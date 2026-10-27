@@ -4,11 +4,11 @@ import type {
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   checkInIdSchema,
   unknownCheckIn,
 } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/check-in-transport.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CheckInJoinControllerOptions = {
   resolveCheckInJoin: ResolveCheckInJoinUseCase;
@@ -25,7 +25,9 @@ export class CheckInJoinController {
     args: LoaderFunctionArgs,
     checkInId: string | undefined,
   ): Promise<RoomNotReady> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
 
     return this.resolve(
       { party: "client", authSubjectId: client.authSubjectId },
@@ -37,7 +39,7 @@ export class CheckInJoinController {
     args: LoaderFunctionArgs,
     checkInId: string | undefined,
   ): Promise<RoomNotReady> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     return this.resolve({ party: "coach" }, checkInId);
   }

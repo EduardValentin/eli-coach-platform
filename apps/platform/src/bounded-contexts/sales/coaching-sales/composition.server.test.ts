@@ -10,11 +10,7 @@ import {
 import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/create-payments.server";
 import { describe, expect, it, vi } from "vitest";
 
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import {
   composeCoachingSalesFeature,
@@ -182,12 +178,10 @@ function coachSendsPaymentLinkArgs() {
 
 function coachArgs(request: Request) {
   return createRequestArgs({
-    contexts: [
-      contextEntry(sessionContext, {
-        account: { authSubjectId: "user_1", id: "acct_1", role: "COACH" },
-        kind: "authenticated",
-      }),
-    ],
+    session: {
+      account: { authSubjectId: "user_1", id: "acct_1", role: "COACH" },
+      kind: "authenticated",
+    },
     request,
   });
 }

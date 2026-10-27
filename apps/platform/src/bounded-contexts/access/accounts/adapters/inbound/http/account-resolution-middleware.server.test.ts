@@ -15,11 +15,8 @@ vi.mock("@clerk/react-router/server", () => ({
 
 import { SIGN_IN_FAILED_PATH } from "~/bounded-contexts/access/accounts/public/paths";
 import { createAccountResolutionMiddleware } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-resolution-middleware.server";
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import type { AccountsFeature } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 const servedAtRoot = { appBasePath: "/" };
 const servedUnderBasePath = { appBasePath: "/platform" };
@@ -33,17 +30,24 @@ describe("createAccountResolutionMiddleware", () => {
     // arrange
     mocks.getAuth.mockResolvedValue({ sessionId: null, userId: null });
     const execute = vi.fn();
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
     await middleware(createArgs({ context }), next);
 
     // assert
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      kind: "anonymous",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          kind: "anonymous",
+        },
+      }),
+    );
     expect(next).toHaveBeenCalledTimes(1);
     expect(execute).not.toHaveBeenCalled();
   });
@@ -57,8 +61,10 @@ describe("createAccountResolutionMiddleware", () => {
       role: "CLIENT" as const,
     };
     const execute = vi.fn().mockResolvedValue({ account, outcome: "active" });
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
@@ -66,10 +72,15 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(execute).toHaveBeenCalledWith("user_1");
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      account,
-      kind: "authenticated",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          account,
+          kind: "authenticated",
+        },
+      }),
+    );
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -79,8 +90,10 @@ describe("createAccountResolutionMiddleware", () => {
     const revokeSession = vi.fn().mockResolvedValue(undefined);
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const execute = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn();
 
     // act
@@ -95,9 +108,14 @@ describe("createAccountResolutionMiddleware", () => {
       SIGN_IN_FAILED_PATH,
     );
     expect(revokeSession).toHaveBeenCalledWith("sess_1");
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      kind: "anonymous",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          kind: "anonymous",
+        },
+      }),
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -109,8 +127,10 @@ describe("createAccountResolutionMiddleware", () => {
     const execute = vi
       .fn()
       .mockResolvedValue({ outcome: "rejected-unprovisioned" });
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn();
 
     // act
@@ -125,9 +145,14 @@ describe("createAccountResolutionMiddleware", () => {
       SIGN_IN_FAILED_PATH,
     );
     expect(revokeSession).toHaveBeenCalledWith("sess_1");
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      kind: "anonymous",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          kind: "anonymous",
+        },
+      }),
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -139,8 +164,10 @@ describe("createAccountResolutionMiddleware", () => {
     const execute = vi
       .fn()
       .mockRejectedValue(new Error("database unavailable"));
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn();
 
     // act
@@ -166,8 +193,10 @@ describe("createAccountResolutionMiddleware", () => {
       .mockRejectedValue(new Error("clerk unavailable"));
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const execute = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn();
 
     // act
@@ -191,19 +220,14 @@ describe("createAccountResolutionMiddleware", () => {
       sessions: { revokeSession: vi.fn().mockResolvedValue(undefined) },
     });
     const execute = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
-    const middleware = createAccountResolutionMiddleware();
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedUnderBasePath,
+    });
 
     // act
     const settled = Promise.resolve(
-      middleware(
-        createArgs({
-          context: createFakeContext({
-            execute,
-            portal: servedUnderBasePath,
-          }),
-        }),
-        vi.fn(),
-      ),
+      middleware(createArgs({ context }), vi.fn()),
     ).catch((thrown: unknown) => thrown);
 
     // assert
@@ -216,8 +240,7 @@ describe("createAccountResolutionMiddleware", () => {
 
   it("never loops on a request already targeting the sign-in-failed page, and still marks it anonymous", async () => {
     // arrange
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({
+    const { context, middleware } = createSubject({
       execute: vi.fn(),
       portal: servedAtRoot,
     });
@@ -231,16 +254,20 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(mocks.getAuth).not.toHaveBeenCalled();
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      kind: "anonymous",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          kind: "anonymous",
+        },
+      }),
+    );
     expect(next).toHaveBeenCalledTimes(1);
   });
 
   it("never loops on a request targeting the sign-in-failed page under an app base path", async () => {
     // arrange
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({
+    const { context, middleware } = createSubject({
       execute: vi.fn(),
       portal: servedUnderBasePath,
     });
@@ -257,9 +284,14 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(mocks.getAuth).not.toHaveBeenCalled();
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      kind: "anonymous",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          kind: "anonymous",
+        },
+      }),
+    );
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -272,8 +304,10 @@ describe("createAccountResolutionMiddleware", () => {
       role: "CLIENT" as const,
     };
     const execute = vi.fn().mockResolvedValue({ account, outcome: "active" });
-    const middleware = createAccountResolutionMiddleware();
-    const context = createFakeContext({ execute, portal: servedAtRoot });
+    const { context, middleware } = createSubject({
+      execute,
+      portal: servedAtRoot,
+    });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
@@ -284,14 +318,19 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(execute).toHaveBeenCalledWith("user_1");
-    expect(context.set).toHaveBeenCalledWith(sessionContext, {
-      account,
-      kind: "authenticated",
-    });
+    expect(context.set).toHaveBeenCalledWith(
+      accessContext,
+      expect.objectContaining({
+        session: {
+          account,
+          kind: "authenticated",
+        },
+      }),
+    );
   });
 });
 
-function createFakeContext(options: {
+function createSubject(options: {
   execute: ReturnType<typeof vi.fn>;
   portal: { appBasePath: string };
 }) {
@@ -299,13 +338,11 @@ function createFakeContext(options: {
     portal: options.portal,
     provisioning: { execute: options.execute },
   } as unknown as AccountsFeature;
+  const context = { set: vi.fn() } as unknown as RouterContextProvider & {
+    set: ReturnType<typeof vi.fn>;
+  };
 
-  return {
-    get: vi.fn((key: unknown) =>
-      key === accountsContext ? accounts : undefined,
-    ),
-    set: vi.fn(),
-  } as unknown as RouterContextProvider & { set: ReturnType<typeof vi.fn> };
+  return { context, middleware: createAccountResolutionMiddleware(accounts) };
 }
 
 function createArgs(options: { context: RouterContextProvider; url?: string }) {

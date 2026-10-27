@@ -9,8 +9,6 @@ import {
 } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientProfileProblemsAnswerSchema,
   clientProfileRefusalSchema,
@@ -22,6 +20,7 @@ import {
   type OwnClientProfileView,
 } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OwnClientProfileControllerOptions = {
   readOwnClientProfile: ReadOwnClientProfileUseCase;
@@ -45,7 +44,9 @@ export class OwnClientProfileController {
   constructor(private readonly options: OwnClientProfileControllerOptions) {}
 
   async load(args: LoaderFunctionArgs): Promise<OwnClientProfileView> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const reading = await this.options.readOwnClientProfile.execute(
       client.authSubjectId,
     );
@@ -58,7 +59,9 @@ export class OwnClientProfileController {
   }
 
   async save(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const request = ownProfileRequestSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: OWN_PROFILE_REQUEST_MAX_BYTES,

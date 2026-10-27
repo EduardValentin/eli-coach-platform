@@ -10,8 +10,6 @@ import {
 } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientIdSchema,
   detailRequestSchema,
@@ -24,6 +22,7 @@ import {
 } from "~/bounded-contexts/clients/client-profile/public/onboarding-review";
 
 import { presentSubmittedReview } from "./onboarding-review-presenter.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OnboardingReviewControllerOptions = {
   approveOnboardingAnswers: ApproveOnboardingAnswersUseCase;
@@ -55,7 +54,7 @@ export class OnboardingReviewController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<OnboardingReviewView> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {
@@ -88,7 +87,7 @@ export class OnboardingReviewController {
   }
 
   async openReview(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const request = reviewTargetSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: REVIEW_ACTION_MAX_BYTES,
@@ -109,7 +108,7 @@ export class OnboardingReviewController {
   }
 
   async requestDetails(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const request = detailRequestSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: REVIEW_ACTION_MAX_BYTES,
@@ -132,7 +131,7 @@ export class OnboardingReviewController {
   }
 
   async approveAnswers(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const request = reviewTargetSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: REVIEW_ACTION_MAX_BYTES,

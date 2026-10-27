@@ -5,8 +5,7 @@ import type {
 import { createPrivateInlineFileResponse } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ProgressPhotoControllerOptions = {
   openProgressPhoto: OpenProgressPhotoUseCase;
@@ -22,7 +21,7 @@ export class ProgressPhotoController {
     args: LoaderFunctionArgs,
     photoId: string | undefined,
   ): Promise<Response> {
-    const account = requireApiAccount(args);
+    const account = args.context.get(accessContext).requireAccount();
     const id = photoIdSchema.safeParse(photoId);
 
     if (!id.success) {
@@ -45,7 +44,7 @@ export class ProgressPhotoController {
     args: ActionFunctionArgs,
     photoId: string | undefined,
   ): Promise<Response> {
-    const account = requireApiAccount(args);
+    const account = args.context.get(accessContext).requireAccount();
     const id = photoIdSchema.safeParse(photoId);
 
     if (!id.success) {

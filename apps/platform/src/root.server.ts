@@ -1,7 +1,6 @@
 import { clerkMiddleware, rootAuthLoader } from "@clerk/react-router/server";
 import type { LoaderFunctionArgs, MiddlewareFunction } from "react-router";
 
-import { createAccountResolutionMiddleware } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-resolution-middleware.server";
 import { getPlatformContainer } from "~/composition-root/container.server";
 import { refuseCrossSiteMutations } from "~/composition-root/cross-site-requests.server";
 import { createFeatureContextMiddleware } from "~/composition-root/feature-contexts.server";
@@ -11,12 +10,15 @@ const featureFlagOverrideMiddleware: MiddlewareFunction<Response> = (
   next,
 ) => getPlatformContainer().operations.overrideMiddleware(args, next);
 
+const sessionMiddleware: MiddlewareFunction<Response> = (args, next) =>
+  getPlatformContainer().access.sessionMiddleware(args, next);
+
 export const middleware = [
   refuseCrossSiteMutations,
   clerkMiddleware(),
   featureFlagOverrideMiddleware,
   createFeatureContextMiddleware(getPlatformContainer),
-  createAccountResolutionMiddleware(),
+  sessionMiddleware,
 ];
 
 export function loader(args: LoaderFunctionArgs) {

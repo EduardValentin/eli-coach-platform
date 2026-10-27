@@ -1,17 +1,12 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type { PortalReach } from "~/bounded-contexts/clients/clients/domain/client";
 import { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type { ReviewStamps } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import type { ClientsFeature } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import {
   contextEntry,
@@ -26,7 +21,7 @@ import {
 } from "./require-client-portal-standing.server";
 
 const BASE_PATH = "/app";
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
@@ -504,19 +499,16 @@ function journeyArgs(options: {
       ),
     },
   } as unknown as ClientsFeature;
-  const accounts = {
-    portal: { appBasePath: options.appBasePath ?? BASE_PATH },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: options.appBasePath ?? BASE_PATH,
+    publicAppUrl: undefined,
+    signInUrl: "",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(clientsContext, coachingSales),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: CLIENT, kind: "authenticated" },
-      ),
-    ],
+    portal,
+    session: options.session ?? { account: CLIENT, kind: "authenticated" },
+    contexts: [contextEntry(clientsContext, coachingSales)],
     request: new Request(`https://evoa.fit${options.pathname}`),
   });
 }

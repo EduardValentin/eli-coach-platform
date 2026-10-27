@@ -1,25 +1,21 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   OpenProgressPhotoUseCase,
   RemoveProgressPhotoUseCase,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { ProgressPhotoController } from "./progress-photo-controller.server";
 
 const PHOTO_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 const PHOTO_BYTES = new Uint8Array([255, 216, 255, 224, 0, 16]);
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
@@ -224,12 +220,7 @@ function createController(
 
 function photoArgs(options: { session?: ResolvedSession } = {}) {
   return createRequestArgs({
-    contexts: [
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: CLIENT, kind: "authenticated" },
-      ),
-    ],
+    session: options.session ?? { account: CLIENT, kind: "authenticated" },
     request: new Request(
       `https://evoa.fit/api/client-profile/photos/${PHOTO_ID}`,
     ),

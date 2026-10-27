@@ -17,8 +17,6 @@ import type {
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   checkInIdSchema,
   checkInOutcomeResponse,
@@ -34,6 +32,7 @@ import {
   openCheckInTimesSchema,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type SharedCheckInsControllerOptions = {
   approveCheckIn: ApproveCheckInUseCase;
@@ -273,9 +272,9 @@ export class SharedCheckInsController {
   }
 
   private requireCheckInActor(args: LoaderFunctionArgs): CheckInActor {
-    const account = requireApiAccount(args);
+    const account = args.context.get(accessContext).requireAccount();
 
-    requirePortalAccess(args, { role: account.role });
+    args.context.get(accessContext).requirePortalAccess(account.role);
 
     return account.role === "COACH"
       ? { party: "coach" }

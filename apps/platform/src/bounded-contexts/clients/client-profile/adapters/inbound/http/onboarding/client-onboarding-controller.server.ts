@@ -23,8 +23,6 @@ import {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   answerDetailsRequestSchema,
   missingConsentSchema,
@@ -48,6 +46,7 @@ import {
   progressPhotoOutcomesOf,
   receivedProgressPhotosOf,
 } from "~/bounded-contexts/clients/client-profile/public/progress-photo-parts";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientOnboardingControllerOptions = {
   answerOnboardingDetails: AnswerOnboardingDetailsUseCase;
@@ -91,7 +90,9 @@ export class ClientOnboardingController {
   constructor(private readonly options: ClientOnboardingControllerOptions) {}
 
   async loadOnboarding(args: LoaderFunctionArgs): Promise<OnboardingPage> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const [reading, openRequest] = await Promise.all([
       this.options.readClientOnboarding.execute(client.authSubjectId),
       this.options.readOpenDetailRequest.execute(client.authSubjectId),
@@ -109,7 +110,9 @@ export class ClientOnboardingController {
   }
 
   async loadOpenRequest(args: LoaderFunctionArgs): Promise<OpenRequestSummary> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const openRequest = await this.options.readOpenDetailRequest.execute(
       client.authSubjectId,
     );
@@ -120,7 +123,9 @@ export class ClientOnboardingController {
   }
 
   async saveDraft(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const request = saveDraftRequestSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: ONBOARDING_REQUEST_MAX_BYTES,
@@ -149,7 +154,9 @@ export class ClientOnboardingController {
   }
 
   async submit(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const body = await readFormDataRequestBody(args.request, {
       maxBytes: SUBMISSION_REQUEST_MAX_BYTES,
     });
@@ -198,7 +205,9 @@ export class ClientOnboardingController {
   }
 
   async answerDetails(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const request = answerDetailsRequestSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: ONBOARDING_REQUEST_MAX_BYTES,

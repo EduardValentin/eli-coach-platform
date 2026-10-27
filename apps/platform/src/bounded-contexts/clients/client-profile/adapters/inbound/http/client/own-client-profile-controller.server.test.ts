@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   OwnClientProfileReading,
   ReadOwnClientProfileUseCase,
@@ -6,25 +5,18 @@ import type {
   UpdateOwnClientProfileUseCase,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { OwnClientProfileController } from "./own-client-profile-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
@@ -210,22 +202,15 @@ function createController(
 function clientArgs(
   options: { body?: unknown; session?: ResolvedSession } = {},
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: CLIENT, kind: "authenticated" },
-      ),
-    ],
+    portal,
+    session: options.session ?? { account: CLIENT, kind: "authenticated" },
     request: new Request("https://evoa.fit/api/client-profile/profile", {
       body:
         options.body === undefined ? undefined : JSON.stringify(options.body),

@@ -17,12 +17,9 @@ function flatOrInConceptFolder(patterns) {
   );
 }
 
-const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared|server/guards)/";
+const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared)/";
 const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/adapters/outbound/persistence/schema\\.server\\.ts$`;
 const REQUEST_KEYS = "adapters/inbound/http/[a-z-]*context\\.server\\.ts$";
-const ACCOUNTS_KEY = `${FEATURES}accounts/adapters/inbound/http/context\\.server\\.ts$`;
-// Temporary until Task 11 dissolves the accounts guards into access middleware.
-const ACCOUNTS_GUARDS = `${FEATURES}accounts/server/guards/`;
 // Temporary until Task 14 publishes the portal standing through clients' public/.
 const CLIENT_PORTAL_STANDING_GUARD = `${FEATURES}clients/adapters/inbound/http/require-client-portal-standing\\.server\\.ts$`;
 const COMPONENT_COMPOSITION = `${FEATURES}${COMPONENT}/composition\\.server\\.ts$`;
@@ -153,7 +150,7 @@ function featureOrderRule(feature, position) {
 function surfaceToFeatureRule(surface, slice) {
   return {
     name: `surface-${surface}-to-feature`,
-    comment: `R2: surfaces/${surface} reaches a bounded context only through a component's ui/${slice}/, ui/shared/ and public/, the bounded context's public/ (request-context keys included) and routes.ts, and, temporarily, the accounts server/guards/ until Task 11 and the client portal standing guard until Task 14.`,
+    comment: `R2: surfaces/${surface} reaches a bounded context only through a component's ui/${slice}/, ui/shared/ and public/, the bounded context's public/ (request-context keys included) and routes.ts, and, temporarily, the client portal standing guard until Task 14.`,
     severity: "error",
     from: { path: `${SURFACES}${surface}/` },
     to: {
@@ -163,7 +160,6 @@ function surfaceToFeatureRule(surface, slice) {
         `${FEATURES}${COMPONENT}/public/`,
         BOUNDED_CONTEXT_PUBLIC,
         `${FEATURES}routes\\.ts$`,
-        ACCOUNTS_GUARDS,
         CLIENT_PORTAL_STANDING_GUARD,
       ],
     },
@@ -182,7 +178,7 @@ module.exports = {
     {
       name: "feature-internals",
       comment:
-        "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/, the accounts request-context key until Task 11, and, temporarily until Task 17, its domain/.",
+        "R3: a feature imports another feature only through public/ or ui/shared/ and, temporarily until Task 17, its domain/.",
       severity: "error",
       from: {
         path: `${FEATURES}(${COMPONENT})/`,
@@ -192,7 +188,6 @@ module.exports = {
         path: `${FEATURES}(?!$1/)${COMPONENT}/`,
         pathNot: [
           `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
-          ACCOUNTS_KEY,
           FOREIGN_DOMAIN,
         ],
       },
@@ -281,27 +276,9 @@ module.exports = {
       },
     },
     {
-      name: "server-guards-consumers",
-      comment:
-        "A feature never imports the app's own guards; a surface reads only runtime config from them.",
-      severity: "error",
-      from: {
-        path: [
-          FEATURES,
-          SURFACES,
-          "^apps/platform/src/root(\\.server)?\\.tsx?$",
-        ],
-      },
-      to: {
-        path: "^apps/platform/src/composition-root/guards/",
-        pathNot:
-          "^apps/platform/src/composition-root/guards/runtime-config-context\\.server\\.ts$",
-      },
-    },
-    {
       name: "component-key-consumers",
       comment:
-        "A component's request-context key in adapters/inbound/http/ is read by that component's adapters/inbound/http/ and ui/ and its composition (the feature type), where feature-internals keeps other components out, by its bounded context's composition.server.ts, which sets it, and public/request-context.ts, which publishes it to the surfaces and the root, where bounded-context-root-own-components keeps other bounded contexts out, and by the accounts guards until Task 11.",
+        "A component's request-context key in adapters/inbound/http/ is read by that component's adapters/inbound/http/ and ui/ and its composition (the feature type), where feature-internals keeps other components out, by its bounded context's composition.server.ts, which sets it, and public/request-context.ts, which publishes it to the surfaces and the root, where bounded-context-root-own-components keeps other bounded contexts out.",
       severity: "error",
       from: {
         path: APP,
@@ -310,7 +287,6 @@ module.exports = {
           COMPONENT_COMPOSITION,
           BOUNDED_CONTEXT_COMPOSITION,
           BOUNDED_CONTEXT_REQUEST_CONTEXT,
-          ACCOUNTS_GUARDS,
         ],
       },
       to: { path: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}` },
@@ -398,31 +374,6 @@ module.exports = {
       to: { path: "^apps/platform/src/composition-root/" },
     },
     {
-      name: "guards-construct-nothing",
-      comment:
-        "A request-context key module (a component's adapters/inbound/http/context.server.ts, the accounts guards, the composition root's guards) imports only the framework, public folders, component domains, config types, sibling keys and guards; its feature type comes from the component's controllers as type-only imports.",
-      severity: "error",
-      from: {
-        path: [
-          `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
-          `${FEATURES}accounts/server/guards/`,
-          "^apps/platform/src/composition-root/guards/",
-        ],
-      },
-      to: {
-        path: APP,
-        pathNot: [
-          `${FEATURES}${COMPONENT}/(public|server/guards|domain)/`,
-          `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
-          "^apps/platform/src/composition-root/guards/",
-          "^apps/platform/src/shared/http/base-path\\.ts$",
-          "^apps/platform/src/shared/(email/product-email|submission-checks/bot-detection)-config\\.ts$",
-          `${FEATURES}${COMPONENT}/config\\.server\\.ts$`,
-        ],
-        dependencyTypesNot: ["type-only"],
-      },
-    },
-    {
       name: "clerk-confined",
       comment:
         "Clerk stays behind the accounts feature, the app root modules, the identity adapter and the test harnesses: nothing else names @clerk/*.",
@@ -487,6 +438,19 @@ module.exports = {
       severity: "error",
       from: { pathNot: ["^apps/platform/src/shared/documents/"] },
       to: { path: "(^|/)(file-type|@file-type/[^/]+)(/|$)" },
+    },
+    {
+      name: "inbound-reads-request-keys-only-from-public",
+      comment:
+        "A component's adapters/inbound/http/ reaches another bounded context only through that bounded context's public/, where its request-context keys (the access session among them) are published, and, until Task 17 republishes them there, a component's public/. It says nothing about ui/.",
+      severity: "error",
+      from: {
+        path: "^apps/platform/src/bounded-contexts/([^/]+)/[^/]+/adapters/inbound/http/",
+      },
+      to: {
+        path: "^apps/platform/src/bounded-contexts/(?!$1/)[^/]+/",
+        pathNot: [BOUNDED_CONTEXT_PUBLIC, `${FEATURES}${COMPONENT}/public/`],
+      },
     },
     {
       name: "inbound-never-imports-outbound",

@@ -2,8 +2,7 @@ import type { OpenClientAvatarUseCase } from "~/bounded-contexts/clients/client-
 import { createPrivateInlineFileResponse } from "~/shared/http/index.server";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientAvatarControllerOptions = {
   openClientAvatar: OpenClientAvatarUseCase;
@@ -18,7 +17,7 @@ export class ClientAvatarController {
     args: LoaderFunctionArgs,
     clientId: string | undefined,
   ): Promise<Response> {
-    const account = requireApiAccount(args);
+    const account = args.context.get(accessContext).requireAccount();
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {

@@ -6,8 +6,6 @@ import type {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   avatarWrittenResponse,
   receivedAvatarOf,
@@ -18,6 +16,7 @@ import {
   type ClientAvatarUrls,
 } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
 import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachClientAvatarControllerOptions = {
   listClientAvatars: ListClientAvatarsUseCase;
@@ -34,7 +33,7 @@ export class CoachClientAvatarController {
     args: ActionFunctionArgs,
     clientId: string | undefined,
   ): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {
@@ -59,7 +58,7 @@ export class CoachClientAvatarController {
     args: ActionFunctionArgs,
     clientId: string | undefined,
   ): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {
@@ -75,7 +74,7 @@ export class CoachClientAvatarController {
     args: LoaderFunctionArgs,
     clientIds: readonly string[],
   ): Promise<ClientAvatarUrls> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
     const avatars = await this.options.listClientAvatars.execute(clientIds);
     const avatarOf = new Map(
       avatars.map((avatar) => [avatar.clientId, avatar]),

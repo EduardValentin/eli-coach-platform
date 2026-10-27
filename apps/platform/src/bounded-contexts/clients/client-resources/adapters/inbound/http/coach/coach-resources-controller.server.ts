@@ -2,12 +2,12 @@ import type { ListClientResourcesUseCase } from "~/bounded-contexts/clients/clie
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   presentResourceListing,
   type CoachResourceListing,
 } from "~/bounded-contexts/clients/client-resources/public/client-resources";
 import { resourceBrowseInputOf } from "~/bounded-contexts/clients/client-resources/public/resource-browse";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachResourcesControllerOptions = {
   listClientResources: ListClientResourcesUseCase;
@@ -24,7 +24,7 @@ export class CoachResourcesController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<CoachResourceListing> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {

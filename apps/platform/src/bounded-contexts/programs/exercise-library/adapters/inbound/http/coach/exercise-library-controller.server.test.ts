@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   Exercise,
   type ArchiveExerciseResult,
@@ -21,19 +20,12 @@ import {
   type StagedExerciseVideo,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { ExerciseLibraryController } from "./exercise-library-controller.server";
 
@@ -41,7 +33,7 @@ const EXERCISE_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 const AT = new Date("2026-10-14T09:00:00.000Z");
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "c0000000-0000-4000-8000-000000000001",
   role: "COACH",
@@ -223,22 +215,15 @@ function createController() {
 function argsFor(
   options: { session?: ResolvedSession; request?: Request } = {},
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/app",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/app",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: COACH, kind: "authenticated" },
-      ),
-    ],
+    portal,
+    session: options.session ?? { account: COACH, kind: "authenticated" },
     request: options.request,
   });
 }

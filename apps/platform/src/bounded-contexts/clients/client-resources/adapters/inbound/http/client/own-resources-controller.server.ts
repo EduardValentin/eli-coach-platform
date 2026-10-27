@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   CountUnopenedResourcesUseCase,
   ListOwnResourcesUseCase,
@@ -8,14 +7,15 @@ import type {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
   presentResourceListing,
   type ClientResourceListing,
 } from "~/bounded-contexts/clients/client-resources/public/client-resources";
 import { resourceBrowseInputOf } from "~/bounded-contexts/clients/client-resources/public/resource-browse";
+import {
+  accessContext,
+  type SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
 type OwnResourcesControllerOptions = {
   listOwnResources: ListOwnResourcesUseCase;
@@ -34,7 +34,9 @@ export class OwnResourcesController {
   constructor(private readonly options: OwnResourcesControllerOptions) {}
 
   async load(args: LoaderFunctionArgs): Promise<ClientResourceListing> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const listing = await this.options.listOwnResources.execute({
       requester: requesterOf(client),
       browse: resourceBrowseInputOf(args.url.searchParams),
@@ -52,7 +54,7 @@ export class OwnResourcesController {
   }
 
   async countUnopened(args: LoaderFunctionArgs): Promise<number> {
-    const session = args.context.get(sessionContext);
+    const session = args.context.get(accessContext).session;
 
     if (session.kind === "anonymous") {
       return 0;
@@ -67,7 +69,9 @@ export class OwnResourcesController {
     args: ActionFunctionArgs,
     resourceId: string | undefined,
   ): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const id = resourceIdSchema.safeParse(resourceId);
 
     if (!id.success) {
@@ -90,7 +94,7 @@ export class OwnResourcesController {
   }
 }
 
-function requesterOf(account: AccountSnapshot): ResourceRequester {
+function requesterOf(account: SessionAccount): ResourceRequester {
   return { role: account.role, authSubjectId: account.authSubjectId };
 }
 

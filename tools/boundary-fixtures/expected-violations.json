@@ -23,7 +23,11 @@
   "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/recipes/recipe-builder.tsx": [
     "not-to-unresolvable"
   ],
-  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-accounts-key.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-access-session.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-accounts-key.server.ts": [
+    "feature-internals",
+    "inbound-reads-request-keys-only-from-public"
+  ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-payment-vocabulary.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-store-key.server.ts": [
     "feature-internals"
@@ -48,9 +52,6 @@
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/catalog/thin.ts": [
     "inbound-never-imports-outbound",
     "route-thinness"
-  ],
-  "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/context.server.ts": [
-    "guards-construct-nothing"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/cycle-a.ts": [
     "no-circular"
@@ -185,7 +186,7 @@
     "composition-only-from-above-container",
     "composition-root"
   ],
-  "apps/platform/src/root.server.ts": ["server-guards-consumers"],
+  "apps/platform/src/root.server.ts": [],
   "apps/platform/src/routes.ts": [
     "composition-only-from-above-container",
     "root-registry-to-server"
@@ -240,9 +241,6 @@
   "apps/platform/src/surfaces/public-site/pages/reads-request-key.tsx": [
     "component-key-consumers",
     "surface-public-site-to-feature"
-  ],
-  "apps/platform/src/surfaces/public-site/pages/server-guards-consumers.tsx": [
-    "server-guards-consumers"
   ],
   "apps/platform/src/surfaces/public-site/pages/surface-to-feature.tsx": [
     "route-thinness",

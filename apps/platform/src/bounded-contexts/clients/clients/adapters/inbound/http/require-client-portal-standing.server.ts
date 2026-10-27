@@ -2,8 +2,6 @@ import { buildRedirectPath, normalizeBasePath } from "~/shared/http/base-path";
 import type { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { redirect, type RouterContextProvider } from "react-router";
 
-import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
   clientJourneyRedirect,
   type ClientPortalStanding,
@@ -11,6 +9,7 @@ import {
 
 import { clientJourneyContext } from "./client-journey-context.server";
 import { clientsContext } from "./context.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type JourneyRequest = {
   context: Readonly<RouterContextProvider>;
@@ -40,7 +39,7 @@ export async function requireClientPortalStanding(
     return;
   }
 
-  const { appBasePath } = args.context.get(accountsContext).portal;
+  const { appBasePath } = args.context.get(accessContext).portal;
   const redirectTo = clientJourneyRedirect(
     signedIn.standing,
     appPathOf(args.url.pathname, appBasePath),
@@ -74,7 +73,7 @@ function handOverClientJourney(
 async function readSignedInClientStanding(
   args: JourneyRequest,
 ): Promise<SignedInStanding | null> {
-  const session = args.context.get(sessionContext);
+  const session = args.context.get(accessContext).session;
 
   if (session.kind === "anonymous" || session.account.role !== "CLIENT") {
     return null;

@@ -11,8 +11,6 @@ import {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientProfileProblemsAnswerSchema,
   clientProfileRefusalSchema,
@@ -27,6 +25,7 @@ import {
   type MeasurementRow,
 } from "~/bounded-contexts/clients/client-profile/public/measurements";
 import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientProfileControllerOptions = {
   readClientMeasurementHistory: ReadClientMeasurementHistoryUseCase;
@@ -83,7 +82,7 @@ export class ClientProfileController {
     args: ActionFunctionArgs,
     clientId: string | undefined,
   ): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {
@@ -144,7 +143,7 @@ export class ClientProfileController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): string {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {

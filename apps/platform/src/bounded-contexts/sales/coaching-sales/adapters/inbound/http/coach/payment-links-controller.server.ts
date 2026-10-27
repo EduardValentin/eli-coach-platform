@@ -1,13 +1,13 @@
 import type { SendPaymentLinkUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { ActionFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
 import {
   sendPaymentLinkErrorSchema,
   sendPaymentLinkRequestSchema,
   sendPaymentLinkSuccessSchema,
 } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type PaymentLinksControllerOptions = {
   sendPaymentLink: SendPaymentLinkUseCase;
@@ -31,7 +31,7 @@ export class PaymentLinksController {
   constructor(private readonly options: PaymentLinksControllerOptions) {}
 
   async sendPaymentLink(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
 
     const body: unknown = await args.request.json().catch(() => null);
     const submission = sendPaymentLinkRequestSchema.safeParse(body);

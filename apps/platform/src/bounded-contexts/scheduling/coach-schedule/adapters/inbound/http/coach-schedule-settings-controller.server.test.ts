@@ -1,8 +1,8 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
-import { RouterContextProvider, type ActionFunctionArgs } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CoachScheduleSettingsController } from "./coach-schedule-settings-controller.server";
 
@@ -231,24 +231,19 @@ function createCoachArgs(body: unknown): ActionFunctionArgs {
 function createActionArgs(options: {
   body: unknown;
   session:
-    { kind: "anonymous" } | { account: AccountSnapshot; kind: "authenticated" };
+    { kind: "anonymous" } | { account: SessionAccount; kind: "authenticated" };
 }): ActionFunctionArgs {
-  const context = new RouterContextProvider(
-    new Map([[sessionContext, options.session]]),
-  );
-
-  return {
-    context,
-    params: {},
+  return createRequestArgs({
     request: new Request("https://eli.example/api/coach-schedule/settings", {
       body: JSON.stringify(options.body),
       headers: { "Content-Type": "application/json" },
       method: "PUT",
     }),
-  } as unknown as ActionFunctionArgs;
+    session: options.session,
+  });
 }
 
-function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
+function buildAccount(overrides: Partial<SessionAccount>): SessionAccount {
   return {
     authSubjectId: "user_1",
     id: "acct_1",

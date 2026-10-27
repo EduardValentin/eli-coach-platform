@@ -1,28 +1,20 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import { describe, expect, it, vi } from "vitest";
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import type { SessionAccount } from "~/bounded-contexts/access/public/session";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 import {
   composeClientProfileFeature,
   composeClientOnboardingFeature,
 } from "./composition.server";
 import type { AttachProgressPhotosUseCase } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_uninvited",
   id: "acct_uninvited",
   role: "CLIENT",
 };
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_coach",
   id: "acct_coach",
   role: "COACH",
@@ -155,22 +147,18 @@ function accountArgs({
   account,
   request = {},
 }: {
-  account: AccountSnapshot;
+  account: SessionAccount;
   request?: RequestShape;
 }) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account, kind: "authenticated" }),
-    ],
+    portal,
+    session: { account, kind: "authenticated" },
     request: new Request(
       "https://evoa.fit/api/client-profile/unit-preference",
       {
@@ -255,7 +243,7 @@ describe("composeClientOnboardingFeature", () => {
     // act
     const response = await controller.submit(
       createRequestArgs({
-        contexts: clientContexts(),
+        ...clientAccess(),
         request: new Request(
           "https://evoa.fit/api/client-onboarding/submission",
           { body: form, method: "POST" },
@@ -412,11 +400,11 @@ function onboardingAccountArgs({
   account,
   request = {},
 }: {
-  account: AccountSnapshot;
+  account: SessionAccount;
   request?: OnboardingRequestShape;
 }) {
   return createRequestArgs({
-    contexts: accountContexts(account),
+    ...accountAccess(account),
     request: new Request("https://evoa.fit/client/onboarding", {
       body:
         request.body === undefined ? undefined : JSON.stringify(request.body),
@@ -426,21 +414,17 @@ function onboardingAccountArgs({
   });
 }
 
-function clientContexts() {
-  return accountContexts(CLIENT);
+function clientAccess() {
+  return accountAccess(CLIENT);
 }
 
-function accountContexts(account: AccountSnapshot) {
-  const accounts = {
+function accountAccess(account: SessionAccount) {
+  return {
     portal: {
       appBasePath: "/",
       publicAppUrl: "https://evoa.fit",
       signInUrl: "https://accounts.evoa.fit/sign-in",
     },
-  } as unknown as AccountsFeature;
-
-  return [
-    contextEntry(accountsContext, accounts),
-    contextEntry(sessionContext, { account, kind: "authenticated" }),
-  ];
+    session: { account, kind: "authenticated" } as const,
+  };
 }

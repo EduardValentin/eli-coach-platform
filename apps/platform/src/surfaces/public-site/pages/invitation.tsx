@@ -6,14 +6,13 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { accountsContext } from "~/bounded-contexts/access/public/request-context";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
 import { INVITATION_PATH } from "~/bounded-contexts/clients/clients/public/paths";
 import {
   AnonymousInvitation,
   SignedInInvitation,
 } from "~/bounded-contexts/clients/clients/ui/public/invitation/invitation-states";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 export type InvitationLoaderData = {
   invitationPath: string;
@@ -21,11 +20,11 @@ export type InvitationLoaderData = {
 };
 
 export function loader({ context }: LoaderFunctionArgs): InvitationLoaderData {
-  const { appBasePath } = context.get(accountsContext).portal;
+  const { appBasePath } = context.get(accessContext).portal;
 
   return {
     invitationPath: buildRedirectPath(appBasePath, INVITATION_PATH),
-    signedIn: context.get(sessionContext).kind === "authenticated",
+    signedIn: context.get(accessContext).session.kind === "authenticated",
   };
 }
 

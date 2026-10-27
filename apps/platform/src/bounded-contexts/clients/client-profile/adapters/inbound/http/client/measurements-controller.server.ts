@@ -8,8 +8,6 @@ import {
 } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   measurementEntryRequestSchema,
   measurementsNudgeSchema,
@@ -27,6 +25,7 @@ import {
   progressPhotoOutcomesOf,
   receivedProgressPhotosOf,
 } from "~/bounded-contexts/clients/client-profile/public/progress-photo-parts";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientMeasurementsControllerOptions = {
   readOwnMeasurementHistory: ReadOwnMeasurementHistoryUseCase;
@@ -48,7 +47,9 @@ export class ClientMeasurementsController {
   constructor(private readonly options: ClientMeasurementsControllerOptions) {}
 
   async loadPage(args: LoaderFunctionArgs): Promise<MeasurementsPage> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const reading = await this.options.readOwnMeasurementHistory.execute({
       authSubjectId: client.authSubjectId,
     });
@@ -66,7 +67,9 @@ export class ClientMeasurementsController {
   }
 
   async loadNudge(args: LoaderFunctionArgs): Promise<MeasurementsNudge> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const reading = await this.options.readOwnMeasurementHistory.execute({
       authSubjectId: client.authSubjectId,
     });
@@ -77,7 +80,9 @@ export class ClientMeasurementsController {
   }
 
   async record(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const body = await readFormDataRequestBody(args.request, {
       maxBytes: RECORD_MEASUREMENTS_MAX_BYTES,
     });

@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   MAX_RESOURCE_FILE_BYTES,
   type AddClientResourceResult,
@@ -20,7 +19,6 @@ import {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
 import {
   addedResourceAnswerSchema,
   changedResourceAnswerSchema,
@@ -31,6 +29,10 @@ import {
   resourceDetailsRequestSchema,
 } from "~/bounded-contexts/clients/client-resources/public/client-resources";
 import { receivedResourceUploadOf } from "~/bounded-contexts/clients/client-resources/public/resource-upload-parts";
+import {
+  accessContext,
+  type SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
 type ClientResourcesControllerOptions = {
   addClientResource: AddClientResourceUseCase;
@@ -264,14 +266,16 @@ export class ClientResourcesController {
 }
 
 function requireCoach(args: LoaderFunctionArgs): ResourceRequester {
-  return requesterOf(requireApiAccount(args, { role: "COACH" }));
+  return requesterOf(
+    args.context.get(accessContext).requireAccount({ role: "COACH" }),
+  );
 }
 
 function requireAccount(args: LoaderFunctionArgs): ResourceRequester {
-  return requesterOf(requireApiAccount(args));
+  return requesterOf(args.context.get(accessContext).requireAccount());
 }
 
-function requesterOf(account: AccountSnapshot): ResourceRequester {
+function requesterOf(account: SessionAccount): ResourceRequester {
   return { role: account.role, authSubjectId: account.authSubjectId };
 }
 

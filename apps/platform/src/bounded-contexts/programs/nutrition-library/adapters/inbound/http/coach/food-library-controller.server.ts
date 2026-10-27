@@ -16,8 +16,6 @@ import {
 } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   foodProblemsAnswerSchema,
   foodRequestSchema,
@@ -28,6 +26,7 @@ import {
   type FoodLibraryView,
 } from "~/bounded-contexts/programs/nutrition-library/public/foods";
 import { COACH_NUTRITION_PATH } from "~/bounded-contexts/programs/nutrition-library/public/paths";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type FoodLibraryControllerOptions = {
   listFoods: ListFoodsUseCase;
@@ -44,14 +43,14 @@ export class FoodLibraryController {
   constructor(private readonly options: FoodLibraryControllerOptions) {}
 
   async list(args: LoaderFunctionArgs): Promise<FoodLibraryView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const { foods, tags } = await this.options.listFoods.execute(coach.id);
 
     return { foods: foods.map(presentFood), tags: tags.map(presentTag) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<FoodEditorView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const { foods, tags } = await this.options.listFoods.execute(coach.id);
 
     return {
@@ -65,7 +64,7 @@ export class FoodLibraryController {
     args: LoaderFunctionArgs,
     foodId: string | undefined,
   ): Promise<FoodEditorView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const id = idSchema.safeParse(foodId);
 
     if (!id.success) {
@@ -89,7 +88,9 @@ export class FoodLibraryController {
   }
 
   async create(args: ActionFunctionArgs): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const draft = await this.readDraft(args.request);
 
     if (!draft.success) {
@@ -115,7 +116,9 @@ export class FoodLibraryController {
     args: ActionFunctionArgs,
     foodId: string | undefined,
   ): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const id = idSchema.safeParse(foodId);
 
     if (!id.success) {

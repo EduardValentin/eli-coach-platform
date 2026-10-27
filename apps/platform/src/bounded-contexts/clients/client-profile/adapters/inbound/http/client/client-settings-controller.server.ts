@@ -8,8 +8,6 @@ import {
 } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientSettingsSchema,
   type ClientSettingsView,
@@ -19,6 +17,7 @@ import {
   unitPreferenceSavedAnswerSchema,
   unitPreferenceSchema,
 } from "~/bounded-contexts/clients/client-profile/public/unit-preference";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientSettingsControllerOptions = {
   readOwnClientSettings: ReadOwnClientSettingsUseCase;
@@ -36,7 +35,9 @@ export class ClientSettingsController {
   constructor(private readonly options: ClientSettingsControllerOptions) {}
 
   async load(args: LoaderFunctionArgs): Promise<ClientSettingsView> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const settings = await this.options.readOwnClientSettings.execute(
       client.authSubjectId,
     );
@@ -53,7 +54,9 @@ export class ClientSettingsController {
   }
 
   async saveUnits(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const request = unitPreferenceSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: UNIT_PREFERENCE_REQUEST_MAX_BYTES,

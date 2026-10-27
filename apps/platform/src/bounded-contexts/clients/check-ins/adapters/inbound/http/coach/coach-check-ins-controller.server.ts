@@ -10,7 +10,6 @@ import type {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   checkInOutcomeResponse,
   readCheckInBody,
@@ -26,6 +25,7 @@ import {
   type CoachCheckIns,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachCheckInsControllerOptions = {
   countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
@@ -45,7 +45,7 @@ export class CoachCheckInsController {
   constructor(private readonly options: CoachCheckInsControllerOptions) {}
 
   async loadCheckIns(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const checkIns = await this.options.listCoachCheckIns.execute();
 
@@ -55,7 +55,7 @@ export class CoachCheckInsController {
   }
 
   async loadAwaiting(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const checkIns = await this.options.listCoachCheckInsAwaiting.execute();
 
@@ -65,7 +65,7 @@ export class CoachCheckInsController {
   }
 
   async loadAwaitingCount(args: LoaderFunctionArgs): Promise<number> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     return this.options.countCheckInsAwaiting.execute({ party: "coach" });
   }
@@ -74,7 +74,7 @@ export class CoachCheckInsController {
     args: LoaderFunctionArgs,
     clientId: string | undefined,
   ): Promise<CheckInScheduling> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const id = clientIdSchema.safeParse(clientId);
 
@@ -94,7 +94,7 @@ export class CoachCheckInsController {
   }
 
   async schedule(args: ActionFunctionArgs): Promise<Response> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const submission = checkInScheduleSchema.safeParse(
       await readCheckInBody(args.request),

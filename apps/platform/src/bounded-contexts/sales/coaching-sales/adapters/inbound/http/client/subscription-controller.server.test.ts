@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   RefundDue,
   type CancelSubscriptionUseCase,
@@ -9,29 +8,22 @@ import {
   type StartProgramNowUseCase,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { SubscriptionController } from "./subscription-controller.server";
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
 };
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_coach",
   id: "acct_coach",
   role: "COACH",
@@ -622,7 +614,7 @@ function createController(options: {
 }
 
 function sessionOf(options: {
-  account?: AccountSnapshot;
+  account?: SessionAccount;
   anonymous?: boolean;
 }): ResolvedSession {
   return options.anonymous
@@ -631,31 +623,27 @@ function sessionOf(options: {
 }
 
 function clientArgs(
-  options: { account?: AccountSnapshot } = {},
+  options: { account?: SessionAccount } = {},
   url = "https://evoa.fit/app/client/settings",
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/app",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/app",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, sessionOf(options)),
-    ],
+    portal,
+    session: sessionOf(options),
     request: new Request(url, { method: "POST" }),
   });
 }
 
 function apiArgs(
-  options: { account?: AccountSnapshot; anonymous?: boolean } = {},
+  options: { account?: SessionAccount; anonymous?: boolean } = {},
 ) {
   return createRequestArgs({
-    contexts: [contextEntry(sessionContext, sessionOf(options))],
+    session: sessionOf(options),
     request: new Request(
       "https://evoa.fit/app/api/coaching-sales/subscription-cancellation",
       { method: "POST" },

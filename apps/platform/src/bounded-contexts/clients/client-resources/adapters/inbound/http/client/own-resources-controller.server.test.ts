@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ClientResource,
   type CountUnopenedResourcesUseCase,
@@ -7,19 +6,12 @@ import {
   type ResourceBrowseSnapshot,
 } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { OwnResourcesController } from "./own-resources-controller.server";
 
@@ -27,7 +19,7 @@ const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
 const NEW_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const OPENED_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 
-const ANA: AccountSnapshot = {
+const ANA: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
@@ -423,19 +415,15 @@ function markArgs(options: { session?: ResolvedSession } = {}) {
 }
 
 function argsFor(options: { session: ResolvedSession; request: Request }) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, options.session),
-    ],
+    portal,
+    session: options.session,
     request: options.request,
   });
 }

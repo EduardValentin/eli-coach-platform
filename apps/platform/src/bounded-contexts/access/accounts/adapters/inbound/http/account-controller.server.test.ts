@@ -1,11 +1,11 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
-import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { AccountController } from "./account-controller.server";
 
@@ -54,7 +54,7 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
   }
 }
 
-function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
+function buildAccount(overrides: Partial<SessionAccount>): SessionAccount {
   return {
     authSubjectId: "user_1",
     id: "acct_1",
@@ -66,13 +66,8 @@ function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
 function createLoaderArgs(options: {
   session: ResolvedSession;
 }): LoaderFunctionArgs {
-  const context = new RouterContextProvider(
-    new Map([[sessionContext, options.session]]),
-  );
-
-  return {
-    context,
-    params: {},
+  return createRequestArgs({
     request: new Request("https://eli.example/api/account"),
-  } as unknown as LoaderFunctionArgs;
+    session: options.session,
+  });
 }

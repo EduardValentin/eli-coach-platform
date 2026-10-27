@@ -3,19 +3,9 @@ import type {
   ResolveCheckInJoinUseCase,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
+import type { ResolvedSession } from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CheckInJoinController } from "./check-in-join-controller.server";
 
@@ -174,19 +164,15 @@ function createController(resolution: CheckInJoinResult) {
 }
 
 function argsFor(session: ResolvedSession) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, session),
-    ],
+    portal,
+    session,
     request: new Request(
       `https://evoa.fit/client/checkins/${CHECK_IN_ID}/join`,
     ),

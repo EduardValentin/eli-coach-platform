@@ -1,36 +1,28 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   ReadOwnClientAvatarUseCase,
   RemoveOwnClientAvatarUseCase,
   UploadOwnClientAvatarUseCase,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { OwnClientAvatarController } from "./own-client-avatar-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const AVATAR_BYTES = new Uint8Array([255, 216, 255, 224]);
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
 };
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "acct_eli",
   role: "COACH",
@@ -193,21 +185,17 @@ function avatarUpload(body?: FormData): RequestInit {
   return { method: "POST", body: form };
 }
 
-function accountArgs(account: AccountSnapshot, init: RequestInit = {}) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+function accountArgs(account: SessionAccount, init: RequestInit = {}) {
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
   const session: ResolvedSession = { account, kind: "authenticated" };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, session),
-    ],
+    portal,
+    session,
     request: new Request("https://evoa.fit/api/client-profile/avatar", init),
   });
 }

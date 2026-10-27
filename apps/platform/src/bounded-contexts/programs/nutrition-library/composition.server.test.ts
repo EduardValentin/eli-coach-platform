@@ -1,20 +1,12 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import { describe, expect, it, vi } from "vitest";
+import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { composeNutritionLibraryFeature } from "./composition.server";
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_coach",
   id: "acct_coach",
   role: "COACH",
@@ -221,19 +213,15 @@ function jsonRequest(
 }
 
 function coachArgs(request = new Request("https://evoa.fit/coach/nutrition")) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account: COACH, kind: "authenticated" }),
-    ],
+    portal,
+    session: { account: COACH, kind: "authenticated" },
     request,
   });
 }

@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   Food,
   MAX_RECIPE_PHOTO_BYTES,
@@ -20,19 +19,12 @@ import {
   type StartRecipeUseCase,
 } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { RecipeLibraryController } from "./recipe-library-controller.server";
 
@@ -45,7 +37,7 @@ const HONEY_ID = "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a";
 const AT = new Date("2026-10-14T09:00:00.000Z");
 const RECIPES = { redirectTo: "/coach/nutrition?tab=recipes" };
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "acct_eli",
   role: "COACH",
@@ -254,22 +246,15 @@ function createController() {
 function argsFor(
   options: { session?: ResolvedSession; request?: Request } = {},
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/app",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/app",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: COACH, kind: "authenticated" },
-      ),
-    ],
+    portal,
+    session: options.session ?? { account: COACH, kind: "authenticated" },
     request: options.request,
   });
 }

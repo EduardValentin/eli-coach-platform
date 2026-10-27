@@ -2,7 +2,6 @@ import type { UpdateClientIdentityAsCoachUseCase } from "~/bounded-contexts/clie
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
 import {
   enteredIdentityOf,
   identityBodyOf,
@@ -10,6 +9,7 @@ import {
   unreadableIdentityResponse,
 } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-identity-transport.server";
 import { coachClientIdentityRequestSchema } from "~/bounded-contexts/clients/clients/public/client-identity";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachClientIdentityControllerOptions = {
   updateClientIdentityAsCoach: UpdateClientIdentityAsCoachUseCase;
@@ -24,7 +24,7 @@ export class CoachClientIdentityController {
     args: ActionFunctionArgs,
     clientId: string | undefined,
   ): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {

@@ -1,5 +1,6 @@
 import type { MiddlewareFunction } from "react-router";
 
+import { createAccountResolutionMiddleware } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-resolution-middleware.server";
 import {
   accountsContext,
   type AccountsFeature,
@@ -12,6 +13,7 @@ import {
 export type AccessComposition = {
   components: { accounts: AccountsFeature };
   middleware: MiddlewareFunction<Response>;
+  sessionMiddleware: MiddlewareFunction<Response>;
 };
 
 export function composeAccess(
@@ -25,5 +27,6 @@ export function composeAccess(
       context.set(accountsContext, accounts);
       return next();
     },
+    sessionMiddleware: createAccountResolutionMiddleware(accounts),
   };
 }

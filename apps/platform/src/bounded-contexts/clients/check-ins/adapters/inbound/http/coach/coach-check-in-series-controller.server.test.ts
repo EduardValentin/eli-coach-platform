@@ -12,19 +12,9 @@ import type {
   StopCheckInSeriesUseCase,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
+import type { ResolvedSession } from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CoachCheckInSeriesController } from "./coach-check-in-series-controller.server";
 
@@ -456,13 +446,11 @@ function coachArgs(
     query?: Record<string, string>;
   } = {},
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
   const url = new URL("https://evoa.fit/api/check-ins/series");
 
   for (const [name, value] of Object.entries(options.query ?? {})) {
@@ -470,10 +458,8 @@ function coachArgs(
   }
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, options.session ?? COACH_SESSION),
-    ],
+    portal,
+    session: options.session ?? COACH_SESSION,
     request: new Request(url, {
       body: options.body ? JSON.stringify(options.body) : null,
       headers: { "Content-Type": "application/json" },

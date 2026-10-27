@@ -8,7 +8,6 @@ import type { EmailAcceptance } from "~/bounded-contexts/sales/coaching-sales/do
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientSubscriptionSchema,
   type ClientSubscription,
@@ -19,6 +18,7 @@ import {
   type PricingTiers,
   type CallSales,
 } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachSalesControllerOptions = {
   emailAcceptance: EmailAcceptance;
@@ -48,7 +48,7 @@ export class CoachSalesController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<ClientSubscription | null> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const id = clientIdSchema.safeParse(clientId);
 

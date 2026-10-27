@@ -12,8 +12,6 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/clients/public/paths";
 import {
   clientEndedSchema,
@@ -32,6 +30,7 @@ import {
   programStatusSchema,
   type ProgramStatus,
 } from "~/bounded-contexts/sales/coaching-sales/public/program-status";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type SubscriptionControllerOptions = {
   appBasePath: string;
@@ -74,7 +73,9 @@ export class SubscriptionController {
   constructor(private readonly options: SubscriptionControllerOptions) {}
 
   async loadSettings(args: LoaderFunctionArgs): Promise<ClientSettings> {
-    const account = requirePortalAccess(args, { role: "CLIENT" });
+    const account = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const reading = await this.options.readClientSubscription.execute(
       account.authSubjectId,
     );
@@ -87,7 +88,9 @@ export class SubscriptionController {
   }
 
   async loadEnded(args: LoaderFunctionArgs): Promise<ClientEnded> {
-    const account = requirePortalAccess(args, { role: "CLIENT" });
+    const account = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const reading = await this.options.readClientSubscription.execute(
       account.authSubjectId,
     );
@@ -100,7 +103,9 @@ export class SubscriptionController {
   async loadProgramStatus(
     args: LoaderFunctionArgs,
   ): Promise<ProgramStatus | null> {
-    const account = requirePortalAccess(args, { role: "CLIENT" });
+    const account = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const status = await this.options.readProgramStatus.execute(
       account.authSubjectId,
     );
@@ -118,7 +123,9 @@ export class SubscriptionController {
   }
 
   async cancel(args: ActionFunctionArgs): Promise<Response> {
-    const account = requireApiAccount(args, { role: "CLIENT" });
+    const account = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const result = await this.options.cancelSubscription.execute(
       account.authSubjectId,
     );
@@ -138,7 +145,9 @@ export class SubscriptionController {
   }
 
   async startNow(args: ActionFunctionArgs): Promise<Response> {
-    const account = requireApiAccount(args, { role: "CLIENT" });
+    const account = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const result = await this.options.startProgramNow.execute(
       account.authSubjectId,
     );
@@ -158,7 +167,9 @@ export class SubscriptionController {
   }
 
   async openPaymentMethod(args: ActionFunctionArgs): Promise<Response> {
-    const account = requireApiAccount(args, { role: "CLIENT" });
+    const account = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const result = await this.options.openPaymentMethodSession.execute({
       authSubjectId: account.authSubjectId,
       returnUrl: this.publicUrl(CLIENT_SETTINGS_PATH),

@@ -1,12 +1,11 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
   clientsContext,
   type ClientsFeature,
@@ -241,20 +240,20 @@ function createLoaderArgs(options: {
   } as unknown as WaitlistFeature;
 
   return createRequestArgs({
+    session: options.session,
     contexts: [
       contextEntry(runtimeConfigContext, {
         appBasePath: options.appBasePath ?? "/",
         botDetection: botDetectionConfig,
       }),
       contextEntry(clientsContext, coachingSales),
-      contextEntry(sessionContext, options.session),
       contextEntry(waitlistContext, waitlist),
     ],
     request: new Request("https://eli.example/"),
   });
 }
 
-function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
+function buildAccount(overrides: Partial<SessionAccount>): SessionAccount {
   return {
     authSubjectId: "user_1",
     id: "acct_1",

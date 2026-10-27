@@ -1,6 +1,5 @@
 import type { MiddlewareFunction } from "react-router";
-
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 // Route middleware, not a loader: React Router runs every matched loader in
 // parallel, so a guard sitting in this layout's loader would not stop a child
@@ -14,7 +13,7 @@ import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/g
 // has something to decide.
 export const middleware: MiddlewareFunction<Response>[] = [
   (args, next) => {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     return next();
   },

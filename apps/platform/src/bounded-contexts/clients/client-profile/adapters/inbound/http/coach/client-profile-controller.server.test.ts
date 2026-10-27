@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   MeasurementHistory,
   type ClientProfileReading,
@@ -9,19 +8,12 @@ import {
   type UpdateClientProfileAsCoachUseCase,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { ClientProfileController } from "./client-profile-controller.server";
 
@@ -30,7 +22,7 @@ const FIRST_ENTRY_ID = "0f5c7e1a-2b3d-4c5e-8f9a-1b2c3d4e5f60";
 const SECOND_ENTRY_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const FRONT_PHOTO_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "acct_eli",
   role: "COACH",
@@ -434,14 +426,14 @@ function createController(
 
 function coachArgs(options: { session?: ResolvedSession } = {}) {
   return createRequestArgs({
-    contexts: sessionContexts(options.session),
+    ...sessionAccess(options.session),
     request: new Request(`https://evoa.fit/coach/clients/${CLIENT_ID}`),
   });
 }
 
 function saveArgs(body: unknown, options: { session?: ResolvedSession } = {}) {
   return createRequestArgs({
-    contexts: sessionContexts(options.session),
+    ...sessionAccess(options.session),
     request: new Request(
       `https://evoa.fit/api/client-profile/coach/${CLIENT_ID}`,
       {
@@ -453,22 +445,15 @@ function saveArgs(body: unknown, options: { session?: ResolvedSession } = {}) {
   });
 }
 
-function sessionContexts(session?: ResolvedSession) {
-  const accounts = {
+function sessionAccess(session?: ResolvedSession) {
+  return {
     portal: {
       appBasePath: "/",
       publicAppUrl: "https://evoa.fit",
       signInUrl: "https://accounts.evoa.fit/sign-in",
     },
-  } as unknown as AccountsFeature;
-
-  return [
-    contextEntry(accountsContext, accounts),
-    contextEntry(
-      sessionContext,
-      session ?? { account: COACH, kind: "authenticated" },
-    ),
-  ];
+    session: session ?? { account: COACH, kind: "authenticated" },
+  };
 }
 
 async function captureThrown(thunk: () => unknown): Promise<unknown> {

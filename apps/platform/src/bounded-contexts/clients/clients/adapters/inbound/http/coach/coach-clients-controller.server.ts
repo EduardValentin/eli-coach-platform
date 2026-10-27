@@ -11,8 +11,6 @@ import type {
 import { readJsonRequestBody } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientRosterSchema,
   coachClientSchema,
@@ -22,6 +20,7 @@ import {
   type ClientRoster,
   type CoachClient,
 } from "~/bounded-contexts/clients/clients/public/coach-clients";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachClientsControllerOptions = {
   listClients: ListClientsUseCase;
@@ -64,7 +63,7 @@ export class CoachClientsController {
   constructor(private readonly options: CoachClientsControllerOptions) {}
 
   async loadRoster(args: LoaderFunctionArgs): Promise<ClientRoster> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const listing = await this.options.listClients.execute();
 
@@ -81,7 +80,7 @@ export class CoachClientsController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<CoachClient> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const id = coachClientSchema.shape.clientId.safeParse(clientId);
 
@@ -108,7 +107,7 @@ export class CoachClientsController {
   }
 
   async resendInvitation(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
 
     const body = await readJsonRequestBody(args.request, {
       maxBytes: RESEND_REQUEST_MAX_BYTES,

@@ -1,26 +1,18 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import { describe, expect, it, vi } from "vitest";
+import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { composeClientResourcesFeature } from "./composition.server";
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_coach",
   id: "acct_coach",
   role: "COACH",
 };
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
@@ -219,37 +211,29 @@ function coachArgs(
     `https://evoa.fit/coach/clients/${UNKNOWN_CLIENT_ID}/resources`,
   ),
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account: COACH, kind: "authenticated" }),
-    ],
+    portal,
+    session: { account: COACH, kind: "authenticated" },
     request,
   });
 }
 
 function clientArgs() {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account: CLIENT, kind: "authenticated" }),
-    ],
+    portal,
+    session: { account: CLIENT, kind: "authenticated" },
     request: new Request("https://evoa.fit/client/resources"),
   });
 }

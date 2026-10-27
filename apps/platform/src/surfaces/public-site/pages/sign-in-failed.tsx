@@ -5,7 +5,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { accountsContext } from "~/bounded-contexts/access/public/request-context";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 import { SignInFailedPage } from "~/bounded-contexts/access/accounts/ui/public/sign-in-failed-page";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 
@@ -14,7 +14,7 @@ export type SignInFailedLoaderData = {
 };
 
 export function loader(args: LoaderFunctionArgs): SignInFailedLoaderData {
-  const { appBasePath } = args.context.get(accountsContext).portal;
+  const { appBasePath } = args.context.get(accessContext).portal;
 
   return {
     storePath: buildRedirectPath(appBasePath, STORE_PATH),

@@ -1,20 +1,15 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
 import {
   contextEntry,
   createRequestArgs,
 } from "~/composition-root/test-support/request-args";
 
-import {
-  accountsContext,
-  type AccountsFeature,
-} from "~/bounded-contexts/access/public/request-context";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
   clientsContext,
   type ClientsFeature,
@@ -180,7 +175,7 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
   }
 }
 
-function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
+function buildAccount(overrides: Partial<SessionAccount>): SessionAccount {
   return {
     authSubjectId: "user_1",
     id: "acct_1",
@@ -210,17 +205,13 @@ function createMiddlewareArgs(options: {
   } as unknown as ClientsFeature;
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, {
-        portal: {
-          appBasePath: "/",
-          publicAppUrl: "https://evoa.fit",
-          signInUrl: "https://accounts.evoa.fit/sign-in",
-        },
-      } as AccountsFeature),
-      contextEntry(clientsContext, coachingSales),
-      contextEntry(sessionContext, options.session),
-    ],
+    portal: {
+      appBasePath: "/",
+      publicAppUrl: "https://evoa.fit",
+      signInUrl: "https://accounts.evoa.fit/sign-in",
+    },
+    session: options.session,
+    contexts: [contextEntry(clientsContext, coachingSales)],
     request: new Request(options.url),
   }) as unknown as Parameters<typeof guardClientPortal>[0];
 }

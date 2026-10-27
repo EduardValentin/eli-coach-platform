@@ -1,4 +1,4 @@
-export { Account, type AccountRole, type AccountSnapshot } from "./account";
+export { Account, type AccountRole } from "./account";
 export { type AccountIds } from "./account-ids";
 export { type Accounts } from "./accounts";
 export { type InvitationAcceptance } from "./invitation-acceptance";

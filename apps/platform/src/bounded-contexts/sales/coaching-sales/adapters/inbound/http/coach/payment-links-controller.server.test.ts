@@ -1,18 +1,14 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import { describe, expect, it, vi } from "vitest";
+import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { PaymentLinksController } from "./payment-links-controller.server";
 
 const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 
 type Session =
-  { kind: "anonymous" } | { account: AccountSnapshot; kind: "authenticated" };
+  { kind: "anonymous" } | { account: SessionAccount; kind: "authenticated" };
 
 describe("PaymentLinksController", () => {
   it("refuses an anonymous caller with 401 and sends nothing", async () => {
@@ -129,9 +125,7 @@ function createController(result: unknown) {
 
 function sendArgs(options: { body?: string; session?: Session }) {
   return createRequestArgs({
-    contexts: [
-      contextEntry(sessionContext, options.session ?? authenticatedAs("COACH")),
-    ],
+    session: options.session ?? authenticatedAs("COACH"),
     request: new Request("https://evoa.test/api/coaching-sales/payment-links", {
       body: options.body ?? JSON.stringify({ assessmentCallId: CALL_ID }),
       headers: { "Content-Type": "application/json" },
@@ -140,7 +134,7 @@ function sendArgs(options: { body?: string; session?: Session }) {
   });
 }
 
-function authenticatedAs(role: AccountSnapshot["role"]): Session {
+function authenticatedAs(role: SessionAccount["role"]): Session {
   return {
     account: { authSubjectId: "user_1", id: "acct_1", role },
     kind: "authenticated",

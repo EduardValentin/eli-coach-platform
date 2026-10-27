@@ -1,28 +1,20 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type { UpdateClientIdentityAsCoachUseCase } from "~/bounded-contexts/clients/clients/domain/client";
 import { describe, expect, it, vi } from "vitest";
+import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CoachClientIdentityController } from "./coach-client-identity-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
 };
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "acct_eli",
   role: "COACH",
@@ -121,20 +113,16 @@ function createController() {
   return { controller, updateAsCoach };
 }
 
-function accountArgs(account: AccountSnapshot, body: unknown) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+function accountArgs(account: SessionAccount, body: unknown) {
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account, kind: "authenticated" }),
-    ],
+    portal,
+    session: { account, kind: "authenticated" },
     request: new Request("https://evoa.fit/api/clients/identity", {
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },

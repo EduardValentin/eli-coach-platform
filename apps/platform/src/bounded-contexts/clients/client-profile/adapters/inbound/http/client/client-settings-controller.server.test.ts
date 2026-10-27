@@ -1,26 +1,18 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   ReadOwnClientSettingsUseCase,
   SaveUnitPreferenceUseCase,
 } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { ClientSettingsController } from "./client-settings-controller.server";
 
-const CLIENT: AccountSnapshot = {
+const CLIENT: SessionAccount = {
   authSubjectId: "user_ana",
   id: "acct_ana",
   role: "CLIENT",
@@ -212,22 +204,15 @@ function createController(result: SaveUnitPreferenceResult) {
 }
 
 function clientArgs(options: { body: string; session?: ResolvedSession }) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: CLIENT, kind: "authenticated" },
-      ),
-    ],
+    portal,
+    session: options.session ?? { account: CLIENT, kind: "authenticated" },
     request: new Request(
       "https://evoa.fit/api/client-profile/unit-preference",
       {

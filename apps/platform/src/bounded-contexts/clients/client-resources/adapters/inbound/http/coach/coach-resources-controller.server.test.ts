@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ClientResource,
   type ClientResourceSnapshot,
@@ -7,19 +6,12 @@ import {
   type ResourceBrowseSnapshot,
 } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CoachResourcesController } from "./coach-resources-controller.server";
 
@@ -27,7 +19,7 @@ const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
 const NEWER_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const OLDER_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "acct_eli",
   role: "COACH",
@@ -271,22 +263,15 @@ function createController(listed: ListClientResourcesResult = EMPTY_LISTING) {
 }
 
 function coachArgs(options: { session?: ResolvedSession; url?: string } = {}) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: COACH, kind: "authenticated" },
-      ),
-    ],
+    portal,
+    session: options.session ?? { account: COACH, kind: "authenticated" },
     request: new Request(
       options.url ?? `https://evoa.fit/coach/clients/${CLIENT_ID}/resources`,
     ),

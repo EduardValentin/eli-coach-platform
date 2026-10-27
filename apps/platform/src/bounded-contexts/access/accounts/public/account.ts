@@ -1,5 +1,3 @@
-export type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
-
 import { z } from "zod";
 
 export const accountResponseSchema = z.object({

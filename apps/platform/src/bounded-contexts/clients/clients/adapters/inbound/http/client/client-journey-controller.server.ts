@@ -8,7 +8,6 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   clientIdentitySchema,
   welcomePageSchema,
@@ -17,6 +16,7 @@ import {
 } from "~/bounded-contexts/clients/clients/public/client-journey";
 import { CLIENT_ONBOARDING_PATH } from "~/bounded-contexts/clients/clients/public/paths";
 import { clientJourneyContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-journey-context.server";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientJourneyControllerOptions = {
   markWelcomeSeen: MarkWelcomeSeenUseCase;
@@ -27,7 +27,9 @@ export class ClientJourneyController {
   constructor(private readonly options: ClientJourneyControllerOptions) {}
 
   async loadWelcome(args: LoaderFunctionArgs): Promise<WelcomePage> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const journey = await this.options.readClientJourney.execute(
       client.authSubjectId,
     );
@@ -56,7 +58,9 @@ export class ClientJourneyController {
   }
 
   async markWelcomeSeen(args: ActionFunctionArgs): Promise<Response> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const result = await this.options.markWelcomeSeen.execute(
       client.authSubjectId,
     );

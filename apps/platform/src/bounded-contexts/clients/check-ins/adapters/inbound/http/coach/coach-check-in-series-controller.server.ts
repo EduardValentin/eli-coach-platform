@@ -12,7 +12,6 @@ import type {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   readCheckInBody,
   refusedCheckIn,
@@ -29,6 +28,7 @@ import {
   type CoachClientSeriesPanel,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachCheckInSeriesControllerOptions = {
   changeCheckInSeries: ChangeCheckInSeriesUseCase;
@@ -52,7 +52,7 @@ export class CoachCheckInSeriesController {
     args: LoaderFunctionArgs,
     clientId: string | undefined,
   ): Promise<CoachClientSeriesPanel> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const id = idSchema.safeParse(clientId);
 
@@ -75,7 +75,7 @@ export class CoachCheckInSeriesController {
   }
 
   async preview(args: LoaderFunctionArgs): Promise<Response> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const query = checkInSeriesPreviewQuerySchema.safeParse(
       Object.fromEntries(args.url.searchParams),
@@ -91,7 +91,7 @@ export class CoachCheckInSeriesController {
   }
 
   async setUp(args: ActionFunctionArgs): Promise<Response> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const submission = checkInSeriesSetUpSchema.safeParse(
       await readCheckInBody(args.request),
@@ -112,7 +112,7 @@ export class CoachCheckInSeriesController {
     args: ActionFunctionArgs,
     seriesId: string | undefined,
   ): Promise<Response> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const id = idSchema.safeParse(seriesId);
 
@@ -142,7 +142,7 @@ export class CoachCheckInSeriesController {
     args: ActionFunctionArgs,
     seriesId: string | undefined,
   ): Promise<Response> {
-    requirePortalAccess(args, { role: "COACH" });
+    args.context.get(accessContext).requirePortalAccess("COACH");
 
     const id = idSchema.safeParse(seriesId);
 

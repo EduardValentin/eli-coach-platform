@@ -1,17 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { ResolvedSession } from "~/bounded-contexts/access/public/session";
 
-import {
-  accountsContext,
-  type AccountsFeature,
-} from "~/bounded-contexts/access/public/request-context";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { loader, meta } from "./invitation";
 
@@ -63,15 +53,15 @@ describe("invitation page loader", () => {
 });
 
 function loaderArguments(session: ResolvedSession) {
-  const accounts = {
-    portal: { appBasePath: "/eli-coach-platform" },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/eli-coach-platform",
+    publicAppUrl: undefined,
+    signInUrl: "",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, session),
-    ],
+    portal,
+    session,
     request: new Request("http://localhost/eli-coach-platform/invitation"),
   });
 }

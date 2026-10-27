@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import type { PublicSessionState } from "~/bounded-contexts/access/accounts/public/account";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import { readClientPortalStanding } from "~/bounded-contexts/clients/clients/adapters/inbound/http/require-client-portal-standing.server";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import {
@@ -15,6 +14,7 @@ import { waitlistContext } from "~/bounded-contexts/sales/public/request-context
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 
 import { resolvePortalDestination } from "./portal-destination";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 export type PublicLayoutLoaderData = {
   botDetection: BotDetectionConfig;
@@ -40,7 +40,7 @@ export async function loader(
 async function readPublicSessionState(
   args: LoaderFunctionArgs,
 ): Promise<PublicSessionState> {
-  const session = args.context.get(sessionContext);
+  const session = args.context.get(accessContext).session;
 
   if (session.kind === "anonymous") {
     return { kind: "anonymous" };

@@ -1,20 +1,12 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type { CoachingSubscriptionSnapshot } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  type AccountsFeature,
-  accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CoachSalesController } from "./coach-sales-controller.server";
 
@@ -114,7 +106,7 @@ const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
   refund: null,
 };
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_coach",
   id: "acct_coach",
   role: "COACH",
@@ -369,19 +361,15 @@ function subscriptionController(summary: unknown) {
 function coachArgs(
   session: ResolvedSession = { account: COACH, kind: "authenticated" },
 ) {
-  const accounts = {
-    portal: {
-      appBasePath: "/",
-      publicAppUrl: "https://evoa.fit",
-      signInUrl: "https://accounts.evoa.fit/sign-in",
-    },
-  } as unknown as AccountsFeature;
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
 
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, session),
-    ],
+    portal,
+    session,
     request: new Request(`https://evoa.fit/coach/clients/${CLIENT_ID}`),
   });
 }

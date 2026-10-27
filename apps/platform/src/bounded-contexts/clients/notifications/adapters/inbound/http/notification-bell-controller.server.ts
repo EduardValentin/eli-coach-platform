@@ -8,12 +8,11 @@ import type {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   notificationBellSchema,
   type NotificationBellReply,
 } from "~/bounded-contexts/clients/notifications/public/notifications";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type NotificationBellControllerOptions = {
   markAllNotificationsRead: MarkAllNotificationsReadUseCase;
@@ -90,9 +89,9 @@ export class NotificationBellController {
   }
 
   private requireReader(args: LoaderFunctionArgs): NotificationReader {
-    const account = requireApiAccount(args);
+    const account = args.context.get(accessContext).requireAccount();
 
-    requirePortalAccess(args, { role: account.role });
+    args.context.get(accessContext).requirePortalAccess(account.role);
 
     return account.role === "COACH"
       ? { party: "coach" }

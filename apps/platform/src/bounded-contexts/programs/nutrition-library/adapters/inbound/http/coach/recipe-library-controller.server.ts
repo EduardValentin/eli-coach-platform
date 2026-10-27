@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   MAX_RECIPE_PHOTO_BYTES,
   type CreateRecipeUseCase,
@@ -26,9 +25,6 @@ import {
 } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import { COACH_RECIPES_PATH } from "~/bounded-contexts/programs/nutrition-library/public/paths";
 import {
   RECIPE_FORM_FIELDS,
@@ -40,6 +36,10 @@ import {
   type RecipeBuilderView,
   type RecipeLibraryView,
 } from "~/bounded-contexts/programs/nutrition-library/public/recipes";
+import {
+  accessContext,
+  type SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
 type RecipeLibraryControllerOptions = {
   listRecipes: ListRecipesUseCase;
@@ -74,7 +74,7 @@ export class RecipeLibraryController {
   constructor(private readonly options: RecipeLibraryControllerOptions) {}
 
   async list(args: LoaderFunctionArgs): Promise<RecipeLibraryView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const { recipes, foods } = await this.options.listRecipes.execute(coach.id);
 
     return {
@@ -83,7 +83,7 @@ export class RecipeLibraryController {
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<RecipeBuilderView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const started = await this.options.startRecipe.execute(coach.id);
 
     return presentRecipeBuilder({ ...started, recipe: null });
@@ -93,7 +93,7 @@ export class RecipeLibraryController {
     args: LoaderFunctionArgs,
     recipeId: string | undefined,
   ): Promise<RecipeBuilderView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const id = idSchema.safeParse(recipeId);
 
     if (!id.success) {
@@ -113,7 +113,9 @@ export class RecipeLibraryController {
   }
 
   async create(args: ActionFunctionArgs): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const save = await this.readSave(args.request);
 
     if (save.status !== "read") {
@@ -140,7 +142,9 @@ export class RecipeLibraryController {
     args: ActionFunctionArgs,
     recipeId: string | undefined,
   ): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const id = idSchema.safeParse(recipeId);
 
     if (!id.success) {
@@ -197,7 +201,7 @@ export class RecipeLibraryController {
   }
 
   private viewerOf(args: LoaderFunctionArgs): RecipePhotoViewer {
-    const session = args.context.get(sessionContext);
+    const session = args.context.get(accessContext).session;
 
     if (session.kind === "anonymous") {
       return { kind: "visitor" };
@@ -206,7 +210,7 @@ export class RecipeLibraryController {
     return this.viewerFor(session.account);
   }
 
-  private viewerFor(account: AccountSnapshot): RecipePhotoViewer {
+  private viewerFor(account: SessionAccount): RecipePhotoViewer {
     switch (account.role) {
       case "COACH":
         return { kind: "coach", accountId: account.id };

@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ExerciseNames,
   MAX_EXERCISE_VIDEO_BYTES,
@@ -34,9 +33,6 @@ import {
 } from "react-router";
 import { z } from "zod";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
-import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
   EXERCISE_FORM_FIELDS,
   exerciseLifecycleAnswerSchema,
@@ -48,6 +44,10 @@ import {
   type ExerciseLibraryView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
 import { COACH_TRAINING_PATH } from "~/bounded-contexts/programs/exercise-library/public/paths";
+import {
+  accessContext,
+  type SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
 type ExerciseLibraryControllerOptions = {
   listExercises: ListExercisesUseCase;
@@ -85,14 +85,14 @@ export class ExerciseLibraryController {
   constructor(private readonly options: ExerciseLibraryControllerOptions) {}
 
   async list(args: LoaderFunctionArgs): Promise<ExerciseLibraryView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const { exercises } = await this.options.listExercises.execute(coach.id);
 
     return { exercises: exercises.map(presentExercise) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const { exercises } = await this.options.listExercises.execute(coach.id);
 
     return {
@@ -105,7 +105,7 @@ export class ExerciseLibraryController {
     args: LoaderFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<ExerciseEditorView> {
-    const coach = requirePortalAccess(args, { role: "COACH" });
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const id = idSchema.safeParse(exerciseId);
 
     if (!id.success) {
@@ -128,7 +128,9 @@ export class ExerciseLibraryController {
   }
 
   async create(args: ActionFunctionArgs): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const save = await this.readSave(args.request);
 
     if (save.status !== "read") {
@@ -155,7 +157,9 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const id = idSchema.safeParse(exerciseId);
 
     if (!id.success) {
@@ -193,7 +197,9 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const reference = this.exerciseReferenceFor(coach, exerciseId);
 
     if (!reference) {
@@ -214,7 +220,9 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const reference = this.exerciseReferenceFor(coach, exerciseId);
 
     if (!reference) {
@@ -237,7 +245,9 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const coach = requireApiAccount(args, { role: "COACH" });
+    const coach = args.context
+      .get(accessContext)
+      .requireAccount({ role: "COACH" });
     const reference = this.exerciseReferenceFor(coach, exerciseId);
 
     if (!reference) {
@@ -280,7 +290,7 @@ export class ExerciseLibraryController {
   }
 
   private viewerOf(args: LoaderFunctionArgs): ExerciseVideoViewer {
-    const session = args.context.get(sessionContext);
+    const session = args.context.get(accessContext).session;
 
     if (session.kind === "anonymous") {
       return { kind: "visitor" };
@@ -289,7 +299,7 @@ export class ExerciseLibraryController {
     return this.viewerFor(session.account);
   }
 
-  private viewerFor(account: AccountSnapshot): ExerciseVideoViewer {
+  private viewerFor(account: SessionAccount): ExerciseVideoViewer {
     switch (account.role) {
       case "COACH":
         return { kind: "coach", accountId: account.id };
@@ -390,7 +400,7 @@ export class ExerciseLibraryController {
   }
 
   private exerciseReferenceFor(
-    coach: AccountSnapshot,
+    coach: SessionAccount,
     exerciseId: string | undefined,
   ): ExerciseReference | null {
     const id = idSchema.safeParse(exerciseId);

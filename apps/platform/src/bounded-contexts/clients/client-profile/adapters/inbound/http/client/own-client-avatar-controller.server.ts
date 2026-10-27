@@ -5,8 +5,6 @@ import type {
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   avatarWrittenResponse,
   receivedAvatarOf,
@@ -17,6 +15,7 @@ import {
   type ClientAvatarUrl,
 } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
 import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OwnClientAvatarControllerOptions = {
   readOwnClientAvatar: ReadOwnClientAvatarUseCase;
@@ -28,7 +27,9 @@ export class OwnClientAvatarController {
   constructor(private readonly options: OwnClientAvatarControllerOptions) {}
 
   async upload(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
     const part = await receivedAvatarOf(args.request);
 
     if (part.status !== "received") {
@@ -44,7 +45,9 @@ export class OwnClientAvatarController {
   }
 
   async remove(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
 
     return avatarWrittenResponse(
       await this.options.removeOwnClientAvatar.execute(client.authSubjectId),
@@ -52,7 +55,9 @@ export class OwnClientAvatarController {
   }
 
   async url(args: LoaderFunctionArgs): Promise<ClientAvatarUrl> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const avatar = await this.options.readOwnClientAvatar.execute(
       client.authSubjectId,
     );

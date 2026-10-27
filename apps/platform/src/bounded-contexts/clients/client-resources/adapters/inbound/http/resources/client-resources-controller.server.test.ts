@@ -1,4 +1,3 @@
-import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ClientResource,
   type AddClientResourceResult,
@@ -13,16 +12,13 @@ import {
   type RemoveClientResourceUseCase,
 } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import { RESOURCE_UPLOAD_PARTS } from "~/bounded-contexts/clients/client-resources/public/resource-upload-parts";
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/composition-root/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { ClientResourcesController } from "./client-resources-controller.server";
 
@@ -34,7 +30,7 @@ const UPLOAD_URL = `https://evoa.fit/api/client-resources/clients/${CLIENT_ID}/r
 const RESOURCE_URL = `https://evoa.fit/api/client-resources/${RESOURCE_ID}`;
 const BODY_CAP_BYTES = 26 * 1024 * 1024;
 
-const COACH: AccountSnapshot = {
+const COACH: SessionAccount = {
   authSubjectId: "user_eli",
   id: "acct_eli",
   role: "COACH",
@@ -901,7 +897,7 @@ function uploadArgs(
   } = {},
 ) {
   return createRequestArgs({
-    contexts: sessionContexts(options.session),
+    ...sessionAccess(options.session),
     request:
       options.request ??
       new Request(UPLOAD_URL, { body: options.form, method: "POST" }),
@@ -916,7 +912,7 @@ function detailsArgs(
   } = {},
 ) {
   return createRequestArgs({
-    contexts: sessionContexts(options.session),
+    ...sessionAccess(options.session),
     request:
       options.request ??
       new Request(RESOURCE_URL, {
@@ -935,27 +931,22 @@ function detailsArgs(
 
 function removalArgs(options: { session?: ResolvedSession } = {}) {
   return createRequestArgs({
-    contexts: sessionContexts(options.session),
+    ...sessionAccess(options.session),
     request: new Request(RESOURCE_URL, { method: "DELETE" }),
   });
 }
 
 function servingArgs(options: { session?: ResolvedSession } = {}) {
   return createRequestArgs({
-    contexts: sessionContexts(options.session),
+    ...sessionAccess(options.session),
     request: new Request(
       `https://evoa.fit/api/client-resources/${RESOURCE_ID}/download`,
     ),
   });
 }
 
-function sessionContexts(session?: ResolvedSession) {
-  return [
-    contextEntry(
-      sessionContext,
-      session ?? { account: COACH, kind: "authenticated" },
-    ),
-  ];
+function sessionAccess(session?: ResolvedSession) {
+  return { session: session ?? { account: COACH, kind: "authenticated" } };
 }
 
 async function* chunksOf(bytes: Uint8Array): AsyncIterable<Uint8Array> {

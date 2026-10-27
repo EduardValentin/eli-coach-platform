@@ -6,7 +6,6 @@ import type {
 import { resolveFieldErrorCode } from "~/shared/http/index.server";
 import type { ActionFunctionArgs } from "react-router";
 
-import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";
 import {
   COACH_SCHEDULE_SETTINGS_MESSAGES,
   coachScheduleSettingsSchema,
@@ -15,6 +14,7 @@ import {
   type CoachScheduleSettings,
   type CoachScheduleSettingsErrorCode,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachScheduleSettingsControllerOptions = {
   getSettings: GetCoachScheduleSettingsUseCase;
@@ -51,7 +51,7 @@ export class CoachScheduleSettingsController {
   }
 
   async updateSettings(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
 
     const body: unknown = await args.request.json();
     const submission = coachScheduleSettingsSchema.safeParse(body);

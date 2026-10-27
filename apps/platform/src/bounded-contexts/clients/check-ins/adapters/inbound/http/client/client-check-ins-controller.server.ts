@@ -7,7 +7,6 @@ import type {
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 import {
   checkInOutcomeResponse,
   readCheckInBody,
@@ -23,6 +22,7 @@ import {
   type ClientCheckIns,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientCheckInsControllerOptions = {
   countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
@@ -39,7 +39,9 @@ export class ClientCheckInsController {
   constructor(private readonly options: ClientCheckInsControllerOptions) {}
 
   async loadCheckIns(args: LoaderFunctionArgs): Promise<ClientCheckIns> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const listing = await this.options.listClientCheckIns.execute(
       client.authSubjectId,
     );
@@ -56,7 +58,9 @@ export class ClientCheckInsController {
   async loadNextCheckIn(
     args: LoaderFunctionArgs,
   ): Promise<ClientCheckIn | null> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const next = await this.options.findNextClientCheckIn.execute(
       client.authSubjectId,
     );
@@ -69,7 +73,9 @@ export class ClientCheckInsController {
   }
 
   async loadAwaitingCount(args: LoaderFunctionArgs): Promise<number> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
 
     return this.options.countCheckInsAwaiting.execute({
       party: "client",
@@ -78,7 +84,9 @@ export class ClientCheckInsController {
   }
 
   async request(args: ActionFunctionArgs): Promise<Response> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
     const submission = checkInRequestSchema.safeParse(
       await readCheckInBody(args.request),
     );
