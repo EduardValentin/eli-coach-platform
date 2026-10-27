@@ -5,7 +5,7 @@ import {
   type CookingMethod,
   type RecipeMacrosSnapshot,
   type TagFamily,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import {
   cn,
   describedByOf,

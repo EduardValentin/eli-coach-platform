@@ -1,7 +1,7 @@
 import type {
   CheckInNotification,
   CheckInSeriesNotification,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { z } from "zod";
 
 import type { SentEmail } from "./api-integration-test-suite";

@@ -3,8 +3,8 @@ import { randomUUID } from "node:crypto";
 import { createClerkClient, type ClerkClient } from "@clerk/backend";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test as base, expect } from "@playwright/test";
-import type { AccountRole } from "@eli-coach-platform/domain/account";
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type pg from "pg";
 
 import { AccountPortal } from "./account-portal";

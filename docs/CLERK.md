@@ -178,7 +178,7 @@ delivery.
 
 Set `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` to a Clerk user id (`user_...`) before
 that person's first sign-in. Account provisioning (`ProvisionAccountUseCase`
-in `packages/domain/src/account/provision-account-use-case.ts`) first looks
+in `apps/platform/src/bounded-contexts/access/accounts/domain/account/provision-account-use-case.ts`) first looks
 up the signing-in Clerk subject by `auth_subject_id`. If no row exists and the
 subject matches this configured value, it inserts a `COACH` row — a plain
 `INSERT`, not an upsert; `auth_subject_id` is unique, and the table carries

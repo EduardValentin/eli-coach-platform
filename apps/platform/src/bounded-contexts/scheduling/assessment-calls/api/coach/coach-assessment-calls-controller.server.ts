@@ -1,8 +1,8 @@
 import type {
   AssessmentCallSnapshot,
   ListAssessmentCallsUseCase,
-} from "@eli-coach-platform/domain/assessment-call";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
 
 import {
   coachAssessmentCallsSchema,

@@ -3,7 +3,7 @@ import type {
   OpenOnboardingReviewUseCase,
   ReadOnboardingReviewUseCase,
   RequestOnboardingDetailsUseCase,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   createBadRequestResponse,
   readJsonRequestBody,

@@ -1,6 +1,6 @@
 import { isAbsolute, relative } from "node:path";
 
-import type { ProductAsset } from "@eli-coach-platform/domain/product";
+import type { ProductAsset } from "~/bounded-contexts/sales/store/domain/product";
 
 export type FileIdentity = { dev: number; ino: number };
 

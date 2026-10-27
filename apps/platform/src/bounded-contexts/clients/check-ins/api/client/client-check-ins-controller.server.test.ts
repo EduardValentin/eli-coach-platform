@@ -5,7 +5,7 @@ import {
   type ListClientCheckInsUseCase,
   type RequestCheckInResult,
   type RequestCheckInUseCase,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

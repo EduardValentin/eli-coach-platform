@@ -1,4 +1,4 @@
-import type { ResourceSortKey } from "@eli-coach-platform/domain/client-resources";
+import type { ResourceSortKey } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import type { SortChoice } from "~/shared/design-system/lib";
 import { useSearchParamsWriter } from "~/shared/design-system/lib";
 import { useEffect, useEffectEvent, useState } from "react";

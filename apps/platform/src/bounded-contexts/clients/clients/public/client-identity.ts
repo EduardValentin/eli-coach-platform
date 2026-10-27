@@ -1,5 +1,5 @@
-import { VISITOR_GENDERS } from "@eli-coach-platform/domain/assessment-call";
-import type { ClientIdentityProblems } from "@eli-coach-platform/domain/client";
+import { VISITOR_GENDERS } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientIdentityProblems } from "~/bounded-contexts/clients/clients/domain/client";
 import { z } from "zod";
 
 const FIELD_MAX_LENGTH = 200;

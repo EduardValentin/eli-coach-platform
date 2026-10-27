@@ -1,5 +1,5 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   ClientOnboarding,
   emptyDraft,
@@ -10,9 +10,9 @@ import {
   type ReadOpenDetailRequestUseCase,
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
-import { UnitPreference } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { AttachProgressPhotosUseCase } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import { UnitPreference } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

@@ -8,13 +8,13 @@ import {
   type ReadOpenDetailRequestUseCase,
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type {
   AttachProgressPhotosUseCase,
   ProgressPhotoOutcomes,
-} from "@eli-coach-platform/domain/client-profile";
-import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { UnitPreference } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import type { Clock } from "~/bounded-contexts/clients/client-profile/domain/clock";
+import type { UnitPreference } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,

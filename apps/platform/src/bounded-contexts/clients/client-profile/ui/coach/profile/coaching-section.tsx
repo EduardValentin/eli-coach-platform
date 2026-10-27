@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CANONICAL_MEASURE_UNITS,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { SettingsBody, SettingsSection } from "~/shared/design-system/portal";
 import { toast } from "~/shared/design-system/toast";
 import { Dumbbell, Lock } from "lucide-react";

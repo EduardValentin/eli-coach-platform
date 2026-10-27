@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 
 import { STORE_ACQUISITION_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
-import { MAX_PUBLICATION_BYTES } from "@eli-coach-platform/domain/product";
+import { MAX_PUBLICATION_BYTES } from "~/bounded-contexts/sales/store/domain/product";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {

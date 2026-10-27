@@ -8,6 +8,7 @@
   "apps/platform/src/bounded-contexts/clients/client-resources/public/reaches-coaching-sales.ts": [
     "feature-order-client-resources"
   ],
+  "apps/platform/src/bounded-contexts/programs/nutrition-library/data/schema.server.ts": [],
   "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/foods/react-dnd-confined.tsx": [
     "not-to-unresolvable",
     "react-dnd-confined"
@@ -18,6 +19,7 @@
   "apps/platform/src/bounded-contexts/sales/coaching-sales/data/schema.server.ts": [
     "feature-schema-foreign-key"
   ],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/domain/coaching-bundle/reads-sibling-domain.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/ui/public/clerk-confined.tsx": [
     "clerk-confined",
     "not-to-unresolvable"
@@ -67,13 +69,12 @@
   "apps/platform/src/bounded-contexts/sales/store/api/root-registry.ts": [
     "root-registry"
   ],
+  "apps/platform/src/bounded-contexts/sales/store/api/route-thinness-domain.ts": [
+    "route-thinness-domain"
+  ],
   "apps/platform/src/bounded-contexts/sales/store/api/thin.ts": [
     "config-runtime-readers",
     "route-thinness"
-  ],
-  "apps/platform/src/bounded-contexts/sales/store/api/workspace-by-name-app.ts": [
-    "route-thinness-domain",
-    "workspace-by-name-app"
   ],
   "apps/platform/src/bounded-contexts/sales/store/data/imports-composition.server.ts": [
     "feature-server-private"
@@ -81,6 +82,16 @@
   "apps/platform/src/bounded-contexts/sales/store/data/reaches-later-schema.server.ts": [
     "feature-internals",
     "feature-order-store"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/data/reads-later-domain.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/store/domain/product/imports-node-crypto.ts": [
+    "domain-imports-only-itself"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/domain/product/imports-own-data.ts": [
+    "domain-imports-only-itself"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/domain/product/imports-system-clock.ts": [
+    "domain-imports-only-itself"
   ],
   "apps/platform/src/bounded-contexts/sales/store/email/design-system-browser-only.server.tsx": [
     "design-system-browser-only"
@@ -191,13 +202,5 @@
   "apps/platform/src/surfaces/public-site/pages/surface-to-feature.tsx": [
     "route-thinness",
     "surface-public-site-to-feature"
-  ],
-  "packages/domain/src/account/domain-slices.ts": ["domain-slices"],
-  "packages/domain/src/product/domain-no-externals.ts": ["domain-no-externals"],
-  "packages/domain/src/product/domain-slice-order.ts": [
-    "domain-slice-order-product"
-  ],
-  "packages/domain/src/product/workspace-by-name-packages.ts": [
-    "workspace-by-name-packages"
   ]
 }

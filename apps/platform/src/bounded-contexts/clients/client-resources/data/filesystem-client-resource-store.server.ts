@@ -6,7 +6,7 @@ import type {
   ClientResourceStore,
   ResourcePageImage,
   StoredResourceOriginal,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 
 import {
   clientResourceFolderKey,

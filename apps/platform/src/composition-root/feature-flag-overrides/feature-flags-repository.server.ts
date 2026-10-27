@@ -1,7 +1,7 @@
 import {
   FeatureFlag,
   type FeatureFlags,
-} from "@eli-coach-platform/domain/feature-flag";
+} from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { DatabaseClient } from "~/shared/database";
 import { featureFlagsTable } from "./feature-flags-schema.server";
 

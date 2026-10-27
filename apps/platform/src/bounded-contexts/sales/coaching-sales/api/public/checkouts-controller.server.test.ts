@@ -1,11 +1,11 @@
 import type {
   ReadCheckoutConfirmationUseCase,
   StartCheckoutUseCase,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   OpenBundlePageUseCase,
   ResolvePaymentLinkUseCase,
-} from "@eli-coach-platform/domain/payment-link";
+} from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRequestArgs } from "~/composition-root/test-support/request-args";

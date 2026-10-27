@@ -1,4 +1,4 @@
-import { MAX_CHECK_IN_NOTE_LENGTH } from "@eli-coach-platform/domain/check-in";
+import { MAX_CHECK_IN_NOTE_LENGTH } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { SlotPicker } from "~/shared/design-system/calendar";
 import {
   ResponsiveSheetDialog,

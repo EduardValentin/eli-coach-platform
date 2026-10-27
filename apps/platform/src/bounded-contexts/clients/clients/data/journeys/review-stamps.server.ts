@@ -1,5 +1,5 @@
 import type { DatabaseTransaction } from "~/shared/database";
-import type { ReviewStamps } from "@eli-coach-platform/domain/client-onboarding";
+import type { ReviewStamps } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { eq } from "drizzle-orm";
 
 import { clientsTable } from "~/bounded-contexts/clients/clients/data/schema.server";

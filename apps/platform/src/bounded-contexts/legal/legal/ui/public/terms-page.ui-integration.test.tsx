@@ -9,7 +9,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "~/bounded-contexts/legal/public";
 import { formatEffectiveDate } from "~/bounded-contexts/legal/legal/ui/shared/format-effective-date";
-import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 import TermsRoute from "./terms-page";

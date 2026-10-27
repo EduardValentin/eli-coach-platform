@@ -1,20 +1,20 @@
-import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisition";
-import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
-import type { CheckInIncidents } from "@eli-coach-platform/domain/check-in";
-import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
-import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
+import type { AcquisitionIncidents } from "~/bounded-contexts/sales/store/domain/acquisition";
+import type { AssessmentCallIncidents } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { CheckInIncidents } from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type { ClientInvitationIncidents } from "~/bounded-contexts/clients/clients/domain/client-invitation";
+import type { ClientOnboardingIncidents } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type {
   ClientAvatarIncidents,
   MeasurementIncidents,
-} from "@eli-coach-platform/domain/client-profile";
-import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-resources";
-import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
-import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
-import type { ExerciseLibraryIncidents } from "@eli-coach-platform/domain/exercise";
-import type { NotificationIncidents } from "@eli-coach-platform/domain/notification";
-import type { NutritionLibraryIncidents } from "@eli-coach-platform/domain/nutrition";
-import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
-import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import type { ClientResourceIncidents } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
+import type { ClientRosterIncidents } from "~/bounded-contexts/clients/clients/domain/client-roster";
+import type { CoachingSubscriptionIncidents } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { ExerciseLibraryIncidents } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
+import type { NotificationIncidents } from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { NutritionLibraryIncidents } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
+import type { CoachingSalesIncidents } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import type { WaitlistIncidents } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
 
 type ConsoleLogger = AcquisitionIncidents &

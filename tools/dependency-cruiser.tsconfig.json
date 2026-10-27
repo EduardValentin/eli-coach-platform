@@ -1,5 +1,5 @@
 {
-  "include": ["../apps/platform/src/**/*", "../packages/*/src/**/*"],
+  "include": ["../apps/platform/src/**/*"],
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",

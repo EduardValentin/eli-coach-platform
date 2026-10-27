@@ -4,13 +4,18 @@ import { describe, expect, it } from "vitest";
 
 import { auditDomainLayout } from "./domain-layout.mjs";
 
-const domainRoot = resolve(import.meta.dirname, "..", "packages/domain/src");
+const boundedContextsRoot = resolve(
+  import.meta.dirname,
+  "..",
+  "apps/platform/src/bounded-contexts",
+);
 const fixturesRoot = resolve(import.meta.dirname, "domain-layout-fixtures");
+const fixtureDomain = "sample/widgets/domain";
 
 describe("domain layout", () => {
-  it("accepts the real domain package", () => {
+  it("accepts every component's domain", () => {
     // arrange
-    const root = domainRoot;
+    const root = boundedContextsRoot;
 
     // act
     const problems = auditDomainLayout(root);
@@ -21,20 +26,25 @@ describe("domain layout", () => {
 
   it.each([
     ["valid", []],
-    ["missing-entity", ["thing: missing thing.ts"]],
-    ["missing-index", ["thing: missing index.ts"]],
+    ["missing-entity", [`${fixtureDomain}/thing: missing thing.ts`]],
+    ["missing-index", [`${fixtureDomain}/thing: missing index.ts`]],
     [
       "service-name",
       [
-        "thing/thing-service.ts: service file name",
-        "thing/thing-service.ts: exports a *Service",
+        `${fixtureDomain}/thing/thing-service.ts: service file name`,
+        `${fixtureDomain}/thing/thing-service.ts: exports a *Service`,
       ],
     ],
     [
       "two-use-cases",
-      ["thing/do-thing-use-case.ts: expected one *UseCase class, found 2"],
+      [
+        `${fixtureDomain}/thing/do-thing-use-case.ts: expected one *UseCase class, found 2`,
+      ],
     ],
-    ["no-execute", ["thing/do-thing-use-case.ts: no execute method"]],
+    [
+      "no-execute",
+      [`${fixtureDomain}/thing/do-thing-use-case.ts: no execute method`],
+    ],
   ])("fixture %s reports %j", (fixture, expected) => {
     // arrange
     const root = join(fixturesRoot, fixture);

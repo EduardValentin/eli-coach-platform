@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   CoachCalendar,
   TimeInterval,
-} from "@eli-coach-platform/domain/coach-availability";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { gt } from "drizzle-orm";
 
 import { coachTimeReservationsTable } from "../schema.server";

@@ -3,8 +3,8 @@ import {
   withoutUnreachable,
   type OnboardingAnswersByForm,
   type OnboardingConsent,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { ProgressPhotoView } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { toast } from "~/shared/design-system/toast";
 import {
   useCallback,

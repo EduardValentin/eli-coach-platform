@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   CoachingStanding,
   type CoachingStatus,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { describe, expect, it } from "vitest";
 
 import { PostgresOnboardingClients } from "./onboarding-clients-reader.server";

@@ -10,8 +10,8 @@ import {
   type CheckInStartWindow,
   OPEN_CHECK_IN_STATUSES,
   UNANSWERED_CHECK_IN_STATUSES,
-} from "@eli-coach-platform/domain/check-in";
-import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type { TimeInterval } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
 import {
   and,

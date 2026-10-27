@@ -2,7 +2,7 @@ import {
   ASSESSMENT_CALL_RULES,
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { z } from "zod";
 
 import {

@@ -1,14 +1,14 @@
 import {
   findCoachingBundle,
   PRICE_TIERS,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
   START_CHOICES,
   type CheckoutCompletion,
   type CreateCheckoutSessionCommand,
   type PaymentCheckout,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import Stripe from "stripe";
 import { z } from "zod";
 

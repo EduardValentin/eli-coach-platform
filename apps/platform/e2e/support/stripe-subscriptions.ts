@@ -1,4 +1,4 @@
-import { COACHING_SUBSCRIPTION_PURPOSE } from "@eli-coach-platform/domain/coaching-subscription";
+import { COACHING_SUBSCRIPTION_PURPOSE } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
 import type Stripe from "stripe";
 

@@ -11,7 +11,6 @@ WORKDIR /workspace
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json .npmrc ./
 COPY apps ./apps
-COPY packages ./packages
 COPY scripts ./scripts
 COPY tools ./tools
 COPY knip.json eslint.config.mjs vitest.config.mts vitest.global-setup.mts vitest.setup.mts lighthouserc.cjs ./

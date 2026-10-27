@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { PaymentLink } from "@eli-coach-platform/domain/payment-link";
+import { PaymentLink } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import { describe, expect, it } from "vitest";
 
 import { paymentLinksTable } from "~/bounded-contexts/sales/coaching-sales/data/schema.server";

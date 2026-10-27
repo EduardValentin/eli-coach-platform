@@ -2,7 +2,7 @@ import { joinBasePath } from "~/shared/http/base-path";
 import type {
   ProductDelivery,
   ProductDeliveryResult,
-} from "@eli-coach-platform/domain/acquisition";
+} from "~/bounded-contexts/sales/store/domain/acquisition";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { STORE_DOWNLOAD_PATH } from "~/bounded-contexts/sales/store/public/paths";

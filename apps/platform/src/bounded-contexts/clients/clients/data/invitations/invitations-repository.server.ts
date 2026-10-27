@@ -7,7 +7,7 @@ import {
   ClientInvitation,
   type ClientInvitations,
   type IdentityInvitation,
-} from "@eli-coach-platform/domain/client-invitation";
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import { and, eq, isNull, type SQL } from "drizzle-orm";
 
 import {

@@ -1,4 +1,4 @@
-import type { ProductDelivery } from "@eli-coach-platform/domain/acquisition";
+import type { ProductDelivery } from "~/bounded-contexts/sales/store/domain/acquisition";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { EmailProductDelivery } from "./email-product-delivery.server";

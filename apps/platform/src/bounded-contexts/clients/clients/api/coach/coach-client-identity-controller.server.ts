@@ -1,4 +1,4 @@
-import type { UpdateClientIdentityAsCoachUseCase } from "@eli-coach-platform/domain/client";
+import type { UpdateClientIdentityAsCoachUseCase } from "~/bounded-contexts/clients/clients/domain/client";
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 

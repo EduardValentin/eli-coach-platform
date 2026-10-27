@@ -2,7 +2,7 @@ import { appSchema } from "~/shared/database";
 import {
   NOTIFICATION_PARTIES,
   type NotificationFacts,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 import { sql } from "drizzle-orm";
 import {
   check,

@@ -1,9 +1,9 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
   MeasurementDueLine,
   MeasurementRecord,
   ProgressPhotoView,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { z } from "zod";
 
 import { subjectPronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";

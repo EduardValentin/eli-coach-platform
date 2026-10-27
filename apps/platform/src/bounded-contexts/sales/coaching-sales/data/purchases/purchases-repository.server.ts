@@ -3,13 +3,13 @@ import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
   CoachingPurchases,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   CallSale,
   CallSalesState,
   CallSalesStates,
-} from "@eli-coach-platform/domain/payment-link";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
 import { recordPaymentEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 

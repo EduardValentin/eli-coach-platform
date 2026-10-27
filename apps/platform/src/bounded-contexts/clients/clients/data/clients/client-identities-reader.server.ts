@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   ClientIdentities,
   ClientIdentity,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { eq, inArray } from "drizzle-orm";
 
 import { clientsTable } from "~/bounded-contexts/clients/clients/data/schema.server";

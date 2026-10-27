@@ -1,8 +1,8 @@
-import { VISITOR_GENDERS } from "@eli-coach-platform/domain/assessment-call";
+import { VISITOR_GENDERS } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   ONBOARDING_FORM_IDS,
   type OnboardingConsent,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { z } from "zod";
 
 import { progressPhotoOutcomesSchema } from "~/bounded-contexts/clients/client-profile/public/progress-photo-parts";

@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { RequestedByteRange } from "@eli-coach-platform/domain/exercise";
+import type { RequestedByteRange } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FilesystemExerciseVideoStore } from "./filesystem-exercise-video-store.server";

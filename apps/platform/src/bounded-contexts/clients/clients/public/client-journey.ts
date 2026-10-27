@@ -1,8 +1,8 @@
-import type { PortalReach } from "@eli-coach-platform/domain/client";
+import type { PortalReach } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   ClientJourney,
   type ClientJourneyStep,
-} from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { z } from "zod";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";

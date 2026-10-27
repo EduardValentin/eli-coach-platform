@@ -48,37 +48,12 @@ const BOUNDED_CONTEXTS = [
 
 const FEATURE_ORDER = BOUNDED_CONTEXTS.flatMap(([, components]) => components);
 
-const DOMAIN_SLICE_ORDER = [
-  "shared",
-  "exercise",
-  "nutrition",
-  "email-address",
-  "feature-flag",
-  "product",
-  "cart",
-  "acquisition",
-  "download-grant",
-  "waitlist",
-  "account",
-  "coach-availability",
-  "coach-meeting-room",
-  "coach-schedule",
-  "assessment-call",
-  "client",
-  "notification",
-  "client-settings",
-  "measurement",
-  "client-invitation",
-  "client-profile",
-  "client-onboarding",
-  "client-journey",
-  "client-roster",
-  "client-resources",
-  "check-in",
-  "coaching-bundle",
-  "payment-link",
-  "coaching-subscription",
-];
+// Temporary until Task 17: another component's domain/ is admitted by
+// feature-internals, feature-schema-foreign-key, every feature-order-* rule and
+// domain-imports-only-itself while the provider imports are replaced one at a
+// time.
+const FOREIGN_DOMAIN =
+  "^apps/platform/src/bounded-contexts/[^/]+/[^/]+/domain/";
 
 function foldersOf(directory) {
   return readdirSync(path.join(__dirname, "..", directory), {
@@ -141,27 +116,6 @@ requireEveryFolderOrdered({
   orderName: "FEATURE_ORDER",
 });
 requireEveryComponentPlaced("apps/platform/src/bounded-contexts");
-requireEveryFolderOrdered({
-  directory: "packages/domain/src",
-  folders: foldersOf("packages/domain/src"),
-  order: DOMAIN_SLICE_ORDER,
-  orderName: "DOMAIN_SLICE_ORDER",
-});
-
-function domainSliceOrderRule(slice, position) {
-  const earlierSlices = DOMAIN_SLICE_ORDER.slice(0, position);
-
-  return {
-    name: `domain-slice-order-${slice}`,
-    comment: `A domain slice imports only the slices before it in DOMAIN_SLICE_ORDER: ${slice} may import ${earlierSlices.join(", ") || "no other slice"}.`,
-    severity: "error",
-    from: { path: `^packages/domain/src/${slice}/` },
-    to: {
-      path: "^packages/domain/src/",
-      pathNot: `^packages/domain/src/(${[...earlierSlices, slice].join("|")})/`,
-    },
-  };
-}
 
 function featureOrderRule(feature, position) {
   const earlierFeatures = FEATURE_ORDER.slice(0, position);
@@ -172,7 +126,7 @@ function featureOrderRule(feature, position) {
 
   return {
     name: `feature-order-${feature}`,
-    comment: `A feature imports only the features before it in FEATURE_ORDER and the public/ of its own and earlier bounded contexts: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"} and ${admittedBoundedContexts.join(", ")} public/. Its data/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
+    comment: `A feature imports only the features before it in FEATURE_ORDER and the public/ of its own and earlier bounded contexts: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"} and ${admittedBoundedContexts.join(", ")} public/, and, temporarily until Task 17, any component's domain/. Its data/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
     severity: "error",
     from: { path: `${FEATURES}${feature}/`, pathNot: FEATURE_SCHEMA },
     to: {
@@ -180,6 +134,7 @@ function featureOrderRule(feature, position) {
       pathNot: [
         `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
         `^apps/platform/src/bounded-contexts/(${admittedBoundedContexts.join("|")})/public/`,
+        FOREIGN_DOMAIN,
       ],
     },
   };
@@ -207,7 +162,7 @@ module.exports = {
   forbidden: [
     {
       name: "no-circular",
-      comment: "R30: no dependency cycles, including between domain slices.",
+      comment: "R30: no dependency cycles, including between domain concepts.",
       severity: "error",
       from: {},
       to: { circular: true },
@@ -215,7 +170,7 @@ module.exports = {
     {
       name: "feature-internals",
       comment:
-        "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/.",
+        "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/, and, temporarily until Task 17, its domain/.",
       severity: "error",
       from: {
         path: `${FEATURES}(${COMPONENT})/`,
@@ -223,13 +178,16 @@ module.exports = {
       },
       to: {
         path: `${FEATURES}(?!$1/)${COMPONENT}/`,
-        pathNot: `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
+        pathNot: [
+          `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
+          FOREIGN_DOMAIN,
+        ],
       },
     },
     {
       name: "feature-schema-foreign-key",
       comment:
-        "R3 carve-out: data/schema.server.ts may import any feature's data/schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and nothing else private.",
+        "R3 carve-out: data/schema.server.ts may import any feature's data/schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and, temporarily until Task 17, any component's domain/, and nothing else private.",
       severity: "error",
       from: { path: `${FEATURES}(${COMPONENT})/data/schema\\.server\\.ts$` },
       to: {
@@ -237,6 +195,7 @@ module.exports = {
         pathNot: [
           `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
           FEATURE_SCHEMA,
+          FOREIGN_DOMAIN,
         ],
       },
     },
@@ -337,7 +296,7 @@ module.exports = {
         "Only the runtime reader, the container and database modules, the readyz controller, the migration config and the integration rig read the environment; everything else receives concern values and may import only their types.",
       severity: "error",
       from: {
-        path: "^(apps|packages)/",
+        path: "^apps/",
         pathNot: [
           "^apps/platform/src/composition-root/runtime-environment\\.ts$",
           "^apps/platform/src/composition-root/(container|database)\\.server\\.ts$",
@@ -365,7 +324,7 @@ module.exports = {
     {
       name: "guards-construct-nothing",
       comment:
-        "A guards module imports only the framework, its feature's public folder, domain slices, config types and sibling guards; its feature type comes from the composition as a type-only import.",
+        "A guards module imports only the framework, its feature's public folder, component domains, config types and sibling guards; its feature type comes from the composition as a type-only import.",
       severity: "error",
       from: {
         path: [
@@ -374,11 +333,10 @@ module.exports = {
         ],
       },
       to: {
-        path: "^(apps/platform/src|packages)/",
+        path: APP,
         pathNot: [
-          `${FEATURES}${COMPONENT}/(public|server/guards)/`,
+          `${FEATURES}${COMPONENT}/(public|server/guards|domain)/`,
           "^apps/platform/src/composition-root/guards/",
-          "^packages/domain/src/",
           "^apps/platform/src/shared/http/base-path\\.ts$",
           "^apps/platform/src/shared/(email/product-email|submission-checks/bot-detection)-config\\.ts$",
           `${FEATURES}${COMPONENT}/config\\.server\\.ts$`,
@@ -538,28 +496,25 @@ module.exports = {
     {
       name: "route-thinness-domain",
       comment:
-        "A registered route module or its .server half never names a domain subpath, not even as a type.",
+        "A registered route module or its .server half never names a component's domain/, not even as a type.",
       severity: "error",
       from: { path: ROUTE_MODULES },
-      to: { path: "^packages/domain/" },
+      to: { path: "^apps/platform/src/bounded-contexts/[^/]+/[^/]+/domain/" },
     },
     {
-      name: "domain-slices",
-      comment: "Domain slices import each other only through the slice entry.",
+      name: "domain-imports-only-itself",
+      comment:
+        "A component's domain/ imports only its own domain/: no shared/, no other folder of its component, no package and no Node built-in, not even as a type. Temporarily until Task 17 it may also import another component's domain/.",
       severity: "error",
-      from: { path: "^packages/domain/src/([^/]+)/" },
-      to: {
-        path: "^packages/domain/src/(?!$1/)[^/]+/",
-        pathNot: "^packages/domain/src/[^/]+/index\\.ts$",
+      from: {
+        path: "^apps/platform/src/bounded-contexts/([^/]+)/([^/]+)/domain/",
       },
-    },
-    ...DOMAIN_SLICE_ORDER.map(domainSliceOrderRule),
-    {
-      name: "domain-no-externals",
-      comment: "The domain package imports nothing outside itself.",
-      severity: "error",
-      from: { path: "^packages/domain/src/" },
-      to: { dependencyTypesNot: ["local", "type-only"] },
+      to: {
+        pathNot: [
+          "^apps/platform/src/bounded-contexts/$1/$2/domain/",
+          FOREIGN_DOMAIN,
+        ],
+      },
     },
     {
       name: "shared-concerns",
@@ -576,22 +531,6 @@ module.exports = {
       severity: "error",
       from: { path: "^apps/platform/src/shared/.*(?<!\\.server)\\.tsx?$" },
       to: { path: "^apps/platform/src/shared/.*\\.server\\.tsx?$" },
-    },
-    {
-      name: "workspace-by-name-app",
-      comment:
-        "No relative path crosses the boundary from an app into a package.",
-      severity: "error",
-      from: { path: "^apps/" },
-      to: { path: "^packages/", dependencyTypes: ["local"] },
-    },
-    {
-      name: "workspace-by-name-packages",
-      comment:
-        "No relative path crosses the boundary from one package into another.",
-      severity: "error",
-      from: { path: "^packages/([^/]+)/" },
-      to: { path: "^packages/(?!$1/)", dependencyTypes: ["local"] },
     },
     {
       name: "ui-subpaths",
@@ -641,7 +580,7 @@ module.exports = {
       comment: "Production code never imports a devDependency.",
       severity: "error",
       from: {
-        path: "^(apps|packages)/",
+        path: "^apps/",
         pathNot: [
           "^apps/platform/src/routes\\.ts$",
           "/routes\\.ts$",
@@ -658,7 +597,7 @@ module.exports = {
       comment:
         "R34: production code never imports a test rig or a test fixture (test files themselves are excluded from the cruise).",
       severity: "error",
-      from: { path: "^(apps|packages)/" },
+      from: { path: "^apps/" },
       to: {
         path: [
           "/integration-test-config/",
@@ -667,14 +606,6 @@ module.exports = {
           "^apps/platform/test-support/",
         ],
       },
-    },
-    {
-      name: "stability",
-      comment:
-        "R31: a package-to-package edge never points at a more unstable package.",
-      severity: "error",
-      from: { path: "^packages/([^/]+)/" },
-      to: { path: "^packages/(?!$1/)[^/]+/", moreUnstable: true },
     },
     {
       name: "no-orphans",

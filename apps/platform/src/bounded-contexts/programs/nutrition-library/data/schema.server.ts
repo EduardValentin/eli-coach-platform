@@ -13,7 +13,7 @@ import {
   type FoodIcon,
   type RecipeIcon,
   type TagFamily,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,

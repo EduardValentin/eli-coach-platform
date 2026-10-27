@@ -1,4 +1,4 @@
-import type { RefundDueNotice } from "@eli-coach-platform/domain/coaching-subscription";
+import type { RefundDueNotice } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 

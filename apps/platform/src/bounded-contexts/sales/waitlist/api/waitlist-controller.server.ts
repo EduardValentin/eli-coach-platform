@@ -11,7 +11,7 @@ import type {
   GetWaitlistUseCase,
   JoinWaitlistResult,
   JoinWaitlistUseCase,
-} from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,

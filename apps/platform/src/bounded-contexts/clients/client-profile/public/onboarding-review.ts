@@ -1,4 +1,4 @@
-import { ONBOARDING_FORM_IDS } from "@eli-coach-platform/domain/client-onboarding";
+import { ONBOARDING_FORM_IDS } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { z } from "zod";
 
 import { questionIdSchema } from "./onboarding";

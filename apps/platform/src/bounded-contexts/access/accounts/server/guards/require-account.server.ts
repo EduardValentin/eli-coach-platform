@@ -1,7 +1,7 @@
 import type {
   AccountRole,
   AccountSnapshot,
-} from "@eli-coach-platform/domain/account";
+} from "~/bounded-contexts/access/accounts/domain/account";
 import type { LoaderFunctionArgs } from "react-router";
 
 import { sessionContext } from "./session-context.server";

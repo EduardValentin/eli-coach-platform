@@ -3,7 +3,7 @@ import type {
   FindPublishedProductUseCase,
   ListPublishedProductsUseCase,
   PublishedProduct,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 import {
   storeCatalogResponseSchema,
   storeProductSchema,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { DeleteAccountUseCase } from "@eli-coach-platform/domain/account";
+import type { DeleteAccountUseCase } from "~/bounded-contexts/access/accounts/domain/account";
 
 const mocks = vi.hoisted(() => ({
   verifyWebhook: vi.fn(),

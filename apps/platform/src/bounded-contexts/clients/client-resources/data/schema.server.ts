@@ -2,7 +2,7 @@ import { appSchema } from "~/shared/database";
 import {
   RESOURCE_FILE_FORMATS,
   type ResourceFileFormat,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,

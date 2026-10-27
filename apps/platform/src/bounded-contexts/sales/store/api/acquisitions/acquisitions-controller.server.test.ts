@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   AcquireProductsResult,
   AcquireProductsUseCase,
-} from "@eli-coach-platform/domain/acquisition";
+} from "~/bounded-contexts/sales/store/domain/acquisition";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,

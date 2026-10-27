@@ -3,7 +3,7 @@ import {
   Client,
   CoachingStanding,
   type ClientIntake,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";

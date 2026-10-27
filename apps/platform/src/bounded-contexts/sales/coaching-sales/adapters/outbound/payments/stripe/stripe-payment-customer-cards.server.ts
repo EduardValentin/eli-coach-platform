@@ -1,7 +1,7 @@
 import {
   PaymentCard,
   type PaymentCustomerCards,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type Stripe from "stripe";
 import { z } from "zod";
 

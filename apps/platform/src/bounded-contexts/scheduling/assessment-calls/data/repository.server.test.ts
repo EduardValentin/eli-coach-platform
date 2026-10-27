@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { AssessmentCall } from "@eli-coach-platform/domain/assessment-call";
+import { AssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresAssessmentCallRepository } from "./repository.server";

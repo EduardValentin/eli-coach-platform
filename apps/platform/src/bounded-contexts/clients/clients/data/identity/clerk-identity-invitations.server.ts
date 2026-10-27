@@ -2,7 +2,7 @@ import {
   INVITATION_VALIDITY_DAYS,
   type IdentityInvitation,
   type IdentityInvitations,
-} from "@eli-coach-platform/domain/client-invitation";
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
 
 import type { IdentityInvitationUrls } from "./identity-invitation-urls.server";
 

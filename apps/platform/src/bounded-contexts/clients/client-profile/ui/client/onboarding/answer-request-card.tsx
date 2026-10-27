@@ -2,8 +2,8 @@ import {
   ONBOARDING_FORMS,
   type OnboardingField,
   type OnboardingFormId,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { MeasureUnits } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { cn } from "~/shared/design-system/lib";
 import {
   Alert,

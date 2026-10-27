@@ -1,4 +1,4 @@
-import { measureUnitsOf } from "@eli-coach-platform/domain/client-settings";
+import { measureUnitsOf } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { Button } from "~/shared/design-system/primitives";
 import { Plus } from "lucide-react";
 import { useState } from "react";

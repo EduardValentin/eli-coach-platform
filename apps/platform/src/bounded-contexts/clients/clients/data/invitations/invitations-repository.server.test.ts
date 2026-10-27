@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { ClientInvitation } from "@eli-coach-platform/domain/client-invitation";
+import { ClientInvitation } from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import { describe, expect, it } from "vitest";
 
 import { PostgresClientInvitations } from "./invitations-repository.server";

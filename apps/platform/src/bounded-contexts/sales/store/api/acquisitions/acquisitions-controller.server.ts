@@ -4,7 +4,7 @@ import type {
   AcquireProductsResult,
   AcquireProductsUseCase,
   StoreDeliveryLimitWindow,
-} from "@eli-coach-platform/domain/acquisition";
+} from "~/bounded-contexts/sales/store/domain/acquisition";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import {
   storeAcquisitionRequestSchema,

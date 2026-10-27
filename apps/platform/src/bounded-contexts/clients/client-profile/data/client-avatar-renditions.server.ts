@@ -2,7 +2,7 @@ import {
   CLIENT_AVATAR_RENDITION,
   type ClientAvatarRendition,
   type ClientAvatarRenditions,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 
 import { openAcceptedImage } from "~/shared/images/sharp-renditions.server";
 

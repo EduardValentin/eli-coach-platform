@@ -2,7 +2,7 @@ import {
   ONBOARDING_FORMS,
   type OnboardingFormDefinition,
   type OnboardingFormId,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 
 type StepPosition = { currentFormIndex: number };
 

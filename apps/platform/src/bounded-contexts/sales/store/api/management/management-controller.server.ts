@@ -13,7 +13,7 @@ import {
   type PublishProductResult,
   type PublishProductVersionUseCase,
   type RetireProductUseCase,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 import type { ManagementAuthenticator } from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";
 import { isSecureManagementTransport } from "~/bounded-contexts/sales/store/api/management/management-auth/management-auth-config.server";
 import type { ManagementAuthConfig } from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";

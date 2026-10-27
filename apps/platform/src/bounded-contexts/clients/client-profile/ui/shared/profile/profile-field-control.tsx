@@ -4,7 +4,7 @@ import {
   measureStep,
   measureUnitLabel,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { DateField } from "~/shared/design-system/calendar";
 import { cn, describedByOf } from "~/shared/design-system/lib";
 import { SettingsBody } from "~/shared/design-system/portal";

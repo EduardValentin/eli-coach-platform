@@ -1,13 +1,13 @@
 import type {
   ReadClientInvitationUseCase,
   ResendInvitationUseCase,
-} from "@eli-coach-platform/domain/client-invitation";
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import type {
   ClientRosterEntry,
   ClientStatus,
   ListClientsUseCase,
   ReadClientRecordUseCase,
-} from "@eli-coach-platform/domain/client-roster";
+} from "~/bounded-contexts/clients/clients/domain/client-roster";
 import { readJsonRequestBody } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 

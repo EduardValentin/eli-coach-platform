@@ -1,7 +1,7 @@
 import type {
   ReadOwnClientSettingsUseCase,
   SaveUnitPreferenceUseCase,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   createBadRequestResponse,
   readJsonRequestBody,

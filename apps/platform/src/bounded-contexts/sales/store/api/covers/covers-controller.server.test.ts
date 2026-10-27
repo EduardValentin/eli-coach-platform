@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   FindPublishedCoverUseCase,
   ProductAssets,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 
 import { StoreCoverAssetController } from "./covers-controller.server";
 

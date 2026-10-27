@@ -7,7 +7,7 @@ import {
   WAITLIST_REDUCED_PRICING_CAP,
   type WaitlistOffer,
   type WaitlistSignupPricing,
-} from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { waitlistJoinResponseSchema } from "~/bounded-contexts/sales/waitlist/public/waitlist";

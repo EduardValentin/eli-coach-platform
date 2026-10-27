@@ -1,4 +1,4 @@
-import type { ReconcileSubscriptionEventUseCase } from "@eli-coach-platform/domain/coaching-subscription";
+import type { ReconcileSubscriptionEventUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   PaymentRefund,
   PaymentSubscriptionChange,

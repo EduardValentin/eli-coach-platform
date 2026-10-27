@@ -1,5 +1,5 @@
 import type { AppConfig } from "~/composition-root/runtime-environment";
-import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
+import type { EmailSubaddressPolicy } from "~/shared/submission-checks/email-address";
 
 export function resolveEmailSubaddressPolicy(
   environment: Pick<AppConfig, "ENVIRONMENT">,

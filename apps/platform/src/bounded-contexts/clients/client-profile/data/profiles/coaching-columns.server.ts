@@ -1,4 +1,4 @@
-import type { CoachingFactsSnapshot } from "@eli-coach-platform/domain/client-profile";
+import type { CoachingFactsSnapshot } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 
 import { clientProfilesTable } from "~/bounded-contexts/clients/client-profile/data/schema.server";
 

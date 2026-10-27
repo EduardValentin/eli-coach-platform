@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
-    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/domain/src && pnpm check:surfaces && node tools/domain-layout.mjs",
+    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src && pnpm check:surfaces && node tools/domain-layout.mjs",
     "check:surfaces": "knip --no-config-hints",
     "client:media:local:prepare": "./scripts/dev/prepare_local_client_media.sh",
     "client:resources:local:prepare": "./scripts/dev/prepare_local_client_resources.sh",
@@ -35,7 +35,7 @@
     "exercise:videos:local:prepare": "./scripts/dev/prepare_local_exercise_videos.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint apps packages --ext .ts,.tsx && pnpm format:check",
+    "lint": "eslint apps --ext .ts,.tsx && pnpm format:check",
     "recipe:photos:local:prepare": "./scripts/dev/prepare_local_recipe_photos.sh",
     "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform",
     "start:platform": "pnpm --filter @eli-coach-platform/platform start:local",

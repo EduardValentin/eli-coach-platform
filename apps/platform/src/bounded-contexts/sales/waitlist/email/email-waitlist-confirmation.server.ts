@@ -3,7 +3,7 @@ import type {
   SendWaitlistConfirmationCommand,
   WaitlistConfirmation,
   WaitlistConfirmationResult,
-} from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 
 import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email.server";
 

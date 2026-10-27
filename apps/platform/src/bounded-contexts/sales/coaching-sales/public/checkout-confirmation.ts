@@ -1,5 +1,5 @@
-import { getCoachingBundle } from "@eli-coach-platform/domain/coaching-bundle";
-import type { ReadCheckoutConfirmationUseCase } from "@eli-coach-platform/domain/coaching-subscription";
+import { getCoachingBundle } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import type { ReadCheckoutConfirmationUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 
 import { formatEuros, renewalLabel } from "./bundle-cards";
 import type { CheckoutConfirmation } from "./coaching-sales";

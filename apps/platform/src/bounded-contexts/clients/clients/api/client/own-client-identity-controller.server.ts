@@ -1,4 +1,4 @@
-import type { UpdateOwnClientIdentityUseCase } from "@eli-coach-platform/domain/client";
+import type { UpdateOwnClientIdentityUseCase } from "~/bounded-contexts/clients/clients/domain/client";
 import type { ActionFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

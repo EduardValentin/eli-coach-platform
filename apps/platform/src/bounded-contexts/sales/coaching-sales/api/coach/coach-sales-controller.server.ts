@@ -1,10 +1,10 @@
-import type { ReadPricingTiersUseCase } from "@eli-coach-platform/domain/coaching-bundle";
+import type { ReadPricingTiersUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import type {
   ReadSubscriptionSummaryUseCase,
   RefundDueSnapshot,
-} from "@eli-coach-platform/domain/coaching-subscription";
-import { EmailAddress } from "@eli-coach-platform/domain/email-address";
-import type { ReadCallSalesStatesUseCase } from "@eli-coach-platform/domain/payment-link";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { ReadCallSalesStatesUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import type { EmailAcceptance } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
@@ -21,6 +21,7 @@ import {
 } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 
 type CoachSalesControllerOptions = {
+  emailAcceptance: EmailAcceptance;
   readCallSalesStates: ReadCallSalesStatesUseCase;
   readPricingTiers: ReadPricingTiersUseCase;
   readSubscriptionSummary: ReadSubscriptionSummaryUseCase;
@@ -66,7 +67,7 @@ export class CoachSalesController {
     calls: readonly CallVisitorEmail[],
   ): Promise<PricingTiers> {
     const normalizedCalls = calls.map((call) => ({
-      email: EmailAddress.normalize(call.email),
+      email: this.options.emailAcceptance.normalize(call.email),
       id: call.id,
     }));
     const tiers = await this.options.readPricingTiers.execute(
@@ -75,7 +76,7 @@ export class CoachSalesController {
 
     return pricingTiersSchema.parse(
       Object.fromEntries(
-        normalizedCalls.map((call) => [call.id, tiers.get(call.email.value)]),
+        normalizedCalls.map((call) => [call.id, tiers.get(call.email)]),
       ),
     );
   }

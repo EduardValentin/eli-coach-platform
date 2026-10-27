@@ -18,7 +18,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
-import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
+import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";

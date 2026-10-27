@@ -3,7 +3,7 @@ import {
   type CheckInNotice,
   type CheckInSeriesSnapshot,
   type LapsedCheckIn,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { describe, expect, it } from "vitest";
 
 import { CheckInNotificationDrafts } from "./check-in-notification-drafts.server";

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import {
   composeBrowserFeatureFlagOverrides,
   composeWithoutFeatureFlagOverrides,

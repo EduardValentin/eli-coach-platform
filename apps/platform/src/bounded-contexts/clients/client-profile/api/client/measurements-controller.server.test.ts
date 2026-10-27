@@ -1,11 +1,11 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   MeasurementHistory,
   type MeasurementRecord,
   type ReadOwnMeasurementHistoryUseCase,
   type RecordMeasurementsUseCase,
-} from "@eli-coach-platform/domain/client-profile";
-import { UnitPreference } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import { UnitPreference } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

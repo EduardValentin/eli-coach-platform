@@ -1,7 +1,7 @@
 import type {
   ProgressPhotoRendition,
   ProgressPhotoRenditions,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 
 import { openAcceptedImage } from "~/shared/images/sharp-renditions.server";
 

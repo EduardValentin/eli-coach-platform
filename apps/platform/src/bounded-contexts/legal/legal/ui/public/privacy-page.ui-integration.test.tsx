@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import PrivacyRoute from "./privacy-page";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";

@@ -1,4 +1,4 @@
-import type { SendPaymentLinkUseCase } from "@eli-coach-platform/domain/payment-link";
+import type { SendPaymentLinkUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { ActionFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

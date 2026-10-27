@@ -14,9 +14,9 @@ import {
   type ResourceDocumentPages,
   type ResourceFileFormatDetector,
   type ResourceImagePages,
-} from "@eli-coach-platform/domain/client-resources";
-import type { ClientReach } from "@eli-coach-platform/domain/client";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
+import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { Clock } from "~/bounded-contexts/clients/client-resources/domain/clock";
 
 import { OwnResourcesController } from "~/bounded-contexts/clients/client-resources/api/client/own-resources-controller.server";
 import { CoachResourcesController } from "~/bounded-contexts/clients/client-resources/api/coach/coach-resources-controller.server";

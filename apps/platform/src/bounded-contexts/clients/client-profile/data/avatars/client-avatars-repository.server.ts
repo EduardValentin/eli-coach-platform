@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   ClientAvatar,
   type ClientAvatars,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { eq, inArray } from "drizzle-orm";
 
 import { clientAvatarsTable } from "~/bounded-contexts/clients/client-profile/data/schema.server";

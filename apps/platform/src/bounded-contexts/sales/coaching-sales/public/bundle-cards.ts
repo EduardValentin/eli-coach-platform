@@ -3,7 +3,7 @@ import {
   PRICE_TIERS,
   type CoachingBundle,
   type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import { z } from "zod";
 
 export const coachingBundleIdSchema = z.enum(COACHING_BUNDLE_IDS);

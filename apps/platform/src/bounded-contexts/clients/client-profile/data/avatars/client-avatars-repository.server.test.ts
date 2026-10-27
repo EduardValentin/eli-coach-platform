@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { ClientAvatar } from "@eli-coach-platform/domain/client-profile";
+import { ClientAvatar } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 

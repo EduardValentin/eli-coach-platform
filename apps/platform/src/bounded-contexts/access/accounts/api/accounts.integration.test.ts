@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import type { AccountRole } from "@eli-coach-platform/domain/account";
+import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
 
 import { accountResponseSchema } from "~/bounded-contexts/access/accounts/public/account";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";

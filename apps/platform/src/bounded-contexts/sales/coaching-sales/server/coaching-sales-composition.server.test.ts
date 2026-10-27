@@ -1,6 +1,7 @@
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
-import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
-import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
+import type { PaymentCheckout } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
@@ -228,6 +229,7 @@ function createHandles(
 
   return {
     appBasePath: "/eli-coach-platform",
+    emailAcceptance: createEmailAcceptance("allowed"),
     assessmentCallReader: { findById: async () => null },
     clientIdentities: {
       findByClientId: async () => null,

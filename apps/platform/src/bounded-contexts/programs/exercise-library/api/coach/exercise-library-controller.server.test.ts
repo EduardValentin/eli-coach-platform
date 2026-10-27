@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   Exercise,
   type ArchiveExerciseResult,
@@ -19,7 +19,7 @@ import {
   type RestoreExerciseUseCase,
   type StageExerciseVideoUseCase,
   type StagedExerciseVideo,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

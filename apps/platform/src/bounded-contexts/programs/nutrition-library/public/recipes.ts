@@ -9,7 +9,7 @@ import {
   type RecipeMacrosSnapshot,
   type RecipeSaveProblems,
   type RecipeSnapshot,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import { z } from "zod";
 
 import {

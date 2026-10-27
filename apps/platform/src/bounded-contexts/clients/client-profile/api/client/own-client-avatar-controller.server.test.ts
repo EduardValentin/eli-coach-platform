@@ -1,9 +1,9 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   ReadOwnClientAvatarUseCase,
   RemoveOwnClientAvatarUseCase,
   UploadOwnClientAvatarUseCase,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

@@ -1,5 +1,5 @@
 import { appSchema } from "~/shared/database";
-import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
+import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import {
   ACTIVITY_LEVELS,
   CLIENT_LEVELS,
@@ -10,16 +10,16 @@ import {
   TRAINING_DAY_OPTIONS,
   TRAINING_PLACES,
   type ClientEquipment,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type {
   OnboardingAnswersByForm,
   OnboardingFormId,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   HEIGHT_UNITS,
   PREFERRED_CHANNELS,
   WEIGHT_UNITS,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,

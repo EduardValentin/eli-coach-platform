@@ -8,9 +8,9 @@ import {
   type CheckInNotifications,
   type CheckInSeriesNotice,
   type CheckInSeriesNotification,
-} from "@eli-coach-platform/domain/check-in";
-import type { ClientIdentity } from "@eli-coach-platform/domain/client";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type { ClientIdentity } from "~/bounded-contexts/clients/clients/domain/client";
+import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
 import {
   buildCalendarInvite,
   buildGoogleCalendarUrl,

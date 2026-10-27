@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { AssessmentCallIds } from "@eli-coach-platform/domain/assessment-call";
+import type { AssessmentCallIds } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 
 export class RandomAssessmentCallIds implements AssessmentCallIds {
   generate(): string {

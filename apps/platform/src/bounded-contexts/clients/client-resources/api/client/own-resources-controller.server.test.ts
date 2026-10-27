@@ -1,11 +1,11 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ClientResource,
   type CountUnopenedResourcesUseCase,
   type ListOwnResourcesUseCase,
   type MarkResourceOpenedUseCase,
   type ResourceBrowseSnapshot,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

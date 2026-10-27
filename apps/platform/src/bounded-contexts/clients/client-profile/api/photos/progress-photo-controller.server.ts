@@ -1,7 +1,7 @@
 import type {
   OpenProgressPhotoUseCase,
   RemoveProgressPhotoUseCase,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { createPrivateInlineFileResponse } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";

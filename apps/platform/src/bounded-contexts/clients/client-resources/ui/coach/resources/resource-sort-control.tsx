@@ -2,7 +2,7 @@ import {
   defaultResourceSortDirection,
   RESOURCE_SORT_KEYS,
   type ResourceSortKey,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { SortControl, type SortOption } from "~/shared/design-system/filters";
 import type { SortChoice } from "~/shared/design-system/lib";
 

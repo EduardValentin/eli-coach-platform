@@ -1,15 +1,15 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
+import type { AssessmentCallReader } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
   ClientIdentities,
   ClientIds,
   ClientReach,
-} from "@eli-coach-platform/domain/client";
-import type { ClientJourneys } from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientJourneys } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import {
   ReadPricingTiersUseCase,
   type PricingEligibility,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
   MirrorPaymentCardUseCase,
@@ -31,8 +31,8 @@ import {
   type PaymentCheckout,
   type PaymentCustomerCards,
   type PaymentSubscriptions,
-} from "@eli-coach-platform/domain/coaching-subscription";
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import {
   CoachingSalesWindow,
   OpenBundlePageUseCase,
@@ -42,8 +42,9 @@ import {
   type CoachingSalesIncidents,
   type PaymentLinkTokenGenerator,
   type PaymentLinkTokenHasher,
-} from "@eli-coach-platform/domain/payment-link";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
+import type { EmailAcceptance } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance";
 import type { ProductEmail } from "~/shared/email/index.server";
 import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
 import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
@@ -97,6 +98,7 @@ export type CoachingSalesFeatureHandles = {
   coachingPeriods: readonly CoachingPeriodHandler[];
   contactEmail: string;
   database: DatabaseClient;
+  emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
   incidents: CoachingSalesIncidents &
     CoachingSubscriptionIncidents &
@@ -146,6 +148,7 @@ export function composeCoachingSalesFeature(
     calls: handles.assessmentCallReader,
     callSalesStates: purchases,
     clock,
+    emailAcceptance: handles.emailAcceptance,
     paymentLinks,
     pricingEligibility: handles.pricingEligibility,
     salesWindow,
@@ -279,6 +282,7 @@ export function composeCoachingSalesFeature(
         startCheckout: useCases.startCheckout,
       }),
       coachSales: new CoachSalesController({
+        emailAcceptance: handles.emailAcceptance,
         readCallSalesStates: useCases.readCallSalesStates,
         readPricingTiers: useCases.readPricingTiers,
         readSubscriptionSummary: useCases.readSubscriptionSummary,

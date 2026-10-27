@@ -1,7 +1,7 @@
 import {
   RESOURCE_RENDITIONS,
   type ReadableResourceDocument,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import PDFDocument from "pdfkit";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";

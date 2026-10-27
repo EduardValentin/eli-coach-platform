@@ -1,6 +1,6 @@
 import type { AppConfig } from "~/composition-root/runtime-environment";
 import type { DatabaseConfig } from "~/shared/database/connection";
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { AppMetadataController } from "~/composition-root/api/meta/app-metadata-controller.server";

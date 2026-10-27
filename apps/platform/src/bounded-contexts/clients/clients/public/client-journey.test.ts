@@ -1,7 +1,7 @@
 import {
   ClientJourney,
   type ClientJourneyStep,
-} from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { describe, expect, it } from "vitest";
 
 import {

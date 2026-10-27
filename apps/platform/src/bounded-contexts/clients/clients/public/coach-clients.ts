@@ -1,8 +1,8 @@
 import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
-} from "@eli-coach-platform/domain/assessment-call";
-import { CLIENT_STATUSES } from "@eli-coach-platform/domain/client-roster";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { CLIENT_STATUSES } from "~/bounded-contexts/clients/clients/domain/client-roster";
 import { z } from "zod";
 
 const clientStatusSchema = z.enum(CLIENT_STATUSES);

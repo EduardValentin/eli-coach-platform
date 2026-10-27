@@ -3,7 +3,7 @@ import {
   EXERCISE_SORT_DEFAULT_DIRECTIONS,
   type ExerciseSortKey,
   type ExerciseStatus,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import type { SortRule } from "~/shared/design-system/lib";
 
 export const EXERCISE_FILTER_PARAMS = {

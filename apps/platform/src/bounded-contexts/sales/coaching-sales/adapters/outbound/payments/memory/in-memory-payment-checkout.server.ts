@@ -4,7 +4,7 @@ import type {
   CheckoutCompletion,
   CreateCheckoutSessionCommand,
   PaymentCheckout,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 
 const CHECKOUT_SESSION_ID_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 

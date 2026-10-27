@@ -10,7 +10,7 @@ import {
   type FoodReference,
   type FoodReplacement,
   type FoodsReference,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import {
   and,
   asc,

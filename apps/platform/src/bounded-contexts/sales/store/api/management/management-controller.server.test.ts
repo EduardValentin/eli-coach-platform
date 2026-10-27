@@ -5,7 +5,7 @@ import {
   type PublishNewProductUseCase,
   type PublishProductVersionUseCase,
   type RetireProductUseCase,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,

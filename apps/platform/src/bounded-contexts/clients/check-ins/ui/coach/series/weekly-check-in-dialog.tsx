@@ -1,5 +1,5 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { Weekday } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import {
   TimeSlotButton,
   type TimeSlotDetail,

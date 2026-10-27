@@ -1,6 +1,6 @@
 import { createContext, type RouterContext } from "react-router";
 
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 
 export type ResolvedSession =
   { kind: "anonymous" } | { kind: "authenticated"; account: AccountSnapshot };

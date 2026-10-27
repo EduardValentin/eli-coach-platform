@@ -1,11 +1,11 @@
 import type {
   ListLapsedCheckInsQuery,
   ListLapsedCheckInsUseCase,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type {
   NotificationDraft,
   NotificationExpirySource,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 
 import { CheckInNotificationDrafts } from "~/bounded-contexts/clients/check-ins/data/inbox/check-in-notification-drafts.server";
 

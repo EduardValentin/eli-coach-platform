@@ -1,13 +1,13 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   ONBOARDING_FORMS,
   type OnboardingAnswersByForm,
   type OnboardingFormAnswers,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   CoachingFacts,
   type CoachingSeed,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type pg from "pg";
 
 import { recordSubmittedPhotoConsent } from "./client-profiles";

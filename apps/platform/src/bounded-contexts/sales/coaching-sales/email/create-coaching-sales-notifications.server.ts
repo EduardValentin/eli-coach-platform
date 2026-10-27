@@ -1,5 +1,5 @@
-import type { RefundNotifications } from "@eli-coach-platform/domain/coaching-subscription";
-import type { CoachingSalesNotifications } from "@eli-coach-platform/domain/payment-link";
+import type { RefundNotifications } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { CoachingSalesNotifications } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import {

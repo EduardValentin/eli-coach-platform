@@ -1,10 +1,10 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import type {
   NotificationExpirySource,
   NotificationInbox,
   NotificationIncidents,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

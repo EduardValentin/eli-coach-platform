@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   ClientSettings,
   UnitPreference,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { describe, expect, it } from "vitest";
 
 import { PostgresClientSettings } from "./client-settings-repository.server";

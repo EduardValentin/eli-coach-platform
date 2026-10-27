@@ -1,4 +1,4 @@
-import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessment-call";
+import type { AssessmentCallSnapshot } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { describe, expect, it } from "vitest";
 
 import { createCoachNotificationEmailContent } from "./coach-notification-email.server";

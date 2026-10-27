@@ -2,7 +2,7 @@ import {
   Account,
   type AccountRole,
   type AccountSnapshot,
-} from "@eli-coach-platform/domain/account";
+} from "~/bounded-contexts/access/accounts/domain/account";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "./accounts-context.server";

@@ -14,8 +14,8 @@ import {
   type NutritionLibraryIncidents,
   type RecipePhotoRenditions,
   type RecipePhotoStore,
-} from "@eli-coach-platform/domain/nutrition";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
+import type { Clock } from "~/bounded-contexts/programs/nutrition-library/domain/clock";
 
 import { FoodLibraryController } from "~/bounded-contexts/programs/nutrition-library/api/coach/food-library-controller.server";
 import { RecipeLibraryController } from "~/bounded-contexts/programs/nutrition-library/api/coach/recipe-library-controller.server";

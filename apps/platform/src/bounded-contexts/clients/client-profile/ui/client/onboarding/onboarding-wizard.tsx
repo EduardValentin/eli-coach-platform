@@ -2,7 +2,7 @@ import {
   clearsSafetyScreening,
   resolveIntro,
   type OnboardingFormAnswers,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { Alert, Stepper } from "~/shared/design-system/primitives";
 import { toast } from "~/shared/design-system/toast";

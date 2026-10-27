@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
+import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 
 const requestOverrides = new AsyncLocalStorage<Readonly<FeatureFlagSet>>();
 

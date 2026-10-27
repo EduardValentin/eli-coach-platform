@@ -2,9 +2,9 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   AcquireProductsUseCase,
   type AcquisitionIncidents,
-} from "@eli-coach-platform/domain/acquisition";
-import { ResolveDownloadGrantUseCase } from "@eli-coach-platform/domain/download-grant";
-import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
+} from "~/bounded-contexts/sales/store/domain/acquisition";
+import { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
+import type { EmailAcceptance } from "~/bounded-contexts/sales/store/domain/email-acceptance";
 import {
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
@@ -14,8 +14,8 @@ import {
   PublishNewProductUseCase,
   PublishProductVersionUseCase,
   RetireProductUseCase,
-} from "@eli-coach-platform/domain/product";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/sales/store/domain/product";
+import type { Clock } from "~/bounded-contexts/sales/store/domain/clock";
 import {
   PRIVACY_POLICY_VERSION,
   STORE_MARKETING_CONSENT_VERSION,
@@ -61,7 +61,7 @@ export type StoreFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  emailSubaddresses: EmailSubaddressPolicy;
+  emailAcceptance: EmailAcceptance;
   incidents: AcquisitionIncidents;
   managementAuth: {
     authenticator: ManagementAuthenticator;
@@ -105,7 +105,7 @@ export function composeStoreFeature(
       contactEmail: handles.contactEmail,
       publicAppUrl: handles.publicAppUrl,
     }),
-    emailSubaddresses: handles.emailSubaddresses,
+    emailAcceptance: handles.emailAcceptance,
     incidents: handles.incidents,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),

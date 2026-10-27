@@ -1,4 +1,4 @@
-import type { ClientIdentityProblems } from "@eli-coach-platform/domain/client";
+import type { ClientIdentityProblems } from "~/bounded-contexts/clients/clients/domain/client";
 import { z } from "zod";
 
 import {

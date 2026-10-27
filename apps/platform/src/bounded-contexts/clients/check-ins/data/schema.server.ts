@@ -5,8 +5,8 @@ import {
   MAX_CHECK_IN_MOVES,
   MAX_CHECK_IN_NOTE_LENGTH,
   RECORDED_CHECK_IN_STATUSES,
-} from "@eli-coach-platform/domain/check-in";
-import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,

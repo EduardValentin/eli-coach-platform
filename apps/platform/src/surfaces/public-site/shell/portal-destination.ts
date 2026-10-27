@@ -1,6 +1,7 @@
-import type { AccountRole } from "@eli-coach-platform/domain/account";
-
-import type { PortalDestination } from "~/bounded-contexts/access/accounts/public/account";
+import type {
+  AccountRole,
+  PortalDestination,
+} from "~/bounded-contexts/access/accounts/public/account";
 import { PORTAL_PATH_BY_ROLE } from "~/bounded-contexts/access/accounts/public/paths";
 import {
   clientJourneyPortalLink,

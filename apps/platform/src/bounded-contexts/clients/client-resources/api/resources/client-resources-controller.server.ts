@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   MAX_RESOURCE_FILE_BYTES,
   type AddClientResourceResult,
@@ -9,7 +9,7 @@ import {
   type RemoveClientResourceUseCase,
   type ResourcePreview,
   type ResourceRequester,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import {
   createBadRequestResponse,
   createPrivateInlineFileResponse,

@@ -2,7 +2,7 @@ import type {
   ReadOwnClientAvatarUseCase,
   RemoveOwnClientAvatarUseCase,
   UploadOwnClientAvatarUseCase,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

@@ -1,4 +1,4 @@
-import type { ClientAvatarRendition } from "@eli-coach-platform/domain/client-profile";
+import type { ClientAvatarRendition } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 

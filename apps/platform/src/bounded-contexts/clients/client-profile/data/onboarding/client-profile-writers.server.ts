@@ -2,7 +2,7 @@ import type { DatabaseTransaction } from "~/shared/database";
 import type {
   ClientMeasurementEntry,
   CoachingSeed,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 
 type ClientMoment = { clientId: string; at: Date };
 

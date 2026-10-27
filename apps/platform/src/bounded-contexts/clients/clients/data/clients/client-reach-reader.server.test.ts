@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { CoachingStandingSnapshot } from "@eli-coach-platform/domain/client";
+import type { CoachingStandingSnapshot } from "~/bounded-contexts/clients/clients/domain/client";
 import { describe, expect, it } from "vitest";
 
 import { PostgresClientReach } from "./client-reach-reader.server";

@@ -2,8 +2,8 @@ import type { DatabaseTransaction } from "~/shared/database";
 import {
   ClientProfile,
   type CoachingSeed,
-} from "@eli-coach-platform/domain/client-profile";
-import { ClientSettings } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import { ClientSettings } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { coachingColumnsOf } from "~/bounded-contexts/clients/client-profile/data/profiles/coaching-columns.server";

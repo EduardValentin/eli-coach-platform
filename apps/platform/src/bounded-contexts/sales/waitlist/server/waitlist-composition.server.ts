@@ -1,20 +1,20 @@
 import type { DatabaseClient } from "~/shared/database";
 import type { WaitlistConfig } from "~/bounded-contexts/sales/waitlist/config.server";
-import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bundle";
+import type { PricingEligibility } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "~/bounded-contexts/legal/public";
-import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+import type { EmailAcceptance } from "~/bounded-contexts/sales/waitlist/domain/email-acceptance";
+import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { Clock } from "~/bounded-contexts/sales/waitlist/domain/clock";
 import {
   GetWaitlistUseCase,
   JoinWaitlistUseCase,
   Waitlist,
   type WaitlistConsentVersions,
   type WaitlistIncidents,
-} from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import type { ProductEmail } from "~/shared/email/index.server";
 
@@ -36,7 +36,7 @@ type WaitlistFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  emailSubaddresses: EmailSubaddressPolicy;
+  emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
   incidents: WaitlistIncidents;
   privacyEmail: string;
@@ -77,7 +77,7 @@ export function composeWaitlistFeature(
             privacyEmail: handles.privacyEmail,
           }),
           consentVersions: WAITLIST_CONSENT_VERSIONS,
-          emailSubaddresses: handles.emailSubaddresses,
+          emailAcceptance: handles.emailAcceptance,
           incidents: handles.incidents,
           waitlist,
           waitlistEntries,

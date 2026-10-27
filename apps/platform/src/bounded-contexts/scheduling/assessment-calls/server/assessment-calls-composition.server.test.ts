@@ -1,9 +1,10 @@
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
 import {
   CoachAvailability,
   type CoachAvailabilitySource,
-} from "@eli-coach-platform/domain/coach-availability";
-import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
@@ -84,7 +85,7 @@ describe("composeAssessmentCallsFeature subaddress policy", () => {
     // arrange
     const { feature } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      emailSubaddresses: "refused",
+      emailAcceptance: createEmailAcceptance("refused"),
     });
     const formData = new FormData();
     formData.set("country", "RO");
@@ -154,7 +155,7 @@ function createHandles(
   featureFlags: FeatureFlagSet,
 ): AssessmentCallsFeatureHandles {
   return {
-    emailSubaddresses: "allowed",
+    emailAcceptance: createEmailAcceptance("allowed"),
     appBasePath: "/eli-coach-platform",
     assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",

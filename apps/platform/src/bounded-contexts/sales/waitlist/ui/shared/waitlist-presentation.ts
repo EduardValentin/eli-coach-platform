@@ -1,4 +1,4 @@
-import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 
 type WaitlistMode = "closed" | "disabled" | "limited" | "open" | "unavailable";
 

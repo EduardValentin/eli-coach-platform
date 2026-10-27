@@ -1,5 +1,5 @@
-import type { CallSalesState as DomainCallSalesState } from "@eli-coach-platform/domain/payment-link";
-import { START_CHOICES } from "@eli-coach-platform/domain/coaching-subscription";
+import type { CallSalesState as DomainCallSalesState } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import { START_CHOICES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { z } from "zod";
 
 import {

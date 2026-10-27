@@ -1,4 +1,4 @@
-import type { ListClientResourcesUseCase } from "@eli-coach-platform/domain/client-resources";
+import type { ListClientResourcesUseCase } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 

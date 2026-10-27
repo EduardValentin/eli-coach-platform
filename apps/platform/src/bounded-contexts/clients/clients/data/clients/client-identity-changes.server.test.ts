@@ -1,6 +1,6 @@
 import type { DatabaseClient } from "~/shared/database";
-import { VisitorCountries } from "@eli-coach-platform/domain/assessment-call";
-import { ClientIdentityEdit } from "@eli-coach-platform/domain/client";
+import { VisitorCountries } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { ClientIdentityEdit } from "~/bounded-contexts/clients/clients/domain/client";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 

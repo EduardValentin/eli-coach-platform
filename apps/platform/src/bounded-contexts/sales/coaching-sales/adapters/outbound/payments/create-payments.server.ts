@@ -3,7 +3,7 @@ import type {
   PaymentCheckout,
   PaymentCustomerCards,
   PaymentSubscriptions,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 
 import { InMemoryPaymentCheckout } from "./memory/in-memory-payment-checkout.server";
 import { InMemoryPaymentCustomerCards } from "./memory/in-memory-payment-customer-cards.server";

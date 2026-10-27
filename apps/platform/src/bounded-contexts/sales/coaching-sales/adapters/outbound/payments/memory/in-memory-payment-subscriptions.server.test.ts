@@ -1,4 +1,4 @@
-import type { PaymentSubscriptions } from "@eli-coach-platform/domain/coaching-subscription";
+import type { PaymentSubscriptions } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { describe, expect, it } from "vitest";
 
 import { InMemoryPaymentSubscriptions } from "./in-memory-payment-subscriptions.server";

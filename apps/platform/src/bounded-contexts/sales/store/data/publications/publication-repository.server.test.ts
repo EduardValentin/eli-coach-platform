@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   Product,
   type PersistPublicationCommand,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 
 import type { DatabaseClient } from "~/shared/database";
 

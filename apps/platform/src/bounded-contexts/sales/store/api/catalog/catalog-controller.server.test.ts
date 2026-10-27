@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   FindPublishedProductUseCase,
   ListPublishedProductsUseCase,
-} from "@eli-coach-platform/domain/product";
-import { PublishedProduct } from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
+import { PublishedProduct } from "~/bounded-contexts/sales/store/domain/product";
 
 import { StoreCatalogController } from "./catalog-controller.server";
 

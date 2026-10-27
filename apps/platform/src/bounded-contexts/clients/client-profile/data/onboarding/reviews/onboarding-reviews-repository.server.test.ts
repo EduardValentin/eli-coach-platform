@@ -3,8 +3,8 @@ import {
   DetailRequest,
   emptyDraft,
   type OnboardingAnswersByForm,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { CoachingSeed } from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { CoachingSeed } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";

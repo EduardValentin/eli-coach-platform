@@ -13,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 
-import { MAX_EXERCISE_VIDEO_BYTES } from "@eli-coach-platform/domain/exercise";
+import { MAX_EXERCISE_VIDEO_BYTES } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import {
   LANDSCAPE_SAMPLE_VIDEO_PATH,
   PORTRAIT_SAMPLE_VIDEO_PATH,

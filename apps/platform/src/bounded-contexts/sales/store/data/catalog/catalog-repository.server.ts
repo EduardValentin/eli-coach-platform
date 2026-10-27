@@ -3,8 +3,8 @@ import type {
   PublishedProductCover,
   StoreCatalog,
   StoreTaxonomyValue,
-} from "@eli-coach-platform/domain/product";
-import { PublishedProduct } from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
+import { PublishedProduct } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";

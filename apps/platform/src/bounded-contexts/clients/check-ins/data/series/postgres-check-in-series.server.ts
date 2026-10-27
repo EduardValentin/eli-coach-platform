@@ -14,7 +14,7 @@ import {
   type CheckInSeriesSetUpResult,
   type CheckInSeriesSnapshot,
   OPEN_CHECK_IN_STATUSES,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import {
   and,
   asc,

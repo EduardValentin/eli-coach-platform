@@ -4,8 +4,8 @@ import {
   type AssessmentCallReservations,
   type ReservationDecision,
   type ReserveAssessmentCallCommand,
-} from "@eli-coach-platform/domain/assessment-call";
-import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { TimeInterval } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import {
   isCausedByDatabaseError,
   type DatabaseClient,

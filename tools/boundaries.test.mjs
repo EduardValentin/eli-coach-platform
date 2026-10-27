@@ -26,7 +26,6 @@ function cruiseFixtures() {
         "json",
         "--no-cache",
         "apps/platform/src",
-        "packages",
       ],
       { cwd: fixturesRoot, encoding: "utf8", stdio: "pipe" },
     );

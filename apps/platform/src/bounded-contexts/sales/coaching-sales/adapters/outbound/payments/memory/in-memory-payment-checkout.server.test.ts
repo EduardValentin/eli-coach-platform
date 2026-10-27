@@ -1,4 +1,4 @@
-import type { CreateCheckoutSessionCommand } from "@eli-coach-platform/domain/coaching-subscription";
+import type { CreateCheckoutSessionCommand } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { InMemoryPaymentCheckout } from "./in-memory-payment-checkout.server";

@@ -1,11 +1,11 @@
-import { waistToHeightRatio } from "@eli-coach-platform/domain/measurement";
+import { waistToHeightRatio } from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import {
   CANONICAL_MEASURE_UNITS,
   measureUnitLabel,
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,

@@ -1,4 +1,4 @@
-import type { AccountRole } from "@eli-coach-platform/domain/account";
+import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
 
 export const SIGN_IN_FAILED_ROUTE_SEGMENT = "sign-in-failed";
 export const SIGN_IN_FAILED_PATH = `/${SIGN_IN_FAILED_ROUTE_SEGMENT}`;

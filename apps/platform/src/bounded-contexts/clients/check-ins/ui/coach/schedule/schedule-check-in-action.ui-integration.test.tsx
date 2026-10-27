@@ -27,7 +27,7 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { clientAction as scheduleCheckIn } from "~/bounded-contexts/clients/check-ins/api/coach/schedule";
 import {
   clientLoader as openTimesLoader,

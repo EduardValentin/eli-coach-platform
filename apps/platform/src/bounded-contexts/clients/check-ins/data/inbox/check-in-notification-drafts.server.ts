@@ -6,12 +6,12 @@ import type {
   CheckInSeriesInboxNotice,
   CheckInSeriesNotification,
   LapsedCheckIn,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type {
   NotificationDraft,
   NotificationFacts,
   NotificationRecipientSnapshot,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 
 import {
   CHECK_IN_BELL_FACTS,

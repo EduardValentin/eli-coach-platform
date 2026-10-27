@@ -4,7 +4,7 @@ import type {
   NotificationBell,
   NotificationReader,
   ReadNotificationBellUseCase,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 

@@ -6,8 +6,8 @@ import {
   CIRCUMFERENCE_MEASUREMENT_FIELDS,
   WEIGHT_MEASUREMENT_FIELD,
   type MeasurementField,
-} from "@eli-coach-platform/domain/measurement";
-import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/measurement";
+import type { MeasureUnits } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";

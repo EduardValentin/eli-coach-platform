@@ -2,7 +2,7 @@ import {
   CheckIn,
   type LapsedCheckIn,
   type ListLapsedCheckInsUseCase,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
 
 import { CheckInExpiryNotifications } from "./check-in-expiry-notifications.server";

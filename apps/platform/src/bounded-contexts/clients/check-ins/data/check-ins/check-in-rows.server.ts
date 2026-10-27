@@ -1,5 +1,5 @@
 import type { DatabaseTransaction } from "~/shared/database";
-import { CheckIn } from "@eli-coach-platform/domain/check-in";
+import { CheckIn } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { sql } from "drizzle-orm";
 
 import { checkInsTable } from "~/bounded-contexts/clients/check-ins/data/schema.server";

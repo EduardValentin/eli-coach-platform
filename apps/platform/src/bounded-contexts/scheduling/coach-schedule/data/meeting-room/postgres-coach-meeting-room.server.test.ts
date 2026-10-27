@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { CoachMeetingRoom } from "@eli-coach-platform/domain/coach-meeting-room";
+import { CoachMeetingRoom } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresCoachMeetingRoom } from "./postgres-coach-meeting-room.server";

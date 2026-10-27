@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { AccountIds } from "@eli-coach-platform/domain/account";
+import type { AccountIds } from "~/bounded-contexts/access/accounts/domain/account";
 
 export class RandomAccountIds implements AccountIds {
   generate(): string {

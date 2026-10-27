@@ -5,7 +5,7 @@ import {
   type ResourceBrowseSnapshot,
   type ResourceDetailsProblems,
   type ResourceRefusal,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { z } from "zod";
 
 import type { ResourceBrowseView } from "~/bounded-contexts/clients/client-resources/public/resource-browse";

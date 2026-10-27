@@ -2,17 +2,17 @@ import { joinBasePath } from "~/shared/http/base-path";
 import {
   COACHING_BUNDLES,
   type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   withdrawalDeadline,
   type ReadCheckoutConfirmationUseCase,
   type StartCheckoutUseCase,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   OpenBundlePageUseCase,
   ResolvePaymentLinkUseCase,
-} from "@eli-coach-platform/domain/payment-link";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,

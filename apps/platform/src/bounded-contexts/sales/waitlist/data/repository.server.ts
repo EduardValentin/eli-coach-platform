@@ -1,14 +1,14 @@
 import type {
   PriceTier,
   PricingEligibility,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   WAITLIST_REDUCED_PRICING_CAP,
   type WaitlistEntries,
   type WaitlistOffer,
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
-} from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { DatabaseClient } from "~/shared/database";
 import { and, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { waitlistEntriesTable } from "./schema.server";
@@ -49,7 +49,7 @@ export class PostgresWaitlistRepository
       .from(waitlistEntriesTable)
       .where(
         and(
-          eq(waitlistEntriesTable.email, email.value),
+          eq(waitlistEntriesTable.email, email),
           eq(waitlistEntriesTable.pricingEligibility, "reduced"),
         ),
       )
@@ -65,22 +65,21 @@ export class PostgresWaitlistRepository
       return new Map();
     }
 
-    const addresses = emails.map((email) => email.value);
     const reducedRows = await this.database
       .selectDistinct({ email: waitlistEntriesTable.email })
       .from(waitlistEntriesTable)
       .where(
         and(
-          inArray(waitlistEntriesTable.email, addresses),
+          inArray(waitlistEntriesTable.email, emails),
           eq(waitlistEntriesTable.pricingEligibility, "reduced"),
         ),
       );
     const reduced = new Set(reducedRows.map((row) => row.email));
 
     return new Map(
-      addresses.map((address) => [
-        address,
-        reduced.has(address) ? "reduced" : "regular",
+      emails.map((email) => [
+        email,
+        reduced.has(email) ? "reduced" : "regular",
       ]),
     );
   }

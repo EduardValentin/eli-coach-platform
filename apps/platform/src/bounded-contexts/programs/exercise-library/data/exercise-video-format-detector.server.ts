@@ -1,4 +1,4 @@
-import type { ExerciseVideoFormatDetector } from "@eli-coach-platform/domain/exercise";
+import type { ExerciseVideoFormatDetector } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 
 import { createFileTypeReader } from "~/shared/documents/file-type.server";
 

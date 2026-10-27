@@ -1,7 +1,7 @@
 import {
   RECIPE_PHOTO_RENDITION,
   type RecipePhotoRendition,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import sharp, { type Sharp } from "sharp";
 import { describe, expect, it } from "vitest";
 

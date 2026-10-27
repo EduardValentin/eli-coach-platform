@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   ClientIdentities,
   ClientReach,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import {
   AttachProgressPhotosUseCase,
   ListClientAvatarsUseCase,
@@ -27,17 +27,17 @@ import {
   type MeasurementIncidents,
   type ProgressPhotoRenditions,
   type ProgressPhotoStore,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   ReadOwnClientSettingsUseCase,
   SaveUnitPreferenceUseCase,
   type ClientSettingsSource,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import type {
   ClientMeasurementsSource,
   MeasurementIds,
-} from "@eli-coach-platform/domain/measurement";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/client-profile/domain/measurement";
+import type { Clock } from "~/bounded-contexts/clients/client-profile/domain/clock";
 
 import { ClientAvatarController } from "~/bounded-contexts/clients/client-profile/api/avatar/client-avatar-controller.server";
 import { ClientSettingsController } from "~/bounded-contexts/clients/client-profile/api/client/client-settings-controller.server";

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PrepareAcquisitionCommand } from "@eli-coach-platform/domain/acquisition";
-import { PublishedProduct } from "@eli-coach-platform/domain/product";
+import type { PrepareAcquisitionCommand } from "~/bounded-contexts/sales/store/domain/acquisition";
+import { PublishedProduct } from "~/bounded-contexts/sales/store/domain/product";
 
 import type { DatabaseClient } from "~/shared/database";
 

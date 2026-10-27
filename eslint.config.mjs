@@ -25,7 +25,7 @@ export default [
     ],
   },
   {
-    files: ["apps/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
+    files: ["apps/**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       globals: { ...globals.browser, ...globals.node },
@@ -49,7 +49,7 @@ export default [
           patterns: [
             {
               message: appAliasMessage,
-              regex: "^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+",
+              regex: "^\\.\\.\\/\\.\\.\\/.+",
             },
           ],
         },
@@ -58,8 +58,7 @@ export default [
         "error",
         {
           message: appAliasMessage,
-          selector:
-            "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+/]",
+          selector: "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/.+/]",
         },
       ],
     },

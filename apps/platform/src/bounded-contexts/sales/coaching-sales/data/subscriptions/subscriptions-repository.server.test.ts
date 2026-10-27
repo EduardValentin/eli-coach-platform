@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it, vi } from "vitest";

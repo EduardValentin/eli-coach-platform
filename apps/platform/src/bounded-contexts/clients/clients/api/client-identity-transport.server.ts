@@ -2,7 +2,7 @@ import type {
   EditableClientIdentity,
   UpdateClientIdentityAsCoachUseCase,
   UpdateOwnClientIdentityUseCase,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import {
   createBadRequestResponse,
   readJsonRequestBody,

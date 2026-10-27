@@ -1,4 +1,4 @@
-import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
+import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { describe, expect, it } from "vitest";
 
 import {

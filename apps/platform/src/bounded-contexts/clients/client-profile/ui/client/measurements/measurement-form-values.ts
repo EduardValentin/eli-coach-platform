@@ -1,12 +1,12 @@
 import {
   MEASUREMENT_FIELDS,
   type MeasurementField,
-} from "@eli-coach-platform/domain/measurement";
+} from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import {
   toCanonicalMeasure,
   toDisplayMeasure,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 
 import {
   measurementEntryRequestSchema,

@@ -3,7 +3,7 @@ import {
   PROGRESS_PHOTO_VIEWS,
   ProgressPhoto,
   type ProgressPhotoView,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { cn } from "~/shared/design-system/lib";
 import {
   Card,

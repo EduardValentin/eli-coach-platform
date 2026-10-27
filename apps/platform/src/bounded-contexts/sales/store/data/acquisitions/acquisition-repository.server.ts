@@ -5,8 +5,8 @@ import {
   type ResolvedPriorAcquisition,
   type StoreAcquisitions,
   type StoreDeliveryLimitWindow,
-} from "@eli-coach-platform/domain/acquisition";
-import { Product } from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/acquisition";
+import { Product } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";

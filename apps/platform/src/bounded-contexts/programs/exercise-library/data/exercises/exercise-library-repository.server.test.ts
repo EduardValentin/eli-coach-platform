@@ -3,7 +3,7 @@ import {
   Exercise,
   InvalidStoredExerciseError,
   type ExerciseSnapshot,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { describe, expect, it } from "vitest";
 
 import { exercisesTable } from "~/bounded-contexts/programs/exercise-library/data/schema.server";

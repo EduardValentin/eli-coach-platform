@@ -1,7 +1,7 @@
 import {
   ACCEPTED_PROGRESS_PHOTO_TYPES,
   ClientAvatar,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { cn, VALUE_LG_CLASS } from "~/shared/design-system/lib";
 import { ConfirmDialog } from "~/shared/design-system/overlays";
 import {

@@ -1,4 +1,4 @@
-import type { FoodCategory } from "@eli-coach-platform/domain/nutrition";
+import type { FoodCategory } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import type { ValueTile } from "~/shared/design-system/primitives";
 import type { ComponentProps } from "react";
 

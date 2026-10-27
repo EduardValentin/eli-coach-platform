@@ -1,4 +1,4 @@
-import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/client-settings";
+import type { UnitPreferenceSnapshot } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { z } from "zod";
 
 import {

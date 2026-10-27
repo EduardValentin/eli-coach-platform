@@ -1,5 +1,5 @@
 import { buildRedirectPath, normalizeBasePath } from "~/shared/http/base-path";
-import type { ClientJourney } from "@eli-coach-platform/domain/client-journey";
+import type { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";

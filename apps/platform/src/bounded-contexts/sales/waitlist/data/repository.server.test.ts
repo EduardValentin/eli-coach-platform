@@ -2,8 +2,6 @@ import type { DatabaseClient } from "~/shared/database";
 import { describe, expect, it, vi } from "vitest";
 import { PostgresWaitlistRepository } from "./repository.server";
 
-type TierEmail = Parameters<PostgresWaitlistRepository["tierForEmail"]>[0];
-
 describe("PostgresWaitlistRepository availability observation", () => {
   it("returns the reduced pricing count before the availability cutoff", async () => {
     // arrange
@@ -31,7 +29,7 @@ describe("PostgresWaitlistRepository pricing eligibility", () => {
     const repository = new PostgresWaitlistRepository(database.client);
 
     // act
-    const tier = await repository.tierForEmail(emailOf("ana@example.com"));
+    const tier = await repository.tierForEmail("ana@example.com");
 
     // assert
     expect(tier).toBe("reduced");
@@ -44,7 +42,7 @@ describe("PostgresWaitlistRepository pricing eligibility", () => {
     const repository = new PostgresWaitlistRepository(database.client);
 
     // act
-    const tier = await repository.tierForEmail(emailOf("ana@example.com"));
+    const tier = await repository.tierForEmail("ana@example.com");
 
     // assert
     expect(tier).toBe("regular");
@@ -61,8 +59,8 @@ describe("PostgresWaitlistRepository pricing tiers for many emails", () => {
 
     // act
     const tiers = await repository.tiersForEmails([
-      emailOf("ana@example.com"),
-      emailOf("bea@example.com"),
+      "ana@example.com",
+      "bea@example.com",
     ]);
 
     // assert
@@ -88,10 +86,6 @@ describe("PostgresWaitlistRepository pricing tiers for many emails", () => {
     expect(database.select).not.toHaveBeenCalled();
   });
 });
-
-function emailOf(value: string): TierEmail {
-  return { value } as TierEmail;
-}
 
 function createDatabaseWithReducedAllocations(rows: readonly unknown[]) {
   const limit = vi.fn().mockResolvedValue(rows);

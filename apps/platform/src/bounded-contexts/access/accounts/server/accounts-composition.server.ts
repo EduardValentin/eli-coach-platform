@@ -3,7 +3,7 @@ import {
   DeleteAccountUseCase,
   ProvisionAccountUseCase,
   type InvitationAcceptance,
-} from "@eli-coach-platform/domain/account";
+} from "~/bounded-contexts/access/accounts/domain/account";
 
 import { AccountController } from "~/bounded-contexts/access/accounts/api/account-controller.server";
 import { AccountWebhookController } from "~/bounded-contexts/access/accounts/api/webhook-controller.server";

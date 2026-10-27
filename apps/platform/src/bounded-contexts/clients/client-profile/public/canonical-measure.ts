@@ -2,7 +2,7 @@ import {
   CANONICAL_MEASURE_UNITS,
   toDisplayMeasure,
   type MeasureKind,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 
 const CANONICAL_UNIT_LABELS: Record<MeasureKind, string> = {
   weight: "kg",

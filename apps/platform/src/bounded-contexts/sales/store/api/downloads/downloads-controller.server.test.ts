@@ -1,8 +1,8 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ResolveDownloadGrantUseCase } from "@eli-coach-platform/domain/download-grant";
-import type { ProductAssets } from "@eli-coach-platform/domain/product";
+import type { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
+import type { ProductAssets } from "~/bounded-contexts/sales/store/domain/product";
 
 import { StoreDownloadController } from "./downloads-controller.server";
 

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { ClientInvitationIds } from "@eli-coach-platform/domain/client-invitation";
+import type { ClientInvitationIds } from "~/bounded-contexts/clients/clients/domain/client-invitation";
 
 export class RandomClientInvitationIds implements ClientInvitationIds {
   generate(): string {

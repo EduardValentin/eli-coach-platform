@@ -1,7 +1,7 @@
 import type {
   CheckInActor,
   ResolveCheckInJoinUseCase,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
 import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";

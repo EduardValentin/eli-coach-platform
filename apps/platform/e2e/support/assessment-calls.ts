@@ -1,4 +1,4 @@
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
+import { ASSESSMENT_CALL_RULES } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type pg from "pg";
 
 import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";

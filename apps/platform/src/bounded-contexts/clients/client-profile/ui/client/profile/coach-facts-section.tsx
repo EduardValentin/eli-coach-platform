@@ -4,7 +4,7 @@ import {
   toDisplayMeasure,
   type MeasureUnits,
   type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { ABSENT_VALUE } from "~/shared/design-system/lib";
 import {
   Reading,

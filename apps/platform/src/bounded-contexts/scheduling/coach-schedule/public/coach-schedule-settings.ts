@@ -1,7 +1,7 @@
 import {
   WEEKDAYS,
   type Weekday,
-} from "@eli-coach-platform/domain/coach-availability";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { z } from "zod";
 
 import { timeZoneSchema } from "./time-zone";

@@ -1,4 +1,4 @@
-import type { OnboardingField } from "@eli-coach-platform/domain/client-onboarding";
+import type { OnboardingField } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type { Control } from "react-hook-form";
 
 import { ProfileFieldControl } from "~/bounded-contexts/clients/client-profile/ui/shared/profile/profile-field-control";

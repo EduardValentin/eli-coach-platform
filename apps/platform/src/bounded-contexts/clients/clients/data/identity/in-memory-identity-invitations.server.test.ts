@@ -1,4 +1,4 @@
-import type { IdentityInvitations } from "@eli-coach-platform/domain/client-invitation";
+import type { IdentityInvitations } from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import { describe, expect, it } from "vitest";
 
 import { InMemoryIdentityInvitations } from "./in-memory-identity-invitations.server";

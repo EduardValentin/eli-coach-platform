@@ -1,4 +1,4 @@
-import { Cart } from "@eli-coach-platform/domain/cart";
+import { Cart } from "~/bounded-contexts/sales/store/domain/cart";
 import { useEffect } from "react";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";

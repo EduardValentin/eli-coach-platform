@@ -1,5 +1,5 @@
 import { joinBasePath } from "~/shared/http/base-path";
-import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/client-settings";
+import type { UnitPreferenceSnapshot } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 
 import type { SaveDraftRequest } from "~/bounded-contexts/clients/client-profile/public/onboarding";
 import {

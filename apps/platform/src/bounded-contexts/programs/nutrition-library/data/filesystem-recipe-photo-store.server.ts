@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import type {
   RecipePhotoOpening,
   RecipePhotoStore,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 
 import { isStorageKeySegment } from "~/shared/private-files/storage-key-segment.server";
 import {

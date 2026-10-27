@@ -2,7 +2,7 @@ import {
   HEIGHT_UNITS,
   WEIGHT_UNITS,
   type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { z } from "zod";
 
 export const unitPreferenceSchema = z.object({

@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { ClientResourceOwner } from "@eli-coach-platform/domain/client-resources";
+import type { ClientResourceOwner } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FilesystemClientResourceStore } from "./filesystem-client-resource-store.server";

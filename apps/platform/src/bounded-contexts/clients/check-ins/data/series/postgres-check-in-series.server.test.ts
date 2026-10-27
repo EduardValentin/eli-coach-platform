@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   CheckInSeries,
   type CheckInSeriesSnapshot,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
 
 import { checkInConstraints } from "~/bounded-contexts/clients/check-ins/data/schema.server";

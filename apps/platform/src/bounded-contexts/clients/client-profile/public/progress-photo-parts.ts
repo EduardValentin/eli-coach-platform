@@ -3,7 +3,7 @@ import {
   type ProgressPhotoOutcomes,
   type ProgressPhotoView,
   type ReceivedProgressPhoto,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { z } from "zod";
 
 export const PROGRESS_PHOTO_PARTS = {

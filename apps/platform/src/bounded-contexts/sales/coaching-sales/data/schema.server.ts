@@ -1,15 +1,15 @@
 import { appSchema } from "~/shared/database";
-import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
+import { COACHING_STATUSES } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   COACHING_BUNDLE_IDS,
   COACHING_BUNDLE_MONTHS,
   PRICE_TIERS,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   REFUND_REASONS,
   START_CHOICES,
-} from "@eli-coach-platform/domain/coaching-subscription";
-import type { PaymentLinkState } from "@eli-coach-platform/domain/payment-link";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { PaymentLinkState } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import { sql, type SQL } from "drizzle-orm";
 import {
   char,

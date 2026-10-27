@@ -1,4 +1,4 @@
-import type { ResolveInvitationUseCase } from "@eli-coach-platform/domain/client-invitation";
+import type { ResolveInvitationUseCase } from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRequestArgs } from "~/composition-root/test-support/request-args";

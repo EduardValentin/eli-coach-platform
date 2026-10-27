@@ -1,5 +1,5 @@
-import { VISITOR_GENDERS } from "@eli-coach-platform/domain/assessment-call";
-import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
+import { VISITOR_GENDERS } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import {
   ACTIVITY_LEVELS,
   CLIENT_EQUIPMENT,
@@ -12,8 +12,8 @@ import {
   type ClientProfileProblems,
   type CoachingFactsSnapshot,
   type SharedCoachingFacts,
-} from "@eli-coach-platform/domain/client-profile";
-import { PREFERRED_CHANNELS } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import { PREFERRED_CHANNELS } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { z } from "zod";
 
 const TEXT_MAX_LENGTH = 2000;

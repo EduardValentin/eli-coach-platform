@@ -2,7 +2,7 @@ import {
   AssessmentCall,
   type AssessmentCallListingResult,
   type ListAssessmentCallsUseCase,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
 import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";

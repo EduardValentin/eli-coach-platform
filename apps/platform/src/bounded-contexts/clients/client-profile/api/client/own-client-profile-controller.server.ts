@@ -2,7 +2,7 @@ import type {
   OwnClientProfileReading,
   ReadOwnClientProfileUseCase,
   UpdateOwnClientProfileUseCase,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   createBadRequestResponse,
   readJsonRequestBody,

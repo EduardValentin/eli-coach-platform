@@ -6,7 +6,7 @@ import {
   type VisitorGender,
   type VisitorPhoneReading,
   type VisitorPrimaryGoal,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { z } from "zod";
 
 import { COUNTRIES } from "./countries";
@@ -14,7 +14,7 @@ import { COUNTRIES } from "./countries";
 export {
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 
 export type ChoiceOption<Value extends string> = {
   readonly value: Value;

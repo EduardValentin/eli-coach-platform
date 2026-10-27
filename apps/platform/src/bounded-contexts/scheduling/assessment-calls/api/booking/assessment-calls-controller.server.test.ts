@@ -6,7 +6,7 @@ import {
   type ListOpenSlotsUseCase,
   type OpenSlotsResult,
   type ResolveJoinLinkUseCase,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";

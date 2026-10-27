@@ -8,15 +8,15 @@ import {
   ResolveJoinLinkUseCase,
   type AssessmentCallIncidents,
   type AssessmentCallReader,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
   CoachAvailabilitySource,
   CoachCalendar,
-} from "@eli-coach-platform/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-meeting-room";
-import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+import type { EmailAcceptance } from "~/bounded-contexts/scheduling/assessment-calls/domain/email-acceptance";
+import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import type { ProductEmail } from "~/shared/email/index.server";
@@ -51,7 +51,7 @@ export type AssessmentCallsFeatureHandles = {
   coachTime: AssessmentCallCoachTime;
   contactEmail: string;
   database: DatabaseClient;
-  emailSubaddresses: EmailSubaddressPolicy;
+  emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
   incidents: AssessmentCallIncidents;
   meetingRoom: CoachMeetingRoomSource;
@@ -81,7 +81,7 @@ export function composeAssessmentCallsFeature(
           availability,
           bookingWindow,
           clock: handles.clock,
-          emailSubaddresses: handles.emailSubaddresses,
+          emailAcceptance: handles.emailAcceptance,
           ids: new RandomAssessmentCallIds(),
           incidents: handles.incidents,
           notifications: createAssessmentCallNotifications(

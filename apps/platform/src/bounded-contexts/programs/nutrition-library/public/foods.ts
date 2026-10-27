@@ -4,7 +4,7 @@ import type {
   FoodDraftProblems,
   FoodSnapshot,
   NutritionTag,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import { z } from "zod";
 
 export type FoodView = Omit<

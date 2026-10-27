@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ProductAsset } from "@eli-coach-platform/domain/product";
+import type { ProductAsset } from "~/bounded-contexts/sales/store/domain/product";
 
 import {
   isConfinedAsset,

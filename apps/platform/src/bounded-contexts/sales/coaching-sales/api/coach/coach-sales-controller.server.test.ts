@@ -1,6 +1,6 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import type { CoachingSubscriptionSnapshot } from "@eli-coach-platform/domain/coaching-subscription";
-import { EmailAddress } from "@eli-coach-platform/domain/email-address";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
+import type { CoachingSubscriptionSnapshot } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";
@@ -29,6 +29,7 @@ describe("CoachSalesController", () => {
       ]),
     );
     const controller = new CoachSalesController({
+      emailAcceptance: createEmailAcceptance("allowed"),
       readCallSalesStates: { execute } as never,
       readPricingTiers: { execute: vi.fn() } as never,
       readSubscriptionSummary: { execute: vi.fn() } as never,
@@ -59,6 +60,7 @@ describe("CoachSalesController", () => {
       ]),
     );
     const controller = new CoachSalesController({
+      emailAcceptance: createEmailAcceptance("allowed"),
       readCallSalesStates: { execute: vi.fn() } as never,
       readPricingTiers: { execute } as never,
       readSubscriptionSummary: { execute: vi.fn() } as never,
@@ -78,9 +80,9 @@ describe("CoachSalesController", () => {
       "call-3": "reduced",
     });
     expect(execute).toHaveBeenCalledWith([
-      EmailAddress.normalize("ana@example.com"),
-      EmailAddress.normalize("bea@example.com"),
-      EmailAddress.normalize("ana@example.com"),
+      "ana@example.com",
+      "bea@example.com",
+      "ana@example.com",
     ]);
   });
 });
@@ -353,6 +355,7 @@ function summaryOf(
 function subscriptionController(summary: unknown) {
   const readSubscriptionSummary = vi.fn().mockResolvedValue(summary);
   const controller = new CoachSalesController({
+    emailAcceptance: createEmailAcceptance("allowed"),
     readCallSalesStates: { execute: vi.fn() } as never,
     readPricingTiers: { execute: vi.fn() } as never,
     readSubscriptionSummary: { execute: readSubscriptionSummary } as never,

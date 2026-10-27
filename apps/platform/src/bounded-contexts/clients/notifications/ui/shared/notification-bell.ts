@@ -1,4 +1,4 @@
-import type { NotificationParty } from "@eli-coach-platform/domain/notification";
+import type { NotificationParty } from "~/bounded-contexts/clients/notifications/domain/notification";
 import type { NotificationBellItem } from "~/shared/design-system/layout";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { pageFocusAction, toast } from "~/shared/design-system/toast";

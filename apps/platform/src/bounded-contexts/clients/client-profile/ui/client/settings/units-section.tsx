@@ -3,7 +3,7 @@ import {
   measureUnitsOf,
   toDisplayMeasure,
   type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   SettingsRow,
   SettingsRows,

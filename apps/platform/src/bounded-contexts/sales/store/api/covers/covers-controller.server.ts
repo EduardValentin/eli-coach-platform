@@ -4,8 +4,8 @@ import type {
   FindPublishedCoverUseCase,
   ProductAssetOpenResult,
   ProductAssets,
-} from "@eli-coach-platform/domain/product";
-import { isStoreCoverMimeType } from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
+import { isStoreCoverMimeType } from "~/bounded-contexts/sales/store/domain/product";
 
 type StoreCoverAssetControllerOptions = {
   assetStore: ProductAssets;

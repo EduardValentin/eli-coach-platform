@@ -2,7 +2,7 @@ import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profil
 import type {
   ClientAvatarStore,
   ProgressPhotoStore,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 
 import {
   clientAvatarStorageKey,

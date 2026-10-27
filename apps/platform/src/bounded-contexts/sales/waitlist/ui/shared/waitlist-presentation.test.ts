@@ -1,4 +1,4 @@
-import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import { describe, expect, it } from "vitest";
 
 import { presentWaitlist } from "./waitlist-presentation";

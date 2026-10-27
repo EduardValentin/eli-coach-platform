@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   DetailRequest,
   emptyDraft,
@@ -7,7 +7,7 @@ import {
   type OpenOnboardingReviewUseCase,
   type ReadOnboardingReviewUseCase,
   type RequestOnboardingDetailsUseCase,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

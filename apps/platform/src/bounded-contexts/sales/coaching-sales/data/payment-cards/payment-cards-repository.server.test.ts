@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { PaymentCard } from "@eli-coach-platform/domain/coaching-subscription";
+import { PaymentCard } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";

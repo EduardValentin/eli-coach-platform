@@ -1,16 +1,16 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
+import type { InvitationAcceptance } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   VisitorCountries,
   type AssessmentCallReader,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   UpdateClientIdentityAsCoachUseCase,
   UpdateOwnClientIdentityUseCase,
   type ClientIdentities,
   type ClientIds,
   type ClientReach,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import {
   AcceptInvitationUseCase,
   AdmitPaidClientUseCase,
@@ -21,24 +21,24 @@ import {
   type IdentityInvitations,
   type InvitationTokenGenerator,
   type InvitationTokenHasher,
-} from "@eli-coach-platform/domain/client-invitation";
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
   ReadClientPortalStandingUseCase,
   type ClientJourneys,
-} from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type {
   OnboardingClients,
   OnboardingReviewStamps,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   ListClientsUseCase,
   ReadClientRecordUseCase,
   type ClientRosterIncidents,
-} from "@eli-coach-platform/domain/client-roster";
-import type { PaidClientAdmission } from "@eli-coach-platform/domain/coaching-subscription";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/clients/domain/client-roster";
+import type { PaidClientAdmission } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { COUNTRIES } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";

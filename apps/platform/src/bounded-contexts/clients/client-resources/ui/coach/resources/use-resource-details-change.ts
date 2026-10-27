@@ -1,4 +1,4 @@
-import type { ResourceDetailsProblems } from "@eli-coach-platform/domain/client-resources";
+import type { ResourceDetailsProblems } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { useEffect, useEffectEvent } from "react";
 import { useFetcher } from "react-router";
 

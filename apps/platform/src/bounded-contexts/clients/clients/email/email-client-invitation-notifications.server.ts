@@ -2,8 +2,8 @@ import { joinBasePath } from "~/shared/http/base-path";
 import type {
   ClientInvitationMessage,
   ClientInvitationNotifications,
-} from "@eli-coach-platform/domain/client-invitation";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
+import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { invitationPath } from "~/bounded-contexts/clients/clients/public/paths";

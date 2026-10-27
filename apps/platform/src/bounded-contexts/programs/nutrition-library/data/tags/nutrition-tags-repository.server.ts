@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   NutritionTag,
   NutritionTags,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import { asc } from "drizzle-orm";
 
 import { nutritionTagsTable } from "~/bounded-contexts/programs/nutrition-library/data/schema.server";

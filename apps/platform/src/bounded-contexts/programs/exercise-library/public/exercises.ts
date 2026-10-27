@@ -5,7 +5,7 @@ import type {
   ExerciseSnapshot,
   ExerciseStatus,
   ExerciseVideoFormat,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { z } from "zod";
 
 import { exerciseVideoPath } from "./paths";

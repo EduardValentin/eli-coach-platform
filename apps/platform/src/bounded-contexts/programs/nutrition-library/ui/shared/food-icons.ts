@@ -30,7 +30,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { FoodIcon } from "@eli-coach-platform/domain/nutrition";
+import type { FoodIcon } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 
 type FoodIconAppearance = { label: string; glyph: LucideIcon };
 

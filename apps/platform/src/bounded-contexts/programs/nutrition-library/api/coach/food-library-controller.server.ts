@@ -4,7 +4,7 @@ import type {
   FindFoodUseCase,
   FoodDraftProblems,
   ListFoodsUseCase,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import {
   createBadRequestResponse,
   readJsonRequestBody,

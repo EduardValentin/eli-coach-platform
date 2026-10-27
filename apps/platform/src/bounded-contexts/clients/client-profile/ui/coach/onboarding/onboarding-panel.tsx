@@ -1,4 +1,4 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,

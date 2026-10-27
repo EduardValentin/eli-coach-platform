@@ -37,7 +37,7 @@ vi.mock("@clerk/react-router", () => ({
 }));
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-config";
-import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import HomeRoute from "~/surfaces/public-site/pages/home";

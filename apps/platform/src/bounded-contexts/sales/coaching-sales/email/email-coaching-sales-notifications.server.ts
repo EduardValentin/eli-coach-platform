@@ -1,9 +1,9 @@
 import { joinBasePath } from "~/shared/http/base-path";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
 import type {
   CoachingSalesNotifications,
   PaymentLinkMessage,
-} from "@eli-coach-platform/domain/payment-link";
+} from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { selectBundlePath } from "~/bounded-contexts/sales/coaching-sales/public/paths";

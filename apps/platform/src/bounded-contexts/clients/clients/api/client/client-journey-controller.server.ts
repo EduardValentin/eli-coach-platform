@@ -1,7 +1,7 @@
 import type {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
-} from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import {
   redirect,
   type ActionFunctionArgs,

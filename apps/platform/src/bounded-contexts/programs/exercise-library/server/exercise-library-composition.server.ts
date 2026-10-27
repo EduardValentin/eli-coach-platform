@@ -13,8 +13,8 @@ import {
   type ExerciseLibraryIncidents,
   type ExerciseVideoFormatDetector,
   type ExerciseVideoStore,
-} from "@eli-coach-platform/domain/exercise";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
+import type { Clock } from "~/bounded-contexts/programs/exercise-library/domain/clock";
 
 import { ExerciseLibraryController } from "~/bounded-contexts/programs/exercise-library/api/coach/exercise-library-controller.server";
 import { PostgresExerciseLibrary } from "~/bounded-contexts/programs/exercise-library/data/exercises/exercise-library-repository.server";

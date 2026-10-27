@@ -2,7 +2,7 @@ import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type RecordCheckoutCompletedUseCase,
   type RefreshPaymentCardUseCase,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { PaidCheckoutSession } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 import type { PaymentCompletionHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
 

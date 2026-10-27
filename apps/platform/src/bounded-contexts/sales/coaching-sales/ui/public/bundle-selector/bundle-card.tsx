@@ -1,4 +1,4 @@
-import type { CoachingBundleId } from "@eli-coach-platform/domain/coaching-bundle";
+import type { CoachingBundleId } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import { cn } from "~/shared/design-system/lib";
 import { publicEaseOut } from "~/shared/design-system/motion";
 import { Star } from "lucide-react";

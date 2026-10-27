@@ -1,4 +1,4 @@
-import type { CoachingBundleId } from "@eli-coach-platform/domain/coaching-bundle";
+import type { CoachingBundleId } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import { buttonVariants } from "~/shared/design-system/primitives";
 import { Tag } from "lucide-react";
 import { motion } from "motion/react";

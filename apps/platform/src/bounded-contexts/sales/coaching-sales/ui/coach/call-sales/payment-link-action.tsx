@@ -3,7 +3,7 @@ import { ConfirmDialog } from "~/shared/design-system/overlays";
 import { useConfirmedJsonAction } from "~/shared/design-system/toast";
 import { Send } from "lucide-react";
 
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 
 import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
 import {

@@ -24,25 +24,25 @@ import {
   StopCheckInSeriesUseCase,
   WithdrawCheckInRequestUseCase,
   type CheckInIncidents,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type {
   ClientIdentities,
   ClientReach,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 import type {
   CoachAvailabilitySource,
   CoachCalendar,
-} from "@eli-coach-platform/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-meeting-room";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
 import type {
   CoachingEndHandler,
   CoachingPeriodHandler,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   NotificationExpirySource,
   NotificationInbox,
-} from "@eli-coach-platform/domain/notification";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { ClientCheckInsController } from "~/bounded-contexts/clients/check-ins/api/client/client-check-ins-controller.server";

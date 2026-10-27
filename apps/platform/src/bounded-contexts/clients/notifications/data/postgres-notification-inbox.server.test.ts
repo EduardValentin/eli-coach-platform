@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { NotificationDraft } from "@eli-coach-platform/domain/notification";
+import type { NotificationDraft } from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
 
 import { notificationsTable } from "~/bounded-contexts/clients/notifications/data/schema.server";

@@ -3,8 +3,8 @@ import {
   emptyDraft,
   type OnboardingAnswersByForm,
   type OnboardingSubmission,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { MeasurementEntry } from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";

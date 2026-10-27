@@ -1,4 +1,4 @@
-import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessment-call";
+import type { AssessmentCallSnapshot } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
   ProductEmail,
   ProductEmailCommand,

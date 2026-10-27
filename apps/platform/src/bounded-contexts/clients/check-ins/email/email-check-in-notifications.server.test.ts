@@ -2,7 +2,7 @@ import {
   CheckIn,
   type CheckInNotice,
   type CheckInSeriesNotice,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import {
   InMemoryProductEmail,
   type ProductEmail,

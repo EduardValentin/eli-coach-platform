@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   MAX_RECIPE_PHOTO_BYTES,
   type CreateRecipeUseCase,
@@ -11,7 +11,7 @@ import {
   type RecipePhotoViewer,
   type RecipeSaveProblems,
   type StartRecipeUseCase,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import {
   createBadRequestResponse,
   createPrivateMediaResponse,

@@ -14,7 +14,7 @@ import type {
   ProposeCheckInTimeUseCase,
   WithdrawCheckInRequestResult,
   WithdrawCheckInRequestUseCase,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

@@ -2,7 +2,7 @@ import type {
   ResourceImagePages,
   ResourceImageRendering,
   ResourceRenditions,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 
 import {
   fitRenderedImageInside,

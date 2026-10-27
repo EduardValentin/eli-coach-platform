@@ -5,7 +5,7 @@ import {
   type StoreProductPublications,
   type StoreTaxonomySnapshot,
   type StoredPublicationRecord,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";

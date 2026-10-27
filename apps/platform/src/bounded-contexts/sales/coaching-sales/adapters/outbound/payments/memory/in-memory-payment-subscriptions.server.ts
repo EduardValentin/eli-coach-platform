@@ -1,4 +1,4 @@
-import type { PaymentSubscriptions } from "@eli-coach-platform/domain/coaching-subscription";
+import type { PaymentSubscriptions } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 
 export class InMemoryPaymentSubscriptions implements PaymentSubscriptions {
   async holdRenewal(): Promise<void> {}

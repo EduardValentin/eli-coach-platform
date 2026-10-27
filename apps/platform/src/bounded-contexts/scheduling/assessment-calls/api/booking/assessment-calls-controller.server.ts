@@ -6,8 +6,8 @@ import {
   type ListOpenSlotsUseCase,
   type OpenSlotsResult,
   type ResolveJoinLinkUseCase,
-} from "@eli-coach-platform/domain/assessment-call";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import {

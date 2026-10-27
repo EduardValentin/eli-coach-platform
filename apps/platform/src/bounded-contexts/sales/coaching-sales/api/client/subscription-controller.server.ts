@@ -5,7 +5,7 @@ import type {
   ReadClientSubscriptionUseCase,
   ReadProgramStatusUseCase,
   StartProgramNowUseCase,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import {
   redirect,
   type ActionFunctionArgs,

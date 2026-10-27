@@ -1,4 +1,4 @@
-import type { CreateCheckoutSessionCommand } from "@eli-coach-platform/domain/coaching-subscription";
+import type { CreateCheckoutSessionCommand } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import Stripe from "stripe";
 import { describe, expect, it, vi } from "vitest";
 

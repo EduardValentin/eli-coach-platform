@@ -3,12 +3,12 @@ import type {
   DownloadGrant,
   DownloadGrantResolution,
   ResolveDownloadGrantUseCase,
-} from "@eli-coach-platform/domain/download-grant";
+} from "~/bounded-contexts/sales/store/domain/download-grant";
 import type {
   ProductAsset,
   ProductAssetOpenResult,
   ProductAssets,
-} from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/product";
 import {
   createAttachmentResponse,
   readFormDataRequestBody,

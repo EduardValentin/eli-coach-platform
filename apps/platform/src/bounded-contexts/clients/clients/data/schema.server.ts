@@ -2,8 +2,8 @@ import { appSchema } from "~/shared/database";
 import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
-} from "@eli-coach-platform/domain/assessment-call";
-import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { COACHING_STATUSES } from "~/bounded-contexts/clients/clients/domain/client";
 import { sql, type SQL } from "drizzle-orm";
 import {
   boolean,

@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ClientResource,
   type AddClientResourceResult,
@@ -11,7 +11,7 @@ import {
   type OpenResourcePreviewUseCase,
   type RemoveClientResourceResult,
   type RemoveClientResourceUseCase,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
 
 import {

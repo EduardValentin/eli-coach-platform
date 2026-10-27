@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { CoachingStandingSnapshot } from "@eli-coach-platform/domain/client";
+import type { CoachingStandingSnapshot } from "~/bounded-contexts/clients/clients/domain/client";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import {
   createTokenGenerator,

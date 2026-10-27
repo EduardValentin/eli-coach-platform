@@ -1,6 +1,6 @@
 import type { WaitlistConfig } from "~/bounded-contexts/sales/waitlist/config.server";
 import type { DatabaseClient } from "~/shared/database";
-import { EmailAddress } from "@eli-coach-platform/domain/email-address";
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { handleHttpErrorResponse } from "~/shared/http/index.server";
 import { describe, expect, it } from "vitest";
@@ -30,7 +30,7 @@ describe("composeWaitlistFeature", () => {
       clock: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
-      emailSubaddresses: "allowed",
+      emailAcceptance: createEmailAcceptance("allowed"),
       featureFlags: {
         execute: async () => {
           throw new Error("database down");
@@ -59,7 +59,7 @@ describe("composeWaitlistFeature", () => {
       clock: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseWithReducedAllocation(),
-      emailSubaddresses: "allowed",
+      emailAcceptance: createEmailAcceptance("allowed"),
       featureFlags: { execute: async () => ({}) },
       incidents: {
         confirmationDeliveryFailed: () => {},
@@ -71,9 +71,8 @@ describe("composeWaitlistFeature", () => {
     });
 
     // act
-    const tier = await handles.pricingEligibility.tierForEmail(
-      EmailAddress.normalize("ana@example.com"),
-    );
+    const tier =
+      await handles.pricingEligibility.tierForEmail("ana@example.com");
 
     // assert
     expect(tier).toBe("reduced");
@@ -86,7 +85,7 @@ describe("composeWaitlistFeature", () => {
       clock: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
-      emailSubaddresses: "refused",
+      emailAcceptance: createEmailAcceptance("refused"),
       featureFlags: { execute: async () => ({}) },
       incidents: {
         confirmationDeliveryFailed: () => {},

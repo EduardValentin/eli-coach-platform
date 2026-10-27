@@ -1,4 +1,4 @@
-import type { PreferredChannel } from "@eli-coach-platform/domain/client-settings";
+import type { PreferredChannel } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { ABSENT_VALUE } from "~/shared/design-system/lib";
 import { SettingsRow, SettingsRows } from "~/shared/design-system/portal";
 

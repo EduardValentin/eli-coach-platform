@@ -3,7 +3,7 @@ import type {
   MarkNotificationReadUseCase,
   NotificationBell,
   ReadNotificationBellUseCase,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

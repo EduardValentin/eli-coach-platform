@@ -2,8 +2,8 @@ import { joinBasePath } from "~/shared/http/base-path";
 import type {
   RefundDueNotice,
   RefundNotifications,
-} from "@eli-coach-platform/domain/coaching-subscription";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";

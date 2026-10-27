@@ -1,4 +1,4 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { Button, DisabledActionHint } from "~/shared/design-system/primitives";
 import { toast } from "~/shared/design-system/toast";

@@ -1,9 +1,9 @@
-import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
+import { COACHING_STATUSES } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   OFFERED_CANCELLATION_RULES,
   REFUND_REASONS,
   START_NOW_REFUSALS,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { z } from "zod";
 
 import { coachingBundleIdSchema } from "./bundle-cards";

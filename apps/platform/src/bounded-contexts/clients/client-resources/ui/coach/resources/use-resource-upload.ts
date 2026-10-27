@@ -1,7 +1,7 @@
 import type {
   ResourceDetailsProblems,
   ResourceRefusal,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { useUploadState } from "~/shared/http";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useFetcher } from "react-router";

@@ -4,8 +4,8 @@ import {
   portalReachOf,
   type ClientReach,
   type ClientReachReading,
-} from "@eli-coach-platform/domain/client";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/clients/domain/client";
+import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
 import { eq, type SQL } from "drizzle-orm";
 
 import { coachingStandingColumns } from "~/bounded-contexts/clients/clients/data/coaching-standing-columns.server";

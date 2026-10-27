@@ -1,4 +1,4 @@
-import type { ExerciseVideoStore } from "@eli-coach-platform/domain/exercise";
+import type { ExerciseVideoStore } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 
 import { FilesystemExerciseVideoStore } from "./filesystem-exercise-video-store.server";
 import { isReadyMediaRoot } from "~/shared/private-files/filesystem/media-root.server";

@@ -1,4 +1,4 @@
-import type { RecipeIcon } from "@eli-coach-platform/domain/nutrition";
+import type { RecipeIcon } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import {
   Beef,
   CakeSlice,

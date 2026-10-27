@@ -4,7 +4,7 @@ import type {
   ListClientCheckInsUseCase,
   RequestCheckInResult,
   RequestCheckInUseCase,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";

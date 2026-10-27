@@ -1,7 +1,7 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import type { PortalReach } from "@eli-coach-platform/domain/client";
-import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
-import type { ReviewStamps } from "@eli-coach-platform/domain/client-onboarding";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
+import type { PortalReach } from "~/bounded-contexts/clients/clients/domain/client";
+import { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
+import type { ReviewStamps } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

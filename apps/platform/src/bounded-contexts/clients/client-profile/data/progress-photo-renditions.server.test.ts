@@ -1,6 +1,6 @@
 import { crc32 } from "node:zlib";
 
-import type { ProgressPhotoRendition } from "@eli-coach-platform/domain/client-profile";
+import type { ProgressPhotoRendition } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 

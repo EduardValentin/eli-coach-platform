@@ -1,4 +1,4 @@
-import type { ClientInvitationMessage } from "@eli-coach-platform/domain/client-invitation";
+import type { ClientInvitationMessage } from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import {
   InMemoryProductEmail,
   type ProductEmail,

@@ -10,7 +10,7 @@ import {
   type ExerciseRemoval,
   type ExerciseReplacement,
   type ExerciseVideoSnapshot,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { and, asc, eq, sql } from "drizzle-orm";
 
 import {

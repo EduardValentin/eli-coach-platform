@@ -2,7 +2,7 @@ import {
   COACHING_BUNDLES,
   type CoachingBundle,
   type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 

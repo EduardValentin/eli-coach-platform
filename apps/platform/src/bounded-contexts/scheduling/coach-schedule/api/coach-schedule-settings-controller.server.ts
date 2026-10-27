@@ -2,7 +2,7 @@ import type {
   CoachScheduleSettingsProblem,
   GetCoachScheduleSettingsUseCase,
   UpdateCoachScheduleSettingsUseCase,
-} from "@eli-coach-platform/domain/coach-schedule";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-schedule";
 import { resolveFieldErrorCode } from "~/shared/http/index.server";
 import type { ActionFunctionArgs } from "react-router";
 

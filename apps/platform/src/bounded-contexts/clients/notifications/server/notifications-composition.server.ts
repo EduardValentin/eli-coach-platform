@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { ClientReach } from "@eli-coach-platform/domain/client";
+import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   MarkAllNotificationsReadUseCase,
   MarkNotificationReadUseCase,
@@ -7,8 +7,8 @@ import {
   type NotificationExpirySource,
   type NotificationInbox,
   type NotificationIncidents,
-} from "@eli-coach-platform/domain/notification";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { Clock } from "~/bounded-contexts/clients/notifications/domain/clock";
 
 import { NotificationBellController } from "~/bounded-contexts/clients/notifications/api/notification-bell-controller.server";
 import { PostgresNotificationInbox } from "~/bounded-contexts/clients/notifications/data/postgres-notification-inbox.server";

@@ -3,7 +3,7 @@ import {
   type ResourceBrowseInput,
   type ResourceSortDirection,
   type ResourceSortKey,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 
 export const RESOURCE_BROWSE_PARAMS = {
   tag: "tag",

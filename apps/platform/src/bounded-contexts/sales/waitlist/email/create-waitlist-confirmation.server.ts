@@ -1,5 +1,5 @@
 import type { ProductEmail } from "~/shared/email/index.server";
-import type { WaitlistConfirmation } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistConfirmation } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 
 import { EmailWaitlistConfirmation } from "./email-waitlist-confirmation.server";
 

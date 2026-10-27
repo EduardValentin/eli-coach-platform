@@ -1,8 +1,8 @@
 import {
   CheckIn,
   type CheckInSeriesSnapshot,
-} from "@eli-coach-platform/domain/check-in";
-import type { NotificationInbox } from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type { NotificationInbox } from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
 
 import { InboxCheckInNotices } from "./inbox-check-in-notices.server";

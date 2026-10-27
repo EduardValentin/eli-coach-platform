@@ -1,5 +1,5 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
+import { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { describe, expect, it, vi } from "vitest";
 
 import {

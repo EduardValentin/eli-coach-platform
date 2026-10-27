@@ -1,11 +1,11 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   getCoachingBundle,
   type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
-import { PurchasedSubscription } from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import { PurchasedSubscription } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type pg from "pg";
 
 export type ClientIdentity = {

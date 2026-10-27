@@ -3,7 +3,7 @@ import {
   ClientSettings,
   type ClientSettingsChanges,
   type ClientSettingsSource,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { eq } from "drizzle-orm";
 
 import { clientSettingsTable } from "~/bounded-contexts/clients/client-profile/data/schema.server";

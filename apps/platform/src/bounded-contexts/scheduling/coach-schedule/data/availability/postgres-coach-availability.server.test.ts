@@ -1,7 +1,7 @@
 import {
   CoachAvailability,
   type CoachAvailabilityProps,
-} from "@eli-coach-platform/domain/coach-availability";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { DatabaseClient } from "~/shared/database";
 import { describe, expect, it, vi } from "vitest";
 

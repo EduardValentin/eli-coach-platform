@@ -1,9 +1,9 @@
 import type { DatabaseClient } from "~/shared/database";
-import { Client } from "@eli-coach-platform/domain/client";
+import { Client } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   PurchasedSubscription,
   type CoachingPurchase,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresCoachingPurchases } from "./purchases-repository.server";

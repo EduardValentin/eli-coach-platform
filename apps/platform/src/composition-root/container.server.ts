@@ -1,9 +1,10 @@
 import { buildRedirectPath } from "~/shared/http/base-path";
 import { resolveFeatureFlagOverridesMode } from "~/composition-root/feature-flag-overrides/feature-flags-config.server";
-import { RESOURCE_RENDITIONS } from "@eli-coach-platform/domain/client-resources";
-import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
-import { RECIPE_PHOTO_RENDITION } from "@eli-coach-platform/domain/nutrition";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+import { RESOURCE_RENDITIONS } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
+import { GetFeatureFlagsUseCase } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import { RECIPE_PHOTO_RENDITION } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
+import { systemClock } from "~/shared/clock/system-clock";
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import { PostgresFeatureFlagRepository } from "~/composition-root/feature-flag-overrides/feature-flags-repository.server";
 import {
   createBotDetectionConfig,
@@ -124,7 +125,7 @@ export function createPlatformContainer(options: {
 }): PlatformContainer {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
-  const clock: Clock = { now: () => new Date() };
+  const clock = systemClock();
   const incidents = createConsoleLogger();
   const botDetection = createBotDetectionConfig(environment);
   const botVerifier = createBotVerifier(environment);
@@ -146,7 +147,9 @@ export function createPlatformContainer(options: {
         })
       : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
   const featureFlags = featureFlagOverrides.featureFlags;
-  const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
+  const emailAcceptance = createEmailAcceptance(
+    resolveEmailSubaddressPolicy(environment),
+  );
   const linkTokens = {
     generator: createTokenGenerator(),
     hasher: createTokenHasher(),
@@ -171,7 +174,7 @@ export function createPlatformContainer(options: {
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
-    emailSubaddresses,
+    emailAcceptance,
     featureFlags,
     incidents,
     privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
@@ -193,7 +196,7 @@ export function createPlatformContainer(options: {
     coachTime: coachSchedule.handles.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
-    emailSubaddresses,
+    emailAcceptance,
     featureFlags,
     incidents,
     meetingRoom: coachSchedule.handles.meetingRoom,
@@ -300,6 +303,7 @@ export function createPlatformContainer(options: {
     coachingPeriods: [checkIns.handles.coachingPeriodHandler],
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
+    emailAcceptance,
     featureFlags,
     incidents,
     linkTokens,
@@ -356,7 +360,7 @@ export function createPlatformContainer(options: {
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
-      emailSubaddresses,
+      emailAcceptance,
       incidents,
       managementAuth: {
         authenticator: managementAuthenticator,

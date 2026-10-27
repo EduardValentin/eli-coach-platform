@@ -6,7 +6,7 @@ import {
   defaultResourceSortDirection,
   MAX_RESOURCE_TAG_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { Toaster } from "~/shared/design-system/toast";
 import {
   cleanup,

@@ -1,4 +1,4 @@
-import type { ResourceFileKind } from "@eli-coach-platform/domain/client-resources";
+import type { ResourceFileKind } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import { cn } from "~/shared/design-system/lib";
 import {
   FileImage,

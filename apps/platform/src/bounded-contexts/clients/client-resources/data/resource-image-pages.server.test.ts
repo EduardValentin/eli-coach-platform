@@ -3,7 +3,7 @@ import { crc32 } from "node:zlib";
 import {
   RESOURCE_RENDITIONS,
   type ResourceImageRendering,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 

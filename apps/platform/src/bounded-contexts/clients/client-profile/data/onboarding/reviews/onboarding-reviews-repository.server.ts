@@ -9,7 +9,7 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingReviews,
   type ReviewStamps,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm";
 
 import type { CoachingSeedWriter } from "~/bounded-contexts/clients/client-profile/data/onboarding/client-profile-writers.server";

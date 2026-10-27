@@ -2,7 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   ClientRoster,
   ClientRosterEntry,
-} from "@eli-coach-platform/domain/client-roster";
+} from "~/bounded-contexts/clients/clients/domain/client-roster";
 import { desc, eq } from "drizzle-orm";
 
 import { coachingStandingColumns } from "~/bounded-contexts/clients/clients/data/coaching-standing-columns.server";

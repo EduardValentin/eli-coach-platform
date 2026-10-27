@@ -3,12 +3,12 @@ import {
   type OnboardingAnswer,
   type OnboardingField,
   type OnboardingFormAnswers,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   toCanonicalMeasure,
   toDisplayMeasure,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 
 import {
   measureKindOf,

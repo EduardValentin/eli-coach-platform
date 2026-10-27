@@ -14,7 +14,7 @@ import type {
   RequestedByteRange,
   ServedByteRange,
   StagedExerciseVideo,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 
 import { isStorageKeySegment } from "~/shared/private-files/storage-key-segment.server";
 import { streamWhenPulled } from "~/shared/private-files/filesystem/media-files.server";

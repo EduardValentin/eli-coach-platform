@@ -18,7 +18,7 @@ import {
   type ExerciseUnit,
   type ExerciseVideoFormat,
   type Muscle,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { sql, type SQL } from "drizzle-orm";
 import {
   boolean,

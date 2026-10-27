@@ -4,7 +4,7 @@ import {
   MAX_RESOURCE_TITLE_LENGTH,
   type ResourceDetailsProblems,
   type ResourceFileKind,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import type { UploadState } from "~/shared/http";
 import {
   ResponsiveSheetDialog,

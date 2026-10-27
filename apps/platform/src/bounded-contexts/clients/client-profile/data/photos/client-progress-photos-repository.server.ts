@@ -4,7 +4,7 @@ import {
   type ProgressPhotoSnapshot,
   type ProgressPhotoView,
   type ProgressPhotos,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { eq } from "drizzle-orm";
 
 import { clientProgressPhotosTable } from "~/bounded-contexts/clients/client-profile/data/schema.server";

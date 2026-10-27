@@ -1,4 +1,4 @@
-import { MAX_RECIPE_PHOTO_BYTES } from "@eli-coach-platform/domain/nutrition";
+import { MAX_RECIPE_PHOTO_BYTES } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 
 import type { RecipeProblems } from "~/bounded-contexts/programs/nutrition-library/public/recipes";
 

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { RecipePhotoIds } from "@eli-coach-platform/domain/nutrition";
+import type { RecipePhotoIds } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 
 export class RandomRecipePhotoIds implements RecipePhotoIds {
   generate(): string {

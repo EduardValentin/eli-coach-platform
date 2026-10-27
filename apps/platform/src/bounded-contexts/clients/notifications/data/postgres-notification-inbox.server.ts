@@ -4,7 +4,7 @@ import {
   type NotificationDraft,
   type NotificationInbox,
   type NotificationRecipientSnapshot,
-} from "@eli-coach-platform/domain/notification";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
 import { and, count, desc, eq, gte, isNull, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 

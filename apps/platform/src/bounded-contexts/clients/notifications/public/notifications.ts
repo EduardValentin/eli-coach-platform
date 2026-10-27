@@ -1,4 +1,4 @@
-import type { NotificationParty } from "@eli-coach-platform/domain/notification";
+import type { NotificationParty } from "~/bounded-contexts/clients/notifications/domain/notification";
 import { z } from "zod";
 
 const notificationSchema = z.object({

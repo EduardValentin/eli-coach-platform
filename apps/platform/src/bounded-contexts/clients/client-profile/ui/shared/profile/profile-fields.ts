@@ -13,8 +13,8 @@ import {
   type CycleMode,
   type SessionMinutes,
   type TrainingDays,
-} from "@eli-coach-platform/domain/client-profile";
-import type { ClientProfileProblems } from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
+import type { ClientProfileProblems } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   CANONICAL_MEASURE_UNITS,
   measureUnitLabel,
@@ -22,8 +22,8 @@ import {
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
-import { WEIGHT_MEASUREMENT_FIELD } from "@eli-coach-platform/domain/measurement";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
+import { WEIGHT_MEASUREMENT_FIELD } from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import { z } from "zod";
 
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";

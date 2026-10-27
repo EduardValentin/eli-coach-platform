@@ -2,7 +2,7 @@ import type {
   OnboardingField,
   OnboardingFormAnswers,
   OnboardingFormDefinition,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { cn } from "~/shared/design-system/lib";
 import {
   Button,

@@ -1,4 +1,4 @@
-import { PaymentCard } from "@eli-coach-platform/domain/coaching-subscription";
+import { PaymentCard } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
 import { StripePaymentCustomerCards } from "./stripe-payment-customer-cards.server";

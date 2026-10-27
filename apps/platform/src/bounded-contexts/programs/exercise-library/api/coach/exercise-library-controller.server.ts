@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ExerciseNames,
   MAX_EXERCISE_VIDEO_BYTES,
@@ -18,7 +18,7 @@ import {
   type RestoreExerciseUseCase,
   type StageExerciseVideoUseCase,
   type StagedExerciseVideo,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import {
   createBadRequestResponse,
   createPrivateMediaResponse,

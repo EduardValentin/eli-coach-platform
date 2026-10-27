@@ -1,10 +1,10 @@
 import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
-import type { ClientMeasurementEntry } from "@eli-coach-platform/domain/client-profile";
+import type { ClientMeasurementEntry } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   measurementEntryOf,
   type ClientMeasurementsSource,
   type MeasurementEntry,
-} from "@eli-coach-platform/domain/measurement";
+} from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import { asc, eq } from "drizzle-orm";
 
 import { clientMeasurementsTable } from "~/bounded-contexts/clients/client-profile/data/schema.server";

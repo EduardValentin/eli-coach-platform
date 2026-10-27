@@ -4,7 +4,7 @@ import { normalizeBasePath } from "~/shared/http/base-path";
 import {
   WAITLIST_MODE_FEATURE_FLAG,
   type FeatureFlagSet,
-} from "@eli-coach-platform/domain/feature-flag";
+} from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 
 import { runWithFeatureFlagOverrides } from "./feature-flag-override-store.server";
 

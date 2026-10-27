@@ -1,4 +1,4 @@
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { MiddlewareFunction } from "react-router";
 
 import { createFeatureFlagOverrideReader } from "./feature-flag-override-reader.server";

@@ -1,4 +1,4 @@
-import type { RecipeMacrosSnapshot } from "@eli-coach-platform/domain/nutrition";
+import type { RecipeMacrosSnapshot } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import { ValueTile } from "~/shared/design-system/primitives";
 
 import { MACRO_TILE_TONE } from "~/bounded-contexts/programs/nutrition-library/ui/shared/nutrition-tints";

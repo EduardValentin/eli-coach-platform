@@ -5,7 +5,7 @@ import {
   resourceFileKindOfExtension,
   type ResourceFileKind,
   type ResourceRefusal,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 
 export const RESOURCE_UPLOAD_ACCEPT = RESOURCE_FILE_EXTENSIONS.map(
   (extension) => `.${extension}`,

@@ -2,13 +2,13 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   GetCoachScheduleSettingsUseCase,
   UpdateCoachScheduleSettingsUseCase,
-} from "@eli-coach-platform/domain/coach-schedule";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-schedule";
 import type {
   CoachAvailabilitySource,
   CoachCalendar,
-} from "@eli-coach-platform/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-meeting-room";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+import type { Clock } from "~/bounded-contexts/scheduling/coach-schedule/domain/clock";
 
 import { CoachScheduleSettingsController } from "~/bounded-contexts/scheduling/coach-schedule/api/coach-schedule-settings-controller.server";
 import { PostgresCoachAvailability } from "~/bounded-contexts/scheduling/coach-schedule/data/availability/postgres-coach-availability.server";

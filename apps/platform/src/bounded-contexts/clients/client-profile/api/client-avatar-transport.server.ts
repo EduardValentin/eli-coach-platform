@@ -4,7 +4,7 @@ import type {
   RemoveOwnClientAvatarUseCase,
   UploadClientAvatarAsCoachUseCase,
   UploadOwnClientAvatarUseCase,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,

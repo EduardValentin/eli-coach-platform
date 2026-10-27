@@ -1,7 +1,7 @@
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type ReconcileSubscriptionEventUseCase,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { toSubscriptionEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/coaching-subscription-change.server";
 import type {
   PaymentEventHandling,

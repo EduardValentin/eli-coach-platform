@@ -9,8 +9,8 @@ import type {
   OnboardingConsents,
   OnboardingDraft,
   OnboardingSubmission,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { MeasurementEntry } from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import { eq, sql, type SQL } from "drizzle-orm";
 
 import type {

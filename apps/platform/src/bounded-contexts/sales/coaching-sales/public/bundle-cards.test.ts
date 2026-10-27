@@ -1,4 +1,4 @@
-import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
+import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import { describe, expect, it } from "vitest";
 
 import { formatEuros, presentBundleCards, renewalLabel } from "./bundle-cards";

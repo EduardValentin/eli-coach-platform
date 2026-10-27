@@ -1,4 +1,4 @@
-import type { ClientResourceStore } from "@eli-coach-platform/domain/client-resources";
+import type { ClientResourceStore } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 
 import { FilesystemClientResourceStore } from "./filesystem-client-resource-store.server";
 import { isReadyMediaRoot } from "~/shared/private-files/filesystem/media-root.server";

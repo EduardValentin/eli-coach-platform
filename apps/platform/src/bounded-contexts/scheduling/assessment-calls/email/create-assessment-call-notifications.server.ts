@@ -1,4 +1,4 @@
-import type { AssessmentCallNotifications } from "@eli-coach-platform/domain/assessment-call";
+import type { AssessmentCallNotifications } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import {

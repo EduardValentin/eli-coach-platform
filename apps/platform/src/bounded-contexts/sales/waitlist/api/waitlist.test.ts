@@ -4,7 +4,7 @@ import { waitlistJoinResponseSchema } from "~/bounded-contexts/sales/waitlist/pu
 import type {
   GetWaitlistUseCase,
   JoinWaitlistUseCase,
-} from "@eli-coach-platform/domain/waitlist";
+} from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 
 import { handleHttpErrorResponse } from "~/shared/http/index.server";
 import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";

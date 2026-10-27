@@ -1,4 +1,4 @@
-import { STEPS_AFTER_SUBMISSION } from "@eli-coach-platform/domain/client-journey";
+import { STEPS_AFTER_SUBMISSION } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import { z } from "zod";
 
 export type ProgramStatusKind = (typeof STEPS_AFTER_SUBMISSION)[number];

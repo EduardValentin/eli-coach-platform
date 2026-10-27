@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import {
   COACHING_BUNDLES,
   type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";

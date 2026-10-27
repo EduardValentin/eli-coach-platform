@@ -1,7 +1,7 @@
 import {
   PaymentCard,
   type PaymentCustomerCards,
-} from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 
 const TEST_CARD = PaymentCard.of({
   brand: "visa",

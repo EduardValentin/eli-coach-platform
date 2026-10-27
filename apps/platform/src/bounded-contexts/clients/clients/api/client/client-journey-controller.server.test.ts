@@ -1,10 +1,10 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
 import {
   ClientJourney,
   type MarkWelcomeSeenUseCase,
   type ReadClientJourneyUseCase,
-} from "@eli-coach-platform/domain/client-journey";
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";

@@ -5,12 +5,12 @@ import type {
   CheckInNotification,
   CheckInSeriesInboxNotice,
   CheckInSeriesNotification,
-} from "@eli-coach-platform/domain/check-in";
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type {
   NotificationDraft,
   NotificationInbox,
-} from "@eli-coach-platform/domain/notification";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
 
 import { CheckInNotificationDrafts } from "~/bounded-contexts/clients/check-ins/data/inbox/check-in-notification-drafts.server";
 

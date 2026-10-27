@@ -3,8 +3,8 @@ import { createHash, randomBytes } from "node:crypto";
 import type {
   CreateDownloadTokenResult,
   PayloadDigestGenerator,
-} from "@eli-coach-platform/domain/acquisition";
-import type { DownloadTokenHasher } from "@eli-coach-platform/domain/download-grant";
+} from "~/bounded-contexts/sales/store/domain/acquisition";
+import type { DownloadTokenHasher } from "~/bounded-contexts/sales/store/domain/download-grant";
 
 export class RandomDownloadTokenGenerator {
   create(): CreateDownloadTokenResult {

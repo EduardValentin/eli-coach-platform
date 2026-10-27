@@ -2,8 +2,8 @@ import {
   CoachMeetingRoom,
   type CoachMeetingRoomChanges,
   type CoachMeetingRoomSource,
-} from "@eli-coach-platform/domain/coach-meeting-room";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+import type { Clock } from "~/bounded-contexts/scheduling/coach-schedule/domain/clock";
 import type { DatabaseClient } from "~/shared/database";
 import { eq } from "drizzle-orm";
 

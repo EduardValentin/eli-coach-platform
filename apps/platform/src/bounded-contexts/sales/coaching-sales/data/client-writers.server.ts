@@ -2,7 +2,7 @@ import type { DatabaseTransaction } from "~/shared/database";
 import type {
   Client,
   CoachingStanding,
-} from "@eli-coach-platform/domain/client";
+} from "~/bounded-contexts/clients/clients/domain/client";
 
 export type ClientWriter = (
   transaction: DatabaseTransaction,

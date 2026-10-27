@@ -2,7 +2,7 @@ import { appSchema } from "~/shared/database";
 import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
-} from "@eli-coach-platform/domain/assessment-call";
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { sql } from "drizzle-orm";
 import {
   char,

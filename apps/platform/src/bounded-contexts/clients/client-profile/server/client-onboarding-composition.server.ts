@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { ClientIdentities } from "@eli-coach-platform/domain/client";
+import type { ClientIdentities } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   AnswerOnboardingDetailsUseCase,
   ApproveOnboardingAnswersUseCase,
@@ -15,14 +15,14 @@ import {
   type OnboardingClients,
   type OnboardingReviewStamps,
   type OnboardingSubmissionStamps,
-} from "@eli-coach-platform/domain/client-onboarding";
-import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { AttachProgressPhotosUseCase } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type {
   ClientMeasurementsSource,
   MeasurementIds,
-} from "@eli-coach-platform/domain/measurement";
-import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ClientSettingsSource } from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/measurement";
+import type { Clock } from "~/bounded-contexts/clients/client-profile/domain/clock";
+import type { ClientSettingsSource } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { ClientOnboardingController } from "~/bounded-contexts/clients/client-profile/api/onboarding/client-onboarding-controller.server";

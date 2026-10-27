@@ -1,0 +1,900 @@
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  AssessmentCall,
+  type AssessmentCallReader,
+  type AssessmentCallSnapshot,
+} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { Client } from "~/bounded-contexts/clients/clients/domain/client";
+import type { PriceTier, PricingEligibility } from "../coaching-bundle";
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
+import {
+  CoachingSalesWindow,
+  PaymentLink,
+  type CallSalesStates,
+  type CoachingSalesIncidents,
+  type PaymentLinks,
+  type PaymentLinkState,
+  type PaymentLinkTokenHasher,
+} from "../payment-link";
+
+import type { CheckoutSessions } from "./checkout-sessions";
+import type {
+  CoachingPurchaseOutcome,
+  CoachingPurchases,
+} from "./coaching-purchases";
+import type { CheckoutCompletion } from "./coaching-subscription";
+import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
+import type { PaidClientAdmission } from "./paid-client-admission";
+import type { PaymentCheckout } from "./payment-checkout";
+import type { PaymentSubscriptions } from "./payment-subscriptions";
+import { PurchasedSubscription } from "./purchased-subscription";
+import { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
+import { RecordCheckoutCompletedUseCase } from "./record-checkout-completed-use-case";
+import { StartCheckoutUseCase } from "./start-checkout-use-case";
+
+const NOW = new Date("2026-09-26T10:00:00.000Z");
+const RAW_TOKEN = "raw-payment-link-token";
+const TOKEN_SHA256 = "b".repeat(64);
+const SUCCESS_URL = "https://evoa.example/coaching/paid";
+const CANCEL_URL = "https://evoa.example/pay/raw-payment-link-token";
+
+const clock = { now: () => NOW };
+
+const call: AssessmentCallSnapshot = AssessmentCall.reconstitute({
+  id: "call-1",
+  firstName: "Ana",
+  lastName: "Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training around a desk job.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
+  startsAt: new Date("2026-09-25T15:00:00.000Z"),
+  visitorTimeZone: "Europe/Bucharest",
+  coachTimeZone: "Europe/Bucharest",
+  bookedAt: new Date("2026-09-20T09:12:00.000Z"),
+}).toSnapshot();
+
+function linkIn(props: { state: PaymentLinkState; expiresAt: Date }) {
+  return PaymentLink.reconstitute({
+    id: "link-1",
+    assessmentCallId: call.id,
+    tokenSha256: TOKEN_SHA256,
+    createdAt: new Date("2026-09-25T16:00:00.000Z"),
+    expiresAt: props.expiresAt,
+    state: props.state,
+    paymentCustomerId: null,
+  });
+}
+
+const usableLink = linkIn({
+  state: "valid",
+  expiresAt: new Date("2026-10-25T16:00:00.000Z"),
+});
+
+const completion: CheckoutCompletion = {
+  checkoutSessionId: "cs_2",
+  paymentCustomerId: "cus_1",
+  paymentSubscriptionId: "sub_1",
+  paymentIntentId: "pi_1",
+  amountCents: 44700,
+  currency: "eur",
+  customerEmail: "ana@example.com",
+  paidAt: new Date("2026-09-26T10:05:00.000Z"),
+  assessmentCallId: call.id,
+  bundleId: "3-months",
+  tier: "regular",
+  startChoice: "waiting",
+};
+
+function createIncidents(): CoachingSalesIncidents {
+  return {
+    salesModeReadFailed: vi.fn(),
+    paymentLinkEmailFailed: vi.fn(),
+  };
+}
+
+function openSalesWindow(): CoachingSalesWindow {
+  return new CoachingSalesWindow({
+    featureFlags: {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
+    },
+    incidents: createIncidents(),
+  });
+}
+
+function closedSalesWindow(): CoachingSalesWindow {
+  return new CoachingSalesWindow({
+    featureFlags: {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
+    },
+    incidents: createIncidents(),
+  });
+}
+
+function createCalls(
+  found: AssessmentCallSnapshot | null,
+): AssessmentCallReader {
+  return { findById: vi.fn().mockResolvedValue(found) };
+}
+
+function createCallSalesStates(
+  states: Awaited<ReturnType<CallSalesStates["forCalls"]>>,
+): CallSalesStates {
+  return { forCalls: vi.fn().mockResolvedValue(states) };
+}
+
+function createPaymentLinks(options: {
+  found: PaymentLink | null;
+  paymentCustomerId: string | null;
+}): PaymentLinks {
+  return {
+    findByTokenSha256: vi.fn().mockResolvedValue(options.found),
+    issue: vi.fn(),
+    voidOtherLinksOf: vi.fn(),
+    void: vi.fn(),
+    findPaymentCustomerForCall: vi
+      .fn()
+      .mockResolvedValue(options.paymentCustomerId),
+    rememberPaymentCustomer: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+function createPricingEligibility(tier: PriceTier): PricingEligibility {
+  return {
+    tierForEmail: vi.fn().mockResolvedValue(tier),
+    tiersForEmails: vi.fn(),
+  };
+}
+
+function createTokenHasher(): PaymentLinkTokenHasher {
+  return { sha256: vi.fn().mockReturnValue(TOKEN_SHA256) };
+}
+
+function createPaymentCheckout(
+  completed: CheckoutCompletion | null,
+): PaymentCheckout {
+  return {
+    createCustomer: vi.fn().mockResolvedValue({ id: "cus_new" }),
+    createSession: vi
+      .fn()
+      .mockResolvedValue({ id: "cs_2", url: "https://pay.example/cs_2" }),
+    expireSession: vi.fn().mockResolvedValue(undefined),
+    findCompletedSession: vi.fn().mockResolvedValue(completed),
+  };
+}
+
+function createCheckoutSessions(
+  open: readonly { id: string }[],
+): CheckoutSessions {
+  return {
+    remember: vi.fn().mockResolvedValue(undefined),
+    findOpenForCall: vi.fn().mockResolvedValue(open),
+    markExpired: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+const PAID_CLIENT_ID = "client-1";
+
+function createPurchases(outcome: CoachingPurchaseOutcome) {
+  return {
+    recordCompletion: vi.fn().mockResolvedValue(outcome),
+  } satisfies CoachingPurchases;
+}
+
+function createAdmission() {
+  return {
+    admit: vi.fn().mockResolvedValue(undefined),
+  } satisfies PaidClientAdmission;
+}
+
+function startCheckoutDependencies(
+  overrides?: Partial<ConstructorParameters<typeof StartCheckoutUseCase>[0]>,
+) {
+  return {
+    calls: createCalls(call),
+    callSalesStates: createCallSalesStates(
+      new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
+    ),
+    checkoutSessions: createCheckoutSessions([]),
+    clock,
+    emailAcceptance: createEmailAcceptance("allowed"),
+    paymentCheckout: createPaymentCheckout(null),
+    paymentLinks: createPaymentLinks({
+      found: usableLink,
+      paymentCustomerId: null,
+    }),
+    pricingEligibility: createPricingEligibility("regular"),
+    salesWindow: openSalesWindow(),
+    tokenHasher: createTokenHasher(),
+    ...overrides,
+  };
+}
+
+const startCommand = {
+  rawToken: RAW_TOKEN,
+  bundleId: "3-months",
+  startChoice: "waiting",
+  successUrl: SUCCESS_URL,
+  cancelUrl: CANCEL_URL,
+} as const;
+
+describe("StartCheckoutUseCase", () => {
+  it("answers closed without touching anything while sales are closed", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      salesWindow: closedSalesWindow(),
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(startCommand);
+
+    // assert
+    expect(result).toEqual({ status: "closed" });
+    expect(dependencies.paymentLinks.findByTokenSha256).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+  });
+
+  it("answers invalid_link for an implausible token without a lookup", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies();
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({ ...startCommand, rawToken: "abc" });
+
+    // assert
+    expect(result).toEqual({ status: "invalid_link" });
+    expect(dependencies.tokenHasher.sha256).not.toHaveBeenCalled();
+    expect(dependencies.paymentLinks.findByTokenSha256).not.toHaveBeenCalled();
+  });
+
+  it.each<[string, PaymentLink | null]>([
+    ["an unknown", null],
+    ["an expired", linkIn({ state: "valid", expiresAt: NOW })],
+    ["a voided", linkIn({ state: "voided", expiresAt: usableLink.expiresAt })],
+    ["a spent", linkIn({ state: "spent", expiresAt: usableLink.expiresAt })],
+  ])("answers invalid_link for %s link", async (_label, found) => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      paymentLinks: createPaymentLinks({ found, paymentCustomerId: null }),
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(startCommand);
+
+    // assert
+    expect(result).toEqual({ status: "invalid_link" });
+    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+  });
+
+  it("answers unknown_bundle without creating a customer or a session", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies();
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      ...startCommand,
+      bundleId: "12-months",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unknown_bundle" });
+    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+    expect(dependencies.checkoutSessions.remember).not.toHaveBeenCalled();
+  });
+
+  it("answers invalid_link when the link's call no longer exists", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      calls: createCalls(null),
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(startCommand);
+
+    // assert
+    expect(result).toEqual({ status: "invalid_link" });
+    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+  });
+
+  it("answers invalid_link for a still-valid link whose call is already paid, without provider calls", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      callSalesStates: createCallSalesStates(
+        new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
+      ),
+      checkoutSessions: createCheckoutSessions([{ id: "cs_1" }]),
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(startCommand);
+
+    // assert
+    expect(result).toEqual({ status: "invalid_link" });
+    expect(dependencies.callSalesStates.forCalls).toHaveBeenCalledWith([
+      call.id,
+    ]);
+    expect(dependencies.pricingEligibility.tierForEmail).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.expireSession).not.toHaveBeenCalled();
+    expect(dependencies.checkoutSessions.markExpired).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+  });
+
+  it("creates and remembers a payment customer on the call's first checkout", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies();
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    await useCase.execute(startCommand);
+
+    // assert
+    expect(
+      dependencies.paymentLinks.findPaymentCustomerForCall,
+    ).toHaveBeenCalledWith(call.id);
+    expect(dependencies.paymentCheckout.createCustomer).toHaveBeenCalledWith({
+      email: call.visitorEmail,
+      assessmentCallId: call.id,
+    });
+    expect(
+      dependencies.paymentLinks.rememberPaymentCustomer,
+    ).toHaveBeenCalledWith(usableLink.id, "cus_new");
+    expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ customerId: "cus_new" }),
+    );
+  });
+
+  it("reuses the call's payment customer on a later checkout", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      paymentLinks: createPaymentLinks({
+        found: usableLink,
+        paymentCustomerId: "cus_1",
+      }),
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    await useCase.execute(startCommand);
+
+    // assert
+    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinks.rememberPaymentCustomer,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ customerId: "cus_1" }),
+    );
+  });
+
+  it("expires every open session of the call before creating the new one", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      checkoutSessions: createCheckoutSessions([
+        { id: "cs_voided_link" },
+        { id: "cs_current_link" },
+      ]),
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    await useCase.execute(startCommand);
+
+    // assert
+    expect(dependencies.checkoutSessions.findOpenForCall).toHaveBeenCalledWith(
+      call.id,
+    );
+    expect(
+      vi.mocked(dependencies.paymentCheckout.expireSession).mock.calls,
+    ).toEqual([["cs_voided_link"], ["cs_current_link"]]);
+    expect(
+      vi.mocked(dependencies.checkoutSessions.markExpired).mock.calls,
+    ).toEqual([["cs_voided_link"], ["cs_current_link"]]);
+    const expired = vi.mocked(dependencies.paymentCheckout.expireSession).mock
+      .invocationCallOrder;
+    const marked = vi.mocked(dependencies.checkoutSessions.markExpired).mock
+      .invocationCallOrder;
+    const [created] = vi.mocked(dependencies.paymentCheckout.createSession).mock
+      .invocationCallOrder;
+    expect(Math.max(...expired, ...marked)).toBeLessThan(created!);
+  });
+
+  it("answers invalid_link when one open session turns out paid, still expiring the others", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies({
+      checkoutSessions: createCheckoutSessions([
+        { id: "cs_paid" },
+        { id: "cs_unpaid" },
+      ]),
+      paymentCheckout: {
+        ...createPaymentCheckout(null),
+        findCompletedSession: vi
+          .fn()
+          .mockImplementation(async (id: string) =>
+            id === "cs_paid"
+              ? { ...completion, checkoutSessionId: "cs_paid" }
+              : null,
+          ),
+      },
+    });
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(startCommand);
+
+    // assert
+    expect(result).toEqual({ status: "invalid_link" });
+    expect(
+      vi.mocked(dependencies.paymentCheckout.expireSession).mock.calls,
+    ).toEqual([["cs_paid"], ["cs_unpaid"]]);
+    expect(
+      vi.mocked(dependencies.checkoutSessions.markExpired).mock.calls,
+    ).toEqual([["cs_unpaid"]]);
+    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+    expect(dependencies.checkoutSessions.remember).not.toHaveBeenCalled();
+  });
+
+  it("proceeds without expiring anything when the call has no open session", async () => {
+    // arrange
+    const dependencies = startCheckoutDependencies();
+    const useCase = new StartCheckoutUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(startCommand);
+
+    // assert
+    expect(result).toEqual({
+      status: "redirect",
+      url: "https://pay.example/cs_2",
+    });
+    expect(dependencies.paymentCheckout.expireSession).not.toHaveBeenCalled();
+    expect(dependencies.checkoutSessions.markExpired).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledOnce();
+  });
+
+  it.each<[PriceTier, number]>([
+    ["regular", 44700],
+    ["reduced", 37500],
+  ])(
+    "opens a session for 3 months at the %s tier charging %i cents and redirects to it",
+    async (tier, amountCents) => {
+      // arrange
+      const dependencies = startCheckoutDependencies({
+        paymentLinks: createPaymentLinks({
+          found: usableLink,
+          paymentCustomerId: "cus_1",
+        }),
+        pricingEligibility: createPricingEligibility(tier),
+      });
+      const useCase = new StartCheckoutUseCase(dependencies);
+
+      // act
+      const result = await useCase.execute(startCommand);
+
+      // assert
+      expect(result).toEqual({
+        status: "redirect",
+        url: "https://pay.example/cs_2",
+      });
+      expect(dependencies.pricingEligibility.tierForEmail).toHaveBeenCalledWith(
+        call.visitorEmail,
+      );
+      expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledWith({
+        customerId: "cus_1",
+        bundle: { id: "3-months", title: "3 Months", months: 3, amountCents },
+        currency: "eur",
+        metadata: {
+          purpose: "coaching-subscription",
+          assessmentCallId: call.id,
+          bundleId: "3-months",
+          tier,
+          startChoice: "waiting",
+        },
+        successUrl: SUCCESS_URL,
+        cancelUrl: CANCEL_URL,
+      });
+      expect(dependencies.checkoutSessions.remember).toHaveBeenCalledWith({
+        id: "cs_2",
+        paymentLinkId: usableLink.id,
+        bundleId: "3-months",
+        tier,
+        amountCents,
+        currency: "eur",
+        startChoice: "waiting",
+        createdAt: NOW,
+      });
+    },
+  );
+});
+
+function createSubscriptionIncidents() {
+  return {
+    subscriptionCancelled: vi.fn(),
+    subscriptionCancellationFailed: vi.fn(),
+    programStartedNow: vi.fn(),
+    subscriptionEventReconciled: vi.fn(),
+    refundSettled: vi.fn(),
+    paymentMethodSessionOpened: vi.fn(),
+    renewalHoldApplied: vi.fn(),
+    renewalHoldFailed: vi.fn(),
+    refundNotificationFailed: vi.fn(),
+    paymentEventRejected: vi.fn(),
+    paymentCardEventMirrored: vi.fn(),
+    paymentCardRefreshFailed: vi.fn(),
+    coachingEndNotPropagated: vi.fn(),
+    coachingPeriodNotPropagated: vi.fn(),
+    renewalHoldLiftFailed: vi.fn(),
+  } satisfies CoachingSubscriptionIncidents;
+}
+
+function createPaymentSubscriptions() {
+  return {
+    holdRenewal: vi.fn().mockResolvedValue(undefined),
+    liftRenewalHold: vi.fn().mockResolvedValue(undefined),
+    endNow: vi.fn(),
+    endAt: vi.fn(),
+    openPaymentMethodSession: vi.fn(),
+  } satisfies PaymentSubscriptions;
+}
+
+function recordCheckoutDependencies(purchaseOutcome: CoachingPurchaseOutcome) {
+  return {
+    admission: createAdmission(),
+    calls: createCalls(call),
+    incidents: createSubscriptionIncidents(),
+    paymentCheckout: createPaymentCheckout(completion),
+    paymentSubscriptions: createPaymentSubscriptions(),
+    purchases: createPurchases(purchaseOutcome),
+    clientIds: { generate: () => PAID_CLIENT_ID },
+    subscriptionIds: { generate: () => "subscription-1" },
+    clock,
+  };
+}
+
+const RECORDED: CoachingPurchaseOutcome = {
+  outcome: "recorded",
+  clientId: PAID_CLIENT_ID,
+};
+
+const CLIENT_RECORDED_EARLIER_ID = "client-recorded-earlier";
+
+const DUPLICATE: CoachingPurchaseOutcome = {
+  outcome: "duplicate_event",
+  clientId: CLIENT_RECORDED_EARLIER_ID,
+};
+
+describe("RecordCheckoutCompletedUseCase", () => {
+  it("records the client from the booking under a fresh id and the subscription the provider reports paid for the session under a fresh id, then admits the paid client, with no sales window consulted", async () => {
+    // arrange
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
+    expect(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).toHaveBeenCalledWith("cs_2");
+    expect(dependencies.purchases.recordCompletion).toHaveBeenCalledWith({
+      eventId: "evt_1",
+      receivedAt: NOW,
+      client: Client.admitted({
+        id: PAID_CLIENT_ID,
+        intake: {
+          assessmentCallId: "call-1",
+          firstName: "Ana",
+          lastName: "Popescu",
+          email: "ana@example.com",
+          dateOfBirth: "1994-03-14",
+          gender: "female",
+          primaryGoal: "build_strength",
+          country: "RO",
+          phone: "+40712345678",
+          bookingTimeZone: "Europe/Bucharest",
+        },
+        at: NOW,
+      }),
+      subscription: PurchasedSubscription.fromCompletedCheckout({
+        id: "subscription-1",
+        completion: completion,
+      }),
+    });
+    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+      clientId: PAID_CLIENT_ID,
+    });
+    expect(
+      dependencies.purchases.recordCompletion.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      dependencies.admission.admit.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it.each([
+    ["a recorded", RECORDED],
+    ["a replayed", DUPLICATE],
+  ])(
+    "holds the renewal of %s waiting payment until her program start, after admitting the client",
+    async (_label, outcome) => {
+      // arrange
+      const dependencies = recordCheckoutDependencies(outcome);
+      const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+      // act
+      await useCase.execute({ eventId: "evt_1", checkoutSessionId: "cs_2" });
+
+      // assert
+      expect(
+        dependencies.paymentSubscriptions.holdRenewal,
+      ).toHaveBeenCalledWith({
+        paymentSubscriptionId: "sub_1",
+        until: new Date("2026-10-10T10:05:00.000Z"),
+      });
+      expect(
+        dependencies.admission.admit.mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        dependencies.paymentSubscriptions.holdRenewal.mock
+          .invocationCallOrder[0] ?? 0,
+      );
+      expect(dependencies.incidents.renewalHoldApplied).toHaveBeenCalledWith({
+        paymentSubscriptionId: "sub_1",
+      });
+    },
+  );
+
+  it("holds no renewal when her program starts immediately", async () => {
+    // arrange
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    vi.mocked(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).mockResolvedValue({ ...completion, startChoice: "immediate" });
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
+    expect(
+      dependencies.paymentSubscriptions.holdRenewal,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed hold and propagates it so the payment event is delivered again, with the client already admitted", async () => {
+    // arrange
+    const failure = new Error("provider unavailable");
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    dependencies.paymentSubscriptions.holdRenewal.mockRejectedValue(failure);
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const recording = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+      clientId: PAID_CLIENT_ID,
+    });
+    expect(dependencies.incidents.renewalHoldFailed).toHaveBeenCalledWith({
+      paymentSubscriptionId: "sub_1",
+      error: failure,
+    });
+    expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
+  });
+
+  it("answers duplicate for a replayed event without raising an incident and admits the client recorded earlier again, never the unused fresh id", async () => {
+    // arrange
+    const dependencies = recordCheckoutDependencies(DUPLICATE);
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "duplicate", paymentCustomerId: "cus_1" });
+    expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
+    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+      clientId: CLIENT_RECORDED_EARLIER_ID,
+    });
+  });
+
+  it("answers already_paid, reports the unrecorded charge and neither admits nor holds anything when the call was already paid", async () => {
+    // arrange
+    const dependencies = recordCheckoutDependencies({
+      outcome: "call_already_paid",
+    });
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_2",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "already_paid" });
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_2",
+      reason: "call_already_paid",
+    });
+    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentSubscriptions.holdRenewal,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("propagates an admission failure without holding so the payment event is delivered again", async () => {
+    // arrange
+    const failure = new Error("identity provider unavailable");
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    dependencies.admission.admit.mockRejectedValue(failure);
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const recording = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+    expect(
+      dependencies.paymentSubscriptions.holdRenewal,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rejects the event, records nothing and admits nobody when the call does not exist", async () => {
+    // arrange
+    const dependencies = {
+      ...recordCheckoutDependencies(RECORDED),
+      calls: createCalls(null),
+    };
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "call_not_found" });
+    expect(dependencies.calls.findById).toHaveBeenCalledWith(
+      completion.assessmentCallId,
+    );
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_1",
+      reason: "call_not_found",
+    });
+    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
+    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+  });
+
+  it("answers unreadable_checkout, reports it and records nothing when the provider reports no paid coaching checkout for the session", async () => {
+    // arrange
+    const dependencies = {
+      ...recordCheckoutDependencies(RECORDED),
+      paymentCheckout: createPaymentCheckout(null),
+    };
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_3",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unreadable_checkout" });
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_3",
+      reason: "unreadable_checkout",
+    });
+    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
+    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+  });
+
+  it("propagates a failed read of the completion so the payment event is delivered again", async () => {
+    // arrange
+    const failure = new Error("provider unavailable");
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    vi.mocked(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).mockRejectedValue(failure);
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const recording = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
+  });
+});
+
+describe("ReadCheckoutConfirmationUseCase", () => {
+  it("answers closed without a lookup while sales are closed", async () => {
+    // arrange
+    const paymentCheckout = createPaymentCheckout(completion);
+    const useCase = new ReadCheckoutConfirmationUseCase({
+      paymentCheckout,
+      salesWindow: closedSalesWindow(),
+    });
+
+    // act
+    const result = await useCase.execute("cs_2");
+
+    // assert
+    expect(result).toEqual({ status: "closed" });
+    expect(paymentCheckout.findCompletedSession).not.toHaveBeenCalled();
+  });
+
+  it("answers not_paid for a session that has not completed", async () => {
+    // arrange
+    const useCase = new ReadCheckoutConfirmationUseCase({
+      paymentCheckout: createPaymentCheckout(null),
+      salesWindow: openSalesWindow(),
+    });
+
+    // act
+    const result = await useCase.execute("cs_2");
+
+    // assert
+    expect(result).toEqual({ status: "not_paid" });
+  });
+
+  it("confirms the paid bundle with the program waiting 14 days after payment", async () => {
+    // arrange
+    const paymentCheckout = createPaymentCheckout(completion);
+    const useCase = new ReadCheckoutConfirmationUseCase({
+      paymentCheckout,
+      salesWindow: openSalesWindow(),
+    });
+
+    // act
+    const result = await useCase.execute("cs_2");
+
+    // assert
+    expect(result).toEqual({
+      status: "paid",
+      bundleId: "3-months",
+      tier: "regular",
+      amountCents: 44700,
+      startChoice: "waiting",
+      paidAt: completion.paidAt,
+      email: "ana@example.com",
+      waitingStartsOn: new Date("2026-10-10T10:05:00.000Z"),
+    });
+    expect(paymentCheckout.findCompletedSession).toHaveBeenCalledWith("cs_2");
+  });
+});

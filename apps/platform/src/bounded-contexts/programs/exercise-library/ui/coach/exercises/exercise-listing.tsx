@@ -9,7 +9,7 @@ import {
   type ExerciseSortKey,
   type ExerciseStatus,
   type ExerciseTypeFilter,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import {
   CountedSelect,
   ListingToolbar,

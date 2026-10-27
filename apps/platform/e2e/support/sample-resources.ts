@@ -1,7 +1,7 @@
 import {
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_PAGES,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 import {
   excelWorkbook,
   japaneseTextPdf,

@@ -2,8 +2,8 @@ import {
   DownloadGrant,
   type DownloadGrantItem,
   type DownloadGrants,
-} from "@eli-coach-platform/domain/download-grant";
-import type { ProductAsset } from "@eli-coach-platform/domain/product";
+} from "~/bounded-contexts/sales/store/domain/download-grant";
+import type { ProductAsset } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";

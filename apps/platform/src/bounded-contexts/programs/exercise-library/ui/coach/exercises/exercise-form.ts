@@ -20,7 +20,7 @@ import {
   type ExerciseType,
   type ExerciseUnit,
   type Muscle,
-} from "@eli-coach-platform/domain/exercise";
+} from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { toggled } from "~/shared/design-system/lib";
 import type { FieldErrors, Resolver } from "react-hook-form";
 

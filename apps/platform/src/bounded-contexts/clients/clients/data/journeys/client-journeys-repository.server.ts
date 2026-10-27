@@ -2,11 +2,11 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   ClientJourney,
   type ClientJourneys,
-} from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type {
   OnboardingReviewStamps,
   ReviewStamps,
-} from "@eli-coach-platform/domain/client-onboarding";
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { coachingStandingColumns } from "~/bounded-contexts/clients/clients/data/coaching-standing-columns.server";

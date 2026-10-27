@@ -1,9 +1,9 @@
 import type { DatabaseClient } from "~/shared/database";
-import { CoachingStanding } from "@eli-coach-platform/domain/client";
+import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
 import type {
   InvitedClient,
   InvitedClients,
-} from "@eli-coach-platform/domain/client-invitation";
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import { eq } from "drizzle-orm";
 
 import { coachingStandingColumns } from "~/bounded-contexts/clients/clients/data/coaching-standing-columns.server";

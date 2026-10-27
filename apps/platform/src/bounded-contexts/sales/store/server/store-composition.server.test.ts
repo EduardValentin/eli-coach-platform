@@ -1,3 +1,4 @@
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
 import type { ManagementAuthenticator } from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
@@ -59,7 +60,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      emailSubaddresses: "allowed",
+      emailAcceptance: createEmailAcceptance("allowed"),
       incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
@@ -84,7 +85,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      emailSubaddresses: "allowed",
+      emailAcceptance: createEmailAcceptance("allowed"),
       incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
@@ -116,7 +117,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      emailSubaddresses: "refused",
+      emailAcceptance: createEmailAcceptance("refused"),
       incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),

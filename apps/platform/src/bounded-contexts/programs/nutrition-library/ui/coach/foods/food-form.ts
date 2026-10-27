@@ -10,7 +10,7 @@ import {
   type FoodCategory,
   type FoodDraftProblems,
   type FoodIcon,
-} from "@eli-coach-platform/domain/nutrition";
+} from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
 import type {

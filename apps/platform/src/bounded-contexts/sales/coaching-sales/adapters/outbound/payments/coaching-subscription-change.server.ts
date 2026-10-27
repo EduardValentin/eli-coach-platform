@@ -1,4 +1,4 @@
-import type { SubscriptionEvent } from "@eli-coach-platform/domain/coaching-subscription";
+import type { SubscriptionEvent } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 
 import type {
   PaymentInvoiceOutcome,

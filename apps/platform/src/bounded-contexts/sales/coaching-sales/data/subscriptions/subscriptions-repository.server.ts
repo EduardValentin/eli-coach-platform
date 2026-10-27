@@ -6,8 +6,8 @@ import {
   type RefundDueSnapshot,
   type SubscriptionChange,
   type SubscriptionEventChange,
-} from "@eli-coach-platform/domain/coaching-subscription";
-import type { Clock } from "@eli-coach-platform/domain/shared";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
 import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
 import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 

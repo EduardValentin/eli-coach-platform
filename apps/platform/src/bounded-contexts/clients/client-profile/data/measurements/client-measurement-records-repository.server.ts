@@ -3,7 +3,7 @@ import type {
   ClientMeasurementEntry,
   ClientMeasurementRecords,
   MeasurementRecord,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { asc, eq } from "drizzle-orm";
 
 import {

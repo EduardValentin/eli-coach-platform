@@ -2,14 +2,14 @@ import {
   measurementProblem,
   type MeasurementField,
   type MeasurementRule,
-} from "@eli-coach-platform/domain/measurement";
+} from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import {
   measureStep,
   measureUnitLabel,
   toCanonicalMeasure,
   toDisplayMeasure,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import { FieldLayout, Input } from "~/shared/design-system/primitives";
 import {
   useController,
