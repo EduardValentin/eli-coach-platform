@@ -25,6 +25,7 @@ import {
   type CoachCheckIn,
   type CoachCheckIns,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type CoachCheckInsControllerOptions = {
   countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
@@ -32,6 +33,7 @@ type CoachCheckInsControllerOptions = {
   listCoachCheckInsAwaiting: ListCoachCheckInsAwaitingUseCase;
   readClientCheckInScheduling: ReadClientCheckInSchedulingUseCase;
   scheduleCheckIn: ScheduleCheckInUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 const CREATED = 201;
@@ -102,11 +104,13 @@ export class CoachCheckInsController {
       return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
     }
 
-    const result = await this.options.scheduleCheckIn.execute({
-      clientId: submission.data.clientId,
-      startsAt: new Date(submission.data.startsAt),
-      note: submission.data.note ?? null,
-    });
+    const result = await this.options.unitOfWork(() =>
+      this.options.scheduleCheckIn.execute({
+        clientId: submission.data.clientId,
+        startsAt: new Date(submission.data.startsAt),
+        note: submission.data.note ?? null,
+      }),
+    );
 
     return this.respondToSchedule(result);
   }

@@ -1,8 +1,9 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
+  type DatabaseExecutor,
 } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientInvitation,
   type ClientInvitations,
@@ -29,6 +30,10 @@ type Acceptance = {
 export class PostgresClientInvitations implements ClientInvitations {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findById(invitationId: string): Promise<ClientInvitation | null> {
     return this.findOneWhere(eq(clientInvitationsTable.id, invitationId));
   }
@@ -42,7 +47,7 @@ export class PostgresClientInvitations implements ClientInvitations {
   }
 
   async insert(invitation: ClientInvitation): Promise<void> {
-    await this.database.insert(clientInvitationsTable).values({
+    await this.executor.insert(clientInvitationsTable).values({
       id: invitation.id,
       clientId: invitation.clientId,
       email: invitation.email,
@@ -60,7 +65,7 @@ export class PostgresClientInvitations implements ClientInvitations {
   }
 
   async reissue(invitation: ClientInvitation): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientInvitationsTable)
       .set({
         tokenHash: invitation.tokenHash,
@@ -76,7 +81,7 @@ export class PostgresClientInvitations implements ClientInvitations {
     invitationId: string;
     provider: IdentityInvitation;
   }): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientInvitationsTable)
       .set({
         providerInvitationId: input.provider.id,
@@ -89,7 +94,7 @@ export class PostgresClientInvitations implements ClientInvitations {
     invitationId: string;
     at: Date;
   }): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientInvitationsTable)
       .set({ emailSentAt: input.at })
       .where(eq(clientInvitationsTable.id, input.invitationId));
@@ -99,14 +104,14 @@ export class PostgresClientInvitations implements ClientInvitations {
     invitationId: string;
     at: Date;
   }): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientInvitationsTable)
       .set({ emailDeliveryFailedAt: input.at })
       .where(eq(clientInvitationsTable.id, input.invitationId));
   }
 
   async accept(acceptance: Acceptance): Promise<"accepted" | "raced"> {
-    return this.database
+    return this.executor
       .transaction((transaction) =>
         acceptAndBindClient(transaction, acceptance),
       )
@@ -114,7 +119,7 @@ export class PostgresClientInvitations implements ClientInvitations {
   }
 
   private async findOneWhere(condition: SQL): Promise<ClientInvitation | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select()
       .from(clientInvitationsTable)
       .where(condition)
@@ -125,7 +130,7 @@ export class PostgresClientInvitations implements ClientInvitations {
 }
 
 async function acceptAndBindClient(
-  transaction: DatabaseTransaction,
+  transaction: DatabaseExecutor,
   acceptance: Acceptance,
 ): Promise<"accepted" | "raced"> {
   const [accepted] = await transaction

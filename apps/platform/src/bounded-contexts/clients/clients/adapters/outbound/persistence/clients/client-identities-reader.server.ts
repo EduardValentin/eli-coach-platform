@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   ClientIdentities,
   ClientIdentity,
@@ -21,8 +22,12 @@ const IDENTITY_COLUMNS = {
 export class PostgresClientIdentities implements ClientIdentities {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByClientId(clientId: string): Promise<ClientIdentity | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select(IDENTITY_COLUMNS)
       .from(clientsTable)
       .where(eq(clientsTable.id, clientId))
@@ -38,7 +43,7 @@ export class PostgresClientIdentities implements ClientIdentities {
       return [];
     }
 
-    return this.database
+    return this.executor
       .select(IDENTITY_COLUMNS)
       .from(clientsTable)
       .where(inArray(clientsTable.id, [...clientIds]));

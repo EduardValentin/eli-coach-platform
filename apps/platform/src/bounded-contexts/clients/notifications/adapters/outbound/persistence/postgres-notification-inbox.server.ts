@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   Notification,
   type NotificationDraft,
@@ -32,18 +33,24 @@ const storedFactsSchema = z.record(
 export class PostgresNotificationInbox implements NotificationInbox {
   constructor(private readonly options: PostgresNotificationInboxOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   async record({ drafts }: Recorded): Promise<void> {
     if (drafts.length === 0) {
       return;
     }
 
-    await this.options.database
-      .insert(notificationsTable)
-      .values(drafts.map((draft) => this.rowOf(draft)))
-      .onConflictDoNothing({
-        target: notificationsTable.onceKey,
-        where: sql`${notificationsTable.onceKey} is not null`,
-      });
+    await this.executor.transaction((savepoint) =>
+      savepoint
+        .insert(notificationsTable)
+        .values(drafts.map((draft) => this.rowOf(draft)))
+        .onConflictDoNothing({
+          target: notificationsTable.onceKey,
+          where: sql`${notificationsTable.onceKey} is not null`,
+        }),
+    );
   }
 
   async latestFor({
@@ -51,7 +58,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
     since,
     limit,
   }: LatestQuery): Promise<Notification[]> {
-    const rows = await this.options.database
+    const rows = await this.executor
       .select()
       .from(notificationsTable)
       .where(
@@ -67,7 +74,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
   }
 
   async unreadCountFor({ recipient, since }: UnreadQuery): Promise<number> {
-    const [counted] = await this.options.database
+    const [counted] = await this.executor
       .select({ unread: count() })
       .from(notificationsTable)
       .where(
@@ -86,7 +93,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
     id,
     at,
   }: ReadMark): Promise<"marked" | "unknown"> {
-    const marked = await this.options.database
+    const marked = await this.executor
       .update(notificationsTable)
       .set({ readAt: sql`coalesce(${notificationsTable.readAt}, ${at})` })
       .where(and(this.addressedTo(recipient), eq(notificationsTable.id, id)))
@@ -96,7 +103,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
   }
 
   async markAllRead({ recipient, at }: AllReadMark): Promise<void> {
-    await this.options.database
+    await this.executor
       .update(notificationsTable)
       .set({ readAt: at })
       .where(

@@ -2,6 +2,7 @@ import {
   createBadRequestResponse,
   readTextRequestBody,
 } from "~/shared/http/index.server";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import {
   PAYMENT_PURPOSE_METADATA_KEY,
   type PaymentCompletionHandler,
@@ -31,6 +32,7 @@ type StripeWebhookControllerOptions = {
     string,
     PaymentSubscriptionChangeHandler
   >;
+  unitOfWork: UnitOfWork;
 };
 
 type Delivery = {
@@ -116,7 +118,10 @@ export class StripeWebhookController {
         purpose: verdict.purpose,
         handlersByPurpose: this.options.subscriptionChangeHandlersByPurpose,
       },
-      (handler) => handler.handle(verdict.eventId, verdict.change),
+      (handler) =>
+        this.options.unitOfWork(() =>
+          handler.handle(verdict.eventId, verdict.change),
+        ),
     );
   }
 
@@ -147,7 +152,10 @@ export class StripeWebhookController {
     return this.deliver({
       eventId,
       handler: REFUNDS_HANDLER,
-      handle: () => this.options.refundHandler.handle(eventId, refund),
+      handle: () =>
+        this.options.unitOfWork(() =>
+          this.options.refundHandler.handle(eventId, refund),
+        ),
     });
   }
 
@@ -158,7 +166,10 @@ export class StripeWebhookController {
     return this.deliver({
       eventId,
       handler: CARDS_HANDLER,
-      handle: () => this.options.cardHandler.handle(eventId, change),
+      handle: () =>
+        this.options.unitOfWork(() =>
+          this.options.cardHandler.handle(eventId, change),
+        ),
     });
   }
 

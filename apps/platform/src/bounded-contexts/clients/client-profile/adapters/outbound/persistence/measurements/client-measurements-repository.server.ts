@@ -1,4 +1,5 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type { ClientMeasurementEntry } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   measurementEntryOf,
@@ -30,8 +31,12 @@ export const MEASUREMENT_SELECTION = {
 export class PostgresClientMeasurements implements ClientMeasurementsSource {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async listByClientId(clientId: string): Promise<MeasurementEntry[]> {
-    const rows = await this.database
+    const rows = await this.executor
       .select(MEASUREMENT_SELECTION)
       .from(clientMeasurementsTable)
       .where(eq(clientMeasurementsTable.clientId, clientId))
@@ -46,10 +51,10 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
 }
 
 export async function recordMeasurementEntry(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   record: ClientMeasurementEntry,
 ): Promise<void> {
-  await transaction
+  await executorOf(database)
     .insert(clientMeasurementsTable)
     .values(measurementInsertOf(record));
 }

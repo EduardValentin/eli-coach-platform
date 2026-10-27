@@ -516,6 +516,7 @@ function createController(options: ControllerOptions) {
   return {
     book,
     controller: new AssessmentCallsController({
+      unitOfWork: (work) => work(),
       botDetection,
       botVerifier: { verifySubmission: verify },
       bookAssessmentCall: {

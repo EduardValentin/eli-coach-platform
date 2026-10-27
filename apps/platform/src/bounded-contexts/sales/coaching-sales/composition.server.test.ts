@@ -304,10 +304,13 @@ function createUnreachableDatabase(): DatabaseClient {
     throw new Error("database down");
   };
 
-  return {
+  const database = {
     insert: unreachable,
     select: unreachable,
-    transaction: unreachable,
+    transaction: (work: (transaction: unknown) => Promise<unknown>) =>
+      work(database),
     update: unreachable,
   } as unknown as DatabaseClient;
+
+  return database;
 }

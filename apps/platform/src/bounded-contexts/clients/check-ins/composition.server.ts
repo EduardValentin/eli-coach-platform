@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import {
   ApproveCheckInUseCase,
   CancelCheckInsAfterCoachingEndUseCase,
@@ -92,6 +93,7 @@ export function composeCheckInsFeature(
   handles: CheckInsFeatureHandles,
 ): CheckInsComposition {
   const { availability, clock } = handles;
+  const unitOfWork = createUnitOfWork(handles.database);
   const checkIns = new PostgresCheckIns({
     coachTime: handles.coachTime,
     database: handles.database,
@@ -149,6 +151,7 @@ export function composeCheckInsFeature(
         ),
         listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
         requestCheckIn: new RequestCheckInUseCase(requestPorts),
+        unitOfWork,
       }),
       coachCheckIns: new CoachCheckInsController({
         countCheckInsAwaiting,
@@ -160,6 +163,7 @@ export function composeCheckInsFeature(
           readPorts,
         ),
         scheduleCheckIn: new ScheduleCheckInUseCase(requestPorts),
+        unitOfWork,
       }),
       coachCheckInSeries: new CoachCheckInSeriesController({
         changeCheckInSeries: new ChangeCheckInSeriesUseCase(seriesPorts),
@@ -170,6 +174,7 @@ export function composeCheckInsFeature(
         readCoachClientSeries: new ReadCoachClientSeriesUseCase(seriesPorts),
         setUpCheckInSeries: new SetUpCheckInSeriesUseCase(seriesPorts),
         stopCheckInSeries: new StopCheckInSeriesUseCase(seriesPorts),
+        unitOfWork,
       }),
       sharedCheckIns: new SharedCheckInsController({
         approveCheckIn: new ApproveCheckInUseCase(answerPorts),
@@ -186,6 +191,7 @@ export function composeCheckInsFeature(
           availability,
         }),
         withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(answerPorts),
+        unitOfWork,
       }),
     },
     handles: {

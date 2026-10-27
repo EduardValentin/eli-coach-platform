@@ -1,4 +1,5 @@
-import type { DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientProfile,
   type CoachingSeed,
@@ -17,7 +18,7 @@ type ClientMoment = { clientId: string; at: Date };
 type CoachingSeeding = ClientMoment & { seed: CoachingSeed };
 
 export async function openClientProfile(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   admission: ClientMoment,
 ): Promise<void> {
   const opening = { clientId: admission.clientId, now: admission.at };
@@ -26,28 +27,28 @@ export async function openClientProfile(
   const { unitPreference, ...settings } =
     ClientSettings.opened(opening).toSnapshot();
 
-  await transaction.insert(clientProfilesTable).values(profile);
-  await transaction
+  await executorOf(database).insert(clientProfilesTable).values(profile);
+  await executorOf(database)
     .insert(clientSettingsTable)
     .values({ ...settings, ...unitPreference });
 }
 
 export async function recordPhotoConsent(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   consent: ClientMoment,
 ): Promise<void> {
-  await transaction
+  await executorOf(database)
     .update(clientProfilesTable)
     .set({ progressPhotosConsentedAt: consent.at })
     .where(eq(clientProfilesTable.clientId, consent.clientId));
 }
 
 export async function seedCoaching(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   seeding: CoachingSeeding,
 ): Promise<void> {
   const { clientId, seed, at } = seeding;
-  const seeded = await transaction
+  const seeded = await executorOf(database)
     .update(clientProfilesTable)
     .set({
       ...coachingColumnsOf(seed.coaching),
@@ -66,7 +67,7 @@ export async function seedCoaching(
     return;
   }
 
-  await transaction
+  await executorOf(database)
     .update(clientSettingsTable)
     .set({ ...seed.preferences, updatedAt: at })
     .where(eq(clientSettingsTable.clientId, clientId));

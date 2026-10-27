@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   DetailRequest,
   emptyDraft,
@@ -67,6 +68,8 @@ const APPROVED_STAMPS = {
   reviewOpenedAt: APPROVED_AT,
   answersApprovedAt: APPROVED_AT,
 };
+
+const OUTSIDE_ANY_TRANSACTION = {} as DatabaseClient;
 
 describe("PostgresOnboardingReviews#findByClientId", () => {
   it("reads the review moments and her requests into one stored review", async () => {
@@ -702,8 +705,8 @@ function createStampWriter(): StampWriterDouble {
 
   return {
     calls,
-    write: async (transaction, projection) => {
-      calls.push({ transaction, projection });
+    write: async (projection) => {
+      calls.push({ transaction: ambientTransaction(), projection });
     },
   };
 }
@@ -713,8 +716,8 @@ function createFailingStampWriter(failure: Error): StampWriterDouble {
 
   return {
     calls,
-    write: async (transaction, projection) => {
-      calls.push({ transaction, projection });
+    write: async (projection) => {
+      calls.push({ transaction: ambientTransaction(), projection });
       throw failure;
     },
   };
@@ -724,7 +727,7 @@ type SeedWriterDouble = {
   write: CoachingSeedWriter;
   calls: {
     transaction: unknown;
-    seeding: Parameters<CoachingSeedWriter>[1];
+    seeding: Parameters<CoachingSeedWriter>[0];
   }[];
 };
 
@@ -733,10 +736,14 @@ function createSeedWriter(): SeedWriterDouble {
 
   return {
     calls,
-    write: async (transaction, seeding) => {
-      calls.push({ transaction, seeding });
+    write: async (seeding) => {
+      calls.push({ transaction: ambientTransaction(), seeding });
     },
   };
+}
+
+function ambientTransaction(): unknown {
+  return executorOf(OUTSIDE_ANY_TRANSACTION);
 }
 
 function requestWithStamps() {

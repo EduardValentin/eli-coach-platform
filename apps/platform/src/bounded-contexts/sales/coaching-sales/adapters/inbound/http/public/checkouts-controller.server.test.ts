@@ -413,6 +413,7 @@ function createController(options: ControllerOptions) {
     .fn()
     .mockResolvedValue({ status: options.bundlePage ?? "open" });
   const controller = new CheckoutsController({
+    unitOfWork: (work) => work(),
     appBasePath: APP_BASE_PATH,
     clock: { now: () => NOW },
     openBundlePage: {

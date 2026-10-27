@@ -8,7 +8,8 @@ import {
 } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient, DatabaseExecutor } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 
 type TaxonomyRow = {
   displayOrder: number;
@@ -44,14 +45,18 @@ const SERIALIZATION_FAILURE_CODE = "40001";
 export class PostgresStoreProductPublicationRepository implements StoreProductPublications {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async getTaxonomy(): Promise<StoreTaxonomySnapshot> {
     const [typeResult, goalResult] = await Promise.all([
-      this.database.execute<TaxonomyRow>(sql`
+      this.executor.execute<TaxonomyRow>(sql`
         select slug, display_label as "label", display_order as "displayOrder"
         from app.product_types
         order by display_order
       `),
-      this.database.execute<TaxonomyRow>(sql`
+      this.executor.execute<TaxonomyRow>(sql`
         select slug, display_label as "label", display_order as "displayOrder"
         from app.product_goals
         order by display_order
@@ -72,7 +77,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
   async findPublicationByIdempotencyKey(
     idempotencyKey: string,
   ): Promise<StoredPublicationRecord | null> {
-    const result = await this.database.execute<StoredPublicationRow>(sql`
+    const result = await this.executor.execute<StoredPublicationRow>(sql`
       ${selectPublication(sql`publication.idempotency_key = ${idempotencyKey}`)}
     `);
     const [row] = result.rows;
@@ -88,7 +93,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
    * single-operator action.
    */
   async getNextDisplayOrder(): Promise<number> {
-    const result = await this.database.execute<NextDisplayOrderRow>(sql`
+    const result = await this.executor.execute<NextDisplayOrderRow>(sql`
       select coalesce(max(display_order), 0) + 1 as "nextDisplayOrder"
       from app.products
     `);
@@ -97,7 +102,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
   }
 
   async retireProduct(productId: number): Promise<boolean> {
-    const result = await this.database.execute<IdRow>(sql`
+    const result = await this.executor.execute<IdRow>(sql`
       update app.products
       set lifecycle_status = 'archived',
         updated_at = now()
@@ -112,7 +117,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     command: PersistPublicationCommand,
   ): Promise<ProductPublication> {
     return this.runWithRetry(() =>
-      this.database.transaction(
+      this.executor.transaction(
         async (transaction) => this.persistInTransaction(transaction, command),
         { isolationLevel: "serializable" },
       ),
@@ -120,7 +125,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
   }
 
   private async persistInTransaction(
-    transaction: DatabaseTransaction,
+    transaction: DatabaseExecutor,
     command: PersistPublicationCommand,
   ): Promise<ProductPublication> {
     /**
@@ -205,7 +210,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
   private async loadProduct(
     predicate: ReturnType<typeof sql>,
   ): Promise<Product | null> {
-    const result = await this.database.execute<ProductRow>(sql`
+    const result = await this.executor.execute<ProductRow>(sql`
       select
         product.id,
         product.slug,
@@ -287,7 +292,7 @@ function mapStoredPublication(
 }
 
 async function insertProduct(
-  transaction: DatabaseTransaction,
+  transaction: DatabaseExecutor,
   command: PersistPublicationCommand,
 ): Promise<number> {
   const result = await transaction.execute<IdRow>(sql`
@@ -300,7 +305,7 @@ async function insertProduct(
 }
 
 async function insertUnpublishedVersion(
-  transaction: DatabaseTransaction,
+  transaction: DatabaseExecutor,
   command: PersistPublicationCommand,
   productId: number,
 ): Promise<number> {
@@ -340,7 +345,7 @@ async function insertUnpublishedVersion(
 }
 
 async function insertVersionAssets(
-  transaction: DatabaseTransaction,
+  transaction: DatabaseExecutor,
   command: PersistPublicationCommand,
   versionId: number,
 ): Promise<void> {
@@ -367,7 +372,7 @@ async function insertVersionAssets(
 }
 
 async function insertTaxonomyAssignments(
-  transaction: DatabaseTransaction,
+  transaction: DatabaseExecutor,
   command: PersistPublicationCommand,
   versionId: number,
 ): Promise<void> {

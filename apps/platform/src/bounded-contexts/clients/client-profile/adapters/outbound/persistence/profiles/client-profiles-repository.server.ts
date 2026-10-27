@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientProfile,
   SESSION_MINUTE_OPTIONS,
@@ -46,8 +47,12 @@ export class PostgresClientProfiles implements ClientProfiles {
 
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByClientId(clientId: string): Promise<ClientProfile | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select({
         ...this.coachingColumns,
         clientId: clientProfilesTable.clientId,
@@ -100,7 +105,7 @@ export class PostgresClientProfiles implements ClientProfiles {
   }
 
   async recordPhotoConsent(clientId: string, at: Date): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientProfilesTable)
       .set({ progressPhotosConsentedAt: at })
       .where(eq(clientProfilesTable.clientId, clientId));
@@ -111,7 +116,7 @@ export class PostgresClientProfiles implements ClientProfiles {
     columns: ProfileColumns,
   ): Promise<ClientProfileSaveOutcome> {
     const { clientId, updatedAt } = save.profile.toSnapshot();
-    const updated = await this.database
+    const updated = await this.executor
       .update(clientProfilesTable)
       .set({ ...columns, updatedAt })
       .where(

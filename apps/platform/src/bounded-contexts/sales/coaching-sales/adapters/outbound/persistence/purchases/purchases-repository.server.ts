@@ -1,4 +1,5 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
@@ -45,12 +46,16 @@ export class PostgresCoachingPurchases
 {
   constructor(private readonly options: PostgresCoachingPurchasesOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   async recordCompletion(
     purchase: CoachingPurchase,
   ): Promise<CoachingPurchaseOutcome> {
     try {
-      return await this.options.database.transaction((transaction) =>
-        this.recordPurchase(transaction, purchase),
+      return await createUnitOfWork(this.options.database)(() =>
+        this.recordPurchase(purchase),
       );
     } catch (error) {
       if (error instanceof CallAlreadyPaid) {
@@ -68,7 +73,7 @@ export class PostgresCoachingPurchases
       return new Map();
     }
 
-    const advancedSales = await this.options.database
+    const advancedSales = await this.executor
       .select({
         assessmentCallId: coachingSubscriptionsTable.assessmentCallId,
         state: sql<CallSalesState>`'paid'`,
@@ -77,7 +82,7 @@ export class PostgresCoachingPurchases
       .from(coachingSubscriptionsTable)
       .where(inArray(coachingSubscriptionsTable.assessmentCallId, [...callIds]))
       .union(
-        this.options.database
+        this.executor
           .select({
             assessmentCallId: paymentLinksTable.assessmentCallId,
             state: sql<CallSalesState>`'payment-link-sent'`,
@@ -97,11 +102,10 @@ export class PostgresCoachingPurchases
   }
 
   private async recordPurchase(
-    transaction: DatabaseTransaction,
     purchase: CoachingPurchase,
   ): Promise<CoachingPurchaseOutcome> {
     const { client, eventId, receivedAt, subscription } = purchase;
-    const ledgerOutcome = await recordPaymentEvent(transaction, {
+    const ledgerOutcome = await recordPaymentEvent(this.options.database, {
       eventId,
       receivedAt,
     });
@@ -109,27 +113,24 @@ export class PostgresCoachingPurchases
     if (ledgerOutcome === "duplicate") {
       return {
         outcome: "duplicate_event",
-        clientId: await this.findClientIdForCall(
-          transaction,
-          client.assessmentCallId,
-        ),
+        clientId: await this.findClientIdForCall(client.assessmentCallId),
       };
     }
 
-    const written = await this.options.writeClient(transaction, client);
+    const written = await this.options.writeClient(client);
 
     if (written === "call_already_has_client") {
       throw new CallAlreadyPaid();
     }
 
-    await this.options.openClientProfile(transaction, {
+    await this.options.openClientProfile({
       clientId: client.id,
       at: receivedAt,
     });
 
     const purchased = subscription.toSnapshot();
 
-    await transaction.insert(coachingSubscriptionsTable).values({
+    await this.executor.insert(coachingSubscriptionsTable).values({
       id: purchased.id,
       clientId: client.id,
       assessmentCallId: client.assessmentCallId,
@@ -149,18 +150,18 @@ export class PostgresCoachingPurchases
       status: purchased.status,
       createdAt: receivedAt,
     });
-    await this.options.writeCoachingStanding(transaction, {
+    await this.options.writeCoachingStanding({
       clientId: client.id,
       standing: subscription.standing(),
     });
 
-    await transaction
+    await this.executor
       .update(paymentLinksTable)
       .set({ state: "spent" })
       .where(
         inArray(
           paymentLinksTable.id,
-          transaction
+          this.executor
             .select({ id: checkoutSessionsTable.paymentLinkId })
             .from(checkoutSessionsTable)
             .where(
@@ -172,11 +173,8 @@ export class PostgresCoachingPurchases
     return { outcome: "recorded", clientId: client.id };
   }
 
-  private async findClientIdForCall(
-    transaction: DatabaseTransaction,
-    assessmentCallId: string,
-  ): Promise<string> {
-    const [subscriptionRow] = await transaction
+  private async findClientIdForCall(assessmentCallId: string): Promise<string> {
+    const [subscriptionRow] = await this.executor
       .select({ clientId: coachingSubscriptionsTable.clientId })
       .from(coachingSubscriptionsTable)
       .where(eq(coachingSubscriptionsTable.assessmentCallId, assessmentCallId))

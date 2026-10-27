@@ -1,3 +1,4 @@
+import { executorOf } from "~/shared/database/index.server";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -57,17 +58,20 @@ describe("recordEventOnce", () => {
   it("records the event and its write together", async () => {
     // arrange
     const ledger = createLedgerInserting([{ id: "evt_1" }]);
-    const write = vi.fn(async () => true);
+    const database = databaseOver(ledger.transaction);
+    const writtenThrough: unknown[] = [];
+    const write = async () => {
+      writtenThrough.push(executorOf(database));
+
+      return true;
+    };
 
     // act
-    const outcome = await recordEventOnce(databaseOver(ledger.transaction), {
-      ...ENTRY,
-      write,
-    });
+    const outcome = await recordEventOnce(database, { ...ENTRY, write });
 
     // assert
     expect(outcome).toBe("recorded");
-    expect(write).toHaveBeenCalledWith(ledger.transaction);
+    expect(writtenThrough).toEqual([ledger.transaction]);
   });
 
   it("answers duplicate without writing when the ledger already holds the event", async () => {

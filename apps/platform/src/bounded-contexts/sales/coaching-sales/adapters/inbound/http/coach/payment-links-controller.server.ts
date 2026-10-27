@@ -7,9 +7,11 @@ import {
   sendPaymentLinkRequestSchema,
   sendPaymentLinkSuccessSchema,
 } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type PaymentLinksControllerOptions = {
   sendPaymentLink: SendPaymentLinkUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 type SendPaymentLinkRefusal = Exclude<
@@ -38,7 +40,9 @@ export class PaymentLinksController {
       return errorResponse({ error: "invalid_request", status: 400 });
     }
 
-    const result = await this.options.sendPaymentLink.execute(submission.data);
+    const result = await this.options.unitOfWork(() =>
+      this.options.sendPaymentLink.execute(submission.data),
+    );
 
     if (result.status === "sent") {
       return Response.json(sendPaymentLinkSuccessSchema.parse(result));

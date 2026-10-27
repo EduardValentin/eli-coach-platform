@@ -225,9 +225,13 @@ function createUnreadableAvailability(): CoachAvailabilitySource {
 }
 
 function createDatabaseStub(): DatabaseClient {
-  return {
+  const database = {
     select: () => {
       throw new Error("database down");
     },
+    transaction: (work: (transaction: unknown) => Promise<unknown>) =>
+      work(database),
   } as unknown as DatabaseClient;
+
+  return database;
 }

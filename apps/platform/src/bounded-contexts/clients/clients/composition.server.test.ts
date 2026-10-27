@@ -1,5 +1,8 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { CoachingStandingSnapshot } from "~/bounded-contexts/clients/clients/domain/client";
+import {
+  CoachingStanding,
+  type CoachingStandingSnapshot,
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
@@ -8,11 +11,6 @@ import {
 import { describe, expect, it, vi } from "vitest";
 
 import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import {
-  writeClient,
-  writeCoachingStanding,
-} from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-writers.server";
-import { writeReviewStamps } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/review-stamps.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -105,23 +103,31 @@ describe("composeClientsFeature client handles", () => {
     await expect(stamping).rejects.toThrow("database down");
   });
 
-  it("hands out the writers other features call inside their own transaction", () => {
+  it("hands out the writers other features call, each writing the clients table", async () => {
     // arrange
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const writers = [
-      handles.reviewStampWriter,
-      handles.writeClient,
-      handles.writeCoachingStanding,
+    const writes = [
+      handles.reviewStampWriter({
+        clientId: CLIENT_ID,
+        stamps: {
+          reviewOpenedAt: null,
+          detailsRequestedAt: null,
+          detailsAnsweredAt: null,
+          answersApprovedAt: null,
+        },
+      }),
+      handles.writeCoachingStanding({
+        clientId: CLIENT_ID,
+        standing: CoachingStanding.of(NOT_STARTED),
+      }),
     ];
 
     // assert
-    expect(writers).toEqual([
-      writeReviewStamps,
-      writeClient,
-      writeCoachingStanding,
-    ]);
+    for (const write of writes) {
+      await expect(write).rejects.toThrow("database down");
+    }
   });
 });
 

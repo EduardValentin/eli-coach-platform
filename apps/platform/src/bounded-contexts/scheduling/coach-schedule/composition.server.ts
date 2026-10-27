@@ -16,6 +16,7 @@ import { PostgresCoachMeetingRoom } from "~/bounded-contexts/scheduling/coach-sc
 import {
   releaseCoachTime,
   reserveCoachTime,
+  type CoachTimeReservations,
 } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/reservations/coach-time-reservations.server";
 import { PostgresCoachCalendar } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/reservations/postgres-coach-calendar.server";
 import type { CoachScheduleFeature } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
@@ -25,10 +26,7 @@ type CoachScheduleComposition = {
   handles: {
     availability: CoachAvailabilitySource;
     calendar: CoachCalendar;
-    coachTime: {
-      release: typeof releaseCoachTime;
-      reserve: typeof reserveCoachTime;
-    };
+    coachTime: CoachTimeReservations;
     meetingRoom: CoachMeetingRoomSource;
   };
 };
@@ -60,7 +58,12 @@ export function composeCoachScheduleFeature(
     handles: {
       availability,
       calendar: new PostgresCoachCalendar(handles.database),
-      coachTime: { release: releaseCoachTime, reserve: reserveCoachTime },
+      coachTime: {
+        release: (appointment) =>
+          releaseCoachTime(handles.database, appointment),
+        reserve: (reservation) =>
+          reserveCoachTime(handles.database, reservation),
+      },
       meetingRoom,
     },
   };

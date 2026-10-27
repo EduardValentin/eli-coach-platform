@@ -8,6 +8,7 @@ import {
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 
 type PublishedProductRow = {
   productId: number;
@@ -53,6 +54,10 @@ type PublishedCoverRow = {
 export class PostgresStoreCatalogRepository implements StoreCatalog {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async getPublishedCatalog(): Promise<readonly PublishedProduct[]> {
     return this.loadPublishedProducts(null);
   }
@@ -68,7 +73,7 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
   async getPublishedCoverByAssetKey(
     assetKey: string,
   ): Promise<PublishedProductCover | null> {
-    const result = await this.database.execute<PublishedCoverRow>(sql`
+    const result = await this.executor.execute<PublishedCoverRow>(sql`
       select
         published_version.cover_asset_key as "assetKey",
         published_version.cover_alt as "alt",
@@ -97,7 +102,7 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
   private async loadPublishedProducts(
     slug: string | null,
   ): Promise<PublishedProduct[]> {
-    const productResult = await this.database.execute<PublishedProductRow>(sql`
+    const productResult = await this.executor.execute<PublishedProductRow>(sql`
         select
           product.id as "productId",
           product.slug,
@@ -141,7 +146,7 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
       sql`, `,
     );
     const [assetResult, typeResult, goalResult] = await Promise.all([
-      this.database.execute<PublishedProductAssetRow>(sql`
+      this.executor.execute<PublishedProductAssetRow>(sql`
         select
           asset.product_version_id as "productVersionId",
           asset.asset_key as "assetKey",
@@ -153,7 +158,7 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
         where asset.product_version_id in (${productVersionParameters})
         order by asset.product_version_id, asset.id
       `),
-      this.database.execute<PublishedProductTaxonomyRow>(sql`
+      this.executor.execute<PublishedProductTaxonomyRow>(sql`
         select
           assignment.product_version_id as "productVersionId",
           product_type.slug,
@@ -165,7 +170,7 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
         where assignment.product_version_id in (${productVersionParameters})
         order by assignment.product_version_id, product_type.display_order
       `),
-      this.database.execute<PublishedProductTaxonomyRow>(sql`
+      this.executor.execute<PublishedProductTaxonomyRow>(sql`
         select
           assignment.product_version_id as "productVersionId",
           product_goal.slug,

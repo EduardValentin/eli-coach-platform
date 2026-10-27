@@ -291,6 +291,8 @@ function createDatabaseInserting() {
   };
   const database = {
     insert: vi.fn().mockReturnValue(chain),
+    transaction: (work: (savepoint: unknown) => Promise<unknown>) =>
+      work(database),
   } as unknown as DatabaseClient & { insert: ReturnType<typeof vi.fn> };
 
   return { database, chain };

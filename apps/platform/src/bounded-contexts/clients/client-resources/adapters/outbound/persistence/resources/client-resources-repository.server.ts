@@ -1,4 +1,5 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient, DatabaseExecutor } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientResource,
   type BrowsedResources,
@@ -37,10 +38,14 @@ const LIKE_WILDCARDS = /[\\%_]/g;
 export class PostgresClientResources implements ClientResources {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   add(resource: ClientResource): Promise<void> {
     const { file, tags, ...columns } = resource.toSnapshot();
 
-    return this.database.transaction(async (transaction) => {
+    return this.executor.transaction(async (transaction) => {
       await transaction.insert(clientResourcesTable).values({
         ...columns,
         originalName: file.originalName,
@@ -59,7 +64,7 @@ export class PostgresClientResources implements ClientResources {
     const ofClient = eq(clientResourcesTable.clientId, clientId);
     const titled = this.titleMatching(browse.search);
     const [rows, tagOptions, { searched, total }] = await Promise.all([
-      this.database
+      this.executor
         .select()
         .from(clientResourcesTable)
         .where(and(ofClient, titled, this.taggedWith(browse.tag)))
@@ -85,7 +90,7 @@ export class PostgresClientResources implements ClientResources {
   }
 
   async findById(resourceId: string): Promise<ClientResource | null> {
-    const rows = await this.database
+    const rows = await this.executor
       .select()
       .from(clientResourcesTable)
       .where(eq(clientResourcesTable.id, resourceId))
@@ -98,7 +103,7 @@ export class PostgresClientResources implements ClientResources {
   async recordOpened(resource: ClientResource): Promise<void> {
     const { id, openedAt } = resource.toSnapshot();
 
-    await this.database
+    await this.executor
       .update(clientResourcesTable)
       .set({ openedAt })
       .where(
@@ -112,7 +117,7 @@ export class PostgresClientResources implements ClientResources {
   saveDetails(resource: ClientResource): Promise<void> {
     const { id, title, description, tags } = resource.toSnapshot();
 
-    return this.database.transaction(async (transaction) => {
+    return this.executor.transaction(async (transaction) => {
       await transaction
         .update(clientResourcesTable)
         .set({ title, description })
@@ -125,13 +130,13 @@ export class PostgresClientResources implements ClientResources {
   }
 
   async remove(resourceId: string): Promise<void> {
-    await this.database
+    await this.executor
       .delete(clientResourcesTable)
       .where(eq(clientResourcesTable.id, resourceId));
   }
 
   async countUnopenedForClient(clientId: string): Promise<number> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select({ unopened: count() })
       .from(clientResourcesTable)
       .where(
@@ -145,7 +150,7 @@ export class PostgresClientResources implements ClientResources {
   }
 
   private async insertTags(
-    transaction: DatabaseTransaction,
+    transaction: DatabaseExecutor,
     held: { resourceId: string; tags: readonly ResourceTagSnapshot[] },
   ): Promise<void> {
     if (held.tags.length === 0) {
@@ -199,7 +204,7 @@ export class PostgresClientResources implements ClientResources {
   }
 
   private async tagOptionsOf(ofClient: SQL, titled: SQL): Promise<TagOption[]> {
-    const rows = await this.database
+    const rows = await this.executor
       .select({
         tag: sql<string>`(array_agg(${clientResourceTagsTable.tag} order by ${clientResourcesTable.addedAt}, ${clientResourcesTable.id}))[1]`,
         folded: clientResourceTagsTable.folded,
@@ -224,7 +229,7 @@ export class PostgresClientResources implements ClientResources {
     ofClient: SQL,
     titled: SQL,
   ): Promise<{ searched: number; total: number }> {
-    const [counts] = await this.database
+    const [counts] = await this.executor
       .select({
         searched: sql<number>`count(*) filter (where ${titled})`.mapWith(
           Number,
@@ -238,7 +243,7 @@ export class PostgresClientResources implements ClientResources {
   }
 
   private async oldestSpellings(holders?: SQL): Promise<ResourceTagSnapshot[]> {
-    const rows = await this.database
+    const rows = await this.executor
       .selectDistinctOn([clientResourceTagsTable.folded], TAG_SELECTION)
       .from(clientResourceTagsTable)
       .innerJoin(
@@ -262,7 +267,7 @@ export class PostgresClientResources implements ClientResources {
       return [];
     }
 
-    const tagRows = await this.database
+    const tagRows = await this.executor
       .select({
         resourceId: clientResourceTagsTable.resourceId,
         ...TAG_SELECTION,

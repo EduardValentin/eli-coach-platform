@@ -439,6 +439,7 @@ function createController(
     .fn()
     .mockResolvedValue(answers.scheduling ?? "allowed");
   const controller = new CoachCheckInsController({
+    unitOfWork: (work) => work(),
     countCheckInsAwaiting: {
       execute: countCheckInsAwaiting,
     } as unknown as CountCheckInsAwaitingUseCase,

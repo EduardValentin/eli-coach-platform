@@ -12,7 +12,8 @@ import {
   UNANSWERED_CHECK_IN_STATUSES,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { TimeInterval } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import {
   and,
   asc,
@@ -64,13 +65,9 @@ type CheckInAppointment = {
 
 export type CheckInCoachTime = {
   reserve: (
-    transaction: DatabaseTransaction,
     reservation: CheckInAppointment & TimeInterval,
   ) => Promise<{ status: "reserved" | "taken" }>;
-  release: (
-    transaction: DatabaseTransaction,
-    appointment: CheckInAppointment,
-  ) => Promise<void>;
+  release: (appointment: CheckInAppointment) => Promise<void>;
 };
 
 type PostgresCheckInsOptions = {
@@ -84,14 +81,49 @@ const MOVE_SAVEPOINT = sql.identifier("check_in_move");
 export class PostgresCheckIns implements CheckIns {
   constructor(private readonly options: PostgresCheckInsOptions) {}
 
-  request(command: CheckInRequest): Promise<CheckInRequestResult> {
-    return this.options.database.transaction((transaction) =>
-      this.requestUnderClientLock(transaction, command),
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
+  async request({
+    checkIn,
+    at,
+  }: CheckInRequest): Promise<CheckInRequestResult> {
+    await lockCheckInsOfClient(this.executor, checkIn.clientId);
+
+    const clientRows = await this.executor
+      .select()
+      .from(checkInsTable)
+      .where(eq(checkInsTable.clientId, checkIn.clientId));
+
+    await this.executor.execute(sql`savepoint ${REQUEST_SAVEPOINT}`);
+    await this.executor.insert(checkInsTable).values(checkInRowOf(checkIn));
+
+    const coachTime = await this.options.coachTime.reserve({
+      ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
+      appointmentKind: "check_in",
+      appointmentId: checkIn.id,
+    });
+    const decision = CheckIn.decideRequest({
+      initiatedBy: checkIn.initiatedBy,
+      coachTime: coachTime.status,
+      clientCheckIns: clientRows.map((row) => checkInOf(row)),
+      at,
+    });
+
+    if (decision === "requested") {
+      return { status: "requested", checkIn };
+    }
+
+    await this.executor.execute(
+      sql`rollback to savepoint ${REQUEST_SAVEPOINT}`,
     );
+
+    return { status: decision };
   }
 
   async find(id: string): Promise<CheckIn | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select()
       .from(checkInsTable)
       .where(eq(checkInsTable.id, id))
@@ -101,7 +133,7 @@ export class PostgresCheckIns implements CheckIns {
   }
 
   async listForClient(clientId: string): Promise<CheckIn[]> {
-    const rows = await this.options.database
+    const rows = await this.executor
       .select()
       .from(checkInsTable)
       .where(eq(checkInsTable.clientId, clientId))
@@ -111,7 +143,7 @@ export class PostgresCheckIns implements CheckIns {
   }
 
   async listAll(): Promise<CheckIn[]> {
-    const rows = await this.options.database
+    const rows = await this.executor
       .select()
       .from(checkInsTable)
       .orderBy(asc(checkInsTable.startsAt));
@@ -135,85 +167,14 @@ export class PostgresCheckIns implements CheckIns {
     );
   }
 
-  settle(settlement: Settlement): Promise<CheckInSettlement> {
-    return this.options.database.transaction((transaction) =>
-      this.settleWhileExpected(transaction, settlement),
-    );
-  }
-
-  move(command: CheckInMoveCommand): Promise<CheckInMove> {
-    return this.options.database.transaction((transaction) =>
-      this.moveWhileExpected(transaction, command),
-    );
-  }
-
-  endCoaching(end: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
-    return this.options.database.transaction((transaction) =>
-      this.endCoachingUnderClientLock(transaction, end),
-    );
-  }
-
-  private unansweredStartedWithin({
-    since,
+  async settle({
+    id,
+    outcome,
     at,
-  }: CheckInStartWindow): SQL | undefined {
-    return and(
-      inArray(checkInsTable.status, UNANSWERED_CHECK_IN_STATUSES),
-      gte(checkInsTable.startsAt, since),
-      lte(checkInsTable.startsAt, at),
-    );
-  }
-
-  private async listWhere(condition: SQL | undefined): Promise<CheckIn[]> {
-    const rows = await this.options.database
-      .select()
-      .from(checkInsTable)
-      .where(condition)
-      .orderBy(asc(checkInsTable.startsAt));
-
-    return rows.map((row) => checkInOf(row));
-  }
-
-  private async requestUnderClientLock(
-    transaction: DatabaseTransaction,
-    { checkIn, at }: CheckInRequest,
-  ): Promise<CheckInRequestResult> {
-    await lockCheckInsOfClient(transaction, checkIn.clientId);
-
-    const clientRows = await transaction
-      .select()
-      .from(checkInsTable)
-      .where(eq(checkInsTable.clientId, checkIn.clientId));
-
-    await transaction.execute(sql`savepoint ${REQUEST_SAVEPOINT}`);
-    await transaction.insert(checkInsTable).values(checkInRowOf(checkIn));
-
-    const coachTime = await this.options.coachTime.reserve(transaction, {
-      ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
-      appointmentKind: "check_in",
-      appointmentId: checkIn.id,
-    });
-    const decision = CheckIn.decideRequest({
-      initiatedBy: checkIn.initiatedBy,
-      coachTime: coachTime.status,
-      clientCheckIns: clientRows.map((row) => checkInOf(row)),
-      at,
-    });
-
-    if (decision === "requested") {
-      return { status: "requested", checkIn };
-    }
-
-    await transaction.execute(sql`rollback to savepoint ${REQUEST_SAVEPOINT}`);
-
-    return { status: decision };
-  }
-
-  private async settleWhileExpected(
-    transaction: DatabaseTransaction,
-    { id, outcome, at, expectedStatus, clientTimeZone }: Settlement,
-  ): Promise<CheckInSettlement> {
-    const settled = await transaction
+    expectedStatus,
+    clientTimeZone,
+  }: Settlement): Promise<CheckInSettlement> {
+    const settled = await this.executor
       .update(checkInsTable)
       .set({ status: outcome, answeredAt: at, clientTimeZone })
       .where(
@@ -230,21 +191,22 @@ export class PostgresCheckIns implements CheckIns {
     }
 
     if (outcome === "cancelled") {
-      await this.releaseHourOf(transaction, id);
+      await this.releaseHourOf(id);
     }
 
     return "settled";
   }
 
-  private async moveWhileExpected(
-    transaction: DatabaseTransaction,
-    { checkIn, expected, at }: CheckInMoveCommand,
-  ): Promise<CheckInMove> {
+  async move({
+    checkIn,
+    expected,
+    at,
+  }: CheckInMoveCommand): Promise<CheckInMove> {
     const snapshot = checkIn.toSnapshot();
 
-    await transaction.execute(sql`savepoint ${MOVE_SAVEPOINT}`);
+    await this.executor.execute(sql`savepoint ${MOVE_SAVEPOINT}`);
 
-    const moved = await transaction
+    const moved = await this.executor
       .update(checkInsTable)
       .set({
         startsAt: snapshot.startsAt,
@@ -270,16 +232,16 @@ export class PostgresCheckIns implements CheckIns {
       return "changed_meanwhile";
     }
 
-    await this.releaseHourOf(transaction, snapshot.id);
+    await this.releaseHourOf(snapshot.id);
 
-    const coachTime = await this.options.coachTime.reserve(transaction, {
+    const coachTime = await this.options.coachTime.reserve({
       ...CHECK_IN_RULES.coachTimeFrom(snapshot.startsAt),
       appointmentKind: "check_in",
       appointmentId: snapshot.id,
     });
 
     if (coachTime.status === "taken") {
-      await transaction.execute(sql`rollback to savepoint ${MOVE_SAVEPOINT}`);
+      await this.executor.execute(sql`rollback to savepoint ${MOVE_SAVEPOINT}`);
 
       return "time_taken";
     }
@@ -287,13 +249,41 @@ export class PostgresCheckIns implements CheckIns {
     return "moved";
   }
 
-  private async endCoachingUnderClientLock(
-    transaction: DatabaseTransaction,
-    { clientId, endsAt, at }: CoachingEnd,
-  ): Promise<CheckInsAtCoachingEnd> {
-    await lockCheckInsOfClient(transaction, clientId);
+  endCoaching(end: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
+    return createUnitOfWork(this.options.database)(() =>
+      this.endCoachingUnderClientLock(end),
+    );
+  }
 
-    const cancelled = await transaction
+  private unansweredStartedWithin({
+    since,
+    at,
+  }: CheckInStartWindow): SQL | undefined {
+    return and(
+      inArray(checkInsTable.status, UNANSWERED_CHECK_IN_STATUSES),
+      gte(checkInsTable.startsAt, since),
+      lte(checkInsTable.startsAt, at),
+    );
+  }
+
+  private async listWhere(condition: SQL | undefined): Promise<CheckIn[]> {
+    const rows = await this.executor
+      .select()
+      .from(checkInsTable)
+      .where(condition)
+      .orderBy(asc(checkInsTable.startsAt));
+
+    return rows.map((row) => checkInOf(row));
+  }
+
+  private async endCoachingUnderClientLock({
+    clientId,
+    endsAt,
+    at,
+  }: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
+    await lockCheckInsOfClient(this.executor, clientId);
+
+    const cancelled = await this.executor
       .update(checkInsTable)
       .set({ status: "cancelled", answeredAt: at })
       .where(
@@ -307,10 +297,10 @@ export class PostgresCheckIns implements CheckIns {
       .returning({ id: checkInsTable.id });
 
     for (const { id } of cancelled) {
-      await this.releaseHourOf(transaction, id);
+      await this.releaseHourOf(id);
     }
 
-    const stopped = await transaction
+    const stopped = await this.executor
       .update(checkInSeriesTable)
       .set({ stoppedAt: at })
       .where(
@@ -327,11 +317,8 @@ export class PostgresCheckIns implements CheckIns {
     };
   }
 
-  private releaseHourOf(
-    transaction: DatabaseTransaction,
-    checkInId: string,
-  ): Promise<void> {
-    return this.options.coachTime.release(transaction, {
+  private releaseHourOf(checkInId: string): Promise<void> {
+    return this.options.coachTime.release({
       appointmentKind: "check_in",
       appointmentId: checkInId,
     });

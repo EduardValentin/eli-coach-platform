@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientSettings,
   type ClientSettingsChanges,
@@ -13,8 +14,12 @@ export class PostgresClientSettings
 {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByClientId(clientId: string): Promise<ClientSettings | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select({
         clientId: clientSettingsTable.clientId,
         weightUnit: clientSettingsTable.weightUnit,
@@ -43,7 +48,7 @@ export class PostgresClientSettings
     const { unitPreference, ...snapshot } = settings.toSnapshot();
     const units = { ...unitPreference, updatedAt: snapshot.updatedAt };
 
-    await this.database
+    await this.executor
       .insert(clientSettingsTable)
       .values({ ...snapshot, ...unitPreference })
       .onConflictDoUpdate({ target: clientSettingsTable.clientId, set: units });

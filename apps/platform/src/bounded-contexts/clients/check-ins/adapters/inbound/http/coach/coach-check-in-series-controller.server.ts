@@ -28,6 +28,7 @@ import {
   type CheckInSeriesOutcomeReply,
   type CoachClientSeriesPanel,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type CoachCheckInSeriesControllerOptions = {
   changeCheckInSeries: ChangeCheckInSeriesUseCase;
@@ -35,6 +36,7 @@ type CoachCheckInSeriesControllerOptions = {
   readCoachClientSeries: ReadCoachClientSeriesUseCase;
   setUpCheckInSeries: SetUpCheckInSeriesUseCase;
   stopCheckInSeries: StopCheckInSeriesUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 const OK = 200;
@@ -100,7 +102,9 @@ export class CoachCheckInSeriesController {
     }
 
     return this.respondToSetUp(
-      await this.options.setUpCheckInSeries.execute(submission.data),
+      await this.options.unitOfWork(() =>
+        this.options.setUpCheckInSeries.execute(submission.data),
+      ),
     );
   }
 
@@ -125,10 +129,12 @@ export class CoachCheckInSeriesController {
     }
 
     return this.respondToChange(
-      await this.options.changeCheckInSeries.execute({
-        seriesId: id.data,
-        ...submission.data,
-      }),
+      await this.options.unitOfWork(() =>
+        this.options.changeCheckInSeries.execute({
+          seriesId: id.data,
+          ...submission.data,
+        }),
+      ),
     );
   }
 
@@ -145,7 +151,9 @@ export class CoachCheckInSeriesController {
     }
 
     return this.respondToStop(
-      await this.options.stopCheckInSeries.execute({ seriesId: id.data }),
+      await this.options.unitOfWork(() =>
+        this.options.stopCheckInSeries.execute({ seriesId: id.data }),
+      ),
     );
   }
 

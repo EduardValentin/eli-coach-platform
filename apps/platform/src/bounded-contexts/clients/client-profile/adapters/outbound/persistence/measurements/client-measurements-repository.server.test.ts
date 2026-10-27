@@ -1,4 +1,4 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
 import { describe, expect, it } from "vitest";
 
 import { clientMeasurementsTable } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/schema.server";
@@ -117,7 +117,7 @@ function createTransactionRecordingInserts() {
         inserted.push({ table, row });
       },
     }),
-  } as unknown as DatabaseTransaction;
+  } as unknown as DatabaseClient;
 
   return { handle, inserted };
 }

@@ -22,12 +22,14 @@ import {
   type ClientCheckIn,
   type ClientCheckIns,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type ClientCheckInsControllerOptions = {
   countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
   findNextClientCheckIn: FindNextClientCheckInUseCase;
   listClientCheckIns: ListClientCheckInsUseCase;
   requestCheckIn: RequestCheckInUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 const CREATED = 201;
@@ -85,12 +87,14 @@ export class ClientCheckInsController {
       return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
     }
 
-    const result = await this.options.requestCheckIn.execute({
-      authSubjectId: client.authSubjectId,
-      startsAt: new Date(submission.data.startsAt),
-      clientTimeZone: submission.data.timeZone,
-      note: submission.data.note ?? null,
-    });
+    const result = await this.options.unitOfWork(() =>
+      this.options.requestCheckIn.execute({
+        authSubjectId: client.authSubjectId,
+        startsAt: new Date(submission.data.startsAt),
+        clientTimeZone: submission.data.timeZone,
+        note: submission.data.note ?? null,
+      }),
+    );
 
     return this.respondToCheckInRequest(result);
   }

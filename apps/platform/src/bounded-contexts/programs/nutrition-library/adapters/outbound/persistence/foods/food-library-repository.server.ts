@@ -1,8 +1,9 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
+  type DatabaseExecutor,
 } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   Food,
   type FoodAddition,
@@ -33,6 +34,10 @@ const UNIQUE_VIOLATION_CODE = "23505";
 
 export class PostgresFoodLibrary implements FoodLibrary {
   constructor(private readonly database: DatabaseClient) {}
+
+  private get executor() {
+    return executorOf(this.database);
+  }
 
   async list(ownerAccountId: string): Promise<Food[]> {
     const rows = await this.selectFoods()
@@ -82,7 +87,7 @@ export class PostgresFoodLibrary implements FoodLibrary {
     const { tagIds, ...row } = food.toSnapshot();
 
     try {
-      await this.database.transaction(async (transaction) => {
+      await this.executor.transaction(async (transaction) => {
         await transaction.insert(foodsTable).values(row);
         await this.tag(transaction, row.id, tagIds);
       });
@@ -103,7 +108,7 @@ export class PostgresFoodLibrary implements FoodLibrary {
     } = food.toSnapshot();
 
     try {
-      await this.database.transaction(async (transaction) => {
+      await this.executor.transaction(async (transaction) => {
         await transaction
           .update(foodsTable)
           .set(columns)
@@ -126,14 +131,14 @@ export class PostgresFoodLibrary implements FoodLibrary {
   }
 
   private selectFoods() {
-    return this.database
+    return this.executor
       .select({ ...getTableColumns(foodsTable), tagIds: this.tagIdsOfFood() })
       .from(foodsTable)
       .$dynamic();
   }
 
   private tagIdsOfFood(): SQL<string[]> {
-    const tagIds = this.database
+    const tagIds = this.executor
       .select({ tagId: foodTagsTable.tagId })
       .from(foodTagsTable)
       .innerJoin(
@@ -147,7 +152,7 @@ export class PostgresFoodLibrary implements FoodLibrary {
   }
 
   private async tag(
-    transaction: DatabaseTransaction,
+    transaction: DatabaseExecutor,
     foodId: string,
     tagIds: readonly string[],
   ): Promise<void> {

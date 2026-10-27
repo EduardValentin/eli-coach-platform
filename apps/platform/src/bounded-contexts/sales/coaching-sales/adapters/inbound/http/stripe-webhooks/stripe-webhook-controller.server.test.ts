@@ -444,6 +444,7 @@ function createController(options: {
   };
   const paymentEvents: PaymentEvents = { verify };
   const controller = new StripeWebhookController({
+    unitOfWork: (work) => work(),
     cardHandler,
     completionHandlersByPurpose: new Map([
       [coachingHandler.purpose, coachingHandler],

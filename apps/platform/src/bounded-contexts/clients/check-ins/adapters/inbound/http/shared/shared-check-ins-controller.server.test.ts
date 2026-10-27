@@ -681,6 +681,7 @@ function createController(
     .fn()
     .mockResolvedValue(answers.withdrawn ?? { status: "unknown" });
   const controller = new SharedCheckInsController({
+    unitOfWork: (work) => work(),
     approveCheckIn: {
       execute: approveCheckIn,
     } as unknown as ApproveCheckInUseCase,

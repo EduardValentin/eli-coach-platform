@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { Client } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   PurchasedSubscription,
@@ -22,8 +23,13 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
   it("records the event in the ledger, admits the client, opens her profile and then records the purchase under the id the domain gave it and her standing in the same transaction", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const { purchases, openClientProfile, writeClient, writeCoachingStanding } =
-      createPurchases(database.client);
+    const {
+      purchases,
+      openClientProfile,
+      writeClient,
+      writeCoachingStanding,
+      writersRanIn,
+    } = createPurchases(database.client);
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -33,11 +39,13 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
       outcome: "recorded",
       clientId: ADMITTED_CLIENT_ID,
     });
-    expect(writeClient).toHaveBeenCalledWith(
+    expect(writersRanIn).toEqual([
       database.transaction,
-      purchase().client,
-    );
-    expect(openClientProfile).toHaveBeenCalledWith(database.transaction, {
+      database.transaction,
+      database.transaction,
+    ]);
+    expect(writeClient).toHaveBeenCalledWith(purchase().client);
+    expect(openClientProfile).toHaveBeenCalledWith({
       clientId: ADMITTED_CLIENT_ID,
       at: NOW,
     });
@@ -52,12 +60,12 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
         programStartsAt: PROGRAM_STARTS_AT,
       }),
     ]);
-    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+    expect(writeCoachingStanding).toHaveBeenCalledWith({
       clientId: ADMITTED_CLIENT_ID,
       standing: expect.anything(),
     });
     expect(
-      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+      writeCoachingStanding.mock.calls[0]?.[0].standing.toSnapshot(),
     ).toEqual({
       status: "not-started",
       accessEndsAt: null,
@@ -210,9 +218,16 @@ function createPurchases(
   database: DatabaseClient,
   options: { admitted?: "written" | "call_already_has_client" } = {},
 ) {
-  const writeClient = vi.fn().mockResolvedValue(options.admitted ?? "written");
-  const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
-  const openClientProfile = vi.fn().mockResolvedValue(undefined);
+  const writersRanIn: unknown[] = [];
+  const writingInTransaction = (answer: unknown) =>
+    vi.fn().mockImplementation(async () => {
+      writersRanIn.push(executorOf(database));
+
+      return answer;
+    });
+  const writeClient = writingInTransaction(options.admitted ?? "written");
+  const writeCoachingStanding = writingInTransaction(undefined);
+  const openClientProfile = writingInTransaction(undefined);
   const purchases = new PostgresCoachingPurchases({
     clock: { now: () => NOW },
     database,
@@ -221,7 +236,13 @@ function createPurchases(
     writeCoachingStanding,
   });
 
-  return { purchases, openClientProfile, writeClient, writeCoachingStanding };
+  return {
+    purchases,
+    openClientProfile,
+    writeClient,
+    writeCoachingStanding,
+    writersRanIn,
+  };
 }
 
 function purchase(): CoachingPurchase {

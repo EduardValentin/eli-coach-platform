@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "~/shared/database";
+import type { DatabaseExecutor } from "~/shared/database";
 import { CheckIn } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { sql } from "drizzle-orm";
 
@@ -9,10 +9,10 @@ export type CheckInRow = typeof checkInsTable.$inferSelect;
 const CLIENT_CHECK_INS_LOCK_PREFIX = "check-in-request:";
 
 export async function lockCheckInsOfClient(
-  transaction: DatabaseTransaction,
+  executor: DatabaseExecutor,
   clientId: string,
 ): Promise<void> {
-  await transaction.execute(
+  await executor.execute(
     sql`select pg_advisory_xact_lock(hashtext(${CLIENT_CHECK_INS_LOCK_PREFIX + clientId}))`,
   );
 }

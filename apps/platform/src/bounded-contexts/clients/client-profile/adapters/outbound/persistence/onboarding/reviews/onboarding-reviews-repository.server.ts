@@ -1,8 +1,8 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
 } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import {
   DetailRequest,
   ONBOARDING_FORM_IDS,
@@ -40,7 +40,6 @@ type ReviewStampProjection = {
 };
 
 export type ReviewStampWriter = (
-  transaction: DatabaseTransaction,
   projection: ReviewStampProjection,
 ) => Promise<void>;
 
@@ -61,9 +60,13 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
     this.coachingSeedWriter = options.coachingSeedWriter;
   }
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByClientId(clientId: string): Promise<StoredOnboardingReview> {
     const [[review], requestRows] = await Promise.all([
-      this.database
+      this.executor
         .select({
           openedAt: clientOnboardingReviewsTable.openedAt,
           approvedAt: clientOnboardingReviewsTable.approvedAt,
@@ -71,7 +74,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
         .from(clientOnboardingReviewsTable)
         .where(eq(clientOnboardingReviewsTable.clientId, clientId))
         .limit(1),
-      this.database
+      this.executor
         .select({
           id: clientOnboardingDetailRequestsTable.id,
           clientId: clientOnboardingDetailRequestsTable.clientId,
@@ -93,8 +96,8 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
   }
 
   async recordOpened({ clientId, at, stamps }: ReviewMoment): Promise<void> {
-    await this.writeWithStamps({ clientId, stamps }, (transaction) =>
-      transaction
+    await this.writeWithStamps({ clientId, stamps }, () =>
+      this.executor
         .insert(clientOnboardingReviewsTable)
         .values({ clientId, openedAt: at, approvedAt: null })
         .onConflictDoUpdate({
@@ -113,17 +116,15 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
     const snapshot = request.toSnapshot();
 
     try {
-      await this.writeWithStamps(
-        { clientId: snapshot.clientId, stamps },
-        (transaction) =>
-          transaction.insert(clientOnboardingDetailRequestsTable).values({
-            id: snapshot.id,
-            clientId: snapshot.clientId,
-            questionIds: [...snapshot.questionIds],
-            note: snapshot.note,
-            askedAt: snapshot.askedAt,
-            answeredAt: snapshot.answeredAt,
-          }),
+      await this.writeWithStamps({ clientId: snapshot.clientId, stamps }, () =>
+        this.executor.insert(clientOnboardingDetailRequestsTable).values({
+          id: snapshot.id,
+          clientId: snapshot.clientId,
+          questionIds: [...snapshot.questionIds],
+          note: snapshot.note,
+          askedAt: snapshot.askedAt,
+          answeredAt: snapshot.answeredAt,
+        }),
       );
 
       return "recorded";
@@ -139,8 +140,8 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
   async recordAnswer(input: RecordDetailsAnswer): Promise<void> {
     const projection = { clientId: input.clientId, stamps: input.stamps };
 
-    await this.writeWithStamps(projection, async (transaction) => {
-      const answered = await transaction
+    await this.writeWithStamps(projection, async () => {
+      const answered = await this.executor
         .update(clientOnboardingDetailRequestsTable)
         .set({ answeredAt: input.answeredAt })
         .where(
@@ -156,7 +157,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
         throw new Error("The detail request is no longer open.");
       }
 
-      await transaction
+      await this.executor
         .update(clientOnboardingSubmissionsTable)
         .set({ answers: mergedAnswersExpression(input.mergedAnswers) })
         .where(eq(clientOnboardingSubmissionsTable.clientId, input.clientId));
@@ -169,8 +170,8 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
     stamps,
     seed,
   }: RecordApproval): Promise<void> {
-    await this.writeWithStamps({ clientId, stamps }, async (transaction) => {
-      await transaction
+    await this.writeWithStamps({ clientId, stamps }, async () => {
+      await this.executor
         .insert(clientOnboardingReviewsTable)
         .values({ clientId, openedAt: at, approvedAt: at })
         .onConflictDoUpdate({
@@ -179,17 +180,17 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
             approvedAt: sql`coalesce(${clientOnboardingReviewsTable.approvedAt}, excluded.approved_at)`,
           },
         });
-      await this.coachingSeedWriter(transaction, { clientId, seed, at });
+      await this.coachingSeedWriter({ clientId, seed, at });
     });
   }
 
   private async writeWithStamps(
     projection: ReviewStampProjection,
-    writeRows: (transaction: DatabaseTransaction) => Promise<unknown>,
+    writeRows: () => Promise<unknown>,
   ): Promise<void> {
-    await this.database.transaction(async (transaction) => {
-      await writeRows(transaction);
-      await this.reviewStampWriter(transaction, projection);
+    await createUnitOfWork(this.database)(async () => {
+      await writeRows();
+      await this.reviewStampWriter(projection);
     });
   }
 }

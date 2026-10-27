@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   CheckoutSessionRecord,
   CheckoutSessions,
@@ -25,8 +26,12 @@ type PostgresPaymentLinksOptions = {
 export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
   constructor(private readonly options: PostgresPaymentLinksOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   async findByTokenSha256(tokenSha256: string): Promise<PaymentLink | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select()
       .from(paymentLinksTable)
       .where(eq(paymentLinksTable.tokenSha256, tokenSha256))
@@ -36,7 +41,7 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
   }
 
   async issue(link: PaymentLink): Promise<void> {
-    await this.options.database.insert(paymentLinksTable).values({
+    await this.executor.insert(paymentLinksTable).values({
       id: link.id,
       assessmentCallId: link.assessmentCallId,
       tokenSha256: link.tokenSha256,
@@ -51,7 +56,7 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
     assessmentCallId: string,
     keepId: string,
   ): Promise<void> {
-    await this.options.database
+    await this.executor
       .update(paymentLinksTable)
       .set({ state: "voided" })
       .where(
@@ -64,7 +69,7 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
   }
 
   async void(id: string): Promise<void> {
-    await this.options.database
+    await this.executor
       .update(paymentLinksTable)
       .set({ state: "voided" })
       .where(
@@ -75,7 +80,7 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
   async findPaymentCustomerForCall(
     assessmentCallId: string,
   ): Promise<string | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select({ paymentCustomerId: paymentLinksTable.stripeCustomerId })
       .from(paymentLinksTable)
       .where(
@@ -94,14 +99,14 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
     paymentLinkId: string,
     paymentCustomerId: string,
   ): Promise<void> {
-    await this.options.database
+    await this.executor
       .update(paymentLinksTable)
       .set({ stripeCustomerId: paymentCustomerId })
       .where(eq(paymentLinksTable.id, paymentLinkId));
   }
 
   async remember(session: CheckoutSessionRecord): Promise<void> {
-    await this.options.database.insert(checkoutSessionsTable).values({
+    await this.executor.insert(checkoutSessionsTable).values({
       id: session.id,
       paymentLinkId: session.paymentLinkId,
       bundleId: session.bundleId,
@@ -116,7 +121,7 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
   async findOpenForCall(
     assessmentCallId: string,
   ): Promise<readonly { id: string }[]> {
-    return this.options.database
+    return this.executor
       .select({ id: checkoutSessionsTable.id })
       .from(checkoutSessionsTable)
       .innerJoin(
@@ -132,7 +137,7 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
   }
 
   async markExpired(id: string): Promise<void> {
-    await this.options.database
+    await this.executor
       .update(checkoutSessionsTable)
       .set({ expiredAt: this.options.clock.now() })
       .where(

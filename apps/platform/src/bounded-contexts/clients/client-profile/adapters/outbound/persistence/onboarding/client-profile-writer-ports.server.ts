@@ -1,4 +1,3 @@
-import type { DatabaseTransaction } from "~/shared/database";
 import type {
   ClientMeasurementEntry,
   CoachingSeed,
@@ -6,17 +5,12 @@ import type {
 
 type ClientMoment = { clientId: string; at: Date };
 
-export type PhotoConsentWriter = (
-  transaction: DatabaseTransaction,
-  consent: ClientMoment,
-) => Promise<void>;
+export type PhotoConsentWriter = (consent: ClientMoment) => Promise<void>;
 
 export type CoachingSeedWriter = (
-  transaction: DatabaseTransaction,
   seeding: ClientMoment & { seed: CoachingSeed },
 ) => Promise<void>;
 
 export type MeasurementEntryWriter = (
-  transaction: DatabaseTransaction,
   record: ClientMeasurementEntry,
 ) => Promise<void>;

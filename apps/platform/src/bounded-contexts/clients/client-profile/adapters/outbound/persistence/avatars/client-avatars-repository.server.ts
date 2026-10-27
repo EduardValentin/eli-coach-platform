@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientAvatar,
   type ClientAvatars,
@@ -22,8 +23,12 @@ type AvatarRow = typeof clientAvatarsTable.$inferSelect;
 export class PostgresClientAvatars implements ClientAvatars {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByClientId(clientId: string): Promise<ClientAvatar | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select(AVATAR_COLUMNS)
       .from(clientAvatarsTable)
       .where(eq(clientAvatarsTable.clientId, clientId))
@@ -37,7 +42,7 @@ export class PostgresClientAvatars implements ClientAvatars {
       return [];
     }
 
-    const rows = await this.database
+    const rows = await this.executor
       .select(AVATAR_COLUMNS)
       .from(clientAvatarsTable)
       .where(inArray(clientAvatarsTable.clientId, [...clientIds]));
@@ -49,7 +54,7 @@ export class PostgresClientAvatars implements ClientAvatars {
     const { reference, ...snapshot } = avatar.toSnapshot();
     const { clientId: _clientId, ...replaced } = { ...snapshot, ...reference };
 
-    await this.database
+    await this.executor
       .insert(clientAvatarsTable)
       .values({ ...snapshot, ...reference })
       .onConflictDoUpdate({
@@ -59,7 +64,7 @@ export class PostgresClientAvatars implements ClientAvatars {
   }
 
   async remove(clientId: string): Promise<void> {
-    await this.database
+    await this.executor
       .delete(clientAvatarsTable)
       .where(eq(clientAvatarsTable.clientId, clientId));
   }

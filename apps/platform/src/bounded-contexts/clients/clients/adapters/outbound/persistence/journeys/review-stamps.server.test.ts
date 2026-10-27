@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
 import { PgDialect } from "drizzle-orm/pg-core";
 import type { SQL } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -87,7 +87,7 @@ function createTransactionRecordingUpdates() {
         };
       },
     }),
-  } as unknown as DatabaseTransaction;
+  } as unknown as DatabaseClient;
 
   return { handle, filters, updates };
 }

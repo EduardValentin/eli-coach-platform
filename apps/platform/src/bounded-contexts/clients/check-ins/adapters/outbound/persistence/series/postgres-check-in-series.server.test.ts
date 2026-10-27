@@ -168,6 +168,7 @@ function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
 
 function createDatabaseFailingTransactions(failure: Error): DatabaseClient {
   return {
+    execute: vi.fn().mockResolvedValue(undefined),
     transaction: vi.fn().mockRejectedValue(failure),
   } as unknown as DatabaseClient;
 }

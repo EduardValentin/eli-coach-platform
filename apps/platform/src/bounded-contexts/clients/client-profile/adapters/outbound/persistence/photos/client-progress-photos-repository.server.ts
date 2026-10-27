@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ProgressPhoto,
   type ProgressPhotoSnapshot,
@@ -36,16 +37,20 @@ export const PROGRESS_PHOTO_SELECTION = {
 export class PostgresProgressPhotos implements ProgressPhotos {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async add(photo: ProgressPhoto): Promise<void> {
     const { reference, ...columns } = photo.toSnapshot();
 
-    await this.database
+    await this.executor
       .insert(clientProgressPhotosTable)
       .values({ ...columns, ...reference });
   }
 
   async findById(photoId: string): Promise<ProgressPhoto | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select(PROGRESS_PHOTO_SELECTION)
       .from(clientProgressPhotosTable)
       .where(eq(clientProgressPhotosTable.id, photoId))
@@ -57,7 +62,7 @@ export class PostgresProgressPhotos implements ProgressPhotos {
   }
 
   async delete(photoId: string): Promise<void> {
-    await this.database
+    await this.executor
       .delete(clientProgressPhotosTable)
       .where(eq(clientProgressPhotosTable.id, photoId));
   }

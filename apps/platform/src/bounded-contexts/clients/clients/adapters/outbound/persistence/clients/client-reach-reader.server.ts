@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   CoachingStanding,
   portalReachOf,
@@ -19,6 +20,10 @@ type PostgresClientReachOptions = {
 export class PostgresClientReach implements ClientReach {
   constructor(private readonly options: PostgresClientReachOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   findByAuthSubjectId(
     authSubjectId: string,
   ): Promise<ClientReachReading | null> {
@@ -30,7 +35,7 @@ export class PostgresClientReach implements ClientReach {
   }
 
   private async findOne(filter: SQL): Promise<ClientReachReading | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select({
         clientId: clientsTable.id,
         onboardingSubmittedAt: clientsTable.onboardingSubmittedAt,

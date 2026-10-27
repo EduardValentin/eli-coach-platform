@@ -1,7 +1,8 @@
 import {
   isCausedByDatabaseError,
-  type DatabaseTransaction,
+  type DatabaseClient,
 } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { eq, sql } from "drizzle-orm";
 
 import {
@@ -22,19 +23,28 @@ type CoachTimeReservation = Appointment & {
 
 type CoachTimeReservationResult = { status: "reserved" } | { status: "taken" };
 
+export type CoachTimeReservations = {
+  reserve: (
+    reservation: CoachTimeReservation,
+  ) => Promise<CoachTimeReservationResult>;
+  release: (appointment: Appointment) => Promise<void>;
+};
+
 const EXCLUSION_VIOLATION_CODE = "23P01";
 const COACH_TIME_LOCK = "coach-time-reservations";
 
 export async function reserveCoachTime(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   reservation: CoachTimeReservation,
 ): Promise<CoachTimeReservationResult> {
-  await transaction.execute(
+  const executor = executorOf(database);
+
+  await executor.execute(
     sql`select pg_advisory_xact_lock(hashtext(${COACH_TIME_LOCK}))`,
   );
 
   try {
-    await transaction.transaction((savepoint) =>
+    await executor.transaction((savepoint) =>
       savepoint.insert(coachTimeReservationsTable).values({
         startsAt: reservation.start,
         endsAt: reservation.end,
@@ -53,10 +63,10 @@ export async function reserveCoachTime(
 }
 
 export async function releaseCoachTime(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   appointment: Appointment,
 ): Promise<void> {
-  await transaction
+  await executorOf(database)
     .delete(coachTimeReservationsTable)
     .where(eq(ownerColumnOf(appointment), appointment.appointmentId));
 }

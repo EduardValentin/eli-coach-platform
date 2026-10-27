@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
@@ -118,9 +119,8 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("copies the saved subscription's standing onto her client in the same transaction", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions, writeCoachingStanding } = createSubscriptions(
-      database.client,
-    );
+    const { subscriptions, standingWrittenIn, writeCoachingStanding } =
+      createSubscriptions(database.client);
     const previous = subscriptionOf({
       status: "active",
       cancelledAt: null,
@@ -132,12 +132,13 @@ describe("PostgresCoachingSubscriptions#save", () => {
     await subscriptions.save({ subscription: cancelled, previous });
 
     // assert
-    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+    expect(standingWrittenIn).toEqual([database.transaction]);
+    expect(writeCoachingStanding).toHaveBeenCalledWith({
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       standing: expect.anything(),
     });
     expect(
-      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+      writeCoachingStanding.mock.calls[0]?.[0].standing.toSnapshot(),
     ).toEqual(cancelled.standing().toSnapshot());
   });
 
@@ -185,9 +186,8 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
   it("copies the reconciled subscription's standing onto her client in the transaction that records the event", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions, writeCoachingStanding } = createSubscriptions(
-      database.client,
-    );
+    const { subscriptions, standingWrittenIn, writeCoachingStanding } =
+      createSubscriptions(database.client);
     const previous = subscriptionOf({
       status: "active",
       cancelledAt: null,
@@ -205,12 +205,13 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
     // assert
     expect(outcome).toBe("recorded");
     expect(database.recordedEvents).toEqual(["evt_1"]);
-    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+    expect(standingWrittenIn).toEqual([database.transaction]);
+    expect(writeCoachingStanding).toHaveBeenCalledWith({
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       standing: expect.anything(),
     });
     expect(
-      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+      writeCoachingStanding.mock.calls[0]?.[0].standing.toSnapshot(),
     ).toEqual(cancelled.standing().toSnapshot());
   });
 
@@ -260,14 +261,17 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
 });
 
 function createSubscriptions(database: DatabaseClient) {
-  const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
+  const standingWrittenIn: unknown[] = [];
+  const writeCoachingStanding = vi.fn().mockImplementation(async () => {
+    standingWrittenIn.push(executorOf(database));
+  });
   const subscriptions = new PostgresCoachingSubscriptions({
     clock: { now: () => PROBLEM_AT },
     database,
     writeCoachingStanding,
   });
 
-  return { subscriptions, writeCoachingStanding };
+  return { subscriptions, standingWrittenIn, writeCoachingStanding };
 }
 
 function createDatabaseUpdating(

@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   emptyDraft,
   type OnboardingAnswersByForm,
@@ -25,6 +26,8 @@ const UPDATED_AT = new Date("2026-10-22T09:00:00.000Z");
 const CONSENTED_AT = new Date("2026-10-22T08:55:00.000Z");
 const SUBMITTED_AT = new Date("2026-10-23T09:00:00.000Z");
 const ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
+
+const OUTSIDE_ANY_TRANSACTION = {} as DatabaseClient;
 
 describe("PostgresClientOnboardings#findByClientId", () => {
   it("reads her draft with its consents and no submission", async () => {
@@ -419,23 +422,23 @@ function onboardingsOver(
 function createRecordingWriters() {
   const photoConsents: {
     transaction: unknown;
-    consent: Parameters<PhotoConsentWriter>[1];
+    consent: Parameters<PhotoConsentWriter>[0];
   }[] = [];
   const measurementEntries: {
     transaction: unknown;
-    input: Parameters<MeasurementEntryWriter>[1];
+    input: Parameters<MeasurementEntryWriter>[0];
   }[] = [];
-  const photoConsentWriter: PhotoConsentWriter = async (
-    transaction,
-    consent,
-  ) => {
-    photoConsents.push({ transaction, consent });
+  const photoConsentWriter: PhotoConsentWriter = async (consent) => {
+    photoConsents.push({
+      transaction: executorOf(OUTSIDE_ANY_TRANSACTION),
+      consent,
+    });
   };
-  const measurementEntryWriter: MeasurementEntryWriter = async (
-    transaction,
-    input,
-  ) => {
-    measurementEntries.push({ transaction, input });
+  const measurementEntryWriter: MeasurementEntryWriter = async (input) => {
+    measurementEntries.push({
+      transaction: executorOf(OUTSIDE_ANY_TRANSACTION),
+      input,
+    });
   };
 
   return {

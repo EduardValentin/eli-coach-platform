@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import { AssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
@@ -197,7 +198,9 @@ describe("PostgresAssessmentCallRepository#reserve", () => {
     });
 
     // act
-    const decision = await repository.reserve({ call, now: bookedAt });
+    const decision = await createUnitOfWork(database.handle)(() =>
+      repository.reserve({ call, now: bookedAt }),
+    );
 
     // assert
     expect(decision).toEqual({ status: "reserved" });
@@ -205,7 +208,6 @@ describe("PostgresAssessmentCallRepository#reserve", () => {
       { table: assessmentCallsTable, values: STORED_ROW },
     ]);
     expect(coachTime.reserve).toHaveBeenCalledWith(
-      database.transaction,
       expect.objectContaining({
         appointmentKind: "assessment_call",
         appointmentId: STORED_ROW.id,

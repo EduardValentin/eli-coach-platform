@@ -8,6 +8,8 @@ export type DatabaseTransaction = Parameters<
   Parameters<DatabaseClient["transaction"]>[0]
 >[0];
 
+export type DatabaseExecutor = DatabaseClient | DatabaseTransaction;
+
 export function createDatabaseClient(pool: Pool): DatabaseClient {
   return drizzle({
     client: pool,

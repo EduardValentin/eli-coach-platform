@@ -1,8 +1,9 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
+  type DatabaseExecutor,
 } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   Recipe,
   type RecipeAddition,
@@ -41,6 +42,10 @@ type RecipeRow = Omit<RecipeSnapshot, "photo"> & { photoId: string | null };
 export class PostgresRecipeLibrary implements RecipeLibrary {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async list(ownerAccountId: string): Promise<Recipe[]> {
     const rows = await this.selectRecipes()
       .where(
@@ -75,7 +80,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
       recipe.toSnapshot();
 
     try {
-      await this.database.transaction(async (transaction) => {
+      await this.executor.transaction(async (transaction) => {
         await transaction
           .insert(recipesTable)
           .values({ ...row, photoId: photo?.photoId ?? null });
@@ -102,7 +107,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
     } = recipe.toSnapshot();
 
     try {
-      await this.database.transaction(async (transaction) => {
+      await this.executor.transaction(async (transaction) => {
         await transaction
           .update(recipesTable)
           .set({ ...columns, photoId: photo?.photoId ?? null })
@@ -136,7 +141,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
   }
 
   private selectRecipes() {
-    return this.database
+    return this.executor
       .select({
         ...getTableColumns(recipesTable),
         ingredients: this.ingredientsOfRecipe(),
@@ -150,7 +155,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
   }
 
   private ingredientsOfRecipe(): SQL<RecipeIngredientSnapshot[]> {
-    const ingredients = this.database
+    const ingredients = this.executor
       .select({
         ingredients: sql`json_agg(json_build_object(
           'foodId', ${recipeIngredientsTable.foodId},
@@ -167,7 +172,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
   }
 
   private tagIdsOfRecipe(family: SQL): SQL<string[]> {
-    const tagIds = this.database
+    const tagIds = this.executor
       .select({ tagId: recipeTagsTable.tagId })
       .from(recipeTagsTable)
       .innerJoin(
@@ -181,7 +186,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
   }
 
   private async place(
-    transaction: DatabaseTransaction,
+    transaction: DatabaseExecutor,
     recipeId: string,
     ingredients: readonly RecipeIngredientSnapshot[],
   ): Promise<void> {
@@ -197,7 +202,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
   }
 
   private async tag(
-    transaction: DatabaseTransaction,
+    transaction: DatabaseExecutor,
     recipeId: string,
     tagIds: readonly string[],
   ): Promise<void> {

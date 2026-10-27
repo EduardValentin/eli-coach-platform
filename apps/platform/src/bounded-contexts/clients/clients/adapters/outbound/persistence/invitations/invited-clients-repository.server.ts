@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
 import type {
   InvitedClient,
@@ -12,8 +13,12 @@ import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbou
 export class PostgresInvitedClients implements InvitedClients {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findById(clientId: string): Promise<InvitedClient | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select({
         id: clientsTable.id,
         email: clientsTable.email,

@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
 import type {
   OnboardingClient,
@@ -12,6 +13,10 @@ import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbou
 export class PostgresOnboardingClients implements OnboardingClients {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   findByAuthSubjectId(authSubjectId: string): Promise<OnboardingClient | null> {
     return this.findOne(eq(clientsTable.authSubjectId, authSubjectId));
   }
@@ -21,7 +26,7 @@ export class PostgresOnboardingClients implements OnboardingClients {
   }
 
   private async findOne(filter: SQL): Promise<OnboardingClient | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select({
         clientId: clientsTable.id,
         submittedAt: clientsTable.onboardingSubmittedAt,

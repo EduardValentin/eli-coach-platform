@@ -19,6 +19,7 @@ import {
   type BotDetectionConfig,
 } from "~/shared/submission-checks/bot-detection";
 import { resolveFieldErrorCode } from "~/shared/http/index.server";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 import {
   bookAssessmentCallErrorSchema,
@@ -41,6 +42,7 @@ type AssessmentCallsControllerOptions = {
   clock: Clock;
   listOpenSlots: ListOpenSlotsUseCase;
   resolveJoinLink: ResolveJoinLinkUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 type BookingErrorOptions = {
@@ -172,7 +174,7 @@ export class AssessmentCallsController {
     }
 
     try {
-      const result = await this.options.bookAssessmentCall.execute({
+      const command = {
         country: submission.data.country,
         dateOfBirth: submission.data.dateOfBirth,
         email: submission.data.email,
@@ -184,7 +186,10 @@ export class AssessmentCallsController {
         primaryGoal: submission.data.primaryGoal,
         startsAt: new Date(submission.data.startsAt),
         visitorTimeZone: submission.data.visitorTimeZone,
-      });
+      };
+      const result = await this.options.unitOfWork(() =>
+        this.options.bookAssessmentCall.execute(command),
+      );
 
       return createBookingResponse(result);
     } catch {

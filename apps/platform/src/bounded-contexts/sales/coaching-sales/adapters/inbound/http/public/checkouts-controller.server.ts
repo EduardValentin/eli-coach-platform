@@ -43,6 +43,7 @@ import {
   CHECKOUT_COMPLETE_PATH,
   selectBundlePath,
 } from "~/bounded-contexts/sales/coaching-sales/public/paths";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type CheckoutsControllerOptions = {
   appBasePath: string;
@@ -52,6 +53,7 @@ type CheckoutsControllerOptions = {
   readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
   resolvePaymentLink: ResolvePaymentLinkUseCase;
   startCheckout: StartCheckoutUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 type PaymentLinkResolution = Awaited<
@@ -140,19 +142,21 @@ export class CheckoutsController {
     }
 
     const { bundleId, startChoice } = choice.data;
-    const checkout = await this.options.startCheckout.execute({
-      rawToken: token,
-      bundleId,
-      startChoice,
-      successUrl: `${this.publicUrl(CHECKOUT_COMPLETE_PATH)}?session=${CHECKOUT_SESSION_ID_PLACEHOLDER}`,
-      cancelUrl: this.publicUrl(
-        selectBundlePath({
-          payment: "cancelled",
-          bundle: bundleId,
-          start: startChoice,
-        }),
-      ),
-    });
+    const checkout = await this.options.unitOfWork(() =>
+      this.options.startCheckout.execute({
+        rawToken: token,
+        bundleId,
+        startChoice,
+        successUrl: `${this.publicUrl(CHECKOUT_COMPLETE_PATH)}?session=${CHECKOUT_SESSION_ID_PLACEHOLDER}`,
+        cancelUrl: this.publicUrl(
+          selectBundlePath({
+            payment: "cancelled",
+            bundle: bundleId,
+            start: startChoice,
+          }),
+        ),
+      }),
+    );
 
     if (checkout.status === "redirect") {
       return redirect(checkout.url, SEE_OTHER);

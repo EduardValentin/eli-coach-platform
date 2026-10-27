@@ -7,6 +7,7 @@ import type { ProductAsset } from "~/bounded-contexts/sales/store/domain/product
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 
 type DownloadGrantRow = {
   grantId: number;
@@ -25,8 +26,12 @@ type DownloadGrantRow = {
 export class PostgresDownloadGrantRepository implements DownloadGrants {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByTokenSha256(tokenSha256: string): Promise<DownloadGrant | null> {
-    const result = await this.database.execute<DownloadGrantRow>(sql`
+    const result = await this.executor.execute<DownloadGrantRow>(sql`
       select
         download_grant.id as "grantId",
         download_grant.status as "grantStatus",

@@ -367,6 +367,7 @@ function createController(
     },
   );
   const controller = new ClientCheckInsController({
+    unitOfWork: (work) => work(),
     countCheckInsAwaiting: {
       execute: countCheckInsAwaiting,
     } as unknown as CountCheckInsAwaitingUseCase,

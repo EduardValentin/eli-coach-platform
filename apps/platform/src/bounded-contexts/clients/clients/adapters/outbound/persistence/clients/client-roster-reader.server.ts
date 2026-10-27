@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   ClientRoster,
   ClientRosterEntry,
@@ -11,8 +12,12 @@ import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbou
 export class PostgresClientRoster implements ClientRoster {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async list(): Promise<ClientRosterEntry[]> {
-    const rows = await selectRoster(this.database).orderBy(
+    const rows = await selectRoster(this.executor).orderBy(
       desc(clientsTable.createdAt),
     );
 
@@ -20,7 +25,7 @@ export class PostgresClientRoster implements ClientRoster {
   }
 
   async findById(clientId: string): Promise<ClientRosterEntry | null> {
-    const [row] = await selectRoster(this.database)
+    const [row] = await selectRoster(this.executor)
       .where(eq(clientsTable.id, clientId))
       .limit(1);
 

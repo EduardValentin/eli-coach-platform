@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   NutritionTag,
   NutritionTags,
@@ -10,8 +11,12 @@ import { nutritionTagsTable } from "~/bounded-contexts/programs/nutrition-librar
 export class PostgresNutritionTags implements NutritionTags {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async list(): Promise<NutritionTag[]> {
-    return this.database
+    return this.executor
       .select({
         id: nutritionTagsTable.id,
         family: nutritionTagsTable.family,

@@ -1,4 +1,5 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
@@ -43,6 +44,10 @@ type SubscriptionWrite = Partial<
 export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   constructor(private readonly options: PostgresCoachingSubscriptionsOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   findCurrentForClient(clientId: string): Promise<CoachingSubscription | null> {
     return this.findCurrent(eq(coachingSubscriptionsTable.clientId, clientId));
   }
@@ -75,8 +80,8 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   }
 
   async save(change: SubscriptionChange): Promise<"saved" | "stale"> {
-    const written = await this.options.database.transaction((transaction) =>
-      this.writeChange(transaction, change),
+    const written = await createUnitOfWork(this.options.database)(() =>
+      this.writeChange(change),
     );
 
     return written ? "saved" : "stale";
@@ -88,14 +93,14 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     return recordEventOnce(this.options.database, {
       eventId: change.eventId,
       receivedAt: this.options.clock.now(),
-      write: (transaction) => this.writeChange(transaction, change),
+      write: () => this.writeChange(change),
     });
   }
 
   private async findCurrent(
     condition: SQL,
   ): Promise<CoachingSubscription | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select()
       .from(coachingSubscriptionsTable)
       .where(condition)
@@ -110,10 +115,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
       : null;
   }
 
-  private async writeChange(
-    transaction: DatabaseTransaction,
-    change: SubscriptionChange,
-  ): Promise<boolean> {
+  private async writeChange(change: SubscriptionChange): Promise<boolean> {
     const previous = change.previous.toSnapshot();
     const columns = this.changedColumns({
       subscription: change.subscription.toSnapshot(),
@@ -122,10 +124,10 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
 
     const written =
       Object.keys(columns).length === 0 ||
-      (await this.updateHeld(transaction, { columns, previous }));
+      (await this.updateHeld({ columns, previous }));
 
     if (written) {
-      await this.options.writeCoachingStanding(transaction, {
+      await this.options.writeCoachingStanding({
         clientId: previous.clientId,
         standing: change.subscription.standing(),
       });
@@ -134,15 +136,12 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     return written;
   }
 
-  private async updateHeld(
-    transaction: DatabaseTransaction,
-    update: {
-      columns: SubscriptionWrite;
-      previous: CoachingSubscriptionSnapshot;
-    },
-  ): Promise<boolean> {
+  private async updateHeld(update: {
+    columns: SubscriptionWrite;
+    previous: CoachingSubscriptionSnapshot;
+  }): Promise<boolean> {
     const { columns, previous } = update;
-    const written = await transaction
+    const written = await this.executor
       .update(coachingSubscriptionsTable)
       .set(columns)
       .where(

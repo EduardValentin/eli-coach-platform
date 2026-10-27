@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   ClientMeasurementEntry,
   ClientMeasurementRecords,
@@ -25,8 +26,12 @@ import {
 export class PostgresClientMeasurementRecords implements ClientMeasurementRecords {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async listByClientId(clientId: string): Promise<MeasurementRecord[]> {
-    const rows = await this.database
+    const rows = await this.executor
       .select({
         id: clientMeasurementsTable.id,
         ...MEASUREMENT_SELECTION,
@@ -47,7 +52,7 @@ export class PostgresClientMeasurementRecords implements ClientMeasurementRecord
   }
 
   async record(record: ClientMeasurementEntry): Promise<void> {
-    await this.database
+    await this.executor
       .insert(clientMeasurementsTable)
       .values(measurementInsertOf(record));
   }

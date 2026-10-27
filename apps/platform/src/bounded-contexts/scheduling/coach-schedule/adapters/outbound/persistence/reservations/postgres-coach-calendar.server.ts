@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   CoachCalendar,
   TimeInterval,
@@ -10,8 +11,12 @@ import { coachTimeReservationsTable } from "../schema.server";
 export class PostgresCoachCalendar implements CoachCalendar {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async busyFrom(from: Date): Promise<TimeInterval[]> {
-    return this.database
+    return this.executor
       .select({
         start: coachTimeReservationsTable.startsAt,
         end: coachTimeReservationsTable.endsAt,

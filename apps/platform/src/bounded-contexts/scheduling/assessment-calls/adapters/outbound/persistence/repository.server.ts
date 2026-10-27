@@ -9,8 +9,8 @@ import type { TimeInterval } from "~/bounded-contexts/scheduling/coach-schedule/
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
 } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { and, eq, gt, sql } from "drizzle-orm";
 
 import { assessmentCallsTable } from "./schema.server";
@@ -24,7 +24,6 @@ type AssessmentCallAppointment = {
 
 export type AssessmentCallCoachTime = {
   reserve: (
-    transaction: DatabaseTransaction,
     reservation: AssessmentCallAppointment & TimeInterval,
   ) => Promise<{ status: "reserved" | "taken" }>;
 };
@@ -42,15 +41,46 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
     private readonly options: PostgresAssessmentCallRepositoryOptions,
   ) {}
 
-  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationDecision> {
-    return this.options.database.transaction((transaction) =>
-      this.reserveUnderEmailLock(transaction, command),
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
+  async reserve(
+    command: ReserveAssessmentCallCommand,
+  ): Promise<ReservationDecision> {
+    const { call } = command;
+
+    await this.executor.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${call.visitorEmail}))`,
     );
+
+    const upcomingCallForEmail = await this.findUpcomingCallForEmail(command);
+
+    await this.executor.execute(sql`savepoint ${RESERVATION_SAVEPOINT}`);
+
+    await this.insertCall(call);
+    const coachTime = await this.options.coachTime.reserve({
+      ...ASSESSMENT_CALL_RULES.coachTimeFrom(call.startsAt),
+      appointmentKind: "assessment_call",
+      appointmentId: call.id,
+    });
+    const decision = AssessmentCall.decideReservation({
+      coachTime: coachTime.status,
+      upcomingCallForEmail,
+    });
+
+    if (decision.status !== "reserved") {
+      await this.executor.execute(
+        sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
+      );
+    }
+
+    return decision;
   }
 
   async findById(id: string): Promise<AssessmentCall | null> {
     try {
-      const [row] = await this.options.database
+      const [row] = await this.executor
         .select()
         .from(assessmentCallsTable)
         .where(eq(assessmentCallsTable.id, id))
@@ -67,7 +97,7 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
   }
 
   async listAll(): Promise<AssessmentCall[]> {
-    const rows = await this.options.database
+    const rows = await this.executor
       .select()
       .from(assessmentCallsTable)
       .orderBy(assessmentCallsTable.startsAt);
@@ -75,48 +105,10 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
     return rows.map((row) => this.toAssessmentCall(row));
   }
 
-  private async reserveUnderEmailLock(
-    transaction: DatabaseTransaction,
-    command: ReserveAssessmentCallCommand,
-  ): Promise<ReservationDecision> {
-    const { call } = command;
-
-    await transaction.execute(
-      sql`select pg_advisory_xact_lock(hashtext(${call.visitorEmail}))`,
-    );
-
-    const upcomingCallForEmail = await this.findUpcomingCallForEmail(
-      transaction,
-      command,
-    );
-
-    await transaction.execute(sql`savepoint ${RESERVATION_SAVEPOINT}`);
-
-    await this.insertCall(transaction, call);
-    const coachTime = await this.options.coachTime.reserve(transaction, {
-      ...ASSESSMENT_CALL_RULES.coachTimeFrom(call.startsAt),
-      appointmentKind: "assessment_call",
-      appointmentId: call.id,
-    });
-    const decision = AssessmentCall.decideReservation({
-      coachTime: coachTime.status,
-      upcomingCallForEmail,
-    });
-
-    if (decision.status !== "reserved") {
-      await transaction.execute(
-        sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
-      );
-    }
-
-    return decision;
-  }
-
   private async findUpcomingCallForEmail(
-    transaction: DatabaseTransaction,
     command: ReserveAssessmentCallCommand,
   ): Promise<AssessmentCall | null> {
-    const [row] = await transaction
+    const [row] = await this.executor
       .select()
       .from(assessmentCallsTable)
       .where(
@@ -131,11 +123,8 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
     return row ? this.toAssessmentCall(row) : null;
   }
 
-  private async insertCall(
-    transaction: DatabaseTransaction,
-    call: AssessmentCall,
-  ): Promise<void> {
-    await transaction.insert(assessmentCallsTable).values({
+  private async insertCall(call: AssessmentCall): Promise<void> {
+    await this.executor.insert(assessmentCallsTable).values({
       id: call.id,
       firstName: call.firstName,
       lastName: call.lastName,

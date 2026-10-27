@@ -10,6 +10,7 @@ import {
   type RegularPricingSignupResult,
 } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { and, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { waitlistEntriesTable } from "./schema.server";
 import {
@@ -43,8 +44,12 @@ export class PostgresWaitlistRepository
 {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async tierForEmail(email: EligibleEmail): Promise<PriceTier> {
-    const reducedAllocations = await this.database
+    const reducedAllocations = await this.executor
       .select({ id: waitlistEntriesTable.id })
       .from(waitlistEntriesTable)
       .where(
@@ -65,7 +70,7 @@ export class PostgresWaitlistRepository
       return new Map();
     }
 
-    const reducedRows = await this.database
+    const reducedRows = await this.executor
       .selectDistinct({ email: waitlistEntriesTable.email })
       .from(waitlistEntriesTable)
       .where(
@@ -88,7 +93,7 @@ export class PostgresWaitlistRepository
     campaignSlug: string;
     createdBefore: Date;
   }): Promise<number> {
-    const [result] = await this.database
+    const [result] = await this.executor
       .select({ entryCount: count() })
       .from(waitlistEntriesTable)
       .where(
@@ -105,7 +110,7 @@ export class PostgresWaitlistRepository
   async registerRegularPricingSignup(
     options: RegularPricingSignupOptions,
   ): Promise<RegularPricingSignupResult> {
-    return this.database.transaction(
+    return this.executor.transaction(
       async (transaction) => {
         await lockOfferSignups(transaction, options.offer);
 
@@ -135,7 +140,7 @@ export class PostgresWaitlistRepository
   async registerReducedPricingSignup(
     options: ReducedPricingSignupOptions,
   ): Promise<ReducedPricingSignupResult> {
-    return this.database.transaction(
+    return this.executor.transaction(
       async (transaction) => {
         await lockOfferSignups(transaction, options.offer);
 

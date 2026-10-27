@@ -1,7 +1,7 @@
 export {
   createDatabaseClient,
   type DatabaseClient,
-  type DatabaseTransaction,
+  type DatabaseExecutor,
 } from "./database-client";
 export { isCausedByDatabaseError } from "./database-error";
 export { createManagedDatabasePool } from "./database-pool";

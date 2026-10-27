@@ -421,6 +421,7 @@ function createController(
     .fn()
     .mockResolvedValue(answers.stopped ?? { status: "unknown_series" });
   const controller = new CoachCheckInSeriesController({
+    unitOfWork: (work) => work(),
     changeCheckInSeries: {
       execute: changeCheckInSeries,
     } as unknown as ChangeCheckInSeriesUseCase,

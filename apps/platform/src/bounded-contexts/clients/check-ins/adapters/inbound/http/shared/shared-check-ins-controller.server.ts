@@ -33,6 +33,7 @@ import {
   openCheckInTimesQuerySchema,
   openCheckInTimesSchema,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type SharedCheckInsControllerOptions = {
   approveCheckIn: ApproveCheckInUseCase;
@@ -41,6 +42,7 @@ type SharedCheckInsControllerOptions = {
   listOpenCheckInTimes: ListOpenCheckInTimesUseCase;
   proposeCheckInTime: ProposeCheckInTimeUseCase;
   withdrawCheckInRequest: WithdrawCheckInRequestUseCase;
+  unitOfWork: UnitOfWork;
 };
 
 type CheckInDecisionResult =
@@ -98,13 +100,15 @@ export class SharedCheckInsController {
       return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
     }
 
-    const result = await this.options.proposeCheckInTime.execute({
-      checkInId: id.data,
-      actor,
-      startsAt: new Date(newTime.data.startsAt),
-      note: newTime.data.note ?? null,
-      ...(newTime.data.timeZone && { clientTimeZone: newTime.data.timeZone }),
-    });
+    const result = await this.options.unitOfWork(() =>
+      this.options.proposeCheckInTime.execute({
+        checkInId: id.data,
+        actor,
+        startsAt: new Date(newTime.data.startsAt),
+        note: newTime.data.note ?? null,
+        ...(newTime.data.timeZone && { clientTimeZone: newTime.data.timeZone }),
+      }),
+    );
 
     return this.respondToProposal(result);
   }
@@ -173,11 +177,13 @@ export class SharedCheckInsController {
       return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
     }
 
-    const result = await decision.execute({
-      checkInId: id.data,
-      actor,
-      ...(answer.data.timeZone && { clientTimeZone: answer.data.timeZone }),
-    });
+    const result = await this.options.unitOfWork(() =>
+      decision.execute({
+        checkInId: id.data,
+        actor,
+        ...(answer.data.timeZone && { clientTimeZone: answer.data.timeZone }),
+      }),
+    );
 
     return this.respondToDecision(result);
   }

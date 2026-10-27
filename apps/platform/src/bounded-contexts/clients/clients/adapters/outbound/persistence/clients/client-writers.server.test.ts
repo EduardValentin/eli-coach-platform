@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
 import {
   Client,
   CoachingStanding,
@@ -122,7 +122,7 @@ function createTransactionRecordingInserts(returned: { id: string }[]) {
         },
       }),
     }),
-  } as unknown as DatabaseTransaction;
+  } as unknown as DatabaseClient;
 
   return { handle, inserts };
 }
@@ -142,7 +142,7 @@ function createTransactionRecordingUpdates() {
         };
       },
     }),
-  } as unknown as DatabaseTransaction;
+  } as unknown as DatabaseClient;
 
   return { handle, filters, updates };
 }

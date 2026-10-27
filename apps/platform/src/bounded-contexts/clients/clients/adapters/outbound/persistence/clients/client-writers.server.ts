@@ -1,4 +1,5 @@
-import type { DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   Client,
   CoachingStanding,
@@ -8,10 +9,10 @@ import { eq } from "drizzle-orm";
 import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/schema.server";
 
 export async function writeClient(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   client: Client,
 ): Promise<"written" | "call_already_has_client"> {
-  const [written] = await transaction
+  const [written] = await executorOf(database)
     .insert(clientsTable)
     .values(client.toSnapshot())
     .onConflictDoNothing({ target: clientsTable.assessmentCallId })
@@ -21,7 +22,7 @@ export async function writeClient(
 }
 
 export async function writeCoachingStanding(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   input: { clientId: string; standing: CoachingStanding },
 ): Promise<void> {
   const {
@@ -33,7 +34,7 @@ export async function writeCoachingStanding(
     paidThrough,
   } = input.standing.toSnapshot();
 
-  await transaction
+  await executorOf(database)
     .update(clientsTable)
     .set({
       coachingStatus: status,

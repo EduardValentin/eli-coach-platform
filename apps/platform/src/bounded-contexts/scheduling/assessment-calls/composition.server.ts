@@ -1,5 +1,6 @@
 import type { AssessmentCallsConfig } from "~/bounded-contexts/scheduling/assessment-calls/config.server";
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import {
   AssessmentCallBookingWindow,
   BookAssessmentCallUseCase,
@@ -59,6 +60,7 @@ export function composeAssessmentCallsFeature(
   handles: AssessmentCallsFeatureHandles,
 ): AssessmentCallsComposition {
   const { availability } = handles;
+  const unitOfWork = createUnitOfWork(handles.database);
   const reservations = new PostgresAssessmentCallRepository({
     coachTime: handles.coachTime,
     database: handles.database,
@@ -104,6 +106,7 @@ export function composeAssessmentCallsFeature(
           meetingRoom: handles.meetingRoom,
           reservations,
         }),
+        unitOfWork,
       }),
       coachAssessmentCalls: new CoachAssessmentCallsController({
         clock: handles.clock,

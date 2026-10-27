@@ -1,4 +1,5 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 
 import { paymentEventsTable } from "./payment-events-schema.server";
 
@@ -8,16 +9,16 @@ type PaymentEventEntry = {
 };
 
 type PaymentEventWrite = PaymentEventEntry & {
-  write: (transaction: DatabaseTransaction) => Promise<boolean>;
+  write: () => Promise<boolean>;
 };
 
 class StaleEventWrite extends Error {}
 
 export async function recordPaymentEvent(
-  transaction: DatabaseTransaction,
+  database: DatabaseClient,
   entry: PaymentEventEntry,
 ): Promise<"recorded" | "duplicate"> {
-  const inserted = await transaction
+  const inserted = await executorOf(database)
     .insert(paymentEventsTable)
     .values({ id: entry.eventId, receivedAt: entry.receivedAt })
     .onConflictDoNothing({ target: paymentEventsTable.id })
@@ -31,12 +32,12 @@ export async function recordEventOnce(
   { write, ...entry }: PaymentEventWrite,
 ): Promise<"recorded" | "duplicate" | "stale"> {
   try {
-    return await database.transaction(async (transaction) => {
-      if ((await recordPaymentEvent(transaction, entry)) === "duplicate") {
+    return await createUnitOfWork(database)(async () => {
+      if ((await recordPaymentEvent(database, entry)) === "duplicate") {
         return "duplicate";
       }
 
-      if (!(await write(transaction))) {
+      if (!(await write())) {
         throw new StaleEventWrite();
       }
 

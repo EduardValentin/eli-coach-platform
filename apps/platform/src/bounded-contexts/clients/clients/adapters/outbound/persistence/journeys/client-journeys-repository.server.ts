@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   ClientJourney,
   type ClientJourneys,
@@ -18,10 +19,14 @@ export class PostgresClientJourneys
 {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByAuthSubjectId(
     authSubjectId: string,
   ): Promise<ClientJourney | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select({
         clientId: clientsTable.id,
         firstName: clientsTable.firstName,
@@ -50,7 +55,7 @@ export class PostgresClientJourneys
     clientId: string;
     at: Date;
   }): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientsTable)
       .set({ welcomeSeenAt: input.at })
       .where(
@@ -65,7 +70,7 @@ export class PostgresClientJourneys
     clientId: string;
     at: Date;
   }): Promise<void> {
-    await this.database
+    await this.executor
       .update(clientsTable)
       .set({ onboardingSubmittedAt: input.at })
       .where(
@@ -80,8 +85,6 @@ export class PostgresClientJourneys
     clientId: string;
     stamps: ReviewStamps;
   }): Promise<void> {
-    await this.database.transaction((transaction) =>
-      writeReviewStamps(transaction, input),
-    );
+    await writeReviewStamps(this.database, input);
   }
 }

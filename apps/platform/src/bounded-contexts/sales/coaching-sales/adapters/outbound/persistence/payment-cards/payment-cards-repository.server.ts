@@ -1,4 +1,5 @@
-import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient, DatabaseExecutor } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   PaymentCard,
   type PaymentCardWrite,
@@ -16,8 +17,6 @@ type PostgresPaymentCardsOptions = {
   database: DatabaseClient;
 };
 
-type Database = DatabaseClient | DatabaseTransaction;
-
 type StampedCardWrite = {
   change: PaymentCardWrite;
   updatedAt: Date;
@@ -34,10 +33,14 @@ const cardColumns = {
 export class PostgresPaymentCards implements PaymentCards {
   constructor(private readonly options: PostgresPaymentCardsOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   async findByPaymentCustomerId(
     paymentCustomerId: string,
   ): Promise<PaymentCard | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select(cardColumns)
       .from(paymentCardsTable)
       .where(eq(paymentCardsTable.stripeCustomerId, paymentCustomerId))
@@ -47,7 +50,7 @@ export class PostgresPaymentCards implements PaymentCards {
   }
 
   async save(change: PaymentCardWrite): Promise<"saved" | "stale"> {
-    const written = await writeCard(this.options.database, {
+    const written = await writeCard(this.executor, {
       change,
       updatedAt: this.options.clock.now(),
     });
@@ -63,14 +66,13 @@ export class PostgresPaymentCards implements PaymentCards {
     return recordEventOnce(this.options.database, {
       eventId: change.eventId,
       receivedAt,
-      write: (transaction) =>
-        writeCard(transaction, { change, updatedAt: receivedAt }),
+      write: () => writeCard(this.executor, { change, updatedAt: receivedAt }),
     });
   }
 }
 
 function writeCard(
-  database: Database,
+  database: DatabaseExecutor,
   write: StampedCardWrite,
 ): Promise<boolean> {
   const { card, previous } = write.change;
@@ -87,7 +89,7 @@ function writeCard(
 }
 
 async function insertCard(
-  database: Database,
+  database: DatabaseExecutor,
   write: StampedCardWrite & { card: PaymentCard },
 ): Promise<boolean> {
   const inserted = await database
@@ -104,7 +106,7 @@ async function insertCard(
 }
 
 async function replaceCard(
-  database: Database,
+  database: DatabaseExecutor,
   write: StampedCardWrite & { card: PaymentCard; previous: PaymentCard },
 ): Promise<boolean> {
   const replaced = await database
@@ -117,7 +119,7 @@ async function replaceCard(
 }
 
 async function removeCard(
-  database: Database,
+  database: DatabaseExecutor,
   write: StampedCardWrite & { previous: PaymentCard },
 ): Promise<boolean> {
   const removed = await database
@@ -129,7 +131,7 @@ async function removeCard(
 }
 
 async function hasNoCard(
-  database: Database,
+  database: DatabaseExecutor,
   paymentCustomerId: string,
 ): Promise<boolean> {
   const rows = await database

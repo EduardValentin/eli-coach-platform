@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "~/shared/database";
+import type { DatabaseClient } from "~/shared/database";
 import type { CoachingSeed } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { and, eq, isNull } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -186,7 +186,7 @@ function createTransactionRecording(returned: readonly unknown[] = []) {
         },
       }),
     }),
-  } as unknown as DatabaseTransaction;
+  } as unknown as DatabaseClient;
 
   return { client, inserts, updates };
 }

@@ -120,6 +120,7 @@ describe("PaymentLinksController", () => {
 function createController(result: unknown) {
   const execute = vi.fn().mockResolvedValue(result);
   const controller = new PaymentLinksController({
+    unitOfWork: (work) => work(),
     sendPaymentLink: { execute } as never,
   });
 

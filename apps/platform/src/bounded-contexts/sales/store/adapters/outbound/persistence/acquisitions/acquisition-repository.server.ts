@@ -10,6 +10,7 @@ import { Product } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 
 type ExistingRequestRow = {
   deliveryStatus: "pending" | "accepted" | "rejected";
@@ -63,11 +64,15 @@ const TRANSIENT_DATABASE_ERROR_CODES = new Set([
 export class PostgresStoreAcquisitionRepository implements StoreAcquisitions {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async resolveIdempotency(command: {
     idempotencyKey: string;
     payloadDigest: string;
   }): Promise<ResolvedPriorAcquisition | null> {
-    const result = await this.database.execute<ExistingRequestRow>(sql`
+    const result = await this.executor.execute<ExistingRequestRow>(sql`
       select
         request.payload_digest as "payloadDigest",
         request.delivery_status as "deliveryStatus",
@@ -111,7 +116,7 @@ export class PostgresStoreAcquisitionRepository implements StoreAcquisitions {
     providerMessageId: string;
   }): Promise<void> {
     await this.runWithRetry(() =>
-      this.database.transaction(async (transaction) => {
+      this.executor.transaction(async (transaction) => {
         await transaction.execute(sql`
           update app.delivery_attempts
           set status = 'accepted',
@@ -138,7 +143,7 @@ export class PostgresStoreAcquisitionRepository implements StoreAcquisitions {
     requestId: number;
     provider: string;
   }): Promise<void> {
-    await this.database.transaction(async (transaction) => {
+    await this.executor.transaction(async (transaction) => {
       await transaction.execute(sql`
         update app.delivery_attempts
         set status = 'rejected',
@@ -174,7 +179,7 @@ export class PostgresStoreAcquisitionRepository implements StoreAcquisitions {
     deliveryAttemptId: number;
     requestId: number;
   }): Promise<void> {
-    await this.database.execute(sql`
+    await this.executor.execute(sql`
       update app.delivery_attempts
       set status = 'retryable',
         updated_at = now()
@@ -187,7 +192,7 @@ export class PostgresStoreAcquisitionRepository implements StoreAcquisitions {
   private async prepareInSerializableTransaction(
     command: PrepareAcquisitionCommand,
   ): Promise<AcquisitionPreparation> {
-    return this.database.transaction(
+    return this.executor.transaction(
       async (transaction) => {
         const existingRequest =
           await transaction.execute<ExistingRequestRow>(sql`

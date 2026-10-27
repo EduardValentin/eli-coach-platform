@@ -1,8 +1,8 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
 } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import type {
   ClientOnboardingChanges,
   ClientOnboardingSource,
@@ -54,12 +54,16 @@ export class PostgresClientOnboardings
     this.photoConsentWriter = options.photoConsentWriter;
   }
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async findByClientId(clientId: string): Promise<{
     draft: OnboardingDraft | null;
     submission: OnboardingSubmission | null;
   }> {
     const [[draftRow], [submissionRow]] = await Promise.all([
-      this.database
+      this.executor
         .select({
           answers: clientOnboardingDraftsTable.answers,
           currentFormIndex: clientOnboardingDraftsTable.currentFormIndex,
@@ -74,7 +78,7 @@ export class PostgresClientOnboardings
         .from(clientOnboardingDraftsTable)
         .where(eq(clientOnboardingDraftsTable.clientId, clientId))
         .limit(1),
-      this.database
+      this.executor
         .select({
           answers: clientOnboardingSubmissionsTable.answers,
           specialCategoryConsentedAt:
@@ -114,7 +118,7 @@ export class PostgresClientOnboardings
     draft: OnboardingDraft;
   }): Promise<"saved" | "already-submitted"> {
     const { draft } = input;
-    const written = await this.database
+    const written = await this.executor
       .insert(clientOnboardingDraftsTable)
       .select(draftRowWhileUnsubmitted(input))
       .onConflictDoUpdate({
@@ -140,23 +144,23 @@ export class PostgresClientOnboardings
     const { clientId, entryId, measurementEntry, submission } = input;
 
     try {
-      await this.database.transaction(async (transaction) => {
-        await transaction.insert(clientOnboardingSubmissionsTable).values({
+      await createUnitOfWork(this.database)(async () => {
+        await this.executor.insert(clientOnboardingSubmissionsTable).values({
           clientId,
           answers: submission.answers,
           ...consentColumnsOf(submission.consents),
           submittedAt: submission.submittedAt,
         });
-        await this.measurementEntryWriter(transaction, {
+        await this.measurementEntryWriter({
           clientId,
           entryId,
           entry: measurementEntry,
         });
-        await this.recordPhotoConsentOf(transaction, {
+        await this.recordPhotoConsentOf({
           clientId,
           consents: submission.consents,
         });
-        await transaction
+        await this.executor
           .delete(clientOnboardingDraftsTable)
           .where(eq(clientOnboardingDraftsTable.clientId, clientId));
       });
@@ -171,14 +175,14 @@ export class PostgresClientOnboardings
     }
   }
 
-  private async recordPhotoConsentOf(
-    transaction: DatabaseTransaction,
-    submitted: { clientId: string; consents: OnboardingConsents },
-  ): Promise<void> {
+  private async recordPhotoConsentOf(submitted: {
+    clientId: string;
+    consents: OnboardingConsents;
+  }): Promise<void> {
     const at = submitted.consents.progressPhotosAt;
 
     if (at) {
-      await this.photoConsentWriter(transaction, {
+      await this.photoConsentWriter({
         clientId: submitted.clientId,
         at,
       });

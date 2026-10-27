@@ -76,9 +76,15 @@ type ClientsComposition = {
     onboardingClients: OnboardingClients;
     onboardingReviewStamps: OnboardingReviewStamps;
     paidClientAdmission: PaidClientAdmission;
-    reviewStampWriter: typeof writeReviewStamps;
-    writeClient: typeof writeClient;
-    writeCoachingStanding: typeof writeCoachingStanding;
+    reviewStampWriter: (
+      input: Parameters<typeof writeReviewStamps>[1],
+    ) => Promise<void>;
+    writeClient: (
+      client: Parameters<typeof writeClient>[1],
+    ) => ReturnType<typeof writeClient>;
+    writeCoachingStanding: (
+      input: Parameters<typeof writeCoachingStanding>[1],
+    ) => Promise<void>;
   };
 };
 
@@ -205,9 +211,9 @@ export function composeClientsFeature(
       paidClientAdmission: {
         admit: (input) => admitPaidClient.execute(input).then(() => undefined),
       },
-      reviewStampWriter: writeReviewStamps,
-      writeClient,
-      writeCoachingStanding,
+      reviewStampWriter: (input) => writeReviewStamps(database, input),
+      writeClient: (client) => writeClient(database, client),
+      writeCoachingStanding: (input) => writeCoachingStanding(database, input),
     },
   };
 }

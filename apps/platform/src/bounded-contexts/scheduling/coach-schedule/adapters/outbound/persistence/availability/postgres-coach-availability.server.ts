@@ -7,6 +7,7 @@ import {
 } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "~/bounded-contexts/scheduling/coach-schedule/domain/clock";
 import type { DatabaseClient } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import { eq } from "drizzle-orm";
 
 import {
@@ -45,8 +46,12 @@ export class PostgresCoachAvailability
 {
   constructor(private readonly options: PostgresCoachAvailabilityOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   async current(): Promise<CoachAvailability> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select()
       .from(coachAvailabilityTable)
       .where(eq(coachAvailabilityTable.id, SINGLETON_COACH_AVAILABILITY_ID))
@@ -76,7 +81,7 @@ export class PostgresCoachAvailability
       updatedAt: this.options.clock.now(),
     };
 
-    await this.options.database
+    await this.executor
       .insert(coachAvailabilityTable)
       .values(values)
       .onConflictDoUpdate({

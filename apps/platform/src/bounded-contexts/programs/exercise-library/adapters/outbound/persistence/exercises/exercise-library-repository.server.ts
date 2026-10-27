@@ -2,6 +2,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseClient,
 } from "~/shared/database";
+import { executorOf } from "~/shared/database/index.server";
 import {
   Exercise,
   type ExerciseAddition,
@@ -25,8 +26,12 @@ const UNIQUE_VIOLATION_CODE = "23505";
 export class PostgresExerciseLibrary implements ExerciseLibrary {
   constructor(private readonly database: DatabaseClient) {}
 
+  private get executor() {
+    return executorOf(this.database);
+  }
+
   async list(ownerAccountId: string): Promise<Exercise[]> {
-    const rows = await this.database
+    const rows = await this.executor
       .select()
       .from(exercisesTable)
       .where(eq(exercisesTable.ownerAccountId, ownerAccountId))
@@ -39,7 +44,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
     ownerAccountId,
     exerciseId,
   }: ExerciseReference): Promise<Exercise | null> {
-    const [row] = await this.database
+    const [row] = await this.executor
       .select()
       .from(exercisesTable)
       .where(
@@ -55,7 +60,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
 
   async add(exercise: Exercise): Promise<ExerciseAddition> {
     try {
-      await this.database.insert(exercisesTable).values(this.rowOf(exercise));
+      await this.executor.insert(exercisesTable).values(this.rowOf(exercise));
 
       return "added";
     } catch (error) {
@@ -72,7 +77,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
     } = this.rowOf(exercise);
 
     try {
-      await this.database
+      await this.executor
         .update(exercisesTable)
         .set(columns)
         .where(
@@ -92,7 +97,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
     ownerAccountId,
     exerciseId,
   }: ExerciseReference): Promise<ExerciseRemoval> {
-    const removed = await this.database
+    const removed = await this.executor
       .delete(exercisesTable)
       .where(
         and(

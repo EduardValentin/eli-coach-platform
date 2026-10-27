@@ -106,10 +106,12 @@ type ClientProfileComposition = {
     clientSettings: ClientSettingsSource;
     measurementIds: MeasurementIds;
     measurements: ClientMeasurementsSource;
-    openClientProfile: typeof openClientProfile;
-    recordMeasurementEntry: typeof recordMeasurementEntry;
-    recordPhotoConsent: typeof recordPhotoConsent;
-    seedCoaching: typeof seedCoaching;
+    openClientProfile: (
+      admission: Parameters<typeof openClientProfile>[1],
+    ) => Promise<void>;
+    recordMeasurementEntry: MeasurementEntryWriter;
+    recordPhotoConsent: PhotoConsentWriter;
+    seedCoaching: CoachingSeedWriter;
   };
 };
 
@@ -245,10 +247,13 @@ export function composeClientProfileFeature(
       clientSettings: settings,
       measurementIds,
       measurements,
-      openClientProfile,
-      recordMeasurementEntry,
-      recordPhotoConsent,
-      seedCoaching,
+      openClientProfile: (admission) =>
+        openClientProfile(handles.database, admission),
+      recordMeasurementEntry: (record) =>
+        recordMeasurementEntry(handles.database, record),
+      recordPhotoConsent: (consent) =>
+        recordPhotoConsent(handles.database, consent),
+      seedCoaching: (seeding) => seedCoaching(handles.database, seeding),
     },
   };
 }

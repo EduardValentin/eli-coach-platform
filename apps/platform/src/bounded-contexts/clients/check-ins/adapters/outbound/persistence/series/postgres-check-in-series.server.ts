@@ -1,8 +1,8 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-  type DatabaseTransaction,
 } from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import {
   CHECK_IN_RULES,
   CheckIn,
@@ -57,6 +57,10 @@ const UNIQUE_VIOLATION_CODE = "23505";
 export class PostgresCheckInSeries implements CheckInSeriesRecords {
   constructor(private readonly options: PostgresCheckInSeriesOptions) {}
 
+  private get executor() {
+    return executorOf(this.options.database);
+  }
+
   find(id: string): Promise<CheckInSeries | null> {
     return this.findOne(eq(checkInSeriesTable.id, id));
   }
@@ -71,7 +75,7 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
   }
 
   async listOccurrences(seriesId: string): Promise<CheckIn[]> {
-    const rows = await this.options.database
+    const rows = await this.executor
       .select()
       .from(checkInsTable)
       .where(eq(checkInsTable.seriesId, seriesId))
@@ -81,34 +85,25 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
   }
 
   async setUp(command: SeriesSetUp): Promise<CheckInSeriesSetUpResult> {
-    try {
-      return await this.options.database.transaction(async (transaction) => {
-        await lockCheckInsOfClient(transaction, command.series.clientId);
-        await transaction
-          .insert(checkInSeriesTable)
-          .values(command.series.toSnapshot());
+    await lockCheckInsOfClient(this.executor, command.series.clientId);
 
-        return {
-          status: "set_up",
-          occurrences: await this.recordWeeks(transaction, command.occurrences),
-        };
-      });
-    } catch (error) {
-      if (!this.violatesActiveSeriesPerClient(error)) {
-        throw error;
-      }
-
+    if ((await this.insertSeries(command.series)) === "series_exists") {
       return { status: "series_exists" };
     }
+
+    return {
+      status: "set_up",
+      occurrences: await this.recordWeeks(command.occurrences),
+    };
   }
 
   extend(command: SeriesExtension): Promise<CheckInSeriesExtension> {
-    return this.options.database.transaction(async (transaction) => {
+    return createUnitOfWork(this.options.database)(async () => {
       const { series, expected } = command;
 
-      await lockCheckInsOfClient(transaction, series.clientId);
+      await lockCheckInsOfClient(this.executor, series.clientId);
 
-      const widened = await transaction
+      const widened = await this.executor
         .update(checkInSeriesTable)
         .set({ coversFrom: series.coversFrom, coversUntil: series.coversUntil })
         .where(
@@ -126,96 +121,88 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
 
       return {
         status: "extended",
-        occurrences: await this.recordWeeks(transaction, command.occurrences),
+        occurrences: await this.recordWeeks(command.occurrences),
       };
     });
   }
 
-  change(command: SeriesChange): Promise<CheckInSeriesChangeResult> {
-    return this.options.database.transaction(async (transaction) => {
-      const { series, expected, at } = command;
+  async change(command: SeriesChange): Promise<CheckInSeriesChangeResult> {
+    const { series, expected, at } = command;
 
-      await lockCheckInsOfClient(transaction, series.clientId);
+    await lockCheckInsOfClient(this.executor, series.clientId);
 
-      const changed = await transaction
-        .update(checkInSeriesTable)
-        .set({
-          weekday: series.weekday,
-          hour: series.hour,
-          timeZone: series.timeZone,
-          changedAt: series.changedAt,
-        })
-        .where(
-          and(
-            this.isActive(series.id),
-            eq(checkInSeriesTable.weekday, expected.weekday),
-            eq(checkInSeriesTable.hour, expected.hour),
-            this.holds(checkInSeriesTable.changedAt, expected.changedAt),
-          ),
-        )
-        .returning({ id: checkInSeriesTable.id });
+    const changed = await this.executor
+      .update(checkInSeriesTable)
+      .set({
+        weekday: series.weekday,
+        hour: series.hour,
+        timeZone: series.timeZone,
+        changedAt: series.changedAt,
+      })
+      .where(
+        and(
+          this.isActive(series.id),
+          eq(checkInSeriesTable.weekday, expected.weekday),
+          eq(checkInSeriesTable.hour, expected.hour),
+          this.holds(checkInSeriesTable.changedAt, expected.changedAt),
+        ),
+      )
+      .returning({ id: checkInSeriesTable.id });
 
-      if (changed.length === 0) {
-        return { status: "changed_meanwhile" };
-      }
+    if (changed.length === 0) {
+      return { status: "changed_meanwhile" };
+    }
 
-      await this.cancelFutureWeeks(transaction, {
-        seriesId: series.id,
-        startsFrom: command.startsFrom,
-        at,
-      });
-
-      return {
-        status: "changed",
-        occurrences: await this.recordWeeks(transaction, command.occurrences),
-      };
+    await this.cancelFutureWeeks({
+      seriesId: series.id,
+      startsFrom: command.startsFrom,
+      at,
     });
+
+    return {
+      status: "changed",
+      occurrences: await this.recordWeeks(command.occurrences),
+    };
   }
 
-  stop(command: SeriesStop): Promise<"stopped" | "changed_meanwhile"> {
-    return this.options.database.transaction(async (transaction) => {
-      const { seriesId, expected, at } = command;
-      const [owner] = await transaction
-        .select({ clientId: checkInSeriesTable.clientId })
-        .from(checkInSeriesTable)
-        .where(eq(checkInSeriesTable.id, seriesId))
-        .limit(1);
+  async stop(command: SeriesStop): Promise<"stopped" | "changed_meanwhile"> {
+    const { seriesId, expected, at } = command;
+    const [owner] = await this.executor
+      .select({ clientId: checkInSeriesTable.clientId })
+      .from(checkInSeriesTable)
+      .where(eq(checkInSeriesTable.id, seriesId))
+      .limit(1);
 
-      if (!owner) {
-        return "changed_meanwhile";
-      }
+    if (!owner) {
+      return "changed_meanwhile";
+    }
 
-      await lockCheckInsOfClient(transaction, owner.clientId);
+    await lockCheckInsOfClient(this.executor, owner.clientId);
 
-      const stopped = await transaction
-        .update(checkInSeriesTable)
-        .set({ stoppedAt: at })
-        .where(
-          and(
-            this.isActive(seriesId),
-            this.holds(checkInSeriesTable.changedAt, expected.changedAt),
-          ),
-        )
-        .returning({ id: checkInSeriesTable.id });
+    const stopped = await this.executor
+      .update(checkInSeriesTable)
+      .set({ stoppedAt: at })
+      .where(
+        and(
+          this.isActive(seriesId),
+          this.holds(checkInSeriesTable.changedAt, expected.changedAt),
+        ),
+      )
+      .returning({ id: checkInSeriesTable.id });
 
-      if (stopped.length === 0) {
-        return "changed_meanwhile";
-      }
+    if (stopped.length === 0) {
+      return "changed_meanwhile";
+    }
 
-      await this.cancelFutureWeeks(transaction, {
-        seriesId,
-        startsFrom: at,
-        at,
-      });
+    await this.cancelFutureWeeks({ seriesId, startsFrom: at, at });
 
-      return "stopped";
-    });
+    return "stopped";
   }
 
   private async findOne(
     condition: SQL | undefined,
   ): Promise<CheckInSeries | null> {
-    const [row] = await this.options.database
+    const [row] = await this.executor
       .select()
       .from(checkInSeriesTable)
       .where(condition)
@@ -224,33 +211,50 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
     return row ? CheckInSeries.reconstitute(this.snapshotOf(row)) : null;
   }
 
+  private async insertSeries(
+    series: SeriesSetUp["series"],
+  ): Promise<"inserted" | "series_exists"> {
+    try {
+      await this.executor.transaction((savepoint) =>
+        savepoint.insert(checkInSeriesTable).values(series.toSnapshot()),
+      );
+    } catch (error) {
+      if (!this.violatesActiveSeriesPerClient(error)) {
+        throw error;
+      }
+
+      return "series_exists";
+    }
+
+    return "inserted";
+  }
+
   private async recordWeeks(
-    transaction: DatabaseTransaction,
     weeks: readonly CheckInSeriesOccurrence[],
   ): Promise<CheckIn[]> {
     const recorded: CheckIn[] = [];
 
     for (const week of weeks) {
-      recorded.push(await this.recordWeek(transaction, week));
+      recorded.push(await this.recordWeek(week));
     }
 
     return recorded;
   }
 
-  private async recordWeek(
-    transaction: DatabaseTransaction,
-    { checkIn, availability }: CheckInSeriesOccurrence,
-  ): Promise<CheckIn> {
-    await transaction.insert(checkInsTable).values(checkInRowOf(checkIn));
+  private async recordWeek({
+    checkIn,
+    availability,
+  }: CheckInSeriesOccurrence): Promise<CheckIn> {
+    await this.executor.insert(checkInsTable).values(checkInRowOf(checkIn));
 
     const decided = CheckIn.decideOccurrence({
       occurrence: checkIn,
       availability,
-      coachTime: await this.coachTimeOf(transaction, { checkIn, availability }),
+      coachTime: await this.coachTimeOf({ checkIn, availability }),
     });
 
     if (decided.recordedStatus !== checkIn.recordedStatus) {
-      await transaction
+      await this.executor
         .update(checkInsTable)
         .set({ status: decided.recordedStatus })
         .where(eq(checkInsTable.id, checkIn.id));
@@ -259,15 +263,15 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
     return decided;
   }
 
-  private async coachTimeOf(
-    transaction: DatabaseTransaction,
-    { checkIn, availability }: CheckInSeriesOccurrence,
-  ): Promise<"reserved" | "taken" | "not_attempted"> {
+  private async coachTimeOf({
+    checkIn,
+    availability,
+  }: CheckInSeriesOccurrence): Promise<"reserved" | "taken" | "not_attempted"> {
     if (availability === "closed") {
       return "not_attempted";
     }
 
-    const reserved = await this.options.coachTime.reserve(transaction, {
+    const reserved = await this.options.coachTime.reserve({
       ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
       appointmentKind: "check_in",
       appointmentId: checkIn.id,
@@ -276,11 +280,12 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
     return reserved.status;
   }
 
-  private async cancelFutureWeeks(
-    transaction: DatabaseTransaction,
-    { seriesId, startsFrom, at }: FutureWeeks,
-  ): Promise<void> {
-    const cancelled = await transaction
+  private async cancelFutureWeeks({
+    seriesId,
+    startsFrom,
+    at,
+  }: FutureWeeks): Promise<void> {
+    const cancelled = await this.executor
       .update(checkInsTable)
       .set({ status: "cancelled", answeredAt: at })
       .where(
@@ -293,7 +298,7 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
       .returning({ id: checkInsTable.id });
 
     for (const { id } of cancelled) {
-      await this.options.coachTime.release(transaction, {
+      await this.options.coachTime.release({
         appointmentKind: "check_in",
         appointmentId: id,
       });

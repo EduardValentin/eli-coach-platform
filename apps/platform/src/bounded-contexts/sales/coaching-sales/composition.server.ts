@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import type { AssessmentCallReader } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
   ClientIdentities,
@@ -118,6 +119,7 @@ export function composeCoachingSalesFeature(
   handles: CoachingSalesFeatureHandles,
 ): CoachingSalesComposition {
   const { clock, database } = handles;
+  const unitOfWork = createUnitOfWork(database);
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
   const purchases = new PostgresCoachingPurchases({
     clock,
@@ -273,6 +275,7 @@ export function composeCoachingSalesFeature(
         readCheckoutConfirmation: useCases.readCheckoutConfirmation,
         resolvePaymentLink: useCases.resolvePaymentLink,
         startCheckout: useCases.startCheckout,
+        unitOfWork,
       }),
       coachSales: new CoachSalesController({
         emailAcceptance: handles.emailAcceptance,
@@ -282,6 +285,7 @@ export function composeCoachingSalesFeature(
       }),
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
+        unitOfWork,
       }),
       stripeWebhooks: new StripeWebhookController({
         cardHandler: new CoachingPaymentCardHandler({
@@ -295,6 +299,7 @@ export function composeCoachingSalesFeature(
         subscriptionChangeHandlersByPurpose: byPurpose(
           subscriptionChangeHandler,
         ),
+        unitOfWork,
       }),
       subscription: new SubscriptionController({
         appBasePath: handles.appBasePath,

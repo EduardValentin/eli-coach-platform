@@ -184,7 +184,7 @@ describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
 });
 
 describe("PostgresClientJourneys#record", () => {
-  it("writes the full set of review stamps of the client in its own transaction", async () => {
+  it("writes the full set of review stamps of the client", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
     const journeys = new PostgresClientJourneys(database.client);
@@ -193,7 +193,6 @@ describe("PostgresClientJourneys#record", () => {
     await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
 
     // assert
-    expect(database.transactions).toBe(1);
     expect(database.updates).toEqual([REQUESTED_STAMPS]);
     expect(database.filters).toHaveLength(1);
   });
@@ -226,8 +225,7 @@ function createDatabaseAnswering(
 function createDatabaseRecordingUpdates() {
   const updates: unknown[] = [];
   const filters: unknown[] = [];
-  let transactions = 0;
-  const transaction = {
+  const client = {
     update: () => ({
       set: (values: unknown) => {
         updates.push(values);
@@ -239,22 +237,7 @@ function createDatabaseRecordingUpdates() {
         };
       },
     }),
-  };
-  const client = {
-    ...transaction,
-    transaction: async (work: (transaction: unknown) => Promise<unknown>) => {
-      transactions += 1;
-
-      return work(transaction);
-    },
   } as unknown as DatabaseClient;
 
-  return {
-    client,
-    filters,
-    updates,
-    get transactions() {
-      return transactions;
-    },
-  };
+  return { client, filters, updates };
 }
