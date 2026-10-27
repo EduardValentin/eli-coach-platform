@@ -1,4 +1,7 @@
 {
+  "apps/platform/src/bounded-contexts/access/accounts/public/reaches-later-bounded-context-public.ts": [
+    "feature-order-accounts"
+  ],
   "apps/platform/src/bounded-contexts/clients/client-resources/data/schema.server.ts": [
     "feature-schema-imports-schemas-only"
   ],

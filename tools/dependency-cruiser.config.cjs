@@ -27,23 +27,26 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 
-const FEATURE_ORDER = [
-  "feature-flags",
-  "legal",
-  "accounts",
-  "coach-schedule",
-  "assessment-calls",
-  "clients",
-  "client-profile",
-  "client-resources",
-  "notifications",
-  "check-ins",
-  "exercise-library",
-  "nutrition-library",
-  "store",
-  "waitlist",
-  "coaching-sales",
+const BOUNDED_CONTEXTS = [
+  ["operations", ["feature-flags"]],
+  ["legal", ["legal"]],
+  ["access", ["accounts"]],
+  ["scheduling", ["coach-schedule", "assessment-calls"]],
+  [
+    "clients",
+    [
+      "clients",
+      "client-profile",
+      "client-resources",
+      "notifications",
+      "check-ins",
+    ],
+  ],
+  ["programs", ["exercise-library", "nutrition-library"]],
+  ["sales", ["store", "waitlist", "coaching-sales"]],
 ];
+
+const FEATURE_ORDER = BOUNDED_CONTEXTS.flatMap(([, components]) => components);
 
 const DOMAIN_SLICE_ORDER = [
   "shared",
@@ -87,10 +90,36 @@ function foldersOf(directory) {
 
 function componentFoldersOf(directory) {
   return foldersOf(directory).flatMap((boundedContext) =>
-    foldersOf(path.join(directory, boundedContext)).filter(
-      (folder) => folder !== "public",
-    ),
+    foldersOf(path.join(directory, boundedContext))
+      .filter((folder) => folder !== "public")
+      .map((component) => ({ boundedContext, component })),
   );
+}
+
+function boundedContextPositionOf(component) {
+  return BOUNDED_CONTEXTS.findIndex(([, components]) =>
+    components.includes(component),
+  );
+}
+
+function requireEveryComponentPlaced(directory) {
+  const misplaced = componentFoldersOf(directory)
+    .filter(({ boundedContext, component }) => {
+      const position = boundedContextPositionOf(component);
+      return (
+        position !== -1 && BOUNDED_CONTEXTS[position][0] !== boundedContext
+      );
+    })
+    .map(
+      ({ boundedContext, component }) =>
+        `${boundedContext}/${component} (BOUNDED_CONTEXTS places it in ${BOUNDED_CONTEXTS[boundedContextPositionOf(component)][0]})`,
+    );
+
+  if (misplaced.length > 0) {
+    throw new Error(
+      `Place every component of ${directory} under the bounded context BOUNDED_CONTEXTS assigns it; misplaced: ${misplaced.join(", ")}.`,
+    );
+  }
 }
 
 function requireEveryFolderOrdered({ directory, folders, order, orderName }) {
@@ -105,10 +134,13 @@ function requireEveryFolderOrdered({ directory, folders, order, orderName }) {
 
 requireEveryFolderOrdered({
   directory: "apps/platform/src/bounded-contexts",
-  folders: componentFoldersOf("apps/platform/src/bounded-contexts"),
+  folders: componentFoldersOf("apps/platform/src/bounded-contexts").map(
+    ({ component }) => component,
+  ),
   order: FEATURE_ORDER,
   orderName: "FEATURE_ORDER",
 });
+requireEveryComponentPlaced("apps/platform/src/bounded-contexts");
 requireEveryFolderOrdered({
   directory: "packages/domain/src",
   folders: foldersOf("packages/domain/src"),
@@ -133,17 +165,21 @@ function domainSliceOrderRule(slice, position) {
 
 function featureOrderRule(feature, position) {
   const earlierFeatures = FEATURE_ORDER.slice(0, position);
+  const admittedBoundedContexts = BOUNDED_CONTEXTS.slice(
+    0,
+    boundedContextPositionOf(feature) + 1,
+  ).map(([boundedContext]) => boundedContext);
 
   return {
     name: `feature-order-${feature}`,
-    comment: `A feature imports only the features before it in FEATURE_ORDER: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"}. Its data/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
+    comment: `A feature imports only the features before it in FEATURE_ORDER and the public/ of its own and earlier bounded contexts: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"} and ${admittedBoundedContexts.join(", ")} public/. Its data/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
     severity: "error",
     from: { path: `${FEATURES}${feature}/`, pathNot: FEATURE_SCHEMA },
     to: {
       path: FEATURES,
       pathNot: [
         `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
-        BOUNDED_CONTEXT_PUBLIC,
+        `^apps/platform/src/bounded-contexts/(${admittedBoundedContexts.join("|")})/public/`,
       ],
     },
   };
