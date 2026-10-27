@@ -16,9 +16,6 @@ function createClerkClient() {
         .fn()
         .mockResolvedValue({ id: "inv_clerk_0", status: "revoked" }),
     },
-    users: {
-      getUser: vi.fn().mockResolvedValue({ publicMetadata: {} }),
-    },
   };
 }
 
@@ -248,33 +245,5 @@ describe("ClerkIdentityInvitations#replace", () => {
     await expect(replacement).rejects.toThrow(
       "Clerk did not create the identity invitation for invitation-1 (status 503).",
     );
-  });
-});
-
-describe("ClerkIdentityInvitations#findInvitationIdForSubject", () => {
-  it.each([
-    [
-      "the invitation id its public metadata carries",
-      { invitationId: "invitation-1" },
-      "invitation-1",
-    ],
-    ["nothing when its public metadata carries no invitation", {}, null],
-    [
-      "nothing when the invitation id is not a string",
-      { invitationId: 42 },
-      null,
-    ],
-  ])("answers %s", async (_label, publicMetadata, expected) => {
-    // arrange
-    const client = createClerkClient();
-    client.users.getUser.mockResolvedValue({ publicMetadata });
-    const { identity } = createAdapter(client);
-
-    // act
-    const invitationId = await identity.findInvitationIdForSubject("user_ana");
-
-    // assert
-    expect(invitationId).toBe(expected);
-    expect(client.users.getUser).toHaveBeenCalledWith("user_ana");
   });
 });

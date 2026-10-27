@@ -1,11 +1,10 @@
-import type { Client } from "~/bounded-contexts/clients/clients/domain/client";
-
+import type { PaidClientIntake } from "./paid-client-admission";
 import type { PurchasedSubscription } from "./purchased-subscription";
 
 export type CoachingPurchase = {
   eventId: string;
   receivedAt: Date;
-  client: Client;
+  client: PaidClientIntake;
   subscription: PurchasedSubscription;
 };
 

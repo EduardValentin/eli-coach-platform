@@ -5,7 +5,7 @@ import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { ListClientResourcesUseCase } from "./list-client-resources-use-case";
 import type { ResourceBrowseSnapshot } from "./resource-browse";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "./client-reach";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const MEAL_PREP = { tag: "Meal Prep", folded: "meal prep" };

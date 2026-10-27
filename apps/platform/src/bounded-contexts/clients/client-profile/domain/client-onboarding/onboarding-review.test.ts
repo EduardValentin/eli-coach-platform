@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ClientIdentity } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentity } from "../client-identities";
 import type { MeasureUnits } from "../client-settings";
 
 import { DetailRequest } from "./detail-request";

@@ -1,4 +1,4 @@
-import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
+import type { AccountRole } from "./account-role";
 
 import type { ResourceFileFormat } from "./resource-file-kind";
 import type { ResourceRefusal } from "./resource-file-intake";

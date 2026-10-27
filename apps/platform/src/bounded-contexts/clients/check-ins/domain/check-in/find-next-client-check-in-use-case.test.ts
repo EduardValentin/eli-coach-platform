@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInIncidents } from "./check-in-incidents";

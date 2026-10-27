@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { ChangeCheckInSeriesUseCase } from "./change-check-in-series-use-case";
 import type { CheckInNotifications } from "./check-in-notifications";
@@ -89,6 +86,7 @@ function createChange(options?: {
     change: vi.fn<CheckInSeriesRecords["change"]>().mockResolvedValue(
       options?.recorded ?? {
         status: "changed",
+        cancelledIds: [],
         freedReservationIds: ["reservation-wednesday"],
       },
     ),
@@ -147,6 +145,7 @@ function createChange(options?: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
+      scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
     openSlots: openSlotsOf(),

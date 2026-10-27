@@ -11,7 +11,6 @@ import {
   ExtendCheckInSeriesUseCase,
   FindNextClientCheckInUseCase,
   ListClientCheckInsUseCase,
-  ListLapsedCheckInsUseCase,
   ListCoachCheckInsAwaitingUseCase,
   ListCoachCheckInsUseCase,
   ListOpenCheckInTimesUseCase,
@@ -29,18 +28,12 @@ import {
 import type {
   ClientIdentities,
   ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+} from "~/bounded-contexts/clients/clients/public";
+import type { NotificationInbox } from "~/bounded-contexts/clients/notifications/public";
+import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods";
 import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time";
 import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room";
 import type { OpenSlotsFacade } from "~/bounded-contexts/scheduling/public/open-slots";
-import type {
-  CoachingEndHandler,
-  CoachingPeriodHandler,
-} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type {
-  NotificationExpirySource,
-  NotificationInbox,
-} from "~/bounded-contexts/clients/notifications/domain/notification";
 import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
@@ -54,8 +47,10 @@ import { SchedulingCoachTime } from "~/bounded-contexts/clients/check-ins/adapte
 import { SchedulingMeetingRoom } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/meeting-room.server";
 import { SchedulingOpenSlots } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/open-slots.server";
 import { RandomCheckInIds } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/random-check-in-ids.server";
-import { CheckInExpiryNotifications } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/inbox/check-in-expiry-notifications.server";
-import { InboxCheckInNotices } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/inbox/inbox-check-in-notices.server";
+import { InboxCheckInNotices } from "~/bounded-contexts/clients/check-ins/adapters/outbound/notifications/inbox-check-in-notices.server";
+import { ClientsClientIdentities } from "~/bounded-contexts/clients/check-ins/adapters/outbound/clients/client-identities.server";
+import { ClientsClientReach } from "~/bounded-contexts/clients/check-ins/adapters/outbound/clients/client-reach.server";
+import { createCoachingPeriodsFacade } from "~/bounded-contexts/clients/check-ins/adapters/inbound/facades/coaching-periods.server";
 import { PostgresCheckInSeries } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/series/postgres-check-in-series.server";
 import { EmailCheckInNotifications } from "~/bounded-contexts/clients/check-ins/adapters/outbound/email/email-check-in-notifications.server";
 import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
@@ -64,14 +59,14 @@ import { createCheckInsIncidents } from "~/bounded-contexts/clients/check-ins/ad
 
 type CheckInsFeatureHandles = {
   appBasePath: string;
-  clientIdentities: Pick<ClientIdentities, "findByClientIds">;
-  clientReach: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  clientIdentities: ClientIdentities;
+  clientReach: ClientReach;
   clock: Clock;
   coachEmail: string;
   coachTime: CoachTimeFacade;
   contactEmail: string;
   database: DatabaseClient;
-  inbox: Pick<NotificationInbox, "record">;
+  inbox: NotificationInbox;
   logger: Logger;
   meetingRoom: MeetingRoomFacade;
   openSlots: OpenSlotsFacade;
@@ -80,12 +75,8 @@ type CheckInsFeatureHandles = {
 };
 
 type CheckInsComposition = {
+  facades: { coachingPeriods: CoachingPeriodsFacade };
   feature: CheckInsFeature;
-  handles: {
-    coachingEndHandler: CoachingEndHandler;
-    coachingPeriodHandler: CoachingPeriodHandler;
-    expirySource: NotificationExpirySource;
-  };
 };
 
 export function composeCheckInsFeature(
@@ -100,18 +91,26 @@ export function composeCheckInsFeature(
     openSlots: handles.openSlots,
     rules: CHECK_IN_RULES,
   });
+  const clients = new ClientsClientReach(handles.clientReach);
+  const inbox = new InboxCheckInNotices({ clock, inbox: handles.inbox });
   const cancelCheckInsAfterCoachingEnd =
-    new CancelCheckInsAfterCoachingEndUseCase({ checkIns, clock, coachTime });
+    new CancelCheckInsAfterCoachingEndUseCase({
+      checkIns,
+      clock,
+      coachTime,
+      inbox,
+      incidents,
+    });
   const readPorts = {
     checkIns,
-    clients: handles.clientReach,
+    clients,
     clock,
-    identities: handles.clientIdentities,
+    identities: new ClientsClientIdentities(handles.clientIdentities),
   };
   const answerPorts = {
     ...readPorts,
     coachTime,
-    inbox: new InboxCheckInNotices({ clock, inbox: handles.inbox }),
+    inbox,
     incidents,
     notifications: new EmailCheckInNotifications(handles.productEmail, {
       appBasePath: handles.appBasePath,
@@ -137,6 +136,14 @@ export function composeCheckInsFeature(
   const extendCheckInSeries = new ExtendCheckInSeriesUseCase(seriesPorts);
 
   return {
+    facades: {
+      coachingPeriods: createCoachingPeriodsFacade({
+        cancelCheckInsAfterCoachingEnd,
+        extendCheckInSeries,
+        incidents,
+        unitOfWork,
+      }),
+    },
     feature: {
       checkInJoin: new CheckInJoinController({
         resolveCheckInJoin: new ResolveCheckInJoinUseCase({
@@ -178,7 +185,7 @@ export function composeCheckInsFeature(
         cancelCheckIn: new CancelCheckInUseCase(answerPorts),
         declineCheckIn: new DeclineCheckInUseCase(answerPorts),
         listOpenCheckInTimes: new ListOpenCheckInTimesUseCase({
-          clients: handles.clientReach,
+          clients,
           clock,
           openSlots,
         }),
@@ -188,29 +195,6 @@ export function composeCheckInsFeature(
         }),
         withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(answerPorts),
         unitOfWork,
-      }),
-    },
-    handles: {
-      coachingEndHandler: {
-        coachingEnds: async (notice) => {
-          await unitOfWork(() =>
-            cancelCheckInsAfterCoachingEnd.execute(notice),
-          );
-        },
-      },
-      coachingPeriodHandler: {
-        paidThroughExtended: async ({ clientId }) => {
-          await unitOfWork(() => extendCheckInSeries.execute({ clientId }));
-        },
-        programStarted: async ({ clientId }) => {
-          await unitOfWork(() => extendCheckInSeries.execute({ clientId }));
-        },
-      },
-      expirySource: new CheckInExpiryNotifications({
-        listLapsedCheckIns: new ListLapsedCheckInsUseCase({
-          checkIns,
-          identities: handles.clientIdentities,
-        }),
       }),
     },
   };

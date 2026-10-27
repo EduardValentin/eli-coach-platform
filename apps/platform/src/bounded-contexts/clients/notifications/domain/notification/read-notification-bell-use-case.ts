@@ -1,11 +1,10 @@
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "./client-reach";
 import type { Clock } from "../clock";
 
 import {
   NOTIFICATION_BELL_RULES,
   type NotificationSnapshot,
 } from "./notification";
-import type { NotificationExpirySource } from "./notification-expiry-source";
 import type { NotificationInbox } from "./notification-inbox";
 import type { NotificationIncidents } from "./notification-incidents";
 import type { NotificationRecipientSnapshot } from "./notification-recipient";
@@ -25,8 +24,7 @@ export type NotificationBell = {
 type ReadNotificationBellUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
-  expirySources: readonly NotificationExpirySource[];
-  inbox: Pick<NotificationInbox, "record" | "latestFor" | "unreadCountFor">;
+  inbox: Pick<NotificationInbox, "latestFor" | "unreadCountFor">;
   incidents: NotificationIncidents;
 };
 
@@ -64,8 +62,6 @@ export class ReadNotificationBellUseCase {
         at,
       };
 
-      await this.recordExpiries(window);
-
       return await this.readBell(window);
     } catch (error) {
       this.options.incidents.notificationBellReadFailed({
@@ -74,24 +70,6 @@ export class ReadNotificationBellUseCase {
       });
 
       return this.emptyBell(at);
-    }
-  }
-
-  private async recordExpiries(window: BellWindow): Promise<void> {
-    try {
-      const expired = await Promise.all(
-        this.options.expirySources.map((source) => source.expiredFor(window)),
-      );
-      const drafts = expired.flat();
-
-      if (drafts.length > 0) {
-        await this.options.inbox.record({ drafts, at: window.at });
-      }
-    } catch (error) {
-      this.options.incidents.notificationExpiriesFailed({
-        party: window.recipient.party,
-        error,
-      });
     }
   }
 
@@ -104,9 +82,10 @@ export class ReadNotificationBellUseCase {
       this.options.inbox.latestFor({
         recipient,
         since,
+        at,
         limit: NOTIFICATION_BELL_RULES.latest,
       }),
-      this.options.inbox.unreadCountFor({ recipient, since }),
+      this.options.inbox.unreadCountFor({ recipient, since, at }),
     ]);
 
     return {

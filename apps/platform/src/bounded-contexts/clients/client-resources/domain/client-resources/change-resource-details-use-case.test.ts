@@ -5,7 +5,7 @@ import { ClientResource } from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "./client-reach";
 import {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,

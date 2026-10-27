@@ -1,9 +1,6 @@
-import {
-  CoachingStanding,
-  type CoachingStatus,
-} from "~/bounded-contexts/clients/clients/domain/client";
 import type { CoachingBundleId, PriceTier } from "../coaching-bundle";
 
+import { CoachingStanding, type CoachingStatus } from "./coaching-standing";
 import { RefundDue, type RefundDueSnapshot } from "./refund-due";
 
 export const COACHING_SUBSCRIPTION_PURPOSE = "coaching-subscription";

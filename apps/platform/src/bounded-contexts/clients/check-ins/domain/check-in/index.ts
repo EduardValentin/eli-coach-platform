@@ -16,7 +16,6 @@ export {
   MAX_CHECK_IN_MOVES,
   OPEN_CHECK_IN_STATUSES,
   RECORDED_CHECK_IN_STATUSES,
-  UNANSWERED_CHECK_IN_STATUSES,
   type CheckInLapseKind,
   type CheckInOutcome,
   type CheckInTab,
@@ -28,6 +27,8 @@ export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
 export { type CheckInIds } from "./check-in-ids";
 export {
   type CheckInClashesNotice,
+  type CheckInExpiry,
+  type CheckInExpiryChange,
   type CheckInInbox,
   type CheckInSeriesInboxNotice,
 } from "./check-in-inbox";
@@ -50,10 +51,10 @@ export {
 } from "./check-in-series-records";
 export {
   type CheckInMove,
+  type CheckInMoveCommand,
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
-  type CheckInStartWindow,
   type HeldCheckIn,
 } from "./check-ins";
 export { type CoachCheckInView } from "./coach-check-in-views";
@@ -72,11 +73,6 @@ export { FindNextClientCheckInUseCase } from "./find-next-client-check-in-use-ca
 export { ListClientCheckInsUseCase } from "./list-client-check-ins-use-case";
 export { ListCoachCheckInsUseCase } from "./list-coach-check-ins-use-case";
 export { ListCoachCheckInsAwaitingUseCase } from "./list-coach-check-ins-awaiting-use-case";
-export {
-  ListLapsedCheckInsUseCase,
-  type LapsedCheckIn,
-  type ListLapsedCheckInsQuery,
-} from "./list-lapsed-check-ins-use-case";
 export {
   ListOpenCheckInTimesUseCase,
   type ListOpenCheckInTimesCommand,
@@ -125,3 +121,8 @@ export {
   type WithdrawCheckInRequestResult,
 } from "./withdraw-check-in-request-use-case";
 export { WEEKDAYS, type Weekday, weekdayNamed } from "./weekdays";
+export {
+  type ClientIdentities,
+  type ClientIdentity,
+} from "./client-identities";
+export { type ClientReach, type ClientReachReading } from "./client-reach";

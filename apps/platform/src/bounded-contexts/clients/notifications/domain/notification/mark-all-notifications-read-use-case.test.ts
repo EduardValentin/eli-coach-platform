@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { MarkAllNotificationsReadUseCase } from "./mark-all-notifications-read-use-case";
 import type { NotificationInbox } from "./notification-inbox";

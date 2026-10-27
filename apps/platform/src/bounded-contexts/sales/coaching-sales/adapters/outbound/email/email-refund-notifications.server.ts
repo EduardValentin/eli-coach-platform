@@ -6,7 +6,7 @@ import type {
 import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
-import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
+import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
 
 import { createRefundDueEmailContent } from "./refund-due-email.server";
 

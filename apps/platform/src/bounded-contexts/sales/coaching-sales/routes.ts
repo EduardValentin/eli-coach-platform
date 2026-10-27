@@ -1,6 +1,6 @@
 import { relative } from "@react-router/dev/routes";
 
-import { CLIENT_ENDED_ROUTE_SEGMENT } from "../../clients/clients/public/paths";
+import { CLIENT_ENDED_ROUTE_SEGMENT } from "../../clients/public/paths";
 
 import {
   CHECKOUT_COMPLETE_ROUTE_SEGMENT,

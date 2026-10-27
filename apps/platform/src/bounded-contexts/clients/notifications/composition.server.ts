@@ -1,16 +1,16 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "~/bounded-contexts/clients/clients/public";
 import {
   MarkAllNotificationsReadUseCase,
   MarkNotificationReadUseCase,
   ReadNotificationBellUseCase,
-  type NotificationExpirySource,
   type NotificationInbox,
 } from "~/bounded-contexts/clients/notifications/domain/notification";
 import type { Clock } from "~/bounded-contexts/clients/notifications/domain/clock";
 
 import { NotificationBellController } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/notification-bell-controller.server";
 import { PostgresNotificationInbox } from "~/bounded-contexts/clients/notifications/adapters/outbound/persistence/postgres-notification-inbox.server";
+import { ClientsClientReach } from "~/bounded-contexts/clients/notifications/adapters/outbound/clients/client-reach.server";
 import type { NotificationsFeature } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createNotificationsIncidents } from "~/bounded-contexts/clients/notifications/adapters/outbound/logging/notifications-incidents.server";
@@ -20,9 +20,8 @@ type NotificationInboxComposition = {
 };
 
 type NotificationsFeatureHandles = {
-  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
+  clientReach: ClientReach;
   clock: Clock;
-  expirySources: readonly NotificationExpirySource[];
   inbox: NotificationInbox;
   logger: Logger;
 };
@@ -42,7 +41,7 @@ export function composeNotificationsFeature(
 ): NotificationsFeature {
   const incidents = createNotificationsIncidents(handles.logger);
   const ports = {
-    clients: handles.clientReach,
+    clients: new ClientsClientReach(handles.clientReach),
     clock: handles.clock,
     inbox: handles.inbox,
   };
@@ -53,7 +52,6 @@ export function composeNotificationsFeature(
       markNotificationRead: new MarkNotificationReadUseCase(ports),
       readNotificationBell: new ReadNotificationBellUseCase({
         ...ports,
-        expirySources: handles.expirySources,
         incidents,
       }),
     }),

@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { CheckIn } from "./check-in";
 import type { CheckInIncidents } from "./check-in-incidents";
@@ -76,8 +73,6 @@ function createCheckIns(clientCheckIns: CheckIn[] = []) {
     find: vi.fn().mockResolvedValue(null),
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
-    listUnansweredStartedWithin: vi.fn(),
-    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi
       .fn()
       .mockResolvedValue({ status: "settled", freedReservationId: null }),
@@ -172,6 +167,7 @@ function createRequestCheckIn(options?: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
+      scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
     notifications: options?.notifications ?? createNotifications(),
     openSlots: workingDays(),

@@ -1,4 +1,4 @@
-import type { ClientIdentity } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentity } from "./client-identities";
 
 import type { CheckInSnapshot } from "./check-in";
 import type { CheckInParty } from "./check-in-party";

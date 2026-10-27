@@ -9,7 +9,7 @@ import {
   type CheckInSeriesNotice,
   type CheckInSeriesNotification,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
-import type { ClientIdentity } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentity } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
 import {
   buildCalendarInvite,

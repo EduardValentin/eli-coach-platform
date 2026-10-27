@@ -234,25 +234,27 @@ function createHandles(
   const payments = createPayments({ PAYMENTS_PROVIDER: "memory" });
 
   return {
+    admissions: {
+      admitPaidClient: async () => ({ status: "call_already_has_client" }),
+      invitePaidClient: async () => undefined,
+      recordCoachingStanding: async () => undefined,
+    },
     appBasePath: "/eli-coach-platform",
     emailAcceptance: createEmailAcceptance("allowed"),
     endedCalls: { endedCall: async () => null },
-    clientIdentities: {
-      findByClientId: async () => null,
-      findByClientIds: async () => [],
+    clientLookup: {
+      identityOf: async () => null,
+      journeyStepOf: async () => null,
+      reachOf: async () => null,
+      reachOfSubject: async () => null,
     },
-    clientIds: { generate: () => "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22" },
-    clientJourneys: { findByAuthSubjectId: async () => null },
-    clientReach: { findByAuthSubjectId: async () => null },
+    clientProfile: { openClientProfile: async () => undefined },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     coachEmail: "eli@evoa.fit",
-    coachingEnds: [{ coachingEnds: async () => undefined }],
-    coachingPeriods: [
-      {
-        paidThroughExtended: async () => undefined,
-        programStarted: async () => undefined,
-      },
-    ],
+    coachingPeriods: {
+      endCoaching: async () => undefined,
+      startCoachingPeriod: async () => undefined,
+    },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
@@ -261,8 +263,6 @@ function createHandles(
       hasher: createTokenHasher(),
     },
     logger: createLogger(),
-    openClientProfile: async () => undefined,
-    paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,
     paymentEvents: payments.events,
@@ -274,10 +274,6 @@ function createHandles(
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
     webhookSigningSecret: "whsec_unit",
-    writeClient: async () => {
-      throw new Error("no client expected");
-    },
-    writeCoachingStanding: async () => undefined,
   };
 }
 

@@ -18,11 +18,6 @@ type ClerkInvitationClient = {
     }): Promise<{ id: string; url?: string }>;
     revokeInvitation(invitationId: string): Promise<unknown>;
   };
-  users: {
-    getUser(
-      userId: string,
-    ): Promise<{ publicMetadata: Record<string, unknown> }>;
-  };
 };
 
 const SETTLED_REVOCATION_CODES: ReadonlySet<string> = new Set([
@@ -85,15 +80,6 @@ export class ClerkIdentityInvitations implements IdentityInvitations {
       });
 
     return this.create(input);
-  }
-
-  async findInvitationIdForSubject(
-    authSubjectId: string,
-  ): Promise<string | null> {
-    const user = await this.client.users.getUser(authSubjectId);
-    const invitationId = user.publicMetadata.invitationId;
-
-    return typeof invitationId === "string" ? invitationId : null;
   }
 }
 

@@ -1,8 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import {
-  CoachingStanding,
-  type CoachingStandingSnapshot,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { CoachingStandingSnapshot } from "~/bounded-contexts/clients/clients/domain/client";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
@@ -29,12 +26,12 @@ const NOT_STARTED: CoachingStandingSnapshot = {
 };
 
 describe("composeClientsFeature invitation acceptance", () => {
-  it("refuses a subject whose identity carries no invitation without reading any invitation", async () => {
+  it("links no client for a subject that accepted no invitation without reading any invitation", async () => {
     // arrange
-    const { handles } = composeClientsFeature(createHandles());
+    const { feature } = composeClientsFeature(createHandles());
 
     // act
-    const outcome = await handles.invitationAcceptance.accept({
+    const outcome = await feature.acceptInvitation.execute({
       authSubjectId: "user_uninvited",
     });
 
@@ -49,7 +46,7 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const reading = handles.onboardingClients.findByAuthSubjectId("user_ana");
+    const reading = handles.onboardingStandings.findByAuthSubjectId("user_ana");
 
     // assert
     await expect(reading).rejects.toThrow("database down");
@@ -71,7 +68,7 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const stamping = handles.clientJourneys.recordOnboardingSubmitted({
+    const stamping = handles.onboardingSubmissions.recordOnboardingSubmitted({
       clientId: CLIENT_ID,
       at: new Date("2026-10-20T10:00:00.000Z"),
     });
@@ -85,7 +82,7 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const stamping = handles.onboardingReviewStamps.record({
+    const stamping = handles.reviewStampRecorder.recordReviewStamp({
       clientId: CLIENT_ID,
       stamps: {
         reviewOpenedAt: new Date("2026-10-20T10:00:00.000Z"),
@@ -99,31 +96,25 @@ describe("composeClientsFeature client handles", () => {
     await expect(stamping).rejects.toThrow("database down");
   });
 
-  it("hands out the writers other features call, each writing the clients table", async () => {
+  it("hands out the admissions other bounded contexts call, each writing the clients table", async () => {
     // arrange
-    const { handles } = composeClientsFeature(createHandles());
+    const { facades } = composeClientsFeature(createHandles());
 
     // act
-    const writes = [
-      handles.reviewStampWriter({
-        clientId: CLIENT_ID,
-        stamps: {
-          reviewOpenedAt: null,
-          detailsRequestedAt: null,
-          detailsAnsweredAt: null,
-          answersApprovedAt: null,
-        },
-      }),
-      handles.writeCoachingStanding({
-        clientId: CLIENT_ID,
-        standing: CoachingStanding.of(NOT_STARTED),
-      }),
-    ];
+    const writing = facades.admissions.recordCoachingStanding({
+      clientId: CLIENT_ID,
+      standing: {
+        status: "not-started",
+        accessEndsAt: null,
+        refundDue: false,
+        bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
+      },
+    });
 
     // assert
-    for (const write of writes) {
-      await expect(write).rejects.toThrow("database down");
-    }
+    await expect(writing).rejects.toThrow("database down");
   });
 });
 
@@ -263,6 +254,12 @@ function coachArgs(request: Request) {
 
 function createHandles(): ClientsFeatureHandles {
   return {
+    accountInvitations: {
+      acceptedInvitationOf: async () => null,
+      allowAccount: async () => {
+        throw new Error("no account invitation expected");
+      },
+    },
     appBasePath: "/eli-coach-platform",
     clientCalls: { callOf: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
@@ -272,7 +269,6 @@ function createHandles(): ClientsFeatureHandles {
       create: async () => {
         throw new Error("no identity invitation expected");
       },
-      findInvitationIdForSubject: async () => null,
       replace: async () => {
         throw new Error("no identity invitation expected");
       },

@@ -1,7 +1,5 @@
-import type {
-  ClientIdentities,
-  ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach } from "./client-reach";
 import type { Clock } from "../clock";
 
 import type { CheckIn } from "./check-in";
@@ -59,22 +57,22 @@ export class ExtendCheckInSeriesUseCase {
   async execute(command: {
     clientId: string;
   }): Promise<ExtendCheckInSeriesResult> {
-    try {
-      const extension = await this.extendWithOneRetry(command.clientId);
+    const extension = await this.extendWithOneRetry(command.clientId);
 
-      if (extension.status !== "extended") {
-        return extension;
-      }
-
-      await this.announcer.announceClashes(
-        extension.series,
-        extension.occurrences.filter((occurrence) => occurrence.isClash()),
-      );
-
-      return { status: "extended", created: extension.occurrences.length };
-    } catch (error) {
-      return this.failed({ clientId: command.clientId, error });
+    if (extension.status !== "extended") {
+      return extension;
     }
+
+    await this.announcer.announceClashes(
+      extension.series,
+      extension.occurrences.filter((occurrence) => occurrence.isClash()),
+    );
+    await this.announcer.announceExpiries(extension.series, {
+      current: extension.occurrences,
+      withdrawn: [],
+    });
+
+    return { status: "extended", created: extension.occurrences.length };
   }
 
   private async extendWithOneRetry(

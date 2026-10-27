@@ -1,7 +1,5 @@
-import type {
-  ClientIdentities,
-  ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach } from "./client-reach";
 import type { Clock } from "../clock";
 
 import type { CheckInCancellationRefusal, CheckInSnapshot } from "./check-in";

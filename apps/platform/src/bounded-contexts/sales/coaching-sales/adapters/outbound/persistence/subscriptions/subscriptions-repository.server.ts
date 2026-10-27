@@ -2,6 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import {
   CoachingSubscription,
+  type CoachingStandingWriter,
   type CoachingSubscriptionSnapshot,
   type CoachingSubscriptions,
   type RefundDueSnapshot,
@@ -12,13 +13,12 @@ import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock
 import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
 import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 
-import type { CoachingStandingWriter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/client-writers.server";
 import { coachingSubscriptionsTable } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";
 
 type PostgresCoachingSubscriptionsOptions = {
   clock: Clock;
   database: DatabaseClient;
-  writeCoachingStanding: CoachingStandingWriter;
+  standings: CoachingStandingWriter;
 };
 
 type CoachingSubscriptionRow = typeof coachingSubscriptionsTable.$inferSelect;
@@ -127,7 +127,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
       (await this.updateHeld({ columns, previous }));
 
     if (written) {
-      await this.options.writeCoachingStanding({
+      await this.options.standings.record({
         clientId: previous.clientId,
         standing: change.subscription.standing(),
       });

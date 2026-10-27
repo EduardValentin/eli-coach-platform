@@ -8,7 +8,7 @@ import type {
 } from "./client-resource-store";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { DownloadClientResourceUseCase } from "./download-client-resource-use-case";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "./client-reach";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ORIGINAL_BYTES = Uint8Array.of(0xd0, 0xcf, 0x11, 0xe0);

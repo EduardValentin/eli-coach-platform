@@ -12,7 +12,7 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
-import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/clients/public/paths";
+import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/public/paths";
 import {
   clientEndedSchema,
   clientSettingsSchema,

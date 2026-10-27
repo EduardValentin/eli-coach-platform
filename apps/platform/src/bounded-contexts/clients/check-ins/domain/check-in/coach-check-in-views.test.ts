@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientIdentity,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities, ClientIdentity } from "./client-identities";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import { CoachCheckInViews } from "./coach-check-in-views";

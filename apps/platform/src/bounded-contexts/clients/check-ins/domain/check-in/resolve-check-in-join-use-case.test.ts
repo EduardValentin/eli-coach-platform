@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
@@ -56,8 +53,6 @@ function createResolveJoin(options?: {
       ),
     listForClient: vi.fn(),
     listAll: vi.fn(),
-    listUnansweredStartedWithin: vi.fn(),
-    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi.fn(),
     endCoaching: vi.fn(),

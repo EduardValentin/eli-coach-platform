@@ -193,9 +193,9 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
-    expect(handles.onboardingClients.findByAuthSubjectId).toHaveBeenCalledWith(
-      "user_uninvited",
-    );
+    expect(
+      handles.onboardingStandings.findByAuthSubjectId,
+    ).toHaveBeenCalledWith("user_uninvited");
   });
 
   it("refuses a draft from an account with no client record without writing anything", async () => {
@@ -254,7 +254,7 @@ describe("composeClientOnboardingFeature", () => {
     // assert
     expect(response.status).toBe(404);
     expect(
-      handles.onboardingSubmissionStamps.recordOnboardingSubmitted,
+      handles.onboardingSubmissions.recordOnboardingSubmitted,
     ).not.toHaveBeenCalled();
     expect(handles.attachProgressPhotos.execute).not.toHaveBeenCalled();
   });
@@ -274,7 +274,9 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.reviewStampWriter).not.toHaveBeenCalled();
+    expect(
+      handles.reviewStampRecorder.recordReviewStamp,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers not found to the coach's review of a client no one knows", async () => {
@@ -290,7 +292,7 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
-    expect(handles.onboardingClients.findByClientId).toHaveBeenCalledWith(
+    expect(handles.onboardingStandings.findByClientId).toHaveBeenCalledWith(
       UNKNOWN_CLIENT_ID,
     );
   });
@@ -340,19 +342,20 @@ function createOnboardingHandles() {
     logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     measurementIds: { generate: () => "entry-1" },
     measurements: { listByClientId: vi.fn().mockResolvedValue([]) },
-    onboardingClients: {
+    onboardingStandings: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       findByClientId: vi.fn().mockResolvedValue(null),
     },
-    onboardingReviewStamps: { record: vi.fn().mockResolvedValue(undefined) },
-    onboardingSubmissionStamps: {
+    onboardingSubmissions: {
       recordOnboardingSubmitted: vi.fn().mockResolvedValue(undefined),
     },
     productEmail: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
     recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
     recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
-    reviewStampWriter: vi.fn().mockResolvedValue(undefined),
+    reviewStampRecorder: {
+      recordReviewStamp: vi.fn().mockResolvedValue(undefined),
+    },
     seedCoaching: vi.fn().mockResolvedValue(undefined),
   };
 }

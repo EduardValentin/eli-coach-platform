@@ -1,12 +1,10 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls";
-import type {
-  ClientIdentities,
-  ClientIds,
-  ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
-import type { ClientJourneys } from "~/bounded-contexts/clients/clients/domain/client-journey";
+import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions";
+import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup";
+import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile";
+import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods";
 import {
   ReadPricingTiersUseCase,
   type PricingEligibility,
@@ -25,9 +23,6 @@ import {
   SignedInSubscriptions,
   StartCheckoutUseCase,
   StartProgramNowUseCase,
-  type CoachingEndHandler,
-  type CoachingPeriodHandler,
-  type PaidClientAdmission,
   type PaymentCheckout,
   type PaymentCustomerCards,
   type PaymentSubscriptions,
@@ -55,11 +50,11 @@ import { CoachingPurchaseCompletionHandler } from "~/bounded-contexts/sales/coac
 import { CoachingSubscriptionEventHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/public/checkouts-controller.server";
 import { StripeWebhookController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/stripe-webhooks/stripe-webhook-controller.server";
-import type {
-  ClientProfileOpener,
-  ClientWriter,
-  CoachingStandingWriter,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/client-writers.server";
+import { ClientsClientLookup } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/client-lookup.server";
+import { ClientsCoachingEndHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-end-handler.server";
+import { ClientsCoachingPeriodHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-period-handler.server";
+import { ClientsCoachingStandingWriter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-standing-writer.server";
+import { ClientsPaidClientAdmission } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/paid-client-admission.server";
 import { PostgresPaymentCards } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-cards/payment-cards-repository.server";
 import { PostgresPaymentLinks } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/payment-links-repository.server";
 import { RandomPaymentLinkIds } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/random-payment-link-ids.server";
@@ -80,16 +75,14 @@ type CoachingSalesComposition = {
 };
 
 export type CoachingSalesFeatureHandles = {
+  admissions: AdmissionsFacade;
   appBasePath: string;
   endedCalls: EndedCallsFacade;
-  clientIdentities: ClientIdentities;
-  clientIds: ClientIds;
-  clientJourneys: Pick<ClientJourneys, "findByAuthSubjectId">;
-  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
+  clientLookup: ClientLookupFacade;
+  clientProfile: ClientProfileFacade;
   clock: Clock;
   coachEmail: string;
-  coachingEnds: readonly CoachingEndHandler[];
-  coachingPeriods: readonly CoachingPeriodHandler[];
+  coachingPeriods: CoachingPeriodsFacade;
   contactEmail: string;
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
@@ -99,8 +92,6 @@ export type CoachingSalesFeatureHandles = {
     generator: PaymentLinkTokenGenerator;
     hasher: PaymentLinkTokenHasher;
   };
-  openClientProfile: ClientProfileOpener;
-  paidClientAdmission: PaidClientAdmission;
   paymentCheckout: PaymentCheckout;
   paymentCustomerCards: PaymentCustomerCards;
   paymentEvents: PaymentEvents;
@@ -109,8 +100,6 @@ export type CoachingSalesFeatureHandles = {
   productEmail: ProductEmail;
   publicAppUrl: string;
   webhookSigningSecret: string | undefined;
-  writeClient: ClientWriter;
-  writeCoachingStanding: CoachingStandingWriter;
 };
 
 export function composeCoachingSalesFeature(
@@ -119,18 +108,21 @@ export function composeCoachingSalesFeature(
   const incidents = createCoachingSalesIncidents(handles.logger);
   const { clock, database } = handles;
   const unitOfWork = createUnitOfWork(database);
+  const clients = new ClientsClientLookup(handles.clientLookup);
+  const admission = new ClientsPaidClientAdmission(
+    handles.admissions,
+    handles.clientProfile,
+  );
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
   const purchases = new PostgresCoachingPurchases({
+    admission,
     clock,
     database,
-    openClientProfile: handles.openClientProfile,
-    writeClient: handles.writeClient,
-    writeCoachingStanding: handles.writeCoachingStanding,
   });
   const subscriptions = new PostgresCoachingSubscriptions({
     clock,
     database,
-    writeCoachingStanding: handles.writeCoachingStanding,
+    standings: new ClientsCoachingStandingWriter(handles.admissions),
   });
   const paymentCards = new PostgresPaymentCards({ clock, database });
   const { generator: tokenGenerator, hasher: tokenHasher } = handles.linkTokens;
@@ -150,13 +142,15 @@ export function composeCoachingSalesFeature(
   };
 
   const signedInSubscriptions = new SignedInSubscriptions({
-    clientReach: handles.clientReach,
+    clients,
     subscriptions,
   });
   const subscriptionPorts = {
     clock,
-    coachingEnds: handles.coachingEnds,
-    coachingPeriods: handles.coachingPeriods,
+    coachingEnds: [new ClientsCoachingEndHandler(handles.coachingPeriods)],
+    coachingPeriods: [
+      new ClientsCoachingPeriodHandler(handles.coachingPeriods),
+    ],
     incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
     subscriptions,
@@ -164,7 +158,7 @@ export function composeCoachingSalesFeature(
   const subscriptionUseCases = {
     cancelSubscription: new CancelSubscriptionUseCase({
       ...subscriptionPorts,
-      clients: handles.clientIdentities,
+      clients,
       notifications: createRefundNotifications(handles.productEmail, {
         appBasePath: handles.appBasePath,
         clock,
@@ -189,7 +183,7 @@ export function composeCoachingSalesFeature(
     }),
     readProgramStatus: new ReadProgramStatusUseCase({
       clock,
-      journeys: handles.clientJourneys,
+      journeys: clients,
       subscriptions,
     }),
     reconcileSubscriptionEvent: new ReconcileSubscriptionEventUseCase(
@@ -223,9 +217,8 @@ export function composeCoachingSalesFeature(
       subscriptions,
     }),
     recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
-      admission: handles.paidClientAdmission,
+      admission,
       calls,
-      clientIds: handles.clientIds,
       clock,
       incidents,
       paymentCheckout: handles.paymentCheckout,

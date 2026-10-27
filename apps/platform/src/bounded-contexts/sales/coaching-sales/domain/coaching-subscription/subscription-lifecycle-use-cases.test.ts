@@ -1,13 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientIdentity,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
-
 import { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
+import type { ClientLookup, SubscribedClient } from "./client-lookup";
 import type { CoachingEndHandler } from "./coaching-end-handler";
 import type { CoachingPeriodHandler } from "./coaching-period-handler";
 import {
@@ -132,44 +126,32 @@ function createNotifications() {
   } satisfies RefundNotifications;
 }
 
-const ana: ClientIdentity = {
+const ana: SubscribedClient = {
   clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   email: "ana@example.com",
-  dateOfBirth: "1994-03-14",
-  gender: "female",
-  country: "RO",
-  phone: null,
 };
 
-function createClients(found: ClientIdentity | null = ana) {
+function createClients(found: SubscribedClient | null = ana) {
   return {
-    findByClientId: vi.fn().mockResolvedValue(found),
-    findByClientIds: vi.fn().mockResolvedValue([]),
-  } satisfies ClientIdentities;
+    identityOf: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientLookup, "identityOf">;
 }
 
-const anaReach: ClientReachReading = {
-  clientId: CLIENT_ID,
-  portal: "reachable",
-  coachingEndsAt: null,
-  programStartsAt: null,
-  paidThrough: null,
-  timeZone: "Europe/Bucharest",
-};
+const anaReach = { clientId: CLIENT_ID };
 
-function createClientReach(found: ClientReachReading | null = anaReach) {
+function createClientReach(found: { clientId: string } | null = anaReach) {
   return {
-    findByAuthSubjectId: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+    clientIdOf: vi.fn().mockResolvedValue(found?.clientId ?? null),
+  } satisfies Pick<ClientLookup, "clientIdOf">;
 }
 
 function signedInOf(
   subscriptions: ReturnType<typeof createSubscriptions>,
   clientReach = createClientReach(),
 ) {
-  return new SignedInSubscriptions({ clientReach, subscriptions });
+  return new SignedInSubscriptions({ clients: clientReach, subscriptions });
 }
 
 function createCoachingEnd() {
@@ -994,9 +976,7 @@ describe("StartProgramNowUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not_found" });
-    expect(clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
-      AUTH_SUBJECT_ID,
-    );
+    expect(clientReach.clientIdOf).toHaveBeenCalledWith(AUTH_SUBJECT_ID);
     expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 

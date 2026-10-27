@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
@@ -63,6 +60,7 @@ function createStop(options?: {
     stop: vi.fn().mockResolvedValue(
       options?.stopped ?? {
         status: "stopped",
+        cancelledIds: [],
         freedReservationIds: ["reservation-1", "reservation-2"],
       },
     ),
@@ -106,6 +104,7 @@ function createStop(options?: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
+      scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
     series,

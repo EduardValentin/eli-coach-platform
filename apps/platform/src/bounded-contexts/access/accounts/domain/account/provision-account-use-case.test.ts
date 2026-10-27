@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Account } from "./account";
 import type { AccountIds } from "./account-ids";
 import type { Accounts } from "./accounts";
-import type { InvitationAcceptance } from "./invitation-acceptance";
+import type { AccountRole } from "./account";
 import { ProvisionAccountUseCase } from "./provision-account-use-case";
 
 function buildAccount(
@@ -20,10 +20,12 @@ function buildAccount(
 
 const accountIds: AccountIds = { generate: () => "account-new" };
 
-function acceptanceAnswering(
-  outcome: "accepted" | "refused",
-): InvitationAcceptance & { accept: ReturnType<typeof vi.fn> } {
-  return { accept: vi.fn().mockResolvedValue(outcome) };
+function gateAdmitting(role: AccountRole | null) {
+  return {
+    admit: vi
+      .fn<(authSubjectId: string) => Promise<AccountRole | null>>()
+      .mockResolvedValue(role),
+  };
 }
 
 describe("ProvisionAccountUseCase", () => {
@@ -34,11 +36,11 @@ describe("ProvisionAccountUseCase", () => {
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const invitationAcceptance = acceptanceAnswering("refused");
+    const invitationGate = gateAdmitting(null);
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance,
+      invitationGate,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
@@ -47,9 +49,7 @@ describe("ProvisionAccountUseCase", () => {
 
     // assert
     expect(result).toEqual({ outcome: "rejected-unprovisioned" });
-    expect(invitationAcceptance.accept).toHaveBeenCalledWith({
-      authSubjectId: "auth-subject-1",
-    });
+    expect(invitationGate.admit).toHaveBeenCalledWith("auth-subject-1");
     expect(accounts.insert).not.toHaveBeenCalled();
   });
 
@@ -63,7 +63,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("accepted"),
+      invitationGate: gateAdmitting("CLIENT"),
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
@@ -98,11 +98,11 @@ describe("ProvisionAccountUseCase", () => {
         .mockResolvedValueOnce(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const invitationAcceptance = acceptanceAnswering("accepted");
+    const invitationGate = gateAdmitting("CLIENT");
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance,
+      invitationGate,
     });
     await expect(useCase.execute("auth-subject-1")).rejects.toThrow(
       "connection reset",
@@ -120,7 +120,7 @@ describe("ProvisionAccountUseCase", () => {
         role: "CLIENT",
       },
     });
-    expect(invitationAcceptance.accept).toHaveBeenCalledTimes(2);
+    expect(invitationGate.admit).toHaveBeenCalledTimes(2);
   });
 
   it("re-reads and returns the CLIENT account when an admitted insert loses a race", async () => {
@@ -141,7 +141,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("accepted"),
+      invitationGate: gateAdmitting("CLIENT"),
     });
 
     // act
@@ -164,7 +164,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("refused"),
+      invitationGate: gateAdmitting(null),
     });
 
     // act
@@ -182,11 +182,11 @@ describe("ProvisionAccountUseCase", () => {
       insert: vi.fn().mockResolvedValue(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const invitationAcceptance = acceptanceAnswering("accepted");
+    const invitationGate = gateAdmitting("CLIENT");
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance,
+      invitationGate,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
@@ -209,7 +209,7 @@ describe("ProvisionAccountUseCase", () => {
         role: "COACH",
       }),
     );
-    expect(invitationAcceptance.accept).not.toHaveBeenCalled();
+    expect(invitationGate.admit).not.toHaveBeenCalled();
   });
 
   it("returns an existing account without changing its role", async () => {
@@ -220,11 +220,11 @@ describe("ProvisionAccountUseCase", () => {
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const invitationAcceptance = acceptanceAnswering("accepted");
+    const invitationGate = gateAdmitting("CLIENT");
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance,
+      invitationGate,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
@@ -237,7 +237,7 @@ describe("ProvisionAccountUseCase", () => {
       account: existing.toSnapshot(),
     });
     expect(accounts.insert).not.toHaveBeenCalled();
-    expect(invitationAcceptance.accept).not.toHaveBeenCalled();
+    expect(invitationGate.admit).not.toHaveBeenCalled();
   });
 
   it("rejects a soft-deleted account without inserting", async () => {
@@ -253,7 +253,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("refused"),
+      invitationGate: gateAdmitting(null),
     });
 
     // act
@@ -282,7 +282,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("refused"),
+      invitationGate: gateAdmitting(null),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
@@ -317,7 +317,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("refused"),
+      invitationGate: gateAdmitting(null),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
@@ -339,7 +339,7 @@ describe("ProvisionAccountUseCase", () => {
     const useCase = new ProvisionAccountUseCase({
       accounts,
       ids: accountIds,
-      invitationAcceptance: acceptanceAnswering("refused"),
+      invitationGate: gateAdmitting(null),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 

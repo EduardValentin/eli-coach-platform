@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  CoachingStanding,
-  type ClientIdentities,
-  type ClientIdentity,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities, ClientIdentity } from "../client-identities";
 import {
   ClientSettings,
   UnitPreference,

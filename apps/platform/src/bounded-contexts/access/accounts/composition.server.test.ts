@@ -13,11 +13,15 @@ describe("composeAccountsFeature", () => {
     };
 
     // act
-    const feature = composeAccountsFeature({
+    const { feature } = composeAccountsFeature({
       bootstrapCoachAuthSubjectId: "user_coach",
       clerkWebhookSigningSecret: undefined,
+      clock: { now: () => new Date("2026-10-27T10:00:00.000Z") },
       database: {} as DatabaseClient,
-      invitationAcceptance: { accept: async () => "refused" },
+      identityConfig: {
+        CLERK_SECRET_KEY: "sk_test_unit",
+        IDENTITY_PROVIDER: "memory",
+      },
       portal,
     });
 

@@ -88,3 +88,5 @@ export { UpdateClientProfileAsCoachUseCase } from "./update-client-profile-as-co
 export { UpdateOwnClientProfileUseCase } from "./update-own-client-profile-use-case";
 export { UploadClientAvatarAsCoachUseCase } from "./upload-client-avatar-as-coach-use-case";
 export { UploadOwnClientAvatarUseCase } from "./upload-own-client-avatar-use-case";
+export { type ClientProfileOpenings } from "./client-profile-openings";
+export { OpenClientProfileUseCase } from "./open-client-profile-use-case";

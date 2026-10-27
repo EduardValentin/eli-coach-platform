@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInNotifications } from "./check-in-notifications";
@@ -131,6 +128,7 @@ function createExtend(options?: {
     checkInEvent: vi.fn().mockResolvedValue(undefined),
     seriesEvent: vi.fn().mockResolvedValue(undefined),
     clashesAdded: vi.fn().mockResolvedValue(undefined),
+    scheduleExpiries: vi.fn().mockResolvedValue(undefined),
   } satisfies CheckInInbox;
   const notifications = {
     requested: vi.fn(),
@@ -358,20 +356,17 @@ describe("ExtendCheckInSeriesUseCase", () => {
     });
   });
 
-  it("reports a failed read or write and answers failed without throwing", async () => {
+  it("rethrows a failed read or write so its caller rolls the extension back before reporting it", async () => {
     // arrange
     const failure = new Error("connection refused");
     const { extend, ports } = createExtend();
     ports.series.widen.mockRejectedValue(failure);
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const extending = extend.execute({ clientId: "client-1" });
 
     // assert
-    expect(result).toEqual({ status: "failed" });
-    expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledWith({
-      clientId: "client-1",
-      error: failure,
-    });
+    await expect(extending).rejects.toBe(failure);
+    expect(ports.incidents.checkInSeriesExtensionFailed).not.toHaveBeenCalled();
   });
 });

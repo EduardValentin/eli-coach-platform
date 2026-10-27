@@ -7,10 +7,7 @@ import {
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 function resourceOf(id: string, clientId: string): ClientResource {

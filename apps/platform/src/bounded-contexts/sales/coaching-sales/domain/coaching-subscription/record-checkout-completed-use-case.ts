@@ -1,16 +1,14 @@
 import type { EndedCalls, SalesCall } from "../payment-link";
-import {
-  Client,
-  type ClientIds,
-  type ClientIntake,
-} from "~/bounded-contexts/clients/clients/domain/client";
 import type { Clock } from "../clock";
 
 import type { CoachingPurchases } from "./coaching-purchases";
 import type { CheckoutCompletion } from "./coaching-subscription";
 import type { CoachingSubscriptionIds } from "./coaching-subscription-ids";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaidClientAdmission } from "./paid-client-admission";
+import type {
+  PaidClientAdmission,
+  PaidClientIntake,
+} from "./paid-client-admission";
 import type { PaymentCheckout } from "./payment-checkout";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
 import { PurchasedSubscription } from "./purchased-subscription";
@@ -28,9 +26,8 @@ type RecordCheckoutCompletedResult =
   | { status: "unreadable_checkout" };
 
 type RecordCheckoutCompletedUseCaseOptions = {
-  admission: PaidClientAdmission;
+  admission: Pick<PaidClientAdmission, "invite">;
   calls: EndedCalls;
-  clientIds: ClientIds;
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
   paymentCheckout: PaymentCheckout;
@@ -94,11 +91,7 @@ export class RecordCheckoutCompletedUseCase {
     const purchase = await this.options.purchases.recordCompletion({
       eventId,
       receivedAt,
-      client: Client.admitted({
-        id: this.options.clientIds.generate(),
-        intake: this.intakeOf(call),
-        at: receivedAt,
-      }),
+      client: this.intakeOf(call),
       subscription,
     });
 
@@ -111,7 +104,7 @@ export class RecordCheckoutCompletedUseCase {
       return { status: "already_paid" };
     }
 
-    await this.options.admission.admit({ clientId: purchase.clientId });
+    await this.options.admission.invite({ clientId: purchase.clientId });
     await this.holdRenewal(subscription);
 
     return {
@@ -120,7 +113,7 @@ export class RecordCheckoutCompletedUseCase {
     };
   }
 
-  private intakeOf(call: SalesCall): ClientIntake {
+  private intakeOf(call: SalesCall): PaidClientIntake {
     return {
       assessmentCallId: call.id,
       firstName: call.firstName,

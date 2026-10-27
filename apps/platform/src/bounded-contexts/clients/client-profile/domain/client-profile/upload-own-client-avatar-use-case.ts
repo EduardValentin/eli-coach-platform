@@ -1,4 +1,4 @@
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "../client-reach";
 
 import {
   ClientAvatarIntake,

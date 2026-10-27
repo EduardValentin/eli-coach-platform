@@ -4,6 +4,7 @@ import {
   clientsContext,
   type ClientsFeature,
 } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import { clientPortalStandingMiddleware } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-portal-standing.server";
 import {
   composeClientsFeature,
   type ClientsFeatureHandles,
@@ -40,32 +41,35 @@ import { composeCheckInsFeature } from "~/bounded-contexts/clients/check-ins/com
 type ClientsComponentHandles = ReturnType<
   typeof composeClientsFeature
 >["handles"];
+type ClientsFacades = ReturnType<typeof composeClientsFeature>["facades"];
 type ClientProfileComponentHandles = ReturnType<
   typeof composeClientProfileFeature
 >["handles"];
-type CheckInsComponentHandles = ReturnType<
-  typeof composeCheckInsFeature
->["handles"];
+type ClientProfileFacades = ReturnType<
+  typeof composeClientProfileFeature
+>["facades"];
+type CheckInsFacades = ReturnType<typeof composeCheckInsFeature>["facades"];
 
 export type ClientsHandles = ClientsFeatureHandles &
   Omit<
     Parameters<typeof composeClientProfileFeature>[0],
-    "clientIdentities" | "clientReach"
+    keyof ClientsComponentHandles
   > &
   Omit<
     Parameters<typeof composeClientOnboardingFeature>[0],
-    | keyof ClientsComponentHandles
-    | keyof ClientProfileComponentHandles
-    | "onboardingSubmissionStamps"
+    keyof ClientsComponentHandles | keyof ClientProfileComponentHandles
   > &
-  Omit<Parameters<typeof composeClientResourcesFeature>[0], "clientReach"> &
+  Omit<
+    Parameters<typeof composeClientResourcesFeature>[0],
+    keyof ClientsComponentHandles
+  > &
   Omit<
     Parameters<typeof composeNotificationsFeature>[0],
-    "clientReach" | "expirySources" | "inbox"
+    keyof ClientsComponentHandles | "inbox"
   > &
   Omit<
     Parameters<typeof composeCheckInsFeature>[0],
-    "clientIdentities" | "clientReach" | "inbox"
+    keyof ClientsComponentHandles | "inbox"
   >;
 
 export type ClientsComposition = {
@@ -77,62 +81,35 @@ export type ClientsComposition = {
     clients: ClientsFeature;
     notifications: NotificationsFeature;
   };
-  handles: Pick<
-    ClientsComponentHandles,
-    | "clientIdentities"
-    | "clientIds"
-    | "clientJourneys"
-    | "clientReach"
-    | "invitationAcceptance"
-    | "paidClientAdmission"
-    | "writeClient"
-    | "writeCoachingStanding"
-  > &
-    Pick<
-      CheckInsComponentHandles,
-      "coachingEndHandler" | "coachingPeriodHandler"
-    > &
-    Pick<ClientProfileComponentHandles, "openClientProfile">;
+  facades: ClientsFacades & ClientProfileFacades & CheckInsFacades;
   middleware: MiddlewareFunction<Response>;
+  portalStandingMiddleware: MiddlewareFunction<Response>;
 };
 
 export function composeClients(handles: ClientsHandles): ClientsComposition {
   const clients = composeClientsFeature(handles);
   const clientProfile = composeClientProfileFeature({
     ...handles,
-    clientIdentities: clients.handles.clientIdentities,
-    clientReach: clients.handles.clientReach,
+    ...clients.handles,
   });
   const clientOnboarding = composeClientOnboardingFeature({
     ...handles,
-    attachProgressPhotos: clientProfile.handles.attachProgressPhotos,
-    clientIdentities: clients.handles.clientIdentities,
-    clientSettings: clientProfile.handles.clientSettings,
-    measurementIds: clientProfile.handles.measurementIds,
-    measurements: clientProfile.handles.measurements,
-    onboardingClients: clients.handles.onboardingClients,
-    onboardingReviewStamps: clients.handles.onboardingReviewStamps,
-    onboardingSubmissionStamps: clients.handles.clientJourneys,
-    recordMeasurementEntry: clientProfile.handles.recordMeasurementEntry,
-    recordPhotoConsent: clientProfile.handles.recordPhotoConsent,
-    reviewStampWriter: clients.handles.reviewStampWriter,
-    seedCoaching: clientProfile.handles.seedCoaching,
+    ...clients.handles,
+    ...clientProfile.handles,
   });
   const clientResources = composeClientResourcesFeature({
     ...handles,
-    clientReach: clients.handles.clientReach,
+    ...clients.handles,
   });
   const notificationInbox = composeNotificationInbox(handles);
-  const checkIns = composeCheckInsFeature({
-    ...handles,
-    clientIdentities: clients.handles.clientIdentities,
-    clientReach: clients.handles.clientReach,
-    inbox: notificationInbox.handles.inbox,
-  });
   const notifications = composeNotificationsFeature({
     ...handles,
-    clientReach: clients.handles.clientReach,
-    expirySources: [checkIns.handles.expirySource],
+    ...clients.handles,
+    inbox: notificationInbox.handles.inbox,
+  });
+  const checkIns = composeCheckInsFeature({
+    ...handles,
+    ...clients.handles,
     inbox: notificationInbox.handles.inbox,
   });
 
@@ -145,18 +122,10 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
       clients: clients.feature,
       notifications,
     },
-    handles: {
-      clientIdentities: clients.handles.clientIdentities,
-      clientIds: clients.handles.clientIds,
-      clientJourneys: clients.handles.clientJourneys,
-      clientReach: clients.handles.clientReach,
-      coachingEndHandler: checkIns.handles.coachingEndHandler,
-      coachingPeriodHandler: checkIns.handles.coachingPeriodHandler,
-      invitationAcceptance: clients.handles.invitationAcceptance,
-      openClientProfile: clientProfile.handles.openClientProfile,
-      paidClientAdmission: clients.handles.paidClientAdmission,
-      writeClient: clients.handles.writeClient,
-      writeCoachingStanding: clients.handles.writeCoachingStanding,
+    facades: {
+      ...clients.facades,
+      ...clientProfile.facades,
+      ...checkIns.facades,
     },
     middleware: ({ context }, next) => {
       context.set(clientsContext, clients.feature);
@@ -167,5 +136,6 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
       context.set(checkInsContext, checkIns.feature);
       return next();
     },
+    portalStandingMiddleware: clientPortalStandingMiddleware,
   };
 }

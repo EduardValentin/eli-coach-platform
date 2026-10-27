@@ -5,7 +5,6 @@ export {
   type NotificationDraft,
   type NotificationFacts,
 } from "./notification";
-export { type NotificationExpirySource } from "./notification-expiry-source";
 export { type NotificationInbox } from "./notification-inbox";
 export { type NotificationIncidents } from "./notification-incidents";
 export {

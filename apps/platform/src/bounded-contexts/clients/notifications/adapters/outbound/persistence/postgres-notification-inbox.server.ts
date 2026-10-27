@@ -6,7 +6,19 @@ import {
   type NotificationInbox,
   type NotificationRecipientSnapshot,
 } from "~/bounded-contexts/clients/notifications/domain/notification";
-import { and, count, desc, eq, gte, isNull, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { z } from "zod";
 
 import { notificationsTable } from "~/bounded-contexts/clients/notifications/adapters/outbound/persistence/schema.server";
@@ -20,6 +32,7 @@ type NotificationRow = typeof notificationsTable.$inferSelect;
 type NotificationInsert = typeof notificationsTable.$inferInsert;
 
 type Recorded = Parameters<NotificationInbox["record"]>[0];
+type Withdrawal = Parameters<NotificationInbox["withdrawUnarrived"]>[0];
 type LatestQuery = Parameters<NotificationInbox["latestFor"]>[0];
 type UnreadQuery = Parameters<NotificationInbox["unreadCountFor"]>[0];
 type ReadMark = Parameters<NotificationInbox["markRead"]>[0];
@@ -53,27 +66,40 @@ export class PostgresNotificationInbox implements NotificationInbox {
     );
   }
 
+  async withdrawUnarrived({ onceKeys, at }: Withdrawal): Promise<void> {
+    if (onceKeys.length === 0) {
+      return;
+    }
+
+    await this.executor.transaction((savepoint) =>
+      savepoint
+        .delete(notificationsTable)
+        .where(
+          and(
+            inArray(notificationsTable.onceKey, [...onceKeys]),
+            gt(notificationsTable.arrivedAt, at),
+          ),
+        ),
+    );
+  }
+
   async latestFor({
     recipient,
     since,
+    at,
     limit,
   }: LatestQuery): Promise<Notification[]> {
     const rows = await this.executor
       .select()
       .from(notificationsTable)
-      .where(
-        and(
-          this.addressedTo(recipient),
-          gte(notificationsTable.arrivedAt, since),
-        ),
-      )
+      .where(and(this.addressedTo(recipient), this.arrivedBetween(since, at)))
       .orderBy(desc(notificationsTable.arrivedAt), desc(notificationsTable.id))
       .limit(limit);
 
     return rows.map((row) => this.notificationOf(row));
   }
 
-  async unreadCountFor({ recipient, since }: UnreadQuery): Promise<number> {
+  async unreadCountFor({ recipient, since, at }: UnreadQuery): Promise<number> {
     const [counted] = await this.executor
       .select({ unread: count() })
       .from(notificationsTable)
@@ -81,7 +107,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
         and(
           this.addressedTo(recipient),
           isNull(notificationsTable.readAt),
-          gte(notificationsTable.arrivedAt, since),
+          this.arrivedBetween(since, at),
         ),
       );
 
@@ -107,8 +133,19 @@ export class PostgresNotificationInbox implements NotificationInbox {
       .update(notificationsTable)
       .set({ readAt: at })
       .where(
-        and(this.addressedTo(recipient), isNull(notificationsTable.readAt)),
+        and(
+          this.addressedTo(recipient),
+          isNull(notificationsTable.readAt),
+          lte(notificationsTable.arrivedAt, at),
+        ),
       );
+  }
+
+  private arrivedBetween(since: Date, at: Date): SQL | undefined {
+    return and(
+      gte(notificationsTable.arrivedAt, since),
+      lte(notificationsTable.arrivedAt, at),
+    );
   }
 
   private addressedTo(

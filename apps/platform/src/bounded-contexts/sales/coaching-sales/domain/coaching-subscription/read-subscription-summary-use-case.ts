@@ -1,4 +1,4 @@
-import type { CoachingStatus } from "~/bounded-contexts/clients/clients/domain/client";
+import type { CoachingStatus } from "./coaching-standing";
 import type { Clock } from "../clock";
 
 import type { CoachingSubscriptionSnapshot } from "./coaching-subscription";

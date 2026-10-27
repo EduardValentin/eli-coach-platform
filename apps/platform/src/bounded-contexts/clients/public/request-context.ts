@@ -21,3 +21,4 @@ export {
   checkInsContext,
   type CheckInsFeature,
 } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+export { clientPortalStandingContext } from "./portal-standing";

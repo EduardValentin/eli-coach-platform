@@ -4,6 +4,7 @@ import {
   DetailRequest,
   emptyDraft,
   type OnboardingAnswersByForm,
+  type OnboardingReviewStamps,
 } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type { CoachingSeed } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import type { SQL } from "drizzle-orm";
@@ -19,10 +20,7 @@ import {
   clientOnboardingSubmissionsTable,
 } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/schema.server";
 
-import {
-  PostgresOnboardingReviews,
-  type ReviewStampWriter,
-} from "./onboarding-reviews-repository.server";
+import { PostgresOnboardingReviews } from "./onboarding-reviews-repository.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const FIRST_REQUEST_ID = "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01";
@@ -527,7 +525,7 @@ function reviewsOver(
 ): PostgresOnboardingReviews {
   return new PostgresOnboardingReviews({
     database,
-    reviewStampWriter: writer.write,
+    reviewStamps: { record: writer.write },
     coachingSeedWriter: seedWriter.write,
   });
 }
@@ -696,7 +694,7 @@ function createRecordingTransaction(
 }
 
 type StampWriterDouble = {
-  write: ReviewStampWriter;
+  write: OnboardingReviewStamps["record"];
   calls: { transaction: unknown; projection: unknown }[];
 };
 

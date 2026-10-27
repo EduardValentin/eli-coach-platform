@@ -1,7 +1,4 @@
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 import type { Clock } from "../clock";
 
 import { CheckIn } from "./check-in";

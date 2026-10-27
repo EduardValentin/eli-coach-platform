@@ -10,7 +10,7 @@ import type {
   ResourcePageImage,
 } from "./client-resource-store";
 import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "./client-reach";
 import type {
   ResourceDocumentPages,
   ResourceDocumentReading,

@@ -7,6 +7,7 @@ import {
   DetailRequest,
   ONBOARDING_FORM_IDS,
   type OnboardingAnswersByForm,
+  type OnboardingReviewStamps,
   type OnboardingReviews,
   type ReviewStamps,
 } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
@@ -39,24 +40,20 @@ type ReviewStampProjection = {
   stamps: ReviewStamps;
 };
 
-export type ReviewStampWriter = (
-  projection: ReviewStampProjection,
-) => Promise<void>;
-
 type OnboardingReviewsOptions = {
   database: DatabaseClient;
-  reviewStampWriter: ReviewStampWriter;
+  reviewStamps: OnboardingReviewStamps;
   coachingSeedWriter: CoachingSeedWriter;
 };
 
 export class PostgresOnboardingReviews implements OnboardingReviews {
   private readonly database: DatabaseClient;
-  private readonly reviewStampWriter: ReviewStampWriter;
+  private readonly reviewStamps: OnboardingReviewStamps;
   private readonly coachingSeedWriter: CoachingSeedWriter;
 
   constructor(options: OnboardingReviewsOptions) {
     this.database = options.database;
-    this.reviewStampWriter = options.reviewStampWriter;
+    this.reviewStamps = options.reviewStamps;
     this.coachingSeedWriter = options.coachingSeedWriter;
   }
 
@@ -190,7 +187,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
   ): Promise<void> {
     await createUnitOfWork(this.database)(async () => {
       await writeRows();
-      await this.reviewStampWriter(projection);
+      await this.reviewStamps.record(projection);
     });
   }
 }

@@ -15,8 +15,4 @@ export class InMemoryIdentityInvitations {
   async replace(): Promise<{ id: string; url: string }> {
     return this.create();
   }
-
-  async findInvitationIdForSubject(): Promise<string | null> {
-    return null;
-  }
 }

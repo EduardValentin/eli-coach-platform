@@ -1,10 +1,9 @@
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
-
+import type { ClientLookup } from "./client-lookup";
 import type { CoachingSubscription } from "./coaching-subscription";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
 
 type SignedInSubscriptionsOptions = {
-  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
+  clients: Pick<ClientLookup, "clientIdOf">;
   subscriptions: Pick<CoachingSubscriptions, "findCurrentForClient">;
 };
 
@@ -14,13 +13,12 @@ export class SignedInSubscriptions {
   async currentFor(
     authSubjectId: string,
   ): Promise<CoachingSubscription | null> {
-    const client =
-      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
+    const clientId = await this.options.clients.clientIdOf(authSubjectId);
 
-    if (!client) {
+    if (!clientId) {
       return null;
     }
 
-    return this.options.subscriptions.findCurrentForClient(client.clientId);
+    return this.options.subscriptions.findCurrentForClient(clientId);
   }
 }

@@ -11,14 +11,18 @@ function createCancelAfterEnd(ended: CheckInsAtCoachingEnd) {
     endCoaching: vi.fn().mockResolvedValue(ended),
   } satisfies Pick<CheckIns, "endCoaching">;
   const coachTime = { release: vi.fn().mockResolvedValue(undefined) };
+  const inbox = { scheduleExpiries: vi.fn().mockResolvedValue(undefined) };
 
   return {
     checkIns,
     coachTime,
+    inbox,
     cancelAfterEnd: new CancelCheckInsAfterCoachingEndUseCase({
       checkIns,
       clock: { now: () => NOW },
       coachTime,
+      inbox,
+      incidents: { checkInInboxFailed: vi.fn() },
     }),
   };
 }

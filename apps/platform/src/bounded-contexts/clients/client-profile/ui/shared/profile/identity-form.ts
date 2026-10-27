@@ -1,4 +1,4 @@
-import type { ClientIdentityProblems } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentityProblems } from "~/bounded-contexts/clients/clients/public";
 import { z } from "zod";
 
 import { COUNTRIES, findCountry } from "~/shared/contact/countries";

@@ -1,0 +1,590 @@
+import type { PortalReach } from "~/bounded-contexts/clients/clients/domain/client";
+import {
+  ClientJourney,
+  type ReviewStamps,
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
+import { clientPortalRedirect } from "~/bounded-contexts/clients/clients/public/client-journey";
+import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/portal-standing";
+import { redirect } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+import {
+  accessContext,
+  type ResolvedSession,
+  type SessionAccount,
+} from "~/bounded-contexts/access/public/session";
+
+import type { ClientsFeature } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/composition-root/test-support/request-args";
+
+import { clientJourneyContext } from "./client-journey-context.server";
+import { clientsContext } from "./context.server";
+import { clientPortalStandingMiddleware } from "./client-portal-standing.server";
+
+const BASE_PATH = "/app";
+const CLIENT: SessionAccount = {
+  authSubjectId: "user_ana",
+  id: "acct_ana",
+  role: "CLIENT",
+};
+
+describe("clientPortalStandingMiddleware with the client portal redirect", () => {
+  it.each(["/app/client", "/app/client/plan"])(
+    "holds a client who has not seen her welcome on the welcome screen when she opens %s",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: null }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect(thrown).toBeInstanceOf(Response);
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe(
+        "/app/client/welcome",
+      );
+    },
+  );
+
+  it.each(["/app/client/welcome", "/app/client/onboarding"])(
+    "lets a client who has not seen her welcome open %s",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: null }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect(thrown).toBeUndefined();
+    },
+  );
+
+  it.each(["/app/client", "/app/client/welcome", "/app/client/plan"])(
+    "holds a client who has seen her welcome on onboarding when she opens %s",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: new Date("2026-10-21T09:00Z") }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe(
+        "/app/client/onboarding",
+      );
+    },
+  );
+
+  it("lets a client who has seen her welcome open onboarding", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf({ welcomeSeenAt: new Date("2026-10-21T09:00Z") }),
+      pathname: "/app/client/onboarding",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it.each(["/app/client/welcome", "/app/client/onboarding"])(
+    "sends a client who has sent her onboarding from %s to the client portal",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({
+          welcomeSeenAt: new Date("2026-10-21T09:00Z"),
+          onboardingSubmittedAt: new Date("2026-10-22T09:00Z"),
+        }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe("/app/client");
+    },
+  );
+
+  it.each(["/app/client", "/app/client/plan"])(
+    "lets a client who has sent her onboarding open %s",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({
+          welcomeSeenAt: new Date("2026-10-21T09:00Z"),
+          onboardingSubmittedAt: new Date("2026-10-22T09:00Z"),
+        }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect(thrown).toBeUndefined();
+    },
+  );
+
+  it.each(
+    Object.keys(REVIEW_JOURNEYS).flatMap((label) =>
+      ["/app/client", "/app/client/plan"].map(
+        (pathname) => [label as ReviewJourney, pathname] as const,
+      ),
+    ),
+  )("lets a client whose onboarding is %s open %s", async (label, pathname) => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS[label]),
+      pathname,
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it.each([
+    ["in review", "/app/client/welcome"],
+    ["in review", "/app/client/onboarding"],
+    ["asked for more details", "/app/client/welcome"],
+    ["approved", "/app/client/welcome"],
+    ["approved", "/app/client/onboarding"],
+  ] as const)(
+    "sends a client whose onboarding is %s from %s to the client portal",
+    async (label, pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf(REVIEW_JOURNEYS[label]),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe("/app/client");
+    },
+  );
+
+  it("lets a client asked for more details open onboarding to answer them", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS["asked for more details"]),
+      pathname: "/app/client/onboarding",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it("gates the paths of an app served at the root", async () => {
+    // arrange
+    const args = journeyArgs({
+      appBasePath: "/",
+      journey: journeyOf({ welcomeSeenAt: new Date("2026-10-21T09:00Z") }),
+      pathname: "/client/welcome",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      "/client/onboarding",
+    );
+  });
+
+  it.each(["/app/client", "/app/client/settings", "/app/client/welcome"])(
+    "sends a client whose coaching has ended from %s to the ended page",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf(REVIEW_JOURNEYS.approved),
+        portal: "ended",
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe(
+        "/app/client/ended",
+      );
+    },
+  );
+
+  it("lets a client whose coaching has ended open the ended page", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS.approved),
+      portal: "ended",
+      pathname: "/app/client/ended",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it("sends a client whose coaching goes on away from the ended page", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS.approved),
+      pathname: "/app/client/ended",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect((thrown as Response).headers.get("Location")).toBe("/app/client");
+  });
+
+  it("leaves a client account with no client record ungated", async () => {
+    // arrange
+    const args = journeyArgs({ journey: null, pathname: "/app/client" });
+
+    // act
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it.each(["/app/client", "/app/client/welcome"])(
+    "hands the loaders under %s a snapshot of her journey",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: null }),
+        pathname,
+      });
+
+      // act
+      await captureThrown(() => requireClientPortalStanding(args));
+
+      // assert
+      expect(args.context.get(clientJourneyContext)).toEqual({
+        clientId: "client_ana",
+        firstName: "Ana",
+        gender: "female",
+        lastName: "Popescu",
+        welcomeSeenAt: null,
+        onboardingSubmittedAt: null,
+        reviewOpenedAt: null,
+        detailsRequestedAt: null,
+        detailsAnsweredAt: null,
+        answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+          bundleMonths: null,
+          programStartsAt: null,
+          paidThrough: null,
+        },
+      });
+    },
+  );
+
+  it("hands the loaders no journey for a client account with no client record", async () => {
+    // arrange
+    const args = journeyArgs({ journey: null, pathname: "/app/client" });
+
+    // act
+    await requireClientPortalStanding(args);
+
+    // assert
+    expect(args.context.get(clientJourneyContext)).toBeNull();
+  });
+
+  it("asks for the journey of the signed-in client's own subject", async () => {
+    // arrange
+    const args = journeyArgs({ journey: null, pathname: "/app/client" });
+
+    // act
+    await requireClientPortalStanding(args);
+
+    // assert
+    expect(readJourneyOf(args)).toHaveBeenCalledWith("user_ana");
+  });
+});
+
+describe("clientPortalStandingMiddleware", () => {
+  it("names the step a signed-in client is at and how far her portal reaches", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf({ welcomeSeenAt: null }),
+      pathname: "/app/",
+    });
+
+    // act
+    const standing = await readClientPortalStanding(args);
+
+    // assert
+    expect(standing).toEqual({
+      step: "welcome",
+      portal: "awaiting_onboarding",
+    });
+  });
+
+  it("links the signed-in client to the invitation she accepted before naming her step", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf({ welcomeSeenAt: null }),
+      pathname: "/app/",
+      linkedOnFirstRequest: true,
+    });
+
+    // act
+    const standing = await readClientPortalStanding(args);
+
+    // assert
+    expect(standing).toEqual({
+      step: "welcome",
+      portal: "awaiting_onboarding",
+    });
+    expect(linkOf(args)).toHaveBeenCalledWith({ authSubjectId: "user_ana" });
+    expect(readJourneyOf(args)).toHaveBeenCalledTimes(2);
+  });
+
+  it("links nothing for a client already bound to her subject", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf({ welcomeSeenAt: null }),
+      pathname: "/app/",
+    });
+
+    // act
+    await readClientPortalStanding(args);
+
+    // assert
+    expect(linkOf(args)).not.toHaveBeenCalled();
+  });
+
+  it("names no step for a client account with no client record", async () => {
+    // arrange
+    const args = journeyArgs({ journey: null, pathname: "/app/" });
+
+    // act
+    const standing = await readClientPortalStanding(args);
+
+    // assert
+    expect(standing).toBeNull();
+  });
+
+  it.each<[string, ResolvedSession]>([
+    ["an anonymous visitor", { kind: "anonymous" }],
+    [
+      "the coach",
+      {
+        account: {
+          authSubjectId: "user_coach",
+          id: "acct_coach",
+          role: "COACH",
+        },
+        kind: "authenticated",
+      },
+    ],
+  ])(
+    "names no step for %s without looking for a journey",
+    async (_label, session) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: null }),
+        pathname: "/app/",
+        session,
+      });
+
+      // act
+      const standing = await readClientPortalStanding(args);
+
+      // assert
+      expect(standing).toBeNull();
+      expect(readJourneyOf(args)).not.toHaveBeenCalled();
+    },
+  );
+});
+
+function journeyOf(
+  options: {
+    welcomeSeenAt: Date | null;
+    onboardingSubmittedAt?: Date;
+  } & Partial<ReviewStamps>,
+): ClientJourney {
+  return ClientJourney.from({
+    clientId: "client_ana",
+    firstName: "Ana",
+    gender: "female",
+    lastName: "Popescu",
+    welcomeSeenAt: options.welcomeSeenAt,
+    onboardingSubmittedAt: options.onboardingSubmittedAt ?? null,
+    reviewOpenedAt: options.reviewOpenedAt ?? null,
+    detailsRequestedAt: options.detailsRequestedAt ?? null,
+    detailsAnsweredAt: options.detailsAnsweredAt ?? null,
+    answersApprovedAt: options.answersApprovedAt ?? null,
+    standing: {
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: null,
+      programStartsAt: null,
+      paidThrough: null,
+    },
+  });
+}
+
+const SUBMITTED = {
+  welcomeSeenAt: new Date("2026-10-21T09:00Z"),
+  onboardingSubmittedAt: new Date("2026-10-22T09:00Z"),
+};
+
+const REVIEW_JOURNEYS = {
+  "in review": { ...SUBMITTED, reviewOpenedAt: new Date("2026-10-23T09:00Z") },
+  "asked for more details": {
+    ...SUBMITTED,
+    reviewOpenedAt: new Date("2026-10-23T09:00Z"),
+    detailsRequestedAt: new Date("2026-10-23T10:00Z"),
+  },
+  approved: {
+    ...SUBMITTED,
+    reviewOpenedAt: new Date("2026-10-23T09:00Z"),
+    answersApprovedAt: new Date("2026-10-24T09:00Z"),
+  },
+} as const;
+
+type ReviewJourney = keyof typeof REVIEW_JOURNEYS;
+
+function journeyArgs(options: {
+  portal?: PortalReach;
+  appBasePath?: string;
+  journey: ClientJourney | null;
+  pathname: string;
+  session?: ResolvedSession;
+  linkedOnFirstRequest?: boolean;
+}) {
+  const reading = options.journey
+    ? {
+        journey: options.journey,
+        portal:
+          options.portal ??
+          (options.journey.onboardingSubmittedAt
+            ? "reachable"
+            : "awaiting_onboarding"),
+      }
+    : null;
+  const readStanding = options.linkedOnFirstRequest
+    ? vi.fn().mockResolvedValueOnce(null).mockResolvedValue(reading)
+    : vi.fn().mockResolvedValue(reading);
+  const coachingSales = {
+    acceptInvitation: {
+      execute: vi
+        .fn()
+        .mockResolvedValue(
+          options.linkedOnFirstRequest ? "accepted" : "refused",
+        ),
+    },
+    readClientPortalStanding: { execute: readStanding },
+  } as unknown as ClientsFeature;
+  const portal = {
+    appBasePath: options.appBasePath ?? BASE_PATH,
+    publicAppUrl: undefined,
+    signInUrl: "",
+  };
+
+  return createRequestArgs({
+    portal,
+    session: options.session ?? { account: CLIENT, kind: "authenticated" },
+    contexts: [contextEntry(clientsContext, coachingSales)],
+    request: new Request(`https://evoa.fit${options.pathname}`),
+  });
+}
+
+function readJourneyOf(args: ReturnType<typeof journeyArgs>) {
+  return args.context.get(clientsContext).readClientPortalStanding.execute;
+}
+
+function linkOf(args: ReturnType<typeof journeyArgs>) {
+  return args.context.get(clientsContext).acceptInvitation.execute;
+}
+
+async function resolveStanding(
+  args: ReturnType<typeof journeyArgs>,
+): Promise<void> {
+  await clientPortalStandingMiddleware(args, async () => new Response());
+}
+
+async function readClientPortalStanding(args: ReturnType<typeof journeyArgs>) {
+  await resolveStanding(args);
+
+  return args.context.get(clientPortalStandingContext);
+}
+
+async function requireClientPortalStanding(
+  args: ReturnType<typeof journeyArgs>,
+): Promise<void> {
+  await resolveStanding(args);
+
+  const redirectTo = clientPortalRedirect({
+    standing: args.context.get(clientPortalStandingContext),
+    url: args.url,
+    appBasePath: args.context.get(accessContext).portal.appBasePath,
+  });
+
+  if (redirectTo) {
+    throw redirect(redirectTo);
+  }
+}
+
+async function captureThrown(thunk: () => unknown): Promise<unknown> {
+  try {
+    await thunk();
+    return undefined;
+  } catch (thrown) {
+    return thrown;
+  }
+}

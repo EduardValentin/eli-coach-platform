@@ -12,6 +12,7 @@ import {
 
 export type AccessComposition = {
   components: { accounts: AccountsFeature };
+  facades: ReturnType<typeof composeAccountsFeature>["facades"];
   middleware: MiddlewareFunction<Response>;
   sessionMiddleware: MiddlewareFunction<Response>;
 };
@@ -19,10 +20,11 @@ export type AccessComposition = {
 export function composeAccess(
   handles: AccountsFeatureHandles,
 ): AccessComposition {
-  const accounts = composeAccountsFeature(handles);
+  const { facades, feature: accounts } = composeAccountsFeature(handles);
 
   return {
     components: { accounts },
+    facades,
     middleware: ({ context }, next) => {
       context.set(accountsContext, accounts);
       return next();

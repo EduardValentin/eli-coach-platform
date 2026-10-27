@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   ClientJourney,
-  type ClientJourneys,
   type ClientJourneySnapshot,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";
 
@@ -12,6 +11,7 @@ import {
   type CoachingSubscriptionSnapshot,
   type StartChoice,
 } from "./coaching-subscription";
+import type { ClientLookup } from "./client-lookup";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import { ReadProgramStatusUseCase } from "./read-program-status-use-case";
 
@@ -57,8 +57,14 @@ function journey(
 
 function createJourneys(found: ClientJourney | null) {
   return {
-    findByAuthSubjectId: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<ClientJourneys, "findByAuthSubjectId">;
+    journeyOf: vi.fn().mockResolvedValue(
+      found && {
+        clientId: found.clientId,
+        step: found.step(),
+        onboardingSubmittedAt: found.onboardingSubmittedAt,
+      },
+    ),
+  } satisfies Pick<ClientLookup, "journeyOf">;
 }
 
 function subscriptionOf(

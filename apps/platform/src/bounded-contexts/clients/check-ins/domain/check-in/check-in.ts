@@ -23,7 +23,7 @@ export const OPEN_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
   "clash",
 ];
 
-export const UNANSWERED_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
+const UNANSWERED_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
   "pending",
   "clash",
 ];
@@ -326,6 +326,23 @@ export class CheckIn {
     const kind = this.unansweredLapse();
 
     if (!kind || this.startsAt > now) {
+      return null;
+    }
+
+    return CheckInLapse.at({ kind, lapsedAt: this.startsAt });
+  }
+
+  keepsItsHourAt(proposal: { startsAt: Date; at: Date }): boolean {
+    return (
+      proposal.startsAt.getTime() === this.startsAt.getTime() &&
+      this.holdsCoachTimeAt(proposal.at)
+    );
+  }
+
+  upcomingLapseAfter(now: Date): CheckInLapse | null {
+    const kind = this.unansweredLapse();
+
+    if (!kind || this.startsAt <= now) {
       return null;
     }
 

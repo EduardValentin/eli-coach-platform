@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/schema.server";
 
-import { writeClient, writeCoachingStanding } from "./client-writers.server";
+import { PostgresAdmittedClients } from "./client-writers.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const ADMITTED_AT = new Date("2026-10-12T10:00:00.000Z");
@@ -35,17 +35,37 @@ const ADMITTED_CLIENT = Client.admitted({
   intake: INTAKE,
   at: ADMITTED_AT,
 });
+const STANDING = CoachingStanding.of({
+  status: "cancelled",
+  accessEndsAt: ACCESS_ENDS_AT,
+  refundDue: true,
+  bundleMonths: 3,
+  programStartsAt: PROGRAM_STARTS_AT,
+  paidThrough: PAID_THROUGH,
+});
+const STANDING_COLUMNS = {
+  coachingStatus: "cancelled",
+  coachingAccessEndsAt: ACCESS_ENDS_AT,
+  coachingRefundDue: true,
+  coachingBundleMonths: 3,
+  coachingProgramStartsAt: PROGRAM_STARTS_AT,
+  coachingPaidThrough: PAID_THROUGH,
+};
 
-describe("writeClient", () => {
-  it("inserts the admitted client's row under the id the domain gave her, through the caller's transaction", async () => {
+describe("PostgresAdmittedClients#admit", () => {
+  it("inserts the admitted client's row under the id the domain gave her, then her standing, through the caller's transaction", async () => {
     // arrange
-    const transaction = createTransactionRecordingInserts([{ id: CLIENT_ID }]);
+    const transaction = createTransactionRecordingWrites([{ id: CLIENT_ID }]);
+    const clients = new PostgresAdmittedClients(transaction.handle);
 
     // act
-    const written = await writeClient(transaction.handle, ADMITTED_CLIENT);
+    const admitted = await clients.admit({
+      client: ADMITTED_CLIENT,
+      standing: STANDING,
+    });
 
     // assert
-    expect(written).toBe("written");
+    expect(admitted).toBe("admitted");
     expect(transaction.inserts).toEqual([
       {
         table: clientsTable,
@@ -53,52 +73,40 @@ describe("writeClient", () => {
         conflictTarget: clientsTable.assessmentCallId,
       },
     ]);
+    expect(transaction.updates).toEqual([
+      { table: clientsTable, values: STANDING_COLUMNS },
+    ]);
   });
 
-  it("answers that the call already has a client when its call is already taken", async () => {
+  it("answers that the call already has a client when its call is already taken, writing no standing", async () => {
     // arrange
-    const transaction = createTransactionRecordingInserts([]);
+    const transaction = createTransactionRecordingWrites([]);
+    const clients = new PostgresAdmittedClients(transaction.handle);
 
     // act
-    const written = await writeClient(transaction.handle, ADMITTED_CLIENT);
+    const admitted = await clients.admit({
+      client: ADMITTED_CLIENT,
+      standing: STANDING,
+    });
 
     // assert
-    expect(written).toBe("call_already_has_client");
+    expect(admitted).toBe("call_already_has_client");
+    expect(transaction.updates).toEqual([]);
   });
 });
 
-describe("writeCoachingStanding", () => {
+describe("PostgresAdmittedClients#recordStanding", () => {
   it("copies the standing onto the client's row through the caller's transaction", async () => {
     // arrange
-    const transaction = createTransactionRecordingUpdates();
-    const standing = CoachingStanding.of({
-      status: "cancelled",
-      accessEndsAt: ACCESS_ENDS_AT,
-      refundDue: true,
-      bundleMonths: 3,
-      programStartsAt: PROGRAM_STARTS_AT,
-      paidThrough: PAID_THROUGH,
-    });
+    const transaction = createTransactionRecordingWrites([]);
+    const clients = new PostgresAdmittedClients(transaction.handle);
 
     // act
-    await writeCoachingStanding(transaction.handle, {
-      clientId: CLIENT_ID,
-      standing,
-    });
+    await clients.recordStanding({ clientId: CLIENT_ID, standing: STANDING });
 
     // assert
     expect(transaction.updates).toEqual([
-      {
-        table: clientsTable,
-        values: {
-          coachingStatus: "cancelled",
-          coachingAccessEndsAt: ACCESS_ENDS_AT,
-          coachingRefundDue: true,
-          coachingBundleMonths: 3,
-          coachingProgramStartsAt: PROGRAM_STARTS_AT,
-          coachingPaidThrough: PAID_THROUGH,
-        },
-      },
+      { table: clientsTable, values: STANDING_COLUMNS },
     ]);
     const filter = new PgDialect().sqlToQuery(transaction.filters[0] as SQL);
     expect(filter.sql).toBe('"app"."clients"."id" = $1');
@@ -106,12 +114,14 @@ describe("writeCoachingStanding", () => {
   });
 });
 
-function createTransactionRecordingInserts(returned: { id: string }[]) {
+function createTransactionRecordingWrites(returned: { id: string }[]) {
   const inserts: {
     table: unknown;
     values: unknown;
     conflictTarget: unknown;
   }[] = [];
+  const updates: { table: unknown; values: unknown }[] = [];
+  const filters: unknown[] = [];
   const handle = {
     insert: (table: unknown) => ({
       values: (values: unknown) => ({
@@ -122,15 +132,6 @@ function createTransactionRecordingInserts(returned: { id: string }[]) {
         },
       }),
     }),
-  } as unknown as DatabaseClient;
-
-  return { handle, inserts };
-}
-
-function createTransactionRecordingUpdates() {
-  const updates: { table: unknown; values: unknown }[] = [];
-  const filters: unknown[] = [];
-  const handle = {
     update: (table: unknown) => ({
       set: (values: unknown) => {
         updates.push({ table, values });
@@ -144,5 +145,5 @@ function createTransactionRecordingUpdates() {
     }),
   } as unknown as DatabaseClient;
 
-  return { handle, filters, updates };
+  return { handle, filters, inserts, updates };
 }

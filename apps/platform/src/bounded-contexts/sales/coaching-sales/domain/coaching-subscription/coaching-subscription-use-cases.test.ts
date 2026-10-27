@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { EndedCalls, SalesCall } from "../payment-link";
-import { Client } from "~/bounded-contexts/clients/clients/domain/client";
 import type { PriceTier, PricingEligibility } from "../coaching-bundle";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import {
@@ -178,8 +177,8 @@ function createPurchases(outcome: CoachingPurchaseOutcome) {
 
 function createAdmission() {
   return {
-    admit: vi.fn().mockResolvedValue(undefined),
-  } satisfies PaidClientAdmission;
+    invite: vi.fn().mockResolvedValue(undefined),
+  } satisfies Pick<PaidClientAdmission, "invite">;
 }
 
 function startCheckoutDependencies(
@@ -548,7 +547,6 @@ function recordCheckoutDependencies(purchaseOutcome: CoachingPurchaseOutcome) {
     paymentCheckout: createPaymentCheckout(completion),
     paymentSubscriptions: createPaymentSubscriptions(),
     purchases: createPurchases(purchaseOutcome),
-    clientIds: { generate: () => PAID_CLIENT_ID },
     subscriptionIds: { generate: () => "subscription-1" },
     clock,
   };
@@ -586,34 +584,30 @@ describe("RecordCheckoutCompletedUseCase", () => {
     expect(dependencies.purchases.recordCompletion).toHaveBeenCalledWith({
       eventId: "evt_1",
       receivedAt: NOW,
-      client: Client.admitted({
-        id: PAID_CLIENT_ID,
-        intake: {
-          assessmentCallId: "call-1",
-          firstName: "Ana",
-          lastName: "Popescu",
-          email: "ana@example.com",
-          dateOfBirth: "1994-03-14",
-          gender: "female",
-          primaryGoal: "build_strength",
-          country: "RO",
-          phone: "+40712345678",
-          bookingTimeZone: "Europe/Bucharest",
-        },
-        at: NOW,
-      }),
+      client: {
+        assessmentCallId: "call-1",
+        firstName: "Ana",
+        lastName: "Popescu",
+        email: "ana@example.com",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        primaryGoal: "build_strength",
+        country: "RO",
+        phone: "+40712345678",
+        bookingTimeZone: "Europe/Bucharest",
+      },
       subscription: PurchasedSubscription.fromCompletedCheckout({
         id: "subscription-1",
         completion: completion,
       }),
     });
-    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+    expect(dependencies.admission.invite).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
     });
     expect(
       dependencies.purchases.recordCompletion.mock.invocationCallOrder[0],
     ).toBeLessThan(
-      dependencies.admission.admit.mock.invocationCallOrder[0] ?? 0,
+      dependencies.admission.invite.mock.invocationCallOrder[0] ?? 0,
     );
   });
 
@@ -638,7 +632,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
         until: new Date("2026-10-10T10:05:00.000Z"),
       });
       expect(
-        dependencies.admission.admit.mock.invocationCallOrder[0],
+        dependencies.admission.invite.mock.invocationCallOrder[0],
       ).toBeLessThan(
         dependencies.paymentSubscriptions.holdRenewal.mock
           .invocationCallOrder[0] ?? 0,
@@ -686,7 +680,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
 
     // assert
     await expect(recording).rejects.toBe(failure);
-    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+    expect(dependencies.admission.invite).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
     });
     expect(dependencies.incidents.renewalHoldFailed).toHaveBeenCalledWith({
@@ -710,7 +704,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
     // assert
     expect(result).toEqual({ status: "duplicate", paymentCustomerId: "cus_1" });
     expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
-    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+    expect(dependencies.admission.invite).toHaveBeenCalledWith({
       clientId: CLIENT_RECORDED_EARLIER_ID,
     });
   });
@@ -734,7 +728,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
       eventId: "evt_2",
       reason: "call_already_paid",
     });
-    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+    expect(dependencies.admission.invite).not.toHaveBeenCalled();
     expect(
       dependencies.paymentSubscriptions.holdRenewal,
     ).not.toHaveBeenCalled();
@@ -744,7 +738,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
     // arrange
     const failure = new Error("identity provider unavailable");
     const dependencies = recordCheckoutDependencies(RECORDED);
-    dependencies.admission.admit.mockRejectedValue(failure);
+    dependencies.admission.invite.mockRejectedValue(failure);
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
@@ -784,7 +778,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
       reason: "call_not_found",
     });
     expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
-    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+    expect(dependencies.admission.invite).not.toHaveBeenCalled();
   });
 
   it("answers unreadable_checkout, reports it and records nothing when the provider reports no paid coaching checkout for the session", async () => {
@@ -809,7 +803,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
     });
     expect(dependencies.calls.findById).not.toHaveBeenCalled();
     expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
-    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+    expect(dependencies.admission.invite).not.toHaveBeenCalled();
   });
 
   it("propagates a failed read of the completion so the payment event is delivered again", async () => {

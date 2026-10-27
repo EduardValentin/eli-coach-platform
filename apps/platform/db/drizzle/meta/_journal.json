@@ -400,6 +400,13 @@
       "when": 1793136743789,
       "tag": "0060_appointments_reference_their_reservation",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1793140789064,
+      "tag": "0061_access_owns_account_invitations",
+      "breakpoints": true
     }
   ]
 }

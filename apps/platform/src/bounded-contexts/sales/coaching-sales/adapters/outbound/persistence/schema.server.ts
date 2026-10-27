@@ -1,11 +1,11 @@
 import { appSchema } from "~/shared/database";
-import { COACHING_STATUSES } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   COACHING_BUNDLE_IDS,
   COACHING_BUNDLE_MONTHS,
   PRICE_TIERS,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
+  COACHING_STATUSES,
   REFUND_REASONS,
   START_CHOICES,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";

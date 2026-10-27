@@ -10,5 +10,4 @@ export interface IdentityInvitations {
     invitationId: string;
     previous: IdentityInvitation;
   }): Promise<IdentityInvitation>;
-  findInvitationIdForSubject(authSubjectId: string): Promise<string | null>;
 }

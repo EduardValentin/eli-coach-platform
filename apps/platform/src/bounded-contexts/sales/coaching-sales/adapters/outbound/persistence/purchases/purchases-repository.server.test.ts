@@ -1,9 +1,10 @@
 import type { DatabaseClient } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
-import { Client } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   PurchasedSubscription,
   type CoachingPurchase,
+  type PaidClientAdmission,
+  type PaidClientAdmissionOutcome,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
@@ -20,16 +21,12 @@ const ADMITTED_CLIENT_ID = "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d";
 const SUBSCRIPTION_ID = "8e9f0a1b-2c3d-4e5f-9a6b-7c8d9e0f1a2b";
 
 describe("PostgresCoachingPurchases#recordCompletion", () => {
-  it("records the event in the ledger, admits the client, opens her profile and then records the purchase under the id the domain gave it and her standing in the same transaction", async () => {
+  it("records the event in the ledger, admits the client with her standing and then records the purchase under the id the domain gave it in the same transaction", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const {
-      purchases,
-      openClientProfile,
-      writeClient,
-      writeCoachingStanding,
-      writersRanIn,
-    } = createPurchases(database.client);
+    const { purchases, admission, writersRanIn } = createPurchases(
+      database.client,
+    );
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -39,14 +36,10 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
       outcome: "recorded",
       clientId: ADMITTED_CLIENT_ID,
     });
-    expect(writersRanIn).toEqual([
-      database.transaction,
-      database.transaction,
-      database.transaction,
-    ]);
-    expect(writeClient).toHaveBeenCalledWith(purchase().client);
-    expect(openClientProfile).toHaveBeenCalledWith({
-      clientId: ADMITTED_CLIENT_ID,
+    expect(writersRanIn).toEqual([database.transaction]);
+    expect(admission.admit).toHaveBeenCalledWith({
+      client: purchase().client,
+      standing: expect.anything(),
       at: NOW,
     });
     expect(database.insertedRows).toEqual([
@@ -60,13 +53,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
         programStartsAt: PROGRAM_STARTS_AT,
       }),
     ]);
-    expect(writeCoachingStanding).toHaveBeenCalledWith({
-      clientId: ADMITTED_CLIENT_ID,
-      standing: expect.anything(),
-    });
-    expect(
-      writeCoachingStanding.mock.calls[0]?.[0].standing.toSnapshot(),
-    ).toEqual({
+    expect(admission.admit.mock.calls[0]?.[0].standing.toSnapshot()).toEqual({
       status: "not-started",
       accessEndsAt: null,
       refundDue: false,
@@ -80,8 +67,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
   it("answers a duplicate event with the client it recorded and writes nothing else when the ledger already holds the event", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([]);
-    const { purchases, openClientProfile, writeClient, writeCoachingStanding } =
-      createPurchases(database.client);
+    const { purchases, admission } = createPurchases(database.client);
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -92,9 +78,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
       clientId: "client-recorded-earlier",
     });
     expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
-    expect(writeClient).not.toHaveBeenCalled();
-    expect(openClientProfile).not.toHaveBeenCalled();
-    expect(writeCoachingStanding).not.toHaveBeenCalled();
+    expect(admission.admit).not.toHaveBeenCalled();
     expect(database.update).not.toHaveBeenCalled();
   });
 
@@ -115,10 +99,9 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
   it("answers an already paid call and records nothing more when the call already has a client", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const { purchases, writeCoachingStanding } = createPurchases(
-      database.client,
-      { admitted: "call_already_has_client" },
-    );
+    const { purchases } = createPurchases(database.client, {
+      admitted: { status: "call_already_has_client" },
+    });
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -126,7 +109,6 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     // assert
     expect(outcome).toEqual({ outcome: "call_already_paid" });
     expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
-    expect(writeCoachingStanding).not.toHaveBeenCalled();
     expect(database.update).not.toHaveBeenCalled();
   });
 
@@ -216,55 +198,48 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
 function createPurchases(
   database: DatabaseClient,
-  options: { admitted?: "written" | "call_already_has_client" } = {},
+  options: { admitted?: PaidClientAdmissionOutcome } = {},
 ) {
   const writersRanIn: unknown[] = [];
-  const writingInTransaction = (answer: unknown) =>
-    vi.fn().mockImplementation(async () => {
-      writersRanIn.push(executorOf(database));
+  const admission = {
+    admit: vi
+      .fn<PaidClientAdmission["admit"]>()
+      .mockImplementation(async () => {
+        writersRanIn.push(executorOf(database));
 
-      return answer;
-    });
-  const writeClient = writingInTransaction(options.admitted ?? "written");
-  const writeCoachingStanding = writingInTransaction(undefined);
-  const openClientProfile = writingInTransaction(undefined);
+        return (
+          options.admitted ?? {
+            status: "admitted",
+            clientId: ADMITTED_CLIENT_ID,
+          }
+        );
+      }),
+  };
   const purchases = new PostgresCoachingPurchases({
+    admission,
     clock: { now: () => NOW },
     database,
-    openClientProfile,
-    writeClient,
-    writeCoachingStanding,
   });
 
-  return {
-    purchases,
-    openClientProfile,
-    writeClient,
-    writeCoachingStanding,
-    writersRanIn,
-  };
+  return { admission, purchases, writersRanIn };
 }
 
 function purchase(): CoachingPurchase {
   return {
     eventId: "evt_1",
     receivedAt: NOW,
-    client: Client.admitted({
-      id: ADMITTED_CLIENT_ID,
-      intake: {
-        assessmentCallId: PAID_CALL_ID,
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-        dateOfBirth: "1994-03-14",
-        gender: "female",
-        primaryGoal: "build_strength",
-        country: "RO",
-        phone: null,
-        bookingTimeZone: "Europe/Bucharest",
-      },
-      at: NOW,
-    }),
+    client: {
+      assessmentCallId: PAID_CALL_ID,
+      firstName: "Ana",
+      lastName: "Popescu",
+      email: "ana@example.com",
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: null,
+      bookingTimeZone: "Europe/Bucharest",
+    },
     subscription: PurchasedSubscription.fromCompletedCheckout({
       id: SUBSCRIPTION_ID,
       completion: {

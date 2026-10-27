@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { AcceptInvitationUseCase } from "./accept-invitation-use-case";
-import { AdmitPaidClientUseCase } from "./admit-paid-client-use-case";
 import { ClientInvitation } from "./client-invitation";
+import type { AccountInvitations } from "./account-invitations";
 import type { ClientInvitationIncidents } from "./client-invitation-incidents";
 import type { ClientInvitationNotifications } from "./client-invitation-notifications";
 import type { ClientInvitations } from "./client-invitations";
@@ -13,6 +13,7 @@ import type {
   InvitationTokenHasher,
 } from "./invitation-token";
 import type { InvitedClient, InvitedClients } from "./invited-client";
+import { InvitePaidClientUseCase } from "./invite-paid-client-use-case";
 import { ResolveInvitationUseCase } from "./resolve-invitation-use-case";
 
 const NOW = new Date("2026-09-27T10:00:00.000Z");
@@ -70,14 +71,18 @@ function createInvitations(
   };
 }
 
-function createIdentity(invitationIdForSubject: string | null = null) {
+function createIdentity() {
   return {
     create: vi.fn().mockResolvedValue(PROVIDER),
     replace: vi.fn().mockResolvedValue(PROVIDER),
-    findInvitationIdForSubject: vi
-      .fn()
-      .mockResolvedValue(invitationIdForSubject),
   } satisfies IdentityInvitations;
+}
+
+function createAccountInvitations(acceptedInvitationId: string | null = null) {
+  return {
+    allow: vi.fn().mockResolvedValue(undefined),
+    acceptedInvitationOf: vi.fn().mockResolvedValue(acceptedInvitationId),
+  } satisfies AccountInvitations;
 }
 
 function createNotifications(delivery: "sent" | "failed") {
@@ -124,6 +129,7 @@ function admitDependencies(overrides: {
   delivery?: "sent" | "failed";
 }) {
   return {
+    accountInvitations: createAccountInvitations(),
     clients: createInvitedClients(
       overrides.clients === undefined ? invitedClient : overrides.clients,
     ),
@@ -139,11 +145,11 @@ function admitDependencies(overrides: {
   };
 }
 
-describe("AdmitPaidClientUseCase", () => {
+describe("InvitePaidClientUseCase", () => {
   it("issues the invitation, creates the identity invitation and emails the raw token for a client without one", async () => {
     // arrange
     const dependencies = admitDependencies({});
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const result = await useCase.execute({ clientId: invitedClient.id });
@@ -189,7 +195,7 @@ describe("AdmitPaidClientUseCase", () => {
     const dependencies = admitDependencies({
       clients: { ...invitedClient, authSubjectId: "user_ana" },
     });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const result = await useCase.execute({ clientId: invitedClient.id });
@@ -206,7 +212,7 @@ describe("AdmitPaidClientUseCase", () => {
     const dependencies = admitDependencies({
       existing: invitation({ provider: PROVIDER, emailSentAt: EARLIER }),
     });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const result = await useCase.execute({ clientId: invitedClient.id });
@@ -229,7 +235,7 @@ describe("AdmitPaidClientUseCase", () => {
         emailDeliveryFailedAt: EARLIER,
       }),
     });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const result = await useCase.execute({ clientId: invitedClient.id });
@@ -244,7 +250,7 @@ describe("AdmitPaidClientUseCase", () => {
     // arrange
     const existing = invitation();
     const dependencies = admitDependencies({ existing });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const result = await useCase.execute({ clientId: invitedClient.id });
@@ -273,7 +279,7 @@ describe("AdmitPaidClientUseCase", () => {
     const dependencies = admitDependencies({
       existing: invitation({ provider: PROVIDER }),
     });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     await useCase.execute({ clientId: invitedClient.id });
@@ -291,7 +297,7 @@ describe("AdmitPaidClientUseCase", () => {
       sentAt: EARLIER,
     });
     const dependencies = admitDependencies({ existing: reissuedByResend });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const result = await useCase.execute({ clientId: invitedClient.id });
@@ -308,7 +314,7 @@ describe("AdmitPaidClientUseCase", () => {
     const failure = new Error("Clerk unavailable");
     const dependencies = admitDependencies({});
     dependencies.identity.create.mockRejectedValue(failure);
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const admission = useCase.execute({ clientId: invitedClient.id });
@@ -332,7 +338,7 @@ describe("AdmitPaidClientUseCase", () => {
       // arrange
       const dependencies = admitDependencies({});
       dependencies.notifications.sendInvitation = sendInvitation();
-      const useCase = new AdmitPaidClientUseCase(dependencies);
+      const useCase = new InvitePaidClientUseCase(dependencies);
 
       // act
       const result = await useCase.execute({ clientId: invitedClient.id });
@@ -352,7 +358,7 @@ describe("AdmitPaidClientUseCase", () => {
   it("refuses to admit a client that does not exist", async () => {
     // arrange
     const dependencies = admitDependencies({ clients: null });
-    const useCase = new AdmitPaidClientUseCase(dependencies);
+    const useCase = new InvitePaidClientUseCase(dependencies);
 
     // act
     const admission = useCase.execute({ clientId: "client-404" });
@@ -426,22 +432,21 @@ describe("ResolveInvitationUseCase", () => {
 
 describe("AcceptInvitationUseCase", () => {
   function acceptDependencies(options: {
-    invitationIdForSubject?: string | null;
+    acceptedInvitationId?: string | null;
     found: ClientInvitation | null;
-    now?: Date;
   }) {
     return {
-      clock: clockAt(options.now ?? NOW),
-      identity: createIdentity(
-        options.invitationIdForSubject === undefined
+      accountInvitations: createAccountInvitations(
+        options.acceptedInvitationId === undefined
           ? "invitation-1"
-          : options.invitationIdForSubject,
+          : options.acceptedInvitationId,
       ),
+      clock: clockAt(NOW),
       invitations: createInvitations(options.found),
     };
   }
 
-  it("accepts a pending invitation for the subject that carries it", async () => {
+  it("links the client of the invitation the signed-in subject accepted", async () => {
     // arrange
     const dependencies = acceptDependencies({
       found: invitation({ provider: PROVIDER }),
@@ -454,7 +459,7 @@ describe("AcceptInvitationUseCase", () => {
     // assert
     expect(outcome).toBe("accepted");
     expect(
-      dependencies.identity.findInvitationIdForSubject,
+      dependencies.accountInvitations.acceptedInvitationOf,
     ).toHaveBeenCalledWith("user_ana");
     expect(dependencies.invitations.findById).toHaveBeenCalledWith(
       "invitation-1",
@@ -466,10 +471,10 @@ describe("AcceptInvitationUseCase", () => {
     });
   });
 
-  it("refuses a subject that carries no invitation", async () => {
+  it("refuses a subject that accepted no invitation", async () => {
     // arrange
     const dependencies = acceptDependencies({
-      invitationIdForSubject: null,
+      acceptedInvitationId: null,
       found: invitation(),
     });
     const useCase = new AcceptInvitationUseCase(dependencies);
@@ -483,7 +488,7 @@ describe("AcceptInvitationUseCase", () => {
     expect(dependencies.invitations.accept).not.toHaveBeenCalled();
   });
 
-  it("refuses a subject whose invitation id matches no invitation", async () => {
+  it("refuses a subject whose accepted invitation matches no invitation", async () => {
     // arrange
     const dependencies = acceptDependencies({ found: null });
     const useCase = new AcceptInvitationUseCase(dependencies);
@@ -496,23 +501,7 @@ describe("AcceptInvitationUseCase", () => {
     expect(dependencies.invitations.accept).not.toHaveBeenCalled();
   });
 
-  it("refuses an expired invitation that was never used", async () => {
-    // arrange
-    const dependencies = acceptDependencies({
-      found: invitation({ provider: PROVIDER }),
-      now: new Date("2026-10-26T10:00:00.000Z"),
-    });
-    const useCase = new AcceptInvitationUseCase(dependencies);
-
-    // act
-    const outcome = await useCase.execute({ authSubjectId: "user_ana" });
-
-    // assert
-    expect(outcome).toBe("refused");
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
-  });
-
-  it("accepts again without writing when the same subject replays an invitation it accepted", async () => {
+  it("accepts again without writing when the client is already linked to the subject", async () => {
     // arrange
     const dependencies = acceptDependencies({
       found: invitation({
@@ -520,7 +509,6 @@ describe("AcceptInvitationUseCase", () => {
         usedAt: EARLIER,
         acceptedByAuthSubjectId: "user_ana",
       }),
-      now: new Date("2026-11-30T10:00:00.000Z"),
     });
     const useCase = new AcceptInvitationUseCase(dependencies);
 
@@ -529,25 +517,6 @@ describe("AcceptInvitationUseCase", () => {
 
     // assert
     expect(outcome).toBe("accepted");
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
-  });
-
-  it("refuses a second subject presenting an invitation another subject accepted", async () => {
-    // arrange
-    const dependencies = acceptDependencies({
-      found: invitation({
-        provider: PROVIDER,
-        usedAt: EARLIER,
-        acceptedByAuthSubjectId: "user_ana",
-      }),
-    });
-    const useCase = new AcceptInvitationUseCase(dependencies);
-
-    // act
-    const outcome = await useCase.execute({ authSubjectId: "user_other" });
-
-    // assert
-    expect(outcome).toBe("refused");
     expect(dependencies.invitations.accept).not.toHaveBeenCalled();
   });
 

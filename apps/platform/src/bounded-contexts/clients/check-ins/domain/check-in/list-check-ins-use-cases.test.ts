@@ -1,11 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientIdentity,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities, ClientIdentity } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckIns } from "./check-ins";
@@ -83,8 +79,6 @@ function createPorts(options: {
     find: vi.fn(),
     listForClient: vi.fn().mockResolvedValue(options.checkIns),
     listAll: vi.fn().mockResolvedValue(options.checkIns),
-    listUnansweredStartedWithin: vi.fn(),
-    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi.fn(),
     endCoaching: vi.fn(),

@@ -1,17 +1,21 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { InvitationAcceptance } from "~/bounded-contexts/access/accounts/domain/account";
+import { createUnitOfWork } from "~/shared/database/index.server";
+import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations";
+import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions";
+import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup";
 import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls";
 import {
+  AdmitPaidClientUseCase,
   ClientCountries,
+  RecordCoachingStandingUseCase,
   UpdateClientIdentityAsCoachUseCase,
   UpdateOwnClientIdentityUseCase,
   type ClientIdentities,
-  type ClientIds,
   type ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   AcceptInvitationUseCase,
-  AdmitPaidClientUseCase,
+  InvitePaidClientUseCase,
   ReadClientInvitationUseCase,
   ResendInvitationUseCase,
   ResolveInvitationUseCase,
@@ -23,17 +27,14 @@ import {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
   ReadClientPortalStandingUseCase,
-  type ClientJourneys,
+  type OnboardingStandings,
+  type OnboardingSubmissionRecorder,
+  type ReviewStampRecorder,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";
-import type {
-  OnboardingClients,
-  OnboardingReviewStamps,
-} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "~/bounded-contexts/clients/clients/domain/client-roster";
-import type { PaidClientAdmission } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
@@ -48,46 +49,38 @@ import { PostgresClientIdentities } from "~/bounded-contexts/clients/clients/ada
 import { PostgresClientIdentityChanges } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-identity-changes.server";
 import { PostgresClientReach } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-reach-reader.server";
 import { PostgresClientRoster } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-roster-reader.server";
-import {
-  writeClient,
-  writeCoachingStanding,
-} from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-writers.server";
-import { PostgresOnboardingClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/onboarding-clients-reader.server";
+import { PostgresAdmittedClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-writers.server";
+import { PostgresOnboardingStandings } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/onboarding-standings-reader.server";
 import { RandomClientIds } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/random-client-ids.server";
 import { RandomClientInvitationIds } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/invitations/random-client-invitation-ids.server";
 import { PostgresClientInvitations } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/invitations/invitations-repository.server";
 import { PostgresInvitedClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/invitations/invited-clients-repository.server";
 import { PostgresClientJourneys } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/client-journeys-repository.server";
-import { writeReviewStamps } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/review-stamps.server";
 import { EmailClientInvitationNotifications } from "~/bounded-contexts/clients/clients/adapters/outbound/email/email-client-invitation-notifications.server";
 import type { ClientsFeature } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import { createAdmissionsFacade } from "~/bounded-contexts/clients/clients/adapters/inbound/facades/admissions.server";
+import { createClientLookupFacade } from "~/bounded-contexts/clients/clients/adapters/inbound/facades/client-lookup.server";
+import { AccessAccountInvitations } from "~/bounded-contexts/clients/clients/adapters/outbound/access/account-invitations.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createClientsIncidents } from "~/bounded-contexts/clients/clients/adapters/outbound/logging/clients-incidents.server";
 
 type ClientsComposition = {
+  facades: {
+    admissions: AdmissionsFacade;
+    clientLookup: ClientLookupFacade;
+  };
   feature: ClientsFeature;
   handles: {
     clientIdentities: ClientIdentities;
-    clientIds: ClientIds;
-    clientJourneys: ClientJourneys;
     clientReach: ClientReach;
-    invitationAcceptance: InvitationAcceptance;
-    onboardingClients: OnboardingClients;
-    onboardingReviewStamps: OnboardingReviewStamps;
-    paidClientAdmission: PaidClientAdmission;
-    reviewStampWriter: (
-      input: Parameters<typeof writeReviewStamps>[1],
-    ) => Promise<void>;
-    writeClient: (
-      client: Parameters<typeof writeClient>[1],
-    ) => ReturnType<typeof writeClient>;
-    writeCoachingStanding: (
-      input: Parameters<typeof writeCoachingStanding>[1],
-    ) => Promise<void>;
+    onboardingStandings: OnboardingStandings;
+    onboardingSubmissions: OnboardingSubmissionRecorder;
+    reviewStampRecorder: ReviewStampRecorder;
   };
 };
 
 export type ClientsFeatureHandles = {
+  accountInvitations: AccountInvitationsFacade;
   appBasePath: string;
   clientCalls: ClientCallsFacade;
   clock: Clock;
@@ -112,12 +105,16 @@ export function composeClientsFeature(
   const clientReach = new PostgresClientReach({ clock, database });
   const invitations = new PostgresClientInvitations(database);
   const journeys = new PostgresClientJourneys(database);
-  const onboardingClients = new PostgresOnboardingClients(database);
+  const accountInvitations = new AccessAccountInvitations(
+    handles.accountInvitations,
+  );
+  const admittedClients = new PostgresAdmittedClients(database);
   const roster = new PostgresClientRoster(database);
   const identityChanges = new PostgresClientIdentityChanges(database);
   const countries = ClientCountries.of(COUNTRIES);
 
   const invitationPorts = {
+    accountInvitations,
     clients: new PostgresInvitedClients(database),
     clock,
     identity: handles.identityInvitations,
@@ -135,22 +132,39 @@ export function composeClientsFeature(
     tokenGenerator: handles.linkTokens.generator,
   };
 
-  const acceptInvitation = new AcceptInvitationUseCase({
-    clock,
-    identity: handles.identityInvitations,
-    invitations,
-  });
-  const admitPaidClient = new AdmitPaidClientUseCase({
-    ...invitationPorts,
-    ids: new RandomClientInvitationIds(),
-  });
   const readClientPortalStanding = new ReadClientPortalStandingUseCase({
     clock,
     journeys,
   });
 
   return {
+    facades: {
+      admissions: createAdmissionsFacade({
+        admitPaidClient: new AdmitPaidClientUseCase({
+          clients: admittedClients,
+          ids: new RandomClientIds(),
+        }),
+        invitePaidClient: new InvitePaidClientUseCase({
+          ...invitationPorts,
+          ids: new RandomClientInvitationIds(),
+        }),
+        recordCoachingStanding: new RecordCoachingStandingUseCase({
+          clients: admittedClients,
+        }),
+        unitOfWork: createUnitOfWork(database),
+      }),
+      clientLookup: createClientLookupFacade({
+        identities: clientIdentities,
+        reach: clientReach,
+        readClientJourney: new ReadClientJourneyUseCase({ journeys }),
+      }),
+    },
     feature: {
+      acceptInvitation: new AcceptInvitationUseCase({
+        accountInvitations,
+        clock,
+        invitations,
+      }),
       clientJourney: new ClientJourneyController({
         markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
         readClientJourney: new ReadClientJourneyUseCase({ journeys }),
@@ -200,20 +214,10 @@ export function composeClientsFeature(
     },
     handles: {
       clientIdentities,
-      clientIds: new RandomClientIds(),
-      clientJourneys: journeys,
       clientReach,
-      invitationAcceptance: {
-        accept: (input) => acceptInvitation.execute(input),
-      },
-      onboardingClients,
-      onboardingReviewStamps: journeys,
-      paidClientAdmission: {
-        admit: (input) => admitPaidClient.execute(input).then(() => undefined),
-      },
-      reviewStampWriter: (input) => writeReviewStamps(database, input),
-      writeClient: (client) => writeClient(database, client),
-      writeCoachingStanding: (input) => writeCoachingStanding(database, input),
+      onboardingStandings: new PostgresOnboardingStandings(database),
+      onboardingSubmissions: journeys,
+      reviewStampRecorder: journeys,
     },
   };
 }

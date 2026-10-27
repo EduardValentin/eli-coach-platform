@@ -223,6 +223,9 @@
   "apps/platform/src/shared/submission-checks/bot-detection/shared-browser-entries.ts": [
     "shared-browser-entries"
   ],
+  "apps/platform/src/surfaces/client-portal/pages/reads-portal-standing-middleware.tsx": [
+    "surface-client-portal-to-feature"
+  ],
   "apps/platform/src/surfaces/client-portal/pages/surface-to-feature.tsx": [
     "route-thinness",
     "surface-client-portal-to-feature"

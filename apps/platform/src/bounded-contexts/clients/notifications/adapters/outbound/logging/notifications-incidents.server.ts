@@ -20,16 +20,5 @@ export function createNotificationsIncidents(
         },
       );
     },
-    notificationExpiriesFailed: ({ error, party }) => {
-      logger.error(
-        "Expired notifications could not be recorded in the bell; it shows what it already holds.",
-        {
-          errorCategory: "notification_expiries_failure",
-          errorClass: errorClassOf(error),
-          party,
-          ...errorCodeOf(error),
-        },
-      );
-    },
   };
 }

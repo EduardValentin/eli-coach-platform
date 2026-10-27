@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "../client-reach";
 
 import { ClientAvatar } from "./client-avatar";
 import type { ClientAvatarIds } from "./client-avatar-ids";

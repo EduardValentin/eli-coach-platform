@@ -117,6 +117,18 @@ export function createPlatformContainer(options: {
     featureFlagsConfig: environment,
   });
   const legal = composeLegal({ documentHasher: createSha256Hasher() });
+  const access = composeAccess({
+    bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
+    clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
+    clock,
+    database: database.client,
+    identityConfig: environment,
+    portal: {
+      appBasePath: environment.APP_BASE_PATH,
+      publicAppUrl: environment.PUBLIC_APP_URL,
+      signInUrl: environment.CLERK_SIGN_IN_URL,
+    },
+  });
   const scheduling = composeScheduling({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallsConfig: environment,
@@ -132,6 +144,7 @@ export function createPlatformContainer(options: {
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const clients = composeClients({
+    accountInvitations: access.facades.accountInvitations,
     appBasePath: environment.APP_BASE_PATH,
     clientAvatarRenditions: createClientAvatarRenditions(),
     clientAvatarStore: createClientAvatarStore(environment),
@@ -161,17 +174,6 @@ export function createPlatformContainer(options: {
     publicAppUrl: environment.PUBLIC_APP_URL,
     store: createClientResourceStore(environment.CLIENT_RESOURCE_ROOT),
   });
-  const access = composeAccess({
-    bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
-    clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
-    database: database.client,
-    invitationAcceptance: clients.handles.invitationAcceptance,
-    portal: {
-      appBasePath: environment.APP_BASE_PATH,
-      publicAppUrl: environment.PUBLIC_APP_URL,
-      signInUrl: environment.CLERK_SIGN_IN_URL,
-    },
-  });
   const programs = composePrograms({
     clock,
     database: database.client,
@@ -182,16 +184,14 @@ export function createPlatformContainer(options: {
     videoStore: createExerciseVideoStore(environment.EXERCISE_VIDEO_ROOT),
   });
   const sales = composeSales({
+    admissions: clients.facades.admissions,
     appBasePath: environment.APP_BASE_PATH,
     botVerifier,
-    clientIdentities: clients.handles.clientIdentities,
-    clientIds: clients.handles.clientIds,
-    clientJourneys: clients.handles.clientJourneys,
-    clientReach: clients.handles.clientReach,
+    clientLookup: clients.facades.clientLookup,
+    clientProfile: clients.facades.clientProfile,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    coachingEnds: [clients.handles.coachingEndHandler],
-    coachingPeriods: [clients.handles.coachingPeriodHandler],
+    coachingPeriods: clients.facades.coachingPeriods,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     emailAcceptance,
@@ -203,8 +203,6 @@ export function createPlatformContainer(options: {
       authenticator: managementAuthenticator,
       config: managementAuthConfig,
     },
-    openClientProfile: clients.handles.openClientProfile,
-    paidClientAdmission: clients.handles.paidClientAdmission,
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,
     paymentEvents: payments.events,
@@ -215,8 +213,6 @@ export function createPlatformContainer(options: {
     storeAssetRoot: environment.STORE_ASSET_ROOT,
     waitlist: environment,
     webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
-    writeClient: clients.handles.writeClient,
-    writeCoachingStanding: clients.handles.writeCoachingStanding,
   });
   const platform = composePlatformFeature({
     app: environment,

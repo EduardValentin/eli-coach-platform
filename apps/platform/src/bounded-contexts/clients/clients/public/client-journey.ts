@@ -3,6 +3,7 @@ import {
   ClientJourney,
   type ClientJourneyStep,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";
+import { buildRedirectPath, normalizeBasePath } from "~/shared/http/base-path";
 import { z } from "zod";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
@@ -61,6 +62,34 @@ const CLIENT_JOURNEY_GATE_BY_STEP = {
   },
   approved: SUBMITTED_GATE,
 } satisfies Record<ClientJourneyStep, ClientJourneyGate>;
+
+export function clientPortalRedirect(request: {
+  standing: ClientPortalStanding | null;
+  url: URL;
+  appBasePath: string;
+}): string | null {
+  if (!request.standing) {
+    return null;
+  }
+
+  const redirectTo = clientJourneyRedirect(
+    request.standing,
+    appPathOf(request.url.pathname, request.appBasePath),
+  );
+
+  // Middleware redirects skip the router's basename, so the target carries it.
+  return redirectTo ? buildRedirectPath(request.appBasePath, redirectTo) : null;
+}
+
+function appPathOf(requestedPathname: string, appBasePath: string): string {
+  const basePath = normalizeBasePath(appBasePath);
+
+  if (!requestedPathname.startsWith(`${basePath}/`)) {
+    return requestedPathname;
+  }
+
+  return requestedPathname.slice(basePath.length);
+}
 
 export function clientJourneyRedirect(
   standing: ClientPortalStanding,

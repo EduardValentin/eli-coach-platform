@@ -1,5 +1,5 @@
-import { COACHING_STATUSES } from "~/bounded-contexts/clients/clients/domain/client";
 import {
+  COACHING_STATUSES,
   OFFERED_CANCELLATION_RULES,
   REFUND_REASONS,
   START_NOW_REFUSALS,

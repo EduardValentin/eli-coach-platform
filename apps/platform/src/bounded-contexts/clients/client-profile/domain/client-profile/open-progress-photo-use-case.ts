@@ -1,5 +1,5 @@
-import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { AccountRole } from "../account-role";
+import type { ClientReach } from "../client-reach";
 
 import type { MeasurementIncidents } from "./measurement-incidents";
 import type { ProgressPhoto } from "./progress-photo";

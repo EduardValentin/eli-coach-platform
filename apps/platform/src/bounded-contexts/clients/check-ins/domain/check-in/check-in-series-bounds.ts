@@ -1,4 +1,4 @@
-import type { PortalReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { PortalReach } from "./client-reach";
 
 import type { CheckInSlotRules } from "./check-in-rules";
 

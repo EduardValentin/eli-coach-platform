@@ -1,3 +1,5 @@
+export { AdmitPaidClientUseCase } from "./admit-paid-client-use-case";
+export { type AdmittedClients, type ClientAdmission } from "./admitted-clients";
 export { Client, type ClientIntake } from "./client";
 export {
   CLIENT_GENDERS,
@@ -25,5 +27,6 @@ export {
   type CoachingStatus,
 } from "./coaching-standing";
 export { portalReachOf, type PortalReach } from "./portal-reach";
+export { RecordCoachingStandingUseCase } from "./record-coaching-standing-use-case";
 export { UpdateClientIdentityAsCoachUseCase } from "./update-client-identity-as-coach-use-case";
 export { UpdateOwnClientIdentityUseCase } from "./update-own-client-identity-use-case";

@@ -1,5 +1,6 @@
 import type { Clock } from "../clock";
 
+import type { AccountInvitations } from "./account-invitations";
 import type { ClientInvitation, IdentityInvitation } from "./client-invitation";
 import type { ClientInvitationIncidents } from "./client-invitation-incidents";
 import type {
@@ -19,6 +20,7 @@ type ResendInvitationResult =
   | { status: "not-found" };
 
 type ResendInvitationUseCaseOptions = {
+  accountInvitations: Pick<AccountInvitations, "allow">;
   clients: InvitedClients;
   clock: Clock;
   identity: IdentityInvitations;
@@ -56,6 +58,12 @@ export class ResendInvitationUseCase {
       sentAt: now,
     });
     await this.options.invitations.reissue(reissued);
+    await this.options.accountInvitations.allow({
+      invitationId: reissued.id,
+      email: reissued.email,
+      role: "CLIENT",
+      expiresAt: reissued.expiresAt,
+    });
 
     const provider = await this.replaceIdentityInvitation(reissued).catch(
       () => null,

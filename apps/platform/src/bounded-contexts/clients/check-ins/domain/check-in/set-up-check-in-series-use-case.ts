@@ -1,7 +1,5 @@
-import type {
-  ClientIdentities,
-  ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach } from "./client-reach";
 import type { Clock } from "../clock";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
@@ -128,6 +126,10 @@ export class SetUpCheckInSeriesUseCase {
       weekStartsAt: starts[0],
       clientTimeZone: client.timeZone,
       firstWeekId: CheckIn.earliestOf(occurrences)?.id ?? null,
+    });
+    await this.announcer.announceExpiries(series, {
+      current: occurrences,
+      withdrawn: [],
     });
 
     return {

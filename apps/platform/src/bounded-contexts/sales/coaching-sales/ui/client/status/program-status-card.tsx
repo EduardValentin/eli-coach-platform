@@ -10,7 +10,7 @@ import { Link } from "react-router";
 import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
-} from "~/bounded-contexts/clients/clients/public/paths";
+} from "~/bounded-contexts/clients/public/paths";
 import type { ProgramStatus } from "~/bounded-contexts/sales/coaching-sales/public/program-status";
 
 import {

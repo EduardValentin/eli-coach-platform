@@ -268,7 +268,7 @@ function createSubscriptions(database: DatabaseClient) {
   const subscriptions = new PostgresCoachingSubscriptions({
     clock: { now: () => PROBLEM_AT },
     database,
-    writeCoachingStanding,
+    standings: { record: writeCoachingStanding },
   });
 
   return { subscriptions, standingWrittenIn, writeCoachingStanding };

@@ -2,6 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
 import {
   ClientProfile,
+  type ClientProfileOpenings,
   type CoachingSeed,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { ClientSettings } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
@@ -31,6 +32,14 @@ export async function openClientProfile(
   await executorOf(database)
     .insert(clientSettingsTable)
     .values({ ...settings, ...unitPreference });
+}
+
+export class PostgresClientProfileOpenings implements ClientProfileOpenings {
+  constructor(private readonly database: DatabaseClient) {}
+
+  open(admission: ClientMoment): Promise<void> {
+    return openClientProfile(this.database, admission);
+  }
 }
 
 export async function recordPhotoConsent(

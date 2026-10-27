@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
@@ -8,6 +8,8 @@ import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
+
+const NOW = new Date("2026-10-15T09:00:00.000Z");
 
 const ANA = {
   clientId: "client-1",
@@ -83,6 +85,7 @@ function createAnnouncer() {
     checkInEvent: vi.fn().mockResolvedValue(undefined),
     seriesEvent: vi.fn().mockResolvedValue(undefined),
     clashesAdded: vi.fn().mockResolvedValue(undefined),
+    scheduleExpiries: vi.fn().mockResolvedValue(undefined),
   } satisfies CheckInInbox;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
@@ -95,7 +98,13 @@ function createAnnouncer() {
     checkInSeriesExtensionFailed: vi.fn(),
     checkInSeriesReadFailed: vi.fn(),
   } satisfies CheckInIncidents;
-  const ports = { identities, inbox, incidents, notifications };
+  const ports = {
+    clock: { now: () => NOW },
+    identities,
+    inbox,
+    incidents,
+    notifications,
+  };
 
   return { announcer: new CheckInAnnouncer(ports), ports };
 }

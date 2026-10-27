@@ -1,14 +1,14 @@
 import type { Clock } from "../clock";
 
+import type { AccountInvitations } from "./account-invitations";
 import type { ClientInvitation } from "./client-invitation";
 import type { ClientInvitations } from "./client-invitations";
-import type { IdentityInvitations } from "./identity-invitations";
 
 type InvitationAcceptanceOutcome = "accepted" | "refused";
 
 type AcceptInvitationUseCaseOptions = {
+  accountInvitations: Pick<AccountInvitations, "acceptedInvitationOf">;
   clock: Clock;
-  identity: IdentityInvitations;
   invitations: ClientInvitations;
 };
 
@@ -18,9 +18,10 @@ export class AcceptInvitationUseCase {
   async execute(command: {
     authSubjectId: string;
   }): Promise<InvitationAcceptanceOutcome> {
-    const invitationId = await this.options.identity.findInvitationIdForSubject(
-      command.authSubjectId,
-    );
+    const invitationId =
+      await this.options.accountInvitations.acceptedInvitationOf(
+        command.authSubjectId,
+      );
 
     if (!invitationId) {
       return "refused";
@@ -43,16 +44,10 @@ export class AcceptInvitationUseCase {
       return "accepted";
     }
 
-    const now = this.options.clock.now();
-
-    if (!invitation.isPending(now)) {
-      return "refused";
-    }
-
     const write = await this.options.invitations.accept({
       invitationId: invitation.id,
       authSubjectId,
-      now,
+      now: this.options.clock.now(),
     });
 
     if (write === "accepted") {

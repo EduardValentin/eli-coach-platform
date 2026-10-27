@@ -1,4 +1,4 @@
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "./client-reach";
 import type { ClientResource } from "./client-resource";
 import {
   ClientResourceAccess,

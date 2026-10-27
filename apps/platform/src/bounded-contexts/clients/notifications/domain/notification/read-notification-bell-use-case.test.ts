@@ -1,12 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
-import { Notification, type NotificationDraft } from "./notification";
-import type { NotificationExpirySource } from "./notification-expiry-source";
+import { Notification } from "./notification";
 import type { NotificationInbox } from "./notification-inbox";
 import type { NotificationIncidents } from "./notification-incidents";
 import { ReadNotificationBellUseCase } from "./read-notification-bell-use-case";
@@ -41,14 +37,6 @@ const SEEN = Notification.reconstitute({
   readAt: new Date("2026-10-13T10:00:00.000Z"),
 });
 
-const EXPIRED: NotificationDraft = {
-  recipient: { party: "client", clientId: "client-1" },
-  kind: "check-in.request-expired",
-  facts: { checkInId: "check-in-2", startsAt: "2026-10-14T15:00:00.000Z" },
-  arrivedAt: new Date("2026-10-14T15:00:00.000Z"),
-  onceKey: "check-in:check-in-2:request_expired:client",
-};
-
 function createReadBell(options?: { client?: ClientReachReading | null }) {
   const calls: string[] = [];
   const clients = {
@@ -57,9 +45,6 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
       .mockResolvedValue(options?.client === undefined ? ANA : options.client),
   } satisfies Pick<ClientReach, "findByAuthSubjectId">;
   const inbox = {
-    record: vi.fn(async () => {
-      calls.push("record");
-    }),
     latestFor: vi.fn(async () => {
       calls.push("latestFor");
       return [APPROVED];
@@ -68,21 +53,13 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
       calls.push("unreadCountFor");
       return 1;
     }),
-  } satisfies Pick<
-    NotificationInbox,
-    "record" | "latestFor" | "unreadCountFor"
-  >;
-  const expirySource = {
-    expiredFor: vi.fn().mockResolvedValue([EXPIRED]),
-  } satisfies NotificationExpirySource;
+  } satisfies Pick<NotificationInbox, "latestFor" | "unreadCountFor">;
   const incidents = {
     notificationBellReadFailed: vi.fn(),
-    notificationExpiriesFailed: vi.fn(),
   } satisfies NotificationIncidents;
   const ports = {
     clients,
     clock: { now: () => NOW },
-    expirySources: [expirySource],
     inbox,
     incidents,
   };
@@ -90,7 +67,6 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
   return {
     readBell: new ReadNotificationBellUseCase(ports),
     ports,
-    expirySource,
     calls,
   };
 }
@@ -132,90 +108,30 @@ describe("ReadNotificationBellUseCase", () => {
     expect(ports.inbox.latestFor).toHaveBeenCalledWith({
       recipient: { party: "client", clientId: "client-1" },
       since: NINETY_DAYS_AGO,
+      at: NOW,
       limit: 30,
     });
     expect(ports.inbox.unreadCountFor).toHaveBeenCalledWith({
       recipient: { party: "client", clientId: "client-1" },
       since: NINETY_DAYS_AGO,
+      at: NOW,
     });
   });
 
   it("reads the coach's bell without looking up a client", async () => {
     // arrange
-    const { readBell, ports, expirySource } = createReadBell();
+    const { readBell, ports } = createReadBell();
 
     // act
     await readBell.execute({ party: "coach" });
 
     // assert
     expect(ports.clients.findByAuthSubjectId).not.toHaveBeenCalled();
-    expect(expirySource.expiredFor).toHaveBeenCalledWith({
-      recipient: { party: "coach" },
-      since: NINETY_DAYS_AGO,
-      at: NOW,
-    });
     expect(ports.inbox.latestFor).toHaveBeenCalledWith({
       recipient: { party: "coach" },
       since: NINETY_DAYS_AGO,
+      at: NOW,
       limit: 30,
-    });
-  });
-
-  it("records the expiries her sources hand over before it reads the bell", async () => {
-    // arrange
-    const { readBell, ports, expirySource, calls } = createReadBell();
-
-    // act
-    await readBell.execute(ANA_READS);
-
-    // assert
-    expect(expirySource.expiredFor).toHaveBeenCalledWith({
-      recipient: { party: "client", clientId: "client-1" },
-      since: NINETY_DAYS_AGO,
-      at: NOW,
-    });
-    expect(ports.inbox.record).toHaveBeenCalledWith({
-      drafts: [EXPIRED],
-      at: NOW,
-    });
-    expect(calls.indexOf("record")).toBeLessThan(calls.indexOf("latestFor"));
-    expect(calls.indexOf("record")).toBeLessThan(
-      calls.indexOf("unreadCountFor"),
-    );
-  });
-
-  it("records nothing when no source has an expiry", async () => {
-    // arrange
-    const { readBell, ports, expirySource } = createReadBell();
-    expirySource.expiredFor.mockResolvedValue([]);
-
-    // act
-    await readBell.execute(ANA_READS);
-
-    // assert
-    expect(ports.inbox.record).not.toHaveBeenCalled();
-    expect(ports.inbox.latestFor).toHaveBeenCalledOnce();
-  });
-
-  it("reports failed expiries and still reads the bell", async () => {
-    // arrange
-    const failure = new Error("check-ins unavailable");
-    const { readBell, ports, expirySource } = createReadBell();
-    expirySource.expiredFor.mockRejectedValue(failure);
-
-    // act
-    const bell = await readBell.execute(ANA_READS);
-
-    // assert
-    expect(ports.incidents.notificationExpiriesFailed).toHaveBeenCalledWith({
-      party: "client",
-      error: failure,
-    });
-    expect(ports.inbox.record).not.toHaveBeenCalled();
-    expect(bell).toEqual({
-      notifications: [{ ...APPROVED.toSnapshot(), unread: true }],
-      unreadCount: 1,
-      checkedAt: NOW,
     });
   });
 
@@ -243,7 +159,7 @@ describe("ReadNotificationBellUseCase", () => {
     "answers an empty bell to a client $situation",
     async ({ client }) => {
       // arrange
-      const { readBell, ports, expirySource } = createReadBell({ client });
+      const { readBell, ports } = createReadBell({ client });
 
       // act
       const bell = await readBell.execute(ANA_READS);
@@ -254,7 +170,6 @@ describe("ReadNotificationBellUseCase", () => {
         unreadCount: 0,
         checkedAt: NOW,
       });
-      expect(expirySource.expiredFor).not.toHaveBeenCalled();
       expect(ports.inbox.latestFor).not.toHaveBeenCalled();
     },
   );

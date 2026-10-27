@@ -1,8 +1,4 @@
 import {
-  CoachingStanding,
-  type CoachingStatus,
-} from "~/bounded-contexts/clients/clients/domain/client";
-import {
   getCoachingBundle,
   type CoachingBundleId,
   type PriceTier,
@@ -14,6 +10,7 @@ import {
   type CheckoutCompletion,
   type StartChoice,
 } from "./coaching-subscription";
+import { CoachingStanding, type CoachingStatus } from "./coaching-standing";
 
 export type PurchasedSubscriptionSnapshot = {
   id: string;

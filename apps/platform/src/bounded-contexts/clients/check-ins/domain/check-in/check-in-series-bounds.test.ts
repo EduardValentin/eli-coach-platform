@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ClientReachReading } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReachReading } from "./client-reach";
 
 import { CHECK_IN_RULES } from "./check-in-rules";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";

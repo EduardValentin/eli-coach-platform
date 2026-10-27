@@ -69,6 +69,10 @@ function resendDependencies(
   } = {},
 ) {
   return {
+    accountInvitations: {
+      allow: vi.fn().mockResolvedValue(undefined),
+      acceptedInvitationOf: vi.fn().mockResolvedValue(null),
+    },
     clients: {
       findById: vi
         .fn()
@@ -80,7 +84,6 @@ function resendDependencies(
     identity: {
       create: vi.fn().mockResolvedValue(FRESH_PROVIDER),
       replace: vi.fn().mockResolvedValue(FRESH_PROVIDER),
-      findInvitationIdForSubject: vi.fn().mockResolvedValue(null),
     } satisfies IdentityInvitations,
     incidents: {
       invitationEmailFailed: vi.fn(),

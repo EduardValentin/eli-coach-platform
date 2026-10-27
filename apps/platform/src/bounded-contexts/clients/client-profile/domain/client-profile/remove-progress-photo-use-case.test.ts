@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "../client-reach";
 
 import type { MeasurementIncidents } from "./measurement-incidents";
 import { ProgressPhoto } from "./progress-photo";

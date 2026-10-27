@@ -1,5 +1,10 @@
 export { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
 export {
+  type ClientLookup,
+  type SubscribedClient,
+  type SubscribedClientJourney,
+} from "./client-lookup";
+export {
   type CheckoutSessionRecord,
   type CheckoutSessions,
 } from "./checkout-sessions";
@@ -21,6 +26,8 @@ export {
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
 export { type CoachingEndHandler } from "./coaching-end-handler";
+export { COACHING_STATUSES, CoachingStanding } from "./coaching-standing";
+export { type CoachingStandingWriter } from "./coaching-standing-writer";
 export { type CoachingPeriodHandler } from "./coaching-period-handler";
 export { type CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 export {
@@ -30,7 +37,11 @@ export {
 } from "./coaching-subscriptions";
 export { MirrorPaymentCardUseCase } from "./mirror-payment-card-use-case";
 export { OpenPaymentMethodSessionUseCase } from "./open-payment-method-session-use-case";
-export { type PaidClientAdmission } from "./paid-client-admission";
+export {
+  type PaidClientAdmission,
+  type PaidClientAdmissionOutcome,
+  type PaidClientIntake,
+} from "./paid-client-admission";
 export {
   type CreateCheckoutSessionCommand,
   type PaymentCheckout,
@@ -43,6 +54,7 @@ export {
 } from "./payment-cards";
 export { type PaymentCustomerCards } from "./payment-customer-cards";
 export { type PaymentSubscriptions } from "./payment-subscriptions";
+export { STEPS_AFTER_SUBMISSION } from "./program-steps";
 export { PurchasedSubscription } from "./purchased-subscription";
 export { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
 export { ReadProgramStatusUseCase } from "./read-program-status-use-case";

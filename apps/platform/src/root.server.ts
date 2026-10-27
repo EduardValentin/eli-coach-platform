@@ -13,12 +13,18 @@ const featureFlagOverrideMiddleware: MiddlewareFunction<Response> = (
 const sessionMiddleware: MiddlewareFunction<Response> = (args, next) =>
   getPlatformContainer().access.sessionMiddleware(args, next);
 
+const clientPortalStandingMiddleware: MiddlewareFunction<Response> = (
+  args,
+  next,
+) => getPlatformContainer().clients.portalStandingMiddleware(args, next);
+
 export const middleware = [
   refuseCrossSiteMutations,
   clerkMiddleware(),
   featureFlagOverrideMiddleware,
   createFeatureContextMiddleware(getPlatformContainer),
   sessionMiddleware,
+  clientPortalStandingMiddleware,
 ];
 
 export function loader(args: LoaderFunctionArgs) {

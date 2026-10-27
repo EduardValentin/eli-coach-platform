@@ -1,8 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type {
-  NotificationExpirySource,
-  NotificationInbox,
-} from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { NotificationInbox } from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import type { SessionAccount } from "~/bounded-contexts/access/public/session";
@@ -37,7 +34,7 @@ describe("composeNotificationInbox", () => {
 });
 
 describe("composeNotificationsFeature", () => {
-  it("reads the bell from the inbox it is handed after recording what the expiry sources found", async () => {
+  it("reads the bell from the inbox it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeNotificationsFeature(handles);
@@ -46,11 +43,8 @@ describe("composeNotificationsFeature", () => {
     const bell = await feature.notificationBell.loadBell(coachArgs());
 
     // assert
-    expect(handles.expirySources[0]?.expiredFor).toHaveBeenCalledWith(
-      expect.objectContaining({ recipient: { party: "coach" }, at: NOW }),
-    );
     expect(handles.inbox.latestFor).toHaveBeenCalledWith(
-      expect.objectContaining({ recipient: { party: "coach" } }),
+      expect.objectContaining({ recipient: { party: "coach" }, at: NOW }),
     );
     expect(bell).toEqual({
       notifications: [],
@@ -79,19 +73,19 @@ describe("composeNotificationsFeature", () => {
 function createHandles() {
   const inbox = {
     record: vi.fn().mockResolvedValue(undefined),
+    withdrawUnarrived: vi.fn().mockResolvedValue(undefined),
     latestFor: vi.fn().mockResolvedValue([]),
     unreadCountFor: vi.fn().mockResolvedValue(2),
     markRead: vi.fn().mockResolvedValue("marked"),
     markAllRead: vi.fn().mockResolvedValue(undefined),
   } satisfies NotificationInbox;
-  const expirySource = {
-    expiredFor: vi.fn().mockResolvedValue([]),
-  } satisfies NotificationExpirySource;
 
   return {
-    clientReach: { findByAuthSubjectId: vi.fn().mockResolvedValue(null) },
+    clientReach: {
+      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+      findById: vi.fn().mockResolvedValue(null),
+    },
     clock: { now: () => NOW },
-    expirySources: [expirySource],
     inbox,
     logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } satisfies Logger,
   };

@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
@@ -97,8 +94,6 @@ function createProposeCheckInTime(options?: {
       ),
     listForClient: vi.fn().mockResolvedValue(options?.clientCheckIns ?? []),
     listAll: vi.fn(),
-    listUnansweredStartedWithin: vi.fn(),
-    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi
       .fn()
@@ -164,6 +159,7 @@ function createProposeCheckInTime(options?: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
+      scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
     openSlots: startsBeyondADay(),

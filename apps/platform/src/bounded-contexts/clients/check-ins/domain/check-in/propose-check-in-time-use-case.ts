@@ -1,7 +1,5 @@
-import type {
-  ClientIdentities,
-  ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach } from "./client-reach";
 import type { Clock } from "../clock";
 
 import {
@@ -19,7 +17,7 @@ import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CHECK_IN_RULES } from "./check-in-rules";
-import type { CheckIns } from "./check-ins";
+import type { CheckInMove, CheckInMoveCommand, CheckIns } from "./check-ins";
 import type { CoachTime } from "./coach-time";
 import type { OpenSlots } from "./open-slots";
 
@@ -130,9 +128,33 @@ export class ProposeCheckInTimeUseCase {
       return { status: "time_taken" };
     }
 
+    const move = {
+      checkIn: proposal.checkIn,
+      expected: {
+        recordedStatus: checkIn.recordedStatus,
+        startsAt: checkIn.startsAt,
+      },
+      at,
+    };
+    const moved = checkIn.keepsItsHourAt({ startsAt: command.startsAt, at })
+      ? await this.options.checkIns.move(move)
+      : await this.moveToANewHour(move);
+
+    if (moved.status !== "moved") {
+      return moved;
+    }
+
+    await this.announcer.announce("newTimeProposed", proposal.checkIn, party);
+
+    return { status: "proposed", checkIn: proposal.checkIn.toSnapshot() };
+  }
+
+  private async moveToANewHour(
+    move: CheckInMoveCommand,
+  ): Promise<CheckInMove | { status: "time_taken" }> {
     const { coachTime } = this.options;
     const held = await coachTime.reserve(
-      CHECK_IN_RULES.coachTimeFrom(command.startsAt),
+      CHECK_IN_RULES.coachTimeFrom(move.checkIn.startsAt),
     );
 
     if (held.status === "taken") {
@@ -140,13 +162,8 @@ export class ProposeCheckInTimeUseCase {
     }
 
     const moved = await this.options.checkIns.move({
-      checkIn: proposal.checkIn,
-      expected: {
-        recordedStatus: checkIn.recordedStatus,
-        startsAt: checkIn.startsAt,
-      },
+      ...move,
       reservationId: held.reservationId,
-      at,
     });
 
     if (moved.status === "changed_meanwhile") {
@@ -157,9 +174,7 @@ export class ProposeCheckInTimeUseCase {
 
     await releaseFreedHours(coachTime, [moved.freedReservationId]);
 
-    await this.announcer.announce("newTimeProposed", proposal.checkIn, party);
-
-    return { status: "proposed", checkIn: proposal.checkIn.toSnapshot() };
+    return moved;
   }
 
   private async isOpenStart({

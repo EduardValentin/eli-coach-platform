@@ -1,7 +1,5 @@
-import type {
-  ClientIdentities,
-  ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach } from "./client-reach";
 import type { Clock } from "../clock";
 
 import { CheckInAnnouncer } from "./check-in-announcer";
@@ -68,6 +66,10 @@ export class StopCheckInSeriesUseCase {
       weekStartsAt: stopped.nextWeekStartFrom(now),
       clientTimeZone: client?.timeZone ?? stopped.timeZone,
       firstWeekId: null,
+    });
+    await this.announcer.announceExpiries(stopped, {
+      current: [],
+      withdrawn: recorded.cancelledIds,
     });
 
     return { status: "stopped", series: stopped.toSnapshot() };

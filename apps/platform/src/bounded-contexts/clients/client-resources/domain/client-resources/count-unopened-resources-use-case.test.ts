@@ -4,10 +4,7 @@ import { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { CountUnopenedResourcesUseCase } from "./count-unopened-resources-use-case";
-import type {
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");

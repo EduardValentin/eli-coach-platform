@@ -1,5 +1,5 @@
 import type { ClientGender } from "./client-gender";
-import type { ClientIdentity } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentity } from "../client-identities";
 import type { MeasureUnits } from "../client-settings";
 
 import type { OnboardingSubmissionProblem } from "./client-onboarding";

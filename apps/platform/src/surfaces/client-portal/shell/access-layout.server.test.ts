@@ -10,10 +10,7 @@ import {
   createRequestArgs,
 } from "~/composition-root/test-support/request-args";
 
-import {
-  clientsContext,
-  type ClientsFeature,
-} from "~/bounded-contexts/clients/public/request-context";
+import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/request-context";
 
 import { middleware } from "./access-layout.server";
 
@@ -189,20 +186,14 @@ function createMiddlewareArgs(options: {
   session: ResolvedSession;
   url: string;
 }): Parameters<typeof guardClientPortal>[0] {
-  const coachingSales = {
-    readClientPortalStanding: {
-      execute: vi.fn().mockResolvedValue(
-        options.journey
-          ? {
-              journey: options.journey,
-              portal: options.journey.onboardingSubmittedAt
-                ? "reachable"
-                : "awaiting_onboarding",
-            }
-          : null,
-      ),
-    },
-  } as unknown as ClientsFeature;
+  const standing = options.journey
+    ? {
+        step: options.journey.step(),
+        portal: options.journey.onboardingSubmittedAt
+          ? ("reachable" as const)
+          : ("awaiting_onboarding" as const),
+      }
+    : null;
 
   return createRequestArgs({
     portal: {
@@ -211,7 +202,7 @@ function createMiddlewareArgs(options: {
       signInUrl: "https://accounts.evoa.fit/sign-in",
     },
     session: options.session,
-    contexts: [contextEntry(clientsContext, coachingSales)],
+    contexts: [contextEntry(clientPortalStandingContext, standing)],
     request: new Request(options.url),
   }) as unknown as Parameters<typeof guardClientPortal>[0];
 }

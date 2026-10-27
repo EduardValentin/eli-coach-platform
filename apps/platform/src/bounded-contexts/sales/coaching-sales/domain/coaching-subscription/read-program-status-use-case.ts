@@ -1,11 +1,9 @@
-import {
-  ClientJourney,
-  type ClientJourneys,
-  type StepAfterSubmission,
-} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type { Clock } from "../clock";
 
+import type { ClientLookup } from "./client-lookup";
+
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import { isAfterSubmission, type StepAfterSubmission } from "./program-steps";
 
 type ProgramStatus = {
   kind: StepAfterSubmission;
@@ -16,7 +14,7 @@ type ProgramStatus = {
 
 type ReadProgramStatusUseCaseOptions = {
   clock: Clock;
-  journeys: Pick<ClientJourneys, "findByAuthSubjectId">;
+  journeys: Pick<ClientLookup, "journeyOf">;
   subscriptions: Pick<CoachingSubscriptions, "findCurrentForClient">;
 };
 
@@ -24,16 +22,15 @@ export class ReadProgramStatusUseCase {
   constructor(private readonly options: ReadProgramStatusUseCaseOptions) {}
 
   async execute(authSubjectId: string): Promise<ProgramStatus | null> {
-    const journey =
-      await this.options.journeys.findByAuthSubjectId(authSubjectId);
+    const journey = await this.options.journeys.journeyOf(authSubjectId);
 
     if (!journey?.onboardingSubmittedAt) {
       return null;
     }
 
-    const step = journey.step();
+    const step = journey.step;
 
-    if (!ClientJourney.isAfterSubmission(step)) {
+    if (!isAfterSubmission(step)) {
       return null;
     }
 

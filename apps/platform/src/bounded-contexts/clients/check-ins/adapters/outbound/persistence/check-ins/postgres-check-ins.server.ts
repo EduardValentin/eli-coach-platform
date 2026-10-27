@@ -1,17 +1,16 @@
 import {
   type CheckIn,
   type CheckInMove,
+  type CheckInMoveCommand,
   type CheckInOutcome,
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
-  type CheckInStartWindow,
   type HeldCheckIn,
   OPEN_CHECK_IN_STATUSES,
-  UNANSWERED_CHECK_IN_STATUSES,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { DatabaseClient } from "~/shared/database";
-import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
+import { executorOf } from "~/shared/database/index.server";
 import {
   and,
   asc,
@@ -45,13 +44,6 @@ type Settlement = {
   at: Date;
   expectedStatus: RecordedStatus;
   clientTimeZone?: string;
-};
-
-type CheckInMoveCommand = {
-  checkIn: CheckIn;
-  expected: { recordedStatus: RecordedStatus; startsAt: Date };
-  reservationId: string;
-  at: Date;
 };
 
 type CoachingEnd = { clientId: string; endsAt: Date; at: Date };
@@ -107,22 +99,6 @@ export class PostgresCheckIns implements CheckIns {
       .orderBy(asc(checkInsTable.startsAt));
 
     return rows.map((row) => checkInOf(row));
-  }
-
-  listUnansweredStartedWithin(window: CheckInStartWindow): Promise<CheckIn[]> {
-    return this.listWhere(this.unansweredStartedWithin(window));
-  }
-
-  listUnansweredForClientStartedWithin(
-    clientId: string,
-    window: CheckInStartWindow,
-  ): Promise<CheckIn[]> {
-    return this.listWhere(
-      and(
-        eq(checkInsTable.clientId, clientId),
-        this.unansweredStartedWithin(window),
-      ),
-    );
   }
 
   async settle({
@@ -185,7 +161,7 @@ export class PostgresCheckIns implements CheckIns {
         proposedBy: snapshot.proposedBy,
         answeredAt: snapshot.answeredAt,
         clientTimeZone: snapshot.clientTimeZone,
-        reservationId,
+        ...(reservationId !== undefined && { reservationId }),
       })
       .where(
         and(
@@ -203,25 +179,13 @@ export class PostgresCheckIns implements CheckIns {
 
     return {
       status: "moved",
-      freedReservationId: held?.reservationId ?? null,
+      freedReservationId:
+        reservationId === undefined ? null : (held?.reservationId ?? null),
     };
   }
 
   endCoaching(end: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
-    return createUnitOfWork(this.database)(() =>
-      this.endCoachingUnderClientLock(end),
-    );
-  }
-
-  private unansweredStartedWithin({
-    since,
-    at,
-  }: CheckInStartWindow): SQL | undefined {
-    return and(
-      inArray(checkInsTable.status, UNANSWERED_CHECK_IN_STATUSES),
-      gte(checkInsTable.startsAt, since),
-      lte(checkInsTable.startsAt, at),
-    );
+    return this.endCoachingUnderClientLock(end);
   }
 
   private async listWhere(condition: SQL | undefined): Promise<CheckIn[]> {

@@ -1,4 +1,4 @@
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "../client-reach";
 import type { Clock } from "../clock";
 import { UnitPreference, type ClientSettingsSource } from "../client-settings";
 import type { ClientMeasurementRecords } from "./client-measurement-records";

@@ -1,7 +1,4 @@
-import type {
-  ClientReach,
-  PortalReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach, PortalReach } from "./client-reach";
 
 export type ClientCheckInScheduling =
   "allowed" | "awaiting_onboarding" | "ended" | "unknown";

@@ -14,7 +14,7 @@ import {
   type ResourceFileFormatDetector,
   type ResourceImagePages,
 } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientReach } from "~/bounded-contexts/clients/clients/public";
 import type { Clock } from "~/bounded-contexts/clients/client-resources/domain/clock";
 
 import { OwnResourcesController } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/client/own-resources-controller.server";
@@ -22,12 +22,13 @@ import { CoachResourcesController } from "~/bounded-contexts/clients/client-reso
 import { ClientResourcesController } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/resources/client-resources-controller.server";
 import { PostgresClientResources } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/client-resources-repository.server";
 import { RandomClientResourceIds } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/random-client-resource-ids.server";
+import { ClientsClientReach } from "~/bounded-contexts/clients/client-resources/adapters/outbound/clients/client-reach.server";
 import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createClientResourcesIncidents } from "~/bounded-contexts/clients/client-resources/adapters/outbound/logging/client-resources-incidents.server";
 
 type ClientResourcesFeatureHandles = {
-  clientReach: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  clientReach: ClientReach;
   clock: Clock;
   database: DatabaseClient;
   documentPages: ResourceDocumentPages;
@@ -43,7 +44,7 @@ export function composeClientResourcesFeature(
   const incidents = createClientResourcesIncidents(handles.logger);
   const accessPorts = {
     resources: new PostgresClientResources(handles.database),
-    clients: handles.clientReach,
+    clients: new ClientsClientReach(handles.clientReach),
     incidents,
   };
   const servingPorts = { ...accessPorts, store: handles.store };

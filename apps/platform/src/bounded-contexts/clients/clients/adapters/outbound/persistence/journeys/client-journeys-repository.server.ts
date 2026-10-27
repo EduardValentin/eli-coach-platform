@@ -3,19 +3,16 @@ import { executorOf } from "~/shared/database/index.server";
 import {
   ClientJourney,
   type ClientJourneys,
+  type ReviewStampRecorder,
+  type ReviewStamps,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";
-import type {
-  OnboardingReviewStamps,
-  ReviewStamps,
-} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { coachingStandingColumns } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/coaching-standing-columns.server";
-import { writeReviewStamps } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/review-stamps.server";
 import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/schema.server";
 
 export class PostgresClientJourneys
-  implements ClientJourneys, OnboardingReviewStamps
+  implements ClientJourneys, ReviewStampRecorder
 {
   constructor(private readonly database: DatabaseClient) {}
 
@@ -81,10 +78,18 @@ export class PostgresClientJourneys
       );
   }
 
-  async record(input: {
+  async recordReviewStamp(input: {
     clientId: string;
     stamps: ReviewStamps;
   }): Promise<void> {
-    await writeReviewStamps(this.database, input);
+    await this.executor
+      .update(clientsTable)
+      .set({
+        reviewOpenedAt: input.stamps.reviewOpenedAt,
+        detailsRequestedAt: input.stamps.detailsRequestedAt,
+        detailsAnsweredAt: input.stamps.detailsAnsweredAt,
+        answersApprovedAt: input.stamps.answersApprovedAt,
+      })
+      .where(eq(clientsTable.id, input.clientId));
   }
 }

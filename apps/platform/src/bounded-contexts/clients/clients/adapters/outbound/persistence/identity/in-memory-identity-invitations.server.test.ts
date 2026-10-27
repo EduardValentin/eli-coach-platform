@@ -51,17 +51,4 @@ describe("InMemoryIdentityInvitations", () => {
       url: "https://accounts.evoa.example/sign-up?__clerk_ticket=memory",
     });
   });
-
-  it("knows no subject that carries an invitation", async () => {
-    // arrange
-    const identity: IdentityInvitations = new InMemoryIdentityInvitations({
-      signUpUrl: "https://accounts.evoa.example/sign-up",
-    });
-
-    // act
-    const invitationId = await identity.findInvitationIdForSubject("user_ana");
-
-    // assert
-    expect(invitationId).toBeNull();
-  });
 });

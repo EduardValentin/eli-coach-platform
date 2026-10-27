@@ -6,14 +6,20 @@ export interface NotificationInbox {
     drafts: readonly NotificationDraft[];
     at: Date;
   }): Promise<void>;
+  withdrawUnarrived(command: {
+    onceKeys: readonly string[];
+    at: Date;
+  }): Promise<void>;
   latestFor(query: {
     recipient: NotificationRecipientSnapshot;
     since: Date;
+    at: Date;
     limit: number;
   }): Promise<Notification[]>;
   unreadCountFor(query: {
     recipient: NotificationRecipientSnapshot;
     since: Date;
+    at: Date;
   }): Promise<number>;
   markRead(command: {
     recipient: NotificationRecipientSnapshot;

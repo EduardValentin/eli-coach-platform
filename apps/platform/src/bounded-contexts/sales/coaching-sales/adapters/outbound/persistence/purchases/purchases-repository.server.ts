@@ -4,6 +4,7 @@ import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
   CoachingPurchases,
+  PaidClientAdmission,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   CallSale,
@@ -14,11 +15,6 @@ import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock
 import { recordPaymentEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 
-import type {
-  ClientProfileOpener,
-  ClientWriter,
-  CoachingStandingWriter,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/client-writers.server";
 import {
   checkoutSessionsTable,
   coachingSubscriptionsTable,
@@ -26,11 +22,9 @@ import {
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";
 
 type PostgresCoachingPurchasesOptions = {
+  admission: Pick<PaidClientAdmission, "admit">;
   clock: Clock;
   database: DatabaseClient;
-  openClientProfile: ClientProfileOpener;
-  writeClient: ClientWriter;
-  writeCoachingStanding: CoachingStandingWriter;
 };
 
 class CallAlreadyPaid extends Error {}
@@ -117,22 +111,22 @@ export class PostgresCoachingPurchases
       };
     }
 
-    const written = await this.options.writeClient(client);
-
-    if (written === "call_already_has_client") {
-      throw new CallAlreadyPaid();
-    }
-
-    await this.options.openClientProfile({
-      clientId: client.id,
+    const admitted = await this.options.admission.admit({
+      client,
+      standing: subscription.standing(),
       at: receivedAt,
     });
 
+    if (admitted.status === "call_already_has_client") {
+      throw new CallAlreadyPaid();
+    }
+
+    const { clientId } = admitted;
     const purchased = subscription.toSnapshot();
 
     await this.executor.insert(coachingSubscriptionsTable).values({
       id: purchased.id,
-      clientId: client.id,
+      clientId,
       assessmentCallId: client.assessmentCallId,
       bundleId: purchased.bundleId,
       months: purchased.months,
@@ -150,11 +144,6 @@ export class PostgresCoachingPurchases
       status: purchased.status,
       createdAt: receivedAt,
     });
-    await this.options.writeCoachingStanding({
-      clientId: client.id,
-      standing: subscription.standing(),
-    });
-
     await this.executor
       .update(paymentLinksTable)
       .set({ state: "spent" })
@@ -170,7 +159,7 @@ export class PostgresCoachingPurchases
         ),
       );
 
-    return { outcome: "recorded", clientId: client.id };
+    return { outcome: "recorded", clientId };
   }
 
   private async findClientIdForCall(assessmentCallId: string): Promise<string> {

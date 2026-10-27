@@ -6,10 +6,7 @@ import type {
   SessionAccount,
 } from "~/bounded-contexts/access/public/session";
 
-import {
-  clientsContext,
-  type ClientsFeature,
-} from "~/bounded-contexts/clients/public/request-context";
+import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/request-context";
 import {
   waitlistContext,
   type WaitlistFeature,
@@ -220,20 +217,14 @@ function createLoaderArgs(options: {
   journey?: ClientJourney;
   session: ResolvedSession;
 }): LoaderFunctionArgs {
-  const coachingSales = {
-    readClientPortalStanding: {
-      execute: vi.fn().mockResolvedValue(
-        options.journey
-          ? {
-              journey: options.journey,
-              portal: options.journey.onboardingSubmittedAt
-                ? "reachable"
-                : "awaiting_onboarding",
-            }
-          : null,
-      ),
-    },
-  } as unknown as ClientsFeature;
+  const standing = options.journey
+    ? {
+        step: options.journey.step(),
+        portal: options.journey.onboardingSubmittedAt
+          ? ("reachable" as const)
+          : ("awaiting_onboarding" as const),
+      }
+    : null;
 
   const waitlist = {
     waitlist: { getWaitlist: vi.fn().mockResolvedValue(liveWaitlist) },
@@ -246,7 +237,7 @@ function createLoaderArgs(options: {
         appBasePath: options.appBasePath ?? "/",
         botDetection: botDetectionConfig,
       }),
-      contextEntry(clientsContext, coachingSales),
+      contextEntry(clientPortalStandingContext, standing),
       contextEntry(waitlistContext, waitlist),
     ],
     request: new Request("https://eli.example/"),

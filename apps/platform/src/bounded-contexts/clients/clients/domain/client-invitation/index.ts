@@ -1,5 +1,5 @@
 export { AcceptInvitationUseCase } from "./accept-invitation-use-case";
-export { AdmitPaidClientUseCase } from "./admit-paid-client-use-case";
+export { type AccountInvitations } from "./account-invitations";
 export {
   ClientInvitation,
   INVITATION_VALIDITY_DAYS,
@@ -17,6 +17,7 @@ export {
   type InvitationTokenGenerator,
   type InvitationTokenHasher,
 } from "./invitation-token";
+export { InvitePaidClientUseCase } from "./invite-paid-client-use-case";
 export { type InvitedClient, type InvitedClients } from "./invited-client";
 export { ReadClientInvitationUseCase } from "./read-client-invitation-use-case";
 export { ResendInvitationUseCase } from "./resend-invitation-use-case";

@@ -19,7 +19,12 @@ export type CheckInMove =
   | { status: "moved"; freedReservationId: string | null }
   | { status: "changed_meanwhile" };
 
-export type CheckInStartWindow = { since: Date; at: Date };
+export type CheckInMoveCommand = {
+  checkIn: CheckIn;
+  expected: { recordedStatus: RecordedCheckInStatus; startsAt: Date };
+  reservationId?: string;
+  at: Date;
+};
 
 export type CheckInsAtCoachingEnd = {
   cancelled: string[];
@@ -33,11 +38,6 @@ export interface CheckIns {
   find(id: string): Promise<CheckIn | null>;
   listForClient(clientId: string): Promise<CheckIn[]>;
   listAll(): Promise<CheckIn[]>;
-  listUnansweredStartedWithin(window: CheckInStartWindow): Promise<CheckIn[]>;
-  listUnansweredForClientStartedWithin(
-    clientId: string,
-    window: CheckInStartWindow,
-  ): Promise<CheckIn[]>;
   settle(command: {
     id: string;
     outcome: CheckInOutcome;
@@ -45,12 +45,7 @@ export interface CheckIns {
     expectedStatus: RecordedCheckInStatus;
     clientTimeZone?: string;
   }): Promise<CheckInSettlement>;
-  move(command: {
-    checkIn: CheckIn;
-    expected: { recordedStatus: RecordedCheckInStatus; startsAt: Date };
-    reservationId: string;
-    at: Date;
-  }): Promise<CheckInMove>;
+  move(command: CheckInMoveCommand): Promise<CheckInMove>;
   endCoaching(command: {
     clientId: string;
     endsAt: Date;

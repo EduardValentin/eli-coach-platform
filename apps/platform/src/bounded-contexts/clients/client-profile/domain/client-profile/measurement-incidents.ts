@@ -1,4 +1,4 @@
-import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
+import type { AccountRole } from "../account-role";
 
 import type { ProgressPhotoView } from "./progress-photo";
 

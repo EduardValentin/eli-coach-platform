@@ -1,12 +1,15 @@
-import type { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
-
 import type { ReviewStamps } from "./onboarding-review-stamps";
+
+type OnboardingCoachingStanding = {
+  hasPortalAccessAt(now: Date): boolean;
+  isCancelledOrEnded(): boolean;
+};
 
 export type OnboardingClient = {
   clientId: string;
   submittedAt: Date | null;
   reviewStamps: ReviewStamps;
-  standing: CoachingStanding;
+  standing: OnboardingCoachingStanding;
 };
 
 export interface OnboardingClients {

@@ -37,3 +37,17 @@ export const accountsTable = appSchema.table("accounts", {
     .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
+
+export const accountInvitationsTable = appSchema.table("account_invitations", {
+  id: uuid("id").primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  role: accountRoleEnum("role").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedByAuthSubjectId: varchar("accepted_by_auth_subject_id", {
+    length: 255,
+  }),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

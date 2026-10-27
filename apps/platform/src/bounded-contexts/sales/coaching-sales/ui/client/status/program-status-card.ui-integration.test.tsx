@@ -31,7 +31,7 @@ import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/pa
 import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
-} from "~/bounded-contexts/clients/clients/public/paths";
+} from "~/bounded-contexts/clients/public/paths";
 import { clientAction as startProgram } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/client/program-start";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 import type { ProgramStatus } from "~/bounded-contexts/sales/coaching-sales/public/program-status";

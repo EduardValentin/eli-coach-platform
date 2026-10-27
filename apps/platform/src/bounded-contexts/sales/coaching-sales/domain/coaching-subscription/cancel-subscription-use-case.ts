@@ -1,4 +1,4 @@
-import type { ClientIdentities } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientLookup } from "./client-lookup";
 import type { Clock } from "../clock";
 
 import type { CoachingEndHandler } from "./coaching-end-handler";
@@ -36,7 +36,7 @@ type RecordedCancellation = Extract<
 >;
 
 type CancelSubscriptionUseCaseOptions = {
-  clients: ClientIdentities;
+  clients: Pick<ClientLookup, "identityOf">;
   clock: Clock;
   coachingEnds: readonly CoachingEndHandler[];
   incidents: CoachingSubscriptionIncidents;
@@ -206,9 +206,7 @@ export class CancelSubscriptionUseCase {
       return null;
     }
 
-    const client = await this.options.clients.findByClientId(
-      subscription.clientId,
-    );
+    const client = await this.options.clients.identityOf(subscription.clientId);
 
     if (!client) {
       return null;

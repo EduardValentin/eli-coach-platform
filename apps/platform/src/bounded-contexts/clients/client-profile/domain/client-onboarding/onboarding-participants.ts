@@ -1,7 +1,4 @@
-import type {
-  ClientIdentities,
-  ClientIdentity,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities, ClientIdentity } from "../client-identities";
 
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 

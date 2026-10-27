@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import type { PublicSessionState } from "~/bounded-contexts/access/accounts/public/account";
-import { readClientPortalStanding } from "~/bounded-contexts/clients/clients/adapters/inbound/http/require-client-portal-standing.server";
+import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/request-context";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import {
   presentWaitlist,
@@ -49,7 +49,7 @@ async function readPublicSessionState(
   return {
     kind: "authenticated",
     portalDestination: resolvePortalDestination({
-      standing: await readClientPortalStanding(args),
+      standing: args.context.get(clientPortalStandingContext),
       role: session.account.role,
     }),
   };

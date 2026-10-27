@@ -2,11 +2,16 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   ClientIdentities,
   ClientReach,
-} from "~/bounded-contexts/clients/clients/domain/client";
+  OnboardingStandings,
+  OnboardingSubmissionRecorder,
+  ReviewStampRecorder,
+} from "~/bounded-contexts/clients/clients/public";
+import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile";
 import {
   AttachProgressPhotosUseCase,
   ListClientAvatarsUseCase,
   OpenClientAvatarUseCase,
+  OpenClientProfileUseCase,
   OpenProgressPhotoUseCase,
   ReadClientMeasurementHistoryUseCase,
   ReadClientProfileUseCase,
@@ -55,10 +60,16 @@ import { RandomMeasurementIds } from "~/bounded-contexts/clients/client-profile/
 import { PostgresProgressPhotos } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/client-progress-photos-repository.server";
 import { RandomProgressPhotoIds } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/random-progress-photo-ids.server";
 import {
-  openClientProfile,
+  PostgresClientProfileOpenings,
   recordPhotoConsent,
   seedCoaching,
 } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/client-profile-writers.server";
+import { createClientProfileFacade } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-profile.server";
+import { ClientsClientIdentities } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/client-identities.server";
+import { ClientsClientReach } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/client-reach.server";
+import { ClientsOnboardingClients } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/onboarding-clients.server";
+import { ClientsReviewStamps } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/review-stamps.server";
+import { ClientsSubmissionStamps } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/submission-stamps.server";
 import { PostgresClientProfiles } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/client-profiles-repository.server";
 import { PostgresClientSettings } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/settings/client-settings-repository.server";
 import type {
@@ -76,9 +87,6 @@ import {
   RequestOnboardingDetailsUseCase,
   SaveOnboardingDraftUseCase,
   SubmitOnboardingUseCase,
-  type OnboardingClients,
-  type OnboardingReviewStamps,
-  type OnboardingSubmissionStamps,
 } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type { ProductEmail } from "~/shared/email/index.server";
 import { ClientOnboardingController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/client-onboarding-controller.server";
@@ -90,24 +98,19 @@ import type {
 } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/client-profile-writer-ports.server";
 import { PostgresClientOnboardings } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/onboardings/client-onboardings-repository.server";
 import { RandomDetailRequestIds } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/random-detail-request-ids.server";
-import {
-  PostgresOnboardingReviews,
-  type ReviewStampWriter,
-} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/onboarding-reviews-repository.server";
+import { PostgresOnboardingReviews } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/onboarding-reviews-repository.server";
 import { EmailOnboardingDetailsNotifications } from "~/bounded-contexts/clients/client-profile/adapters/outbound/email/onboarding/email-onboarding-details-notifications.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createClientProfileIncidents } from "~/bounded-contexts/clients/client-profile/adapters/outbound/logging/client-profile-incidents.server";
 
 type ClientProfileComposition = {
+  facades: { clientProfile: ClientProfileFacade };
   feature: ClientProfileFeature;
   handles: {
     attachProgressPhotos: AttachProgressPhotosUseCase;
     clientSettings: ClientSettingsSource;
     measurementIds: MeasurementIds;
     measurements: ClientMeasurementsSource;
-    openClientProfile: (
-      admission: Parameters<typeof openClientProfile>[1],
-    ) => Promise<void>;
     recordMeasurementEntry: MeasurementEntryWriter;
     recordPhotoConsent: PhotoConsentWriter;
     seedCoaching: CoachingSeedWriter;
@@ -131,6 +134,7 @@ export function composeClientProfileFeature(
 ): ClientProfileComposition {
   const { clock } = handles;
   const incidents = createClientProfileIncidents(handles.logger);
+  const clientReach = new ClientsClientReach(handles.clientReach);
   const avatars = new PostgresClientAvatars(handles.database);
   const measurements = new PostgresClientMeasurements(handles.database);
   const records = new PostgresClientMeasurementRecords(handles.database);
@@ -139,7 +143,7 @@ export function composeClientProfileFeature(
   const settings = new PostgresClientSettings(handles.database);
   const measurementIds = new RandomMeasurementIds();
   const progressPhotoPorts = {
-    clients: handles.clientReach,
+    clients: clientReach,
     photos,
     store: handles.progressPhotoStore,
     incidents,
@@ -151,7 +155,7 @@ export function composeClientProfileFeature(
     clock,
   };
   const avatarPorts = {
-    clients: handles.clientReach,
+    clients: clientReach,
     avatars,
     avatarIds: new RandomClientAvatarIds(),
     store: handles.clientAvatarStore,
@@ -160,7 +164,7 @@ export function composeClientProfileFeature(
     clock,
   };
   const profileReadingPorts = {
-    identities: handles.clientIdentities,
+    identities: new ClientsClientIdentities(handles.clientIdentities),
     profiles,
     settings,
     avatars,
@@ -168,13 +172,20 @@ export function composeClientProfileFeature(
   };
 
   return {
+    facades: {
+      clientProfile: createClientProfileFacade(
+        new OpenClientProfileUseCase({
+          openings: new PostgresClientProfileOpenings(handles.database),
+        }),
+      ),
+    },
     feature: {
       avatars: new ClientAvatarController({
         openClientAvatar: new OpenClientAvatarUseCase(avatarPorts),
       }),
       clientMeasurements: new ClientMeasurementsController({
         readOwnMeasurementHistory: new ReadOwnMeasurementHistoryUseCase({
-          clients: handles.clientReach,
+          clients: clientReach,
           clock,
           profiles,
           records,
@@ -189,12 +200,12 @@ export function composeClientProfileFeature(
       }),
       clientSettings: new ClientSettingsController({
         readOwnClientSettings: new ReadOwnClientSettingsUseCase({
-          clients: handles.clientReach,
+          clients: clientReach,
           settings,
         }),
         saveUnitPreference: new SaveUnitPreferenceUseCase({
           changes: settings,
-          clients: handles.clientReach,
+          clients: clientReach,
           clock,
           settings,
         }),
@@ -226,10 +237,10 @@ export function composeClientProfileFeature(
       ownProfile: new OwnClientProfileController({
         readOwnClientProfile: new ReadOwnClientProfileUseCase({
           ...profileReadingPorts,
-          clients: handles.clientReach,
+          clients: clientReach,
         }),
         updateOwnClientProfile: new UpdateOwnClientProfileUseCase({
-          clients: handles.clientReach,
+          clients: clientReach,
           clock,
           profiles,
         }),
@@ -247,8 +258,6 @@ export function composeClientProfileFeature(
       clientSettings: settings,
       measurementIds,
       measurements,
-      openClientProfile: (admission) =>
-        openClientProfile(handles.database, admission),
       recordMeasurementEntry: (record) =>
         recordMeasurementEntry(handles.database, record),
       recordPhotoConsent: (consent) =>
@@ -269,14 +278,13 @@ type ClientOnboardingFeatureHandles = {
   logger: Logger;
   measurementIds: MeasurementIds;
   measurements: ClientMeasurementsSource;
-  onboardingClients: OnboardingClients;
-  onboardingReviewStamps: OnboardingReviewStamps;
-  onboardingSubmissionStamps: OnboardingSubmissionStamps;
+  onboardingStandings: OnboardingStandings;
+  onboardingSubmissions: OnboardingSubmissionRecorder;
   productEmail: ProductEmail;
   publicAppUrl: string;
   recordMeasurementEntry: MeasurementEntryWriter;
   recordPhotoConsent: PhotoConsentWriter;
-  reviewStampWriter: ReviewStampWriter;
+  reviewStampRecorder: ReviewStampRecorder;
   seedCoaching: CoachingSeedWriter;
 };
 
@@ -285,9 +293,10 @@ export function composeClientOnboardingFeature(
 ): ClientOnboardingFeature {
   const { clock } = handles;
   const incidents = createClientProfileIncidents(handles.logger);
+  const reviewStamps = new ClientsReviewStamps(handles.reviewStampRecorder);
   const participants = new OnboardingParticipants({
-    clients: handles.onboardingClients,
-    identities: handles.clientIdentities,
+    clients: new ClientsOnboardingClients(handles.onboardingStandings),
+    identities: new ClientsClientIdentities(handles.clientIdentities),
   });
   const onboardings = new PostgresClientOnboardings({
     database: handles.database,
@@ -296,13 +305,13 @@ export function composeClientOnboardingFeature(
   });
   const reviews = new PostgresOnboardingReviews({
     database: handles.database,
-    reviewStampWriter: handles.reviewStampWriter,
+    reviewStamps,
     coachingSeedWriter: handles.seedCoaching,
   });
   const reviewPorts = { participants, onboardings, reviews, incidents };
   const reviewReadPorts = {
     ...reviewPorts,
-    stamps: handles.onboardingReviewStamps,
+    stamps: reviewStamps,
   };
 
   return {
@@ -334,7 +343,7 @@ export function composeClientOnboardingFeature(
         measurementIds: handles.measurementIds,
         onboardings,
         participants,
-        stamps: handles.onboardingSubmissionStamps,
+        stamps: new ClientsSubmissionStamps(handles.onboardingSubmissions),
         settings: handles.clientSettings,
       }),
     }),

@@ -11,6 +11,7 @@ const NOTIFICATION_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
 const ARRIVED_AT = new Date("2026-10-15T09:00:00.000Z");
 const READ_AT = new Date("2026-10-15T10:00:00.000Z");
 const SINCE = new Date("2026-07-17T09:00:00.000Z");
+const NOW = new Date("2026-10-15T11:00:00.000Z");
 const FACTS = {
   checkInId: "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a",
   startsAt: "2026-10-17T15:00:00.000Z",
@@ -48,6 +49,7 @@ describe("PostgresNotificationInbox#latestFor", () => {
     const notifications = await inbox.latestFor({
       recipient: { party: "coach" },
       since: SINCE,
+      at: NOW,
       limit: 30,
     });
 
@@ -75,6 +77,7 @@ describe("PostgresNotificationInbox#latestFor", () => {
     const [notification] = await inbox.latestFor({
       recipient: { party: "client", clientId: CLIENT_ID },
       since: SINCE,
+      at: NOW,
       limit: 30,
     });
 
@@ -95,6 +98,7 @@ describe("PostgresNotificationInbox#latestFor", () => {
     await inbox.latestFor({
       recipient: { party: "coach" },
       since: SINCE,
+      at: NOW,
       limit: 30,
     });
 
@@ -113,6 +117,7 @@ describe("PostgresNotificationInbox#latestFor", () => {
     const latest = inbox.latestFor({
       recipient: { party: "coach" },
       since: SINCE,
+      at: NOW,
       limit: 30,
     });
 
@@ -131,6 +136,7 @@ describe("PostgresNotificationInbox#unreadCountFor", () => {
     const unread = await inbox.unreadCountFor({
       recipient: { party: "client", clientId: CLIENT_ID },
       since: SINCE,
+      at: NOW,
     });
 
     // assert

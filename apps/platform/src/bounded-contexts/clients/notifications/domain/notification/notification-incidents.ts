@@ -5,8 +5,4 @@ export interface NotificationIncidents {
     party: NotificationParty;
     error: unknown;
   }): void;
-  notificationExpiriesFailed(incident: {
-    party: NotificationParty;
-    error: unknown;
-  }): void;
 }

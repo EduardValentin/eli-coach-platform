@@ -1,7 +1,7 @@
 import { Account, type AccountRole, type AccountSnapshot } from "./account";
 import type { AccountIds } from "./account-ids";
 import type { Accounts } from "./accounts";
-import type { InvitationAcceptance } from "./invitation-acceptance";
+import type { AccountInvitationGate } from "./account-invitation-gate";
 
 export type ProvisionAccountResult =
   | { outcome: "active"; account: AccountSnapshot }
@@ -12,7 +12,7 @@ type ProvisionAccountUseCaseOptions = {
   accounts: Accounts;
   ids: AccountIds;
   bootstrapCoachAuthSubjectId?: string;
-  invitationAcceptance: InvitationAcceptance;
+  invitationGate: Pick<AccountInvitationGate, "admit">;
 };
 
 function toProvisioningResult(account: Account): ProvisionAccountResult {
@@ -52,11 +52,7 @@ export class ProvisionAccountUseCase {
       return "COACH";
     }
 
-    const acceptance = await this.options.invitationAcceptance.accept({
-      authSubjectId,
-    });
-
-    return acceptance === "accepted" ? "CLIENT" : null;
+    return this.options.invitationGate.admit(authSubjectId);
   }
 
   private async insert(account: Account): Promise<ProvisionAccountResult> {

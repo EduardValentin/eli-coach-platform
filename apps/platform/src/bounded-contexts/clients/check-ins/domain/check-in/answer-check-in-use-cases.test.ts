@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
+import type { ClientReach, ClientReachReading } from "./client-reach";
 
 import { ApproveCheckInUseCase } from "./approve-check-in-use-case";
 import { CancelCheckInUseCase } from "./cancel-check-in-use-case";
@@ -89,8 +86,6 @@ function createPorts(options?: {
       ),
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
-    listUnansweredStartedWithin: vi.fn(),
-    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi
       .fn()
       .mockResolvedValue(
@@ -158,6 +153,7 @@ function createPorts(options?: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
+      scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
   };

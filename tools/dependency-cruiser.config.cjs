@@ -20,8 +20,6 @@ function flatOrInConceptFolder(patterns) {
 const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared)/";
 const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/adapters/outbound/persistence/schema\\.server\\.ts$`;
 const REQUEST_KEYS = "adapters/inbound/http/[a-z-]*context\\.server\\.ts$";
-// Temporary until Task 14 publishes the portal standing through clients' public/.
-const CLIENT_PORTAL_STANDING_GUARD = `${FEATURES}clients/adapters/inbound/http/require-client-portal-standing\\.server\\.ts$`;
 const COMPONENT_COMPOSITION = `${FEATURES}${COMPONENT}/composition\\.server\\.ts$`;
 const BOUNDED_CONTEXT_COMPOSITION = `${FEATURES}composition\\.server\\.ts$`;
 const BOUNDED_CONTEXT_REQUEST_CONTEXT = `${FEATURES}public/request-context\\.ts$`;
@@ -150,7 +148,7 @@ function featureOrderRule(feature, position) {
 function surfaceToFeatureRule(surface, slice) {
   return {
     name: `surface-${surface}-to-feature`,
-    comment: `R2: surfaces/${surface} reaches a bounded context only through a component's ui/${slice}/, ui/shared/ and public/, the bounded context's public/ (request-context keys included) and routes.ts, and, temporarily, the client portal standing guard until Task 14.`,
+    comment: `R2: surfaces/${surface} reaches a bounded context only through a component's ui/${slice}/, ui/shared/ and public/, the bounded context's public/ (request-context keys included) and routes.ts.`,
     severity: "error",
     from: { path: `${SURFACES}${surface}/` },
     to: {
@@ -160,7 +158,6 @@ function surfaceToFeatureRule(surface, slice) {
         `${FEATURES}${COMPONENT}/public/`,
         BOUNDED_CONTEXT_PUBLIC,
         `${FEATURES}routes\\.ts$`,
-        CLIENT_PORTAL_STANDING_GUARD,
       ],
     },
   };

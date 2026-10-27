@@ -1,11 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientIdentity,
-  ClientReach,
-  ClientReachReading,
-} from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities, ClientIdentity } from "../client-identities";
+import type { ClientReach, ClientReachReading } from "../client-reach";
 import { ClientSettings, type ClientSettingsSource } from "../client-settings";
 import type {
   ClientMeasurementsSource,

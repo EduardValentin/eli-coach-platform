@@ -1,4 +1,4 @@
-import type { ClientIdentities } from "~/bounded-contexts/clients/clients/domain/client";
+import type { ClientIdentities } from "./client-identities";
 import type { Clock } from "../clock";
 
 import type { CheckIns } from "./check-ins";

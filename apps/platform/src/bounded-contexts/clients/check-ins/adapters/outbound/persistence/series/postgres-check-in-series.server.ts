@@ -43,6 +43,11 @@ type SeriesWidening = Parameters<CheckInSeriesRecords["widen"]>[0];
 type SeriesChange = Parameters<CheckInSeriesRecords["change"]>[0];
 type SeriesStop = Parameters<CheckInSeriesRecords["stop"]>[0];
 
+type CancelledWeeks = {
+  cancelledIds: string[];
+  freedReservationIds: string[];
+};
+
 type FutureWeeks = { seriesId: string; startsFrom: Date; at: Date };
 
 const UNIQUE_VIOLATION_CODE = "23505";
@@ -135,11 +140,11 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
 
     return {
       status: "changed",
-      freedReservationIds: await this.cancelFutureWeeks({
+      ...(await this.cancelFutureWeeks({
         seriesId: series.id,
         startsFrom: command.startsFrom,
         at,
-      }),
+      })),
     };
   }
 
@@ -174,11 +179,7 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
 
     return {
       status: "stopped",
-      freedReservationIds: await this.cancelFutureWeeks({
-        seriesId,
-        startsFrom: at,
-        at,
-      }),
+      ...(await this.cancelFutureWeeks({ seriesId, startsFrom: at, at })),
     };
   }
 
@@ -229,7 +230,7 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
     seriesId,
     startsFrom,
     at,
-  }: FutureWeeks): Promise<string[]> {
+  }: FutureWeeks): Promise<CancelledWeeks> {
     const cancelled = await reservationsHeldBy(
       this.executor,
       and(
@@ -251,7 +252,10 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
         );
     }
 
-    return heldReservationIdsOf(cancelled);
+    return {
+      cancelledIds: cancelled.map(({ id }) => id),
+      freedReservationIds: heldReservationIdsOf(cancelled),
+    };
   }
 
   private isActive(seriesId: string): SQL | undefined {

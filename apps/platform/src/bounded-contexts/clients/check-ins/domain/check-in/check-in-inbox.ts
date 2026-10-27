@@ -1,3 +1,4 @@
+import type { CheckInLapseSnapshot, CheckInSnapshot } from "./check-in";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
 import type {
   CheckInNotice,
@@ -17,6 +18,17 @@ export type CheckInClashesNotice = {
   earliest: { id: string; startsAt: Date };
 };
 
+export type CheckInExpiry = {
+  checkIn: CheckInSnapshot;
+  lapse: CheckInLapseSnapshot;
+  client: CheckInNotice["client"];
+};
+
+export type CheckInExpiryChange = {
+  withdrawn: readonly string[];
+  upcoming: readonly CheckInExpiry[];
+};
+
 export interface CheckInInbox {
   checkInEvent(
     event: CheckInNotification,
@@ -27,4 +39,5 @@ export interface CheckInInbox {
     notice: CheckInSeriesInboxNotice,
   ): Promise<void>;
   clashesAdded(notice: CheckInClashesNotice): Promise<void>;
+  scheduleExpiries(change: CheckInExpiryChange): Promise<void>;
 }

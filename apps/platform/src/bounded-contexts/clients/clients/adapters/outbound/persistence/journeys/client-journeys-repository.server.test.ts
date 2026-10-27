@@ -1,4 +1,6 @@
 import type { DatabaseClient } from "~/shared/database";
+import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
 import { PostgresClientJourneys } from "./client-journeys-repository.server";
@@ -183,18 +185,53 @@ describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
   });
 });
 
-describe("PostgresClientJourneys#record", () => {
-  it("writes the full set of review stamps of the client", async () => {
+describe("PostgresClientJourneys#recordReviewStamp", () => {
+  it("writes the full set of review stamps on the client's row", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
     const journeys = new PostgresClientJourneys(database.client);
 
     // act
-    await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
+    await journeys.recordReviewStamp({
+      clientId: CLIENT_ID,
+      stamps: REQUESTED_STAMPS,
+    });
 
     // assert
     expect(database.updates).toEqual([REQUESTED_STAMPS]);
-    expect(database.filters).toHaveLength(1);
+    const filter = new PgDialect().sqlToQuery(database.filters[0] as SQL);
+    expect(filter.sql).toBe('"app"."clients"."id" = $1');
+    expect(filter.params).toEqual([CLIENT_ID]);
+  });
+
+  it("writes the same row when the same stamps are written twice", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const journeys = new PostgresClientJourneys(database.client);
+    const input = { clientId: CLIENT_ID, stamps: REQUESTED_STAMPS };
+
+    // act
+    await journeys.recordReviewStamp(input);
+    await journeys.recordReviewStamp(input);
+
+    // assert
+    expect(database.updates[1]).toEqual(database.updates[0]);
+    expect(database.filters[1]).toEqual(database.filters[0]);
+  });
+
+  it("clears a stamp the review no longer carries", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const journeys = new PostgresClientJourneys(database.client);
+
+    // act
+    await journeys.recordReviewStamp({
+      clientId: CLIENT_ID,
+      stamps: NO_REVIEW_STAMPS,
+    });
+
+    // assert
+    expect(database.updates).toEqual([NO_REVIEW_STAMPS]);
   });
 });
 

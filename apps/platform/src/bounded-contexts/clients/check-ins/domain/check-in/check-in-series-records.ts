@@ -3,11 +3,11 @@ import type { CheckInSeries, CheckInSeriesSnapshot } from "./check-in-series";
 import type { HeldCheckIn } from "./check-ins";
 
 export type CheckInSeriesChange =
-  | { status: "changed"; freedReservationIds: string[] }
+  | { status: "changed"; cancelledIds: string[]; freedReservationIds: string[] }
   | { status: "changed_meanwhile" };
 
 export type CheckInSeriesStop =
-  | { status: "stopped"; freedReservationIds: string[] }
+  | { status: "stopped"; cancelledIds: string[]; freedReservationIds: string[] }
   | { status: "changed_meanwhile" };
 
 export interface CheckInSeriesRecords {
