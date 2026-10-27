@@ -1,117 +1,128 @@
 {
-  "apps/platform/src/features/client-resources/data/schema.server.ts": [
+  "apps/platform/src/bounded-contexts/clients/client-resources/data/schema.server.ts": [
     "feature-schema-imports-schemas-only"
   ],
-  "apps/platform/src/features/client-resources/public/reaches-coaching-sales.ts": [
+  "apps/platform/src/bounded-contexts/clients/client-resources/public/reaches-coaching-sales.ts": [
     "feature-order-client-resources"
   ],
-  "apps/platform/src/features/coaching-sales/data/schema.server.ts": [
-    "feature-schema-foreign-key"
-  ],
-  "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
-    "clerk-confined",
-    "not-to-unresolvable"
-  ],
-  "apps/platform/src/features/nutrition-library/ui/coach/foods/react-dnd-confined.tsx": [
+  "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/foods/react-dnd-confined.tsx": [
     "not-to-unresolvable",
     "react-dnd-confined"
   ],
-  "apps/platform/src/features/nutrition-library/ui/coach/recipes/recipe-builder.tsx": [
+  "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/recipes/recipe-builder.tsx": [
     "not-to-unresolvable"
   ],
-  "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/data/schema.server.ts": [
+    "feature-schema-foreign-key"
+  ],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/ui/public/clerk-confined.tsx": [
+    "clerk-confined",
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/api/catalog/deeper/not-a-route.ts": [
     "feature-api-to-data"
   ],
-  "apps/platform/src/features/store/api/catalog/thin.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/catalog/thin.ts": [
     "feature-api-to-data",
     "route-thinness"
   ],
-  "apps/platform/src/features/store/api/cycle-a.ts": ["no-circular"],
-  "apps/platform/src/features/store/api/feature-api-never-imports-ui.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/cycle-a.ts": [
+    "no-circular"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/api/feature-api-never-imports-ui.ts": [
     "feature-api-never-imports-ui"
   ],
-  "apps/platform/src/features/store/api/feature-internals.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/feature-internals.ts": [
     "feature-api-to-data",
     "feature-internals",
     "route-thinness",
     "feature-order-store"
   ],
-  "apps/platform/src/features/store/api/features-never-reach-server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/features-never-reach-server.ts": [
     "features-never-reach-server",
     "route-thinness"
   ],
-  "apps/platform/src/features/store/api/imports-data.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/imports-data.ts": [
     "feature-api-to-data",
     "route-thinness"
   ],
-  "apps/platform/src/features/store/api/no-non-package-json.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/no-non-package-json.ts": [
     "no-non-package-json"
   ],
-  "apps/platform/src/features/store/api/no-orphans.ts": ["no-orphans"],
-  "apps/platform/src/features/store/api/no-production-import-of-tests.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/no-orphans.ts": [
+    "no-orphans"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/api/no-production-import-of-tests.ts": [
     "no-production-import-of-tests"
   ],
-  "apps/platform/src/features/store/api/not-to-dev-dep.ts": ["not-to-dev-dep"],
-  "apps/platform/src/features/store/api/not-to-unresolvable.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/not-to-dev-dep.ts": [
+    "not-to-dev-dep"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/api/not-to-unresolvable.ts": [
     "not-to-unresolvable"
   ],
-  "apps/platform/src/features/store/api/root-registry.ts": ["root-registry"],
-  "apps/platform/src/features/store/api/thin.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/root-registry.ts": [
+    "root-registry"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/api/thin.ts": [
     "config-runtime-readers",
     "route-thinness",
     "workspace-by-name-app"
   ],
-  "apps/platform/src/features/store/api/workspace-by-name-app.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/api/workspace-by-name-app.ts": [
     "route-thinness-domain",
     "workspace-by-name-app"
   ],
-  "apps/platform/src/features/store/data/imports-composition.server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/data/imports-composition.server.ts": [
     "feature-server-private"
   ],
-  "apps/platform/src/features/store/data/reaches-later-schema.server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/data/reaches-later-schema.server.ts": [
     "feature-internals",
     "feature-order-store"
   ],
-  "apps/platform/src/features/store/email/design-system-browser-only.server.tsx": [
+  "apps/platform/src/bounded-contexts/sales/store/email/design-system-browser-only.server.tsx": [
     "design-system-browser-only"
   ],
-  "apps/platform/src/features/store/public/design-system-browser-only.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/public/design-system-browser-only.ts": [
     "design-system-browser-only"
   ],
-  "apps/platform/src/features/store/routes.ts": ["feature-server-private"],
-  "apps/platform/src/features/store/server/guards/constructs.server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/public/reaches-bounded-context-public.ts": [],
+  "apps/platform/src/bounded-contexts/sales/store/routes.ts": [
+    "feature-server-private"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/server/guards/constructs.server.ts": [
     "guards-construct-nothing"
   ],
-  "apps/platform/src/features/store/server/store-composition.server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/server/store-composition.server.ts": [
     "config-runtime-readers",
     "workspace-by-name-app"
   ],
-  "apps/platform/src/features/store/ui/public/browser-half-server-loader.server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half-server-loader.server.ts": [
     "browser-half"
   ],
-  "apps/platform/src/features/store/ui/public/browser-half.tsx": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half.tsx": [
     "browser-half"
   ],
-  "apps/platform/src/features/store/ui/public/catalog/thin-page.tsx": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/catalog/thin-page.tsx": [
     "browser-half",
     "route-thinness"
   ],
-  "apps/platform/src/features/store/ui/public/composition-root.tsx": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/composition-root.tsx": [
     "features-never-reach-server"
   ],
-  "apps/platform/src/features/store/ui/public/design-system-in-browser-ui.tsx": [],
-  "apps/platform/src/features/store/ui/public/loader.server.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/design-system-in-browser-ui.tsx": [],
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/loader.server.ts": [
     "browser-half",
     "feature-server-private"
   ],
-  "apps/platform/src/features/store/ui/public/surface-import.tsx": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/surface-import.tsx": [
     "surface-import"
   ],
-  "apps/platform/src/features/store/ui/public/thin-page.tsx": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/public/thin-page.tsx": [
     "browser-half",
     "route-thinness"
   ],
-  "apps/platform/src/features/store/ui/shared/feature-shared-ui-never-imports-actor-ui.ts": [
+  "apps/platform/src/bounded-contexts/sales/store/ui/shared/feature-shared-ui-never-imports-actor-ui.ts": [
     "feature-shared-ui-never-imports-actor-ui"
   ],
   "apps/platform/src/root-error-page.tsx": ["composition-root"],

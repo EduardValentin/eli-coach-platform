@@ -20,16 +20,16 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 
 import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
 
-import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
-import { presentBundleCards } from "~/features/coaching-sales/public/bundle-cards";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
 import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
-} from "~/features/waitlist/ui/public/api-client";
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+} from "~/bounded-contexts/sales/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",

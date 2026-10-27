@@ -1,22 +1,22 @@
 import { index, relative } from "@react-router/dev/routes";
 
-import { COACH_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/public/paths";
-import { COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT } from "../../features/assessment-calls/public/paths";
+import { COACH_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/accounts/public/paths";
+import { COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT } from "../../bounded-contexts/scheduling/assessment-calls/public/paths";
 import {
   checkInsCoachJoinRoutes,
   checkInsCoachRoutes,
-} from "../../features/check-ins/routes";
-import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../features/client-resources/public/paths";
+} from "../../bounded-contexts/clients/check-ins/routes";
+import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../bounded-contexts/clients/client-resources/public/paths";
 import {
   COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
   COACH_CLIENTS_ROUTE_SEGMENT,
-} from "../../features/clients/public/paths";
-import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
-import { exerciseLibraryCoachRoutes } from "../../features/exercise-library/routes";
+} from "../../bounded-contexts/clients/clients/public/paths";
+import { coachScheduleCoachRoutes } from "../../bounded-contexts/scheduling/coach-schedule/routes";
+import { exerciseLibraryCoachRoutes } from "../../bounded-contexts/programs/exercise-library/routes";
 import {
   nutritionLibraryCoachBuilderRoutes,
   nutritionLibraryCoachRoutes,
-} from "../../features/nutrition-library/routes";
+} from "../../bounded-contexts/programs/nutrition-library/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 

@@ -12,12 +12,12 @@ import {
 import {
   COACH_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "~/features/accounts/public/paths";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
-import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
-import { useNotificationBell } from "~/features/notifications/ui/shared/notification-bell";
+} from "~/bounded-contexts/access/accounts/public/paths";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { describeCheckInNotification } from "~/bounded-contexts/clients/check-ins/ui/shared/bell/check-in-bell-copy";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
+import { useNotificationBell } from "~/bounded-contexts/clients/notifications/ui/shared/notification-bell";
 
 import {
   coachSurfaceLinksOf,

@@ -1,0 +1,89 @@
+import type { DatabaseClient } from "~/shared/database";
+import type { WaitlistConfig } from "@eli-coach-platform/config";
+import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bundle";
+import {
+  PRIVACY_POLICY_VERSION,
+  WAITLIST_MARKETING_CONSENT_VERSION,
+} from "@eli-coach-platform/content";
+import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import type { Clock } from "@eli-coach-platform/domain/shared";
+import {
+  GetWaitlistUseCase,
+  JoinWaitlistUseCase,
+  Waitlist,
+  type WaitlistConsentVersions,
+  type WaitlistIncidents,
+} from "@eli-coach-platform/domain/waitlist";
+import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+
+import { WaitlistController } from "~/bounded-contexts/sales/waitlist/api/waitlist-controller.server";
+import { PostgresWaitlistRepository } from "~/bounded-contexts/sales/waitlist/data/repository.server";
+import { createWaitlistConfirmation } from "~/bounded-contexts/sales/waitlist/email/create-waitlist-confirmation.server";
+
+export type WaitlistFeature = {
+  waitlist: WaitlistController;
+};
+
+type WaitlistComposition = {
+  feature: WaitlistFeature;
+  handles: { pricingEligibility: PricingEligibility };
+};
+
+type WaitlistFeatureHandles = {
+  botVerifier: BotVerifier;
+  clock: Clock;
+  contactEmail: string;
+  database: DatabaseClient;
+  emailSubaddresses: EmailSubaddressPolicy;
+  featureFlags: FeatureFlagReader;
+  incidents: WaitlistIncidents;
+  privacyEmail: string;
+  productEmail: ProductEmail;
+  waitlist: WaitlistConfig;
+};
+
+const WAITLIST_CONSENT_VERSIONS = {
+  marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
+  privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+} satisfies WaitlistConsentVersions;
+
+export function composeWaitlistFeature(
+  handles: WaitlistFeatureHandles,
+): WaitlistComposition {
+  const waitlist = Waitlist.configure({
+    offer: {
+      plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
+      campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
+    },
+  });
+  const waitlistEntries = new PostgresWaitlistRepository(handles.database);
+
+  return {
+    feature: {
+      waitlist: new WaitlistController({
+        botVerifier: handles.botVerifier,
+        getWaitlist: new GetWaitlistUseCase({
+          clock: handles.clock,
+          featureFlags: handles.featureFlags,
+          incidents: handles.incidents,
+          waitlist,
+          waitlistEntries,
+        }),
+        joinWaitlist: new JoinWaitlistUseCase({
+          confirmation: createWaitlistConfirmation(handles.productEmail, {
+            contactEmail: handles.contactEmail,
+            privacyEmail: handles.privacyEmail,
+          }),
+          consentVersions: WAITLIST_CONSENT_VERSIONS,
+          emailSubaddresses: handles.emailSubaddresses,
+          incidents: handles.incidents,
+          waitlist,
+          waitlistEntries,
+        }),
+      }),
+    },
+    handles: { pricingEligibility: waitlistEntries },
+  };
+}

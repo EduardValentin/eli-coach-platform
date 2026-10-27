@@ -6,12 +6,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
   sessionContext,
   type ResolvedSession,
-} from "~/features/accounts/server/guards/session-context.server";
-import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
-import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
-import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
+import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/waitlist-composition.server";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
 import {
   contextEntry,

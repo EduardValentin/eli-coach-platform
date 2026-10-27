@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { MotionConfig, motion, type Transition } from "motion/react";
@@ -10,10 +10,10 @@ import { buttonVariants } from "~/shared/design-system/primitives";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
-import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
+import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
-import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(

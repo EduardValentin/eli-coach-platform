@@ -7,14 +7,14 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
-import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";
+import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
 import {
   sessionContext,
   type ResolvedSession,
-} from "~/features/accounts/server/guards/session-context.server";
-import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
 
 import { middleware } from "./access-layout.server";
 

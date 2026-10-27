@@ -1,0 +1,169 @@
+import { joinBasePath } from "@eli-coach-platform/config";
+import type {
+  DownloadGrant,
+  DownloadGrantResolution,
+  ResolveDownloadGrantUseCase,
+} from "@eli-coach-platform/domain/download-grant";
+import type {
+  ProductAsset,
+  ProductAssetOpenResult,
+  ProductAssets,
+} from "@eli-coach-platform/domain/product";
+import {
+  createAttachmentResponse,
+  readFormDataRequestBody,
+} from "@eli-coach-platform/infrastructure/http/server";
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
+import { STORE_DOWNLOAD_PATH } from "~/bounded-contexts/sales/store/public/paths";
+import { storeDownloadRequestSchema } from "~/bounded-contexts/sales/store/public/store";
+
+import recoveryDocument from "./download-recovery.html?raw";
+
+type ZipDeliveryStream = {
+  create(grant: DownloadGrant): Promise<ProductAssetOpenResult>;
+};
+
+const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
+
+export class StoreDownloadController {
+  constructor(
+    private readonly resolveDownloadGrant: ResolveDownloadGrantUseCase,
+    private readonly assetStore: ProductAssets,
+    private readonly options: {
+      appBasePath: string;
+      zipDeliveryStream: ZipDeliveryStream;
+    },
+  ) {}
+
+  async download(request: Request): Promise<Response> {
+    const requestBody = await readFormDataRequestBody(request, {
+      maxBytes: MAX_DOWNLOAD_BODY_BYTES,
+    });
+
+    if (requestBody.status !== "valid") {
+      return createDownloadRecoveryResponse({
+        appBasePath: this.options.appBasePath,
+        heading: "This download request could not be processed",
+        message: "Return to the store and request your free resources again.",
+        status: requestBody.status === "too_large" ? 413 : 400,
+        title: "Download request unavailable",
+      });
+    }
+
+    const formData = requestBody.formData;
+    const parsedRequest = storeDownloadRequestSchema.safeParse({
+      token: formData.get("token"),
+    });
+
+    if (!parsedRequest.success) {
+      return createUnavailableResponse();
+    }
+
+    let resolution: DownloadGrantResolution;
+
+    try {
+      resolution = await this.resolveDownloadGrant.execute(
+        parsedRequest.data.token,
+      );
+    } catch {
+      return createTemporaryUnavailableResponse(this.options.appBasePath);
+    }
+
+    try {
+      if (resolution.status === "unavailable") {
+        return createUnavailableResponse();
+      }
+
+      const delivery = resolution.delivery;
+
+      switch (delivery.kind) {
+        case "empty":
+          return createUnavailableResponse();
+        case "single":
+          return await this.streamSingleAsset(delivery.asset);
+        case "bundle": {
+          const archive = await this.options.zipDeliveryStream.create(
+            resolution.grant,
+          );
+
+          if (archive.kind === "unavailable") {
+            return createUnavailableResponse();
+          }
+
+          return createAttachmentResponse(archive.bytes, {
+            filename: "eli-resources.zip",
+            mimeType: "application/zip",
+          });
+        }
+      }
+    } catch {
+      return createTemporaryUnavailableResponse(this.options.appBasePath);
+    }
+  }
+
+  private async streamSingleAsset(asset: ProductAsset): Promise<Response> {
+    const opened = await this.assetStore.openVerified(asset);
+
+    if (opened.kind === "unavailable") {
+      return createUnavailableResponse();
+    }
+
+    return createAttachmentResponse(opened.bytes, {
+      filename: asset.customerFilename,
+      mimeType: asset.mimeType,
+    });
+  }
+}
+
+function createUnavailableResponse(): Response {
+  return new Response(null, {
+    headers: {
+      "Cache-Control": "no-store",
+      Location: `${STORE_DOWNLOAD_PATH}?unavailable=1`,
+    },
+    status: 303,
+  });
+}
+
+function createTemporaryUnavailableResponse(appBasePath: string): Response {
+  return createDownloadRecoveryResponse({
+    appBasePath,
+    heading: "Downloads are temporarily unavailable",
+    message:
+      "Your link may still be active. Please wait a moment and try again.",
+    status: 503,
+    title: "Downloads temporarily unavailable",
+  });
+}
+
+function createDownloadRecoveryResponse(options: {
+  appBasePath: string;
+  heading: string;
+  message: string;
+  status: number;
+  title: string;
+}): Response {
+  const storeUrl = joinBasePath(options.appBasePath, STORE_PATH);
+  const responseBody = recoveryDocument
+    .replaceAll("{{TITLE}}", escapeHtml(options.title))
+    .replaceAll("{{HEADING}}", escapeHtml(options.heading))
+    .replaceAll("{{MESSAGE}}", escapeHtml(options.message))
+    .replaceAll("{{STORE_URL}}", escapeHtml(storeUrl));
+
+  return new Response(responseBody, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/html; charset=utf-8",
+    },
+    status: options.status,
+  });
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}

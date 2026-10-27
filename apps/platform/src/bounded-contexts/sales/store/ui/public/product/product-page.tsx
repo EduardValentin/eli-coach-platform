@@ -1,0 +1,144 @@
+import { Button, Card } from "~/shared/design-system/primitives";
+import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
+import {
+  Link,
+  type MetaFunction,
+  useLoaderData,
+  type LoaderFunctionArgs,
+} from "react-router";
+
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
+import { storeContext } from "~/bounded-contexts/sales/store/server/guards/store-context.server";
+import { storeProductSchema } from "~/bounded-contexts/sales/store/public/store";
+
+import { useStoreCart } from "../cart/cart-provider";
+
+export async function loader({ context, params }: LoaderFunctionArgs) {
+  if (!params.slug) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  const response = await context
+    .get(storeContext)
+    .catalog.getPublishedProductBySlug(params.slug);
+
+  if (!response.ok) {
+    throw response;
+  }
+
+  return storeProductSchema.parse(await response.json());
+}
+
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
+  if (!loaderData) {
+    return [
+      { title: "Free Resource | Evoa" },
+      {
+        name: "description",
+        content: "Free workout, nutrition, and wellbeing resources.",
+      },
+    ];
+  }
+
+  return [
+    { title: `${loaderData.title} | Free Resources | Evoa` },
+    { name: "description", content: loaderData.cardSummary },
+  ];
+};
+
+export default function ProductDetailsRoute() {
+  const product = useLoaderData<typeof loader>();
+  const addProduct = useStoreCart((cart) => cart.addProduct);
+  const isInCart = useStoreCart((cart) =>
+    cart.productSlugs.includes(product.slug),
+  );
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
+
+  return (
+    <article className="mx-auto w-full max-w-6xl px-6 pb-24 pt-4">
+      <Link
+        className="-ml-2 mb-12 inline-flex min-h-11 items-center gap-2 px-2 text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary"
+        to={STORE_PATH}
+      >
+        <ArrowLeft aria-hidden="true" size={16} />
+        Back to Store
+      </Link>
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
+        <div className="aspect-[4/5] overflow-hidden rounded-card bg-surface-subtle shadow-raised sm:aspect-square lg:aspect-[4/5]">
+          <img
+            alt={product.cover.alt}
+            className="size-full object-cover"
+            src={product.cover.url}
+          />
+        </div>
+        <div className="flex flex-col justify-center">
+          <div className="mb-6 flex flex-wrap gap-2">
+            {product.types.map((type) => (
+              <span
+                className="rounded-tile bg-brand-secondary-soft px-3 py-1.5 text-label uppercase text-brand-secondary"
+                key={type.slug}
+              >
+                {type.label}
+              </span>
+            ))}
+            {product.goals.map((goal) => (
+              <span
+                className="rounded-tile bg-surface-subtle px-3 py-1.5 text-label uppercase text-copy-muted"
+                key={goal.slug}
+              >
+                {goal.label}
+              </span>
+            ))}
+          </div>
+          <h1 className="font-heading text-4xl leading-tight tracking-tight text-text-primary lg:text-5xl">
+            {product.title}
+          </h1>
+          <div aria-hidden="true" className="my-8 h-1 w-16 bg-border-subtle" />
+          <p className="text-lg leading-relaxed text-text-secondary">
+            {product.detailDescription}
+          </p>
+          <Card className="my-10 p-6">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-primary">
+              What&apos;s included:
+            </h2>
+            <ul className="grid gap-4">
+              {product.includedItems.map((item) => (
+                <li
+                  className="flex items-start gap-3 text-text-secondary"
+                  key={item}
+                >
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0 text-brand-secondary"
+                    size={20}
+                  />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Button
+            aria-label={
+              isInCart ? "Added to your cart" : `Get ${product.title} for free`
+            }
+            onClick={(event) => {
+              addProduct(product.slug);
+              openCartFrom(event.currentTarget);
+            }}
+            elevation="raised"
+            size="lg"
+            textSize="lg"
+            variant="secondary"
+            width="full"
+          >
+            <Download aria-hidden="true" size={21} />
+            {isInCart ? "Added to your cart" : "Get it for Free"}
+          </Button>
+          <p className="mt-5 text-center text-sm text-text-secondary">
+            We&apos;ll send a private seven-day download link to your email.
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}

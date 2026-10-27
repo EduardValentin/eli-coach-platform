@@ -22,26 +22,26 @@ import {
 import {
   clientLoader as seriesPreviewLoader,
   shouldRevalidate as shouldRevalidateSeriesPreview,
-} from "~/features/check-ins/api/coach/series-preview";
+} from "~/bounded-contexts/clients/check-ins/api/coach/series-preview";
 import type {
   CheckInScheduling,
   CoachClientSeriesPanel,
-} from "~/features/check-ins/public/check-ins";
-import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
+} from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import { CHECK_INS_API_PATHS } from "~/bounded-contexts/clients/check-ins/public/paths";
 import type {
   OnboardingReviewView,
   SubmittedReview,
-} from "~/features/client-onboarding/public/onboarding-review";
-import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
-import type { MeasurementRow } from "~/features/client-profile/public/measurements";
-import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
-import type { CoachClient } from "~/features/clients/public/coach-clients";
+} from "~/bounded-contexts/clients/client-profile/public/onboarding-review";
+import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
+import type { MeasurementRow } from "~/bounded-contexts/clients/client-profile/public/measurements";
+import { coachClientResourcesPath } from "~/bounded-contexts/clients/client-resources/public/paths";
+import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
 import {
   CLIENTS_API_PATHS,
   COACH_CLIENTS_PATH,
   coachClientPath,
-} from "~/features/clients/public/paths";
-import type { ClientSubscription } from "~/features/coaching-sales/public/client-subscription";
+} from "~/bounded-contexts/clients/clients/public/paths";
+import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import { frameworkModeLoader } from "~/server/test-support/framework-mode-action";
 
 import CoachClientRoute, { ErrorBoundary } from "./client";

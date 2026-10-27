@@ -1,13 +1,13 @@
 import { index, relative } from "@react-router/dev/routes";
 
-import { accountsDeadEndRoutes } from "../../features/accounts/routes";
+import { SIGN_IN_FAILED_ROUTE_SEGMENT } from "../../bounded-contexts/access/accounts/public/paths";
 import {
   assessmentCallsBookingRoutes,
   assessmentCallsJoinRoutes,
-} from "../../features/assessment-calls/routes";
-import { INVITATION_ROUTE_SEGMENT } from "../../features/clients/public/paths";
-import { coachingSalesPublicRoutes } from "../../features/coaching-sales/routes";
-import { storePublicRoutes } from "../../features/store/routes";
+} from "../../bounded-contexts/scheduling/assessment-calls/routes";
+import { INVITATION_ROUTE_SEGMENT } from "../../bounded-contexts/clients/clients/public/paths";
+import { coachingSalesPublicRoutes } from "../../bounded-contexts/sales/coaching-sales/routes";
+import { storePublicRoutes } from "../../bounded-contexts/sales/store/routes";
 
 import { PRICING_PATH } from "./paths";
 
@@ -24,7 +24,7 @@ export const publicSiteRoutes = [
     ...coachingSalesPublicRoutes,
     ...storePublicRoutes,
   ]),
-  ...accountsDeadEndRoutes,
+  route(SIGN_IN_FAILED_ROUTE_SEGMENT, "./pages/sign-in-failed.tsx"),
   route(INVITATION_ROUTE_SEGMENT, "./pages/invitation.tsx"),
   ...assessmentCallsJoinRoutes,
 ];

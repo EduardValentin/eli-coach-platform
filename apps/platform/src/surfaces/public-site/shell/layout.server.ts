@@ -2,15 +2,15 @@ import { buildRedirectPath } from "@eli-coach-platform/config";
 import type { LoaderFunctionArgs } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import type { PublicSessionState } from "~/features/accounts/public/account";
-import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import { readClientPortalStanding } from "~/features/clients/server/guards/require-client-portal-standing.server";
-import { STORE_PATH } from "~/features/store/public/paths";
+import type { PublicSessionState } from "~/bounded-contexts/access/accounts/public/account";
+import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import { readClientPortalStanding } from "~/bounded-contexts/clients/clients/server/guards/require-client-portal-standing.server";
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import {
   presentWaitlist,
   type WaitlistPresentation,
-} from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
+} from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
 
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
 

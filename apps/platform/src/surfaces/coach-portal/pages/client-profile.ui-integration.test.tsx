@@ -25,15 +25,15 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as saveCoachProfile } from "~/features/client-profile/api/coach/coach-client-profile";
-import { clientAction as writeCoachAvatar } from "~/features/client-profile/api/coach/coach-client-avatar";
-import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
-import { clientAction as saveIdentity } from "~/features/clients/api/coach/coach-client-identity";
+import { clientAction as saveCoachProfile } from "~/bounded-contexts/clients/client-profile/api/coach/coach-client-profile";
+import { clientAction as writeCoachAvatar } from "~/bounded-contexts/clients/client-profile/api/coach/coach-client-avatar";
+import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
+import { clientAction as saveIdentity } from "~/bounded-contexts/clients/clients/api/coach/coach-client-identity";
 import {
   COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
   coachClientPath,
   coachClientProfilePath,
-} from "~/features/clients/public/paths";
+} from "~/bounded-contexts/clients/clients/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import CoachClientProfileRoute, { ErrorBoundary } from "./client-profile";

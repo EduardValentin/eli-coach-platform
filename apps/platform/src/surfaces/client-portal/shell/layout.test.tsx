@@ -21,8 +21,8 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: vi.fn(({ children }: PropsWithChildren) => children),
 }));
 
-import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
 
 import type { ClientShellPresentation } from "./client-identity-presentation";
 import ClientLayoutRoute, { meta } from "./layout";

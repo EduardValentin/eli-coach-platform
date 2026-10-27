@@ -24,7 +24,7 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 
 // The shell composes AuthNavActions, which renders Clerk's SignInButton /
 // SignOutButton. Those clone their child and wire an onClick into a live
@@ -39,13 +39,13 @@ vi.mock("@clerk/react-router", () => ({
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
 import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
-} from "~/features/waitlist/ui/public/api-client";
+} from "~/bounded-contexts/sales/waitlist/ui/public/api-client";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
 

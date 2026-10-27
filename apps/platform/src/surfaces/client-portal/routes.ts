@@ -1,16 +1,18 @@
 import { index, prefix, relative } from "@react-router/dev/routes";
 
-import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/public/paths";
+import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/accounts/public/paths";
 import {
   checkInsClientJoinRoutes,
   checkInsClientRoutes,
-} from "../../features/check-ins/routes";
-import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
-import { clientProfileClientRoutes } from "../../features/client-profile/routes";
-import { clientResourcesClientRoutes } from "../../features/client-resources/routes";
-import { clientsClientRoutes } from "../../features/clients/routes";
-import { CLIENT_SETTINGS_ROUTE_SEGMENT } from "../../features/coaching-sales/public/paths";
-import { coachingSalesClientRoutes } from "../../features/coaching-sales/routes";
+} from "../../bounded-contexts/clients/check-ins/routes";
+import {
+  clientOnboardingClientRoutes,
+  clientProfileClientRoutes,
+} from "../../bounded-contexts/clients/client-profile/routes";
+import { clientResourcesClientRoutes } from "../../bounded-contexts/clients/client-resources/routes";
+import { clientsClientRoutes } from "../../bounded-contexts/clients/clients/routes";
+import { CLIENT_SETTINGS_ROUTE_SEGMENT } from "../../bounded-contexts/sales/coaching-sales/public/paths";
+import { coachingSalesClientRoutes } from "../../bounded-contexts/sales/coaching-sales/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 

@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   ClientResourceView,
   CoachResourceListing,
-} from "~/features/client-resources/public/client-resources";
-import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
-import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import type { CoachClient } from "~/features/clients/public/coach-clients";
-import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+} from "~/bounded-contexts/clients/client-resources/public/client-resources";
+import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/server/client-resources-composition.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
+import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
 import {
   contextEntry,
   createRequestArgs,

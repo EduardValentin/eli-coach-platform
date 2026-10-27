@@ -6,12 +6,12 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
-import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";
+import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
 import {
   sessionContext,
   type ResolvedSession,
-} from "~/features/accounts/server/guards/session-context.server";
+} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 
 const { middleware } = await import("./access-layout.server");
 

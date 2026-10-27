@@ -1,0 +1,235 @@
+import { joinBasePath } from "@eli-coach-platform/config";
+import {
+  COACHING_BUNDLES,
+  type PriceTier,
+} from "@eli-coach-platform/domain/coaching-bundle";
+import {
+  withdrawalDeadline,
+  type ReadCheckoutConfirmationUseCase,
+  type StartCheckoutUseCase,
+} from "@eli-coach-platform/domain/coaching-subscription";
+import type {
+  OpenBundlePageUseCase,
+  ResolvePaymentLinkUseCase,
+} from "@eli-coach-platform/domain/payment-link";
+import type { Clock } from "@eli-coach-platform/domain/shared";
+import {
+  createBadRequestResponse,
+  readFormDataRequestBody,
+  readJsonRequestBody,
+} from "@eli-coach-platform/infrastructure/http/server";
+import {
+  data,
+  redirect,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
+
+import {
+  coachingBundleIdSchema,
+  presentBundleCards,
+  type CoachingBundleCard,
+} from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
+import { presentPaidConfirmation } from "~/bounded-contexts/sales/coaching-sales/public/checkout-confirmation";
+import {
+  bundlePageRequestSchema,
+  bundlePageSchema,
+  checkoutChoiceSchema,
+  checkoutConfirmationSchema,
+  checkoutSessionIdSchema,
+  paymentLinkTokenSchema,
+} from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
+import {
+  CHECKOUT_COMPLETE_PATH,
+  selectBundlePath,
+} from "~/bounded-contexts/sales/coaching-sales/public/paths";
+
+type CheckoutsControllerOptions = {
+  appBasePath: string;
+  clock: Clock;
+  openBundlePage: OpenBundlePageUseCase;
+  publicAppUrl: string;
+  readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
+  resolvePaymentLink: ResolvePaymentLinkUseCase;
+  startCheckout: StartCheckoutUseCase;
+};
+
+type PaymentLinkResolution = Awaited<
+  ReturnType<ResolvePaymentLinkUseCase["execute"]>
+>;
+
+type OpenPaymentLinkResolution = Exclude<
+  PaymentLinkResolution,
+  { status: "closed" }
+>;
+
+const BUNDLE_PAGE_REQUEST_MAX_BYTES = 1024;
+const CHECKOUT_FORM_MAX_BYTES = 4096;
+const CHECKOUT_SESSION_ID_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
+const SEE_OTHER = 303;
+const UNCACHED_PAGE_HEADERS = { "Cache-Control": "no-store" };
+const CONFIRMATION_PAGE_HEADERS = {
+  ...UNCACHED_PAGE_HEADERS,
+  "Referrer-Policy": "no-referrer",
+};
+
+export class CheckoutsController {
+  constructor(private readonly options: CheckoutsControllerOptions) {}
+
+  async loadBundlePageShell() {
+    const bundlePage = await this.options.openBundlePage.execute();
+
+    if (bundlePage.status === "closed") {
+      throw createNotFoundResponse();
+    }
+
+    return data(null, { headers: UNCACHED_PAGE_HEADERS });
+  }
+
+  async resolveBundlePage({ request }: ActionFunctionArgs): Promise<Response> {
+    const submission = bundlePageRequestSchema.safeParse(
+      await readJsonRequestBody(request, {
+        maxBytes: BUNDLE_PAGE_REQUEST_MAX_BYTES,
+      }),
+    );
+
+    if (!submission.success) {
+      return createBadRequestResponse("The payment link could not be read.");
+    }
+
+    const link = await this.options.resolvePaymentLink.execute(
+      submission.data.token,
+    );
+
+    if (link.status === "closed") {
+      return createNotFoundResponse();
+    }
+
+    return Response.json(this.presentBundlePage(link), {
+      headers: UNCACHED_PAGE_HEADERS,
+    });
+  }
+
+  loadPricingCards({ tier }: { tier: PriceTier }): CoachingBundleCard[] {
+    return presentBundleCards(COACHING_BUNDLES, tier);
+  }
+
+  async startCheckout({ request }: ActionFunctionArgs): Promise<Response> {
+    const body = await readFormDataRequestBody(request, {
+      maxBytes: CHECKOUT_FORM_MAX_BYTES,
+    });
+
+    if (body.status !== "valid") {
+      return createBadRequestResponse(
+        "The checkout request could not be read.",
+      );
+    }
+
+    const form = body.formData;
+    const token = paymentLinkTokenSchema.parse(form.get("token"));
+    const choice = checkoutChoiceSchema.safeParse({
+      bundleId: form.get("bundleId"),
+      startChoice: form.get("startChoice"),
+    });
+
+    if (!choice.success) {
+      return this.returnToBundlePage({
+        token,
+        bundle: coachingBundleIdSchema.safeParse(form.get("bundleId")).data,
+      });
+    }
+
+    const { bundleId, startChoice } = choice.data;
+    const checkout = await this.options.startCheckout.execute({
+      rawToken: token,
+      bundleId,
+      startChoice,
+      successUrl: `${this.publicUrl(CHECKOUT_COMPLETE_PATH)}?session=${CHECKOUT_SESSION_ID_PLACEHOLDER}`,
+      cancelUrl: this.publicUrl(
+        selectBundlePath({
+          payment: "cancelled",
+          bundle: bundleId,
+          start: startChoice,
+        }),
+      ),
+    });
+
+    if (checkout.status === "redirect") {
+      return redirect(checkout.url, SEE_OTHER);
+    }
+
+    if (checkout.status === "closed") {
+      return createNotFoundResponse();
+    }
+
+    return this.redirectInApp(selectBundlePath({ token }));
+  }
+
+  async loadConfirmation({ url }: LoaderFunctionArgs) {
+    const sessionId = checkoutSessionIdSchema.parse(
+      url.searchParams.get("session"),
+    );
+    const confirmation =
+      await this.options.readCheckoutConfirmation.execute(sessionId);
+
+    if (confirmation.status === "closed") {
+      throw createNotFoundResponse();
+    }
+
+    const page =
+      confirmation.status === "paid"
+        ? presentPaidConfirmation(confirmation)
+        : { state: "call-first" };
+
+    return data(checkoutConfirmationSchema.parse(page), {
+      headers: CONFIRMATION_PAGE_HEADERS,
+    });
+  }
+
+  private presentBundlePage(link: OpenPaymentLinkResolution) {
+    const page =
+      link.status === "valid"
+        ? {
+            state: "valid",
+            tier: link.tier,
+            cards: this.loadPricingCards({ tier: link.tier }),
+            waitingStartsOn: withdrawalDeadline(
+              this.options.clock.now(),
+            ).toISOString(),
+          }
+        : {
+            state: "call-first",
+            cards: this.loadPricingCards({ tier: "regular" }),
+          };
+
+    return bundlePageSchema.parse(page);
+  }
+
+  private async returnToBundlePage(query: {
+    token: string;
+    bundle?: string;
+  }): Promise<Response> {
+    const link = await this.options.resolvePaymentLink.execute(query.token);
+
+    if (link.status === "closed") {
+      return createNotFoundResponse();
+    }
+
+    return this.redirectInApp(selectBundlePath(query));
+  }
+
+  private redirectInApp(path: string): Response {
+    return redirect(path, SEE_OTHER);
+  }
+
+  private publicUrl(path: string): string {
+    return new URL(
+      joinBasePath(this.options.appBasePath, path),
+      this.options.publicAppUrl,
+    ).toString();
+  }
+}
+
+function createNotFoundResponse(): Response {
+  return new Response("Not Found", { status: 404 });
+}

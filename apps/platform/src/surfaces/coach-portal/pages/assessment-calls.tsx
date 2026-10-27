@@ -8,31 +8,31 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
 import {
   isEndedCall,
   LISTING_PARAMS,
   type ClassifiedCall,
-} from "~/features/assessment-calls/ui/coach/assessment-call-listing";
-import { AssessmentCallsSection } from "~/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section";
-import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
-import { ViewClientLink } from "~/features/clients/ui/coach/clients/view-client-link";
-import type { CallSalesState } from "~/features/coaching-sales/public/coaching-sales";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
-import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/call-sales/payment-link-action";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-call-listing";
+import { AssessmentCallsSection } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-calls/assessment-calls-section";
+import { useCoachClock } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/use-coach-clock";
+import { ViewClientLink } from "~/bounded-contexts/clients/clients/ui/coach/clients/view-client-link";
+import type { CallSalesState } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { CallSalesStateBadge } from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
+import { PaymentLinkAction } from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/payment-link-action";
 import {
   PRICING_DETAIL_LABEL,
   pricingTierLabel,
-} from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
+} from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/pricing-tier-label";
 import {
   matchesSalesFilter,
   SalesStatusFilter,
   SALES_STATUS_PARAM,
   useSalesFilterParam,
-} from "~/features/coaching-sales/ui/coach/call-sales/sales-status-filter";
+} from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/sales-status-filter";
 
-export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
+export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-calls-error-boundary";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   const listing = await context

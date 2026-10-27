@@ -3,7 +3,9 @@ const path = require("node:path");
 
 const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
 const APP = "^apps/platform/src/";
-const FEATURES = "^apps/platform/src/features/";
+const FEATURES = "^apps/platform/src/bounded-contexts/[^/]+/";
+const COMPONENT = "(?!public/)[^/]+";
+const BOUNDED_CONTEXT_PUBLIC = `${FEATURES}public/`;
 const SURFACES = "^apps/platform/src/surfaces/";
 const CONCEPT = "{concept}";
 
@@ -16,29 +18,30 @@ function flatOrInConceptFolder(patterns) {
 }
 
 const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared|server/guards)/";
-const FEATURE_SCHEMA = `${FEATURES}[^/]+/data/schema\\.server\\.ts$`;
+const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/data/schema\\.server\\.ts$`;
 const ROUTE_MODULES = flatOrInConceptFolder([
-  `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
-  `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
+  `${FEATURES}${COMPONENT}/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+  `${FEATURES}${COMPONENT}/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
   `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 
 const FEATURE_ORDER = [
-  "store",
+  "feature-flags",
+  "legal",
   "accounts",
-  "notifications",
-  "exercise-library",
-  "nutrition-library",
-  "waitlist",
   "coach-schedule",
   "assessment-calls",
   "clients",
   "client-profile",
   "client-resources",
-  "client-onboarding",
+  "notifications",
   "check-ins",
+  "exercise-library",
+  "nutrition-library",
+  "store",
+  "waitlist",
   "coaching-sales",
 ];
 
@@ -74,12 +77,24 @@ const DOMAIN_SLICE_ORDER = [
   "coaching-subscription",
 ];
 
-function requireEveryFolderOrdered({ directory, order, orderName }) {
-  const unordered = readdirSync(path.join(__dirname, "..", directory), {
+function foldersOf(directory) {
+  return readdirSync(path.join(__dirname, "..", directory), {
     withFileTypes: true,
   })
-    .filter((entry) => entry.isDirectory() && !order.includes(entry.name))
+    .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
+}
+
+function componentFoldersOf(directory) {
+  return foldersOf(directory).flatMap((boundedContext) =>
+    foldersOf(path.join(directory, boundedContext)).filter(
+      (folder) => folder !== "public",
+    ),
+  );
+}
+
+function requireEveryFolderOrdered({ directory, folders, order, orderName }) {
+  const unordered = folders.filter((folder) => !order.includes(folder));
 
   if (unordered.length > 0) {
     throw new Error(
@@ -89,12 +104,14 @@ function requireEveryFolderOrdered({ directory, order, orderName }) {
 }
 
 requireEveryFolderOrdered({
-  directory: "apps/platform/src/features",
+  directory: "apps/platform/src/bounded-contexts",
+  folders: componentFoldersOf("apps/platform/src/bounded-contexts"),
   order: FEATURE_ORDER,
   orderName: "FEATURE_ORDER",
 });
 requireEveryFolderOrdered({
   directory: "packages/domain/src",
+  folders: foldersOf("packages/domain/src"),
   order: DOMAIN_SLICE_ORDER,
   orderName: "DOMAIN_SLICE_ORDER",
 });
@@ -124,7 +141,10 @@ function featureOrderRule(feature, position) {
     from: { path: `${FEATURES}${feature}/`, pathNot: FEATURE_SCHEMA },
     to: {
       path: FEATURES,
-      pathNot: `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
+      pathNot: [
+        `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
+        BOUNDED_CONTEXT_PUBLIC,
+      ],
     },
   };
 }
@@ -138,9 +158,10 @@ function surfaceToFeatureRule(surface, slice) {
     to: {
       path: FEATURES,
       pathNot: [
-        `${FEATURES}[^/]+/${FEATURE_PUBLIC_FOLDERS}`,
-        `${FEATURES}[^/]+/ui/${slice}/`,
-        `${FEATURES}[^/]+/routes\\.ts$`,
+        `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
+        `${FEATURES}${COMPONENT}/ui/${slice}/`,
+        `${FEATURES}${COMPONENT}/routes\\.ts$`,
+        BOUNDED_CONTEXT_PUBLIC,
       ],
     },
   };
@@ -161,12 +182,12 @@ module.exports = {
         "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/.",
       severity: "error",
       from: {
-        path: `${FEATURES}([^/]+)/`,
+        path: `${FEATURES}(${COMPONENT})/`,
         pathNot: FEATURE_SCHEMA,
       },
       to: {
-        path: `${FEATURES}(?!$1/)[^/]+/`,
-        pathNot: `${FEATURES}[^/]+/${FEATURE_PUBLIC_FOLDERS}`,
+        path: `${FEATURES}(?!$1/)${COMPONENT}/`,
+        pathNot: `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
       },
     },
     {
@@ -174,10 +195,13 @@ module.exports = {
       comment:
         "R3 carve-out: data/schema.server.ts may import any feature's data/schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and nothing else private.",
       severity: "error",
-      from: { path: `${FEATURES}([^/]+)/data/schema\\.server\\.ts$` },
+      from: { path: `${FEATURES}(${COMPONENT})/data/schema\\.server\\.ts$` },
       to: {
-        path: `${FEATURES}(?!$1/)[^/]+/`,
-        pathNot: [`${FEATURES}[^/]+/${FEATURE_PUBLIC_FOLDERS}`, FEATURE_SCHEMA],
+        path: `${FEATURES}(?!$1/)${COMPONENT}/`,
+        pathNot: [
+          `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
+          FEATURE_SCHEMA,
+        ],
       },
     },
     {
@@ -185,8 +209,8 @@ module.exports = {
       comment:
         "A schema file sits outside FEATURE_ORDER, so another feature's data/schema.server.ts is the only thing of that feature it imports: not even its public folders.",
       severity: "error",
-      from: { path: `${FEATURES}([^/]+)/data/schema\\.server\\.ts$` },
-      to: { path: `${FEATURES}(?!$1/)[^/]+/${FEATURE_PUBLIC_FOLDERS}` },
+      from: { path: `${FEATURES}(${COMPONENT})/data/schema\\.server\\.ts$` },
+      to: { path: `${FEATURES}(?!$1/)${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}` },
     },
     ...FEATURE_ORDER.map(featureOrderRule),
     surfaceToFeatureRule("public-site", "public"),
@@ -265,7 +289,7 @@ module.exports = {
       comment:
         "Nothing in a feature outside server/ (api/, data/, email/, public/, ui/, routes.ts) imports its server/ outside guards/: composition and middleware are reachable only from the root and the container.",
       severity: "error",
-      from: { path: `${FEATURES}([^/]+)/(?!server/)` },
+      from: { path: `${FEATURES}(${COMPONENT})/(?!server/)` },
       to: { path: `${FEATURES}$1/server/(?!guards/)` },
     },
     {
@@ -299,14 +323,14 @@ module.exports = {
       severity: "error",
       from: {
         path: [
-          `${FEATURES}[^/]+/server/guards/`,
+          `${FEATURES}${COMPONENT}/server/guards/`,
           "^apps/platform/src/server/guards/",
         ],
       },
       to: {
         path: "^(apps/platform/src|packages)/",
         pathNot: [
-          `${FEATURES}[^/]+/(public|server/guards)/`,
+          `${FEATURES}${COMPONENT}/(public|server/guards)/`,
           "^apps/platform/src/server/guards/",
           "^packages/domain/src/",
           "^packages/config/src/(index|base-path)\\.ts$",
@@ -386,23 +410,23 @@ module.exports = {
       comment:
         "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",
       severity: "error",
-      from: { path: `${FEATURES}[^/]+/api/` },
-      to: { path: `${FEATURES}[^/]+/(data|email)/` },
+      from: { path: `${FEATURES}${COMPONENT}/api/` },
+      to: { path: `${FEATURES}${COMPONENT}/(data|email)/` },
     },
     {
       name: "feature-api-never-imports-ui",
       comment:
         "A feature's api/ never imports any feature's ui/: what a route module's clientAction shares with the browser half lives in public/ or a package's browser entry.",
       severity: "error",
-      from: { path: `${FEATURES}[^/]+/api/` },
-      to: { path: `${FEATURES}[^/]+/ui/` },
+      from: { path: `${FEATURES}${COMPONENT}/api/` },
+      to: { path: `${FEATURES}${COMPONENT}/ui/` },
     },
     {
       name: "feature-shared-ui-never-imports-actor-ui",
       comment:
         "A feature's ui/shared/ serves every actor UI of that feature, so it never imports the feature's own ui/public/, ui/client/ or ui/coach/.",
       severity: "error",
-      from: { path: `${FEATURES}([^/]+)/ui/shared/` },
+      from: { path: `${FEATURES}(${COMPONENT})/ui/shared/` },
       to: { path: `${FEATURES}$1/ui/(public|client|coach)/` },
     },
     {
@@ -431,8 +455,10 @@ module.exports = {
       comment:
         "R6: a feature's ui/** never imports its data/, api/ or email/ folders and reaches server/ only through guards/; a registered page's loader reads its feature key there, and the .server suffix keeps that key out of the client build.",
       severity: "error",
-      from: { path: `${FEATURES}[^/]+/ui/` },
-      to: { path: `${FEATURES}[^/]+/(data/|api/|email/|server/(?!guards/))` },
+      from: { path: `${FEATURES}${COMPONENT}/ui/` },
+      to: {
+        path: `${FEATURES}${COMPONENT}/(data/|api/|email/|server/(?!guards/))`,
+      },
     },
     {
       name: "design-system-browser-only",
@@ -440,10 +466,7 @@ module.exports = {
         "A feature's public/ is read by its server half, and a .server module never reaches a browser: neither imports the design system.",
       severity: "error",
       from: {
-        path: [
-          "^apps/platform/src/features/[^/]+/public/",
-          "\\.server\\.tsx?$",
-        ],
+        path: [`${FEATURES}${COMPONENT}/public/`, "\\.server\\.tsx?$"],
       },
       to: { path: "^apps/platform/src/shared/design-system/" },
     },
@@ -455,13 +478,13 @@ module.exports = {
       from: { path: ROUTE_MODULES },
       to: {
         path: [
-          `${FEATURES}[^/]+/(data|email)/`,
+          `${FEATURES}${COMPONENT}/(data|email)/`,
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
           "^packages/infrastructure/src/(?!(http|pwa)/)",
           "^packages/config/src/runtime\\.ts$",
           "^apps/platform/src/server/(?!guards/)",
-          `${FEATURES}[^/]+/server/(?!guards/)`,
+          `${FEATURES}${COMPONENT}/server/(?!guards/)`,
         ],
         dependencyTypesNot: ["type-only"],
       },

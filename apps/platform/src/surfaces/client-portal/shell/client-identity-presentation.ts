@@ -1,4 +1,4 @@
-import type { ClientIdentity } from "~/features/clients/public/client-journey";
+import type { ClientIdentity } from "~/bounded-contexts/clients/clients/public/client-journey";
 
 export type ClientShellPresentation = {
   displayName: string;

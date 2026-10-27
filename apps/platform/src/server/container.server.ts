@@ -40,46 +40,46 @@ import {
   createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
 import {
   composeAccountsFeature,
   type AccountsFeature,
-} from "~/features/accounts/server/accounts-composition.server";
-import { composeAssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
+} from "~/bounded-contexts/access/accounts/server/accounts-composition.server";
+import { composeAssessmentCallsFeature } from "~/bounded-contexts/scheduling/assessment-calls/server/assessment-calls-composition.server";
 import {
   composeCheckInsFeature,
   type CheckInsFeature,
-} from "~/features/check-ins/server/check-ins-composition.server";
+} from "~/bounded-contexts/clients/check-ins/server/check-ins-composition.server";
 import {
   composeClientOnboardingFeature,
   type ClientOnboardingFeature,
-} from "~/features/client-onboarding/server/client-onboarding-composition.server";
-import { composeClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
+} from "~/bounded-contexts/clients/client-profile/server/client-onboarding-composition.server";
+import { composeClientProfileFeature } from "~/bounded-contexts/clients/client-profile/server/client-profile-composition.server";
 import {
   composeClientResourcesFeature,
   type ClientResourcesFeature,
-} from "~/features/client-resources/server/client-resources-composition.server";
-import { composeClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { composeCoachScheduleFeature } from "~/features/coach-schedule/server/coach-schedule-composition.server";
-import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
+} from "~/bounded-contexts/clients/client-resources/server/client-resources-composition.server";
+import { composeClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
+import { composeCoachScheduleFeature } from "~/bounded-contexts/scheduling/coach-schedule/server/coach-schedule-composition.server";
+import { composeCoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/server/coaching-sales-composition.server";
 import {
   composeExerciseLibraryFeature,
   type ExerciseLibraryFeature,
-} from "~/features/exercise-library/server/exercise-library-composition.server";
+} from "~/bounded-contexts/programs/exercise-library/server/exercise-library-composition.server";
 import {
   composeNotificationInbox,
   composeNotificationsFeature,
   type NotificationsFeature,
-} from "~/features/notifications/server/notifications-composition.server";
+} from "~/bounded-contexts/clients/notifications/server/notifications-composition.server";
 import {
   composeNutritionLibraryFeature,
   type NutritionLibraryFeature,
-} from "~/features/nutrition-library/server/nutrition-library-composition.server";
+} from "~/bounded-contexts/programs/nutrition-library/server/nutrition-library-composition.server";
 import {
   composeStoreFeature,
   type StoreFeature,
-} from "~/features/store/server/store-composition.server";
-import { composeWaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
+} from "~/bounded-contexts/sales/store/server/store-composition.server";
+import { composeWaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/waitlist-composition.server";
 import { createPlatformDatabase } from "~/server/database.server";
 import {
   composeBrowserFeatureFlagOverrides,

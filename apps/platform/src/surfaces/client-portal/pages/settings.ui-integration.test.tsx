@@ -25,17 +25,17 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as saveUnitPreference } from "~/features/client-profile/api/client/unit-preference";
-import type { ClientSettingsView } from "~/features/client-profile/public/client-settings";
-import type { OwnClientProfileView } from "~/features/client-profile/public/own-client-profile";
-import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
-import { CLIENT_ENDED_PATH } from "~/features/clients/public/paths";
-import { clientAction as cancelSubscription } from "~/features/coaching-sales/api/client/subscription-cancellation";
-import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
+import { clientAction as saveUnitPreference } from "~/bounded-contexts/clients/client-profile/api/client/unit-preference";
+import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profile/public/client-settings";
+import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
+import { CLIENT_PROFILE_API_PATHS } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/clients/public/paths";
+import { clientAction as cancelSubscription } from "~/bounded-contexts/sales/coaching-sales/api/client/subscription-cancellation";
+import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import {
   CLIENT_SETTINGS_PATH,
   COACHING_SALES_API_PATHS,
-} from "~/features/coaching-sales/public/paths";
+} from "~/bounded-contexts/sales/coaching-sales/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import SettingsRoute from "./settings";

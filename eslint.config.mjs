@@ -71,8 +71,8 @@ export default [
   {
     files: [
       "apps/platform/src/surfaces/*/routes.ts",
-      "apps/platform/src/features/*/routes.ts",
-      "apps/platform/src/features/*/public/paths.ts",
+      "apps/platform/src/bounded-contexts/*/*/routes.ts",
+      "apps/platform/src/bounded-contexts/*/*/public/paths.ts",
     ],
     rules: {
       "no-restricted-imports": "off",
@@ -83,8 +83,8 @@ export default [
   // global is refused in every feature's ui/ and api/ and every surface.
   {
     files: [
-      "apps/platform/src/features/*/ui/**/*.{ts,tsx}",
-      "apps/platform/src/features/*/api/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/ui/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/api/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.{ts,tsx}",
     ],
     ignores: ["**/*.test.{ts,tsx}"],
@@ -99,12 +99,12 @@ export default [
   // XMLHttpRequest is refused here again.
   {
     files: [
-      "apps/platform/src/features/*/ui/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/ui/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.{ts,tsx}",
     ],
     ignores: [
       "**/*.test.{ts,tsx}",
-      "apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-autosave-requests.ts",
+      "apps/platform/src/bounded-contexts/clients/client-profile/ui/client/onboarding/draft-autosave-requests.ts",
     ],
     rules: {
       "no-restricted-globals": [
@@ -120,7 +120,7 @@ export default [
   },
   {
     files: [
-      "apps/platform/src/features/exercise-library/ui/coach/exercises/exercise-video-field.tsx",
+      "apps/platform/src/bounded-contexts/programs/exercise-library/ui/coach/exercises/exercise-video-field.tsx",
     ],
     rules: {
       "jsx-a11y/media-has-caption": "off",

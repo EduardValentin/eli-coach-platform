@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { AssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
-import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import type { AssessmentCallsFeature } from "~/bounded-contexts/scheduling/assessment-calls/server/assessment-calls-composition.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
+import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/server/check-ins-composition.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
 import {
   contextEntry,
   createRequestArgs,

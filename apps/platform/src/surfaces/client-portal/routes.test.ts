@@ -59,7 +59,7 @@ describe("client portal routes", () => {
         }),
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/client-profile\/ui\/client\/profile\/profile-page\.tsx$/,
+            /bounded-contexts\/clients\/client-profile\/ui\/client\/profile\/profile-page\.tsx$/,
           ),
           path: "client/profile",
         }),
@@ -107,7 +107,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/client-resources\/ui\/client\/resources\/resources-page\.tsx$/,
+            /bounded-contexts\/clients\/client-resources\/ui\/client\/resources\/resources-page\.tsx$/,
           ),
           path: "client/resources",
         }),
@@ -129,7 +129,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/coaching-sales\/ui\/client\/ended\/ended-page\.tsx$/,
+            /bounded-contexts\/sales\/coaching-sales\/ui\/client\/ended\/ended-page\.tsx$/,
           ),
           path: "client/ended",
         }),

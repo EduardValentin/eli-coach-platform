@@ -1,11 +1,11 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import type { ClientRoster } from "~/features/clients/public/coach-clients";
-import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+import type { ClientProfileFeature } from "~/bounded-contexts/clients/client-profile/server/client-profile-composition.server";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import type { ClientRoster } from "~/bounded-contexts/clients/clients/public/coach-clients";
+import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
 import {
   contextEntry,
   createRequestArgs,

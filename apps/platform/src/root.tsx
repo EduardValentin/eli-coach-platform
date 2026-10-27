@@ -26,11 +26,12 @@ import {
   isPortalRouteHandle,
   portalForPathname,
   type PortalRouteSegment,
-} from "~/features/accounts/public/paths";
+} from "~/bounded-contexts/access/accounts/public/paths";
 import {
   AccessDeniedPage,
   resolveAccessDeniedRecovery,
-} from "~/features/accounts/ui/shared/access-denied-page";
+} from "~/bounded-contexts/access/accounts/ui/shared/access-denied-page";
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 
 import { RootErrorPage } from "./root-error-page";
 import type { loader } from "./root.server";
@@ -160,7 +161,10 @@ export function ErrorBoundary() {
   // guard wrote.
   if (isRouteErrorResponse(error) && error.status === 403) {
     return (
-      <AccessDeniedPage recovery={resolveAccessDeniedRecovery(error.data)} />
+      <AccessDeniedPage
+        continuePath={STORE_PATH}
+        recovery={resolveAccessDeniedRecovery(error.data)}
+      />
     );
   }
 

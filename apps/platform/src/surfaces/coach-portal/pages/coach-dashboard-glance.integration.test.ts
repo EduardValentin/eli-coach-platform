@@ -8,7 +8,7 @@ import {
   it,
 } from "vitest";
 
-import { coachCheckInPath } from "~/features/check-ins/public/paths";
+import { coachCheckInPath } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { CheckInsJourney } from "~integration-test-config/check-ins-journey";
 import { ClientOnboardingJourney } from "~integration-test-config/client-onboarding-journey";

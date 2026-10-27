@@ -6,14 +6,14 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
-import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
-import { INVITATION_PATH } from "~/features/clients/public/paths";
+import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
+import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
+import { INVITATION_PATH } from "~/bounded-contexts/clients/clients/public/paths";
 import {
   AnonymousInvitation,
   SignedInInvitation,
-} from "~/features/clients/ui/public/invitation/invitation-states";
+} from "~/bounded-contexts/clients/clients/ui/public/invitation/invitation-states";
 
 export type InvitationLoaderData = {
   invitationPath: string;

@@ -5,17 +5,17 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
 import {
   classifyCalls,
   countCallsLeftToday,
-} from "~/features/assessment-calls/ui/coach/assessment-call-listing";
-import { UpcomingCallsWidget } from "~/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget";
-import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { PendingCheckInsWidget } from "~/features/check-ins/ui/coach/dashboard/pending-check-ins-widget";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-call-listing";
+import { UpcomingCallsWidget } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/dashboard/upcoming-calls-widget";
+import { useCoachClock } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/use-coach-clock";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { PendingCheckInsWidget } from "~/bounded-contexts/clients/check-ins/ui/coach/dashboard/pending-check-ins-widget";
 
-export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
+export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-calls-error-boundary";
 
 export async function loader(args: LoaderFunctionArgs) {
   const [listing, pendingCheckIns] = await Promise.all([

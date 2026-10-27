@@ -1,0 +1,101 @@
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "~/shared/design-system/lib";
+import { PortalWidget } from "~/shared/design-system/portal";
+import { buttonVariants } from "~/shared/design-system/primitives";
+import { ClipboardList } from "lucide-react";
+import { Link } from "react-router";
+
+import {
+  CLIENT_ANSWER_QUERY,
+  CLIENT_ONBOARDING_PATH,
+} from "~/bounded-contexts/clients/clients/public/paths";
+import type { ProgramStatus } from "~/bounded-contexts/sales/coaching-sales/public/program-status";
+
+import {
+  ANSWER_NOW_LABEL,
+  programStatusEyebrow,
+  programStatusLabel,
+  programStatusLine,
+} from "./program-status-copy";
+import { StartNowDialog } from "./start-now-dialog";
+import { StartNowOfferAction, StartNowOfferNote } from "./start-now-offer";
+import { useStartNow } from "./use-start-now";
+
+type DetailsRequest = { note: string };
+
+type ProgramStatusCardProps = {
+  status: ProgramStatus;
+  detailsRequest?: DetailsRequest | null;
+};
+
+const ANSWER_PATH = `${CLIENT_ONBOARDING_PATH}?${CLIENT_ANSWER_QUERY}`;
+
+export function ProgramStatusCard({
+  status,
+  detailsRequest = null,
+}: ProgramStatusCardProps) {
+  const timeZone = useCalendarDayTimeZone();
+  const startNow = useStartNow();
+  const workStartDay = status.workStartsOn
+    ? formatDayMonth(status.workStartsOn, timeZone)
+    : null;
+  const needsDetails = status.kind === "needs-details";
+  const canStartNow = status.startNowUntil !== null;
+  const statusLine = programStatusLine({
+    kind: status.kind,
+    requestNote: detailsRequest?.note ?? null,
+    workStartDay,
+  });
+
+  return (
+    <div
+      className="mb-8"
+      data-parity="program-status"
+      data-parity-root="ProgramStatusCard"
+    >
+      <PortalWidget
+        headingId="program-status-heading"
+        icon={ClipboardList}
+        title={
+          <span data-parity="status-eyebrow">
+            {programStatusEyebrow(status.kind)}
+          </span>
+        }
+        voice={
+          <span data-parity="status-label">
+            {programStatusLabel(status.kind)}
+          </span>
+        }
+      >
+        {statusLine !== null && (
+          <p
+            className="mt-1 max-w-2xl text-sm text-text-secondary"
+            data-parity="status-line"
+          >
+            {statusLine}
+          </p>
+        )}
+        {canStartNow && <StartNowOfferNote />}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          {needsDetails && (
+            <Link
+              className={buttonVariants({
+                size: "sm",
+                variant: "primary",
+                width: "full-below-sm",
+              })}
+              data-parity="answer-now"
+              to={ANSWER_PATH}
+            >
+              {ANSWER_NOW_LABEL}
+            </Link>
+          )}
+          {canStartNow && <StartNowOfferAction startNow={startNow} />}
+        </div>
+      </PortalWidget>
+      <StartNowDialog dialog={startNow.dialog} />
+    </div>
+  );
+}

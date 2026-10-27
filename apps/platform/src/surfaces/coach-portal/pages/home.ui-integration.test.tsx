@@ -16,14 +16,14 @@ import { configureAxe } from "vitest-axe";
 import type {
   CoachAssessmentCall,
   CoachAssessmentCalls,
-} from "~/features/assessment-calls/public/assessment-calls";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
-import { COACH_PORTAL_PATH } from "~/features/accounts/public/paths";
-import type { CoachCheckIn } from "~/features/check-ins/public/check-ins";
+} from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { COACH_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import type { CoachCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import {
   COACH_CHECK_INS_PATH,
   coachCheckInPath,
-} from "~/features/check-ins/public/paths";
+} from "~/bounded-contexts/clients/check-ins/public/paths";
 
 import CoachHomeRoute, {
   ErrorBoundary as CoachHomeErrorBoundary,

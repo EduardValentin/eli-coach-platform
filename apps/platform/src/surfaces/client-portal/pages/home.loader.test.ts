@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientOnboardingFeature } from "~/features/client-onboarding/server/client-onboarding-composition.server";
-import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
-import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import type { ClientOnboardingFeature } from "~/bounded-contexts/clients/client-profile/server/client-onboarding-composition.server";
+import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
+import type { ClientProfileFeature } from "~/bounded-contexts/clients/client-profile/server/client-profile-composition.server";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/server/coaching-sales-composition.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
 import {
   contextEntry,
   createRequestArgs,

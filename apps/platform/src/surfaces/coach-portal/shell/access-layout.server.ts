@@ -1,6 +1,6 @@
 import type { MiddlewareFunction } from "react-router";
 
-import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
+import { requirePortalAccess } from "~/bounded-contexts/access/accounts/server/guards/require-portal-access.server";
 
 // Route middleware, not a loader: React Router runs every matched loader in
 // parallel, so a guard sitting in this layout's loader would not stop a child

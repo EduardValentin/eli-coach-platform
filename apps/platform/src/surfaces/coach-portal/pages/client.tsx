@@ -12,27 +12,27 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { ScheduleCheckInAction } from "~/features/check-ins/ui/coach/schedule/schedule-check-in-action";
-import { WeeklyCheckInPanel } from "~/features/check-ins/ui/coach/series/weekly-check-in-panel";
-import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
-import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
-import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
-import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
-import { clientAvatarSrc } from "~/features/client-profile/ui/shared/avatar/client-avatar-src";
-import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
-import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
-import { clientFullName } from "~/features/clients/public/clients";
-import { COACH_CLIENTS_PATH } from "~/features/clients/public/paths";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
-import { AssessmentCallBlock } from "~/features/clients/ui/coach/clients/assessment-call-block";
-import { ClientStatusBadge } from "~/features/clients/ui/coach/clients/client-status-badge";
-import { InvitationBlock } from "~/features/clients/ui/coach/clients/invitation-block";
-import { NeedsRefundBadge } from "~/features/clients/ui/shared/needs-refund-badge";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { ScheduleCheckInAction } from "~/bounded-contexts/clients/check-ins/ui/coach/schedule/schedule-check-in-action";
+import { WeeklyCheckInPanel } from "~/bounded-contexts/clients/check-ins/ui/coach/series/weekly-check-in-panel";
+import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
+import { OnboardingPanel } from "~/bounded-contexts/clients/client-profile/ui/coach/onboarding/onboarding-panel";
+import { MEASUREMENTS_COPY } from "~/bounded-contexts/clients/client-profile/public/measurements";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { ClientProfileBlock } from "~/bounded-contexts/clients/client-profile/ui/coach/profile/client-profile-block";
+import { MeasurementsTable } from "~/bounded-contexts/clients/client-profile/ui/shared/measurements/measurements-table";
+import { clientAvatarSrc } from "~/bounded-contexts/clients/client-profile/ui/shared/avatar/client-avatar-src";
+import { PhotoViewDialog } from "~/bounded-contexts/clients/client-profile/ui/shared/photos/photo-view-dialog";
+import { coachClientResourcesPath } from "~/bounded-contexts/clients/client-resources/public/paths";
+import { clientFullName } from "~/bounded-contexts/clients/clients/public/clients";
+import { COACH_CLIENTS_PATH } from "~/bounded-contexts/clients/clients/public/paths";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import { AssessmentCallBlock } from "~/bounded-contexts/clients/clients/ui/coach/clients/assessment-call-block";
+import { ClientStatusBadge } from "~/bounded-contexts/clients/clients/ui/coach/clients/client-status-badge";
+import { InvitationBlock } from "~/bounded-contexts/clients/clients/ui/coach/clients/invitation-block";
+import { NeedsRefundBadge } from "~/bounded-contexts/clients/clients/ui/shared/needs-refund-badge";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { SubscriptionSummary } from "~/bounded-contexts/sales/coaching-sales/ui/coach/clients/subscription-summary";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;

@@ -37,20 +37,20 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as uploadResource } from "~/features/client-resources/api/resources/client-resources";
-import { clientAction as changeOrRemoveResource } from "~/features/client-resources/api/resources/resource";
+import { clientAction as uploadResource } from "~/bounded-contexts/clients/client-resources/api/resources/client-resources";
+import { clientAction as changeOrRemoveResource } from "~/bounded-contexts/clients/client-resources/api/resources/resource";
 import type {
   ClientResourceView,
   CoachResourceListing,
-} from "~/features/client-resources/public/client-resources";
+} from "~/bounded-contexts/clients/client-resources/public/client-resources";
 import {
   CLIENT_RESOURCES_API_PATHS,
   clientResourcesPath,
   COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
   coachClientResourcesPath,
-} from "~/features/client-resources/public/paths";
-import type { CoachClient } from "~/features/clients/public/coach-clients";
-import { coachClientPath } from "~/features/clients/public/paths";
+} from "~/bounded-contexts/clients/client-resources/public/paths";
+import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
+import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import CoachClientResourcesRoute, { ErrorBoundary } from "./client-resources";

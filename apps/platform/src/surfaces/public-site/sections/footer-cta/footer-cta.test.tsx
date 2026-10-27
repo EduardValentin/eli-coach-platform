@@ -10,7 +10,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 
 import { PublicFooterCta } from "./footer-cta";
 

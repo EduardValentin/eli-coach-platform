@@ -18,7 +18,7 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 
 import { PublicLayout } from "./public-layout";
 

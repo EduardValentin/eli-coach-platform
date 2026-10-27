@@ -5,14 +5,14 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { clientAvatarSrc } from "~/features/client-profile/ui/shared/avatar/client-avatar-src";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { clientAvatarSrc } from "~/bounded-contexts/clients/client-profile/ui/shared/avatar/client-avatar-src";
 import {
   ClientsSection,
   ClientsUnavailable,
-} from "~/features/clients/ui/coach/clients/clients-section";
-import { haveOnlyRosterParamsChanged } from "~/features/clients/ui/coach/clients/roster-listing";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+} from "~/bounded-contexts/clients/clients/ui/coach/clients/clients-section";
+import { haveOnlyRosterParamsChanged } from "~/bounded-contexts/clients/clients/ui/coach/clients/roster-listing";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
 
 export async function loader(args: LoaderFunctionArgs) {
   const { clients } = await args.context

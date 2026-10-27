@@ -18,7 +18,7 @@ import {
 } from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import { COACH_PORTAL_ROUTE_SEGMENT } from "~/features/accounts/public/paths";
+import { COACH_PORTAL_ROUTE_SEGMENT } from "~/bounded-contexts/access/accounts/public/paths";
 
 import { ErrorBoundary, Layout, meta } from "./root";
 

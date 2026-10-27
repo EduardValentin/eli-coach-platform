@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { createRoutesStub } from "react-router";
 
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
 
 import CoachLayoutRoute, { meta } from "./layout";
 import type { CoachNavigationCounts } from "./navigation-links";

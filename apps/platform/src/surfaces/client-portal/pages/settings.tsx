@@ -6,14 +6,14 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ClientSettingsView } from "~/features/client-profile/public/client-settings";
-import type { OwnClientProfileView } from "~/features/client-profile/public/own-client-profile";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { PreferencesSection } from "~/features/client-profile/ui/client/settings/preferences-section";
-import { UnitsSection } from "~/features/client-profile/ui/client/settings/units-section";
-import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { SubscriptionSection } from "~/features/coaching-sales/ui/client/settings/subscription-section";
+import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profile/public/client-settings";
+import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { PreferencesSection } from "~/bounded-contexts/clients/client-profile/ui/client/settings/preferences-section";
+import { UnitsSection } from "~/bounded-contexts/clients/client-profile/ui/client/settings/units-section";
+import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { SubscriptionSection } from "~/bounded-contexts/sales/coaching-sales/ui/client/settings/subscription-section";
 
 type SettingsPage = {
   subscription: ClientSettings;

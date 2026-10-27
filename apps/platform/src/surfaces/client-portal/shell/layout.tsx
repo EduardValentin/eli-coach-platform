@@ -18,19 +18,19 @@ import {
 import {
   CLIENT_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "~/features/accounts/public/paths";
-import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
-import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { NextCheckInWidget } from "~/features/check-ins/ui/client/shell/next-check-in-widget";
-import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
-import type { ClientAvatarUrl } from "~/features/client-profile/public/client-avatar";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
-import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
-import { useNotificationBell } from "~/features/notifications/ui/shared/notification-bell";
+} from "~/bounded-contexts/access/accounts/public/paths";
+import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
+import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { NextCheckInWidget } from "~/bounded-contexts/clients/check-ins/ui/client/shell/next-check-in-widget";
+import { describeCheckInNotification } from "~/bounded-contexts/clients/check-ins/ui/shared/bell/check-in-bell-copy";
+import type { ClientAvatarUrl } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
+import { useNotificationBell } from "~/bounded-contexts/clients/notifications/ui/shared/notification-bell";
 
 import {
   presentClientIdentity,
