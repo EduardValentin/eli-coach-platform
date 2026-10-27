@@ -3,7 +3,7 @@ import {
   type MarkWelcomeSeenUseCase,
   type ReadClientJourneyUseCase,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 import { describe, expect, it, vi } from "vitest";
 import type {
   ResolvedSession,

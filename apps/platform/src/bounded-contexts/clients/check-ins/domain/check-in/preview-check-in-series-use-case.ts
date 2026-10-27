@@ -1,10 +1,4 @@
 import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
-import type {
-  CoachAvailabilitySource,
-  CoachCalendar,
-  TimeInterval,
-  Weekday,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import { CHECK_IN_RULES } from "./check-in-rules";
@@ -14,6 +8,9 @@ import {
   CheckInSeriesRule,
   type CheckInSeriesPreviewHour,
 } from "./check-in-series-rule";
+import type { CoachTimeSpan } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
+import type { Weekday } from "./weekdays";
 
 export type PreviewCheckInSeriesCommand = {
   clientId: string;
@@ -29,10 +26,9 @@ export type PreviewCheckInSeriesResult =
   | { status: "unknown_client" | "client_cannot_answer" };
 
 type PreviewCheckInSeriesUseCaseOptions = {
-  availability: CoachAvailabilitySource;
-  calendar: CoachCalendar;
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  openSlots: Pick<OpenSlots, "coachWeek" | "busyFrom">;
   series: Pick<CheckInSeriesRecords, "findActiveForClient" | "listOccurrences">;
 };
 
@@ -62,28 +58,26 @@ export class PreviewCheckInSeriesUseCase {
     }
 
     if (bounds === "nothing_to_create") {
-      const availability = await this.options.availability.current();
+      const week = await this.options.openSlots.coachWeek();
 
       return {
         status: "previewed",
-        weekdays: [...availability.weekdays],
-        hours: availability
-          .weeklyHours()
-          .map((hour) => ({ hour, occurrences: 0, clashes: 0 })),
+        weekdays: [...week.weekdays],
+        hours: week.hours.map((hour) => ({ hour, occurrences: 0, clashes: 0 })),
       };
     }
 
-    const [availability, busy] = await Promise.all([
-      this.options.availability.current(),
+    const [week, busy] = await Promise.all([
+      this.options.openSlots.coachWeek(),
       this.busyBesideOwnWeeksOf({ clientId: client.clientId, now }),
     ]);
 
     return {
       status: "previewed",
-      weekdays: [...availability.weekdays],
+      weekdays: [...week.weekdays],
       hours: CheckInSeriesRule.previewHoursOn({
         weekday: command.weekday,
-        availability,
+        week,
         bounds,
         busy,
       }),
@@ -93,9 +87,9 @@ export class PreviewCheckInSeriesUseCase {
   private async busyBesideOwnWeeksOf({
     clientId,
     now,
-  }: BusyOfClient): Promise<TimeInterval[]> {
+  }: BusyOfClient): Promise<CoachTimeSpan[]> {
     const [busy, series] = await Promise.all([
-      this.options.calendar.busyFrom(now),
+      this.options.openSlots.busyFrom(now),
       this.options.series.findActiveForClient(clientId),
     ]);
 

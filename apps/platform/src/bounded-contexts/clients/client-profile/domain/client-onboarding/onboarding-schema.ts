@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "./client-gender";
 import {
   BODYWEIGHT_ONLY,
   CLIENT_EQUIPMENT,
@@ -97,7 +97,7 @@ export type OnboardingFormDefinition = {
 
 export function resolveIntro(
   intro: OnboardingFormIntro,
-  gender: VisitorGender,
+  gender: ClientGender,
 ): string {
   if (typeof intro === "string") return intro;
   if (gender === "female") return intro.female;
@@ -812,7 +812,7 @@ export const ONBOARDING_FORMS: readonly OnboardingFormDefinition[] = [
 ];
 
 export function formsForGender(
-  gender: VisitorGender,
+  gender: ClientGender,
 ): OnboardingFormDefinition[] {
   return ONBOARDING_FORMS.filter(
     (form) => form.audience === "everyone" || gender === "female",

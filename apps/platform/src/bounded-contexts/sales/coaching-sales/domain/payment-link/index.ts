@@ -9,6 +9,7 @@ export {
   type PaymentLinkMessage,
 } from "./coaching-sales-notifications";
 export { CoachingSalesWindow } from "./coaching-sales-window";
+export { type EndedCalls, type SalesCall } from "./ended-calls";
 export { OpenBundlePageUseCase } from "./open-bundle-page-use-case";
 export { PaymentLink, type PaymentLinkState } from "./payment-link";
 export { type PaymentLinkIds } from "./payment-link-ids";

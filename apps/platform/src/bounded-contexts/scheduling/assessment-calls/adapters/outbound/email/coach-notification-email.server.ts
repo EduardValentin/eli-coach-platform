@@ -5,8 +5,8 @@ import {
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { formatCallMoment } from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
-import { findCountry } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+import { formatCallMoment } from "~/shared/time-format/call-moment";
+import { findCountry } from "~/shared/contact/countries";
 import {
   formatAgeForEmail,
   labelForGender,

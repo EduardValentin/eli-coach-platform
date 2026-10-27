@@ -8,10 +8,16 @@ const CALL_ID = "0b3a7f6e-6c2c-4a1e-9f47-2d0c1f6f9a01";
 const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
 
 const insertCallSql = `
+  with reservation as (
+    insert into app.coach_time_reservations (starts_at, ends_at)
+    values ('2026-09-01T08:00:00Z', '2026-09-01T09:00:00Z')
+    returning id
+  )
   insert into app.assessment_calls
-    (id, first_name, last_name, visitor_email, visitor_notes, date_of_birth, gender, primary_goal, country, phone, starts_at, visitor_time_zone, coach_time_zone, booked_at)
-  values
-    ($1, 'Ana', 'Regular', 'ana@example.com', null, '1994-03-14', 'female', 'build_strength', 'RO', null, '2026-09-01T08:00:00Z', 'Europe/Bucharest', 'Europe/Bucharest', '2026-08-25T08:00:00Z')
+    (id, first_name, last_name, visitor_email, visitor_notes, date_of_birth, gender, primary_goal, country, phone, starts_at, visitor_time_zone, coach_time_zone, booked_at, reservation_id)
+  select
+    $1, 'Ana', 'Regular', 'ana@example.com', null, '1994-03-14', 'female', 'build_strength', 'RO', null, '2026-09-01T08:00:00Z', 'Europe/Bucharest', 'Europe/Bucharest', '2026-08-25T08:00:00Z', id
+  from reservation
 `;
 
 const insertClientSql = `

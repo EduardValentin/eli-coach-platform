@@ -10,10 +10,16 @@ const ENTRY_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 
 const insertCallSql = `
+  with reservation as (
+    insert into app.coach_time_reservations (starts_at, ends_at)
+    values ('2026-09-01T08:00:00Z', '2026-09-01T09:00:00Z')
+    returning id
+  )
   insert into app.assessment_calls
-    (id, first_name, last_name, visitor_email, visitor_notes, date_of_birth, gender, primary_goal, country, phone, starts_at, visitor_time_zone, coach_time_zone, booked_at)
-  values
-    ($1, 'Ana', 'Regular', 'ana@example.com', null, '1994-03-14', 'female', 'build_strength', 'RO', null, '2026-09-01T08:00:00Z', 'Europe/Bucharest', 'Europe/Bucharest', '2026-08-25T08:00:00Z')
+    (id, first_name, last_name, visitor_email, visitor_notes, date_of_birth, gender, primary_goal, country, phone, starts_at, visitor_time_zone, coach_time_zone, booked_at, reservation_id)
+  select
+    $1, 'Ana', 'Regular', 'ana@example.com', null, '1994-03-14', 'female', 'build_strength', 'RO', null, '2026-09-01T08:00:00Z', 'Europe/Bucharest', 'Europe/Bucharest', '2026-08-25T08:00:00Z', id
+  from reservation
 `;
 
 const insertClientSql = `

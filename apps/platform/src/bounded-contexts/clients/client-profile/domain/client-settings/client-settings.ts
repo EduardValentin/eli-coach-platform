@@ -1,4 +1,4 @@
-import type { Weekday } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { Weekday } from "./weekdays";
 
 import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
 

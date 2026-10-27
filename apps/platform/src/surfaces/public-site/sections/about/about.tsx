@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 import { Link } from "react-router";
 
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";

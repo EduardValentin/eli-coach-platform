@@ -1,4 +1,11 @@
 export { Client, type ClientIntake } from "./client";
+export {
+  CLIENT_GENDERS,
+  CLIENT_PRIMARY_GOALS,
+  ClientCountries,
+  type ClientGender,
+  type ClientPrimaryGoal,
+} from "./client-details";
 export { type ClientIds } from "./client-ids";
 export { type ClientReach, type ClientReachReading } from "./client-reach";
 export {

@@ -8,8 +8,8 @@ import {
   formatClockTime,
   formatDayFirstDate,
   formatMonthFirstDay,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
-import { dayKeyOf } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/day-key";
+} from "~/shared/time-format/call-moment";
+import { dayKeyOf } from "~/shared/time-format/day-key";
 
 const SLOT_PICKER_WORDING: SlotPickerWording = {
   availableDays: "Available days",

@@ -2,8 +2,8 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { Weekday } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
+import type { Weekday } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { Toaster } from "~/shared/design-system/toast";
 import {
   cleanup,

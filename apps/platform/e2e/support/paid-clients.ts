@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 import {
   getCoachingBundle,
   type PriceTier,
@@ -99,12 +99,18 @@ const EXPIRED_INVITATION_SENT_DAYS_AGO = 40;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const INSERT_ENDED_CALL = `
+  with reservation as (
+    insert into app.coach_time_reservations (starts_at, ends_at)
+    values ($9, $9::timestamptz + interval '1 hour')
+    returning id
+  )
   insert into app.assessment_calls (
     id, first_name, last_name, visitor_email, date_of_birth, gender,
     primary_goal, country, starts_at, visitor_time_zone, coach_time_zone,
-    booked_at
+    booked_at, reservation_id
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $9)
+  select $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $9, id
+  from reservation
 `;
 const INSERT_CLIENT = `
   insert into app.clients (

@@ -23,11 +23,13 @@ const STORED_ROW = {
   bookedAt: new Date("2026-09-18T09:30:00.000Z"),
 };
 
+const RESERVATION_ID = "7d2c9e14-3a58-4b6f-9e21-0c4d8b7a5f36";
+
 describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps a stored row into the assessment call the domain reads", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(createDatabaseReturning([STORED_ROW])),
+      createDatabaseReturning([STORED_ROW]),
     );
 
     // act
@@ -57,9 +59,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps an absent note to no note", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(
-        createDatabaseReturning([{ ...STORED_ROW, visitorNotes: null }]),
-      ),
+      createDatabaseReturning([{ ...STORED_ROW, visitorNotes: null }]),
     );
 
     // act
@@ -72,9 +72,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps an absent phone to no phone", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(
-        createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
-      ),
+      createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
     );
 
     // act
@@ -87,7 +85,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("finds no call for an identifier that matches no row", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(createDatabaseReturning([])),
+      createDatabaseReturning([]),
     );
 
     // act
@@ -100,9 +98,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("finds no call for an identifier Postgres cannot read", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(
-        createDatabaseRejecting(createDatabaseError({ code: "22P02" })),
-      ),
+      createDatabaseRejecting(createDatabaseError({ code: "22P02" })),
     );
 
     // act
@@ -122,7 +118,7 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
       startsAt: new Date("2026-10-02T14:00:00.000Z"),
     };
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(createDatabaseReturning([STORED_ROW, laterRow])),
+      createDatabaseReturning([STORED_ROW, laterRow]),
     );
 
     // act
@@ -172,7 +168,7 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
   it("lists nothing when no call is booked", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      repositoryOptions(createDatabaseReturning([])),
+      createDatabaseReturning([]),
     );
 
     // act
@@ -183,36 +179,26 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
   });
 });
 
-describe("PostgresAssessmentCallRepository#reserve", () => {
-  it("stores the call under the id the domain gave it and reserves the coach's time for that id", async () => {
+describe("PostgresAssessmentCallRepository#add", () => {
+  it("stores the call under the id the domain gave it, holding the coach's reserved time", async () => {
     // arrange
     const { bookedAt, ...visitorAndSlot } = STORED_ROW;
     const call = AssessmentCall.booked({ ...visitorAndSlot, at: bookedAt });
     const database = createDatabaseRecordingReservation();
-    const coachTime = {
-      reserve: vi.fn().mockResolvedValue({ status: "reserved" }),
-    };
-    const repository = new PostgresAssessmentCallRepository({
-      coachTime,
-      database: database.handle,
-    });
+    const repository = new PostgresAssessmentCallRepository(database.handle);
 
     // act
-    const decision = await createUnitOfWork(database.handle)(() =>
-      repository.reserve({ call, now: bookedAt }),
+    await createUnitOfWork(database.handle)(() =>
+      repository.add({ call, reservationId: RESERVATION_ID }),
     );
 
     // assert
-    expect(decision).toEqual({ status: "reserved" });
     expect(database.inserts).toEqual([
-      { table: assessmentCallsTable, values: STORED_ROW },
+      {
+        table: assessmentCallsTable,
+        values: { ...STORED_ROW, reservationId: RESERVATION_ID },
+      },
     ]);
-    expect(coachTime.reserve).toHaveBeenCalledWith(
-      expect.objectContaining({
-        appointmentKind: "assessment_call",
-        appointmentId: STORED_ROW.id,
-      }),
-    );
   });
 });
 
@@ -233,13 +219,6 @@ function createDatabaseRecordingReservation() {
   } as unknown as DatabaseClient;
 
   return { handle, inserts, transaction };
-}
-
-function repositoryOptions(database: DatabaseClient) {
-  return {
-    coachTime: { reserve: vi.fn() },
-    database,
-  };
 }
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {

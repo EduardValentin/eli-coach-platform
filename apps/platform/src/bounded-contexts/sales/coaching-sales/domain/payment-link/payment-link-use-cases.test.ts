@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  AssessmentCall,
-  type AssessmentCallReader,
-  type AssessmentCallSnapshot,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { EndedCalls, SalesCall } from "./ended-calls";
 import type { PricingEligibility } from "../coaching-bundle";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
@@ -29,22 +25,19 @@ const RAW_TOKEN = "raw-payment-link-token";
 const TOKEN_SHA256 = "b".repeat(64);
 const NEW_LINK_ID = "link-2";
 
-const call: AssessmentCallSnapshot = AssessmentCall.reconstitute({
+const call: SalesCall = {
   id: "call-1",
   firstName: "Ana",
   lastName: "Popescu",
   visitorEmail: "ana@example.com",
-  visitorNotes: null,
   dateOfBirth: "1994-03-14",
   gender: "female",
   primaryGoal: "build_strength",
   country: "RO",
   phone: null,
-  startsAt: new Date("2026-09-25T15:00:00.000Z"),
   visitorTimeZone: "Europe/Bucharest",
-  coachTimeZone: "Europe/Bucharest",
-  bookedAt: new Date("2026-09-20T09:12:00.000Z"),
-}).toSnapshot();
+  endsAt: new Date("2026-09-25T15:30:00.000Z"),
+};
 
 function clockAt(now: Date) {
   return { now: () => now };
@@ -98,9 +91,7 @@ function closedSalesWindow(): CoachingSalesWindow {
   });
 }
 
-function createCalls(
-  found: AssessmentCallSnapshot | null,
-): AssessmentCallReader {
+function createCalls(found: SalesCall | null): EndedCalls {
   return { findById: vi.fn().mockResolvedValue(found) };
 }
 

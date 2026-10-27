@@ -14,7 +14,7 @@ import {
   type ShouldRevalidateFunction,
 } from "react-router";
 
-import { formatShortDay } from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+import { formatShortDay } from "~/shared/time-format/call-moment";
 import type { ClientCheckIns } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { clientCheckInJoinPath } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";

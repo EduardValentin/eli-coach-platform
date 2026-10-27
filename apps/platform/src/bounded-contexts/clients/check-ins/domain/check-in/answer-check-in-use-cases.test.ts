@@ -80,7 +80,8 @@ function createPorts(options?: {
   now?: Date;
 }) {
   const checkIns = {
-    request: vi.fn(),
+    listForClientLocked: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(undefined),
     find: vi
       .fn()
       .mockResolvedValue(
@@ -90,11 +91,19 @@ function createPorts(options?: {
     listAll: vi.fn().mockResolvedValue([]),
     listUnansweredStartedWithin: vi.fn(),
     listUnansweredForClientStartedWithin: vi.fn(),
-    settle: vi.fn().mockResolvedValue(options?.settlement ?? "settled"),
-    move: vi.fn().mockResolvedValue("moved"),
-    endCoaching: vi
+    settle: vi
       .fn()
-      .mockResolvedValue({ cancelled: [], seriesStopped: false }),
+      .mockResolvedValue(
+        options?.settlement ?? { status: "settled", freedReservationId: null },
+      ),
+    move: vi
+      .fn()
+      .mockResolvedValue({ status: "moved", freedReservationId: null }),
+    endCoaching: vi.fn().mockResolvedValue({
+      cancelled: [],
+      seriesStopped: false,
+      freedReservationIds: [],
+    }),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
@@ -132,6 +141,7 @@ function createPorts(options?: {
     checkIns,
     clients,
     clock: { now: () => now },
+    coachTime: { release: vi.fn().mockResolvedValue(undefined) },
     identities,
     incidents: {
       checkInNotificationFailed: vi.fn(),
@@ -291,7 +301,9 @@ describe.each(ANSWERS)(
 
     it("refuses when another answer settled the request first", async () => {
       // arrange
-      const ports = createPorts({ settlement: "changed_meanwhile" });
+      const ports = createPorts({
+        settlement: { status: "changed_meanwhile" },
+      });
 
       // act
       const result = await create(ports).execute(command);
@@ -686,7 +698,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
   it("refuses when the coach answered first", async () => {
     // arrange
-    const ports = createPorts({ settlement: "changed_meanwhile" });
+    const ports = createPorts({ settlement: { status: "changed_meanwhile" } });
 
     // act
     const result = await new WithdrawCheckInRequestUseCase(ports).execute(
@@ -749,6 +761,7 @@ describe("CancelCheckInUseCase", () => {
           initiatedBy: canceller,
           proposedBy: canceller,
         }),
+        settlement: { status: "settled", freedReservationId: "reservation-1" },
       });
 
       // act
@@ -771,6 +784,7 @@ describe("CancelCheckInUseCase", () => {
         at: NOW,
         expectedStatus: "approved",
       });
+      expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-1");
       expect(ports.notifications.cancelled).toHaveBeenCalledWith({
         checkIn: expect.objectContaining({ id: "check-in-1" }),
         client: ANA,
@@ -886,7 +900,7 @@ describe("CancelCheckInUseCase", () => {
     // arrange
     const ports = createPorts({
       found: approvedCheckIn(),
-      settlement: "changed_meanwhile",
+      settlement: { status: "changed_meanwhile" },
     });
 
     // act

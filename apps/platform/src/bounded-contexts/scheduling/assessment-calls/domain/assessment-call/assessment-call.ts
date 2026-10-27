@@ -1,4 +1,5 @@
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
+import type { CoachTimeSpan } from "./coach-time";
 import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type AssessmentCallProps = {
@@ -33,6 +34,10 @@ export type ReservationDecision =
 const MILLISECONDS_PER_MINUTE = 60_000;
 const DURATION_MS =
   ASSESSMENT_CALL_RULES.durationMinutes * MILLISECONDS_PER_MINUTE;
+const HELD_MS =
+  (ASSESSMENT_CALL_RULES.durationMinutes +
+    ASSESSMENT_CALL_RULES.bufferMinutes) *
+  MILLISECONDS_PER_MINUTE;
 
 export class AssessmentCall {
   readonly id: string;
@@ -96,6 +101,13 @@ export class AssessmentCall {
 
   endsAt(): Date {
     return new Date(this.startsAt.getTime() + DURATION_MS);
+  }
+
+  coachTimeSpan(): CoachTimeSpan {
+    return {
+      start: this.startsAt,
+      end: new Date(this.startsAt.getTime() + HELD_MS),
+    };
   }
 
   fullName(): string {

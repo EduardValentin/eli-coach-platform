@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "./client-gender";
 import type { MeasureUnits } from "../client-settings";
 import { ClientOnboarding } from "./client-onboarding";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
@@ -86,7 +86,7 @@ function givenConsents(): OnboardingConsents {
 
 function onboarding(
   overrides: {
-    gender?: VisitorGender;
+    gender?: ClientGender;
     dateOfBirth?: string;
     submission?: OnboardingSubmission | null;
   } = {},

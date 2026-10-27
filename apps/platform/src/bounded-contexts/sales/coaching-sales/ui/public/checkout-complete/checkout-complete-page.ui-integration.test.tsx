@@ -12,7 +12,7 @@ import {
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import type { CheckoutConfirmation } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 
 import CheckoutCompleteRoute from "./checkout-complete-page";

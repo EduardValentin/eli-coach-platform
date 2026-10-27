@@ -13,7 +13,7 @@ import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detectio
 import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(

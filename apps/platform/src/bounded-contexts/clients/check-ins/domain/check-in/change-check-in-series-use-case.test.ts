@@ -5,16 +5,16 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import { CoachAvailability } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 
 import { ChangeCheckInSeriesUseCase } from "./change-check-in-series-use-case";
-import { CheckIn } from "./check-in";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import type {
-  CheckInSeriesChangeResult,
+  CheckInSeriesChange,
   CheckInSeriesRecords,
 } from "./check-in-series-records";
+import type { CoachTime, CoachTimeHold } from "./coach-time";
+import { CoachWeek, type OpenSlots } from "./open-slots";
 
 const TUESDAY_NOON = new Date("2026-10-13T12:00:00.000Z");
 
@@ -59,27 +59,25 @@ const FRIDAY_STARTS = [
   "2026-10-30T08:00:00.000Z",
 ];
 
-function availabilityOf() {
-  const result = CoachAvailability.from({
-    timeZone: "Europe/Bucharest",
-    weekdays: ["monday", "wednesday", "friday"],
-    startHour: 9,
-    endHour: 20,
-  });
-
-  if (result.status !== "configured") {
-    throw new Error(`expected a configured availability: ${result.problems}`);
-  }
-
-  return { current: vi.fn().mockResolvedValue(result.availability) };
+function openSlotsOf() {
+  return {
+    coachWeek: vi.fn().mockResolvedValue(
+      CoachWeek.of({
+        timeZone: "Europe/Bucharest",
+        weekdays: ["monday", "wednesday", "friday"],
+        hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      }),
+    ),
+  } satisfies Pick<OpenSlots, "coachWeek">;
 }
 
 function createChange(options?: {
   found?: CheckInSeries | null;
   client?: ClientReachReading | null;
-  recorded?: CheckInSeriesChangeResult;
+  recorded?: CheckInSeriesChange;
 }) {
   let generated = 0;
+  let reserved = 0;
   const series = {
     find: vi
       .fn()
@@ -88,16 +86,23 @@ function createChange(options?: {
           ? CheckInSeries.reconstitute(SERIES)
           : options.found,
       ),
-    change: vi.fn(
-      async (
-        command: Parameters<CheckInSeriesRecords["change"]>[0],
-      ): Promise<CheckInSeriesChangeResult> =>
-        options?.recorded ?? {
-          status: "changed",
-          occurrences: command.occurrences.map(({ checkIn }) => checkIn),
-        },
+    change: vi.fn<CheckInSeriesRecords["change"]>().mockResolvedValue(
+      options?.recorded ?? {
+        status: "changed",
+        freedReservationIds: ["reservation-wednesday"],
+      },
     ),
-  } satisfies Pick<CheckInSeriesRecords, "find" | "change">;
+    recordWeeks: vi
+      .fn<CheckInSeriesRecords["recordWeeks"]>()
+      .mockResolvedValue(undefined),
+  } satisfies Pick<CheckInSeriesRecords, "find" | "change" | "recordWeeks">;
+  const coachTime = {
+    reserve: vi.fn(async (): Promise<CoachTimeHold> => ({
+      status: "reserved",
+      reservationId: `reservation-${(reserved += 1)}`,
+    })),
+    release: vi.fn().mockResolvedValue(undefined),
+  } satisfies CoachTime;
   const clients = {
     findById: vi
       .fn()
@@ -122,9 +127,9 @@ function createChange(options?: {
     seriesStopped: vi.fn(),
   } satisfies CheckInNotifications;
   const ports = {
-    availability: availabilityOf(),
     clients,
     clock: { now: () => TUESDAY_NOON },
+    coachTime,
     identities,
     ids: { generate: () => `week-${(generated += 1)}` },
     incidents: {
@@ -144,6 +149,7 @@ function createChange(options?: {
       clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
+    openSlots: openSlotsOf(),
     series,
   };
 
@@ -172,17 +178,21 @@ describe("ChangeCheckInSeriesUseCase", () => {
       changedAt: TUESDAY_NOON,
     };
     expect(command.series.toSnapshot()).toEqual(changed);
+    expect(ports.coachTime.release).toHaveBeenCalledWith(
+      "reservation-wednesday",
+    );
+    const [weeks] = ports.series.recordWeeks.mock.calls[0];
     expect(
-      command.occurrences.map(({ checkIn, availability }) => ({
-        availability,
+      weeks.map(({ checkIn, reservationId }) => ({
+        reservationId,
         startsAt: checkIn.startsAt.toISOString(),
         seriesId: checkIn.seriesId,
         recordedStatus: checkIn.recordedStatus,
         clientTimeZone: checkIn.clientTimeZone,
       })),
     ).toEqual(
-      FRIDAY_STARTS.map((startsAt) => ({
-        availability: "open",
+      FRIDAY_STARTS.map((startsAt, week) => ({
+        reservationId: `reservation-${week + 1}`,
         startsAt,
         seriesId: "series-1",
         recordedStatus: "approved",
@@ -211,25 +221,7 @@ describe("ChangeCheckInSeriesUseCase", () => {
 
   it("writes the changed series to her inbox, opening her earliest new week", async () => {
     // arrange
-    const weekOf = (id: string, startsAt: string) =>
-      CheckIn.seriesOccurrence({
-        id,
-        seriesId: "series-1",
-        clientId: "client-1",
-        startsAt: new Date(startsAt),
-        clientTimeZone: "Europe/London",
-        coachTimeZone: "Europe/Bucharest",
-        at: TUESDAY_NOON,
-      });
-    const { change, ports } = createChange({
-      recorded: {
-        status: "changed",
-        occurrences: [
-          weekOf("week-2", FRIDAY_STARTS[1]),
-          weekOf("week-1", FRIDAY_STARTS[0]),
-        ],
-      },
-    });
+    const { change, ports } = createChange();
 
     // act
     await change.execute(FRIDAY_MORNINGS);
@@ -248,7 +240,10 @@ describe("ChangeCheckInSeriesUseCase", () => {
   it("writes the changed series to her inbox without a week to open when no new week was recorded", async () => {
     // arrange
     const { change, ports } = createChange({
-      recorded: { status: "changed", occurrences: [] },
+      found: CheckInSeries.reconstitute({
+        ...SERIES,
+        coversUntil: new Date("2026-10-14T00:00:00.000Z"),
+      }),
     });
 
     // act
@@ -272,6 +267,7 @@ describe("ChangeCheckInSeriesUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "changed_meanwhile" });
+    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
     expect(ports.notifications.seriesChanged).not.toHaveBeenCalled();
   });
 

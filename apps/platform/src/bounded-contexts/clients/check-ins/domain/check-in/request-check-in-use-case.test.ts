@@ -5,15 +5,13 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import {
-  CoachAvailability,
-  type CoachAvailabilitySource,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 
 import { CheckIn } from "./check-in";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
-import type { CheckInRequestResult, CheckIns } from "./check-ins";
+import type { CheckIns } from "./check-ins";
+import type { CoachTime, CoachTimeHold } from "./coach-time";
+import { CoachWeek, type OpenSlots } from "./open-slots";
 import { RequestCheckInUseCase } from "./request-check-in-use-case";
 
 const NOW = new Date("2026-06-01T08:30:00.000Z");
@@ -44,38 +42,75 @@ const COMMAND = {
   note: "  Can we look at my squat?  ",
 };
 
-function workingDays(): CoachAvailabilitySource {
-  const result = CoachAvailability.from({
-    timeZone: "Europe/Bucharest",
-    weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-    startHour: 9,
-    endHour: 17,
-  });
-
-  if (result.status !== "configured") {
-    throw new Error(`expected a configured availability: ${result.problems}`);
-  }
-
-  return { current: vi.fn().mockResolvedValue(result.availability) };
+function workingDays() {
+  return {
+    coachWeek: vi.fn().mockResolvedValue(
+      CoachWeek.of({
+        timeZone: "Europe/Bucharest",
+        weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        hours: [9, 10, 11, 12, 13, 14, 15, 16],
+      }),
+    ),
+    offersStart: vi.fn(
+      async ({ start }: { start: Date }) =>
+        start.getTime() === OPEN_START.getTime(),
+    ),
+  } satisfies Pick<OpenSlots, "coachWeek" | "offersStart">;
 }
 
-function createCheckIns(answer?: CheckInRequestResult) {
+function createCoachTime(hold?: CoachTimeHold) {
   return {
-    request: vi.fn(
-      async ({ checkIn }: { checkIn: CheckIn }) =>
-        answer ?? { status: "requested" as const, checkIn },
-    ),
+    reserve: vi
+      .fn()
+      .mockResolvedValue(
+        hold ?? { status: "reserved", reservationId: "reservation-1" },
+      ),
+    release: vi.fn().mockResolvedValue(undefined),
+  } satisfies CoachTime;
+}
+
+function createCheckIns(clientCheckIns: CheckIn[] = []) {
+  return {
+    listForClientLocked: vi.fn().mockResolvedValue(clientCheckIns),
+    add: vi.fn().mockResolvedValue(undefined),
     find: vi.fn().mockResolvedValue(null),
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
     listUnansweredStartedWithin: vi.fn(),
     listUnansweredForClientStartedWithin: vi.fn(),
-    settle: vi.fn().mockResolvedValue("settled"),
-    move: vi.fn().mockResolvedValue("moved"),
-    endCoaching: vi
+    settle: vi
       .fn()
-      .mockResolvedValue({ cancelled: [], seriesStopped: false }),
+      .mockResolvedValue({ status: "settled", freedReservationId: null }),
+    move: vi
+      .fn()
+      .mockResolvedValue({ status: "moved", freedReservationId: null }),
+    endCoaching: vi.fn().mockResolvedValue({
+      cancelled: [],
+      seriesStopped: false,
+      freedReservationIds: [],
+    }),
   } satisfies CheckIns;
+}
+
+function waitingRequest(): CheckIn {
+  return CheckIn.reconstitute({
+    id: "check-in-0",
+    seriesId: null,
+    clientId: "client-1",
+    startsAt: new Date("2026-06-04T09:00:00.000Z"),
+    clientTimeZone: "Europe/London",
+    coachTimeZone: "Europe/Bucharest",
+    kind: "ad_hoc",
+    recordedStatus: "pending",
+    initiatedBy: "client",
+    proposedBy: "client",
+    note: null,
+    requestedAt: new Date("2026-05-31T08:30:00.000Z"),
+    answeredAt: null,
+    earlierStartsAt: null,
+    moves: 0,
+    newTimeNote: null,
+  });
 }
 
 function createClients(client: ClientReachReading | null) {
@@ -108,17 +143,18 @@ function createNotifications() {
 
 function createRequestCheckIn(options?: {
   checkIns?: ReturnType<typeof createCheckIns>;
+  coachTime?: ReturnType<typeof createCoachTime>;
   client?: ClientReachReading | null;
   notifications?: ReturnType<typeof createNotifications>;
   incidents?: CheckInIncidents;
 }) {
   const ports = {
-    availability: workingDays(),
     checkIns: options?.checkIns ?? createCheckIns(),
     clients: createClients(
       options?.client === undefined ? REACHABLE_ANA : options.client,
     ),
     clock: { now: () => NOW },
+    coachTime: options?.coachTime ?? createCoachTime(),
     identities: createIdentities(),
     ids: { generate: () => "check-in-1" },
     incidents: options?.incidents ?? {
@@ -138,6 +174,7 @@ function createRequestCheckIn(options?: {
       clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications: options?.notifications ?? createNotifications(),
+    openSlots: workingDays(),
   };
 
   return { ports, requestCheckIn: new RequestCheckInUseCase(ports) };
@@ -166,9 +203,14 @@ describe("RequestCheckInUseCase", () => {
         requestedAt: NOW,
       }),
     });
-    expect(ports.checkIns.request).toHaveBeenCalledWith({
+    expect(ports.checkIns.listForClientLocked).toHaveBeenCalledWith("client-1");
+    expect(ports.coachTime.reserve).toHaveBeenCalledWith({
+      start: OPEN_START,
+      end: new Date("2026-06-03T10:00:00.000Z"),
+    });
+    expect(ports.checkIns.add).toHaveBeenCalledWith({
       checkIn: expect.any(CheckIn),
-      at: NOW,
+      reservationId: "reservation-1",
     });
   });
 
@@ -214,30 +256,42 @@ describe("RequestCheckInUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "time_taken" });
-    expect(ports.checkIns.request).not.toHaveBeenCalled();
+    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["while her earlier request waits", "request_waiting"],
-    ["when the hour was taken meanwhile", "time_taken"],
-  ] as const)(
-    "refuses the request %s and emails nobody",
-    async (_situation, refusal) => {
-      // arrange
-      const notifications = createNotifications();
-      const { requestCheckIn } = createRequestCheckIn({
-        checkIns: createCheckIns({ status: refusal }),
-        notifications,
-      });
+  it("refuses the request while her earlier request waits, before holding any time, and emails nobody", async () => {
+    // arrange
+    const notifications = createNotifications();
+    const { requestCheckIn, ports } = createRequestCheckIn({
+      checkIns: createCheckIns([waitingRequest()]),
+      notifications,
+    });
 
-      // act
-      const result = await requestCheckIn.execute(COMMAND);
+    // act
+    const result = await requestCheckIn.execute(COMMAND);
 
-      // assert
-      expect(result).toEqual({ status: refusal });
-      expect(notifications.requested).not.toHaveBeenCalled();
-    },
-  );
+    // assert
+    expect(result).toEqual({ status: "request_waiting" });
+    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(notifications.requested).not.toHaveBeenCalled();
+  });
+
+  it("refuses the request when the hour was taken meanwhile, storing nothing and emailing nobody", async () => {
+    // arrange
+    const notifications = createNotifications();
+    const { requestCheckIn, ports } = createRequestCheckIn({
+      coachTime: createCoachTime({ status: "taken" }),
+      notifications,
+    });
+
+    // act
+    const result = await requestCheckIn.execute(COMMAND);
+
+    // assert
+    expect(result).toEqual({ status: "time_taken" });
+    expect(ports.checkIns.add).not.toHaveBeenCalled();
+    expect(notifications.requested).not.toHaveBeenCalled();
+  });
 
   it.each([
     ["whose coaching ended", { ...REACHABLE_ANA, portal: "ended" }],
@@ -255,7 +309,7 @@ describe("RequestCheckInUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.checkIns.request).not.toHaveBeenCalled();
+    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -274,7 +328,7 @@ describe("RequestCheckInUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "time_taken" });
-      expect(ports.checkIns.request).not.toHaveBeenCalled();
+      expect(ports.coachTime.reserve).not.toHaveBeenCalled();
     },
   );
 
@@ -306,7 +360,7 @@ describe("RequestCheckInUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "note_too_long" });
-    expect(ports.checkIns.request).not.toHaveBeenCalled();
+    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
   });
 
   it.each([["Mars/Olympus_Mons"], ["+02:00"], [""]])(
@@ -323,7 +377,7 @@ describe("RequestCheckInUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "invalid_time_zone" });
-      expect(ports.checkIns.request).not.toHaveBeenCalled();
+      expect(ports.coachTime.reserve).not.toHaveBeenCalled();
     },
   );
 

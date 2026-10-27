@@ -1,16 +1,12 @@
-import type {
-  SlotPolicy,
-  TimeInterval,
-  Weekday,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-
 import { CheckIn } from "./check-in";
-import { CHECK_IN_RULES } from "./check-in-rules";
+import { CHECK_IN_RULES, type CheckInSlotRules } from "./check-in-rules";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import {
   CheckInSeriesRule,
   type CheckInSeriesRuleSnapshot,
 } from "./check-in-series-rule";
+import type { CoachTimeSpan } from "./coach-time";
+import type { Weekday } from "./weekdays";
 
 export type CheckInSeriesSnapshot = CheckInSeriesRuleSnapshot & {
   id: string;
@@ -40,7 +36,7 @@ type CheckInSeriesSetUp = {
 type CheckInSeriesChange = {
   rule: CheckInSeriesRule;
   now: Date;
-  lead: SlotPolicy;
+  lead: CheckInSlotRules;
 };
 
 type CheckInSeriesWeeks = {
@@ -52,7 +48,7 @@ type CheckInSeriesWeeks = {
 };
 
 type BusyBesideOwnWeeks = {
-  busy: readonly TimeInterval[];
+  busy: readonly CoachTimeSpan[];
   weeks: readonly CheckIn[];
   at: Date;
 };
@@ -159,7 +155,7 @@ export class CheckInSeries {
     }));
   }
 
-  busyBesideOwnWeeks({ busy, weeks, at }: BusyBesideOwnWeeks): TimeInterval[] {
+  busyBesideOwnWeeks({ busy, weeks, at }: BusyBesideOwnWeeks): CoachTimeSpan[] {
     const held = weeks
       .filter((week) => week.seriesId === this.id && week.holdsCoachTimeAt(at))
       .map((week) => CHECK_IN_RULES.coachTimeFrom(week.startsAt));

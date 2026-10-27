@@ -39,8 +39,7 @@ export type CheckInCancellationRefusal =
   "not_approved" | "expired" | "not_allowed";
 export type CheckInRefusal =
   CheckInProposalRefusal | CheckInCancellationRefusal;
-export type CheckInRequestDecision =
-  "requested" | "request_waiting" | "time_taken";
+export type CheckInRequestDecision = "requested" | "request_waiting";
 export type CheckInViewerProposal =
   "allowed" | "exhausted" | "later_week" | "none";
 export type CheckInTab = "upcoming" | "requests" | "past";
@@ -248,24 +247,16 @@ export class CheckIn {
 
   static decideRequest(learned: {
     initiatedBy: CheckInParty;
-    coachTime: "reserved" | "taken";
     clientCheckIns: readonly CheckIn[];
     at: Date;
   }): CheckInRequestDecision {
-    if (
+    const waiting =
       learned.initiatedBy === "client" &&
       learned.clientCheckIns.some((checkIn) =>
         checkIn.isWaitingRequestAt(learned.at),
-      )
-    ) {
-      return "request_waiting";
-    }
+      );
 
-    if (learned.coachTime === "taken") {
-      return "time_taken";
-    }
-
-    return "requested";
+    return waiting ? "request_waiting" : "requested";
   }
 
   static byStart(a: CheckIn, b: CheckIn): number {

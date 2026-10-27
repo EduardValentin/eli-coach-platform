@@ -5,8 +5,8 @@ import {
   type CheckInTab,
   type CheckInView,
   type ClientCheckInScheduling,
+  WEEKDAYS,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
-import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { z } from "zod";
 
 const CHECK_IN_STATUSES = [...RECORDED_CHECK_IN_STATUSES, "passed"] as const;

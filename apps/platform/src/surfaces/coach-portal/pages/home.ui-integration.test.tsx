@@ -17,7 +17,7 @@ import type {
   CoachAssessmentCall,
   CoachAssessmentCalls,
 } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import { COACH_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
 import type { CoachCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import {

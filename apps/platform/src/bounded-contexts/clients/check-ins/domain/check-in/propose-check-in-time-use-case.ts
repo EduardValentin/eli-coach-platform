@@ -2,7 +2,6 @@ import type {
   ClientIdentities,
   ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type { CoachAvailabilitySource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import {
@@ -14,12 +13,15 @@ import {
 import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
+import { releaseFreedHours } from "./check-in-hour-release";
 import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CHECK_IN_RULES } from "./check-in-rules";
 import type { CheckIns } from "./check-ins";
+import type { CoachTime } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
 
 export type ProposeCheckInTimeCommand = CheckInActorCommand & {
   startsAt: Date;
@@ -44,14 +46,15 @@ type OpenStartCheck = {
 };
 
 type ProposeCheckInTimeUseCaseOptions = {
-  availability: CoachAvailabilitySource;
   checkIns: Pick<CheckIns, "find" | "listForClient" | "move">;
   clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
+  coachTime: CoachTime;
   identities: Pick<ClientIdentities, "findByClientIds">;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
+  openSlots: Pick<OpenSlots, "offersStart">;
 };
 
 export class ProposeCheckInTimeUseCase {
@@ -127,18 +130,32 @@ export class ProposeCheckInTimeUseCase {
       return { status: "time_taken" };
     }
 
+    const { coachTime } = this.options;
+    const held = await coachTime.reserve(
+      CHECK_IN_RULES.coachTimeFrom(command.startsAt),
+    );
+
+    if (held.status === "taken") {
+      return { status: "time_taken" };
+    }
+
     const moved = await this.options.checkIns.move({
       checkIn: proposal.checkIn,
       expected: {
         recordedStatus: checkIn.recordedStatus,
         startsAt: checkIn.startsAt,
       },
+      reservationId: held.reservationId,
       at,
     });
 
-    if (moved !== "moved") {
-      return { status: moved };
+    if (moved.status === "changed_meanwhile") {
+      await coachTime.release(held.reservationId);
+
+      return moved;
     }
+
+    await releaseFreedHours(coachTime, [moved.freedReservationId]);
 
     await this.announcer.announce("newTimeProposed", proposal.checkIn, party);
 
@@ -154,12 +171,6 @@ export class ProposeCheckInTimeUseCase {
       return false;
     }
 
-    const availability = await this.options.availability.current();
-
-    return availability.isOpenStart({
-      start: startsAt,
-      now: at,
-      policy: CHECK_IN_RULES,
-    });
+    return this.options.openSlots.offersStart({ start: startsAt, now: at });
   }
 }

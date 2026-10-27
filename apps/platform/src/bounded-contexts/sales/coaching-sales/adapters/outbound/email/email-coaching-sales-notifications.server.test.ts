@@ -1,4 +1,4 @@
-import type { AssessmentCallSnapshot } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { SalesCall } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import {
   InMemoryProductEmail,
   type ProductEmail,
@@ -7,26 +7,19 @@ import { describe, expect, it, vi } from "vitest";
 
 import { EmailCoachingSalesNotifications } from "./email-coaching-sales-notifications.server";
 
-function createCall(
-  overrides: Partial<AssessmentCallSnapshot> = {},
-): AssessmentCallSnapshot {
+function createCall(overrides: Partial<SalesCall> = {}): SalesCall {
   return {
     id: "ac-demo",
     firstName: "Ana",
     lastName: "Popescu",
-    fullName: "Ana Popescu",
     visitorEmail: "ana@example.com",
-    visitorNotes: null,
     dateOfBirth: "1994-03-14",
     gender: "female",
     primaryGoal: "build_strength",
     country: "RO",
     phone: null,
-    startsAt: new Date("2026-09-25T15:00:00.000Z"),
     endsAt: new Date("2026-09-25T15:30:00.000Z"),
     visitorTimeZone: "Europe/Bucharest",
-    coachTimeZone: "Europe/Bucharest",
-    bookedAt: new Date("2026-09-20T09:12:00.000Z"),
     ...overrides,
   };
 }

@@ -1,7 +1,4 @@
-import type {
-  AssessmentCallReader,
-  AssessmentCallSnapshot,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { EndedCalls, SalesCall } from "../payment-link";
 import {
   Client,
   type ClientIds,
@@ -32,7 +29,7 @@ type RecordCheckoutCompletedResult =
 
 type RecordCheckoutCompletedUseCaseOptions = {
   admission: PaidClientAdmission;
-  calls: AssessmentCallReader;
+  calls: EndedCalls;
   clientIds: ClientIds;
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
@@ -123,7 +120,7 @@ export class RecordCheckoutCompletedUseCase {
     };
   }
 
-  private intakeOf(call: AssessmentCallSnapshot): ClientIntake {
+  private intakeOf(call: SalesCall): ClientIntake {
     return {
       assessmentCallId: call.id,
       firstName: call.firstName,

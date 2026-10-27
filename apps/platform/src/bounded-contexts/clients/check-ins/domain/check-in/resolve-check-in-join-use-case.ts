@@ -1,11 +1,11 @@
 import type { ClientReach } from "~/bounded-contexts/clients/clients/domain/client";
-import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
 import type { Clock } from "../clock";
 
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckIns } from "./check-ins";
+import type { MeetingRoom } from "./meeting-room";
 
 export type ResolveCheckInJoinCommand = {
   actor: CheckInActor;
@@ -21,7 +21,7 @@ type ResolveCheckInJoinUseCaseOptions = {
   checkIns: CheckIns;
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
-  meetingRoom: CoachMeetingRoomSource;
+  meetingRoom: MeetingRoom;
 };
 
 export class ResolveCheckInJoinUseCase {
@@ -44,13 +44,13 @@ export class ResolveCheckInJoinUseCase {
       return { status: "unknown" };
     }
 
-    const room = await this.options.meetingRoom.current();
+    const url = await this.options.meetingRoom.currentJoinUrl();
 
-    if (!room) {
+    if (url === null) {
       return { status: "link_not_set" };
     }
 
-    return { status: "found", url: room.url };
+    return { status: "found", url };
   }
 
   private async reaches(

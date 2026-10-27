@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 
 export type ClientPronouns = {
   subject: string;

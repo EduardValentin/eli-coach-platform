@@ -1,5 +1,6 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import { weekdayNamed } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import { weekdayNamed } from "../client-settings";
+
+import type { ClientGender } from "./client-gender";
 import {
   ACTIVITY_LEVELS,
   CLIENT_EQUIPMENT,
@@ -137,7 +138,7 @@ function preferencesOf(lifestyle: OnboardingFormAnswers): ClientPreferences {
 
 export function coachingSeedOf(
   answers: OnboardingAnswersByForm,
-  gender: VisitorGender,
+  gender: ClientGender,
 ): CoachingSeed {
   const goal = answers["goal-availability"];
   const lifestyle = answers["nutrition-lifestyle"];

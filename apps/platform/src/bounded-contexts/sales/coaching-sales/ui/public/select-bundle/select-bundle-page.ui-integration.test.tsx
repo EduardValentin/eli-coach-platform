@@ -18,7 +18,7 @@ import {
   it,
 } from "vitest";
 
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
 import type { BundlePage } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";

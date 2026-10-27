@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "./client-gender";
 import type { CycleMode } from "../client-profile";
 
 import type {
@@ -98,7 +98,7 @@ const PERIMENOPAUSE_VALUES: ReadonlySet<OnboardingAnswer | undefined> = new Set(
 
 export function cycleModeOf(
   answers: OnboardingAnswersByForm,
-  gender: VisitorGender,
+  gender: ClientGender,
 ): CycleMode | null {
   if (gender === "male") return "general";
 

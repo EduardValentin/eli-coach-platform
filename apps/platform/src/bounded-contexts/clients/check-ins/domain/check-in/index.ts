@@ -41,27 +41,27 @@ export {
   type CheckInSeriesNotice,
   type CheckInSeriesNotification,
 } from "./check-in-notifications";
-export { CHECK_IN_RULES } from "./check-in-rules";
+export { CHECK_IN_RULES, type CheckInSlotRules } from "./check-in-rules";
+export { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 export {
-  CheckInSeries,
-  type CheckInSeriesOccurrence,
-  type CheckInSeriesSnapshot,
-} from "./check-in-series";
-export {
-  type CheckInSeriesChangeResult,
-  type CheckInSeriesExtension,
+  type CheckInSeriesChange,
   type CheckInSeriesRecords,
-  type CheckInSeriesSetUpResult,
+  type CheckInSeriesStop,
 } from "./check-in-series-records";
 export {
   type CheckInMove,
-  type CheckInRequestResult,
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
   type CheckInStartWindow,
+  type HeldCheckIn,
 } from "./check-ins";
 export { type CoachCheckInView } from "./coach-check-in-views";
+export {
+  type CoachTime,
+  type CoachTimeHold,
+  type CoachTimeSpan,
+} from "./coach-time";
 export { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
 export {
   DeclineCheckInUseCase,
@@ -82,6 +82,8 @@ export {
   type ListOpenCheckInTimesCommand,
   type ListOpenCheckInTimesResult,
 } from "./list-open-check-in-times-use-case";
+export { type MeetingRoom } from "./meeting-room";
+export { CoachWeek, type OpenSlots } from "./open-slots";
 export {
   PreviewCheckInSeriesUseCase,
   type PreviewCheckInSeriesResult,
@@ -122,3 +124,4 @@ export {
   WithdrawCheckInRequestUseCase,
   type WithdrawCheckInRequestResult,
 } from "./withdraw-check-in-request-use-case";
+export { WEEKDAYS, type Weekday, weekdayNamed } from "./weekdays";

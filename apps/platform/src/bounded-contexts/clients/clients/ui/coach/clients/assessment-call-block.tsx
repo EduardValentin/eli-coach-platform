@@ -13,8 +13,8 @@ import { Video } from "lucide-react";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
-import { findCountry } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+} from "~/shared/time-format/call-moment";
+import { findCountry } from "~/shared/contact/countries";
 import {
   labelForGender,
   labelForPrimaryGoal,

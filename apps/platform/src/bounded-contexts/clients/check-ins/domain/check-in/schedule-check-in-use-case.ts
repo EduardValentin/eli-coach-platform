@@ -2,7 +2,6 @@ import type {
   ClientIdentities,
   ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type { CoachAvailabilitySource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
@@ -12,9 +11,11 @@ import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
 import type { CheckInNotifications } from "./check-in-notifications";
-import { CHECK_IN_RULES } from "./check-in-rules";
+import { CheckInRequestPlacement } from "./check-in-request-placement";
 import { CheckInTimeZone } from "./check-in-time-zone";
 import type { CheckIns } from "./check-ins";
+import type { CoachTime } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
 
 export type ScheduleCheckInCommand = {
   clientId: string;
@@ -31,22 +32,25 @@ export type ScheduleCheckInResult =
   | { status: "invalid_time_zone" };
 
 type ScheduleCheckInUseCaseOptions = {
-  availability: CoachAvailabilitySource;
-  checkIns: Pick<CheckIns, "request">;
+  checkIns: Pick<CheckIns, "listForClientLocked" | "add">;
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  coachTime: Pick<CoachTime, "reserve">;
   identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
+  openSlots: Pick<OpenSlots, "coachWeek" | "offersStart">;
 };
 
 export class ScheduleCheckInUseCase {
   private readonly announcer: CheckInAnnouncer;
+  private readonly placement: CheckInRequestPlacement;
 
   constructor(private readonly options: ScheduleCheckInUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
+    this.placement = new CheckInRequestPlacement(options);
   }
 
   async execute(
@@ -84,25 +88,20 @@ export class ScheduleCheckInUseCase {
     }
 
     const now = this.options.clock.now();
-    const availability = await this.options.availability.current();
+    const { openSlots } = this.options;
 
-    if (
-      !availability.isOpenStart({
-        start: command.startsAt,
-        now,
-        policy: CHECK_IN_RULES,
-      })
-    ) {
+    if (!(await openSlots.offersStart({ start: command.startsAt, now }))) {
       return { status: "time_taken" };
     }
 
-    const requested = await this.options.checkIns.request({
+    const { timeZone: coachTimeZone } = await openSlots.coachWeek();
+    const requested = await this.placement.place({
       checkIn: CheckIn.scheduledByCoach({
         id: this.options.ids.generate(),
         clientId: client.clientId,
         startsAt: command.startsAt,
         clientTimeZone: zone.timeZone,
-        coachTimeZone: availability.timeZone,
+        coachTimeZone,
         note: written.note,
         requestedAt: now,
       }),

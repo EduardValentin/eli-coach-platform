@@ -1,9 +1,8 @@
-import type {
-  AssessmentCallReader,
-  VisitorGender,
-  VisitorPrimaryGoal,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import { ClientJourney } from "../client-journey";
+import {
+  ClientJourney,
+  type ClientCall,
+  type ClientCalls,
+} from "../client-journey";
 import type { Clock } from "../clock";
 
 import {
@@ -18,22 +17,11 @@ type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
   needsRefund: boolean;
   coachingCancelledOrEnded: boolean;
-  assessmentCall: {
-    startsAt: Date;
-    firstName: string;
-    lastName: string;
-    email: string;
-    dateOfBirth: string;
-    gender: VisitorGender;
-    country: string;
-    phone: string | null;
-    primaryGoal: VisitorPrimaryGoal;
-    notes: string | null;
-  };
+  assessmentCall: ClientCall;
 };
 
 type ReadClientRecordUseCaseOptions = {
-  calls: AssessmentCallReader;
+  calls: ClientCalls;
   clock: Clock;
   roster: ClientRoster;
 };
@@ -48,7 +36,7 @@ export class ReadClientRecordUseCase {
       return null;
     }
 
-    const call = await this.options.calls.findById(
+    const call = await this.options.calls.callOf(
       entry.booking.assessmentCallId,
     );
 
@@ -67,18 +55,7 @@ export class ReadClientRecordUseCase {
       }),
       needsRefund: rosterEntryNeedsRefund(entry),
       coachingCancelledOrEnded: journey.standing.isCancelledOrEnded(),
-      assessmentCall: {
-        startsAt: call.startsAt,
-        firstName: call.firstName,
-        lastName: call.lastName,
-        email: call.visitorEmail,
-        dateOfBirth: call.dateOfBirth,
-        gender: call.gender,
-        country: call.country,
-        phone: call.phone,
-        primaryGoal: call.primaryGoal,
-        notes: call.visitorNotes,
-      },
+      assessmentCall: call,
     };
   }
 }

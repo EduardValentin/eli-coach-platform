@@ -5,8 +5,8 @@ import {
   MAX_CHECK_IN_MOVES,
   MAX_CHECK_IN_NOTE_LENGTH,
   RECORDED_CHECK_IN_STATUSES,
+  WEEKDAYS,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
-import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,
@@ -21,6 +21,7 @@ import {
 
 import { LAST_HOUR_OF_DAY } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/schema.server";
+import { coachTimeReservationsTable } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/schema.server";
 
 export const checkInConstraints = {
   activeSeriesPerClient: "check_in_series_active_per_client_unique",
@@ -89,6 +90,11 @@ export const checkInsTable = appSchema.table(
     earlierStartsAt: timestamp("earlier_starts_at", { withTimezone: true }),
     moves: smallint("moves").notNull().default(0),
     newTimeNote: text("new_time_note"),
+    reservationId: uuid("reservation_id")
+      .unique()
+      .references(() => coachTimeReservationsTable.id, {
+        onDelete: "restrict",
+      }),
   },
   (table) => [
     index("check_ins_client_id_starts_at_idx").on(

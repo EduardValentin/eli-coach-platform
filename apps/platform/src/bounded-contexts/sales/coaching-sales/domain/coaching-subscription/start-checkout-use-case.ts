@@ -1,7 +1,3 @@
-import type {
-  AssessmentCallReader,
-  AssessmentCallSnapshot,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   findCoachingBundle,
   type PricingEligibility,
@@ -11,8 +7,10 @@ import {
   PaymentLink,
   type CallSalesStates,
   type CoachingSalesWindow,
+  type EndedCalls,
   type PaymentLinks,
   type PaymentLinkTokenHasher,
+  type SalesCall,
 } from "../payment-link";
 import type { Clock } from "../clock";
 
@@ -38,7 +36,7 @@ type StartCheckoutResult =
   | { status: "unknown_bundle" };
 
 type StartCheckoutUseCaseOptions = {
-  calls: AssessmentCallReader;
+  calls: EndedCalls;
   callSalesStates: CallSalesStates;
   checkoutSessions: CheckoutSessions;
   clock: Clock;
@@ -149,7 +147,7 @@ export class StartCheckoutUseCase {
   }
 
   private async paymentCustomerFor(
-    call: AssessmentCallSnapshot,
+    call: SalesCall,
     paymentLinkId: string,
   ): Promise<string> {
     const existing = await this.options.paymentLinks.findPaymentCustomerForCall(

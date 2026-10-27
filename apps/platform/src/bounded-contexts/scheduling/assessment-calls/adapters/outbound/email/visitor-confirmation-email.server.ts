@@ -5,7 +5,7 @@ import {
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { formatCallMoment } from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+import { formatCallMoment } from "~/shared/time-format/call-moment";
 
 import { ASSESSMENT_CALL_ACTION_COPY } from "./assessment-call-email-actions.server";
 import {

@@ -78,7 +78,8 @@ function createPorts(options: {
   identities?: ClientIdentity[];
 }) {
   const checkIns = {
-    request: vi.fn(),
+    listForClientLocked: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(undefined),
     find: vi.fn(),
     listForClient: vi.fn().mockResolvedValue(options.checkIns),
     listAll: vi.fn().mockResolvedValue(options.checkIns),

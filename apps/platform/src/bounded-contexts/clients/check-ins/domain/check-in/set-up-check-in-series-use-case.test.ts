@@ -5,15 +5,12 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import { CoachAvailability } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 
-import { CheckIn } from "./check-in";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries } from "./check-in-series";
-import type {
-  CheckInSeriesRecords,
-  CheckInSeriesSetUpResult,
-} from "./check-in-series-records";
+import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CoachTime, CoachTimeHold } from "./coach-time";
+import { CoachWeek, type OpenSlots } from "./open-slots";
 import { SetUpCheckInSeriesUseCase } from "./set-up-check-in-series-use-case";
 
 const NOW = new Date("2026-10-05T09:00:00.000Z");
@@ -50,37 +47,41 @@ const WEEK_STARTS = [
   "2026-11-04T16:00:00.000Z",
 ];
 
-function availabilityOf() {
-  const result = CoachAvailability.from({
-    timeZone: "Europe/Bucharest",
-    weekdays: ["monday", "wednesday", "friday"],
-    startHour: 9,
-    endHour: 20,
-  });
-
-  if (result.status !== "configured") {
-    throw new Error(`expected a configured availability: ${result.problems}`);
-  }
-
-  return { current: vi.fn().mockResolvedValue(result.availability) };
+function openSlotsOf() {
+  return {
+    coachWeek: vi.fn().mockResolvedValue(
+      CoachWeek.of({
+        timeZone: "Europe/Bucharest",
+        weekdays: ["monday", "wednesday", "friday"],
+        hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      }),
+    ),
+  } satisfies Pick<OpenSlots, "coachWeek">;
 }
 
 function createSetUp(options?: {
   client?: ClientReachReading | null;
-  recorded?: CheckInSeriesSetUpResult;
+  started?: "started" | "series_exists";
+  hold?: CoachTimeHold;
 }) {
   let generated = 0;
+  let reserved = 0;
   const series = {
-    setUp: vi.fn(
-      async (
-        command: Parameters<CheckInSeriesRecords["setUp"]>[0],
-      ): Promise<CheckInSeriesSetUpResult> =>
-        options?.recorded ?? {
-          status: "set_up",
-          occurrences: command.occurrences.map(({ checkIn }) => checkIn),
+    start: vi.fn().mockResolvedValue(options?.started ?? "started"),
+    recordWeeks: vi
+      .fn<CheckInSeriesRecords["recordWeeks"]>()
+      .mockResolvedValue(undefined),
+  } satisfies Pick<CheckInSeriesRecords, "start" | "recordWeeks">;
+  const coachTime = {
+    reserve: vi.fn(
+      async (): Promise<CoachTimeHold> =>
+        options?.hold ?? {
+          status: "reserved",
+          reservationId: `reservation-${(reserved += 1)}`,
         },
     ),
-  } satisfies Pick<CheckInSeriesRecords, "setUp">;
+    release: vi.fn().mockResolvedValue(undefined),
+  } satisfies CoachTime;
   const clients = {
     findById: vi
       .fn()
@@ -116,9 +117,9 @@ function createSetUp(options?: {
     checkInSeriesInboxFailed: vi.fn(),
   };
   const ports = {
-    availability: availabilityOf(),
     clients,
     clock: { now: () => NOW },
+    coachTime,
     identities,
     ids: { generate: () => `id-${(generated += 1)}` },
     incidents,
@@ -128,6 +129,7 @@ function createSetUp(options?: {
       clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
+    openSlots: openSlotsOf(),
     series,
   };
 
@@ -143,8 +145,8 @@ describe("SetUpCheckInSeriesUseCase", () => {
     const result = await setUp.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    const [{ series, occurrences, at }] = ports.series.setUp.mock.calls[0];
-    expect(at).toEqual(NOW);
+    const [series] = ports.series.start.mock.calls[0];
+    const [weeks] = ports.series.recordWeeks.mock.calls[0];
     expect(series).toBeInstanceOf(CheckInSeries);
     expect(series.toSnapshot()).toEqual({
       id: "id-1",
@@ -159,8 +161,8 @@ describe("SetUpCheckInSeriesUseCase", () => {
       stoppedAt: null,
     });
     expect(
-      occurrences.map(({ checkIn, availability }) => ({
-        availability,
+      weeks.map(({ checkIn, reservationId }) => ({
+        reservationId,
         startsAt: checkIn.startsAt.toISOString(),
         seriesId: checkIn.seriesId,
         kind: checkIn.kind,
@@ -169,8 +171,8 @@ describe("SetUpCheckInSeriesUseCase", () => {
         coachTimeZone: checkIn.coachTimeZone,
       })),
     ).toEqual(
-      WEEK_STARTS.map((startsAt) => ({
-        availability: "open",
+      WEEK_STARTS.map((startsAt, week) => ({
+        reservationId: `reservation-${week + 1}`,
         startsAt,
         seriesId: "id-1",
         kind: "recurring",
@@ -182,32 +184,26 @@ describe("SetUpCheckInSeriesUseCase", () => {
     expect(result).toEqual({
       status: "set_up",
       series: series.toSnapshot(),
-      occurrences: occurrences.map(({ checkIn }) => checkIn.toSnapshot()),
+      occurrences: weeks.map(({ checkIn }) => checkIn.toSnapshot()),
     });
   });
 
-  it("answers with the weeks as recorded, clashes included", async () => {
+  it("answers with the weeks as recorded, a week whose hour is taken as a clash holding no time", async () => {
     // arrange
-    const clash = CheckIn.seriesOccurrence({
-      id: "week-1",
-      seriesId: "id-1",
-      clientId: "client-1",
-      startsAt: new Date(WEEK_STARTS[0]),
-      clientTimeZone: "Europe/London",
-      coachTimeZone: "Europe/Bucharest",
-      at: NOW,
-    }).asClash();
-    const { setUp } = createSetUp({
-      recorded: { status: "set_up", occurrences: [clash] },
-    });
+    const { ports, setUp } = createSetUp({ hold: { status: "taken" } });
 
     // act
     const result = await setUp.execute(WEDNESDAY_EVENINGS);
 
     // assert
+    const [weeks] = ports.series.recordWeeks.mock.calls[0];
+    expect(weeks[0]).toMatchObject({ reservationId: null });
+    expect(weeks[0]?.checkIn.recordedStatus).toBe("clash");
     expect(result).toMatchObject({
       status: "set_up",
-      occurrences: [clash.toSnapshot()],
+      occurrences: expect.arrayContaining([
+        expect.objectContaining({ recordedStatus: "clash" }),
+      ]),
     });
   });
 
@@ -245,25 +241,7 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
   it("writes the series to her inbox, opening her earliest recorded week", async () => {
     // arrange
-    const weekOf = (id: string, startsAt: string) =>
-      CheckIn.seriesOccurrence({
-        id,
-        seriesId: "id-1",
-        clientId: "client-1",
-        startsAt: new Date(startsAt),
-        clientTimeZone: "Europe/London",
-        coachTimeZone: "Europe/Bucharest",
-        at: NOW,
-      });
-    const { ports, setUp } = createSetUp({
-      recorded: {
-        status: "set_up",
-        occurrences: [
-          weekOf("week-2", WEEK_STARTS[1]),
-          weekOf("week-1", WEEK_STARTS[0]),
-        ],
-      },
-    });
+    const { ports, setUp } = createSetUp();
 
     // act
     await setUp.execute(WEDNESDAY_EVENINGS);
@@ -275,7 +253,7 @@ describe("SetUpCheckInSeriesUseCase", () => {
       clientTimeZone: "Europe/London",
       client: ANA,
       recipient: "client",
-      firstWeekId: "week-1",
+      firstWeekId: "id-2",
     });
   });
 
@@ -292,23 +270,23 @@ describe("SetUpCheckInSeriesUseCase", () => {
     await setUp.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    const [{ occurrences }] = ports.series.setUp.mock.calls[0];
-    expect(
-      occurrences.map(({ checkIn }) => checkIn.startsAt.toISOString()),
-    ).toEqual(WEEK_STARTS.slice(2));
+    const [weeks] = ports.series.recordWeeks.mock.calls[0];
+    expect(weeks.map(({ checkIn }) => checkIn.startsAt.toISOString())).toEqual(
+      WEEK_STARTS.slice(2),
+    );
   });
 
   it("refuses a second active series without emailing", async () => {
     // arrange
-    const { ports, setUp } = createSetUp({
-      recorded: { status: "series_exists" },
-    });
+    const { ports, setUp } = createSetUp({ started: "series_exists" });
 
     // act
     const result = await setUp.execute(WEDNESDAY_EVENINGS);
 
     // assert
     expect(result).toEqual({ status: "series_exists" });
+    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(ports.series.recordWeeks).not.toHaveBeenCalled();
     expect(ports.notifications.seriesSetUp).not.toHaveBeenCalled();
   });
 
@@ -350,7 +328,7 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
       // assert
       expect(result).toEqual({ status });
-      expect(ports.series.setUp).not.toHaveBeenCalled();
+      expect(ports.series.start).not.toHaveBeenCalled();
     },
   );
 
@@ -380,7 +358,7 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "outside_availability" });
-      expect(ports.series.setUp).not.toHaveBeenCalled();
+      expect(ports.series.start).not.toHaveBeenCalled();
     },
   );
 });

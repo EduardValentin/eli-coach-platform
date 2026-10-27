@@ -1,17 +1,15 @@
+import { CHECK_IN_RULES } from "./check-in-rules";
+import type { CheckInSeriesBounds } from "./check-in-series-bounds";
+import type { CoachTimeSpan } from "./coach-time";
+import type { CoachWeek } from "./open-slots";
+import { WEEKDAYS, type Weekday } from "./weekdays";
 import {
   addDays,
   instantToWallClock,
   wallClockToInstant,
   weekdayIndexOf,
-  WEEKDAYS,
   type CalendarDate,
-  type CoachAvailability,
-  type TimeInterval,
-  type Weekday,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-
-import { CHECK_IN_RULES } from "./check-in-rules";
-import type { CheckInSeriesBounds } from "./check-in-series-bounds";
+} from "./zoned-time";
 
 export type CheckInSeriesRuleSnapshot = {
   weekday: Weekday;
@@ -27,14 +25,14 @@ export type CheckInSeriesPreviewHour = {
 
 type CheckInSeriesWeekdayPreview = {
   weekday: Weekday;
-  availability: CoachAvailability;
+  week: CoachWeek;
   bounds: CheckInSeriesBounds;
-  busy: readonly TimeInterval[];
+  busy: readonly CoachTimeSpan[];
 };
 
 type CheckInSeriesHourPreview = {
   bounds: CheckInSeriesBounds;
-  busy: readonly TimeInterval[];
+  busy: readonly CoachTimeSpan[];
 };
 
 const DAYS_PER_WEEK = 7;
@@ -56,15 +54,15 @@ export class CheckInSeriesRule {
 
   static previewHoursOn({
     weekday,
-    availability,
+    week,
     bounds,
     busy,
   }: CheckInSeriesWeekdayPreview): CheckInSeriesPreviewHour[] {
-    return availability.weeklyHours().map((hour) =>
+    return week.hours.map((hour) =>
       new CheckInSeriesRule({
         weekday,
         hour,
-        timeZone: availability.timeZone,
+        timeZone: week.timeZone,
       }).previewBetween({ bounds, busy }),
     );
   }
@@ -130,7 +128,7 @@ export class CheckInSeriesRule {
     });
   }
 
-  private isTaken(start: Date, busy: readonly TimeInterval[]): boolean {
+  private isTaken(start: Date, busy: readonly CoachTimeSpan[]): boolean {
     const held = CHECK_IN_RULES.coachTimeFrom(start);
 
     return busy.some(

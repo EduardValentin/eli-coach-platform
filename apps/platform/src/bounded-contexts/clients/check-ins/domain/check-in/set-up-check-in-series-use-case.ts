@@ -2,10 +2,6 @@ import type {
   ClientIdentities,
   ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type {
-  CoachAvailabilitySource,
-  Weekday,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
@@ -19,6 +15,10 @@ import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 import { CheckInSeriesRule } from "./check-in-series-rule";
+import { CheckInWeekRecorder } from "./check-in-week-recorder";
+import type { CoachTime } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
+import type { Weekday } from "./weekdays";
 
 export type SetUpCheckInSeriesCommand = {
   clientId: string;
@@ -42,22 +42,25 @@ export type SetUpCheckInSeriesResult =
     };
 
 type SetUpCheckInSeriesUseCaseOptions = {
-  availability: CoachAvailabilitySource;
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  coachTime: Pick<CoachTime, "reserve">;
   identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
-  series: Pick<CheckInSeriesRecords, "setUp">;
+  openSlots: Pick<OpenSlots, "coachWeek">;
+  series: Pick<CheckInSeriesRecords, "start" | "recordWeeks">;
 };
 
 export class SetUpCheckInSeriesUseCase {
   private readonly announcer: CheckInAnnouncer;
+  private readonly weeks: CheckInWeekRecorder;
 
   constructor(private readonly options: SetUpCheckInSeriesUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
+    this.weeks = new CheckInWeekRecorder(options);
   }
 
   async execute(
@@ -80,9 +83,9 @@ export class SetUpCheckInSeriesUseCase {
       return { status: bounds };
     }
 
-    const availability = await this.options.availability.current();
+    const week = await this.options.openSlots.coachWeek();
 
-    if (!availability.holdsWeeklyHour(command)) {
+    if (!week.holdsWeeklyHour(command)) {
       return { status: "outside_availability" };
     }
 
@@ -96,7 +99,7 @@ export class SetUpCheckInSeriesUseCase {
       rule: CheckInSeriesRule.of({
         weekday: command.weekday,
         hour: command.hour,
-        timeZone: availability.timeZone,
+        timeZone: week.timeZone,
       }),
       bounds,
       at: now,
@@ -106,33 +109,31 @@ export class SetUpCheckInSeriesUseCase {
       return { status: "nothing_to_create" };
     }
 
-    const recorded = await this.options.series.setUp({
-      series,
-      occurrences: series.occurrencesAt({
+    if ((await this.options.series.start(series)) === "series_exists") {
+      return { status: "series_exists" };
+    }
+
+    const occurrences = await this.weeks.record(
+      series.occurrencesAt({
         starts,
         clientTimeZone: client.timeZone,
         availability: "open",
         at: now,
         newId: () => this.options.ids.generate(),
       }),
-      at: now,
-    });
-
-    if (recorded.status !== "set_up") {
-      return recorded;
-    }
+    );
 
     await this.announcer.announceSeries("seriesSetUp", {
       series,
       weekStartsAt: starts[0],
       clientTimeZone: client.timeZone,
-      firstWeekId: CheckIn.earliestOf(recorded.occurrences)?.id ?? null,
+      firstWeekId: CheckIn.earliestOf(occurrences)?.id ?? null,
     });
 
     return {
       status: "set_up",
       series: series.toSnapshot(),
-      occurrences: recorded.occurrences.map((checkIn) => checkIn.toSnapshot()),
+      occurrences: occurrences.map((checkIn) => checkIn.toSnapshot()),
     };
   }
 }

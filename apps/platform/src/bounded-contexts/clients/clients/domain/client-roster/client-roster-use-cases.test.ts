@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  AssessmentCall,
-  type AssessmentCallReader,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { CoachingStandingSnapshot } from "../client";
+import type { ClientCalls } from "../client-journey";
 
 import type { ClientRoster, ClientRosterEntry } from "./client-roster";
 import type { ClientRosterIncidents } from "./client-roster-incidents";
@@ -148,27 +145,21 @@ describe("ListClientsUseCase", () => {
 });
 
 describe("ReadClientRecordUseCase", () => {
-  function callReader(visitorNotes: string | null) {
+  function callReader(notes: string | null) {
     return {
-      findById: vi.fn().mockResolvedValue(
-        AssessmentCall.reconstitute({
-          id: "call-1",
-          firstName: "Ana-Maria",
-          lastName: "Popescu",
-          visitorEmail: "ana.booked@example.com",
-          visitorNotes,
-          dateOfBirth: "1994-03-14",
-          gender: "female",
-          primaryGoal: "lose_weight",
-          country: "MD",
-          phone: "+37360000000",
-          startsAt: new Date("2026-09-25T15:00:00.000Z"),
-          visitorTimeZone: "Europe/Bucharest",
-          coachTimeZone: "Europe/Bucharest",
-          bookedAt: new Date("2026-09-20T09:12:00.000Z"),
-        }).toSnapshot(),
-      ),
-    } satisfies AssessmentCallReader;
+      callOf: vi.fn().mockResolvedValue({
+        startsAt: new Date("2026-09-25T15:00:00.000Z"),
+        firstName: "Ana-Maria",
+        lastName: "Popescu",
+        email: "ana.booked@example.com",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        country: "MD",
+        phone: "+37360000000",
+        primaryGoal: "lose_weight",
+        notes,
+      }),
+    } satisfies ClientCalls;
   }
 
   it("reads her record with her status and the call she booked: when, who booked it, her goal and her notes", async () => {
@@ -201,7 +192,7 @@ describe("ReadClientRecordUseCase", () => {
       },
     });
     expect(roster.findById).toHaveBeenCalledWith("client-1");
-    expect(calls.findById).toHaveBeenCalledWith("call-1");
+    expect(calls.callOf).toHaveBeenCalledWith("call-1");
   });
 
   it.each([
@@ -280,7 +271,7 @@ describe("ReadClientRecordUseCase", () => {
     // arrange
     const useCase = new ReadClientRecordUseCase({
       roster: createRoster({ findById: vi.fn().mockResolvedValue(entry()) }),
-      calls: { findById: vi.fn().mockResolvedValue(null) },
+      calls: { callOf: vi.fn().mockResolvedValue(null) },
       clock,
     });
 
@@ -305,6 +296,6 @@ describe("ReadClientRecordUseCase", () => {
 
     // assert
     expect(result).toBeNull();
-    expect(calls.findById).not.toHaveBeenCalled();
+    expect(calls.callOf).not.toHaveBeenCalled();
   });
 });

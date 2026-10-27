@@ -27,7 +27,7 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 import { clientAction as scheduleCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/schedule";
 import {
   clientLoader as openTimesLoader,

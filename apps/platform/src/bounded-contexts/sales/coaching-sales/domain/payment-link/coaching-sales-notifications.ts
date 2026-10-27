@@ -1,8 +1,9 @@
-import type { AssessmentCallSnapshot } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { PriceTier } from "../coaching-bundle";
 
+import type { SalesCall } from "./ended-calls";
+
 export type PaymentLinkMessage = {
-  call: AssessmentCallSnapshot;
+  call: SalesCall;
   paymentLinkId: string;
   rawToken: string;
   tier: PriceTier;

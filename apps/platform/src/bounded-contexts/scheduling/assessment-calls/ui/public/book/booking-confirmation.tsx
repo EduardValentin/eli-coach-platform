@@ -8,7 +8,7 @@ import type { Booking } from "~/bounded-contexts/scheduling/assessment-calls/pub
 import {
   formatMonthFirstDate,
   formatClockTime,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+} from "~/shared/time-format/call-moment";
 
 type BookingConfirmationProps = {
   booking: Booking;

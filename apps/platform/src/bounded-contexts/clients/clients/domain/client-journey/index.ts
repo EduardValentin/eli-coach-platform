@@ -1,3 +1,4 @@
+export { type ClientCall, type ClientCalls } from "./client-call";
 export {
   ClientJourney,
   STEPS_AFTER_SUBMISSION,

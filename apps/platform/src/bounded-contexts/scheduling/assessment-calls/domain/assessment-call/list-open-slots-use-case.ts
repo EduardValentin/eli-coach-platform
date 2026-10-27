@@ -1,14 +1,12 @@
-import type {
-  CoachAvailability,
-  CoachAvailabilitySource,
-  CoachCalendar,
-  TimeInterval,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 import type { AssessmentCallIncidents } from "./assessment-call-incidents";
-import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
+import type {
+  CoachAvailability,
+  CoachAvailabilityReading,
+} from "./coach-availability";
+import type { CoachTimeSpan } from "./coach-time";
 
 export type OpenSlotsResult =
   | { status: "closed" }
@@ -16,16 +14,15 @@ export type OpenSlotsResult =
   | { status: "unavailable" };
 
 type ListOpenSlotsUseCaseOptions = {
-  availability: CoachAvailabilitySource;
+  availability: CoachAvailability;
   bookingWindow: AssessmentCallBookingWindow;
-  calendar: CoachCalendar;
   clock: Clock;
   incidents: AssessmentCallIncidents;
 };
 
 type SlotSources = {
-  availability: CoachAvailability;
-  busy: TimeInterval[];
+  availability: CoachAvailabilityReading;
+  busy: CoachTimeSpan[];
 };
 
 export class ListOpenSlotsUseCase {
@@ -48,11 +45,7 @@ export class ListOpenSlotsUseCase {
     return {
       status: "open",
       coachTimeZone: sources.availability.timeZone,
-      slots: sources.availability.openSlotStarts({
-        now,
-        policy: ASSESSMENT_CALL_RULES,
-        busy: sources.busy,
-      }),
+      slots: sources.availability.openStarts({ now, busy: sources.busy }),
     };
   }
 
@@ -60,7 +53,7 @@ export class ListOpenSlotsUseCase {
     try {
       return {
         availability: await this.options.availability.current(),
-        busy: await this.options.calendar.busyFrom(now),
+        busy: await this.options.availability.busyFrom(now),
       };
     } catch {
       return null;

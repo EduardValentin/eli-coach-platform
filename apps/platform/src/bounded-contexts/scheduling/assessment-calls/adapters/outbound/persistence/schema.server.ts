@@ -15,6 +15,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import { coachTimeReservationsTable } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/schema.server";
+
 export const assessmentCallsTable = appSchema.table(
   "assessment_calls",
   {
@@ -35,6 +37,12 @@ export const assessmentCallsTable = appSchema.table(
     visitorTimeZone: varchar("visitor_time_zone", { length: 64 }).notNull(),
     coachTimeZone: varchar("coach_time_zone", { length: 64 }).notNull(),
     bookedAt: timestamp("booked_at", { withTimezone: true }).notNull(),
+    reservationId: uuid("reservation_id")
+      .notNull()
+      .unique()
+      .references(() => coachTimeReservationsTable.id, {
+        onDelete: "restrict",
+      }),
   },
   (table) => [
     index("assessment_calls_visitor_email_starts_at_idx").on(

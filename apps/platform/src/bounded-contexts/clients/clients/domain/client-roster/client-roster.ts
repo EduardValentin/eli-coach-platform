@@ -1,5 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { CoachingStanding, CoachingStatus } from "../client";
+import type { ClientGender, CoachingStanding, CoachingStatus } from "../client";
 import type {
   ClientJourney,
   ClientJourneySnapshot,
@@ -25,7 +24,7 @@ export type ClientRosterEntry = {
   accountBound: boolean;
   booking: {
     email: string;
-    gender: VisitorGender;
+    gender: ClientGender;
     assessmentCallId: string;
   };
   joinedAt: Date;

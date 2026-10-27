@@ -7,7 +7,7 @@ import {
 import { UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { findCountry } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+import { findCountry } from "~/shared/contact/countries";
 import {
   formatAgeForCard,
   labelForGender,

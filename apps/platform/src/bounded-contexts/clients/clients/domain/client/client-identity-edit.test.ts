@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { VisitorCountries } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
 
 import {
   ClientIdentityEdit,
@@ -13,7 +13,7 @@ const ON = {
   timeZone: "Europe/Bucharest",
 };
 
-const COUNTRIES = VisitorCountries.of([
+const COUNTRIES = ClientCountries.of([
   { code: "RO", callingCode: "+40" },
   { code: "MD", callingCode: "+373" },
 ]);

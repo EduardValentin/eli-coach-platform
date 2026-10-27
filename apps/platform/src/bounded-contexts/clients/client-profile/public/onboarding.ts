@@ -1,4 +1,4 @@
-import { VISITOR_GENDERS } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { CLIENT_GENDERS } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import {
   ONBOARDING_FORM_IDS,
   type OnboardingConsent,
@@ -76,7 +76,7 @@ const onboardingWizardPageSchema = z.object({
   mode: z.literal("wizard"),
   clientId: z.string().min(1),
   formIds: z.array(formIdSchema).min(1),
-  gender: z.enum(VISITOR_GENDERS),
+  gender: z.enum(CLIENT_GENDERS),
   manualScreening: z.boolean(),
   draft: z.object({
     answers: answersByFormSchema,

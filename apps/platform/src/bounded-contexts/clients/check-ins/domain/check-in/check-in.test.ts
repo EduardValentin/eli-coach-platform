@@ -783,27 +783,22 @@ describe("CheckIn.decideRequest", () => {
 
   it.each([
     {
-      situation: "the hour reserved and nothing waiting",
-      coachTime: "reserved",
+      situation: "nothing waiting",
       clientCheckIns: [],
       expected: "requested",
     },
     {
-      situation: "the hour reserved and a request waiting",
-      coachTime: "reserved",
+      situation: "a request waiting",
       clientCheckIns: [waitingRequest],
       expected: "request_waiting",
     },
     {
-      situation:
-        "the hour reserved beside a request that has started and an approved check-in",
-      coachTime: "reserved",
+      situation: "a request that has started beside an approved check-in",
       clientCheckIns: [startedRequest, approved],
       expected: "requested",
     },
     {
-      situation: "the hour reserved and only a coach request waiting",
-      coachTime: "reserved",
+      situation: "only a coach request waiting",
       clientCheckIns: [
         checkIn({
           id: "check-in-4",
@@ -814,24 +809,16 @@ describe("CheckIn.decideRequest", () => {
       expected: "requested",
     },
     {
-      situation: "the hour taken and nothing waiting",
-      coachTime: "taken",
-      clientCheckIns: [],
-      expected: "time_taken",
-    },
-    {
-      situation: "the hour taken and a request waiting",
-      coachTime: "taken",
+      situation: "an approved check-in beside a request waiting",
       clientCheckIns: [approved, waitingRequest],
       expected: "request_waiting",
     },
   ] as const)(
     "decides her request with $situation as $expected",
-    ({ coachTime, clientCheckIns, expected }) => {
+    ({ clientCheckIns, expected }) => {
       // arrange
       const learned = {
         initiatedBy: "client" as const,
-        coachTime,
         clientCheckIns,
         at,
       };
@@ -848,28 +835,19 @@ describe("CheckIn.decideRequest", () => {
     {
       situation: "a client request waiting",
       clientCheckIns: [waitingRequest],
-      coachTime: "reserved",
       expected: "requested",
     },
     {
       situation: "her own earlier request waiting",
       clientCheckIns: [checkIn({ initiatedBy: "coach", proposedBy: "coach" })],
-      coachTime: "reserved",
       expected: "requested",
-    },
-    {
-      situation: "the hour taken",
-      clientCheckIns: [],
-      coachTime: "taken",
-      expected: "time_taken",
     },
   ] as const)(
     "decides the coach's request with $situation as $expected",
-    ({ coachTime, clientCheckIns, expected }) => {
+    ({ clientCheckIns, expected }) => {
       // arrange
       const learned = {
         initiatedBy: "coach" as const,
-        coachTime,
         clientCheckIns,
         at,
       };
@@ -886,7 +864,6 @@ describe("CheckIn.decideRequest", () => {
     // arrange
     const learned = {
       initiatedBy: "client" as const,
-      coachTime: "reserved" as const,
       clientCheckIns: [newTimeFromCoach({ proposedBy: "client" })],
       at,
     };
@@ -902,7 +879,6 @@ describe("CheckIn.decideRequest", () => {
     // arrange
     const learned = {
       initiatedBy: "client" as const,
-      coachTime: "reserved" as const,
       clientCheckIns: [
         checkIn({
           id: "check-in-5",

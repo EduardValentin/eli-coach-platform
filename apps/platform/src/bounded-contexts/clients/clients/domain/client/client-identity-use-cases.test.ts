@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { VisitorCountries } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
 
 import type { ClientIdentities, ClientIdentity } from "./client-identities";
 import type { ClientIdentityChanges } from "./client-identity-changes";
@@ -67,7 +67,7 @@ function createPorts(
       save: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientIdentityChanges,
     clock: { now: () => NOW },
-    countries: VisitorCountries.of([
+    countries: ClientCountries.of([
       { code: "RO", callingCode: "+40" },
       { code: "MD", callingCode: "+373" },
     ]),

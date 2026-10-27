@@ -2,14 +2,11 @@ import type {
   ClientIdentities,
   ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type {
-  CoachAvailabilitySource,
-  Weekday,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
+import { releaseFreedHours } from "./check-in-hour-release";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
@@ -19,6 +16,10 @@ import type { CheckInSeriesSnapshot } from "./check-in-series";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 import { CheckInSeriesRule } from "./check-in-series-rule";
+import { CheckInWeekRecorder } from "./check-in-week-recorder";
+import type { CoachTime } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
+import type { Weekday } from "./weekdays";
 
 export type ChangeCheckInSeriesCommand = {
   seriesId: string;
@@ -41,22 +42,25 @@ export type ChangeCheckInSeriesResult =
     };
 
 type ChangeCheckInSeriesUseCaseOptions = {
-  availability: CoachAvailabilitySource;
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  coachTime: CoachTime;
   identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
-  series: Pick<CheckInSeriesRecords, "find" | "change">;
+  openSlots: Pick<OpenSlots, "coachWeek">;
+  series: Pick<CheckInSeriesRecords, "find" | "change" | "recordWeeks">;
 };
 
 export class ChangeCheckInSeriesUseCase {
   private readonly announcer: CheckInAnnouncer;
+  private readonly weeks: CheckInWeekRecorder;
 
   constructor(private readonly options: ChangeCheckInSeriesUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
+    this.weeks = new CheckInWeekRecorder(options);
   }
 
   async execute(
@@ -74,9 +78,9 @@ export class ChangeCheckInSeriesUseCase {
       return { status: "client_cannot_answer" };
     }
 
-    const availability = await this.options.availability.current();
+    const week = await this.options.openSlots.coachWeek();
 
-    if (!availability.holdsWeeklyHour(command)) {
+    if (!week.holdsWeeklyHour(command)) {
       return { status: "outside_availability" };
     }
 
@@ -85,12 +89,12 @@ export class ChangeCheckInSeriesUseCase {
       rule: CheckInSeriesRule.of({
         weekday: command.weekday,
         hour: command.hour,
-        timeZone: availability.timeZone,
+        timeZone: week.timeZone,
       }),
       now,
       lead: CHECK_IN_RULES,
     });
-    const recorded = await this.options.series.change({
+    const changed = await this.options.series.change({
       series,
       expected: {
         changedAt: current.changedAt,
@@ -98,31 +102,39 @@ export class ChangeCheckInSeriesUseCase {
         hour: current.hour,
       },
       startsFrom: now,
-      occurrences: series.occurrencesAt({
+      at: now,
+    });
+
+    if (changed.status === "changed_meanwhile") {
+      return changed;
+    }
+
+    await releaseFreedHours(
+      this.options.coachTime,
+      changed.freedReservationIds,
+    );
+
+    const occurrences = await this.weeks.record(
+      series.occurrencesAt({
         starts,
         clientTimeZone: client.timeZone,
         availability: "open",
         at: now,
         newId: () => this.options.ids.generate(),
       }),
-      at: now,
-    });
-
-    if (recorded.status !== "changed") {
-      return recorded;
-    }
+    );
 
     await this.announcer.announceSeries("seriesChanged", {
       series,
       weekStartsAt: starts[0] ?? series.nextWeekStartFrom(now),
       clientTimeZone: client.timeZone,
-      firstWeekId: CheckIn.earliestOf(recorded.occurrences)?.id ?? null,
+      firstWeekId: CheckIn.earliestOf(occurrences)?.id ?? null,
     });
 
     return {
       status: "changed",
       series: series.toSnapshot(),
-      occurrences: recorded.occurrences.map((checkIn) => checkIn.toSnapshot()),
+      occurrences: occurrences.map((checkIn) => checkIn.toSnapshot()),
     };
   }
 }

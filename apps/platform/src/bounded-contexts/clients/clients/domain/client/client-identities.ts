@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "./client-details";
 
 export type ClientIdentity = {
   clientId: string;
@@ -6,7 +6,7 @@ export type ClientIdentity = {
   lastName: string;
   email: string;
   dateOfBirth: string;
-  gender: VisitorGender;
+  gender: ClientGender;
   country: string;
   phone: string | null;
 };

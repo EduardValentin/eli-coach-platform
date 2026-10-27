@@ -1,5 +1,7 @@
-import { VISITOR_GENDERS } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { ClientIdentityProblems } from "~/bounded-contexts/clients/clients/domain/client";
+import {
+  CLIENT_GENDERS,
+  type ClientIdentityProblems,
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { z } from "zod";
 
 const FIELD_MAX_LENGTH = 200;
@@ -18,7 +20,7 @@ export type OwnClientIdentityRequest = z.infer<
 >;
 
 export const coachClientIdentityRequestSchema =
-  ownClientIdentityRequestSchema.extend({ gender: z.enum(VISITOR_GENDERS) });
+  ownClientIdentityRequestSchema.extend({ gender: z.enum(CLIENT_GENDERS) });
 
 const clientIdentityProblemsSchema = z.object({
   firstName: z.enum(["missing", "too-long"]).optional(),

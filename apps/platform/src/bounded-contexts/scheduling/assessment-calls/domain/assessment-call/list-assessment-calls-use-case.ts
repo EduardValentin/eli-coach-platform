@@ -1,24 +1,23 @@
-import type {
-  CoachAvailability,
-  CoachAvailabilitySource,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-
 import type { AssessmentCall, AssessmentCallSnapshot } from "./assessment-call";
 import type { AssessmentCallIncidents } from "./assessment-call-incidents";
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
+import type {
+  CoachAvailability,
+  CoachAvailabilityReading,
+} from "./coach-availability";
 
 export type AssessmentCallListingResult =
   | { status: "ok"; coachTimeZone: string; calls: AssessmentCallSnapshot[] }
   | { status: "unavailable" };
 
 type ListAssessmentCallsUseCaseOptions = {
-  availability: CoachAvailabilitySource;
+  availability: CoachAvailability;
   incidents: AssessmentCallIncidents;
   reservations: AssessmentCallReservations;
 };
 
 type ListingSources = {
-  availability: CoachAvailability;
+  availability: CoachAvailabilityReading;
   calls: AssessmentCall[];
 };
 

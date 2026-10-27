@@ -1,6 +1,5 @@
-import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
-
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
+import type { MeetingRoom } from "./meeting-room";
 
 export type JoinLinkResult =
   | { status: "found"; url: string }
@@ -8,7 +7,7 @@ export type JoinLinkResult =
   | { status: "unknown" };
 
 type ResolveJoinLinkUseCaseOptions = {
-  meetingRoom: CoachMeetingRoomSource;
+  meetingRoom: MeetingRoom;
   reservations: AssessmentCallReservations;
 };
 

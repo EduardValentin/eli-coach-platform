@@ -1,9 +1,9 @@
 import { appSchema } from "~/shared/database";
 import {
-  VISITOR_GENDERS,
-  VISITOR_PRIMARY_GOALS,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import { COACHING_STATUSES } from "~/bounded-contexts/clients/clients/domain/client";
+  CLIENT_GENDERS,
+  CLIENT_PRIMARY_GOALS,
+  COACHING_STATUSES,
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { sql, type SQL } from "drizzle-orm";
 import {
   boolean,
@@ -37,9 +37,9 @@ export const clientsTable = appSchema.table(
     lastName: varchar("last_name", { length: 60 }).notNull(),
     email: varchar("email", { length: 320 }).notNull(),
     dateOfBirth: date("date_of_birth", { mode: "string" }).notNull(),
-    gender: varchar("gender", { enum: VISITOR_GENDERS, length: 32 }).notNull(),
+    gender: varchar("gender", { enum: CLIENT_GENDERS, length: 32 }).notNull(),
     primaryGoal: varchar("primary_goal", {
-      enum: VISITOR_PRIMARY_GOALS,
+      enum: CLIENT_PRIMARY_GOALS,
       length: 32,
     }).notNull(),
     country: char("country", { length: 2 }).notNull(),
@@ -86,11 +86,11 @@ export const clientsTable = appSchema.table(
     ),
     check(
       "clients_gender_check",
-      sql`${table.gender} in (${quotedList(VISITOR_GENDERS)})`,
+      sql`${table.gender} in (${quotedList(CLIENT_GENDERS)})`,
     ),
     check(
       "clients_primary_goal_check",
-      sql`${table.primaryGoal} in (${quotedList(VISITOR_PRIMARY_GOALS)})`,
+      sql`${table.primaryGoal} in (${quotedList(CLIENT_PRIMARY_GOALS)})`,
     ),
     check(
       "clients_coaching_status_check",

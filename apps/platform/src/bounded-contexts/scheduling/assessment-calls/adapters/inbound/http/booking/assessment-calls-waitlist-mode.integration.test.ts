@@ -207,6 +207,11 @@ async function seedAssessmentCall(): Promise<string> {
 
   await suite.postgres.executeSql({
     sql: `
+      with reservation as (
+        insert into app.coach_time_reservations (starts_at, ends_at)
+        values ($9, $9::timestamptz + interval '1 hour')
+        returning id
+      )
       insert into app.assessment_calls (
         id,
         first_name,
@@ -221,9 +226,11 @@ async function seedAssessmentCall(): Promise<string> {
         starts_at,
         visitor_time_zone,
         coach_time_zone,
-        booked_at
+        booked_at,
+        reservation_id
       )
-      values ($1, $2, $3, $4, null, $5, $6, $7, $8, null, $9, $10, $11, $12)
+      select $1, $2, $3, $4, null, $5, $6, $7, $8, null, $9, $10, $11, $12, id
+      from reservation
     `,
     values: [
       callId,

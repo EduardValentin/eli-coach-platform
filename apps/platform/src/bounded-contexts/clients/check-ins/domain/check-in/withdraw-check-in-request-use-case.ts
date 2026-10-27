@@ -11,6 +11,7 @@ import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSettler } from "./check-in-settler";
 import type { CheckIns } from "./check-ins";
+import type { CoachTime } from "./coach-time";
 
 export type WithdrawCheckInRequestResult =
   | { status: "withdrawn"; checkIn: CheckInSnapshot }
@@ -23,6 +24,7 @@ type WithdrawCheckInRequestUseCaseOptions = {
   checkIns: CheckIns;
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
+  coachTime: Pick<CoachTime, "release">;
   identities: Pick<ClientIdentities, "findByClientIds">;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;

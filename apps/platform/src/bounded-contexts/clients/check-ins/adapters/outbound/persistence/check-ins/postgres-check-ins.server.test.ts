@@ -56,7 +56,7 @@ describe("PostgresCheckIns#find", () => {
   it("maps a stored row into the check-in the domain reads", async () => {
     // arrange
     const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([PENDING_ROW])),
+      createDatabaseReturning([PENDING_ROW]),
     );
 
     // act
@@ -94,9 +94,7 @@ describe("PostgresCheckIns#find", () => {
       moves: 1,
       newTimeNote: "Does Thursday work instead?",
     };
-    const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([movedRow])),
-    );
+    const checkIns = new PostgresCheckIns(createDatabaseReturning([movedRow]));
 
     // act
     const checkIn = await checkIns.find(PENDING_ROW.id);
@@ -120,9 +118,7 @@ describe("PostgresCheckIns#find", () => {
       initiatedBy: "coach",
       proposedBy: "coach",
     };
-    const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([weeklyRow])),
-    );
+    const checkIns = new PostgresCheckIns(createDatabaseReturning([weeklyRow]));
 
     // act
     const checkIn = await checkIns.find(weeklyRow.id);
@@ -137,9 +133,7 @@ describe("PostgresCheckIns#find", () => {
 
   it("finds no check-in for an identifier that matches no row", async () => {
     // arrange
-    const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([])),
-    );
+    const checkIns = new PostgresCheckIns(createDatabaseReturning([]));
 
     // act
     const checkIn = await checkIns.find(PENDING_ROW.id);
@@ -153,7 +147,7 @@ describe("PostgresCheckIns#listForClient", () => {
   it("maps every stored row of the client into the check-ins the domain reads", async () => {
     // arrange
     const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([PENDING_ROW, APPROVED_ROW])),
+      createDatabaseReturning([PENDING_ROW, APPROVED_ROW]),
     );
 
     // act
@@ -186,9 +180,7 @@ describe("PostgresCheckIns#listForClient", () => {
 describe("PostgresCheckIns#listAll", () => {
   it("lists nothing when no check-in is stored", async () => {
     // arrange
-    const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([])),
-    );
+    const checkIns = new PostgresCheckIns(createDatabaseReturning([]));
 
     // act
     const listed = await checkIns.listAll();
@@ -200,7 +192,7 @@ describe("PostgresCheckIns#listAll", () => {
   it("maps every stored row into the check-ins the domain reads", async () => {
     // arrange
     const checkIns = new PostgresCheckIns(
-      repositoryOptions(createDatabaseReturning([PENDING_ROW, APPROVED_ROW])),
+      createDatabaseReturning([PENDING_ROW, APPROVED_ROW]),
     );
 
     // act
@@ -218,7 +210,7 @@ describe("PostgresCheckIns#listUnansweredStartedWithin", () => {
   it("asks the database only for pending and clashing check-ins that started within the window", async () => {
     // arrange
     const database = createDatabaseFiltering([CLASH_ROW, PENDING_ROW]);
-    const checkIns = new PostgresCheckIns(repositoryOptions(database.client));
+    const checkIns = new PostgresCheckIns(database.client);
 
     // act
     const listed = await checkIns.listUnansweredStartedWithin(WINDOW);
@@ -247,7 +239,7 @@ describe("PostgresCheckIns#listUnansweredForClientStartedWithin", () => {
   it("asks the database only for the client's pending and clashing check-ins that started within the window", async () => {
     // arrange
     const database = createDatabaseFiltering([PENDING_ROW]);
-    const checkIns = new PostgresCheckIns(repositoryOptions(database.client));
+    const checkIns = new PostgresCheckIns(database.client);
 
     // act
     const listed = await checkIns.listUnansweredForClientStartedWithin(
@@ -270,16 +262,6 @@ describe("PostgresCheckIns#listUnansweredForClientStartedWithin", () => {
     expect(listed.map(({ id }) => id)).toEqual([PENDING_ROW.id]);
   });
 });
-
-function repositoryOptions(database: DatabaseClient) {
-  return {
-    coachTime: {
-      release: vi.fn(),
-      reserve: vi.fn(),
-    },
-    database,
-  };
-}
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
   return {

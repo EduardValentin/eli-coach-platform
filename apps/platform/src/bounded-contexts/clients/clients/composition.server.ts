@@ -1,10 +1,8 @@
 import type { DatabaseClient } from "~/shared/database";
 import type { InvitationAcceptance } from "~/bounded-contexts/access/accounts/domain/account";
+import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls";
 import {
-  VisitorCountries,
-  type AssessmentCallReader,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import {
+  ClientCountries,
   UpdateClientIdentityAsCoachUseCase,
   UpdateOwnClientIdentityUseCase,
   type ClientIdentities,
@@ -39,7 +37,8 @@ import type { PaidClientAdmission } from "~/bounded-contexts/sales/coaching-sale
 import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
-import { COUNTRIES } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+import { COUNTRIES } from "~/shared/contact/countries";
+import { SchedulingClientCalls } from "~/bounded-contexts/clients/clients/adapters/outbound/scheduling/client-calls.server";
 import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
 import { OwnClientIdentityController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/own-client-identity-controller.server";
 import { CoachClientIdentityController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/coach/coach-client-identity-controller.server";
@@ -90,7 +89,7 @@ type ClientsComposition = {
 
 export type ClientsFeatureHandles = {
   appBasePath: string;
-  assessmentCallReader: AssessmentCallReader;
+  clientCalls: ClientCallsFacade;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
@@ -116,7 +115,7 @@ export function composeClientsFeature(
   const onboardingClients = new PostgresOnboardingClients(database);
   const roster = new PostgresClientRoster(database);
   const identityChanges = new PostgresClientIdentityChanges(database);
-  const countries = VisitorCountries.of(COUNTRIES);
+  const countries = ClientCountries.of(COUNTRIES);
 
   const invitationPorts = {
     clients: new PostgresInvitedClients(database),
@@ -175,7 +174,7 @@ export function composeClientsFeature(
           invitations,
         }),
         readClientRecord: new ReadClientRecordUseCase({
-          calls: handles.assessmentCallReader,
+          calls: new SchedulingClientCalls(handles.clientCalls),
           clock,
           roster,
         }),

@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "./client-gender";
 import type { ClientIdentity } from "~/bounded-contexts/clients/clients/domain/client";
 import type { MeasureUnits } from "../client-settings";
 
@@ -118,7 +118,7 @@ function uniqueQuestions(
 
 export class OnboardingReview {
   readonly clientId: string;
-  readonly gender: VisitorGender;
+  readonly gender: ClientGender;
   readonly dateOfBirth: string;
   readonly submission: OnboardingSubmission | null;
   readonly openedAt: Date | null;

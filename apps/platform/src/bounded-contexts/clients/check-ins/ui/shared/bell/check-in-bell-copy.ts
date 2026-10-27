@@ -4,7 +4,7 @@ import type { z } from "zod";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+} from "~/shared/time-format/call-moment";
 import {
   CHECK_IN_BELL_FACTS,
   CHECK_IN_BELL_KINDS,

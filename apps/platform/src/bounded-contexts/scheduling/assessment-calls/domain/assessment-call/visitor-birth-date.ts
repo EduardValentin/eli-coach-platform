@@ -1,8 +1,4 @@
-import {
-  instantToWallClock,
-  type CalendarDate,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-
+import type { CalendarDate, CalendarDates } from "./calendar-dates";
 import { MAX_BOOKING_AGE, MIN_BOOKING_AGE } from "./visitor-profile";
 
 type BirthDateProblem = "impossible" | "too-young";
@@ -33,8 +29,8 @@ export class VisitorBirthDate {
     return isCalendarDate ? new VisitorBirthDate({ year, month, day }) : null;
   }
 
-  ageOn(moment: AgeMoment): number {
-    const today = instantToWallClock(moment.on, moment.timeZone);
+  ageOn(moment: AgeMoment, calendar: CalendarDates): number {
+    const today = calendar.dateOn(moment);
     const birthdayStillAhead =
       today.month < this.date.month ||
       (today.month === this.date.month && today.day < this.date.day);
@@ -42,8 +38,11 @@ export class VisitorBirthDate {
     return today.year - this.date.year - (birthdayStillAhead ? 1 : 0);
   }
 
-  bookingProblemOn(moment: AgeMoment): BirthDateProblem | null {
-    const age = this.ageOn(moment);
+  bookingProblemOn(
+    moment: AgeMoment,
+    calendar: CalendarDates,
+  ): BirthDateProblem | null {
+    const age = this.ageOn(moment, calendar);
 
     if (age < 0 || age > MAX_BOOKING_AGE) return "impossible";
 

@@ -4,15 +4,12 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import {
-  CoachAvailability,
-  type CoachCalendar,
-  type TimeInterval,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 
 import { CheckIn } from "./check-in";
 import { CheckInSeries } from "./check-in-series";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CoachTimeSpan } from "./coach-time";
+import { CoachWeek, type OpenSlots } from "./open-slots";
 import { PreviewCheckInSeriesUseCase } from "./preview-check-in-series-use-case";
 
 const NOW = new Date("2026-10-05T09:00:00.000Z");
@@ -26,12 +23,12 @@ const ANA_REACH: ClientReachReading = {
   timeZone: "Europe/London",
 };
 
-const HELD_WEDNESDAY_SIX_PM: TimeInterval = {
+const HELD_WEDNESDAY_SIX_PM: CoachTimeSpan = {
   start: new Date("2026-10-14T15:00:00.000Z"),
   end: new Date("2026-10-14T16:00:00.000Z"),
 };
 
-const HELD_WEDNESDAY_SEVEN_PM: TimeInterval = {
+const HELD_WEDNESDAY_SEVEN_PM: CoachTimeSpan = {
   start: new Date("2026-10-28T17:00:00.000Z"),
   end: new Date("2026-10-28T18:00:00.000Z"),
 };
@@ -65,22 +62,18 @@ function createPreview(
   client: ClientReachReading | null = ANA_REACH,
   activeSeries: { series: CheckInSeries; weeks: CheckIn[] } | null = null,
 ) {
-  const result = CoachAvailability.from({
-    timeZone: "Europe/Bucharest",
-    weekdays: ["monday", "wednesday", "friday"],
-    startHour: 17,
-    endHour: 20,
-  });
-
-  if (result.status !== "configured") {
-    throw new Error(`expected a configured availability: ${result.problems}`);
-  }
-
-  const calendar = {
+  const openSlots = {
+    coachWeek: vi.fn().mockResolvedValue(
+      CoachWeek.of({
+        timeZone: "Europe/Bucharest",
+        weekdays: ["monday", "wednesday", "friday"],
+        hours: [17, 18, 19],
+      }),
+    ),
     busyFrom: vi
       .fn()
       .mockResolvedValue([HELD_WEDNESDAY_SIX_PM, HELD_WEDNESDAY_SEVEN_PM]),
-  } satisfies CoachCalendar;
+  } satisfies Pick<OpenSlots, "coachWeek" | "busyFrom">;
   const clients = {
     findById: vi.fn().mockResolvedValue(client),
   } satisfies Pick<ClientReach, "findById">;
@@ -94,10 +87,9 @@ function createPreview(
     "findActiveForClient" | "listOccurrences"
   >;
   const ports = {
-    availability: { current: vi.fn().mockResolvedValue(result.availability) },
-    calendar,
     clients,
     clock: { now: () => NOW },
+    openSlots,
     series,
   };
 
@@ -125,7 +117,7 @@ describe("PreviewCheckInSeriesUseCase", () => {
         { hour: 19, occurrences: 5, clashes: 1 },
       ],
     });
-    expect(ports.calendar.busyFrom).toHaveBeenCalledWith(NOW);
+    expect(ports.openSlots.busyFrom).toHaveBeenCalledWith(NOW);
   });
 
   it("leaves the hours her own weekly check-in holds out of the clashes, since a change replaces them", async () => {
@@ -231,6 +223,6 @@ describe("PreviewCheckInSeriesUseCase", () => {
 
     // assert
     expect(result).toEqual({ status });
-    expect(ports.calendar.busyFrom).not.toHaveBeenCalled();
+    expect(ports.openSlots.busyFrom).not.toHaveBeenCalled();
   });
 });

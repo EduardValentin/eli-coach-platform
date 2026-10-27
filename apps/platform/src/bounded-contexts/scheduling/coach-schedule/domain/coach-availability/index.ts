@@ -10,12 +10,10 @@ export {
 export { type CoachAvailabilityChanges } from "./coach-availability-changes";
 export { type CoachAvailabilitySource } from "./coach-availability-source";
 export { type CoachCalendar } from "./coach-calendar";
+export { CoachOpenings } from "./coach-openings";
+export {
+  type CoachTimeHold,
+  type CoachTimeReservations,
+} from "./coach-time-reservations";
 export { SlotPolicy } from "./slot-policy";
 export { type TimeInterval } from "./time-interval";
-export {
-  addDays,
-  instantToWallClock,
-  wallClockToInstant,
-  weekdayIndexOf,
-  type CalendarDate,
-} from "./zoned-time";

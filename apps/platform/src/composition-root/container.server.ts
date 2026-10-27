@@ -133,14 +133,12 @@ export function createPlatformContainer(options: {
   });
   const clients = composeClients({
     appBasePath: environment.APP_BASE_PATH,
-    assessmentCallReader: scheduling.handles.assessmentCallReader,
-    availability: scheduling.handles.availability,
-    calendar: scheduling.handles.calendar,
     clientAvatarRenditions: createClientAvatarRenditions(),
     clientAvatarStore: createClientAvatarStore(environment),
+    clientCalls: scheduling.facades.clientCalls,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    coachTime: scheduling.handles.coachTime,
+    coachTime: scheduling.facades.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     documentPages: createResourceDocumentPages({
@@ -155,7 +153,8 @@ export function createPlatformContainer(options: {
     imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
     linkTokens,
     logger,
-    meetingRoom: scheduling.handles.meetingRoom,
+    meetingRoom: scheduling.facades.meetingRoom,
+    openSlots: scheduling.facades.openSlots,
     productEmail,
     progressPhotoRenditions: createProgressPhotoRenditions(),
     progressPhotoStore: createProgressPhotoStore(environment),
@@ -184,7 +183,6 @@ export function createPlatformContainer(options: {
   });
   const sales = composeSales({
     appBasePath: environment.APP_BASE_PATH,
-    assessmentCallReader: scheduling.handles.assessmentCallReader,
     botVerifier,
     clientIdentities: clients.handles.clientIdentities,
     clientIds: clients.handles.clientIds,
@@ -197,6 +195,7 @@ export function createPlatformContainer(options: {
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     emailAcceptance,
+    endedCalls: scheduling.facades.endedCalls,
     featureFlags: operations.reader,
     linkTokens,
     logger,

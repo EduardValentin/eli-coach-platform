@@ -236,7 +236,7 @@ function createHandles(
   return {
     appBasePath: "/eli-coach-platform",
     emailAcceptance: createEmailAcceptance("allowed"),
-    assessmentCallReader: { findById: async () => null },
+    endedCalls: { endedCall: async () => null },
     clientIdentities: {
       findByClientId: async () => null,
       findByClientIds: async () => [],

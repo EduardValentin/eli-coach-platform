@@ -13,6 +13,7 @@ import type {
 import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
+import { releaseFreedHours } from "./check-in-hour-release";
 import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type {
@@ -21,11 +22,13 @@ import type {
 } from "./check-in-notifications";
 import type { CheckInParty } from "./check-in-party";
 import type { CheckIns } from "./check-ins";
+import type { CoachTime } from "./coach-time";
 
 type CheckInSettlerOptions = {
   checkIns: Pick<CheckIns, "find" | "settle">;
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
+  coachTime: Pick<CoachTime, "release">;
   identities: Pick<ClientIdentities, "findByClientIds">;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
@@ -90,9 +93,13 @@ export class CheckInSettler {
       ...(zone.timeZone && { clientTimeZone: zone.timeZone.name }),
     });
 
-    if (recorded === "changed_meanwhile") {
-      return { status: "changed_meanwhile" };
+    if (recorded.status === "changed_meanwhile") {
+      return recorded;
     }
+
+    await releaseFreedHours(this.options.coachTime, [
+      recorded.freedReservationId,
+    ]);
 
     const settled = checkIn.settled({
       outcome,

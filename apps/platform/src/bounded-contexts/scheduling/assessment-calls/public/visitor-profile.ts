@@ -9,7 +9,8 @@ import {
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { z } from "zod";
 
-import { COUNTRIES } from "./countries";
+import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/clock/wall-clock-calendar-dates";
+import { COUNTRIES } from "~/shared/contact/countries";
 
 export {
   MAX_BOOKING_AGE,
@@ -74,7 +75,9 @@ export function checkBirthDate(question: AgeQuestion): BirthDateCheck {
     return "impossible";
   }
 
-  return BIRTH_DATE_CHECKS[birthDate.bookingProblemOn(question) ?? "none"];
+  return BIRTH_DATE_CHECKS[
+    birthDate.bookingProblemOn(question, wallClockCalendarDates) ?? "none"
+  ];
 }
 
 export function birthDateMessage(check: BirthDateCheck): string | null {
@@ -184,7 +187,12 @@ export function objectPronoun(gender: VisitorGender): string {
 }
 
 export function ageOn(question: AgeQuestion): number {
-  return VisitorBirthDate.parse(question.dateOfBirth)?.ageOn(question) ?? NaN;
+  return (
+    VisitorBirthDate.parse(question.dateOfBirth)?.ageOn(
+      question,
+      wallClockCalendarDates,
+    ) ?? NaN
+  );
 }
 
 export function formatAgeForCard(question: AgeQuestion): string {

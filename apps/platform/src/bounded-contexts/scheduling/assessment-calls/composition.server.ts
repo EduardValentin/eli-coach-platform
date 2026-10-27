@@ -2,18 +2,20 @@ import type { AssessmentCallsConfig } from "~/bounded-contexts/scheduling/assess
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import {
+  ASSESSMENT_CALL_RULES,
   AssessmentCallBookingWindow,
   BookAssessmentCallUseCase,
   ListAssessmentCallsUseCase,
   ListOpenSlotsUseCase,
   ResolveJoinLinkUseCase,
-  type AssessmentCallReader,
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
-  CoachAvailabilitySource,
-  CoachCalendar,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+  CoachOpenings,
+  CoachTimeReservations,
+} from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
+import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/public/meeting-room";
+import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls";
+import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls";
 import type { EmailAcceptance } from "~/bounded-contexts/scheduling/assessment-calls/domain/email-acceptance";
 import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
@@ -24,10 +26,10 @@ import type { ProductEmail } from "~/shared/email/index.server";
 import { AssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/booking/assessment-calls-controller.server";
 import { CoachAssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/coach/coach-assessment-calls-controller.server";
 import { RandomAssessmentCallIds } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/random-assessment-call-ids.server";
-import {
-  PostgresAssessmentCallRepository,
-  type AssessmentCallCoachTime,
-} from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/repository.server";
+import { PostgresAssessmentCallRepository } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/repository.server";
+import { CoachScheduleAvailability } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/coach-schedule/coach-availability.server";
+import { createClientCallsFacade } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/facades/client-calls.server";
+import { createEndedCallsFacade } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/facades/ended-calls.server";
 import { createAssessmentCallNotifications } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/email/create-assessment-call-notifications.server";
 import type { AssessmentCallsFeature } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
@@ -35,24 +37,23 @@ import { createAssessmentCallsIncidents } from "~/bounded-contexts/scheduling/as
 
 type AssessmentCallsComposition = {
   feature: AssessmentCallsFeature;
-  handles: { assessmentCallReader: AssessmentCallReader };
+  facades: { clientCalls: ClientCallsFacade; endedCalls: EndedCallsFacade };
 };
 
 export type AssessmentCallsFeatureHandles = {
   appBasePath: string;
   assessmentCallsConfig: AssessmentCallsConfig;
-  availability: CoachAvailabilitySource;
   botDetection: BotDetectionConfig;
   botVerifier: BotVerifier;
-  calendar: CoachCalendar;
   clock: Clock;
-  coachTime: AssessmentCallCoachTime;
+  coachTime: CoachTimeReservations;
   contactEmail: string;
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
   logger: Logger;
   meetingRoom: CoachMeetingRoomSource;
+  openings: CoachOpenings;
   productEmail: ProductEmail;
   publicAppUrl: string;
 };
@@ -61,12 +62,12 @@ export function composeAssessmentCallsFeature(
   handles: AssessmentCallsFeatureHandles,
 ): AssessmentCallsComposition {
   const incidents = createAssessmentCallsIncidents(handles.logger);
-  const { availability } = handles;
-  const unitOfWork = createUnitOfWork(handles.database);
-  const reservations = new PostgresAssessmentCallRepository({
-    coachTime: handles.coachTime,
-    database: handles.database,
+  const availability = new CoachScheduleAvailability({
+    openings: handles.openings,
+    rules: ASSESSMENT_CALL_RULES,
   });
+  const unitOfWork = createUnitOfWork(handles.database);
+  const reservations = new PostgresAssessmentCallRepository(handles.database);
   const bookingWindow = new AssessmentCallBookingWindow({
     featureFlags: handles.featureFlags,
     incidents,
@@ -81,6 +82,7 @@ export function composeAssessmentCallsFeature(
           availability,
           bookingWindow,
           clock: handles.clock,
+          coachTime: handles.coachTime,
           emailAcceptance: handles.emailAcceptance,
           ids: new RandomAssessmentCallIds(),
           incidents,
@@ -100,7 +102,6 @@ export function composeAssessmentCallsFeature(
         listOpenSlots: new ListOpenSlotsUseCase({
           availability,
           bookingWindow,
-          calendar: handles.calendar,
           clock: handles.clock,
           incidents,
         }),
@@ -119,11 +120,9 @@ export function composeAssessmentCallsFeature(
         }),
       }),
     },
-    handles: {
-      assessmentCallReader: {
-        findById: async (id) =>
-          (await reservations.findById(id))?.toSnapshot() ?? null,
-      },
+    facades: {
+      clientCalls: createClientCallsFacade(reservations),
+      endedCalls: createEndedCallsFacade(reservations),
     },
   };
 }

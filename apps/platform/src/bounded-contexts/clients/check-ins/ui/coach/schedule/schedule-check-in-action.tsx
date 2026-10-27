@@ -1,11 +1,11 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { Button, DisabledActionHint } from "~/shared/design-system/primitives";
 import { toast } from "~/shared/design-system/toast";
 import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 
-import { formatShortDay } from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+import { formatShortDay } from "~/shared/time-format/call-moment";
 import type { CheckInScheduling } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { awaitingOnboardingReason } from "~/bounded-contexts/clients/check-ins/ui/coach/shared/awaiting-onboarding-reason";

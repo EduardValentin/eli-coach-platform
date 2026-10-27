@@ -20,7 +20,7 @@ import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detectio
 
 import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";

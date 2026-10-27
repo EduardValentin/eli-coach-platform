@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 
 import {
   objectPronoun,
@@ -7,7 +7,7 @@ import {
 
 export const PANEL_TITLE = "Onboarding";
 
-export function answersNotInLine(gender: VisitorGender): string {
+export function answersNotInLine(gender: ClientGender): string {
   return `${possessivePronoun(gender).capitalised} answers are not in yet.`;
 }
 
@@ -47,7 +47,7 @@ export const APPROVE_ACTION = "Approve answers";
 
 export const REVIEW_DIALOG = {
   title: (firstName: string) => `Review ${firstName}’s answers`,
-  description: (gender: VisitorGender) =>
+  description: (gender: ClientGender) =>
     `Tick any answer you want ${objectPronoun(gender)} to revisit, then approve or ask for more details.`,
   flagLabel: "Flag",
   noteLabel: "What is missing?",

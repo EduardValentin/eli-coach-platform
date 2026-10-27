@@ -1,5 +1,8 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import { CoachingStanding, type CoachingStandingSnapshot } from "../client";
+import {
+  CoachingStanding,
+  type ClientGender,
+  type CoachingStandingSnapshot,
+} from "../client";
 
 export type ClientJourneyStep =
   | "welcome"
@@ -24,7 +27,7 @@ export type ClientJourneySnapshot = {
   clientId: string;
   firstName: string;
   lastName: string;
-  gender: VisitorGender;
+  gender: ClientGender;
   welcomeSeenAt: Date | null;
   onboardingSubmittedAt: Date | null;
   reviewOpenedAt: Date | null;
@@ -38,7 +41,7 @@ export class ClientJourney {
   readonly clientId: string;
   readonly firstName: string;
   readonly lastName: string;
-  readonly gender: VisitorGender;
+  readonly gender: ClientGender;
   readonly welcomeSeenAt: Date | null;
   readonly onboardingSubmittedAt: Date | null;
   readonly reviewOpenedAt: Date | null;

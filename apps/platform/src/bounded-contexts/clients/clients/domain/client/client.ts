@@ -1,7 +1,4 @@
-import type {
-  VisitorGender,
-  VisitorPrimaryGoal,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender, ClientPrimaryGoal } from "./client-details";
 
 export type ClientIntake = {
   assessmentCallId: string;
@@ -9,8 +6,8 @@ export type ClientIntake = {
   lastName: string;
   email: string;
   dateOfBirth: string;
-  gender: VisitorGender;
-  primaryGoal: VisitorPrimaryGoal;
+  gender: ClientGender;
+  primaryGoal: ClientPrimaryGoal;
   country: string;
   phone: string | null;
   bookingTimeZone: string;
@@ -28,8 +25,8 @@ export class Client {
   readonly lastName: string;
   readonly email: string;
   readonly dateOfBirth: string;
-  readonly gender: VisitorGender;
-  readonly primaryGoal: VisitorPrimaryGoal;
+  readonly gender: ClientGender;
+  readonly primaryGoal: ClientPrimaryGoal;
   readonly country: string;
   readonly phone: string | null;
   readonly bookingTimeZone: string;

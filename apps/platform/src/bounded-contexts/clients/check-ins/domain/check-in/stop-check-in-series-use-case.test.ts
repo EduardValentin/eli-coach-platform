@@ -8,7 +8,10 @@ import type {
 
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type {
+  CheckInSeriesRecords,
+  CheckInSeriesStop,
+} from "./check-in-series-records";
 import { StopCheckInSeriesUseCase } from "./stop-check-in-series-use-case";
 
 const NOW = new Date("2026-10-13T12:00:00.000Z");
@@ -47,7 +50,7 @@ const NEXT_WEDNESDAY_SIX_PM = new Date("2026-10-14T15:00:00.000Z");
 
 function createStop(options?: {
   found?: CheckInSeries | null;
-  stopped?: "stopped" | "changed_meanwhile";
+  stopped?: CheckInSeriesStop;
 }) {
   const series = {
     find: vi
@@ -57,7 +60,12 @@ function createStop(options?: {
           ? CheckInSeries.reconstitute(SERIES)
           : options.found,
       ),
-    stop: vi.fn().mockResolvedValue(options?.stopped ?? "stopped"),
+    stop: vi.fn().mockResolvedValue(
+      options?.stopped ?? {
+        status: "stopped",
+        freedReservationIds: ["reservation-1", "reservation-2"],
+      },
+    ),
   } satisfies Pick<CheckInSeriesRecords, "find" | "stop">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
@@ -81,6 +89,7 @@ function createStop(options?: {
   const ports = {
     clients,
     clock: { now: () => NOW },
+    coachTime: { release: vi.fn().mockResolvedValue(undefined) },
     identities,
     incidents: {
       checkInNotificationFailed: vi.fn(),
@@ -121,6 +130,8 @@ describe("StopCheckInSeriesUseCase", () => {
       expected: { changedAt: CHANGED_AT },
       at: NOW,
     });
+    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-1");
+    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-2");
     expect(ports.notifications.seriesStopped).toHaveBeenCalledWith({
       series: stopped,
       weekStartsAt: NEXT_WEDNESDAY_SIX_PM,
@@ -150,7 +161,9 @@ describe("StopCheckInSeriesUseCase", () => {
 
   it("answers changed_meanwhile without emailing when the series changed since it was read", async () => {
     // arrange
-    const { ports, stop } = createStop({ stopped: "changed_meanwhile" });
+    const { ports, stop } = createStop({
+      stopped: { status: "changed_meanwhile" },
+    });
 
     // act
     const result = await stop.execute({ seriesId: "series-1" });

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/clock/wall-clock-calendar-dates";
+
 import { VisitorBirthDate } from "./visitor-birth-date";
 
 const ON = {
@@ -28,8 +30,8 @@ describe("VisitorBirthDate#ageOn", () => {
 
     // act
     const ages = [
-      birthDate?.ageOn(ON),
-      birthDate?.ageOn({ on: ON.on, timeZone: "UTC" }),
+      birthDate?.ageOn(ON, wallClockCalendarDates),
+      birthDate?.ageOn({ on: ON.on, timeZone: "UTC" }, wallClockCalendarDates),
     ];
 
     // assert
@@ -56,7 +58,7 @@ describe("VisitorBirthDate#bookingProblemOn", () => {
     const birthDate = VisitorBirthDate.parse("1994-03-14");
 
     // act
-    const problem = birthDate?.bookingProblemOn(ON);
+    const problem = birthDate?.bookingProblemOn(ON, wallClockCalendarDates);
 
     // assert
     expect(problem).toBeNull();
@@ -67,7 +69,10 @@ describe("VisitorBirthDate#bookingProblemOn", () => {
     const turnsEighteenTomorrowInUtc = VisitorBirthDate.parse("2008-10-25");
 
     // act
-    const problem = turnsEighteenTomorrowInUtc?.bookingProblemOn(ON);
+    const problem = turnsEighteenTomorrowInUtc?.bookingProblemOn(
+      ON,
+      wallClockCalendarDates,
+    );
 
     // assert
     expect(problem).toBeNull();
@@ -82,7 +87,7 @@ describe("VisitorBirthDate#bookingProblemOn", () => {
     const birthDate = VisitorBirthDate.parse(isoDate);
 
     // act
-    const problem = birthDate?.bookingProblemOn(ON);
+    const problem = birthDate?.bookingProblemOn(ON, wallClockCalendarDates);
 
     // assert
     expect(problem).toBe(expected);

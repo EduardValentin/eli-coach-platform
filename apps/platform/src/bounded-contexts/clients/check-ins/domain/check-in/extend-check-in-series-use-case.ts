@@ -2,7 +2,6 @@ import type {
   ClientIdentities,
   ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type { CoachAvailabilitySource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import type { CheckIn } from "./check-in";
@@ -15,6 +14,9 @@ import { CHECK_IN_RULES } from "./check-in-rules";
 import type { CheckInSeries } from "./check-in-series";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
+import { CheckInWeekRecorder } from "./check-in-week-recorder";
+import type { CoachTime } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
 
 export type ExtendCheckInSeriesResult =
   | { status: "extended"; created: number }
@@ -22,15 +24,19 @@ export type ExtendCheckInSeriesResult =
   | { status: "failed" };
 
 type ExtendCheckInSeriesUseCaseOptions = {
-  availability: CoachAvailabilitySource;
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  coachTime: Pick<CoachTime, "reserve">;
   identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
-  series: Pick<CheckInSeriesRecords, "findActiveForClient" | "extend">;
+  openSlots: Pick<OpenSlots, "coachWeek">;
+  series: Pick<
+    CheckInSeriesRecords,
+    "findActiveForClient" | "widen" | "recordWeeks"
+  >;
 };
 
 type Extension =
@@ -43,9 +49,11 @@ type ExtensionFailure = { clientId: string; error: unknown };
 
 export class ExtendCheckInSeriesUseCase {
   private readonly announcer: CheckInAnnouncer;
+  private readonly weeks: CheckInWeekRecorder;
 
   constructor(private readonly options: ExtendCheckInSeriesUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
+    this.weeks = new CheckInWeekRecorder(options);
   }
 
   async execute(command: {
@@ -120,26 +128,30 @@ export class ExtendCheckInSeriesUseCase {
       return { status: "nothing_to_add" };
     }
 
-    const availability = await this.options.availability.current();
-    const extended = await this.options.series.extend({
+    const week = await this.options.openSlots.coachWeek();
+    const widened = await this.options.series.widen({
       series,
       expected: {
         coversFrom: current.coversFrom,
         coversUntil: current.coversUntil,
       },
-      occurrences: series.occurrencesAt({
+    });
+
+    if (widened === "changed_meanwhile") {
+      return { status: widened };
+    }
+
+    const occurrences = await this.weeks.record(
+      series.occurrencesAt({
         starts,
         clientTimeZone: client.timeZone,
-        availability: availability.holdsWeeklyHour(series) ? "open" : "closed",
+        availability: week.holdsWeeklyHour(series) ? "open" : "closed",
         at: now,
         newId: () => this.options.ids.generate(),
       }),
-      at: now,
-    });
+    );
 
-    return extended.status === "extended"
-      ? { status: "extended", series, occurrences: extended.occurrences }
-      : extended;
+    return { status: "extended", series, occurrences };
   }
 
   private failed(failure: ExtensionFailure): { status: "failed" } {

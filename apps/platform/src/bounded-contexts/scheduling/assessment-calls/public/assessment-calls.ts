@@ -10,7 +10,7 @@ import {
   timeZoneSchema,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/time-zone";
 
-import { findCountry } from "./countries";
+import { findCountry } from "~/shared/contact/countries";
 import {
   birthDateMessage,
   BOOKING_FIELD_MESSAGES,

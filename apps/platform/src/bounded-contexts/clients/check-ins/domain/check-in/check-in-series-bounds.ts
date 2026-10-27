@@ -1,5 +1,6 @@
 import type { PortalReach } from "~/bounded-contexts/clients/clients/domain/client";
-import type { SlotPolicy } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+
+import type { CheckInSlotRules } from "./check-in-rules";
 
 export type CheckInSeriesBoundsSnapshot = { from: Date; until: Date };
 
@@ -14,7 +15,7 @@ type CoachingReading = {
     paidThrough: Date | null;
   };
   now: Date;
-  lead: SlotPolicy;
+  lead: CheckInSlotRules;
 };
 
 export class CheckInSeriesBounds {

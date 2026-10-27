@@ -1,13 +1,12 @@
 import {
-  MAX_VISITOR_NAME_LENGTH,
-  VisitorBirthDate,
+  ClientBirthDate,
+  MAX_CLIENT_NAME_LENGTH,
   type AgeMoment,
-  type VisitorCountries,
-  type VisitorGender,
-  type VisitorPhoneEntry,
-  type VisitorPhoneReading,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-
+  type ClientCountries,
+  type ClientGender,
+  type ClientPhoneEntry,
+  type ClientPhoneReading,
+} from "./client-details";
 import type { ClientIdentity } from "./client-identities";
 
 export type ClientIdentityEditSnapshot = Omit<ClientIdentity, "email">;
@@ -17,12 +16,12 @@ export type EditableClientIdentity = {
   lastName: string;
   dateOfBirth: string;
   country: string;
-  phone: VisitorPhoneEntry;
+  phone: ClientPhoneEntry;
 };
 
 export type EnteredClientIdentity = EditableClientIdentity & {
   clientId: string;
-  gender: VisitorGender;
+  gender: ClientGender;
 };
 
 export type ClientIdentityProblems = {
@@ -43,7 +42,7 @@ export class ClientIdentityEdit {
   static of(
     entered: EnteredClientIdentity,
     moment: AgeMoment,
-    countries: VisitorCountries,
+    countries: ClientCountries,
   ): ClientIdentityEditResult {
     const { phone: phoneEntry, ...identity } = entered;
     const phoneReading = countries.phoneOf(phoneEntry);
@@ -51,10 +50,7 @@ export class ClientIdentityEdit {
       ...identity,
       firstName: entered.firstName.trim(),
       lastName: entered.lastName.trim(),
-      phone:
-        phoneReading.status === "valid"
-          ? phoneReading.phone.toSnapshot().e164
-          : null,
+      phone: phoneReading.status === "valid" ? phoneReading.e164 : null,
     });
     const problems = edit.problems(moment, phoneReading, countries);
 
@@ -69,15 +65,15 @@ export class ClientIdentityEdit {
 
   private problems(
     moment: AgeMoment,
-    phoneReading: VisitorPhoneReading,
-    countries: VisitorCountries,
+    phoneReading: ClientPhoneReading,
+    countries: ClientCountries,
   ): ClientIdentityProblems {
     const { firstName, lastName, dateOfBirth, country } = this.snapshot;
     const firstNameProblem = this.nameProblem(firstName);
     const lastNameProblem = this.nameProblem(lastName);
-    const birthDate = VisitorBirthDate.parse(dateOfBirth);
+    const birthDate = ClientBirthDate.parse(dateOfBirth);
     const dateOfBirthProblem = birthDate
-      ? birthDate.bookingProblemOn(moment)
+      ? birthDate.problemOn(moment)
       : "impossible";
 
     return {
@@ -92,6 +88,6 @@ export class ClientIdentityEdit {
   private nameProblem(name: string): "missing" | "too-long" | null {
     if (name.length === 0) return "missing";
 
-    return name.length > MAX_VISITOR_NAME_LENGTH ? "too-long" : null;
+    return name.length > MAX_CLIENT_NAME_LENGTH ? "too-long" : null;
   }
 }

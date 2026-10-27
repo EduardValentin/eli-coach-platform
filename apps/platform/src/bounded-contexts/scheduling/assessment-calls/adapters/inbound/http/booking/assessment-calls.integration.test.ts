@@ -826,12 +826,14 @@ async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
   return suite.postgres.queryRows<CoachTimeReservationRow>({
     sql: `
       select
-        starts_at as "startsAt",
-        ends_at as "endsAt",
-        assessment_call_id as "assessmentCallId",
-        check_in_id as "checkInId"
-      from app.coach_time_reservations
-      order by starts_at
+        reservation.starts_at as "startsAt",
+        reservation.ends_at as "endsAt",
+        call.id as "assessmentCallId",
+        check_in.id as "checkInId"
+      from app.coach_time_reservations reservation
+      left join app.assessment_calls call on call.reservation_id = reservation.id
+      left join app.check_ins check_in on check_in.reservation_id = reservation.id
+      order by reservation.starts_at
     `,
     values: [],
   });
@@ -843,10 +845,16 @@ async function insertCallDirectly(columns: {
 }): Promise<void> {
   await suite.postgres.executeSql({
     sql: `
+      with reservation as (
+        insert into app.coach_time_reservations (starts_at, ends_at)
+        values ($8, $8::timestamptz + interval '1 hour')
+        returning id
+      )
       insert into app.assessment_calls
         (id, first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
-         country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
-      values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         country, starts_at, visitor_time_zone, coach_time_zone, booked_at, reservation_id)
+      select gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, id
+      from reservation
     `,
     values: [
       "Ana",
@@ -870,16 +878,17 @@ async function bookAnotherCallAt(occupied: {
 }): Promise<void> {
   await suite.postgres.executeSql({
     sql: `
-      with call as (
-        insert into app.assessment_calls
-          (id, first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
-           country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
-        values (gen_random_uuid(), 'Irina', 'Dobre', 'irina@example.com', '1990-06-02', 'female',
-                'build_strength', 'RO', $1, 'Europe/Bucharest', 'Europe/Bucharest', $3)
+      with reservation as (
+        insert into app.coach_time_reservations (starts_at, ends_at)
+        values ($1, $2)
         returning id
       )
-      insert into app.coach_time_reservations (starts_at, ends_at, assessment_call_id)
-      select $1, $2, id from call
+      insert into app.assessment_calls
+        (id, first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
+         country, starts_at, visitor_time_zone, coach_time_zone, booked_at, reservation_id)
+      select gen_random_uuid(), 'Irina', 'Dobre', 'irina@example.com', '1990-06-02', 'female',
+             'build_strength', 'RO', $1, 'Europe/Bucharest', 'Europe/Bucharest', $3, id
+      from reservation
     `,
     values: [occupied.startsAt, occupied.endsAt, MONDAY_MORNING.toISOString()],
   });

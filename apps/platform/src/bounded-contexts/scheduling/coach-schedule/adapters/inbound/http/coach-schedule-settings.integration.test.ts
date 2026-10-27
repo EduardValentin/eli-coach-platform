@@ -489,9 +489,13 @@ async function readCalls(): Promise<AssessmentCallRow[]> {
 async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
   return suite.postgres.queryRows<CoachTimeReservationRow>({
     sql: `
-      select starts_at as "startsAt", ends_at as "endsAt", assessment_call_id as "assessmentCallId"
-      from app.coach_time_reservations
-      order by starts_at
+      select
+        reservation.starts_at as "startsAt",
+        reservation.ends_at as "endsAt",
+        call.id as "assessmentCallId"
+      from app.coach_time_reservations reservation
+      left join app.assessment_calls call on call.reservation_id = reservation.id
+      order by reservation.starts_at
     `,
     values: [],
   });

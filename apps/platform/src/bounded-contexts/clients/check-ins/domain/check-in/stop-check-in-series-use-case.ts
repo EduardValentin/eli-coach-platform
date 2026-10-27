@@ -5,11 +5,13 @@ import type {
 import type { Clock } from "../clock";
 
 import { CheckInAnnouncer } from "./check-in-announcer";
+import { releaseFreedHours } from "./check-in-hour-release";
 import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CoachTime } from "./coach-time";
 
 export type StopCheckInSeriesResult =
   | { status: "stopped"; series: CheckInSeriesSnapshot }
@@ -18,6 +20,7 @@ export type StopCheckInSeriesResult =
 type StopCheckInSeriesUseCaseOptions = {
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  coachTime: Pick<CoachTime, "release">;
   identities: Pick<ClientIdentities, "findByClientIds">;
   inbox: CheckInInbox;
   incidents: CheckInIncidents;
@@ -49,9 +52,14 @@ export class StopCheckInSeriesUseCase {
       at: now,
     });
 
-    if (recorded !== "stopped") {
-      return { status: recorded };
+    if (recorded.status === "changed_meanwhile") {
+      return recorded;
     }
+
+    await releaseFreedHours(
+      this.options.coachTime,
+      recorded.freedReservationIds,
+    );
 
     const stopped = current.stop(now);
 

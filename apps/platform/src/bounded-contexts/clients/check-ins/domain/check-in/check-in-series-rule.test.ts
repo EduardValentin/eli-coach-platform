@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { CoachAvailability } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import { CheckInSeriesRule } from "./check-in-series-rule";
+import { CoachWeek } from "./open-slots";
 
 const WEDNESDAY_EVENINGS = CheckInSeriesRule.of({
   weekday: "wednesday",
@@ -59,16 +58,11 @@ describe("CheckInSeriesRule#startsBetween", () => {
 describe("CheckInSeriesRule.previewHoursOn", () => {
   it("counts, for every hour of the coach's window, the weeks in the bounds and the ones whose hour is already taken", () => {
     // arrange
-    const configured = CoachAvailability.from({
+    const week = CoachWeek.of({
       timeZone: "Europe/Bucharest",
       weekdays: ["monday", "wednesday", "friday"],
-      startHour: 17,
-      endHour: 20,
+      hours: [17, 18, 19],
     });
-
-    if (configured.status !== "configured") {
-      throw new Error(`expected a configured availability`);
-    }
 
     const bounds = CheckInSeriesBounds.of({
       from: new Date("2026-10-06T09:00:00.000Z"),
@@ -88,7 +82,7 @@ describe("CheckInSeriesRule.previewHoursOn", () => {
     // act
     const hours = CheckInSeriesRule.previewHoursOn({
       weekday: "wednesday",
-      availability: configured.availability,
+      week,
       bounds,
       busy,
     });

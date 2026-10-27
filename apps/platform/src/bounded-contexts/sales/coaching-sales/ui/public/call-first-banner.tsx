@@ -2,7 +2,7 @@ import { buttonVariants } from "~/shared/design-system/primitives";
 import { AlertCircle, Calendar } from "lucide-react";
 import { Link } from "react-router";
 
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
 export const CALL_FIRST_HEADING = "A Call Comes First";
 

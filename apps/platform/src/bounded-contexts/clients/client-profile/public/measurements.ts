@@ -1,4 +1,4 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { ClientGender } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type {
   MeasurementDueLine,
   MeasurementRecord,
@@ -86,7 +86,7 @@ const PROGRESS_PHOTO_VIEW_LABELS = {
 
 export const MEASUREMENTS_COPY = {
   title: "Measurements",
-  empty: (gender: VisitorGender) => {
+  empty: (gender: ClientGender) => {
     const subject = subjectPronoun(gender);
 
     return `${subject.capitalised} ${subject.hasVerb} not sent any measurements yet.`;

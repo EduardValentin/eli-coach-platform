@@ -9,7 +9,7 @@ import {
 } from "~/shared/design-system/primitives";
 import type { ChangeEvent } from "react";
 
-import { COUNTRIES } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+import { COUNTRIES } from "~/shared/contact/countries";
 
 const PHONE_FIELD_LABEL = "Phone";
 const CALLING_CODE_LABEL = "Country calling code";

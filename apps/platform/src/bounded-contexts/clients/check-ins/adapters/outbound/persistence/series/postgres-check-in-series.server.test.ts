@@ -102,7 +102,7 @@ describe("PostgresCheckInSeries#listOccurrences", () => {
   });
 });
 
-describe("PostgresCheckInSeries#setUp", () => {
+describe("PostgresCheckInSeries#start", () => {
   it("answers that a series exists when the one-active-series index refuses the insert", async () => {
     // arrange
     const records = seriesOver(
@@ -117,14 +117,10 @@ describe("PostgresCheckInSeries#setUp", () => {
     );
 
     // act
-    const result = await records.setUp({
-      series: CheckInSeries.reconstitute(SERIES_ROW),
-      occurrences: [],
-      at: SET_UP_AT,
-    });
+    const result = await records.start(CheckInSeries.reconstitute(SERIES_ROW));
 
     // assert
-    expect(result).toEqual({ status: "series_exists" });
+    expect(result).toBe("series_exists");
   });
 
   it("rethrows any other failure of the set-up transaction", async () => {
@@ -133,22 +129,15 @@ describe("PostgresCheckInSeries#setUp", () => {
     const records = seriesOver(createDatabaseFailingTransactions(failure));
 
     // act
-    const setUp = records.setUp({
-      series: CheckInSeries.reconstitute(SERIES_ROW),
-      occurrences: [],
-      at: SET_UP_AT,
-    });
+    const start = records.start(CheckInSeries.reconstitute(SERIES_ROW));
 
     // assert
-    await expect(setUp).rejects.toBe(failure);
+    await expect(start).rejects.toBe(failure);
   });
 });
 
 function seriesOver(database: DatabaseClient) {
-  return new PostgresCheckInSeries({
-    coachTime: { release: vi.fn(), reserve: vi.fn() },
-    database,
-  });
+  return new PostgresCheckInSeries(database);
 }
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {

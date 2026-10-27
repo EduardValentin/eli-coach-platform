@@ -2,15 +2,11 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type {
-  CoachAvailabilitySource,
-  CoachCalendar,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 
 import { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import { CHECK_IN_RULES } from "./check-in-rules";
+import type { OpenSlots } from "./open-slots";
 
 export type ListOpenCheckInTimesCommand = {
   actor: CheckInActor;
@@ -28,10 +24,9 @@ type OpenTimesClient =
   | Exclude<ListOpenCheckInTimesResult, { status: "listed" }>;
 
 type ListOpenCheckInTimesUseCaseOptions = {
-  availability: CoachAvailabilitySource;
-  calendar: CoachCalendar;
   clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
+  openSlots: Pick<OpenSlots, "openStarts">;
 };
 
 export class ListOpenCheckInTimesUseCase {
@@ -47,19 +42,14 @@ export class ListOpenCheckInTimesUseCase {
     }
 
     const now = this.options.clock.now();
-    const [availability, busy] = await Promise.all([
-      this.options.availability.current(),
-      this.options.calendar.busyFrom(now),
-    ]);
+    const starts = await this.options.openSlots.openStarts(now);
     const { coachingEndsAt } = found.client;
 
     return {
       status: "listed",
-      times: availability
-        .openSlotStarts({ now, policy: CHECK_IN_RULES, busy })
-        .filter((startsAt) =>
-          CheckIn.startsBeforeCoachingEnd({ startsAt, coachingEndsAt }),
-        ),
+      times: starts.filter((startsAt) =>
+        CheckIn.startsBeforeCoachingEnd({ startsAt, coachingEndsAt }),
+      ),
     };
   }
 

@@ -1,12 +1,18 @@
-import type { AssessmentCall, ReservationDecision } from "./assessment-call";
+import type { AssessmentCall } from "./assessment-call";
 
-export type ReserveAssessmentCallCommand = {
+export type UpcomingCallQuestion = { visitorEmail: string; now: Date };
+
+export type AssessmentCallReservation = {
   call: AssessmentCall;
-  now: Date;
+  reservationId: string;
 };
 
 export interface AssessmentCallReservations {
-  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationDecision>;
+  lockVisitorEmail(visitorEmail: string): Promise<void>;
+  findUpcomingCallFor(
+    question: UpcomingCallQuestion,
+  ): Promise<AssessmentCall | null>;
+  add(reservation: AssessmentCallReservation): Promise<void>;
   findById(id: string): Promise<AssessmentCall | null>;
   listAll(): Promise<AssessmentCall[]>;
 }

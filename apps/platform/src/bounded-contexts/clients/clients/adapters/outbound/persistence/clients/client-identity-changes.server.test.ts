@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { VisitorCountries } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
 import { ClientIdentityEdit } from "~/bounded-contexts/clients/clients/domain/client";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -29,7 +29,7 @@ describe("PostgresClientIdentityChanges#save", () => {
         on: new Date("2026-10-24T10:00:00.000Z"),
         timeZone: "Europe/Bucharest",
       },
-      VisitorCountries.of([
+      ClientCountries.of([
         { code: "RO", callingCode: "+40" },
         { code: "MD", callingCode: "+373" },
       ]),

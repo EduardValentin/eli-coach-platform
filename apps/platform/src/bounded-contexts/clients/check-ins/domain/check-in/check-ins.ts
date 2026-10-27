@@ -9,22 +9,27 @@ export type CheckInRequestResult =
   | { status: "request_waiting" }
   | { status: "time_taken" };
 
-export type CheckInSettlement = "settled" | "changed_meanwhile";
+export type HeldCheckIn = { checkIn: CheckIn; reservationId: string | null };
 
-export type CheckInMove = "moved" | "time_taken" | "changed_meanwhile";
+export type CheckInSettlement =
+  | { status: "settled"; freedReservationId: string | null }
+  | { status: "changed_meanwhile" };
+
+export type CheckInMove =
+  | { status: "moved"; freedReservationId: string | null }
+  | { status: "changed_meanwhile" };
 
 export type CheckInStartWindow = { since: Date; at: Date };
 
 export type CheckInsAtCoachingEnd = {
   cancelled: string[];
   seriesStopped: boolean;
+  freedReservationIds: string[];
 };
 
 export interface CheckIns {
-  request(command: {
-    checkIn: CheckIn;
-    at: Date;
-  }): Promise<CheckInRequestResult>;
+  listForClientLocked(clientId: string): Promise<CheckIn[]>;
+  add(held: HeldCheckIn): Promise<void>;
   find(id: string): Promise<CheckIn | null>;
   listForClient(clientId: string): Promise<CheckIn[]>;
   listAll(): Promise<CheckIn[]>;
@@ -43,6 +48,7 @@ export interface CheckIns {
   move(command: {
     checkIn: CheckIn;
     expected: { recordedStatus: RecordedCheckInStatus; startsAt: Date };
+    reservationId: string;
     at: Date;
   }): Promise<CheckInMove>;
   endCoaching(command: {

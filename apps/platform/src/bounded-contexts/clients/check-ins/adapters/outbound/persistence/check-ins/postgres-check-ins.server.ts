@@ -1,17 +1,15 @@
 import {
-  CHECK_IN_RULES,
-  CheckIn,
+  type CheckIn,
   type CheckInMove,
   type CheckInOutcome,
-  type CheckInRequestResult,
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
   type CheckInStartWindow,
+  type HeldCheckIn,
   OPEN_CHECK_IN_STATUSES,
   UNANSWERED_CHECK_IN_STATUSES,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
-import type { TimeInterval } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
 import {
@@ -24,21 +22,20 @@ import {
   isNull,
   lte,
   type SQL,
-  sql,
 } from "drizzle-orm";
 
 import {
   checkInOf,
   checkInRowOf,
+  heldReservationIdsOf,
   lockCheckInsOfClient,
+  reservationsHeldBy,
   type CheckInRow,
 } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/check-in-rows.server";
 import {
   checkInSeriesTable,
   checkInsTable,
 } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/schema.server";
-
-type CheckInRequest = { checkIn: CheckIn; at: Date };
 
 type RecordedStatus = CheckInRow["status"];
 
@@ -53,73 +50,34 @@ type Settlement = {
 type CheckInMoveCommand = {
   checkIn: CheckIn;
   expected: { recordedStatus: RecordedStatus; startsAt: Date };
+  reservationId: string;
   at: Date;
 };
 
 type CoachingEnd = { clientId: string; endsAt: Date; at: Date };
 
-type CheckInAppointment = {
-  appointmentKind: "check_in";
-  appointmentId: string;
-};
-
-export type CheckInCoachTime = {
-  reserve: (
-    reservation: CheckInAppointment & TimeInterval,
-  ) => Promise<{ status: "reserved" | "taken" }>;
-  release: (appointment: CheckInAppointment) => Promise<void>;
-};
-
-type PostgresCheckInsOptions = {
-  database: DatabaseClient;
-  coachTime: CheckInCoachTime;
-};
-
-const REQUEST_SAVEPOINT = sql.identifier("check_in_request");
-const MOVE_SAVEPOINT = sql.identifier("check_in_move");
-
 export class PostgresCheckIns implements CheckIns {
-  constructor(private readonly options: PostgresCheckInsOptions) {}
+  constructor(private readonly database: DatabaseClient) {}
 
   private get executor() {
-    return executorOf(this.options.database);
+    return executorOf(this.database);
   }
 
-  async request({
-    checkIn,
-    at,
-  }: CheckInRequest): Promise<CheckInRequestResult> {
-    await lockCheckInsOfClient(this.executor, checkIn.clientId);
+  async listForClientLocked(clientId: string): Promise<CheckIn[]> {
+    await lockCheckInsOfClient(this.executor, clientId);
 
-    const clientRows = await this.executor
+    const rows = await this.executor
       .select()
       .from(checkInsTable)
-      .where(eq(checkInsTable.clientId, checkIn.clientId));
+      .where(eq(checkInsTable.clientId, clientId));
 
-    await this.executor.execute(sql`savepoint ${REQUEST_SAVEPOINT}`);
-    await this.executor.insert(checkInsTable).values(checkInRowOf(checkIn));
+    return rows.map((row) => checkInOf(row));
+  }
 
-    const coachTime = await this.options.coachTime.reserve({
-      ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
-      appointmentKind: "check_in",
-      appointmentId: checkIn.id,
-    });
-    const decision = CheckIn.decideRequest({
-      initiatedBy: checkIn.initiatedBy,
-      coachTime: coachTime.status,
-      clientCheckIns: clientRows.map((row) => checkInOf(row)),
-      at,
-    });
-
-    if (decision === "requested") {
-      return { status: "requested", checkIn };
-    }
-
-    await this.executor.execute(
-      sql`rollback to savepoint ${REQUEST_SAVEPOINT}`,
-    );
-
-    return { status: decision };
+  async add({ checkIn, reservationId }: HeldCheckIn): Promise<void> {
+    await this.executor
+      .insert(checkInsTable)
+      .values({ ...checkInRowOf(checkIn), reservationId });
   }
 
   async find(id: string): Promise<CheckIn | null> {
@@ -174,9 +132,18 @@ export class PostgresCheckIns implements CheckIns {
     expectedStatus,
     clientTimeZone,
   }: Settlement): Promise<CheckInSettlement> {
+    const freesItsHour = outcome === "cancelled";
+    const [held] = freesItsHour
+      ? await reservationsHeldBy(this.executor, eq(checkInsTable.id, id))
+      : [];
     const settled = await this.executor
       .update(checkInsTable)
-      .set({ status: outcome, answeredAt: at, clientTimeZone })
+      .set({
+        status: outcome,
+        answeredAt: at,
+        clientTimeZone,
+        ...(freesItsHour && { reservationId: null }),
+      })
       .where(
         and(
           eq(checkInsTable.id, id),
@@ -187,25 +154,26 @@ export class PostgresCheckIns implements CheckIns {
       .returning({ id: checkInsTable.id });
 
     if (settled.length === 0) {
-      return "changed_meanwhile";
+      return { status: "changed_meanwhile" };
     }
 
-    if (outcome === "cancelled") {
-      await this.releaseHourOf(id);
-    }
-
-    return "settled";
+    return {
+      status: "settled",
+      freedReservationId: held?.reservationId ?? null,
+    };
   }
 
   async move({
     checkIn,
     expected,
+    reservationId,
     at,
   }: CheckInMoveCommand): Promise<CheckInMove> {
     const snapshot = checkIn.toSnapshot();
-
-    await this.executor.execute(sql`savepoint ${MOVE_SAVEPOINT}`);
-
+    const [held] = await reservationsHeldBy(
+      this.executor,
+      eq(checkInsTable.id, snapshot.id),
+    );
     const moved = await this.executor
       .update(checkInsTable)
       .set({
@@ -217,6 +185,7 @@ export class PostgresCheckIns implements CheckIns {
         proposedBy: snapshot.proposedBy,
         answeredAt: snapshot.answeredAt,
         clientTimeZone: snapshot.clientTimeZone,
+        reservationId,
       })
       .where(
         and(
@@ -229,28 +198,17 @@ export class PostgresCheckIns implements CheckIns {
       .returning({ id: checkInsTable.id });
 
     if (moved.length === 0) {
-      return "changed_meanwhile";
+      return { status: "changed_meanwhile" };
     }
 
-    await this.releaseHourOf(snapshot.id);
-
-    const coachTime = await this.options.coachTime.reserve({
-      ...CHECK_IN_RULES.coachTimeFrom(snapshot.startsAt),
-      appointmentKind: "check_in",
-      appointmentId: snapshot.id,
-    });
-
-    if (coachTime.status === "taken") {
-      await this.executor.execute(sql`rollback to savepoint ${MOVE_SAVEPOINT}`);
-
-      return "time_taken";
-    }
-
-    return "moved";
+    return {
+      status: "moved",
+      freedReservationId: held?.reservationId ?? null,
+    };
   }
 
   endCoaching(end: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
-    return createUnitOfWork(this.options.database)(() =>
+    return createUnitOfWork(this.database)(() =>
       this.endCoachingUnderClientLock(end),
     );
   }
@@ -283,21 +241,26 @@ export class PostgresCheckIns implements CheckIns {
   }: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
     await lockCheckInsOfClient(this.executor, clientId);
 
-    const cancelled = await this.executor
-      .update(checkInsTable)
-      .set({ status: "cancelled", answeredAt: at })
-      .where(
-        and(
-          eq(checkInsTable.clientId, clientId),
-          inArray(checkInsTable.status, [...OPEN_CHECK_IN_STATUSES]),
-          gte(checkInsTable.startsAt, endsAt),
-          gt(checkInsTable.startsAt, at),
-        ),
-      )
-      .returning({ id: checkInsTable.id });
+    const cancelled = await reservationsHeldBy(
+      this.executor,
+      and(
+        eq(checkInsTable.clientId, clientId),
+        inArray(checkInsTable.status, [...OPEN_CHECK_IN_STATUSES]),
+        gte(checkInsTable.startsAt, endsAt),
+        gt(checkInsTable.startsAt, at),
+      ),
+    );
 
-    for (const { id } of cancelled) {
-      await this.releaseHourOf(id);
+    if (cancelled.length > 0) {
+      await this.executor
+        .update(checkInsTable)
+        .set({ status: "cancelled", answeredAt: at, reservationId: null })
+        .where(
+          inArray(
+            checkInsTable.id,
+            cancelled.map(({ id }) => id),
+          ),
+        );
     }
 
     const stopped = await this.executor
@@ -314,13 +277,7 @@ export class PostgresCheckIns implements CheckIns {
     return {
       cancelled: cancelled.map(({ id }) => id),
       seriesStopped: stopped.length > 0,
+      freedReservationIds: heldReservationIdsOf(cancelled),
     };
-  }
-
-  private releaseHourOf(checkInId: string): Promise<void> {
-    return this.options.coachTime.release({
-      appointmentKind: "check_in",
-      appointmentId: checkInId,
-    });
   }
 }

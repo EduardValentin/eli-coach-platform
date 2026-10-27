@@ -1,5 +1,5 @@
-import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { Weekday } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
+import type { Weekday } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import { VALUE_CLASS } from "~/shared/design-system/lib";
 import {
   PortalWidget,
@@ -18,7 +18,7 @@ import type {
   CoachClientSeriesPanel,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { COACH_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
-import { formatClockHour } from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+import { formatClockHour } from "~/shared/time-format/call-moment";
 import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
 import { awaitingOnboardingReason } from "~/bounded-contexts/clients/check-ins/ui/coach/shared/awaiting-onboarding-reason";
 import { WEEKDAY_LABELS } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";

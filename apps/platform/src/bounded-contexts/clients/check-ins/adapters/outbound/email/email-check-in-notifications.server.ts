@@ -27,7 +27,7 @@ import {
   formatCallSchedule,
   formatClockTime,
   formatWeekday,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+} from "~/shared/time-format/call-moment";
 import {
   CLIENT_CHECK_INS_PATH,
   clientCheckInJoinPath,

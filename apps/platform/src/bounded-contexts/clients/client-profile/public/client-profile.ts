@@ -1,5 +1,5 @@
-import { VISITOR_GENDERS } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import { CLIENT_GENDERS } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import { WEEKDAYS } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   ACTIVITY_LEVELS,
   CLIENT_EQUIPMENT,
@@ -54,7 +54,7 @@ export const profileIdentitySchema = z.object({
   lastName: z.string().min(1),
   email: z.email(),
   dateOfBirth: z.iso.date(),
-  gender: z.enum(VISITOR_GENDERS),
+  gender: z.enum(CLIENT_GENDERS),
   country: z.string().min(1),
   phone: z.string().nullable(),
 });

@@ -1,8 +1,3 @@
-import {
-  AssessmentCall,
-  type AssessmentCallReader,
-  type AssessmentCallSnapshot,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { PricingEligibility } from "../coaching-bundle";
 import type { EmailAcceptance } from "../email-acceptance";
 import type { Clock } from "../clock";
@@ -14,6 +9,7 @@ import type {
   PaymentLinkMessage,
 } from "./coaching-sales-notifications";
 import type { CoachingSalesWindow } from "./coaching-sales-window";
+import type { EndedCalls, SalesCall } from "./ended-calls";
 import { PaymentLink } from "./payment-link";
 import type { PaymentLinkIds } from "./payment-link-ids";
 import type { PaymentLinks, PaymentLinkTokenGenerator } from "./payment-links";
@@ -27,7 +23,7 @@ type SendPaymentLinkResult =
   | { status: "delivery_failed" };
 
 type SendPaymentLinkUseCaseOptions = {
-  calls: AssessmentCallReader;
+  calls: EndedCalls;
   callSalesStates: CallSalesStates;
   clock: Clock;
   emailAcceptance: EmailAcceptance;
@@ -58,7 +54,7 @@ export class SendPaymentLinkUseCase {
 
     const now = this.options.clock.now();
 
-    if (!AssessmentCall.reconstitute(call).hasEnded(now)) {
+    if (call.endsAt > now) {
       return { status: "call_not_ended" };
     }
 
@@ -72,7 +68,7 @@ export class SendPaymentLinkUseCase {
   }
 
   private async issueAndSend(
-    call: AssessmentCallSnapshot,
+    call: SalesCall,
     now: Date,
   ): Promise<SendPaymentLinkResult> {
     const tier = await this.options.pricingEligibility.tierForEmail(

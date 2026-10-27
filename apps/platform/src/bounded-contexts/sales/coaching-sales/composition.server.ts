@@ -1,6 +1,6 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
-import type { AssessmentCallReader } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls";
 import type {
   ClientIdentities,
   ClientIds,
@@ -73,6 +73,7 @@ import {
 import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createCoachingSalesIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/logging/coaching-sales-incidents.server";
+import { SchedulingEndedCalls } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/scheduling/ended-calls.server";
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
@@ -80,7 +81,7 @@ type CoachingSalesComposition = {
 
 export type CoachingSalesFeatureHandles = {
   appBasePath: string;
-  assessmentCallReader: AssessmentCallReader;
+  endedCalls: EndedCallsFacade;
   clientIdentities: ClientIdentities;
   clientIds: ClientIds;
   clientJourneys: Pick<ClientJourneys, "findByAuthSubjectId">;
@@ -137,8 +138,9 @@ export function composeCoachingSalesFeature(
     featureFlags: handles.featureFlags,
     incidents,
   });
+  const calls = new SchedulingEndedCalls(handles.endedCalls);
   const paymentLinkPorts = {
-    calls: handles.assessmentCallReader,
+    calls,
     callSalesStates: purchases,
     clock,
     emailAcceptance: handles.emailAcceptance,
@@ -222,7 +224,7 @@ export function composeCoachingSalesFeature(
     }),
     recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
       admission: handles.paidClientAdmission,
-      calls: handles.assessmentCallReader,
+      calls,
       clientIds: handles.clientIds,
       clock,
       incidents,

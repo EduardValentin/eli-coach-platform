@@ -1,6 +1,6 @@
-import type { VisitorCountries } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { Clock } from "../clock";
 
+import type { ClientCountries } from "./client-details";
 import type { ClientIdentities } from "./client-identities";
 import type { ClientIdentityChanges } from "./client-identity-changes";
 import {
@@ -26,7 +26,7 @@ type UpdateOwnClientIdentityUseCaseOptions = {
   identities: Pick<ClientIdentities, "findByClientId">;
   changes: ClientIdentityChanges;
   clock: Clock;
-  countries: VisitorCountries;
+  countries: ClientCountries;
 };
 
 export class UpdateOwnClientIdentityUseCase {

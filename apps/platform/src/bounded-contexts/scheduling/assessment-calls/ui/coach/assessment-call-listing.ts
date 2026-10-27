@@ -2,7 +2,7 @@ import type { SortChoice, SortRule } from "~/shared/design-system/lib";
 
 import type { CoachAssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
 import { COACH_CALLS_PAGE_PARAM } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
-import { dayKeyOf } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/day-key";
+import { dayKeyOf } from "~/shared/time-format/day-key";
 
 export const WHEN_PARAM = "when";
 export const QUERY_PARAM = "q";

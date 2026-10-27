@@ -1,6 +1,7 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import {
+  CHECK_IN_RULES,
   ApproveCheckInUseCase,
   CancelCheckInsAfterCoachingEndUseCase,
   CancelCheckInUseCase,
@@ -29,11 +30,9 @@ import type {
   ClientIdentities,
   ClientReach,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import type {
-  CoachAvailabilitySource,
-  CoachCalendar,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time";
+import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room";
+import type { OpenSlotsFacade } from "~/bounded-contexts/scheduling/public/open-slots";
 import type {
   CoachingEndHandler,
   CoachingPeriodHandler,
@@ -50,10 +49,10 @@ import { CoachCheckInSeriesController } from "~/bounded-contexts/clients/check-i
 import { CoachCheckInsController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/coach-check-ins-controller.server";
 import { CheckInJoinController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/join/check-in-join-controller.server";
 import { SharedCheckInsController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/shared-check-ins-controller.server";
-import {
-  PostgresCheckIns,
-  type CheckInCoachTime,
-} from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/postgres-check-ins.server";
+import { PostgresCheckIns } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/postgres-check-ins.server";
+import { SchedulingCoachTime } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/coach-time.server";
+import { SchedulingMeetingRoom } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/meeting-room.server";
+import { SchedulingOpenSlots } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/open-slots.server";
 import { RandomCheckInIds } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/random-check-in-ids.server";
 import { CheckInExpiryNotifications } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/inbox/check-in-expiry-notifications.server";
 import { InboxCheckInNotices } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/inbox/inbox-check-in-notices.server";
@@ -65,18 +64,17 @@ import { createCheckInsIncidents } from "~/bounded-contexts/clients/check-ins/ad
 
 type CheckInsFeatureHandles = {
   appBasePath: string;
-  availability: CoachAvailabilitySource;
-  calendar: CoachCalendar;
   clientIdentities: Pick<ClientIdentities, "findByClientIds">;
   clientReach: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
   coachEmail: string;
-  coachTime: CheckInCoachTime;
+  coachTime: CoachTimeFacade;
   contactEmail: string;
   database: DatabaseClient;
   inbox: Pick<NotificationInbox, "record">;
   logger: Logger;
-  meetingRoom: CoachMeetingRoomSource;
+  meetingRoom: MeetingRoomFacade;
+  openSlots: OpenSlotsFacade;
   productEmail: ProductEmail;
   publicAppUrl: string;
 };
@@ -94,14 +92,16 @@ export function composeCheckInsFeature(
   handles: CheckInsFeatureHandles,
 ): CheckInsComposition {
   const incidents = createCheckInsIncidents(handles.logger);
-  const { availability, clock } = handles;
+  const { clock } = handles;
   const unitOfWork = createUnitOfWork(handles.database);
-  const checkIns = new PostgresCheckIns({
-    coachTime: handles.coachTime,
-    database: handles.database,
+  const checkIns = new PostgresCheckIns(handles.database);
+  const coachTime = new SchedulingCoachTime(handles.coachTime);
+  const openSlots = new SchedulingOpenSlots({
+    openSlots: handles.openSlots,
+    rules: CHECK_IN_RULES,
   });
   const cancelCheckInsAfterCoachingEnd =
-    new CancelCheckInsAfterCoachingEndUseCase({ checkIns, clock });
+    new CancelCheckInsAfterCoachingEndUseCase({ checkIns, clock, coachTime });
   const readPorts = {
     checkIns,
     clients: handles.clientReach,
@@ -110,6 +110,7 @@ export function composeCheckInsFeature(
   };
   const answerPorts = {
     ...readPorts,
+    coachTime,
     inbox: new InboxCheckInNotices({ clock, inbox: handles.inbox }),
     incidents,
     notifications: new EmailCheckInNotifications(handles.productEmail, {
@@ -126,15 +127,12 @@ export function composeCheckInsFeature(
   );
   const requestPorts = {
     ...answerPorts,
-    availability,
     ids: new RandomCheckInIds(),
+    openSlots,
   };
   const seriesPorts = {
     ...requestPorts,
-    series: new PostgresCheckInSeries({
-      coachTime: handles.coachTime,
-      database: handles.database,
-    }),
+    series: new PostgresCheckInSeries(handles.database),
   };
   const extendCheckInSeries = new ExtendCheckInSeriesUseCase(seriesPorts);
 
@@ -143,7 +141,7 @@ export function composeCheckInsFeature(
       checkInJoin: new CheckInJoinController({
         resolveCheckInJoin: new ResolveCheckInJoinUseCase({
           ...readPorts,
-          meetingRoom: handles.meetingRoom,
+          meetingRoom: new SchedulingMeetingRoom(handles.meetingRoom),
         }),
       }),
       clientCheckIns: new ClientCheckInsController({
@@ -169,10 +167,7 @@ export function composeCheckInsFeature(
       }),
       coachCheckInSeries: new CoachCheckInSeriesController({
         changeCheckInSeries: new ChangeCheckInSeriesUseCase(seriesPorts),
-        previewCheckInSeries: new PreviewCheckInSeriesUseCase({
-          ...seriesPorts,
-          calendar: handles.calendar,
-        }),
+        previewCheckInSeries: new PreviewCheckInSeriesUseCase(seriesPorts),
         readCoachClientSeries: new ReadCoachClientSeriesUseCase(seriesPorts),
         setUpCheckInSeries: new SetUpCheckInSeriesUseCase(seriesPorts),
         stopCheckInSeries: new StopCheckInSeriesUseCase(seriesPorts),
@@ -183,14 +178,13 @@ export function composeCheckInsFeature(
         cancelCheckIn: new CancelCheckInUseCase(answerPorts),
         declineCheckIn: new DeclineCheckInUseCase(answerPorts),
         listOpenCheckInTimes: new ListOpenCheckInTimesUseCase({
-          availability,
-          calendar: handles.calendar,
           clients: handles.clientReach,
           clock,
+          openSlots,
         }),
         proposeCheckInTime: new ProposeCheckInTimeUseCase({
           ...answerPorts,
-          availability,
+          openSlots,
         }),
         withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(answerPorts),
         unitOfWork,
@@ -199,15 +193,17 @@ export function composeCheckInsFeature(
     handles: {
       coachingEndHandler: {
         coachingEnds: async (notice) => {
-          await cancelCheckInsAfterCoachingEnd.execute(notice);
+          await unitOfWork(() =>
+            cancelCheckInsAfterCoachingEnd.execute(notice),
+          );
         },
       },
       coachingPeriodHandler: {
         paidThroughExtended: async ({ clientId }) => {
-          await extendCheckInSeries.execute({ clientId });
+          await unitOfWork(() => extendCheckInSeries.execute({ clientId }));
         },
         programStarted: async ({ clientId }) => {
-          await extendCheckInSeries.execute({ clientId });
+          await unitOfWork(() => extendCheckInSeries.execute({ clientId }));
         },
       },
       expirySource: new CheckInExpiryNotifications({

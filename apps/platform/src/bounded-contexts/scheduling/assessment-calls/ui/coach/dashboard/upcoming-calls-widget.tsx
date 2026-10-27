@@ -8,7 +8,7 @@ import { useId } from "react";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+} from "~/shared/time-format/call-moment";
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 import {
   upcomingCalls,

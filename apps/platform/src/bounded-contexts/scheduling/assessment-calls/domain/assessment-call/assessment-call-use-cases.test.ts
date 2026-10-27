@@ -1,12 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { CoachScheduleAvailability } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/coach-schedule/coach-availability.server";
 import {
-  CoachAvailability,
-  type CoachAvailabilityProps,
-  type CoachAvailabilitySource,
-  type CoachCalendar,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+  CoachAvailability as CoachWeekAvailability,
+  CoachOpenings,
+} from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 import {
   createEmailAcceptance,
   type EmailSubaddressPolicy,
@@ -17,6 +15,10 @@ import { AssessmentCall } from "./assessment-call";
 import { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
+import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
+import type { CoachAvailability } from "./coach-availability";
+import type { CoachTime } from "./coach-time";
+import type { MeetingRoom } from "./meeting-room";
 import { BookAssessmentCallUseCase } from "./book-assessment-call-use-case";
 import {
   ListAssessmentCallsUseCase,
@@ -29,6 +31,12 @@ const NOW = new Date("2026-06-01T06:00:00.000Z");
 const OPEN_START = new Date("2026-06-01T15:00:00.000Z");
 const CLOSED_START = new Date("2026-06-01T13:00:00.000Z");
 const COACH_TIME_ZONE = "Europe/Bucharest";
+const RESERVATION_ID = "reservation-1";
+
+type OpeningsSources = ConstructorParameters<typeof CoachOpenings>[0];
+type CoachAvailabilitySource = OpeningsSources["availability"];
+type CoachCalendar = OpeningsSources["calendar"];
+type CoachAvailabilityProps = Parameters<typeof CoachWeekAvailability.from>[0];
 
 const clock = { now: () => NOW };
 
@@ -69,8 +77,8 @@ function closedBookingWindow(): AssessmentCallBookingWindow {
 
 function configuredAvailabilityOrThrow(
   props: CoachAvailabilityProps,
-): CoachAvailability {
-  const result = CoachAvailability.from(props);
+): CoachWeekAvailability {
+  const result = CoachWeekAvailability.from(props);
 
   if (result.status !== "configured") {
     throw new Error(
@@ -142,9 +150,21 @@ function createReservations(
   options?: Partial<AssessmentCallReservations>,
 ): AssessmentCallReservations {
   return {
-    reserve: vi.fn().mockResolvedValue({ status: "reserved" }),
+    lockVisitorEmail: vi.fn().mockResolvedValue(undefined),
+    findUpcomingCallFor: vi.fn().mockResolvedValue(null),
+    add: vi.fn().mockResolvedValue(undefined),
     findById: vi.fn().mockResolvedValue(null),
     listAll: vi.fn().mockResolvedValue([]),
+    ...options,
+  };
+}
+
+function createCoachTime(options?: Partial<CoachTime>): CoachTime {
+  return {
+    reserve: vi
+      .fn()
+      .mockResolvedValue({ status: "reserved", reservationId: RESERVATION_ID }),
+    release: vi.fn().mockResolvedValue(undefined),
     ...options,
   };
 }
@@ -154,6 +174,16 @@ function createCalendar(options?: Partial<CoachCalendar>): CoachCalendar {
     busyFrom: vi.fn().mockResolvedValue([]),
     ...options,
   };
+}
+
+function availabilityOver(
+  availability: CoachAvailabilitySource,
+  calendar: CoachCalendar = createCalendar(),
+): CoachAvailability {
+  return new CoachScheduleAvailability({
+    openings: new CoachOpenings({ availability, calendar }),
+    rules: ASSESSMENT_CALL_RULES,
+  });
 }
 
 function createNotifications(
@@ -172,9 +202,8 @@ function createListOpenSlots(options: {
   incidents: ReturnType<typeof createIncidents>;
 }): ListOpenSlotsUseCase {
   return new ListOpenSlotsUseCase({
-    availability: options.availability,
+    availability: availabilityOver(options.availability, options.calendar),
     bookingWindow: openBookingWindow(),
-    calendar: options.calendar,
     clock,
     incidents: options.incidents,
   });
@@ -182,15 +211,17 @@ function createListOpenSlots(options: {
 
 function createBookAssessmentCall(options: {
   availability: CoachAvailabilitySource;
+  coachTime?: CoachTime;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createIncidents>;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
 }): BookAssessmentCallUseCase {
   return new BookAssessmentCallUseCase({
-    availability: options.availability,
+    availability: availabilityOver(options.availability),
     bookingWindow: openBookingWindow(),
     clock,
+    coachTime: options.coachTime ?? createCoachTime(),
     emailAcceptance: createEmailAcceptance(
       options.emailSubaddresses ?? "allowed",
     ),
@@ -282,9 +313,8 @@ describe("ListOpenSlotsUseCase", () => {
     const availability = createAvailabilitySource();
     const calendar = createCalendar();
     const listOpenSlots = new ListOpenSlotsUseCase({
-      availability,
+      availability: availabilityOver(availability, calendar),
       bookingWindow: closedBookingWindow(),
-      calendar,
       clock,
       incidents: createIncidents(),
     });
@@ -397,7 +427,9 @@ describe("ListAssessmentCallsUseCase", () => {
     // arrange
     const call = existingCall();
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: createAvailabilitySource("Europe/Chisinau"),
+      availability: availabilityOver(
+        createAvailabilitySource("Europe/Chisinau"),
+      ),
       incidents: createIncidents(),
       reservations: createReservations({
         listAll: vi.fn().mockResolvedValue([call]),
@@ -424,7 +456,7 @@ describe("ListAssessmentCallsUseCase", () => {
       startsAt: new Date("2026-06-02T15:00:00.000Z"),
     });
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: createAvailabilitySource(),
+      availability: availabilityOver(createAvailabilitySource()),
       incidents: createIncidents(),
       reservations: createReservations({
         listAll: vi.fn().mockResolvedValue([earlier, later]),
@@ -441,7 +473,7 @@ describe("ListAssessmentCallsUseCase", () => {
   it("still names the coach's time zone when she has no calls", async () => {
     // arrange
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: createAvailabilitySource(),
+      availability: availabilityOver(createAvailabilitySource()),
       incidents: createIncidents(),
       reservations: createReservations(),
     });
@@ -461,7 +493,7 @@ describe("ListAssessmentCallsUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: createAvailabilitySource(),
+      availability: availabilityOver(createAvailabilitySource()),
       incidents,
       reservations: createReservations({
         listAll: vi.fn().mockRejectedValue(new Error("down")),
@@ -480,9 +512,9 @@ describe("ListAssessmentCallsUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: {
+      availability: availabilityOver({
         current: vi.fn().mockRejectedValue(new Error("down")),
-      },
+      }),
       incidents,
       reservations: createReservations(),
     });
@@ -500,10 +532,12 @@ describe("BookAssessmentCallUseCase", () => {
   it("reports closed without reserving when booking is closed", async () => {
     // arrange
     const reservations = createReservations();
+    const coachTime = createCoachTime();
     const bookAssessmentCall = new BookAssessmentCallUseCase({
-      availability: createAvailabilitySource(),
+      availability: availabilityOver(createAvailabilitySource()),
       bookingWindow: closedBookingWindow(),
       clock,
+      coachTime,
       emailAcceptance: createEmailAcceptance("allowed"),
       ids: callIds,
       incidents: createIncidents(),
@@ -516,14 +550,17 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(reservations.reserve).not.toHaveBeenCalled();
+    expect(coachTime.reserve).not.toHaveBeenCalled();
+    expect(reservations.add).not.toHaveBeenCalled();
   });
 
   it("refuses a start the availability no longer offers", async () => {
     // arrange
     const reservations = createReservations();
+    const coachTime = createCoachTime();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
+      coachTime,
       incidents: createIncidents(),
       notifications: createNotifications(),
       reservations,
@@ -537,7 +574,8 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "slot_unavailable" });
-    expect(reservations.reserve).not.toHaveBeenCalled();
+    expect(coachTime.reserve).not.toHaveBeenCalled();
+    expect(reservations.add).not.toHaveBeenCalled();
   });
 
   it("reserves a call under a fresh id with the visitor's profile, the normalised email and the clock instants, then notifies", async () => {
@@ -555,9 +593,16 @@ describe("BookAssessmentCallUseCase", () => {
     const result = await bookAssessmentCall.execute(bookingCommand);
 
     // assert
-    expect(reservations.reserve).toHaveBeenCalledWith({
-      call: bookedCall,
+    expect(reservations.lockVisitorEmail).toHaveBeenCalledWith(
+      "ana@example.com",
+    );
+    expect(reservations.findUpcomingCallFor).toHaveBeenCalledWith({
+      visitorEmail: "ana@example.com",
       now: NOW,
+    });
+    expect(reservations.add).toHaveBeenCalledWith({
+      call: bookedCall,
+      reservationId: RESERVATION_ID,
     });
     expect(notifications.notifyBooked).toHaveBeenCalledWith(
       bookedCall.toSnapshot(),
@@ -579,7 +624,7 @@ describe("BookAssessmentCallUseCase", () => {
     await bookAssessmentCall.execute(bookingCommand);
 
     // assert
-    expect(reservations.reserve).toHaveBeenCalledWith(
+    expect(reservations.add).toHaveBeenCalledWith(
       expect.objectContaining({
         call: expect.objectContaining({ coachTimeZone: "Europe/Chisinau" }),
       }),
@@ -634,13 +679,17 @@ describe("BookAssessmentCallUseCase", () => {
   it("refuses a slot that is already taken, whoever holds it, without notifying anyone", async () => {
     // arrange
     const notifications = createNotifications();
+    const reservations = createReservations({
+      findUpcomingCallFor: vi.fn().mockResolvedValue(existingCall()),
+    });
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
+      coachTime: createCoachTime({
+        reserve: vi.fn().mockResolvedValue({ status: "taken" }),
+      }),
       incidents: createIncidents(),
       notifications,
-      reservations: createReservations({
-        reserve: vi.fn().mockResolvedValue({ status: "slot_taken" }),
-      }),
+      reservations,
     });
 
     // act
@@ -648,20 +697,22 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "slot_unavailable" });
+    expect(reservations.add).not.toHaveBeenCalled();
     expect(notifications.notifyBooked).not.toHaveBeenCalled();
   });
 
-  it("refuses a second upcoming call for one email without describing the first", async () => {
+  it("refuses a second upcoming call for one email without describing the first, giving back the time it held", async () => {
     // arrange
+    const coachTime = createCoachTime();
+    const reservations = createReservations({
+      findUpcomingCallFor: vi.fn().mockResolvedValue(existingCall()),
+    });
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
+      coachTime,
       incidents: createIncidents(),
       notifications: createNotifications(),
-      reservations: createReservations({
-        reserve: vi
-          .fn()
-          .mockResolvedValue({ status: "email_has_upcoming_call" }),
-      }),
+      reservations,
     });
 
     // act
@@ -669,6 +720,8 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "email_already_booked" });
+    expect(coachTime.release).toHaveBeenCalledWith(RESERVATION_ID);
+    expect(reservations.add).not.toHaveBeenCalled();
   });
 
   it("refuses a subaddressed email before reading the booking window, the availability or the reservations", async () => {
@@ -677,12 +730,14 @@ describe("BookAssessmentCallUseCase", () => {
       execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
     };
     const availability = createAvailabilitySource();
+    const coachTime = createCoachTime();
     const notifications = createNotifications();
     const reservations = createReservations();
     const bookAssessmentCall = new BookAssessmentCallUseCase({
-      availability,
+      availability: availabilityOver(availability),
       bookingWindow: createBookingWindow({ featureFlags }),
       clock,
+      coachTime,
       emailAcceptance: createEmailAcceptance("refused"),
       ids: callIds,
       incidents: createIncidents(),
@@ -700,7 +755,8 @@ describe("BookAssessmentCallUseCase", () => {
     expect(result).toEqual({ status: "subaddress_refused" });
     expect(featureFlags.execute).not.toHaveBeenCalled();
     expect(availability.current).not.toHaveBeenCalled();
-    expect(reservations.reserve).not.toHaveBeenCalled();
+    expect(coachTime.reserve).not.toHaveBeenCalled();
+    expect(reservations.lockVisitorEmail).not.toHaveBeenCalled();
     expect(notifications.notifyBooked).not.toHaveBeenCalled();
   });
 
@@ -746,7 +802,7 @@ describe("BookAssessmentCallUseCase", () => {
         visitorEmail: "ana+coaching@example.com",
       }),
     });
-    expect(reservations.reserve).toHaveBeenCalledWith(
+    expect(reservations.add).toHaveBeenCalledWith(
       expect.objectContaining({
         call: expect.objectContaining({
           visitorEmail: "ana+coaching@example.com",
@@ -756,9 +812,7 @@ describe("BookAssessmentCallUseCase", () => {
   });
 });
 
-function createMeetingRoomSource(
-  options?: Partial<CoachMeetingRoomSource>,
-): CoachMeetingRoomSource {
+function createMeetingRoomSource(options?: Partial<MeetingRoom>): MeetingRoom {
   return {
     current: vi.fn().mockResolvedValue(null),
     ...options,

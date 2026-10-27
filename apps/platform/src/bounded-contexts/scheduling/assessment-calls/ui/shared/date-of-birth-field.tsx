@@ -14,7 +14,7 @@ import {
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
 } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
-import { dayKeyOf } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/day-key";
+import { dayKeyOf } from "~/shared/time-format/day-key";
 
 const DEFAULT_YEARS_BACK = 30;
 const PLACEHOLDER = "Select a date";

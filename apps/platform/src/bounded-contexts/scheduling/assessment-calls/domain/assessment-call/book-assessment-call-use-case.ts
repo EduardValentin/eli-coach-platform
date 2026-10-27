@@ -1,4 +1,3 @@
-import type { CoachAvailabilitySource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import type { Clock } from "../clock";
 import type { EmailAcceptance } from "../email-acceptance";
 
@@ -8,7 +7,8 @@ import type { AssessmentCallIds } from "./assessment-call-ids";
 import type { AssessmentCallIncidents } from "./assessment-call-incidents";
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
-import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
+import type { CoachAvailability } from "./coach-availability";
+import type { CoachTime } from "./coach-time";
 import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type BookAssessmentCallCommand = {
@@ -33,9 +33,10 @@ export type BookAssessmentCallResult =
   | { status: "closed" };
 
 type BookAssessmentCallUseCaseOptions = {
-  availability: CoachAvailabilitySource;
+  availability: CoachAvailability;
   bookingWindow: AssessmentCallBookingWindow;
   clock: Clock;
+  coachTime: CoachTime;
   emailAcceptance: EmailAcceptance;
   ids: AssessmentCallIds;
   incidents: AssessmentCallIncidents;
@@ -64,13 +65,7 @@ export class BookAssessmentCallUseCase {
     const now = this.options.clock.now();
     const availability = await this.options.availability.current();
 
-    const offered = availability.isOpenStart({
-      start: command.startsAt,
-      now,
-      policy: ASSESSMENT_CALL_RULES,
-    });
-
-    if (!offered) {
+    if (!availability.offersStart({ start: command.startsAt, now })) {
       return { status: "slot_unavailable" };
     }
 
@@ -90,9 +85,40 @@ export class BookAssessmentCallUseCase {
       coachTimeZone: availability.timeZone,
       at: now,
     });
-    const reservation = await this.options.reservations.reserve({ call, now });
+    const reservation = await this.reserve(call, now);
 
     return this.resolveReservation(call, reservation);
+  }
+
+  private async reserve(
+    call: AssessmentCall,
+    now: Date,
+  ): Promise<ReservationDecision> {
+    const { coachTime, reservations } = this.options;
+
+    await reservations.lockVisitorEmail(call.visitorEmail);
+
+    const upcomingCallForEmail = await reservations.findUpcomingCallFor({
+      visitorEmail: call.visitorEmail,
+      now,
+    });
+    const held = await coachTime.reserve(call.coachTimeSpan());
+    const decision = AssessmentCall.decideReservation({
+      coachTime: held.status,
+      upcomingCallForEmail,
+    });
+
+    if (held.status === "taken") {
+      return decision;
+    }
+
+    if (decision.status === "reserved") {
+      await reservations.add({ call, reservationId: held.reservationId });
+    } else {
+      await coachTime.release(held.reservationId);
+    }
+
+    return decision;
   }
 
   private async resolveReservation(

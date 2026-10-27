@@ -1,7 +1,7 @@
 import {
-  VISITOR_GENDERS,
-  VISITOR_PRIMARY_GOALS,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+  CLIENT_GENDERS,
+  CLIENT_PRIMARY_GOALS,
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { CLIENT_STATUSES } from "~/bounded-contexts/clients/clients/domain/client-roster";
 import { z } from "zod";
 
@@ -38,7 +38,7 @@ const clientInvitationSchema = z.object({
 
 export type ClientInvitationReading = z.infer<typeof clientInvitationSchema>;
 
-const visitorGenderSchema = z.enum(VISITOR_GENDERS);
+const visitorGenderSchema = z.enum(CLIENT_GENDERS);
 
 const bookedAssessmentCallSchema = z.object({
   startsAt: z.iso.datetime(),
@@ -49,7 +49,7 @@ const bookedAssessmentCallSchema = z.object({
   gender: visitorGenderSchema,
   country: z.string().min(1),
   phone: z.string().nullable(),
-  primaryGoal: z.enum(VISITOR_PRIMARY_GOALS),
+  primaryGoal: z.enum(CLIENT_PRIMARY_GOALS),
   notes: z.string().nullable(),
 });
 

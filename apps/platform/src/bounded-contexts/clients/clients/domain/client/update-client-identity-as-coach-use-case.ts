@@ -1,9 +1,6 @@
-import type {
-  VisitorCountries,
-  VisitorGender,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { Clock } from "../clock";
 
+import type { ClientCountries, ClientGender } from "./client-details";
 import type { ClientIdentityChanges } from "./client-identity-changes";
 import {
   ClientIdentityEdit,
@@ -14,7 +11,7 @@ import type { ClientReach } from "./client-reach";
 
 type UpdateClientIdentityAsCoachCommand = {
   clientId: string;
-  identity: EditableClientIdentity & { gender: VisitorGender };
+  identity: EditableClientIdentity & { gender: ClientGender };
 };
 
 type UpdateClientIdentityAsCoachResult =
@@ -26,7 +23,7 @@ type UpdateClientIdentityAsCoachUseCaseOptions = {
   clients: Pick<ClientReach, "findById">;
   changes: ClientIdentityChanges;
   clock: Clock;
-  countries: VisitorCountries;
+  countries: ClientCountries;
 };
 
 export class UpdateClientIdentityAsCoachUseCase {

@@ -2,8 +2,8 @@ import { createEmailAcceptance } from "~/shared/submission-checks/email-address"
 import type { DatabaseClient } from "~/shared/database";
 import {
   CoachAvailability,
-  type CoachAvailabilitySource,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+  CoachOpenings,
+} from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
@@ -48,7 +48,7 @@ describe("composeAssessmentCallsFeature", () => {
     // arrange
     const { feature } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      availability: createUnreadableAvailability(),
+      openings: openingsOver(createUnreadableAvailability()),
     });
 
     // act
@@ -116,35 +116,34 @@ describe("composeAssessmentCallsFeature subaddress policy", () => {
   });
 });
 
-describe("composeAssessmentCallsFeature assessment call reader", () => {
-  it("reads a booked call as a snapshot for coaching sales", async () => {
+describe("composeAssessmentCallsFeature ended calls facade", () => {
+  it("reads a booked call with its end and visitor for coaching sales", async () => {
     // arrange
-    const { handles } = composeAssessmentCallsFeature({
+    const { facades } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
       database: createDatabaseWithBookedCalls([BOOKED_ROW]),
     });
 
     // act
-    const call = await handles.assessmentCallReader.findById(BOOKED_ROW.id);
+    const call = await facades.endedCalls.endedCall(BOOKED_ROW.id);
 
     // assert
     expect(call).toMatchObject({
-      endsAt: new Date("2026-10-20T14:30:00.000Z"),
-      fullName: "Ana Popescu",
+      endsAt: "2026-10-20T14:30:00.000Z",
       id: BOOKED_ROW.id,
-      visitorEmail: "ana@example.com",
+      visitor: { fullName: "Ana Popescu", email: "ana@example.com" },
     });
   });
 
   it("answers null for a call that was never booked", async () => {
     // arrange
-    const { handles } = composeAssessmentCallsFeature({
+    const { facades } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
       database: createDatabaseWithBookedCalls([]),
     });
 
     // act
-    const call = await handles.assessmentCallReader.findById(BOOKED_ROW.id);
+    const call = await facades.endedCalls.endedCall(BOOKED_ROW.id);
 
     // assert
     expect(call).toBeNull();
@@ -160,17 +159,19 @@ function createHandles(
     assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
     },
-    availability: createBucharestEveningAvailability(),
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
     botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-    calendar: { busyFrom: async () => [] },
     clock: { now: () => new Date("2026-10-19T08:00:00.000Z") },
-    coachTime: { reserve: async () => ({ status: "reserved" }) },
+    coachTime: {
+      reserve: async () => ({ status: "reserved", reservationId: "held" }),
+      release: async () => {},
+    },
     contactEmail: "contact@evoa.fit",
     database: createDatabaseStub(),
     featureFlags: { execute: async () => featureFlags },
     logger: { error: () => {}, warn: () => {}, info: () => {} },
     meetingRoom: { current: async () => null },
+    openings: openingsOver(createBucharestEveningAvailability()),
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };
@@ -194,6 +195,17 @@ function createDatabaseWithBookedCalls(
       from: () => chainResolving(bookedCallRows),
     }),
   } as unknown as DatabaseClient;
+}
+
+type CoachAvailabilitySource = ConstructorParameters<
+  typeof CoachOpenings
+>[0]["availability"];
+
+function openingsOver(availability: CoachAvailabilitySource): CoachOpenings {
+  return new CoachOpenings({
+    availability,
+    calendar: { busyFrom: async () => [] },
+  });
 }
 
 function createBucharestEveningAvailability(): CoachAvailabilitySource {

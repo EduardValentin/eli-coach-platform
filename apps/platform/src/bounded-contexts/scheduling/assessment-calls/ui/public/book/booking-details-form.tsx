@@ -22,10 +22,7 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 
-import {
-  COUNTRIES,
-  findCountry,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+import { COUNTRIES, findCountry } from "~/shared/contact/countries";
 import {
   birthDateMessage,
   BOOKING_FIELD_MESSAGES,

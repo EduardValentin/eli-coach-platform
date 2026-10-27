@@ -1,24 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { reserveCoachTime } from "./coach-time-reservations.server";
+import { PostgresCoachTimeReservations } from "./coach-time-reservations.server";
 import { COACH_TIME_RESERVATIONS_NO_OVERLAP } from "../schema.server";
 
-type Transaction = Parameters<typeof reserveCoachTime>[0];
+type Transaction = ConstructorParameters<
+  typeof PostgresCoachTimeReservations
+>[0];
 
-const RESERVATION = {
+const RESERVATION_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
+
+const INTERVAL = {
   start: new Date("2026-10-19T14:00:00.000Z"),
   end: new Date("2026-10-19T15:00:00.000Z"),
-  appointmentKind: "assessment_call",
-  appointmentId: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-} as const;
+};
 
-describe("reserveCoachTime", () => {
+function reserveCoachTime(transaction: Transaction) {
+  return new PostgresCoachTimeReservations(transaction).reserve(INTERVAL);
+}
+
+describe("PostgresCoachTimeReservations#reserve", () => {
   it("queues behind every other reservation of the coach's time before inserting its own", async () => {
     // arrange
-    const transaction = createTransactionSettling(Promise.resolve());
+    const transaction = createTransactionSettling(
+      Promise.resolve([{ id: RESERVATION_ID }]),
+    );
 
     // act
-    await reserveCoachTime(transaction, RESERVATION);
+    await reserveCoachTime(transaction);
 
     // assert
     const [lockOrder] = vi.mocked(transaction.execute).mock.invocationCallOrder;
@@ -29,13 +37,18 @@ describe("reserveCoachTime", () => {
 
   it("reserves the coach's time when nothing overlaps it", async () => {
     // arrange
-    const transaction = createTransactionSettling(Promise.resolve());
+    const transaction = createTransactionSettling(
+      Promise.resolve([{ id: RESERVATION_ID }]),
+    );
 
     // act
-    const result = await reserveCoachTime(transaction, RESERVATION);
+    const result = await reserveCoachTime(transaction);
 
     // assert
-    expect(result).toEqual({ status: "reserved" });
+    expect(result).toEqual({
+      status: "reserved",
+      reservationId: RESERVATION_ID,
+    });
   });
 
   it("reports the time taken when the no-overlap constraint refuses it", async () => {
@@ -50,7 +63,7 @@ describe("reserveCoachTime", () => {
     );
 
     // act
-    const result = await reserveCoachTime(transaction, RESERVATION);
+    const result = await reserveCoachTime(transaction);
 
     // assert
     expect(result).toEqual({ status: "taken" });
@@ -61,8 +74,8 @@ describe("reserveCoachTime", () => {
     [{ code: "23514", constraint: COACH_TIME_RESERVATIONS_NO_OVERLAP }],
     [
       {
-        code: "23503",
-        constraint: "coach_time_reservations_check_in_id_check_ins_id_fk",
+        code: "23514",
+        constraint: "coach_time_reservations_ends_after_start",
       },
     ],
     [{ code: "08006" }],
@@ -72,7 +85,7 @@ describe("reserveCoachTime", () => {
     const transaction = createTransactionSettling(Promise.reject(failure));
 
     // act
-    const result = reserveCoachTime(transaction, RESERVATION);
+    const result = reserveCoachTime(transaction);
 
     // assert
     await expect(result).rejects.toBe(failure);

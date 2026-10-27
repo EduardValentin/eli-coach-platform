@@ -1,5 +1,5 @@
 import { appSchema } from "~/shared/database";
-import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import { WEEKDAYS } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   ACTIVITY_LEVELS,
   CLIENT_LEVELS,

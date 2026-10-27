@@ -10,10 +10,12 @@ import {
 } from "lucide-react";
 
 import { COACH_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import {
+  COACH_ASSESSMENT_CALLS_PATH,
+  COACH_SETTINGS_PATH,
+} from "~/bounded-contexts/scheduling/public/paths";
 import { COACH_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { COACH_CLIENTS_PATH } from "~/bounded-contexts/clients/clients/public/paths";
-import { COACH_SETTINGS_PATH } from "~/bounded-contexts/scheduling/coach-schedule/public/paths";
 import { COACH_TRAINING_PATH } from "~/bounded-contexts/programs/exercise-library/public/paths";
 import { COACH_NUTRITION_PATH } from "~/bounded-contexts/programs/nutrition-library/public/paths";
 

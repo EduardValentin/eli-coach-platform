@@ -264,7 +264,7 @@ function coachArgs(request: Request) {
 function createHandles(): ClientsFeatureHandles {
   return {
     appBasePath: "/eli-coach-platform",
-    assessmentCallReader: { findById: async () => null },
+    clientCalls: { callOf: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),

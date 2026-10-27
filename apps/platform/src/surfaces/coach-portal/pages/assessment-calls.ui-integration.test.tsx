@@ -32,7 +32,7 @@ import {
 } from "vitest";
 
 import type { CoachAssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import {
   COACH_CLIENTS_PATH,
   coachClientPath,

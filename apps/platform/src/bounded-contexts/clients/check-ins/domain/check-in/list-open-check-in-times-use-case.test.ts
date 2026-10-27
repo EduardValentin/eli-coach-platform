@@ -4,19 +4,23 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
+import { SchedulingOpenSlots } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/open-slots.server";
+import { createOpenSlotsFacade } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/open-slots.server";
 import {
   CoachAvailability,
-  type CoachAvailabilitySource,
-  type CoachCalendar,
-  type TimeInterval,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+  CoachOpenings,
+} from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 
 import type { CheckInActor } from "./check-in-actor";
+import { CHECK_IN_RULES } from "./check-in-rules";
+import type { CoachTimeSpan } from "./coach-time";
 import { ListOpenCheckInTimesUseCase } from "./list-open-check-in-times-use-case";
 
 const MONDAY_LATE_MORNING = new Date("2026-06-01T08:30:00.000Z");
 
-function workingDays(): CoachAvailabilitySource {
+type OpeningsSources = ConstructorParameters<typeof CoachOpenings>[0];
+
+function workingDays(): OpeningsSources["availability"] {
   const result = CoachAvailability.from({
     timeZone: "Europe/Bucharest",
     weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
@@ -31,8 +35,17 @@ function workingDays(): CoachAvailabilitySource {
   return { current: vi.fn().mockResolvedValue(result.availability) };
 }
 
-function calendarBusyWith(busy: TimeInterval[]): CoachCalendar {
-  return { busyFrom: vi.fn().mockResolvedValue(busy) };
+function calendarBusyWith(busy: CoachTimeSpan[]) {
+  return {
+    busyFrom: vi.fn().mockResolvedValue(busy),
+  } satisfies OpeningsSources["calendar"];
+}
+
+function openSlotsOver(sources: OpeningsSources): SchedulingOpenSlots {
+  return new SchedulingOpenSlots({
+    openSlots: createOpenSlotsFacade(new CoachOpenings(sources)),
+    rules: CHECK_IN_RULES,
+  });
 }
 
 const ANA_ACTOR: CheckInActor = { party: "client", authSubjectId: "user_ana" };
@@ -48,13 +61,14 @@ const ANA: ClientReachReading = {
 };
 
 function createListOpenTimes(options?: {
-  busy?: TimeInterval[];
+  busy?: CoachTimeSpan[];
   client?: ClientReachReading | null;
 }) {
   const client = options?.client === undefined ? ANA : options.client;
+  const calendar = calendarBusyWith(options?.busy ?? []);
   const ports = {
-    availability: workingDays(),
-    calendar: calendarBusyWith(options?.busy ?? []),
+    calendar,
+    openSlots: openSlotsOver({ availability: workingDays(), calendar }),
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(client),
       findById: vi.fn().mockResolvedValue(client),
@@ -62,11 +76,18 @@ function createListOpenTimes(options?: {
     clock: { now: () => MONDAY_LATE_MORNING },
   };
 
-  return { ports, listOpenTimes: new ListOpenCheckInTimesUseCase(ports) };
+  return {
+    ports,
+    listOpenTimes: new ListOpenCheckInTimesUseCase({
+      clients: ports.clients,
+      clock: ports.clock,
+      openSlots: ports.openSlots,
+    }),
+  };
 }
 
 async function openTimes(options?: {
-  busy?: TimeInterval[];
+  busy?: CoachTimeSpan[];
   client?: ClientReachReading;
 }): Promise<string[]> {
   const { listOpenTimes } = createListOpenTimes(options);

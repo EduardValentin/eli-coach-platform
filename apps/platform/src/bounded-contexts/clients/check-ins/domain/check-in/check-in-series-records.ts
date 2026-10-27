@@ -1,46 +1,34 @@
 import type { CheckIn } from "./check-in";
-import type {
-  CheckInSeries,
-  CheckInSeriesOccurrence,
-  CheckInSeriesSnapshot,
-} from "./check-in-series";
+import type { CheckInSeries, CheckInSeriesSnapshot } from "./check-in-series";
+import type { HeldCheckIn } from "./check-ins";
 
-export type CheckInSeriesSetUpResult =
-  { status: "set_up"; occurrences: CheckIn[] } | { status: "series_exists" };
-
-export type CheckInSeriesExtension =
-  | { status: "extended"; occurrences: CheckIn[] }
+export type CheckInSeriesChange =
+  | { status: "changed"; freedReservationIds: string[] }
   | { status: "changed_meanwhile" };
 
-export type CheckInSeriesChangeResult =
-  | { status: "changed"; occurrences: CheckIn[] }
+export type CheckInSeriesStop =
+  | { status: "stopped"; freedReservationIds: string[] }
   | { status: "changed_meanwhile" };
 
 export interface CheckInSeriesRecords {
   find(id: string): Promise<CheckInSeries | null>;
   findActiveForClient(clientId: string): Promise<CheckInSeries | null>;
   listOccurrences(seriesId: string): Promise<CheckIn[]>;
-  setUp(command: {
-    series: CheckInSeries;
-    occurrences: readonly CheckInSeriesOccurrence[];
-    at: Date;
-  }): Promise<CheckInSeriesSetUpResult>;
-  extend(command: {
+  start(series: CheckInSeries): Promise<"started" | "series_exists">;
+  widen(command: {
     series: CheckInSeries;
     expected: { coversFrom: Date; coversUntil: Date };
-    occurrences: readonly CheckInSeriesOccurrence[];
-    at: Date;
-  }): Promise<CheckInSeriesExtension>;
+  }): Promise<"widened" | "changed_meanwhile">;
   change(command: {
     series: CheckInSeries;
     expected: Pick<CheckInSeriesSnapshot, "changedAt" | "weekday" | "hour">;
     startsFrom: Date;
-    occurrences: readonly CheckInSeriesOccurrence[];
     at: Date;
-  }): Promise<CheckInSeriesChangeResult>;
+  }): Promise<CheckInSeriesChange>;
   stop(command: {
     seriesId: string;
     expected: Pick<CheckInSeriesSnapshot, "changedAt">;
     at: Date;
-  }): Promise<"stopped" | "changed_meanwhile">;
+  }): Promise<CheckInSeriesStop>;
+  recordWeeks(weeks: readonly HeldCheckIn[]): Promise<void>;
 }

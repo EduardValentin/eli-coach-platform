@@ -1,0 +1,77 @@
+import {
+  CoachWeek,
+  weekdayNamed,
+  type CheckInSlotRules,
+  type CoachTimeSpan,
+  type OpenSlots,
+  type Weekday,
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type {
+  OpenSlotsFacade,
+  OpenSlotsRequest,
+} from "~/bounded-contexts/scheduling/public/open-slots";
+
+type SchedulingOpenSlotsOptions = {
+  openSlots: OpenSlotsFacade;
+  rules: CheckInSlotRules;
+};
+
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
+const MINUTES_PER_HOUR = 60;
+
+export class SchedulingOpenSlots implements OpenSlots {
+  constructor(private readonly options: SchedulingOpenSlotsOptions) {}
+
+  async coachWeek(): Promise<CoachWeek> {
+    const week = await this.options.openSlots.coachWeek();
+
+    return CoachWeek.of({
+      timeZone: week.timeZone,
+      weekdays: week.weekdays.flatMap((name): Weekday[] => {
+        const weekday = weekdayNamed(name);
+
+        return weekday ? [weekday] : [];
+      }),
+      hours: week.hours,
+    });
+  }
+
+  offersStart({ start, now }: { start: Date; now: Date }): Promise<boolean> {
+    return this.options.openSlots.offersStart({
+      ...this.requestFrom(now),
+      startsAt: start.toISOString(),
+    });
+  }
+
+  async openStarts(now: Date): Promise<Date[]> {
+    const starts = await this.options.openSlots.openStarts(
+      this.requestFrom(now),
+    );
+
+    return starts.map((start) => new Date(start));
+  }
+
+  async busyFrom(from: Date): Promise<CoachTimeSpan[]> {
+    const busy = await this.options.openSlots.busyFrom(from.toISOString());
+
+    return busy.map((interval) => ({
+      start: new Date(interval.startsAt),
+      end: new Date(interval.endsAt),
+    }));
+  }
+
+  private requestFrom(now: Date): OpenSlotsRequest {
+    const { rules } = this.options;
+
+    return {
+      from: now.toISOString(),
+      to: new Date(
+        now.getTime() + rules.horizonDays * MILLISECONDS_PER_DAY,
+      ).toISOString(),
+      durationMinutes: rules.durationMinutes,
+      stepMinutes: rules.stepMinutes,
+      leadTimeHours: rules.leadMinutes / MINUTES_PER_HOUR,
+      bufferMinutes: rules.bufferMinutes,
+    };
+  }
+}

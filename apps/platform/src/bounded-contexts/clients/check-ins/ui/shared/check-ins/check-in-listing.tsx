@@ -32,7 +32,7 @@ import { useLocation } from "react-router";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+} from "~/shared/time-format/call-moment";
 import { CHECK_IN_FOCUS_PARAM } from "~/bounded-contexts/clients/check-ins/public/paths";
 
 import {

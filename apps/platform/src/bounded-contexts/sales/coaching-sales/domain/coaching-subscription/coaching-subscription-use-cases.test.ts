@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  AssessmentCall,
-  type AssessmentCallReader,
-  type AssessmentCallSnapshot,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { EndedCalls, SalesCall } from "../payment-link";
 import { Client } from "~/bounded-contexts/clients/clients/domain/client";
 import type { PriceTier, PricingEligibility } from "../coaching-bundle";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
@@ -41,22 +37,19 @@ const CANCEL_URL = "https://evoa.example/pay/raw-payment-link-token";
 
 const clock = { now: () => NOW };
 
-const call: AssessmentCallSnapshot = AssessmentCall.reconstitute({
+const call: SalesCall = {
   id: "call-1",
   firstName: "Ana",
   lastName: "Popescu",
   visitorEmail: "ana@example.com",
-  visitorNotes: "Training around a desk job.",
   dateOfBirth: "1994-03-14",
   gender: "female",
   primaryGoal: "build_strength",
   country: "RO",
   phone: "+40712345678",
-  startsAt: new Date("2026-09-25T15:00:00.000Z"),
   visitorTimeZone: "Europe/Bucharest",
-  coachTimeZone: "Europe/Bucharest",
-  bookedAt: new Date("2026-09-20T09:12:00.000Z"),
-}).toSnapshot();
+  endsAt: new Date("2026-09-25T15:30:00.000Z"),
+};
 
 function linkIn(props: { state: PaymentLinkState; expiresAt: Date }) {
   return PaymentLink.reconstitute({
@@ -115,9 +108,7 @@ function closedSalesWindow(): CoachingSalesWindow {
   });
 }
 
-function createCalls(
-  found: AssessmentCallSnapshot | null,
-): AssessmentCallReader {
+function createCalls(found: SalesCall | null): EndedCalls {
   return { findById: vi.fn().mockResolvedValue(found) };
 }
 

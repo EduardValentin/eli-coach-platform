@@ -5,15 +5,13 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import {
-  CoachAvailability,
-  type CoachAvailabilitySource,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckInMove, CheckIns } from "./check-ins";
+import type { CoachTimeHold } from "./coach-time";
+import type { OpenSlots } from "./open-slots";
 import { ProposeCheckInTimeUseCase } from "./propose-check-in-time-use-case";
 
 const NOW = new Date("2026-06-01T08:30:00.000Z");
@@ -70,30 +68,28 @@ function checkIn(props?: Partial<CheckInProps>): CheckIn {
   return CheckIn.reconstitute({ ...APPROVED, ...props });
 }
 
-function workingDays(): CoachAvailabilitySource {
-  const result = CoachAvailability.from({
-    timeZone: "Europe/Bucharest",
-    weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-    startHour: 9,
-    endHour: 17,
-  });
+const ONE_DAY_MS = 24 * 60 * 60 * 1_000;
 
-  if (result.status !== "configured") {
-    throw new Error(`expected a configured availability: ${result.problems}`);
-  }
-
-  return { current: vi.fn().mockResolvedValue(result.availability) };
+function startsBeyondADay() {
+  return {
+    offersStart: vi.fn(
+      async ({ start, now }: { start: Date; now: Date }) =>
+        start.getTime() - now.getTime() >= ONE_DAY_MS,
+    ),
+  } satisfies Pick<OpenSlots, "offersStart">;
 }
 
 function createProposeCheckInTime(options?: {
   found?: CheckIn | null;
   clientCheckIns?: CheckIn[];
   moved?: CheckInMove;
+  hold?: CoachTimeHold;
   reference?: ClientReachReading | null;
   client?: ClientReachReading | null;
 }) {
   const checkIns = {
-    request: vi.fn(),
+    listForClientLocked: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(undefined),
     find: vi
       .fn()
       .mockResolvedValue(
@@ -104,7 +100,11 @@ function createProposeCheckInTime(options?: {
     listUnansweredStartedWithin: vi.fn(),
     listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
-    move: vi.fn().mockResolvedValue(options?.moved ?? "moved"),
+    move: vi
+      .fn()
+      .mockResolvedValue(
+        options?.moved ?? { status: "moved", freedReservationId: null },
+      ),
     endCoaching: vi.fn(),
   } satisfies CheckIns;
   const clients = {
@@ -136,10 +136,18 @@ function createProposeCheckInTime(options?: {
     seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
   const ports = {
-    availability: workingDays(),
     checkIns,
     clients,
     clock: { now: () => NOW },
+    coachTime: {
+      reserve: vi.fn().mockResolvedValue(
+        options?.hold ?? {
+          status: "reserved",
+          reservationId: "reservation-2",
+        },
+      ),
+      release: vi.fn().mockResolvedValue(undefined),
+    },
     identities,
     incidents: {
       checkInNotificationFailed: vi.fn(),
@@ -158,6 +166,7 @@ function createProposeCheckInTime(options?: {
       clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
+    openSlots: startsBeyondADay(),
   };
 
   return { ports, proposeCheckInTime: new ProposeCheckInTimeUseCase(ports) };
@@ -166,7 +175,9 @@ function createProposeCheckInTime(options?: {
 describe("ProposeCheckInTimeUseCase", () => {
   it("moves an approved check-in to the new time, waiting for the client, as it was read", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime();
+    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      moved: { status: "moved", freedReservationId: "reservation-1" },
+    });
 
     // act
     const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
@@ -184,11 +195,17 @@ describe("ProposeCheckInTimeUseCase", () => {
         answeredAt: null,
       }),
     });
+    expect(ports.coachTime.reserve).toHaveBeenCalledWith({
+      start: NEW_START,
+      end: new Date("2026-06-04T10:00:00.000Z"),
+    });
     expect(ports.checkIns.move).toHaveBeenCalledWith({
       checkIn: expect.any(CheckIn),
       expected: { recordedStatus: "approved", startsAt: STARTS_AT },
+      reservationId: "reservation-2",
       at: NOW,
     });
+    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-1");
   });
 
   it("moves a clash to the coach's new time from the clash she read, waiting for the client without spending a move", async () => {
@@ -221,6 +238,7 @@ describe("ProposeCheckInTimeUseCase", () => {
     expect(ports.checkIns.move).toHaveBeenCalledWith({
       checkIn: expect.any(CheckIn),
       expected: { recordedStatus: "clash", startsAt: STARTS_AT },
+      reservationId: "reservation-2",
       at: NOW,
     });
   });
@@ -433,25 +451,35 @@ describe("ProposeCheckInTimeUseCase", () => {
     expect(ports.checkIns.move).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["the new hour was taken meanwhile", "time_taken"],
-    ["the check-in changed meanwhile", "changed_meanwhile"],
-  ] as const)(
-    "refuses when %s and emails nobody",
-    async (_situation, moved) => {
-      // arrange
-      const { proposeCheckInTime, ports } = createProposeCheckInTime({
-        moved,
-      });
+  it("refuses when the new hour was taken meanwhile, moving nothing and emailing nobody", async () => {
+    // arrange
+    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      hold: { status: "taken" },
+    });
 
-      // act
-      const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    // act
+    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
 
-      // assert
-      expect(result).toEqual({ status: moved });
-      expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
-    },
-  );
+    // assert
+    expect(result).toEqual({ status: "time_taken" });
+    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+  });
+
+  it("refuses when the check-in changed meanwhile, giving back the new hour and emailing nobody", async () => {
+    // arrange
+    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      moved: { status: "changed_meanwhile" },
+    });
+
+    // act
+    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+
+    // assert
+    expect(result).toEqual({ status: "changed_meanwhile" });
+    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-2");
+    expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+  });
 
   it("answers unknown for another client's check-in", async () => {
     // arrange

@@ -1,13 +1,10 @@
-import type {
-  AssessmentCallReader,
-  AssessmentCallSnapshot,
-} from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type { PriceTier, PricingEligibility } from "../coaching-bundle";
 import type { EmailAcceptance } from "../email-acceptance";
 import type { Clock } from "../clock";
 
 import type { CallSalesStates } from "./call-sales-states";
 import type { CoachingSalesWindow } from "./coaching-sales-window";
+import type { EndedCalls, SalesCall } from "./ended-calls";
 import { PaymentLink } from "./payment-link";
 import type { PaymentLinks, PaymentLinkTokenHasher } from "./payment-links";
 
@@ -15,14 +12,14 @@ type PaymentLinkResolution =
   | {
       status: "valid";
       link: PaymentLink;
-      call: AssessmentCallSnapshot;
+      call: SalesCall;
       tier: PriceTier;
     }
   | { status: "closed" }
   | { status: "invalid" };
 
 type ResolvePaymentLinkUseCaseOptions = {
-  calls: AssessmentCallReader;
+  calls: EndedCalls;
   callSalesStates: CallSalesStates;
   clock: Clock;
   emailAcceptance: EmailAcceptance;

@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider, useParams } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import {
   COACH_CLIENTS_PATH,
   coachClientPath,

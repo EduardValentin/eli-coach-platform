@@ -17,7 +17,7 @@ import {
 } from "react";
 import { useFetcher } from "react-router";
 
-import { formatClockTime } from "~/bounded-contexts/scheduling/assessment-calls/public/call-moment";
+import { formatClockTime } from "~/shared/time-format/call-moment";
 import { useSlotPickerProps } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/slot-picker-props";
 import {
   checkInOutcomeSchema,

@@ -1,6 +1,6 @@
 import type { DatabaseExecutor } from "~/shared/database";
 import { CheckIn } from "~/bounded-contexts/clients/check-ins/domain/check-in";
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 
 import { checkInsTable } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/schema.server";
 
@@ -14,6 +14,30 @@ export async function lockCheckInsOfClient(
 ): Promise<void> {
   await executor.execute(
     sql`select pg_advisory_xact_lock(hashtext(${CLIENT_CHECK_INS_LOCK_PREFIX + clientId}))`,
+  );
+}
+
+type HeldReservationRow = { id: string; reservationId: string | null };
+
+export function reservationsHeldBy(
+  executor: DatabaseExecutor,
+  condition: SQL | undefined,
+): Promise<HeldReservationRow[]> {
+  return executor
+    .select({
+      id: checkInsTable.id,
+      reservationId: checkInsTable.reservationId,
+    })
+    .from(checkInsTable)
+    .where(condition)
+    .for("update");
+}
+
+export function heldReservationIdsOf(
+  rows: readonly HeldReservationRow[],
+): string[] {
+  return rows.flatMap(({ reservationId }) =>
+    reservationId === null ? [] : [reservationId],
   );
 }
 

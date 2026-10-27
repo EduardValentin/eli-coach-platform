@@ -5,15 +5,9 @@ import {
   smallint,
   text,
   timestamp,
-  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-
-import { assessmentCallsTable } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/schema.server";
-import { checkInsTable } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/schema.server";
-
-export type AppointmentKind = "assessment_call" | "check_in";
 
 export const COACH_TIME_RESERVATIONS_NO_OVERLAP =
   "coach_time_reservations_no_overlap";
@@ -24,13 +18,6 @@ export const coachTimeReservationsTable = appSchema.table(
     id: uuid("id").primaryKey().defaultRandom(),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
-    assessmentCallId: uuid("assessment_call_id").references(
-      () => assessmentCallsTable.id,
-      { onDelete: "cascade" },
-    ),
-    checkInId: uuid("check_in_id").references(() => checkInsTable.id, {
-      onDelete: "cascade",
-    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -40,14 +27,6 @@ export const coachTimeReservationsTable = appSchema.table(
       "coach_time_reservations_ends_after_start",
       sql`${table.endsAt} > ${table.startsAt}`,
     ),
-    check(
-      "coach_time_reservations_one_appointment",
-      sql`num_nonnulls(${table.assessmentCallId}, ${table.checkInId}) = 1`,
-    ),
-    uniqueIndex("coach_time_reservations_assessment_call_unique").on(
-      table.assessmentCallId,
-    ),
-    uniqueIndex("coach_time_reservations_check_in_unique").on(table.checkInId),
   ],
 );
 

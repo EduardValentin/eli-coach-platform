@@ -392,7 +392,7 @@ export class CheckInsJourney {
 
   heldCheckInHours(): Promise<HeldCheckInHour[]> {
     return this.rig.suite.postgres.queryRows<HeldCheckInHour>({
-      sql: 'select check_in_id as "checkInId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where check_in_id is not null order by starts_at',
+      sql: 'select check_in.id as "checkInId", reservation.starts_at as "startsAt", reservation.ends_at as "endsAt" from app.coach_time_reservations reservation join app.check_ins check_in on check_in.reservation_id = reservation.id order by reservation.starts_at',
       values: [],
     });
   }

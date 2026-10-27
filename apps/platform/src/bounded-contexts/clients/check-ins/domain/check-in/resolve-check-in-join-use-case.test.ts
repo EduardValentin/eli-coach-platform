@@ -4,14 +4,11 @@ import type {
   ClientReach,
   ClientReachReading,
 } from "~/bounded-contexts/clients/clients/domain/client";
-import {
-  CoachMeetingRoom,
-  type CoachMeetingRoomSource,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import type { CheckIns } from "./check-ins";
+import type { MeetingRoom } from "./meeting-room";
 import { ResolveCheckInJoinUseCase } from "./resolve-check-in-join-use-case";
 
 const NOW = new Date("2026-06-03T08:55:00.000Z");
@@ -43,24 +40,15 @@ function checkIn(props?: Partial<CheckInProps>): CheckIn {
   return CheckIn.reconstitute({ ...APPROVED, ...props });
 }
 
-function roomAt(url: string): CoachMeetingRoom {
-  const result = CoachMeetingRoom.from(url);
-
-  if (result.status !== "set") {
-    throw new Error(`expected a valid meeting room, got ${result.status}`);
-  }
-
-  return result.room;
-}
-
 function createResolveJoin(options?: {
   found?: CheckIn | null;
-  room?: CoachMeetingRoom | null;
+  joinUrl?: string | null;
   client?: ClientReachReading | null;
   now?: Date;
 }) {
   const checkIns = {
-    request: vi.fn(),
+    listForClientLocked: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(undefined),
     find: vi
       .fn()
       .mockResolvedValue(
@@ -88,11 +76,11 @@ function createResolveJoin(options?: {
         : options.client,
     ),
   } satisfies Pick<ClientReach, "findByAuthSubjectId">;
-  const meetingRoom: CoachMeetingRoomSource = {
-    current: vi
+  const meetingRoom: MeetingRoom = {
+    currentJoinUrl: vi
       .fn()
       .mockResolvedValue(
-        options?.room === undefined ? roomAt(ROOM_URL) : options.room,
+        options?.joinUrl === undefined ? ROOM_URL : options.joinUrl,
       ),
   };
   const now = options?.now ?? NOW;
@@ -141,7 +129,7 @@ describe("ResolveCheckInJoinUseCase", () => {
 
   it("answers link not set while the coach has no meeting room", async () => {
     // arrange
-    const resolveJoin = createResolveJoin({ room: null });
+    const resolveJoin = createResolveJoin({ joinUrl: null });
 
     // act
     const result = await resolveJoin.execute({

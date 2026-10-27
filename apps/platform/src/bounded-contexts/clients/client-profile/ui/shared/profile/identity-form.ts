@@ -1,10 +1,7 @@
 import type { ClientIdentityProblems } from "~/bounded-contexts/clients/clients/domain/client";
 import { z } from "zod";
 
-import {
-  COUNTRIES,
-  findCountry,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
+import { COUNTRIES, findCountry } from "~/shared/contact/countries";
 import {
   checkBirthDate,
   MIN_BOOKING_AGE,

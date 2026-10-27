@@ -13,7 +13,7 @@ import {
 } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
-import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import {
   coachingSalesContext,
   waitlistContext,
