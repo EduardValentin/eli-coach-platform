@@ -8,7 +8,7 @@ import type {
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 
 import {
   CLIENT_AVATAR_FIELD,

@@ -1,7 +1,4 @@
-import {
-  EMAIL_COLORS,
-  EMAIL_FONTS,
-} from "@eli-coach-platform/infrastructure/email/server";
+import { EMAIL_COLORS, EMAIL_FONTS } from "~/shared/email/index.server";
 import type { CSSProperties } from "react";
 
 export const heroSectionStyle: CSSProperties = {

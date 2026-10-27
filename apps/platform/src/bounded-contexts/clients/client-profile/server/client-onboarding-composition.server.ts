@@ -23,7 +23,7 @@ import type {
 } from "@eli-coach-platform/domain/measurement";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ClientSettingsSource } from "@eli-coach-platform/domain/client-settings";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { ClientOnboardingController } from "~/bounded-contexts/clients/client-profile/api/onboarding/client-onboarding-controller.server";
 import { OnboardingReviewController } from "~/bounded-contexts/clients/client-profile/api/onboarding/onboarding-review-controller.server";

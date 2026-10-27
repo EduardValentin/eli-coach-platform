@@ -1,4 +1,4 @@
-import { readTextRequestBody } from "@eli-coach-platform/infrastructure/http/server";
+import { readTextRequestBody } from "~/shared/http/index.server";
 import { z } from "zod";
 
 import {

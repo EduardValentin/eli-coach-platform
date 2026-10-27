@@ -15,7 +15,7 @@ import {
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";

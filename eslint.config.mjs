@@ -8,7 +8,7 @@ const appAliasMessage =
 
 const xmlHttpRequestRestriction = {
   message:
-    "An upload with progress goes through uploadOutcomeOf from @eli-coach-platform/infrastructure/http in the resource route's clientAction; nothing else sends XMLHttpRequest (see conventions.md, Client state).",
+    "An upload with progress goes through uploadOutcomeOf from ~/shared/http in the resource route's clientAction; nothing else sends XMLHttpRequest (see conventions.md, Client state).",
   name: "XMLHttpRequest",
 };
 

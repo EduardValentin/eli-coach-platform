@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
 
 const ALLOWED_METHODS = ["GET"];

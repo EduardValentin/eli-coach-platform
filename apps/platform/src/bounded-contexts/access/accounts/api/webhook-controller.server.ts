@@ -2,7 +2,7 @@ import { verifyWebhook } from "@clerk/react-router/webhooks";
 
 import type { DeleteAccountUseCase } from "@eli-coach-platform/domain/account";
 
-import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { createBadRequestResponse } from "~/shared/http/index.server";
 
 export class AccountWebhookController {
   constructor(

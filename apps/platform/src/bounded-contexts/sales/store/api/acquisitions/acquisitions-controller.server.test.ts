@@ -8,7 +8,7 @@ import type {
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   TURNSTILE_RESPONSE_FIELD,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 
 import { StoreAcquisitionController } from "./acquisitions-controller.server";
 

@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
 
 export async function action(args: ActionFunctionArgs) {

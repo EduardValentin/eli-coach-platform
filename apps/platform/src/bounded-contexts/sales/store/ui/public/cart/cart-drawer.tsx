@@ -35,7 +35,7 @@ import {
   BotDetectionWidget,
   type BotDetectionConfig,
   type BotDetectionWidgetProps,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 import {
   type StoreAcquisitionForm,
   type StoreProduct,

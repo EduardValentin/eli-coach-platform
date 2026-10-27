@@ -3,11 +3,11 @@ import {
   type MirrorPaymentCardUseCase,
   type PaymentCardEvent,
 } from "@eli-coach-platform/domain/coaching-subscription";
+import type { PaymentCardChange } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 import type {
-  PaymentCardChange,
   PaymentCardHandler,
   PaymentEventHandling,
-} from "@eli-coach-platform/infrastructure/payments/server";
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-handlers.server";
 
 type CoachingPaymentCardHandlerOptions = {
   mirrorPaymentCard: MirrorPaymentCardUseCase;

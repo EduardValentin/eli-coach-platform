@@ -5,7 +5,7 @@ import type {
   AcquireProductsUseCase,
   StoreDeliveryLimitWindow,
 } from "@eli-coach-platform/domain/acquisition";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import {
   storeAcquisitionRequestSchema,
   storeAcquisitionResponseSchema,
@@ -15,9 +15,9 @@ import {
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   TURNSTILE_RESPONSE_FIELD,
-} from "@eli-coach-platform/infrastructure/bot-detection";
-import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/submission-checks/bot-detection";
+import { resolveRequestRemoteIp } from "~/shared/submission-checks/bot-detection/index.server";
+import { readFormDataRequestBody } from "~/shared/http/index.server";
 
 const ERROR_MESSAGE = "Unable to deliver store resources.";
 const MAX_ACQUISITION_BODY_BYTES = 16 * 1024;

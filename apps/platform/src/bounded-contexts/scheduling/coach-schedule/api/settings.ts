@@ -4,11 +4,11 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
+import { fetcherOutcomeOf } from "~/shared/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/server/guards/coach-schedule-context.server";
 
 export async function action(args: ActionFunctionArgs) {

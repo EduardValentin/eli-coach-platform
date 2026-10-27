@@ -19,7 +19,7 @@ import { useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { requiredName } from "~test-support/index";
 

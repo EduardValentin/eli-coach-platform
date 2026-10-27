@@ -7,7 +7,7 @@ import {
   useMatches,
 } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
 import {

@@ -4,7 +4,7 @@ import {
   useBotDetectionSubmission,
   WAITLIST_TURNSTILE_ACTION,
   type BotDetectionConfig,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 
 import { useJoinWaitlistFetcher } from "./api-client";
 import { launchWaitlistConfetti } from "./confetti";

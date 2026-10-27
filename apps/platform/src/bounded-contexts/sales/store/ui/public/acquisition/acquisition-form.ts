@@ -6,7 +6,7 @@ import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   useBotDetectionSubmission,
   type BotDetectionConfig,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 import {
   storeAcquisitionFormSchema,
   type StoreAcquisitionForm,

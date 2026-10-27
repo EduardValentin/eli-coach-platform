@@ -1,7 +1,10 @@
 import type { DatabaseClient } from "~/shared/database";
 import type { CoachingStandingSnapshot } from "@eli-coach-platform/domain/client";
-import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
+import {
+  createTokenGenerator,
+  createTokenHasher,
+} from "~/shared/tokens/link-tokens.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
@@ -271,7 +274,10 @@ function createHandles(): ClientsFeatureHandles {
       },
     },
     incidents: createIncidents(),
-    linkTokens: createLinkTokens(),
+    linkTokens: {
+      generator: createTokenGenerator(),
+      hasher: createTokenHasher(),
+    },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };

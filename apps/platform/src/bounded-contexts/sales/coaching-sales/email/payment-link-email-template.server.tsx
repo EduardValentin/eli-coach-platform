@@ -22,7 +22,7 @@ import {
   letterParagraphStyle,
   letterSectionStyle,
   signoffStyle,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 
 import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 

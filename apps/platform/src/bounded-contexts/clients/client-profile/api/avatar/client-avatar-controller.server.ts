@@ -1,5 +1,5 @@
 import type { OpenClientAvatarUseCase } from "@eli-coach-platform/domain/client-profile";
-import { createPrivateInlineFileResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { createPrivateInlineFileResponse } from "~/shared/http/index.server";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 

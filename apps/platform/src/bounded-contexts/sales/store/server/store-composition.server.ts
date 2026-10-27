@@ -21,12 +21,12 @@ import {
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "~/bounded-contexts/legal/public";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
+import type { ProductEmail } from "~/shared/email/index.server";
 import type {
   ManagementAuthenticator,
   ManagementAuthConfig,
-} from "@eli-coach-platform/infrastructure/management-auth/server";
+} from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";
 
 import { StoreAcquisitionController } from "~/bounded-contexts/sales/store/api/acquisitions/acquisitions-controller.server";
 import { StoreCatalogController } from "~/bounded-contexts/sales/store/api/catalog/catalog-controller.server";

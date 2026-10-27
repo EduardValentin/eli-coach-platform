@@ -15,7 +15,7 @@ import type { NotificationIncidents } from "@eli-coach-platform/domain/notificat
 import type { NutritionLibraryIncidents } from "@eli-coach-platform/domain/nutrition";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
-import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
+import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
 
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &

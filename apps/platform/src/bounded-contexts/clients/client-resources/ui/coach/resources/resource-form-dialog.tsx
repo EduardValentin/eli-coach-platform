@@ -5,7 +5,7 @@ import {
   type ResourceDetailsProblems,
   type ResourceFileKind,
 } from "@eli-coach-platform/domain/client-resources";
-import type { UploadState } from "@eli-coach-platform/infrastructure/http";
+import type { UploadState } from "~/shared/http";
 import {
   ResponsiveSheetDialog,
   SheetDialogActions,

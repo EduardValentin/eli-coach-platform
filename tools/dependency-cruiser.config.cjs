@@ -395,7 +395,7 @@ module.exports = {
         pathNot: [
           `${FEATURES}accounts/`,
           "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
-          "^packages/infrastructure/src/identity/",
+          `${FEATURES}clients/data/identity/`,
           "^apps/platform/test-support/",
           "^apps/platform/e2e/",
           "^apps/platform/integration-test-config/",
@@ -407,9 +407,9 @@ module.exports = {
     {
       name: "sharp-confined",
       comment:
-        "Image decoding stays behind the infrastructure images concern: nothing else names sharp.",
+        "Image decoding stays behind the shared images concern: nothing else names sharp.",
       severity: "error",
-      from: { pathNot: ["^packages/infrastructure/src/images/"] },
+      from: { pathNot: ["^apps/platform/src/shared/images/"] },
       to: { path: "(^|/)sharp(/|$)" },
     },
     {
@@ -427,9 +427,9 @@ module.exports = {
     {
       name: "pdf-rendering-confined",
       comment:
-        "PDF rendering stays behind the infrastructure documents concern: nothing else names pdfjs-dist or @napi-rs/canvas.",
+        "PDF rendering stays behind the shared documents concern: nothing else names pdfjs-dist or @napi-rs/canvas.",
       severity: "error",
-      from: { pathNot: ["^packages/infrastructure/src/documents/"] },
+      from: { pathNot: ["^apps/platform/src/shared/documents/"] },
       to: { path: "(^|/)(pdfjs-dist|@napi-rs/canvas)(/|$)" },
     },
     {
@@ -439,7 +439,7 @@ module.exports = {
       severity: "error",
       from: {
         pathNot: [
-          "^packages/infrastructure/src/http/streaming-form-data\\.server\\.ts$",
+          "^apps/platform/src/shared/http/streaming-form-data\\.server\\.ts$",
         ],
       },
       to: { path: "(^|/)@fastify/busboy(/|$)" },
@@ -447,9 +447,9 @@ module.exports = {
     {
       name: "file-type-confined",
       comment:
-        "File format detection stays behind the infrastructure documents concern: nothing else names file-type or @file-type/*.",
+        "File format detection stays behind the shared documents concern: nothing else names file-type or @file-type/*.",
       severity: "error",
-      from: { pathNot: ["^packages/infrastructure/src/documents/"] },
+      from: { pathNot: ["^apps/platform/src/shared/documents/"] },
       to: { path: "(^|/)(file-type|@file-type/[^/]+)(/|$)" },
     },
     {
@@ -528,7 +528,7 @@ module.exports = {
           `${FEATURES}${COMPONENT}/(adapters|data|email)/`,
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
-          "^packages/infrastructure/src/(?!(http|pwa)/)",
+          "^apps/platform/src/shared/(email|images|documents|private-files|tokens|submission-checks/bot-detection)/",
           "^apps/platform/src/composition-root/(?!guards/)",
           `${FEATURES}${COMPONENT}/server/(?!guards/)`,
         ],
@@ -562,19 +562,20 @@ module.exports = {
       to: { dependencyTypesNot: ["local", "type-only"] },
     },
     {
-      name: "infrastructure-subpaths",
-      comment: "F77: infrastructure subpaths never import each other.",
+      name: "shared-concerns",
+      comment:
+        "A shared concern never imports a bounded context or the composition root.",
       severity: "error",
-      from: { path: "^packages/infrastructure/src/([^/]+)/" },
-      to: { path: "^packages/infrastructure/src/(?!$1/)[^/]+/" },
+      from: { path: "^apps/platform/src/shared/" },
+      to: { path: "^apps/platform/src/(bounded-contexts|composition-root)/" },
     },
     {
-      name: "infrastructure-browser-entries",
+      name: "shared-browser-entries",
       comment:
-        "A non-.server module in infrastructure never imports a .server module.",
+        "A non-.server module in shared/ never imports a .server module.",
       severity: "error",
-      from: { path: "^packages/infrastructure/src/.*(?<!\\.server)\\.tsx?$" },
-      to: { path: "^packages/infrastructure/src/.*\\.server\\.tsx?$" },
+      from: { path: "^apps/platform/src/shared/.*(?<!\\.server)\\.tsx?$" },
+      to: { path: "^apps/platform/src/shared/.*\\.server\\.tsx?$" },
     },
     {
       name: "workspace-by-name-app",

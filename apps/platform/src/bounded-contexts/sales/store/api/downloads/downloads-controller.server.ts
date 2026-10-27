@@ -12,7 +12,7 @@ import type {
 import {
   createAttachmentResponse,
   readFormDataRequestBody,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import { STORE_DOWNLOAD_PATH } from "~/bounded-contexts/sales/store/public/paths";
 import { storeDownloadRequestSchema } from "~/bounded-contexts/sales/store/public/store";

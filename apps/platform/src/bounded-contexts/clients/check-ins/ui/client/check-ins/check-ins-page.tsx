@@ -1,6 +1,6 @@
 import { joinBasePath } from "~/shared/http/base-path";
 import { COACH_DISPLAY_NAME, ELI_PORTRAIT_PATHS } from "~/shared/brand";
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
+import { pwaSurfaceDefinitions } from "~/shared/pwa";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { PortalPageHeader } from "~/shared/design-system/portal";
 import { Button, DisabledActionHint } from "~/shared/design-system/primitives";

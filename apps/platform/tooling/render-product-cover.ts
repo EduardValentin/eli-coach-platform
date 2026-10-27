@@ -1,4 +1,4 @@
-import { createPdfCoverRenderer } from "@eli-coach-platform/infrastructure/documents/server";
+import { createPdfCoverRenderer } from "~/shared/documents/create-pdf-cover-renderer.server";
 
 /**
  * Repository tooling: the management API takes a supplied cover and

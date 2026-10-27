@@ -6,7 +6,7 @@ import type {
   JoinWaitlistUseCase,
 } from "@eli-coach-platform/domain/waitlist";
 
-import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { handleHttpErrorResponse } from "~/shared/http/index.server";
 import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
 import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/waitlist-composition.server";
 import {

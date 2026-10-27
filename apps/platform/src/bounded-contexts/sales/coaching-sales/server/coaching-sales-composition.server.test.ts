@@ -1,9 +1,12 @@
 import type { DatabaseClient } from "~/shared/database";
 import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
-import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
-import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
+import {
+  createTokenGenerator,
+  createTokenHasher,
+} from "~/shared/tokens/link-tokens.server";
+import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/create-payments.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
@@ -83,25 +86,40 @@ describe("composeCoachingSalesFeature", () => {
   it("hands a completed checkout to purchase recording while the site is in waitlist mode", async () => {
     // arrange
     const incidents = createIncidents();
-    const sale = { ...createHandles({ WAITLIST_MODE: true }), incidents };
-    const paidSession = await openCheckoutSession(sale.paymentCheckout);
-    const { handles } = composeCoachingSalesFeature(sale);
-
-    // act
-    const outcome = await handles.paymentCompletionHandler.handle("evt_1", {
-      id: paidSession.id,
-      customerId: "cus_1",
-      subscriptionId: "sub_1",
-      paymentIntentId: null,
-      amountCents: 44700,
-      currency: "eur",
-      customerEmail: "ana@example.com",
-      paidAt: new Date("2026-10-20T10:00:00.000Z"),
-      metadata: { purpose: "coaching-subscription" },
+    const handles = { ...createHandles({ WAITLIST_MODE: true }), incidents };
+    const paidSession = await openCheckoutSession(handles.paymentCheckout);
+    const { feature } = composeCoachingSalesFeature({
+      ...handles,
+      paymentEvents: {
+        verify: async () => ({
+          kind: "checkout_completed",
+          eventId: "evt_1",
+          session: {
+            id: paidSession.id,
+            customerId: "cus_1",
+            subscriptionId: "sub_1",
+            paymentIntentId: null,
+            amountCents: 44700,
+            currency: "eur",
+            customerEmail: "ana@example.com",
+            paidAt: new Date("2026-10-20T10:00:00.000Z"),
+            metadata: { purpose: "coaching-subscription" },
+          },
+        }),
+      },
     });
 
+    // act
+    const response = await feature.stripeWebhooks.handleEvent(
+      new Request("https://evoa.fit/api/stripe/webhooks", {
+        body: "{}",
+        headers: { "stripe-signature": "t=1,v1=signed" },
+        method: "POST",
+      }),
+    );
+
     // assert
-    expect(outcome).toBe("ignored");
+    expect(response.status).toBe(200);
     expect(incidents.paymentEventRejected).toHaveBeenCalledWith({
       eventId: "evt_1",
       reason: "call_not_found",
@@ -231,11 +249,15 @@ function createHandles(
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
     incidents: createIncidents(),
-    linkTokens: createLinkTokens(),
+    linkTokens: {
+      generator: createTokenGenerator(),
+      hasher: createTokenHasher(),
+    },
     openClientProfile: async () => undefined,
     paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,
+    paymentEvents: payments.events,
     paymentSubscriptions: payments.subscriptions,
     pricingEligibility: {
       tierForEmail: async () => "regular",
@@ -243,6 +265,7 @@ function createHandles(
     },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
+    webhookSigningSecret: "whsec_unit",
     writeClient: async () => {
       throw new Error("no client expected");
     },
@@ -256,7 +279,9 @@ function createIncidents() {
     coachingEndNotPropagated: vi.fn(),
     coachingPeriodNotPropagated: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
+    paymentEventHandlingFailed: vi.fn(),
     paymentEventRejected: vi.fn(),
+    paymentEventUnrouted: vi.fn(),
     paymentMethodSessionOpened: vi.fn(),
     programStartedNow: vi.fn(),
     refundNotificationFailed: vi.fn(),

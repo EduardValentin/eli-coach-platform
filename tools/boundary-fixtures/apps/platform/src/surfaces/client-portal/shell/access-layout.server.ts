@@ -1,3 +1,3 @@
-import { target } from "../../../../../../packages/infrastructure/src/bot-detection/bot-verifier.server";
+import { target } from "../../../shared/submission-checks/bot-detection/bot-verifier.server";
 
 export const probe = target;

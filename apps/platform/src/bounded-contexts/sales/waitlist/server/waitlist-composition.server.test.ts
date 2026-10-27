@@ -1,8 +1,8 @@
 import type { WaitlistConfig } from "~/bounded-contexts/sales/waitlist/config.server";
 import type { DatabaseClient } from "~/shared/database";
 import { EmailAddress } from "@eli-coach-platform/domain/email-address";
-import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
+import { handleHttpErrorResponse } from "~/shared/http/index.server";
 import { describe, expect, it } from "vitest";
 
 import { composeWaitlistFeature } from "./waitlist-composition.server";

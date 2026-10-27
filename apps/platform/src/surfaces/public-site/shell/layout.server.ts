@@ -1,7 +1,7 @@
 import { buildRedirectPath } from "~/shared/http/base-path";
 import type { LoaderFunctionArgs } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import type { PublicSessionState } from "~/bounded-contexts/access/accounts/public/account";
 import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import { readClientPortalStanding } from "~/bounded-contexts/clients/clients/server/guards/require-client-portal-standing.server";

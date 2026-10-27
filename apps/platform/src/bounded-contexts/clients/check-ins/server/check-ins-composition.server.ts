@@ -43,7 +43,7 @@ import type {
   NotificationInbox,
 } from "@eli-coach-platform/domain/notification";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { ClientCheckInsController } from "~/bounded-contexts/clients/check-ins/api/client/client-check-ins-controller.server";
 import { CoachCheckInSeriesController } from "~/bounded-contexts/clients/check-ins/api/coach/coach-check-in-series-controller.server";

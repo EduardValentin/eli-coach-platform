@@ -1,4 +1,4 @@
-import { WAITLIST_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
+import { WAITLIST_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";

@@ -39,7 +39,7 @@ import {
 } from "@eli-coach-platform/domain/client-roster";
 import type { PaidClientAdmission } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { COUNTRIES } from "~/bounded-contexts/scheduling/assessment-calls/public/countries";
 import { ClientJourneyController } from "~/bounded-contexts/clients/clients/api/client/client-journey-controller.server";

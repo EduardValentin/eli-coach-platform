@@ -1,4 +1,4 @@
-import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
 import { createProductDelivery } from "./create-product-delivery.server";

@@ -10,7 +10,7 @@ import {
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {

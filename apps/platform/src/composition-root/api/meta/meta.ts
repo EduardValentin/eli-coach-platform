@@ -1,4 +1,4 @@
-import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { handleHttpErrorResponse } from "~/shared/http/index.server";
 import type { LoaderFunctionArgs } from "react-router";
 
 import { platformContext } from "~/composition-root/guards/platform-context.server";

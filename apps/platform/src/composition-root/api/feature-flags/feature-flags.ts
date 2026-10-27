@@ -1,7 +1,7 @@
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { platformContext } from "~/composition-root/guards/platform-context.server";

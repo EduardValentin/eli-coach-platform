@@ -149,6 +149,28 @@
     "ui-primitives-import-only-lib",
     "ui-subpaths"
   ],
+  "apps/platform/src/shared/email/busboy-confined.server.ts": [
+    "busboy-confined",
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/shared/email/file-type-confined.server.ts": [
+    "file-type-confined",
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/shared/email/pdf-rendering-confined.server.ts": [
+    "not-to-unresolvable",
+    "pdf-rendering-confined"
+  ],
+  "apps/platform/src/shared/email/shared-concerns.server.ts": [
+    "shared-concerns"
+  ],
+  "apps/platform/src/shared/email/sharp-confined.server.ts": [
+    "not-to-unresolvable",
+    "sharp-confined"
+  ],
+  "apps/platform/src/shared/submission-checks/bot-detection/shared-browser-entries.ts": [
+    "shared-browser-entries"
+  ],
   "apps/platform/src/surfaces/client-portal/pages/surface-to-feature.tsx": [
     "route-thinness",
     "surface-client-portal-to-feature"
@@ -157,8 +179,7 @@
     "surface-to-surface"
   ],
   "apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts": [
-    "route-thinness",
-    "workspace-by-name-app"
+    "route-thinness"
   ],
   "apps/platform/src/surfaces/coach-portal/pages/surface-to-feature.tsx": [
     "route-thinness",
@@ -178,27 +199,5 @@
   ],
   "packages/domain/src/product/workspace-by-name-packages.ts": [
     "workspace-by-name-packages"
-  ],
-  "packages/infrastructure/src/bot-detection/infrastructure-browser-entries.ts": [
-    "infrastructure-browser-entries"
-  ],
-  "packages/infrastructure/src/email/busboy-confined.server.ts": [
-    "busboy-confined",
-    "not-to-unresolvable"
-  ],
-  "packages/infrastructure/src/email/file-type-confined.server.ts": [
-    "file-type-confined",
-    "not-to-unresolvable"
-  ],
-  "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
-    "infrastructure-subpaths"
-  ],
-  "packages/infrastructure/src/email/pdf-rendering-confined.server.ts": [
-    "not-to-unresolvable",
-    "pdf-rendering-confined"
-  ],
-  "packages/infrastructure/src/email/sharp-confined.server.ts": [
-    "not-to-unresolvable",
-    "sharp-confined"
   ]
 }

@@ -3,10 +3,8 @@ import {
   type RecordCheckoutCompletedUseCase,
   type RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type {
-  PaidCheckoutSession,
-  PaymentCompletionHandler,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import type { PaidCheckoutSession } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
+import type { PaymentCompletionHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
 
 type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
 

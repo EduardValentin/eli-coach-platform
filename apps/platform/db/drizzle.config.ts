@@ -24,7 +24,6 @@ export default defineConfig({
   schema: [
     "./src/shared/database/schema/index.ts",
     "./src/**/*schema*.server.ts",
-    "../../packages/*/src/**/*schema*.server.ts",
   ],
   ...(databaseUrl ? { dbCredentials: { url: databaseUrl } } : {}),
 });

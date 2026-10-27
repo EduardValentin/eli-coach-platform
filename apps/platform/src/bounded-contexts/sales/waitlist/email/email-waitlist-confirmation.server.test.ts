@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { EmailWaitlistConfirmation } from "./email-waitlist-confirmation.server";
 

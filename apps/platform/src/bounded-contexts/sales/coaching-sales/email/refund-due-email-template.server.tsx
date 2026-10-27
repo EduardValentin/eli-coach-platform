@@ -17,7 +17,7 @@ import {
   heroHeadingStyle,
   heroSectionStyle,
   heroSubheadStyle,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 
 import {
   buttonSectionStyle,

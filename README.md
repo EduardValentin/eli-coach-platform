@@ -21,7 +21,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
     /surfaces    public-site, client-portal, coach-portal
     /composition-root  composition root, runtime wiring, resource routes no surface owns
     /types       ambient type declarations
-/packages        config, content, db, domain, infrastructure, ui
+/packages        domain
 /deploy          per-environment Compose stacks
 /docker          image definitions
 /docs            database, secret, store-publishing, and web-session guides

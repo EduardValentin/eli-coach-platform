@@ -1,20 +1,11 @@
 import type { AppConfig } from "~/composition-root/runtime-environment";
 import type { DatabaseConfig } from "~/shared/database/connection";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import type {
-  PaymentCardHandler,
-  PaymentCompletionHandler,
-  PaymentEvents,
-  PaymentRefundHandler,
-  PaymentSubscriptionChangeHandler,
-  PaymentWebhookIncidents,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { AppMetadataController } from "~/composition-root/api/meta/app-metadata-controller.server";
 import { FeatureFlagController } from "~/composition-root/api/feature-flags/feature-flags-controller.server";
 import { ReadyzController } from "~/composition-root/api/readyz/readyz-controller.server";
-import { StripeWebhookController } from "~/composition-root/api/stripe-webhooks/stripe-webhook-controller.server";
 
 export type PlatformFeature = {
   appBasePath: string;
@@ -22,12 +13,11 @@ export type PlatformFeature = {
   featureFlags: FeatureFlagController;
   metadata: AppMetadataController;
   readyz: ReadyzController;
-  stripeWebhooks: StripeWebhookController;
 };
 
 export type PlatformControllers = Pick<
   PlatformFeature,
-  "featureFlags" | "metadata" | "readyz" | "stripeWebhooks"
+  "featureFlags" | "metadata" | "readyz"
 >;
 
 export type RuntimeConfig = Pick<
@@ -39,14 +29,7 @@ type PlatformFeatureHandles = {
   app: AppConfig & DatabaseConfig;
   botDetection: BotDetectionConfig;
   featureFlags: FeatureFlagReader;
-  incidents: PaymentWebhookIncidents;
-  paymentCardHandler: PaymentCardHandler;
-  paymentCompletionHandlers: readonly PaymentCompletionHandler[];
-  paymentEvents: PaymentEvents;
-  paymentRefundHandler: PaymentRefundHandler;
-  paymentSubscriptionChangeHandlers: readonly PaymentSubscriptionChangeHandler[];
   version: string;
-  webhookSigningSecret: string | undefined;
 };
 
 export function composePlatformFeature(
@@ -62,39 +45,5 @@ export function composePlatformFeature(
       version: handles.version,
     }),
     readyz: new ReadyzController(handles.app),
-    stripeWebhooks: new StripeWebhookController({
-      cardHandler: handles.paymentCardHandler,
-      completionHandlersByPurpose: handlersByPurpose(
-        handles.paymentCompletionHandlers,
-        "payment completion",
-      ),
-      incidents: handles.incidents,
-      paymentEvents: handles.paymentEvents,
-      refundHandler: handles.paymentRefundHandler,
-      signingSecret: handles.webhookSigningSecret,
-      subscriptionChangeHandlersByPurpose: handlersByPurpose(
-        handles.paymentSubscriptionChangeHandlers,
-        "subscription change",
-      ),
-    }),
   };
-}
-
-function handlersByPurpose<Handler extends { readonly purpose: string }>(
-  handlers: readonly Handler[],
-  handlerKind: string,
-): ReadonlyMap<string, Handler> {
-  const byPurpose = new Map<string, Handler>();
-
-  for (const handler of handlers) {
-    if (byPurpose.has(handler.purpose)) {
-      throw new Error(
-        `Two ${handlerKind} handlers serve the purpose "${handler.purpose}".`,
-      );
-    }
-
-    byPurpose.set(handler.purpose, handler);
-  }
-
-  return byPurpose;
 }

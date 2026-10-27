@@ -2,7 +2,7 @@ import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "~/bounded-contexts/legal/public";
-import { WAITLIST_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
+import { WAITLIST_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
 import {
   WAITLIST_REDUCED_PRICING_CAP,
   type WaitlistOffer,

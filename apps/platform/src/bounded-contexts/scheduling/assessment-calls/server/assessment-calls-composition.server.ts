@@ -17,9 +17,9 @@ import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-me
 import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
+import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { AssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/api/booking/assessment-calls-controller.server";
 import { CoachAssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/api/coach/coach-assessment-calls-controller.server";

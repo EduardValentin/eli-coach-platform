@@ -6,7 +6,7 @@ import {
   waitlistSchema,
   type Waitlist,
 } from "~/bounded-contexts/sales/waitlist/public/waitlist";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import type {
   GetWaitlistUseCase,
   JoinWaitlistResult,
@@ -16,9 +16,9 @@ import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,
   WAITLIST_TURNSTILE_ACTION,
-} from "@eli-coach-platform/infrastructure/bot-detection";
-import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { HttpJsonError } from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/submission-checks/bot-detection";
+import { resolveRequestRemoteIp } from "~/shared/submission-checks/bot-detection/index.server";
+import { HttpJsonError } from "~/shared/http/index.server";
 
 type JoinRequestValidationError = {
   issues: readonly { code: string }[];

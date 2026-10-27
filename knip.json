@@ -32,7 +32,8 @@
         "vite.config.ts",
         "e2e/**/*.ts",
         "integration-test-config/**/*.ts",
-        "tooling/**/*.ts"
+        "tooling/**/*.ts",
+        "src/shared/documents/pdf-pages-worker.server.ts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",
@@ -42,12 +43,6 @@
         "integration-test-config/**/*.ts",
         "test-support/**/*.ts",
         "tooling/**/*.ts"
-      ],
-      "ignoreDependencies": [
-        "sharp",
-        "@napi-rs/canvas",
-        "pdfjs-dist",
-        "@fastify/busboy"
       ]
     },
     "packages/*": {
@@ -56,8 +51,7 @@
         "src/*/index.ts",
         "src/*/index.server.ts",
         "src/runtime.ts",
-        "scripts/**/*.ts",
-        "src/documents/pdf-pages-worker.server.ts"
+        "scripts/**/*.ts"
       ],
       "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "tooling/**/*.ts"],
       "includeEntryExports": true

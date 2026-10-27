@@ -1,7 +1,7 @@
 import { joinBasePath } from "~/shared/http/base-path";
 import type { OnboardingDetailsNotifications } from "@eli-coach-platform/domain/client-onboarding";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
 

@@ -18,7 +18,7 @@ import {
   isFormDataRequest,
   readFormDataRequestBody,
   readJsonRequestBody,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import {
   redirect,
   type ActionFunctionArgs,

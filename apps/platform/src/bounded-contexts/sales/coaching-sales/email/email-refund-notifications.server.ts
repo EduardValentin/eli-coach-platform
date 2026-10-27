@@ -4,7 +4,7 @@ import type {
   RefundNotifications,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
 

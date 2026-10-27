@@ -1,4 +1,4 @@
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
+import { pwaSurfaceDefinitions } from "~/shared/pwa";
 import { PortalPageHeader } from "~/shared/design-system/portal";
 import {
   useLoaderData,

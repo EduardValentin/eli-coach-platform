@@ -2,14 +2,16 @@ import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type ReconcileSubscriptionEventUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import {
-  toSubscriptionEvent,
-  type PaymentEventHandling,
-  type PaymentRefund,
-  type PaymentRefundHandler,
-  type PaymentSubscriptionChange,
-  type PaymentSubscriptionChangeHandler,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import { toSubscriptionEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/coaching-subscription-change.server";
+import type {
+  PaymentEventHandling,
+  PaymentRefundHandler,
+  PaymentSubscriptionChangeHandler,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-handlers.server";
+import type {
+  PaymentRefund,
+  PaymentSubscriptionChange,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 
 type CoachingSubscriptionEventHandlerOptions = {
   reconcileSubscriptionEvent: ReconcileSubscriptionEventUseCase;

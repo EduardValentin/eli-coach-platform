@@ -1,3 +1,3 @@
-import { createUploadProgress } from "@eli-coach-platform/infrastructure/http";
+import { createUploadProgress } from "~/shared/http";
 
 export const resourceUploadProgress = createUploadProgress();

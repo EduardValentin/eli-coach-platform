@@ -8,7 +8,7 @@ import type {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
-import { readJsonRequestBody } from "@eli-coach-platform/infrastructure/http/server";
+import { readJsonRequestBody } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

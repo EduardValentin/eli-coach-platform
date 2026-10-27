@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 

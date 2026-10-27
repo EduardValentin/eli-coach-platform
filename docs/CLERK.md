@@ -108,7 +108,8 @@ this repository does not own either value; see
 A paid client gets her account through a Clerk application invitation that
 the app creates itself, in the same webhook delivery that records her
 payment (`ClerkIdentityInvitations` in
-`packages/infrastructure/src/identity/`, selected by `IDENTITY_PROVIDER`):
+`apps/platform/src/bounded-contexts/clients/clients/data/identity/`, selected
+by `IDENTITY_PROVIDER`):
 
 - `notify: false` — Clerk sends nothing; the app sends its own branded
   invitation email with a link to its `/invitation` landing page.

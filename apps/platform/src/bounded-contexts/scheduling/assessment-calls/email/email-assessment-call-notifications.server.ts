@@ -9,11 +9,11 @@ import type {
   CalendarEvent,
   ProductEmail,
   ProductEmailCommand,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 import {
   buildCalendarInvite,
   buildGoogleCalendarUrl,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 
 import { assessmentCallJoinPath } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 

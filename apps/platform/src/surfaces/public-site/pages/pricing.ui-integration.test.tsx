@@ -16,7 +16,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
 

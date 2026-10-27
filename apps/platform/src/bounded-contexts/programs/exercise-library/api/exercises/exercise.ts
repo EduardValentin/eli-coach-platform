@@ -4,14 +4,11 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import {
-  fetcherOutcomeOf,
-  uploadOutcomeOf,
-} from "@eli-coach-platform/infrastructure/http";
+import { fetcherOutcomeOf, uploadOutcomeOf } from "~/shared/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { exerciseVideoUploadProgress } from "~/bounded-contexts/programs/exercise-library/public/exercise-video-upload-progress";
 import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
 

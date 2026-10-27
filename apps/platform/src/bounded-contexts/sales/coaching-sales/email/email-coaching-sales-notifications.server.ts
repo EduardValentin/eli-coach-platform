@@ -4,7 +4,7 @@ import type {
   CoachingSalesNotifications,
   PaymentLinkMessage,
 } from "@eli-coach-platform/domain/payment-link";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { selectBundlePath } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 

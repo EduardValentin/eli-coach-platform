@@ -4,7 +4,7 @@ import type {
   ClientInvitationNotifications,
 } from "@eli-coach-platform/domain/client-invitation";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { invitationPath } from "~/bounded-contexts/clients/clients/public/paths";
 

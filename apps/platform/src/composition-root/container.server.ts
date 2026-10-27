@@ -4,37 +4,34 @@ import { RESOURCE_RENDITIONS } from "@eli-coach-platform/domain/client-resources
 import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
 import { RECIPE_PHOTO_RENDITION } from "@eli-coach-platform/domain/nutrition";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
+import { PostgresFeatureFlagRepository } from "~/composition-root/feature-flag-overrides/feature-flags-repository.server";
 import {
   createBotDetectionConfig,
   createBotVerifier,
-} from "@eli-coach-platform/infrastructure/bot-detection/server";
+} from "~/shared/submission-checks/bot-detection/index.server";
 import {
   createClientAvatarStore,
-  createClientResourceStore,
-  createExerciseVideoStore,
   createProgressPhotoStore,
-  createRecipePhotoStore,
-} from "@eli-coach-platform/infrastructure/private-files/server";
+} from "~/bounded-contexts/clients/client-profile/data/client-media-stores.server";
+import { createClientResourceStore } from "~/bounded-contexts/clients/client-resources/data/client-resource-store.server";
+import { createExerciseVideoStore } from "~/bounded-contexts/programs/exercise-library/data/exercise-video-store.server";
+import { createRecipePhotoStore } from "~/bounded-contexts/programs/nutrition-library/data/recipe-photo-store.server";
+import { createExerciseVideoFormatDetector } from "~/bounded-contexts/programs/exercise-library/data/exercise-video-format-detector.server";
+import { createResourceDocumentPages } from "~/bounded-contexts/clients/client-resources/data/resource-document-pages.server";
+import { createResourceFileFormatDetector } from "~/bounded-contexts/clients/client-resources/data/resource-file-format-detector.server";
+import { createProductEmail } from "~/shared/email/index.server";
+import { createIdentityInvitations } from "~/bounded-contexts/clients/clients/data/identity/create-identity-invitations.server";
 import {
-  createExerciseVideoFormatDetector,
-  createResourceDocumentPages,
-  createResourceFileFormatDetector,
-} from "@eli-coach-platform/infrastructure/documents/server";
-import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
-import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
-import {
-  createClientAvatarRenditions,
-  createProgressPhotoRenditions,
-  createRecipePhotoRenditions,
-  createResourceImagePages,
-} from "@eli-coach-platform/infrastructure/images/server";
-import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
-import {
-  createManagementAuthConfig,
-  createManagementAuthenticator,
-} from "@eli-coach-platform/infrastructure/management-auth/server";
+  createTokenGenerator,
+  createTokenHasher,
+} from "~/shared/tokens/link-tokens.server";
+import { createClientAvatarRenditions } from "~/bounded-contexts/clients/client-profile/data/client-avatar-renditions.server";
+import { createProgressPhotoRenditions } from "~/bounded-contexts/clients/client-profile/data/progress-photo-renditions.server";
+import { createRecipePhotoRenditions } from "~/bounded-contexts/programs/nutrition-library/data/recipe-photo-renditions.server";
+import { createResourceImagePages } from "~/bounded-contexts/clients/client-resources/data/resource-image-pages.server";
+import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/create-payments.server";
+import { createManagementAuthConfig } from "~/bounded-contexts/sales/store/api/management/management-auth/management-auth-config.server";
+import { createManagementAuthenticator } from "~/bounded-contexts/sales/store/api/management/management-auth/create-management-authenticator.server";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
 import {
@@ -150,7 +147,10 @@ export function createPlatformContainer(options: {
       : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
   const featureFlags = featureFlagOverrides.featureFlags;
   const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
-  const linkTokens = createLinkTokens();
+  const linkTokens = {
+    generator: createTokenGenerator(),
+    hasher: createTokenHasher(),
+  };
   const legal = composeLegal({ documentHasher: createSha256Hasher() });
   const exerciseLibrary = composeExerciseLibraryFeature({
     clock,
@@ -307,10 +307,12 @@ export function createPlatformContainer(options: {
     paidClientAdmission: clients.handles.paidClientAdmission,
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,
+    paymentEvents: payments.events,
     paymentSubscriptions: payments.subscriptions,
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
+    webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
     writeClient: clients.handles.writeClient,
     writeCoachingStanding: clients.handles.writeCoachingStanding,
   });
@@ -318,16 +320,7 @@ export function createPlatformContainer(options: {
     app: environment,
     botDetection,
     featureFlags,
-    incidents,
-    paymentCardHandler: coachingSales.handles.paymentCardHandler,
-    paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
-    paymentEvents: payments.events,
-    paymentRefundHandler: coachingSales.handles.refundHandler,
-    paymentSubscriptionChangeHandlers: [
-      coachingSales.handles.subscriptionChangeHandler,
-    ],
     version: process.env.GIT_SHA ?? "dev",
-    webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
   });
 
   return {
@@ -387,10 +380,7 @@ export function getPlatformContainer(): PlatformContainer {
 
 function pdfPagesWorkerUrl(): URL {
   return import.meta.env.DEV
-    ? new URL(
-        import.meta
-          .resolve("@eli-coach-platform/infrastructure/documents/pdf-pages-worker"),
-      )
+    ? new URL("../shared/documents/pdf-pages-worker.server.ts", import.meta.url)
     : new URL("./pdf-pages-worker.js", import.meta.url);
 }
 

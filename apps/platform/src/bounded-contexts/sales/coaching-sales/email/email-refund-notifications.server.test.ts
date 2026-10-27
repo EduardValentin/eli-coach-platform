@@ -2,7 +2,7 @@ import type { RefundDueNotice } from "@eli-coach-platform/domain/coaching-subscr
 import {
   InMemoryProductEmail,
   type ProductEmail,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { EmailRefundNotifications } from "./email-refund-notifications.server";

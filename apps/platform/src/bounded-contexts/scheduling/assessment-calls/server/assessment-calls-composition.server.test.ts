@@ -4,7 +4,7 @@ import {
   type CoachAvailabilitySource,
 } from "@eli-coach-platform/domain/coach-availability";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
-import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
 import {

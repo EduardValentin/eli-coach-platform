@@ -14,18 +14,16 @@ import {
   type PublishProductVersionUseCase,
   type RetireProductUseCase,
 } from "@eli-coach-platform/domain/product";
-import type { ManagementAuthenticator } from "@eli-coach-platform/infrastructure/management-auth/server";
-import {
-  isSecureManagementTransport,
-  type ManagementAuthConfig,
-} from "@eli-coach-platform/infrastructure/management-auth/server";
+import type { ManagementAuthenticator } from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";
+import { isSecureManagementTransport } from "~/bounded-contexts/sales/store/api/management/management-auth/management-auth-config.server";
+import type { ManagementAuthConfig } from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";
 
 import {
   newProductMetadataSchema,
   productValidationMetadataSchema,
   productVersionMetadataSchema,
 } from "~/bounded-contexts/sales/store/public/store-management";
-import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
+import { readFormDataRequestBody } from "~/shared/http/index.server";
 
 type StoreProductManagementControllerOptions = {
   authConfig: ManagementAuthConfig;

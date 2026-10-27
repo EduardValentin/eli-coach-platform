@@ -10,7 +10,7 @@ import {
   EmailPreviewText,
   EmailSection,
   EmailText,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 
 import { AssessmentCallEmailActions } from "./assessment-call-email-actions.server";
 import {

@@ -2,7 +2,7 @@ import type { ClientInvitationMessage } from "@eli-coach-platform/domain/client-
 import {
   InMemoryProductEmail,
   type ProductEmail,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { EmailClientInvitationNotifications } from "./email-client-invitation-notifications.server";

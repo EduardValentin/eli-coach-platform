@@ -4,7 +4,7 @@ import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
   useBotDetectionSubmission,
   type BotDetectionConfig,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 
 import { useBookAssessmentCallFetcher } from "./api-client";
 

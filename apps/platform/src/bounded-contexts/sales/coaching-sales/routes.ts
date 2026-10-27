@@ -50,4 +50,8 @@ export const coachingSalesApiRoutes = [
     COACHING_SALES_API_PATHS.paymentMethodSession.slice(1),
     "./api/client/payment-method-session.ts",
   ),
+  route(
+    COACHING_SALES_API_PATHS.stripeWebhooks.slice(1),
+    "./api/stripe-webhooks/stripe-webhooks.ts",
+  ),
 ];

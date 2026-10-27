@@ -1,3 +1,3 @@
-import { target } from "../../../infrastructure/src/bot-detection/bot-verifier.server";
+import { target } from "../../../sibling/src/target";
 
 export const probe = target;

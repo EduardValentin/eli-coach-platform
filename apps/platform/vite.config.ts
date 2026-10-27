@@ -12,8 +12,10 @@ const PDF_PAGES_WORKER_OUTPUT = "pdf-pages-worker.js";
 
 function emitPdfPagesWorker(): Plugin {
   const workerSource = fileURLToPath(
-    import.meta
-      .resolve("@eli-coach-platform/infrastructure/documents/pdf-pages-worker"),
+    new URL(
+      "./src/shared/documents/pdf-pages-worker.server.ts",
+      import.meta.url,
+    ),
   );
 
   return {

@@ -4,11 +4,11 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import { uploadOutcomeOf } from "@eli-coach-platform/infrastructure/http";
+import { uploadOutcomeOf } from "~/shared/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { resourceUploadProgress } from "~/bounded-contexts/clients/client-resources/public/resource-upload-progress";
 import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
 

@@ -1,5 +1,5 @@
 import { joinBasePath } from "~/shared/http/base-path";
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
+import { pwaSurfaceDefinitions } from "~/shared/pwa";
 
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "~/bounded-contexts/access/accounts/public/paths";
 

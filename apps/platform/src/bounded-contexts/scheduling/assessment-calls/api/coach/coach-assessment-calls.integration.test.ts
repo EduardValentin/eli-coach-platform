@@ -1,4 +1,4 @@
-import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
+import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
 import {
   afterAll,
   afterEach,

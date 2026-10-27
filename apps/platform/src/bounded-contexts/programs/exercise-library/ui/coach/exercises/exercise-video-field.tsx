@@ -1,5 +1,5 @@
 import { joinBasePath } from "~/shared/http/base-path";
-import type { UploadState } from "@eli-coach-platform/infrastructure/http";
+import type { UploadState } from "~/shared/http";
 import {
   Alert,
   AlertAction,

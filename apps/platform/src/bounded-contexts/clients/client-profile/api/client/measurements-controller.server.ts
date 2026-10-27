@@ -5,7 +5,7 @@ import type {
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

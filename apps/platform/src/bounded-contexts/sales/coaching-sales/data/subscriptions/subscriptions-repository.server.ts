@@ -8,7 +8,7 @@ import {
   type SubscriptionEventChange,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import { recordEventOnce } from "@eli-coach-platform/infrastructure/payments/server";
+import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
 import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 
 import type { CoachingStandingWriter } from "~/bounded-contexts/sales/coaching-sales/data/client-writers.server";

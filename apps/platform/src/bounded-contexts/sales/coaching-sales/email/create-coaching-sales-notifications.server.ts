@@ -1,6 +1,6 @@
 import type { RefundNotifications } from "@eli-coach-platform/domain/coaching-subscription";
 import type { CoachingSalesNotifications } from "@eli-coach-platform/domain/payment-link";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import {
   EmailCoachingSalesNotifications,

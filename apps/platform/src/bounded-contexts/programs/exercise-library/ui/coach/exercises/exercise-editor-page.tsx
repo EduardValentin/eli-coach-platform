@@ -1,7 +1,4 @@
-import {
-  useUploadState,
-  type UploadState,
-} from "@eli-coach-platform/infrastructure/http";
+import { useUploadState, type UploadState } from "~/shared/http";
 import { useSaveFetcher, type SaveOutcome } from "~/shared/design-system/lib";
 import {
   PortalBackLink,

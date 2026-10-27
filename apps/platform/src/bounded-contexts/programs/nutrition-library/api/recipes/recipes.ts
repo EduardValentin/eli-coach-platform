@@ -4,11 +4,11 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
+import { fetcherOutcomeOf } from "~/shared/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/server/guards/nutrition-library-context.server";
 
 const ALLOWED_METHODS = ["POST"];

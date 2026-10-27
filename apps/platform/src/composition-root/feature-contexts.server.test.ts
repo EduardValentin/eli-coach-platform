@@ -57,7 +57,6 @@ describe("createFeatureContextMiddleware", () => {
         featureFlags: { kind: "flags" },
         metadata: { kind: "meta" },
         readyz: { kind: "readyz" },
-        stripeWebhooks: { kind: "stripe-webhooks" },
       },
       store: { kind: "store" },
       waitlist: {
@@ -109,7 +108,6 @@ describe("createFeatureContextMiddleware", () => {
       featureFlags: container.platform.featureFlags,
       metadata: container.platform.metadata,
       readyz: container.platform.readyz,
-      stripeWebhooks: container.platform.stripeWebhooks,
     });
     expect(context.get(runtimeConfigContext)).toEqual({
       appBasePath: container.platform.appBasePath,

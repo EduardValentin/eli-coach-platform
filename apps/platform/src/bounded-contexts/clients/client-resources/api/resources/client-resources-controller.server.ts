@@ -16,7 +16,7 @@ import {
   createSandboxedAttachmentResponse,
   readFormDataRequestBody,
   readTextRequestBody,
-} from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 

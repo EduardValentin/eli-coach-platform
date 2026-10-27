@@ -1,4 +1,4 @@
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { EmailOnboardingDetailsNotifications } from "./email-onboarding-details-notifications.server";

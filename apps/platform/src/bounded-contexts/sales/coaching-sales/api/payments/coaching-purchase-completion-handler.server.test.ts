@@ -2,7 +2,7 @@ import type {
   RecordCheckoutCompletedUseCase,
   RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type { PaidCheckoutSession } from "@eli-coach-platform/infrastructure/payments/server";
+import type { PaidCheckoutSession } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingPurchaseCompletionHandler } from "./coaching-purchase-completion-handler.server";

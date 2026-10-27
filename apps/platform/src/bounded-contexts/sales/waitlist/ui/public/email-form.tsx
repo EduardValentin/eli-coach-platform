@@ -20,7 +20,7 @@ import {
   BotDetectionWidget,
   TURNSTILE_RESPONSE_FIELD,
   type BotDetectionConfig,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+} from "~/shared/submission-checks/bot-detection";
 
 import {
   resolveWaitlistErrorMessage,

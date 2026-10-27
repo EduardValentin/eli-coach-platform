@@ -24,7 +24,7 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { launchWaitlistConfetti } from "~/bounded-contexts/sales/waitlist/ui/public/confetti";
 import {

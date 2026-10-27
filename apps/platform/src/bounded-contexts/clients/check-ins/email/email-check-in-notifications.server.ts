@@ -17,7 +17,7 @@ import {
   type CalendarEvent,
   type EmailAttachment,
   type ProductEmail,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 import type { ReactElement } from "react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";

@@ -44,13 +44,9 @@ import {
   type PaymentLinkTokenHasher,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import type {
-  PaymentCardHandler,
-  PaymentCompletionHandler,
-  PaymentRefundHandler,
-  PaymentSubscriptionChangeHandler,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import type { ProductEmail } from "~/shared/email/index.server";
+import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
+import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
 
 import { SubscriptionController } from "~/bounded-contexts/sales/coaching-sales/api/client/subscription-controller.server";
 import { CoachSalesController } from "~/bounded-contexts/sales/coaching-sales/api/coach/coach-sales-controller.server";
@@ -59,6 +55,7 @@ import { CoachingPaymentCardHandler } from "~/bounded-contexts/sales/coaching-sa
 import { CoachingPurchaseCompletionHandler } from "~/bounded-contexts/sales/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
 import { CoachingSubscriptionEventHandler } from "~/bounded-contexts/sales/coaching-sales/api/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/bounded-contexts/sales/coaching-sales/api/public/checkouts-controller.server";
+import { StripeWebhookController } from "~/bounded-contexts/sales/coaching-sales/api/stripe-webhooks/stripe-webhook-controller.server";
 import type {
   ClientProfileOpener,
   ClientWriter,
@@ -79,17 +76,12 @@ export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
   coachSales: CoachSalesController;
   paymentLinks: PaymentLinksController;
+  stripeWebhooks: StripeWebhookController;
   subscription: SubscriptionController;
 };
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
-  handles: {
-    paymentCardHandler: PaymentCardHandler;
-    paymentCompletionHandler: PaymentCompletionHandler;
-    refundHandler: PaymentRefundHandler;
-    subscriptionChangeHandler: PaymentSubscriptionChangeHandler;
-  };
 };
 
 export type CoachingSalesFeatureHandles = {
@@ -106,7 +98,9 @@ export type CoachingSalesFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
-  incidents: CoachingSalesIncidents & CoachingSubscriptionIncidents;
+  incidents: CoachingSalesIncidents &
+    CoachingSubscriptionIncidents &
+    PaymentWebhookIncidents;
   linkTokens: {
     generator: PaymentLinkTokenGenerator;
     hasher: PaymentLinkTokenHasher;
@@ -115,10 +109,12 @@ export type CoachingSalesFeatureHandles = {
   paidClientAdmission: PaidClientAdmission;
   paymentCheckout: PaymentCheckout;
   paymentCustomerCards: PaymentCustomerCards;
+  paymentEvents: PaymentEvents;
   paymentSubscriptions: PaymentSubscriptions;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
   publicAppUrl: string;
+  webhookSigningSecret: string | undefined;
   writeClient: ClientWriter;
   writeCoachingStanding: CoachingStandingWriter;
 };
@@ -266,6 +262,10 @@ export function composeCoachingSalesFeature(
   const subscriptionChangeHandler = new CoachingSubscriptionEventHandler({
     reconcileSubscriptionEvent: subscriptionUseCases.reconcileSubscriptionEvent,
   });
+  const paymentCompletionHandler = new CoachingPurchaseCompletionHandler({
+    recordCheckoutCompleted: useCases.recordCheckoutCompleted,
+    refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
+  });
 
   return {
     feature: {
@@ -286,6 +286,19 @@ export function composeCoachingSalesFeature(
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
       }),
+      stripeWebhooks: new StripeWebhookController({
+        cardHandler: new CoachingPaymentCardHandler({
+          mirrorPaymentCard: subscriptionUseCases.mirrorPaymentCard,
+        }),
+        completionHandlersByPurpose: byPurpose(paymentCompletionHandler),
+        incidents: handles.incidents,
+        paymentEvents: handles.paymentEvents,
+        refundHandler: subscriptionChangeHandler,
+        signingSecret: handles.webhookSigningSecret,
+        subscriptionChangeHandlersByPurpose: byPurpose(
+          subscriptionChangeHandler,
+        ),
+      }),
       subscription: new SubscriptionController({
         appBasePath: handles.appBasePath,
         cancelSubscription: subscriptionUseCases.cancelSubscription,
@@ -296,16 +309,11 @@ export function composeCoachingSalesFeature(
         startProgramNow: subscriptionUseCases.startProgramNow,
       }),
     },
-    handles: {
-      paymentCardHandler: new CoachingPaymentCardHandler({
-        mirrorPaymentCard: subscriptionUseCases.mirrorPaymentCard,
-      }),
-      paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
-        recordCheckoutCompleted: useCases.recordCheckoutCompleted,
-        refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
-      }),
-      refundHandler: subscriptionChangeHandler,
-      subscriptionChangeHandler,
-    },
   };
+}
+
+function byPurpose<Handler extends { readonly purpose: string }>(
+  handler: Handler,
+): ReadonlyMap<string, Handler> {
+  return new Map([[handler.purpose, handler]]);
 }

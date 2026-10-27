@@ -2,7 +2,7 @@ import type { ReconcileSubscriptionEventUseCase } from "@eli-coach-platform/doma
 import type {
   PaymentRefund,
   PaymentSubscriptionChange,
-} from "@eli-coach-platform/infrastructure/payments/server";
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingSubscriptionEventHandler } from "./coaching-subscription-event-handler.server";

@@ -3,7 +3,7 @@ import type {
   GetCoachScheduleSettingsUseCase,
   UpdateCoachScheduleSettingsUseCase,
 } from "@eli-coach-platform/domain/coach-schedule";
-import { resolveFieldErrorCode } from "@eli-coach-platform/infrastructure/http/server";
+import { resolveFieldErrorCode } from "~/shared/http/index.server";
 import type { ActionFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/bounded-contexts/access/accounts/server/guards/require-account.server";

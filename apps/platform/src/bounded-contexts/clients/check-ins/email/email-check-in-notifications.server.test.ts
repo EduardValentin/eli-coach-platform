@@ -6,7 +6,7 @@ import {
 import {
   InMemoryProductEmail,
   type ProductEmail,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
 import { EmailCheckInNotifications } from "./email-check-in-notifications.server";

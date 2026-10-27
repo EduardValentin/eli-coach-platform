@@ -2,7 +2,7 @@ import {
   PaymentCard,
   type MirrorPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type { PaymentCardChange } from "@eli-coach-platform/infrastructure/payments/server";
+import type { PaymentCardChange } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingPaymentCardHandler } from "./coaching-payment-card-handler.server";

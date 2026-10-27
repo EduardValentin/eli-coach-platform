@@ -9,14 +9,14 @@ import {
 } from "@eli-coach-platform/domain/assessment-call";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
   TURNSTILE_RESPONSE_FIELD,
   type BotDetectionConfig,
-} from "@eli-coach-platform/infrastructure/bot-detection";
-import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { resolveFieldErrorCode } from "@eli-coach-platform/infrastructure/http/server";
+} from "~/shared/submission-checks/bot-detection";
+import { resolveRequestRemoteIp } from "~/shared/submission-checks/bot-detection/index.server";
+import { resolveFieldErrorCode } from "~/shared/http/index.server";
 
 import {
   bookAssessmentCallErrorSchema,

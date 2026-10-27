@@ -8,7 +8,7 @@ import { Link } from "react-router";
 import { cn } from "~/shared/design-system/lib";
 import { buttonVariants } from "~/shared/design-system/primitives";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";

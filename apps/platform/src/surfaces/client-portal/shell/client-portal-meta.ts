@@ -1,4 +1,4 @@
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
+import { pwaSurfaceDefinitions } from "~/shared/pwa";
 import type { MetaDescriptor } from "react-router";
 
 const CLIENT_PORTAL_META: readonly MetaDescriptor[] = [

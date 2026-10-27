@@ -1,5 +1,5 @@
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "~/shared/brand";
-import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
 import { createWaitlistConfirmation } from "./create-waitlist-confirmation.server";

@@ -10,7 +10,7 @@ import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
   ManagementAuthConfig,
-} from "@eli-coach-platform/infrastructure/management-auth/server";
+} from "~/bounded-contexts/sales/store/api/management/management-auth/management-authenticator-contract.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { StoreProductManagementController } from "./management-controller.server";

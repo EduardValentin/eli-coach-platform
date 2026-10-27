@@ -1,0 +1,193 @@
+import {
+  createBadRequestResponse,
+  readTextRequestBody,
+} from "~/shared/http/index.server";
+import {
+  PAYMENT_PURPOSE_METADATA_KEY,
+  type PaymentCompletionHandler,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
+import type {
+  PaidCheckoutSession,
+  PaymentCardChange,
+  PaymentRefund,
+  PaymentSubscriptionChange,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
+import type {
+  PaymentCardHandler,
+  PaymentRefundHandler,
+  PaymentSubscriptionChangeHandler,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-handlers.server";
+import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
+import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
+
+type StripeWebhookControllerOptions = {
+  cardHandler: PaymentCardHandler;
+  completionHandlersByPurpose: ReadonlyMap<string, PaymentCompletionHandler>;
+  incidents: PaymentWebhookIncidents;
+  paymentEvents: PaymentEvents;
+  refundHandler: PaymentRefundHandler;
+  signingSecret: string | undefined;
+  subscriptionChangeHandlersByPurpose: ReadonlyMap<
+    string,
+    PaymentSubscriptionChangeHandler
+  >;
+};
+
+type Delivery = {
+  eventId: string;
+  handler: string;
+  handle: () => Promise<unknown>;
+};
+
+type PurposeRouting<Handler> = {
+  eventId: string;
+  purpose: string | null;
+  handlersByPurpose: ReadonlyMap<string, Handler>;
+};
+
+const SIGNATURE_HEADER = "stripe-signature";
+const EVENT_MAX_BYTES = 512 * 1024;
+const PAYLOAD_TOO_LARGE = 413;
+const HANDLER_FAILED = 500;
+const REFUNDS_HANDLER = "charge-refunds";
+const CARDS_HANDLER = "payment-cards";
+
+export class StripeWebhookController {
+  constructor(private readonly options: StripeWebhookControllerOptions) {}
+
+  async handleEvent(request: Request): Promise<Response> {
+    if (!this.options.signingSecret) {
+      return new Response(null, { status: 503 });
+    }
+
+    const body = await readTextRequestBody(request, {
+      maxBytes: EVENT_MAX_BYTES,
+    });
+
+    if (body.status === "too_large") {
+      return new Response(null, { status: PAYLOAD_TOO_LARGE });
+    }
+
+    const verdict = await this.options.paymentEvents.verify(
+      body.text,
+      request.headers.get(SIGNATURE_HEADER),
+    );
+
+    switch (verdict.kind) {
+      case "invalid":
+        return createBadRequestResponse(
+          "Unable to verify the payment event signature.",
+        );
+      case "checkout_completed":
+        return this.routePaidSession(verdict.eventId, verdict.session);
+      case "subscription_changed":
+        return this.routeSubscriptionChange(verdict);
+      case "charge_refunded":
+        return this.deliverRefund(verdict.eventId, verdict.refund);
+      case "payment_method_changed":
+        return this.deliverCardChange(verdict.eventId, verdict.change);
+      case "ignored":
+        return acknowledged();
+    }
+  }
+
+  private routePaidSession(
+    eventId: string,
+    session: PaidCheckoutSession,
+  ): Promise<Response> {
+    return this.routeByPurpose(
+      {
+        eventId,
+        purpose: session.metadata[PAYMENT_PURPOSE_METADATA_KEY] ?? null,
+        handlersByPurpose: this.options.completionHandlersByPurpose,
+      },
+      (handler) => handler.handle(eventId, session),
+    );
+  }
+
+  private routeSubscriptionChange(verdict: {
+    eventId: string;
+    purpose: string | null;
+    change: PaymentSubscriptionChange;
+  }): Promise<Response> {
+    return this.routeByPurpose(
+      {
+        eventId: verdict.eventId,
+        purpose: verdict.purpose,
+        handlersByPurpose: this.options.subscriptionChangeHandlersByPurpose,
+      },
+      (handler) => handler.handle(verdict.eventId, verdict.change),
+    );
+  }
+
+  private routeByPurpose<Handler>(
+    routing: PurposeRouting<Handler>,
+    handle: (handler: Handler) => Promise<unknown>,
+  ): Promise<Response> {
+    const { eventId, purpose } = routing;
+    const handler = purpose
+      ? routing.handlersByPurpose.get(purpose)
+      : undefined;
+
+    if (!purpose || !handler) {
+      return this.unrouted(eventId, purpose);
+    }
+
+    return this.deliver({
+      eventId,
+      handler: purpose,
+      handle: () => handle(handler),
+    });
+  }
+
+  private deliverRefund(
+    eventId: string,
+    refund: PaymentRefund,
+  ): Promise<Response> {
+    return this.deliver({
+      eventId,
+      handler: REFUNDS_HANDLER,
+      handle: () => this.options.refundHandler.handle(eventId, refund),
+    });
+  }
+
+  private deliverCardChange(
+    eventId: string,
+    change: PaymentCardChange,
+  ): Promise<Response> {
+    return this.deliver({
+      eventId,
+      handler: CARDS_HANDLER,
+      handle: () => this.options.cardHandler.handle(eventId, change),
+    });
+  }
+
+  private async unrouted(
+    eventId: string,
+    purpose: string | null,
+  ): Promise<Response> {
+    this.options.incidents.paymentEventUnrouted({ eventId, purpose });
+
+    return acknowledged();
+  }
+
+  private deliver(delivery: Delivery): Promise<Response> {
+    return delivery.handle().then(acknowledged, (error) => {
+      this.options.incidents.paymentEventHandlingFailed({
+        errorClass: errorClassOf(error),
+        eventId: delivery.eventId,
+        handler: delivery.handler,
+      });
+
+      return new Response(null, { status: HANDLER_FAILED });
+    });
+  }
+}
+
+function acknowledged(): Response {
+  return new Response(null, { status: 200 });
+}
+
+function errorClassOf(error: unknown): string {
+  return error instanceof Error ? error.name : typeof error;
+}

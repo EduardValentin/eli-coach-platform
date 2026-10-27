@@ -1,7 +1,4 @@
-import {
-  createPwaRegistration,
-  pwaSurfaceDefinitions,
-} from "@eli-coach-platform/infrastructure/pwa";
+import { createPwaRegistration, pwaSurfaceDefinitions } from "~/shared/pwa";
 import { NotificationBell, PortalShell } from "~/shared/design-system/layout";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { Button } from "~/shared/design-system/primitives";

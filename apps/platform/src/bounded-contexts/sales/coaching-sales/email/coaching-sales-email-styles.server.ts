@@ -7,7 +7,7 @@ import {
   nextStepsOuterStyle,
   nextStepTextStyle,
   reassuranceTextStyle,
-} from "@eli-coach-platform/infrastructure/email/server";
+} from "~/shared/email/index.server";
 import type { CSSProperties } from "react";
 
 export const bundlesOuterStyle: CSSProperties = {

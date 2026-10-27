@@ -19,6 +19,7 @@ export const COACHING_SALES_API_PATHS = {
   subscriptionCancellation: "/api/coaching-sales/subscription-cancellation",
   programStart: "/api/coaching-sales/program-start",
   paymentMethodSession: "/api/coaching-sales/payment-method-session",
+  stripeWebhooks: "/api/stripe/webhooks",
 } as const;
 
 type SelectBundleLink = {

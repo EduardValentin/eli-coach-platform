@@ -2,7 +2,7 @@ import type {
   ResourceDetailsProblems,
   ResourceRefusal,
 } from "@eli-coach-platform/domain/client-resources";
-import { useUploadState } from "@eli-coach-platform/infrastructure/http";
+import { useUploadState } from "~/shared/http";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useFetcher } from "react-router";
 

@@ -15,8 +15,8 @@ import {
   type WaitlistConsentVersions,
   type WaitlistIncidents,
 } from "@eli-coach-platform/domain/waitlist";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
+import type { ProductEmail } from "~/shared/email/index.server";
 
 import { WaitlistController } from "~/bounded-contexts/sales/waitlist/api/waitlist-controller.server";
 import { PostgresWaitlistRepository } from "~/bounded-contexts/sales/waitlist/data/repository.server";
