@@ -99,9 +99,14 @@ const EXPIRED_INVITATION_SENT_DAYS_AGO = 40;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const INSERT_ENDED_CALL = `
-  with reservation as (
+  with free_hour as (
+    select least($9::timestamptz, min(starts_at) - interval '1 hour') as starts_at
+    from app.coach_time_reservations
+    where starts_at < $9::timestamptz + interval '1 hour'
+  ),
+  reservation as (
     insert into app.coach_time_reservations (starts_at, ends_at)
-    values ($9, $9::timestamptz + interval '1 hour')
+    select starts_at, starts_at + interval '1 hour' from free_hour
     returning id
   )
   insert into app.assessment_calls (
