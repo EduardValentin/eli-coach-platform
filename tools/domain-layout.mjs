@@ -25,9 +25,8 @@ function componentDomainsOf(boundedContextsRoot) {
   );
 }
 
-function auditFile(path, label) {
+function serviceNameProblems(source, label) {
   const problems = [];
-  const source = readFileSync(path, "utf8");
   if (label.endsWith("-service.ts"))
     problems.push(`${label}: service file name`);
   if (
@@ -36,20 +35,32 @@ function auditFile(path, label) {
     )
   )
     problems.push(`${label}: exports a *Service`);
-  if (label.endsWith("-use-case.ts")) {
-    const classes = source.match(/export\s+class\s+\w+UseCase\b/g) ?? [];
-    if (classes.length !== 1)
-      problems.push(
-        `${label}: expected one *UseCase class, found ${classes.length}`,
-      );
-    if (
-      !/^\s+(?:public\s+|private\s+|protected\s+)?(?:async\s+)?execute\(/m.test(
-        source,
-      )
-    )
-      problems.push(`${label}: no execute method`);
-  }
   return problems;
+}
+
+function useCaseShapeProblems(source, label) {
+  if (!label.endsWith("-use-case.ts")) return [];
+  const problems = [];
+  const classes = source.match(/export\s+class\s+\w+UseCase\b/g) ?? [];
+  if (classes.length !== 1)
+    problems.push(
+      `${label}: expected one *UseCase class, found ${classes.length}`,
+    );
+  if (
+    !/^\s+(?:public\s+|private\s+|protected\s+)?(?:async\s+)?execute\(/m.test(
+      source,
+    )
+  )
+    problems.push(`${label}: no execute method`);
+  return problems;
+}
+
+function auditFile(path, label) {
+  const source = readFileSync(path, "utf8");
+  return [
+    ...serviceNameProblems(source, label),
+    ...useCaseShapeProblems(source, label),
+  ];
 }
 
 function auditFilesIn(directory, labelPrefix) {

@@ -3,7 +3,7 @@ import { createUnitOfWork } from "~/shared/database/index.server";
 import { AssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
-import { PostgresAssessmentCallRepository } from "./repository.server";
+import { PostgresAssessmentCallRepository } from "./assessment-call-reservations-repository.server";
 import { assessmentCallsTable } from "./schema.server";
 
 const STORED_ROW = {

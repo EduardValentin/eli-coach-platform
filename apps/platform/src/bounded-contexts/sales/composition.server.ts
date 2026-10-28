@@ -39,11 +39,6 @@ type SalesHandles = Omit<
 };
 
 export type SalesComposition = {
-  components: {
-    coachingSales: CoachingSalesFeature;
-    store: StoreFeature;
-    waitlist: WaitlistFeature;
-  };
   middleware: MiddlewareFunction<Response>;
 };
 
@@ -60,11 +55,6 @@ export function composeSales(handles: SalesHandles): SalesComposition {
   });
 
   return {
-    components: {
-      coachingSales: coachingSales.feature,
-      store,
-      waitlist: waitlist.feature,
-    },
     middleware: ({ context }, next) => {
       context.set(storeContext, store);
       context.set(waitlistContext, waitlist.feature);

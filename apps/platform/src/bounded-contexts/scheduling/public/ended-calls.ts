@@ -8,5 +8,5 @@ type EndedCall = {
 };
 
 export interface EndedCallsFacade {
-  endedCall(callId: string): Promise<EndedCall | null>;
+  callOf(callId: string): Promise<EndedCall | null>;
 }

@@ -53,7 +53,7 @@ import { PostgresClientIdentities } from "~/bounded-contexts/clients/clients/ada
 import { PostgresClientIdentityChanges } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-identity-changes.server";
 import { PostgresClientReach } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-reach-reader.server";
 import { PostgresClientRoster } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-roster-reader.server";
-import { PostgresAdmittedClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-writers.server";
+import { PostgresAdmittedClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/admitted-clients-repository.server";
 import { PostgresOnboardingStandings } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/onboarding-standings-reader.server";
 import { RandomClientIds } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/random-client-ids.server";
 import { RandomClientInvitationIds } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/invitations/random-client-invitation-ids.server";
@@ -70,7 +70,7 @@ import { createClientsIncidents } from "~/bounded-contexts/clients/clients/adapt
 import {
   createIdentityInvitations,
   type IdentityConfig,
-} from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/identity/create-identity-invitations.server";
+} from "~/bounded-contexts/clients/clients/adapters/outbound/identity/create-identity-invitations.server";
 
 type ClientsComposition = {
   facades: {

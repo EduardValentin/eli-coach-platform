@@ -47,12 +47,16 @@ export class CancelCheckInsAfterCoachingEndUseCase {
         upcoming: [],
       });
     } catch {
-      for (const checkInId of cancelled) {
-        this.options.incidents.checkInInboxFailed({
-          checkInId,
-          event: "cancelled",
-        });
-      }
+      this.reportInboxFailures(cancelled);
+    }
+  }
+
+  private reportInboxFailures(cancelled: readonly string[]): void {
+    for (const checkInId of cancelled) {
+      this.options.incidents.checkInInboxFailed({
+        checkInId,
+        event: "cancelled",
+      });
     }
   }
 }

@@ -7,7 +7,7 @@ export function createEndedCallsFacade(
   calls: Pick<AssessmentCallReservations, "findById">,
 ): EndedCallsFacade {
   return {
-    endedCall: async (callId) => {
+    callOf: async (callId) => {
       const call = await calls.findById(callId);
 
       return call

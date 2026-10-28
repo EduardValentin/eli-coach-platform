@@ -6,12 +6,9 @@ import {
 } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
 import { composeFeatureFlagsFeature } from "~/bounded-contexts/operations/feature-flags/composition.server";
 
-export type OperationsHandles = Parameters<
-  typeof composeFeatureFlagsFeature
->[0];
+type OperationsHandles = Parameters<typeof composeFeatureFlagsFeature>[0];
 
 export type OperationsComposition = {
-  components: { featureFlags: FeatureFlagsFeature };
   facades: ReturnType<typeof composeFeatureFlagsFeature>["facades"];
   middleware: MiddlewareFunction<Response>;
   overrideMiddleware: MiddlewareFunction<Response>;
@@ -23,7 +20,6 @@ export function composeOperations(
   const featureFlags = composeFeatureFlagsFeature(handles);
 
   return {
-    components: { featureFlags: featureFlags.feature },
     facades: featureFlags.facades,
     middleware: ({ context }, next) => {
       context.set(featureFlagsContext, featureFlags.feature);

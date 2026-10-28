@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/schema.server";
 
-import { PostgresAdmittedClients } from "./client-writers.server";
+import { PostgresAdmittedClients } from "./admitted-clients-repository.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const ADMITTED_AT = new Date("2026-10-12T10:00:00.000Z");

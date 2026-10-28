@@ -4,7 +4,7 @@ import type { ClientJourneyStepName } from "./client-journey-step";
 
 type ClientPortalReach = "reachable" | "awaiting_onboarding" | "ended";
 
-export type ClientPortalStandingDto = {
+type ClientPortalStandingDto = {
   step: ClientJourneyStepName;
   portal: ClientPortalReach;
 };

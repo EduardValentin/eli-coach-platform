@@ -124,7 +124,7 @@ describe("composeAssessmentCallsFeature ended calls facade", () => {
     });
 
     // act
-    const call = await facades.endedCalls.endedCall(BOOKED_ROW.id);
+    const call = await facades.endedCalls.callOf(BOOKED_ROW.id);
 
     // assert
     expect(call).toMatchObject({
@@ -142,7 +142,7 @@ describe("composeAssessmentCallsFeature ended calls facade", () => {
     });
 
     // act
-    const call = await facades.endedCalls.endedCall(BOOKED_ROW.id);
+    const call = await facades.endedCalls.callOf(BOOKED_ROW.id);
 
     // assert
     expect(call).toBeNull();

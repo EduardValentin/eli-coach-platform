@@ -11,7 +11,6 @@ import {
 } from "~/bounded-contexts/access/accounts/composition.server";
 
 export type AccessComposition = {
-  components: { accounts: AccountsFeature };
   facades: ReturnType<typeof composeAccountsFeature>["facades"];
   middleware: MiddlewareFunction<Response>;
   sessionMiddleware: MiddlewareFunction<Response>;
@@ -23,7 +22,6 @@ export function composeAccess(
   const { facades, feature: accounts } = composeAccountsFeature(handles);
 
   return {
-    components: { accounts },
     facades,
     middleware: ({ context }, next) => {
       context.set(accountsContext, accounts);

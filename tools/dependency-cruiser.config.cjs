@@ -4,10 +4,14 @@ const path = require("node:path");
 const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
 const APP = "^apps/platform/src/";
 const BOUNDED_CONTEXTS_ROOT = "^apps/platform/src/bounded-contexts/";
-const FEATURES = `${BOUNDED_CONTEXTS_ROOT}[^/]+/`;
+const BOUNDED_CONTEXT = `${BOUNDED_CONTEXTS_ROOT}[^/]+/`;
 const COMPONENT = "(?!public/)[^/]+";
-const BOUNDED_CONTEXT_PUBLIC = `${FEATURES}public/`;
-const PUBLISHED_FOLDERS = `${FEATURES}(public|${COMPONENT}/ui/shared)/`;
+const BOUNDED_CONTEXT_PUBLIC = `${BOUNDED_CONTEXT}public/`;
+function publishedFoldersOf(boundedContexts) {
+  return `${BOUNDED_CONTEXTS_ROOT}${boundedContexts}/(public|${COMPONENT}/ui/shared)/`;
+}
+
+const PUBLISHED_FOLDERS = publishedFoldersOf("[^/]+");
 const SURFACES = "^apps/platform/src/surfaces/";
 const CONCEPT = "{concept}";
 
@@ -20,15 +24,15 @@ function flatOrInConceptFolder(patterns) {
 }
 
 const SCHEMA_FILE = "adapters/outbound/persistence/schema\\.server\\.ts$";
-const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/${SCHEMA_FILE}`;
+const COMPONENT_SCHEMA = `${BOUNDED_CONTEXT}${COMPONENT}/${SCHEMA_FILE}`;
 const REQUEST_KEYS = "adapters/inbound/http/[a-z-]*context\\.server\\.ts$";
-const COMPONENT_COMPOSITION = `${FEATURES}${COMPONENT}/composition\\.server\\.ts$`;
-const BOUNDED_CONTEXT_COMPOSITION = `${FEATURES}composition\\.server\\.ts$`;
-const BOUNDED_CONTEXT_REQUEST_CONTEXT = `${FEATURES}public/request-context\\.ts$`;
+const COMPONENT_COMPOSITION = `${BOUNDED_CONTEXT}${COMPONENT}/composition\\.server\\.ts$`;
+const BOUNDED_CONTEXT_COMPOSITION = `${BOUNDED_CONTEXT}composition\\.server\\.ts$`;
+const BOUNDED_CONTEXT_REQUEST_CONTEXT = `${BOUNDED_CONTEXT}public/request-context\\.ts$`;
 const COMPOSITION_ROOT = "^apps/platform/src/composition-root/";
 const ROUTE_MODULES = flatOrInConceptFolder([
-  `${FEATURES}${COMPONENT}/adapters/inbound/http/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
-  `${FEATURES}${COMPONENT}/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
+  `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/http/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+  `${BOUNDED_CONTEXT}${COMPONENT}/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
   `${APP}composition-root/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
@@ -109,12 +113,12 @@ function boundedContextOrderRule(boundedContext, position) {
     severity: "error",
     from: {
       path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/`,
-      pathNot: FEATURE_SCHEMA,
+      pathNot: COMPONENT_SCHEMA,
     },
     to: {
       path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/)[^/]+/`,
       ...(earlier.length > 0 && {
-        pathNot: `${BOUNDED_CONTEXTS_ROOT}(${earlier.join("|")})/(public|${COMPONENT}/ui/shared)/`,
+        pathNot: publishedFoldersOf(`(${earlier.join("|")})`),
       }),
     },
   };
@@ -130,7 +134,7 @@ function componentOrderRule({ boundedContext, component }) {
     severity: "error",
     from: {
       path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/${component}/`,
-      pathNot: FEATURE_SCHEMA,
+      pathNot: COMPONENT_SCHEMA,
     },
     to: {
       path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/(?!(${earlierAndOwn.join("|")})/)${COMPONENT}/`,
@@ -149,30 +153,30 @@ function schemaForeignKeyRule({ boundedContext, component }, position) {
       "A component's adapters/outbound/persistence/schema.server.ts imports nothing of any bounded context outside its own component except, for a foreign key, consumer to provider, the schema.server.ts of a component earlier in BOUNDED_CONTEXT_ORDER, then COMPONENT_ORDER.",
     severity: "error",
     from: {
-      path: `${FEATURES}${component}/${SCHEMA_FILE}`,
+      path: `${BOUNDED_CONTEXT}${component}/${SCHEMA_FILE}`,
     },
     to: {
       path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/${component}/)`,
       ...(providers.length > 0 && {
-        pathNot: `${FEATURES}(${providers.join("|")})/${SCHEMA_FILE}`,
+        pathNot: `${BOUNDED_CONTEXT}(${providers.join("|")})/${SCHEMA_FILE}`,
       }),
     },
   };
 }
 
-function surfaceToFeatureRule(surface, slice) {
+function surfaceToBoundedContextRule(surface, slice) {
   return {
     name: `surface-${surface}-to-feature`,
     comment: `R2: surfaces/${surface} reaches a bounded context only through a component's ui/${slice}/, ui/shared/ and public/, the bounded context's public/ (request-context keys included) and routes.ts.`,
     severity: "error",
     from: { path: `${SURFACES}${surface}/` },
     to: {
-      path: FEATURES,
+      path: BOUNDED_CONTEXT,
       pathNot: [
-        `${FEATURES}${COMPONENT}/ui/(${slice}|shared)/`,
-        `${FEATURES}${COMPONENT}/public/`,
+        `${BOUNDED_CONTEXT}${COMPONENT}/ui/(${slice}|shared)/`,
+        `${BOUNDED_CONTEXT}${COMPONENT}/public/`,
         BOUNDED_CONTEXT_PUBLIC,
-        `${FEATURES}routes\\.ts$`,
+        `${BOUNDED_CONTEXT}routes\\.ts$`,
       ],
     },
   };
@@ -197,7 +201,7 @@ module.exports = {
       severity: "error",
       from: {
         path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/(${COMPONENT})/`,
-        pathNot: FEATURE_SCHEMA,
+        pathNot: COMPONENT_SCHEMA,
       },
       to: {
         path: `${BOUNDED_CONTEXTS_ROOT}$1/(?!$2/)${COMPONENT}/`,
@@ -212,8 +216,8 @@ module.exports = {
       from: {
         path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/(?:adapters/outbound/)?([^/]+)/`,
         pathNot: [
-          `${FEATURES}${COMPONENT}/(ui|public|adapters/inbound/http|adapters/outbound/email)/`,
-          FEATURE_SCHEMA,
+          `${BOUNDED_CONTEXT}${COMPONENT}/(ui|public|adapters/inbound/http|adapters/outbound/email)/`,
+          COMPONENT_SCHEMA,
         ],
       },
       to: {
@@ -276,7 +280,7 @@ module.exports = {
       comment:
         "A request-context key file (adapters/inbound/http/*context.server.ts) creates a router context and nothing else: at runtime it imports only react-router; everything else it names is a type.",
       severity: "error",
-      from: { path: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}` },
+      from: { path: `${BOUNDED_CONTEXT}${COMPONENT}/${REQUEST_KEYS}` },
       to: {
         pathNot: "(^|/)react-router(/|$)",
         dependencyTypesNot: ["type-only"],
@@ -290,7 +294,7 @@ module.exports = {
       from: {
         path: APP,
         pathNot: [
-          `${FEATURES}${COMPONENT}/adapters/outbound/persistence/`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/outbound/persistence/`,
           COMPONENT_COMPOSITION,
           BOUNDED_CONTEXT_COMPOSITION,
           COMPOSITION_ROOT,
@@ -305,9 +309,9 @@ module.exports = {
         ],
       },
     },
-    surfaceToFeatureRule("public-site", "public"),
-    surfaceToFeatureRule("client-portal", "client"),
-    surfaceToFeatureRule("coach-portal", "coach"),
+    surfaceToBoundedContextRule("public-site", "public"),
+    surfaceToBoundedContextRule("client-portal", "client"),
+    surfaceToBoundedContextRule("coach-portal", "coach"),
     {
       name: "surface-to-surface",
       comment: "R4: a surface never imports another surface.",
@@ -336,7 +340,7 @@ module.exports = {
           "^apps/platform/src/root\\.server\\.ts$",
           COMPOSITION_ROOT,
           "^apps/platform/src/routes\\.ts$",
-          FEATURES,
+          BOUNDED_CONTEXT,
         ],
       },
       to: {
@@ -353,12 +357,12 @@ module.exports = {
       from: {
         path: APP,
         pathNot: [
-          `${FEATURES}feature-flags/composition\\.server\\.ts$`,
-          `${FEATURES}feature-flags/adapters/outbound/overrides/`,
+          `${BOUNDED_CONTEXT}feature-flags/composition\\.server\\.ts$`,
+          `${BOUNDED_CONTEXT}feature-flags/adapters/outbound/overrides/`,
         ],
       },
       to: {
-        path: `${FEATURES}feature-flags/adapters/outbound/overrides/`,
+        path: `${BOUNDED_CONTEXT}feature-flags/adapters/outbound/overrides/`,
       },
     },
     {
@@ -369,13 +373,13 @@ module.exports = {
       from: {
         path: APP,
         pathNot: [
-          `${FEATURES}${COMPONENT}/(adapters/inbound/http|ui)/`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/(adapters/inbound/http|ui)/`,
           COMPONENT_COMPOSITION,
           BOUNDED_CONTEXT_COMPOSITION,
           BOUNDED_CONTEXT_REQUEST_CONTEXT,
         ],
       },
-      to: { path: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}` },
+      to: { path: `${BOUNDED_CONTEXT}${COMPONENT}/${REQUEST_KEYS}` },
     },
     {
       name: "composition-only-from-above",
@@ -422,9 +426,9 @@ module.exports = {
         path: BOUNDED_CONTEXTS_ROOT,
         pathNot: [
           BOUNDED_CONTEXT_COMPOSITION,
-          `${FEATURES}routes\\.ts$`,
+          `${BOUNDED_CONTEXT}routes\\.ts$`,
           BOUNDED_CONTEXT_PUBLIC,
-          `${FEATURES}${COMPONENT}/config\\.server\\.ts$`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/config\\.server\\.ts$`,
         ],
       },
     },
@@ -464,23 +468,23 @@ module.exports = {
       },
     },
     {
-      name: "features-never-reach-server",
+      name: "bounded-contexts-never-reach-composition-root",
       comment:
-        "Features and the composition root stay acyclic: a feature imports nothing under composition-root/.",
+        "The bounded contexts and the composition root stay acyclic: a bounded context imports nothing under composition-root/.",
       severity: "error",
-      from: { path: FEATURES },
+      from: { path: BOUNDED_CONTEXT },
       to: { path: COMPOSITION_ROOT },
     },
     {
       name: "clerk-confined",
       comment:
-        "Clerk stays behind the accounts feature, the app root modules, the identity adapter and the test harnesses: nothing else names @clerk/*.",
+        "Clerk stays behind the accounts component, the app root modules, the clients identity adapter and the test harnesses: nothing else names @clerk/*.",
       severity: "error",
       from: {
         pathNot: [
-          `${FEATURES}accounts/`,
+          `${BOUNDED_CONTEXT}accounts/`,
           "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
-          `${FEATURES}clients/adapters/outbound/persistence/identity/`,
+          `${BOUNDED_CONTEXT}clients/adapters/outbound/identity/`,
           "^apps/platform/e2e/",
           "^apps/platform/integration-test-config/",
           "^lighthouserc\\.cjs$",
@@ -495,7 +499,7 @@ module.exports = {
       severity: "error",
       from: {
         pathNot: [
-          `${FEATURES}coaching-sales/adapters/outbound/payments/stripe/`,
+          `${BOUNDED_CONTEXT}coaching-sales/adapters/outbound/payments/stripe/`,
         ],
       },
       to: { path: "(^|node_modules/)stripe(/|$)" },
@@ -523,7 +527,7 @@ module.exports = {
       severity: "error",
       from: {
         pathNot: [
-          `${FEATURES}nutrition-library/ui/coach/recipes/recipe-builder(-sections)?\\.tsx$`,
+          `${BOUNDED_CONTEXT}nutrition-library/ui/coach/recipes/recipe-builder(-sections)?\\.tsx$`,
         ],
       },
       to: { path: "(^|/)react-dnd(-touch-backend)?(/|$)" },
@@ -561,9 +565,9 @@ module.exports = {
       comment:
         "An inbound adapter (controller, route, facade) never imports its component's persistence or email adapters; the composition hands them in through ports. A provider adapter's vocabulary under adapters/outbound/<provider>/ stays readable.",
       severity: "error",
-      from: { path: `${FEATURES}${COMPONENT}/adapters/inbound/` },
+      from: { path: `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/` },
       to: {
-        path: `${FEATURES}${COMPONENT}/adapters/outbound/(persistence|email)/`,
+        path: `${BOUNDED_CONTEXT}${COMPONENT}/adapters/outbound/(persistence|email)/`,
       },
     },
     {
@@ -571,16 +575,16 @@ module.exports = {
       comment:
         "A component's adapters/inbound/ never imports any component's ui/: what a route module's clientAction shares with the browser half lives in public/ or a shared browser entry.",
       severity: "error",
-      from: { path: `${FEATURES}${COMPONENT}/adapters/inbound/` },
-      to: { path: `${FEATURES}${COMPONENT}/ui/` },
+      from: { path: `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/` },
+      to: { path: `${BOUNDED_CONTEXT}${COMPONENT}/ui/` },
     },
     {
       name: "feature-shared-ui-never-imports-actor-ui",
       comment:
         "A component's ui/shared/ serves every actor UI of that component, so it never imports the component's own ui/public/, ui/client/ or ui/coach/.",
       severity: "error",
-      from: { path: `${FEATURES}(${COMPONENT})/ui/shared/` },
-      to: { path: `${FEATURES}$1/ui/(public|client|coach)/` },
+      from: { path: `${BOUNDED_CONTEXT}(${COMPONENT})/ui/shared/` },
+      to: { path: `${BOUNDED_CONTEXT}$1/ui/(public|client|coach)/` },
     },
     {
       name: "root-registry-to-server",
@@ -608,10 +612,10 @@ module.exports = {
       comment:
         "R6: a component's ui/** never imports its adapters/, composition.server.ts or config.server.ts, except its request-context keys in adapters/inbound/http/: a registered page's loader reads its component key there, and the .server suffix keeps that key out of the client build.",
       severity: "error",
-      from: { path: `${FEATURES}${COMPONENT}/ui/` },
+      from: { path: `${BOUNDED_CONTEXT}${COMPONENT}/ui/` },
       to: {
-        path: `${FEATURES}${COMPONENT}/(adapters/|(composition|config)\\.server\\.ts$)`,
-        pathNot: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
+        path: `${BOUNDED_CONTEXT}${COMPONENT}/(adapters/|(composition|config)\\.server\\.ts$)`,
+        pathNot: `${BOUNDED_CONTEXT}${COMPONENT}/${REQUEST_KEYS}`,
       },
     },
     {
@@ -621,7 +625,7 @@ module.exports = {
       severity: "error",
       from: {
         path: [
-          `${FEATURES}${COMPONENT}/public/`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/public/`,
           BOUNDED_CONTEXT_PUBLIC,
           "\\.server\\.tsx?$",
         ],
@@ -636,10 +640,10 @@ module.exports = {
       from: { path: ROUTE_MODULES },
       to: {
         path: [
-          `${FEATURES}${COMPONENT}/adapters/(outbound|inbound/facades)/`,
-          `${FEATURES}${COMPONENT}/adapters/inbound/http/.*(?<!context)\\.server\\.tsx?$`,
-          `${FEATURES}${COMPONENT}/adapters/inbound/http/management/management-auth/`,
-          `${FEATURES}${COMPONENT}/(composition|config)\\.server\\.ts$`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/(outbound|inbound/facades)/`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/http/.*(?<!context)\\.server\\.tsx?$`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/http/management/management-auth/`,
+          `${BOUNDED_CONTEXT}${COMPONENT}/(composition|config)\\.server\\.ts$`,
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
           "^apps/platform/src/shared/(email|images|documents|private-files|tokens|submission-checks/bot-detection)/",
@@ -654,7 +658,7 @@ module.exports = {
         "A registered route module or its .server half never names a component's domain/, not even as a type.",
       severity: "error",
       from: { path: ROUTE_MODULES },
-      to: { path: `${FEATURES}${COMPONENT}/domain/` },
+      to: { path: `${BOUNDED_CONTEXT}${COMPONENT}/domain/` },
     },
     {
       name: "domain-imports-only-itself",

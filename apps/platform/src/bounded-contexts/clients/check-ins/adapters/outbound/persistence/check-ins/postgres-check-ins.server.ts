@@ -11,17 +11,7 @@ import {
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type { DatabaseClient } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
-import {
-  and,
-  asc,
-  eq,
-  gt,
-  gte,
-  inArray,
-  isNull,
-  lte,
-  type SQL,
-} from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, isNull } from "drizzle-orm";
 
 import {
   checkInOf,
@@ -184,21 +174,7 @@ export class PostgresCheckIns implements CheckIns {
     };
   }
 
-  endCoaching(end: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
-    return this.endCoachingUnderClientLock(end);
-  }
-
-  private async listWhere(condition: SQL | undefined): Promise<CheckIn[]> {
-    const rows = await this.executor
-      .select()
-      .from(checkInsTable)
-      .where(condition)
-      .orderBy(asc(checkInsTable.startsAt));
-
-    return rows.map((row) => checkInOf(row));
-  }
-
-  private async endCoachingUnderClientLock({
+  async endCoaching({
     clientId,
     endsAt,
     at,

@@ -26,7 +26,7 @@ import type { ProductEmail } from "~/shared/email/index.server";
 import { AssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/booking/assessment-calls-controller.server";
 import { CoachAssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/coach/coach-assessment-calls-controller.server";
 import { RandomAssessmentCallIds } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/random-assessment-call-ids.server";
-import { PostgresAssessmentCallRepository } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/repository.server";
+import { PostgresAssessmentCallRepository } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/assessment-call-reservations-repository.server";
 import { CoachScheduleAvailability } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/coach-schedule/coach-availability.server";
 import { OperationsWaitlistMode } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/operations/waitlist-mode.server";
 import { createClientCallsFacade } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/facades/client-calls.server";

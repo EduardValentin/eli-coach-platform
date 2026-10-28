@@ -8,7 +8,7 @@ export class SchedulingEndedCalls implements EndedCalls {
   constructor(private readonly calls: EndedCallsFacade) {}
 
   async findById(callId: string): Promise<SalesCall | null> {
-    const call = await this.calls.endedCall(callId);
+    const call = await this.calls.callOf(callId);
 
     if (!call) {
       return null;

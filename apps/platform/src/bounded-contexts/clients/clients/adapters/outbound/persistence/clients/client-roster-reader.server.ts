@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "~/shared/database";
+import type { DatabaseClient, DatabaseExecutor } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
 import type {
   ClientRoster,
@@ -33,8 +33,8 @@ export class PostgresClientRoster implements ClientRoster {
   }
 }
 
-function selectRoster(database: DatabaseClient) {
-  return database
+function selectRoster(executor: DatabaseExecutor) {
+  return executor
     .select({
       clientId: clientsTable.id,
       firstName: clientsTable.firstName,

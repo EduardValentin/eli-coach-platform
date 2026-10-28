@@ -24,16 +24,10 @@ type AssessmentCallsFacades = ReturnType<
   typeof composeAssessmentCallsFeature
 >["facades"];
 
-export type SchedulingHandles = Parameters<
-  typeof composeCoachScheduleFeature
->[0] &
+type SchedulingHandles = Parameters<typeof composeCoachScheduleFeature>[0] &
   Omit<AssessmentCallsFeatureHandles, keyof CoachScheduleHandles>;
 
 export type SchedulingComposition = {
-  components: {
-    assessmentCalls: AssessmentCallsFeature;
-    coachSchedule: CoachScheduleFeature;
-  };
   facades: CoachScheduleFacades & AssessmentCallsFacades;
   middleware: MiddlewareFunction<Response>;
 };
@@ -48,10 +42,6 @@ export function composeScheduling(
   });
 
   return {
-    components: {
-      assessmentCalls: assessmentCalls.feature,
-      coachSchedule: coachSchedule.feature,
-    },
     facades: { ...coachSchedule.facades, ...assessmentCalls.facades },
     middleware: ({ context }, next) => {
       context.set(coachScheduleContext, coachSchedule.feature);

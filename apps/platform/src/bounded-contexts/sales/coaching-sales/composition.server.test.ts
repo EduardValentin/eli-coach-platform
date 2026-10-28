@@ -240,7 +240,7 @@ function createHandles(
     },
     appBasePath: "/eli-coach-platform",
     emailAcceptance: createEmailAcceptance("allowed"),
-    endedCalls: { endedCall: async () => null },
+    endedCalls: { callOf: async () => null },
     clientLookup: {
       identityOf: async () => null,
       journeyStepOf: async () => null,

@@ -1,4 +1,4 @@
-import { weekdayNamed } from "../client-settings";
+import { weekdayFromInput } from "../client-settings";
 
 import type { ClientGender } from "./client-gender";
 import {
@@ -128,7 +128,7 @@ function preferencesOf(lifestyle: OnboardingFormAnswers): ClientPreferences {
   const checkInDay = textOf(lifestyle.checkInDay);
 
   return {
-    preferredCheckInWeekday: checkInDay ? weekdayNamed(checkInDay) : null,
+    preferredCheckInWeekday: checkInDay ? weekdayFromInput(checkInDay) : null,
     preferredChannel: mappedAnswer(
       CHANNELS_BY_ANSWER,
       lifestyle.checkInChannel,

@@ -7,10 +7,10 @@ import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-c
 type MiddlewareArgs = Parameters<MiddlewareFunction<Response>>[0];
 type MiddlewareNext = Parameters<MiddlewareFunction<Response>>[1];
 
-export function createFeatureContextMiddleware(
+export function createBoundedContextMiddleware(
   getContainer: () => PlatformContainer,
 ): MiddlewareFunction<Response> {
-  return async function provideFeatureContexts(args, next) {
+  return async function provideBoundedContexts(args, next) {
     const container = getContainer();
 
     args.context.set(platformContext, {
@@ -25,7 +25,6 @@ export function createFeatureContextMiddleware(
     return runInOrder(
       [
         container.operations.middleware,
-        container.legal.middleware,
         container.access.middleware,
         container.scheduling.middleware,
         container.clients.middleware,

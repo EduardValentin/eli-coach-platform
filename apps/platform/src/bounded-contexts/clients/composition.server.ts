@@ -92,14 +92,6 @@ type ClientsHandles = Omit<ComponentHandles, ConstructedHere> & {
 };
 
 export type ClientsComposition = {
-  components: {
-    checkIns: CheckInsFeature;
-    clientOnboarding: ClientOnboardingFeature;
-    clientProfile: ClientProfileFeature;
-    clientResources: ClientResourcesFeature;
-    clients: ClientsFeature;
-    notifications: NotificationsFeature;
-  };
   facades: ClientsFacades & ClientProfileFacades & CheckInsFacades;
   middleware: MiddlewareFunction<Response>;
   portalStandingMiddleware: MiddlewareFunction<Response>;
@@ -141,14 +133,6 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
   });
 
   return {
-    components: {
-      checkIns: checkIns.feature,
-      clientOnboarding,
-      clientProfile: clientProfile.feature,
-      clientResources,
-      clients: clients.feature,
-      notifications,
-    },
     facades: {
       ...clients.facades,
       ...clientProfile.facades,

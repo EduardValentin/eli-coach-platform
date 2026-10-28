@@ -30,10 +30,6 @@ type ProgramsHandles = Omit<
 };
 
 export type ProgramsComposition = {
-  components: {
-    exerciseLibrary: ExerciseLibraryFeature;
-    nutritionLibrary: NutritionLibraryFeature;
-  };
   middleware: MiddlewareFunction<Response>;
 };
 
@@ -48,7 +44,6 @@ export function composePrograms(handles: ProgramsHandles): ProgramsComposition {
   });
 
   return {
-    components: { exerciseLibrary, nutritionLibrary },
     middleware: ({ context }, next) => {
       context.set(exerciseLibraryContext, exerciseLibrary);
       context.set(nutritionLibraryContext, nutritionLibrary);

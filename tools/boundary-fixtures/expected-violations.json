@@ -139,7 +139,7 @@
     "composition-only-from-above"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/reaches-composition-root.server.ts": [
-    "features-never-reach-server"
+    "bounded-contexts-never-reach-composition-root"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/reads-own-domain.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/reads-request-key.server.ts": [
@@ -180,7 +180,7 @@
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/composition-root.tsx": [
     "composition-only-from-above-container",
-    "features-never-reach-server"
+    "bounded-contexts-never-reach-composition-root"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/design-system-in-browser-ui.tsx": [],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/reads-request-key.server.ts": [],

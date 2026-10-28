@@ -26,21 +26,21 @@ export function createAccountResolutionMiddleware(
 ): MiddlewareFunction<Response> {
   return async function resolveAccount(args, next) {
     const { context, url } = args;
-    const resolveSession = (session: ResolvedSession) =>
+    const publishSession = (session: ResolvedSession) =>
       context.set(
         accessContext,
         createAccessRequestContext(session, accounts.portal, url),
       );
 
     if (targetsSignInFailedPage(url, accounts.portal.appBasePath)) {
-      resolveSession({ kind: "anonymous" });
+      publishSession({ kind: "anonymous" });
       return next();
     }
 
     const auth = await getAuth(args);
 
     if (!auth.userId) {
-      resolveSession({ kind: "anonymous" });
+      publishSession({ kind: "anonymous" });
       return next();
     }
 
@@ -50,7 +50,7 @@ export function createAccountResolutionMiddleware(
       const result = await accounts.provisioning.execute(auth.userId);
 
       if (result.outcome === "active") {
-        resolveSession({ account: result.account, kind: "authenticated" });
+        publishSession({ account: result.account, kind: "authenticated" });
         return next();
       }
 
@@ -73,7 +73,7 @@ export function createAccountResolutionMiddleware(
       }
     }
 
-    resolveSession({ kind: "anonymous" });
+    publishSession({ kind: "anonymous" });
     // React Router prefixes the router's basename onto a redirect thrown from
     // a loader, but not onto one thrown from middleware — so under a base path
     // a bare target would send the visitor outside the application entirely.

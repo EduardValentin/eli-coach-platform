@@ -4,9 +4,18 @@ import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { RouterContextProvider } from "react-router";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
-import { createPlatformContainer } from "./container.server";
+import {
+  coachingSalesContext,
+  waitlistContext,
+} from "~/bounded-contexts/sales/public/request-context";
+
+import {
+  createPlatformContainer,
+  type PlatformContainer,
+} from "./container.server";
 import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 const storeAssetRoot = mkdtempSync(
@@ -35,6 +44,21 @@ function createRuntimeEnvironmentWithoutDatabase() {
     EXERCISE_VIDEO_ROOT: exerciseVideoRoot,
     RECIPE_PHOTO_ROOT: recipePhotoRoot,
   });
+}
+
+async function salesContextOf(
+  container: PlatformContainer,
+): Promise<RouterContextProvider> {
+  const context = new RouterContextProvider();
+  await container.sales.middleware(
+    {
+      context,
+      request: new Request("https://eli.example/"),
+      params: {},
+    } as never,
+    async () => new Response(null),
+  );
+  return context;
 }
 
 describe("platform container", () => {
@@ -115,10 +139,10 @@ describe("platform container", () => {
     const container = createPlatformContainer({
       runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
     });
+    const context = await salesContextOf(container);
 
     // act
-    const waitlist =
-      await container.sales.components.waitlist.waitlist.getWaitlist();
+    const waitlist = await context.get(waitlistContext).waitlist.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({
@@ -133,10 +157,12 @@ describe("platform container", () => {
     const container = createPlatformContainer({
       runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
     });
+    const context = await salesContextOf(container);
 
     // act
-    const confirmation =
-      container.sales.components.coachingSales.checkouts.loadConfirmation(
+    const confirmation = context
+      .get(coachingSalesContext)
+      .checkouts.loadConfirmation(
         createRequestArgs({
           request: new Request(
             "https://eli.example/checkout/complete?session=cs_test_1",

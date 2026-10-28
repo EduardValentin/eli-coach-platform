@@ -13,7 +13,11 @@ type PortalStandingReading = Awaited<
 export const clientPortalStandingMiddleware: MiddlewareFunction<
   Response
 > = async ({ context }, next) => {
-  const reading = await readSignedInClientStanding(context);
+  const reading =
+    (await readClientStanding(context)) ??
+    ((await linkAcceptedInvitation(context))
+      ? await readClientStanding(context)
+      : null);
 
   context.set(clientJourneyContext, reading?.journey.toSnapshot() ?? null);
   context.set(
@@ -24,27 +28,40 @@ export const clientPortalStandingMiddleware: MiddlewareFunction<
   return next();
 };
 
-async function readSignedInClientStanding(
+async function readClientStanding(
   context: Readonly<RouterContextProvider>,
 ): Promise<PortalStandingReading> {
+  const authSubjectId = signedInClientSubjectOf(context);
+
+  return authSubjectId === null
+    ? null
+    : context
+        .get(clientsContext)
+        .readClientPortalStanding.execute(authSubjectId);
+}
+
+async function linkAcceptedInvitation(
+  context: Readonly<RouterContextProvider>,
+): Promise<boolean> {
+  const authSubjectId = signedInClientSubjectOf(context);
+
+  if (authSubjectId === null) {
+    return false;
+  }
+
+  const linked = await context
+    .get(clientsContext)
+    .acceptInvitation.execute({ authSubjectId });
+
+  return linked === "accepted";
+}
+
+function signedInClientSubjectOf(
+  context: Readonly<RouterContextProvider>,
+): string | null {
   const session = context.get(accessContext).session;
 
-  if (session.kind === "anonymous" || session.account.role !== "CLIENT") {
-    return null;
-  }
-
-  const clients = context.get(clientsContext);
-  const authSubjectId = session.account.authSubjectId;
-  const standing =
-    await clients.readClientPortalStanding.execute(authSubjectId);
-
-  if (standing) {
-    return standing;
-  }
-
-  const linked = await clients.acceptInvitation.execute({ authSubjectId });
-
-  return linked === "accepted"
-    ? clients.readClientPortalStanding.execute(authSubjectId)
-    : null;
+  return session.kind === "anonymous" || session.account.role !== "CLIENT"
+    ? null
+    : session.account.authSubjectId;
 }

@@ -9,7 +9,7 @@ import { accessContext } from "~/bounded-contexts/access/public/session";
 import { SignInFailedPage } from "~/bounded-contexts/access/accounts/ui/public/sign-in-failed-page";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 
-export type SignInFailedLoaderData = {
+type SignInFailedLoaderData = {
   storePath: string;
 };
 
