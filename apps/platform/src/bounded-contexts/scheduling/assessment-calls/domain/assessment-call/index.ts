@@ -49,3 +49,4 @@ export {
   type VisitorGender,
   type VisitorPrimaryGoal,
 } from "./visitor-profile";
+export { type WaitlistMode } from "./waitlist-mode";

@@ -91,19 +91,15 @@ function createIncidents(): CoachingSalesIncidents {
 
 function openSalesWindow(): CoachingSalesWindow {
   return new CoachingSalesWindow({
-    featureFlags: {
-      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
-    },
     incidents: createIncidents(),
+    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(false) },
   });
 }
 
 function closedSalesWindow(): CoachingSalesWindow {
   return new CoachingSalesWindow({
-    featureFlags: {
-      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
-    },
     incidents: createIncidents(),
+    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(true) },
   });
 }
 

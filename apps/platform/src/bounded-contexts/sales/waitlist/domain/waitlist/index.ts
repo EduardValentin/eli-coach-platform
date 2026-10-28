@@ -1,3 +1,4 @@
+export { type ConsentVersions } from "./consent-versions";
 export { GetWaitlistUseCase } from "./get-waitlist-use-case";
 export {
   JoinWaitlistUseCase,
@@ -22,3 +23,4 @@ export {
   type WaitlistEntries,
 } from "./waitlist-entries";
 export type { WaitlistIncidents } from "./waitlist-incidents";
+export { type WaitlistMode } from "./waitlist-mode";

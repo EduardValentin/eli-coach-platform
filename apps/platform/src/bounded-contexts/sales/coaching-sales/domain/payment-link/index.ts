@@ -21,3 +21,4 @@ export {
 export { ReadCallSalesStatesUseCase } from "./read-call-sales-states-use-case";
 export { ResolvePaymentLinkUseCase } from "./resolve-payment-link-use-case";
 export { SendPaymentLinkUseCase } from "./send-payment-link-use-case";
+export { type WaitlistMode } from "./waitlist-mode";

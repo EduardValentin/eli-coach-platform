@@ -151,9 +151,11 @@ function createUseCase(options: {
       catalog: options.catalog ?? createCatalog(),
       clock: { now: () => fixedNow },
       consentVersions: {
-        marketingConsentVersion: "1.0",
-        privacyPolicyVersion: "2.0",
-        termsVersion: "1.0",
+        current: () => ({
+          marketingConsentVersion: "1.0",
+          privacyPolicyVersion: "2.0",
+          termsVersion: "1.0",
+        }),
       },
       delivery,
       emailAcceptance: createEmailAcceptance(
@@ -277,9 +279,11 @@ describe("AcquireProductsUseCase", () => {
       catalog,
       clock: { now: () => fixedNow },
       consentVersions: {
-        marketingConsentVersion: "1.0",
-        privacyPolicyVersion: "2.0",
-        termsVersion: "1.0",
+        current: () => ({
+          marketingConsentVersion: "1.0",
+          privacyPolicyVersion: "2.0",
+          termsVersion: "1.0",
+        }),
       },
       delivery,
       emailAcceptance: createEmailAcceptance("allowed"),
@@ -468,9 +472,11 @@ describe("AcquireProductsUseCase", () => {
       catalog: createCatalog([]),
       clock: { now: () => fixedNow },
       consentVersions: {
-        marketingConsentVersion: "2.0",
-        privacyPolicyVersion: "3.0",
-        termsVersion: "2.0",
+        current: () => ({
+          marketingConsentVersion: "2.0",
+          privacyPolicyVersion: "3.0",
+          termsVersion: "2.0",
+        }),
       },
       delivery,
       emailAcceptance: createEmailAcceptance("allowed"),
@@ -521,9 +527,11 @@ describe("AcquireProductsUseCase", () => {
       catalog,
       clock: { now: () => fixedNow },
       consentVersions: {
-        marketingConsentVersion: "1.0",
-        privacyPolicyVersion: "2.0",
-        termsVersion: "1.0",
+        current: () => ({
+          marketingConsentVersion: "1.0",
+          privacyPolicyVersion: "2.0",
+          termsVersion: "1.0",
+        }),
       },
       delivery,
       emailAcceptance: createEmailAcceptance("allowed"),
@@ -557,9 +565,11 @@ describe("AcquireProductsUseCase", () => {
       catalog: createCatalog(),
       clock: { now: () => fixedNow },
       consentVersions: {
-        marketingConsentVersion: "1.0",
-        privacyPolicyVersion: "2.0",
-        termsVersion: "1.0",
+        current: () => ({
+          marketingConsentVersion: "1.0",
+          privacyPolicyVersion: "2.0",
+          termsVersion: "1.0",
+        }),
       },
       delivery,
       emailAcceptance: createEmailAcceptance("allowed"),

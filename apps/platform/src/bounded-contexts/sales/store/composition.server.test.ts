@@ -64,6 +64,7 @@ describe("composeStoreFeature", () => {
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
     });
 
     // act
@@ -89,6 +90,7 @@ describe("composeStoreFeature", () => {
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
     });
     const formData = new FormData();
     formData.set("token", "unit-test-grant-token");
@@ -121,6 +123,7 @@ describe("composeStoreFeature", () => {
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
     });
     const formData = new FormData();
     formData.set("email", "woman+guides@example.com");

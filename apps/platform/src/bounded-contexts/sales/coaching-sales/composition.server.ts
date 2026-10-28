@@ -5,10 +5,8 @@ import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissi
 import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup";
 import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile";
 import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods";
-import {
-  ReadPricingTiersUseCase,
-  type PricingEligibility,
-} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import { ReadPricingTiersUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import type { PricingEligibilitySource } from "~/bounded-contexts/sales/waitlist/public/pricing-eligibility";
 import {
   CancelSubscriptionUseCase,
   MirrorPaymentCardUseCase,
@@ -27,7 +25,7 @@ import {
   type PaymentCustomerCards,
   type PaymentSubscriptions,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/feature-flags";
 import {
   CoachingSalesWindow,
   OpenBundlePageUseCase,
@@ -69,6 +67,8 @@ import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sal
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createCoachingSalesIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/logging/coaching-sales-incidents.server";
 import { SchedulingEndedCalls } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/scheduling/ended-calls.server";
+import { OperationsWaitlistMode } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/operations/waitlist-mode.server";
+import { WaitlistPricingEligibility } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/waitlist/pricing-eligibility.server";
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
@@ -86,7 +86,7 @@ export type CoachingSalesFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
-  featureFlags: FeatureFlagReader;
+  featureFlags: FeatureFlagsFacade;
   logger: Logger;
   linkTokens: {
     generator: PaymentLinkTokenGenerator;
@@ -96,7 +96,7 @@ export type CoachingSalesFeatureHandles = {
   paymentCustomerCards: PaymentCustomerCards;
   paymentEvents: PaymentEvents;
   paymentSubscriptions: PaymentSubscriptions;
-  pricingEligibility: PricingEligibility;
+  pricingEligibility: PricingEligibilitySource;
   productEmail: ProductEmail;
   publicAppUrl: string;
   webhookSigningSecret: string | undefined;
@@ -127,17 +127,20 @@ export function composeCoachingSalesFeature(
   const paymentCards = new PostgresPaymentCards({ clock, database });
   const { generator: tokenGenerator, hasher: tokenHasher } = handles.linkTokens;
   const salesWindow = new CoachingSalesWindow({
-    featureFlags: handles.featureFlags,
     incidents,
+    waitlistMode: new OperationsWaitlistMode(handles.featureFlags),
   });
   const calls = new SchedulingEndedCalls(handles.endedCalls);
+  const pricingEligibility = new WaitlistPricingEligibility(
+    handles.pricingEligibility,
+  );
   const paymentLinkPorts = {
     calls,
     callSalesStates: purchases,
     clock,
     emailAcceptance: handles.emailAcceptance,
     paymentLinks,
-    pricingEligibility: handles.pricingEligibility,
+    pricingEligibility,
     salesWindow,
   };
 
@@ -205,9 +208,7 @@ export function composeCoachingSalesFeature(
     readCallSalesStates: new ReadCallSalesStatesUseCase({
       callSalesStates: purchases,
     }),
-    readPricingTiers: new ReadPricingTiersUseCase({
-      pricingEligibility: handles.pricingEligibility,
-    }),
+    readPricingTiers: new ReadPricingTiersUseCase({ pricingEligibility }),
     readCheckoutConfirmation: new ReadCheckoutConfirmationUseCase({
       paymentCheckout: handles.paymentCheckout,
       salesWindow,

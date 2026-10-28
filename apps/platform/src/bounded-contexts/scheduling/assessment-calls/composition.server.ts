@@ -17,7 +17,7 @@ import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach
 import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls";
 import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls";
 import type { EmailAcceptance } from "~/bounded-contexts/scheduling/assessment-calls/domain/email-acceptance";
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/feature-flags";
 import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
@@ -28,6 +28,7 @@ import { CoachAssessmentCallsController } from "~/bounded-contexts/scheduling/as
 import { RandomAssessmentCallIds } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/random-assessment-call-ids.server";
 import { PostgresAssessmentCallRepository } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/repository.server";
 import { CoachScheduleAvailability } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/coach-schedule/coach-availability.server";
+import { OperationsWaitlistMode } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/operations/waitlist-mode.server";
 import { createClientCallsFacade } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/facades/client-calls.server";
 import { createEndedCallsFacade } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/facades/ended-calls.server";
 import { createAssessmentCallNotifications } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/email/create-assessment-call-notifications.server";
@@ -50,7 +51,7 @@ export type AssessmentCallsFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
-  featureFlags: FeatureFlagReader;
+  featureFlags: FeatureFlagsFacade;
   logger: Logger;
   meetingRoom: CoachMeetingRoomSource;
   openings: CoachOpenings;
@@ -69,8 +70,8 @@ export function composeAssessmentCallsFeature(
   const unitOfWork = createUnitOfWork(handles.database);
   const reservations = new PostgresAssessmentCallRepository(handles.database);
   const bookingWindow = new AssessmentCallBookingWindow({
-    featureFlags: handles.featureFlags,
     incidents,
+    waitlistMode: new OperationsWaitlistMode(handles.featureFlags),
   });
 
   return {

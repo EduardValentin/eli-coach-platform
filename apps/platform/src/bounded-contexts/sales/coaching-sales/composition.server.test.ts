@@ -1,7 +1,7 @@
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
 import type { PaymentCheckout } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagSetDto } from "~/bounded-contexts/operations/public/feature-flags";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
@@ -42,7 +42,7 @@ describe("composeCoachingSalesFeature", () => {
     const { feature } = composeCoachingSalesFeature({
       ...createHandles({}),
       featureFlags: {
-        execute: async () => {
+        read: async () => {
           throw new Error("database down");
         },
       },
@@ -229,7 +229,7 @@ async function openCheckoutSession(
 }
 
 function createHandles(
-  featureFlags: FeatureFlagSet,
+  featureFlags: FeatureFlagSetDto,
 ): CoachingSalesFeatureHandles {
   const payments = createPayments({ PAYMENTS_PROVIDER: "memory" });
 
@@ -257,7 +257,7 @@ function createHandles(
     },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
-    featureFlags: { execute: async () => featureFlags },
+    featureFlags: { read: async () => featureFlags },
     linkTokens: {
       generator: createTokenGenerator(),
       hasher: createTokenHasher(),

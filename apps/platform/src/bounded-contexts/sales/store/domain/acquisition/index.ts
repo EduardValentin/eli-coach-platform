@@ -4,6 +4,10 @@ export {
 } from "./acquire-products-use-case";
 export type { AcquisitionIncidents } from "./acquisition-incidents";
 export {
+  type ConsentVersions,
+  type StoreConsentVersions,
+} from "./consent-versions";
+export {
   evaluateDeliveryLimit,
   type StoreDeliveryLimitWindow,
 } from "./acquisition";

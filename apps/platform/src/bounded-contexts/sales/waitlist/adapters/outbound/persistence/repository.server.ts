@@ -1,11 +1,8 @@
-import type {
-  PriceTier,
-  PricingEligibility,
-} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import {
   WAITLIST_REDUCED_PRICING_CAP,
   type WaitlistEntries,
   type WaitlistOffer,
+  type WaitlistSignupPricing,
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
 } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
@@ -25,7 +22,6 @@ type RegularPricingSignupOptions = Parameters<
   WaitlistEntries["registerRegularPricingSignup"]
 >[0];
 type SignupOptions = ReducedPricingSignupOptions | RegularPricingSignupOptions;
-type EligibleEmail = Parameters<PricingEligibility["tierForEmail"]>[0];
 
 type EntryPlacement =
   | { pricing: "reduced"; reducedSlot: number }
@@ -39,16 +35,14 @@ type FreeReducedSlotRow = {
   reducedSlot: number;
 };
 
-export class PostgresWaitlistRepository
-  implements WaitlistEntries, PricingEligibility
-{
+export class PostgresWaitlistRepository implements WaitlistEntries {
   constructor(private readonly database: DatabaseClient) {}
 
   private get executor() {
     return executorOf(this.database);
   }
 
-  async tierForEmail(email: EligibleEmail): Promise<PriceTier> {
+  async tierForEmail(email: string): Promise<WaitlistSignupPricing> {
     const reducedAllocations = await this.executor
       .select({ id: waitlistEntriesTable.id })
       .from(waitlistEntriesTable)
@@ -64,8 +58,8 @@ export class PostgresWaitlistRepository
   }
 
   async tiersForEmails(
-    emails: readonly EligibleEmail[],
-  ): Promise<ReadonlyMap<string, PriceTier>> {
+    emails: readonly string[],
+  ): Promise<ReadonlyMap<string, WaitlistSignupPricing>> {
     if (emails.length === 0) {
       return new Map();
     }

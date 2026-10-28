@@ -1,8 +1,8 @@
 import type { EmailAcceptance } from "../email-acceptance";
 
+import type { ConsentVersions } from "./consent-versions";
 import type {
   Waitlist,
-  WaitlistConsentVersions,
   WaitlistOffer,
   WaitlistSignupPricing,
 } from "./waitlist";
@@ -20,7 +20,7 @@ export type JoinWaitlistResult = {
 
 type JoinWaitlistUseCaseOptions = {
   confirmation: WaitlistConfirmation;
-  consentVersions: WaitlistConsentVersions;
+  consentVersions: ConsentVersions;
   emailAcceptance: EmailAcceptance;
   incidents: WaitlistIncidents;
   waitlist: Waitlist;
@@ -41,7 +41,7 @@ export class JoinWaitlistUseCase {
 
     const reducedPricingSignup =
       await this.options.waitlistEntries.registerReducedPricingSignup({
-        consentVersions: this.options.consentVersions,
+        consentVersions: this.options.consentVersions.current(),
         normalizedEmail,
         offer: this.options.waitlist.offer,
       });
@@ -70,7 +70,7 @@ export class JoinWaitlistUseCase {
   ): Promise<JoinWaitlistResult> {
     const registration =
       await this.options.waitlistEntries.registerRegularPricingSignup({
-        consentVersions: this.options.consentVersions,
+        consentVersions: this.options.consentVersions.current(),
         normalizedEmail,
         offer: this.options.waitlist.offer,
       });

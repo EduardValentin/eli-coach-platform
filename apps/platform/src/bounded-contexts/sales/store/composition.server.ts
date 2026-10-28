@@ -13,11 +13,7 @@ import {
   RetireProductUseCase,
 } from "~/bounded-contexts/sales/store/domain/product";
 import type { Clock } from "~/bounded-contexts/sales/store/domain/clock";
-import {
-  PRIVACY_POLICY_VERSION,
-  STORE_MARKETING_CONSENT_VERSION,
-  WEBSITE_AND_STORE_TERMS_DOCUMENT,
-} from "~/bounded-contexts/legal/public";
+import type { TermsFacade } from "~/bounded-contexts/legal/public";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import type { ProductEmail } from "~/shared/email/index.server";
 import type {
@@ -46,6 +42,7 @@ import { createProductDelivery } from "~/bounded-contexts/sales/store/adapters/o
 import type { StoreFeature } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createStoreIncidents } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents.server";
+import { LegalConsentVersions } from "~/bounded-contexts/sales/store/adapters/outbound/legal/consent-versions.server";
 
 export type StoreFeatureHandles = {
   appBasePath: string;
@@ -62,12 +59,7 @@ export type StoreFeatureHandles = {
   productEmail: ProductEmail;
   publicAppUrl: string;
   storeAssetRoot: string;
-};
-
-const STORE_CONSENT_VERSIONS = {
-  marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
-  privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-  termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
+  terms: TermsFacade;
 };
 
 export function composeStoreFeature(
@@ -92,7 +84,7 @@ export function composeStoreFeature(
     acquisitions: new PostgresStoreAcquisitionRepository(handles.database),
     catalog: catalogRepository,
     clock: handles.clock,
-    consentVersions: STORE_CONSENT_VERSIONS,
+    consentVersions: new LegalConsentVersions(handles.terms),
     delivery: createProductDelivery(handles.productEmail, {
       appBasePath: handles.appBasePath,
       contactEmail: handles.contactEmail,

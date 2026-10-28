@@ -1,35 +1,29 @@
-import {
-  WAITLIST_MODE_FEATURE_FLAG,
-  type FeatureFlagReader,
-  type FeatureFlagSet,
-} from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { Clock } from "../clock";
 
 import { Waitlist, type WaitlistSnapshot } from "./waitlist";
 import type { WaitlistEntries } from "./waitlist-entries";
 import type { WaitlistIncidents } from "./waitlist-incidents";
+import type { WaitlistMode } from "./waitlist-mode";
 
 type GetWaitlistUseCaseOptions = {
   clock: Clock;
-  featureFlags: FeatureFlagReader;
   incidents: WaitlistIncidents;
   waitlist: Waitlist;
   waitlistEntries: WaitlistEntries;
+  waitlistMode: WaitlistMode;
 };
 
 export class GetWaitlistUseCase {
   constructor(private readonly options: GetWaitlistUseCaseOptions) {}
 
   async execute(): Promise<WaitlistSnapshot> {
-    const [featureFlags, reducedPricingSignupCount] = await Promise.all([
-      this.getFeatureFlagsSafely(),
+    const [waitlistMode, reducedPricingSignupCount] = await Promise.all([
+      this.getWaitlistModeSafely(),
       this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
-    const enabled =
-      featureFlags === null ||
-      featureFlags[WAITLIST_MODE_FEATURE_FLAG] === true;
+    const enabled = waitlistMode === null || waitlistMode;
     const availability =
-      featureFlags === null || reducedPricingSignupCount === null
+      waitlistMode === null || reducedPricingSignupCount === null
         ? null
         : this.options.waitlist.availability(reducedPricingSignupCount);
 
@@ -40,9 +34,9 @@ export class GetWaitlistUseCase {
     };
   }
 
-  private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {
+  private async getWaitlistModeSafely(): Promise<boolean | null> {
     try {
-      return await this.options.featureFlags.execute();
+      return await this.options.waitlistMode.isEnabled();
     } catch {
       this.options.incidents.waitlistModeReadFailed();
 

@@ -4,7 +4,7 @@ import {
   CoachAvailability,
   CoachOpenings,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
-import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagSetDto } from "~/bounded-contexts/operations/public/feature-flags";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
@@ -151,7 +151,7 @@ describe("composeAssessmentCallsFeature ended calls facade", () => {
 });
 
 function createHandles(
-  featureFlags: FeatureFlagSet,
+  featureFlags: FeatureFlagSetDto,
 ): AssessmentCallsFeatureHandles {
   return {
     emailAcceptance: createEmailAcceptance("allowed"),
@@ -168,7 +168,7 @@ function createHandles(
     },
     contactEmail: "contact@evoa.fit",
     database: createDatabaseStub(),
-    featureFlags: { execute: async () => featureFlags },
+    featureFlags: { read: async () => featureFlags },
     logger: { error: () => {}, warn: () => {}, info: () => {} },
     meetingRoom: { current: async () => null },
     openings: openingsOver(createBucharestEveningAvailability()),

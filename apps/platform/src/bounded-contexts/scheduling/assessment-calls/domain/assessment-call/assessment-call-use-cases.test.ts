@@ -9,7 +9,6 @@ import {
   createEmailAcceptance,
   type EmailSubaddressPolicy,
 } from "~/shared/submission-checks/email-address";
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 
 import { AssessmentCall } from "./assessment-call";
 import { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
@@ -19,6 +18,7 @@ import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 import type { CoachAvailability } from "./coach-availability";
 import type { CoachTime } from "./coach-time";
 import type { MeetingRoom } from "./meeting-room";
+import type { WaitlistMode } from "./waitlist-mode";
 import { BookAssessmentCallUseCase } from "./book-assessment-call-use-case";
 import {
   ListAssessmentCallsUseCase,
@@ -50,28 +50,24 @@ function createIncidents() {
 }
 
 function createBookingWindow(options: {
-  featureFlags: FeatureFlagReader;
+  waitlistMode: WaitlistMode;
   incidents?: ReturnType<typeof createIncidents>;
 }): AssessmentCallBookingWindow {
   return new AssessmentCallBookingWindow({
-    featureFlags: options.featureFlags,
     incidents: options.incidents ?? createIncidents(),
+    waitlistMode: options.waitlistMode,
   });
 }
 
 function openBookingWindow(): AssessmentCallBookingWindow {
   return createBookingWindow({
-    featureFlags: {
-      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
-    },
+    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(false) },
   });
 }
 
 function closedBookingWindow(): AssessmentCallBookingWindow {
   return createBookingWindow({
-    featureFlags: {
-      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
-    },
+    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(true) },
   });
 }
 
@@ -277,24 +273,11 @@ describe("AssessmentCallBookingWindow", () => {
     expect(open).toBe(true);
   });
 
-  it("opens when no waitlist mode is persisted", async () => {
-    // arrange
-    const bookingWindow = createBookingWindow({
-      featureFlags: { execute: vi.fn().mockResolvedValue({}) },
-    });
-
-    // act
-    const open = await bookingWindow.isOpen();
-
-    // assert
-    expect(open).toBe(true);
-  });
-
   it("stays closed and records the incident when the mode cannot be read", async () => {
     // arrange
     const incidents = createIncidents();
     const bookingWindow = createBookingWindow({
-      featureFlags: { execute: vi.fn().mockRejectedValue(new Error("down")) },
+      waitlistMode: { isEnabled: vi.fn().mockRejectedValue(new Error("down")) },
       incidents,
     });
 
@@ -726,16 +709,14 @@ describe("BookAssessmentCallUseCase", () => {
 
   it("refuses a subaddressed email before reading the booking window, the availability or the reservations", async () => {
     // arrange
-    const featureFlags = {
-      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
-    };
+    const waitlistMode = { isEnabled: vi.fn().mockResolvedValue(false) };
     const availability = createAvailabilitySource();
     const coachTime = createCoachTime();
     const notifications = createNotifications();
     const reservations = createReservations();
     const bookAssessmentCall = new BookAssessmentCallUseCase({
       availability: availabilityOver(availability),
-      bookingWindow: createBookingWindow({ featureFlags }),
+      bookingWindow: createBookingWindow({ waitlistMode }),
       clock,
       coachTime,
       emailAcceptance: createEmailAcceptance("refused"),
@@ -753,7 +734,7 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "subaddress_refused" });
-    expect(featureFlags.execute).not.toHaveBeenCalled();
+    expect(waitlistMode.isEnabled).not.toHaveBeenCalled();
     expect(availability.current).not.toHaveBeenCalled();
     expect(coachTime.reserve).not.toHaveBeenCalled();
     expect(reservations.lockVisitorEmail).not.toHaveBeenCalled();

@@ -1,6 +1,5 @@
 import type { MiddlewareFunction } from "react-router";
 
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import {
   featureFlagsContext,
   type FeatureFlagsFeature,
@@ -13,9 +12,9 @@ export type OperationsHandles = Parameters<
 
 export type OperationsComposition = {
   components: { featureFlags: FeatureFlagsFeature };
+  facades: ReturnType<typeof composeFeatureFlagsFeature>["facades"];
   middleware: MiddlewareFunction<Response>;
   overrideMiddleware: MiddlewareFunction<Response>;
-  reader: FeatureFlagReader;
 };
 
 export function composeOperations(
@@ -25,11 +24,11 @@ export function composeOperations(
 
   return {
     components: { featureFlags: featureFlags.feature },
+    facades: featureFlags.facades,
     middleware: ({ context }, next) => {
       context.set(featureFlagsContext, featureFlags.feature);
       return next();
     },
     overrideMiddleware: featureFlags.middleware,
-    reader: featureFlags.reader,
   };
 }

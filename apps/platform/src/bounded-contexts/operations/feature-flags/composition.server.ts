@@ -1,13 +1,12 @@
 import type { DatabaseClient } from "~/shared/database";
 import type { MiddlewareFunction } from "react-router";
 import type { RuntimeStage } from "~/shared/runtime/production-runtime";
-import {
-  GetFeatureFlagsUseCase,
-  type FeatureFlagReader,
-} from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import { GetFeatureFlagsUseCase } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/feature-flags";
 
 import { FeatureFlagController } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/feature-flags-controller.server";
 import type { FeatureFlagsFeature } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
+import { createFeatureFlagsFacade } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/facades/feature-flags.server";
 import {
   composeBrowserFeatureFlagOverrides,
   composeWithoutFeatureFlagOverrides,
@@ -19,9 +18,9 @@ import {
 } from "~/bounded-contexts/operations/feature-flags/config.server";
 
 type FeatureFlagsComposition = {
+  facades: { featureFlags: FeatureFlagsFacade };
   feature: FeatureFlagsFeature;
   middleware: MiddlewareFunction<Response>;
-  reader: FeatureFlagReader;
 };
 
 type FeatureFlagsFeatureHandles = {
@@ -45,10 +44,10 @@ export function composeFeatureFlagsFeature(
       : composeWithoutFeatureFlagOverrides(storedFlags);
 
   return {
+    facades: { featureFlags: createFeatureFlagsFacade(overrides.featureFlags) },
     feature: {
       featureFlags: new FeatureFlagController(overrides.featureFlags),
     },
     middleware: overrides.middleware,
-    reader: overrides.featureFlags,
   };
 }

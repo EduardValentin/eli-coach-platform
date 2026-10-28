@@ -9,6 +9,7 @@ import {
   type StoreDeliveryLimitWindow,
 } from "./acquisition";
 import type { AcquisitionIncidents } from "./acquisition-incidents";
+import type { ConsentVersions } from "./consent-versions";
 import type {
   DownloadTokenGenerator,
   PayloadDigestGenerator,
@@ -19,12 +20,6 @@ import type {
   ResolvedPriorAcquisition,
   StoreAcquisitions,
 } from "./store-acquisitions";
-
-type StoreConsentVersions = {
-  termsVersion: string;
-  privacyPolicyVersion: string;
-  marketingConsentVersion: string;
-};
 
 export type AcquireProductsResult =
   | { status: "delivered" }
@@ -45,7 +40,7 @@ type AcquireProductsUseCaseOptions = {
   acquisitions: StoreAcquisitions;
   catalog: StoreCatalog;
   clock: Clock;
-  consentVersions: StoreConsentVersions;
+  consentVersions: ConsentVersions;
   delivery: ProductDelivery;
   emailAcceptance: EmailAcceptance;
   incidents: AcquisitionIncidents;
@@ -95,6 +90,7 @@ export class AcquireProductsUseCase {
 
     const products = selection.products;
     const token = this.options.tokenGenerator.create();
+    const consentVersions = this.options.consentVersions.current();
     const providerIdempotencyKey =
       this.options.delivery.createProviderIdempotencyKey(
         request.idempotencyKey,
@@ -111,15 +107,14 @@ export class AcquireProductsUseCase {
       marketingConsentedAt: request.marketingConsent
         ? request.requestedAt
         : null,
-      marketingConsentVersion:
-        this.options.consentVersions.marketingConsentVersion,
+      marketingConsentVersion: consentVersions.marketingConsentVersion,
       normalizedEmail: request.email,
       payloadDigest,
-      privacyPolicyVersion: this.options.consentVersions.privacyPolicyVersion,
+      privacyPolicyVersion: consentVersions.privacyPolicyVersion,
       products,
       providerIdempotencyKey,
       requestedAt: request.requestedAt,
-      termsVersion: this.options.consentVersions.termsVersion,
+      termsVersion: consentVersions.termsVersion,
       tokenSha256: token.sha256,
     });
 

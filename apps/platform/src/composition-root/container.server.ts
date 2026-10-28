@@ -138,7 +138,7 @@ export function createPlatformContainer(options: {
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     emailAcceptance,
-    featureFlags: operations.reader,
+    featureFlags: operations.facades.featureFlags,
     logger,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
@@ -196,7 +196,7 @@ export function createPlatformContainer(options: {
     database: database.client,
     emailAcceptance,
     endedCalls: scheduling.facades.endedCalls,
-    featureFlags: operations.reader,
+    featureFlags: operations.facades.featureFlags,
     linkTokens,
     logger,
     managementAuth: {
@@ -211,6 +211,7 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
     storeAssetRoot: environment.STORE_ASSET_ROOT,
+    terms: legal.facades.terms,
     waitlist: environment,
     webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
   });

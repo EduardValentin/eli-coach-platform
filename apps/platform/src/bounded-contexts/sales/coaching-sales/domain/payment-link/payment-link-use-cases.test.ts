@@ -3,11 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import type { EndedCalls, SalesCall } from "./ended-calls";
 import type { PricingEligibility } from "../coaching-bundle";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 
 import type { CallSalesState, CallSalesStates } from "./call-sales-states";
 import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
 import type { CoachingSalesNotifications } from "./coaching-sales-notifications";
+import type { WaitlistMode } from "./waitlist-mode";
 import { CoachingSalesWindow } from "./coaching-sales-window";
 import { OpenBundlePageUseCase } from "./open-bundle-page-use-case";
 import { PaymentLink, type PaymentLinkState } from "./payment-link";
@@ -72,23 +72,19 @@ function createIncidents(): CoachingSalesIncidents {
   };
 }
 
-function salesWindowReading(featureFlags: FeatureFlagReader) {
+function salesWindowReading(waitlistMode: WaitlistMode) {
   return new CoachingSalesWindow({
-    featureFlags,
     incidents: createIncidents(),
+    waitlistMode,
   });
 }
 
 function openSalesWindow(): CoachingSalesWindow {
-  return salesWindowReading({
-    execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
-  });
+  return salesWindowReading({ isEnabled: vi.fn().mockResolvedValue(false) });
 }
 
 function closedSalesWindow(): CoachingSalesWindow {
-  return salesWindowReading({
-    execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
-  });
+  return salesWindowReading({ isEnabled: vi.fn().mockResolvedValue(true) });
 }
 
 function createCalls(found: SalesCall | null): EndedCalls {
@@ -180,17 +176,12 @@ function resolvePaymentLinkDependencies(
 
 describe("CoachingSalesWindow", () => {
   it.each([
-    ["open once waitlist mode is off", { WAITLIST_MODE: false }, true],
-    ["open when no waitlist mode is persisted", {}, true],
-    [
-      "closed while the site is in waitlist mode",
-      { WAITLIST_MODE: true },
-      false,
-    ],
-  ])("is %s", async (_label, flags, expected) => {
+    ["open once waitlist mode is off", false, true],
+    ["closed while the site is in waitlist mode", true, false],
+  ])("is %s", async (_label, waitlistModeEnabled, expected) => {
     // arrange
     const salesWindow = salesWindowReading({
-      execute: vi.fn().mockResolvedValue(flags),
+      isEnabled: vi.fn().mockResolvedValue(waitlistModeEnabled),
     });
 
     // act
@@ -227,8 +218,8 @@ describe("SendPaymentLinkUseCase", () => {
     const incidents = createIncidents();
     const dependencies = sendPaymentLinkDependencies({
       salesWindow: new CoachingSalesWindow({
-        featureFlags: { execute: vi.fn().mockRejectedValue(failure) },
         incidents,
+        waitlistMode: { isEnabled: vi.fn().mockRejectedValue(failure) },
       }),
     });
     const useCase = new SendPaymentLinkUseCase(dependencies);

@@ -1,10 +1,8 @@
 import type { MiddlewareFunction } from "react-router";
 
 import { normalizeBasePath } from "~/shared/http/base-path";
-import {
-  WAITLIST_MODE_FEATURE_FLAG,
-  type FeatureFlagSet,
-} from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagSet } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import { WAITLIST_MODE_FEATURE_FLAG } from "~/bounded-contexts/operations/public/feature-flags";
 
 import { runWithFeatureFlagOverrides } from "./feature-flag-override-store.server";
 

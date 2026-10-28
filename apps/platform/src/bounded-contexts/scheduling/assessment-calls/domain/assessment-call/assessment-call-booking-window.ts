@@ -1,13 +1,9 @@
-import {
-  WAITLIST_MODE_FEATURE_FLAG,
-  type FeatureFlagReader,
-} from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
-
 import type { AssessmentCallIncidents } from "./assessment-call-incidents";
+import type { WaitlistMode } from "./waitlist-mode";
 
 type AssessmentCallBookingWindowOptions = {
-  featureFlags: FeatureFlagReader;
   incidents: AssessmentCallIncidents;
+  waitlistMode: WaitlistMode;
 };
 
 export class AssessmentCallBookingWindow {
@@ -15,9 +11,7 @@ export class AssessmentCallBookingWindow {
 
   async isOpen(): Promise<boolean> {
     try {
-      const featureFlags = await this.options.featureFlags.execute();
-
-      return featureFlags[WAITLIST_MODE_FEATURE_FLAG] !== true;
+      return !(await this.options.waitlistMode.isEnabled());
     } catch {
       this.options.incidents.bookingModeReadFailed();
 
