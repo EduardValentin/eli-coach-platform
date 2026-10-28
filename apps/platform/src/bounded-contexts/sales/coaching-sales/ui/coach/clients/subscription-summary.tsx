@@ -7,7 +7,7 @@ import {
 import { PortalWidget, Reading } from "~/shared/design-system/portal";
 import { CreditCard } from "lucide-react";
 
-import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import { bundleLengthLabel } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import { formatMoney } from "~/bounded-contexts/sales/coaching-sales/public/money";

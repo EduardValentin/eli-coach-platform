@@ -5,11 +5,11 @@ import {
   COACH_SCHEDULE_SETTINGS_MESSAGES,
   COACH_SCHEDULE_SETTINGS_TOASTS,
   HOUR_OPTIONS,
-  WEEKDAY_DISPLAY_ORDER,
   coachScheduleSettingsSchema,
   updateCoachScheduleSettingsErrorSchema,
   updateCoachScheduleSettingsSuccessSchema,
 } from "./coach-schedule-settings";
+import { WEEKDAY_DISPLAY_ORDER } from "~/bounded-contexts/scheduling/coach-schedule/ui/shared/weekday-labels";
 
 const VALID_SETTINGS = {
   timeZone: "Europe/Bucharest",

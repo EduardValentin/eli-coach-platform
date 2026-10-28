@@ -2,7 +2,7 @@ import type { PreferredChannel } from "~/bounded-contexts/clients/client-profile
 import { ABSENT_VALUE } from "~/shared/design-system/lib";
 import { SettingsRow, SettingsRows } from "~/shared/design-system/portal";
 
-import { WEEKDAY_LABELS } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
+import { WEEKDAY_LABELS } from "~/bounded-contexts/scheduling/coach-schedule/ui/shared/weekday-labels";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 
 import { ReadOnlyValue } from "./read-only-value";

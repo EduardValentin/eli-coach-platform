@@ -11,7 +11,7 @@ import { findCountry } from "~/shared/contact/countries";
 import {
   formatAgeForCard,
   labelForGender,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import { coachClientProfilePath } from "~/bounded-contexts/clients/clients/public/paths";
 

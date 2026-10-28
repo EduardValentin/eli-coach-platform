@@ -4,10 +4,10 @@ import { z } from "zod";
 import { COUNTRIES, findCountry } from "~/shared/contact/countries";
 import {
   checkBirthDate,
-  MIN_BOOKING_AGE,
   normalizeVisitorPhone,
   VISITOR_GENDER_OPTIONS,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
+import { MIN_BOOKING_AGE } from "~/bounded-contexts/scheduling/public/visitor";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 
 import {

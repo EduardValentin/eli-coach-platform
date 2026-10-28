@@ -19,9 +19,9 @@ import type {
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { COACH_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { formatClockHour } from "~/shared/time-format/call-moment";
-import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import { awaitingOnboardingReason } from "~/bounded-contexts/clients/check-ins/ui/coach/shared/awaiting-onboarding-reason";
-import { WEEKDAY_LABELS } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
+import { WEEKDAY_LABELS } from "~/bounded-contexts/scheduling/coach-schedule/ui/shared/weekday-labels";
 
 import { StopWeeklyCheckInDialog } from "./stop-weekly-check-in-dialog";
 import {

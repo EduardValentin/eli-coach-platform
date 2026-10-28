@@ -7,7 +7,7 @@ const BOUNDED_CONTEXTS_ROOT = "^apps/platform/src/bounded-contexts/";
 const FEATURES = `${BOUNDED_CONTEXTS_ROOT}[^/]+/`;
 const COMPONENT = "(?!public/)[^/]+";
 const BOUNDED_CONTEXT_PUBLIC = `${FEATURES}public/`;
-const PUBLISHED_FOLDERS = `${FEATURES}(public|${COMPONENT}/(public|ui/shared))/`;
+const PUBLISHED_FOLDERS = `${FEATURES}(public|${COMPONENT}/ui/shared)/`;
 const SURFACES = "^apps/platform/src/surfaces/";
 const CONCEPT = "{concept}";
 
@@ -105,7 +105,7 @@ function boundedContextOrderRule(boundedContext, position) {
 
   return {
     name: `bounded-context-order-${boundedContext}`,
-    comment: `A bounded context imports only the bounded contexts before it in BOUNDED_CONTEXT_ORDER, and of those only their published folders (public/ and each component's public/ and ui/shared/): ${boundedContext} may reach ${earlier.join(", ") || "no other bounded context"}. Schema files are held by schema-foreign-keys-point-at-providers instead.`,
+    comment: `A bounded context imports only the bounded contexts before it in BOUNDED_CONTEXT_ORDER, and of those only their published folders (the bounded context's public/ and each component's ui/shared/): ${boundedContext} may reach ${earlier.join(", ") || "no other bounded context"}. Schema files are held by schema-foreign-keys-point-at-providers instead.`,
     severity: "error",
     from: {
       path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/`,
@@ -114,7 +114,7 @@ function boundedContextOrderRule(boundedContext, position) {
     to: {
       path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/)[^/]+/`,
       ...(earlier.length > 0 && {
-        pathNot: `${BOUNDED_CONTEXTS_ROOT}(${earlier.join("|")})/(public|${COMPONENT}/(public|ui/shared))/`,
+        pathNot: `${BOUNDED_CONTEXTS_ROOT}(${earlier.join("|")})/(public|${COMPONENT}/ui/shared)/`,
       }),
     },
   };
@@ -138,7 +138,7 @@ function componentOrderRule({ boundedContext, component }) {
   };
 }
 
-function schemaForeignKeyRule({ component }, position) {
+function schemaForeignKeyRule({ boundedContext, component }, position) {
   const providers = COMBINED_ORDER.slice(0, position).map(
     (earlier) => earlier.component,
   );
@@ -146,13 +146,13 @@ function schemaForeignKeyRule({ component }, position) {
   return {
     name: "schema-foreign-keys-point-at-providers",
     comment:
-      "A component's adapters/outbound/persistence/schema.server.ts imports another component only for a foreign key, consumer to provider: the provider's schema.server.ts, and only when the provider comes earlier in BOUNDED_CONTEXT_ORDER, then COMPONENT_ORDER.",
+      "A component's adapters/outbound/persistence/schema.server.ts imports nothing of any bounded context outside its own component except, for a foreign key, consumer to provider, the schema.server.ts of a component earlier in BOUNDED_CONTEXT_ORDER, then COMPONENT_ORDER.",
     severity: "error",
     from: {
       path: `${FEATURES}${component}/${SCHEMA_FILE}`,
     },
     to: {
-      path: `${FEATURES}(?!${component}/)${COMPONENT}/`,
+      path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/${component}/)`,
       ...(providers.length > 0 && {
         pathNot: `${FEATURES}(${providers.join("|")})/${SCHEMA_FILE}`,
       }),
@@ -207,7 +207,7 @@ module.exports = {
     {
       name: "outbound-provider-adapter-only-importer",
       comment:
-        "Across bounded contexts, only a component's adapters/outbound/<provider>/ imports the provider, and only the provider's bounded-context public/. A component's public/ and adapters/outbound/email/ are held by the rule's second instance; ui/ (ui-reads-published-only), adapters/inbound/http/ (inbound-reads-request-keys-only-from-public) and schema files (schema-foreign-keys-point-at-providers) by their own rules; the files at a component's root (composition.server.ts, which types the facades it hands in, routes.ts, config.server.ts) by the bounded-context order.",
+        "Across bounded contexts, only a component's adapters/outbound/<provider>/ imports the provider, and only the provider's bounded-context public/. A component's public/, adapters/outbound/email/ and root files (composition.server.ts, which types the facades it hands in, routes.ts, config.server.ts) are held by the rule's second instance; ui/ (ui-reads-published-only), adapters/inbound/http/ (inbound-reads-request-keys-only-from-public) and schema files (schema-foreign-keys-point-at-providers) by their own rules.",
       severity: "error",
       from: {
         path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/(?:adapters/outbound/)?([^/]+)/`,
@@ -224,10 +224,10 @@ module.exports = {
     {
       name: "outbound-provider-adapter-only-importer",
       comment:
-        "A component's public/ and adapters/outbound/email/ may read another bounded context's bounded-context public/ for route paths and DTO types, as ui/ may: a path constant or DTO type is published data, and an email links to a portal page. Never a foreign component's public/, a facade implementation, an adapter or a domain.",
+        "A component's public/, adapters/outbound/email/ and root files (composition.server.ts, routes.ts, config.server.ts) may read another bounded context's bounded-context public/ for route paths, DTO types and facade interfaces: a path constant or DTO type is published data, and an email links to a portal page. Never a foreign component's public/ or ui/, a facade implementation, an adapter or a domain.",
       severity: "error",
       from: {
-        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/(public|adapters/outbound/email)/`,
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/((public|adapters/outbound/email)/|(composition|config)\\.server\\.ts$|routes\\.ts$)`,
       },
       to: {
         path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
@@ -237,7 +237,7 @@ module.exports = {
     {
       name: "ui-reads-published-only",
       comment:
-        "A component's ui/ reaches another bounded context only through its published folders: the bounded context's public/, a component's public/ and ui/shared/. Never a foreign domain/, adapters/ or composition.",
+        "A component's ui/ reaches another bounded context only through its published folders: the bounded context's public/ for paths and DTO types, and a component's ui/shared/ for widgets. Never a foreign component's public/, domain/, adapters/ or composition.",
       severity: "error",
       from: { path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/ui/` },
       to: {

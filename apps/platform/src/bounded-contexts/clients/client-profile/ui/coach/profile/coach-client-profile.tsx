@@ -9,7 +9,7 @@ import {
   objectPronoun,
   possessivePronoun,
   subjectPronoun,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import { coachClientAvatarApiPath } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { AvatarField } from "~/bounded-contexts/clients/client-profile/ui/shared/avatar/avatar-field";

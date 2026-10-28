@@ -6,7 +6,7 @@ import { useConfirmedJsonAction } from "~/shared/design-system/toast";
 import { Loader2, Mail, Send } from "lucide-react";
 import { useRevalidator } from "react-router";
 
-import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import {
   resendInvitationSuccessSchema,
   type ClientInvitationReading,

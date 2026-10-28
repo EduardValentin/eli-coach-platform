@@ -13,7 +13,7 @@ import {
 } from "~/shared/design-system/portal";
 import { ShieldCheck } from "lucide-react";
 
-import { labelForGender } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { labelForGender } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import {
   CLIENT_LEVEL_LABELS,

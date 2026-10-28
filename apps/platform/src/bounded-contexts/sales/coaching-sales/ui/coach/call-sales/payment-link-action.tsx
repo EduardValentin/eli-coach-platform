@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 
 import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 
-import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import {
   PAYMENT_LINK_MESSAGES,
   sendPaymentLinkErrorSchema,

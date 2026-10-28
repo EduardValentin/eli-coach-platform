@@ -1,7 +1,4 @@
-import {
-  WEEKDAYS,
-  type Weekday,
-} from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
+import { WEEKDAYS } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
 import { z } from "zod";
 
 import { timeZoneSchema } from "./time-zone";
@@ -20,27 +17,6 @@ export const COACH_SCHEDULE_SETTINGS_TOASTS = {
   saved: "Settings saved",
   failed: COACH_SCHEDULE_SETTINGS_MESSAGES.server_error,
 } as const;
-
-export const WEEKDAY_DISPLAY_ORDER = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-] as const satisfies readonly Weekday[];
-
-export const WEEKDAY_LABELS: Record<Weekday, { full: string; short: string }> =
-  {
-    monday: { full: "Monday", short: "Mon" },
-    tuesday: { full: "Tuesday", short: "Tue" },
-    wednesday: { full: "Wednesday", short: "Wed" },
-    thursday: { full: "Thursday", short: "Thu" },
-    friday: { full: "Friday", short: "Fri" },
-    saturday: { full: "Saturday", short: "Sat" },
-    sunday: { full: "Sunday", short: "Sun" },
-  };
 
 function hourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;

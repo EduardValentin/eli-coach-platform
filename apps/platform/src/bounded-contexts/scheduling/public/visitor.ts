@@ -19,3 +19,5 @@ export type Visitor = {
   phone: string | null;
   timeZone: string;
 };
+
+export const MIN_BOOKING_AGE = 18;

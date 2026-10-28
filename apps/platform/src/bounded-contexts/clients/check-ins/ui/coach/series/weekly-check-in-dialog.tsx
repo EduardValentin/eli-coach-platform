@@ -30,7 +30,7 @@ import {
 import { generatePath, useFetcher } from "react-router";
 
 import { formatClockHour } from "~/shared/time-format/call-moment";
-import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import {
   checkInRefusalSchema,
   checkInSeriesOutcomeSchema,
@@ -44,7 +44,7 @@ import { useLoadOnOpening } from "~/bounded-contexts/clients/check-ins/ui/shared
 import {
   WEEKDAY_DISPLAY_ORDER,
   WEEKDAY_LABELS,
-} from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
+} from "~/bounded-contexts/scheduling/coach-schedule/ui/shared/weekday-labels";
 
 export type WeeklyCheckInSeries = NonNullable<CoachClientSeriesPanel["series"]>;
 

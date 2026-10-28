@@ -8,12 +8,14 @@ import {
   labelForPrimaryGoal,
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
-  objectPronoun,
-  possessivePronoun,
-  subjectPronoun,
   VISITOR_GENDER_OPTIONS,
   VISITOR_PRIMARY_GOAL_OPTIONS,
 } from "./visitor-profile";
+import {
+  objectPronoun,
+  possessivePronoun,
+  subjectPronoun,
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 
 const BUCHAREST = "Europe/Bucharest";
 const AUTUMN_EVENING = new Date("2026-09-21T18:00:00.000Z");

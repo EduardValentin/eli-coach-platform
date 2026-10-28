@@ -2,11 +2,19 @@
   "apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/identity/clerk-identity.server.ts": [
     "not-to-unresolvable"
   ],
+  "apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/persistence/schema.server.ts": [
+    "schema-foreign-keys-point-at-providers"
+  ],
   "apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/sales/reaches-later-bounded-context.server.ts": [
     "bounded-context-order-access"
   ],
   "apps/platform/src/bounded-contexts/clients/client-resources/ui/client/reads-earlier-published.tsx": [],
+  "apps/platform/src/bounded-contexts/clients/client-resources/ui/client/reads-foreign-component-public.tsx": [
+    "bounded-context-order-clients",
+    "ui-reads-published-only"
+  ],
   "apps/platform/src/bounded-contexts/clients/composition.server.ts": [
+    "bounded-context-order-clients",
     "bounded-context-root-own-components"
   ],
   "apps/platform/src/bounded-contexts/operations/feature-flags/composition.server.ts": [],
@@ -25,11 +33,13 @@
   ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-access-session.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-other-component-public.server.ts": [
+    "bounded-context-order-sales",
     "inbound-reads-request-keys-only-from-public"
   ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-payment-vocabulary.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/access/reads-earlier-bounded-context.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/email/reads-foreign-component-public.server.ts": [
+    "bounded-context-order-sales",
     "outbound-provider-adapter-only-importer"
   ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/stripe/stripe-client.server.ts": [
@@ -43,6 +53,7 @@
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/store/reads-sibling-domain.server.ts": [
     "sibling-imports-published-only"
   ],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/composition.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/domain/coaching-bundle/reads-sibling-domain.ts": [
     "domain-imports-only-itself",
     "sibling-imports-published-only"
@@ -142,6 +153,10 @@
   "apps/platform/src/bounded-contexts/sales/store/domain/product/reads-sibling-concept.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/public/design-system-browser-only.ts": [
     "design-system-browser-only"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/routes.ts": [
+    "bounded-context-order-sales",
+    "outbound-provider-adapter-only-importer"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half.tsx": [
     "browser-half"

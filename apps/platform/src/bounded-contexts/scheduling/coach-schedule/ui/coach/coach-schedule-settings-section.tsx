@@ -33,11 +33,13 @@ import {
   COACH_SCHEDULE_SETTINGS_TOASTS,
   coachScheduleSettingsSchema,
   HOUR_OPTIONS,
-  WEEKDAY_DISPLAY_ORDER,
-  WEEKDAY_LABELS,
   type CoachScheduleSettings,
   type CoachScheduleSettingsErrorCode,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
+import {
+  WEEKDAY_DISPLAY_ORDER,
+  WEEKDAY_LABELS,
+} from "~/bounded-contexts/scheduling/coach-schedule/ui/shared/weekday-labels";
 
 import { useSaveCoachScheduleSettingsFetcher } from "./api-client";
 

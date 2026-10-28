@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   objectPronoun,
   subjectPronoun,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import {
   coachIdentitySchema,

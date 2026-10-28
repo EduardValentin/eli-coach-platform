@@ -3,7 +3,7 @@ import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor
 import {
   possessivePronoun,
   subjectPronoun,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 
 export function awaitingOnboardingReason(gender: VisitorGender): string {
   const subject = subjectPronoun(gender);

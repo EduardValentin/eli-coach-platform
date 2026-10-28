@@ -8,7 +8,7 @@ import { toast } from "~/shared/design-system/toast";
 import { Dumbbell, Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import {
   clientProfileProblemsAnswerSchema,
   clientProfileSavedAnswerSchema,

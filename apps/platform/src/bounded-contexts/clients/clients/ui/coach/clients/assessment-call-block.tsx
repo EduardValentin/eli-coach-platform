@@ -18,7 +18,7 @@ import { findCountry } from "~/shared/contact/countries";
 import {
   labelForGender,
   labelForPrimaryGoal,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
 
 const CALENDAR_DATE_TIME_ZONE = "UTC";
