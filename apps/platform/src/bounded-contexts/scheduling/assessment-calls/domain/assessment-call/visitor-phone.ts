@@ -16,7 +16,7 @@ export class VisitorPhone {
     parts: VisitorPhoneParts,
     phoneNumbers: PhoneNumbers,
   ): VisitorPhoneReading {
-    const reading = phoneNumbers.normalise(parts);
+    const reading = phoneNumbers.normalize(parts);
 
     return reading.status === "valid"
       ? { status: "valid", phone: new VisitorPhone({ e164: reading.e164 }) }

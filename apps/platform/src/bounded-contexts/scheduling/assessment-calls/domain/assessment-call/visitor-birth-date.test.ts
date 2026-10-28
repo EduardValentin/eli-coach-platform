@@ -15,7 +15,7 @@ describe("VisitorBirthDate.parse", () => {
     (isoDate) => {
       // arrange
       // act
-      const birthDate = VisitorBirthDate.parse(isoDate);
+      const birthDate = VisitorBirthDate.parse(isoDate, wallClockCalendarDates);
 
       // assert
       expect(birthDate).toBeNull();
@@ -26,7 +26,10 @@ describe("VisitorBirthDate.parse", () => {
 describe("VisitorBirthDate#ageOn", () => {
   it("counts whole years on the calendar date in her own zone", () => {
     // arrange
-    const birthDate = VisitorBirthDate.parse("2008-10-25");
+    const birthDate = VisitorBirthDate.parse(
+      "2008-10-25",
+      wallClockCalendarDates,
+    );
 
     // act
     const ages = [
@@ -42,7 +45,10 @@ describe("VisitorBirthDate#ageOn", () => {
 describe("VisitorBirthDate#toSnapshot", () => {
   it("hands back the calendar date it was read from", () => {
     // arrange
-    const birthDate = VisitorBirthDate.parse("1994-03-14");
+    const birthDate = VisitorBirthDate.parse(
+      "1994-03-14",
+      wallClockCalendarDates,
+    );
 
     // act
     const snapshot = birthDate?.toSnapshot();
@@ -55,7 +61,10 @@ describe("VisitorBirthDate#toSnapshot", () => {
 describe("VisitorBirthDate#bookingProblemOn", () => {
   it("finds no problem for an adult of booking age", () => {
     // arrange
-    const birthDate = VisitorBirthDate.parse("1994-03-14");
+    const birthDate = VisitorBirthDate.parse(
+      "1994-03-14",
+      wallClockCalendarDates,
+    );
 
     // act
     const problem = birthDate?.bookingProblemOn(ON, wallClockCalendarDates);
@@ -66,7 +75,10 @@ describe("VisitorBirthDate#bookingProblemOn", () => {
 
   it("counts her age on the day it is in her own time zone", () => {
     // arrange
-    const turnsEighteenTomorrowInUtc = VisitorBirthDate.parse("2008-10-25");
+    const turnsEighteenTomorrowInUtc = VisitorBirthDate.parse(
+      "2008-10-25",
+      wallClockCalendarDates,
+    );
 
     // act
     const problem = turnsEighteenTomorrowInUtc?.bookingProblemOn(
@@ -84,7 +96,7 @@ describe("VisitorBirthDate#bookingProblemOn", () => {
     ["someone under 18", "2010-06-01", "too-young"],
   ] as const)("names the problem with %s", (_label, isoDate, expected) => {
     // arrange
-    const birthDate = VisitorBirthDate.parse(isoDate);
+    const birthDate = VisitorBirthDate.parse(isoDate, wallClockCalendarDates);
 
     // act
     const problem = birthDate?.bookingProblemOn(ON, wallClockCalendarDates);

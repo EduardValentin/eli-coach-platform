@@ -1,28 +1,20 @@
 import type { MiddlewareFunction } from "react-router";
 
-import {
-  storeContext,
-  type StoreFeature,
-} from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
+import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import {
   composeManagementAuth,
   composeStoreFeature,
   type StoreFeatureHandles,
 } from "~/bounded-contexts/sales/store/composition.server";
 import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
-import {
-  waitlistContext,
-  type WaitlistFeature,
-} from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import { composeWaitlistFeature } from "~/bounded-contexts/sales/waitlist/composition.server";
-import {
-  coachingSalesContext,
-  type CoachingSalesFeature,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import {
   composeCoachingSalesFeature,
   composePayments,
   type CoachingSalesFeatureHandles,
+  type PaymentHandles,
 } from "~/bounded-contexts/sales/coaching-sales/composition.server";
 import type { PaymentsConfig } from "~/bounded-contexts/sales/coaching-sales/config.server";
 
@@ -30,9 +22,7 @@ type SalesHandles = Omit<
   StoreFeatureHandles &
     Parameters<typeof composeWaitlistFeature>[0] &
     CoachingSalesFeatureHandles,
-  | "managementAuth"
-  | "pricingEligibility"
-  | keyof ReturnType<typeof composePayments>
+  "managementAuth" | "pricingEligibility" | keyof PaymentHandles
 > & {
   managementApiConfig: ManagementApiConfig;
   paymentsConfig: PaymentsConfig;

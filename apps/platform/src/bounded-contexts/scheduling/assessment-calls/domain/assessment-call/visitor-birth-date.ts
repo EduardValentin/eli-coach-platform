@@ -5,37 +5,20 @@ type BirthDateProblem = "impossible" | "too-young";
 
 export type AgeMoment = { on: Date; timeZone: string };
 
-const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
-
 export class VisitorBirthDate {
   private constructor(private readonly date: CalendarDate) {}
 
-  static parse(isoDate: string): VisitorBirthDate | null {
-    const match = ISO_DATE.exec(isoDate);
+  static parse(
+    isoDate: string,
+    calendar: CalendarDates,
+  ): VisitorBirthDate | null {
+    const date = calendar.dateOf(isoDate);
 
-    if (!match) return null;
-
-    const [year, month, day] = match.slice(1).map(Number) as [
-      number,
-      number,
-      number,
-    ];
-    const calendar = new Date(Date.UTC(year, month - 1, day));
-    const isCalendarDate =
-      calendar.getUTCFullYear() === year &&
-      calendar.getUTCMonth() === month - 1 &&
-      calendar.getUTCDate() === day;
-
-    return isCalendarDate ? new VisitorBirthDate({ year, month, day }) : null;
+    return date ? new VisitorBirthDate(date) : null;
   }
 
   ageOn(moment: AgeMoment, calendar: CalendarDates): number {
-    const today = calendar.dateOn(moment);
-    const birthdayStillAhead =
-      today.month < this.date.month ||
-      (today.month === this.date.month && today.day < this.date.day);
-
-    return today.year - this.date.year - (birthdayStillAhead ? 1 : 0);
+    return calendar.yearsBetween(this.date, calendar.dateOn(moment));
   }
 
   bookingProblemOn(

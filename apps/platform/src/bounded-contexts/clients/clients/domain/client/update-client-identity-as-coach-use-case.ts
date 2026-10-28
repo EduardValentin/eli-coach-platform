@@ -1,9 +1,10 @@
 import type { Clock } from "../clock";
 
-import type {
-  CalendarDates,
-  ClientCountries,
-  ClientGender,
+import {
+  ClientToday,
+  type CalendarDates,
+  type ClientCountries,
+  type ClientGender,
 } from "./client-details";
 import type { ClientIdentityChanges } from "./client-identity-changes";
 import {
@@ -47,10 +48,10 @@ export class UpdateClientIdentityAsCoachUseCase {
 
     const result = ClientIdentityEdit.of(
       { ...command.identity, clientId: client.clientId },
-      this.options.calendar.dateOn({
-        on: this.options.clock.now(),
-        timeZone: client.timeZone,
-      }),
+      ClientToday.on(
+        { on: this.options.clock.now(), timeZone: client.timeZone },
+        this.options.calendar,
+      ),
       this.options.countries,
     );
 

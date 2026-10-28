@@ -1,9 +1,6 @@
 import type { MiddlewareFunction } from "react-router";
 
-import {
-  featureFlagsContext,
-  type FeatureFlagsFeature,
-} from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
+import { featureFlagsContext } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
 import { composeFeatureFlagsFeature } from "~/bounded-contexts/operations/feature-flags/composition.server";
 
 type OperationsHandles = Parameters<typeof composeFeatureFlagsFeature>[0];

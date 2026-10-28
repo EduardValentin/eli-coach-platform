@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
-import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
+import {
+  ClientCountries,
+  ClientToday,
+} from "~/bounded-contexts/clients/clients/domain/client";
 import { phoneNumbers } from "~/shared/contact/phone-numbers";
 
 import {
@@ -10,10 +13,10 @@ import {
   type EnteredClientIdentity,
 } from "./client-identity-edit";
 
-const TODAY = wallClockCalendarDates.dateOn({
-  on: new Date("2026-10-24T22:30:00.000Z"),
-  timeZone: "Europe/Bucharest",
-});
+const TODAY = ClientToday.on(
+  { on: new Date("2026-10-24T22:30:00.000Z"), timeZone: "Europe/Bucharest" },
+  wallClockCalendarDates,
+);
 
 const COUNTRIES = ClientCountries.of(
   [

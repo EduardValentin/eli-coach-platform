@@ -1,18 +1,12 @@
 import type { MiddlewareFunction } from "react-router";
 
-import {
-  exerciseLibraryContext,
-  type ExerciseLibraryFeature,
-} from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
+import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 import {
   composeExerciseLibraryFeature,
   composeExerciseVideoFiles,
 } from "~/bounded-contexts/programs/exercise-library/composition.server";
 import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
-import {
-  nutritionLibraryContext,
-  type NutritionLibraryFeature,
-} from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
+import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
 import {
   composeNutritionLibraryFeature,
   composeRecipePhotoFiles,

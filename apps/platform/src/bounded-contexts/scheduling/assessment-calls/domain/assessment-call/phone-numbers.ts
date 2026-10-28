@@ -4,7 +4,7 @@ type PhoneNumberReading =
   | { status: "invalid" };
 
 export interface PhoneNumbers {
-  normalise(parts: {
+  normalize(parts: {
     callingCode: string;
     nationalNumber: string;
   }): PhoneNumberReading;

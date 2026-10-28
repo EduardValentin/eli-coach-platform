@@ -1,9 +1,6 @@
 import type { MiddlewareFunction } from "react-router";
 
-import {
-  clientsContext,
-  type ClientsFeature,
-} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import { clientPortalStandingMiddleware } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-portal-standing.server";
 import {
   composeClientsFeature,
@@ -13,8 +10,6 @@ import {
 import {
   clientOnboardingContext,
   clientProfileContext,
-  type ClientOnboardingFeature,
-  type ClientProfileFeature,
 } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import {
   composeClientMedia,
@@ -22,26 +17,17 @@ import {
   composeClientProfileFeature,
 } from "~/bounded-contexts/clients/client-profile/composition.server";
 import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
-import {
-  clientResourcesContext,
-  type ClientResourcesFeature,
-} from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 import {
   composeClientResourcesFeature,
   composeResourceFiles,
 } from "~/bounded-contexts/clients/client-resources/composition.server";
-import {
-  notificationsContext,
-  type NotificationsFeature,
-} from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
 import {
   composeNotificationInbox,
   composeNotificationsFeature,
 } from "~/bounded-contexts/clients/notifications/composition.server";
-import {
-  checkInsContext,
-  type CheckInsFeature,
-} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import { composeCheckInsFeature } from "~/bounded-contexts/clients/check-ins/composition.server";
 
 type ClientsComponentHandles = ReturnType<

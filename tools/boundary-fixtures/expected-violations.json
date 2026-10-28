@@ -95,8 +95,8 @@
     "inbound-never-imports-outbound"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/context.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/feature-api-never-imports-ui.ts": [
-    "feature-api-never-imports-ui"
+  "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/inbound-never-imports-ui.ts": [
+    "inbound-never-imports-ui"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/imports-facade.ts": [
     "route-thinness"
@@ -187,8 +187,8 @@
   "apps/platform/src/bounded-contexts/sales/store/ui/public/surface-import.tsx": [
     "surface-import"
   ],
-  "apps/platform/src/bounded-contexts/sales/store/ui/shared/feature-shared-ui-never-imports-actor-ui.ts": [
-    "feature-shared-ui-never-imports-actor-ui"
+  "apps/platform/src/bounded-contexts/sales/store/ui/shared/shared-ui-never-imports-actor-ui.ts": [
+    "shared-ui-never-imports-actor-ui"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/shared/product-card.tsx": [],
   "apps/platform/src/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server.ts": [
@@ -274,19 +274,19 @@
   "apps/platform/src/shared/submission-checks/bot-detection/shared-browser-entries.ts": [
     "shared-browser-entries"
   ],
-  "apps/platform/src/surfaces/client-portal/pages/surface-to-feature.tsx": [
-    "surface-client-portal-to-feature"
+  "apps/platform/src/surfaces/client-portal/pages/surface-to-bounded-context.tsx": [
+    "surface-client-portal-to-bounded-context"
   ],
   "apps/platform/src/surfaces/client-portal/pages/surface-to-surface.tsx": [
     "surface-to-surface"
   ],
-  "apps/platform/src/surfaces/coach-portal/pages/surface-to-feature.tsx": [
-    "surface-coach-portal-to-feature"
+  "apps/platform/src/surfaces/coach-portal/pages/surface-to-bounded-context.tsx": [
+    "surface-coach-portal-to-bounded-context"
   ],
   "apps/platform/src/surfaces/public-site/pages/reads-bounded-context-request-context.tsx": [],
   "apps/platform/src/surfaces/public-site/pages/reads-own-shell.tsx": [],
-  "apps/platform/src/surfaces/public-site/pages/surface-to-feature.tsx": [
-    "surface-public-site-to-feature"
+  "apps/platform/src/surfaces/public-site/pages/surface-to-bounded-context.tsx": [
+    "surface-public-site-to-bounded-context"
   ],
   "apps/platform/src/surfaces/public-site/sections/reads-platform-context.server.ts": [
     "composition-root"

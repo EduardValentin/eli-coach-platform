@@ -1,10 +1,7 @@
 import type { MiddlewareFunction } from "react-router";
 
 import { createAccountResolutionMiddleware } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-resolution-middleware.server";
-import {
-  accountsContext,
-  type AccountsFeature,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 import {
   composeAccountsFeature,
   type AccountsFeatureHandles,

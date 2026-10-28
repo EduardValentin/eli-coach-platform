@@ -1,11 +1,10 @@
 import {
-  ClientBirthDate,
   MAX_CLIENT_NAME_LENGTH,
-  type CalendarDate,
   type ClientCountries,
   type ClientGender,
   type ClientPhoneEntry,
   type ClientPhoneReading,
+  type ClientToday,
 } from "./client-details";
 import type { ClientIdentity } from "./client-identities";
 
@@ -41,7 +40,7 @@ export class ClientIdentityEdit {
 
   static of(
     entered: EnteredClientIdentity,
-    today: CalendarDate,
+    today: ClientToday,
     countries: ClientCountries,
   ): ClientIdentityEditResult {
     const { phone: phoneEntry, ...identity } = entered;
@@ -64,17 +63,14 @@ export class ClientIdentityEdit {
   }
 
   private problems(
-    today: CalendarDate,
+    today: ClientToday,
     phoneReading: ClientPhoneReading,
     countries: ClientCountries,
   ): ClientIdentityProblems {
     const { firstName, lastName, dateOfBirth, country } = this.snapshot;
     const firstNameProblem = this.nameProblem(firstName);
     const lastNameProblem = this.nameProblem(lastName);
-    const birthDate = ClientBirthDate.parse(dateOfBirth);
-    const dateOfBirthProblem = birthDate
-      ? birthDate.problemOn(today)
-      : "impossible";
+    const dateOfBirthProblem = today.birthDateProblemOf(dateOfBirth);
 
     return {
       ...(firstNameProblem && { firstName: firstNameProblem }),

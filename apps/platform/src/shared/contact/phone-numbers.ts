@@ -1,6 +1,6 @@
-export type PhoneNumberParts = { callingCode: string; nationalNumber: string };
+type PhoneNumberParts = { callingCode: string; nationalNumber: string };
 
-export type PhoneNumberReading =
+type PhoneNumberReading =
   | { status: "empty" }
   | { status: "valid"; e164: string }
   | { status: "invalid" };
@@ -12,7 +12,7 @@ const PHONE_SEPARATORS = /[\s().-]/g;
 const CALLING_CODE = /^\+\d{1,3}$/;
 const NATIONAL_NUMBER = /^\d+$/;
 
-export function normalisePhone(parts: PhoneNumberParts): PhoneNumberReading {
+function normalizePhone(parts: PhoneNumberParts): PhoneNumberReading {
   const compact = parts.nationalNumber.replace(PHONE_SEPARATORS, "");
 
   if (compact.length === 0) {
@@ -37,4 +37,4 @@ export function normalisePhone(parts: PhoneNumberParts): PhoneNumberReading {
   return { status: "valid", e164: `+${countryDigits}${national}` };
 }
 
-export const phoneNumbers = { normalise: normalisePhone };
+export const phoneNumbers = { normalize: normalizePhone };

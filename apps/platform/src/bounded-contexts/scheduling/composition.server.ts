@@ -1,14 +1,8 @@
 import type { MiddlewareFunction } from "react-router";
 
-import {
-  coachScheduleContext,
-  type CoachScheduleFeature,
-} from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
+import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
 import { composeCoachScheduleFeature } from "~/bounded-contexts/scheduling/coach-schedule/composition.server";
-import {
-  assessmentCallsContext,
-  type AssessmentCallsFeature,
-} from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
 import {
   composeAssessmentCallsFeature,
   type AssessmentCallsFeatureHandles,

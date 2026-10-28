@@ -1,5 +1,9 @@
 import type { DatabaseClient } from "~/shared/database";
-import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
+import {
+  ClientCountries,
+  ClientToday,
+} from "~/bounded-contexts/clients/clients/domain/client";
+import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
 import { phoneNumbers } from "~/shared/contact/phone-numbers";
 import { ClientIdentityEdit } from "~/bounded-contexts/clients/clients/domain/client";
 import { eq } from "drizzle-orm";
@@ -26,7 +30,10 @@ describe("PostgresClientIdentityChanges#save", () => {
         country: "MD",
         gender: "female",
       },
-      { year: 2026, month: 10, day: 24 },
+      ClientToday.on(
+        { on: new Date("2026-10-24T12:00:00.000Z"), timeZone: "UTC" },
+        wallClockCalendarDates,
+      ),
       ClientCountries.of(
         [
           { code: "RO", callingCode: "+40" },

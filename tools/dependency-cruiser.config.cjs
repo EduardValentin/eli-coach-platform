@@ -166,7 +166,7 @@ function schemaForeignKeyRule({ boundedContext, component }, position) {
 
 function surfaceToBoundedContextRule(surface, slice) {
   return {
-    name: `surface-${surface}-to-feature`,
+    name: `surface-${surface}-to-bounded-context`,
     comment: `R2: surfaces/${surface} reaches a bounded context only through a component's ui/${slice}/, ui/shared/ and public/, the bounded context's public/ (request-context keys included) and routes.ts.`,
     severity: "error",
     from: { path: `${SURFACES}${surface}/` },
@@ -571,7 +571,7 @@ module.exports = {
       },
     },
     {
-      name: "feature-api-never-imports-ui",
+      name: "inbound-never-imports-ui",
       comment:
         "A component's adapters/inbound/ never imports any component's ui/: what a route module's clientAction shares with the browser half lives in public/ or a shared browser entry.",
       severity: "error",
@@ -579,7 +579,7 @@ module.exports = {
       to: { path: `${BOUNDED_CONTEXT}${COMPONENT}/ui/` },
     },
     {
-      name: "feature-shared-ui-never-imports-actor-ui",
+      name: "shared-ui-never-imports-actor-ui",
       comment:
         "A component's ui/shared/ serves every actor UI of that component, so it never imports the component's own ui/public/, ui/client/ or ui/coach/.",
       severity: "error",

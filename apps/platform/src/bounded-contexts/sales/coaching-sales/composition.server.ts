@@ -104,6 +104,15 @@ export type CoachingSalesFeatureHandles = {
   webhookSigningSecret: string | undefined;
 };
 
+export type PaymentHandles = Pick<
+  CoachingSalesFeatureHandles,
+  | "paymentCheckout"
+  | "paymentCustomerCards"
+  | "paymentEvents"
+  | "paymentSubscriptions"
+  | "webhookSigningSecret"
+>;
+
 export function composeCoachingSalesFeature(
   handles: CoachingSalesFeatureHandles,
 ): CoachingSalesComposition {
@@ -316,7 +325,7 @@ function byPurpose<Handler extends { readonly purpose: string }>(
   return new Map([[handler.purpose, handler]]);
 }
 
-export function composePayments(config: PaymentsConfig) {
+export function composePayments(config: PaymentsConfig): PaymentHandles {
   const payments = createPayments(config);
 
   return {

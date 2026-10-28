@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { normalisePhone } from "./phone-numbers";
+import { phoneNumbers } from "./phone-numbers";
 
-describe("normalisePhone", () => {
+describe("phoneNumbers.normalize", () => {
   it.each([
     [
       "spaces, dots, dashes and parentheses",
@@ -29,7 +29,7 @@ describe("normalisePhone", () => {
     const parts = { callingCode, nationalNumber };
 
     // act
-    const reading = normalisePhone(parts);
+    const reading = phoneNumbers.normalize(parts);
 
     // assert
     expect(reading).toEqual({ status: "valid", e164 });
@@ -40,7 +40,7 @@ describe("normalisePhone", () => {
     const parts = { callingCode: "+40", nationalNumber: "   " };
 
     // act
-    const reading = normalisePhone(parts);
+    const reading = phoneNumbers.normalize(parts);
 
     // assert
     expect(reading).toEqual({ status: "empty" });
@@ -57,7 +57,7 @@ describe("normalisePhone", () => {
     const parts = { callingCode, nationalNumber };
 
     // act
-    const reading = normalisePhone(parts);
+    const reading = phoneNumbers.normalize(parts);
 
     // assert
     expect(reading).toEqual({ status: "invalid" });

@@ -70,7 +70,10 @@ export function nameSchema(message: string) {
 }
 
 export function checkBirthDate(question: AgeQuestion): BirthDateCheck {
-  const birthDate = VisitorBirthDate.parse(question.dateOfBirth);
+  const birthDate = VisitorBirthDate.parse(
+    question.dateOfBirth,
+    wallClockCalendarDates,
+  );
 
   if (!birthDate) {
     return "impossible";
@@ -127,7 +130,7 @@ export function labelForPrimaryGoal(goal: VisitorPrimaryGoal): string {
 
 export function ageOn(question: AgeQuestion): number {
   return (
-    VisitorBirthDate.parse(question.dateOfBirth)?.ageOn(
+    VisitorBirthDate.parse(question.dateOfBirth, wallClockCalendarDates)?.ageOn(
       question,
       wallClockCalendarDates,
     ) ?? NaN
@@ -156,7 +159,10 @@ function normalizationOf(reading: VisitorPhoneReading): PhoneNormalization {
 }
 
 function formatBirthDate(isoDate: string, month: "short" | "long"): string {
-  const birth = VisitorBirthDate.parse(isoDate)?.toSnapshot();
+  const birth = VisitorBirthDate.parse(
+    isoDate,
+    wallClockCalendarDates,
+  )?.toSnapshot();
 
   if (!birth) {
     throw new RangeError("A stored date of birth is not a calendar date.");

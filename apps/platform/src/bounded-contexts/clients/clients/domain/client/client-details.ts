@@ -20,48 +20,35 @@ export type CalendarDate = { year: number; month: number; day: number };
 
 export interface CalendarDates {
   dateOn(moment: { on: Date; timeZone: string }): CalendarDate;
+  dateOf(isoDate: string): CalendarDate | null;
+  yearsBetween(from: CalendarDate, to: CalendarDate): number;
 }
 
 type BirthDateProblem = "impossible" | "too-young";
 
-const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+export class ClientToday {
+  private constructor(
+    private readonly date: CalendarDate,
+    private readonly calendar: CalendarDates,
+  ) {}
 
-export class ClientBirthDate {
-  private constructor(private readonly date: CalendarDate) {}
-
-  static parse(isoDate: string): ClientBirthDate | null {
-    const match = ISO_DATE.exec(isoDate);
-
-    if (!match) return null;
-
-    const [year, month, day] = match.slice(1).map(Number) as [
-      number,
-      number,
-      number,
-    ];
-    const calendar = new Date(Date.UTC(year, month - 1, day));
-    const isCalendarDate =
-      calendar.getUTCFullYear() === year &&
-      calendar.getUTCMonth() === month - 1 &&
-      calendar.getUTCDate() === day;
-
-    return isCalendarDate ? new ClientBirthDate({ year, month, day }) : null;
+  static on(
+    moment: { on: Date; timeZone: string },
+    calendar: CalendarDates,
+  ): ClientToday {
+    return new ClientToday(calendar.dateOn(moment), calendar);
   }
 
-  problemOn(today: CalendarDate): BirthDateProblem | null {
-    const age = this.ageOn(today);
+  birthDateProblemOf(isoDate: string): BirthDateProblem | null {
+    const birthDate = this.calendar.dateOf(isoDate);
+
+    if (!birthDate) return "impossible";
+
+    const age = this.calendar.yearsBetween(birthDate, this.date);
 
     if (age < 0 || age > MAX_CLIENT_AGE) return "impossible";
 
     return age < MIN_CLIENT_AGE ? "too-young" : null;
-  }
-
-  private ageOn(today: CalendarDate): number {
-    const birthdayStillAhead =
-      today.month < this.date.month ||
-      (today.month === this.date.month && today.day < this.date.day);
-
-    return today.year - this.date.year - (birthdayStillAhead ? 1 : 0);
   }
 }
 
@@ -73,7 +60,7 @@ export type ClientPhoneReading =
   | { status: "invalid" };
 
 export interface PhoneNumbers {
-  normalise(parts: {
+  normalize(parts: {
     callingCode: string;
     nationalNumber: string;
   }): ClientPhoneReading;
@@ -102,7 +89,7 @@ export class ClientCountries {
   }
 
   phoneOf(entry: ClientPhoneEntry): ClientPhoneReading {
-    return this.phoneNumbers.normalise({
+    return this.phoneNumbers.normalize({
       callingCode: this.callingCodes.get(entry.country) ?? "",
       nationalNumber: entry.nationalNumber,
     });

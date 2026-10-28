@@ -1,4 +1,8 @@
 import type { CalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import {
+  completedYearsBetween,
+  parseCalendarDate,
+} from "~/shared/clock/calendar-date";
 import { instantToWallClock } from "~/shared/clock/wall-clock";
 
 export const wallClockCalendarDates: CalendarDates = {
@@ -7,4 +11,6 @@ export const wallClockCalendarDates: CalendarDates = {
 
     return { year, month, day };
   },
+  dateOf: parseCalendarDate,
+  yearsBetween: completedYearsBetween,
 };
