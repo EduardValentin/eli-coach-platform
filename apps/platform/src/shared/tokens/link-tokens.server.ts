@@ -1,4 +1,6 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
+
+import { sha256Hex } from "~/shared/documents/sha256-hasher.server";
 
 const TOKEN_BYTES = 32;
 
@@ -10,18 +12,14 @@ class RandomTokenGenerator implements TokenGenerator {
   create(): { rawToken: string; sha256: string } {
     const rawToken = randomBytes(TOKEN_BYTES).toString("base64url");
 
-    return { rawToken, sha256: hashSha256(rawToken) };
+    return { rawToken, sha256: sha256Hex(rawToken) };
   }
 }
 
 class Sha256TokenHasher implements TokenHasher {
   sha256(rawToken: string): string {
-    return hashSha256(rawToken);
+    return sha256Hex(rawToken);
   }
-}
-
-function hashSha256(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
 }
 
 export function createTokenGenerator(): TokenGenerator {

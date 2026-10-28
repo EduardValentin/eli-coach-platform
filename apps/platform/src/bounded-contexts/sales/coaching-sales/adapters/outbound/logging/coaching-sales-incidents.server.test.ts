@@ -202,7 +202,9 @@ describe("createCoachingSalesIncidents", () => {
 
     // act
     logger.paymentEventHandlingFailed({
-      errorClass: "DrizzleQueryError",
+      error: Object.assign(new Error("relation is locked"), {
+        name: "DrizzleQueryError",
+      }),
       eventId: "evt_1",
       handler: "coaching-subscription",
     });

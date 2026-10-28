@@ -269,7 +269,7 @@ describe("StripeWebhookController with a subscription change", () => {
     // assert
     expect(response.status).toBe(500);
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
-      errorClass: "RangeError",
+      error: expect.any(RangeError),
       eventId: "evt_deleted",
       handler: "coaching-subscription",
     });
@@ -315,7 +315,7 @@ describe("StripeWebhookController with a refunded charge", () => {
     // assert
     expect(response.status).toBe(500);
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
-      errorClass: "Error",
+      error: expect.any(Error),
       eventId: "evt_refunded",
       handler: "charge-refunds",
     });
@@ -358,7 +358,7 @@ describe("StripeWebhookController with a card change", () => {
     // assert
     expect(response.status).toBe(500);
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
-      errorClass: "Error",
+      error: expect.any(Error),
       eventId: "evt_card",
       handler: "payment-cards",
     });
@@ -415,7 +415,7 @@ describe("StripeWebhookController when the handler fails", () => {
     expect(response.status).toBe(500);
     expect(await response.text()).toBe("");
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
-      errorClass: "TypeError",
+      error: expect.any(TypeError),
       eventId: "evt_failing",
       handler: "coaching-subscription",
     });

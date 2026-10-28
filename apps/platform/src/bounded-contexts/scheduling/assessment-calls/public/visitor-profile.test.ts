@@ -16,6 +16,7 @@ import {
   possessivePronoun,
   subjectPronoun,
 } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
+import { MIN_BOOKING_AGE as PUBLISHED_MIN_BOOKING_AGE } from "~/bounded-contexts/scheduling/public/visitor";
 
 const BUCHAREST = "Europe/Bucharest";
 const AUTUMN_EVENING = new Date("2026-09-21T18:00:00.000Z");
@@ -73,12 +74,16 @@ describe("visitor profile options", () => {
     expect(goalLabel).toBe("Maintain but improve lifestyle");
   });
 
-  it("books visitors between eighteen and one hundred and twenty", () => {
+  it("books visitors between eighteen and one hundred and twenty, the published minimum included", () => {
     // arrange, act
-    const bounds = [MIN_BOOKING_AGE, MAX_BOOKING_AGE];
+    const bounds = [
+      MIN_BOOKING_AGE,
+      PUBLISHED_MIN_BOOKING_AGE,
+      MAX_BOOKING_AGE,
+    ];
 
     // assert
-    expect(bounds).toEqual([18, 120]);
+    expect(bounds).toEqual([18, 18, 120]);
   });
 });
 

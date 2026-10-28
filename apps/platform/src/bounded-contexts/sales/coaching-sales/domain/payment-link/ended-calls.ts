@@ -1,10 +1,4 @@
-type CallerGender = "female" | "male" | "prefer_not_to_say";
-
-type CallerGoal =
-  | "lose_weight"
-  | "build_muscle"
-  | "build_strength"
-  | "maintain_improve_lifestyle";
+import type { CallerGender, CallerGoal } from "../caller";
 
 export type SalesCall = {
   id: string;

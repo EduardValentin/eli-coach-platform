@@ -7,9 +7,7 @@ import {
 export class OperationsWaitlistMode implements WaitlistMode {
   constructor(private readonly featureFlags: FeatureFlagsFacade) {}
 
-  async isEnabled(): Promise<boolean> {
-    const featureFlags = await this.featureFlags.read();
-
-    return featureFlags[WAITLIST_MODE_FEATURE_FLAG] === true;
+  isEnabled(): Promise<boolean> {
+    return this.featureFlags.isOn(WAITLIST_MODE_FEATURE_FLAG);
   }
 }

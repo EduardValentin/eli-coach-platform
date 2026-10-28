@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "~/shared/database";
 import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
+import { phoneNumbers } from "~/shared/contact/phone-numbers";
 import { ClientIdentityEdit } from "~/bounded-contexts/clients/clients/domain/client";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -25,14 +26,14 @@ describe("PostgresClientIdentityChanges#save", () => {
         country: "MD",
         gender: "female",
       },
-      {
-        on: new Date("2026-10-24T10:00:00.000Z"),
-        timeZone: "Europe/Bucharest",
-      },
-      ClientCountries.of([
-        { code: "RO", callingCode: "+40" },
-        { code: "MD", callingCode: "+373" },
-      ]),
+      { year: 2026, month: 10, day: 24 },
+      ClientCountries.of(
+        [
+          { code: "RO", callingCode: "+40" },
+          { code: "MD", callingCode: "+373" },
+        ],
+        phoneNumbers,
+      ),
     );
     if (result.status !== "valid") throw new Error(result.status);
 

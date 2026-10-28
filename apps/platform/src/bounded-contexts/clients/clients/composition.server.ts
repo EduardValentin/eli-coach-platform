@@ -41,6 +41,8 @@ import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
 import { COUNTRIES } from "~/shared/contact/countries";
+import { phoneNumbers } from "~/shared/contact/phone-numbers";
+import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
 import { SchedulingClientCalls } from "~/bounded-contexts/clients/clients/adapters/outbound/scheduling/client-calls.server";
 import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
 import { OwnClientIdentityController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/own-client-identity-controller.server";
@@ -117,7 +119,7 @@ export function composeClientsFeature(
   const admittedClients = new PostgresAdmittedClients(database);
   const roster = new PostgresClientRoster(database);
   const identityChanges = new PostgresClientIdentityChanges(database);
-  const countries = ClientCountries.of(COUNTRIES);
+  const countries = ClientCountries.of(COUNTRIES, phoneNumbers);
 
   const invitationPorts = {
     accountInvitations,
@@ -180,6 +182,7 @@ export function composeClientsFeature(
           changes: identityChanges,
           clients: clientReach,
           clock,
+          calendar: wallClockCalendarDates,
           countries,
         }),
       }),
@@ -212,6 +215,7 @@ export function composeClientsFeature(
           changes: identityChanges,
           clients: clientReach,
           clock,
+          calendar: wallClockCalendarDates,
           countries,
           identities: clientIdentities,
         }),

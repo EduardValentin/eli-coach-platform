@@ -7,9 +7,6 @@ import type {
   OpenSlotsRequest,
 } from "~/bounded-contexts/scheduling/public/open-slots";
 
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
-const MINUTES_PER_HOUR = 60;
-
 export function createOpenSlotsFacade(
   openings: CoachOpenings,
 ): OpenSlotsFacade {
@@ -53,10 +50,7 @@ function policyOf(request: OpenSlotsRequest): SlotPolicy {
     durationMinutes: request.durationMinutes,
     bufferMinutes: request.bufferMinutes,
     stepMinutes: request.stepMinutes,
-    horizonDays: Math.floor(
-      (Date.parse(request.to) - Date.parse(request.from)) /
-        MILLISECONDS_PER_DAY,
-    ),
-    leadMinutes: request.leadTimeHours * MINUTES_PER_HOUR,
+    horizonDays: request.horizonDays,
+    leadMinutes: request.leadMinutes,
   });
 }

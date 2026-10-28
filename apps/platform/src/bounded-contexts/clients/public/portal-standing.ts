@@ -1,12 +1,6 @@
 import { createContext, type RouterContext } from "react-router";
 
-type ClientJourneyStepName =
-  | "welcome"
-  | "onboarding"
-  | "submitted"
-  | "in-review"
-  | "needs-details"
-  | "approved";
+import type { ClientJourneyStepName } from "./client-journey-step";
 
 type ClientPortalReach = "reachable" | "awaiting_onboarding" | "ended";
 

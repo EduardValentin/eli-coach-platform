@@ -1,7 +1,7 @@
 import {
   ClientBirthDate,
   MAX_CLIENT_NAME_LENGTH,
-  type AgeMoment,
+  type CalendarDate,
   type ClientCountries,
   type ClientGender,
   type ClientPhoneEntry,
@@ -41,7 +41,7 @@ export class ClientIdentityEdit {
 
   static of(
     entered: EnteredClientIdentity,
-    moment: AgeMoment,
+    today: CalendarDate,
     countries: ClientCountries,
   ): ClientIdentityEditResult {
     const { phone: phoneEntry, ...identity } = entered;
@@ -52,7 +52,7 @@ export class ClientIdentityEdit {
       lastName: entered.lastName.trim(),
       phone: phoneReading.status === "valid" ? phoneReading.e164 : null,
     });
-    const problems = edit.problems(moment, phoneReading, countries);
+    const problems = edit.problems(today, phoneReading, countries);
 
     return Object.keys(problems).length > 0
       ? { status: "invalid", problems }
@@ -64,7 +64,7 @@ export class ClientIdentityEdit {
   }
 
   private problems(
-    moment: AgeMoment,
+    today: CalendarDate,
     phoneReading: ClientPhoneReading,
     countries: ClientCountries,
   ): ClientIdentityProblems {
@@ -73,7 +73,7 @@ export class ClientIdentityEdit {
     const lastNameProblem = this.nameProblem(lastName);
     const birthDate = ClientBirthDate.parse(dateOfBirth);
     const dateOfBirthProblem = birthDate
-      ? birthDate.problemOn(moment)
+      ? birthDate.problemOn(today)
       : "impossible";
 
     return {

@@ -16,9 +16,11 @@ export const MAX_CLIENT_NAME_LENGTH = 60;
 const MIN_CLIENT_AGE = 18;
 const MAX_CLIENT_AGE = 120;
 
-type CalendarDate = { year: number; month: number; day: number };
+export type CalendarDate = { year: number; month: number; day: number };
 
-export type AgeMoment = { on: Date; timeZone: string };
+export interface CalendarDates {
+  dateOn(moment: { on: Date; timeZone: string }): CalendarDate;
+}
 
 type BirthDateProblem = "impossible" | "too-young";
 
@@ -46,34 +48,20 @@ export class ClientBirthDate {
     return isCalendarDate ? new ClientBirthDate({ year, month, day }) : null;
   }
 
-  problemOn(moment: AgeMoment): BirthDateProblem | null {
-    const age = this.ageOn(moment);
+  problemOn(today: CalendarDate): BirthDateProblem | null {
+    const age = this.ageOn(today);
 
     if (age < 0 || age > MAX_CLIENT_AGE) return "impossible";
 
     return age < MIN_CLIENT_AGE ? "too-young" : null;
   }
 
-  private ageOn(moment: AgeMoment): number {
-    const today = this.calendarDateOf(moment);
+  private ageOn(today: CalendarDate): number {
     const birthdayStillAhead =
       today.month < this.date.month ||
       (today.month === this.date.month && today.day < this.date.day);
 
     return today.year - this.date.year - (birthdayStillAhead ? 1 : 0);
-  }
-
-  private calendarDateOf({ on, timeZone }: AgeMoment): CalendarDate {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(on);
-    const part = (type: Intl.DateTimeFormatPartTypes) =>
-      Number(parts.find((candidate) => candidate.type === type)?.value);
-
-    return { year: part("year"), month: part("month"), day: part("day") };
   }
 }
 
@@ -84,23 +72,28 @@ export type ClientPhoneReading =
   | { status: "valid"; e164: string }
   | { status: "invalid" };
 
-type ClientCountry = { code: string; callingCode: string };
+export interface PhoneNumbers {
+  normalise(parts: {
+    callingCode: string;
+    nationalNumber: string;
+  }): ClientPhoneReading;
+}
 
-const MIN_NATIONAL_DIGITS = 4;
-const MAX_NATIONAL_DIGITS = 14;
-const MAX_E164_DIGITS = 15;
-const PHONE_SEPARATORS = /[\s().-]/g;
-const CALLING_CODE = /^\+\d{1,3}$/;
-const NATIONAL_NUMBER = /^\d+$/;
+type ClientCountry = { code: string; callingCode: string };
 
 export class ClientCountries {
   private constructor(
     private readonly callingCodes: ReadonlyMap<string, string>,
+    private readonly phoneNumbers: PhoneNumbers,
   ) {}
 
-  static of(countries: readonly ClientCountry[]): ClientCountries {
+  static of(
+    countries: readonly ClientCountry[],
+    phoneNumbers: PhoneNumbers,
+  ): ClientCountries {
     return new ClientCountries(
       new Map(countries.map((country) => [country.code, country.callingCode])),
+      phoneNumbers,
     );
   }
 
@@ -109,29 +102,9 @@ export class ClientCountries {
   }
 
   phoneOf(entry: ClientPhoneEntry): ClientPhoneReading {
-    const callingCode = this.callingCodes.get(entry.country) ?? "";
-    const compact = entry.nationalNumber.replace(PHONE_SEPARATORS, "");
-
-    if (compact.length === 0) {
-      return { status: "empty" };
-    }
-
-    if (!CALLING_CODE.test(callingCode) || !NATIONAL_NUMBER.test(compact)) {
-      return { status: "invalid" };
-    }
-
-    const national = compact.replace(/^0/, "");
-    const countryDigits = callingCode.slice(1);
-    const withinNationalBounds =
-      national.length >= MIN_NATIONAL_DIGITS &&
-      national.length <= MAX_NATIONAL_DIGITS;
-    const withinE164 =
-      countryDigits.length + national.length <= MAX_E164_DIGITS;
-
-    if (!withinNationalBounds || !withinE164) {
-      return { status: "invalid" };
-    }
-
-    return { status: "valid", e164: `+${countryDigits}${national}` };
+    return this.phoneNumbers.normalise({
+      callingCode: this.callingCodes.get(entry.country) ?? "",
+      nationalNumber: entry.nationalNumber,
+    });
   }
 }

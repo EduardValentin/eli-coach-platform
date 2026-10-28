@@ -1,10 +1,10 @@
 export type OpenSlotsRequest = {
   from: string;
-  to: string;
   durationMinutes: number;
-  stepMinutes: number;
-  leadTimeHours: number;
   bufferMinutes: number;
+  stepMinutes: number;
+  horizonDays: number;
+  leadMinutes: number;
 };
 
 type OfferedStartRequest = OpenSlotsRequest & { startsAt: string };

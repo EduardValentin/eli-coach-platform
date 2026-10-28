@@ -185,7 +185,7 @@ export class StripeWebhookController {
   private deliver(delivery: Delivery): Promise<Response> {
     return delivery.handle().then(acknowledged, (error) => {
       this.options.incidents.paymentEventHandlingFailed({
-        errorClass: errorClassOf(error),
+        error,
         eventId: delivery.eventId,
         handler: delivery.handler,
       });
@@ -197,8 +197,4 @@ export class StripeWebhookController {
 
 function acknowledged(): Response {
   return new Response(null, { status: 200 });
-}
-
-function errorClassOf(error: unknown): string {
-  return error instanceof Error ? error.name : typeof error;
 }

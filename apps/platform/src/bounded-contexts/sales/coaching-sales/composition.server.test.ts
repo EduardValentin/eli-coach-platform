@@ -1,7 +1,6 @@
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
 import type { PaymentCheckout } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type { FeatureFlagSetDto } from "~/bounded-contexts/operations/public/feature-flags";
 import { InMemoryProductEmail } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
@@ -42,7 +41,7 @@ describe("composeCoachingSalesFeature", () => {
     const { feature } = composeCoachingSalesFeature({
       ...createHandles({}),
       featureFlags: {
-        read: async () => {
+        isOn: async () => {
           throw new Error("database down");
         },
       },
@@ -229,7 +228,7 @@ async function openCheckoutSession(
 }
 
 function createHandles(
-  featureFlags: FeatureFlagSetDto,
+  featureFlags: Record<string, boolean>,
 ): CoachingSalesFeatureHandles {
   const payments = createPayments({ PAYMENTS_PROVIDER: "memory" });
 
@@ -257,7 +256,7 @@ function createHandles(
     },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
-    featureFlags: { read: async () => featureFlags },
+    featureFlags: { isOn: async (flag) => featureFlags[flag] === true },
     linkTokens: {
       generator: createTokenGenerator(),
       hasher: createTokenHasher(),

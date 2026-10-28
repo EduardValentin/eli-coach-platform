@@ -5,6 +5,7 @@ export {
   CLIENT_GENDERS,
   CLIENT_PRIMARY_GOALS,
   ClientCountries,
+  type CalendarDates,
   type ClientGender,
   type ClientPrimaryGoal,
 } from "./client-details";

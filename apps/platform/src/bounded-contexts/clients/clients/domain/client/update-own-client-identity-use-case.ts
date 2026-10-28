@@ -1,6 +1,6 @@
 import type { Clock } from "../clock";
 
-import type { ClientCountries } from "./client-details";
+import type { CalendarDates, ClientCountries } from "./client-details";
 import type { ClientIdentities } from "./client-identities";
 import type { ClientIdentityChanges } from "./client-identity-changes";
 import {
@@ -25,6 +25,7 @@ type UpdateOwnClientIdentityUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   identities: Pick<ClientIdentities, "findByClientId">;
   changes: ClientIdentityChanges;
+  calendar: CalendarDates;
   clock: Clock;
   countries: ClientCountries;
 };
@@ -63,7 +64,10 @@ export class UpdateOwnClientIdentityUseCase {
         clientId: client.clientId,
         gender: current.gender,
       },
-      { on: this.options.clock.now(), timeZone: client.timeZone },
+      this.options.calendar.dateOn({
+        on: this.options.clock.now(),
+        timeZone: client.timeZone,
+      }),
       this.options.countries,
     );
 

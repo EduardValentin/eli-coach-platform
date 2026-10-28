@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
 import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
+import { phoneNumbers } from "~/shared/contact/phone-numbers";
 
 import type { ClientIdentities, ClientIdentity } from "./client-identities";
 import type { ClientIdentityChanges } from "./client-identity-changes";
@@ -66,11 +68,15 @@ function createPorts(
     changes: {
       save: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientIdentityChanges,
+    calendar: wallClockCalendarDates,
     clock: { now: () => NOW },
-    countries: ClientCountries.of([
-      { code: "RO", callingCode: "+40" },
-      { code: "MD", callingCode: "+373" },
-    ]),
+    countries: ClientCountries.of(
+      [
+        { code: "RO", callingCode: "+40" },
+        { code: "MD", callingCode: "+373" },
+      ],
+      phoneNumbers,
+    ),
   };
 }
 

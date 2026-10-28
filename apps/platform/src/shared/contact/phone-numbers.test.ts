@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { VisitorPhone } from "./visitor-phone";
+import { normalisePhone } from "./phone-numbers";
 
-describe("VisitorPhone.read", () => {
+describe("normalisePhone", () => {
   it.each([
     [
       "spaces, dots, dashes and parentheses",
@@ -29,12 +29,10 @@ describe("VisitorPhone.read", () => {
     const parts = { callingCode, nationalNumber };
 
     // act
-    const reading = VisitorPhone.read(parts);
+    const reading = normalisePhone(parts);
 
     // assert
-    expect(reading.status === "valid" && reading.phone.toSnapshot()).toEqual({
-      e164,
-    });
+    expect(reading).toEqual({ status: "valid", e164 });
   });
 
   it("reads no phone from a blank number", () => {
@@ -42,7 +40,7 @@ describe("VisitorPhone.read", () => {
     const parts = { callingCode: "+40", nationalNumber: "   " };
 
     // act
-    const reading = VisitorPhone.read(parts);
+    const reading = normalisePhone(parts);
 
     // assert
     expect(reading).toEqual({ status: "empty" });
@@ -59,7 +57,7 @@ describe("VisitorPhone.read", () => {
     const parts = { callingCode, nationalNumber };
 
     // act
-    const reading = VisitorPhone.read(parts);
+    const reading = normalisePhone(parts);
 
     // assert
     expect(reading).toEqual({ status: "invalid" });

@@ -4,5 +4,7 @@ import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/fe
 export function createFeatureFlagsFacade(
   reader: FeatureFlagReader,
 ): FeatureFlagsFacade {
-  return { read: () => reader.execute() };
+  return {
+    isOn: async (flag) => (await reader.execute())[flag] === true,
+  };
 }

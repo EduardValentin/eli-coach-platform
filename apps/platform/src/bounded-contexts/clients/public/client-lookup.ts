@@ -1,3 +1,5 @@
+import type { ClientJourneyStepName } from "./client-journey-step";
+
 type ClientIdentityDto = {
   clientId: string;
   firstName: string;
@@ -9,14 +11,6 @@ export type ClientReachDto = {
   clientId: string;
   timeZone: string;
 };
-
-type ClientJourneyStepName =
-  | "welcome"
-  | "onboarding"
-  | "submitted"
-  | "in-review"
-  | "needs-details"
-  | "approved";
 
 type ClientJourneyStepDto = {
   clientId: string;

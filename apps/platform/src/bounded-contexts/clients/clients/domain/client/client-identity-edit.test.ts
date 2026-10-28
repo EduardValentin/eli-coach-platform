@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
 import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
+import { phoneNumbers } from "~/shared/contact/phone-numbers";
 
 import {
   ClientIdentityEdit,
@@ -8,15 +10,18 @@ import {
   type EnteredClientIdentity,
 } from "./client-identity-edit";
 
-const ON = {
+const TODAY = wallClockCalendarDates.dateOn({
   on: new Date("2026-10-24T22:30:00.000Z"),
   timeZone: "Europe/Bucharest",
-};
+});
 
-const COUNTRIES = ClientCountries.of([
-  { code: "RO", callingCode: "+40" },
-  { code: "MD", callingCode: "+373" },
-]);
+const COUNTRIES = ClientCountries.of(
+  [
+    { code: "RO", callingCode: "+40" },
+    { code: "MD", callingCode: "+373" },
+  ],
+  phoneNumbers,
+);
 
 const ENTERED: EnteredClientIdentity = {
   clientId: "client-1",
@@ -44,7 +49,7 @@ describe("ClientIdentityEdit.of", () => {
     const entered = { ...ENTERED, firstName: "  Ana ", lastName: " Popescu  " };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
+    const result = ClientIdentityEdit.of(entered, TODAY, COUNTRIES);
 
     // assert
     expect(result.status === "valid" && result.edit.toSnapshot()).toEqual(
@@ -57,7 +62,7 @@ describe("ClientIdentityEdit.of", () => {
     const entered = { ...ENTERED, phone: { country: "", nationalNumber: "" } };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
+    const result = ClientIdentityEdit.of(entered, TODAY, COUNTRIES);
 
     // assert
     expect(result.status === "valid" && result.edit.toSnapshot()).toEqual({
@@ -76,7 +81,7 @@ describe("ClientIdentityEdit.of", () => {
     // act
     const result = ClientIdentityEdit.of(
       turnsEighteenTomorrowInUtc,
-      ON,
+      TODAY,
       COUNTRIES,
     );
 
@@ -122,7 +127,7 @@ describe("ClientIdentityEdit.of", () => {
     const entered = { ...ENTERED, ...change };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
+    const result = ClientIdentityEdit.of(entered, TODAY, COUNTRIES);
 
     // assert
     expect(result).toEqual({ status: "invalid", problems });
@@ -139,7 +144,7 @@ describe("ClientIdentityEdit.of", () => {
     };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
+    const result = ClientIdentityEdit.of(entered, TODAY, COUNTRIES);
 
     // assert
     expect(result).toEqual({

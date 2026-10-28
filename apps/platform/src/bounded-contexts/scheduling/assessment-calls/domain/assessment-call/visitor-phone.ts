@@ -1,3 +1,5 @@
+import type { PhoneNumbers } from "./phone-numbers";
+
 export type VisitorPhoneParts = { callingCode: string; nationalNumber: string };
 
 export type VisitorPhoneReading =
@@ -7,46 +9,18 @@ export type VisitorPhoneReading =
 
 export type VisitorPhoneSnapshot = { e164: string };
 
-const MIN_NATIONAL_DIGITS = 4;
-const MAX_NATIONAL_DIGITS = 14;
-const MAX_E164_DIGITS = 15;
-const PHONE_SEPARATORS = /[\s().-]/g;
-const CALLING_CODE = /^\+\d{1,3}$/;
-const NATIONAL_NUMBER = /^\d+$/;
-
 export class VisitorPhone {
   private constructor(private readonly snapshot: VisitorPhoneSnapshot) {}
 
-  static read(parts: VisitorPhoneParts): VisitorPhoneReading {
-    const compact = parts.nationalNumber.replace(PHONE_SEPARATORS, "");
+  static read(
+    parts: VisitorPhoneParts,
+    phoneNumbers: PhoneNumbers,
+  ): VisitorPhoneReading {
+    const reading = phoneNumbers.normalise(parts);
 
-    if (compact.length === 0) {
-      return { status: "empty" };
-    }
-
-    if (
-      !CALLING_CODE.test(parts.callingCode) ||
-      !NATIONAL_NUMBER.test(compact)
-    ) {
-      return { status: "invalid" };
-    }
-
-    const national = compact.replace(/^0/, "");
-    const countryDigits = parts.callingCode.slice(1);
-    const withinNationalBounds =
-      national.length >= MIN_NATIONAL_DIGITS &&
-      national.length <= MAX_NATIONAL_DIGITS;
-    const withinE164 =
-      countryDigits.length + national.length <= MAX_E164_DIGITS;
-
-    if (!withinNationalBounds || !withinE164) {
-      return { status: "invalid" };
-    }
-
-    return {
-      status: "valid",
-      phone: new VisitorPhone({ e164: `+${countryDigits}${national}` }),
-    };
+    return reading.status === "valid"
+      ? { status: "valid", phone: new VisitorPhone({ e164: reading.e164 }) }
+      : reading;
   }
 
   toSnapshot(): VisitorPhoneSnapshot {

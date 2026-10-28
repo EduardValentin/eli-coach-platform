@@ -16,9 +16,6 @@ type SchedulingOpenSlotsOptions = {
   rules: CheckInSlotRules;
 };
 
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
-const MINUTES_PER_HOUR = 60;
-
 export class SchedulingOpenSlots implements OpenSlots {
   constructor(private readonly options: SchedulingOpenSlotsOptions) {}
 
@@ -65,13 +62,11 @@ export class SchedulingOpenSlots implements OpenSlots {
 
     return {
       from: now.toISOString(),
-      to: new Date(
-        now.getTime() + rules.horizonDays * MILLISECONDS_PER_DAY,
-      ).toISOString(),
       durationMinutes: rules.durationMinutes,
-      stepMinutes: rules.stepMinutes,
-      leadTimeHours: rules.leadMinutes / MINUTES_PER_HOUR,
       bufferMinutes: rules.bufferMinutes,
+      stepMinutes: rules.stepMinutes,
+      horizonDays: rules.horizonDays,
+      leadMinutes: rules.leadMinutes,
     };
   }
 }

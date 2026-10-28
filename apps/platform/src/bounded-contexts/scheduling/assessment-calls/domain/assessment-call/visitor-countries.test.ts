@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 
+import { phoneNumbers } from "~/shared/contact/phone-numbers";
+
 import { VisitorCountries } from "./visitor-countries";
 
-const COUNTRIES = VisitorCountries.of([
-  { code: "RO", callingCode: "+40" },
-  { code: "MD", callingCode: "+373" },
-]);
+const COUNTRIES = VisitorCountries.of(
+  [
+    { code: "RO", callingCode: "+40" },
+    { code: "MD", callingCode: "+373" },
+  ],
+  phoneNumbers,
+);
 
 describe("VisitorCountries#includes", () => {
   it("knows the countries it was given and no other", () => {

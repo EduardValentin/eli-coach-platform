@@ -57,10 +57,10 @@ export function createCoachingSalesIncidents(
         paymentCustomerId,
       });
     },
-    paymentEventHandlingFailed: ({ errorClass, eventId, handler }) => {
+    paymentEventHandlingFailed: ({ error, eventId, handler }) => {
       logger.error("Payment event handler failed; Stripe will redeliver.", {
         errorCategory: "payment_event_handling_failure",
-        errorClass,
+        errorClass: errorClassOf(error),
         eventId,
         handler,
       });

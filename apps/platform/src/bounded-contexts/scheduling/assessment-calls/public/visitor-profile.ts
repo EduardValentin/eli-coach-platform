@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/public/wall-clock-calendar-dates";
 import { COUNTRIES } from "~/shared/contact/countries";
+import { phoneNumbers } from "~/shared/contact/phone-numbers";
 
 export {
   MAX_BOOKING_AGE,
@@ -41,7 +42,7 @@ export const VISITOR_PRIMARY_GOAL_OPTIONS: readonly ChoiceOption<VisitorPrimaryG
 
 export const MAX_NOTES_LENGTH = 1000;
 
-const VISITOR_COUNTRIES = VisitorCountries.of(COUNTRIES);
+const VISITOR_COUNTRIES = VisitorCountries.of(COUNTRIES, phoneNumbers);
 
 export const BOOKING_FIELD_MESSAGES = {
   birthDateImpossible: "Enter a real date of birth.",
