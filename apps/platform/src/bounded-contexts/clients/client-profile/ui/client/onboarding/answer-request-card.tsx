@@ -15,7 +15,7 @@ import { useId, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 
-import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import type {
   AskedAnswers,
   OnboardingAnswerPage,

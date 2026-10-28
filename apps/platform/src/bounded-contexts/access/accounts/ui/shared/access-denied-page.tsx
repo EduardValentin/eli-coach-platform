@@ -4,7 +4,7 @@ import { Lock } from "lucide-react";
 import {
   CLIENT_PORTAL_PATH,
   COACH_PORTAL_PATH,
-} from "~/bounded-contexts/access/accounts/public/paths";
+} from "~/bounded-contexts/access/public/paths";
 
 export type AccessDeniedRecovery = "client-portal" | "coach-portal" | "store";
 

@@ -1,3 +1,3 @@
-import { target } from "happy-dom";
+import { target as t0 } from "happy-dom";
 
-export const probe = target;
+export const probe = [t0];

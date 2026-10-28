@@ -1,3 +1,3 @@
-import { SignOutButton } from "@clerk/react-router";
+import { target as t0 } from "@clerk/react-router";
 
-export const probe = SignOutButton;
+export const probe = [t0];

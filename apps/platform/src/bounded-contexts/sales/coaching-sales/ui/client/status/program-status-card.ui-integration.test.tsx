@@ -27,7 +27,7 @@ import {
   vi,
 } from "vitest";
 
-import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,

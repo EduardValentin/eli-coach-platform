@@ -10,7 +10,7 @@ import {
   type SubscriptionEventChange,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
-import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
+import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/payment-event-ledger.server";
 import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 
 import { coachingSubscriptionsTable } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";

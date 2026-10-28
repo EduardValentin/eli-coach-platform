@@ -1,4 +1,5 @@
 import {
+  bundleLengthLabel,
   COACHING_BUNDLES,
   type CoachingBundle,
   type PriceTier,
@@ -6,7 +7,6 @@ import {
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { bundleLengthLabel } from "~/bounded-contexts/clients/clients/public/clients";
 import { formatEuros } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
 import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 

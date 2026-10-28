@@ -1,4 +1,3 @@
-import { DndProvider } from "react-dnd";
-import { TouchBackend } from "react-dnd-touch-backend";
+import { target as t0 } from "react-dnd";
 
-export const probe = [DndProvider, TouchBackend];
+export const probe = [t0];

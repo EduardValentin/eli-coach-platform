@@ -7,7 +7,7 @@ import {
   type PaymentCards,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
-import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
+import { recordEventOnce } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/payment-event-ledger.server";
 import { and, eq, type SQL } from "drizzle-orm";
 
 import { paymentCardsTable } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";

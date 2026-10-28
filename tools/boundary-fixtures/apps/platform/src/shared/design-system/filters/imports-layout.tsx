@@ -1,3 +1,3 @@
-import { target } from "../layout/app-shell";
+import { target as t0 } from "../layout/app-shell";
 
-export const probe = target;
+export const probe = [t0];

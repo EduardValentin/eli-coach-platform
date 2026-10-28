@@ -1,4 +1,4 @@
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-config";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-settings";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
   STORE_ACQUISITION_TURNSTILE_ACTION,

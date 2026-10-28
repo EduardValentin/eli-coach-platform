@@ -1,1 +1,1 @@
-export const target = 1;
+export { target } from "../lib/cn";

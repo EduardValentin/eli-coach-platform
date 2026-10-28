@@ -1,4 +1,4 @@
-import { CLIENT_PORTAL_PATH } from "../../../access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "../../../access/public/paths";
 import {
   COACH_CLIENTS_ROUTE_SEGMENT,
   coachClientPath,

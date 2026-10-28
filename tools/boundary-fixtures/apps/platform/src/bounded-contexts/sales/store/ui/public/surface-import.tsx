@@ -1,3 +1,3 @@
-import { target } from "~/surfaces/public-site/shell/layout";
+import { target as t0 } from "~/surfaces/public-site/shell/layout";
 
-export const probe = target;
+export const probe = [t0];

@@ -1,1 +1,1 @@
-export const target = "/store";
+export const target = 1;

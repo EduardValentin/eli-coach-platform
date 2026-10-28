@@ -12,7 +12,7 @@ import type {
   CallSalesStates,
 } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
-import { recordPaymentEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-ledger.server";
+import { recordPaymentEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/payment-event-ledger.server";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 
 import {

@@ -1,4 +1,3 @@
-import { detectCfbf } from "@file-type/cfbf";
-import { FileTypeParser } from "file-type";
+import { target as t0 } from "file-type";
 
-export const probe = [detectCfbf, FileTypeParser];
+export const probe = [t0];

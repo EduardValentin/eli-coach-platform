@@ -1,3 +1,3 @@
-import { target } from "~/shared/database/connection";
+import { target as t0 } from "~/shared/database/connection";
 
-export { target };
+export const probe = [t0];

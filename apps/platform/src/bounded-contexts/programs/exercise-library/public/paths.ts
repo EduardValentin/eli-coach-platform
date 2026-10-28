@@ -1,4 +1,4 @@
-import { COACH_PORTAL_PATH } from "../../../access/accounts/public/paths";
+import { COACH_PORTAL_PATH } from "../../../access/public/paths";
 
 const EXERCISES_API = "/api/coach/exercises";
 

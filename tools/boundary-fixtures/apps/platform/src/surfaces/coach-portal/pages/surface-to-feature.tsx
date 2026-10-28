@@ -1,3 +1,3 @@
-import { target } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/catalog-repository.server";
+import { target as t0 } from "~/bounded-contexts/sales/store/ui/public/catalog-panel";
 
-export const probe = target;
+export const probe = [t0];

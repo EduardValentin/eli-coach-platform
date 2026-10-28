@@ -1,6 +1,6 @@
 import { index, relative } from "@react-router/dev/routes";
 
-import { SIGN_IN_FAILED_ROUTE_SEGMENT } from "../../bounded-contexts/access/accounts/public/paths";
+import { SIGN_IN_FAILED_ROUTE_SEGMENT } from "../../bounded-contexts/access/public/paths";
 import { INVITATION_ROUTE_SEGMENT } from "../../bounded-contexts/clients/clients/public/paths";
 import { legalRoutes } from "../../bounded-contexts/legal/routes";
 import { salesRoutes } from "../../bounded-contexts/sales/routes";

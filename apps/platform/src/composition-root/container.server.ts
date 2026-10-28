@@ -31,7 +31,7 @@ import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters
 import { createManagementAuthConfig } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-auth-config.server";
 import { createManagementAuthenticator } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/create-management-authenticator.server";
 
-import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import {
   composeAccess,
   type AccessComposition,

@@ -1,3 +1,3 @@
-import { target } from "~/bounded-contexts/sales/store/public/reaches-bounded-context-public";
+import { target as t0 } from "~/bounded-contexts/sales/store/public/store";
 
-export const probe = target;
+export const probe = [t0];

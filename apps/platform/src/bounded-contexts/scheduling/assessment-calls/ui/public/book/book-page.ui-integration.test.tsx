@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-config";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-settings";
 import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import {

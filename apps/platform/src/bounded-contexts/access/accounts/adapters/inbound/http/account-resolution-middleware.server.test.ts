@@ -13,7 +13,7 @@ vi.mock("@clerk/react-router/server", () => ({
   clerkClient: mocks.clerkClient,
 }));
 
-import { SIGN_IN_FAILED_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { SIGN_IN_FAILED_PATH } from "~/bounded-contexts/access/public/paths";
 import { createAccountResolutionMiddleware } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-resolution-middleware.server";
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 import { accessContext } from "~/bounded-contexts/access/public/session";

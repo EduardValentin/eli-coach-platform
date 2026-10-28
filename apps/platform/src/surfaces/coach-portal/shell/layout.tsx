@@ -12,7 +12,7 @@ import {
 import {
   COACH_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "~/bounded-contexts/access/accounts/public/paths";
+} from "~/bounded-contexts/access/public/paths";
 import {
   checkInsContext,
   notificationsContext,

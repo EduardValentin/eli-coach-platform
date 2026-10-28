@@ -1,3 +1,3 @@
-import { target } from "~/bounded-contexts/access/public/session";
+import { target as t0 } from "~/bounded-contexts/access/public/session";
 
-export const probe = target;
+export const probe = [t0];

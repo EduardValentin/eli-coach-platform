@@ -1,3 +1,3 @@
-import { target } from "msw";
+import { target as t0 } from "msw";
 
-export const probe = target;
+export const probe = [t0];

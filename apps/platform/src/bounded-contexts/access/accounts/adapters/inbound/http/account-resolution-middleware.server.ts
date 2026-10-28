@@ -3,7 +3,7 @@ import { buildRedirectPath } from "~/shared/http/base-path";
 import type { ProvisionAccountResult } from "~/bounded-contexts/access/accounts/domain/account";
 import { redirect, type MiddlewareFunction } from "react-router";
 
-import { SIGN_IN_FAILED_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { SIGN_IN_FAILED_PATH } from "~/bounded-contexts/access/public/paths";
 import {
   accessContext,
   type ResolvedSession,

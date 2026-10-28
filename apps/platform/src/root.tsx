@@ -26,7 +26,7 @@ import {
   isPortalRouteHandle,
   portalForPathname,
   type PortalRouteSegment,
-} from "~/bounded-contexts/access/accounts/public/paths";
+} from "~/bounded-contexts/access/public/paths";
 import {
   AccessDeniedPage,
   resolveAccessDeniedRecovery,

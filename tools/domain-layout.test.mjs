@@ -2,7 +2,7 @@ import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { auditDomainLayout } from "./domain-layout.mjs";
+import { auditDomainLayout, auditSharedLayout } from "./domain-layout.mjs";
 
 const boundedContextsRoot = resolve(
   import.meta.dirname,
@@ -10,6 +10,11 @@ const boundedContextsRoot = resolve(
   "apps/platform/src/bounded-contexts",
 );
 const fixturesRoot = resolve(import.meta.dirname, "domain-layout-fixtures");
+const sharedRoot = resolve(
+  import.meta.dirname,
+  "..",
+  "apps/platform/src/shared",
+);
 const fixtureDomain = "sample/widgets/domain";
 
 describe("domain layout", () => {
@@ -54,5 +59,32 @@ describe("domain layout", () => {
 
     // assert
     expect(problems).toEqual(expected);
+  });
+});
+
+describe("shared layout", () => {
+  it("accepts every shared concern", () => {
+    // arrange
+    const root = sharedRoot;
+
+    // act
+    const problems = auditSharedLayout(root);
+
+    // assert
+    expect(problems).toEqual([]);
+  });
+
+  it("reports a domain/ or adapters/ folder under shared/", () => {
+    // arrange
+    const root = join(fixturesRoot, "shared-layout");
+
+    // act
+    const problems = auditSharedLayout(root);
+
+    // assert
+    expect(problems).toEqual([
+      "clock/domain: shared holds no domain/ folder",
+      "email/adapters: shared holds no adapters/ folder",
+    ]);
   });
 });

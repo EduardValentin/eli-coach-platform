@@ -3,9 +3,11 @@ const path = require("node:path");
 
 const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
 const APP = "^apps/platform/src/";
-const FEATURES = "^apps/platform/src/bounded-contexts/[^/]+/";
+const BOUNDED_CONTEXTS_ROOT = "^apps/platform/src/bounded-contexts/";
+const FEATURES = `${BOUNDED_CONTEXTS_ROOT}[^/]+/`;
 const COMPONENT = "(?!public/)[^/]+";
 const BOUNDED_CONTEXT_PUBLIC = `${FEATURES}public/`;
+const PUBLISHED_FOLDERS = `${FEATURES}(public|${COMPONENT}/(public|ui/shared))/`;
 const SURFACES = "^apps/platform/src/surfaces/";
 const CONCEPT = "{concept}";
 
@@ -17,8 +19,8 @@ function flatOrInConceptFolder(patterns) {
   );
 }
 
-const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared)/";
-const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/adapters/outbound/persistence/schema\\.server\\.ts$`;
+const SCHEMA_FILE = "adapters/outbound/persistence/schema\\.server\\.ts$";
+const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/${SCHEMA_FILE}`;
 const REQUEST_KEYS = "adapters/inbound/http/[a-z-]*context\\.server\\.ts$";
 const COMPONENT_COMPOSITION = `${FEATURES}${COMPONENT}/composition\\.server\\.ts$`;
 const BOUNDED_CONTEXT_COMPOSITION = `${FEATURES}composition\\.server\\.ts$`;
@@ -32,33 +34,38 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${APP}composition-root/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 
-const BOUNDED_CONTEXTS = [
-  ["operations", ["feature-flags"]],
-  ["legal", ["legal"]],
-  ["access", ["accounts"]],
-  ["scheduling", ["coach-schedule", "assessment-calls"]],
-  [
-    "clients",
-    [
-      "clients",
-      "client-profile",
-      "client-resources",
-      "notifications",
-      "check-ins",
-    ],
-  ],
-  ["programs", ["exercise-library", "nutrition-library"]],
-  ["sales", ["store", "waitlist", "coaching-sales"]],
+const BOUNDED_CONTEXT_ORDER = [
+  "operations",
+  "legal",
+  "access",
+  "scheduling",
+  "clients",
+  "programs",
+  "sales",
 ];
 
-const FEATURE_ORDER = BOUNDED_CONTEXTS.flatMap(([, components]) => components);
+const COMPONENT_ORDER = {
+  operations: ["feature-flags"],
+  legal: ["legal"],
+  access: ["accounts"],
+  scheduling: ["coach-schedule", "assessment-calls"],
+  clients: [
+    "clients",
+    "client-profile",
+    "client-resources",
+    "notifications",
+    "check-ins",
+  ],
+  programs: ["exercise-library", "nutrition-library"],
+  sales: ["store", "waitlist", "coaching-sales"],
+};
 
-// Temporary until Task 17: another component's domain/ is admitted by
-// feature-internals, feature-schema-foreign-key, every feature-order-* rule and
-// domain-imports-only-itself while the provider imports are replaced one at a
-// time.
-const FOREIGN_DOMAIN =
-  "^apps/platform/src/bounded-contexts/[^/]+/[^/]+/domain/";
+const COMBINED_ORDER = BOUNDED_CONTEXT_ORDER.flatMap((boundedContext) =>
+  COMPONENT_ORDER[boundedContext].map((component) => ({
+    boundedContext,
+    component,
+  })),
+);
 
 function foldersOf(directory) {
   return readdirSync(path.join(__dirname, "..", directory), {
@@ -68,79 +75,87 @@ function foldersOf(directory) {
     .map((entry) => entry.name);
 }
 
-function componentFoldersOf(directory) {
-  return foldersOf(directory).flatMap((boundedContext) =>
-    foldersOf(path.join(directory, boundedContext))
+function requireEveryFolderOrdered(directory) {
+  const unordered = foldersOf(directory).flatMap((boundedContext) => {
+    if (!BOUNDED_CONTEXT_ORDER.includes(boundedContext)) {
+      return [`${boundedContext} (not in BOUNDED_CONTEXT_ORDER)`];
+    }
+    return foldersOf(path.join(directory, boundedContext))
       .filter((folder) => folder !== "public")
-      .map((component) => ({ boundedContext, component })),
-  );
-}
-
-function boundedContextPositionOf(component) {
-  return BOUNDED_CONTEXTS.findIndex(([, components]) =>
-    components.includes(component),
-  );
-}
-
-function requireEveryComponentPlaced(directory) {
-  const misplaced = componentFoldersOf(directory)
-    .filter(({ boundedContext, component }) => {
-      const position = boundedContextPositionOf(component);
-      return (
-        position !== -1 && BOUNDED_CONTEXTS[position][0] !== boundedContext
+      .filter(
+        (component) => !COMPONENT_ORDER[boundedContext].includes(component),
+      )
+      .map(
+        (component) =>
+          `${boundedContext}/${component} (not in COMPONENT_ORDER.${boundedContext})`,
       );
-    })
-    .map(
-      ({ boundedContext, component }) =>
-        `${boundedContext}/${component} (BOUNDED_CONTEXTS places it in ${BOUNDED_CONTEXTS[boundedContextPositionOf(component)][0]})`,
-    );
-
-  if (misplaced.length > 0) {
-    throw new Error(
-      `Place every component of ${directory} under the bounded context BOUNDED_CONTEXTS assigns it; misplaced: ${misplaced.join(", ")}.`,
-    );
-  }
-}
-
-function requireEveryFolderOrdered({ directory, folders, order, orderName }) {
-  const unordered = folders.filter((folder) => !order.includes(folder));
+  });
 
   if (unordered.length > 0) {
     throw new Error(
-      `Place every folder of ${directory} in ${orderName}; missing: ${unordered.join(", ")}.`,
+      `Place every bounded context of ${directory} in BOUNDED_CONTEXT_ORDER and every component in its COMPONENT_ORDER entry; missing: ${unordered.join(", ")}.`,
     );
   }
 }
 
-requireEveryFolderOrdered({
-  directory: "apps/platform/src/bounded-contexts",
-  folders: componentFoldersOf("apps/platform/src/bounded-contexts").map(
-    ({ component }) => component,
-  ),
-  order: FEATURE_ORDER,
-  orderName: "FEATURE_ORDER",
-});
-requireEveryComponentPlaced("apps/platform/src/bounded-contexts");
+requireEveryFolderOrdered("apps/platform/src/bounded-contexts");
 
-function featureOrderRule(feature, position) {
-  const earlierFeatures = FEATURE_ORDER.slice(0, position);
-  const admittedBoundedContexts = BOUNDED_CONTEXTS.slice(
-    0,
-    boundedContextPositionOf(feature) + 1,
-  ).map(([boundedContext]) => boundedContext);
+function boundedContextOrderRule(boundedContext, position) {
+  const earlier = BOUNDED_CONTEXT_ORDER.slice(0, position);
 
   return {
-    name: `feature-order-${feature}`,
-    comment: `A feature imports only the features before it in FEATURE_ORDER and the public/ of its own and earlier bounded contexts: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"} and ${admittedBoundedContexts.join(", ")} public/, and, temporarily until Task 17, any component's domain/. Its adapters/outbound/persistence/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
+    name: `bounded-context-order-${boundedContext}`,
+    comment: `A bounded context imports only the bounded contexts before it in BOUNDED_CONTEXT_ORDER, and of those only their published folders (public/ and each component's public/ and ui/shared/): ${boundedContext} may reach ${earlier.join(", ") || "no other bounded context"}. Schema files are held by schema-foreign-keys-point-at-providers instead.`,
     severity: "error",
-    from: { path: `${FEATURES}${feature}/`, pathNot: FEATURE_SCHEMA },
+    from: {
+      path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/`,
+      pathNot: FEATURE_SCHEMA,
+    },
     to: {
-      path: FEATURES,
-      pathNot: [
-        `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
-        `^apps/platform/src/bounded-contexts/(${admittedBoundedContexts.join("|")})/public/`,
-        FOREIGN_DOMAIN,
-      ],
+      path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/)[^/]+/`,
+      ...(earlier.length > 0 && {
+        pathNot: `${BOUNDED_CONTEXTS_ROOT}(${earlier.join("|")})/(public|${COMPONENT}/(public|ui/shared))/`,
+      }),
+    },
+  };
+}
+
+function componentOrderRule({ boundedContext, component }) {
+  const components = COMPONENT_ORDER[boundedContext];
+  const earlierAndOwn = components.slice(0, components.indexOf(component) + 1);
+
+  return {
+    name: `component-order-${component}`,
+    comment: `Inside ${boundedContext}, a component imports only the components before it in COMPONENT_ORDER.${boundedContext}: ${component} may reach ${earlierAndOwn.slice(0, -1).join(", ") || "no sibling"}. Schema files are held by schema-foreign-keys-point-at-providers instead.`,
+    severity: "error",
+    from: {
+      path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/${component}/`,
+      pathNot: FEATURE_SCHEMA,
+    },
+    to: {
+      path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/(?!(${earlierAndOwn.join("|")})/)${COMPONENT}/`,
+    },
+  };
+}
+
+function schemaForeignKeyRule({ component }, position) {
+  const providers = COMBINED_ORDER.slice(0, position).map(
+    (earlier) => earlier.component,
+  );
+
+  return {
+    name: "schema-foreign-keys-point-at-providers",
+    comment:
+      "A component's adapters/outbound/persistence/schema.server.ts imports another component only for a foreign key, consumer to provider: the provider's schema.server.ts, and only when the provider comes earlier in BOUNDED_CONTEXT_ORDER, then COMPONENT_ORDER.",
+    severity: "error",
+    from: {
+      path: `${FEATURES}${component}/${SCHEMA_FILE}`,
+    },
+    to: {
+      path: `${FEATURES}(?!${component}/)${COMPONENT}/`,
+      ...(providers.length > 0 && {
+        pathNot: `${FEATURES}(${providers.join("|")})/${SCHEMA_FILE}`,
+      }),
     },
   };
 }
@@ -172,51 +187,110 @@ module.exports = {
       from: {},
       to: { circular: true },
     },
+    ...BOUNDED_CONTEXT_ORDER.map(boundedContextOrderRule),
+    ...COMBINED_ORDER.map(componentOrderRule),
+    ...COMBINED_ORDER.map(schemaForeignKeyRule),
     {
-      name: "feature-internals",
+      name: "sibling-imports-published-only",
       comment:
-        "R3: a feature imports another feature only through public/ or ui/shared/ and, temporarily until Task 17, its domain/.",
+        "Inside a bounded context, a component reaches a sibling only through the sibling's public/ and ui/shared/. Schema files are held by schema-foreign-keys-point-at-providers instead.",
       severity: "error",
       from: {
-        path: `${FEATURES}(${COMPONENT})/`,
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/(${COMPONENT})/`,
         pathNot: FEATURE_SCHEMA,
       },
       to: {
-        path: `${FEATURES}(?!$1/)${COMPONENT}/`,
-        pathNot: [
-          `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
-          FOREIGN_DOMAIN,
-        ],
+        path: `${BOUNDED_CONTEXTS_ROOT}$1/(?!$2/)${COMPONENT}/`,
+        pathNot: `${BOUNDED_CONTEXTS_ROOT}$1/${COMPONENT}/(public|ui/shared)/`,
       },
     },
     {
-      name: "feature-schema-foreign-key",
+      name: "outbound-provider-adapter-only-importer",
       comment:
-        "R3 carve-out: adapters/outbound/persistence/schema.server.ts may import any feature's schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and, temporarily until Task 17, any component's domain/, and nothing else private.",
+        "Across bounded contexts, only a component's adapters/outbound/<provider>/ imports the provider, and only the provider's bounded-context public/. A component's public/ and adapters/outbound/email/ are held by the rule's second instance; ui/ (ui-reads-published-only), adapters/inbound/http/ (inbound-reads-request-keys-only-from-public) and schema files (schema-foreign-keys-point-at-providers) by their own rules; the files at a component's root (composition.server.ts, which types the facades it hands in, routes.ts, config.server.ts) by the bounded-context order.",
       severity: "error",
       from: {
-        path: `${FEATURES}(${COMPONENT})/adapters/outbound/persistence/schema\\.server\\.ts$`,
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/(?:adapters/outbound/)?([^/]+)/`,
+        pathNot: [
+          `${FEATURES}${COMPONENT}/(ui|public|adapters/inbound/http|adapters/outbound/email)/`,
+          FEATURE_SCHEMA,
+        ],
       },
       to: {
-        path: `${FEATURES}(?!$1/)${COMPONENT}/`,
-        pathNot: [
-          `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
-          FEATURE_SCHEMA,
-          FOREIGN_DOMAIN,
-        ],
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
+        pathNot: `${BOUNDED_CONTEXTS_ROOT}$2/public/`,
       },
     },
     {
-      name: "feature-schema-imports-schemas-only",
+      name: "outbound-provider-adapter-only-importer",
       comment:
-        "A schema file sits outside FEATURE_ORDER, so another feature's adapters/outbound/persistence/schema.server.ts is the only thing of that feature it imports: not even its public folders.",
+        "A component's public/ and adapters/outbound/email/ may read another bounded context's bounded-context public/ for route paths and DTO types, as ui/ may: a path constant or DTO type is published data, and an email links to a portal page. Never a foreign component's public/, a facade implementation, an adapter or a domain.",
       severity: "error",
       from: {
-        path: `${FEATURES}(${COMPONENT})/adapters/outbound/persistence/schema\\.server\\.ts$`,
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/(public|adapters/outbound/email)/`,
       },
-      to: { path: `${FEATURES}(?!$1/)${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}` },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
+        pathNot: BOUNDED_CONTEXT_PUBLIC,
+      },
     },
-    ...FEATURE_ORDER.map(featureOrderRule),
+    {
+      name: "ui-reads-published-only",
+      comment:
+        "A component's ui/ reaches another bounded context only through its published folders: the bounded context's public/, a component's public/ and ui/shared/. Never a foreign domain/, adapters/ or composition.",
+      severity: "error",
+      from: { path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/ui/` },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
+        pathNot: PUBLISHED_FOLDERS,
+      },
+    },
+    {
+      name: "inbound-reads-request-keys-only-from-public",
+      comment:
+        "A component's adapters/inbound/http/ reaches another bounded context only through that bounded context's public/, where its request-context keys (the access session among them), DTOs and route paths are published.",
+      severity: "error",
+      from: {
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/adapters/inbound/http/`,
+      },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
+        pathNot: BOUNDED_CONTEXT_PUBLIC,
+      },
+    },
+    {
+      name: "keys-construct-nothing",
+      comment:
+        "A request-context key file (adapters/inbound/http/*context.server.ts) creates a router context and nothing else: at runtime it imports only react-router; everything else it names is a type.",
+      severity: "error",
+      from: { path: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}` },
+      to: {
+        pathNot: "(^|/)react-router(/|$)",
+        dependencyTypesNot: ["type-only"],
+      },
+    },
+    {
+      name: "no-database-types-outside-persistence",
+      comment:
+        "Only adapters/outbound/persistence/, composition.server.ts files, composition-root/ and shared/database/ name the database: no port, facade, use case or controller imports shared/database, drizzle-orm or pg.",
+      severity: "error",
+      from: {
+        path: APP,
+        pathNot: [
+          `${FEATURES}${COMPONENT}/adapters/outbound/persistence/`,
+          "(^|/)composition\\.server\\.ts$",
+          COMPOSITION_ROOT,
+          "^apps/platform/src/shared/database/",
+        ],
+      },
+      to: {
+        path: [
+          "^apps/platform/src/shared/database/",
+          "(^|/)drizzle-orm(/|$)",
+          "(^|/)pg(/|$)",
+        ],
+      },
+    },
     surfaceToFeatureRule("public-site", "public"),
     surfaceToFeatureRule("client-portal", "client"),
     surfaceToFeatureRule("coach-portal", "coach"),
@@ -240,20 +314,21 @@ module.exports = {
     {
       name: "composition-root",
       comment:
-        "R5: nothing imports composition-root/** except root.server.ts, the registry (fragments only) and composition-root/guards/ consumers.",
+        "R5: nothing imports composition-root/** except root.server.ts, the registry (fragments only) and composition-root/ itself; a surface reads only the runtime-config key in composition-root/guards/runtime-config-context.server.ts.",
       severity: "error",
       from: {
         path: APP,
         pathNot: [
           "^apps/platform/src/root\\.server\\.ts$",
-          "^apps/platform/src/composition-root/",
+          COMPOSITION_ROOT,
           "^apps/platform/src/routes\\.ts$",
           FEATURES,
         ],
       },
       to: {
-        path: "^apps/platform/src/composition-root/",
-        pathNot: "^apps/platform/src/composition-root/guards/",
+        path: COMPOSITION_ROOT,
+        pathNot:
+          "^apps/platform/src/composition-root/guards/runtime-config-context\\.server\\.ts$",
       },
     },
     {
@@ -275,7 +350,7 @@ module.exports = {
     {
       name: "component-key-consumers",
       comment:
-        "A component's request-context key in adapters/inbound/http/ is read by that component's adapters/inbound/http/ and ui/ and its composition (the feature type), where feature-internals keeps other components out, by its bounded context's composition.server.ts, which sets it, and public/request-context.ts, which publishes it to the surfaces and the root, where bounded-context-root-own-components keeps other bounded contexts out.",
+        "A component's request-context key in adapters/inbound/http/ is read by that component's adapters/inbound/http/ and ui/ and its composition (the feature type), where sibling-imports-published-only keeps other components out, by its bounded context's composition.server.ts, which sets it, and public/request-context.ts, which publishes it to the surfaces and the root, where bounded-context-root-own-components keeps other bounded contexts out.",
       severity: "error",
       from: {
         path: APP,
@@ -287,16 +362,6 @@ module.exports = {
         ],
       },
       to: { path: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}` },
-    },
-    {
-      name: "feature-server-private",
-      comment:
-        "Nothing in a component outside composition.server.ts imports its composition.server.ts: composition is reachable only from the composition root.",
-      severity: "error",
-      from: {
-        path: `${FEATURES}(${COMPONENT})/(?!composition\\.server\\.ts$)`,
-      },
-      to: { path: `${FEATURES}$1/composition\\.server\\.ts$` },
     },
     {
       name: "composition-only-from-above",
@@ -368,7 +433,7 @@ module.exports = {
         "Features and the composition root stay acyclic: a feature imports nothing under composition-root/.",
       severity: "error",
       from: { path: FEATURES },
-      to: { path: "^apps/platform/src/composition-root/" },
+      to: { path: COMPOSITION_ROOT },
     },
     {
       name: "clerk-confined",
@@ -380,13 +445,32 @@ module.exports = {
           `${FEATURES}accounts/`,
           "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
           `${FEATURES}clients/adapters/outbound/persistence/identity/`,
-          "^apps/platform/test-support/",
           "^apps/platform/e2e/",
           "^apps/platform/integration-test-config/",
           "^lighthouserc\\.cjs$",
         ],
       },
       to: { path: "(^|/)@clerk/" },
+    },
+    {
+      name: "stripe-confined",
+      comment:
+        "Stripe stays behind the coaching-sales payments adapter: nothing else names stripe.",
+      severity: "error",
+      from: {
+        pathNot: [
+          `${FEATURES}coaching-sales/adapters/outbound/payments/stripe/`,
+        ],
+      },
+      to: { path: "(^|node_modules/)stripe(/|$)" },
+    },
+    {
+      name: "resend-confined",
+      comment:
+        "Email delivery stays behind the shared email concern: nothing else names resend.",
+      severity: "error",
+      from: { pathNot: ["^apps/platform/src/shared/email/"] },
+      to: { path: "(^|node_modules/)resend(/|$)" },
     },
     {
       name: "sharp-confined",
@@ -437,19 +521,6 @@ module.exports = {
       to: { path: "(^|/)(file-type|@file-type/[^/]+)(/|$)" },
     },
     {
-      name: "inbound-reads-request-keys-only-from-public",
-      comment:
-        "A component's adapters/inbound/http/ reaches another bounded context only through that bounded context's public/, where its request-context keys (the access session among them) are published, and, until Task 17 republishes them there, a component's public/. It says nothing about ui/.",
-      severity: "error",
-      from: {
-        path: "^apps/platform/src/bounded-contexts/([^/]+)/[^/]+/adapters/inbound/http/",
-      },
-      to: {
-        path: "^apps/platform/src/bounded-contexts/(?!$1/)[^/]+/",
-        pathNot: [BOUNDED_CONTEXT_PUBLIC, `${FEATURES}${COMPONENT}/public/`],
-      },
-    },
-    {
       name: "inbound-never-imports-outbound",
       comment:
         "An inbound adapter (controller, route, facade) never imports its component's persistence or email adapters; the composition hands them in through ports. A provider adapter's vocabulary under adapters/outbound/<provider>/ stays readable.",
@@ -470,7 +541,7 @@ module.exports = {
     {
       name: "feature-shared-ui-never-imports-actor-ui",
       comment:
-        "A feature's ui/shared/ serves every actor UI of that feature, so it never imports the feature's own ui/public/, ui/client/ or ui/coach/.",
+        "A component's ui/shared/ serves every actor UI of that component, so it never imports the component's own ui/public/, ui/client/ or ui/coach/.",
       severity: "error",
       from: { path: `${FEATURES}(${COMPONENT})/ui/shared/` },
       to: { path: `${FEATURES}$1/ui/(public|client|coach)/` },
@@ -482,7 +553,7 @@ module.exports = {
       severity: "error",
       from: { path: "^apps/platform/src/routes\\.ts$" },
       to: {
-        path: "^apps/platform/src/composition-root/",
+        path: COMPOSITION_ROOT,
         pathNot: "^apps/platform/src/composition-root/api/routes\\.ts$",
       },
     },
@@ -510,22 +581,27 @@ module.exports = {
     {
       name: "design-system-browser-only",
       comment:
-        "A feature's public/ is read by its server half, and a .server module never reaches a browser: neither imports the design system.",
+        "A component's or a bounded context's public/ is read by the server half, and a .server module never reaches a browser: none of them imports the design system.",
       severity: "error",
       from: {
-        path: [`${FEATURES}${COMPONENT}/public/`, "\\.server\\.tsx?$"],
+        path: [
+          `${FEATURES}${COMPONENT}/public/`,
+          BOUNDED_CONTEXT_PUBLIC,
+          "\\.server\\.tsx?$",
+        ],
       },
       to: { path: "^apps/platform/src/shared/design-system/" },
     },
     {
       name: "route-thinness",
       comment:
-        "A registered route module never imports adapters/outbound/, the store's management-auth helpers, a composition, a config module, a controller, shared/database or composition-root/ outside guards/.",
+        "A registered route module never imports adapters/outbound/, adapters/inbound/facades/, an inbound .server module other than a request-context key (controllers, the store's management-auth helpers), a composition, a config module, shared/database, a server-only shared concern or composition-root/ outside guards/.",
       severity: "error",
       from: { path: ROUTE_MODULES },
       to: {
         path: [
-          `${FEATURES}${COMPONENT}/adapters/outbound/`,
+          `${FEATURES}${COMPONENT}/adapters/(outbound|inbound/facades)/`,
+          `${FEATURES}${COMPONENT}/adapters/inbound/http/.*(?<!context)\\.server\\.tsx?$`,
           `${FEATURES}${COMPONENT}/adapters/inbound/http/management/management-auth/`,
           `${FEATURES}${COMPONENT}/(composition|config)\\.server\\.ts$`,
           "-controller\\.server\\.ts$",
@@ -542,21 +618,18 @@ module.exports = {
         "A registered route module or its .server half never names a component's domain/, not even as a type.",
       severity: "error",
       from: { path: ROUTE_MODULES },
-      to: { path: "^apps/platform/src/bounded-contexts/[^/]+/[^/]+/domain/" },
+      to: { path: `${FEATURES}${COMPONENT}/domain/` },
     },
     {
       name: "domain-imports-only-itself",
       comment:
-        "A component's domain/ imports only its own domain/: no shared/, no other folder of its component, no package and no Node built-in, not even as a type. Temporarily until Task 17 it may also import another component's domain/.",
+        "A component's domain/ imports only its own domain/: no sibling's or other bounded context's domain/, no shared/, no other folder of its component, no package and no Node built-in, not even as a type.",
       severity: "error",
       from: {
         path: "^apps/platform/src/bounded-contexts/([^/]+)/([^/]+)/domain/",
       },
       to: {
-        pathNot: [
-          "^apps/platform/src/bounded-contexts/$1/$2/domain/",
-          FOREIGN_DOMAIN,
-        ],
+        pathNot: "^apps/platform/src/bounded-contexts/$1/$2/domain/",
       },
     },
     {
@@ -578,9 +651,9 @@ module.exports = {
       },
     },
     {
-      name: "shared-concerns",
+      name: "shared-imports-no-context",
       comment:
-        "A shared concern never imports a bounded context or the composition root.",
+        "shared/ sits below every bounded context: a shared concern never imports a bounded context or the composition root.",
       severity: "error",
       from: { path: "^apps/platform/src/shared/" },
       to: { path: "^apps/platform/src/(bounded-contexts|composition-root)/" },
@@ -660,12 +733,7 @@ module.exports = {
       severity: "error",
       from: { path: "^apps/" },
       to: {
-        path: [
-          "/integration-test-config/",
-          "/e2e/",
-          "/test-support/",
-          "^apps/platform/test-support/",
-        ],
+        path: ["/integration-test-config/", "/e2e/", "/test-support/"],
       },
     },
     {

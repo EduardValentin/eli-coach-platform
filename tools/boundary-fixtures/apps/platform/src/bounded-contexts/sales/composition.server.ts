@@ -1,4 +1,4 @@
-import { target as storeComposition } from "~/bounded-contexts/sales/store/composition.server";
-import { target as storeKey } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
+import { target as t0 } from "~/bounded-contexts/sales/store/composition.server";
+import { target as t1 } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 
-export const target = [storeComposition, storeKey];
+export const probe = [t0, t1];

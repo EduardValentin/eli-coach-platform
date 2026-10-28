@@ -1,3 +1,3 @@
-import { systemClock } from "~/shared/clock/system-clock";
+import { target as t0 } from "~/shared/clock/system-clock";
 
-export const probe = systemClock;
+export const probe = [t0];

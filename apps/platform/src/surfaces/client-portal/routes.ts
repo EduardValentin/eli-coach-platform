@@ -1,6 +1,6 @@
 import { index, prefix, relative } from "@react-router/dev/routes";
 
-import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/public/paths";
 import { clientsRoutes } from "../../bounded-contexts/clients/routes";
 import { CLIENT_SETTINGS_ROUTE_SEGMENT } from "../../bounded-contexts/sales/coaching-sales/public/paths";
 import { salesRoutes } from "../../bounded-contexts/sales/routes";

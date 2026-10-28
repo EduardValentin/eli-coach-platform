@@ -8,7 +8,7 @@ import { PortalWidget, Reading } from "~/shared/design-system/portal";
 import { CreditCard } from "lucide-react";
 
 import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
-import { bundleLengthLabel } from "~/bounded-contexts/clients/clients/public/clients";
+import { bundleLengthLabel } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import { formatMoney } from "~/bounded-contexts/sales/coaching-sales/public/money";
 import { REFUND_REASON_LABELS } from "~/bounded-contexts/sales/coaching-sales/public/subscription-refunds";

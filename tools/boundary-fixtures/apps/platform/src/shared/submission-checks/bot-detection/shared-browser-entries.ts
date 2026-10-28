@@ -1,3 +1,3 @@
-import { target } from "./bot-verifier.server";
+import { target as t0 } from "./bot-verifier.server";
 
-export const probe = target;
+export const probe = [t0];

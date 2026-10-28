@@ -40,7 +40,7 @@ import {
 import {
   botDetectionShape,
   refineBotDetection,
-} from "~/shared/submission-checks/bot-detection-config";
+} from "~/shared/submission-checks/bot-detection-settings";
 
 const appShape = {
   APP_NAME: z.string().default("eli-coach-platform"),

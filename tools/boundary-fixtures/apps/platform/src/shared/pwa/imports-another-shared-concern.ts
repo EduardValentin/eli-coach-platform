@@ -1,3 +1,3 @@
-import { target } from "../http/base-path";
+import { target as t0 } from "~/shared/http/base-path";
 
-export const probe = target;
+export const probe = [t0];

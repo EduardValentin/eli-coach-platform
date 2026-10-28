@@ -2,9 +2,9 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 function entriesOf(directory, isWanted) {
-  return readdirSync(directory).filter((name) =>
-    isWanted(statSync(join(directory, name))),
-  );
+  return readdirSync(directory)
+    .filter((name) => isWanted(statSync(join(directory, name))))
+    .sort();
 }
 
 function foldersOf(directory) {
@@ -78,6 +78,20 @@ function auditDomain(domainRoot) {
   ];
 }
 
+const SHARED_FORBIDDEN_FOLDERS = ["domain", "adapters"];
+
+export function auditSharedLayout(sharedRoot) {
+  return foldersOf(sharedRoot).flatMap((folder) => {
+    const path = join(sharedRoot, folder);
+    const nested = auditSharedLayout(path).map(
+      (problem) => `${folder}/${problem}`,
+    );
+    return SHARED_FORBIDDEN_FOLDERS.includes(folder)
+      ? [`${folder}: shared holds no ${folder}/ folder`, ...nested]
+      : nested;
+  });
+}
+
 export function auditDomainLayout(boundedContextsRoot) {
   return componentDomainsOf(boundedContextsRoot).flatMap((domainRoot) => {
     const domainPath = relative(boundedContextsRoot, domainRoot);
@@ -86,12 +100,13 @@ export function auditDomainLayout(boundedContextsRoot) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const root = resolve(
-    import.meta.dirname,
-    "..",
-    "apps/platform/src/bounded-contexts",
-  );
-  const problems = auditDomainLayout(root);
+  const sourceRoot = resolve(import.meta.dirname, "..", "apps/platform/src");
+  const problems = [
+    ...auditDomainLayout(join(sourceRoot, "bounded-contexts")),
+    ...auditSharedLayout(join(sourceRoot, "shared")).map(
+      (problem) => `shared/${problem}`,
+    ),
+  ];
   for (const problem of problems) {
     console.error(problem);
   }

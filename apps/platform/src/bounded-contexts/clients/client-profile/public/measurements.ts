@@ -6,7 +6,7 @@ import type {
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { z } from "zod";
 
-import { subjectPronoun } from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+import { subjectPronoun } from "~/bounded-contexts/clients/client-profile/public/client-pronouns";
 import {
   progressPhotoOutcomesSchema,
   progressPhotoViewSchema,

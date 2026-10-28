@@ -1,7 +1,7 @@
 import {
   CLIENT_PORTAL_PATH,
   COACH_PORTAL_PATH,
-} from "../../../access/accounts/public/paths";
+} from "../../../access/public/paths";
 
 const CHECK_INS_API = "/api/check-ins";
 

@@ -15,7 +15,7 @@ import {
 import {
   CLIENT_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "~/bounded-contexts/access/accounts/public/paths";
+} from "~/bounded-contexts/access/public/paths";
 import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
 import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import {

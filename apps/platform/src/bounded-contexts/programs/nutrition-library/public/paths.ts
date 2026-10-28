@@ -2,7 +2,7 @@ import {
   COACH_PORTAL_PATH,
   COACH_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "../../../access/accounts/public/paths";
+} from "../../../access/public/paths";
 
 const FOODS_API = "/api/coach/foods";
 

@@ -98,3 +98,7 @@ export function getCoachingBundle(id: CoachingBundleId): CoachingBundle {
 export function findCoachingBundle(id: string): CoachingBundle | null {
   return COACHING_BUNDLES.find((bundle) => bundle.id === id) ?? null;
 }
+
+export function bundleLengthLabel(months: number): string {
+  return months === 1 ? "1 month" : `${months} months`;
+}

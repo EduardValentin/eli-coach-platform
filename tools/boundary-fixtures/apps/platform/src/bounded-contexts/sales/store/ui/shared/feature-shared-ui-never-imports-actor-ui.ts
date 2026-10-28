@@ -1,3 +1,3 @@
-import { probe as target } from "~/bounded-contexts/sales/store/ui/public/surface-import";
+import { target as t0 } from "~/bounded-contexts/sales/store/ui/public/catalog-panel";
 
-export const probe = target;
+export const probe = [t0];

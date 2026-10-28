@@ -1,6 +1,6 @@
 import { index, relative } from "@react-router/dev/routes";
 
-import { COACH_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/accounts/public/paths";
+import { COACH_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/public/paths";
 import { COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT } from "../../bounded-contexts/scheduling/assessment-calls/public/paths";
 import { clientsRoutes } from "../../bounded-contexts/clients/routes";
 import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../bounded-contexts/clients/client-resources/public/paths";

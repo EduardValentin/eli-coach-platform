@@ -1,3 +1,3 @@
-import { target } from "../primitives/button";
+import { target as t0 } from "../primitives/button";
 
-export const probe = target;
+export const probe = [t0];

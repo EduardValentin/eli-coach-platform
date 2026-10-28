@@ -1,4 +1,4 @@
-import { bundleLengthLabel } from "~/bounded-contexts/clients/clients/public/clients";
+import { bundleLengthLabel } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
 import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 
 export type OfferedCancellation = NonNullable<

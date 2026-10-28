@@ -1,3 +1,3 @@
-import { randomUUID } from "node:crypto";
+import { target as t0 } from "node:crypto";
 
-export const probe = randomUUID;
+export const probe = [t0];

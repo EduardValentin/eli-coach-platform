@@ -3,7 +3,7 @@ import type { OnboardingDetailsNotifications } from "~/bounded-contexts/clients/
 import type { Clock } from "~/bounded-contexts/clients/client-profile/domain/clock";
 import type { ProductEmail } from "~/shared/email/index.server";
 
-import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 
 import { createDetailsRequestEmailContent } from "./details-request-email.server";
 

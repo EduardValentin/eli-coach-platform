@@ -3,7 +3,7 @@ import type { ClientGender } from "~/bounded-contexts/clients/client-profile/dom
 import {
   objectPronoun,
   possessivePronoun,
-} from "~/bounded-contexts/scheduling/assessment-calls/public/visitor-profile";
+} from "~/bounded-contexts/clients/client-profile/public/client-pronouns";
 
 export const PANEL_TITLE = "Onboarding";
 

@@ -1,4 +1,4 @@
-import { CLIENT_PORTAL_PATH } from "../../../access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "../../../access/public/paths";
 
 export { CLIENT_ONBOARDING_ROUTE_SEGMENT } from "../../clients/public/paths";
 

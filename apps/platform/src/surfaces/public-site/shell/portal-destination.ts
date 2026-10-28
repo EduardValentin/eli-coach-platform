@@ -1,6 +1,6 @@
 import type { PortalDestination } from "~/bounded-contexts/access/accounts/public/account";
 import type { AccountRole } from "~/bounded-contexts/access/public/session";
-import { PORTAL_PATH_BY_ROLE } from "~/bounded-contexts/access/accounts/public/paths";
+import { PORTAL_PATH_BY_ROLE } from "~/bounded-contexts/access/public/paths";
 import {
   clientJourneyPortalLink,
   type ClientPortalStanding,

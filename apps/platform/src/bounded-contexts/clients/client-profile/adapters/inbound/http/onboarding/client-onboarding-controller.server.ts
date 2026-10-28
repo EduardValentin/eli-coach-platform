@@ -22,7 +22,7 @@ import {
 } from "~/shared/http/index.server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import {
   answerDetailsRequestSchema,
   missingConsentSchema,

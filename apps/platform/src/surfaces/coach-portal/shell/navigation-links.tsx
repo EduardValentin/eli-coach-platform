@@ -9,7 +9,7 @@ import {
   Video,
 } from "lucide-react";
 
-import { COACH_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { COACH_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import {
   COACH_ASSESSMENT_CALLS_PATH,
   COACH_SETTINGS_PATH,

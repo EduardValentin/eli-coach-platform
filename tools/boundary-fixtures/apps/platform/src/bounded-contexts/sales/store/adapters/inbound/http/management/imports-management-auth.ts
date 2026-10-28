@@ -1,3 +1,3 @@
-import { target } from "./management-auth/authenticator.server";
+import { target as t0 } from "./management-auth/authenticator.server";
 
-export const probe = target;
+export const probe = [t0];

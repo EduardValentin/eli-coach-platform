@@ -1,4 +1,3 @@
-import { createCanvas } from "@napi-rs/canvas";
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { target as t0 } from "pdfjs-dist";
 
-export const probe = [createCanvas, getDocument];
+export const probe = [t0];

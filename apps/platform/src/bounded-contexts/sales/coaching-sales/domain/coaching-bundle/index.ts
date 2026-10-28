@@ -1,4 +1,5 @@
 export {
+  bundleLengthLabel,
   COACHING_BUNDLE_IDS,
   COACHING_BUNDLE_MONTHS,
   COACHING_BUNDLES,

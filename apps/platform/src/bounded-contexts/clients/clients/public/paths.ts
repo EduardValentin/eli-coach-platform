@@ -1,7 +1,7 @@
 import {
   CLIENT_PORTAL_PATH,
   COACH_PORTAL_PATH,
-} from "../../../access/accounts/public/paths";
+} from "../../../access/public/paths";
 
 export const INVITATION_ROUTE_SEGMENT = "invitation";
 

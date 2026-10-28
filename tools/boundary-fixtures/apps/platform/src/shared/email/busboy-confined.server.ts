@@ -1,3 +1,3 @@
-import { Busboy } from "@fastify/busboy";
+import { target as t0 } from "@fastify/busboy";
 
-export const probe = Busboy;
+export const probe = [t0];

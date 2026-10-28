@@ -6,7 +6,7 @@ import {
 import { buildRedirectPath, normalizeBasePath } from "~/shared/http/base-path";
 import { z } from "zod";
 
-import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 
 import {
   CLIENT_ENDED_PATH,
