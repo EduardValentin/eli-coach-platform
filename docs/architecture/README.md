@@ -47,7 +47,7 @@ Components: 50, units: 1519, edges: 5116, component cycles: 0, uncovered modules
 | C34 apps/platform/src/bounded-contexts/clients/public (facades, DTOs, path literals) | 5 | 16 | 0 | 0 | 0.88 | 0.13 | none |
 | C35 apps/platform/src/bounded-contexts/sales/public (facades, DTOs, path literals) | 1 | 9 | 0 | 0 | 0 | 1 | pain |
 | C36 apps/platform/src/bounded-contexts/operations (composition, routes, request-context) | 3 | 2 | 3 | 0.6 | 0.4 | 0 | none |
-| C37 apps/platform/src/bounded-contexts/legal (composition, routes, request-context) | 2 | 2 | 2 | 0.5 | 0.33 | 0.17 | none |
+| C37 apps/platform/src/bounded-contexts/legal (composition, routes) | 2 | 2 | 2 | 0.5 | 0.33 | 0.17 | none |
 | C38 apps/platform/src/bounded-contexts/access (composition, routes, request-context) | 3 | 2 | 3 | 0.6 | 0.25 | 0.15 | none |
 | C39 apps/platform/src/bounded-contexts/scheduling (composition, routes, request-context) | 4 | 13 | 4 | 0.24 | 0.18 | 0.58 | none |
 | C40 apps/platform/src/bounded-contexts/clients (composition, routes, request-context) | 4 | 19 | 4 | 0.17 | 0.09 | 0.74 | pain |
