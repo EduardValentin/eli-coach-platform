@@ -32,7 +32,7 @@ RUN test -f /deploy/build/server/index.js \
   && test ! -e /deploy/e2e \
   && test ! -e /deploy/src \
   && test ! -e /deploy/test-support \
-  && test -z "$(find -L /deploy/node_modules/@eli-coach-platform -type f \( -name '*.test.*' -o -name '*.spec.*' \) -print -quit)"
+  && test -z "$(find /deploy -path /deploy/node_modules -prune -o \( -name '*.test.*' -o -name '*.spec.*' \) -print -quit)"
 
 FROM ${NODE_IMAGE} AS runtime
 

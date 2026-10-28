@@ -49,10 +49,10 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Comments explain non-obvious reasons, not what the code does.
 - Formatting belongs to Prettier (`pnpm format`); `pnpm lint` fails on unformatted files, so never hand-format or argue layout in review.
 - At most three parameters per function; an options object beyond that. No boolean parameters: expose separate named operations.
-- A feature is defined by a bounded context (from Domain-Driven Design), and it doesn't have to have a direct UI page representation to be represented as a feature folder in the codebase with its dedicated domain layer.
+- Components live at `apps/platform/src/bounded-contexts/<bounded-context>/<component>/`, each with the anatomy `docs/architecture/conventions.md` describes (`domain/`, `adapters/`, `public/`, `ui/`, `composition.server.ts`, `config.server.ts`, `routes.ts`). A bounded context (from Domain-Driven Design) groups the components that share one model and language; a component doesn't need a page of its own.
 - A function created to serve one class is a private method of that class. A module exists only when it has two or more consumers. One factory per concern, not one per port.
 - No production code whose only purpose is to serve a test.
-- In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths
+- In `apps/platform`, import app-local modules through the app-root alias `~/`. Use package scripts or exposed binaries, never deep `node_modules` paths
 - Tailwind-first UI. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or repeated spacing, radius, and shadow values; arbitrary values only for non-reusable layout mechanics. Build conditional classes with `cn` object entries, not template interpolation or nested ternaries.
 
 ## Data and SQL
@@ -60,8 +60,8 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Database state is reproducible from migrations (`pnpm db:generate`, `pnpm db:migrate`), the reference rows in `apps/platform/db/seeds/` that `pnpm db:migrate` applies after them, and application code. Never depend on manual schema edits or one-off data mutations. Migrations get no tests; applying one is its verification.
 - Bind every dynamic SQL value through ORM or tagged-template parameters; allowlist dynamic identifiers.
 - SQL does persistence, filtering, joins, ordering, constraints, and necessary aggregation. Map rows into API and domain shapes in TypeScript unless a documented performance, atomicity, or database-native need says otherwise.
-- Query every table through Drizzle's core query builder, never `db.query.*`. Tables live in a feature's `data/schema.server.ts` or a package's own `*schema*.server.ts`; `apps/platform/db/drizzle.config.ts` finds them.
-- A feature's `data/schema.server.ts` may reference any feature's tables, whatever the feature order; code imports still follow it, and only the owning feature's `data/` adapters write a table. Declare foreign keys in the schema; hand-write migration SQL only for what Drizzle cannot declare.
+- Query every table through Drizzle's core query builder, never `db.query.*`. Tables live in a component's `adapters/outbound/persistence/schema.server.ts`; `apps/platform/db/drizzle.config.ts` finds them. `apps/platform/db/` holds the drizzle config, migrations, seeds, bootstrap SQL and local scripts.
+- A component's schema may import another component's schema only when that component is earlier in the order (consumer → provider), and only the owning component's persistence adapters write a table. Declare foreign keys in the schema; hand-write migration SQL only for what Drizzle cannot declare.
 
 ## Tests
 
