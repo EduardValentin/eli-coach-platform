@@ -85,18 +85,27 @@ describe("AccountInvitationGate", () => {
     expect(dependencies.invitations.accept).not.toHaveBeenCalled();
   });
 
-  it("refuses a subject whose invitation id matches no invitation", async () => {
-    // arrange
-    const dependencies = gateDependencies({ found: null });
-    const gate = new AccountInvitationGate(dependencies);
+  it.each([
+    ["matches no invitation", null],
+    [
+      "holds an invitation for a role other than CLIENT",
+      invitation({ role: "COACH" }),
+    ],
+  ] as const)(
+    "refuses a subject whose invitation id %s",
+    async (_label, found) => {
+      // arrange
+      const dependencies = gateDependencies({ found });
+      const gate = new AccountInvitationGate(dependencies);
 
-    // act
-    const role = await gate.admit("user_ana");
+      // act
+      const role = await gate.admit("user_ana");
 
-    // assert
-    expect(role).toBeNull();
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
-  });
+      // assert
+      expect(role).toBeNull();
+      expect(dependencies.invitations.accept).not.toHaveBeenCalled();
+    },
+  );
 
   it("refuses an expired invitation that was never used", async () => {
     // arrange

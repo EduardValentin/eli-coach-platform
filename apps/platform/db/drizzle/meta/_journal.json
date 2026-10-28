@@ -414,6 +414,13 @@
       "when": 1793172267217,
       "tag": "0062_one_accepted_invitation_per_subject",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793185272063,
+      "tag": "0063_invitations_admit_clients_only",
+      "breakpoints": true
     }
   ]
 }

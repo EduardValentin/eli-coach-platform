@@ -1,5 +1,7 @@
 import type { AccountRole } from "./account";
 
+export type InvitedAccountRole = Extract<AccountRole, "CLIENT">;
+
 export type AccountInvitationSnapshot = {
   id: string;
   email: string;
@@ -29,7 +31,7 @@ export class AccountInvitation {
   static allowed(input: {
     id: string;
     email: string;
-    role: AccountRole;
+    role: InvitedAccountRole;
     expiresAt: Date;
   }): AccountInvitation {
     return new AccountInvitation({
@@ -41,6 +43,10 @@ export class AccountInvitation {
 
   static reconstitute(snapshot: AccountInvitationSnapshot): AccountInvitation {
     return new AccountInvitation(snapshot);
+  }
+
+  invitesClient(): boolean {
+    return this.role === "CLIENT";
   }
 
   isPending(now: Date): boolean {

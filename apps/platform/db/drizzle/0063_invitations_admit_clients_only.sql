@@ -1,0 +1,1 @@
+ALTER TABLE "app"."account_invitations" ADD CONSTRAINT "account_invitations_role_check" CHECK ("app"."account_invitations"."role" = 'CLIENT');

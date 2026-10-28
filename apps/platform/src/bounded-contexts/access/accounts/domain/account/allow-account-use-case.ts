@@ -1,11 +1,13 @@
-import type { AccountRole } from "./account";
-import { AccountInvitation } from "./account-invitation";
+import {
+  AccountInvitation,
+  type InvitedAccountRole,
+} from "./account-invitation";
 import type { AccountInvitations } from "./account-invitations";
 
 type AllowAccountCommand = {
   invitationId: string;
   email: string;
-  role: AccountRole;
+  role: InvitedAccountRole;
   expiresAt: Date;
 };
 

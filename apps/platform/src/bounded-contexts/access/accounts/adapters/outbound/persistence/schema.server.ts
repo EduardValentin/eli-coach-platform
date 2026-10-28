@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  check,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { appSchema } from "~/shared/database";
 import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
 
@@ -58,5 +64,6 @@ export const accountInvitationsTable = appSchema.table(
     uniqueIndex("account_invitations_one_accepted_per_auth_subject")
       .on(table.acceptedByAuthSubjectId)
       .where(sql`${table.acceptedByAuthSubjectId} is not null`),
+    check("account_invitations_role_check", sql`${table.role} = 'CLIENT'`),
   ],
 );

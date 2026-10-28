@@ -24,7 +24,7 @@ export class AccountInvitationGate {
 
     const invitation = await this.options.invitations.findById(invitationId);
 
-    if (!invitation) {
+    if (!invitation?.invitesClient()) {
       return null;
     }
 
