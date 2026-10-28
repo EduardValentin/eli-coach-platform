@@ -102,6 +102,13 @@ import { PostgresOnboardingReviews } from "~/bounded-contexts/clients/client-pro
 import { EmailOnboardingDetailsNotifications } from "~/bounded-contexts/clients/client-profile/adapters/outbound/email/onboarding/email-onboarding-details-notifications.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createClientProfileIncidents } from "~/bounded-contexts/clients/client-profile/adapters/outbound/logging/client-profile-incidents.server";
+import {
+  createClientAvatarStore,
+  createProgressPhotoStore,
+} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/client-media-stores.server";
+import { createClientAvatarRenditions } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/client-avatar-renditions.server";
+import { createProgressPhotoRenditions } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/progress-photo-renditions.server";
+import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
 
 type ClientProfileComposition = {
   facades: { clientProfile: ClientProfileFacade };
@@ -117,16 +124,19 @@ type ClientProfileComposition = {
   };
 };
 
-type ClientProfileFeatureHandles = {
+type ClientMedia = {
   clientAvatarRenditions: ClientAvatarRenditions;
   clientAvatarStore: ClientAvatarStore;
+  progressPhotoRenditions: ProgressPhotoRenditions;
+  progressPhotoStore: ProgressPhotoStore;
+};
+
+type ClientProfileFeatureHandles = ClientMedia & {
   clientIdentities: ClientIdentities;
   clientReach: ClientReach;
   clock: Clock;
   database: DatabaseClient;
   logger: Logger;
-  progressPhotoRenditions: ProgressPhotoRenditions;
-  progressPhotoStore: ProgressPhotoStore;
 };
 
 export function composeClientProfileFeature(
@@ -375,5 +385,14 @@ export function composeClientOnboardingFeature(
         ids: new RandomDetailRequestIds(),
       }),
     }),
+  };
+}
+
+export function composeClientMedia(config: ClientFilesConfig): ClientMedia {
+  return {
+    clientAvatarRenditions: createClientAvatarRenditions(),
+    clientAvatarStore: createClientAvatarStore(config),
+    progressPhotoRenditions: createProgressPhotoRenditions(),
+    progressPhotoStore: createProgressPhotoStore(config),
   };
 }

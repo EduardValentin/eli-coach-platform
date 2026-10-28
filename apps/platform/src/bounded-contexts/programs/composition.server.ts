@@ -4,17 +4,30 @@ import {
   exerciseLibraryContext,
   type ExerciseLibraryFeature,
 } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
-import { composeExerciseLibraryFeature } from "~/bounded-contexts/programs/exercise-library/composition.server";
+import {
+  composeExerciseLibraryFeature,
+  composeExerciseVideoFiles,
+} from "~/bounded-contexts/programs/exercise-library/composition.server";
+import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
 import {
   nutritionLibraryContext,
   type NutritionLibraryFeature,
 } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
-import { composeNutritionLibraryFeature } from "~/bounded-contexts/programs/nutrition-library/composition.server";
+import {
+  composeNutritionLibraryFeature,
+  composeRecipePhotoFiles,
+} from "~/bounded-contexts/programs/nutrition-library/composition.server";
+import type { RecipePhotosConfig } from "~/bounded-contexts/programs/nutrition-library/config.server";
 
-export type ProgramsHandles = Parameters<
-  typeof composeExerciseLibraryFeature
->[0] &
-  Parameters<typeof composeNutritionLibraryFeature>[0];
+type ProgramsHandles = Omit<
+  Parameters<typeof composeExerciseLibraryFeature>[0] &
+    Parameters<typeof composeNutritionLibraryFeature>[0],
+  | keyof ReturnType<typeof composeExerciseVideoFiles>
+  | keyof ReturnType<typeof composeRecipePhotoFiles>
+> & {
+  exerciseVideosConfig: ExerciseVideosConfig;
+  recipePhotosConfig: RecipePhotosConfig;
+};
 
 export type ProgramsComposition = {
   components: {
@@ -25,8 +38,14 @@ export type ProgramsComposition = {
 };
 
 export function composePrograms(handles: ProgramsHandles): ProgramsComposition {
-  const exerciseLibrary = composeExerciseLibraryFeature(handles);
-  const nutritionLibrary = composeNutritionLibraryFeature(handles);
+  const exerciseLibrary = composeExerciseLibraryFeature({
+    ...handles,
+    ...composeExerciseVideoFiles(handles.exerciseVideosConfig),
+  });
+  const nutritionLibrary = composeNutritionLibraryFeature({
+    ...handles,
+    ...composeRecipePhotoFiles(handles.recipePhotosConfig),
+  });
 
   return {
     components: { exerciseLibrary, nutritionLibrary },

@@ -9,6 +9,7 @@ import {
   ListFoodsUseCase,
   ListRecipesUseCase,
   OpenRecipePhotoUseCase,
+  RECIPE_PHOTO_RENDITION,
   RecipePhotoSaving,
   StartRecipeUseCase,
   type RecipePhotoRenditions,
@@ -27,13 +28,19 @@ import { PostgresNutritionTags } from "~/bounded-contexts/programs/nutrition-lib
 import type { NutritionLibraryFeature } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createNutritionLibraryIncidents } from "~/bounded-contexts/programs/nutrition-library/adapters/outbound/logging/nutrition-library-incidents.server";
+import { createRecipePhotoRenditions } from "~/bounded-contexts/programs/nutrition-library/adapters/outbound/persistence/recipe-photo-renditions.server";
+import { createRecipePhotoStore } from "~/bounded-contexts/programs/nutrition-library/adapters/outbound/persistence/recipe-photo-store.server";
+import type { RecipePhotosConfig } from "~/bounded-contexts/programs/nutrition-library/config.server";
 
-type NutritionLibraryFeatureHandles = {
+type RecipePhotoFiles = {
+  photoRenditions: RecipePhotoRenditions;
+  photoStore: RecipePhotoStore;
+};
+
+type NutritionLibraryFeatureHandles = RecipePhotoFiles & {
   clock: Clock;
   database: DatabaseClient;
   logger: Logger;
-  photoRenditions: RecipePhotoRenditions;
-  photoStore: RecipePhotoStore;
 };
 
 export function composeNutritionLibraryFeature(
@@ -84,5 +91,14 @@ export function composeNutritionLibraryFeature(
         store: handles.photoStore,
       }),
     }),
+  };
+}
+
+export function composeRecipePhotoFiles(
+  config: RecipePhotosConfig,
+): RecipePhotoFiles {
+  return {
+    photoRenditions: createRecipePhotoRenditions(RECIPE_PHOTO_RENDITION),
+    photoStore: createRecipePhotoStore(config.RECIPE_PHOTO_ROOT),
   };
 }

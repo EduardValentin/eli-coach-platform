@@ -9,6 +9,7 @@ import {
   MarkResourceOpenedUseCase,
   OpenResourcePreviewUseCase,
   RemoveClientResourceUseCase,
+  RESOURCE_RENDITIONS,
   type ClientResourceStore,
   type ResourceDocumentPages,
   type ResourceFileFormatDetector,
@@ -26,16 +27,23 @@ import { ClientsClientReach } from "~/bounded-contexts/clients/client-resources/
 import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createClientResourcesIncidents } from "~/bounded-contexts/clients/client-resources/adapters/outbound/logging/client-resources-incidents.server";
+import { createClientResourceStore } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/client-resource-store.server";
+import { createResourceDocumentPages } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resource-document-pages.server";
+import { createResourceFileFormatDetector } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resource-file-format-detector.server";
+import { createResourceImagePages } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resource-image-pages.server";
 
-type ClientResourcesFeatureHandles = {
-  clientReach: ClientReach;
-  clock: Clock;
-  database: DatabaseClient;
+type ResourceFiles = {
   documentPages: ResourceDocumentPages;
   fileFormats: ResourceFileFormatDetector;
   imagePages: ResourceImagePages;
-  logger: Logger;
   store: ClientResourceStore;
+};
+
+type ClientResourcesFeatureHandles = ResourceFiles & {
+  clientReach: ClientReach;
+  clock: Clock;
+  database: DatabaseClient;
+  logger: Logger;
 };
 
 export function composeClientResourcesFeature(
@@ -75,5 +83,20 @@ export function composeClientResourcesFeature(
         clock: handles.clock,
       }),
     }),
+  };
+}
+
+export function composeResourceFiles(locations: {
+  documentPagesWorkerUrl: URL;
+  resourceRoot: string;
+}): ResourceFiles {
+  return {
+    documentPages: createResourceDocumentPages({
+      workerUrl: locations.documentPagesWorkerUrl,
+      renditions: RESOURCE_RENDITIONS,
+    }),
+    fileFormats: createResourceFileFormatDetector(),
+    imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
+    store: createClientResourceStore(locations.resourceRoot),
   };
 }

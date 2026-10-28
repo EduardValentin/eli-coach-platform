@@ -393,6 +393,25 @@ module.exports = {
       },
     },
     {
+      name: "composition-root-reaches-compositions-only",
+      comment:
+        "composition-root/ composes the bounded contexts and never adapts: of bounded-contexts/ it imports only a bounded context's composition.server.ts, routes.ts and public/ and a component's config.server.ts, whose shape it merges. Each component builds its own adapters in its composition.server.ts; the root hands in config values and shared implementations. The test-support/ rig builds request contexts for tests and is not held.",
+      severity: "error",
+      from: {
+        path: COMPOSITION_ROOT,
+        pathNot: `${COMPOSITION_ROOT}test-support/`,
+      },
+      to: {
+        path: BOUNDED_CONTEXTS_ROOT,
+        pathNot: [
+          BOUNDED_CONTEXT_COMPOSITION,
+          `${FEATURES}routes\\.ts$`,
+          BOUNDED_CONTEXT_PUBLIC,
+          `${FEATURES}${COMPONENT}/config\\.server\\.ts$`,
+        ],
+      },
+    },
+    {
       name: "bounded-context-root-own-components",
       comment:
         "A bounded context's root modules (composition.server.ts, routes.ts, public/) reach into their own bounded context's components only; another bounded context is reached through its public/.",

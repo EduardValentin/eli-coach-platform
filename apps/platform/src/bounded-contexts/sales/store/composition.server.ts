@@ -43,6 +43,14 @@ import type { StoreFeature } from "~/bounded-contexts/sales/store/adapters/inbou
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createStoreIncidents } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents.server";
 import { LegalConsentVersions } from "~/bounded-contexts/sales/store/adapters/outbound/legal/consent-versions.server";
+import { createManagementAuthConfig } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-auth-config.server";
+import { createManagementAuthenticator } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/create-management-authenticator.server";
+import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
+
+type ManagementAuth = {
+  authenticator: ManagementAuthenticator;
+  config: ManagementAuthConfig;
+};
 
 export type StoreFeatureHandles = {
   appBasePath: string;
@@ -52,10 +60,7 @@ export type StoreFeatureHandles = {
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
   logger: Logger;
-  managementAuth: {
-    authenticator: ManagementAuthenticator;
-    config: ManagementAuthConfig;
-  };
+  managementAuth: ManagementAuth;
   productEmail: ProductEmail;
   publicAppUrl: string;
   storeAssetRoot: string;
@@ -136,6 +141,18 @@ export function composeStoreFeature(
       retireProduct: new RetireProductUseCase({
         publications: planOptions.publications,
       }),
+    }),
+  };
+}
+
+export function composeManagementAuth(site: {
+  managementApiConfig: ManagementApiConfig;
+  publicAppUrl: string;
+}): ManagementAuth {
+  return {
+    authenticator: createManagementAuthenticator(site.managementApiConfig),
+    config: createManagementAuthConfig(site.managementApiConfig, {
+      PUBLIC_APP_URL: site.publicAppUrl,
     }),
   };
 }

@@ -5,9 +5,11 @@ import {
   type StoreFeature,
 } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import {
+  composeManagementAuth,
   composeStoreFeature,
   type StoreFeatureHandles,
 } from "~/bounded-contexts/sales/store/composition.server";
+import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 import {
   waitlistContext,
   type WaitlistFeature,
@@ -19,12 +21,22 @@ import {
 } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import {
   composeCoachingSalesFeature,
+  composePayments,
   type CoachingSalesFeatureHandles,
 } from "~/bounded-contexts/sales/coaching-sales/composition.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/coaching-sales/config.server";
 
-export type SalesHandles = StoreFeatureHandles &
-  Parameters<typeof composeWaitlistFeature>[0] &
-  Omit<CoachingSalesFeatureHandles, "pricingEligibility">;
+type SalesHandles = Omit<
+  StoreFeatureHandles &
+    Parameters<typeof composeWaitlistFeature>[0] &
+    CoachingSalesFeatureHandles,
+  | "managementAuth"
+  | "pricingEligibility"
+  | keyof ReturnType<typeof composePayments>
+> & {
+  managementApiConfig: ManagementApiConfig;
+  paymentsConfig: PaymentsConfig;
+};
 
 export type SalesComposition = {
   components: {
@@ -36,10 +48,14 @@ export type SalesComposition = {
 };
 
 export function composeSales(handles: SalesHandles): SalesComposition {
-  const store = composeStoreFeature(handles);
+  const store = composeStoreFeature({
+    ...handles,
+    managementAuth: composeManagementAuth(handles),
+  });
   const waitlist = composeWaitlistFeature(handles);
   const coachingSales = composeCoachingSalesFeature({
     ...handles,
+    ...composePayments(handles.paymentsConfig),
     pricingEligibility: waitlist.handles.pricingEligibility,
   });
 

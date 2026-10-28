@@ -22,13 +22,19 @@ import { RandomExerciseVideoIds } from "~/bounded-contexts/programs/exercise-lib
 import type { ExerciseLibraryFeature } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createExerciseLibraryIncidents } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/logging/exercise-library-incidents.server";
+import { createExerciseVideoFormatDetector } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercise-video-format-detector.server";
+import { createExerciseVideoStore } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercise-video-store.server";
+import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
 
-type ExerciseLibraryFeatureHandles = {
+type ExerciseVideoFiles = {
+  videoFormats: ExerciseVideoFormatDetector;
+  videoStore: ExerciseVideoStore;
+};
+
+type ExerciseLibraryFeatureHandles = ExerciseVideoFiles & {
   clock: Clock;
   database: DatabaseClient;
   logger: Logger;
-  videoFormats: ExerciseVideoFormatDetector;
-  videoStore: ExerciseVideoStore;
 };
 
 export function composeExerciseLibraryFeature(
@@ -77,5 +83,14 @@ export function composeExerciseLibraryFeature(
         }),
       }),
     }),
+  };
+}
+
+export function composeExerciseVideoFiles(
+  config: ExerciseVideosConfig,
+): ExerciseVideoFiles {
+  return {
+    videoFormats: createExerciseVideoFormatDetector(),
+    videoStore: createExerciseVideoStore(config.EXERCISE_VIDEO_ROOT),
   };
 }

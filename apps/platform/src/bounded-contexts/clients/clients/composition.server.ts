@@ -1,4 +1,6 @@
 import type { DatabaseClient } from "~/shared/database";
+import { buildRedirectPath } from "~/shared/http/base-path";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations";
 import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions";
@@ -63,6 +65,10 @@ import { createClientLookupFacade } from "~/bounded-contexts/clients/clients/ada
 import { AccessAccountInvitations } from "~/bounded-contexts/clients/clients/adapters/outbound/access/account-invitations.server";
 import type { Logger } from "~/shared/logging/console-logger.server";
 import { createClientsIncidents } from "~/bounded-contexts/clients/clients/adapters/outbound/logging/clients-incidents.server";
+import {
+  createIdentityInvitations,
+  type IdentityConfig,
+} from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/identity/create-identity-invitations.server";
 
 type ClientsComposition = {
   facades: {
@@ -220,4 +226,18 @@ export function composeClientsFeature(
       reviewStampRecorder: journeys,
     },
   };
+}
+
+export function composeIdentityInvitations(site: {
+  appBasePath: string;
+  identityConfig: IdentityConfig & { CLERK_SIGN_UP_URL: string };
+  publicAppUrl: string;
+}): IdentityInvitations {
+  return createIdentityInvitations(site.identityConfig, {
+    signUpUrl: site.identityConfig.CLERK_SIGN_UP_URL,
+    returnUrl: new URL(
+      buildRedirectPath(site.appBasePath, CLIENT_PORTAL_PATH),
+      site.publicAppUrl,
+    ).toString(),
+  });
 }

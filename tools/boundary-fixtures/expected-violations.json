@@ -17,6 +17,9 @@
     "bounded-context-order-clients",
     "bounded-context-root-own-components"
   ],
+  "apps/platform/src/bounded-contexts/operations/feature-flags/adapters/inbound/http/imports-feature-flag-overrides.server.ts": [
+    "feature-flag-overrides-root-only"
+  ],
   "apps/platform/src/bounded-contexts/operations/feature-flags/composition.server.ts": [],
   "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/foods/react-dnd-confined.tsx": [
     "not-to-unresolvable",
@@ -177,14 +180,16 @@
   "apps/platform/src/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server.ts": [
     "keys-construct-nothing"
   ],
-  "apps/platform/src/composition-root/api/meta/imports-feature-flag-overrides.server.ts": [
-    "feature-flag-overrides-root-only"
-  ],
+  "apps/platform/src/bounded-contexts/sales/waitlist/config.server.ts": [],
   "apps/platform/src/composition-root/container.server.ts": [],
+  "apps/platform/src/composition-root/imports-component-adapter.server.ts": [
+    "composition-root-reaches-compositions-only"
+  ],
   "apps/platform/src/composition-root/imports-test-support.ts": [
     "no-production-import-of-tests"
   ],
   "apps/platform/src/composition-root/logger.server.ts": [],
+  "apps/platform/src/composition-root/reads-bounded-context-entries.server.ts": [],
   "apps/platform/src/root.server.ts": [],
   "apps/platform/src/root.tsx": [],
   "apps/platform/src/routes.ts": ["root-registry-to-server"],

@@ -7,6 +7,7 @@ import {
 import { clientPortalStandingMiddleware } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-portal-standing.server";
 import {
   composeClientsFeature,
+  composeIdentityInvitations,
   type ClientsFeatureHandles,
 } from "~/bounded-contexts/clients/clients/composition.server";
 import {
@@ -16,14 +17,19 @@ import {
   type ClientProfileFeature,
 } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import {
+  composeClientMedia,
   composeClientOnboardingFeature,
   composeClientProfileFeature,
 } from "~/bounded-contexts/clients/client-profile/composition.server";
+import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
 import {
   clientResourcesContext,
   type ClientResourcesFeature,
 } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
-import { composeClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/composition.server";
+import {
+  composeClientResourcesFeature,
+  composeResourceFiles,
+} from "~/bounded-contexts/clients/client-resources/composition.server";
 import {
   notificationsContext,
   type NotificationsFeature,
@@ -50,7 +56,12 @@ type ClientProfileFacades = ReturnType<
 >["facades"];
 type CheckInsFacades = ReturnType<typeof composeCheckInsFeature>["facades"];
 
-export type ClientsHandles = ClientsFeatureHandles &
+type ConstructedHere =
+  | keyof ReturnType<typeof composeClientMedia>
+  | keyof ReturnType<typeof composeResourceFiles>
+  | "identityInvitations";
+
+type ComponentHandles = ClientsFeatureHandles &
   Omit<
     Parameters<typeof composeClientProfileFeature>[0],
     keyof ClientsComponentHandles
@@ -72,6 +83,14 @@ export type ClientsHandles = ClientsFeatureHandles &
     keyof ClientsComponentHandles | "inbox"
   >;
 
+type ClientsHandles = Omit<ComponentHandles, ConstructedHere> & {
+  clientFilesConfig: ClientFilesConfig;
+  documentPagesWorkerUrl: URL;
+  identityConfig: Parameters<
+    typeof composeIdentityInvitations
+  >[0]["identityConfig"];
+};
+
 export type ClientsComposition = {
   components: {
     checkIns: CheckInsFeature;
@@ -87,10 +106,14 @@ export type ClientsComposition = {
 };
 
 export function composeClients(handles: ClientsHandles): ClientsComposition {
-  const clients = composeClientsFeature(handles);
+  const clients = composeClientsFeature({
+    ...handles,
+    identityInvitations: composeIdentityInvitations(handles),
+  });
   const clientProfile = composeClientProfileFeature({
     ...handles,
     ...clients.handles,
+    ...composeClientMedia(handles.clientFilesConfig),
   });
   const clientOnboarding = composeClientOnboardingFeature({
     ...handles,
@@ -100,6 +123,10 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
   const clientResources = composeClientResourcesFeature({
     ...handles,
     ...clients.handles,
+    ...composeResourceFiles({
+      documentPagesWorkerUrl: handles.documentPagesWorkerUrl,
+      resourceRoot: handles.clientFilesConfig.CLIENT_RESOURCE_ROOT,
+    }),
   });
   const notificationInbox = composeNotificationInbox(handles);
   const notifications = composeNotificationsFeature({

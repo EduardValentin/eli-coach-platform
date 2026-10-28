@@ -69,6 +69,8 @@ import { createCoachingSalesIncidents } from "~/bounded-contexts/sales/coaching-
 import { SchedulingEndedCalls } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/scheduling/ended-calls.server";
 import { OperationsWaitlistMode } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/operations/waitlist-mode.server";
 import { WaitlistPricingEligibility } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/waitlist/pricing-eligibility.server";
+import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/create-payments.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/coaching-sales/config.server";
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
@@ -312,4 +314,16 @@ function byPurpose<Handler extends { readonly purpose: string }>(
   handler: Handler,
 ): ReadonlyMap<string, Handler> {
   return new Map([[handler.purpose, handler]]);
+}
+
+export function composePayments(config: PaymentsConfig) {
+  const payments = createPayments(config);
+
+  return {
+    paymentCheckout: payments.checkout,
+    paymentCustomerCards: payments.customerCards,
+    paymentEvents: payments.events,
+    paymentSubscriptions: payments.subscriptions,
+    webhookSigningSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
+  };
 }
