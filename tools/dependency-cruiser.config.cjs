@@ -207,7 +207,7 @@ module.exports = {
     {
       name: "outbound-provider-adapter-only-importer",
       comment:
-        "Across bounded contexts, only a component's adapters/outbound/<provider>/ imports the provider, and only the provider's bounded-context public/. A component's public/, adapters/outbound/email/ and root files (composition.server.ts, which types the facades it hands in, routes.ts, config.server.ts) are held by the rule's second instance; ui/ (ui-reads-published-only), adapters/inbound/http/ (inbound-reads-request-keys-only-from-public) and schema files (schema-foreign-keys-point-at-providers) by their own rules.",
+        "Across bounded contexts, only a component's adapters/outbound/<provider>/ imports the provider, and only the provider's bounded-context public/. A component's public/, adapters/outbound/email/, routes.ts and config.server.ts are held by component-roots-read-provider-paths, its composition.server.ts by component-composition-reads-provider-public, ui/ by ui-reads-published-only, adapters/inbound/http/ by inbound-reads-request-keys-only-from-public and schema files by schema-foreign-keys-point-at-providers.",
       severity: "error",
       from: {
         path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/(?:adapters/outbound/)?([^/]+)/`,
@@ -222,12 +222,25 @@ module.exports = {
       },
     },
     {
-      name: "outbound-provider-adapter-only-importer",
+      name: "component-roots-read-provider-paths",
       comment:
-        "A component's public/, adapters/outbound/email/ and root files (composition.server.ts, routes.ts, config.server.ts) may read another bounded context's bounded-context public/ for route paths, DTO types and facade interfaces: a path constant or DTO type is published data, and an email links to a portal page. Never a foreign component's public/ or ui/, a facade implementation, an adapter or a domain.",
+        "A component's public/, adapters/outbound/email/, routes.ts and config.server.ts read another bounded context only through its public/paths.ts: a route path is published data and an email links to a portal page. The admitted files are named; no bounded-context public/ holds a DTO-only module today, and one is added here by name when it appears. Never a facade interface, a foreign component's public/ or ui/, an adapter or a domain.",
       severity: "error",
       from: {
-        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/((public|adapters/outbound/email)/|(composition|config)\\.server\\.ts$|routes\\.ts$)`,
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/((public|adapters/outbound/email)/|config\\.server\\.ts$|routes\\.ts$)`,
+      },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
+        pathNot: `${BOUNDED_CONTEXT_PUBLIC}paths\\.ts$`,
+      },
+    },
+    {
+      name: "component-composition-reads-provider-public",
+      comment:
+        "A component's composition.server.ts reads another bounded context only through its bounded-context public/: the facade interfaces it types and hands to its adapters, and route paths. Never a foreign component's public/ or ui/, an adapter or a domain.",
+      severity: "error",
+      from: {
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/composition\\.server\\.ts$`,
       },
       to: {
         path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
@@ -248,14 +261,14 @@ module.exports = {
     {
       name: "inbound-reads-request-keys-only-from-public",
       comment:
-        "A component's adapters/inbound/http/ reaches another bounded context only through that bounded context's public/, where its request-context keys (the access session among them), DTOs and route paths are published.",
+        "A component's adapters/inbound/http/ reaches another bounded context only through four files of that bounded context's public/: request-context.ts (keys), session.ts (the access session), portal-standing.ts (the client's standing) and paths.ts. Never a facade interface: a controller is never handed a provider facade, it calls its own use cases, which reach the provider through their own ports.",
       severity: "error",
       from: {
         path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/${COMPONENT}/adapters/inbound/http/`,
       },
       to: {
         path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
-        pathNot: BOUNDED_CONTEXT_PUBLIC,
+        pathNot: `${BOUNDED_CONTEXT_PUBLIC}(request-context|session|portal-standing|paths)\\.ts$`,
       },
     },
     {
@@ -272,13 +285,14 @@ module.exports = {
     {
       name: "no-database-types-outside-persistence",
       comment:
-        "Only adapters/outbound/persistence/, composition.server.ts files, composition-root/ and shared/database/ name the database: no port, facade, use case or controller imports shared/database, drizzle-orm or pg.",
+        "Only adapters/outbound/persistence/, the bounded contexts' and components' composition.server.ts files, composition-root/ and shared/database/ name the database: no port, facade, use case or controller imports shared/database, drizzle-orm or pg.",
       severity: "error",
       from: {
         path: APP,
         pathNot: [
           `${FEATURES}${COMPONENT}/adapters/outbound/persistence/`,
-          "(^|/)composition\\.server\\.ts$",
+          COMPONENT_COMPOSITION,
+          BOUNDED_CONTEXT_COMPOSITION,
           COMPOSITION_ROOT,
           "^apps/platform/src/shared/database/",
         ],
@@ -374,9 +388,12 @@ module.exports = {
     {
       name: "composition-only-from-above-bounded-context",
       comment:
-        "A bounded context's composition.server.ts is imported only by composition-root/.",
+        "A bounded context's composition.server.ts is imported only by composition-root/container.server.ts.",
       severity: "error",
-      from: { path: APP, pathNot: COMPOSITION_ROOT },
+      from: {
+        path: APP,
+        pathNot: "^apps/platform/src/composition-root/container\\.server\\.ts$",
+      },
       to: { path: BOUNDED_CONTEXT_COMPOSITION },
     },
     {
@@ -658,6 +675,32 @@ module.exports = {
       severity: "error",
       from: { path: BOUNDED_CONTEXT_PUBLIC },
       to: { path: "/domain/" },
+    },
+    {
+      name: "bounded-context-public-publishes-keys-and-paths",
+      comment:
+        "A bounded context's public/ holds interfaces, DTO types, route paths and the request-context keys, and nothing else that runs: of a bounded context it imports only a bounded-context public/ (its own or an earlier one's), its own components' request-context keys (adapters/inbound/http/*context.server.ts) and their public/paths.ts. Never a component public/, which may re-export domain types, and never another bounded context's component.",
+      severity: "error",
+      from: { path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/public/` },
+      to: {
+        path: BOUNDED_CONTEXTS_ROOT,
+        pathNot: [
+          BOUNDED_CONTEXT_PUBLIC,
+          `${BOUNDED_CONTEXTS_ROOT}$1/${COMPONENT}/public/paths\\.ts$`,
+          `${BOUNDED_CONTEXTS_ROOT}$1/${COMPONENT}/${REQUEST_KEYS}`,
+        ],
+      },
+    },
+    {
+      name: "component-public-reads-own-domain-only",
+      comment:
+        "A component's public/ publishes its domain types and browser-safe helpers over them: of its own component it imports only domain/ and public/, never adapters/, ui/, composition.server.ts or config.server.ts. Siblings are held by sibling-imports-published-only, other bounded contexts by component-roots-read-provider-paths.",
+      severity: "error",
+      from: { path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/(${COMPONENT})/public/` },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}$1/$2/`,
+        pathNot: `${BOUNDED_CONTEXTS_ROOT}$1/$2/(domain|public)/`,
+      },
     },
     {
       name: "no-cross-context-domain-import",

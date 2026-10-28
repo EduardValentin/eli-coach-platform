@@ -9,7 +9,7 @@ import {
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { z } from "zod";
 
-import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/clock/wall-clock-calendar-dates";
+import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/public/wall-clock-calendar-dates";
 import { COUNTRIES } from "~/shared/contact/countries";
 
 export {

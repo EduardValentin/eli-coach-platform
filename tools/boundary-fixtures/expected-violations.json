@@ -35,6 +35,9 @@
     "no-circular"
   ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-access-session.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-foreign-facade.server.ts": [
+    "inbound-reads-request-keys-only-from-public"
+  ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-other-component-public.server.ts": [
     "bounded-context-order-sales",
     "inbound-reads-request-keys-only-from-public"
@@ -43,7 +46,10 @@
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/access/reads-earlier-bounded-context.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/email/reads-foreign-component-public.server.ts": [
     "bounded-context-order-sales",
-    "outbound-provider-adapter-only-importer"
+    "component-roots-read-provider-paths"
+  ],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/email/reads-foreign-facade.server.ts": [
+    "component-roots-read-provider-paths"
   ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/stripe/stripe-client.server.ts": [
     "not-to-unresolvable"
@@ -75,10 +81,14 @@
   "apps/platform/src/bounded-contexts/sales/public/design-system-browser-only.ts": [
     "design-system-browser-only"
   ],
-  "apps/platform/src/bounded-contexts/sales/public/reads-store-domain.ts": [
-    "bounded-context-public-imports-no-domain"
+  "apps/platform/src/bounded-contexts/sales/public/reads-store-component-public.ts": [
+    "bounded-context-public-publishes-keys-and-paths"
   ],
-  "apps/platform/src/bounded-contexts/sales/public/reads-store-public.ts": [],
+  "apps/platform/src/bounded-contexts/sales/public/reads-store-domain.ts": [
+    "bounded-context-public-imports-no-domain",
+    "bounded-context-public-publishes-keys-and-paths"
+  ],
+  "apps/platform/src/bounded-contexts/sales/public/reads-store-paths.ts": [],
   "apps/platform/src/bounded-contexts/sales/public/request-context.ts": [],
   "apps/platform/src/bounded-contexts/sales/routes.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/catalog/deeper/not-a-route.ts": [
@@ -157,9 +167,13 @@
   "apps/platform/src/bounded-contexts/sales/store/public/design-system-browser-only.ts": [
     "design-system-browser-only"
   ],
+  "apps/platform/src/bounded-contexts/sales/store/public/reads-own-adapter.ts": [
+    "component-public-reads-own-domain-only"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/public/reads-own-domain.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/routes.ts": [
     "bounded-context-order-sales",
-    "outbound-provider-adapter-only-importer"
+    "component-roots-read-provider-paths"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half.tsx": [
     "browser-half"
@@ -180,8 +194,15 @@
   "apps/platform/src/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server.ts": [
     "keys-construct-nothing"
   ],
+  "apps/platform/src/bounded-contexts/sales/waitlist/composition.server.ts": [
+    "bounded-context-order-sales",
+    "component-composition-reads-provider-public"
+  ],
   "apps/platform/src/bounded-contexts/sales/waitlist/config.server.ts": [],
   "apps/platform/src/composition-root/container.server.ts": [],
+  "apps/platform/src/composition-root/imports-bounded-context-composition.server.ts": [
+    "composition-only-from-above-bounded-context"
+  ],
   "apps/platform/src/composition-root/imports-component-adapter.server.ts": [
     "composition-root-reaches-compositions-only"
   ],
@@ -245,6 +266,9 @@
   ],
   "apps/platform/src/shared/images/sharp-images.server.ts": [
     "not-to-unresolvable"
+  ],
+  "apps/platform/src/shared/pwa/composition.server.ts": [
+    "no-database-types-outside-persistence"
   ],
   "apps/platform/src/shared/pwa/imports-another-shared-concern.ts": [],
   "apps/platform/src/shared/submission-checks/bot-detection/shared-browser-entries.ts": [

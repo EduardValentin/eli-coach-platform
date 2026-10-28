@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/clock/wall-clock-calendar-dates";
+import { wallClockCalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/public/wall-clock-calendar-dates";
 
 import { VisitorBirthDate } from "./visitor-birth-date";
 
