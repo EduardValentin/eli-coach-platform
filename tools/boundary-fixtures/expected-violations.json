@@ -8,6 +8,9 @@
   "apps/platform/src/bounded-contexts/clients/client-resources/adapters/outbound/persistence/schema.server.ts": [
     "feature-schema-imports-schemas-only"
   ],
+  "apps/platform/src/bounded-contexts/clients/client-resources/adapters/outbound/sales/reads-other-context-domain.server.ts": [
+    "no-cross-context-domain-import"
+  ],
   "apps/platform/src/bounded-contexts/clients/client-resources/public/reaches-coaching-sales.ts": [
     "feature-order-client-resources"
   ],
@@ -39,12 +42,17 @@
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server.ts": [
     "feature-schema-foreign-key"
   ],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/store/reads-sibling-component-domain.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/domain/coaching-bundle/reads-sibling-domain.ts": [],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/ui/public/clerk-confined.tsx": [
     "clerk-confined",
     "not-to-unresolvable"
   ],
   "apps/platform/src/bounded-contexts/sales/composition.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/public/reads-store-domain.ts": [
+    "bounded-context-public-imports-no-domain"
+  ],
+  "apps/platform/src/bounded-contexts/sales/public/reads-store-public.ts": [],
   "apps/platform/src/bounded-contexts/sales/public/request-context.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/catalog/deeper/not-a-route.ts": [
     "inbound-never-imports-outbound"

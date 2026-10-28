@@ -1,4 +1,5 @@
-import { timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 import { appSchema } from "~/shared/database";
 import type { AccountRole } from "~/bounded-contexts/access/accounts/domain/account";
 
@@ -38,16 +39,24 @@ export const accountsTable = appSchema.table("accounts", {
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
-export const accountInvitationsTable = appSchema.table("account_invitations", {
-  id: uuid("id").primaryKey(),
-  email: varchar("email", { length: 320 }).notNull(),
-  role: accountRoleEnum("role").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  acceptedByAuthSubjectId: varchar("accepted_by_auth_subject_id", {
-    length: 255,
-  }),
-  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const accountInvitationsTable = appSchema.table(
+  "account_invitations",
+  {
+    id: uuid("id").primaryKey(),
+    email: varchar("email", { length: 320 }).notNull(),
+    role: accountRoleEnum("role").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedByAuthSubjectId: varchar("accepted_by_auth_subject_id", {
+      length: 255,
+    }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("account_invitations_one_accepted_per_auth_subject")
+      .on(table.acceptedByAuthSubjectId)
+      .where(sql`${table.acceptedByAuthSubjectId} is not null`),
+  ],
+);

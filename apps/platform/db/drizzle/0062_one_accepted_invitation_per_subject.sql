@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "account_invitations_one_accepted_per_auth_subject" ON "app"."account_invitations" USING btree ("accepted_by_auth_subject_id") WHERE "app"."account_invitations"."accepted_by_auth_subject_id" is not null;

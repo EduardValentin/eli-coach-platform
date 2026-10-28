@@ -1,3 +1,3 @@
-import { target } from "~/bounded-contexts/sales/store/domain/product";
+import { target } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 
 export const probe = target;

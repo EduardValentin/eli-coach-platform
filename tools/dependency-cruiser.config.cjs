@@ -560,6 +560,24 @@ module.exports = {
       },
     },
     {
+      name: "bounded-context-public-imports-no-domain",
+      comment:
+        "A bounded context's public/ publishes DTO types, interfaces, request-context keys and route paths: it never imports a domain/, not even its own components' and not even as a type.",
+      severity: "error",
+      from: { path: BOUNDED_CONTEXT_PUBLIC },
+      to: { path: "/domain/" },
+    },
+    {
+      name: "no-cross-context-domain-import",
+      comment:
+        "No entity leaves its bounded context: nothing in a bounded context imports another bounded context's domain/, not even as a type.",
+      severity: "error",
+      from: { path: "^apps/platform/src/bounded-contexts/([^/]+)/" },
+      to: {
+        path: "^apps/platform/src/bounded-contexts/(?!$1/)[^/]+/[^/]+/domain/",
+      },
+    },
+    {
       name: "shared-concerns",
       comment:
         "A shared concern never imports a bounded context or the composition root.",

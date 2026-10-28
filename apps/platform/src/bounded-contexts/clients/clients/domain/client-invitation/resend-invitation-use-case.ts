@@ -57,13 +57,13 @@ export class ResendInvitationUseCase {
       tokenHash: token.sha256,
       sentAt: now,
     });
-    await this.options.invitations.reissue(reissued);
     await this.options.accountInvitations.allow({
       invitationId: reissued.id,
       email: reissued.email,
       role: "CLIENT",
       expiresAt: reissued.expiresAt,
     });
+    await this.options.invitations.reissue(reissued);
 
     const provider = await this.replaceIdentityInvitation(reissued).catch(
       () => null,

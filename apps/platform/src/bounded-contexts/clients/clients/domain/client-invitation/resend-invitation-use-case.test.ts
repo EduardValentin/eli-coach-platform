@@ -147,6 +147,7 @@ describe("ResendInvitationUseCase", () => {
       invitationId: "invitation-1",
     });
     const order = [
+      dependencies.accountInvitations.allow,
       dependencies.invitations.reissue,
       dependencies.identity.replace,
       dependencies.invitations.recordProvider,

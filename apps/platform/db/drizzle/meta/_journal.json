@@ -407,6 +407,13 @@
       "when": 1793140789064,
       "tag": "0061_access_owns_account_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1793172267217,
+      "tag": "0062_one_accepted_invitation_per_subject",
+      "breakpoints": true
     }
   ]
 }

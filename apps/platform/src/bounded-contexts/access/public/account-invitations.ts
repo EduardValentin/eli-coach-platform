@@ -1,9 +1,11 @@
 import type { AccountRole } from "./session";
 
+type InvitedAccountRole = Extract<AccountRole, "CLIENT">;
+
 type AccountInvitationDto = {
   invitationId: string;
   email: string;
-  role: AccountRole;
+  role: InvitedAccountRole;
   expiresAt: string;
 };
 
