@@ -7,7 +7,7 @@ import {
   type RegularPricingSignupResult,
 } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { DatabaseClient } from "~/shared/database";
-import { executorOf } from "~/shared/database/index.server";
+import { executorOf, inSavepoint } from "~/shared/database/index.server";
 import { and, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { waitlistEntriesTable } from "./schema.server";
 import {
@@ -225,7 +225,7 @@ async function insertEntry(
   options: SignupOptions,
   placement: EntryPlacement,
 ): Promise<void> {
-  await transaction.transaction(async (savepoint) => {
+  await inSavepoint(transaction, async (savepoint) => {
     await savepoint.execute(sql`
       insert into app.waitlist_entries (
         email,

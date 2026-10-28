@@ -2,7 +2,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseClient,
 } from "~/shared/database";
-import { executorOf } from "~/shared/database/index.server";
+import { executorOf, inSavepoint } from "~/shared/database/index.server";
 import {
   CheckInSeries,
   type CheckIn,
@@ -212,7 +212,7 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
     series: CheckInSeries,
   ): Promise<"inserted" | "series_exists"> {
     try {
-      await this.executor.transaction((savepoint) =>
+      await inSavepoint(this.executor, (savepoint) =>
         savepoint.insert(checkInSeriesTable).values(series.toSnapshot()),
       );
     } catch (error) {

@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { executorOf } from "~/shared/database/index.server";
+import { executorOf, inSavepoint } from "~/shared/database/index.server";
 import {
   Notification,
   type NotificationDraft,
@@ -55,7 +55,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
       return;
     }
 
-    await this.executor.transaction((savepoint) =>
+    await inSavepoint(this.executor, (savepoint) =>
       savepoint
         .insert(notificationsTable)
         .values(drafts.map((draft) => this.rowOf(draft)))
@@ -71,7 +71,7 @@ export class PostgresNotificationInbox implements NotificationInbox {
       return;
     }
 
-    await this.executor.transaction((savepoint) =>
+    await inSavepoint(this.executor, (savepoint) =>
       savepoint
         .delete(notificationsTable)
         .where(

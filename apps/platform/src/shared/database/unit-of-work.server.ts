@@ -20,3 +20,10 @@ export function createUnitOfWork(database: DatabaseClient): UnitOfWork {
 export function executorOf(database: DatabaseClient): DatabaseExecutor {
   return ambientTransaction.getStore() ?? database;
 }
+
+export function inSavepoint<T>(
+  executor: DatabaseExecutor,
+  work: (savepoint: DatabaseTransaction) => Promise<T>,
+): Promise<T> {
+  return executor.transaction(work);
+}

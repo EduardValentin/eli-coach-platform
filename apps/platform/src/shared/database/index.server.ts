@@ -1,1 +1,5 @@
-export { createUnitOfWork, executorOf } from "./unit-of-work.server";
+export {
+  createUnitOfWork,
+  executorOf,
+  inSavepoint,
+} from "./unit-of-work.server";

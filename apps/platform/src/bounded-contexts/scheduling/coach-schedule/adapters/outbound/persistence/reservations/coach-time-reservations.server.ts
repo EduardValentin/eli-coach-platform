@@ -7,7 +7,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseClient,
 } from "~/shared/database";
-import { executorOf } from "~/shared/database/index.server";
+import { executorOf, inSavepoint } from "~/shared/database/index.server";
 import { eq, sql } from "drizzle-orm";
 
 import {
@@ -31,7 +31,7 @@ export class PostgresCoachTimeReservations implements CoachTimeReservations {
     );
 
     try {
-      const [reserved] = await this.executor.transaction((savepoint) =>
+      const [reserved] = await inSavepoint(this.executor, (savepoint) =>
         savepoint
           .insert(coachTimeReservationsTable)
           .values({ startsAt: interval.start, endsAt: interval.end })
