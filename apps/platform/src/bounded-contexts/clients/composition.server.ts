@@ -4,7 +4,6 @@ import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbo
 import { clientPortalStandingMiddleware } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-portal-standing.server";
 import {
   composeClientsFeature,
-  composeIdentityInvitations,
   type ClientsFeatureHandles,
 } from "~/bounded-contexts/clients/clients/composition.server";
 import {
@@ -44,8 +43,7 @@ type CheckInsFacades = ReturnType<typeof composeCheckInsFeature>["facades"];
 
 type ConstructedHere =
   | keyof ReturnType<typeof composeClientMedia>
-  | keyof ReturnType<typeof composeResourceFiles>
-  | "identityInvitations";
+  | keyof ReturnType<typeof composeResourceFiles>;
 
 type ComponentHandles = ClientsFeatureHandles &
   Omit<
@@ -72,9 +70,6 @@ type ComponentHandles = ClientsFeatureHandles &
 type ClientsHandles = Omit<ComponentHandles, ConstructedHere> & {
   clientFilesConfig: ClientFilesConfig;
   documentPagesWorkerUrl: URL;
-  identityConfig: Parameters<
-    typeof composeIdentityInvitations
-  >[0]["identityConfig"];
 };
 
 export type ClientsComposition = {
@@ -84,10 +79,7 @@ export type ClientsComposition = {
 };
 
 export function composeClients(handles: ClientsHandles): ClientsComposition {
-  const clients = composeClientsFeature({
-    ...handles,
-    identityInvitations: composeIdentityInvitations(handles),
-  });
+  const clients = composeClientsFeature(handles);
   const clientProfile = composeClientProfileFeature({
     ...handles,
     ...clients.handles,

@@ -34,11 +34,12 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
     `,
   },
   {
-    rows: "client invitations",
+    rows: "account invitations",
     statement: `
-      delete from app.client_invitations
-      where client_id in (
-        select id from app.clients where assessment_call_id = any($1::uuid[])
+      delete from app.account_invitations
+      where id in (
+        select account_invitation_id from app.clients
+        where assessment_call_id = any($1::uuid[])
       )
     `,
   },

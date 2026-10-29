@@ -1,33 +1,24 @@
-import type { Clock } from "../clock";
-
-import type { InvitationStanding } from "./client-invitation";
-import type { ClientInvitations } from "./client-invitations";
-
-type ClientInvitationReading = {
-  state: InvitationStanding;
-  sentAt: Date;
-  expiresAt: Date;
-};
+import type { AccountInvitations } from "./account-invitations";
+import type { ClientInvitationStanding } from "./client-invitation";
+import type { InvitedClients } from "./invited-client";
 
 type ReadClientInvitationUseCaseOptions = {
-  invitations: ClientInvitations;
-  clock: Clock;
+  accountInvitations: Pick<AccountInvitations, "standingOf">;
+  clients: Pick<InvitedClients, "findById">;
 };
 
 export class ReadClientInvitationUseCase {
   constructor(private readonly options: ReadClientInvitationUseCaseOptions) {}
 
-  async execute(clientId: string): Promise<ClientInvitationReading | null> {
-    const invitation = await this.options.invitations.findByClientId(clientId);
+  async execute(clientId: string): Promise<ClientInvitationStanding | null> {
+    const client = await this.options.clients.findById(clientId);
 
-    if (!invitation || invitation.usedAt) {
+    if (!client?.accountInvitationId) {
       return null;
     }
 
-    return {
-      state: invitation.standing(this.options.clock.now()),
-      sentAt: invitation.sentAt,
-      expiresAt: invitation.expiresAt,
-    };
+    return this.options.accountInvitations.standingOf(
+      client.accountInvitationId,
+    );
   }
 }

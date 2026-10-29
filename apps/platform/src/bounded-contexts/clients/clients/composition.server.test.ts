@@ -1,10 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
 import type { CoachingStandingSnapshot } from "~/bounded-contexts/clients/clients/domain/client";
-import { InMemoryProductEmail } from "~/shared/email/index.server";
-import {
-  createTokenGenerator,
-  createTokenHasher,
-} from "~/shared/tokens/link-tokens.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRequestArgs } from "~/composition-root/test-support/request-args";
@@ -256,31 +251,20 @@ function createHandles(): ClientsFeatureHandles {
   return {
     accountInvitations: {
       acceptedInvitationOf: async () => null,
-      allowAccount: async () => {
-        throw new Error("no account invitation expected");
-      },
+      ensureDelivered: unexpectedAccountInvitation,
+      issue: unexpectedAccountInvitation,
+      resend: unexpectedAccountInvitation,
+      standingOf: unexpectedAccountInvitation,
     },
-    appBasePath: "/eli-coach-platform",
     clientCalls: { callOf: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
-    contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
-    identityInvitations: {
-      create: async () => {
-        throw new Error("no identity invitation expected");
-      },
-      replace: async () => {
-        throw new Error("no identity invitation expected");
-      },
-    },
-    linkTokens: {
-      generator: createTokenGenerator(),
-      hasher: createTokenHasher(),
-    },
     logger: createLogger(),
-    productEmail: new InMemoryProductEmail(),
-    publicAppUrl: "https://evoa.fit",
   };
+}
+
+async function unexpectedAccountInvitation(): Promise<never> {
+  throw new Error("no account invitation expected");
 }
 
 function createLogger() {

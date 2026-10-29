@@ -13,10 +13,6 @@ export const clientsClientRoutes = [
 
 export const clientsApiRoutes = [
   route(
-    CLIENTS_API_PATHS.invitation.slice(1),
-    "./adapters/inbound/http/public/invitation.ts",
-  ),
-  route(
     CLIENTS_API_PATHS.invitationResends.slice(1),
     "./adapters/inbound/http/coach/invitation-resends.ts",
   ),

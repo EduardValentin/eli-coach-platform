@@ -478,13 +478,12 @@ module.exports = {
     {
       name: "clerk-confined",
       comment:
-        "Clerk stays behind the accounts component, the app root modules, the clients identity adapter and the test harnesses: nothing else names @clerk/*.",
+        "Clerk stays behind the accounts component, the app root modules and the test harnesses: nothing else names @clerk/*.",
       severity: "error",
       from: {
         pathNot: [
           `${BOUNDED_CONTEXT}accounts/`,
           "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
-          `${BOUNDED_CONTEXT}clients/adapters/outbound/identity/`,
           "^apps/platform/e2e/",
           "^apps/platform/integration-test-config/",
           "^lighthouserc\\.cjs$",

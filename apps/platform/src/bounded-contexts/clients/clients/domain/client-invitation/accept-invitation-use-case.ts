@@ -1,15 +1,14 @@
-import type { Clock } from "../clock";
-
 import type { AccountInvitations } from "./account-invitations";
-import type { ClientInvitation } from "./client-invitation";
-import type { ClientInvitations } from "./client-invitations";
+import type { InvitedClient, InvitedClients } from "./invited-client";
 
 type InvitationAcceptanceOutcome = "accepted" | "refused";
 
 type AcceptInvitationUseCaseOptions = {
   accountInvitations: Pick<AccountInvitations, "acceptedInvitationOf">;
-  clock: Clock;
-  invitations: ClientInvitations;
+  clients: Pick<
+    InvitedClients,
+    "findById" | "findByAccountInvitationId" | "bindAuthSubject"
+  >;
 };
 
 export class AcceptInvitationUseCase {
@@ -27,35 +26,35 @@ export class AcceptInvitationUseCase {
       return "refused";
     }
 
-    const invitation = await this.options.invitations.findById(invitationId);
+    const client =
+      await this.options.clients.findByAccountInvitationId(invitationId);
 
-    if (!invitation) {
+    if (!client) {
       return "refused";
     }
 
-    return this.accept(invitation, command.authSubjectId);
+    return this.accept(client, command.authSubjectId);
   }
 
   private async accept(
-    invitation: ClientInvitation,
+    client: InvitedClient,
     authSubjectId: string,
   ): Promise<InvitationAcceptanceOutcome> {
-    if (invitation.wasAcceptedBy(authSubjectId)) {
+    if (client.authSubjectId === authSubjectId) {
       return "accepted";
     }
 
-    const write = await this.options.invitations.accept({
-      invitationId: invitation.id,
+    const write = await this.options.clients.bindAuthSubject({
+      clientId: client.id,
       authSubjectId,
-      now: this.options.clock.now(),
     });
 
-    if (write === "accepted") {
+    if (write === "bound") {
       return "accepted";
     }
 
-    const winner = await this.options.invitations.findById(invitation.id);
+    const winner = await this.options.clients.findById(client.id);
 
-    return winner?.wasAcceptedBy(authSubjectId) ? "accepted" : "refused";
+    return winner?.authSubjectId === authSubjectId ? "accepted" : "refused";
   }
 }

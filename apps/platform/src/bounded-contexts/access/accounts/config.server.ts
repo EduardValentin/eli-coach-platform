@@ -32,6 +32,14 @@ export const clerkShape = {
 
 export type ClerkConfig = z.infer<z.ZodObject<typeof clerkShape>>;
 
+export type IdentityConfig = Pick<
+  ClerkConfig,
+  | "CLERK_API_URL"
+  | "CLERK_SECRET_KEY"
+  | "CLERK_SIGN_UP_URL"
+  | "IDENTITY_PROVIDER"
+>;
+
 export function refineClerk(
   environment: ClerkConfig & RuntimeStage,
   context: z.RefinementCtx,

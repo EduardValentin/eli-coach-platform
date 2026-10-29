@@ -365,17 +365,19 @@ async function readInvitation(): Promise<InvitationRow | undefined> {
   const [invitation] = await suite.postgres.queryRows<InvitationRow>({
     sql: `
       select
-        id,
-        client_id as "clientId",
-        token_hash as "tokenHash",
-        sent_at as "sentAt",
-        expires_at as "expiresAt",
-        used_at as "usedAt",
-        provider_invitation_id as "providerInvitationId",
-        provider_invitation_url as "providerInvitationUrl",
-        email_sent_at as "emailSentAt",
-        email_delivery_failed_at as "emailDeliveryFailedAt"
-      from app.client_invitations
+        invitation.id,
+        client.id as "clientId",
+        invitation.token_hash as "tokenHash",
+        invitation.sent_at as "sentAt",
+        invitation.expires_at as "expiresAt",
+        invitation.accepted_at as "usedAt",
+        invitation.provider_invitation_id as "providerInvitationId",
+        invitation.provider_invitation_url as "providerInvitationUrl",
+        invitation.email_sent_at as "emailSentAt",
+        invitation.email_delivery_failed_at as "emailDeliveryFailedAt"
+      from app.account_invitations invitation
+      left join app.clients client
+        on client.account_invitation_id = invitation.id
     `,
     values: [],
   });

@@ -1053,7 +1053,7 @@ async function readPaymentEventIds(): Promise<string[]> {
 async function countInvitations(): Promise<number> {
   return (
     (await suite.postgres.countRows({
-      tableName: "app.client_invitations",
+      tableName: "app.account_invitations",
       values: [],
       whereClause: "true",
     })) ?? 0

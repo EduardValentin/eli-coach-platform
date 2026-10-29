@@ -188,11 +188,13 @@ async function readInvitation(): Promise<InvitationRow | undefined> {
   const [invitation] = await suite.postgres.queryRows<InvitationRow>({
     sql: `
       select
-        id,
-        client_id as "clientId",
-        used_at as "usedAt",
-        accepted_by_auth_subject_id as "acceptedByAuthSubjectId"
-      from app.client_invitations
+        invitation.id,
+        client.id as "clientId",
+        invitation.accepted_at as "usedAt",
+        invitation.accepted_by_auth_subject_id as "acceptedByAuthSubjectId"
+      from app.account_invitations invitation
+      left join app.clients client
+        on client.account_invitation_id = invitation.id
     `,
     values: [],
   });

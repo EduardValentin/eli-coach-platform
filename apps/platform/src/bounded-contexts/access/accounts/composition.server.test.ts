@@ -1,5 +1,10 @@
 import type { DatabaseClient } from "~/shared/database";
-import { describe, expect, it } from "vitest";
+import { InMemoryProductEmail } from "~/shared/email/index.server";
+import {
+  createTokenGenerator,
+  createTokenHasher,
+} from "~/shared/tokens/link-tokens.server";
+import { describe, expect, it, vi } from "vitest";
 
 import { composeAccountsFeature } from "./composition.server";
 
@@ -14,15 +19,25 @@ describe("composeAccountsFeature", () => {
 
     // act
     const { feature } = composeAccountsFeature({
+      appBasePath: "/",
       bootstrapCoachAuthSubjectId: "user_coach",
       clerkWebhookSigningSecret: undefined,
       clock: { now: () => new Date("2026-10-27T10:00:00.000Z") },
+      contactEmail: "contact@evoa.fit",
       database: {} as DatabaseClient,
       identityConfig: {
         CLERK_SECRET_KEY: "sk_test_unit",
+        CLERK_SIGN_UP_URL: "https://accounts.evoa.fit/sign-up",
         IDENTITY_PROVIDER: "memory",
       },
+      linkTokens: {
+        generator: createTokenGenerator(),
+        hasher: createTokenHasher(),
+      },
+      logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
       portal,
+      productEmail: new InMemoryProductEmail(),
+      publicAppUrl: "https://evoa.fit",
     });
 
     const response = await feature.webhooks.handleClerkEvent(

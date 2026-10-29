@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  text,
   timestamp,
   uniqueIndex,
   uuid,
@@ -51,7 +52,15 @@ export const accountInvitationsTable = appSchema.table(
     id: uuid("id").primaryKey(),
     email: varchar("email", { length: 320 }).notNull(),
     role: accountRoleEnum("role").notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    providerInvitationId: varchar("provider_invitation_id", { length: 255 }),
+    providerInvitationUrl: text("provider_invitation_url"),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    emailDeliveryFailedAt: timestamp("email_delivery_failed_at", {
+      withTimezone: true,
+    }),
     acceptedByAuthSubjectId: varchar("accepted_by_auth_subject_id", {
       length: 255,
     }),
@@ -64,6 +73,23 @@ export const accountInvitationsTable = appSchema.table(
     uniqueIndex("account_invitations_one_accepted_per_auth_subject")
       .on(table.acceptedByAuthSubjectId)
       .where(sql`${table.acceptedByAuthSubjectId} is not null`),
+    uniqueIndex("account_invitations_token_hash_unique").on(table.tokenHash),
     check("account_invitations_role_check", sql`${table.role} = 'CLIENT'`),
+    check(
+      "account_invitations_token_hash_hex",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "account_invitations_expires_after_sending",
+      sql`${table.expiresAt} > ${table.sentAt}`,
+    ),
+    check(
+      "account_invitations_accepted_by_a_subject",
+      sql`(${table.acceptedAt} is null) = (${table.acceptedByAuthSubjectId} is null)`,
+    ),
+    check(
+      "account_invitations_provider_complete",
+      sql`(${table.providerInvitationId} is null) = (${table.providerInvitationUrl} is null)`,
+    ),
   ],
 );

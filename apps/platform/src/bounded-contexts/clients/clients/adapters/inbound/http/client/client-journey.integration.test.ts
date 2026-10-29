@@ -223,7 +223,7 @@ describe.sequential("client journey integration", () => {
 async function admitInvitedClient(visitor: Visitor): Promise<void> {
   await journey.payForCall(visitor);
   const [invitation] = await suite.postgres.queryRows<{ id: string }>({
-    sql: "select id from app.client_invitations",
+    sql: "select id from app.account_invitations",
     values: [],
   });
 

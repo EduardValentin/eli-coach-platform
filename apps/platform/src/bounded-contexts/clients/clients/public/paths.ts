@@ -3,10 +3,6 @@ import {
   COACH_PORTAL_PATH,
 } from "../../../access/public/paths";
 
-export const INVITATION_ROUTE_SEGMENT = "invitation";
-
-export const INVITATION_PATH = `/${INVITATION_ROUTE_SEGMENT}`;
-
 export const CLIENT_WELCOME_ROUTE_SEGMENT = "welcome";
 
 export const CLIENT_WELCOME_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_WELCOME_ROUTE_SEGMENT}`;
@@ -39,15 +35,10 @@ export function coachClientProfilePath(clientId: string): string {
 
 export const CLIENTS_API_PATHS = {
   clients: "/api/clients",
-  invitation: "/api/clients/invitation",
   invitationResends: "/api/clients/invitation-resends",
   ownIdentity: "/api/clients/identity",
 } as const;
 
 export function coachClientIdentityPath(clientId: string): string {
   return `${CLIENTS_API_PATHS.clients}/${encodeURIComponent(clientId)}/identity`;
-}
-
-export function invitationPath(link: { token: string }): string {
-  return `${INVITATION_PATH}#${link.token}`;
 }

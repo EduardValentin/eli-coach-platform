@@ -11,11 +11,12 @@ function invitation(
   overrides: Partial<Parameters<typeof AccountInvitation.reconstitute>[0]> = {},
 ): AccountInvitation {
   return AccountInvitation.reconstitute({
-    ...AccountInvitation.allowed({
+    ...AccountInvitation.issue({
       id: "invitation-1",
       email: "ana@example.com",
       role: "CLIENT",
-      expiresAt: EXPIRES_AT,
+      tokenHash: "a".repeat(64),
+      sentAt: EARLIER,
     }).toSnapshot(),
     ...overrides,
   });

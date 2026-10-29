@@ -90,16 +90,22 @@ export function createPlatformContainer(options: {
   });
   const legal = composeLegal({ documentHasher: createSha256Hasher() });
   const access = composeAccess({
+    appBasePath: environment.APP_BASE_PATH,
     bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
     clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
     clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     identityConfig: environment,
+    linkTokens,
+    logger,
     portal: {
       appBasePath: environment.APP_BASE_PATH,
       publicAppUrl: environment.PUBLIC_APP_URL,
       signInUrl: environment.CLERK_SIGN_IN_URL,
     },
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const scheduling = composeScheduling({
     appBasePath: environment.APP_BASE_PATH,
@@ -126,8 +132,6 @@ export function createPlatformContainer(options: {
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     documentPagesWorkerUrl: pdfPagesWorkerUrl(),
-    identityConfig: environment,
-    linkTokens,
     logger,
     meetingRoom: scheduling.facades.meetingRoom,
     openSlots: scheduling.facades.openSlots,

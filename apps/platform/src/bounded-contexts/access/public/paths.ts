@@ -3,6 +3,15 @@ import type { AccountRole } from "./session";
 export const SIGN_IN_FAILED_ROUTE_SEGMENT = "sign-in-failed";
 export const SIGN_IN_FAILED_PATH = `/${SIGN_IN_FAILED_ROUTE_SEGMENT}`;
 
+export const INVITATION_ROUTE_SEGMENT = "invitation";
+export const INVITATION_PATH = `/${INVITATION_ROUTE_SEGMENT}`;
+
+export function invitationPath(link: { token: string }): string {
+  return `${INVITATION_PATH}#${link.token}`;
+}
+
+export const INVITATION_RESOLUTION_API_PATH = "/api/clients/invitation";
+
 export const CLIENT_PORTAL_ROUTE_SEGMENT = "client";
 export const CLIENT_PORTAL_PATH = `/${CLIENT_PORTAL_ROUTE_SEGMENT}`;
 

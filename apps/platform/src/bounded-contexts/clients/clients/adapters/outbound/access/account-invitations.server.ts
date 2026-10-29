@@ -1,16 +1,45 @@
-import type { AccountInvitations } from "~/bounded-contexts/clients/clients/domain/client-invitation";
+import type {
+  AccountInvitations,
+  ClientInvitationStanding,
+  InvitationResendOutcome,
+} from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations";
+
+type InvitationDelivery = Parameters<AccountInvitations["ensureDelivered"]>[0];
 
 export class AccessAccountInvitations implements AccountInvitations {
   constructor(private readonly accountInvitations: AccountInvitationsFacade) {}
 
-  allow(invitation: Parameters<AccountInvitations["allow"]>[0]): Promise<void> {
-    return this.accountInvitations.allowAccount({
-      invitationId: invitation.invitationId,
-      email: invitation.email,
-      role: invitation.role,
-      expiresAt: invitation.expiresAt.toISOString(),
+  issue(invitation: { email: string }): Promise<{ invitationId: string }> {
+    return this.accountInvitations.issue({ email: invitation.email });
+  }
+
+  ensureDelivered(delivery: InvitationDelivery): Promise<void> {
+    return this.accountInvitations.ensureDelivered({
+      invitationId: delivery.invitationId,
+      firstName: delivery.firstName,
     });
+  }
+
+  resend(delivery: InvitationDelivery): Promise<InvitationResendOutcome> {
+    return this.accountInvitations.resend({
+      invitationId: delivery.invitationId,
+      firstName: delivery.firstName,
+    });
+  }
+
+  async standingOf(
+    invitationId: string,
+  ): Promise<ClientInvitationStanding | null> {
+    const standing = await this.accountInvitations.standingOf(invitationId);
+
+    return standing
+      ? {
+          state: standing.state,
+          sentAt: new Date(standing.sentAt),
+          expiresAt: new Date(standing.expiresAt),
+        }
+      : null;
   }
 
   acceptedInvitationOf(authSubjectId: string): Promise<string | null> {

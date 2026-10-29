@@ -1,12 +1,15 @@
 import {
   AccountInvitation,
   type AccountInvitations,
+  type IdentityInvitation,
 } from "~/bounded-contexts/access/accounts/domain/account";
 import type { DatabaseClient } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
 import { and, eq, isNull, type SQL } from "drizzle-orm";
 
 import { accountInvitationsTable } from "./schema.server";
+
+type AccountInvitationRow = typeof accountInvitationsTable.$inferSelect;
 
 type Acceptance = Parameters<AccountInvitations["accept"]>[0];
 
@@ -17,26 +20,82 @@ export class PostgresAccountInvitations implements AccountInvitations {
     return executorOf(this.database);
   }
 
-  async allow(invitation: AccountInvitation): Promise<void> {
-    const { id, email, role, expiresAt } = invitation.toSnapshot();
-
-    await this.executor
-      .insert(accountInvitationsTable)
-      .values({ id, email, role, expiresAt })
-      .onConflictDoUpdate({
-        target: accountInvitationsTable.id,
-        set: { email, role, expiresAt },
-      });
-  }
-
   findById(invitationId: string): Promise<AccountInvitation | null> {
     return this.findOneWhere(eq(accountInvitationsTable.id, invitationId));
+  }
+
+  findByTokenHash(tokenHash: string): Promise<AccountInvitation | null> {
+    return this.findOneWhere(eq(accountInvitationsTable.tokenHash, tokenHash));
   }
 
   findAcceptedBy(authSubjectId: string): Promise<AccountInvitation | null> {
     return this.findOneWhere(
       eq(accountInvitationsTable.acceptedByAuthSubjectId, authSubjectId),
     );
+  }
+
+  async insert(invitation: AccountInvitation): Promise<void> {
+    await this.executor.insert(accountInvitationsTable).values({
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      tokenHash: invitation.tokenHash,
+      sentAt: invitation.sentAt,
+      expiresAt: invitation.expiresAt,
+      providerInvitationId: invitation.provider?.id ?? null,
+      providerInvitationUrl: invitation.provider?.url ?? null,
+      emailSentAt: invitation.emailSentAt,
+      emailDeliveryFailedAt: invitation.emailDeliveryFailedAt,
+      acceptedByAuthSubjectId: invitation.acceptedByAuthSubjectId,
+      acceptedAt: invitation.acceptedAt,
+      createdAt: invitation.sentAt,
+    });
+  }
+
+  async reissue(invitation: AccountInvitation): Promise<void> {
+    await this.executor
+      .update(accountInvitationsTable)
+      .set({
+        tokenHash: invitation.tokenHash,
+        sentAt: invitation.sentAt,
+        expiresAt: invitation.expiresAt,
+        emailSentAt: invitation.emailSentAt,
+        emailDeliveryFailedAt: invitation.emailDeliveryFailedAt,
+      })
+      .where(eq(accountInvitationsTable.id, invitation.id));
+  }
+
+  async recordProvider(input: {
+    invitationId: string;
+    provider: IdentityInvitation;
+  }): Promise<void> {
+    await this.executor
+      .update(accountInvitationsTable)
+      .set({
+        providerInvitationId: input.provider.id,
+        providerInvitationUrl: input.provider.url,
+      })
+      .where(eq(accountInvitationsTable.id, input.invitationId));
+  }
+
+  async recordEmailSent(input: {
+    invitationId: string;
+    at: Date;
+  }): Promise<void> {
+    await this.executor
+      .update(accountInvitationsTable)
+      .set({ emailSentAt: input.at })
+      .where(eq(accountInvitationsTable.id, input.invitationId));
+  }
+
+  async recordEmailDeliveryFailed(input: {
+    invitationId: string;
+    at: Date;
+  }): Promise<void> {
+    await this.executor
+      .update(accountInvitationsTable)
+      .set({ emailDeliveryFailedAt: input.at })
+      .where(eq(accountInvitationsTable.id, input.invitationId));
   }
 
   async accept(acceptance: Acceptance): Promise<"accepted" | "raced"> {
@@ -61,19 +120,35 @@ export class PostgresAccountInvitations implements AccountInvitations {
     condition: SQL,
   ): Promise<AccountInvitation | null> {
     const [row] = await this.executor
-      .select({
-        id: accountInvitationsTable.id,
-        email: accountInvitationsTable.email,
-        role: accountInvitationsTable.role,
-        expiresAt: accountInvitationsTable.expiresAt,
-        acceptedByAuthSubjectId:
-          accountInvitationsTable.acceptedByAuthSubjectId,
-        acceptedAt: accountInvitationsTable.acceptedAt,
-      })
+      .select()
       .from(accountInvitationsTable)
       .where(condition)
       .limit(1);
 
-    return row ? AccountInvitation.reconstitute(row) : null;
+    return row ? this.toAccountInvitation(row) : null;
+  }
+
+  private toAccountInvitation(row: AccountInvitationRow): AccountInvitation {
+    return AccountInvitation.reconstitute({
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      tokenHash: row.tokenHash,
+      sentAt: row.sentAt,
+      expiresAt: row.expiresAt,
+      provider: this.providerOf(row),
+      emailSentAt: row.emailSentAt,
+      emailDeliveryFailedAt: row.emailDeliveryFailedAt,
+      acceptedByAuthSubjectId: row.acceptedByAuthSubjectId,
+      acceptedAt: row.acceptedAt,
+    });
+  }
+
+  private providerOf(row: AccountInvitationRow): IdentityInvitation | null {
+    if (!row.providerInvitationId || !row.providerInvitationUrl) {
+      return null;
+    }
+
+    return { id: row.providerInvitationId, url: row.providerInvitationUrl };
   }
 }

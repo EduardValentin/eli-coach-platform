@@ -99,7 +99,7 @@ export class ClientOnboardingJourney {
     const [invitation] = await this.rig.suite.postgres.queryRows<{
       id: string;
     }>({
-      sql: "select id from app.client_invitations where email = $1",
+      sql: "select id from app.account_invitations where email = $1",
       values: [visitor.email],
     });
 

@@ -421,6 +421,13 @@
       "when": 1793185272063,
       "tag": "0063_invitations_admit_clients_only",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1793268953341,
+      "tag": "0064_access_owns_the_invitation",
+      "breakpoints": true
     }
   ]
 }

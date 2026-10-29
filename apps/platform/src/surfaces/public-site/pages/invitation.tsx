@@ -7,11 +7,11 @@ import {
 } from "react-router";
 
 import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
-import { INVITATION_PATH } from "~/bounded-contexts/clients/clients/public/paths";
+import { INVITATION_PATH } from "~/bounded-contexts/access/public/paths";
 import {
   AnonymousInvitation,
   SignedInInvitation,
-} from "~/bounded-contexts/clients/clients/ui/public/invitation/invitation-states";
+} from "~/bounded-contexts/access/accounts/ui/public/invitation/invitation-states";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 export type InvitationLoaderData = {

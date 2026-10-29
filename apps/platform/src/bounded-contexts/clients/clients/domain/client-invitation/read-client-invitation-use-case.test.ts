@@ -1,53 +1,38 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ClientInvitation } from "./client-invitation";
-import type { ClientInvitations } from "./client-invitations";
+import type { InvitedClient } from "./invited-client";
 import { ReadClientInvitationUseCase } from "./read-client-invitation-use-case";
 
 const SENT_AT = new Date("2026-09-27T10:00:00.000Z");
 const EXPIRES_AT = new Date("2026-10-27T10:00:00.000Z");
-const NOW = new Date("2026-10-01T10:00:00.000Z");
 
-function invitation(
-  overrides: Partial<Parameters<typeof ClientInvitation.reconstitute>[0]> = {},
-): ClientInvitation {
-  return ClientInvitation.reconstitute({
-    ...ClientInvitation.issue({
-      id: "invitation-1",
-      clientId: "client-1",
-      email: "ana@example.com",
-      tokenHash: "c".repeat(64),
-      sentAt: SENT_AT,
-    }),
-    emailSentAt: SENT_AT,
-    ...overrides,
-  });
-}
+const invitedClient: InvitedClient = {
+  id: "client-1",
+  email: "ana@example.com",
+  firstName: "Ana",
+  authSubjectId: null,
+  accountInvitationId: "invitation-1",
+  coachingCancelledOrEnded: false,
+};
 
-function createInvitations(found: ClientInvitation | null) {
+function readDependencies(client: InvitedClient | null) {
   return {
-    findById: vi.fn(),
-    findByClientId: vi.fn().mockResolvedValue(found),
-    findByTokenHash: vi.fn(),
-    insert: vi.fn(),
-    reissue: vi.fn(),
-    recordProvider: vi.fn(),
-    recordEmailSent: vi.fn(),
-    recordEmailDeliveryFailed: vi.fn(),
-    accept: vi.fn(),
-  } satisfies ClientInvitations;
+    accountInvitations: {
+      standingOf: vi.fn().mockResolvedValue({
+        state: "email-failed",
+        sentAt: SENT_AT,
+        expiresAt: EXPIRES_AT,
+      }),
+    },
+    clients: { findById: vi.fn().mockResolvedValue(client) },
+  };
 }
 
 describe("ReadClientInvitationUseCase", () => {
-  it("reads her invitation's standing with when it was sent and when it expires", async () => {
+  it("reads the standing of the account invitation she holds", async () => {
     // arrange
-    const invitations = createInvitations(
-      invitation({ emailDeliveryFailedAt: SENT_AT, emailSentAt: null }),
-    );
-    const useCase = new ReadClientInvitationUseCase({
-      invitations,
-      clock: { now: () => NOW },
-    });
+    const dependencies = readDependencies(invitedClient);
+    const useCase = new ReadClientInvitationUseCase(dependencies);
 
     // act
     const result = await useCase.execute("client-1");
@@ -58,26 +43,27 @@ describe("ReadClientInvitationUseCase", () => {
       sentAt: SENT_AT,
       expiresAt: EXPIRES_AT,
     });
-    expect(invitations.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(dependencies.accountInvitations.standingOf).toHaveBeenCalledWith(
+      "invitation-1",
+    );
   });
 
   it.each([
-    ["no invitation", null],
+    ["no client", null],
     [
-      "a used invitation",
-      invitation({ usedAt: NOW, acceptedByAuthSubjectId: "user_ana" }),
+      "a client without an invitation",
+      { ...invitedClient, accountInvitationId: null },
     ],
-  ])("reads nothing for %s", async (_label, found) => {
+  ])("reads nothing for %s", async (_label, client) => {
     // arrange
-    const useCase = new ReadClientInvitationUseCase({
-      invitations: createInvitations(found),
-      clock: { now: () => NOW },
-    });
+    const dependencies = readDependencies(client);
+    const useCase = new ReadClientInvitationUseCase(dependencies);
 
     // act
     const result = await useCase.execute("client-1");
 
     // assert
     expect(result).toBeNull();
+    expect(dependencies.accountInvitations.standingOf).not.toHaveBeenCalled();
   });
 });

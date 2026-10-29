@@ -1,23 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  coachClientIdentityPath,
-  coachClientProfilePath,
-  invitationPath,
-} from "./paths";
-
-describe("invitationPath", () => {
-  it("carries the invitation token in the fragment so it never reaches the server", () => {
-    // arrange
-    const token = "abc-DEF_123";
-
-    // act
-    const path = invitationPath({ token });
-
-    // assert
-    expect(path).toBe("/invitation#abc-DEF_123");
-  });
-});
+import { coachClientIdentityPath, coachClientProfilePath } from "./paths";
 
 describe("coach client paths", () => {
   it("places her profile page under her client page", () => {

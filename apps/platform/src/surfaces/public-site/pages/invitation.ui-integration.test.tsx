@@ -19,8 +19,8 @@ import {
   vi,
 } from "vitest";
 
-import type { InvitationResolution } from "~/bounded-contexts/clients/clients/public/invitation";
-import { CLIENTS_API_PATHS } from "~/bounded-contexts/clients/clients/public/paths";
+import type { InvitationResolution } from "~/bounded-contexts/access/accounts/public/invitation";
+import { INVITATION_RESOLUTION_API_PATH } from "~/bounded-contexts/access/public/paths";
 
 vi.mock("@clerk/react-router", () => ({
   SignOutButton: vi.fn(({ children }: PropsWithChildren) => children),
@@ -30,7 +30,7 @@ import InvitationRoute, { type InvitationLoaderData } from "./invitation";
 
 const TOKEN = "tok_live_invitation_token";
 const INVITATION_STORAGE_KEY = "clients:invitation";
-const INVITATION_API_URL = CLIENTS_API_PATHS.invitation;
+const INVITATION_API_URL = INVITATION_RESOLUTION_API_PATH;
 const INVITATION_RETURN_PATH = "/app/invitation";
 const SIGN_UP_URL =
   "https://accounts.evoa.example/sign-up?__clerk_ticket=ticket";

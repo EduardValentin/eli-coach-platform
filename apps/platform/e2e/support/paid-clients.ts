@@ -154,12 +154,18 @@ const OPEN_CLIENT_SETTINGS = `
   values ($1, 'kg', 'cm', $2)
 `;
 const INSERT_INVITATION = `
-  insert into app.client_invitations (
-    id, client_id, email, token_hash, sent_at, expires_at,
-    provider_invitation_id, provider_invitation_url, email_sent_at,
-    email_delivery_failed_at, created_at
+  with invitation as (
+    insert into app.account_invitations (
+      id, email, role, token_hash, sent_at, expires_at,
+      provider_invitation_id, provider_invitation_url, email_sent_at,
+      email_delivery_failed_at, created_at
+    )
+    values ($1, $3, 'CLIENT', $4, $5, $6, $7, $8, $9, $10, $5)
+    returning id
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $5)
+  update app.clients
+  set account_invitation_id = (select id from invitation)
+  where id = $2
 `;
 
 export async function insertPaidClientRecords(

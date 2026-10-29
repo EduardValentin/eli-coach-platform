@@ -130,7 +130,7 @@ Every server-only module carries the `.server` suffix (repositories, senders, co
 
 ## Vendors
 
-Each vendor stays behind one folder: Clerk behind the accounts component, the app root modules and the clients identity adapter; Stripe behind coaching sales' `adapters/outbound/payments/stripe/`; Resend behind `shared/email`; sharp behind `shared/images`; the PDF renderer and file-type detection behind `shared/documents`; the multipart reader behind one `shared/http` module; drag and drop behind the recipe builder (rules: clerk-confined, stripe-confined, resend-confined, sharp-confined, pdf-rendering-confined, file-type-confined, busboy-confined, react-dnd-confined).
+Each vendor stays behind one folder: Clerk behind the accounts component and the app root modules; Stripe behind coaching sales' `adapters/outbound/payments/stripe/`; Resend behind `shared/email`; sharp behind `shared/images`; the PDF renderer and file-type detection behind `shared/documents`; the multipart reader behind one `shared/http` module; drag and drop behind the recipe builder (rules: clerk-confined, stripe-confined, resend-confined, sharp-confined, pdf-rendering-confined, file-type-confined, busboy-confined, react-dnd-confined).
 
 ## The design system
 
