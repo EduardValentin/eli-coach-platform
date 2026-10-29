@@ -43,10 +43,22 @@ export class PostgresInvitedClients implements InvitedClients {
     clientId: string;
     invitationId: string;
   }): Promise<void> {
-    await this.executor
+    const recorded = await this.executor
       .update(clientsTable)
       .set({ accountInvitationId: reference.invitationId })
-      .where(eq(clientsTable.id, reference.clientId));
+      .where(
+        and(
+          eq(clientsTable.id, reference.clientId),
+          isNull(clientsTable.accountInvitationId),
+        ),
+      )
+      .returning({ id: clientsTable.id });
+
+    if (recorded.length === 0) {
+      throw new Error(
+        `Client ${reference.clientId} already references an account invitation.`,
+      );
+    }
   }
 
   async bindAuthSubject(binding: Binding): Promise<"bound" | "raced"> {

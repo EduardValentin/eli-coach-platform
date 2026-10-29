@@ -22,7 +22,7 @@ import { assessmentCallsTable } from "~/bounded-contexts/scheduling/assessment-c
 export const clientsConstraints = {
   clientPerCall: "clients_assessment_call_id_unique",
   clientPerAuthSubject: "clients_auth_subject_id_unique",
-  invitationPerClient: "clients_account_invitation_id_unique",
+  clientPerAccountInvitation: "clients_account_invitation_id_unique",
 } as const;
 
 export const clientsTable = appSchema.table(
@@ -84,7 +84,7 @@ export const clientsTable = appSchema.table(
     uniqueIndex(clientsConstraints.clientPerAuthSubject).on(
       table.authSubjectId,
     ),
-    uniqueIndex(clientsConstraints.invitationPerClient).on(
+    uniqueIndex(clientsConstraints.clientPerAccountInvitation).on(
       table.accountInvitationId,
     ),
     check(
