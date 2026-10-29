@@ -4,11 +4,6 @@ import type { PaymentSubscriptions } from "./payment-subscriptions";
 import type { PurchasedSubscription } from "./purchased-subscription";
 import type { RecordedCheckoutPurchase } from "./checkout-purchase";
 
-type FinishedCheckoutPurchase = {
-  status: RecordedCheckoutPurchase["status"];
-  paymentCustomerId: string;
-};
-
 type FinishCheckoutPurchaseUseCaseOptions = {
   admission: Pick<PaidClientAdmission, "invite">;
   incidents: CoachingSubscriptionIncidents;
@@ -18,16 +13,9 @@ type FinishCheckoutPurchaseUseCaseOptions = {
 export class FinishCheckoutPurchaseUseCase {
   constructor(private readonly options: FinishCheckoutPurchaseUseCaseOptions) {}
 
-  async execute(
-    purchase: RecordedCheckoutPurchase,
-  ): Promise<FinishedCheckoutPurchase> {
+  async execute(purchase: RecordedCheckoutPurchase): Promise<void> {
     await this.options.admission.invite({ clientId: purchase.clientId });
     await this.holdRenewal(purchase.subscription);
-
-    return {
-      status: purchase.status,
-      paymentCustomerId: purchase.paymentCustomerId,
-    };
   }
 
   private async holdRenewal(

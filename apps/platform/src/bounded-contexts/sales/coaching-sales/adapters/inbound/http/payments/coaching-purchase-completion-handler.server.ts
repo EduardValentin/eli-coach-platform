@@ -65,14 +65,12 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
       return OUTCOME_BY_PURCHASE_STATUS[recorded.status];
     }
 
-    const finished =
-      await this.options.finishCheckoutPurchase.execute(recorded);
-
+    await this.options.finishCheckoutPurchase.execute(recorded);
     await this.options.refreshPaymentCard.execute({
-      paymentCustomerId: finished.paymentCustomerId,
+      paymentCustomerId: recorded.subscription.paymentCustomerId,
     });
 
-    return OUTCOME_BY_PURCHASE_STATUS[finished.status];
+    return OUTCOME_BY_PURCHASE_STATUS[recorded.status];
   }
 
   private async recordPurchase(

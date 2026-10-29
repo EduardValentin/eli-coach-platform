@@ -6,14 +6,12 @@ export type CheckoutPurchase = {
   receivedAt: Date;
   client: PaidClientIntake;
   subscription: PurchasedSubscription;
-  paymentCustomerId: string;
 };
 
 export type RecordedCheckoutPurchase = {
   status: "recorded" | "duplicate";
   clientId: string;
   subscription: PurchasedSubscription;
-  paymentCustomerId: string;
 };
 
 export class CallAlreadyPaid extends Error {}

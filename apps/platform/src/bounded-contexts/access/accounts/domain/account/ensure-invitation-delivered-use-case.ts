@@ -52,10 +52,12 @@ export class EnsureInvitationDeliveredUseCase {
     await this.options.invitations.reissue(invitation);
     await this.ensureIdentityInvitation(invitation);
     await this.sendInvitation({
-      invitation,
+      invitationId: invitation.id,
+      email: invitation.email,
       firstName: command.firstName,
       rawToken: token.rawToken,
-      now,
+      sentAt: invitation.sentAt,
+      expiresAt: invitation.expiresAt,
     });
   }
 
@@ -77,44 +79,26 @@ export class EnsureInvitationDeliveredUseCase {
     });
   }
 
-  private async sendInvitation(sending: {
-    invitation: AccountInvitation;
-    firstName: string;
-    rawToken: string;
-    now: Date;
-  }): Promise<void> {
-    const invitationId = sending.invitation.id;
-    const delivery = await this.deliver({
-      invitationId,
-      email: sending.invitation.email,
-      firstName: sending.firstName,
-      rawToken: sending.rawToken,
-      sentAt: sending.invitation.sentAt,
-      expiresAt: sending.invitation.expiresAt,
-    });
+  private async sendInvitation(
+    message: AccountInvitationMessage,
+  ): Promise<void> {
+    const { invitationId, sentAt } = message;
+    const delivery = await this.options.notifications
+      .sendInvitation(message)
+      .catch(() => "failed" as const);
 
     if (delivery === "sent") {
       await this.options.invitations.recordEmailSent({
         invitationId,
-        at: sending.now,
+        at: sentAt,
       });
       return;
     }
 
     await this.options.invitations.recordEmailDeliveryFailed({
       invitationId,
-      at: sending.now,
+      at: sentAt,
     });
     this.options.incidents.invitationEmailFailed({ invitationId });
-  }
-
-  private async deliver(
-    message: AccountInvitationMessage,
-  ): Promise<"sent" | "failed"> {
-    try {
-      return await this.options.notifications.sendInvitation(message);
-    } catch {
-      return "failed";
-    }
   }
 }

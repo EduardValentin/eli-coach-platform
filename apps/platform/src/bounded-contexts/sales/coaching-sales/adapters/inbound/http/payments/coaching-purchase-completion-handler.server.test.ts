@@ -64,7 +64,6 @@ const PURCHASE: CheckoutPurchase = {
     bookingTimeZone: "Europe/Bucharest",
   },
   subscription,
-  paymentCustomerId: "cus_1",
 };
 
 const FOUND: PurchaseRead = { status: "found", purchase: PURCHASE };
@@ -73,7 +72,6 @@ const RECORDED: RecordedCheckoutPurchase = {
   status: "recorded",
   clientId: "client-1",
   subscription,
-  paymentCustomerId: "cus_1",
 };
 
 const DUPLICATE: RecordedCheckoutPurchase = {
@@ -244,10 +242,7 @@ function createHandler(
   const refreshCard = vi.fn();
   observed(readCheckout, answers.read ?? FOUND);
   observed(recordCheckout, recorded);
-  observed(finishCheckout, {
-    status: recorded.status,
-    paymentCustomerId: "cus_1",
-  });
+  observed(finishCheckout, undefined);
   observed(refreshCard, undefined);
   const unitOfWork: UnitOfWork =
     answers.unitOfWork ??

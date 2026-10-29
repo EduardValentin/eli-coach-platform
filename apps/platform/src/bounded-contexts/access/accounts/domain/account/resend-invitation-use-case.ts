@@ -43,7 +43,7 @@ export class ResendInvitationUseCase {
       return { status: "not-found" };
     }
 
-    if (invitation.acceptedAt) {
+    if (invitation.isAccepted()) {
       return { status: "already-accepted" };
     }
 

@@ -6,8 +6,6 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export type InvitedAccountRole = Extract<AccountRole, "CLIENT">;
 
-export type InvitationResolution = "valid" | "expired" | "used";
-
 export type InvitationStanding = "pending" | "expired" | "email-failed";
 
 export type IdentityInvitation = { id: string; url: string };
@@ -96,22 +94,16 @@ export class AccountInvitation {
     return this.role === "CLIENT";
   }
 
-  resolve(now: Date): InvitationResolution {
-    if (this.acceptedAt) {
-      return "used";
-    }
-
-    return now < this.expiresAt ? "valid" : "expired";
+  isAccepted(): boolean {
+    return this.acceptedAt !== null;
   }
 
   isPending(now: Date): boolean {
-    return this.resolve(now) === "valid";
+    return !this.isAccepted() && now < this.expiresAt;
   }
 
   wasAcceptedBy(authSubjectId: string): boolean {
-    return (
-      this.acceptedAt !== null && this.acceptedByAuthSubjectId === authSubjectId
-    );
+    return this.isAccepted() && this.acceptedByAuthSubjectId === authSubjectId;
   }
 
   awaitsEmail(): boolean {

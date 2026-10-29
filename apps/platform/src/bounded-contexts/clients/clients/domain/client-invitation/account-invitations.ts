@@ -3,7 +3,7 @@ import type {
   InvitationResendOutcome,
 } from "./client-invitation";
 
-type InvitationDelivery = { invitationId: string; firstName: string };
+export type InvitationDelivery = { invitationId: string; firstName: string };
 
 export interface AccountInvitations {
   issue(invitation: { email: string }): Promise<{ invitationId: string }>;

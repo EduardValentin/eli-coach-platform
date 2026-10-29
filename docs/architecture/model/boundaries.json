@@ -230,7 +230,8 @@
     { "id": "B245", "path": "apps/platform/src/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server.ts", "symbol": "checkInsContext", "owner": "C22" },
     { "id": "B246", "path": "apps/platform/src/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server.ts", "symbol": "clientResourcesContext", "owner": "C21" },
     { "id": "B247", "path": "apps/platform/src/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server.ts", "symbol": "featureFlagsContext", "owner": "C28" },
-    { "id": "B248", "path": "apps/platform/src/shared/http/unit-of-work.ts", "symbol": "UnitOfWork", "owner": "C48" }
+    { "id": "B248", "path": "apps/platform/src/shared/http/unit-of-work.ts", "symbol": "UnitOfWork", "owner": "C48" },
+    { "id": "B249", "path": "apps/platform/src/bounded-contexts/sales/coaching-sales/domain/coaching-subscription/payment-event-ledger.ts", "symbol": "PaymentEventLedger", "owner": "C18" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C7", "C8", "C9", "C15", "C17", "C18", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27", "C28" ] },

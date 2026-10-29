@@ -72,36 +72,48 @@ describe("AccountInvitation#reissue", () => {
   });
 });
 
-describe("AccountInvitation#resolve", () => {
+describe("AccountInvitation#isPending and #isAccepted", () => {
   it.each([
-    ["valid right after it is sent", pendingInvitation(), SENT_AT, "valid"],
     [
-      "valid one millisecond before it expires",
+      "pending right after it is sent",
+      pendingInvitation(),
+      SENT_AT,
+      { pending: true, accepted: false },
+    ],
+    [
+      "pending one millisecond before it expires",
       pendingInvitation(),
       new Date(EXPIRES_AT.getTime() - 1),
-      "valid",
+      { pending: true, accepted: false },
     ],
     [
       "expired once its validity ends",
       pendingInvitation(),
       EXPIRES_AT,
-      "expired",
+      { pending: false, accepted: false },
     ],
-    ["used once accepted", acceptedInvitation(), SENT_AT, "used"],
     [
-      "used even after it would have expired",
+      "accepted once accepted",
+      acceptedInvitation(),
+      SENT_AT,
+      { pending: false, accepted: true },
+    ],
+    [
+      "accepted even after it would have expired",
       acceptedInvitation(),
       EXPIRES_AT,
-      "used",
+      { pending: false, accepted: true },
     ],
   ] as const)("is %s", (_label, invitation, now, expected) => {
     // arrange
     // act
-    const resolution = invitation.resolve(now);
+    const standing = {
+      pending: invitation.isPending(now),
+      accepted: invitation.isAccepted(),
+    };
 
     // assert
-    expect(resolution).toBe(expected);
-    expect(invitation.isPending(now)).toBe(expected === "valid");
+    expect(standing).toEqual(expected);
   });
 });
 

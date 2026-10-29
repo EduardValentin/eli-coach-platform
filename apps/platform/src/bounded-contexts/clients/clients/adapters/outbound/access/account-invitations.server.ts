@@ -1,11 +1,10 @@
 import type {
   AccountInvitations,
   ClientInvitationStanding,
+  InvitationDelivery,
   InvitationResendOutcome,
 } from "~/bounded-contexts/clients/clients/domain/client-invitation";
 import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations";
-
-type InvitationDelivery = Parameters<AccountInvitations["ensureDelivered"]>[0];
 
 export class AccessAccountInvitations implements AccountInvitations {
   constructor(private readonly accountInvitations: AccountInvitationsFacade) {}

@@ -1,5 +1,8 @@
 export { AcceptInvitationUseCase } from "./accept-invitation-use-case";
-export { type AccountInvitations } from "./account-invitations";
+export {
+  type AccountInvitations,
+  type InvitationDelivery,
+} from "./account-invitations";
 export {
   type ClientInvitationStanding,
   type InvitationResendOutcome,

@@ -114,7 +114,7 @@ describe("InvitePaidClientUseCase", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("refuses to admit a client that does not exist", async () => {
+  it("refuses to invite a client that does not exist", async () => {
     // arrange
     const dependencies = inviteDependencies(null);
     const useCase = new InvitePaidClientUseCase(dependencies);
@@ -189,7 +189,7 @@ describe("AcceptInvitationUseCase", () => {
     expect(dependencies.clients.bindAuthSubject).not.toHaveBeenCalled();
   });
 
-  it("refuses a subject whose accepted invitation names no client", async () => {
+  it("refuses a subject whose accepted invitation no client references", async () => {
     // arrange
     const dependencies = acceptDependencies({ found: null });
     const useCase = new AcceptInvitationUseCase(dependencies);

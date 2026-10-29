@@ -19,8 +19,7 @@ export class RecordCheckoutPurchaseUseCase {
   constructor(private readonly options: RecordCheckoutPurchaseUseCaseOptions) {}
 
   async execute(purchase: CheckoutPurchase): Promise<RecordedCheckoutPurchase> {
-    const { client, eventId, paymentCustomerId, receivedAt, subscription } =
-      purchase;
+    const { client, eventId, receivedAt, subscription } = purchase;
     const ledgerOutcome = await this.options.paymentEventLedger.record({
       eventId,
       receivedAt,
@@ -33,7 +32,6 @@ export class RecordCheckoutPurchaseUseCase {
           client.assessmentCallId,
         ),
         subscription,
-        paymentCustomerId,
       };
     }
 
@@ -49,7 +47,7 @@ export class RecordCheckoutPurchaseUseCase {
       subscription.checkoutSessionId,
     );
 
-    return { status: "recorded", clientId, subscription, paymentCustomerId };
+    return { status: "recorded", clientId, subscription };
   }
 
   private async admit({

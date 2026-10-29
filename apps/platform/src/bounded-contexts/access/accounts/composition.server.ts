@@ -36,7 +36,6 @@ import { RandomAccountInvitationIds } from "~/bounded-contexts/access/accounts/a
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 
 export type AccountsFeatureHandles = {
-  appBasePath: string;
   bootstrapCoachAuthSubjectId: string | undefined;
   clerkWebhookSigningSecret: string | undefined;
   clock: Clock;
@@ -48,9 +47,8 @@ export type AccountsFeatureHandles = {
     hasher: InvitationTokenHasher;
   };
   logger: Logger;
-  portal: AccountsFeature["portal"];
+  portal: AccountsFeature["portal"] & { publicAppUrl: string };
   productEmail: ProductEmail;
-  publicAppUrl: string;
 };
 
 type AccountsComposition = {
@@ -72,10 +70,10 @@ export function composeAccountsFeature(
     notifications: new EmailAccountInvitationNotifications(
       handles.productEmail,
       {
-        appBasePath: handles.appBasePath,
+        appBasePath: handles.portal.appBasePath,
         clock,
         contactEmail: handles.contactEmail,
-        publicAppUrl: handles.publicAppUrl,
+        publicAppUrl: handles.portal.publicAppUrl,
       },
     ),
     tokenGenerator: handles.linkTokens.generator,
@@ -137,8 +135,8 @@ function composeIdentityInvitations(
   return createIdentityInvitations(handles.identityConfig, {
     signUpUrl: handles.identityConfig.CLERK_SIGN_UP_URL,
     returnUrl: new URL(
-      buildRedirectPath(handles.appBasePath, CLIENT_PORTAL_PATH),
-      handles.publicAppUrl,
+      buildRedirectPath(handles.portal.appBasePath, CLIENT_PORTAL_PATH),
+      handles.portal.publicAppUrl,
     ).toString(),
   });
 }

@@ -19,7 +19,6 @@ describe("composeAccountsFeature", () => {
 
     // act
     const { feature } = composeAccountsFeature({
-      appBasePath: "/",
       bootstrapCoachAuthSubjectId: "user_coach",
       clerkWebhookSigningSecret: undefined,
       clock: { now: () => new Date("2026-10-27T10:00:00.000Z") },
@@ -37,7 +36,6 @@ describe("composeAccountsFeature", () => {
       logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
       portal,
       productEmail: new InMemoryProductEmail(),
-      publicAppUrl: "https://evoa.fit",
     });
 
     const response = await feature.webhooks.handleClerkEvent(

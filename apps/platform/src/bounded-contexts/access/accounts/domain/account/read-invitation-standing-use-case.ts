@@ -22,7 +22,7 @@ export class ReadInvitationStandingUseCase {
   ): Promise<InvitationStandingReading | null> {
     const invitation = await this.options.invitations.findById(invitationId);
 
-    if (!invitation || invitation.acceptedAt) {
+    if (!invitation || invitation.isAccepted()) {
       return null;
     }
 

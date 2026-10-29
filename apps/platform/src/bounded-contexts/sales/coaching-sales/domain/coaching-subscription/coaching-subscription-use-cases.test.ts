@@ -588,7 +588,6 @@ function recordedPurchase(
       id: "subscription-1",
       completion: purchased,
     }),
-    paymentCustomerId: "cus_1",
   };
 }
 
@@ -615,7 +614,6 @@ const checkoutPurchase: CheckoutPurchase = {
   receivedAt: NOW,
   client: paidClientIntake,
   subscription: purchasedSubscription,
-  paymentCustomerId: "cus_1",
 };
 
 describe("ReadCheckoutPurchaseUseCase", () => {
@@ -721,7 +719,6 @@ describe("RecordCheckoutPurchaseUseCase", () => {
       status: "recorded",
       clientId: PAID_CLIENT_ID,
       subscription: purchasedSubscription,
-      paymentCustomerId: "cus_1",
     });
     expect(dependencies.paymentEventLedger.record).toHaveBeenCalledWith({
       eventId: "evt_1",
@@ -776,7 +773,6 @@ describe("RecordCheckoutPurchaseUseCase", () => {
       status: "duplicate",
       clientId: CLIENT_RECORDED_EARLIER_ID,
       subscription: purchasedSubscription,
-      paymentCustomerId: "cus_1",
     });
     expect(dependencies.purchases.findClientIdForCall).toHaveBeenCalledWith(
       "call-1",
@@ -849,17 +845,16 @@ describe("FinishCheckoutPurchaseUseCase", () => {
     ["recorded", PAID_CLIENT_ID],
     ["duplicate", CLIENT_RECORDED_EARLIER_ID],
   ] as const)(
-    "invites the client the %s purchase names and answers its status with her payment customer",
+    "invites the client the %s purchase names",
     async (status, clientId) => {
       // arrange
       const dependencies = checkoutPurchaseDependencies();
       const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
 
       // act
-      const result = await useCase.execute(recordedPurchase(status));
+      await useCase.execute(recordedPurchase(status));
 
       // assert
-      expect(result).toEqual({ status, paymentCustomerId: "cus_1" });
       expect(dependencies.admission.invite).toHaveBeenCalledWith({ clientId });
     },
   );
@@ -870,12 +865,11 @@ describe("FinishCheckoutPurchaseUseCase", () => {
     const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(
+    await useCase.execute(
       recordedPurchase("recorded", { ...completion, startChoice: "immediate" }),
     );
 
     // assert
-    expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
     expect(
       dependencies.paymentSubscriptions.holdRenewal,
     ).not.toHaveBeenCalled();

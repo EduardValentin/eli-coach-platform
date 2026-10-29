@@ -21,7 +21,7 @@ export class PostgresPaymentEventLedger implements PaymentEventLedger {
   }
 }
 
-export async function recordPaymentEvent(
+async function recordPaymentEvent(
   database: DatabaseClient,
   entry: PaymentEventEntry,
 ): Promise<"recorded" | "duplicate"> {

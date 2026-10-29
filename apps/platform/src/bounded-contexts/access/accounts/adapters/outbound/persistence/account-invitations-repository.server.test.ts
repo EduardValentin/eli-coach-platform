@@ -29,7 +29,7 @@ describe("PostgresAccountInvitations#findByTokenHash", () => {
       id: "inv_1",
       url: "https://accounts.evoa.fit/sign-up?ticket=1",
     });
-    expect(invitation?.resolve(NOW)).toBe("valid");
+    expect(invitation?.isPending(NOW)).toBe(true);
   });
 
   it("reconstitutes an invitation Clerk has not created yet without a provider", async () => {

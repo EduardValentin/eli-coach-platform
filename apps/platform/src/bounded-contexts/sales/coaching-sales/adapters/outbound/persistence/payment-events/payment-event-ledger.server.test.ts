@@ -2,11 +2,11 @@ import { executorOf } from "~/shared/database/index.server";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  PostgresPaymentEventLedger,
   recordEventOnce,
-  recordPaymentEvent,
 } from "./payment-event-ledger.server";
 
-type Transaction = Parameters<typeof recordPaymentEvent>[0];
+type Transaction = ConstructorParameters<typeof PostgresPaymentEventLedger>[0];
 type Database = Parameters<typeof recordEventOnce>[0];
 
 const ENTRY = {
@@ -14,13 +14,15 @@ const ENTRY = {
   receivedAt: new Date("2026-09-27T10:00:00.000Z"),
 };
 
-describe("recordPaymentEvent", () => {
+describe("PostgresPaymentEventLedger#record", () => {
   it("records an event the ledger has not seen", async () => {
     // arrange
     const ledger = createLedgerInserting([{ id: "evt_1" }]);
 
     // act
-    const outcome = await recordPaymentEvent(ledger.transaction, ENTRY);
+    const outcome = await new PostgresPaymentEventLedger(
+      ledger.transaction,
+    ).record(ENTRY);
 
     // assert
     expect(outcome).toBe("recorded");
@@ -35,7 +37,9 @@ describe("recordPaymentEvent", () => {
     const ledger = createLedgerInserting([]);
 
     // act
-    const outcome = await recordPaymentEvent(ledger.transaction, ENTRY);
+    const outcome = await new PostgresPaymentEventLedger(
+      ledger.transaction,
+    ).record(ENTRY);
 
     // assert
     expect(outcome).toBe("duplicate");
@@ -47,7 +51,9 @@ describe("recordPaymentEvent", () => {
     const ledger = createLedgerInserting(Promise.reject(failure));
 
     // act
-    const recording = recordPaymentEvent(ledger.transaction, ENTRY);
+    const recording = new PostgresPaymentEventLedger(ledger.transaction).record(
+      ENTRY,
+    );
 
     // assert
     await expect(recording).rejects.toBe(failure);

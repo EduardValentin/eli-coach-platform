@@ -67,7 +67,6 @@ export class ReadCheckoutPurchaseUseCase {
           id: this.options.subscriptionIds.generate(),
           completion,
         }),
-        paymentCustomerId: completion.paymentCustomerId,
       },
     };
   }

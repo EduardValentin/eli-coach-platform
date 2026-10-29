@@ -204,7 +204,7 @@ describe("composeClientsFeature coach clients", () => {
     );
   });
 
-  it("re-sends an invitation through the clients table", async () => {
+  it("reads the invited client from the clients table before re-sending", async () => {
     // arrange
     const { feature } = composeClientsFeature(createHandles());
 
