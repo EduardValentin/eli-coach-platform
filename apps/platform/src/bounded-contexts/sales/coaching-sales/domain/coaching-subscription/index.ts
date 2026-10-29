@@ -1,5 +1,10 @@
 export { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
 export {
+  CallAlreadyPaid,
+  type CheckoutPurchase,
+  type RecordedCheckoutPurchase,
+} from "./checkout-purchase";
+export {
   type ClientLookup,
   type SubscribedClient,
   type SubscribedClientJourney,
@@ -10,7 +15,6 @@ export {
 } from "./checkout-sessions";
 export {
   type CoachingPurchase,
-  type CoachingPurchaseOutcome,
   type CoachingPurchases,
 } from "./coaching-purchases";
 export { type CoachingSubscriptionIds } from "./coaching-subscription-ids";
@@ -35,6 +39,7 @@ export {
   type SubscriptionChange,
   type SubscriptionEventChange,
 } from "./coaching-subscriptions";
+export { FinishCheckoutPurchaseUseCase } from "./finish-checkout-purchase-use-case";
 export { MirrorPaymentCardUseCase } from "./mirror-payment-card-use-case";
 export { OpenPaymentMethodSessionUseCase } from "./open-payment-method-session-use-case";
 export {
@@ -53,6 +58,10 @@ export {
   type PaymentCards,
 } from "./payment-cards";
 export { type PaymentCustomerCards } from "./payment-customer-cards";
+export {
+  type PaymentEventEntry,
+  type PaymentEventLedger,
+} from "./payment-event-ledger";
 export { type PaymentSubscriptions } from "./payment-subscriptions";
 export { STEPS_AFTER_SUBMISSION } from "./program-steps";
 export { PurchasedSubscription } from "./purchased-subscription";
@@ -61,7 +70,8 @@ export { ReadProgramStatusUseCase } from "./read-program-status-use-case";
 export { ReadSubscriptionSummaryUseCase } from "./read-subscription-summary-use-case";
 export { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-case";
 export { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
-export { RecordCheckoutCompletedUseCase } from "./record-checkout-completed-use-case";
+export { ReadCheckoutPurchaseUseCase } from "./read-checkout-purchase-use-case";
+export { RecordCheckoutPurchaseUseCase } from "./record-checkout-purchase-use-case";
 export { RefreshPaymentCardUseCase } from "./refresh-payment-card-use-case";
 export {
   REFUND_REASONS,

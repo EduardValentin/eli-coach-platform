@@ -9,14 +9,16 @@ import { ReadPricingTiersUseCase } from "~/bounded-contexts/sales/coaching-sales
 import type { PricingEligibilitySource } from "~/bounded-contexts/sales/waitlist/public/pricing-eligibility";
 import {
   CancelSubscriptionUseCase,
+  FinishCheckoutPurchaseUseCase,
   MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
   ReadClientSubscriptionUseCase,
   ReadProgramStatusUseCase,
   ReadSubscriptionSummaryUseCase,
+  ReadCheckoutPurchaseUseCase,
   ReconcileSubscriptionEventUseCase,
-  RecordCheckoutCompletedUseCase,
+  RecordCheckoutPurchaseUseCase,
   RefreshPaymentCardUseCase,
   SignedInSubscriptions,
   StartCheckoutUseCase,
@@ -53,6 +55,7 @@ import { ClientsCoachingEndHandler } from "~/bounded-contexts/sales/coaching-sal
 import { ClientsCoachingPeriodHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-period-handler.server";
 import { ClientsCoachingStandingWriter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-standing-writer.server";
 import { ClientsPaidClientAdmission } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/paid-client-admission.server";
+import { PostgresPaymentEventLedger } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/payment-event-ledger.server";
 import { PostgresPaymentCards } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-cards/payment-cards-repository.server";
 import { PostgresPaymentLinks } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/payment-links-repository.server";
 import { RandomPaymentLinkIds } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/random-payment-link-ids.server";
@@ -125,11 +128,7 @@ export function composeCoachingSalesFeature(
     handles.clientProfile,
   );
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
-  const purchases = new PostgresCoachingPurchases({
-    admission,
-    clock,
-    database,
-  });
+  const purchases = new PostgresCoachingPurchases({ clock, database });
   const subscriptions = new PostgresCoachingSubscriptions({
     clock,
     database,
@@ -228,15 +227,23 @@ export function composeCoachingSalesFeature(
       clock,
       subscriptions,
     }),
-    recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
+    finishCheckoutPurchase: new FinishCheckoutPurchaseUseCase({
       admission,
+      incidents,
+      paymentSubscriptions: handles.paymentSubscriptions,
+    }),
+    readCheckoutPurchase: new ReadCheckoutPurchaseUseCase({
       calls,
       clock,
       incidents,
       paymentCheckout: handles.paymentCheckout,
-      paymentSubscriptions: handles.paymentSubscriptions,
-      purchases,
       subscriptionIds: new RandomCoachingSubscriptionIds(),
+    }),
+    recordCheckoutPurchase: new RecordCheckoutPurchaseUseCase({
+      admission,
+      incidents,
+      paymentEventLedger: new PostgresPaymentEventLedger(database),
+      purchases,
     }),
     resolvePaymentLink: new ResolvePaymentLinkUseCase({
       ...paymentLinkPorts,
@@ -266,8 +273,11 @@ export function composeCoachingSalesFeature(
     reconcileSubscriptionEvent: subscriptionUseCases.reconcileSubscriptionEvent,
   });
   const paymentCompletionHandler = new CoachingPurchaseCompletionHandler({
-    recordCheckoutCompleted: useCases.recordCheckoutCompleted,
+    finishCheckoutPurchase: useCases.finishCheckoutPurchase,
+    readCheckoutPurchase: useCases.readCheckoutPurchase,
+    recordCheckoutPurchase: useCases.recordCheckoutPurchase,
     refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
+    unitOfWork,
   });
 
   return {

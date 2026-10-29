@@ -13,19 +13,28 @@ import {
   type PaymentLinkTokenHasher,
 } from "../payment-link";
 
+import {
+  CallAlreadyPaid,
+  type CheckoutPurchase,
+  type RecordedCheckoutPurchase,
+} from "./checkout-purchase";
 import type { CheckoutSessions } from "./checkout-sessions";
-import type {
-  CoachingPurchaseOutcome,
-  CoachingPurchases,
-} from "./coaching-purchases";
+import type { CoachingPurchases } from "./coaching-purchases";
 import type { CheckoutCompletion } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaidClientAdmission } from "./paid-client-admission";
+import type {
+  PaidClientAdmission,
+  PaidClientAdmissionOutcome,
+  PaidClientIntake,
+} from "./paid-client-admission";
 import type { PaymentCheckout } from "./payment-checkout";
+import type { PaymentEventLedger } from "./payment-event-ledger";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
 import { PurchasedSubscription } from "./purchased-subscription";
 import { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
-import { RecordCheckoutCompletedUseCase } from "./record-checkout-completed-use-case";
+import { FinishCheckoutPurchaseUseCase } from "./finish-checkout-purchase-use-case";
+import { ReadCheckoutPurchaseUseCase } from "./read-checkout-purchase-use-case";
+import { RecordCheckoutPurchaseUseCase } from "./record-checkout-purchase-use-case";
 import { StartCheckoutUseCase } from "./start-checkout-use-case";
 
 const NOW = new Date("2026-09-26T10:00:00.000Z");
@@ -165,16 +174,27 @@ function createCheckoutSessions(
 
 const PAID_CLIENT_ID = "client-1";
 
-function createPurchases(outcome: CoachingPurchaseOutcome) {
+const CLIENT_RECORDED_EARLIER_ID = "client-recorded-earlier";
+
+function createPurchases() {
   return {
-    recordCompletion: vi.fn().mockResolvedValue(outcome),
+    insertSubscription: vi.fn().mockResolvedValue(undefined),
+    spendPaymentLink: vi.fn().mockResolvedValue(undefined),
+    findClientIdForCall: vi.fn().mockResolvedValue(CLIENT_RECORDED_EARLIER_ID),
   } satisfies CoachingPurchases;
 }
 
-function createAdmission() {
+function createAdmission(admitted: PaidClientAdmissionOutcome) {
   return {
+    admit: vi.fn().mockResolvedValue(admitted),
     invite: vi.fn().mockResolvedValue(undefined),
-  } satisfies Pick<PaidClientAdmission, "invite">;
+  } satisfies PaidClientAdmission;
+}
+
+function createPaymentEventLedger(outcome: "recorded" | "duplicate") {
+  return {
+    record: vi.fn().mockResolvedValue(outcome),
+  } satisfies PaymentEventLedger;
 }
 
 function startCheckoutDependencies(
@@ -535,36 +555,74 @@ function createPaymentSubscriptions() {
   } satisfies PaymentSubscriptions;
 }
 
-function recordCheckoutDependencies(purchaseOutcome: CoachingPurchaseOutcome) {
+function checkoutPurchaseDependencies(
+  answers: {
+    ledger?: "recorded" | "duplicate";
+    admitted?: PaidClientAdmissionOutcome;
+  } = {},
+) {
   return {
-    admission: createAdmission(),
+    admission: createAdmission(
+      answers.admitted ?? { status: "admitted", clientId: PAID_CLIENT_ID },
+    ),
     calls: createCalls(call),
     incidents: createSubscriptionIncidents(),
     paymentCheckout: createPaymentCheckout(completion),
+    paymentEventLedger: createPaymentEventLedger(answers.ledger ?? "recorded"),
     paymentSubscriptions: createPaymentSubscriptions(),
-    purchases: createPurchases(purchaseOutcome),
+    purchases: createPurchases(),
     subscriptionIds: { generate: () => "subscription-1" },
     clock,
   };
 }
 
-const RECORDED: CoachingPurchaseOutcome = {
-  outcome: "recorded",
-  clientId: PAID_CLIENT_ID,
+function recordedPurchase(
+  status: RecordedCheckoutPurchase["status"],
+  purchased: CheckoutCompletion = completion,
+): RecordedCheckoutPurchase {
+  return {
+    status,
+    clientId:
+      status === "recorded" ? PAID_CLIENT_ID : CLIENT_RECORDED_EARLIER_ID,
+    subscription: PurchasedSubscription.fromCompletedCheckout({
+      id: "subscription-1",
+      completion: purchased,
+    }),
+    paymentCustomerId: "cus_1",
+  };
+}
+
+const purchasedSubscription = PurchasedSubscription.fromCompletedCheckout({
+  id: "subscription-1",
+  completion,
+});
+
+const paidClientIntake: PaidClientIntake = {
+  assessmentCallId: "call-1",
+  firstName: "Ana",
+  lastName: "Popescu",
+  email: "ana@example.com",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
+  bookingTimeZone: "Europe/Bucharest",
 };
 
-const CLIENT_RECORDED_EARLIER_ID = "client-recorded-earlier";
-
-const DUPLICATE: CoachingPurchaseOutcome = {
-  outcome: "duplicate_event",
-  clientId: CLIENT_RECORDED_EARLIER_ID,
+const checkoutPurchase: CheckoutPurchase = {
+  eventId: "evt_1",
+  receivedAt: NOW,
+  client: paidClientIntake,
+  subscription: purchasedSubscription,
+  paymentCustomerId: "cus_1",
 };
 
-describe("RecordCheckoutCompletedUseCase", () => {
-  it("records the client from the booking under a fresh id and the subscription the provider reports paid for the session under a fresh id, then admits the paid client, with no sales window consulted", async () => {
+describe("ReadCheckoutPurchaseUseCase", () => {
+  it("drafts the purchase from the booking's client and the subscription the provider reports paid for the session under a fresh id, with no sales window consulted", async () => {
     // arrange
-    const dependencies = recordCheckoutDependencies(RECORDED);
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+    const dependencies = checkoutPurchaseDependencies();
+    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
 
     // act
     const result = await useCase.execute({
@@ -573,52 +631,200 @@ describe("RecordCheckoutCompletedUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
+    expect(result).toEqual({ status: "found", purchase: checkoutPurchase });
     expect(
       dependencies.paymentCheckout.findCompletedSession,
     ).toHaveBeenCalledWith("cs_2");
-    expect(dependencies.purchases.recordCompletion).toHaveBeenCalledWith({
-      eventId: "evt_1",
-      receivedAt: NOW,
-      client: {
-        assessmentCallId: "call-1",
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-        dateOfBirth: "1994-03-14",
-        gender: "female",
-        primaryGoal: "build_strength",
-        country: "RO",
-        phone: "+40712345678",
-        bookingTimeZone: "Europe/Bucharest",
-      },
-      subscription: PurchasedSubscription.fromCompletedCheckout({
-        id: "subscription-1",
-        completion: completion,
-      }),
-    });
-    expect(dependencies.admission.invite).toHaveBeenCalledWith({
-      clientId: PAID_CLIENT_ID,
-    });
-    expect(
-      dependencies.purchases.recordCompletion.mock.invocationCallOrder[0],
-    ).toBeLessThan(
-      dependencies.admission.invite.mock.invocationCallOrder[0] ?? 0,
-    );
+    expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
   });
 
+  it("rejects the event when the call does not exist", async () => {
+    // arrange
+    const dependencies = {
+      ...checkoutPurchaseDependencies(),
+      calls: createCalls(null),
+    };
+    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "call_not_found" });
+    expect(dependencies.calls.findById).toHaveBeenCalledWith(
+      completion.assessmentCallId,
+    );
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_1",
+      reason: "call_not_found",
+    });
+  });
+
+  it("answers unreadable_checkout and reports it when the provider reports no paid coaching checkout for the session", async () => {
+    // arrange
+    const dependencies = {
+      ...checkoutPurchaseDependencies(),
+      paymentCheckout: createPaymentCheckout(null),
+    };
+    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_3",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unreadable_checkout" });
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_3",
+      reason: "unreadable_checkout",
+    });
+    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+  });
+
+  it("propagates a failed read of the completion so the payment event is delivered again", async () => {
+    // arrange
+    const failure = new Error("provider unavailable");
+    const dependencies = checkoutPurchaseDependencies();
+    vi.mocked(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).mockRejectedValue(failure);
+    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+
+    // act
+    const reading = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    await expect(reading).rejects.toBe(failure);
+    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+  });
+});
+
+describe("RecordCheckoutPurchaseUseCase", () => {
+  it("records the event in the ledger, admits the client with her standing, then records the subscription and spends its payment link", async () => {
+    // arrange
+    const dependencies = checkoutPurchaseDependencies();
+    const useCase = new RecordCheckoutPurchaseUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(checkoutPurchase);
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      clientId: PAID_CLIENT_ID,
+      subscription: purchasedSubscription,
+      paymentCustomerId: "cus_1",
+    });
+    expect(dependencies.paymentEventLedger.record).toHaveBeenCalledWith({
+      eventId: "evt_1",
+      receivedAt: NOW,
+    });
+    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+      client: paidClientIntake,
+      standing: expect.anything(),
+      at: NOW,
+    });
+    expect(
+      dependencies.admission.admit.mock.calls[0]?.[0].standing.toSnapshot(),
+    ).toEqual({
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: 3,
+      programStartsAt: new Date("2026-10-10T10:05:00.000Z"),
+      paidThrough: new Date("2026-12-26T10:05:00.000Z"),
+    });
+    expect(dependencies.purchases.insertSubscription).toHaveBeenCalledWith({
+      assessmentCallId: "call-1",
+      clientId: PAID_CLIENT_ID,
+      subscription: purchasedSubscription,
+      receivedAt: NOW,
+    });
+    expect(dependencies.purchases.spendPaymentLink).toHaveBeenCalledWith(
+      "cs_2",
+    );
+    const stepOrder = [
+      dependencies.paymentEventLedger.record,
+      dependencies.admission.admit,
+      dependencies.purchases.insertSubscription,
+      dependencies.purchases.spendPaymentLink,
+    ].map((step) => step.mock.invocationCallOrder[0] ?? 0);
+    expect(stepOrder).toEqual(
+      [...stepOrder].sort((first, second) => first - second),
+    );
+    expect(dependencies.admission.invite).not.toHaveBeenCalled();
+  });
+
+  it("answers duplicate for a replayed event with the client recorded for the call, without raising an incident or writing anything else, never the unused fresh id", async () => {
+    // arrange
+    const dependencies = checkoutPurchaseDependencies({ ledger: "duplicate" });
+    const useCase = new RecordCheckoutPurchaseUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute(checkoutPurchase);
+
+    // assert
+    expect(result).toEqual({
+      status: "duplicate",
+      clientId: CLIENT_RECORDED_EARLIER_ID,
+      subscription: purchasedSubscription,
+      paymentCustomerId: "cus_1",
+    });
+    expect(dependencies.purchases.findClientIdForCall).toHaveBeenCalledWith(
+      "call-1",
+    );
+    expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
+    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+    expect(dependencies.purchases.insertSubscription).not.toHaveBeenCalled();
+    expect(dependencies.purchases.spendPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("reports the unrecorded charge and throws CallAlreadyPaid so the unit of work rolls the event back, recording nothing more, when the call already has a client", async () => {
+    // arrange
+    const dependencies = checkoutPurchaseDependencies({
+      admitted: { status: "call_already_has_client" },
+    });
+    const useCase = new RecordCheckoutPurchaseUseCase(dependencies);
+
+    // act
+    const recording = useCase.execute({
+      ...checkoutPurchase,
+      eventId: "evt_2",
+    });
+
+    // assert
+    await expect(recording).rejects.toBeInstanceOf(CallAlreadyPaid);
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_2",
+      reason: "call_already_paid",
+    });
+    expect(dependencies.purchases.insertSubscription).not.toHaveBeenCalled();
+    expect(dependencies.purchases.spendPaymentLink).not.toHaveBeenCalled();
+    expect(dependencies.admission.invite).not.toHaveBeenCalled();
+  });
+});
+
+describe("FinishCheckoutPurchaseUseCase", () => {
   it.each([
-    ["a recorded", RECORDED],
-    ["a replayed", DUPLICATE],
-  ])(
-    "holds the renewal of %s waiting payment until her program start, after admitting the client",
-    async (_label, outcome) => {
+    ["a recorded", "recorded"],
+    ["a replayed", "duplicate"],
+  ] as const)(
+    "holds the renewal of %s waiting payment until her program start, after inviting the client",
+    async (_label, status) => {
       // arrange
-      const dependencies = recordCheckoutDependencies(outcome);
-      const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+      const dependencies = checkoutPurchaseDependencies();
+      const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
 
       // act
-      await useCase.execute({ eventId: "evt_1", checkoutSessionId: "cs_2" });
+      await useCase.execute(recordedPurchase(status));
 
       // assert
       expect(
@@ -639,19 +845,34 @@ describe("RecordCheckoutCompletedUseCase", () => {
     },
   );
 
+  it.each([
+    ["recorded", PAID_CLIENT_ID],
+    ["duplicate", CLIENT_RECORDED_EARLIER_ID],
+  ] as const)(
+    "invites the client the %s purchase names and answers its status with her payment customer",
+    async (status, clientId) => {
+      // arrange
+      const dependencies = checkoutPurchaseDependencies();
+      const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
+
+      // act
+      const result = await useCase.execute(recordedPurchase(status));
+
+      // assert
+      expect(result).toEqual({ status, paymentCustomerId: "cus_1" });
+      expect(dependencies.admission.invite).toHaveBeenCalledWith({ clientId });
+    },
+  );
+
   it("holds no renewal when her program starts immediately", async () => {
     // arrange
-    const dependencies = recordCheckoutDependencies(RECORDED);
-    vi.mocked(
-      dependencies.paymentCheckout.findCompletedSession,
-    ).mockResolvedValue({ ...completion, startChoice: "immediate" });
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+    const dependencies = checkoutPurchaseDependencies();
+    const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({
-      eventId: "evt_1",
-      checkoutSessionId: "cs_2",
-    });
+    const result = await useCase.execute(
+      recordedPurchase("recorded", { ...completion, startChoice: "immediate" }),
+    );
 
     // assert
     expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
@@ -661,21 +882,18 @@ describe("RecordCheckoutCompletedUseCase", () => {
     expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
   });
 
-  it("reports a failed hold and propagates it so the payment event is delivered again, with the client already admitted", async () => {
+  it("reports a failed hold and propagates it so the payment event is delivered again, with the client already invited", async () => {
     // arrange
     const failure = new Error("provider unavailable");
-    const dependencies = recordCheckoutDependencies(RECORDED);
+    const dependencies = checkoutPurchaseDependencies();
     dependencies.paymentSubscriptions.holdRenewal.mockRejectedValue(failure);
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+    const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
 
     // act
-    const recording = useCase.execute({
-      eventId: "evt_1",
-      checkoutSessionId: "cs_2",
-    });
+    const finishing = useCase.execute(recordedPurchase("recorded"));
 
     // assert
-    await expect(recording).rejects.toBe(failure);
+    await expect(finishing).rejects.toBe(failure);
     expect(dependencies.admission.invite).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
     });
@@ -686,140 +904,21 @@ describe("RecordCheckoutCompletedUseCase", () => {
     expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
   });
 
-  it("answers duplicate for a replayed event without raising an incident and admits the client recorded earlier again, never the unused fresh id", async () => {
-    // arrange
-    const dependencies = recordCheckoutDependencies(DUPLICATE);
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
-
-    // act
-    const result = await useCase.execute({
-      eventId: "evt_1",
-      checkoutSessionId: "cs_2",
-    });
-
-    // assert
-    expect(result).toEqual({ status: "duplicate", paymentCustomerId: "cus_1" });
-    expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
-    expect(dependencies.admission.invite).toHaveBeenCalledWith({
-      clientId: CLIENT_RECORDED_EARLIER_ID,
-    });
-  });
-
-  it("answers already_paid, reports the unrecorded charge and neither admits nor holds anything when the call was already paid", async () => {
-    // arrange
-    const dependencies = recordCheckoutDependencies({
-      outcome: "call_already_paid",
-    });
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
-
-    // act
-    const result = await useCase.execute({
-      eventId: "evt_2",
-      checkoutSessionId: "cs_2",
-    });
-
-    // assert
-    expect(result).toEqual({ status: "already_paid" });
-    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
-      eventId: "evt_2",
-      reason: "call_already_paid",
-    });
-    expect(dependencies.admission.invite).not.toHaveBeenCalled();
-    expect(
-      dependencies.paymentSubscriptions.holdRenewal,
-    ).not.toHaveBeenCalled();
-  });
-
-  it("propagates an admission failure without holding so the payment event is delivered again", async () => {
+  it("propagates an invitation failure without holding so the payment event is delivered again", async () => {
     // arrange
     const failure = new Error("identity provider unavailable");
-    const dependencies = recordCheckoutDependencies(RECORDED);
+    const dependencies = checkoutPurchaseDependencies();
     dependencies.admission.invite.mockRejectedValue(failure);
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+    const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
 
     // act
-    const recording = useCase.execute({
-      eventId: "evt_1",
-      checkoutSessionId: "cs_2",
-    });
+    const finishing = useCase.execute(recordedPurchase("recorded"));
 
     // assert
-    await expect(recording).rejects.toBe(failure);
+    await expect(finishing).rejects.toBe(failure);
     expect(
       dependencies.paymentSubscriptions.holdRenewal,
     ).not.toHaveBeenCalled();
-  });
-
-  it("rejects the event, records nothing and admits nobody when the call does not exist", async () => {
-    // arrange
-    const dependencies = {
-      ...recordCheckoutDependencies(RECORDED),
-      calls: createCalls(null),
-    };
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
-
-    // act
-    const result = await useCase.execute({
-      eventId: "evt_1",
-      checkoutSessionId: "cs_2",
-    });
-
-    // assert
-    expect(result).toEqual({ status: "call_not_found" });
-    expect(dependencies.calls.findById).toHaveBeenCalledWith(
-      completion.assessmentCallId,
-    );
-    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
-      eventId: "evt_1",
-      reason: "call_not_found",
-    });
-    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
-    expect(dependencies.admission.invite).not.toHaveBeenCalled();
-  });
-
-  it("answers unreadable_checkout, reports it and records nothing when the provider reports no paid coaching checkout for the session", async () => {
-    // arrange
-    const dependencies = {
-      ...recordCheckoutDependencies(RECORDED),
-      paymentCheckout: createPaymentCheckout(null),
-    };
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
-
-    // act
-    const result = await useCase.execute({
-      eventId: "evt_3",
-      checkoutSessionId: "cs_2",
-    });
-
-    // assert
-    expect(result).toEqual({ status: "unreadable_checkout" });
-    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
-      eventId: "evt_3",
-      reason: "unreadable_checkout",
-    });
-    expect(dependencies.calls.findById).not.toHaveBeenCalled();
-    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
-    expect(dependencies.admission.invite).not.toHaveBeenCalled();
-  });
-
-  it("propagates a failed read of the completion so the payment event is delivered again", async () => {
-    // arrange
-    const failure = new Error("provider unavailable");
-    const dependencies = recordCheckoutDependencies(RECORDED);
-    vi.mocked(
-      dependencies.paymentCheckout.findCompletedSession,
-    ).mockRejectedValue(failure);
-    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
-
-    // act
-    const recording = useCase.execute({
-      eventId: "evt_1",
-      checkoutSessionId: "cs_2",
-    });
-
-    // assert
-    await expect(recording).rejects.toBe(failure);
-    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
   });
 });
 

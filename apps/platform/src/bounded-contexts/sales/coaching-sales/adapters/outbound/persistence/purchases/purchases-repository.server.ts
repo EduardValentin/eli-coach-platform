@@ -1,10 +1,8 @@
 import type { DatabaseClient } from "~/shared/database";
-import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
+import { executorOf } from "~/shared/database/index.server";
 import type {
   CoachingPurchase,
-  CoachingPurchaseOutcome,
   CoachingPurchases,
-  PaidClientAdmission,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type {
   CallSale,
@@ -12,7 +10,6 @@ import type {
   CallSalesStates,
 } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
-import { recordPaymentEvent } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/payment-event-ledger.server";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 
 import {
@@ -22,12 +19,9 @@ import {
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";
 
 type PostgresCoachingPurchasesOptions = {
-  admission: Pick<PaidClientAdmission, "admit">;
   clock: Clock;
   database: DatabaseClient;
 };
-
-class CallAlreadyPaid extends Error {}
 
 const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
   "held",
@@ -42,22 +36,6 @@ export class PostgresCoachingPurchases
 
   private get executor() {
     return executorOf(this.options.database);
-  }
-
-  async recordCompletion(
-    purchase: CoachingPurchase,
-  ): Promise<CoachingPurchaseOutcome> {
-    try {
-      return await createUnitOfWork(this.options.database)(() =>
-        this.recordPurchase(purchase),
-      );
-    } catch (error) {
-      if (error instanceof CallAlreadyPaid) {
-        return { outcome: "call_already_paid" };
-      }
-
-      throw error;
-    }
   }
 
   async forCalls(
@@ -95,39 +73,18 @@ export class PostgresCoachingPurchases
     return this.callSalesOf(callIds, advancedSales);
   }
 
-  private async recordPurchase(
-    purchase: CoachingPurchase,
-  ): Promise<CoachingPurchaseOutcome> {
-    const { client, eventId, receivedAt, subscription } = purchase;
-    const ledgerOutcome = await recordPaymentEvent(this.options.database, {
-      eventId,
-      receivedAt,
-    });
-
-    if (ledgerOutcome === "duplicate") {
-      return {
-        outcome: "duplicate_event",
-        clientId: await this.findClientIdForCall(client.assessmentCallId),
-      };
-    }
-
-    const admitted = await this.options.admission.admit({
-      client,
-      standing: subscription.standing(),
-      at: receivedAt,
-    });
-
-    if (admitted.status === "call_already_has_client") {
-      throw new CallAlreadyPaid();
-    }
-
-    const { clientId } = admitted;
+  async insertSubscription({
+    assessmentCallId,
+    clientId,
+    subscription,
+    receivedAt,
+  }: CoachingPurchase): Promise<void> {
     const purchased = subscription.toSnapshot();
 
     await this.executor.insert(coachingSubscriptionsTable).values({
       id: purchased.id,
       clientId,
-      assessmentCallId: client.assessmentCallId,
+      assessmentCallId,
       bundleId: purchased.bundleId,
       months: purchased.months,
       tier: purchased.tier,
@@ -144,6 +101,9 @@ export class PostgresCoachingPurchases
       status: purchased.status,
       createdAt: receivedAt,
     });
+  }
+
+  async spendPaymentLink(checkoutSessionId: string): Promise<void> {
     await this.executor
       .update(paymentLinksTable)
       .set({ state: "spent" })
@@ -153,16 +113,12 @@ export class PostgresCoachingPurchases
           this.executor
             .select({ id: checkoutSessionsTable.paymentLinkId })
             .from(checkoutSessionsTable)
-            .where(
-              eq(checkoutSessionsTable.id, subscription.checkoutSessionId),
-            ),
+            .where(eq(checkoutSessionsTable.id, checkoutSessionId)),
         ),
       );
-
-    return { outcome: "recorded", clientId };
   }
 
-  private async findClientIdForCall(assessmentCallId: string): Promise<string> {
+  async findClientIdForCall(assessmentCallId: string): Promise<string> {
     const [subscriptionRow] = await this.executor
       .select({ clientId: coachingSubscriptionsTable.clientId })
       .from(coachingSubscriptionsTable)

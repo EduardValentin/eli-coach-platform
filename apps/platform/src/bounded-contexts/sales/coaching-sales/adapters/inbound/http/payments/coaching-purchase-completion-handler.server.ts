@@ -1,6 +1,12 @@
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import {
+  CallAlreadyPaid,
   COACHING_SUBSCRIPTION_PURPOSE,
-  type RecordCheckoutCompletedUseCase,
+  type CheckoutPurchase,
+  type FinishCheckoutPurchaseUseCase,
+  type ReadCheckoutPurchaseUseCase,
+  type RecordCheckoutPurchaseUseCase,
+  type RecordedCheckoutPurchase,
   type RefreshPaymentCardUseCase,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { PaidCheckoutSession } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
@@ -8,16 +14,24 @@ import type { PaymentCompletionHandler } from "~/bounded-contexts/sales/coaching
 
 type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
 
-type RecordStatus = Awaited<
-  ReturnType<RecordCheckoutCompletedUseCase["execute"]>
->["status"];
+type PurchaseRecording = RecordedCheckoutPurchase | { status: "already_paid" };
+
+type PurchaseStatus =
+  | Exclude<
+      Awaited<ReturnType<ReadCheckoutPurchaseUseCase["execute"]>>["status"],
+      "found"
+    >
+  | PurchaseRecording["status"];
 
 type CoachingPurchaseCompletionHandlerOptions = {
-  recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
+  finishCheckoutPurchase: FinishCheckoutPurchaseUseCase;
+  readCheckoutPurchase: ReadCheckoutPurchaseUseCase;
+  recordCheckoutPurchase: RecordCheckoutPurchaseUseCase;
   refreshPaymentCard: RefreshPaymentCardUseCase;
+  unitOfWork: UnitOfWork;
 };
 
-const OUTCOME_BY_RECORD_STATUS: Record<RecordStatus, HandlerOutcome> = {
+const OUTCOME_BY_PURCHASE_STATUS: Record<PurchaseStatus, HandlerOutcome> = {
   recorded: "recorded",
   duplicate: "duplicate",
   already_paid: "ignored",
@@ -36,17 +50,44 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
     eventId: string,
     session: PaidCheckoutSession,
   ): Promise<HandlerOutcome> {
-    const recorded = await this.options.recordCheckoutCompleted.execute({
+    const read = await this.options.readCheckoutPurchase.execute({
       eventId,
       checkoutSessionId: session.id,
     });
 
-    if (recorded.status === "recorded" || recorded.status === "duplicate") {
-      await this.options.refreshPaymentCard.execute({
-        paymentCustomerId: recorded.paymentCustomerId,
-      });
+    if (read.status !== "found") {
+      return OUTCOME_BY_PURCHASE_STATUS[read.status];
     }
 
-    return OUTCOME_BY_RECORD_STATUS[recorded.status];
+    const recorded = await this.recordPurchase(read.purchase);
+
+    if (recorded.status === "already_paid") {
+      return OUTCOME_BY_PURCHASE_STATUS[recorded.status];
+    }
+
+    const finished =
+      await this.options.finishCheckoutPurchase.execute(recorded);
+
+    await this.options.refreshPaymentCard.execute({
+      paymentCustomerId: finished.paymentCustomerId,
+    });
+
+    return OUTCOME_BY_PURCHASE_STATUS[finished.status];
+  }
+
+  private async recordPurchase(
+    purchase: CheckoutPurchase,
+  ): Promise<PurchaseRecording> {
+    try {
+      return await this.options.unitOfWork(() =>
+        this.options.recordCheckoutPurchase.execute(purchase),
+      );
+    } catch (error) {
+      if (error instanceof CallAlreadyPaid) {
+        return { status: "already_paid" };
+      }
+
+      throw error;
+    }
   }
 }

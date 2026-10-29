@@ -1,10 +1,7 @@
 import type { DatabaseClient } from "~/shared/database";
-import { executorOf } from "~/shared/database/index.server";
 import {
   PurchasedSubscription,
   type CoachingPurchase,
-  type PaidClientAdmission,
-  type PaidClientAdmissionOutcome,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
@@ -20,30 +17,17 @@ const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 const ADMITTED_CLIENT_ID = "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d";
 const SUBSCRIPTION_ID = "8e9f0a1b-2c3d-4e5f-9a6b-7c8d9e0f1a2b";
 
-describe("PostgresCoachingPurchases#recordCompletion", () => {
-  it("records the event in the ledger, admits the client with her standing and then records the purchase under the id the domain gave it in the same transaction", async () => {
+describe("PostgresCoachingPurchases#insertSubscription", () => {
+  it("records the purchase for the admitted client under the id the domain gave it", async () => {
     // arrange
-    const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const { purchases, admission, writersRanIn } = createPurchases(
-      database.client,
-    );
+    const database = createRecordingDatabase();
+    const { purchases } = createPurchases(database.client);
 
     // act
-    const outcome = await purchases.recordCompletion(purchase());
+    await purchases.insertSubscription(purchase());
 
     // assert
-    expect(outcome).toEqual({
-      outcome: "recorded",
-      clientId: ADMITTED_CLIENT_ID,
-    });
-    expect(writersRanIn).toEqual([database.transaction]);
-    expect(admission.admit).toHaveBeenCalledWith({
-      client: purchase().client,
-      standing: expect.anything(),
-      at: NOW,
-    });
     expect(database.insertedRows).toEqual([
-      { id: "evt_1", receivedAt: NOW },
       expect.objectContaining({
         id: SUBSCRIPTION_ID,
         clientId: ADMITTED_CLIENT_ID,
@@ -51,79 +35,50 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
         stripeCheckoutSessionId: "cs_1",
         paidThrough: PAID_THROUGH,
         programStartsAt: PROGRAM_STARTS_AT,
+        createdAt: NOW,
       }),
     ]);
-    expect(admission.admit.mock.calls[0]?.[0].standing.toSnapshot()).toEqual({
-      status: "not-started",
-      accessEndsAt: null,
-      refundDue: false,
-      bundleMonths: 3,
-      programStartsAt: PROGRAM_STARTS_AT,
-      paidThrough: PAID_THROUGH,
-    });
-    expect(database.update).toHaveBeenCalledTimes(1);
   });
+});
 
-  it("answers a duplicate event with the client it recorded and writes nothing else when the ledger already holds the event", async () => {
+describe("PostgresCoachingPurchases#spendPaymentLink", () => {
+  it("spends the payment link behind the checkout session", async () => {
     // arrange
-    const database = createDatabaseWithLedgerAnswering([]);
-    const { purchases, admission } = createPurchases(database.client);
-
-    // act
-    const outcome = await purchases.recordCompletion(purchase());
-
-    // assert
-    expect(outcome).toEqual({
-      outcome: "duplicate_event",
-      clientId: "client-recorded-earlier",
-    });
-    expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
-    expect(admission.admit).not.toHaveBeenCalled();
-    expect(database.update).not.toHaveBeenCalled();
-  });
-
-  it("refuses a duplicate event whose recorded client cannot be found", async () => {
-    // arrange
-    const database = createDatabaseWithLedgerAnswering([], {
-      recordedClients: [],
-    });
+    const database = createRecordingDatabase();
     const { purchases } = createPurchases(database.client);
 
     // act
-    const recording = purchases.recordCompletion(purchase());
+    await purchases.spendPaymentLink("cs_1");
 
     // assert
-    await expect(recording).rejects.toThrow(PAID_CALL_ID);
+    expect(database.update).toHaveBeenCalledTimes(1);
+    expect(database.insertedRows).toEqual([]);
   });
+});
 
-  it("answers an already paid call and records nothing more when the call already has a client", async () => {
+describe("PostgresCoachingPurchases#findClientIdForCall", () => {
+  it("answers the client recorded for the call", async () => {
     // arrange
-    const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const { purchases } = createPurchases(database.client, {
-      admitted: { status: "call_already_has_client" },
-    });
+    const { purchases } = createPurchases(createRecordingDatabase().client);
 
     // act
-    const outcome = await purchases.recordCompletion(purchase());
+    const clientId = await purchases.findClientIdForCall(PAID_CALL_ID);
 
     // assert
-    expect(outcome).toEqual({ outcome: "call_already_paid" });
-    expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
-    expect(database.update).not.toHaveBeenCalled();
+    expect(clientId).toBe("client-recorded-earlier");
   });
 
-  it("rethrows a failure of the purchase transaction", async () => {
+  it("refuses a call whose recorded client cannot be found", async () => {
     // arrange
-    const failure = new Error("connection reset");
     const { purchases } = createPurchases(
-      createDatabaseFailingTransactionWith(failure),
+      createRecordingDatabase({ recordedClients: [] }).client,
     );
 
     // act
-    const recording = purchases.recordCompletion(purchase());
+    const lookup = purchases.findClientIdForCall(PAID_CALL_ID);
 
     // assert
-    await expect(recording).rejects.toBe(failure);
+    await expect(lookup).rejects.toThrow(PAID_CALL_ID);
   });
 });
 
@@ -196,50 +151,20 @@ describe("PostgresCoachingPurchases#forCalls", () => {
   });
 });
 
-function createPurchases(
-  database: DatabaseClient,
-  options: { admitted?: PaidClientAdmissionOutcome } = {},
-) {
-  const writersRanIn: unknown[] = [];
-  const admission = {
-    admit: vi
-      .fn<PaidClientAdmission["admit"]>()
-      .mockImplementation(async () => {
-        writersRanIn.push(executorOf(database));
-
-        return (
-          options.admitted ?? {
-            status: "admitted",
-            clientId: ADMITTED_CLIENT_ID,
-          }
-        );
-      }),
-  };
+function createPurchases(database: DatabaseClient) {
   const purchases = new PostgresCoachingPurchases({
-    admission,
     clock: { now: () => NOW },
     database,
   });
 
-  return { admission, purchases, writersRanIn };
+  return { purchases };
 }
 
 function purchase(): CoachingPurchase {
   return {
-    eventId: "evt_1",
+    assessmentCallId: PAID_CALL_ID,
+    clientId: ADMITTED_CLIENT_ID,
     receivedAt: NOW,
-    client: {
-      assessmentCallId: PAID_CALL_ID,
-      firstName: "Ana",
-      lastName: "Popescu",
-      email: "ana@example.com",
-      dateOfBirth: "1994-03-14",
-      gender: "female",
-      primaryGoal: "build_strength",
-      country: "RO",
-      phone: null,
-      bookingTimeZone: "Europe/Bucharest",
-    },
     subscription: PurchasedSubscription.fromCompletedCheckout({
       id: SUBSCRIPTION_ID,
       completion: {
@@ -260,22 +185,17 @@ function purchase(): CoachingPurchase {
   };
 }
 
-function createDatabaseWithLedgerAnswering(
-  ledgerRows: readonly unknown[],
+function createRecordingDatabase(
   options: { recordedClients: readonly unknown[] } = {
     recordedClients: [{ clientId: "client-recorded-earlier" }],
   },
 ) {
   const insertedRows: unknown[] = [];
   const update = vi.fn(() => ({ set: () => ({ where: async () => [] }) }));
-  const transaction = {
+  const client = {
     insert: () => ({
-      values: (row: unknown) => {
+      values: async (row: unknown) => {
         insertedRows.push(row);
-
-        return Object.assign(Promise.resolve(), {
-          onConflictDoNothing: () => ({ returning: async () => ledgerRows }),
-        });
       },
     }),
     select: () => ({
@@ -287,20 +207,9 @@ function createDatabaseWithLedgerAnswering(
       }),
     }),
     update,
-  };
-  const client = {
-    transaction: (work: (tx: unknown) => Promise<unknown>) => work(transaction),
   } as unknown as DatabaseClient;
 
-  return { client, insertedRows, transaction, update };
-}
-
-function createDatabaseFailingTransactionWith(failure: Error): DatabaseClient {
-  return {
-    transaction: async () => {
-      throw failure;
-    },
-  } as unknown as DatabaseClient;
+  return { client, insertedRows, update };
 }
 
 function createDatabaseAnsweringSalesRows(
