@@ -32,11 +32,11 @@ export const coachingSalesApiRoutes = [
   ),
   route(
     COACHING_SALES_API_PATHS.bundlePage.slice(1),
-    "./adapters/inbound/http/public/bundle-page.ts",
+    "./adapters/inbound/http/public-site/bundle-page.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.checkouts.slice(1),
-    "./adapters/inbound/http/public/checkouts.ts",
+    "./adapters/inbound/http/public-site/checkouts.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.subscriptionCancellation.slice(1),

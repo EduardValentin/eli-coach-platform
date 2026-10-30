@@ -9,6 +9,6 @@ export const accountsApiRoutes = [
   route("api/clerk/webhooks", "./adapters/inbound/http/clerk-webhooks.ts"),
   route(
     INVITATION_RESOLUTION_API_PATH.slice(1),
-    "./adapters/inbound/http/public/invitation.ts",
+    "./adapters/inbound/http/public-site/invitation.ts",
   ),
 ];

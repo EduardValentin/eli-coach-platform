@@ -48,7 +48,7 @@ import { PaymentLinksController } from "~/bounded-contexts/sales/coaching-sales/
 import { CoachingPaymentCardHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/payments/coaching-payment-card-handler.server";
 import { CoachingPurchaseCompletionHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/payments/coaching-purchase-completion-handler.server";
 import { CoachingSubscriptionEventHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/payments/coaching-subscription-event-handler.server";
-import { CheckoutsController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/public/checkouts-controller.server";
+import { CheckoutsController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/public-site/checkouts-controller.server";
 import { StripeWebhookController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/stripe-webhooks/stripe-webhook-controller.server";
 import { ClientsClientLookup } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/client-lookup.server";
 import { ClientsCoachingEndHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-end-handler.server";

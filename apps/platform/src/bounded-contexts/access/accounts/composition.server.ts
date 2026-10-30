@@ -22,7 +22,7 @@ import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import type { IdentityConfig } from "~/bounded-contexts/access/accounts/config.server";
 
 import { AccountController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-controller.server";
-import { InvitationsController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/public/invitations-controller.server";
+import { InvitationsController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/public-site/invitations-controller.server";
 import { AccountWebhookController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/webhook-controller.server";
 import { createAccountInvitationsFacade } from "~/bounded-contexts/access/accounts/adapters/inbound/facades/account-invitations.server";
 import { EmailAccountInvitationNotifications } from "~/bounded-contexts/access/accounts/adapters/outbound/email/email-account-invitation-notifications.server";
