@@ -4,8 +4,6 @@ import { CoachScheduleAvailabilityAdapter } from "~/bounded-contexts/scheduling/
 import {
   CoachAvailability as CoachWeekAvailability,
   CoachOpenings,
-  type CoachAvailabilitySourcePort,
-  type CoachCalendarPort,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 import {
   createEmailAcceptance,
@@ -28,6 +26,11 @@ import {
 } from "./list-assessment-calls-use-case";
 import { ListOpenSlotsUseCase } from "./list-open-slots-use-case";
 import { ResolveJoinLinkUseCase } from "./resolve-join-link-use-case";
+
+type CoachOpeningsPorts = ConstructorParameters<typeof CoachOpenings>[0];
+type CoachAvailabilitySourcePort =
+  CoachOpeningsPorts["coachAvailabilitySourcePort"];
+type CoachCalendarPort = CoachOpeningsPorts["coachCalendarPort"];
 
 const NOW = new Date("2026-06-01T06:00:00.000Z");
 const OPEN_START = new Date("2026-06-01T15:00:00.000Z");

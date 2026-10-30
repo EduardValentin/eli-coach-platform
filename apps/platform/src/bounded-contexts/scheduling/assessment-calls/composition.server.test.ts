@@ -3,7 +3,6 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   CoachAvailability,
   CoachOpenings,
-  type CoachAvailabilitySourcePort,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
@@ -196,6 +195,10 @@ function createDatabaseWithBookedCalls(
     }),
   } as unknown as DatabaseClient;
 }
+
+type CoachAvailabilitySourcePort = ConstructorParameters<
+  typeof CoachOpenings
+>[0]["coachAvailabilitySourcePort"];
 
 function openingsOver(
   coachAvailabilitySourcePort: CoachAvailabilitySourcePort,

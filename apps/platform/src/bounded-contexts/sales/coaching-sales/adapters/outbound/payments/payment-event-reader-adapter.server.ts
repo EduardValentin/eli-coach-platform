@@ -125,7 +125,9 @@ const paymentMethodSchema = z.object({
 });
 
 export class PaymentEventReaderAdapter {
-  constructor(private readonly vocabulary: PaymentProviderVocabularyPort) {}
+  constructor(
+    private readonly paymentProviderVocabularyPort: PaymentProviderVocabularyPort,
+  ) {}
 
   read(event: unknown): PaymentEventVerdict {
     const parsed = paymentEventSchema.safeParse(event);
@@ -140,7 +142,7 @@ export class PaymentEventReaderAdapter {
       case CHARGE_REFUNDED_EVENT:
         return this.readChargeRefunded(parsed.data);
       default:
-        return this.vocabulary.cardChangeOf(parsed.data.type)
+        return this.paymentProviderVocabularyPort.cardChangeOf(parsed.data.type)
           ? this.readPaymentMethodChanged(parsed.data)
           : this.readSubscriptionChanged(parsed.data);
     }
@@ -176,8 +178,11 @@ export class PaymentEventReaderAdapter {
   }
 
   private readPaymentMethodChanged(event: PaymentEvent): PaymentEventVerdict {
-    const kind = this.vocabulary.cardChangeOf(event.type);
-    const details = readCardDetails(event.data.object, this.vocabulary);
+    const kind = this.paymentProviderVocabularyPort.cardChangeOf(event.type);
+    const details = readCardDetails(
+      event.data.object,
+      this.paymentProviderVocabularyPort,
+    );
     const customerId = this.ownerOf(event);
 
     if (!kind || !details || !customerId) {
@@ -220,10 +225,12 @@ export class PaymentEventReaderAdapter {
         kind: "subscription_state",
         subscriptionId: subscription.id,
         customerId: subscription.customer,
-        standing: this.vocabulary.standingOf(subscription.status),
+        standing: this.paymentProviderVocabularyPort.standingOf(
+          subscription.status,
+        ),
         previousStanding:
           typeof previousStatus === "string"
-            ? this.vocabulary.standingOf(previousStatus)
+            ? this.paymentProviderVocabularyPort.standingOf(previousStatus)
             : null,
         scheduledEndAt: subscription.cancel_at
           ? fromUnixSeconds(subscription.cancel_at)
@@ -259,7 +266,7 @@ export class PaymentEventReaderAdapter {
         subscriptionId: details.subscription,
         customerId: invoice.customer,
         outcome,
-        invoiceReason: this.vocabulary.invoiceReasonOf(
+        invoiceReason: this.paymentProviderVocabularyPort.invoiceReasonOf(
           invoice.billing_reason ?? null,
         ),
         periodEndsAt: fromUnixSeconds(
@@ -309,11 +316,14 @@ export function readPaidCheckoutSession(
 
 export function readCardDetails(
   paymentMethod: unknown,
-  vocabulary: PaymentProviderVocabularyPort,
+  paymentProviderVocabularyPort: PaymentProviderVocabularyPort,
 ): PaymentCardDetails | null {
   const parsed = paymentMethodSchema.safeParse(paymentMethod);
 
-  if (!parsed.success || !vocabulary.isCardPaymentMethod(parsed.data.type)) {
+  if (
+    !parsed.success ||
+    !paymentProviderVocabularyPort.isCardPaymentMethod(parsed.data.type)
+  ) {
     return null;
   }
 

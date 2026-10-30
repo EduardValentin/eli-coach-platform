@@ -8,8 +8,10 @@ const MEMORY_SIGNATURE = "memory";
 export class InMemoryPaymentEventsAdapter implements PaymentEventsPort {
   private readonly paymentEventReaderAdapter: PaymentEventReaderAdapter;
 
-  constructor(vocabulary: PaymentProviderVocabularyPort) {
-    this.paymentEventReaderAdapter = new PaymentEventReaderAdapter(vocabulary);
+  constructor(paymentProviderVocabularyPort: PaymentProviderVocabularyPort) {
+    this.paymentEventReaderAdapter = new PaymentEventReaderAdapter(
+      paymentProviderVocabularyPort,
+    );
   }
 
   async verify(
