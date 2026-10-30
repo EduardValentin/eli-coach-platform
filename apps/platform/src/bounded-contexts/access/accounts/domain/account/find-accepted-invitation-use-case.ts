@@ -3,13 +3,13 @@ import type { AccountInvitationsPort } from "./account-invitations-port";
 export class FindAcceptedInvitationUseCase {
   constructor(
     private readonly options: {
-      invitations: Pick<AccountInvitationsPort, "findAcceptedBy">;
+      accountInvitationsPort: Pick<AccountInvitationsPort, "findAcceptedBy">;
     },
   ) {}
 
   async execute(authSubjectId: string): Promise<string | null> {
     const invitation =
-      await this.options.invitations.findAcceptedBy(authSubjectId);
+      await this.options.accountInvitationsPort.findAcceptedBy(authSubjectId);
 
     return invitation?.id ?? null;
   }

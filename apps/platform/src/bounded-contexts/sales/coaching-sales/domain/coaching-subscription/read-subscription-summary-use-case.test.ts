@@ -54,13 +54,13 @@ describe("ReadSubscriptionSummaryUseCase", () => {
     // arrange
     const subscription = subscriptionOf();
     const subscriptions = createSubscriptions(subscription);
-    const useCase = new ReadSubscriptionSummaryUseCase({
-      clock,
-      subscriptions,
+    const readSubscriptionSummaryUseCase = new ReadSubscriptionSummaryUseCase({
+      clockPort: clock,
+      coachingSubscriptionsPort: subscriptions,
     });
 
     // act
-    const summary = await useCase.execute("client-1");
+    const summary = await readSubscriptionSummaryUseCase.execute("client-1");
 
     // assert
     expect(summary).toEqual({
@@ -74,15 +74,15 @@ describe("ReadSubscriptionSummaryUseCase", () => {
 
   it("reads when the work starts for a client waiting out her withdrawal window", async () => {
     // arrange
-    const useCase = new ReadSubscriptionSummaryUseCase({
-      clock,
-      subscriptions: createSubscriptions(
+    const readSubscriptionSummaryUseCase = new ReadSubscriptionSummaryUseCase({
+      clockPort: clock,
+      coachingSubscriptionsPort: createSubscriptions(
         subscriptionOf({ startChoice: "waiting" }),
       ),
     });
 
     // act
-    const summary = await useCase.execute("client-1");
+    const summary = await readSubscriptionSummaryUseCase.execute("client-1");
 
     // assert
     expect(summary?.workStartsOn).toEqual(new Date("2026-10-10T10:00:00.000Z"));
@@ -90,9 +90,9 @@ describe("ReadSubscriptionSummaryUseCase", () => {
 
   it("reads her subscription as ended once her cancelled access has run out", async () => {
     // arrange
-    const useCase = new ReadSubscriptionSummaryUseCase({
-      clock,
-      subscriptions: createSubscriptions(
+    const readSubscriptionSummaryUseCase = new ReadSubscriptionSummaryUseCase({
+      clockPort: clock,
+      coachingSubscriptionsPort: createSubscriptions(
         subscriptionOf({
           status: "cancelled",
           cancelledAt: PAID_AT,
@@ -102,7 +102,7 @@ describe("ReadSubscriptionSummaryUseCase", () => {
     });
 
     // act
-    const summary = await useCase.execute("client-1");
+    const summary = await readSubscriptionSummaryUseCase.execute("client-1");
 
     // assert
     expect(summary?.status).toBe("ended");
@@ -111,9 +111,9 @@ describe("ReadSubscriptionSummaryUseCase", () => {
   it("reads what is still owed of a part-settled refund", async () => {
     // arrange
     const cancelledAt = new Date("2026-10-05T10:00:00.000Z");
-    const useCase = new ReadSubscriptionSummaryUseCase({
-      clock,
-      subscriptions: createSubscriptions(
+    const readSubscriptionSummaryUseCase = new ReadSubscriptionSummaryUseCase({
+      clockPort: clock,
+      coachingSubscriptionsPort: createSubscriptions(
         subscriptionOf({
           status: "ended",
           cancelledAt,
@@ -126,7 +126,7 @@ describe("ReadSubscriptionSummaryUseCase", () => {
     });
 
     // act
-    const summary = await useCase.execute("client-1");
+    const summary = await readSubscriptionSummaryUseCase.execute("client-1");
 
     // assert
     expect(summary?.refundOutstandingCents).toBe(34700);
@@ -134,13 +134,13 @@ describe("ReadSubscriptionSummaryUseCase", () => {
 
   it("reads nothing for a client with no subscription", async () => {
     // arrange
-    const useCase = new ReadSubscriptionSummaryUseCase({
-      clock,
-      subscriptions: createSubscriptions(null),
+    const readSubscriptionSummaryUseCase = new ReadSubscriptionSummaryUseCase({
+      clockPort: clock,
+      coachingSubscriptionsPort: createSubscriptions(null),
     });
 
     // act
-    const summary = await useCase.execute("client-1");
+    const summary = await readSubscriptionSummaryUseCase.execute("client-1");
 
     // assert
     expect(summary).toBeNull();

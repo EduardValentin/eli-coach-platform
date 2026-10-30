@@ -18,7 +18,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       });
     }
 
-    return context.get(waitlistContext).waitlist.join(request);
+    return context.get(waitlistContext).waitlistController.join(request);
   });
 }
 

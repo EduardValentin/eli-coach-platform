@@ -76,12 +76,14 @@ const READING: Reading = {
 describe("SubscriptionController#loadSettings", () => {
   it("reads her own subscription with the cancellation that applies now, dates and cents raw", async () => {
     // arrange
-    const { controller, readClientSubscription } = createController({
-      reading: READING,
-    });
+    const { subscriptionController, readClientSubscription } = createController(
+      {
+        reading: READING,
+      },
+    );
 
     // act
-    const settings = await controller.loadSettings(clientArgs());
+    const settings = await subscriptionController.loadSettings(clientArgs());
 
     // assert
     expect(settings).toEqual({
@@ -110,7 +112,7 @@ describe("SubscriptionController#loadSettings", () => {
 
   it("reads the card on file by brand, last four digits and expiry, never its payment method", async () => {
     // arrange
-    const { controller } = createController({
+    const { subscriptionController } = createController({
       reading: {
         ...READING,
         card: {
@@ -124,7 +126,7 @@ describe("SubscriptionController#loadSettings", () => {
     });
 
     // act
-    const settings = await controller.loadSettings(clientArgs());
+    const settings = await subscriptionController.loadSettings(clientArgs());
 
     // assert
     expect(settings.card).toEqual({
@@ -137,7 +139,7 @@ describe("SubscriptionController#loadSettings", () => {
 
   it("offers the cancellation without a refund with its dates and no refund amount", async () => {
     // arrange
-    const { controller } = createController({
+    const { subscriptionController } = createController({
       reading: {
         ...READING,
         subscription: { ...SUBSCRIPTION, startChoice: "immediate" },
@@ -148,7 +150,7 @@ describe("SubscriptionController#loadSettings", () => {
     });
 
     // act
-    const settings = await controller.loadSettings(clientArgs());
+    const settings = await subscriptionController.loadSettings(clientArgs());
 
     // assert
     expect(settings.cancellation).toEqual({
@@ -160,7 +162,7 @@ describe("SubscriptionController#loadSettings", () => {
 
   it("offers no cancellation once she has cancelled, with her access end and a payment problem", async () => {
     // arrange
-    const { controller } = createController({
+    const { subscriptionController } = createController({
       reading: {
         ...READING,
         subscription: {
@@ -179,7 +181,7 @@ describe("SubscriptionController#loadSettings", () => {
     });
 
     // act
-    const settings = await controller.loadSettings(clientArgs());
+    const settings = await subscriptionController.loadSettings(clientArgs());
 
     // assert
     expect(settings).toMatchObject({
@@ -196,11 +198,11 @@ describe("SubscriptionController#loadSettings", () => {
 
   it("answers 404 to a client with no subscription", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { subscriptionController } = createController({ reading: null });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadSettings(clientArgs()),
+      subscriptionController.loadSettings(clientArgs()),
     );
 
     // assert
@@ -209,13 +211,15 @@ describe("SubscriptionController#loadSettings", () => {
 
   it("refuses the coach", async () => {
     // arrange
-    const { controller, readClientSubscription } = createController({
-      reading: READING,
-    });
+    const { subscriptionController, readClientSubscription } = createController(
+      {
+        reading: READING,
+      },
+    );
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadSettings(clientArgs({ account: COACH })),
+      subscriptionController.loadSettings(clientArgs({ account: COACH })),
     );
 
     // assert
@@ -230,12 +234,12 @@ describe("SubscriptionController#loadEnded", () => {
     ["nothing is owed", false],
   ])("tells the ended page whether %s", async (_label, refundDue) => {
     // arrange
-    const { controller } = createController({
+    const { subscriptionController } = createController({
       reading: { ...READING, status: "ended", refundDue },
     });
 
     // act
-    const ended = await controller.loadEnded(clientArgs());
+    const ended = await subscriptionController.loadEnded(clientArgs());
 
     // assert
     expect(ended).toEqual({ refundDue });
@@ -243,10 +247,10 @@ describe("SubscriptionController#loadEnded", () => {
 
   it("tells the ended page that nothing is owed when no subscription is read", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { subscriptionController } = createController({ reading: null });
 
     // act
-    const ended = await controller.loadEnded(clientArgs());
+    const ended = await subscriptionController.loadEnded(clientArgs());
 
     // assert
     expect(ended).toEqual({ refundDue: false });
@@ -257,7 +261,7 @@ describe("SubscriptionController#cancel", () => {
   it("cancels the subscription of the signed-in client and answers what it ended", async () => {
     // arrange
     const cancelledAt = DAY_13;
-    const { controller, cancelSubscription } = createController({
+    const { subscriptionController, cancelSubscription } = createController({
       cancelled: {
         status: "cancelled",
         rule: "full-refund",
@@ -276,7 +280,7 @@ describe("SubscriptionController#cancel", () => {
     });
 
     // act
-    const response = await controller.cancel(apiArgs());
+    const response = await subscriptionController.cancel(apiArgs());
 
     // assert
     expect(response.status).toBe(200);
@@ -305,10 +309,12 @@ describe("SubscriptionController#cancel", () => {
     "answers %s with %i",
     async (status, expectedStatus, expectedBody) => {
       // arrange
-      const { controller } = createController({ cancelled: { status } });
+      const { subscriptionController } = createController({
+        cancelled: { status },
+      });
 
       // act
-      const response = await controller.cancel(apiArgs());
+      const response = await subscriptionController.cancel(apiArgs());
 
       // assert
       expect(response.status).toBe(expectedStatus);
@@ -318,11 +324,11 @@ describe("SubscriptionController#cancel", () => {
 
   it("refuses the coach without cancelling anything", async () => {
     // arrange
-    const { controller, cancelSubscription } = createController({});
+    const { subscriptionController, cancelSubscription } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.cancel(apiArgs({ account: COACH })),
+      subscriptionController.cancel(apiArgs({ account: COACH })),
     );
 
     // assert
@@ -332,11 +338,11 @@ describe("SubscriptionController#cancel", () => {
 
   it("refuses an anonymous visitor", async () => {
     // arrange
-    const { controller, cancelSubscription } = createController({});
+    const { subscriptionController, cancelSubscription } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.cancel(apiArgs({ anonymous: true })),
+      subscriptionController.cancel(apiArgs({ anonymous: true })),
     );
 
     // assert
@@ -348,12 +354,12 @@ describe("SubscriptionController#cancel", () => {
 describe("SubscriptionController#startNow", () => {
   it("starts the program of the signed-in client now", async () => {
     // arrange
-    const { controller, startProgramNow } = createController({
+    const { subscriptionController, startProgramNow } = createController({
       started: { status: "started" },
     });
 
     // act
-    const response = await controller.startNow(apiArgs());
+    const response = await subscriptionController.startNow(apiArgs());
 
     // assert
     expect(response.status).toBe(200);
@@ -369,10 +375,10 @@ describe("SubscriptionController#startNow", () => {
     "answers a refusal %o with %i",
     async (started, expectedStatus, error) => {
       // arrange
-      const { controller } = createController({ started });
+      const { subscriptionController } = createController({ started });
 
       // act
-      const response = await controller.startNow(apiArgs());
+      const response = await subscriptionController.startNow(apiArgs());
 
       // assert
       expect(response.status).toBe(expectedStatus);
@@ -384,12 +390,13 @@ describe("SubscriptionController#startNow", () => {
 describe("SubscriptionController#openPaymentMethod", () => {
   it("sends her to the provider's page with a return to her settings built from configuration", async () => {
     // arrange
-    const { controller, openPaymentMethodSession } = createController({
-      opened: { status: "opened", url: "https://billing.stripe.com/p/1" },
-    });
+    const { subscriptionController, openPaymentMethodSession } =
+      createController({
+        opened: { status: "opened", url: "https://billing.stripe.com/p/1" },
+      });
 
     // act
-    const response = await controller.openPaymentMethod(
+    const response = await subscriptionController.openPaymentMethod(
       clientArgs(undefined, "https://attacker.example/client/settings"),
     );
 
@@ -411,10 +418,13 @@ describe("SubscriptionController#openPaymentMethod", () => {
     "sends her back into the portal when the session is %s",
     async (status, location) => {
       // arrange
-      const { controller } = createController({ opened: { status } });
+      const { subscriptionController } = createController({
+        opened: { status },
+      });
 
       // act
-      const response = await controller.openPaymentMethod(clientArgs());
+      const response =
+        await subscriptionController.openPaymentMethod(clientArgs());
 
       // assert
       expect(response.status).toBe(303);
@@ -429,11 +439,12 @@ describe("SubscriptionController#openPaymentMethod", () => {
     "refuses %s without opening a session",
     async (_label, session, status) => {
       // arrange
-      const { controller, openPaymentMethodSession } = createController({});
+      const { subscriptionController, openPaymentMethodSession } =
+        createController({});
 
       // act
       const thrown = await captureThrown(() =>
-        controller.openPaymentMethod(apiArgs(session)),
+        subscriptionController.openPaymentMethod(apiArgs(session)),
       );
 
       // assert
@@ -444,13 +455,13 @@ describe("SubscriptionController#openPaymentMethod", () => {
 
   it("answers 404 to a client with no subscription", async () => {
     // arrange
-    const { controller } = createController({
+    const { subscriptionController } = createController({
       opened: { status: "not_found" },
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.openPaymentMethod(clientArgs()),
+      subscriptionController.openPaymentMethod(clientArgs()),
     );
 
     // assert
@@ -470,7 +481,7 @@ describe("SubscriptionController#loadProgramStatus", () => {
     "answers her submitted onboarding %s",
     async (_label, workStartsOn, expectedWorkStartsOn) => {
       // arrange
-      const { controller, readProgramStatus } = createController({
+      const { subscriptionController, readProgramStatus } = createController({
         programStatus: {
           kind: "submitted",
           submittedAt: new Date("2026-09-28T10:00:00.000Z"),
@@ -480,7 +491,8 @@ describe("SubscriptionController#loadProgramStatus", () => {
       });
 
       // act
-      const status = await controller.loadProgramStatus(clientArgs());
+      const status =
+        await subscriptionController.loadProgramStatus(clientArgs());
 
       // assert
       expect(status).toEqual({
@@ -495,7 +507,7 @@ describe("SubscriptionController#loadProgramStatus", () => {
 
   it("carries until when she can start now", async () => {
     // arrange
-    const { controller } = createController({
+    const { subscriptionController } = createController({
       programStatus: {
         kind: "submitted",
         submittedAt: new Date("2026-09-28T10:00:00.000Z"),
@@ -505,7 +517,7 @@ describe("SubscriptionController#loadProgramStatus", () => {
     });
 
     // act
-    const status = await controller.loadProgramStatus(clientArgs());
+    const status = await subscriptionController.loadProgramStatus(clientArgs());
 
     // assert
     expect(status).toMatchObject({
@@ -517,7 +529,7 @@ describe("SubscriptionController#loadProgramStatus", () => {
     "answers the %s step of her reviewed onboarding",
     async (kind) => {
       // arrange
-      const { controller } = createController({
+      const { subscriptionController } = createController({
         programStatus: {
           kind,
           submittedAt: new Date("2026-09-28T10:00:00.000Z"),
@@ -527,7 +539,8 @@ describe("SubscriptionController#loadProgramStatus", () => {
       });
 
       // act
-      const status = await controller.loadProgramStatus(clientArgs());
+      const status =
+        await subscriptionController.loadProgramStatus(clientArgs());
 
       // assert
       expect(status).toEqual({
@@ -541,10 +554,12 @@ describe("SubscriptionController#loadProgramStatus", () => {
 
   it("answers no status before she has sent her onboarding", async () => {
     // arrange
-    const { controller } = createController({ programStatus: null });
+    const { subscriptionController } = createController({
+      programStatus: null,
+    });
 
     // act
-    const status = await controller.loadProgramStatus(clientArgs());
+    const status = await subscriptionController.loadProgramStatus(clientArgs());
 
     // assert
     expect(status).toBeNull();
@@ -552,13 +567,13 @@ describe("SubscriptionController#loadProgramStatus", () => {
 
   it("refuses the coach without reading any status", async () => {
     // arrange
-    const { controller, readProgramStatus } = createController({
+    const { subscriptionController, readProgramStatus } = createController({
       programStatus: null,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadProgramStatus(clientArgs({ account: COACH })),
+      subscriptionController.loadProgramStatus(clientArgs({ account: COACH })),
     );
 
     // assert
@@ -583,29 +598,29 @@ function createController(options: {
   const cancelSubscription = vi.fn().mockResolvedValue(options.cancelled);
   const startProgramNow = vi.fn().mockResolvedValue(options.started);
   const openPaymentMethodSession = vi.fn().mockResolvedValue(options.opened);
-  const controller = new SubscriptionController({
+  const subscriptionController = new SubscriptionController({
     appBasePath: "/app",
-    cancelSubscription: {
+    cancelSubscriptionUseCase: {
       execute: cancelSubscription,
     } as unknown as CancelSubscriptionUseCase,
-    openPaymentMethodSession: {
+    openPaymentMethodSessionUseCase: {
       execute: openPaymentMethodSession,
     } as unknown as OpenPaymentMethodSessionUseCase,
     publicAppUrl: "https://evoa.fit",
-    readClientSubscription: {
+    readClientSubscriptionUseCase: {
       execute: readClientSubscription,
     } as unknown as ReadClientSubscriptionUseCase,
-    readProgramStatus: {
+    readProgramStatusUseCase: {
       execute: readProgramStatus,
     } as unknown as ReadProgramStatusUseCase,
-    startProgramNow: {
+    startProgramNowUseCase: {
       execute: startProgramNow,
     } as unknown as StartProgramNowUseCase,
   });
 
   return {
     cancelSubscription,
-    controller,
+    subscriptionController,
     openPaymentMethodSession,
     readClientSubscription,
     readProgramStatus,

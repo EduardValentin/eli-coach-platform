@@ -45,7 +45,7 @@ describe("composePlatformFeature", () => {
     const feature = composePlatform();
 
     // act
-    const response = feature.readyz.getStatus();
+    const response = feature.readyzController.getStatus();
 
     // assert
     expect(response.status).toBe(200);

@@ -6,11 +6,11 @@ import type { WaitlistIncidentsPort } from "./waitlist-incidents-port";
 import type { WaitlistModePort } from "./waitlist-mode-port";
 
 type GetWaitlistUseCaseOptions = {
-  clock: ClockPort;
-  incidents: WaitlistIncidentsPort;
+  clockPort: ClockPort;
+  waitlistIncidentsPort: WaitlistIncidentsPort;
   waitlist: Waitlist;
-  waitlistEntries: WaitlistEntriesPort;
-  waitlistMode: WaitlistModePort;
+  waitlistEntriesPort: WaitlistEntriesPort;
+  waitlistModePort: WaitlistModePort;
 };
 
 export class GetWaitlistUseCase {
@@ -36,9 +36,9 @@ export class GetWaitlistUseCase {
 
   private async getWaitlistModeSafely(): Promise<boolean | null> {
     try {
-      return await this.options.waitlistMode.isEnabled();
+      return await this.options.waitlistModePort.isEnabled();
     } catch {
-      this.options.incidents.waitlistModeReadFailed();
+      this.options.waitlistIncidentsPort.waitlistModeReadFailed();
 
       return null;
     }
@@ -48,11 +48,11 @@ export class GetWaitlistUseCase {
     number | null
   > {
     try {
-      return await this.options.waitlistEntries.countReducedPricingSignupsCreatedBefore(
+      return await this.options.waitlistEntriesPort.countReducedPricingSignupsCreatedBefore(
         {
           campaignSlug: this.options.waitlist.offer.campaignSlug,
           createdBefore: Waitlist.availabilityBucketStart(
-            this.options.clock.now(),
+            this.options.clockPort.now(),
           ),
         },
       );

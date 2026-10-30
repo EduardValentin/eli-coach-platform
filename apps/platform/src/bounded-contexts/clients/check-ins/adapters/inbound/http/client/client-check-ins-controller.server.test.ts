@@ -55,12 +55,13 @@ const APPROVED = CheckIn.reconstitute({
 describe("ClientCheckInsController loadNextCheckIn", () => {
   it("hands the client her next approved check-in as instants", async () => {
     // arrange
-    const { controller, findNextClientCheckIn } = createController({
-      next: APPROVED.viewFor({ party: "client", at: NOW }),
-    });
+    const { clientCheckInsController, findNextClientCheckIn } =
+      createController({
+        next: APPROVED.viewFor({ party: "client", at: NOW }),
+      });
 
     // act
-    const next = await controller.loadNextCheckIn(clientArgs());
+    const next = await clientCheckInsController.loadNextCheckIn(clientArgs());
 
     // assert
     expect(findNextClientCheckIn).toHaveBeenCalledWith("user_ana");
@@ -77,10 +78,10 @@ describe("ClientCheckInsController loadNextCheckIn", () => {
 
   it("hands the client nothing when no approved check-in lies ahead", async () => {
     // arrange
-    const { controller } = createController({ next: null });
+    const { clientCheckInsController } = createController({ next: null });
 
     // act
-    const next = await controller.loadNextCheckIn(clientArgs());
+    const next = await clientCheckInsController.loadNextCheckIn(clientArgs());
 
     // assert
     expect(next).toBeNull();
@@ -88,11 +89,14 @@ describe("ClientCheckInsController loadNextCheckIn", () => {
 
   it("refuses the coach without looking anything up", async () => {
     // arrange
-    const { controller, findNextClientCheckIn } = createController();
+    const { clientCheckInsController, findNextClientCheckIn } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadNextCheckIn(clientArgs({ session: COACH_SESSION })),
+      clientCheckInsController.loadNextCheckIn(
+        clientArgs({ session: COACH_SESSION }),
+      ),
     );
 
     // assert
@@ -104,7 +108,7 @@ describe("ClientCheckInsController loadNextCheckIn", () => {
 describe("ClientCheckInsController loadCheckIns", () => {
   it("hands the client her check-ins as instants with their status at the moment of reading", async () => {
     // arrange
-    const { controller, listClientCheckIns } = createController({
+    const { clientCheckInsController, listClientCheckIns } = createController({
       listed: {
         status: "listed",
         checkIns: [PENDING.viewFor({ party: "client", at: NOW })],
@@ -112,7 +116,7 @@ describe("ClientCheckInsController loadCheckIns", () => {
     });
 
     // act
-    const listing = await controller.loadCheckIns(clientArgs());
+    const listing = await clientCheckInsController.loadCheckIns(clientArgs());
 
     // assert
     expect(listClientCheckIns).toHaveBeenCalledWith("user_ana");
@@ -146,11 +150,13 @@ describe("ClientCheckInsController loadCheckIns", () => {
 
   it("answers not found to a client whose portal is closed", async () => {
     // arrange
-    const { controller } = createController({ listed: { status: "ended" } });
+    const { clientCheckInsController } = createController({
+      listed: { status: "ended" },
+    });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadCheckIns(clientArgs()),
+      clientCheckInsController.loadCheckIns(clientArgs()),
     );
 
     // assert
@@ -159,11 +165,13 @@ describe("ClientCheckInsController loadCheckIns", () => {
 
   it("refuses the coach without listing anything", async () => {
     // arrange
-    const { controller, listClientCheckIns } = createController();
+    const { clientCheckInsController, listClientCheckIns } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadCheckIns(clientArgs({ session: COACH_SESSION })),
+      clientCheckInsController.loadCheckIns(
+        clientArgs({ session: COACH_SESSION }),
+      ),
     );
 
     // assert
@@ -175,12 +183,14 @@ describe("ClientCheckInsController loadCheckIns", () => {
 describe("ClientCheckInsController loadAwaitingCount", () => {
   it("counts the check-ins waiting for the client's answer", async () => {
     // arrange
-    const { controller, countCheckInsAwaiting } = createController({
-      awaiting: 2,
-    });
+    const { clientCheckInsController, countCheckInsAwaiting } =
+      createController({
+        awaiting: 2,
+      });
 
     // act
-    const count = await controller.loadAwaitingCount(clientArgs());
+    const count =
+      await clientCheckInsController.loadAwaitingCount(clientArgs());
 
     // assert
     expect(count).toBe(2);
@@ -192,11 +202,14 @@ describe("ClientCheckInsController loadAwaitingCount", () => {
 
   it("refuses the coach without counting", async () => {
     // arrange
-    const { controller, countCheckInsAwaiting } = createController();
+    const { clientCheckInsController, countCheckInsAwaiting } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadAwaitingCount(clientArgs({ session: COACH_SESSION })),
+      clientCheckInsController.loadAwaitingCount(
+        clientArgs({ session: COACH_SESSION }),
+      ),
     );
 
     // assert
@@ -208,12 +221,12 @@ describe("ClientCheckInsController loadAwaitingCount", () => {
 describe("ClientCheckInsController request", () => {
   it("asks for the check-in at the chosen instant in her zone with her note", async () => {
     // arrange
-    const { controller, requestCheckIn } = createController({
+    const { clientCheckInsController, requestCheckIn } = createController({
       requested: { status: "requested", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.request(
+    const response = await clientCheckInsController.request(
       requestArgs({
         startsAt: STARTS_AT.toISOString(),
         timeZone: "Europe/London",
@@ -237,10 +250,10 @@ describe("ClientCheckInsController request", () => {
 
   it("asks without a note when she wrote none", async () => {
     // arrange
-    const { controller, requestCheckIn } = createController();
+    const { clientCheckInsController, requestCheckIn } = createController();
 
     // act
-    await controller.request(
+    await clientCheckInsController.request(
       requestArgs({
         startsAt: STARTS_AT.toISOString(),
         timeZone: "Europe/London",
@@ -275,10 +288,12 @@ describe("ClientCheckInsController request", () => {
     "answers $status $error when the request is refused as $error",
     async ({ result, status, error }) => {
       // arrange
-      const { controller } = createController({ requested: result });
+      const { clientCheckInsController } = createController({
+        requested: result,
+      });
 
       // act
-      const response = await controller.request(
+      const response = await clientCheckInsController.request(
         requestArgs({
           startsAt: STARTS_AT.toISOString(),
           timeZone: "Europe/London",
@@ -304,10 +319,12 @@ describe("ClientCheckInsController request", () => {
     },
   ])("refuses $what without asking for anything", async ({ body }) => {
     // arrange
-    const { controller, requestCheckIn } = createController();
+    const { clientCheckInsController, requestCheckIn } = createController();
 
     // act
-    const response = await controller.request(rawRequestArgs(body));
+    const response = await clientCheckInsController.request(
+      rawRequestArgs(body),
+    );
 
     // assert
     expect(response.status).toBe(422);
@@ -317,11 +334,11 @@ describe("ClientCheckInsController request", () => {
 
   it("refuses the coach without asking for anything", async () => {
     // arrange
-    const { controller, requestCheckIn } = createController();
+    const { clientCheckInsController, requestCheckIn } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.request(
+      clientCheckInsController.request(
         requestArgs(
           { startsAt: STARTS_AT.toISOString(), timeZone: "Europe/London" },
           COACH_SESSION,
@@ -356,24 +373,24 @@ function createController(
       checkIn: PENDING.toSnapshot(),
     },
   );
-  const controller = new ClientCheckInsController({
+  const clientCheckInsController = new ClientCheckInsController({
     unitOfWork: (work) => work(),
-    countCheckInsAwaiting: {
+    countCheckInsAwaitingUseCase: {
       execute: countCheckInsAwaiting,
     } as unknown as CountCheckInsAwaitingUseCase,
-    findNextClientCheckIn: {
+    findNextClientCheckInUseCase: {
       execute: findNextClientCheckIn,
     } as unknown as FindNextClientCheckInUseCase,
-    listClientCheckIns: {
+    listClientCheckInsUseCase: {
       execute: listClientCheckIns,
     } as unknown as ListClientCheckInsUseCase,
-    requestCheckIn: {
+    requestCheckInUseCase: {
       execute: requestCheckIn,
     } as unknown as RequestCheckInUseCase,
   });
 
   return {
-    controller,
+    clientCheckInsController,
     countCheckInsAwaiting,
     findNextClientCheckIn,
     listClientCheckIns,

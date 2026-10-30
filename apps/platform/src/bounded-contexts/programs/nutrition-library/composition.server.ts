@@ -33,62 +33,87 @@ import { createRecipePhotoStoreAdapter } from "~/bounded-contexts/programs/nutri
 import type { RecipePhotosConfig } from "~/bounded-contexts/programs/nutrition-library/config.server";
 
 type RecipePhotoFiles = {
-  photoRenditions: RecipePhotoRenditionsPort;
-  photoStore: RecipePhotoStorePort;
+  recipePhotoRenditionsPort: RecipePhotoRenditionsPort;
+  recipePhotoStorePort: RecipePhotoStorePort;
 };
 
 type NutritionLibraryFeatureHandles = RecipePhotoFiles & {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
-  logger: LoggerPort;
+  loggerPort: LoggerPort;
 };
 
 export function composeNutritionLibraryFeature(
   handles: NutritionLibraryFeatureHandles,
 ): NutritionLibraryFeature {
-  const incidents = new NutritionLibraryIncidentsAdapter(handles.logger);
-  const library = new PostgresFoodLibraryRepository(handles.database);
-  const recipes = new PostgresRecipeLibraryRepository(handles.database);
-  const tags = new PostgresNutritionTagsRepository(handles.database);
-  const writeHandles = { clock: handles.clock, incidents };
-  const recipeReads = { recipes, foods: library, tags };
+  const nutritionLibraryIncidentsAdapter = new NutritionLibraryIncidentsAdapter(
+    handles.loggerPort,
+  );
+  const postgresFoodLibraryRepository = new PostgresFoodLibraryRepository(
+    handles.database,
+  );
+  const postgresRecipeLibraryRepository = new PostgresRecipeLibraryRepository(
+    handles.database,
+  );
+  const postgresNutritionTagsRepository = new PostgresNutritionTagsRepository(
+    handles.database,
+  );
+  const writeHandles = {
+    clockPort: handles.clockPort,
+    nutritionLibraryIncidentsPort: nutritionLibraryIncidentsAdapter,
+  };
+  const recipeReads = {
+    recipeLibraryPort: postgresRecipeLibraryRepository,
+    foodLibraryPort: postgresFoodLibraryRepository,
+    nutritionTagsPort: postgresNutritionTagsRepository,
+  };
   const photos = new RecipePhotoSaving({
-    renditions: handles.photoRenditions,
-    ids: new RandomRecipePhotoIdsAdapter(),
-    store: handles.photoStore,
-    incidents,
+    recipePhotoRenditionsPort: handles.recipePhotoRenditionsPort,
+    recipePhotoIdsPort: new RandomRecipePhotoIdsAdapter(),
+    recipePhotoStorePort: handles.recipePhotoStorePort,
+    nutritionLibraryIncidentsPort: nutritionLibraryIncidentsAdapter,
   });
 
   return {
-    foodLibrary: new FoodLibraryController({
-      listFoods: new ListFoodsUseCase({ library, tags }),
-      findFood: new FindFoodUseCase({ library, tags }),
-      createFood: new CreateFoodUseCase({
-        library,
-        tags,
-        ...writeHandles,
-        ids: new RandomFoodIdsAdapter(),
+    foodLibraryController: new FoodLibraryController({
+      listFoodsUseCase: new ListFoodsUseCase({
+        foodLibraryPort: postgresFoodLibraryRepository,
+        nutritionTagsPort: postgresNutritionTagsRepository,
       }),
-      editFood: new EditFoodUseCase({ library, tags, ...writeHandles }),
+      findFoodUseCase: new FindFoodUseCase({
+        foodLibraryPort: postgresFoodLibraryRepository,
+        nutritionTagsPort: postgresNutritionTagsRepository,
+      }),
+      createFoodUseCase: new CreateFoodUseCase({
+        foodLibraryPort: postgresFoodLibraryRepository,
+        nutritionTagsPort: postgresNutritionTagsRepository,
+        ...writeHandles,
+        foodIdsPort: new RandomFoodIdsAdapter(),
+      }),
+      editFoodUseCase: new EditFoodUseCase({
+        foodLibraryPort: postgresFoodLibraryRepository,
+        nutritionTagsPort: postgresNutritionTagsRepository,
+        ...writeHandles,
+      }),
     }),
-    recipeLibrary: new RecipeLibraryController({
-      listRecipes: new ListRecipesUseCase(recipeReads),
-      startRecipe: new StartRecipeUseCase(recipeReads),
-      findRecipe: new FindRecipeUseCase(recipeReads),
-      createRecipe: new CreateRecipeUseCase({
+    recipeLibraryController: new RecipeLibraryController({
+      listRecipesUseCase: new ListRecipesUseCase(recipeReads),
+      startRecipeUseCase: new StartRecipeUseCase(recipeReads),
+      findRecipeUseCase: new FindRecipeUseCase(recipeReads),
+      createRecipeUseCase: new CreateRecipeUseCase({
         ...recipeReads,
         ...writeHandles,
-        ids: new RandomRecipeIdsAdapter(),
+        recipeIdsPort: new RandomRecipeIdsAdapter(),
         photos,
       }),
-      editRecipe: new EditRecipeUseCase({
+      editRecipeUseCase: new EditRecipeUseCase({
         ...recipeReads,
         ...writeHandles,
         photos,
       }),
-      openRecipePhoto: new OpenRecipePhotoUseCase({
-        recipes,
-        store: handles.photoStore,
+      openRecipePhotoUseCase: new OpenRecipePhotoUseCase({
+        recipeLibraryPort: postgresRecipeLibraryRepository,
+        recipePhotoStorePort: handles.recipePhotoStorePort,
       }),
     }),
   };
@@ -98,7 +123,11 @@ export function composeRecipePhotoFiles(
   config: RecipePhotosConfig,
 ): RecipePhotoFiles {
   return {
-    photoRenditions: createRecipePhotoRenditionsAdapter(RECIPE_PHOTO_RENDITION),
-    photoStore: createRecipePhotoStoreAdapter(config.RECIPE_PHOTO_ROOT),
+    recipePhotoRenditionsPort: createRecipePhotoRenditionsAdapter(
+      RECIPE_PHOTO_RENDITION,
+    ),
+    recipePhotoStorePort: createRecipePhotoStoreAdapter(
+      config.RECIPE_PHOTO_ROOT,
+    ),
   };
 }

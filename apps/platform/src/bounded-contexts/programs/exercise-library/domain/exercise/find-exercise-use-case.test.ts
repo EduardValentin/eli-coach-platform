@@ -66,16 +66,21 @@ function createUseCase() {
     list: vi.fn(async (ownerAccountId: string) => ownedBy(ownerAccountId)),
   } satisfies Pick<ExerciseLibraryPort, "list">;
 
-  return { useCase: new FindExerciseUseCase({ library }), library };
+  return {
+    findExerciseUseCase: new FindExerciseUseCase({
+      exerciseLibraryPort: library,
+    }),
+    library,
+  };
 }
 
 describe("FindExerciseUseCase", () => {
   it("finds her exercise in one read of her library, with the names of her other active exercises, its own left out", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { findExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
     });
@@ -91,10 +96,10 @@ describe("FindExerciseUseCase", () => {
 
   it("answers an archived exercise as archived", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { findExerciseUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000005",
     });
@@ -105,10 +110,10 @@ describe("FindExerciseUseCase", () => {
 
   it("finds nothing for an unknown exercise", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { findExerciseUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000404",
     });
@@ -119,10 +124,10 @@ describe("FindExerciseUseCase", () => {
 
   it("finds nothing for another coach's exercise", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { findExerciseUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000004",
     });

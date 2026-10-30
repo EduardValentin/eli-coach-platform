@@ -7,12 +7,16 @@ export type PublishedCoverResult =
   | { status: "unavailable" };
 
 export class FindPublishedCoverUseCase {
-  constructor(private readonly options: { catalog: StoreCatalogPort }) {}
+  constructor(
+    private readonly options: { storeCatalogPort: StoreCatalogPort },
+  ) {}
 
   async execute(assetKey: string): Promise<PublishedCoverResult> {
     try {
       const cover =
-        await this.options.catalog.getPublishedCoverByAssetKey(assetKey);
+        await this.options.storeCatalogPort.getPublishedCoverByAssetKey(
+          assetKey,
+        );
 
       return cover ? { status: "available", cover } : { status: "not_found" };
     } catch {

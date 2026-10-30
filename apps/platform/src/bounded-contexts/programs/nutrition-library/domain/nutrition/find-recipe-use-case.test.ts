@@ -86,18 +86,22 @@ function createUseCase() {
     ),
   };
   const tags = { list: vi.fn(async () => TAGS) };
-  const useCase = new FindRecipeUseCase({ recipes, foods, tags });
+  const findRecipeUseCase = new FindRecipeUseCase({
+    recipeLibraryPort: recipes,
+    foodLibraryPort: foods,
+    nutritionTagsPort: tags,
+  });
 
-  return { useCase, recipes, foods };
+  return { findRecipeUseCase, recipes, foods };
 }
 
 describe("FindRecipeUseCase", () => {
   it("finds her recipe in one read of her library, offering her active foods and keeping the archived ones it uses as placed only, with the names of her other recipes and the tag vocabulary", async () => {
     // arrange
-    const { useCase, recipes, foods } = createUseCase();
+    const { findRecipeUseCase, recipes, foods } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
     });
@@ -128,10 +132,10 @@ describe("FindRecipeUseCase", () => {
     ["another coach's recipe", "recipe-3"],
   ])("finds nothing for %s", async (_case, recipeId) => {
     // arrange
-    const { useCase, foods } = createUseCase();
+    const { findRecipeUseCase, foods } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId,
     });

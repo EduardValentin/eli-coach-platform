@@ -5,8 +5,14 @@ type InvitePaidClientResult =
   { status: "invited" } | { status: "already-admitted" };
 
 type InvitePaidClientUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitationsPort, "issue" | "ensureDelivered">;
-  clients: Pick<InvitedClientsPort, "findById" | "recordAccountInvitation">;
+  accountInvitationsPort: Pick<
+    AccountInvitationsPort,
+    "issue" | "ensureDelivered"
+  >;
+  invitedClientsPort: Pick<
+    InvitedClientsPort,
+    "findById" | "recordAccountInvitation"
+  >;
 };
 
 export class InvitePaidClientUseCase {
@@ -15,7 +21,9 @@ export class InvitePaidClientUseCase {
   async execute(command: {
     clientId: string;
   }): Promise<InvitePaidClientResult> {
-    const client = await this.options.clients.findById(command.clientId);
+    const client = await this.options.invitedClientsPort.findById(
+      command.clientId,
+    );
 
     if (!client) {
       throw new Error(`Paid client ${command.clientId} does not exist.`);
@@ -25,24 +33,24 @@ export class InvitePaidClientUseCase {
       return { status: "already-admitted" };
     }
 
-    await this.options.accountInvitations.ensureDelivered({
-      invitationId: await this.invitationIdOf(client),
+    await this.options.accountInvitationsPort.ensureDelivered({
+      invitationId: await this.ensureInvitationFor(client),
       firstName: client.firstName,
     });
 
     return { status: "invited" };
   }
 
-  private async invitationIdOf(client: InvitedClient): Promise<string> {
+  private async ensureInvitationFor(client: InvitedClient): Promise<string> {
     if (client.accountInvitationId) {
       return client.accountInvitationId;
     }
 
-    const { invitationId } = await this.options.accountInvitations.issue({
+    const { invitationId } = await this.options.accountInvitationsPort.issue({
       email: client.email,
     });
 
-    await this.options.clients.recordAccountInvitation({
+    await this.options.invitedClientsPort.recordAccountInvitation({
       clientId: client.id,
       invitationId,
     });

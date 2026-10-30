@@ -3,11 +3,11 @@ import type { FeatureFlagReaderPort } from "~/bounded-contexts/operations/featur
 import { currentFeatureFlagOverrides } from "./feature-flag-override-store.server";
 
 export class FeatureFlagOverrideReaderAdapter implements FeatureFlagReaderPort {
-  constructor(private readonly storedFlags: FeatureFlagReaderPort) {}
+  constructor(private readonly featureFlagReaderPort: FeatureFlagReaderPort) {}
 
   async execute() {
     return {
-      ...(await this.storedFlags.execute()),
+      ...(await this.featureFlagReaderPort.execute()),
       ...currentFeatureFlagOverrides(),
     };
   }

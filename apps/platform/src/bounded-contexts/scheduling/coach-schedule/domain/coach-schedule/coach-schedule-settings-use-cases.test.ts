@@ -48,7 +48,7 @@ function configuredRoom(url: string): CoachMeetingRoom {
 }
 
 function createAvailabilitySource(
-  options?: Partial<CoachAvailabilitySourcePort>,
+  coachAvailabilitySourcePort?: Partial<CoachAvailabilitySourcePort>,
 ): CoachAvailabilitySourcePort {
   return {
     current: vi
@@ -56,51 +56,53 @@ function createAvailabilitySource(
       .mockResolvedValue(
         configuredAvailabilityOrThrow(CONFIGURED_AVAILABILITY),
       ),
-    ...options,
+    ...coachAvailabilitySourcePort,
   };
 }
 
 function createAvailabilityChanges(
-  options?: Partial<CoachAvailabilityChangesPort>,
+  coachAvailabilityChangesPort?: Partial<CoachAvailabilityChangesPort>,
 ): CoachAvailabilityChangesPort {
   return {
     save: vi.fn().mockResolvedValue(undefined),
-    ...options,
+    ...coachAvailabilityChangesPort,
   };
 }
 
 function createMeetingRoomSource(
-  options?: Partial<CoachMeetingRoomSourcePort>,
+  coachMeetingRoomSourcePort?: Partial<CoachMeetingRoomSourcePort>,
 ): CoachMeetingRoomSourcePort {
   return {
     current: vi.fn().mockResolvedValue(null),
-    ...options,
+    ...coachMeetingRoomSourcePort,
   };
 }
 
 function createMeetingRoomChanges(
-  options?: Partial<CoachMeetingRoomChangesPort>,
+  coachMeetingRoomChangesPort?: Partial<CoachMeetingRoomChangesPort>,
 ): CoachMeetingRoomChangesPort {
   return {
     save: vi.fn().mockResolvedValue(undefined),
-    ...options,
+    ...coachMeetingRoomChangesPort,
   };
 }
 
 describe("GetCoachScheduleSettingsUseCase", () => {
   it("composes the availability and the meeting room into one snapshot", async () => {
     // arrange
-    const getSettings = new GetCoachScheduleSettingsUseCase({
-      availability: createAvailabilitySource(),
-      meetingRoom: createMeetingRoomSource({
-        current: vi
-          .fn()
-          .mockResolvedValue(configuredRoom("https://meet.example.com/room")),
-      }),
-    });
+    const getCoachScheduleSettingsUseCase = new GetCoachScheduleSettingsUseCase(
+      {
+        coachAvailabilitySourcePort: createAvailabilitySource(),
+        coachMeetingRoomSourcePort: createMeetingRoomSource({
+          current: vi
+            .fn()
+            .mockResolvedValue(configuredRoom("https://meet.example.com/room")),
+        }),
+      },
+    );
 
     // act
-    const settings = await getSettings.execute();
+    const settings = await getCoachScheduleSettingsUseCase.execute();
 
     // assert
     expect(settings).toEqual({
@@ -114,13 +116,15 @@ describe("GetCoachScheduleSettingsUseCase", () => {
 
   it("answers no meeting link while the coach has saved no room", async () => {
     // arrange
-    const getSettings = new GetCoachScheduleSettingsUseCase({
-      availability: createAvailabilitySource(),
-      meetingRoom: createMeetingRoomSource(),
-    });
+    const getCoachScheduleSettingsUseCase = new GetCoachScheduleSettingsUseCase(
+      {
+        coachAvailabilitySourcePort: createAvailabilitySource(),
+        coachMeetingRoomSourcePort: createMeetingRoomSource(),
+      },
+    );
 
     // act
-    const settings = await getSettings.execute();
+    const settings = await getCoachScheduleSettingsUseCase.execute();
 
     // assert
     expect(settings.meetingLink).toBeNull();
@@ -138,33 +142,37 @@ describe("UpdateCoachScheduleSettingsUseCase", () => {
 
   it("saves the availability and then the room when both are valid", async () => {
     // arrange
-    const availabilityChanges = createAvailabilityChanges();
-    const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
-      availabilityChanges,
-      meetingRoomChanges,
-    });
+    const coachAvailabilityChangesPort = createAvailabilityChanges();
+    const coachMeetingRoomChangesPort = createMeetingRoomChanges();
+    const updateCoachScheduleSettingsUseCase =
+      new UpdateCoachScheduleSettingsUseCase({
+        coachAvailabilityChangesPort,
+        coachMeetingRoomChangesPort,
+      });
 
     // act
-    const result = await updateSettings.execute(validCommand);
+    const result =
+      await updateCoachScheduleSettingsUseCase.execute(validCommand);
 
     // assert
     expect(result).toEqual({ status: "saved", settings: validCommand });
-    expect(availabilityChanges.save).toHaveBeenCalledWith(
+    expect(coachAvailabilityChangesPort.save).toHaveBeenCalledWith(
       expect.objectContaining({
         timeZone: "Europe/Bucharest",
         startHour: 9,
         endHour: 12,
       }),
     );
-    expect(meetingRoomChanges.save).toHaveBeenCalledWith(
+    expect(coachMeetingRoomChangesPort.save).toHaveBeenCalledWith(
       expect.objectContaining({ url: "https://meet.example.com/room" }),
     );
 
-    const savedAvailability = availabilityChanges.save as ReturnType<
+    const savedAvailability = coachAvailabilityChangesPort.save as ReturnType<
       typeof vi.fn
     >;
-    const savedRoom = meetingRoomChanges.save as ReturnType<typeof vi.fn>;
+    const savedRoom = coachMeetingRoomChangesPort.save as ReturnType<
+      typeof vi.fn
+    >;
 
     expect(savedAvailability.mock.invocationCallOrder[0]).toBeLessThan(
       savedRoom.mock.invocationCallOrder[0]!,
@@ -173,14 +181,15 @@ describe("UpdateCoachScheduleSettingsUseCase", () => {
 
   it("saves an empty meeting link as no room", async () => {
     // arrange
-    const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
-      availabilityChanges: createAvailabilityChanges(),
-      meetingRoomChanges,
-    });
+    const coachMeetingRoomChangesPort = createMeetingRoomChanges();
+    const updateCoachScheduleSettingsUseCase =
+      new UpdateCoachScheduleSettingsUseCase({
+        coachAvailabilityChangesPort: createAvailabilityChanges(),
+        coachMeetingRoomChangesPort,
+      });
 
     // act
-    const result = await updateSettings.execute({
+    const result = await updateCoachScheduleSettingsUseCase.execute({
       ...validCommand,
       meetingLink: "",
     });
@@ -190,41 +199,43 @@ describe("UpdateCoachScheduleSettingsUseCase", () => {
       status: "saved",
       settings: { ...validCommand, meetingLink: null },
     });
-    expect(meetingRoomChanges.save).toHaveBeenCalledWith(null);
+    expect(coachMeetingRoomChangesPort.save).toHaveBeenCalledWith(null);
   });
 
   it("refuses without saving anything when no weekday is selected", async () => {
     // arrange
-    const availabilityChanges = createAvailabilityChanges();
-    const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
-      availabilityChanges,
-      meetingRoomChanges,
-    });
+    const coachAvailabilityChangesPort = createAvailabilityChanges();
+    const coachMeetingRoomChangesPort = createMeetingRoomChanges();
+    const updateCoachScheduleSettingsUseCase =
+      new UpdateCoachScheduleSettingsUseCase({
+        coachAvailabilityChangesPort,
+        coachMeetingRoomChangesPort,
+      });
 
     // act
-    const result = await updateSettings.execute({
+    const result = await updateCoachScheduleSettingsUseCase.execute({
       ...validCommand,
       weekdays: [],
     });
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: ["no_weekday"] });
-    expect(availabilityChanges.save).not.toHaveBeenCalled();
-    expect(meetingRoomChanges.save).not.toHaveBeenCalled();
+    expect(coachAvailabilityChangesPort.save).not.toHaveBeenCalled();
+    expect(coachMeetingRoomChangesPort.save).not.toHaveBeenCalled();
   });
 
   it("refuses without saving anything for an invalid meeting link", async () => {
     // arrange
-    const availabilityChanges = createAvailabilityChanges();
-    const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
-      availabilityChanges,
-      meetingRoomChanges,
-    });
+    const coachAvailabilityChangesPort = createAvailabilityChanges();
+    const coachMeetingRoomChangesPort = createMeetingRoomChanges();
+    const updateCoachScheduleSettingsUseCase =
+      new UpdateCoachScheduleSettingsUseCase({
+        coachAvailabilityChangesPort,
+        coachMeetingRoomChangesPort,
+      });
 
     // act
-    const result = await updateSettings.execute({
+    const result = await updateCoachScheduleSettingsUseCase.execute({
       ...validCommand,
       meetingLink: "not-a-url",
     });
@@ -234,19 +245,20 @@ describe("UpdateCoachScheduleSettingsUseCase", () => {
       status: "invalid",
       problems: ["invalid_meeting_link"],
     });
-    expect(availabilityChanges.save).not.toHaveBeenCalled();
-    expect(meetingRoomChanges.save).not.toHaveBeenCalled();
+    expect(coachAvailabilityChangesPort.save).not.toHaveBeenCalled();
+    expect(coachMeetingRoomChangesPort.save).not.toHaveBeenCalled();
   });
 
   it("collects every problem when the availability and the link are both invalid", async () => {
     // arrange
-    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
-      availabilityChanges: createAvailabilityChanges(),
-      meetingRoomChanges: createMeetingRoomChanges(),
-    });
+    const updateCoachScheduleSettingsUseCase =
+      new UpdateCoachScheduleSettingsUseCase({
+        coachAvailabilityChangesPort: createAvailabilityChanges(),
+        coachMeetingRoomChangesPort: createMeetingRoomChanges(),
+      });
 
     // act
-    const result = await updateSettings.execute({
+    const result = await updateCoachScheduleSettingsUseCase.execute({
       ...validCommand,
       weekdays: [],
       meetingLink: "not-a-url",

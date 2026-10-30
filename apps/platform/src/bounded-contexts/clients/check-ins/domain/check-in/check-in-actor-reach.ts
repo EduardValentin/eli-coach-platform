@@ -10,8 +10,8 @@ type ReachedCheckIn =
   | { status: "ended" };
 
 type CheckInActorReachOptions = {
-  checkIns: Pick<CheckInsPort, "find">;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  checkInsPort: Pick<CheckInsPort, "find">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class CheckInActorReach {
@@ -21,7 +21,7 @@ export class CheckInActorReach {
     authSubjectId: string,
   ): Promise<ClientReachReading | null> {
     const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+      await this.options.clientReachPort.findByAuthSubjectId(authSubjectId);
 
     return client?.portal === "reachable" ? client : null;
   }
@@ -40,7 +40,7 @@ export class CheckInActorReach {
     checkInId: string;
   }): Promise<ReachedCheckIn> {
     if (actor.party === "coach") {
-      const checkIn = await this.options.checkIns.find(checkInId);
+      const checkIn = await this.options.checkInsPort.find(checkInId);
 
       return checkIn ? { status: "reached", checkIn } : { status: "unknown" };
     }
@@ -51,7 +51,7 @@ export class CheckInActorReach {
       return { status: "ended" };
     }
 
-    const checkIn = await this.options.checkIns.find(checkInId);
+    const checkIn = await this.options.checkInsPort.find(checkInId);
 
     if (!checkIn?.isFor(clientId)) {
       return { status: "unknown" };

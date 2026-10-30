@@ -123,25 +123,27 @@ function createUseCase(options: {
     checkInInboxFailed: vi.fn(),
     checkInSeriesInboxFailed: vi.fn(),
   } satisfies CheckInIncidentsPort;
-  const useCase = new ListCoachCheckInsAwaitingUseCase({
-    checkIns,
-    clock: { now: () => NOW },
-    identities,
-    incidents,
-  });
+  const listCoachCheckInsAwaitingUseCase = new ListCoachCheckInsAwaitingUseCase(
+    {
+      checkInsPort: checkIns,
+      clockPort: { now: () => NOW },
+      clientIdentitiesPort: identities,
+      checkInIncidentsPort: incidents,
+    },
+  );
 
-  return { incidents, useCase };
+  return { incidents, listCoachCheckInsAwaitingUseCase };
 }
 
 describe("ListCoachCheckInsAwaitingUseCase", () => {
   it("lists the check-ins waiting for the coach's answer with each client's name, soonest start first", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { listCoachCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(CLIENT_REQUEST, SOONER_CLIENT_REQUEST),
     });
 
     // act
-    const listed = await useCase.execute();
+    const listed = await listCoachCheckInsAwaitingUseCase.execute();
 
     // assert
     expect(listed).toMatchObject([
@@ -160,12 +162,12 @@ describe("ListCoachCheckInsAwaitingUseCase", () => {
 
   it("lists a clash as waiting for the coach to find a new time", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { listCoachCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(CLASH, CLIENT_REQUEST),
     });
 
     // act
-    const listed = await useCase.execute();
+    const listed = await listCoachCheckInsAwaitingUseCase.execute();
 
     // assert
     expect(listed.map((view) => [view.id, view.status])).toEqual([
@@ -180,12 +182,12 @@ describe("ListCoachCheckInsAwaitingUseCase", () => {
     ["a request whose start has passed", EXPIRED_REQUEST],
   ])("leaves out %s", async (_situation, props) => {
     // arrange
-    const { useCase } = createUseCase({
+    const { listCoachCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(CLIENT_REQUEST, props),
     });
 
     // act
-    const listed = await useCase.execute();
+    const listed = await listCoachCheckInsAwaitingUseCase.execute();
 
     // assert
     expect(listed.map((view) => view.id)).toEqual(["check-in-1"]);
@@ -199,13 +201,13 @@ describe("ListCoachCheckInsAwaitingUseCase", () => {
     async (_read, failing) => {
       // arrange
       const failure = new Error("connection refused");
-      const { incidents, useCase } = createUseCase({
+      const { incidents, listCoachCheckInsAwaitingUseCase } = createUseCase({
         checkIns: checkInsOf(CLIENT_REQUEST),
         [failing]: failure,
       });
 
       // act
-      const listed = await useCase.execute();
+      const listed = await listCoachCheckInsAwaitingUseCase.execute();
 
       // assert
       expect(listed).toEqual([]);

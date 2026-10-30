@@ -32,10 +32,10 @@ const ENTERED = {
 describe("CoachClientIdentityController save", () => {
   it("saves her identity with the gender the coach chose", async () => {
     // arrange
-    const { controller, updateAsCoach } = createController();
+    const { coachClientIdentityController, updateAsCoach } = createController();
 
     // act
-    const response = await controller.save(
+    const response = await coachClientIdentityController.save(
       accountArgs(COACH, { ...ENTERED, gender: "prefer_not_to_say" }),
       CLIENT_ID,
     );
@@ -58,10 +58,10 @@ describe("CoachClientIdentityController save", () => {
 
   it("refuses a body without a gender without saving anything", async () => {
     // arrange
-    const { controller, updateAsCoach } = createController();
+    const { coachClientIdentityController, updateAsCoach } = createController();
 
     // act
-    const response = await controller.save(
+    const response = await coachClientIdentityController.save(
       accountArgs(COACH, ENTERED),
       CLIENT_ID,
     );
@@ -73,10 +73,10 @@ describe("CoachClientIdentityController save", () => {
 
   it("answers not found to an id that is not a uuid", async () => {
     // arrange
-    const { controller } = createController();
+    const { coachClientIdentityController } = createController();
 
     // act
-    const response = await controller.save(
+    const response = await coachClientIdentityController.save(
       accountArgs(COACH, { ...ENTERED, gender: "female" }),
       "nope",
     );
@@ -87,11 +87,11 @@ describe("CoachClientIdentityController save", () => {
 
   it("refuses a client on the coach's route", async () => {
     // arrange
-    const { controller } = createController();
+    const { coachClientIdentityController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.save(
+      coachClientIdentityController.save(
         accountArgs(CLIENT, { ...ENTERED, gender: "female" }),
         CLIENT_ID,
       ),
@@ -104,13 +104,13 @@ describe("CoachClientIdentityController save", () => {
 
 function createController() {
   const updateAsCoach = vi.fn().mockResolvedValue({ status: "saved" });
-  const controller = new CoachClientIdentityController({
-    updateClientIdentityAsCoach: {
+  const coachClientIdentityController = new CoachClientIdentityController({
+    updateClientIdentityAsCoachUseCase: {
       execute: updateAsCoach,
     } as unknown as UpdateClientIdentityAsCoachUseCase,
   });
 
-  return { controller, updateAsCoach };
+  return { coachClientIdentityController, updateAsCoach };
 }
 
 function accountArgs(account: SessionAccount, body: unknown) {

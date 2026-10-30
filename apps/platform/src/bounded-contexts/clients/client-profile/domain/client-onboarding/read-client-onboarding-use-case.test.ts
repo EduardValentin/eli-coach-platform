@@ -97,17 +97,17 @@ describe("ReadClientOnboardingUseCase", () => {
     // arrange
     const onboardings = createOnboardings();
     const settings = createSettings(UnitPreference.of("imperial"));
-    const useCase = new ReadClientOnboardingUseCase({
+    const readClientOnboardingUseCase = new ReadClientOnboardingUseCase({
       participants: new OnboardingParticipants({
-        clients: createClients(CLIENT),
-        identities: createIdentities(),
+        onboardingClientsPort: createClients(CLIENT),
+        clientIdentitiesPort: createIdentities(),
       }),
-      onboardings,
-      settings,
+      clientOnboardingSourcePort: onboardings,
+      clientSettingsSourcePort: settings,
     });
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readClientOnboardingUseCase.execute("user_ana");
 
     // assert
     expect(result?.onboarding).toMatchObject({
@@ -127,17 +127,17 @@ describe("ReadClientOnboardingUseCase", () => {
 
   it("reads metric units while she has chosen none", async () => {
     // arrange
-    const useCase = new ReadClientOnboardingUseCase({
+    const readClientOnboardingUseCase = new ReadClientOnboardingUseCase({
       participants: new OnboardingParticipants({
-        clients: createClients(CLIENT),
-        identities: createIdentities(),
+        onboardingClientsPort: createClients(CLIENT),
+        clientIdentitiesPort: createIdentities(),
       }),
-      onboardings: createOnboardings(),
-      settings: createSettings(null),
+      clientOnboardingSourcePort: createOnboardings(),
+      clientSettingsSourcePort: createSettings(null),
     });
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readClientOnboardingUseCase.execute("user_ana");
 
     // assert
     expect(result?.unitPreference.toSnapshot()).toEqual({
@@ -149,17 +149,17 @@ describe("ReadClientOnboardingUseCase", () => {
   it("reads nothing for a subject bound to no client", async () => {
     // arrange
     const onboardings = createOnboardings();
-    const useCase = new ReadClientOnboardingUseCase({
+    const readClientOnboardingUseCase = new ReadClientOnboardingUseCase({
       participants: new OnboardingParticipants({
-        clients: createClients(null),
-        identities: createIdentities(),
+        onboardingClientsPort: createClients(null),
+        clientIdentitiesPort: createIdentities(),
       }),
-      onboardings,
-      settings: createSettings(null),
+      clientOnboardingSourcePort: onboardings,
+      clientSettingsSourcePort: createSettings(null),
     });
 
     // act
-    const result = await useCase.execute("user_stranger");
+    const result = await readClientOnboardingUseCase.execute("user_stranger");
 
     // assert
     expect(result).toBeNull();
@@ -169,17 +169,17 @@ describe("ReadClientOnboardingUseCase", () => {
   it("reads nothing for a client with no identity", async () => {
     // arrange
     const onboardings = createOnboardings();
-    const useCase = new ReadClientOnboardingUseCase({
+    const readClientOnboardingUseCase = new ReadClientOnboardingUseCase({
       participants: new OnboardingParticipants({
-        clients: createClients(CLIENT),
-        identities: createIdentities(null),
+        onboardingClientsPort: createClients(CLIENT),
+        clientIdentitiesPort: createIdentities(null),
       }),
-      onboardings,
-      settings: createSettings(null),
+      clientOnboardingSourcePort: onboardings,
+      clientSettingsSourcePort: createSettings(null),
     });
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readClientOnboardingUseCase.execute("user_ana");
 
     // assert
     expect(result).toBeNull();

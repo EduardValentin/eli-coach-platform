@@ -21,22 +21,22 @@ type ClientRecord = ClientRosterEntry & {
 };
 
 type ReadClientRecordUseCaseOptions = {
-  calls: ClientCallsPort;
-  clock: ClockPort;
-  roster: ClientRosterPort;
+  clientCallsPort: ClientCallsPort;
+  clockPort: ClockPort;
+  clientRosterPort: ClientRosterPort;
 };
 
 export class ReadClientRecordUseCase {
   constructor(private readonly options: ReadClientRecordUseCaseOptions) {}
 
   async execute(clientId: string): Promise<ClientRecord | null> {
-    const entry = await this.options.roster.findById(clientId);
+    const entry = await this.options.clientRosterPort.findById(clientId);
 
     if (!entry) {
       return null;
     }
 
-    const call = await this.options.calls.callOf(
+    const call = await this.options.clientCallsPort.callOf(
       entry.booking.assessmentCallId,
     );
 
@@ -51,7 +51,7 @@ export class ReadClientRecordUseCase {
       status: rosterEntryStatus({
         accountBound: entry.accountBound,
         journey,
-        now: this.options.clock.now(),
+        now: this.options.clockPort.now(),
       }),
       needsRefund: rosterEntryNeedsRefund(entry),
       coachingCancelledOrEnded: journey.standing.isCancelledOrEnded(),

@@ -25,12 +25,12 @@ function createProductEmail(
 }
 
 function createNotifications(
-  productEmail: ProductEmailPort,
+  productEmailPort: ProductEmailPort,
   appBasePath = "/app",
 ) {
-  return new EmailOnboardingDetailsNotificationsAdapter(productEmail, {
+  return new EmailOnboardingDetailsNotificationsAdapter(productEmailPort, {
     appBasePath,
-    clock: { now: () => new Date("2026-09-29T10:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-09-29T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     publicAppUrl: "https://evoa.fit",
   });
@@ -43,12 +43,14 @@ describe("EmailOnboardingDetailsNotifications", () => {
       kind: "sent",
       providerMessageId: "msg_1",
     });
-    const notifications = createNotifications(productEmail);
+    const emailOnboardingDetailsNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    const result = await notifications.sendDetailsRequest(
-      detailsRequestMessage(),
-    );
+    const result =
+      await emailOnboardingDetailsNotificationsAdapter.sendDetailsRequest(
+        detailsRequestMessage(),
+      );
 
     // assert
     expect(result).toBe("sent");
@@ -69,11 +71,16 @@ describe("EmailOnboardingDetailsNotifications", () => {
       kind: "sent",
       providerMessageId: "msg_1",
     });
-    const notifications = createNotifications(productEmail, "/app");
+    const emailOnboardingDetailsNotificationsAdapter = createNotifications(
+      productEmail,
+      "/app",
+    );
     const expectedUrl = "https://evoa.fit/app/client";
 
     // act
-    await notifications.sendDetailsRequest(detailsRequestMessage());
+    await emailOnboardingDetailsNotificationsAdapter.sendDetailsRequest(
+      detailsRequestMessage(),
+    );
 
     // assert
     const [command] = productEmail.send.mock.calls[0] ?? [];
@@ -89,10 +96,13 @@ describe("EmailOnboardingDetailsNotifications", () => {
       kind: "sent",
       providerMessageId: "msg_1",
     });
-    const notifications = createNotifications(productEmail);
+    const emailOnboardingDetailsNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    await notifications.sendDetailsRequest(detailsRequestMessage());
+    await emailOnboardingDetailsNotificationsAdapter.sendDetailsRequest(
+      detailsRequestMessage(),
+    );
 
     // assert
     const [command] = productEmail.send.mock.calls[0] ?? [];
@@ -110,12 +120,15 @@ describe("EmailOnboardingDetailsNotifications", () => {
     "reports a send the provider %s as failed",
     async (_label, outcome) => {
       // arrange
-      const notifications = createNotifications(createProductEmail(outcome));
+      const emailOnboardingDetailsNotificationsAdapter = createNotifications(
+        createProductEmail(outcome),
+      );
 
       // act
-      const result = await notifications.sendDetailsRequest(
-        detailsRequestMessage(),
-      );
+      const result =
+        await emailOnboardingDetailsNotificationsAdapter.sendDetailsRequest(
+          detailsRequestMessage(),
+        );
 
       // assert
       expect(result).toBe("failed");

@@ -52,16 +52,22 @@ function createUseCase() {
   } satisfies Pick<FoodLibraryPort, "list">;
   const tags = { list: vi.fn(async () => TAGS) };
 
-  return { useCase: new FindFoodUseCase({ library, tags }), library };
+  return {
+    findFoodUseCase: new FindFoodUseCase({
+      foodLibraryPort: library,
+      nutritionTagsPort: tags,
+    }),
+    library,
+  };
 }
 
 describe("FindFoodUseCase", () => {
   it("finds her food in one read of her library, with the names of every other food of hers, its own left out, and the tag vocabulary", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { findFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
     });
@@ -78,10 +84,10 @@ describe("FindFoodUseCase", () => {
 
   it("finds nothing for an unknown food", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { findFoodUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-9",
     });
@@ -92,10 +98,10 @@ describe("FindFoodUseCase", () => {
 
   it("finds nothing for another coach's food", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { findFoodUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await findFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-4",
     });

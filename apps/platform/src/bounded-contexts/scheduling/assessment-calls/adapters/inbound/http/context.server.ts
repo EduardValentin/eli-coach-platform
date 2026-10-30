@@ -4,8 +4,8 @@ import type { AssessmentCallsController } from "~/bounded-contexts/scheduling/as
 import type { CoachAssessmentCallsController } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/coach/coach-assessment-calls-controller.server";
 
 export type AssessmentCallsFeature = {
-  assessmentCalls: AssessmentCallsController;
-  coachAssessmentCalls: CoachAssessmentCallsController;
+  assessmentCallsController: AssessmentCallsController;
+  coachAssessmentCallsController: CoachAssessmentCallsController;
 };
 
 export const assessmentCallsContext: RouterContext<AssessmentCallsFeature> =

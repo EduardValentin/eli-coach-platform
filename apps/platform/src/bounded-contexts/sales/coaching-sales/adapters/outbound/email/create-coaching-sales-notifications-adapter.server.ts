@@ -7,8 +7,8 @@ import {
 } from "./email-coaching-sales-notifications-adapter.server";
 
 export function createCoachingSalesNotificationsAdapter(
-  productEmail: ProductEmailPort,
+  productEmailPort: ProductEmailPort,
   options: EmailCoachingSalesNotificationsOptions,
 ): CoachingSalesNotificationsPort {
-  return new EmailCoachingSalesNotificationsAdapter(productEmail, options);
+  return new EmailCoachingSalesNotificationsAdapter(productEmailPort, options);
 }

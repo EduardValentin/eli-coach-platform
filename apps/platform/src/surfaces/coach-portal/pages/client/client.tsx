@@ -46,8 +46,8 @@ export async function loader(args: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: CLIENT_NOT_FOUND_STATUS });
   }
 
-  const { coachProfile } = args.context.get(clientProfileContext);
-  const { coachCheckIns, coachCheckInSeries } =
+  const { clientProfileController } = args.context.get(clientProfileContext);
+  const { coachCheckInsController, coachCheckInSeriesController } =
     args.context.get(checkInsContext);
   const [
     client,
@@ -58,17 +58,19 @@ export async function loader(args: LoaderFunctionArgs) {
     scheduling,
     weekly,
   ] = await Promise.all([
-    args.context.get(clientsContext).coachClients.loadClient(args, clientId),
+    args.context
+      .get(clientsContext)
+      .coachClientsController.loadClient(args, clientId),
     args.context
       .get(coachingSalesContext)
-      .coachSales.loadClientSubscription(args, clientId),
+      .coachSalesController.loadClientSubscription(args, clientId),
     args.context
       .get(clientOnboardingContext)
-      .coachReview.loadReview(args, clientId),
-    coachProfile.load(args, clientId),
-    coachProfile.loadMeasurements(args, clientId),
-    coachCheckIns.loadClientScheduling(args, clientId),
-    coachCheckInSeries.loadClientSeries(args, clientId),
+      .onboardingReviewController.loadReview(args, clientId),
+    clientProfileController.load(args, clientId),
+    clientProfileController.loadMeasurements(args, clientId),
+    coachCheckInsController.loadClientScheduling(args, clientId),
+    coachCheckInSeriesController.loadClientSeries(args, clientId),
   ]);
 
   return {

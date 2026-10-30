@@ -19,9 +19,12 @@ type UpdateOwnClientProfileResult =
   | { status: "changed-meanwhile" };
 
 type UpdateOwnClientProfileUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  profiles: Pick<ClientProfilesPort, "findByClientId" | "saveSharedFacts">;
-  clock: ClockPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientProfilesPort: Pick<
+    ClientProfilesPort,
+    "findByClientId" | "saveSharedFacts"
+  >;
+  clockPort: ClockPort;
 };
 
 export class UpdateOwnClientProfileUseCase {
@@ -30,7 +33,7 @@ export class UpdateOwnClientProfileUseCase {
   async execute(
     command: UpdateOwnClientProfileCommand,
   ): Promise<UpdateOwnClientProfileResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       command.authSubjectId,
     );
 
@@ -42,7 +45,9 @@ export class UpdateOwnClientProfileUseCase {
       return { status: "ended" };
     }
 
-    const profile = await this.options.profiles.findByClientId(client.clientId);
+    const profile = await this.options.clientProfilesPort.findByClientId(
+      client.clientId,
+    );
 
     if (!profile) {
       return { status: "not-on-journey" };
@@ -50,14 +55,14 @@ export class UpdateOwnClientProfileUseCase {
 
     const outcome = profile.editSharedFacts(
       command.facts,
-      this.options.clock.now(),
+      this.options.clockPort.now(),
     );
 
     if (outcome.status !== "edited") {
       return outcome;
     }
 
-    const saved = await this.options.profiles.saveSharedFacts({
+    const saved = await this.options.clientProfilesPort.saveSharedFacts({
       profile: outcome.profile,
       expectedUpdatedAt: profile.toSnapshot().updatedAt,
     });

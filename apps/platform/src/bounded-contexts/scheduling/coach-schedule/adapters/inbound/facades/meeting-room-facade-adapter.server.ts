@@ -2,9 +2,11 @@ import type { CoachMeetingRoomSourcePort } from "~/bounded-contexts/scheduling/c
 import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room-facade";
 
 export class MeetingRoomFacadeAdapter implements MeetingRoomFacade {
-  constructor(private readonly meetingRoom: CoachMeetingRoomSourcePort) {}
+  constructor(
+    private readonly coachMeetingRoomSourcePort: CoachMeetingRoomSourcePort,
+  ) {}
 
   async currentJoinUrl() {
-    return (await this.meetingRoom.current())?.url ?? null;
+    return (await this.coachMeetingRoomSourcePort.current())?.url ?? null;
   }
 }

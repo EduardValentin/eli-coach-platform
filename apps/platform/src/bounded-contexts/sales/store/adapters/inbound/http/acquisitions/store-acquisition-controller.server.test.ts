@@ -22,19 +22,19 @@ describe("StoreAcquisitionController", () => {
         return { status: "verified" as const };
       }),
     };
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn(async () => {
         events.push("acquired");
         return { status: "delivered" };
       }),
     } as unknown as AcquireProductsUseCase;
-    const controller = new StoreAcquisitionController(
-      acquireProducts,
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
       botVerifier,
     );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(201);
@@ -49,19 +49,22 @@ describe("StoreAcquisitionController", () => {
 
   it("never invokes the domain use case when bot verification fails", async () => {
     // arrange
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn(),
     } as unknown as AcquireProductsUseCase;
-    const controller = new StoreAcquisitionController(acquireProducts, {
-      verifySubmission: vi.fn().mockResolvedValue({ status: "rejected" }),
-    });
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "rejected" }),
+      },
+    );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(400);
-    expect(acquireProducts.execute).not.toHaveBeenCalled();
+    expect(acquireProductsUseCase.execute).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {
@@ -73,19 +76,22 @@ describe("StoreAcquisitionController", () => {
 
   it("reports bot verification infrastructure failures as temporary unavailability", async () => {
     // arrange
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn(),
     } as unknown as AcquireProductsUseCase;
-    const controller = new StoreAcquisitionController(acquireProducts, {
-      verifySubmission: vi.fn().mockResolvedValue({ status: "unavailable" }),
-    });
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "unavailable" }),
+      },
+    );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(503);
-    expect(acquireProducts.execute).not.toHaveBeenCalled();
+    expect(acquireProductsUseCase.execute).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {
@@ -97,18 +103,21 @@ describe("StoreAcquisitionController", () => {
 
   it("returns available product identifiers for atomic cart reconciliation", async () => {
     // arrange
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "unavailable_products",
         availableProductSlugs: ["hormone-harmony"],
       }),
     } as unknown as AcquireProductsUseCase;
-    const controller = new StoreAcquisitionController(acquireProducts, {
-      verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
-    });
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+      },
+    );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(409);
@@ -124,17 +133,20 @@ describe("StoreAcquisitionController", () => {
 
   it("returns a retryable response when delivery outcome is ambiguous", async () => {
     // arrange
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "delivery_retryable",
       }),
     } as unknown as AcquireProductsUseCase;
-    const controller = new StoreAcquisitionController(acquireProducts, {
-      verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
-    });
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+      },
+    );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(503);
@@ -149,18 +161,21 @@ describe("StoreAcquisitionController", () => {
 
   it("returns a distinct rate-limited response inside the delivery cooldown", async () => {
     // arrange
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "rate_limited",
         window: "cooldown",
       }),
     } as unknown as AcquireProductsUseCase;
-    const controller = new StoreAcquisitionController(acquireProducts, {
-      verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
-    });
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+      },
+    );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(429);
@@ -208,7 +223,7 @@ describe("StoreAcquisitionController", () => {
 
   it("answers a refused subaddress with the status an invalid email gets", async () => {
     // arrange
-    const controller = new StoreAcquisitionController(
+    const storeAcquisitionController = new StoreAcquisitionController(
       {
         execute: vi.fn().mockResolvedValue({ status: "subaddress_refused" }),
       } as unknown as AcquireProductsUseCase,
@@ -218,7 +233,7 @@ describe("StoreAcquisitionController", () => {
     );
 
     // act
-    const response = await controller.acquire(createRequest());
+    const response = await storeAcquisitionController.acquire(createRequest());
 
     // assert
     expect(response.status).toBe(400);
@@ -233,14 +248,14 @@ describe("StoreAcquisitionController", () => {
 
   it("rejects an oversized streamed body before bot verification or acquisition", async () => {
     // arrange
-    const acquireProducts = {
+    const acquireProductsUseCase = {
       execute: vi.fn(),
     } as unknown as AcquireProductsUseCase;
     const botVerifier = {
       verifySubmission: vi.fn(),
     };
-    const controller = new StoreAcquisitionController(
-      acquireProducts,
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
       botVerifier,
     );
     const request = new Request("https://eli.example/api/store/acquisitions", {
@@ -254,13 +269,13 @@ describe("StoreAcquisitionController", () => {
     });
 
     // act
-    const response = await controller.acquire(request);
+    const response = await storeAcquisitionController.acquire(request);
 
     // assert
     expect(request.headers.has("Content-Length")).toBe(false);
     expect(response.status).toBe(413);
     expect(botVerifier.verifySubmission).not.toHaveBeenCalled();
-    expect(acquireProducts.execute).not.toHaveBeenCalled();
+    expect(acquireProductsUseCase.execute).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {

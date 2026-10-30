@@ -30,12 +30,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
           },
         ],
       });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const taxonomy = await repository.getTaxonomy();
+    const taxonomy =
+      await postgresStoreProductPublicationRepository.getTaxonomy();
 
     // assert
     expect(taxonomy).toEqual({
@@ -59,12 +59,14 @@ describe("PostgresStoreProductPublicationRepository", () => {
         },
       ],
     });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const product = await repository.findProductBySlug("glute-growth-guide");
+    const product =
+      await postgresStoreProductPublicationRepository.findProductBySlug(
+        "glute-growth-guide",
+      );
 
     // assert
     expect(product).toEqual(
@@ -81,12 +83,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
   it("reports an unknown product as null", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({ rows: [] });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const product = await repository.findProductById(404);
+    const product =
+      await postgresStoreProductPublicationRepository.findProductById(404);
 
     // assert
     expect(product).toBeNull();
@@ -107,12 +109,14 @@ describe("PostgresStoreProductPublicationRepository", () => {
         },
       ],
     });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const record = await repository.findPublicationByIdempotencyKey("key-1");
+    const record =
+      await postgresStoreProductPublicationRepository.findPublicationByIdempotencyKey(
+        "key-1",
+      );
 
     // assert
     expect(record).toEqual({
@@ -133,12 +137,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
     const execute = vi
       .fn()
       .mockResolvedValue({ rows: [{ nextDisplayOrder: "5" }] });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const nextDisplayOrder = await repository.getNextDisplayOrder();
+    const nextDisplayOrder =
+      await postgresStoreProductPublicationRepository.getNextDisplayOrder();
 
     // assert
     expect(nextDisplayOrder).toBe(5);
@@ -147,12 +151,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
   it("starts the catalog order at one when no product exists", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({ rows: [] });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const nextDisplayOrder = await repository.getNextDisplayOrder();
+    const nextDisplayOrder =
+      await postgresStoreProductPublicationRepository.getNextDisplayOrder();
 
     // assert
     expect(nextDisplayOrder).toBe(1);
@@ -172,12 +176,16 @@ describe("PostgresStoreProductPublicationRepository", () => {
       .fn()
       .mockRejectedValueOnce({ code: "40001" })
       .mockResolvedValueOnce(publication);
-    const repository = new PostgresStoreProductPublicationRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const result = await repository.persistPublication(persistCommand());
+    const result =
+      await postgresStoreProductPublicationRepository.persistPublication(
+        persistCommand(),
+      );
 
     // assert
     expect(result).toBe(publication);
@@ -187,12 +195,16 @@ describe("PostgresStoreProductPublicationRepository", () => {
   it("does not retry a failure that serialization cannot explain", async () => {
     // arrange
     const transaction = vi.fn().mockRejectedValue({ code: "23505" });
-    const repository = new PostgresStoreProductPublicationRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const persisting = repository.persistPublication(persistCommand());
+    const persisting =
+      postgresStoreProductPublicationRepository.persistPublication(
+        persistCommand(),
+      );
 
     // assert
     await expect(persisting).rejects.toMatchObject({ code: "23505" });
@@ -202,12 +214,16 @@ describe("PostgresStoreProductPublicationRepository", () => {
   it("gives up after the retry budget rather than looping forever", async () => {
     // arrange
     const transaction = vi.fn().mockRejectedValue({ code: "40001" });
-    const repository = new PostgresStoreProductPublicationRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const persisting = repository.persistPublication(persistCommand());
+    const persisting =
+      postgresStoreProductPublicationRepository.persistPublication(
+        persistCommand(),
+      );
 
     // assert
     await expect(persisting).rejects.toMatchObject({ code: "40001" });
@@ -217,12 +233,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
   it("reports retirement of an unknown product as no rows changed", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({ rows: [] });
-    const repository = new PostgresStoreProductPublicationRepository(
-      createDatabase(execute),
-    );
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
 
     // act
-    const retired = await repository.retireProduct(404);
+    const retired =
+      await postgresStoreProductPublicationRepository.retireProduct(404);
 
     // assert
     expect(retired).toBe(false);

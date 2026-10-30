@@ -23,8 +23,8 @@ import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/publ
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OwnClientProfileControllerOptions = {
-  readOwnClientProfile: ReadOwnClientProfileUseCase;
-  updateOwnClientProfile: UpdateOwnClientProfileUseCase;
+  readOwnClientProfileUseCase: ReadOwnClientProfileUseCase;
+  updateOwnClientProfileUseCase: UpdateOwnClientProfileUseCase;
 };
 
 type UpdateOwnClientProfileResult = Awaited<
@@ -47,7 +47,7 @@ export class OwnClientProfileController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const reading = await this.options.readOwnClientProfile.execute(
+    const reading = await this.options.readOwnClientProfileUseCase.execute(
       client.authSubjectId,
     );
 
@@ -73,7 +73,7 @@ export class OwnClientProfileController {
     }
 
     return this.savedResponse(
-      await this.options.updateOwnClientProfile.execute({
+      await this.options.updateOwnClientProfileUseCase.execute({
         authSubjectId: client.authSubjectId,
         facts: request.data.facts,
       }),

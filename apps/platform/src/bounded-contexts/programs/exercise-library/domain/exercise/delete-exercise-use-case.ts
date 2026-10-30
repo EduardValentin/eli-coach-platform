@@ -9,7 +9,7 @@ export type DeleteExerciseResult =
   { status: "deleted"; exercise: Exercise } | { status: "not-found" };
 
 type DeleteExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibraryPort, "find" | "remove">;
+  exerciseLibraryPort: Pick<ExerciseLibraryPort, "find" | "remove">;
   videos: Pick<ExerciseVideoCleanup, "removeStored">;
 };
 
@@ -17,14 +17,14 @@ export class DeleteExerciseUseCase {
   constructor(private readonly options: DeleteExerciseUseCaseOptions) {}
 
   async execute(reference: ExerciseReference): Promise<DeleteExerciseResult> {
-    const { library } = this.options;
-    const exercise = await library.find(reference);
+    const { exerciseLibraryPort } = this.options;
+    const exercise = await exerciseLibraryPort.find(reference);
 
     if (!exercise) {
       return { status: "not-found" };
     }
 
-    const removal = await library.remove(reference);
+    const removal = await exerciseLibraryPort.remove(reference);
 
     if (removal === "missing") {
       return { status: "not-found" };

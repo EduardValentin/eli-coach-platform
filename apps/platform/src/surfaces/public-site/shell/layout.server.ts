@@ -27,13 +27,13 @@ export async function loader(
   args: LoaderFunctionArgs,
 ): Promise<PublicLayoutLoaderData> {
   const runtimeConfig = args.context.get(runtimeConfigContext);
-  const { waitlist } = args.context.get(waitlistContext);
+  const { waitlistController } = args.context.get(waitlistContext);
 
   return {
     botDetection: runtimeConfig.botDetection,
     session: await readPublicSessionState(args),
     storePath: buildRedirectPath(runtimeConfig.appBasePath, STORE_PATH),
-    waitlist: presentWaitlist(await waitlist.getWaitlist()),
+    waitlist: presentWaitlist(await waitlistController.getWaitlist()),
   };
 }
 

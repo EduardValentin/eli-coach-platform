@@ -13,7 +13,9 @@ import { ClientResourceLibrary } from "./client-resource-library";
 export function loader(
   args: LoaderFunctionArgs,
 ): Promise<ClientResourceListing> {
-  return args.context.get(clientResourcesContext).ownResources.load(args);
+  return args.context
+    .get(clientResourcesContext)
+    .ownResourcesController.load(args);
 }
 
 export const meta: MetaFunction = () => [

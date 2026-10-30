@@ -33,12 +33,12 @@ describe("ClientJourneyController welcome", () => {
     "greets a %s client by her first name with the %s form wording",
     async (gender, wording) => {
       // arrange
-      const { controller, readClientJourney } = createController({
+      const { clientJourneyController, readClientJourney } = createController({
         journey: journeyOf({ gender }),
       });
 
       // act
-      const page = await controller.loadWelcome(clientArgs());
+      const page = await clientJourneyController.loadWelcome(clientArgs());
 
       // assert
       expect(page).toEqual({ firstName: "Ana", wording });
@@ -48,11 +48,11 @@ describe("ClientJourneyController welcome", () => {
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ journey: null });
+    const { clientJourneyController } = createController({ journey: null });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadWelcome(clientArgs()),
+      clientJourneyController.loadWelcome(clientArgs()),
     );
 
     // assert
@@ -61,13 +61,13 @@ describe("ClientJourneyController welcome", () => {
 
   it("refuses the coach without reading any journey", async () => {
     // arrange
-    const { controller, readClientJourney } = createController({
+    const { clientJourneyController, readClientJourney } = createController({
       journey: journeyOf({ gender: "female" }),
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadWelcome(
+      clientJourneyController.loadWelcome(
         clientArgs({
           account: { ...CLIENT, role: "COACH" },
           kind: "authenticated",
@@ -82,13 +82,13 @@ describe("ClientJourneyController welcome", () => {
 
   it("sends an anonymous visitor to sign in without reading any journey", async () => {
     // arrange
-    const { controller, readClientJourney } = createController({
+    const { clientJourneyController, readClientJourney } = createController({
       journey: journeyOf({ gender: "female" }),
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadWelcome(clientArgs({ kind: "anonymous" })),
+      clientJourneyController.loadWelcome(clientArgs({ kind: "anonymous" })),
     );
 
     // assert
@@ -103,7 +103,7 @@ describe("ClientJourneyController welcome", () => {
 describe("ClientJourneyController identity", () => {
   it("names the client from the journey the gate handed over", () => {
     // arrange
-    const { controller, readClientJourney } = createController({});
+    const { clientJourneyController, readClientJourney } = createController({});
     const args = createRequestArgs({
       contexts: [
         contextEntry(
@@ -114,7 +114,7 @@ describe("ClientJourneyController identity", () => {
     });
 
     // act
-    const identity = controller.loadIdentity(args);
+    const identity = clientJourneyController.loadIdentity(args);
 
     // assert
     expect(identity).toEqual({ firstName: "Ana", lastName: "Popescu" });
@@ -123,13 +123,13 @@ describe("ClientJourneyController identity", () => {
 
   it("names no one for a client account with no client record", () => {
     // arrange
-    const { controller } = createController({});
+    const { clientJourneyController } = createController({});
     const args = createRequestArgs({
       contexts: [contextEntry(clientJourneyContext, null)],
     });
 
     // act
-    const identity = controller.loadIdentity(args);
+    const identity = clientJourneyController.loadIdentity(args);
 
     // assert
     expect(identity).toBeNull();
@@ -139,12 +139,13 @@ describe("ClientJourneyController identity", () => {
 describe("ClientJourneyController mark welcome seen", () => {
   it("records her welcome as seen and moves her on to onboarding", async () => {
     // arrange
-    const { controller, markWelcomeSeen } = createController({
+    const { clientJourneyController, markWelcomeSeen } = createController({
       markResult: { status: "welcome-seen" },
     });
 
     // act
-    const response = await controller.markWelcomeSeen(clientArgs());
+    const response =
+      await clientJourneyController.markWelcomeSeen(clientArgs());
 
     // assert
     expect(markWelcomeSeen).toHaveBeenCalledWith("user_ana");
@@ -154,13 +155,13 @@ describe("ClientJourneyController mark welcome seen", () => {
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientJourneyController } = createController({
       markResult: { status: "not-on-journey" },
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.markWelcomeSeen(clientArgs()),
+      clientJourneyController.markWelcomeSeen(clientArgs()),
     );
 
     // assert
@@ -169,13 +170,13 @@ describe("ClientJourneyController mark welcome seen", () => {
 
   it("refuses the coach without recording anything", async () => {
     // arrange
-    const { controller, markWelcomeSeen } = createController({
+    const { clientJourneyController, markWelcomeSeen } = createController({
       markResult: { status: "welcome-seen" },
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.markWelcomeSeen(
+      clientJourneyController.markWelcomeSeen(
         clientArgs({
           account: { ...CLIENT, role: "COACH" },
           kind: "authenticated",
@@ -218,16 +219,16 @@ function createController(options: {
 }) {
   const readClientJourney = vi.fn().mockResolvedValue(options.journey ?? null);
   const markWelcomeSeen = vi.fn().mockResolvedValue(options.markResult);
-  const controller = new ClientJourneyController({
-    markWelcomeSeen: {
+  const clientJourneyController = new ClientJourneyController({
+    markWelcomeSeenUseCase: {
       execute: markWelcomeSeen,
     } as unknown as MarkWelcomeSeenUseCase,
-    readClientJourney: {
+    readClientJourneyUseCase: {
       execute: readClientJourney,
     } as unknown as ReadClientJourneyUseCase,
   });
 
-  return { controller, markWelcomeSeen, readClientJourney };
+  return { clientJourneyController, markWelcomeSeen, readClientJourney };
 }
 
 function clientArgs(

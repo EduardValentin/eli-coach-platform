@@ -14,10 +14,10 @@ export type OpenSlotsResult =
   | { status: "unavailable" };
 
 type ListOpenSlotsUseCaseOptions = {
-  availability: CoachAvailabilityPort;
+  coachAvailabilityPort: CoachAvailabilityPort;
   bookingWindow: AssessmentCallBookingWindow;
-  clock: ClockPort;
-  incidents: AssessmentCallIncidentsPort;
+  clockPort: ClockPort;
+  assessmentCallIncidentsPort: AssessmentCallIncidentsPort;
 };
 
 type SlotSources = {
@@ -33,11 +33,11 @@ export class ListOpenSlotsUseCase {
       return { status: "closed" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const sources = await this.readSources(now);
 
     if (!sources) {
-      this.options.incidents.slotsReadFailed();
+      this.options.assessmentCallIncidentsPort.slotsReadFailed();
 
       return { status: "unavailable" };
     }
@@ -52,8 +52,8 @@ export class ListOpenSlotsUseCase {
   private async readSources(now: Date): Promise<SlotSources | null> {
     try {
       return {
-        availability: await this.options.availability.current(),
-        busy: await this.options.availability.busyFrom(now),
+        availability: await this.options.coachAvailabilityPort.current(),
+        busy: await this.options.coachAvailabilityPort.busyFrom(now),
       };
     } catch {
       return null;

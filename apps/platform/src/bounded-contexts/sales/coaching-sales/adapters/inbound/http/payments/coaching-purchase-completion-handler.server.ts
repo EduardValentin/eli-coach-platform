@@ -26,10 +26,10 @@ type PurchaseStatus =
   | PurchaseRecording["status"];
 
 type CoachingPurchaseCompletionHandlerOptions = {
-  finishCheckoutPurchase: FinishCheckoutPurchaseUseCase;
-  readCheckoutPurchase: ReadCheckoutPurchaseUseCase;
-  recordCheckoutPurchase: RecordCheckoutPurchaseUseCase;
-  refreshPaymentCard: RefreshPaymentCardUseCase;
+  finishCheckoutPurchaseUseCase: FinishCheckoutPurchaseUseCase;
+  readCheckoutPurchaseUseCase: ReadCheckoutPurchaseUseCase;
+  recordCheckoutPurchaseUseCase: RecordCheckoutPurchaseUseCase;
+  refreshPaymentCardUseCase: RefreshPaymentCardUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -52,7 +52,7 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
     eventId: string,
     session: PaidCheckoutSession,
   ): Promise<HandlerOutcome> {
-    const read = await this.options.readCheckoutPurchase.execute({
+    const read = await this.options.readCheckoutPurchaseUseCase.execute({
       eventId,
       checkoutSessionId: session.id,
     });
@@ -67,8 +67,8 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
       return OUTCOME_BY_PURCHASE_STATUS[recorded.status];
     }
 
-    await this.options.finishCheckoutPurchase.execute(recorded);
-    await this.options.refreshPaymentCard.execute({
+    await this.options.finishCheckoutPurchaseUseCase.execute(recorded);
+    await this.options.refreshPaymentCardUseCase.execute({
       paymentCustomerId: recorded.subscription.paymentCustomerId,
     });
 
@@ -80,7 +80,7 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
   ): Promise<PurchaseRecording> {
     try {
       return await this.options.unitOfWork(() =>
-        this.options.recordCheckoutPurchase.execute(purchase),
+        this.options.recordCheckoutPurchaseUseCase.execute(purchase),
       );
     } catch (error) {
       if (error instanceof CallAlreadyPaid) {

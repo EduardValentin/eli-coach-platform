@@ -54,14 +54,16 @@ function everyOpenedFileIsClosed(): boolean {
 describe("FilesystemRecipePhotoStore", () => {
   let workspace: string;
   let root: string;
-  let store: FilesystemRecipePhotoStoreAdapter;
+  let filesystemRecipePhotoStoreAdapter: FilesystemRecipePhotoStoreAdapter;
 
   beforeEach(async () => {
     openedFiles.length = 0;
     workspace = await mkdtemp(join(tmpdir(), "recipe-photo-store-"));
     root = join(workspace, "photos-root");
     await mkdir(root);
-    store = new FilesystemRecipePhotoStoreAdapter(root);
+    filesystemRecipePhotoStoreAdapter = new FilesystemRecipePhotoStoreAdapter(
+      root,
+    );
   });
 
   afterEach(async () => {
@@ -70,7 +72,7 @@ describe("FilesystemRecipePhotoStore", () => {
 
   async function storedPhoto(bytes: Buffer = PHOTO): Promise<string> {
     const photoId = randomUUID();
-    await store.store(photoId, bytes);
+    await filesystemRecipePhotoStoreAdapter.store(photoId, bytes);
 
     return photoId;
   }
@@ -81,7 +83,7 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = randomUUID();
 
       // act
-      await store.store(photoId, PHOTO);
+      await filesystemRecipePhotoStoreAdapter.store(photoId, PHOTO);
 
       // assert
       expect(await readdir(join(root, "photos"))).toEqual([photoId]);
@@ -94,7 +96,10 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = await storedPhoto();
 
       // act
-      const storing = store.store(photoId, randomBytes(16));
+      const storing = filesystemRecipePhotoStoreAdapter.store(
+        photoId,
+        randomBytes(16),
+      );
 
       // assert
       await expect(storing).rejects.toThrow(
@@ -110,7 +115,7 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = await storedPhoto();
 
       // act
-      const opening = await store.open(photoId);
+      const opening = await filesystemRecipePhotoStoreAdapter.open(photoId);
 
       // assert
       expect(opening).toMatchObject({
@@ -128,7 +133,8 @@ describe("FilesystemRecipePhotoStore", () => {
       await storedPhoto();
 
       // act
-      const opening = await store.open(randomUUID());
+      const opening =
+        await filesystemRecipePhotoStoreAdapter.open(randomUUID());
 
       // assert
       expect(opening).toEqual({ status: "missing" });
@@ -139,7 +145,7 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = randomUUID();
 
       // act
-      const opening = await store.open(photoId);
+      const opening = await filesystemRecipePhotoStoreAdapter.open(photoId);
 
       // assert
       expect(opening).toEqual({ status: "missing" });
@@ -151,7 +157,7 @@ describe("FilesystemRecipePhotoStore", () => {
       openedFiles.length = 0;
 
       // act
-      const opening = await store.open(photoId);
+      const opening = await filesystemRecipePhotoStoreAdapter.open(photoId);
       const openedBeforePulling = openedFiles.length;
       const chunks =
         opening.status === "opened"
@@ -175,21 +181,23 @@ describe("FilesystemRecipePhotoStore", () => {
       const otherId = await storedPhoto();
 
       // act
-      await store.remove(photoId);
+      await filesystemRecipePhotoStoreAdapter.remove(photoId);
 
       // assert
       expect(await readdir(join(root, "photos"))).toEqual([otherId]);
-      expect(await store.open(photoId)).toEqual({ status: "missing" });
+      expect(await filesystemRecipePhotoStoreAdapter.open(photoId)).toEqual({
+        status: "missing",
+      });
     });
 
     it("removes what is not there without failing", async () => {
       // arrange
       const photoId = await storedPhoto();
-      await store.remove(photoId);
+      await filesystemRecipePhotoStoreAdapter.remove(photoId);
 
       // act
       const outcomes = await Promise.allSettled([
-        store.remove(photoId),
+        filesystemRecipePhotoStoreAdapter.remove(photoId),
         new FilesystemRecipePhotoStoreAdapter(join(workspace, "empty")).remove(
           randomUUID(),
         ),
@@ -208,9 +216,9 @@ describe("FilesystemRecipePhotoStore", () => {
     async (id) => {
       // arrange
       const calls = [
-        () => store.store(id, PHOTO),
-        () => store.open(id),
-        () => store.remove(id),
+        () => filesystemRecipePhotoStoreAdapter.store(id, PHOTO),
+        () => filesystemRecipePhotoStoreAdapter.open(id),
+        () => filesystemRecipePhotoStoreAdapter.remove(id),
       ];
 
       // act
@@ -243,7 +251,7 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = randomUUID();
 
       // act
-      const storing = store.store(photoId, PHOTO);
+      const storing = filesystemRecipePhotoStoreAdapter.store(photoId, PHOTO);
 
       // assert
       await expect(storing).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -255,7 +263,7 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = "photo-1";
 
       // act
-      const opening = store.open(photoId);
+      const opening = filesystemRecipePhotoStoreAdapter.open(photoId);
 
       // assert
       await expect(opening).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -267,7 +275,7 @@ describe("FilesystemRecipePhotoStore", () => {
       const photoId = "photo-1";
 
       // act
-      const removing = store.remove(photoId);
+      const removing = filesystemRecipePhotoStoreAdapter.remove(photoId);
 
       // assert
       await expect(removing).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -283,7 +291,7 @@ describe("FilesystemRecipePhotoStore", () => {
     await symlink(outsideFile, join(root, "photos", "photo-1"));
 
     // act
-    const opening = store.open("photo-1");
+    const opening = filesystemRecipePhotoStoreAdapter.open("photo-1");
 
     // assert
     await expect(opening).rejects.toThrow(LOCATION_LEAVES_ROOT);

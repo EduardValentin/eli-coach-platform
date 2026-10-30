@@ -32,12 +32,13 @@ const SNAPSHOT = {
 describe("PostgresClientAvatars#findByClientId", () => {
   it("rebuilds her avatar from its row", async () => {
     // arrange
-    const avatars = new PostgresClientAvatarsRepository(
+    const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
       createDatabaseAnswering([ROW]),
     );
 
     // act
-    const avatar = await avatars.findByClientId(CLIENT_ID);
+    const avatar =
+      await postgresClientAvatarsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(avatar?.toSnapshot()).toEqual(SNAPSHOT);
@@ -45,12 +46,13 @@ describe("PostgresClientAvatars#findByClientId", () => {
 
   it("answers null while she has no avatar", async () => {
     // arrange
-    const avatars = new PostgresClientAvatarsRepository(
+    const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
       createDatabaseAnswering([]),
     );
 
     // act
-    const avatar = await avatars.findByClientId(CLIENT_ID);
+    const avatar =
+      await postgresClientAvatarsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(avatar).toBeNull();
@@ -60,10 +62,12 @@ describe("PostgresClientAvatars#findByClientId", () => {
 describe("PostgresClientAvatars#findByClientIds", () => {
   it("reads nothing for no clients without querying", async () => {
     // arrange
-    const avatars = new PostgresClientAvatarsRepository({} as DatabaseClient);
+    const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
+      {} as DatabaseClient,
+    );
 
     // act
-    const found = await avatars.findByClientIds([]);
+    const found = await postgresClientAvatarsRepository.findByClientIds([]);
 
     // assert
     expect(found).toEqual([]);
@@ -71,12 +75,14 @@ describe("PostgresClientAvatars#findByClientIds", () => {
 
   it("rebuilds the avatars of the clients asked for", async () => {
     // arrange
-    const avatars = new PostgresClientAvatarsRepository(
+    const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
       createDatabaseAnswering([ROW]),
     );
 
     // act
-    const found = await avatars.findByClientIds([CLIENT_ID]);
+    const found = await postgresClientAvatarsRepository.findByClientIds([
+      CLIENT_ID,
+    ]);
 
     // assert
     expect(found.map((avatar) => avatar.toSnapshot())).toEqual([SNAPSHOT]);
@@ -87,10 +93,14 @@ describe("PostgresClientAvatars#save", () => {
   it("records her avatar, replacing the one she had", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
-    const avatars = new PostgresClientAvatarsRepository(database.client);
+    const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
+      database.client,
+    );
 
     // act
-    await avatars.save(ClientAvatar.reconstitute(SNAPSHOT));
+    await postgresClientAvatarsRepository.save(
+      ClientAvatar.reconstitute(SNAPSHOT),
+    );
 
     // assert
     expect(database.inserted).toEqual([ROW]);
@@ -103,10 +113,12 @@ describe("PostgresClientAvatars#remove", () => {
   it("deletes her avatar row", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
-    const avatars = new PostgresClientAvatarsRepository(database.client);
+    const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
+      database.client,
+    );
 
     // act
-    await avatars.remove(CLIENT_ID);
+    await postgresClientAvatarsRepository.remove(CLIENT_ID);
 
     // assert
     expect(database.deletes).toEqual([

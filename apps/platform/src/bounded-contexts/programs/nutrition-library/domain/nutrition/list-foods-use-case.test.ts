@@ -34,10 +34,13 @@ describe("ListFoodsUseCase", () => {
     // arrange
     const library = { list: vi.fn(async () => [OATS]) };
     const tags = { list: vi.fn(async () => TAGS) };
-    const useCase = new ListFoodsUseCase({ library, tags });
+    const listFoodsUseCase = new ListFoodsUseCase({
+      foodLibraryPort: library,
+      nutritionTagsPort: tags,
+    });
 
     // act
-    const result = await useCase.execute(COACH_ACCOUNT_ID);
+    const result = await listFoodsUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
     expect(result).toEqual({ status: "listed", foods: [OATS], tags: TAGS });

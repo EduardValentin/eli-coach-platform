@@ -15,13 +15,18 @@ const ALLOWED_METHODS = ["PATCH", "DELETE"];
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
-    const { clientResources } = args.context.get(clientResourcesContext);
+    const { clientResourcesController } = args.context.get(
+      clientResourcesContext,
+    );
 
     switch (args.request.method) {
       case "PATCH":
-        return clientResources.changeDetails(args, args.params.resourceId);
+        return clientResourcesController.changeDetails(
+          args,
+          args.params.resourceId,
+        );
       case "DELETE":
-        return clientResources.remove(args, args.params.resourceId);
+        return clientResourcesController.remove(args, args.params.resourceId);
       default:
         throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
     }

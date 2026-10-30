@@ -10,22 +10,25 @@ export class VisitorBirthDate {
 
   static parse(
     isoDate: string,
-    calendar: CalendarDatesPort,
+    calendarDatesPort: CalendarDatesPort,
   ): VisitorBirthDate | null {
-    const date = calendar.dateOf(isoDate);
+    const date = calendarDatesPort.dateOf(isoDate);
 
     return date ? new VisitorBirthDate(date) : null;
   }
 
-  ageOn(moment: AgeMoment, calendar: CalendarDatesPort): number {
-    return calendar.yearsBetween(this.date, calendar.dateOn(moment));
+  ageOn(moment: AgeMoment, calendarDatesPort: CalendarDatesPort): number {
+    return calendarDatesPort.yearsBetween(
+      this.date,
+      calendarDatesPort.dateOn(moment),
+    );
   }
 
   bookingProblemOn(
     moment: AgeMoment,
-    calendar: CalendarDatesPort,
+    calendarDatesPort: CalendarDatesPort,
   ): BirthDateProblem | null {
-    const age = this.ageOn(moment, calendar);
+    const age = this.ageOn(moment, calendarDatesPort);
 
     if (age < 0 || age > MAX_BOOKING_AGE) return "impossible";
 

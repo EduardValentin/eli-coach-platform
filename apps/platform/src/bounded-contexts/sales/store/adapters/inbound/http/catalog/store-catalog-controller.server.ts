@@ -12,8 +12,8 @@ import {
 
 type StoreCatalogControllerOptions = {
   appBasePath: string;
-  findPublishedProduct: FindPublishedProductUseCase;
-  listPublishedProducts: ListPublishedProductsUseCase;
+  findPublishedProductUseCase: FindPublishedProductUseCase;
+  listPublishedProductsUseCase: ListPublishedProductsUseCase;
 };
 
 const UNAVAILABLE_MESSAGE = "The store is temporarily unavailable.";
@@ -22,7 +22,7 @@ export class StoreCatalogController {
   constructor(private readonly options: StoreCatalogControllerOptions) {}
 
   async getPublishedCatalog(): Promise<Response> {
-    const result = await this.options.listPublishedProducts.execute();
+    const result = await this.options.listPublishedProductsUseCase.execute();
 
     if (result.status === "unavailable") {
       return Response.json(
@@ -48,7 +48,7 @@ export class StoreCatalogController {
   }
 
   async getPublishedProductBySlug(slug: string): Promise<Response> {
-    const result = await this.options.findPublishedProduct.execute(slug);
+    const result = await this.options.findPublishedProductUseCase.execute(slug);
 
     if (result.status === "not_found") {
       return new Response("Not Found", { status: 404 });

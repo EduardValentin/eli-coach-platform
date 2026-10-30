@@ -14,7 +14,7 @@ describe("createExerciseLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ExerciseLibraryIncidentsAdapter(
+    const exerciseLibraryIncidentsAdapter = new ExerciseLibraryIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("secret row contents"), {
@@ -22,7 +22,7 @@ describe("createExerciseLibraryIncidents", () => {
     });
 
     // act
-    logger.exerciseCreationFailed({ error: cause });
+    exerciseLibraryIncidentsAdapter.exerciseCreationFailed({ error: cause });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -40,7 +40,7 @@ describe("createExerciseLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ExerciseLibraryIncidentsAdapter(
+    const exerciseLibraryIncidentsAdapter = new ExerciseLibraryIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("secret row contents"), {
@@ -48,7 +48,10 @@ describe("createExerciseLibraryIncidents", () => {
     });
 
     // act
-    logger.exerciseEditFailed({ exerciseId: "exercise-1", error: cause });
+    exerciseLibraryIncidentsAdapter.exerciseEditFailed({
+      exerciseId: "exercise-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -67,7 +70,7 @@ describe("createExerciseLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ExerciseLibraryIncidentsAdapter(
+    const exerciseLibraryIncidentsAdapter = new ExerciseLibraryIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("secret row contents"), {
@@ -75,7 +78,10 @@ describe("createExerciseLibraryIncidents", () => {
     });
 
     // act
-    logger.exerciseRestoreFailed({ exerciseId: "exercise-1", error: cause });
+    exerciseLibraryIncidentsAdapter.exerciseRestoreFailed({
+      exerciseId: "exercise-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -94,7 +100,7 @@ describe("createExerciseLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ExerciseLibraryIncidentsAdapter(
+    const exerciseLibraryIncidentsAdapter = new ExerciseLibraryIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("/srv/exercise-videos/videos/x"), {
@@ -102,7 +108,10 @@ describe("createExerciseLibraryIncidents", () => {
     });
 
     // act
-    logger.videoCleanupFailed({ videoId: "video-1", error: cause });
+    exerciseLibraryIncidentsAdapter.videoCleanupFailed({
+      videoId: "video-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -121,7 +130,7 @@ describe("createExerciseLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ExerciseLibraryIncidentsAdapter(
+    const exerciseLibraryIncidentsAdapter = new ExerciseLibraryIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("/srv/exercise-videos/.incoming/x"), {
@@ -129,7 +138,10 @@ describe("createExerciseLibraryIncidents", () => {
     });
 
     // act
-    logger.videoCleanupFailed({ stagingId: "staging-1", error: cause });
+    exerciseLibraryIncidentsAdapter.videoCleanupFailed({
+      stagingId: "staging-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(

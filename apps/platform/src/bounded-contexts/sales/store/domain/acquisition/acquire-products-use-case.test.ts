@@ -100,33 +100,37 @@ function createDelivery(): ProductDeliveryPort {
 }
 
 function createUseCase(options: {
-  acquisitions?: StoreAcquisitionsPort;
-  catalog?: StoreCatalogPort;
-  delivery?: ProductDeliveryPort;
+  storeAcquisitionsPort?: StoreAcquisitionsPort;
+  storeCatalogPort?: StoreCatalogPort;
+  productDeliveryPort?: ProductDeliveryPort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents?: ReturnType<typeof createAcquisitionIncidents>;
 }) {
   const events: string[] = [];
-  const acquisitions = options.acquisitions ?? createAcquisitions();
-  const delivery = options.delivery ?? createDelivery();
+  const storeAcquisitionsPort =
+    options.storeAcquisitionsPort ?? createAcquisitions();
+  const productDeliveryPort = options.productDeliveryPort ?? createDelivery();
   const incidents = options.incidents ?? createAcquisitionIncidents();
   const payloadDigestGenerator = {
     digest: vi.fn().mockReturnValue("payload-digest"),
   };
 
-  vi.mocked(acquisitions.prepareAcquisition).mockImplementation(async () => {
-    events.push("prepared");
-    return {
-      deliveryAttemptId: 41,
-      deliveryProvider: delivery.provider,
-      providerIdempotencyKey: delivery.createProviderIdempotencyKey(
-        command.idempotencyKey,
-      ),
-      status: "created",
-      requestId: 31,
-    };
-  });
-  vi.mocked(delivery.deliver).mockImplementation(async () => {
+  vi.mocked(storeAcquisitionsPort.prepareAcquisition).mockImplementation(
+    async () => {
+      events.push("prepared");
+      return {
+        deliveryAttemptId: 41,
+        deliveryProvider: productDeliveryPort.provider,
+        providerIdempotencyKey:
+          productDeliveryPort.createProviderIdempotencyKey(
+            command.idempotencyKey,
+          ),
+        status: "created",
+        requestId: 31,
+      };
+    },
+  );
+  vi.mocked(productDeliveryPort.deliver).mockImplementation(async () => {
     events.push("sent");
     return {
       kind: "delivered",
@@ -134,36 +138,36 @@ function createUseCase(options: {
       providerMessageId: "email-1",
     };
   });
-  vi.mocked(acquisitions.recordDeliveryAccepted).mockImplementation(
+  vi.mocked(storeAcquisitionsPort.recordDeliveryAccepted).mockImplementation(
     async () => {
       events.push("accepted");
     },
   );
 
   return {
-    acquisitions,
-    delivery,
+    storeAcquisitionsPort,
+    productDeliveryPort,
     events,
     incidents,
     payloadDigestGenerator,
-    acquireProducts: new AcquireProductsUseCase({
-      acquisitions,
-      catalog: options.catalog ?? createCatalog(),
-      clock: { now: () => fixedNow },
-      consentVersions: {
+    acquireProductsUseCase: new AcquireProductsUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort: options.storeCatalogPort ?? createCatalog(),
+      clockPort: { now: () => fixedNow },
+      consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
       },
-      delivery,
-      emailAcceptance: createEmailAcceptance(
+      productDeliveryPort,
+      emailAcceptancePort: createEmailAcceptance(
         options.emailSubaddresses ?? "allowed",
       ),
-      incidents,
-      payloadDigestGenerator,
-      tokenGenerator: {
+      acquisitionIncidentsPort: incidents,
+      payloadDigestGeneratorPort: payloadDigestGenerator,
+      downloadTokenGeneratorPort: {
         create: vi.fn().mockReturnValue({
           rawToken: "raw-token",
           sha256: "b".repeat(64),
@@ -190,20 +194,20 @@ describe("AcquireProductsUseCase", () => {
   it("commits normalized acquisition and a seven-day grant before sending one email", async () => {
     // arrange
     const {
-      acquireProducts,
-      acquisitions,
-      delivery,
+      acquireProductsUseCase,
+      storeAcquisitionsPort,
+      productDeliveryPort,
       events,
       payloadDigestGenerator,
     } = createUseCase({});
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivered" });
     expect(events).toEqual(["prepared", "sent", "accepted"]);
-    expect(acquisitions.prepareAcquisition).toHaveBeenCalledWith(
+    expect(storeAcquisitionsPort.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         normalizedEmail: "woman@example.com",
         expiresAt: new Date("2026-08-06T12:00:00.000Z"),
@@ -215,7 +219,7 @@ describe("AcquireProductsUseCase", () => {
         ),
       }),
     );
-    expect(delivery.deliver).toHaveBeenCalledWith(
+    expect(productDeliveryPort.deliver).toHaveBeenCalledWith(
       expect.objectContaining({
         idempotencyKey: createProviderIdempotencyKey(command.idempotencyKey),
         resources: [{ title: "Hormone Harmony", typeLabels: ["E-Books"] }],
@@ -232,16 +236,16 @@ describe("AcquireProductsUseCase", () => {
 
   it("rejects the whole request before persistence when any product is unavailable", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    const delivery = createDelivery();
-    const { acquireProducts } = createUseCase({
-      acquisitions,
-      catalog: createCatalog([product]),
-      delivery,
+    const storeAcquisitionsPort = createAcquisitions();
+    const productDeliveryPort = createDelivery();
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort: createCatalog([product]),
+      productDeliveryPort,
     });
 
     // act
-    const result = await acquireProducts.execute({
+    const result = await acquireProductsUseCase.execute({
       ...command,
       productSlugs: ["hormone-harmony", "removed-guide"],
     });
@@ -251,21 +255,21 @@ describe("AcquireProductsUseCase", () => {
       status: "unavailable_products",
       availableProductSlugs: ["hormone-harmony"],
     });
-    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("replays a delivered technical request before reading the mutable catalog", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "accepted",
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const delivery = createDelivery();
-    const catalog = createCatalog();
-    vi.mocked(catalog.getPublishedCatalog).mockRejectedValue(
+    const productDeliveryPort = createDelivery();
+    const storeCatalogPort = createCatalog();
+    vi.mocked(storeCatalogPort.getPublishedCatalog).mockRejectedValue(
       new Error("catalog unavailable"),
     );
     const tokenGenerator = {
@@ -274,75 +278,75 @@ describe("AcquireProductsUseCase", () => {
         sha256: "b".repeat(64),
       }),
     };
-    const acquireProducts = new AcquireProductsUseCase({
-      acquisitions,
-      catalog,
-      clock: { now: () => fixedNow },
-      consentVersions: {
+    const acquireProductsUseCase = new AcquireProductsUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort,
+      clockPort: { now: () => fixedNow },
+      consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
       },
-      delivery,
-      emailAcceptance: createEmailAcceptance("allowed"),
-      incidents: createAcquisitionIncidents(),
-      payloadDigestGenerator: { digest: () => "payload-digest" },
-      tokenGenerator,
+      productDeliveryPort,
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      acquisitionIncidentsPort: createAcquisitionIncidents(),
+      payloadDigestGeneratorPort: { digest: () => "payload-digest" },
+      downloadTokenGeneratorPort: tokenGenerator,
     });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivered" });
-    expect(catalog.getPublishedCatalog).not.toHaveBeenCalled();
+    expect(storeCatalogPort.getPublishedCatalog).not.toHaveBeenCalled();
     expect(tokenGenerator.create).not.toHaveBeenCalled();
-    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
-    expect(delivery.deliver).not.toHaveBeenCalled();
-    expect(acquisitions.recordDeliveryAccepted).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.recordDeliveryAccepted).not.toHaveBeenCalled();
   });
 
   it("keeps catalog infrastructure failures retryable without preparing delivery", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    const catalog = createCatalog();
-    vi.mocked(catalog.getPublishedCatalog).mockRejectedValue(
+    const storeAcquisitionsPort = createAcquisitions();
+    const storeCatalogPort = createCatalog();
+    vi.mocked(storeCatalogPort.getPublishedCatalog).mockRejectedValue(
       new Error("catalog unavailable"),
     );
-    const delivery = createDelivery();
-    const { acquireProducts } = createUseCase({
-      acquisitions,
-      catalog,
-      delivery,
+    const productDeliveryPort = createDelivery();
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort,
+      productDeliveryPort,
     });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("keeps an ambiguous provider transport failure pending for an idempotent retry", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    const delivery = createDelivery();
-    const setup = createUseCase({ acquisitions, delivery });
-    vi.mocked(delivery.deliver).mockRejectedValue(
+    const storeAcquisitionsPort = createAcquisitions();
+    const productDeliveryPort = createDelivery();
+    const setup = createUseCase({ storeAcquisitionsPort, productDeliveryPort });
+    vi.mocked(productDeliveryPort.deliver).mockRejectedValue(
       new Error("provider unavailable"),
     );
 
     // act
-    const result = await setup.acquireProducts.execute(command);
+    const result = await setup.acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(acquisitions.prepareAcquisition).toHaveBeenCalledTimes(1);
-    expect(acquisitions.recordDeliveryRejected).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.prepareAcquisition).toHaveBeenCalledTimes(1);
+    expect(storeAcquisitionsPort.recordDeliveryRejected).not.toHaveBeenCalled();
   });
 
   it("records an ambiguous provider outcome before allowing a retry", async () => {
@@ -352,12 +356,17 @@ describe("AcquireProductsUseCase", () => {
       ...createAcquisitions(),
       recordDeliveryRetryable,
     };
-    const delivery = createDelivery();
-    const setup = createUseCase({ acquisitions, delivery });
-    vi.mocked(delivery.deliver).mockResolvedValue({ kind: "unconfirmed" });
+    const productDeliveryPort = createDelivery();
+    const setup = createUseCase({
+      storeAcquisitionsPort: acquisitions,
+      productDeliveryPort,
+    });
+    vi.mocked(productDeliveryPort.deliver).mockResolvedValue({
+      kind: "unconfirmed",
+    });
 
     // act
-    const result = await setup.acquireProducts.execute(command);
+    const result = await setup.acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
@@ -369,17 +378,17 @@ describe("AcquireProductsUseCase", () => {
 
   it("reports when a retryable delivery outcome cannot be audited", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.recordDeliveryRetryable).mockRejectedValue(
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.recordDeliveryRetryable).mockRejectedValue(
       new Error("database unavailable"),
     );
-    const setup = createUseCase({ acquisitions });
-    vi.mocked(setup.delivery.deliver).mockResolvedValue({
+    const setup = createUseCase({ storeAcquisitionsPort });
+    vi.mocked(setup.productDeliveryPort.deliver).mockResolvedValue({
       kind: "unconfirmed",
     });
 
     // act
-    const result = await setup.acquireProducts.execute(command);
+    const result = await setup.acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
@@ -390,39 +399,42 @@ describe("AcquireProductsUseCase", () => {
 
   it("does not resend a pending technical replay", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "pending",
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const delivery = createDelivery();
-    const { acquireProducts } = createUseCase({ acquisitions, delivery });
+    const productDeliveryPort = createDelivery();
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      productDeliveryPort,
+    });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("records a definitive provider rejection while preserving the committed acquisition", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    const delivery = createDelivery();
-    const setup = createUseCase({ acquisitions, delivery });
-    vi.mocked(delivery.deliver).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    const productDeliveryPort = createDelivery();
+    const setup = createUseCase({ storeAcquisitionsPort, productDeliveryPort });
+    vi.mocked(productDeliveryPort.deliver).mockResolvedValue({
       kind: "rejected",
       reason: "invalid_from_address",
     });
 
     // act
-    const result = await setup.acquireProducts.execute(command);
+    const result = await setup.acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_unavailable" });
-    expect(acquisitions.recordDeliveryRejected).toHaveBeenCalledWith({
+    expect(storeAcquisitionsPort.recordDeliveryRejected).toHaveBeenCalledWith({
       deliveryAttemptId: 41,
       requestId: 31,
       provider: "resend",
@@ -435,18 +447,18 @@ describe("AcquireProductsUseCase", () => {
 
   it("keeps the request retryable when an accepted delivery cannot be audited", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.recordDeliveryAccepted).mockRejectedValueOnce(
-      new Error("database unavailable"),
-    );
-    const setup = createUseCase({ acquisitions });
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(
+      storeAcquisitionsPort.recordDeliveryAccepted,
+    ).mockRejectedValueOnce(new Error("database unavailable"));
+    const setup = createUseCase({ storeAcquisitionsPort });
 
     // act
-    const result = await setup.acquireProducts.execute(command);
+    const result = await setup.acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(acquisitions.recordDeliveryRejected).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.recordDeliveryRejected).not.toHaveBeenCalled();
     expect(setup.incidents.deliveryAcceptanceAuditPending).toHaveBeenCalledWith(
       { requestId: 31 },
     );
@@ -454,169 +466,175 @@ describe("AcquireProductsUseCase", () => {
 
   it("does not resend when accepted delivery audit remains pending", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "pending",
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const delivery = createDelivery();
+    const productDeliveryPort = createDelivery();
     const tokenGenerator = {
       create: vi.fn().mockReturnValue({
         rawToken: "stable-raw-token",
         sha256: "b".repeat(64),
       }),
     };
-    const acquireProducts = new AcquireProductsUseCase({
-      acquisitions,
-      catalog: createCatalog([]),
-      clock: { now: () => fixedNow },
-      consentVersions: {
+    const acquireProductsUseCase = new AcquireProductsUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort: createCatalog([]),
+      clockPort: { now: () => fixedNow },
+      consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "2.0",
           privacyPolicyVersion: "3.0",
           termsVersion: "2.0",
         }),
       },
-      delivery,
-      emailAcceptance: createEmailAcceptance("allowed"),
-      incidents: createAcquisitionIncidents(),
-      payloadDigestGenerator: { digest: () => "payload-digest" },
-      tokenGenerator,
+      productDeliveryPort,
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      acquisitionIncidentsPort: createAcquisitionIncidents(),
+      payloadDigestGeneratorPort: { digest: () => "payload-digest" },
+      downloadTokenGeneratorPort: tokenGenerator,
     });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(tokenGenerator.create).not.toHaveBeenCalled();
-    expect(delivery.deliver).not.toHaveBeenCalled();
-    expect(acquisitions.recordDeliveryAccepted).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.recordDeliveryAccepted).not.toHaveBeenCalled();
   });
 
   it("does not send an expired pending grant during an idempotent retry", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "pending",
       expiresAt: new Date("2026-07-30T11:59:59.999Z"),
       status: "replay",
     });
-    const delivery = createDelivery();
-    const { acquireProducts } = createUseCase({ acquisitions, delivery });
+    const productDeliveryPort = createDelivery();
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      productDeliveryPort,
+    });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_unavailable" });
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("rejects reuse of an idempotency key with a different payload before reading the catalog", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.resolveIdempotency).mockResolvedValue({
       status: "idempotency_conflict",
     });
-    const delivery = createDelivery();
-    const catalog = createCatalog();
-    const acquireProducts = new AcquireProductsUseCase({
-      acquisitions,
-      catalog,
-      clock: { now: () => fixedNow },
-      consentVersions: {
+    const productDeliveryPort = createDelivery();
+    const storeCatalogPort = createCatalog();
+    const acquireProductsUseCase = new AcquireProductsUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort,
+      clockPort: { now: () => fixedNow },
+      consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
       },
-      delivery,
-      emailAcceptance: createEmailAcceptance("allowed"),
-      incidents: createAcquisitionIncidents(),
-      payloadDigestGenerator: { digest: () => "payload-digest" },
-      tokenGenerator: {
+      productDeliveryPort,
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      acquisitionIncidentsPort: createAcquisitionIncidents(),
+      payloadDigestGeneratorPort: { digest: () => "payload-digest" },
+      downloadTokenGeneratorPort: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
       },
     });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "idempotency_conflict" });
-    expect(catalog.getPublishedCatalog).not.toHaveBeenCalled();
-    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(storeCatalogPort.getPublishedCatalog).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("rejects all products when the persistence transaction observes a catalog change", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    vi.mocked(acquisitions.prepareAcquisition).mockResolvedValue({
+    const storeAcquisitionsPort = createAcquisitions();
+    vi.mocked(storeAcquisitionsPort.prepareAcquisition).mockResolvedValue({
       availableProductSlugs: ["hormone-harmony"],
       status: "unavailable_products",
     });
-    const delivery = createDelivery();
-    const acquireProducts = new AcquireProductsUseCase({
-      acquisitions,
-      catalog: createCatalog(),
-      clock: { now: () => fixedNow },
-      consentVersions: {
+    const productDeliveryPort = createDelivery();
+    const acquireProductsUseCase = new AcquireProductsUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort: createCatalog(),
+      clockPort: { now: () => fixedNow },
+      consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
       },
-      delivery,
-      emailAcceptance: createEmailAcceptance("allowed"),
-      incidents: createAcquisitionIncidents(),
-      payloadDigestGenerator: { digest: () => "payload-digest" },
-      tokenGenerator: {
+      productDeliveryPort,
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      acquisitionIncidentsPort: createAcquisitionIncidents(),
+      payloadDigestGeneratorPort: { digest: () => "payload-digest" },
+      downloadTokenGeneratorPort: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
       },
     });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({
       availableProductSlugs: ["hormone-harmony"],
       status: "unavailable_products",
     });
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("reports an unknown outcome when the acceptance audit cannot be written", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    const delivery = createDelivery();
-    const { acquireProducts } = createUseCase({ acquisitions, delivery });
-    vi.mocked(acquisitions.recordDeliveryAccepted).mockRejectedValue(
+    const storeAcquisitionsPort = createAcquisitions();
+    const productDeliveryPort = createDelivery();
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      productDeliveryPort,
+    });
+    vi.mocked(storeAcquisitionsPort.recordDeliveryAccepted).mockRejectedValue(
       new Error("audit write failed"),
     );
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(delivery.deliver).toHaveBeenCalledTimes(1);
+    expect(productDeliveryPort.deliver).toHaveBeenCalledTimes(1);
   });
 
   it("measures the delivery cooldown and rolling allowance from the current time", async () => {
     // arrange
-    const { acquireProducts, acquisitions } = createUseCase({});
+    const { acquireProductsUseCase, storeAcquisitionsPort } = createUseCase({});
 
     // act
-    await acquireProducts.execute(command);
+    await acquireProductsUseCase.execute(command);
 
     // assert
-    expect(acquisitions.prepareAcquisition).toHaveBeenCalledWith(
+    expect(storeAcquisitionsPort.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
         dailyLimit: 10,
@@ -628,16 +646,16 @@ describe("AcquireProductsUseCase", () => {
 
   it("shares one allowance across sub-addressed variants of an inbox", async () => {
     // arrange
-    const { acquireProducts, acquisitions } = createUseCase({});
+    const { acquireProductsUseCase, storeAcquisitionsPort } = createUseCase({});
 
     // act
-    await acquireProducts.execute({
+    await acquireProductsUseCase.execute({
       ...command,
       email: "Woman+Guides@Example.com ",
     });
 
     // assert
-    expect(acquisitions.prepareAcquisition).toHaveBeenCalledWith(
+    expect(storeAcquisitionsPort.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         deliveryLimitKey: "woman@example.com",
         normalizedEmail: "woman+guides@example.com",
@@ -649,58 +667,63 @@ describe("AcquireProductsUseCase", () => {
     "reports the %s window without delivering when the recipient is over the limit",
     async (window) => {
       // arrange
-      const acquisitions = createAcquisitions();
-      const delivery = createDelivery();
-      const { acquireProducts } = createUseCase({ acquisitions, delivery });
-      vi.mocked(acquisitions.prepareAcquisition).mockResolvedValue({
+      const storeAcquisitionsPort = createAcquisitions();
+      const productDeliveryPort = createDelivery();
+      const { acquireProductsUseCase } = createUseCase({
+        storeAcquisitionsPort,
+        productDeliveryPort,
+      });
+      vi.mocked(storeAcquisitionsPort.prepareAcquisition).mockResolvedValue({
         status: "rate_limited",
         window,
       });
 
       // act
-      const result = await acquireProducts.execute(command);
+      const result = await acquireProductsUseCase.execute(command);
 
       // assert
       expect(result).toEqual({ status: "rate_limited", window });
-      expect(delivery.deliver).not.toHaveBeenCalled();
-      expect(acquisitions.recordDeliveryRetryable).not.toHaveBeenCalled();
+      expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
+      expect(
+        storeAcquisitionsPort.recordDeliveryRetryable,
+      ).not.toHaveBeenCalled();
     },
   );
 
   it("refuses a subaddressed email before reading the idempotency record, the catalog or the delivery allowance", async () => {
     // arrange
-    const acquisitions = createAcquisitions();
-    const catalog = createCatalog();
-    const delivery = createDelivery();
-    const { acquireProducts } = createUseCase({
-      acquisitions,
-      catalog,
-      delivery,
+    const storeAcquisitionsPort = createAcquisitions();
+    const storeCatalogPort = createCatalog();
+    const productDeliveryPort = createDelivery();
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort,
+      productDeliveryPort,
       emailSubaddresses: "refused",
     });
 
     // act
-    const result = await acquireProducts.execute({
+    const result = await acquireProductsUseCase.execute({
       ...command,
       email: "Woman+Guides@Example.com",
     });
 
     // assert
     expect(result).toEqual({ status: "subaddress_refused" });
-    expect(acquisitions.resolveIdempotency).not.toHaveBeenCalled();
-    expect(catalog.getPublishedCatalog).not.toHaveBeenCalled();
-    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
-    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.resolveIdempotency).not.toHaveBeenCalled();
+    expect(storeCatalogPort.getPublishedCatalog).not.toHaveBeenCalled();
+    expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
   });
 
   it("delivers to a main address where subaddresses are refused", async () => {
     // arrange
-    const { acquireProducts } = createUseCase({
+    const { acquireProductsUseCase } = createUseCase({
       emailSubaddresses: "refused",
     });
 
     // act
-    const result = await acquireProducts.execute(command);
+    const result = await acquireProductsUseCase.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivered" });

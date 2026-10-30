@@ -28,12 +28,15 @@ export type CreateRecipeResult =
   | { status: "failed" };
 
 type CreateRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibraryPort, "list" | "add">;
-  foods: Pick<FoodLibraryPort, "list">;
-  tags: Pick<NutritionTagsPort, "list">;
-  ids: RecipeIdsPort;
-  clock: ClockPort;
-  incidents: Pick<NutritionLibraryIncidentsPort, "recipeCreationFailed">;
+  recipeLibraryPort: Pick<RecipeLibraryPort, "list" | "add">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
+  recipeIdsPort: RecipeIdsPort;
+  clockPort: ClockPort;
+  nutritionLibraryIncidentsPort: Pick<
+    NutritionLibraryIncidentsPort,
+    "recipeCreationFailed"
+  >;
   photos: RecipePhotoSavingPort;
 };
 
@@ -44,7 +47,9 @@ export class CreateRecipeUseCase {
     try {
       return await this.create(command);
     } catch (error) {
-      this.options.incidents.recipeCreationFailed({ error });
+      this.options.nutritionLibraryIncidentsPort.recipeCreationFailed({
+        error,
+      });
 
       return { status: "failed" };
     }
@@ -55,11 +60,18 @@ export class CreateRecipeUseCase {
     draft: input,
     photo: choice,
   }: CreateRecipeCommand): Promise<CreateRecipeResult> {
-    const { recipes, foods, tags, ids, clock, photos } = this.options;
+    const {
+      recipeLibraryPort,
+      foodLibraryPort,
+      nutritionTagsPort,
+      recipeIdsPort,
+      clockPort,
+      photos,
+    } = this.options;
     const [storedRecipes, activeFoods, vocabulary] = await Promise.all([
-      recipes.list(ownerAccountId),
-      foods.list(ownerAccountId),
-      tags.list(),
+      recipeLibraryPort.list(ownerAccountId),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
     const draft = RecipeDraft.from(input, {
       otherNames: storedRecipes.map(({ name }) => name),
@@ -77,16 +89,17 @@ export class CreateRecipeUseCase {
 
     const change = await photos.storeAccepted(photo);
     const recipe = Recipe.added({
-      id: ids.generate(),
+      id: recipeIdsPort.generate(),
       ownerAccountId,
       draft: draft.draft,
       photo: change,
-      at: clock.now(),
+      at: clockPort.now(),
     });
 
     if (
-      (await photos.writeOrRemoveStored(change, () => recipes.add(recipe))) ===
-      "name-taken"
+      (await photos.writeOrRemoveStored(change, () =>
+        recipeLibraryPort.add(recipe),
+      )) === "name-taken"
     ) {
       return { status: "invalid", problems: { name: "taken" } };
     }

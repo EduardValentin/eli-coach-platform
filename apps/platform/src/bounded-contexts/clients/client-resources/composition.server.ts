@@ -33,54 +33,69 @@ import { createResourceFileFormatDetectorAdapter } from "~/bounded-contexts/clie
 import { createResourceImagePagesAdapter } from "./adapters/outbound/persistence/create-resource-image-pages-adapter.server";
 
 type ResourceFiles = {
-  documentPages: ResourceDocumentPagesPort;
-  fileFormats: ResourceFileFormatDetectorPort;
-  imagePages: ResourceImagePagesPort;
-  store: ClientResourceStorePort;
+  resourceDocumentPagesPort: ResourceDocumentPagesPort;
+  resourceFileFormatDetectorPort: ResourceFileFormatDetectorPort;
+  resourceImagePagesPort: ResourceImagePagesPort;
+  clientResourceStorePort: ClientResourceStorePort;
 };
 
 type ClientResourcesFeatureHandles = ResourceFiles & {
-  clientReach: ClientReachPort;
-  clock: ClockPort;
+  clientReachPort: ClientReachPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
-  logger: LoggerPort;
+  loggerPort: LoggerPort;
 };
 
 export function composeClientResourcesFeature(
   handles: ClientResourcesFeatureHandles,
 ): ClientResourcesFeature {
-  const incidents = new ClientResourcesIncidentsAdapter(handles.logger);
+  const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
+    handles.loggerPort,
+  );
   const accessPorts = {
-    resources: new PostgresClientResourcesRepository(handles.database),
-    clients: new ClientsClientReachAdapter(handles.clientReach),
-    incidents,
+    clientResourcesPort: new PostgresClientResourcesRepository(
+      handles.database,
+    ),
+    clientReachPort: new ClientsClientReachAdapter(handles.clientReachPort),
+    clientResourceIncidentsPort: clientResourcesIncidentsAdapter,
   };
-  const servingPorts = { ...accessPorts, store: handles.store };
+  const servingPorts = {
+    ...accessPorts,
+    clientResourceStorePort: handles.clientResourceStorePort,
+  };
 
   return {
-    clientResources: new ClientResourcesController({
-      addClientResource: new AddClientResourceUseCase({
+    clientResourcesController: new ClientResourcesController({
+      addClientResourceUseCase: new AddClientResourceUseCase({
         ...servingPorts,
-        resourceIds: new RandomClientResourceIdsAdapter(),
-        documentPages: handles.documentPages,
-        imagePages: handles.imagePages,
-        fileFormats: handles.fileFormats,
-        clock: handles.clock,
+        clientResourceIdsPort: new RandomClientResourceIdsAdapter(),
+        resourceDocumentPagesPort: handles.resourceDocumentPagesPort,
+        resourceImagePagesPort: handles.resourceImagePagesPort,
+        resourceFileFormatDetectorPort: handles.resourceFileFormatDetectorPort,
+        clockPort: handles.clockPort,
       }),
-      openResourcePreview: new OpenResourcePreviewUseCase(servingPorts),
-      downloadClientResource: new DownloadClientResourceUseCase(servingPorts),
-      changeResourceDetails: new ChangeResourceDetailsUseCase(accessPorts),
-      removeClientResource: new RemoveClientResourceUseCase(servingPorts),
+      openResourcePreviewUseCase: new OpenResourcePreviewUseCase(servingPorts),
+      downloadClientResourceUseCase: new DownloadClientResourceUseCase(
+        servingPorts,
+      ),
+      changeResourceDetailsUseCase: new ChangeResourceDetailsUseCase(
+        accessPorts,
+      ),
+      removeClientResourceUseCase: new RemoveClientResourceUseCase(
+        servingPorts,
+      ),
     }),
-    coachResources: new CoachResourcesController({
-      listClientResources: new ListClientResourcesUseCase(accessPorts),
+    coachResourcesController: new CoachResourcesController({
+      listClientResourcesUseCase: new ListClientResourcesUseCase(accessPorts),
     }),
-    ownResources: new OwnResourcesController({
-      listOwnResources: new ListOwnResourcesUseCase(accessPorts),
-      countUnopenedResources: new CountUnopenedResourcesUseCase(accessPorts),
-      markResourceOpened: new MarkResourceOpenedUseCase({
+    ownResourcesController: new OwnResourcesController({
+      listOwnResourcesUseCase: new ListOwnResourcesUseCase(accessPorts),
+      countUnopenedResourcesUseCase: new CountUnopenedResourcesUseCase(
+        accessPorts,
+      ),
+      markResourceOpenedUseCase: new MarkResourceOpenedUseCase({
         ...accessPorts,
-        clock: handles.clock,
+        clockPort: handles.clockPort,
       }),
     }),
   };
@@ -91,12 +106,15 @@ export function composeResourceFiles(locations: {
   resourceRoot: string;
 }): ResourceFiles {
   return {
-    documentPages: createResourceDocumentPagesAdapter({
+    resourceDocumentPagesPort: createResourceDocumentPagesAdapter({
       workerUrl: locations.documentPagesWorkerUrl,
       renditions: RESOURCE_RENDITIONS,
     }),
-    fileFormats: createResourceFileFormatDetectorAdapter(),
-    imagePages: createResourceImagePagesAdapter(RESOURCE_RENDITIONS),
-    store: createClientResourceStoreAdapter(locations.resourceRoot),
+    resourceFileFormatDetectorPort: createResourceFileFormatDetectorAdapter(),
+    resourceImagePagesPort:
+      createResourceImagePagesAdapter(RESOURCE_RENDITIONS),
+    clientResourceStorePort: createClientResourceStoreAdapter(
+      locations.resourceRoot,
+    ),
   };
 }

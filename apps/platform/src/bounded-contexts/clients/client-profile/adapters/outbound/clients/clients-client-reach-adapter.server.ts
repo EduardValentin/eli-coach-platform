@@ -5,15 +5,15 @@ import type {
 import type { ClientReachPort as PublishedClientReach } from "~/bounded-contexts/clients/clients/public";
 
 export class ClientsClientReachAdapter implements ClientReachPort {
-  constructor(private readonly reach: PublishedClientReach) {}
+  constructor(private readonly clientReachPort: PublishedClientReach) {}
 
   findByAuthSubjectId(
     authSubjectId: string,
   ): Promise<ClientReachReading | null> {
-    return this.reach.findByAuthSubjectId(authSubjectId);
+    return this.clientReachPort.findByAuthSubjectId(authSubjectId);
   }
 
   findById(clientId: string): Promise<ClientReachReading | null> {
-    return this.reach.findById(clientId);
+    return this.clientReachPort.findById(clientId);
   }
 }

@@ -36,16 +36,16 @@ function createDownloadGrants(grant: DownloadGrant | null): DownloadGrantsPort {
 describe("ResolveDownloadGrantUseCase", () => {
   it("resolves the exact pinned assets without extending a reusable grant", async () => {
     // arrange
-    const downloadGrants = createDownloadGrants(activeGrant);
-    const useCase = new ResolveDownloadGrantUseCase({
-      clock: { now: () => now },
-      downloadGrants,
-      tokenHasher: { sha256: () => "b".repeat(64) },
+    const downloadGrantsPort = createDownloadGrants(activeGrant);
+    const resolveDownloadGrantUseCase = new ResolveDownloadGrantUseCase({
+      clockPort: { now: () => now },
+      downloadGrantsPort,
+      downloadTokenHasherPort: { sha256: () => "b".repeat(64) },
     });
 
     // act
-    const firstResult = await useCase.execute("raw-token");
-    const secondResult = await useCase.execute("raw-token");
+    const firstResult = await resolveDownloadGrantUseCase.execute("raw-token");
+    const secondResult = await resolveDownloadGrantUseCase.execute("raw-token");
 
     // assert
     expect(firstResult).toEqual({
@@ -54,7 +54,7 @@ describe("ResolveDownloadGrantUseCase", () => {
       grant: activeGrant,
     });
     expect(secondResult).toEqual(firstResult);
-    expect(downloadGrants.findByTokenSha256).toHaveBeenCalledTimes(2);
+    expect(downloadGrantsPort.findByTokenSha256).toHaveBeenCalledTimes(2);
   });
 
   it.each([
@@ -81,14 +81,14 @@ describe("ResolveDownloadGrantUseCase", () => {
     "returns the same privacy-safe result for a %s grant",
     async (_label, grant) => {
       // arrange
-      const useCase = new ResolveDownloadGrantUseCase({
-        clock: { now: () => now },
-        downloadGrants: createDownloadGrants(grant),
-        tokenHasher: { sha256: () => "b".repeat(64) },
+      const resolveDownloadGrantUseCase = new ResolveDownloadGrantUseCase({
+        clockPort: { now: () => now },
+        downloadGrantsPort: createDownloadGrants(grant),
+        downloadTokenHasherPort: { sha256: () => "b".repeat(64) },
       });
 
       // act
-      const result = await useCase.execute("raw-token");
+      const result = await resolveDownloadGrantUseCase.execute("raw-token");
 
       // assert
       expect(result).toEqual({ status: "unavailable" });
@@ -97,18 +97,18 @@ describe("ResolveDownloadGrantUseCase", () => {
 
   it("returns an unavailable result for an empty raw token", async () => {
     // arrange
-    const downloadGrants = createDownloadGrants(activeGrant);
-    const useCase = new ResolveDownloadGrantUseCase({
-      clock: { now: () => now },
-      downloadGrants,
-      tokenHasher: { sha256: () => "b".repeat(64) },
+    const downloadGrantsPort = createDownloadGrants(activeGrant);
+    const resolveDownloadGrantUseCase = new ResolveDownloadGrantUseCase({
+      clockPort: { now: () => now },
+      downloadGrantsPort,
+      downloadTokenHasherPort: { sha256: () => "b".repeat(64) },
     });
 
     // act
-    const result = await useCase.execute("   ");
+    const result = await resolveDownloadGrantUseCase.execute("   ");
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
-    expect(downloadGrants.findByTokenSha256).not.toHaveBeenCalled();
+    expect(downloadGrantsPort.findByTokenSha256).not.toHaveBeenCalled();
   });
 });

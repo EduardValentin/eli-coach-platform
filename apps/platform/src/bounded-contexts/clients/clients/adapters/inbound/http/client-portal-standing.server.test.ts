@@ -521,14 +521,14 @@ function journeyArgs(options: {
     ? vi.fn().mockResolvedValueOnce(null).mockResolvedValue(reading)
     : vi.fn().mockResolvedValue(reading);
   const coachingSales = {
-    acceptInvitation: {
+    acceptInvitationUseCase: {
       execute: vi
         .fn()
         .mockResolvedValue(
           options.linkedOnFirstRequest ? "accepted" : "refused",
         ),
     },
-    readClientPortalStanding: { execute: readStanding },
+    readClientPortalStandingUseCase: { execute: readStanding },
   } as unknown as ClientsFeature;
   const portal = {
     appBasePath: options.appBasePath ?? BASE_PATH,
@@ -545,11 +545,12 @@ function journeyArgs(options: {
 }
 
 function readJourneyOf(args: ReturnType<typeof journeyArgs>) {
-  return args.context.get(clientsContext).readClientPortalStanding.execute;
+  return args.context.get(clientsContext).readClientPortalStandingUseCase
+    .execute;
 }
 
 function linkOf(args: ReturnType<typeof journeyArgs>) {
-  return args.context.get(clientsContext).acceptInvitation.execute;
+  return args.context.get(clientsContext).acceptInvitationUseCase.execute;
 }
 
 async function resolveStanding(

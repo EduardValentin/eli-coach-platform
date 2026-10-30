@@ -11,9 +11,9 @@ export type AssessmentCallListingResult =
   | { status: "unavailable" };
 
 type ListAssessmentCallsUseCaseOptions = {
-  availability: CoachAvailabilityPort;
-  incidents: AssessmentCallIncidentsPort;
-  reservations: AssessmentCallReservationsPort;
+  coachAvailabilityPort: CoachAvailabilityPort;
+  assessmentCallIncidentsPort: AssessmentCallIncidentsPort;
+  assessmentCallReservationsPort: AssessmentCallReservationsPort;
 };
 
 type ListingSources = {
@@ -28,7 +28,7 @@ export class ListAssessmentCallsUseCase {
     const sources = await this.readSources();
 
     if (!sources) {
-      this.options.incidents.callsReadFailed();
+      this.options.assessmentCallIncidentsPort.callsReadFailed();
 
       return { status: "unavailable" };
     }
@@ -43,8 +43,8 @@ export class ListAssessmentCallsUseCase {
   private async readSources(): Promise<ListingSources | null> {
     try {
       const [availability, calls] = await Promise.all([
-        this.options.availability.current(),
-        this.options.reservations.listAll(),
+        this.options.coachAvailabilityPort.current(),
+        this.options.assessmentCallReservationsPort.listAll(),
       ]);
 
       return { availability, calls };

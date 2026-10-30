@@ -25,9 +25,9 @@ export type ChangeResourceDetailsResult =
   | { status: "failed" };
 
 type ChangeResourceDetailsUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class ChangeResourceDetailsUseCase {
@@ -60,18 +60,18 @@ export class ChangeResourceDetailsUseCase {
     resource: ClientResource,
     details: ResourceDetails,
   ): Promise<ChangeResourceDetailsResult> {
-    const { resources } = this.options;
+    const { clientResourcesPort } = this.options;
 
     try {
       const changed = resource.withDetails(
-        details.withStoredSpellings(await resources.tagVocabulary()),
+        details.withStoredSpellings(await clientResourcesPort.tagVocabulary()),
       );
 
-      await resources.saveDetails(changed);
+      await clientResourcesPort.saveDetails(changed);
 
       return { status: "changed", resource: changed };
     } catch (error) {
-      this.options.incidents.resourceChangeFailed({
+      this.options.clientResourceIncidentsPort.resourceChangeFailed({
         ...resource.storageOwner(),
         error,
       });

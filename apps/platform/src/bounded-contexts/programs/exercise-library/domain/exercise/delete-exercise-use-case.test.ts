@@ -73,21 +73,24 @@ function createUseCase() {
   const incidents = {
     videoCleanupFailed: vi.fn(),
   } satisfies Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
-  const useCase = new DeleteExerciseUseCase({
-    library,
-    videos: new ExerciseVideoCleanup({ store, incidents }),
+  const deleteExerciseUseCase = new DeleteExerciseUseCase({
+    exerciseLibraryPort: library,
+    videos: new ExerciseVideoCleanup({
+      exerciseVideoStorePort: store,
+      exerciseLibraryIncidentsPort: incidents,
+    }),
   });
 
-  return { useCase, library, store, incidents };
+  return { deleteExerciseUseCase, library, store, incidents };
 }
 
 describe("DeleteExerciseUseCase", () => {
   it("deletes her exercise and then its video file", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { deleteExerciseUseCase, library, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await deleteExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: HIP_THRUST_ID,
     });
@@ -109,10 +112,10 @@ describe("DeleteExerciseUseCase", () => {
 
   it("deletes an exercise without a video, removing no file", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { deleteExerciseUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await deleteExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: LUNGE_ID,
     });
@@ -128,11 +131,11 @@ describe("DeleteExerciseUseCase", () => {
   it("reports a video file it could not remove and still answers the exercise deleted", async () => {
     // arrange
     const failure = new Error("disk unavailable");
-    const { useCase, store, incidents } = createUseCase();
+    const { deleteExerciseUseCase, store, incidents } = createUseCase();
     store.remove.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await deleteExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: HIP_THRUST_ID,
     });
@@ -147,11 +150,11 @@ describe("DeleteExerciseUseCase", () => {
 
   it("finds nothing to delete when the exercise is gone before it is removed", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { deleteExerciseUseCase, library, store } = createUseCase();
     library.remove.mockResolvedValueOnce("missing");
 
     // act
-    const result = await useCase.execute({
+    const result = await deleteExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: HIP_THRUST_ID,
     });
@@ -163,10 +166,10 @@ describe("DeleteExerciseUseCase", () => {
 
   it("finds nothing to delete for an unknown exercise", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { deleteExerciseUseCase, library, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await deleteExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000404",
     });
@@ -179,10 +182,10 @@ describe("DeleteExerciseUseCase", () => {
 
   it("finds nothing to delete in another coach's library", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { deleteExerciseUseCase, library, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await deleteExerciseUseCase.execute({
       ownerAccountId: OTHER_COACH_ACCOUNT_ID,
       exerciseId: HIP_THRUST_ID,
     });

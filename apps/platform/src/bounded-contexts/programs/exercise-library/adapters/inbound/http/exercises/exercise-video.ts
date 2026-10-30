@@ -10,10 +10,12 @@ const ALLOWED_METHODS = ["GET"];
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    args.context.get(exerciseLibraryContext).exerciseLibrary.openVideo(args, {
-      exerciseId: args.params.exerciseId,
-      videoId: args.params.videoId,
-    }),
+    args.context
+      .get(exerciseLibraryContext)
+      .exerciseLibraryController.openVideo(args, {
+        exerciseId: args.params.exerciseId,
+        videoId: args.params.videoId,
+      }),
   );
 }
 

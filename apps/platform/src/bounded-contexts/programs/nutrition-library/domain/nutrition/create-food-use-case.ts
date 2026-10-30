@@ -21,11 +21,14 @@ export type CreateFoodResult =
   | { status: "failed" };
 
 type CreateFoodUseCaseOptions = {
-  library: Pick<FoodLibraryPort, "list" | "add">;
-  tags: Pick<NutritionTagsPort, "list">;
-  ids: FoodIdsPort;
-  clock: ClockPort;
-  incidents: Pick<NutritionLibraryIncidentsPort, "foodCreationFailed">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list" | "add">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
+  foodIdsPort: FoodIdsPort;
+  clockPort: ClockPort;
+  nutritionLibraryIncidentsPort: Pick<
+    NutritionLibraryIncidentsPort,
+    "foodCreationFailed"
+  >;
 };
 
 export class CreateFoodUseCase {
@@ -35,7 +38,7 @@ export class CreateFoodUseCase {
     try {
       return await this.create(command);
     } catch (error) {
-      this.options.incidents.foodCreationFailed({ error });
+      this.options.nutritionLibraryIncidentsPort.foodCreationFailed({ error });
 
       return { status: "failed" };
     }
@@ -45,10 +48,11 @@ export class CreateFoodUseCase {
     ownerAccountId,
     draft: input,
   }: CreateFoodCommand): Promise<CreateFoodResult> {
-    const { library, tags, ids, clock } = this.options;
+    const { foodLibraryPort, nutritionTagsPort, foodIdsPort, clockPort } =
+      this.options;
     const [foods, vocabulary] = await Promise.all([
-      library.list(ownerAccountId),
-      tags.list(),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
     const draft = FoodDraft.from(input, {
       otherNames: foods.map(({ name }) => name),
@@ -58,13 +62,13 @@ export class CreateFoodUseCase {
     if (draft.status === "invalid") return draft;
 
     const food = Food.added({
-      id: ids.generate(),
+      id: foodIdsPort.generate(),
       ownerAccountId,
       draft: draft.draft,
-      at: clock.now(),
+      at: clockPort.now(),
     });
 
-    if ((await library.add(food)) === "name-taken") {
+    if ((await foodLibraryPort.add(food)) === "name-taken") {
       return { status: "invalid", problems: { name: "taken" } };
     }
 

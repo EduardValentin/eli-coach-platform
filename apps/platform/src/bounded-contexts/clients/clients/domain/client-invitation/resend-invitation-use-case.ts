@@ -10,15 +10,15 @@ type ResendInvitationResult =
   | { status: "not-found" };
 
 type ResendInvitationUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitationsPort, "resend">;
-  clients: Pick<InvitedClientsPort, "findById">;
+  accountInvitationsPort: Pick<AccountInvitationsPort, "resend">;
+  invitedClientsPort: Pick<InvitedClientsPort, "findById">;
 };
 
 export class ResendInvitationUseCase {
   constructor(private readonly options: ResendInvitationUseCaseOptions) {}
 
   async execute(clientId: string): Promise<ResendInvitationResult> {
-    const client = await this.options.clients.findById(clientId);
+    const client = await this.options.invitedClientsPort.findById(clientId);
 
     if (!client?.accountInvitationId) {
       return { status: "not-found" };
@@ -33,7 +33,7 @@ export class ResendInvitationUseCase {
     }
 
     return this.resultOf(
-      await this.options.accountInvitations.resend({
+      await this.options.accountInvitationsPort.resend({
         invitationId: client.accountInvitationId,
         firstName: client.firstName,
       }),

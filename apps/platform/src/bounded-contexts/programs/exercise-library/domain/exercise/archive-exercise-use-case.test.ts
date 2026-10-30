@@ -57,21 +57,21 @@ function createUseCase() {
     ),
     replace: vi.fn(async (): Promise<ExerciseReplacement> => "replaced"),
   } satisfies Pick<ExerciseLibraryPort, "find" | "replace">;
-  const useCase = new ArchiveExerciseUseCase({
-    library,
-    clock: { now: () => NOW },
+  const archiveExerciseUseCase = new ArchiveExerciseUseCase({
+    exerciseLibraryPort: library,
+    clockPort: { now: () => NOW },
   });
 
-  return { useCase, library };
+  return { archiveExerciseUseCase, library };
 }
 
 describe("ArchiveExerciseUseCase", () => {
   it("archives her exercise from now on", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { archiveExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await archiveExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
     });
@@ -88,10 +88,10 @@ describe("ArchiveExerciseUseCase", () => {
 
   it("answers an exercise already archived as archived from when it first was", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { archiveExerciseUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await archiveExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000002",
     });
@@ -102,10 +102,10 @@ describe("ArchiveExerciseUseCase", () => {
 
   it("finds nothing to archive for an unknown exercise", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { archiveExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await archiveExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000404",
     });
@@ -117,10 +117,10 @@ describe("ArchiveExerciseUseCase", () => {
 
   it("finds nothing to archive in another coach's library", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { archiveExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await archiveExerciseUseCase.execute({
       ownerAccountId: OTHER_COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
     });

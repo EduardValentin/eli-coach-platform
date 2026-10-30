@@ -21,12 +21,13 @@ function credentials(authorizationHeader: string | null): {
 describe("BearerSecretManagementAuthenticator", () => {
   it("resolves a correct credential to the configured machine principal", async () => {
     // arrange
-    const authenticator = createAuthenticator();
+    const bearerSecretManagementAuthenticatorAdapter = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(
-      credentials(`Bearer ${SECRET}`),
-    );
+    const result =
+      await bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials(`Bearer ${SECRET}`),
+      );
 
     // assert
     expect(result).toEqual({
@@ -37,12 +38,13 @@ describe("BearerSecretManagementAuthenticator", () => {
 
   it("accepts the scheme case-insensitively, as HTTP defines it", async () => {
     // arrange
-    const authenticator = createAuthenticator();
+    const bearerSecretManagementAuthenticatorAdapter = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(
-      credentials(`bearer ${SECRET}`),
-    );
+    const result =
+      await bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials(`bearer ${SECRET}`),
+      );
 
     // assert
     expect(result).toMatchObject({ status: "authenticated" });
@@ -61,10 +63,13 @@ describe("BearerSecretManagementAuthenticator", () => {
     ["an empty header", ""],
   ])("rejects %s", async (_description, authorization) => {
     // arrange
-    const authenticator = createAuthenticator();
+    const bearerSecretManagementAuthenticatorAdapter = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(credentials(authorization));
+    const result =
+      await bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials(authorization),
+      );
 
     // assert
     expect(result).toEqual({ status: "unauthenticated" });
@@ -72,10 +77,13 @@ describe("BearerSecretManagementAuthenticator", () => {
 
   it("rejects credentials carrying no Authorization header", async () => {
     // arrange
-    const authenticator = createAuthenticator();
+    const bearerSecretManagementAuthenticatorAdapter = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(credentials(null));
+    const result =
+      await bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials(null),
+      );
 
     // assert
     expect(result).toEqual({ status: "unauthenticated" });
@@ -83,13 +91,19 @@ describe("BearerSecretManagementAuthenticator", () => {
 
   it("never reports forbidden or unavailable, which only a later provider can produce", async () => {
     // arrange
-    const authenticator = createAuthenticator();
+    const bearerSecretManagementAuthenticatorAdapter = createAuthenticator();
 
     // act
     const results = await Promise.all([
-      authenticator.authenticate(credentials(`Bearer ${SECRET}`)),
-      authenticator.authenticate(credentials("Bearer wrong")),
-      authenticator.authenticate(credentials(null)),
+      bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials(`Bearer ${SECRET}`),
+      ),
+      bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials("Bearer wrong"),
+      ),
+      bearerSecretManagementAuthenticatorAdapter.authenticate(
+        credentials(null),
+      ),
     ]);
 
     // assert

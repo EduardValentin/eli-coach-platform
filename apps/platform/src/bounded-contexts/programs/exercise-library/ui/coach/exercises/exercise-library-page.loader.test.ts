@@ -18,7 +18,7 @@ describe("exercise library page loader", () => {
     // arrange
     const list = vi.fn().mockResolvedValue(LIBRARY);
     const feature = {
-      exerciseLibrary: { list },
+      exerciseLibraryController: { list },
     } as unknown as ExerciseLibraryFeature;
     const args = createRequestArgs({
       contexts: [contextEntry(exerciseLibraryContext, feature)],

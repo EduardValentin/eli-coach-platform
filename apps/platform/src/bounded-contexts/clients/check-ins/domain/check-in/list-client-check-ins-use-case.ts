@@ -9,9 +9,9 @@ export type ListClientCheckInsResult =
   { status: "listed"; checkIns: CheckInView[] } | { status: "ended" };
 
 type ListClientCheckInsUseCaseOptions = {
-  checkIns: CheckInsPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
+  checkInsPort: CheckInsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
 };
 
 export class ListClientCheckInsUseCase {
@@ -28,8 +28,8 @@ export class ListClientCheckInsUseCase {
       return { status: "ended" };
     }
 
-    const checkIns = await this.options.checkIns.listForClient(clientId);
-    const now = this.options.clock.now();
+    const checkIns = await this.options.checkInsPort.listForClient(clientId);
+    const now = this.options.clockPort.now();
 
     return {
       status: "listed",

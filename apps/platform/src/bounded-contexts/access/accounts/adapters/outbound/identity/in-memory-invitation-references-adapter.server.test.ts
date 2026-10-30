@@ -7,11 +7,12 @@ import { InMemoryInvitationReferencesAdapter } from "./in-memory-invitation-refe
 describe("InMemoryInvitationReferences", () => {
   it("knows no subject that carries an invitation", async () => {
     // arrange
-    const references: InvitationReferencesPort =
+    const invitationReferencesPort: InvitationReferencesPort =
       new InMemoryInvitationReferencesAdapter();
 
     // act
-    const invitationId = await references.invitationIdOf("user_ana");
+    const invitationId =
+      await invitationReferencesPort.invitationIdOf("user_ana");
 
     // assert
     expect(invitationId).toBeNull();

@@ -16,29 +16,31 @@ const ENTRY_ID = "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01";
 describe("PostgresClientMeasurements#listByClientId", () => {
   it("maps her rows oldest first and leaves out the circumferences she never took", async () => {
     // arrange
-    const measurements = new PostgresClientMeasurementsRepository(
-      createDatabaseAnswering([
-        {
-          recordedAt: FIRST_RECORDED_AT,
-          weightKg: 66.1,
-          waistCm: 74,
-          hipsCm: null,
-          thighCm: null,
-          armCm: null,
-        },
-        {
-          recordedAt: SECOND_RECORDED_AT,
-          weightKg: 64.5,
-          waistCm: 72,
-          hipsCm: 96.5,
-          thighCm: 55,
-          armCm: 28.5,
-        },
-      ]),
-    );
+    const postgresClientMeasurementsRepository =
+      new PostgresClientMeasurementsRepository(
+        createDatabaseAnswering([
+          {
+            recordedAt: FIRST_RECORDED_AT,
+            weightKg: 66.1,
+            waistCm: 74,
+            hipsCm: null,
+            thighCm: null,
+            armCm: null,
+          },
+          {
+            recordedAt: SECOND_RECORDED_AT,
+            weightKg: 64.5,
+            waistCm: 72,
+            hipsCm: 96.5,
+            thighCm: 55,
+            armCm: 28.5,
+          },
+        ]),
+      );
 
     // act
-    const entries = await measurements.listByClientId(CLIENT_ID);
+    const entries =
+      await postgresClientMeasurementsRepository.listByClientId(CLIENT_ID);
 
     // assert
     expect(entries).toEqual([
@@ -61,12 +63,12 @@ describe("PostgresClientMeasurements#listByClientId", () => {
 
   it("answers no entries when she has no measurements", async () => {
     // arrange
-    const measurements = new PostgresClientMeasurementsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresClientMeasurementsRepository =
+      new PostgresClientMeasurementsRepository(createDatabaseAnswering([]));
 
     // act
-    const entries = await measurements.listByClientId(CLIENT_ID);
+    const entries =
+      await postgresClientMeasurementsRepository.listByClientId(CLIENT_ID);
 
     // assert
     expect(entries).toEqual([]);

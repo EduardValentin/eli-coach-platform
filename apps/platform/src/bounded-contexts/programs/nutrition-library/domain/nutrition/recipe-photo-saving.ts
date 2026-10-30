@@ -17,10 +17,13 @@ export type JudgedRecipePhoto =
 type AcceptedRecipePhoto = Exclude<JudgedRecipePhoto, { kind: "refused" }>;
 
 type RecipePhotoSavingOptions = {
-  renditions: RecipePhotoRenditionsPort;
-  ids: RecipePhotoIdsPort;
-  store: Pick<RecipePhotoStorePort, "store" | "remove">;
-  incidents: Pick<NutritionLibraryIncidentsPort, "recipePhotoCleanupFailed">;
+  recipePhotoRenditionsPort: RecipePhotoRenditionsPort;
+  recipePhotoIdsPort: RecipePhotoIdsPort;
+  recipePhotoStorePort: Pick<RecipePhotoStorePort, "store" | "remove">;
+  nutritionLibraryIncidentsPort: Pick<
+    NutritionLibraryIncidentsPort,
+    "recipePhotoCleanupFailed"
+  >;
 };
 
 export type RecipePhotoSavingPort = Pick<
@@ -48,7 +51,9 @@ export class RecipePhotoSaving {
       return { kind: "refused", refusal: "too-large" };
     }
 
-    const rendition = await this.options.renditions.render(choice.bytes);
+    const rendition = await this.options.recipePhotoRenditionsPort.render(
+      choice.bytes,
+    );
 
     return rendition.status === "rendered"
       ? { kind: "attach", bytes: rendition.bytes }
@@ -58,8 +63,8 @@ export class RecipePhotoSaving {
   async storeAccepted(judged: AcceptedRecipePhoto): Promise<RecipePhotoChange> {
     if (judged.kind !== "attach") return judged;
 
-    const photoId = this.options.ids.generate();
-    await this.options.store.store(photoId, judged.bytes);
+    const photoId = this.options.recipePhotoIdsPort.generate();
+    await this.options.recipePhotoStorePort.store(photoId, judged.bytes);
 
     return { kind: "attach", photo: RecipePhoto.fromStored({ photoId }) };
   }
@@ -95,9 +100,12 @@ export class RecipePhotoSaving {
     const { photoId } = photo;
 
     try {
-      await this.options.store.remove(photoId);
+      await this.options.recipePhotoStorePort.remove(photoId);
     } catch (error) {
-      this.options.incidents.recipePhotoCleanupFailed({ photoId, error });
+      this.options.nutritionLibraryIncidentsPort.recipePhotoCleanupFailed({
+        photoId,
+        error,
+      });
     }
   }
 }

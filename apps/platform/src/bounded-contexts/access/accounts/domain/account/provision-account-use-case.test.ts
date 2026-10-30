@@ -18,7 +18,7 @@ function buildAccount(
   });
 }
 
-const accountIds: AccountIdsPort = { generate: () => "account-new" };
+const accountIdsPort: AccountIdsPort = { generate: () => "account-new" };
 
 function gateAdmitting(role: AccountRole | null) {
   return {
@@ -31,44 +31,44 @@ function gateAdmitting(role: AccountRole | null) {
 describe("ProvisionAccountUseCase", () => {
   it("rejects a subject with no account whose invitation is refused, without inserting one", async () => {
     // arrange
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationGate = gateAdmitting(null);
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-unprovisioned" });
     expect(invitationGate.admit).toHaveBeenCalledWith("auth-subject-1");
-    expect(accounts.insert).not.toHaveBeenCalled();
+    expect(accountsPort.insert).not.toHaveBeenCalled();
   });
 
   it("inserts a CLIENT account under a fresh id for a subject whose invitation is accepted", async () => {
     // arrange
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockResolvedValue(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting("CLIENT"),
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
@@ -79,7 +79,7 @@ describe("ProvisionAccountUseCase", () => {
         role: "CLIENT",
       },
     });
-    expect(accounts.insert).toHaveBeenCalledWith(
+    expect(accountsPort.insert).toHaveBeenCalledWith(
       Account.provisioned({
         id: "account-new",
         authSubjectId: "auth-subject-1",
@@ -90,7 +90,7 @@ describe("ProvisionAccountUseCase", () => {
 
   it("provisions the CLIENT account on the request after an accepted invitation whose account insert failed", async () => {
     // arrange
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi
         .fn()
@@ -99,17 +99,17 @@ describe("ProvisionAccountUseCase", () => {
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationGate = gateAdmitting("CLIENT");
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate,
     });
-    await expect(useCase.execute("auth-subject-1")).rejects.toThrow(
-      "connection reset",
-    );
+    await expect(
+      provisionAccountUseCase.execute("auth-subject-1"),
+    ).rejects.toThrow("connection reset");
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
@@ -126,7 +126,7 @@ describe("ProvisionAccountUseCase", () => {
   it("re-reads and returns the CLIENT account when an admitted insert loses a race", async () => {
     // arrange
     const wonByConcurrentInsert = buildAccount({ role: "CLIENT" });
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -138,14 +138,14 @@ describe("ProvisionAccountUseCase", () => {
         ),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting("CLIENT"),
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
@@ -156,42 +156,42 @@ describe("ProvisionAccountUseCase", () => {
 
   it("rejects a subject with no account when no bootstrap coach is configured", async () => {
     // arrange
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting(null),
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-unprovisioned" });
-    expect(accounts.insert).not.toHaveBeenCalled();
+    expect(accountsPort.insert).not.toHaveBeenCalled();
   });
 
   it("inserts a new COACH account when the auth subject matches the bootstrap coach id", async () => {
     // arrange
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockResolvedValue(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationGate = gateAdmitting("CLIENT");
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
@@ -202,7 +202,7 @@ describe("ProvisionAccountUseCase", () => {
         role: "COACH",
       },
     });
-    expect(accounts.insert).toHaveBeenCalledWith(
+    expect(accountsPort.insert).toHaveBeenCalledWith(
       Account.provisioned({
         id: "account-new",
         authSubjectId: "auth-subject-1",
@@ -215,28 +215,28 @@ describe("ProvisionAccountUseCase", () => {
   it("returns an existing account without changing its role", async () => {
     // arrange
     const existing = buildAccount({ role: "COACH" });
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(existing),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationGate = gateAdmitting("CLIENT");
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
       outcome: "active",
       account: existing.toSnapshot(),
     });
-    expect(accounts.insert).not.toHaveBeenCalled();
+    expect(accountsPort.insert).not.toHaveBeenCalled();
     expect(invitationGate.admit).not.toHaveBeenCalled();
   });
 
@@ -245,23 +245,23 @@ describe("ProvisionAccountUseCase", () => {
     const deleted = buildAccount({
       deletedAt: new Date("2026-01-01T00:00:00Z"),
     });
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(deleted),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting(null),
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-deleted" });
-    expect(accounts.insert).not.toHaveBeenCalled();
+    expect(accountsPort.insert).not.toHaveBeenCalled();
   });
 
   it("re-reads and returns the existing account when insert loses a race", async () => {
@@ -271,7 +271,7 @@ describe("ProvisionAccountUseCase", () => {
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
     );
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -279,22 +279,22 @@ describe("ProvisionAccountUseCase", () => {
       insert: vi.fn().mockRejectedValue(uniqueViolation),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting(null),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
       outcome: "active",
       account: wonByConcurrentInsert.toSnapshot(),
     });
-    expect(accounts.findByAuthSubjectId).toHaveBeenCalledTimes(2);
+    expect(accountsPort.findByAuthSubjectId).toHaveBeenCalledTimes(2);
   });
 
   it("rejects a soft-deleted account found via the race re-read", async () => {
@@ -306,7 +306,7 @@ describe("ProvisionAccountUseCase", () => {
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
     );
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -314,15 +314,15 @@ describe("ProvisionAccountUseCase", () => {
       insert: vi.fn().mockRejectedValue(uniqueViolation),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting(null),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const result = await useCase.execute("auth-subject-1");
+    const result = await provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-deleted" });
@@ -331,20 +331,20 @@ describe("ProvisionAccountUseCase", () => {
   it("rethrows the original insert error when the re-read still finds nothing", async () => {
     // arrange
     const insertError = new Error("connection reset");
-    const accounts: AccountsPort = {
+    const accountsPort: AccountsPort = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockRejectedValue(insertError),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const useCase = new ProvisionAccountUseCase({
-      accounts,
-      ids: accountIds,
+    const provisionAccountUseCase = new ProvisionAccountUseCase({
+      accountsPort,
+      accountIdsPort,
       invitationGate: gateAdmitting(null),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const outcome = useCase.execute("auth-subject-1");
+    const outcome = provisionAccountUseCase.execute("auth-subject-1");
 
     // assert
     await expect(outcome).rejects.toThrow(insertError);

@@ -28,12 +28,13 @@ const RESERVATION_ID = "7d2c9e14-3a58-4b6f-9e21-0c4d8b7a5f36";
 describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps a stored row into the assessment call the domain reads", async () => {
     // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([STORED_ROW]),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(
+        createDatabaseReturning([STORED_ROW]),
+      );
 
     // act
-    const call = await repository.findById(STORED_ROW.id);
+    const call = await postgresAssessmentCallRepository.findById(STORED_ROW.id);
 
     // assert
     expect(call?.toSnapshot()).toEqual({
@@ -58,12 +59,13 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
 
   it("maps an absent note to no note", async () => {
     // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([{ ...STORED_ROW, visitorNotes: null }]),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(
+        createDatabaseReturning([{ ...STORED_ROW, visitorNotes: null }]),
+      );
 
     // act
-    const call = await repository.findById(STORED_ROW.id);
+    const call = await postgresAssessmentCallRepository.findById(STORED_ROW.id);
 
     // assert
     expect(call?.toSnapshot().visitorNotes).toBeNull();
@@ -71,12 +73,13 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
 
   it("maps an absent phone to no phone", async () => {
     // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(
+        createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
+      );
 
     // act
-    const call = await repository.findById(STORED_ROW.id);
+    const call = await postgresAssessmentCallRepository.findById(STORED_ROW.id);
 
     // assert
     expect(call?.toSnapshot().phone).toBeNull();
@@ -84,12 +87,11 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
 
   it("finds no call for an identifier that matches no row", async () => {
     // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([]),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(createDatabaseReturning([]));
 
     // act
-    const call = await repository.findById(STORED_ROW.id);
+    const call = await postgresAssessmentCallRepository.findById(STORED_ROW.id);
 
     // assert
     expect(call).toBeNull();
@@ -97,12 +99,14 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
 
   it("finds no call for an identifier Postgres cannot read", async () => {
     // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseRejecting(createDatabaseError({ code: "22P02" })),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(
+        createDatabaseRejecting(createDatabaseError({ code: "22P02" })),
+      );
 
     // act
-    const call = await repository.findById("not-an-identifier");
+    const call =
+      await postgresAssessmentCallRepository.findById("not-an-identifier");
 
     // assert
     expect(call).toBeNull();
@@ -117,12 +121,13 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
       id: "9c2b7d41-0e58-4a17-8c6f-2d4e7b9a1f03",
       startsAt: new Date("2026-10-02T14:00:00.000Z"),
     };
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([STORED_ROW, laterRow]),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(
+        createDatabaseReturning([STORED_ROW, laterRow]),
+      );
 
     // act
-    const calls = await repository.listAll();
+    const calls = await postgresAssessmentCallRepository.listAll();
 
     // assert
     expect(calls.map((call) => call.toSnapshot())).toEqual([
@@ -167,12 +172,11 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
 
   it("lists nothing when no call is booked", async () => {
     // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([]),
-    );
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(createDatabaseReturning([]));
 
     // act
-    const calls = await repository.listAll();
+    const calls = await postgresAssessmentCallRepository.listAll();
 
     // assert
     expect(calls).toEqual([]);
@@ -185,11 +189,15 @@ describe("PostgresAssessmentCallRepository#add", () => {
     const { bookedAt, ...visitorAndSlot } = STORED_ROW;
     const call = AssessmentCall.booked({ ...visitorAndSlot, at: bookedAt });
     const database = createDatabaseRecordingReservation();
-    const repository = new PostgresAssessmentCallRepository(database.handle);
+    const postgresAssessmentCallRepository =
+      new PostgresAssessmentCallRepository(database.handle);
 
     // act
     await createUnitOfWork(database.handle)(() =>
-      repository.add({ call, reservationId: RESERVATION_ID }),
+      postgresAssessmentCallRepository.add({
+        call,
+        reservationId: RESERVATION_ID,
+      }),
     );
 
     // assert

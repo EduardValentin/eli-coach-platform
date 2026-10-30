@@ -12,12 +12,12 @@ const request = new Request("https://eli.example/?ff.WAITLIST_MODE=false");
 describe("feature flag overrides composition", () => {
   it("lets a browser override the database flags", async () => {
     // arrange
-    const databaseReader: FeatureFlagReaderPort = {
+    const featureFlagReaderPort: FeatureFlagReaderPort = {
       execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
     };
     const overrides = composeBrowserFeatureFlagOverrides({
       appBasePath: "/",
-      featureFlags: databaseReader,
+      featureFlagReaderPort,
     });
     const flagsSeenByApplication = vi.fn();
 
@@ -25,7 +25,7 @@ describe("feature flag overrides composition", () => {
     const response = await overrides.middleware(
       createRequestArgs({ request }),
       async () => {
-        flagsSeenByApplication(await overrides.featureFlags.execute());
+        flagsSeenByApplication(await overrides.featureFlagReaderPort.execute());
 
         return new Response("ok");
       },
@@ -42,10 +42,10 @@ describe("feature flag overrides composition", () => {
 
   it("ignores override input when overrides are off", async () => {
     // arrange
-    const databaseReader: FeatureFlagReaderPort = {
+    const featureFlagReaderPort: FeatureFlagReaderPort = {
       execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
     };
-    const overrides = composeWithoutFeatureFlagOverrides(databaseReader);
+    const overrides = composeWithoutFeatureFlagOverrides(featureFlagReaderPort);
     const applicationResponse = new Response("ok");
     const flagsSeenByApplication = vi.fn();
 
@@ -53,7 +53,7 @@ describe("feature flag overrides composition", () => {
     const response = await overrides.middleware(
       createRequestArgs({ request }),
       async () => {
-        flagsSeenByApplication(await overrides.featureFlags.execute());
+        flagsSeenByApplication(await overrides.featureFlagReaderPort.execute());
 
         return applicationResponse;
       },

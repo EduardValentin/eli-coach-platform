@@ -20,7 +20,7 @@ describe("ended page route", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(coachingSalesContext, {
-          subscription,
+          subscriptionController: subscription,
         } as unknown as CoachingSalesFeature),
       ],
       request: new Request("https://evoa.fit/client/ended"),

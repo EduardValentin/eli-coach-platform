@@ -7,6 +7,6 @@ export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
     args.context
       .get(clientResourcesContext)
-      .clientResources.openThumbnail(args, args.params.resourceId),
+      .clientResourcesController.openThumbnail(args, args.params.resourceId),
   );
 }

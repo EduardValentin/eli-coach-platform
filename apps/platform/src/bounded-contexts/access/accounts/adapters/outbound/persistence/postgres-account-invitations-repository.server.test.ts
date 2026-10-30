@@ -11,17 +11,21 @@ const SUBJECT = "user_invited";
 describe("PostgresAccountInvitations#findByTokenHash", () => {
   it("reconstitutes a stored invitation with the identity invitation it carries", async () => {
     // arrange
-    const invitations = new PostgresAccountInvitationsRepository(
-      createDatabaseAnswering([
-        invitationRow({
-          providerInvitationId: "inv_1",
-          providerInvitationUrl: "https://accounts.evoa.fit/sign-up?ticket=1",
-        }),
-      ]),
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(
+        createDatabaseAnswering([
+          invitationRow({
+            providerInvitationId: "inv_1",
+            providerInvitationUrl: "https://accounts.evoa.fit/sign-up?ticket=1",
+          }),
+        ]),
+      );
 
     // act
-    const invitation = await invitations.findByTokenHash("a".repeat(64));
+    const invitation =
+      await postgresAccountInvitationsRepository.findByTokenHash(
+        "a".repeat(64),
+      );
 
     // assert
     expect(invitation?.id).toBe(INVITATION_ID);
@@ -34,12 +38,16 @@ describe("PostgresAccountInvitations#findByTokenHash", () => {
 
   it("reconstitutes an invitation Clerk has not created yet without a provider", async () => {
     // arrange
-    const invitations = new PostgresAccountInvitationsRepository(
-      createDatabaseAnswering([invitationRow({})]),
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(
+        createDatabaseAnswering([invitationRow({})]),
+      );
 
     // act
-    const invitation = await invitations.findByTokenHash("a".repeat(64));
+    const invitation =
+      await postgresAccountInvitationsRepository.findByTokenHash(
+        "a".repeat(64),
+      );
 
     // assert
     expect(invitation?.provider).toBeNull();
@@ -47,12 +55,14 @@ describe("PostgresAccountInvitations#findByTokenHash", () => {
 
   it("answers null for a hash no invitation carries", async () => {
     // arrange
-    const invitations = new PostgresAccountInvitationsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(createDatabaseAnswering([]));
 
     // act
-    const invitation = await invitations.findByTokenHash("b".repeat(64));
+    const invitation =
+      await postgresAccountInvitationsRepository.findByTokenHash(
+        "b".repeat(64),
+      );
 
     // assert
     expect(invitation).toBeNull();
@@ -63,12 +73,11 @@ describe("PostgresAccountInvitations#insert", () => {
   it("stores the issued invitation as created at the moment it was sent", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
-    const invitations = new PostgresAccountInvitationsRepository(
-      database.client,
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(database.client);
 
     // act
-    await invitations.insert(issuedInvitation());
+    await postgresAccountInvitationsRepository.insert(issuedInvitation());
 
     // assert
     expect(database.writes).toEqual([
@@ -90,9 +99,8 @@ describe("PostgresAccountInvitations#reissue", () => {
   it("rewrites the token and its validity and clears the email outcome, leaving the identity invitation alone", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
-    const invitations = new PostgresAccountInvitationsRepository(
-      database.client,
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(database.client);
     const later = new Date("2026-10-22T09:00:00.000Z");
     const reissued = issuedInvitation().reissue({
       tokenHash: "c".repeat(64),
@@ -100,7 +108,7 @@ describe("PostgresAccountInvitations#reissue", () => {
     });
 
     // act
-    await invitations.reissue(reissued);
+    await postgresAccountInvitationsRepository.reissue(reissued);
 
     // assert
     expect(database.writes).toEqual([
@@ -119,12 +127,11 @@ describe("PostgresAccountInvitations#accept", () => {
   it("marks the invitation accepted by the subject", async () => {
     // arrange
     const database = createDatabaseAccepting([{ id: INVITATION_ID }]);
-    const invitations = new PostgresAccountInvitationsRepository(
-      database.client,
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(database.client);
 
     // act
-    const outcome = await invitations.accept({
+    const outcome = await postgresAccountInvitationsRepository.accept({
       invitationId: INVITATION_ID,
       authSubjectId: SUBJECT,
       at: NOW,
@@ -140,12 +147,11 @@ describe("PostgresAccountInvitations#accept", () => {
   it("answers raced when another request accepted the invitation first", async () => {
     // arrange
     const database = createDatabaseAccepting([]);
-    const invitations = new PostgresAccountInvitationsRepository(
-      database.client,
-    );
+    const postgresAccountInvitationsRepository =
+      new PostgresAccountInvitationsRepository(database.client);
 
     // act
-    const outcome = await invitations.accept({
+    const outcome = await postgresAccountInvitationsRepository.accept({
       invitationId: INVITATION_ID,
       authSubjectId: SUBJECT,
       at: NOW,

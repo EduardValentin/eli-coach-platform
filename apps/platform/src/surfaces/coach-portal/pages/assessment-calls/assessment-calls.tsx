@@ -37,11 +37,11 @@ export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/bounded-context
 export async function loader({ context }: LoaderFunctionArgs) {
   const listing = await context
     .get(assessmentCallsContext)
-    .coachAssessmentCalls.loadCalls();
-  const { coachSales } = context.get(coachingSalesContext);
+    .coachAssessmentCallsController.loadCalls();
+  const { coachSalesController } = context.get(coachingSalesContext);
   const [callSales, pricingTiers] = await Promise.all([
-    coachSales.loadCallSales(listing.calls.map((call) => call.id)),
-    coachSales.loadPricingTiers(
+    coachSalesController.loadCallSales(listing.calls.map((call) => call.id)),
+    coachSalesController.loadPricingTiers(
       listing.calls.map((call) => ({ email: call.visitorEmail, id: call.id })),
     ),
   ]);

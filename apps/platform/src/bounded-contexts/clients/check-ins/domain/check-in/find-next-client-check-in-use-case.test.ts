@@ -103,14 +103,14 @@ function createUseCase(options: {
     checkInInboxFailed: vi.fn(),
     checkInSeriesInboxFailed: vi.fn(),
   } satisfies CheckInIncidentsPort;
-  const useCase = new FindNextClientCheckInUseCase({
-    checkIns,
-    clients,
-    clock: { now: () => NOW },
-    incidents,
+  const findNextClientCheckInUseCase = new FindNextClientCheckInUseCase({
+    checkInsPort: checkIns,
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    checkInIncidentsPort: incidents,
   });
 
-  return { checkIns, incidents, useCase };
+  return { checkIns, incidents, findNextClientCheckInUseCase };
 }
 
 describe("FindNextClientCheckInUseCase", () => {
@@ -122,12 +122,12 @@ describe("FindNextClientCheckInUseCase", () => {
       SOONER_CANCELLED,
       SOONER_PENDING,
     );
-    const { checkIns, useCase } = createUseCase({
+    const { checkIns, findNextClientCheckInUseCase } = createUseCase({
       checkIns: [later, soonest, pending, cancelled],
     });
 
     // act
-    const next = await useCase.execute("user_ana");
+    const next = await findNextClientCheckInUseCase.execute("user_ana");
 
     // assert
     expect(next).toEqual(soonest.viewFor({ party: "client", at: NOW }));
@@ -136,12 +136,12 @@ describe("FindNextClientCheckInUseCase", () => {
 
   it("still finds an approved check-in that is live now", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { findNextClientCheckInUseCase } = createUseCase({
       checkIns: checkInsOf(APPROVED, LIVE),
     });
 
     // act
-    const next = await useCase.execute("user_ana");
+    const next = await findNextClientCheckInUseCase.execute("user_ana");
 
     // assert
     expect(next).toMatchObject({ id: "check-in-5", status: "approved" });
@@ -149,12 +149,12 @@ describe("FindNextClientCheckInUseCase", () => {
 
   it("passes over an approved check-in that has ended", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { findNextClientCheckInUseCase } = createUseCase({
       checkIns: checkInsOf(APPROVED, ENDED),
     });
 
     // act
-    const next = await useCase.execute("user_ana");
+    const next = await findNextClientCheckInUseCase.execute("user_ana");
 
     // assert
     expect(next).toMatchObject({ id: "check-in-1" });
@@ -162,12 +162,12 @@ describe("FindNextClientCheckInUseCase", () => {
 
   it("finds nothing when none of her check-ins is approved and still ahead", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { findNextClientCheckInUseCase } = createUseCase({
       checkIns: checkInsOf(SOONER_PENDING, SOONER_CANCELLED, ENDED),
     });
 
     // act
-    const next = await useCase.execute("user_ana");
+    const next = await findNextClientCheckInUseCase.execute("user_ana");
 
     // assert
     expect(next).toBeNull();
@@ -178,13 +178,13 @@ describe("FindNextClientCheckInUseCase", () => {
     ["with no client record", null],
   ] as const)("finds nothing for a client %s", async (_situation, client) => {
     // arrange
-    const { checkIns, useCase } = createUseCase({
+    const { checkIns, findNextClientCheckInUseCase } = createUseCase({
       checkIns: checkInsOf(APPROVED),
       client,
     });
 
     // act
-    const next = await useCase.execute("user_ana");
+    const next = await findNextClientCheckInUseCase.execute("user_ana");
 
     // assert
     expect(next).toBeNull();
@@ -194,10 +194,13 @@ describe("FindNextClientCheckInUseCase", () => {
   it("reports a failed read and finds nothing", async () => {
     // arrange
     const failure = new Error("connection refused");
-    const { incidents, useCase } = createUseCase({ checkIns: [], failure });
+    const { incidents, findNextClientCheckInUseCase } = createUseCase({
+      checkIns: [],
+      failure,
+    });
 
     // act
-    const next = await useCase.execute("user_ana");
+    const next = await findNextClientCheckInUseCase.execute("user_ana");
 
     // assert
     expect(next).toBeNull();

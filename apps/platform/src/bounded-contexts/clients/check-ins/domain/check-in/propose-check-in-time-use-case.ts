@@ -48,15 +48,15 @@ type OpenStartCheck = {
 };
 
 type ProposeCheckInTimeUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "find" | "listForClient" | "move">;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  clock: ClockPort;
-  coachTime: CoachTimePort;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
-  openSlots: Pick<OpenSlotsPort, "offersStart">;
+  checkInsPort: Pick<CheckInsPort, "find" | "listForClient" | "move">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clockPort: ClockPort;
+  coachTimePort: CoachTimePort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
+  openSlotsPort: Pick<OpenSlotsPort, "offersStart">;
 };
 
 export class ProposeCheckInTimeUseCase {
@@ -91,7 +91,7 @@ export class ProposeCheckInTimeUseCase {
 
     const { checkIn } = reached;
     const party = command.actor.party;
-    const at = this.options.clock.now();
+    const at = this.options.clockPort.now();
     const proposal = checkIn.proposeNewTime({
       party,
       startsAt: command.startsAt,
@@ -107,7 +107,7 @@ export class ProposeCheckInTimeUseCase {
     const laterWeek = checkIn.laterWeekRefusalFor({
       party,
       at,
-      clientCheckIns: await this.options.checkIns.listForClient(
+      clientCheckIns: await this.options.checkInsPort.listForClient(
         checkIn.clientId,
       ),
     });
@@ -116,7 +116,9 @@ export class ProposeCheckInTimeUseCase {
       return { status: laterWeek };
     }
 
-    const client = await this.options.clients.findById(checkIn.clientId);
+    const client = await this.options.clientReachPort.findById(
+      checkIn.clientId,
+    );
 
     if (!client) {
       return { status: "unknown" };
@@ -141,7 +143,7 @@ export class ProposeCheckInTimeUseCase {
       at,
     };
     const moved = checkIn.keepsItsHourAt({ startsAt: command.startsAt, at })
-      ? await this.options.checkIns.move(move)
+      ? await this.options.checkInsPort.move(move)
       : await this.moveToANewHour(move);
 
     if (moved.status !== "moved") {
@@ -156,8 +158,8 @@ export class ProposeCheckInTimeUseCase {
   private async moveToANewHour(
     move: CheckInMoveCommand,
   ): Promise<CheckInMove | { status: "time_taken" }> {
-    const { coachTime } = this.options;
-    const held = await coachTime.reserve(
+    const { coachTimePort } = this.options;
+    const held = await coachTimePort.reserve(
       CHECK_IN_RULES.coachTimeFrom(move.checkIn.startsAt),
     );
 
@@ -165,18 +167,18 @@ export class ProposeCheckInTimeUseCase {
       return { status: "time_taken" };
     }
 
-    const moved = await this.options.checkIns.move({
+    const moved = await this.options.checkInsPort.move({
       ...move,
       reservationId: held.reservationId,
     });
 
     if (moved.status === "changed_meanwhile") {
-      await coachTime.release(held.reservationId);
+      await coachTimePort.release(held.reservationId);
 
       return moved;
     }
 
-    await releaseFreedHours(coachTime, [moved.freedReservationId]);
+    await releaseFreedHours(coachTimePort, [moved.freedReservationId]);
 
     return moved;
   }
@@ -190,6 +192,6 @@ export class ProposeCheckInTimeUseCase {
       return false;
     }
 
-    return this.options.openSlots.offersStart({ start: startsAt, now: at });
+    return this.options.openSlotsPort.offersStart({ start: startsAt, now: at });
   }
 }

@@ -14,8 +14,8 @@ type OnboardingParticipant = {
 };
 
 type OnboardingParticipantsOptions = {
-  clients: OnboardingClientsPort;
-  identities: Pick<ClientIdentitiesPort, "findByClientId">;
+  onboardingClientsPort: OnboardingClientsPort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientId">;
 };
 
 export class OnboardingParticipants {
@@ -25,13 +25,15 @@ export class OnboardingParticipants {
     authSubjectId: string,
   ): Promise<OnboardingParticipant | null> {
     return this.withIdentity(
-      await this.options.clients.findByAuthSubjectId(authSubjectId),
+      await this.options.onboardingClientsPort.findByAuthSubjectId(
+        authSubjectId,
+      ),
     );
   }
 
   async byClientId(clientId: string): Promise<OnboardingParticipant | null> {
     return this.withIdentity(
-      await this.options.clients.findByClientId(clientId),
+      await this.options.onboardingClientsPort.findByClientId(clientId),
     );
   }
 
@@ -42,7 +44,7 @@ export class OnboardingParticipants {
       return null;
     }
 
-    const identity = await this.options.identities.findByClientId(
+    const identity = await this.options.clientIdentitiesPort.findByClientId(
       client.clientId,
     );
 

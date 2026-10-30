@@ -113,7 +113,7 @@ import {
 
 type EmailCheckInNotificationsOptions = {
   appBasePath: string;
-  clock: ClockPort;
+  clockPort: ClockPort;
   coachEmail: string;
   contactEmail: string;
   publicAppUrl: string;
@@ -163,7 +163,7 @@ const NAME_UNSAFE_RUNS = /[\p{Cc}\s]+/gu;
 
 export class EmailCheckInNotificationsAdapter implements CheckInNotificationsPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailCheckInNotificationsOptions,
   ) {}
 
@@ -568,7 +568,7 @@ export class EmailCheckInNotificationsAdapter implements CheckInNotificationsPor
   }
 
   private async deliver(email: OutgoingEmail): Promise<CheckInDelivery> {
-    const delivery = await this.productEmail.send({
+    const delivery = await this.productEmailPort.send({
       html: `<!doctype html>${renderToStaticMarkup(email.body)}`,
       idempotencyKey: email.idempotencyKey,
       ...(email.replyTo ? { replyTo: email.replyTo } : {}),
@@ -583,7 +583,7 @@ export class EmailCheckInNotificationsAdapter implements CheckInNotificationsPor
 
   private inviteFor(event: CalendarEvent): EmailAttachment {
     return buildCalendarInvite(event, {
-      issuedAt: this.options.clock.now(),
+      issuedAt: this.options.clockPort.now(),
       organizerEmail: this.options.contactEmail,
       productName: INVITE_PRODUCT_NAME,
       uidHost: new URL(this.options.publicAppUrl).host,
@@ -598,7 +598,7 @@ export class EmailCheckInNotificationsAdapter implements CheckInNotificationsPor
   }
 
   private currentYear(): number {
-    return this.options.clock.now().getUTCFullYear();
+    return this.options.clockPort.now().getUTCFullYear();
   }
 
   private coachMomentOf(notice: CheckInNotice): string {

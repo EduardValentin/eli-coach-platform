@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(checkInsContext)
-      .sharedCheckIns.proposeNewTime(args, args.params.checkInId);
+      .sharedCheckInsController.proposeNewTime(args, args.params.checkInId);
   });
 }
 

@@ -9,21 +9,21 @@ export type ArchiveExerciseResult =
   { status: "archived"; exercise: Exercise } | { status: "not-found" };
 
 type ArchiveExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibraryPort, "find" | "replace">;
-  clock: ClockPort;
+  exerciseLibraryPort: Pick<ExerciseLibraryPort, "find" | "replace">;
+  clockPort: ClockPort;
 };
 
 export class ArchiveExerciseUseCase {
   constructor(private readonly options: ArchiveExerciseUseCaseOptions) {}
 
   async execute(reference: ExerciseReference): Promise<ArchiveExerciseResult> {
-    const { library, clock } = this.options;
-    const exercise = await library.find(reference);
+    const { exerciseLibraryPort, clockPort } = this.options;
+    const exercise = await exerciseLibraryPort.find(reference);
 
     if (!exercise) return { status: "not-found" };
 
-    const archived = exercise.archived(clock.now());
-    await library.replace(archived);
+    const archived = exercise.archived(clockPort.now());
+    await exerciseLibraryPort.replace(archived);
 
     return { status: "archived", exercise: archived };
   }

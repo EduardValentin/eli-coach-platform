@@ -9,7 +9,7 @@ import {
 export type OwnClientProfileReading = Omit<ClientProfileReading, "coachNotes">;
 
 type ReadOwnClientProfileUseCaseOptions = ClientProfileReadingPorts & {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class ReadOwnClientProfileUseCase {
@@ -19,7 +19,7 @@ export class ReadOwnClientProfileUseCase {
     authSubjectId: string,
   ): Promise<OwnClientProfileReading | null> {
     const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+      await this.options.clientReachPort.findByAuthSubjectId(authSubjectId);
     const reading =
       client &&
       (await new ClientProfileComposite(this.options).readFor(client.clientId));

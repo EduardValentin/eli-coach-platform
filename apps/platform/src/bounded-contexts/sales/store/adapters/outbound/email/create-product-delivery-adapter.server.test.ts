@@ -7,30 +7,36 @@ import { EmailProductDeliveryAdapter } from "./email-product-delivery-adapter.se
 describe("createProductDelivery", () => {
   it("returns the email product delivery", () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
 
     // act
-    const delivery = createProductDeliveryAdapter(productEmail, {
-      appBasePath: "/",
-      contactEmail: "contact@evoa.fit",
-      publicAppUrl: "https://eli.example",
-    });
+    const productDeliveryPort = createProductDeliveryAdapter(
+      inMemoryProductEmailAdapter,
+      {
+        appBasePath: "/",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://eli.example",
+      },
+    );
 
     // assert
-    expect(delivery).toBeInstanceOf(EmailProductDeliveryAdapter);
+    expect(productDeliveryPort).toBeInstanceOf(EmailProductDeliveryAdapter);
   });
 
   it("delivers through the injected product email port", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const delivery = createProductDeliveryAdapter(productEmail, {
-      appBasePath: "/",
-      contactEmail: "contact@evoa.fit",
-      publicAppUrl: "https://eli.example",
-    });
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const productDeliveryPort = createProductDeliveryAdapter(
+      inMemoryProductEmailAdapter,
+      {
+        appBasePath: "/",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://eli.example",
+      },
+    );
 
     // act
-    const result = await delivery.deliver({
+    const result = await productDeliveryPort.deliver({
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-unit-test",
       rawToken: "opaque-token",
@@ -40,7 +46,7 @@ describe("createProductDelivery", () => {
     });
 
     // assert
-    expect(productEmail.sent).toHaveLength(1);
+    expect(inMemoryProductEmailAdapter.sent).toHaveLength(1);
     expect(result).toEqual({
       kind: "delivered",
       provider: "memory",

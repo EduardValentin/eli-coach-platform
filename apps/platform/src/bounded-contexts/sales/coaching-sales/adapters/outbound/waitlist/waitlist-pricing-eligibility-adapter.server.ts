@@ -5,15 +5,17 @@ import type {
 import type { PricingEligibilitySourceFacade } from "~/bounded-contexts/sales/waitlist/public/pricing-eligibility-source-facade";
 
 export class WaitlistPricingEligibilityAdapter implements PricingEligibilityPort {
-  constructor(private readonly source: PricingEligibilitySourceFacade) {}
+  constructor(
+    private readonly pricingEligibilitySourceFacade: PricingEligibilitySourceFacade,
+  ) {}
 
   tierForEmail(email: string): Promise<PriceTier> {
-    return this.source.tierForEmail(email);
+    return this.pricingEligibilitySourceFacade.tierForEmail(email);
   }
 
   tiersForEmails(
     emails: readonly string[],
   ): Promise<ReadonlyMap<string, PriceTier>> {
-    return this.source.tiersForEmails(emails);
+    return this.pricingEligibilitySourceFacade.tiersForEmails(emails);
   }
 }

@@ -17,12 +17,12 @@ type StartProgramNowResult =
   | { status: "not_found" };
 
 type StartProgramNowUseCaseOptions = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   coachingPeriods: readonly CoachingPeriodHandlerPort[];
-  incidents: CoachingSubscriptionIncidentsPort;
-  paymentSubscriptions: Pick<PaymentSubscriptionsPort, "liftRenewalHold">;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  paymentSubscriptionsPort: Pick<PaymentSubscriptionsPort, "liftRenewalHold">;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
-  subscriptions: Pick<CoachingSubscriptionsPort, "save">;
+  coachingSubscriptionsPort: Pick<CoachingSubscriptionsPort, "save">;
 };
 
 export class StartProgramNowUseCase {
@@ -33,7 +33,7 @@ export class StartProgramNowUseCase {
   }
 
   async execute(authSubjectId: string): Promise<StartProgramNowResult> {
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const first = await this.attempt(authSubjectId, now);
     const result =
       first === "stale" ? await this.attempt(authSubjectId, now) : first;
@@ -64,7 +64,7 @@ export class StartProgramNowUseCase {
       return { status: "refused", reason: decision.reason };
     }
 
-    const saved = await this.options.subscriptions.save({
+    const saved = await this.options.coachingSubscriptionsPort.save({
       subscription: decision.subscription,
       previous: current,
     });
@@ -73,7 +73,9 @@ export class StartProgramNowUseCase {
       return "stale";
     }
 
-    this.options.incidents.programStartedNow({ subscriptionId: current.id });
+    this.options.coachingSubscriptionIncidentsPort.programStartedNow({
+      subscriptionId: current.id,
+    });
     await this.coachingPeriod.propagateProgramStart(decision.subscription);
     await this.liftRenewalHold(decision.subscription);
 
@@ -86,11 +88,11 @@ export class StartProgramNowUseCase {
     const { paymentSubscriptionId } = subscription;
 
     try {
-      await this.options.paymentSubscriptions.liftRenewalHold(
+      await this.options.paymentSubscriptionsPort.liftRenewalHold(
         paymentSubscriptionId,
       );
     } catch (error) {
-      this.options.incidents.renewalHoldLiftFailed({
+      this.options.coachingSubscriptionIncidentsPort.renewalHoldLiftFailed({
         paymentSubscriptionId,
         error,
       });

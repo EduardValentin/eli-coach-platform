@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientOnboardingContext)
-      .coachReview.approveAnswers(args);
+      .onboardingReviewController.approveAnswers(args);
   });
 }
 

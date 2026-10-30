@@ -10,7 +10,7 @@ export class CoachingSalesIncidentsAdapter
     CoachingSubscriptionIncidentsPort,
     PaymentWebhookIncidents
 {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   coachingEndNotPropagated({
     clientId,
@@ -23,7 +23,7 @@ export class CoachingSalesIncidentsAdapter
     endsAt: Date;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Coaching end did not reach the client's check-ins; their later check-ins stay booked.",
       {
         clientId,
@@ -44,7 +44,7 @@ export class CoachingSalesIncidentsAdapter
     clientId: string;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Coaching period did not reach the client's check-ins; her weekly check-in misses the new weeks.",
       {
         clientId,
@@ -62,7 +62,7 @@ export class CoachingSalesIncidentsAdapter
     paymentCustomerId: string;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Payment card could not be refreshed; Stripe will redeliver.",
       {
         errorCategory: "payment_card_mirror_failure",
@@ -80,7 +80,7 @@ export class CoachingSalesIncidentsAdapter
   }: Parameters<
     CoachingSubscriptionIncidentsPort["paymentCardEventMirrored"]
   >[0]) {
-    this.logger.info("Card on file mirrored.", {
+    this.loggerPort.info("Card on file mirrored.", {
       eventCategory: "payment_card_event_mirrored",
       eventId,
       eventKind,
@@ -98,19 +98,22 @@ export class CoachingSalesIncidentsAdapter
     eventId: string;
     handler: string;
   }) {
-    this.logger.error("Payment event handler failed; Stripe will redeliver.", {
-      errorCategory: "payment_event_handling_failure",
-      errorClass: errorClassOf(error),
-      eventId,
-      handler,
-    });
+    this.loggerPort.error(
+      "Payment event handler failed; Stripe will redeliver.",
+      {
+        errorCategory: "payment_event_handling_failure",
+        errorClass: errorClassOf(error),
+        eventId,
+        handler,
+      },
+    );
   }
 
   paymentEventRejected({
     eventId,
     reason,
   }: Parameters<CoachingSubscriptionIncidentsPort["paymentEventRejected"]>[0]) {
-    this.logger.error("Payment event was not recorded.", {
+    this.loggerPort.error("Payment event was not recorded.", {
       errorCategory: "payment_event_rejected",
       eventId,
       reason,
@@ -124,7 +127,7 @@ export class CoachingSalesIncidentsAdapter
     eventId: string;
     purpose: string | null;
   }) {
-    this.logger.error("Payment event matched no payment handler.", {
+    this.loggerPort.error("Payment event matched no payment handler.", {
       errorCategory: "payment_event_unrouted",
       eventId,
       purpose,
@@ -132,28 +135,28 @@ export class CoachingSalesIncidentsAdapter
   }
 
   paymentLinkEmailFailed(assessmentCallId: string) {
-    this.logger.error("Payment link email failed.", {
+    this.loggerPort.error("Payment link email failed.", {
       assessmentCallId,
       errorCategory: "payment_link_email_failure",
     });
   }
 
   paymentMethodSessionOpened({ subscriptionId }: { subscriptionId: string }) {
-    this.logger.info("Payment method session opened.", {
+    this.loggerPort.info("Payment method session opened.", {
       eventCategory: "payment_method_session_opened",
       subscriptionId,
     });
   }
 
   programStartedNow({ subscriptionId }: { subscriptionId: string }) {
-    this.logger.info("Coaching program started now.", {
+    this.loggerPort.info("Coaching program started now.", {
       eventCategory: "coaching_program_started_now",
       subscriptionId,
     });
   }
 
   refundNotificationFailed({ subscriptionId }: { subscriptionId: string }) {
-    this.logger.error("Refund due email to the coach failed.", {
+    this.loggerPort.error("Refund due email to the coach failed.", {
       errorCategory: "coaching_subscription_refund_notification_failure",
       subscriptionId,
     });
@@ -166,7 +169,7 @@ export class CoachingSalesIncidentsAdapter
     subscriptionId: string;
     refundedCents: number;
   }) {
-    this.logger.info("Coaching subscription refund settled.", {
+    this.loggerPort.info("Coaching subscription refund settled.", {
       eventCategory: "coaching_subscription_refund_settled",
       refundedCents,
       subscriptionId,
@@ -178,7 +181,7 @@ export class CoachingSalesIncidentsAdapter
   }: {
     paymentSubscriptionId: string;
   }) {
-    this.logger.info("Coaching subscription renewal hold applied.", {
+    this.loggerPort.info("Coaching subscription renewal hold applied.", {
       eventCategory: "coaching_subscription_renewal_hold_applied",
       paymentSubscriptionId,
     });
@@ -191,7 +194,7 @@ export class CoachingSalesIncidentsAdapter
     paymentSubscriptionId: string;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Coaching subscription renewal hold failed; Stripe will redeliver.",
       {
         errorCategory: "coaching_subscription_renewal_hold_failure",
@@ -208,7 +211,7 @@ export class CoachingSalesIncidentsAdapter
     paymentSubscriptionId: string;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Coaching subscription renewal hold could not be lifted; it ends at its resume date.",
       {
         errorCategory: "coaching_subscription_renewal_hold_lift_failure",
@@ -219,7 +222,7 @@ export class CoachingSalesIncidentsAdapter
   }
 
   salesModeReadFailed(error: unknown) {
-    this.logger.error("Coaching sales mode feature flag read failed.", {
+    this.loggerPort.error("Coaching sales mode feature flag read failed.", {
       errorCategory: "coaching_sales_mode_read_failure",
       ...this.describeError(error),
     });
@@ -232,7 +235,7 @@ export class CoachingSalesIncidentsAdapter
   }: Parameters<
     CoachingSubscriptionIncidentsPort["subscriptionCancellationFailed"]
   >[0]) {
-    this.logger.error(
+    this.loggerPort.error(
       "Coaching subscription cancellation failed at the payment provider.",
       {
         errorCategory: "coaching_subscription_cancellation_failure",
@@ -251,7 +254,7 @@ export class CoachingSalesIncidentsAdapter
   }: Parameters<
     CoachingSubscriptionIncidentsPort["subscriptionCancelled"]
   >[0]) {
-    this.logger.info("Coaching subscription cancelled.", {
+    this.loggerPort.info("Coaching subscription cancelled.", {
       eventCategory: "coaching_subscription_cancelled",
       refundDueCents,
       rule,
@@ -268,7 +271,7 @@ export class CoachingSalesIncidentsAdapter
   }: Parameters<
     CoachingSubscriptionIncidentsPort["subscriptionEventReconciled"]
   >[0]) {
-    this.logger.info("Coaching subscription event reconciled.", {
+    this.loggerPort.info("Coaching subscription event reconciled.", {
       eventCategory: "coaching_subscription_event_reconciled",
       eventId,
       eventKind,

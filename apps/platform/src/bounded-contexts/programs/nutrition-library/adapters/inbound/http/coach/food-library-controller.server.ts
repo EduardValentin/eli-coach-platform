@@ -29,10 +29,10 @@ import { COACH_NUTRITION_PATH } from "~/bounded-contexts/programs/nutrition-libr
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type FoodLibraryControllerOptions = {
-  listFoods: ListFoodsUseCase;
-  findFood: FindFoodUseCase;
-  createFood: CreateFoodUseCase;
-  editFood: EditFoodUseCase;
+  listFoodsUseCase: ListFoodsUseCase;
+  findFoodUseCase: FindFoodUseCase;
+  createFoodUseCase: CreateFoodUseCase;
+  editFoodUseCase: EditFoodUseCase;
 };
 
 const FOOD_REQUEST_MAX_BYTES = 16 * 1024;
@@ -44,14 +44,18 @@ export class FoodLibraryController {
 
   async list(args: LoaderFunctionArgs): Promise<FoodLibraryView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { foods, tags } = await this.options.listFoods.execute(coach.id);
+    const { foods, tags } = await this.options.listFoodsUseCase.execute(
+      coach.id,
+    );
 
     return { foods: foods.map(presentFood), tags: tags.map(presentTag) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<FoodEditorView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { foods, tags } = await this.options.listFoods.execute(coach.id);
+    const { foods, tags } = await this.options.listFoodsUseCase.execute(
+      coach.id,
+    );
 
     return {
       food: null,
@@ -71,7 +75,7 @@ export class FoodLibraryController {
       throw this.backToLibrary();
     }
 
-    const found = await this.options.findFood.execute({
+    const found = await this.options.findFoodUseCase.execute({
       ownerAccountId: coach.id,
       foodId: id.data,
     });
@@ -97,7 +101,7 @@ export class FoodLibraryController {
       return createBadRequestResponse("The food could not be read.");
     }
 
-    const result = await this.options.createFood.execute({
+    const result = await this.options.createFoodUseCase.execute({
       ownerAccountId: coach.id,
       draft: draft.data,
     });
@@ -131,7 +135,7 @@ export class FoodLibraryController {
       return createBadRequestResponse("The food could not be read.");
     }
 
-    const result = await this.options.editFood.execute({
+    const result = await this.options.editFoodUseCase.execute({
       ownerAccountId: coach.id,
       foodId: id.data,
       draft: draft.data,

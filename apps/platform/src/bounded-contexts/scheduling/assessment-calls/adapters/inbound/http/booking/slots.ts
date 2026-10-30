@@ -18,6 +18,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["GET", "HEAD"] });
     }
 
-    return context.get(assessmentCallsContext).assessmentCalls.listSlots();
+    return context
+      .get(assessmentCallsContext)
+      .assessmentCallsController.listSlots();
   });
 }

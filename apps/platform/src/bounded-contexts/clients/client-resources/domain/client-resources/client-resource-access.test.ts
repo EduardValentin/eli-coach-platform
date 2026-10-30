@@ -107,11 +107,11 @@ class InMemoryClientReachAdapter implements ClientReachPort {
 }
 
 function createAccess() {
-  const resources = new InMemoryClientResourcesAdapter([
+  const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter([
     RESOURCE,
     UNREACHABLE_PORTAL_RESOURCE,
   ]);
-  const clients = new InMemoryClientReachAdapter();
+  const inMemoryClientReachAdapter = new InMemoryClientReachAdapter();
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -123,9 +123,18 @@ function createAccess() {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const access = new ClientResourceAccess({ resources, clients, incidents });
+  const access = new ClientResourceAccess({
+    clientResourcesPort: inMemoryClientResourcesAdapter,
+    clientReachPort: inMemoryClientReachAdapter,
+    clientResourceIncidentsPort: incidents,
+  });
 
-  return { access, incidents, resources, clients };
+  return {
+    access,
+    incidents,
+    inMemoryClientResourcesAdapter,
+    inMemoryClientReachAdapter,
+  };
 }
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
@@ -302,8 +311,11 @@ describe("ClientResourceAccess", () => {
 
     it("answers no client to the coach, without looking one up", async () => {
       // arrange
-      const { access, clients } = createAccess();
-      const findClient = vi.spyOn(clients, "findByAuthSubjectId");
+      const { access, inMemoryClientReachAdapter } = createAccess();
+      const findClient = vi.spyOn(
+        inMemoryClientReachAdapter,
+        "findByAuthSubjectId",
+      );
 
       // act
       const clientId = await access.clientWithReachablePortalOf(COACH);
@@ -347,8 +359,8 @@ describe("ClientResourceAccess", () => {
 
     it("hands the coach nothing, without looking the resource up", async () => {
       // arrange
-      const { access, resources } = createAccess();
-      const findResource = vi.spyOn(resources, "findById");
+      const { access, inMemoryClientResourcesAdapter } = createAccess();
+      const findResource = vi.spyOn(inMemoryClientResourcesAdapter, "findById");
 
       // act
       const resource = await access.ownResourceFor(COACH, "resource-1");
@@ -444,9 +456,16 @@ describe("ClientResourceAccess", () => {
   describe("an account in neither the coach nor the client role", () => {
     it("is refused one resource before anything is looked up, even when a client record is linked to it", async () => {
       // arrange
-      const { access, resources, clients } = createAccess();
-      const findResource = vi.spyOn(resources, "findById");
-      const findClient = vi.spyOn(clients, "findByAuthSubjectId");
+      const {
+        access,
+        inMemoryClientResourcesAdapter,
+        inMemoryClientReachAdapter,
+      } = createAccess();
+      const findResource = vi.spyOn(inMemoryClientResourcesAdapter, "findById");
+      const findClient = vi.spyOn(
+        inMemoryClientReachAdapter,
+        "findByAuthSubjectId",
+      );
 
       // act
       const resource = await access.resourceFor(
@@ -462,9 +481,16 @@ describe("ClientResourceAccess", () => {
 
     it("has no own client and is refused its own resource before anything is looked up", async () => {
       // arrange
-      const { access, resources, clients } = createAccess();
-      const findResource = vi.spyOn(resources, "findById");
-      const findClient = vi.spyOn(clients, "findByAuthSubjectId");
+      const {
+        access,
+        inMemoryClientResourcesAdapter,
+        inMemoryClientReachAdapter,
+      } = createAccess();
+      const findResource = vi.spyOn(inMemoryClientResourcesAdapter, "findById");
+      const findClient = vi.spyOn(
+        inMemoryClientReachAdapter,
+        "findByAuthSubjectId",
+      );
 
       // act
       const clientId = await access.clientWithReachablePortalOf(
@@ -484,9 +510,12 @@ describe("ClientResourceAccess", () => {
 
     it("is refused a client's resources before anything is looked up, even her own", async () => {
       // arrange
-      const { access, clients } = createAccess();
-      const findClientById = vi.spyOn(clients, "findById");
-      const findClient = vi.spyOn(clients, "findByAuthSubjectId");
+      const { access, inMemoryClientReachAdapter } = createAccess();
+      const findClientById = vi.spyOn(inMemoryClientReachAdapter, "findById");
+      const findClient = vi.spyOn(
+        inMemoryClientReachAdapter,
+        "findByAuthSubjectId",
+      );
 
       // act
       const reached = await access.reachesClient(

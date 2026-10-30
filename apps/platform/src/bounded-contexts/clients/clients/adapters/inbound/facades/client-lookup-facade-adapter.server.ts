@@ -10,16 +10,17 @@ import type {
 } from "~/bounded-contexts/clients/public/client-lookup-facade";
 
 type ClientLookupFacadeOptions = {
-  identities: Pick<ClientIdentitiesPort, "findByClientId">;
-  reach: ClientReachPort;
-  readClientJourney: ReadClientJourneyUseCase;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientId">;
+  clientReachPort: ClientReachPort;
+  readClientJourneyUseCase: ReadClientJourneyUseCase;
 };
 
 export class ClientLookupFacadeAdapter implements ClientLookupFacade {
   constructor(private readonly options: ClientLookupFacadeOptions) {}
 
   async identityOf(clientId: string) {
-    const identity = await this.options.identities.findByClientId(clientId);
+    const identity =
+      await this.options.clientIdentitiesPort.findByClientId(clientId);
 
     return identity
       ? {
@@ -32,17 +33,20 @@ export class ClientLookupFacadeAdapter implements ClientLookupFacade {
   }
 
   async reachOf(clientId: string) {
-    return this.reachDtoOf(await this.options.reach.findById(clientId));
+    return this.reachDtoOf(
+      await this.options.clientReachPort.findById(clientId),
+    );
   }
 
   async reachOfSubject(authSubjectId: string) {
     return this.reachDtoOf(
-      await this.options.reach.findByAuthSubjectId(authSubjectId),
+      await this.options.clientReachPort.findByAuthSubjectId(authSubjectId),
     );
   }
 
   async journeyStepOf(authSubjectId: string) {
-    const journey = await this.options.readClientJourney.execute(authSubjectId);
+    const journey =
+      await this.options.readClientJourneyUseCase.execute(authSubjectId);
 
     return journey
       ? {

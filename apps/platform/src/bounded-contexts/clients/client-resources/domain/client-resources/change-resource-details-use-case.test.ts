@@ -87,7 +87,7 @@ class InMemoryClientResourcesAdapter implements ClientResourcesPort {
 }
 
 function createUseCase() {
-  const resources = new InMemoryClientResourcesAdapter();
+  const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -117,22 +117,27 @@ function createUseCase() {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new ChangeResourceDetailsUseCase({
-    resources,
-    clients,
-    incidents,
+  const changeResourceDetailsUseCase = new ChangeResourceDetailsUseCase({
+    clientResourcesPort: inMemoryClientResourcesAdapter,
+    clientReachPort: clients,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, resources, incidents };
+  return {
+    changeResourceDetailsUseCase,
+    inMemoryClientResourcesAdapter,
+    incidents,
+  };
 }
 
 describe("ChangeResourceDetailsUseCase", () => {
   it("saves the trimmed title, description and tags, keeps the moment she opened it and every other field, and answers the changed resource", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
+    const { changeResourceDetailsUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await changeResourceDetailsUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
       details: {
@@ -153,7 +158,9 @@ describe("ChangeResourceDetailsUseCase", () => {
       status: "changed",
       resource: ClientResource.reconstitute(changed),
     });
-    expect(resources.snapshotOf("resource-1")).toEqual(changed);
+    expect(inMemoryClientResourcesAdapter.snapshotOf("resource-1")).toEqual(
+      changed,
+    );
   });
 
   it.each([
@@ -191,10 +198,11 @@ describe("ChangeResourceDetailsUseCase", () => {
     ],
   ])("refuses %s without a write", async (_case, details, problems) => {
     // arrange
-    const { useCase, resources } = createUseCase();
+    const { changeResourceDetailsUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await changeResourceDetailsUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
       details,
@@ -202,8 +210,10 @@ describe("ChangeResourceDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "invalid-details", problems });
-    expect(resources.saveDetails).not.toHaveBeenCalled();
-    expect(resources.snapshotOf("resource-1")).toEqual(STORED.toSnapshot());
+    expect(inMemoryClientResourcesAdapter.saveDetails).not.toHaveBeenCalled();
+    expect(inMemoryClientResourcesAdapter.snapshotOf("resource-1")).toEqual(
+      STORED.toSnapshot(),
+    );
   });
 
   it.each([
@@ -216,10 +226,14 @@ describe("ChangeResourceDetailsUseCase", () => {
     "finds nothing for %s and reports the refusal",
     async (_case, requester) => {
       // arrange
-      const { useCase, resources, incidents } = createUseCase();
+      const {
+        changeResourceDetailsUseCase,
+        inMemoryClientResourcesAdapter,
+        incidents,
+      } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await changeResourceDetailsUseCase.execute({
         requester,
         resourceId: "resource-1",
         details: { title: "Meal plan v2", description: "", tags: [] },
@@ -227,17 +241,18 @@ describe("ChangeResourceDetailsUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "not-found" });
-      expect(resources.saveDetails).not.toHaveBeenCalled();
+      expect(inMemoryClientResourcesAdapter.saveDetails).not.toHaveBeenCalled();
       expect(incidents.resourceAccessRefused).toHaveBeenCalledOnce();
     },
   );
 
   it("finds nothing to change for an unknown resource", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
+    const { changeResourceDetailsUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await changeResourceDetailsUseCase.execute({
       requester: COACH,
       resourceId: "resource-404",
       details: { title: "Meal plan v2", description: "", tags: [] },
@@ -245,32 +260,39 @@ describe("ChangeResourceDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(resources.saveDetails).not.toHaveBeenCalled();
+    expect(inMemoryClientResourcesAdapter.saveDetails).not.toHaveBeenCalled();
   });
 
   it("clears every tag when none is given", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
+    const { changeResourceDetailsUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
 
     // act
-    await useCase.execute({
+    await changeResourceDetailsUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
       details: { title: "Meal plan", description: "Week one", tags: [] },
     });
 
     // assert
-    expect(resources.snapshotOf("resource-1")?.tags).toEqual([]);
+    expect(
+      inMemoryClientResourcesAdapter.snapshotOf("resource-1")?.tags,
+    ).toEqual([]);
   });
 
   it("reports a failed read of the tag vocabulary and answers that the change failed without a write", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, resources, incidents } = createUseCase();
-    resources.tagVocabulary.mockRejectedValueOnce(failure);
+    const {
+      changeResourceDetailsUseCase,
+      inMemoryClientResourcesAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryClientResourcesAdapter.tagVocabulary.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await changeResourceDetailsUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
       details: { title: "Meal plan v2", description: "", tags: ["Cardio"] },
@@ -278,7 +300,7 @@ describe("ChangeResourceDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(resources.saveDetails).not.toHaveBeenCalled();
+    expect(inMemoryClientResourcesAdapter.saveDetails).not.toHaveBeenCalled();
     expect(incidents.resourceChangeFailed).toHaveBeenCalledWith({
       clientId: "client-ana",
       resourceId: "resource-1",
@@ -289,11 +311,15 @@ describe("ChangeResourceDetailsUseCase", () => {
   it("reports a failed write and answers that the change failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, resources, incidents } = createUseCase();
-    resources.saveDetails.mockRejectedValueOnce(failure);
+    const {
+      changeResourceDetailsUseCase,
+      inMemoryClientResourcesAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryClientResourcesAdapter.saveDetails.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await changeResourceDetailsUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
       details: { title: "Meal plan v2", description: "", tags: [] },

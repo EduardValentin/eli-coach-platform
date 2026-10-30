@@ -34,8 +34,8 @@ const COACH_TIME_ZONE = "Europe/Bucharest";
 const RESERVATION_ID = "reservation-1";
 
 type OpeningsSources = ConstructorParameters<typeof CoachOpenings>[0];
-type CoachAvailabilitySource = OpeningsSources["availability"];
-type CoachCalendar = OpeningsSources["calendar"];
+type CoachAvailabilitySource = OpeningsSources["coachAvailabilitySourcePort"];
+type CoachCalendar = OpeningsSources["coachCalendarPort"];
 type CoachAvailabilityProps = Parameters<typeof CoachWeekAvailability.from>[0];
 
 const clock = { now: () => NOW };
@@ -50,24 +50,24 @@ function createIncidents() {
 }
 
 function createBookingWindow(options: {
-  waitlistMode: WaitlistModePort;
+  waitlistModePort: WaitlistModePort;
   incidents?: ReturnType<typeof createIncidents>;
 }): AssessmentCallBookingWindow {
   return new AssessmentCallBookingWindow({
-    incidents: options.incidents ?? createIncidents(),
-    waitlistMode: options.waitlistMode,
+    assessmentCallIncidentsPort: options.incidents ?? createIncidents(),
+    waitlistModePort: options.waitlistModePort,
   });
 }
 
 function openBookingWindow(): AssessmentCallBookingWindow {
   return createBookingWindow({
-    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(false) },
+    waitlistModePort: { isEnabled: vi.fn().mockResolvedValue(false) },
   });
 }
 
 function closedBookingWindow(): AssessmentCallBookingWindow {
   return createBookingWindow({
-    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(true) },
+    waitlistModePort: { isEnabled: vi.fn().mockResolvedValue(true) },
   });
 }
 
@@ -143,7 +143,7 @@ const bookedCall = AssessmentCall.booked({
 const callIds = { generate: () => "call-new" };
 
 function createReservations(
-  options?: Partial<AssessmentCallReservationsPort>,
+  assessmentCallReservationsPort?: Partial<AssessmentCallReservationsPort>,
 ): AssessmentCallReservationsPort {
   return {
     lockVisitorEmail: vi.fn().mockResolvedValue(undefined),
@@ -151,17 +151,19 @@ function createReservations(
     add: vi.fn().mockResolvedValue(undefined),
     findById: vi.fn().mockResolvedValue(null),
     listAll: vi.fn().mockResolvedValue([]),
-    ...options,
+    ...assessmentCallReservationsPort,
   };
 }
 
-function createCoachTime(options?: Partial<CoachTimePort>): CoachTimePort {
+function createCoachTime(
+  coachTimePort?: Partial<CoachTimePort>,
+): CoachTimePort {
   return {
     reserve: vi
       .fn()
       .mockResolvedValue({ status: "reserved", reservationId: RESERVATION_ID }),
     release: vi.fn().mockResolvedValue(undefined),
-    ...options,
+    ...coachTimePort,
   };
 }
 
@@ -177,7 +179,10 @@ function availabilityOver(
   calendar: CoachCalendar = createCalendar(),
 ): CoachAvailabilityPort {
   return new CoachScheduleAvailabilityAdapter({
-    openings: new CoachOpenings({ availability, calendar }),
+    openings: new CoachOpenings({
+      coachAvailabilitySourcePort: availability,
+      coachCalendarPort: calendar,
+    }),
     rules: ASSESSMENT_CALL_RULES,
   });
 }
@@ -200,33 +205,36 @@ function createListOpenSlots(options: {
   incidents: ReturnType<typeof createIncidents>;
 }): ListOpenSlotsUseCase {
   return new ListOpenSlotsUseCase({
-    availability: availabilityOver(options.availability, options.calendar),
+    coachAvailabilityPort: availabilityOver(
+      options.availability,
+      options.calendar,
+    ),
     bookingWindow: openBookingWindow(),
-    clock,
-    incidents: options.incidents,
+    clockPort: clock,
+    assessmentCallIncidentsPort: options.incidents,
   });
 }
 
 function createBookAssessmentCall(options: {
   availability: CoachAvailabilitySource;
-  coachTime?: CoachTimePort;
+  coachTimePort?: CoachTimePort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createIncidents>;
-  notifications: AssessmentCallNotificationsPort;
-  reservations: AssessmentCallReservationsPort;
+  assessmentCallNotificationsPort: AssessmentCallNotificationsPort;
+  assessmentCallReservationsPort: AssessmentCallReservationsPort;
 }): BookAssessmentCallUseCase {
   return new BookAssessmentCallUseCase({
-    availability: availabilityOver(options.availability),
+    coachAvailabilityPort: availabilityOver(options.availability),
     bookingWindow: openBookingWindow(),
-    clock,
-    coachTime: options.coachTime ?? createCoachTime(),
-    emailAcceptance: createEmailAcceptance(
+    clockPort: clock,
+    coachTimePort: options.coachTimePort ?? createCoachTime(),
+    emailAcceptancePort: createEmailAcceptance(
       options.emailSubaddresses ?? "allowed",
     ),
-    ids: callIds,
-    incidents: options.incidents,
-    notifications: options.notifications,
-    reservations: options.reservations,
+    assessmentCallIdsPort: callIds,
+    assessmentCallIncidentsPort: options.incidents,
+    assessmentCallNotificationsPort: options.assessmentCallNotificationsPort,
+    assessmentCallReservationsPort: options.assessmentCallReservationsPort,
   });
 }
 
@@ -279,7 +287,9 @@ describe("AssessmentCallBookingWindow", () => {
     // arrange
     const incidents = createIncidents();
     const bookingWindow = createBookingWindow({
-      waitlistMode: { isEnabled: vi.fn().mockRejectedValue(new Error("down")) },
+      waitlistModePort: {
+        isEnabled: vi.fn().mockRejectedValue(new Error("down")),
+      },
       incidents,
     });
 
@@ -295,27 +305,30 @@ describe("AssessmentCallBookingWindow", () => {
 describe("ListOpenSlotsUseCase", () => {
   it("reports closed without reading availability when booking is closed", async () => {
     // arrange
-    const availability = createAvailabilitySource();
-    const calendar = createCalendar();
-    const listOpenSlots = new ListOpenSlotsUseCase({
-      availability: availabilityOver(availability, calendar),
+    const coachAvailabilitySourcePort = createAvailabilitySource();
+    const coachCalendarPort = createCalendar();
+    const listOpenSlotsUseCase = new ListOpenSlotsUseCase({
+      coachAvailabilityPort: availabilityOver(
+        coachAvailabilitySourcePort,
+        coachCalendarPort,
+      ),
       bookingWindow: closedBookingWindow(),
-      clock,
-      incidents: createIncidents(),
+      clockPort: clock,
+      assessmentCallIncidentsPort: createIncidents(),
     });
 
     // act
-    const result = await listOpenSlots.execute();
+    const result = await listOpenSlotsUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(availability.current).not.toHaveBeenCalled();
-    expect(calendar.busyFrom).not.toHaveBeenCalled();
+    expect(coachAvailabilitySourcePort.current).not.toHaveBeenCalled();
+    expect(coachCalendarPort.busyFrom).not.toHaveBeenCalled();
   });
 
   it("offers the coach time zone and the starts the coach's busy time leaves free", async () => {
     // arrange
-    const calendar = createCalendar({
+    const coachCalendarPort = createCalendar({
       busyFrom: vi.fn().mockResolvedValue([
         {
           start: new Date("2026-06-01T15:15:00.000Z"),
@@ -323,17 +336,17 @@ describe("ListOpenSlotsUseCase", () => {
         },
       ]),
     });
-    const listOpenSlots = createListOpenSlots({
+    const listOpenSlotsUseCase = createListOpenSlots({
       availability: createAvailabilitySource(),
-      calendar,
+      calendar: coachCalendarPort,
       incidents: createIncidents(),
     });
 
     // act
-    const result = await listOpenSlots.execute();
+    const result = await listOpenSlotsUseCase.execute();
 
     // assert
-    expect(calendar.busyFrom).toHaveBeenCalledWith(NOW);
+    expect(coachCalendarPort.busyFrom).toHaveBeenCalledWith(NOW);
     expect(result).toEqual({
       status: "open",
       coachTimeZone: COACH_TIME_ZONE,
@@ -351,14 +364,14 @@ describe("ListOpenSlotsUseCase", () => {
   it("reports unavailable and logs when the availability source throws", async () => {
     // arrange
     const incidents = createIncidents();
-    const listOpenSlots = createListOpenSlots({
+    const listOpenSlotsUseCase = createListOpenSlots({
       availability: { current: vi.fn().mockRejectedValue(new Error("down")) },
       calendar: createCalendar(),
       incidents,
     });
 
     // act
-    const result = await listOpenSlots.execute();
+    const result = await listOpenSlotsUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
@@ -368,19 +381,19 @@ describe("ListOpenSlotsUseCase", () => {
   it("lets a fault in the slot arithmetic surface instead of reporting empty", async () => {
     // arrange
     const incidents = createIncidents();
-    const availability = createAvailabilitySource();
-    const configured = await availability.current();
+    const coachAvailabilitySourcePort = createAvailabilitySource();
+    const configured = await coachAvailabilitySourcePort.current();
     vi.spyOn(configured, "openSlotStarts").mockImplementation(() => {
       throw new RangeError("Invalid time zone specified: Europe/Bucarest");
     });
-    const listOpenSlots = createListOpenSlots({
-      availability,
+    const listOpenSlotsUseCase = createListOpenSlots({
+      availability: coachAvailabilitySourcePort,
       calendar: createCalendar(),
       incidents,
     });
 
     // act
-    const execute = listOpenSlots.execute();
+    const execute = listOpenSlotsUseCase.execute();
 
     // assert
     await expect(execute).rejects.toThrow(/Invalid time zone/);
@@ -390,7 +403,7 @@ describe("ListOpenSlotsUseCase", () => {
   it("reports unavailable and logs when the coach calendar throws", async () => {
     // arrange
     const incidents = createIncidents();
-    const listOpenSlots = createListOpenSlots({
+    const listOpenSlotsUseCase = createListOpenSlots({
       availability: createAvailabilitySource(),
       calendar: createCalendar({
         busyFrom: vi.fn().mockRejectedValue(new Error("down")),
@@ -399,7 +412,7 @@ describe("ListOpenSlotsUseCase", () => {
     });
 
     // act
-    const result = await listOpenSlots.execute();
+    const result = await listOpenSlotsUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
@@ -411,18 +424,18 @@ describe("ListAssessmentCallsUseCase", () => {
   it("lists the coach's calls as snapshots carrying their end, in her time zone", async () => {
     // arrange
     const call = existingCall();
-    const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: availabilityOver(
+    const listAssessmentCallsUseCase = new ListAssessmentCallsUseCase({
+      coachAvailabilityPort: availabilityOver(
         createAvailabilitySource("Europe/Chisinau"),
       ),
-      incidents: createIncidents(),
-      reservations: createReservations({
+      assessmentCallIncidentsPort: createIncidents(),
+      assessmentCallReservationsPort: createReservations({
         listAll: vi.fn().mockResolvedValue([call]),
       }),
     });
 
     // act
-    const listing = loadedListing(await listAssessmentCalls.execute());
+    const listing = loadedListing(await listAssessmentCallsUseCase.execute());
 
     // assert
     expect(listing).toEqual({
@@ -440,16 +453,16 @@ describe("ListAssessmentCallsUseCase", () => {
       id: "call-2",
       startsAt: new Date("2026-06-02T15:00:00.000Z"),
     });
-    const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: availabilityOver(createAvailabilitySource()),
-      incidents: createIncidents(),
-      reservations: createReservations({
+    const listAssessmentCallsUseCase = new ListAssessmentCallsUseCase({
+      coachAvailabilityPort: availabilityOver(createAvailabilitySource()),
+      assessmentCallIncidentsPort: createIncidents(),
+      assessmentCallReservationsPort: createReservations({
         listAll: vi.fn().mockResolvedValue([earlier, later]),
       }),
     });
 
     // act
-    const listing = loadedListing(await listAssessmentCalls.execute());
+    const listing = loadedListing(await listAssessmentCallsUseCase.execute());
 
     // assert
     expect(listing.calls.map((call) => call.id)).toEqual(["call-1", "call-2"]);
@@ -457,14 +470,14 @@ describe("ListAssessmentCallsUseCase", () => {
 
   it("still names the coach's time zone when she has no calls", async () => {
     // arrange
-    const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: availabilityOver(createAvailabilitySource()),
-      incidents: createIncidents(),
-      reservations: createReservations(),
+    const listAssessmentCallsUseCase = new ListAssessmentCallsUseCase({
+      coachAvailabilityPort: availabilityOver(createAvailabilitySource()),
+      assessmentCallIncidentsPort: createIncidents(),
+      assessmentCallReservationsPort: createReservations(),
     });
 
     // act
-    const listing = await listAssessmentCalls.execute();
+    const listing = await listAssessmentCallsUseCase.execute();
 
     // assert
     expect(listing).toEqual({
@@ -477,16 +490,16 @@ describe("ListAssessmentCallsUseCase", () => {
   it("reports unavailable and logs when the reservations read throws", async () => {
     // arrange
     const incidents = createIncidents();
-    const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: availabilityOver(createAvailabilitySource()),
-      incidents,
-      reservations: createReservations({
+    const listAssessmentCallsUseCase = new ListAssessmentCallsUseCase({
+      coachAvailabilityPort: availabilityOver(createAvailabilitySource()),
+      assessmentCallIncidentsPort: incidents,
+      assessmentCallReservationsPort: createReservations({
         listAll: vi.fn().mockRejectedValue(new Error("down")),
       }),
     });
 
     // act
-    const listing = await listAssessmentCalls.execute();
+    const listing = await listAssessmentCallsUseCase.execute();
 
     // assert
     expect(listing).toEqual({ status: "unavailable" });
@@ -496,16 +509,16 @@ describe("ListAssessmentCallsUseCase", () => {
   it("reports unavailable and logs when the availability read throws", async () => {
     // arrange
     const incidents = createIncidents();
-    const listAssessmentCalls = new ListAssessmentCallsUseCase({
-      availability: availabilityOver({
+    const listAssessmentCallsUseCase = new ListAssessmentCallsUseCase({
+      coachAvailabilityPort: availabilityOver({
         current: vi.fn().mockRejectedValue(new Error("down")),
       }),
-      incidents,
-      reservations: createReservations(),
+      assessmentCallIncidentsPort: incidents,
+      assessmentCallReservationsPort: createReservations(),
     });
 
     // act
-    const listing = await listAssessmentCalls.execute();
+    const listing = await listAssessmentCallsUseCase.execute();
 
     // assert
     expect(listing).toEqual({ status: "unavailable" });
@@ -516,80 +529,82 @@ describe("ListAssessmentCallsUseCase", () => {
 describe("BookAssessmentCallUseCase", () => {
   it("reports closed without reserving when booking is closed", async () => {
     // arrange
-    const reservations = createReservations();
-    const coachTime = createCoachTime();
-    const bookAssessmentCall = new BookAssessmentCallUseCase({
-      availability: availabilityOver(createAvailabilitySource()),
+    const assessmentCallReservationsPort = createReservations();
+    const coachTimePort = createCoachTime();
+    const bookAssessmentCallUseCase = new BookAssessmentCallUseCase({
+      coachAvailabilityPort: availabilityOver(createAvailabilitySource()),
       bookingWindow: closedBookingWindow(),
-      clock,
-      coachTime,
-      emailAcceptance: createEmailAcceptance("allowed"),
-      ids: callIds,
-      incidents: createIncidents(),
-      notifications: createNotifications(),
-      reservations,
+      clockPort: clock,
+      coachTimePort,
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      assessmentCallIdsPort: callIds,
+      assessmentCallIncidentsPort: createIncidents(),
+      assessmentCallNotificationsPort: createNotifications(),
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(coachTime.reserve).not.toHaveBeenCalled();
-    expect(reservations.add).not.toHaveBeenCalled();
+    expect(coachTimePort.reserve).not.toHaveBeenCalled();
+    expect(assessmentCallReservationsPort.add).not.toHaveBeenCalled();
   });
 
   it("refuses a start the availability no longer offers", async () => {
     // arrange
-    const reservations = createReservations();
-    const coachTime = createCoachTime();
-    const bookAssessmentCall = createBookAssessmentCall({
+    const assessmentCallReservationsPort = createReservations();
+    const coachTimePort = createCoachTime();
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      coachTime,
+      coachTimePort,
       incidents: createIncidents(),
-      notifications: createNotifications(),
-      reservations,
+      assessmentCallNotificationsPort: createNotifications(),
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute({
+    const result = await bookAssessmentCallUseCase.execute({
       ...bookingCommand,
       startsAt: CLOSED_START,
     });
 
     // assert
     expect(result).toEqual({ status: "slot_unavailable" });
-    expect(coachTime.reserve).not.toHaveBeenCalled();
-    expect(reservations.add).not.toHaveBeenCalled();
+    expect(coachTimePort.reserve).not.toHaveBeenCalled();
+    expect(assessmentCallReservationsPort.add).not.toHaveBeenCalled();
   });
 
   it("reserves a call under a fresh id with the visitor's profile, the normalised email and the clock instants, then notifies", async () => {
     // arrange
-    const reservations = createReservations();
-    const notifications = createNotifications();
-    const bookAssessmentCall = createBookAssessmentCall({
+    const assessmentCallReservationsPort = createReservations();
+    const assessmentCallNotificationsPort = createNotifications();
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       incidents: createIncidents(),
-      notifications,
-      reservations,
+      assessmentCallNotificationsPort,
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
-    expect(reservations.lockVisitorEmail).toHaveBeenCalledWith(
-      "ana@example.com",
-    );
-    expect(reservations.findUpcomingCallFor).toHaveBeenCalledWith({
+    expect(
+      assessmentCallReservationsPort.lockVisitorEmail,
+    ).toHaveBeenCalledWith("ana@example.com");
+    expect(
+      assessmentCallReservationsPort.findUpcomingCallFor,
+    ).toHaveBeenCalledWith({
       visitorEmail: "ana@example.com",
       now: NOW,
     });
-    expect(reservations.add).toHaveBeenCalledWith({
+    expect(assessmentCallReservationsPort.add).toHaveBeenCalledWith({
       call: bookedCall,
       reservationId: RESERVATION_ID,
     });
-    expect(notifications.notifyBooked).toHaveBeenCalledWith(
+    expect(assessmentCallNotificationsPort.notifyBooked).toHaveBeenCalledWith(
       bookedCall.toSnapshot(),
     );
     expect(result).toEqual({ status: "booked", call: bookedCall });
@@ -597,19 +612,19 @@ describe("BookAssessmentCallUseCase", () => {
 
   it("reserves with the time zone the availability source carries", async () => {
     // arrange
-    const reservations = createReservations();
-    const bookAssessmentCall = createBookAssessmentCall({
+    const assessmentCallReservationsPort = createReservations();
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource("Europe/Chisinau"),
       incidents: createIncidents(),
-      notifications: createNotifications(),
-      reservations,
+      assessmentCallNotificationsPort: createNotifications(),
+      assessmentCallReservationsPort,
     });
 
     // act
-    await bookAssessmentCall.execute(bookingCommand);
+    await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
-    expect(reservations.add).toHaveBeenCalledWith(
+    expect(assessmentCallReservationsPort.add).toHaveBeenCalledWith(
       expect.objectContaining({
         call: expect.objectContaining({ coachTimeZone: "Europe/Chisinau" }),
       }),
@@ -623,15 +638,15 @@ describe("BookAssessmentCallUseCase", () => {
   ])("logs the failed legs of %o", async (delivery, failures) => {
     // arrange
     const incidents = createIncidents();
-    const bookAssessmentCall = createBookAssessmentCall({
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       incidents,
-      notifications: createNotifications(delivery),
-      reservations: createReservations(),
+      assessmentCallNotificationsPort: createNotifications(delivery),
+      assessmentCallReservationsPort: createReservations(),
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
     expect(result).toEqual({ status: "booked", call: bookedCall });
@@ -641,15 +656,17 @@ describe("BookAssessmentCallUseCase", () => {
   it("keeps the booking when the notification port throws", async () => {
     // arrange
     const incidents = createIncidents();
-    const bookAssessmentCall = createBookAssessmentCall({
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       incidents,
-      notifications: { notifyBooked: vi.fn().mockRejectedValue(new Error()) },
-      reservations: createReservations(),
+      assessmentCallNotificationsPort: {
+        notifyBooked: vi.fn().mockRejectedValue(new Error()),
+      },
+      assessmentCallReservationsPort: createReservations(),
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
     expect(result).toEqual({ status: "booked", call: bookedCall });
@@ -663,73 +680,73 @@ describe("BookAssessmentCallUseCase", () => {
 
   it("refuses a slot that is already taken, whoever holds it, without notifying anyone", async () => {
     // arrange
-    const notifications = createNotifications();
-    const reservations = createReservations({
+    const assessmentCallNotificationsPort = createNotifications();
+    const assessmentCallReservationsPort = createReservations({
       findUpcomingCallFor: vi.fn().mockResolvedValue(existingCall()),
     });
-    const bookAssessmentCall = createBookAssessmentCall({
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      coachTime: createCoachTime({
+      coachTimePort: createCoachTime({
         reserve: vi.fn().mockResolvedValue({ status: "taken" }),
       }),
       incidents: createIncidents(),
-      notifications,
-      reservations,
+      assessmentCallNotificationsPort,
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
     expect(result).toEqual({ status: "slot_unavailable" });
-    expect(reservations.add).not.toHaveBeenCalled();
-    expect(notifications.notifyBooked).not.toHaveBeenCalled();
+    expect(assessmentCallReservationsPort.add).not.toHaveBeenCalled();
+    expect(assessmentCallNotificationsPort.notifyBooked).not.toHaveBeenCalled();
   });
 
   it("refuses a second upcoming call for one email without describing the first, giving back the time it held", async () => {
     // arrange
-    const coachTime = createCoachTime();
-    const reservations = createReservations({
+    const coachTimePort = createCoachTime();
+    const assessmentCallReservationsPort = createReservations({
       findUpcomingCallFor: vi.fn().mockResolvedValue(existingCall()),
     });
-    const bookAssessmentCall = createBookAssessmentCall({
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      coachTime,
+      coachTimePort,
       incidents: createIncidents(),
-      notifications: createNotifications(),
-      reservations,
+      assessmentCallNotificationsPort: createNotifications(),
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
     expect(result).toEqual({ status: "email_already_booked" });
-    expect(coachTime.release).toHaveBeenCalledWith(RESERVATION_ID);
-    expect(reservations.add).not.toHaveBeenCalled();
+    expect(coachTimePort.release).toHaveBeenCalledWith(RESERVATION_ID);
+    expect(assessmentCallReservationsPort.add).not.toHaveBeenCalled();
   });
 
   it("refuses a subaddressed email before reading the booking window, the availability or the reservations", async () => {
     // arrange
     const waitlistMode = { isEnabled: vi.fn().mockResolvedValue(false) };
-    const availability = createAvailabilitySource();
-    const coachTime = createCoachTime();
-    const notifications = createNotifications();
-    const reservations = createReservations();
-    const bookAssessmentCall = new BookAssessmentCallUseCase({
-      availability: availabilityOver(availability),
-      bookingWindow: createBookingWindow({ waitlistMode }),
-      clock,
-      coachTime,
-      emailAcceptance: createEmailAcceptance("refused"),
-      ids: callIds,
-      incidents: createIncidents(),
-      notifications,
-      reservations,
+    const coachAvailabilitySourcePort = createAvailabilitySource();
+    const coachTimePort = createCoachTime();
+    const assessmentCallNotificationsPort = createNotifications();
+    const assessmentCallReservationsPort = createReservations();
+    const bookAssessmentCallUseCase = new BookAssessmentCallUseCase({
+      coachAvailabilityPort: availabilityOver(coachAvailabilitySourcePort),
+      bookingWindow: createBookingWindow({ waitlistModePort: waitlistMode }),
+      clockPort: clock,
+      coachTimePort,
+      emailAcceptancePort: createEmailAcceptance("refused"),
+      assessmentCallIdsPort: callIds,
+      assessmentCallIncidentsPort: createIncidents(),
+      assessmentCallNotificationsPort,
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute({
+    const result = await bookAssessmentCallUseCase.execute({
       ...bookingCommand,
       email: "Ana+Coaching@Example.com",
     });
@@ -737,24 +754,26 @@ describe("BookAssessmentCallUseCase", () => {
     // assert
     expect(result).toEqual({ status: "subaddress_refused" });
     expect(waitlistMode.isEnabled).not.toHaveBeenCalled();
-    expect(availability.current).not.toHaveBeenCalled();
-    expect(coachTime.reserve).not.toHaveBeenCalled();
-    expect(reservations.lockVisitorEmail).not.toHaveBeenCalled();
-    expect(notifications.notifyBooked).not.toHaveBeenCalled();
+    expect(coachAvailabilitySourcePort.current).not.toHaveBeenCalled();
+    expect(coachTimePort.reserve).not.toHaveBeenCalled();
+    expect(
+      assessmentCallReservationsPort.lockVisitorEmail,
+    ).not.toHaveBeenCalled();
+    expect(assessmentCallNotificationsPort.notifyBooked).not.toHaveBeenCalled();
   });
 
   it("books a main address where subaddresses are refused", async () => {
     // arrange
-    const bookAssessmentCall = createBookAssessmentCall({
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       emailSubaddresses: "refused",
       incidents: createIncidents(),
-      notifications: createNotifications(),
-      reservations: createReservations(),
+      assessmentCallNotificationsPort: createNotifications(),
+      assessmentCallReservationsPort: createReservations(),
     });
 
     // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
+    const result = await bookAssessmentCallUseCase.execute(bookingCommand);
 
     // assert
     expect(result).toEqual({ status: "booked", call: bookedCall });
@@ -762,17 +781,17 @@ describe("BookAssessmentCallUseCase", () => {
 
   it("reserves a subaddressed email as entered where subaddresses are allowed", async () => {
     // arrange
-    const reservations = createReservations();
-    const bookAssessmentCall = createBookAssessmentCall({
+    const assessmentCallReservationsPort = createReservations();
+    const bookAssessmentCallUseCase = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       emailSubaddresses: "allowed",
       incidents: createIncidents(),
-      notifications: createNotifications(),
-      reservations,
+      assessmentCallNotificationsPort: createNotifications(),
+      assessmentCallReservationsPort,
     });
 
     // act
-    const result = await bookAssessmentCall.execute({
+    const result = await bookAssessmentCallUseCase.execute({
       ...bookingCommand,
       email: "Ana+Coaching@Example.com",
     });
@@ -785,7 +804,7 @@ describe("BookAssessmentCallUseCase", () => {
         visitorEmail: "ana+coaching@example.com",
       }),
     });
-    expect(reservations.add).toHaveBeenCalledWith(
+    expect(assessmentCallReservationsPort.add).toHaveBeenCalledWith(
       expect.objectContaining({
         call: expect.objectContaining({
           visitorEmail: "ana+coaching@example.com",
@@ -796,11 +815,11 @@ describe("BookAssessmentCallUseCase", () => {
 });
 
 function createMeetingRoomSource(
-  options?: Partial<MeetingRoomPort>,
+  meetingRoomPort?: Partial<MeetingRoomPort>,
 ): MeetingRoomPort {
   return {
     current: vi.fn().mockResolvedValue(null),
-    ...options,
+    ...meetingRoomPort,
   };
 }
 
@@ -808,20 +827,20 @@ describe("ResolveJoinLinkUseCase", () => {
   it("resolves the coach's current meeting room for a known booking", async () => {
     // arrange
     const call = existingCall();
-    const meetingRoom = createMeetingRoomSource({
+    const meetingRoomPort = createMeetingRoomSource({
       current: vi
         .fn()
         .mockResolvedValue({ url: "https://meet.example.com/room" }),
     });
-    const resolveJoinLink = new ResolveJoinLinkUseCase({
-      meetingRoom,
-      reservations: createReservations({
+    const resolveJoinLinkUseCase = new ResolveJoinLinkUseCase({
+      meetingRoomPort,
+      assessmentCallReservationsPort: createReservations({
         findById: vi.fn().mockResolvedValue(call),
       }),
     });
 
     // act
-    const result = await resolveJoinLink.execute("call-1");
+    const result = await resolveJoinLinkUseCase.execute("call-1");
 
     // assert
     expect(result).toEqual({
@@ -832,15 +851,15 @@ describe("ResolveJoinLinkUseCase", () => {
 
   it("reports the link as not set while the coach has saved no room", async () => {
     // arrange
-    const resolveJoinLink = new ResolveJoinLinkUseCase({
-      meetingRoom: createMeetingRoomSource(),
-      reservations: createReservations({
+    const resolveJoinLinkUseCase = new ResolveJoinLinkUseCase({
+      meetingRoomPort: createMeetingRoomSource(),
+      assessmentCallReservationsPort: createReservations({
         findById: vi.fn().mockResolvedValue(existingCall()),
       }),
     });
 
     // act
-    const result = await resolveJoinLink.execute("call-1");
+    const result = await resolveJoinLinkUseCase.execute("call-1");
 
     // assert
     expect(result).toEqual({ status: "link_not_set" });
@@ -848,17 +867,17 @@ describe("ResolveJoinLinkUseCase", () => {
 
   it("reports an unknown booking without reading the meeting room", async () => {
     // arrange
-    const meetingRoom = createMeetingRoomSource();
-    const resolveJoinLink = new ResolveJoinLinkUseCase({
-      meetingRoom,
-      reservations: createReservations(),
+    const meetingRoomPort = createMeetingRoomSource();
+    const resolveJoinLinkUseCase = new ResolveJoinLinkUseCase({
+      meetingRoomPort,
+      assessmentCallReservationsPort: createReservations(),
     });
 
     // act
-    const result = await resolveJoinLink.execute("missing");
+    const result = await resolveJoinLinkUseCase.execute("missing");
 
     // assert
     expect(result).toEqual({ status: "unknown" });
-    expect(meetingRoom.current).not.toHaveBeenCalled();
+    expect(meetingRoomPort.current).not.toHaveBeenCalled();
   });
 });

@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(coachScheduleContext)
-      .coachScheduleSettings.updateSettings(args);
+      .coachScheduleSettingsController.updateSettings(args);
   });
 }
 

@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientResourcesContext)
-      .ownResources.markOpened(args, args.params.resourceId);
+      .ownResourcesController.markOpened(args, args.params.resourceId);
   });
 }
 

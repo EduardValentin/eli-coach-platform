@@ -8,15 +8,16 @@ import {
 } from "~/bounded-contexts/sales/store/domain/product";
 
 type StoreCoverAssetControllerOptions = {
-  assetStore: ProductAssetsPort;
-  findPublishedCover: FindPublishedCoverUseCase;
+  productAssetsPort: ProductAssetsPort;
+  findPublishedCoverUseCase: FindPublishedCoverUseCase;
 };
 
 export class StoreCoverAssetController {
   constructor(private readonly options: StoreCoverAssetControllerOptions) {}
 
   async getCover(assetKey: string): Promise<Response> {
-    const result = await this.options.findPublishedCover.execute(assetKey);
+    const result =
+      await this.options.findPublishedCoverUseCase.execute(assetKey);
 
     if (result.status === "not_found") {
       return new Response("Not Found", { status: 404 });
@@ -33,7 +34,7 @@ export class StoreCoverAssetController {
     let opened: ProductAssetOpenResult;
 
     try {
-      opened = await this.options.assetStore.openVerified(result.cover);
+      opened = await this.options.productAssetsPort.openVerified(result.cover);
     } catch {
       return createCoverUnavailableResponse();
     }

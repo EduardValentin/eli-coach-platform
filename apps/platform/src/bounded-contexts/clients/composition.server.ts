@@ -60,11 +60,11 @@ type ComponentHandles = ClientsFeatureHandles &
   > &
   Omit<
     Parameters<typeof composeNotificationsFeature>[0],
-    keyof ClientsComponentHandles | "inbox"
+    keyof ClientsComponentHandles | "notificationInboxPort"
   > &
   Omit<
     Parameters<typeof composeCheckInsFeature>[0],
-    keyof ClientsComponentHandles | "inbox"
+    keyof ClientsComponentHandles | "notificationInboxPort"
   >;
 
 type ClientsHandles = Omit<ComponentHandles, ConstructedHere> & {
@@ -102,12 +102,12 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
   const notifications = composeNotificationsFeature({
     ...handles,
     ...clients.handles,
-    inbox: notificationInbox.handles.inbox,
+    notificationInboxPort: notificationInbox.handles.notificationInboxPort,
   });
   const checkIns = composeCheckInsFeature({
     ...handles,
     ...clients.handles,
-    inbox: notificationInbox.handles.inbox,
+    notificationInboxPort: notificationInbox.handles.notificationInboxPort,
   });
 
   return {

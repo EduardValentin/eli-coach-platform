@@ -58,15 +58,17 @@ const PENDING = CheckIn.reconstitute({
 describe("SharedCheckInsController listOpenTimes", () => {
   it("answers the client her open times as instants, never cached", async () => {
     // arrange
-    const { controller, listOpenCheckInTimes } = createController({
-      openTimes: {
-        status: "listed",
-        times: [STARTS_AT, new Date("2026-10-22T15:00:00.000Z")],
+    const { sharedCheckInsController, listOpenCheckInTimes } = createController(
+      {
+        openTimes: {
+          status: "listed",
+          times: [STARTS_AT, new Date("2026-10-22T15:00:00.000Z")],
+        },
       },
-    });
+    );
 
     // act
-    const response = await controller.listOpenTimes(
+    const response = await sharedCheckInsController.listOpenTimes(
       argsFor({ session: CLIENT_SESSION }),
     );
 
@@ -83,12 +85,14 @@ describe("SharedCheckInsController listOpenTimes", () => {
 
   it("ignores the client a client names", async () => {
     // arrange
-    const { controller, listOpenCheckInTimes } = createController({
-      openTimes: { status: "listed", times: [] },
-    });
+    const { sharedCheckInsController, listOpenCheckInTimes } = createController(
+      {
+        openTimes: { status: "listed", times: [] },
+      },
+    );
 
     // act
-    await controller.listOpenTimes(
+    await sharedCheckInsController.listOpenTimes(
       argsFor({ session: CLIENT_SESSION, query: "?clientId=not-a-client" }),
     );
 
@@ -100,12 +104,14 @@ describe("SharedCheckInsController listOpenTimes", () => {
 
   it("lists the coach the open times of the client she names", async () => {
     // arrange
-    const { controller, listOpenCheckInTimes } = createController({
-      openTimes: { status: "listed", times: [STARTS_AT] },
-    });
+    const { sharedCheckInsController, listOpenCheckInTimes } = createController(
+      {
+        openTimes: { status: "listed", times: [STARTS_AT] },
+      },
+    );
 
     // act
-    const response = await controller.listOpenTimes(
+    const response = await sharedCheckInsController.listOpenTimes(
       argsFor({ session: COACH_SESSION, query: `?clientId=${CLIENT_ID}` }),
     );
 
@@ -127,10 +133,12 @@ describe("SharedCheckInsController listOpenTimes", () => {
     "answers $status when the listing answers $result.status",
     async ({ result, status }) => {
       // arrange
-      const { controller } = createController({ openTimes: result });
+      const { sharedCheckInsController } = createController({
+        openTimes: result,
+      });
 
       // act
-      const response = await controller.listOpenTimes(
+      const response = await sharedCheckInsController.listOpenTimes(
         argsFor({ session: COACH_SESSION }),
       );
 
@@ -141,10 +149,11 @@ describe("SharedCheckInsController listOpenTimes", () => {
 
   it("answers not found when the coach names a client that is not an identifier, without listing", async () => {
     // arrange
-    const { controller, listOpenCheckInTimes } = createController();
+    const { sharedCheckInsController, listOpenCheckInTimes } =
+      createController();
 
     // act
-    const response = await controller.listOpenTimes(
+    const response = await sharedCheckInsController.listOpenTimes(
       argsFor({ session: COACH_SESSION, query: "?clientId=../other" }),
     );
 
@@ -155,11 +164,14 @@ describe("SharedCheckInsController listOpenTimes", () => {
 
   it("answers 401 to a visitor who is not signed in without reading the times", async () => {
     // arrange
-    const { controller, listOpenCheckInTimes } = createController();
+    const { sharedCheckInsController, listOpenCheckInTimes } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.listOpenTimes(argsFor({ session: ANONYMOUS_SESSION })),
+      sharedCheckInsController.listOpenTimes(
+        argsFor({ session: ANONYMOUS_SESSION }),
+      ),
     );
 
     // assert
@@ -171,12 +183,12 @@ describe("SharedCheckInsController listOpenTimes", () => {
 describe("SharedCheckInsController proposeNewTime", () => {
   it("proposes the client's new time with her note from the zone she names", async () => {
     // arrange
-    const { controller, proposeCheckInTime } = createController({
+    const { sharedCheckInsController, proposeCheckInTime } = createController({
       proposed: { status: "proposed", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.proposeNewTime(
+    const response = await sharedCheckInsController.proposeNewTime(
       argsFor({
         session: CLIENT_SESSION,
         body: {
@@ -205,12 +217,12 @@ describe("SharedCheckInsController proposeNewTime", () => {
 
   it("proposes the coach's new time without a note when she wrote none", async () => {
     // arrange
-    const { controller, proposeCheckInTime } = createController({
+    const { sharedCheckInsController, proposeCheckInTime } = createController({
       proposed: { status: "proposed", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    await controller.proposeNewTime(
+    await sharedCheckInsController.proposeNewTime(
       argsFor({
         session: COACH_SESSION,
         body: { startsAt: "2026-10-23T14:00:00.000Z" },
@@ -266,10 +278,12 @@ describe("SharedCheckInsController proposeNewTime", () => {
     "answers $status $error when the new time is refused as $result.status",
     async ({ result, status, error }) => {
       // arrange
-      const { controller } = createController({ proposed: result });
+      const { sharedCheckInsController } = createController({
+        proposed: result,
+      });
 
       // act
-      const response = await controller.proposeNewTime(
+      const response = await sharedCheckInsController.proposeNewTime(
         argsFor({
           session: CLIENT_SESSION,
           body: { startsAt: "2026-10-23T14:00:00.000Z" },
@@ -285,12 +299,12 @@ describe("SharedCheckInsController proposeNewTime", () => {
 
   it("answers not found to a check-in the actor cannot reach", async () => {
     // arrange
-    const { controller } = createController({
+    const { sharedCheckInsController } = createController({
       proposed: { status: "unknown" },
     });
 
     // act
-    const response = await controller.proposeNewTime(
+    const response = await sharedCheckInsController.proposeNewTime(
       argsFor({
         session: CLIENT_SESSION,
         body: { startsAt: "2026-10-23T14:00:00.000Z" },
@@ -304,10 +318,10 @@ describe("SharedCheckInsController proposeNewTime", () => {
 
   it("refuses a new time that is not an instant without proposing anything", async () => {
     // arrange
-    const { controller, proposeCheckInTime } = createController();
+    const { sharedCheckInsController, proposeCheckInTime } = createController();
 
     // act
-    const response = await controller.proposeNewTime(
+    const response = await sharedCheckInsController.proposeNewTime(
       argsFor({ session: COACH_SESSION, body: { startsAt: "next Friday" } }),
       CHECK_IN_ID,
     );
@@ -320,10 +334,10 @@ describe("SharedCheckInsController proposeNewTime", () => {
 
   it("answers not found to an id that is not a uuid without proposing anything", async () => {
     // arrange
-    const { controller, proposeCheckInTime } = createController();
+    const { sharedCheckInsController, proposeCheckInTime } = createController();
 
     // act
-    const response = await controller.proposeNewTime(
+    const response = await sharedCheckInsController.proposeNewTime(
       argsFor({
         session: COACH_SESSION,
         body: { startsAt: "2026-10-23T14:00:00.000Z" },
@@ -340,12 +354,12 @@ describe("SharedCheckInsController proposeNewTime", () => {
 describe("SharedCheckInsController cancel", () => {
   it("cancels as the client from the zone her answer names", async () => {
     // arrange
-    const { controller, cancelCheckIn } = createController({
+    const { sharedCheckInsController, cancelCheckIn } = createController({
       cancelled: { status: "cancelled", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.cancel(
+    const response = await sharedCheckInsController.cancel(
       argsFor({ session: CLIENT_SESSION, body: { timeZone: "Asia/Tokyo" } }),
       CHECK_IN_ID,
     );
@@ -377,10 +391,12 @@ describe("SharedCheckInsController cancel", () => {
     "answers $status $error when the cancellation is refused as $result.status",
     async ({ result, status, error }) => {
       // arrange
-      const { controller } = createController({ cancelled: result });
+      const { sharedCheckInsController } = createController({
+        cancelled: result,
+      });
 
       // act
-      const response = await controller.cancel(
+      const response = await sharedCheckInsController.cancel(
         argsFor({ session: COACH_SESSION }),
         CHECK_IN_ID,
       );
@@ -395,12 +411,12 @@ describe("SharedCheckInsController cancel", () => {
 describe("SharedCheckInsController approve", () => {
   it("approves as the coach and hands the use case any zone the body names", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController({
+    const { sharedCheckInsController, approveCheckIn } = createController({
       approved: { status: "approved", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.approve(
+    const response = await sharedCheckInsController.approve(
       argsFor({ session: COACH_SESSION, body: { timeZone: "Asia/Tokyo" } }),
       CHECK_IN_ID,
     );
@@ -420,12 +436,12 @@ describe("SharedCheckInsController approve", () => {
 
   it("approves as the client from the zone her answer names", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController({
+    const { sharedCheckInsController, approveCheckIn } = createController({
       approved: { status: "approved", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.approve(
+    const response = await sharedCheckInsController.approve(
       argsFor({ session: CLIENT_SESSION, body: { timeZone: "Asia/Tokyo" } }),
       CHECK_IN_ID,
     );
@@ -441,12 +457,12 @@ describe("SharedCheckInsController approve", () => {
 
   it("approves without a zone when the answer carries no body", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController({
+    const { sharedCheckInsController, approveCheckIn } = createController({
       approved: { status: "approved", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.approve(
+    const response = await sharedCheckInsController.approve(
       argsFor({ session: COACH_SESSION }),
       CHECK_IN_ID,
     );
@@ -478,10 +494,12 @@ describe("SharedCheckInsController approve", () => {
     "answers $status $error when the approval is refused as $result.status",
     async ({ result, status, error }) => {
       // arrange
-      const { controller } = createController({ approved: result });
+      const { sharedCheckInsController } = createController({
+        approved: result,
+      });
 
       // act
-      const response = await controller.approve(
+      const response = await sharedCheckInsController.approve(
         argsFor({ session: CLIENT_SESSION }),
         CHECK_IN_ID,
       );
@@ -494,12 +512,12 @@ describe("SharedCheckInsController approve", () => {
 
   it("answers not found to a check-in the actor cannot reach", async () => {
     // arrange
-    const { controller } = createController({
+    const { sharedCheckInsController } = createController({
       approved: { status: "unknown" },
     });
 
     // act
-    const response = await controller.approve(
+    const response = await sharedCheckInsController.approve(
       argsFor({ session: CLIENT_SESSION }),
       CHECK_IN_ID,
     );
@@ -510,10 +528,10 @@ describe("SharedCheckInsController approve", () => {
 
   it("refuses a body that is not JSON without approving anything", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController();
+    const { sharedCheckInsController, approveCheckIn } = createController();
 
     // act
-    const response = await controller.approve(
+    const response = await sharedCheckInsController.approve(
       argsFor({ session: CLIENT_SESSION, rawBody: "{not json" }),
       CHECK_IN_ID,
     );
@@ -526,10 +544,10 @@ describe("SharedCheckInsController approve", () => {
 
   it("answers not found to an id that is not a uuid without approving anything", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController();
+    const { sharedCheckInsController, approveCheckIn } = createController();
 
     // act
-    const response = await controller.approve(
+    const response = await sharedCheckInsController.approve(
       argsFor({ session: COACH_SESSION }),
       "../other",
     );
@@ -541,11 +559,14 @@ describe("SharedCheckInsController approve", () => {
 
   it("answers 401 to a visitor who is not signed in without approving anything", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController();
+    const { sharedCheckInsController, approveCheckIn } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.approve(argsFor({ session: ANONYMOUS_SESSION }), CHECK_IN_ID),
+      sharedCheckInsController.approve(
+        argsFor({ session: ANONYMOUS_SESSION }),
+        CHECK_IN_ID,
+      ),
     );
 
     // assert
@@ -557,12 +578,12 @@ describe("SharedCheckInsController approve", () => {
 describe("SharedCheckInsController decline", () => {
   it("declines as the client from the zone her answer names", async () => {
     // arrange
-    const { controller, declineCheckIn } = createController({
+    const { sharedCheckInsController, declineCheckIn } = createController({
       declined: { status: "declined", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.decline(
+    const response = await sharedCheckInsController.decline(
       argsFor({ session: CLIENT_SESSION, body: { timeZone: "Asia/Tokyo" } }),
       CHECK_IN_ID,
     );
@@ -593,12 +614,13 @@ describe("SharedCheckInsController withdraw", () => {
     "withdraws as %s and names the request in the answer",
     async (_who, session, actor) => {
       // arrange
-      const { controller, withdrawCheckInRequest } = createController({
-        withdrawn: { status: "withdrawn", checkIn: PENDING.toSnapshot() },
-      });
+      const { sharedCheckInsController, withdrawCheckInRequest } =
+        createController({
+          withdrawn: { status: "withdrawn", checkIn: PENDING.toSnapshot() },
+        });
 
       // act
-      const response = await controller.withdraw(
+      const response = await sharedCheckInsController.withdraw(
         argsFor({ session }),
         CHECK_IN_ID,
       );
@@ -627,10 +649,12 @@ describe("SharedCheckInsController withdraw", () => {
     "answers $status $error when the withdrawal is refused as $result.status",
     async ({ result, status, error }) => {
       // arrange
-      const { controller } = createController({ withdrawn: result });
+      const { sharedCheckInsController } = createController({
+        withdrawn: result,
+      });
 
       // act
-      const response = await controller.withdraw(
+      const response = await sharedCheckInsController.withdraw(
         argsFor({ session: CLIENT_SESSION }),
         CHECK_IN_ID,
       );
@@ -670,30 +694,30 @@ function createController(
   const withdrawCheckInRequest = vi
     .fn()
     .mockResolvedValue(answers.withdrawn ?? { status: "unknown" });
-  const controller = new SharedCheckInsController({
+  const sharedCheckInsController = new SharedCheckInsController({
     unitOfWork: (work) => work(),
-    approveCheckIn: {
+    approveCheckInUseCase: {
       execute: approveCheckIn,
     } as unknown as ApproveCheckInUseCase,
-    cancelCheckIn: {
+    cancelCheckInUseCase: {
       execute: cancelCheckIn,
     } as unknown as CancelCheckInUseCase,
-    declineCheckIn: {
+    declineCheckInUseCase: {
       execute: declineCheckIn,
     } as unknown as DeclineCheckInUseCase,
-    listOpenCheckInTimes: {
+    listOpenCheckInTimesUseCase: {
       execute: listOpenCheckInTimes,
     } as unknown as ListOpenCheckInTimesUseCase,
-    proposeCheckInTime: {
+    proposeCheckInTimeUseCase: {
       execute: proposeCheckInTime,
     } as unknown as ProposeCheckInTimeUseCase,
-    withdrawCheckInRequest: {
+    withdrawCheckInRequestUseCase: {
       execute: withdrawCheckInRequest,
     } as unknown as WithdrawCheckInRequestUseCase,
   });
 
   return {
-    controller,
+    sharedCheckInsController,
     approveCheckIn,
     cancelCheckIn,
     declineCheckIn,

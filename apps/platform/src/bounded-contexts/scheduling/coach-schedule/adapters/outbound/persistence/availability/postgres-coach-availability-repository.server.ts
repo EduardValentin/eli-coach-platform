@@ -38,7 +38,7 @@ const DEFAULT_COACH_AVAILABILITY = configuredAvailabilityOrThrow(
 
 type PostgresCoachAvailabilityOptions = {
   database: DatabaseClient;
-  clock: ClockPort;
+  clockPort: ClockPort;
 };
 
 export class PostgresCoachAvailabilityRepository
@@ -78,7 +78,7 @@ export class PostgresCoachAvailabilityRepository
       weekdays: [...availability.weekdays],
       startHour: availability.startHour,
       endHour: availability.endHour,
-      updatedAt: this.options.clock.now(),
+      updatedAt: this.options.clockPort.now(),
     };
 
     await this.executor

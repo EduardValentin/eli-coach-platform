@@ -18,9 +18,9 @@ import {
 } from "~/bounded-contexts/access/public/session";
 
 type OwnResourcesControllerOptions = {
-  listOwnResources: ListOwnResourcesUseCase;
-  countUnopenedResources: CountUnopenedResourcesUseCase;
-  markResourceOpened: MarkResourceOpenedUseCase;
+  listOwnResourcesUseCase: ListOwnResourcesUseCase;
+  countUnopenedResourcesUseCase: CountUnopenedResourcesUseCase;
+  markResourceOpenedUseCase: MarkResourceOpenedUseCase;
 };
 
 const UNAVAILABLE_LISTING: ClientResourceListing = { status: "unavailable" };
@@ -37,7 +37,7 @@ export class OwnResourcesController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const listing = await this.options.listOwnResources.execute({
+    const listing = await this.options.listOwnResourcesUseCase.execute({
       requester: requesterOf(client),
       browse: resourceBrowseInputOf(args.url.searchParams),
     });
@@ -60,7 +60,7 @@ export class OwnResourcesController {
       return 0;
     }
 
-    return this.options.countUnopenedResources.execute(
+    return this.options.countUnopenedResourcesUseCase.execute(
       requesterOf(session.account),
     );
   }
@@ -78,7 +78,7 @@ export class OwnResourcesController {
       return notFoundResponse();
     }
 
-    const result = await this.options.markResourceOpened.execute({
+    const result = await this.options.markResourceOpenedUseCase.execute({
       requester: requesterOf(client),
       resourceId: id.data,
     });

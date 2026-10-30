@@ -18,8 +18,8 @@ type UpdateCoachScheduleSettingsResult =
   | { status: "invalid"; problems: CoachScheduleSettingsProblem[] };
 
 type UpdateCoachScheduleSettingsUseCaseOptions = {
-  availabilityChanges: CoachAvailabilityChangesPort;
-  meetingRoomChanges: CoachMeetingRoomChangesPort;
+  coachAvailabilityChangesPort: CoachAvailabilityChangesPort;
+  coachMeetingRoomChangesPort: CoachMeetingRoomChangesPort;
 };
 
 export class UpdateCoachScheduleSettingsUseCase {
@@ -50,13 +50,13 @@ export class UpdateCoachScheduleSettingsUseCase {
       };
     }
 
-    await this.options.availabilityChanges.save(
+    await this.options.coachAvailabilityChangesPort.save(
       availabilityResult.availability,
     );
 
     const room = roomResult.status === "set" ? roomResult.room : null;
 
-    await this.options.meetingRoomChanges.save(room);
+    await this.options.coachMeetingRoomChangesPort.save(room);
 
     return {
       status: "saved",

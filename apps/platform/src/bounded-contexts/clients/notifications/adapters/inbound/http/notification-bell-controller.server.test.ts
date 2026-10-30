@@ -59,10 +59,13 @@ const BELL: NotificationBell = {
 describe("NotificationBellController loadBell", () => {
   it("reads the coach's bell as the coach", async () => {
     // arrange
-    const { controller, readNotificationBell } = createController();
+    const { notificationBellController, readNotificationBell } =
+      createController();
 
     // act
-    await controller.loadBell(argsFor({ session: COACH_SESSION }));
+    await notificationBellController.loadBell(
+      argsFor({ session: COACH_SESSION }),
+    );
 
     // assert
     expect(readNotificationBell).toHaveBeenCalledWith({ party: "coach" });
@@ -70,10 +73,13 @@ describe("NotificationBellController loadBell", () => {
 
   it("reads a client's bell by her sign-in", async () => {
     // arrange
-    const { controller, readNotificationBell } = createController();
+    const { notificationBellController, readNotificationBell } =
+      createController();
 
     // act
-    await controller.loadBell(argsFor({ session: CLIENT_SESSION }));
+    await notificationBellController.loadBell(
+      argsFor({ session: CLIENT_SESSION }),
+    );
 
     // assert
     expect(readNotificationBell).toHaveBeenCalledWith({
@@ -84,10 +90,12 @@ describe("NotificationBellController loadBell", () => {
 
   it("answers the bell with instants and an unread flag instead of read instants", async () => {
     // arrange
-    const { controller } = createController();
+    const { notificationBellController } = createController();
 
     // act
-    const bell = await controller.loadBell(argsFor({ session: COACH_SESSION }));
+    const bell = await notificationBellController.loadBell(
+      argsFor({ session: COACH_SESSION }),
+    );
 
     // assert
     expect(bell).toEqual({
@@ -118,11 +126,14 @@ describe("NotificationBellController loadBell", () => {
 
   it("answers 401 to a visitor who is not signed in without reading any bell", async () => {
     // arrange
-    const { controller, readNotificationBell } = createController();
+    const { notificationBellController, readNotificationBell } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadBell(argsFor({ session: ANONYMOUS_SESSION })),
+      notificationBellController.loadBell(
+        argsFor({ session: ANONYMOUS_SESSION }),
+      ),
     );
 
     // assert
@@ -134,10 +145,10 @@ describe("NotificationBellController loadBell", () => {
 describe("NotificationBellController respondWithBell", () => {
   it("answers the bell as JSON that is never cached", async () => {
     // arrange
-    const { controller } = createController();
+    const { notificationBellController } = createController();
 
     // act
-    const response = await controller.respondWithBell(
+    const response = await notificationBellController.respondWithBell(
       argsFor({ session: CLIENT_SESSION }),
     );
 
@@ -154,10 +165,11 @@ describe("NotificationBellController respondWithBell", () => {
 describe("NotificationBellController markRead", () => {
   it("marks the client's notification read and answers marked", async () => {
     // arrange
-    const { controller, markNotificationRead } = createController();
+    const { notificationBellController, markNotificationRead } =
+      createController();
 
     // act
-    const response = await controller.markRead(
+    const response = await notificationBellController.markRead(
       argsFor({ session: CLIENT_SESSION }),
       NOTIFICATION_ID,
     );
@@ -173,10 +185,12 @@ describe("NotificationBellController markRead", () => {
 
   it("answers 404 for a notification that is not hers", async () => {
     // arrange
-    const { controller } = createController({ marked: "unknown" });
+    const { notificationBellController } = createController({
+      marked: "unknown",
+    });
 
     // act
-    const response = await controller.markRead(
+    const response = await notificationBellController.markRead(
       argsFor({ session: CLIENT_SESSION }),
       NOTIFICATION_ID,
     );
@@ -193,10 +207,11 @@ describe("NotificationBellController markRead", () => {
     "answers 404 without marking anything when the id is $situation",
     async ({ notificationId }) => {
       // arrange
-      const { controller, markNotificationRead } = createController();
+      const { notificationBellController, markNotificationRead } =
+        createController();
 
       // act
-      const response = await controller.markRead(
+      const response = await notificationBellController.markRead(
         argsFor({ session: COACH_SESSION }),
         notificationId,
       );
@@ -209,11 +224,12 @@ describe("NotificationBellController markRead", () => {
 
   it("answers 401 to a visitor who is not signed in without marking anything", async () => {
     // arrange
-    const { controller, markNotificationRead } = createController();
+    const { notificationBellController, markNotificationRead } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.markRead(
+      notificationBellController.markRead(
         argsFor({ session: ANONYMOUS_SESSION }),
         NOTIFICATION_ID,
       ),
@@ -228,10 +244,11 @@ describe("NotificationBellController markRead", () => {
 describe("NotificationBellController markAllRead", () => {
   it("marks every notification of the coach read and answers marked", async () => {
     // arrange
-    const { controller, markAllNotificationsRead } = createController();
+    const { notificationBellController, markAllNotificationsRead } =
+      createController();
 
     // act
-    const response = await controller.markAllRead(
+    const response = await notificationBellController.markAllRead(
       argsFor({ session: COACH_SESSION }),
     );
 
@@ -243,10 +260,12 @@ describe("NotificationBellController markAllRead", () => {
 
   it("answers 404 to a client the bell does not reach", async () => {
     // arrange
-    const { controller } = createController({ allMarked: "unknown" });
+    const { notificationBellController } = createController({
+      allMarked: "unknown",
+    });
 
     // act
-    const response = await controller.markAllRead(
+    const response = await notificationBellController.markAllRead(
       argsFor({ session: CLIENT_SESSION }),
     );
 
@@ -269,20 +288,20 @@ function createController(
   const markAllNotificationsRead = vi
     .fn()
     .mockResolvedValue(answers.allMarked ?? "marked");
-  const controller = new NotificationBellController({
-    markAllNotificationsRead: {
+  const notificationBellController = new NotificationBellController({
+    markAllNotificationsReadUseCase: {
       execute: markAllNotificationsRead,
     } as unknown as MarkAllNotificationsReadUseCase,
-    markNotificationRead: {
+    markNotificationReadUseCase: {
       execute: markNotificationRead,
     } as unknown as MarkNotificationReadUseCase,
-    readNotificationBell: {
+    readNotificationBellUseCase: {
       execute: readNotificationBell,
     } as unknown as ReadNotificationBellUseCase,
   });
 
   return {
-    controller,
+    notificationBellController,
     markAllNotificationsRead,
     markNotificationRead,
     readNotificationBell,

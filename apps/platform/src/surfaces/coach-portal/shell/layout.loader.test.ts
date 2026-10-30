@@ -41,10 +41,10 @@ describe("coach shell loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(checkInsContext, {
-          coachCheckIns: { loadAwaitingCount },
+          coachCheckInsController: { loadAwaitingCount },
         } as unknown as CheckInsFeature),
         contextEntry(notificationsContext, {
-          notificationBell: { loadBell },
+          notificationBellController: { loadBell },
         } as unknown as NotificationsFeature),
       ],
       request: new Request("https://evoa.fit/coach"),

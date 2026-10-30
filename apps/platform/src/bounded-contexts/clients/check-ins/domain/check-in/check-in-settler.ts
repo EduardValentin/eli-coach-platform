@@ -23,14 +23,14 @@ import type { CheckInsPort } from "./check-ins-port";
 import type { CoachTimePort } from "./coach-time-port";
 
 type CheckInSettlerOptions = {
-  checkIns: Pick<CheckInsPort, "find" | "settle">;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "release">;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
+  checkInsPort: Pick<CheckInsPort, "find" | "settle">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "release">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
 };
 
 type CheckInTurn = { party: CheckInParty; at: Date };
@@ -76,14 +76,14 @@ export class CheckInSettler {
 
     const { checkIn } = reached;
     const party = command.actor.party;
-    const at = this.options.clock.now();
+    const at = this.options.clockPort.now();
     const refusal = settling.refusalOf(checkIn, { party, at });
 
     if (refusal) {
       return { status: refusal };
     }
 
-    const recorded = await this.options.checkIns.settle({
+    const recorded = await this.options.checkInsPort.settle({
       id: checkIn.id,
       outcome,
       at,
@@ -95,7 +95,7 @@ export class CheckInSettler {
       return recorded;
     }
 
-    await releaseFreedHours(this.options.coachTime, [
+    await releaseFreedHours(this.options.coachTimePort, [
       recorded.freedReservationId,
     ]);
 

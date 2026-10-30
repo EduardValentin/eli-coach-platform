@@ -30,9 +30,9 @@ type ListOwnResourcesResult =
   | { status: "unavailable" };
 
 type ListOwnResourcesUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class ListOwnResourcesUseCase {
@@ -66,17 +66,23 @@ export class ListOwnResourcesUseCase {
     clientId: string,
     input: ResourceBrowseInput,
   ): Promise<OwnResourceListing | null> {
-    const { resources } = this.options;
+    const { clientResourcesPort } = this.options;
 
     try {
       const browse = ResourceBrowse.from(input)
-        .withTagAmong(await resources.tagsHeldBy(clientId))
+        .withTagAmong(await clientResourcesPort.tagsHeldBy(clientId))
         .toSnapshot();
-      const browsing = await resources.browseForClient(clientId, browse);
+      const browsing = await clientResourcesPort.browseForClient(
+        clientId,
+        browse,
+      );
 
       return { browsing, browse };
     } catch (error) {
-      this.options.incidents.resourceListingFailed({ clientId, error });
+      this.options.clientResourceIncidentsPort.resourceListingFailed({
+        clientId,
+        error,
+      });
 
       return null;
     }

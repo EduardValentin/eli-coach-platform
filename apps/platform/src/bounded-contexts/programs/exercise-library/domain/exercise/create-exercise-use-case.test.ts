@@ -119,26 +119,28 @@ function createUseCase() {
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
-  const useCase = new CreateExerciseUseCase({
-    library,
-    ids: { generate: () => "e0000000-0000-4000-8000-000000000002" },
-    videoIds: { generate: () => "9c1b0000-0000-4000-8000-000000000001" },
-    clock: { now: () => NOW },
-    incidents,
-    formats,
-    store,
+  const createExerciseUseCase = new CreateExerciseUseCase({
+    exerciseLibraryPort: library,
+    exerciseIdsPort: { generate: () => "e0000000-0000-4000-8000-000000000002" },
+    exerciseVideoIdsPort: {
+      generate: () => "9c1b0000-0000-4000-8000-000000000001",
+    },
+    clockPort: { now: () => NOW },
+    exerciseLibraryIncidentsPort: incidents,
+    exerciseVideoFormatDetectorPort: formats,
+    exerciseVideoStorePort: store,
   });
 
-  return { useCase, library, incidents, formats, store };
+  return { createExerciseUseCase, library, incidents, formats, store };
 }
 
 describe("CreateExerciseUseCase", () => {
   it("adds the exercise without a video under a new id, owned by the coach who created it, its name trimmed, created now", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { createExerciseUseCase, library, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: { kind: "keep" },
@@ -153,10 +155,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("keeps an accepted video under a video id it hands out and adds the exercise with it", async () => {
     // arrange
-    const { useCase, library, formats, store } = createUseCase();
+    const { createExerciseUseCase, library, formats, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -183,11 +185,11 @@ describe("CreateExerciseUseCase", () => {
 
   it("refuses content that is not an .mp4 or .mov video and discards it without adding the exercise", async () => {
     // arrange
-    const { useCase, library, formats, store } = createUseCase();
+    const { createExerciseUseCase, library, formats, store } = createUseCase();
     formats.detect.mockResolvedValueOnce(null);
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -206,12 +208,13 @@ describe("CreateExerciseUseCase", () => {
   it("reports a refused upload it could not discard by its staging id and still answers the refusal", async () => {
     // arrange
     const failure = new Error("disk unavailable");
-    const { useCase, formats, incidents, store } = createUseCase();
+    const { createExerciseUseCase, formats, incidents, store } =
+      createUseCase();
     formats.detect.mockResolvedValueOnce(null);
     store.discard.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -230,10 +233,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("refuses a video over 50 MB and discards it", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { createExerciseUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: {
@@ -252,11 +255,11 @@ describe("CreateExerciseUseCase", () => {
 
   it("names every problem of a draft that breaks a rule beside a refused video", async () => {
     // arrange
-    const { useCase, formats, library } = createUseCase();
+    const { createExerciseUseCase, formats, library } = createUseCase();
     formats.detect.mockResolvedValueOnce("pdf");
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " ", primaryMuscles: [] },
       video: ATTACH,
@@ -276,10 +279,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("discards an accepted video when the draft breaks a rule", async () => {
     // arrange
-    const { useCase, store, library } = createUseCase();
+    const { createExerciseUseCase, store, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " HIP thrust  " },
       video: ATTACH,
@@ -294,11 +297,11 @@ describe("CreateExerciseUseCase", () => {
 
   it("removes the kept video when the library finds the name taken by an exercise added meanwhile", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { createExerciseUseCase, library, store } = createUseCase();
     library.add.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -314,11 +317,12 @@ describe("CreateExerciseUseCase", () => {
   it("removes the kept video, reports the failed write and answers that the creation failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents, store } = createUseCase();
+    const { createExerciseUseCase, library, incidents, store } =
+      createUseCase();
     library.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -337,11 +341,12 @@ describe("CreateExerciseUseCase", () => {
   it("discards the staged video, reports a failed read of the other names and answers that the creation failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents, store } = createUseCase();
+    const { createExerciseUseCase, library, incidents, store } =
+      createUseCase();
     library.list.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -359,12 +364,13 @@ describe("CreateExerciseUseCase", () => {
   it("reports a video it could not remove and still answers the name taken", async () => {
     // arrange
     const failure = new Error("disk unavailable");
-    const { useCase, library, incidents, store } = createUseCase();
+    const { createExerciseUseCase, library, incidents, store } =
+      createUseCase();
     library.add.mockResolvedValueOnce("name-taken");
     store.remove.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: ATTACH,
@@ -380,10 +386,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("refuses a name another of her exercises already has, whatever its case and spaces, without adding it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " HIP thrust  " },
       video: { kind: "keep" },
@@ -396,10 +402,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("adds a name only another coach's exercise has", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: "plank" },
       video: { kind: "keep" },
@@ -412,10 +418,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("adds a name only an archived exercise of hers has", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " lunge" },
       video: { kind: "keep" },
@@ -429,11 +435,12 @@ describe("CreateExerciseUseCase", () => {
   it("reports a failed write and answers that the creation failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents, store } = createUseCase();
+    const { createExerciseUseCase, library, incidents, store } =
+      createUseCase();
     library.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: { kind: "keep" },
@@ -449,10 +456,10 @@ describe("CreateExerciseUseCase", () => {
 
   it("names a taken name beside the draft's other problems", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " hip thrust", primaryMuscles: [] },
       video: { kind: "keep" },

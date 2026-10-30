@@ -59,86 +59,90 @@ describe("OnboardingReviewController loadReview", () => {
       note: "Your weight and check-in day look off.",
       askedAt: ASKED_AT,
     }).toSnapshot();
-    const { controller, readOnboardingReview } = createController({
-      reading: submittedReading({
-        answers: answersWith({
-          "goal-availability": {
-            weight: 66.1,
-            height: 165,
-            goalWeight: 60,
-            primaryGoal: "Lose fat",
-            blockers: ["Busy schedule", "Something else"],
-            additionalInfo: null,
+    const { onboardingReviewController, readOnboardingReview } =
+      createController({
+        reading: submittedReading({
+          answers: answersWith({
+            "goal-availability": {
+              weight: 66.1,
+              height: 165,
+              goalWeight: 60,
+              primaryGoal: "Lose fat",
+              blockers: ["Busy schedule", "Something else"],
+              additionalInfo: null,
+            },
+            "safety-screening": { chestPainOnExertion: "Yes" },
+            "cycle-context": { cycleLengthMin: 29 },
+            "nutrition-lifestyle": {
+              checkInDay: "Friday",
+              checkInChannel: "WhatsApp",
+            },
+            measurements: { waist: 74 },
+          }),
+          overrides: {
+            stage: "needs-details",
+            screening: { outcome: "needs-review", yesCount: 1 },
+            withholdsNutritionAdvice: true,
+            pregnancyContext: false,
+            flaggedQuestions: [
+              { formId: "safety-screening", fieldId: "chestPainOnExertion" },
+            ],
+            forms: [
+              {
+                formId: "goal-availability",
+                fieldIds: [
+                  "weight",
+                  "height",
+                  "goalWeight",
+                  "primaryGoal",
+                  "blockers",
+                  "additionalInfo",
+                ],
+                answered: 5,
+                total: 6,
+              },
+              {
+                formId: "safety-screening",
+                fieldIds: ["chestPainOnExertion"],
+                answered: 1,
+                total: 1,
+              },
+              {
+                formId: "cycle-context",
+                fieldIds: ["cycleLengthMin"],
+                answered: 1,
+                total: 1,
+              },
+              {
+                formId: "nutrition-lifestyle",
+                fieldIds: ["checkInDay", "checkInChannel"],
+                answered: 2,
+                total: 2,
+              },
+              {
+                formId: "measurements",
+                fieldIds: ["waist"],
+                answered: 1,
+                total: 1,
+              },
+            ],
+            openRequest,
+            requests: [openRequest],
+            submittedMeasurement: {
+              recordedAt: SUBMITTED_AT,
+              weightKg: 66.1,
+              waistCm: 74,
+            },
+            statedHeightCm: 165,
           },
-          "safety-screening": { chestPainOnExertion: "Yes" },
-          "cycle-context": { cycleLengthMin: 29 },
-          "nutrition-lifestyle": {
-            checkInDay: "Friday",
-            checkInChannel: "WhatsApp",
-          },
-          measurements: { waist: 74 },
         }),
-        overrides: {
-          stage: "needs-details",
-          screening: { outcome: "needs-review", yesCount: 1 },
-          withholdsNutritionAdvice: true,
-          pregnancyContext: false,
-          flaggedQuestions: [
-            { formId: "safety-screening", fieldId: "chestPainOnExertion" },
-          ],
-          forms: [
-            {
-              formId: "goal-availability",
-              fieldIds: [
-                "weight",
-                "height",
-                "goalWeight",
-                "primaryGoal",
-                "blockers",
-                "additionalInfo",
-              ],
-              answered: 5,
-              total: 6,
-            },
-            {
-              formId: "safety-screening",
-              fieldIds: ["chestPainOnExertion"],
-              answered: 1,
-              total: 1,
-            },
-            {
-              formId: "cycle-context",
-              fieldIds: ["cycleLengthMin"],
-              answered: 1,
-              total: 1,
-            },
-            {
-              formId: "nutrition-lifestyle",
-              fieldIds: ["checkInDay", "checkInChannel"],
-              answered: 2,
-              total: 2,
-            },
-            {
-              formId: "measurements",
-              fieldIds: ["waist"],
-              answered: 1,
-              total: 1,
-            },
-          ],
-          openRequest,
-          requests: [openRequest],
-          submittedMeasurement: {
-            recordedAt: SUBMITTED_AT,
-            weightKg: 66.1,
-            waistCm: 74,
-          },
-          statedHeightCm: 165,
-        },
-      }),
-    });
+      });
 
     // act
-    const review = await controller.loadReview(coachArgs(), CLIENT_ID);
+    const review = await onboardingReviewController.loadReview(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(readOnboardingReview).toHaveBeenCalledWith(CLIENT_ID);
@@ -218,7 +222,7 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("answers no forms and no open request when the client gave no answers", async () => {
     // arrange
-    const { controller } = createController({
+    const { onboardingReviewController } = createController({
       reading: submittedReading({
         answers: answersWith({}),
         overrides: { openRequest: null },
@@ -226,7 +230,10 @@ describe("OnboardingReviewController loadReview", () => {
     });
 
     // act
-    const review = await controller.loadReview(coachArgs(), CLIENT_ID);
+    const review = await onboardingReviewController.loadReview(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(review.submitted).toMatchObject({
@@ -237,7 +244,7 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("answers unanswered questions with no value, and a ticked box as yes", async () => {
     // arrange
-    const { controller } = createController({
+    const { onboardingReviewController } = createController({
       reading: submittedReading({
         answers: answersWith({
           "goal-availability": { blockers: [], additionalInfo: "  " },
@@ -263,7 +270,10 @@ describe("OnboardingReviewController loadReview", () => {
     });
 
     // act
-    const review = await controller.loadReview(coachArgs(), CLIENT_ID);
+    const review = await onboardingReviewController.loadReview(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(
@@ -275,7 +285,7 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("words the previous personal trainer questions with PT capitalised", async () => {
     // arrange
-    const { controller } = createController({
+    const { onboardingReviewController } = createController({
       reading: submittedReading({
         answers: answersWith({
           "goal-availability": {
@@ -297,7 +307,10 @@ describe("OnboardingReviewController loadReview", () => {
     });
 
     // act
-    const review = await controller.loadReview(coachArgs(), CLIENT_ID);
+    const review = await onboardingReviewController.loadReview(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(
@@ -307,12 +320,15 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("answers no submission, no submitted waist and no height before the client has submitted", async () => {
     // arrange
-    const { controller } = createController({
+    const { onboardingReviewController } = createController({
       reading: { status: "not-submitted" },
     });
 
     // act
-    const review = await controller.loadReview(coachArgs(), CLIENT_ID);
+    const review = await onboardingReviewController.loadReview(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(review).toEqual({
@@ -325,13 +341,13 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("answers not found when the client does not exist", async () => {
     // arrange
-    const { controller } = createController({
+    const { onboardingReviewController } = createController({
       reading: { status: "not-found" },
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadReview(coachArgs(), CLIENT_ID),
+      onboardingReviewController.loadReview(coachArgs(), CLIENT_ID),
     );
 
     // assert
@@ -340,13 +356,14 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("answers not found to an id that is not a uuid without reading any review", async () => {
     // arrange
-    const { controller, readOnboardingReview } = createController({
-      reading: { status: "not-submitted" },
-    });
+    const { onboardingReviewController, readOnboardingReview } =
+      createController({
+        reading: { status: "not-submitted" },
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadReview(coachArgs(), "not-a-uuid"),
+      onboardingReviewController.loadReview(coachArgs(), "not-a-uuid"),
     );
 
     // assert
@@ -356,13 +373,17 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("refuses a client account without reading any review", async () => {
     // arrange
-    const { controller, readOnboardingReview } = createController({
-      reading: { status: "not-submitted" },
-    });
+    const { onboardingReviewController, readOnboardingReview } =
+      createController({
+        reading: { status: "not-submitted" },
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadReview(coachArgs({ session: CLIENT_SESSION }), CLIENT_ID),
+      onboardingReviewController.loadReview(
+        coachArgs({ session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -372,13 +393,14 @@ describe("OnboardingReviewController loadReview", () => {
 
   it("sends an anonymous visitor to sign in without reading any review", async () => {
     // arrange
-    const { controller, readOnboardingReview } = createController({
-      reading: { status: "not-submitted" },
-    });
+    const { onboardingReviewController, readOnboardingReview } =
+      createController({
+        reading: { status: "not-submitted" },
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadReview(
+      onboardingReviewController.loadReview(
         coachArgs({ session: ANONYMOUS_SESSION }),
         CLIENT_ID,
       ),
@@ -396,12 +418,15 @@ describe("OnboardingReviewController openReview", () => {
     [{ status: "already-open" }, "already-open"],
   ])("accepts an opening the use case answers %j", async (result, outcome) => {
     // arrange
-    const { controller, openOnboardingReview } = createController({
-      openResult: result,
-    });
+    const { onboardingReviewController, openOnboardingReview } =
+      createController({
+        openResult: result,
+      });
 
     // act
-    const response = await controller.openReview(actionArgs(targetBody()));
+    const response = await onboardingReviewController.openReview(
+      actionArgs(targetBody()),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -416,10 +441,14 @@ describe("OnboardingReviewController openReview", () => {
     [{ status: "subscription-cancelled-or-ended" }, 409],
   ])("refuses an opening the use case answers %j", async (result, status) => {
     // arrange
-    const { controller } = createController({ openResult: result });
+    const { onboardingReviewController } = createController({
+      openResult: result,
+    });
 
     // act
-    const response = await controller.openReview(actionArgs(targetBody()));
+    const response = await onboardingReviewController.openReview(
+      actionArgs(targetBody()),
+    );
 
     // assert
     expect(response.status).toBe(status);
@@ -428,14 +457,15 @@ describe("OnboardingReviewController openReview", () => {
 
   it("answers 400 to a body it cannot read without opening any review", async () => {
     // arrange
-    const { controller, openOnboardingReview } = createController({
-      openResult: { status: "opened" },
-    });
+    const { onboardingReviewController, openOnboardingReview } =
+      createController({
+        openResult: { status: "opened" },
+      });
 
     // act
     const responses = await Promise.all(
       unreadableTargetBodies().map((body) =>
-        controller.openReview(actionArgs(body)),
+        onboardingReviewController.openReview(actionArgs(body)),
       ),
     );
 
@@ -451,13 +481,16 @@ describe("OnboardingReviewController openReview", () => {
     "refuses %s without opening any review",
     async (_label, session, status) => {
       // arrange
-      const { controller, openOnboardingReview } = createController({
-        openResult: { status: "opened" },
-      });
+      const { onboardingReviewController, openOnboardingReview } =
+        createController({
+          openResult: { status: "opened" },
+        });
 
       // act
       const thrown = await captureThrown(() =>
-        controller.openReview(actionArgs(targetBody(), session)),
+        onboardingReviewController.openReview(
+          actionArgs(targetBody(), session),
+        ),
       );
 
       // assert
@@ -470,12 +503,15 @@ describe("OnboardingReviewController openReview", () => {
 describe("OnboardingReviewController requestDetails", () => {
   it("accepts the request and hands the use case the client, the questions and the note", async () => {
     // arrange
-    const { controller, requestOnboardingDetails } = createController({
-      requestResult: { status: "requested" },
-    });
+    const { onboardingReviewController, requestOnboardingDetails } =
+      createController({
+        requestResult: { status: "requested" },
+      });
 
     // act
-    const response = await controller.requestDetails(actionArgs(detailsBody()));
+    const response = await onboardingReviewController.requestDetails(
+      actionArgs(detailsBody()),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -503,10 +539,12 @@ describe("OnboardingReviewController requestDetails", () => {
     "refuses a request the use case answers %j",
     async (result, status, error) => {
       // arrange
-      const { controller } = createController({ requestResult: result });
+      const { onboardingReviewController } = createController({
+        requestResult: result,
+      });
 
       // act
-      const response = await controller.requestDetails(
+      const response = await onboardingReviewController.requestDetails(
         actionArgs(detailsBody()),
       );
 
@@ -518,9 +556,10 @@ describe("OnboardingReviewController requestDetails", () => {
 
   it("answers 400 to a body it cannot read without requesting anything", async () => {
     // arrange
-    const { controller, requestOnboardingDetails } = createController({
-      requestResult: { status: "requested" },
-    });
+    const { onboardingReviewController, requestOnboardingDetails } =
+      createController({
+        requestResult: { status: "requested" },
+      });
     const bodies = [
       "{",
       detailsBody({ clientId: "not-a-uuid" }),
@@ -529,7 +568,9 @@ describe("OnboardingReviewController requestDetails", () => {
 
     // act
     const responses = await Promise.all(
-      bodies.map((body) => controller.requestDetails(actionArgs(body))),
+      bodies.map((body) =>
+        onboardingReviewController.requestDetails(actionArgs(body)),
+      ),
     );
 
     // assert
@@ -546,13 +587,16 @@ describe("OnboardingReviewController requestDetails", () => {
     "refuses %s without requesting anything",
     async (_label, session, status) => {
       // arrange
-      const { controller, requestOnboardingDetails } = createController({
-        requestResult: { status: "requested" },
-      });
+      const { onboardingReviewController, requestOnboardingDetails } =
+        createController({
+          requestResult: { status: "requested" },
+        });
 
       // act
       const thrown = await captureThrown(() =>
-        controller.requestDetails(actionArgs(detailsBody(), session)),
+        onboardingReviewController.requestDetails(
+          actionArgs(detailsBody(), session),
+        ),
       );
 
       // assert
@@ -565,12 +609,15 @@ describe("OnboardingReviewController requestDetails", () => {
 describe("OnboardingReviewController approveAnswers", () => {
   it("accepts the approval", async () => {
     // arrange
-    const { controller, approveOnboardingAnswers } = createController({
-      approveResult: { status: "approved" },
-    });
+    const { onboardingReviewController, approveOnboardingAnswers } =
+      createController({
+        approveResult: { status: "approved" },
+      });
 
     // act
-    const response = await controller.approveAnswers(actionArgs(targetBody()));
+    const response = await onboardingReviewController.approveAnswers(
+      actionArgs(targetBody()),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -584,10 +631,14 @@ describe("OnboardingReviewController approveAnswers", () => {
     [{ status: "subscription-cancelled-or-ended" }, 409],
   ])("refuses an approval the use case answers %j", async (result, status) => {
     // arrange
-    const { controller } = createController({ approveResult: result });
+    const { onboardingReviewController } = createController({
+      approveResult: result,
+    });
 
     // act
-    const response = await controller.approveAnswers(actionArgs(targetBody()));
+    const response = await onboardingReviewController.approveAnswers(
+      actionArgs(targetBody()),
+    );
 
     // assert
     expect(response.status).toBe(status);
@@ -596,14 +647,15 @@ describe("OnboardingReviewController approveAnswers", () => {
 
   it("answers 400 to a body it cannot read without approving anything", async () => {
     // arrange
-    const { controller, approveOnboardingAnswers } = createController({
-      approveResult: { status: "approved" },
-    });
+    const { onboardingReviewController, approveOnboardingAnswers } =
+      createController({
+        approveResult: { status: "approved" },
+      });
 
     // act
     const responses = await Promise.all(
       unreadableTargetBodies().map((body) =>
-        controller.approveAnswers(actionArgs(body)),
+        onboardingReviewController.approveAnswers(actionArgs(body)),
       ),
     );
 
@@ -619,13 +671,16 @@ describe("OnboardingReviewController approveAnswers", () => {
     "refuses %s without approving anything",
     async (_label, session, status) => {
       // arrange
-      const { controller, approveOnboardingAnswers } = createController({
-        approveResult: { status: "approved" },
-      });
+      const { onboardingReviewController, approveOnboardingAnswers } =
+        createController({
+          approveResult: { status: "approved" },
+        });
 
       // act
       const thrown = await captureThrown(() =>
-        controller.approveAnswers(actionArgs(targetBody(), session)),
+        onboardingReviewController.approveAnswers(
+          actionArgs(targetBody(), session),
+        ),
       );
 
       // assert
@@ -713,24 +768,24 @@ function createController(
   const requestOnboardingDetails = vi
     .fn()
     .mockResolvedValue(options.requestResult);
-  const controller = new OnboardingReviewController({
-    approveOnboardingAnswers: {
+  const onboardingReviewController = new OnboardingReviewController({
+    approveOnboardingAnswersUseCase: {
       execute: approveOnboardingAnswers,
     } as unknown as ApproveOnboardingAnswersUseCase,
-    openOnboardingReview: {
+    openOnboardingReviewUseCase: {
       execute: openOnboardingReview,
     } as unknown as OpenOnboardingReviewUseCase,
-    readOnboardingReview: {
+    readOnboardingReviewUseCase: {
       execute: readOnboardingReview,
     } as unknown as ReadOnboardingReviewUseCase,
-    requestOnboardingDetails: {
+    requestOnboardingDetailsUseCase: {
       execute: requestOnboardingDetails,
     } as unknown as RequestOnboardingDetailsUseCase,
   });
 
   return {
     approveOnboardingAnswers,
-    controller,
+    onboardingReviewController,
     openOnboardingReview,
     readOnboardingReview,
     requestOnboardingDetails,

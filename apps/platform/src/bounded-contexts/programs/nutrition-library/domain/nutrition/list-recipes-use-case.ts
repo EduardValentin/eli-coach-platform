@@ -12,20 +12,21 @@ export type ListRecipesResult = {
 };
 
 type ListRecipesUseCaseOptions = {
-  recipes: Pick<RecipeLibraryPort, "list">;
-  foods: Pick<FoodLibraryPort, "list" | "referenced">;
-  tags: Pick<NutritionTagsPort, "list">;
+  recipeLibraryPort: Pick<RecipeLibraryPort, "list">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list" | "referenced">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
 };
 
 export class ListRecipesUseCase {
   constructor(private readonly options: ListRecipesUseCaseOptions) {}
 
   async execute(ownerAccountId: string): Promise<ListRecipesResult> {
-    const { recipes, foods, tags } = this.options;
+    const { recipeLibraryPort, foodLibraryPort, nutritionTagsPort } =
+      this.options;
     const [storedRecipes, activeFoods, vocabulary] = await Promise.all([
-      recipes.list(ownerAccountId),
-      foods.list(ownerAccountId),
-      tags.list(),
+      recipeLibraryPort.list(ownerAccountId),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
     const archivedFoodIds = [
       ...new Set(storedRecipes.flatMap((recipe) => recipe.ingredientFoodIds)),
@@ -33,7 +34,10 @@ export class ListRecipesUseCase {
     const archivedFoods =
       archivedFoodIds.length === 0
         ? []
-        : await foods.referenced({ ownerAccountId, foodIds: archivedFoodIds });
+        : await foodLibraryPort.referenced({
+            ownerAccountId,
+            foodIds: archivedFoodIds,
+          });
 
     return {
       status: "listed",

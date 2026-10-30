@@ -16,7 +16,7 @@ describe("StoreDownloadController", () => {
       sha256: "a".repeat(64),
       sizeBytes: 5,
     };
-    const resolveDownloadGrant = {
+    const resolveDownloadGrantUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         delivery: { kind: "single", asset },
@@ -42,8 +42,8 @@ describe("StoreDownloadController", () => {
         bytes: Readable.from([Buffer.from("guide")]),
       }),
     } satisfies ProductAssetsPort;
-    const controller = new StoreDownloadController(
-      resolveDownloadGrant,
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
       assetStore,
       {
         appBasePath: "/eli",
@@ -52,7 +52,9 @@ describe("StoreDownloadController", () => {
     );
 
     // act
-    const response = await controller.download(createRequest("opaque-token"));
+    const response = await storeDownloadController.download(
+      createRequest("opaque-token"),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -67,11 +69,11 @@ describe("StoreDownloadController", () => {
     "uses the same privacy-safe response for a %s grant",
     async () => {
       // arrange
-      const resolveDownloadGrant = {
+      const resolveDownloadGrantUseCase = {
         execute: vi.fn().mockResolvedValue({ status: "unavailable" }),
       } as unknown as ResolveDownloadGrantUseCase;
-      const controller = new StoreDownloadController(
-        resolveDownloadGrant,
+      const storeDownloadController = new StoreDownloadController(
+        resolveDownloadGrantUseCase,
         createUnusedAssetStore(),
         {
           appBasePath: "/eli",
@@ -80,7 +82,9 @@ describe("StoreDownloadController", () => {
       );
 
       // act
-      const response = await controller.download(createRequest("bad-token"));
+      const response = await storeDownloadController.download(
+        createRequest("bad-token"),
+      );
 
       // assert
       expect(response.status).toBe(303);
@@ -129,7 +133,7 @@ describe("StoreDownloadController", () => {
     },
   ])("refuses a $scenario without partial delivery", async ({ items }) => {
     // arrange
-    const resolveDownloadGrant = {
+    const resolveDownloadGrantUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         delivery: { kind: "empty" },
@@ -141,11 +145,11 @@ describe("StoreDownloadController", () => {
         },
       }),
     } as unknown as ResolveDownloadGrantUseCase;
-    const assetStore = createUnusedAssetStore();
+    const productAssetsPort = createUnusedAssetStore();
     const zipDeliveryStream = { create: vi.fn() };
-    const controller = new StoreDownloadController(
-      resolveDownloadGrant,
-      assetStore,
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
+      productAssetsPort,
       {
         appBasePath: "/eli",
         zipDeliveryStream,
@@ -153,24 +157,26 @@ describe("StoreDownloadController", () => {
     );
 
     // act
-    const response = await controller.download(createRequest("opaque-token"));
+    const response = await storeDownloadController.download(
+      createRequest("opaque-token"),
+    );
 
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(
       "/store/download?unavailable=1",
     );
-    expect(assetStore.openVerified).not.toHaveBeenCalled();
+    expect(productAssetsPort.openVerified).not.toHaveBeenCalled();
     expect(zipDeliveryStream.create).not.toHaveBeenCalled();
   });
 
   it("returns a temporary recovery response when grant resolution fails", async () => {
     // arrange
-    const resolveDownloadGrant = {
+    const resolveDownloadGrantUseCase = {
       execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
     } as unknown as ResolveDownloadGrantUseCase;
-    const controller = new StoreDownloadController(
-      resolveDownloadGrant,
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
       createUnusedAssetStore(),
       {
         appBasePath: "/eli",
@@ -179,7 +185,9 @@ describe("StoreDownloadController", () => {
     );
 
     // act
-    const response = await controller.download(createRequest("opaque-token"));
+    const response = await storeDownloadController.download(
+      createRequest("opaque-token"),
+    );
 
     // assert
     expect(response.status).toBe(503);
@@ -192,11 +200,11 @@ describe("StoreDownloadController", () => {
 
   it("escapes dynamic values in the temporary recovery document", async () => {
     // arrange
-    const resolveDownloadGrant = {
+    const resolveDownloadGrantUseCase = {
       execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
     } as unknown as ResolveDownloadGrantUseCase;
-    const controller = new StoreDownloadController(
-      resolveDownloadGrant,
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
       createUnusedAssetStore(),
       {
         appBasePath: '/eli" onmouseover="alert(1)',
@@ -205,7 +213,9 @@ describe("StoreDownloadController", () => {
     );
 
     // act
-    const response = await controller.download(createRequest("opaque-token"));
+    const response = await storeDownloadController.download(
+      createRequest("opaque-token"),
+    );
     const responseBody = await response.text();
 
     // assert
@@ -225,7 +235,7 @@ describe("StoreDownloadController", () => {
       sha256: "a".repeat(64),
       sizeBytes: 5,
     };
-    const resolveDownloadGrant = {
+    const resolveDownloadGrantUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         delivery: { kind: "single", asset },
@@ -248,8 +258,8 @@ describe("StoreDownloadController", () => {
       assertReady: vi.fn(),
       openVerified: vi.fn().mockResolvedValue({ kind: "unavailable" }),
     } satisfies ProductAssetsPort;
-    const controller = new StoreDownloadController(
-      resolveDownloadGrant,
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
       assetStore,
       {
         appBasePath: "/eli",
@@ -258,7 +268,9 @@ describe("StoreDownloadController", () => {
     );
 
     // act
-    const response = await controller.download(createRequest("opaque-token"));
+    const response = await storeDownloadController.download(
+      createRequest("opaque-token"),
+    );
 
     // assert
     expect(response.status).toBe(303);
@@ -269,11 +281,11 @@ describe("StoreDownloadController", () => {
 
   it("rejects an oversized streamed body before resolving a grant", async () => {
     // arrange
-    const resolveDownloadGrant = {
+    const resolveDownloadGrantUseCase = {
       execute: vi.fn(),
     } as unknown as ResolveDownloadGrantUseCase;
-    const controller = new StoreDownloadController(
-      resolveDownloadGrant,
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
       createUnusedAssetStore(),
       {
         appBasePath: "/eli",
@@ -291,12 +303,12 @@ describe("StoreDownloadController", () => {
     });
 
     // act
-    const response = await controller.download(request);
+    const response = await storeDownloadController.download(request);
 
     // assert
     expect(request.headers.has("Content-Length")).toBe(false);
     expect(response.status).toBe(413);
-    expect(resolveDownloadGrant.execute).not.toHaveBeenCalled();
+    expect(resolveDownloadGrantUseCase.execute).not.toHaveBeenCalled();
     const responseBody = await response.text();
 
     expect(responseBody).toContain(

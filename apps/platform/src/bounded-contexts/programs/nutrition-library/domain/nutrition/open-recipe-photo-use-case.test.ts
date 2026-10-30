@@ -55,7 +55,10 @@ function createUseCase(snapshot: RecipeSnapshot | null = PORRIDGE) {
   } satisfies Pick<RecipePhotoStorePort, "open">;
 
   return {
-    useCase: new OpenRecipePhotoUseCase({ recipes, store }),
+    openRecipePhotoUseCase: new OpenRecipePhotoUseCase({
+      recipeLibraryPort: recipes,
+      recipePhotoStorePort: store,
+    }),
     recipes,
     store,
   };
@@ -64,10 +67,10 @@ function createUseCase(snapshot: RecipeSnapshot | null = PORRIDGE) {
 describe("OpenRecipePhotoUseCase", () => {
   it("opens the recipe's current photo for the coach who owns it, as a WebP image", async () => {
     // arrange
-    const { useCase, recipes, store } = createUseCase();
+    const { openRecipePhotoUseCase, recipes, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openRecipePhotoUseCase.execute({
       viewer: COACH,
       recipeId: RECIPE_ID,
       photoId: PHOTO_ID,
@@ -89,10 +92,10 @@ describe("OpenRecipePhotoUseCase", () => {
 
   it("answers not found to another coach without opening the file", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openRecipePhotoUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openRecipePhotoUseCase.execute({
       viewer: {
         kind: "coach",
         accountId: "c0000000-0000-4000-8000-000000000002",
@@ -113,10 +116,10 @@ describe("OpenRecipePhotoUseCase", () => {
     "answers not found to a $viewer.kind without looking for the recipe",
     async ({ viewer }) => {
       // arrange
-      const { useCase, recipes, store } = createUseCase();
+      const { openRecipePhotoUseCase, recipes, store } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await openRecipePhotoUseCase.execute({
         viewer,
         recipeId: RECIPE_ID,
         photoId: PHOTO_ID,
@@ -131,10 +134,10 @@ describe("OpenRecipePhotoUseCase", () => {
 
   it("answers not found for a photo id that is no longer the recipe's photo", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openRecipePhotoUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openRecipePhotoUseCase.execute({
       viewer: COACH,
       recipeId: RECIPE_ID,
       photoId: "7a1b0000-0000-4000-8000-000000000000",
@@ -147,10 +150,13 @@ describe("OpenRecipePhotoUseCase", () => {
 
   it("answers not found for a recipe without a photo", async () => {
     // arrange
-    const { useCase, store } = createUseCase({ ...PORRIDGE, photo: null });
+    const { openRecipePhotoUseCase, store } = createUseCase({
+      ...PORRIDGE,
+      photo: null,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await openRecipePhotoUseCase.execute({
       viewer: COACH,
       recipeId: RECIPE_ID,
       photoId: PHOTO_ID,
@@ -163,10 +169,10 @@ describe("OpenRecipePhotoUseCase", () => {
 
   it("answers not found for a missing recipe", async () => {
     // arrange
-    const { useCase } = createUseCase(null);
+    const { openRecipePhotoUseCase } = createUseCase(null);
 
     // act
-    const result = await useCase.execute({
+    const result = await openRecipePhotoUseCase.execute({
       viewer: COACH,
       recipeId: RECIPE_ID,
       photoId: PHOTO_ID,
@@ -178,11 +184,11 @@ describe("OpenRecipePhotoUseCase", () => {
 
   it("answers not found when the stored file has gone", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openRecipePhotoUseCase, store } = createUseCase();
     store.open.mockResolvedValueOnce({ status: "missing" });
 
     // act
-    const result = await useCase.execute({
+    const result = await openRecipePhotoUseCase.execute({
       viewer: COACH,
       recipeId: RECIPE_ID,
       photoId: PHOTO_ID,

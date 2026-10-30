@@ -105,7 +105,7 @@ class InMemoryResourceImagesAdapter implements ClientResourceStorePort {
 }
 
 function createUseCase() {
-  const store = new InMemoryResourceImagesAdapter();
+  const inMemoryResourceImagesAdapter = new InMemoryResourceImagesAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -139,14 +139,18 @@ function createUseCase() {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new OpenResourcePreviewUseCase({
-    resources: new InMemoryClientResourcesAdapter(),
-    clients,
-    store,
-    incidents,
+  const openResourcePreviewUseCase = new OpenResourcePreviewUseCase({
+    clientResourcesPort: new InMemoryClientResourcesAdapter(),
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryResourceImagesAdapter,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, store, incidents };
+  return {
+    openResourcePreviewUseCase,
+    inMemoryResourceImagesAdapter,
+    incidents,
+  };
 }
 
 describe("OpenResourcePreviewUseCase", () => {
@@ -155,10 +159,10 @@ describe("OpenResourcePreviewUseCase", () => {
     ["the client it is for", { role: "CLIENT", authSubjectId: "user_ana" }],
   ] as const)("opens a page image for %s", async (_case, requester) => {
     // arrange
-    const { useCase } = createUseCase();
+    const { openResourcePreviewUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openResourcePreviewUseCase.execute({
       requester,
       resourceId: "resource-pdf",
       preview: { kind: "page", pageNumber: 2 },
@@ -174,10 +178,10 @@ describe("OpenResourcePreviewUseCase", () => {
 
   it("opens the thumbnail", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { openResourcePreviewUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openResourcePreviewUseCase.execute({
       requester: COACH,
       resourceId: "resource-pdf",
       preview: { kind: "thumbnail" },
@@ -193,10 +197,14 @@ describe("OpenResourcePreviewUseCase", () => {
 
   it("finds nothing for another client and reports the refusal", async () => {
     // arrange
-    const { useCase, store, incidents } = createUseCase();
+    const {
+      openResourcePreviewUseCase,
+      inMemoryResourceImagesAdapter,
+      incidents,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openResourcePreviewUseCase.execute({
       requester: { role: "CLIENT", authSubjectId: "user_bea" },
       resourceId: "resource-pdf",
       preview: { kind: "page", pageNumber: 1 },
@@ -204,7 +212,7 @@ describe("OpenResourcePreviewUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(store.openPage).not.toHaveBeenCalled();
+    expect(inMemoryResourceImagesAdapter.openPage).not.toHaveBeenCalled();
     expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
       requesterRole: "CLIENT",
       clientId: "client-ana",
@@ -222,10 +230,11 @@ describe("OpenResourcePreviewUseCase", () => {
     "finds nothing for %s without reading the store",
     async (_case, resourceId, preview) => {
       // arrange
-      const { useCase, store } = createUseCase();
+      const { openResourcePreviewUseCase, inMemoryResourceImagesAdapter } =
+        createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await openResourcePreviewUseCase.execute({
         requester: COACH,
         resourceId,
         preview,
@@ -233,18 +242,21 @@ describe("OpenResourcePreviewUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "not-found" });
-      expect(store.openPage).not.toHaveBeenCalled();
-      expect(store.openThumbnail).not.toHaveBeenCalled();
+      expect(inMemoryResourceImagesAdapter.openPage).not.toHaveBeenCalled();
+      expect(
+        inMemoryResourceImagesAdapter.openThumbnail,
+      ).not.toHaveBeenCalled();
     },
   );
 
   it("finds nothing when the stored page image is gone", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
-    store.openPage.mockResolvedValueOnce(null);
+    const { openResourcePreviewUseCase, inMemoryResourceImagesAdapter } =
+      createUseCase();
+    inMemoryResourceImagesAdapter.openPage.mockResolvedValueOnce(null);
 
     // act
-    const result = await useCase.execute({
+    const result = await openResourcePreviewUseCase.execute({
       requester: COACH,
       resourceId: "resource-pdf",
       preview: { kind: "page", pageNumber: 1 },

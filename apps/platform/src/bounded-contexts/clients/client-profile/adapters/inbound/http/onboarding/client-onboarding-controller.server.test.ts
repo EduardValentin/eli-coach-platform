@@ -96,12 +96,14 @@ describe("ClientOnboardingController load", () => {
     "hands a %s client her forms, an empty draft and her units on her first visit",
     async (gender, formIds) => {
       // arrange
-      const { controller, readClientOnboarding } = createController({
-        reading: readingOf({ gender }),
-      });
+      const { clientOnboardingController, readClientOnboarding } =
+        createController({
+          reading: readingOf({ gender }),
+        });
 
       // act
-      const page = await controller.loadOnboarding(clientArgs());
+      const page =
+        await clientOnboardingController.loadOnboarding(clientArgs());
 
       // assert
       expect(page).toEqual({
@@ -142,7 +144,7 @@ describe("ClientOnboardingController load", () => {
         progressPhotosAt: null,
       },
     };
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       reading: readingOf({
         gender: "female",
         draft,
@@ -151,7 +153,7 @@ describe("ClientOnboardingController load", () => {
     });
 
     // act
-    const page = await controller.loadOnboarding(clientArgs());
+    const page = await clientOnboardingController.loadOnboarding(clientArgs());
 
     // assert
     expect(page).toMatchObject({
@@ -168,7 +170,7 @@ describe("ClientOnboardingController load", () => {
 
   it("does not call a draft with only cleared answers a resumed one", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       reading: readingOf({
         gender: "female",
         draft: {
@@ -182,7 +184,7 @@ describe("ClientOnboardingController load", () => {
     });
 
     // act
-    const page = await controller.loadOnboarding(clientArgs());
+    const page = await clientOnboardingController.loadOnboarding(clientArgs());
 
     // assert
     expect(page).toMatchObject({ mode: "wizard", resumed: false });
@@ -190,12 +192,12 @@ describe("ClientOnboardingController load", () => {
 
   it("asks for manual screening when her age falls outside the screening range", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       reading: readingOf({ gender: "female", dateOfBirth: "1950-01-01" }),
     });
 
     // act
-    const page = await controller.loadOnboarding(clientArgs());
+    const page = await clientOnboardingController.loadOnboarding(clientArgs());
 
     // assert
     expect(page).toMatchObject({ mode: "wizard", manualScreening: true });
@@ -203,20 +205,24 @@ describe("ClientOnboardingController load", () => {
 
   it("hands her only the asked questions with her submitted answers while a request is open", async () => {
     // arrange
-    const { controller, readOpenDetailRequest } = createController({
-      reading: readingOf({
-        gender: "female",
-        submission: submissionWith({
-          "goal-availability": { weight: 66.1, height: 165 },
-          "nutrition-lifestyle": { checkInDay: "Monday", checkInChannel: null },
+    const { clientOnboardingController, readOpenDetailRequest } =
+      createController({
+        reading: readingOf({
+          gender: "female",
+          submission: submissionWith({
+            "goal-availability": { weight: 66.1, height: 165 },
+            "nutrition-lifestyle": {
+              checkInDay: "Monday",
+              checkInChannel: null,
+            },
+          }),
+          unitPreference: UnitPreference.of("imperial"),
         }),
-        unitPreference: UnitPreference.of("imperial"),
-      }),
-      openRequest: OPEN_REQUEST,
-    });
+        openRequest: OPEN_REQUEST,
+      });
 
     // act
-    const page = await controller.loadOnboarding(clientArgs());
+    const page = await clientOnboardingController.loadOnboarding(clientArgs());
 
     // assert
     expect(page).toEqual({
@@ -233,11 +239,11 @@ describe("ClientOnboardingController load", () => {
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { clientOnboardingController } = createController({ reading: null });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadOnboarding(clientArgs()),
+      clientOnboardingController.loadOnboarding(clientArgs()),
     );
 
     // assert
@@ -246,13 +252,16 @@ describe("ClientOnboardingController load", () => {
 
   it("refuses the coach without reading any onboarding", async () => {
     // arrange
-    const { controller, readClientOnboarding } = createController({
-      reading: readingOf({ gender: "female" }),
-    });
+    const { clientOnboardingController, readClientOnboarding } =
+      createController({
+        reading: readingOf({ gender: "female" }),
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadOnboarding(clientArgs({ session: COACH_SESSION })),
+      clientOnboardingController.loadOnboarding(
+        clientArgs({ session: COACH_SESSION }),
+      ),
     );
 
     // assert
@@ -262,13 +271,16 @@ describe("ClientOnboardingController load", () => {
 
   it("sends an anonymous visitor to sign in without reading any onboarding", async () => {
     // arrange
-    const { controller, readClientOnboarding } = createController({
-      reading: readingOf({ gender: "female" }),
-    });
+    const { clientOnboardingController, readClientOnboarding } =
+      createController({
+        reading: readingOf({ gender: "female" }),
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadOnboarding(clientArgs({ session: { kind: "anonymous" } })),
+      clientOnboardingController.loadOnboarding(
+        clientArgs({ session: { kind: "anonymous" } }),
+      ),
     );
 
     // assert
@@ -280,12 +292,13 @@ describe("ClientOnboardingController load", () => {
 describe("ClientOnboardingController save draft", () => {
   it("saves her draft with her consents as instants and answers no content", async () => {
     // arrange
-    const { controller, saveOnboardingDraft } = createController({
-      saveDraftResult: { status: "saved" },
-    });
+    const { clientOnboardingController, saveOnboardingDraft } =
+      createController({
+        saveDraftResult: { status: "saved" },
+      });
 
     // act
-    const response = await controller.saveDraft(
+    const response = await clientOnboardingController.saveDraft(
       clientArgs({ method: "PUT", body: JSON.stringify(draftRequest()) }),
     );
 
@@ -310,12 +323,12 @@ describe("ClientOnboardingController save draft", () => {
     ["already-submitted", 409, "already-submitted"],
   ])("answers %s with %i", async (status, expectedStatus, expectedError) => {
     // arrange
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       saveDraftResult: { status } as SaveDraftResult,
     });
 
     // act
-    const response = await controller.saveDraft(
+    const response = await clientOnboardingController.saveDraft(
       clientArgs({ method: "PUT", body: JSON.stringify(draftRequest()) }),
     );
 
@@ -347,12 +360,13 @@ describe("ClientOnboardingController save draft", () => {
     ],
   ])("refuses %s without saving anything", async (_label, body) => {
     // arrange
-    const { controller, saveOnboardingDraft } = createController({
-      saveDraftResult: { status: "saved" },
-    });
+    const { clientOnboardingController, saveOnboardingDraft } =
+      createController({
+        saveDraftResult: { status: "saved" },
+      });
 
     // act
-    const response = await controller.saveDraft(
+    const response = await clientOnboardingController.saveDraft(
       clientArgs({ method: "PUT", body }),
     );
 
@@ -363,13 +377,14 @@ describe("ClientOnboardingController save draft", () => {
 
   it("refuses the coach without saving anything", async () => {
     // arrange
-    const { controller, saveOnboardingDraft } = createController({
-      saveDraftResult: { status: "saved" },
-    });
+    const { clientOnboardingController, saveOnboardingDraft } =
+      createController({
+        saveDraftResult: { status: "saved" },
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.saveDraft(
+      clientOnboardingController.saveDraft(
         clientArgs({
           method: "PUT",
           body: JSON.stringify(draftRequest()),
@@ -385,13 +400,14 @@ describe("ClientOnboardingController save draft", () => {
 
   it("refuses an anonymous visitor without saving anything", async () => {
     // arrange
-    const { controller, saveOnboardingDraft } = createController({
-      saveDraftResult: { status: "saved" },
-    });
+    const { clientOnboardingController, saveOnboardingDraft } =
+      createController({
+        saveDraftResult: { status: "saved" },
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.saveDraft(
+      clientOnboardingController.saveDraft(
         clientArgs({
           method: "PUT",
           body: JSON.stringify(draftRequest()),
@@ -409,11 +425,14 @@ describe("ClientOnboardingController save draft", () => {
 describe("ClientOnboardingController submit", () => {
   it("sends her on to her portal once her onboarding is submitted, with no photo to attach", async () => {
     // arrange
-    const { attachProgressPhotos, controller, submitOnboarding } =
-      createController({ submitResult: SUBMITTED });
+    const {
+      attachProgressPhotos,
+      clientOnboardingController,
+      submitOnboarding,
+    } = createController({ submitResult: SUBMITTED });
 
     // act
-    const response = await controller.submit(
+    const response = await clientOnboardingController.submit(
       submissionArgs({ body: submissionForm() }),
     );
 
@@ -437,11 +456,14 @@ describe("ClientOnboardingController submit", () => {
 
   it("attaches the photos she sent to her first entry once her onboarding is submitted, and answers each view's outcome", async () => {
     // arrange
-    const { attachProgressPhotos, controller, submitOnboarding } =
-      createController({
-        submitResult: SUBMITTED,
-        attached: { front: "stored", back: "refused" },
-      });
+    const {
+      attachProgressPhotos,
+      clientOnboardingController,
+      submitOnboarding,
+    } = createController({
+      submitResult: SUBMITTED,
+      attached: { front: "stored", back: "refused" },
+    });
     const form = submissionForm();
     form.set(
       "front",
@@ -455,7 +477,9 @@ describe("ClientOnboardingController submit", () => {
     );
 
     // act
-    const response = await controller.submit(submissionArgs({ body: form }));
+    const response = await clientOnboardingController.submit(
+      submissionArgs({ body: form }),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -495,12 +519,12 @@ describe("ClientOnboardingController submit", () => {
         message: "Add your waist measurement.",
       },
     ];
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       submitResult: { status: "invalid", problems },
     });
 
     // act
-    const response = await controller.submit(
+    const response = await clientOnboardingController.submit(
       submissionArgs({ body: submissionForm() }),
     );
 
@@ -511,12 +535,12 @@ describe("ClientOnboardingController submit", () => {
 
   it("names the consent she has not given", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       submitResult: { status: "consent-missing", consent: "disclaimer" },
     });
 
     // act
-    const response = await controller.submit(
+    const response = await clientOnboardingController.submit(
       submissionArgs({ body: submissionForm() }),
     );
 
@@ -531,12 +555,12 @@ describe("ClientOnboardingController submit", () => {
     ["already-submitted", 409, "already-submitted"],
   ])("answers %s with %i", async (status, expectedStatus, expectedError) => {
     // arrange
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       submitResult: { status } as SubmitResult,
     });
 
     // act
-    const response = await controller.submit(
+    const response = await clientOnboardingController.submit(
       submissionArgs({ body: submissionForm() }),
     );
 
@@ -563,9 +587,10 @@ describe("ClientOnboardingController submit", () => {
     "attaches no photo to a submission refused as %s",
     async (_case, submitResult) => {
       // arrange
-      const { attachProgressPhotos, controller } = createController({
-        submitResult,
-      });
+      const { attachProgressPhotos, clientOnboardingController } =
+        createController({
+          submitResult,
+        });
       const form = submissionForm();
       form.set(
         "front",
@@ -575,7 +600,7 @@ describe("ClientOnboardingController submit", () => {
       );
 
       // act
-      await controller.submit(submissionArgs({ body: form }));
+      await clientOnboardingController.submit(submissionArgs({ body: form }));
 
       // assert
       expect(attachProgressPhotos).not.toHaveBeenCalled();
@@ -594,12 +619,16 @@ describe("ClientOnboardingController submit", () => {
     "refuses %s without submitting anything",
     async (_case, body: FormData | string) => {
       // arrange
-      const { controller, submitOnboarding } = createController({
-        submitResult: SUBMITTED,
-      });
+      const { clientOnboardingController, submitOnboarding } = createController(
+        {
+          submitResult: SUBMITTED,
+        },
+      );
 
       // act
-      const response = await controller.submit(submissionArgs({ body }));
+      const response = await clientOnboardingController.submit(
+        submissionArgs({ body }),
+      );
 
       // assert
       expect(response.status).toBe(400);
@@ -612,12 +641,12 @@ describe("ClientOnboardingController submit", () => {
 
   it("refuses answers and photos beyond 32 MiB without submitting anything", async () => {
     // arrange
-    const { controller, submitOnboarding } = createController({
+    const { clientOnboardingController, submitOnboarding } = createController({
       submitResult: SUBMITTED,
     });
 
     // act
-    const response = await controller.submit(
+    const response = await clientOnboardingController.submit(
       submissionArgs({
         body: submissionForm(),
         headers: { "Content-Length": String(MAX_SUBMISSION_BYTES + 1) },
@@ -634,13 +663,13 @@ describe("ClientOnboardingController submit", () => {
 
   it("refuses the coach without submitting anything", async () => {
     // arrange
-    const { controller, submitOnboarding } = createController({
+    const { clientOnboardingController, submitOnboarding } = createController({
       submitResult: SUBMITTED,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.submit(
+      clientOnboardingController.submit(
         submissionArgs({ body: submissionForm(), session: COACH_SESSION }),
       ),
     );
@@ -654,10 +683,13 @@ describe("ClientOnboardingController submit", () => {
 describe("ClientOnboardingController open request", () => {
   it("hands her dashboard the note of her open request", async () => {
     // arrange
-    const { controller } = createController({ openRequest: OPEN_REQUEST });
+    const { clientOnboardingController } = createController({
+      openRequest: OPEN_REQUEST,
+    });
 
     // act
-    const summary = await controller.loadOpenRequest(clientArgs());
+    const summary =
+      await clientOnboardingController.loadOpenRequest(clientArgs());
 
     // assert
     expect(summary).toEqual({ note: OPEN_REQUEST.note });
@@ -665,10 +697,13 @@ describe("ClientOnboardingController open request", () => {
 
   it("hands her dashboard nothing while no request is open", async () => {
     // arrange
-    const { controller } = createController({ openRequest: null });
+    const { clientOnboardingController } = createController({
+      openRequest: null,
+    });
 
     // act
-    const summary = await controller.loadOpenRequest(clientArgs());
+    const summary =
+      await clientOnboardingController.loadOpenRequest(clientArgs());
 
     // assert
     expect(summary).toBeNull();
@@ -676,13 +711,16 @@ describe("ClientOnboardingController open request", () => {
 
   it("refuses the coach without reading any request", async () => {
     // arrange
-    const { controller, readOpenDetailRequest } = createController({
-      openRequest: OPEN_REQUEST,
-    });
+    const { clientOnboardingController, readOpenDetailRequest } =
+      createController({
+        openRequest: OPEN_REQUEST,
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadOpenRequest(clientArgs({ session: COACH_SESSION })),
+      clientOnboardingController.loadOpenRequest(
+        clientArgs({ session: COACH_SESSION }),
+      ),
     );
 
     // assert
@@ -694,13 +732,14 @@ describe("ClientOnboardingController open request", () => {
 describe("ClientOnboardingController answer details", () => {
   it("sends her back to her portal once her answers are in", async () => {
     // arrange
-    const { controller, answerOnboardingDetails } = createController({
-      answerResult: { status: "answered" },
-    });
+    const { clientOnboardingController, answerOnboardingDetails } =
+      createController({
+        answerResult: { status: "answered" },
+      });
     const answers = { "goal-availability": { weight: 64.5 } };
 
     // act
-    const response = await controller.answerDetails(
+    const response = await clientOnboardingController.answerDetails(
       clientArgs({ method: "POST", body: JSON.stringify({ answers }) }),
     );
 
@@ -720,12 +759,12 @@ describe("ClientOnboardingController answer details", () => {
       fieldId: "height",
       message: "This question was not asked.",
     };
-    const { controller } = createController({
+    const { clientOnboardingController } = createController({
       answerResult: { status: "invalid", problems: [problem] },
     });
 
     // act
-    const response = await controller.answerDetails(
+    const response = await clientOnboardingController.answerDetails(
       clientArgs({
         method: "POST",
         body: JSON.stringify({
@@ -745,10 +784,12 @@ describe("ClientOnboardingController answer details", () => {
     ["ended" as const, 409],
   ])("refuses her answers when %s", async (status, httpStatus) => {
     // arrange
-    const { controller } = createController({ answerResult: { status } });
+    const { clientOnboardingController } = createController({
+      answerResult: { status },
+    });
 
     // act
-    const response = await controller.answerDetails(
+    const response = await clientOnboardingController.answerDetails(
       clientArgs({
         method: "POST",
         body: JSON.stringify({ answers: {} }),
@@ -762,10 +803,11 @@ describe("ClientOnboardingController answer details", () => {
 
   it("refuses answers it cannot read without answering anything", async () => {
     // arrange
-    const { controller, answerOnboardingDetails } = createController({});
+    const { clientOnboardingController, answerOnboardingDetails } =
+      createController({});
 
     // act
-    const response = await controller.answerDetails(
+    const response = await clientOnboardingController.answerDetails(
       clientArgs({
         method: "POST",
         body: JSON.stringify({ answers: { "not-a-form": { weight: 64 } } }),
@@ -779,11 +821,12 @@ describe("ClientOnboardingController answer details", () => {
 
   it("refuses the coach without answering anything", async () => {
     // arrange
-    const { controller, answerOnboardingDetails } = createController({});
+    const { clientOnboardingController, answerOnboardingDetails } =
+      createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.answerDetails(
+      clientOnboardingController.answerDetails(
         clientArgs({
           method: "POST",
           body: JSON.stringify({ answers: {} }),
@@ -898,24 +941,24 @@ function createController(options: {
   const attachProgressPhotos = vi
     .fn()
     .mockResolvedValue(options.attached ?? {});
-  const controller = new ClientOnboardingController({
-    answerOnboardingDetails: {
+  const clientOnboardingController = new ClientOnboardingController({
+    answerOnboardingDetailsUseCase: {
       execute: answerOnboardingDetails,
     } as unknown as AnswerOnboardingDetailsUseCase,
-    attachProgressPhotos: {
+    attachProgressPhotosUseCase: {
       execute: attachProgressPhotos,
     } as unknown as AttachProgressPhotosUseCase,
-    clock: { now: () => NOW },
-    readClientOnboarding: {
+    clockPort: { now: () => NOW },
+    readClientOnboardingUseCase: {
       execute: readClientOnboarding,
     } as unknown as ReadClientOnboardingUseCase,
-    readOpenDetailRequest: {
+    readOpenDetailRequestUseCase: {
       execute: readOpenDetailRequest,
     } as unknown as ReadOpenDetailRequestUseCase,
-    saveOnboardingDraft: {
+    saveOnboardingDraftUseCase: {
       execute: saveOnboardingDraft,
     } as unknown as SaveOnboardingDraftUseCase,
-    submitOnboarding: {
+    submitOnboardingUseCase: {
       execute: submitOnboarding,
     } as unknown as SubmitOnboardingUseCase,
   });
@@ -923,7 +966,7 @@ function createController(options: {
   return {
     answerOnboardingDetails,
     attachProgressPhotos,
-    controller,
+    clientOnboardingController,
     readClientOnboarding,
     readOpenDetailRequest,
     saveOnboardingDraft,

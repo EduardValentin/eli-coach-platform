@@ -19,7 +19,7 @@ import { haveOnlyRosterParamsChanged } from "~/bounded-contexts/clients/clients/
 export async function loader(args: LoaderFunctionArgs) {
   const { clients } = await args.context
     .get(clientsContext)
-    .coachClients.loadRoster(args);
+    .coachClientsController.loadRoster(args);
 
   if (clients === null) {
     return { avatarUrls: {}, clients };
@@ -27,7 +27,7 @@ export async function loader(args: LoaderFunctionArgs) {
 
   const avatarUrls = await args.context
     .get(clientProfileContext)
-    .coachAvatars.urlsFor(
+    .coachClientAvatarController.urlsFor(
       args,
       clients.map((client) => client.clientId),
     );

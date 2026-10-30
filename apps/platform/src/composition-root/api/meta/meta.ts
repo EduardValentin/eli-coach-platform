@@ -5,6 +5,6 @@ import { platformContext } from "~/composition-root/guards/platform-context.serv
 
 export function loader({ context }: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    context.get(platformContext).metadata.getMetadata(),
+    context.get(platformContext).appMetadataController.getMetadata(),
   );
 }

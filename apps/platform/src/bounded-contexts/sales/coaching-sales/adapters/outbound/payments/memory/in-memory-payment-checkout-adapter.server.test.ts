@@ -35,14 +35,16 @@ describe("InMemoryPaymentCheckout", () => {
 
   it("returns the success URL carrying the new session id as the checkout URL", async () => {
     // arrange
-    const checkout = new InMemoryPaymentCheckoutAdapter();
-    const customer = await checkout.createCustomer({
+    const inMemoryPaymentCheckoutAdapter = new InMemoryPaymentCheckoutAdapter();
+    const customer = await inMemoryPaymentCheckoutAdapter.createCustomer({
       email: "sofia@example.com",
       assessmentCallId: ASSESSMENT_CALL_ID,
     });
 
     // act
-    const session = await checkout.createSession(sessionCommand(customer.id));
+    const session = await inMemoryPaymentCheckoutAdapter.createSession(
+      sessionCommand(customer.id),
+    );
 
     // assert
     expect(session.url).toBe(
@@ -54,15 +56,18 @@ describe("InMemoryPaymentCheckout", () => {
     // arrange
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-09-26T10:00:00.000Z"));
-    const checkout = new InMemoryPaymentCheckoutAdapter();
-    const customer = await checkout.createCustomer({
+    const inMemoryPaymentCheckoutAdapter = new InMemoryPaymentCheckoutAdapter();
+    const customer = await inMemoryPaymentCheckoutAdapter.createCustomer({
       email: "sofia@example.com",
       assessmentCallId: ASSESSMENT_CALL_ID,
     });
-    const session = await checkout.createSession(sessionCommand(customer.id));
+    const session = await inMemoryPaymentCheckoutAdapter.createSession(
+      sessionCommand(customer.id),
+    );
 
     // act
-    const completion = await checkout.findCompletedSession(session.id);
+    const completion =
+      await inMemoryPaymentCheckoutAdapter.findCompletedSession(session.id);
 
     // assert
     expect(completion).toEqual({
@@ -83,15 +88,19 @@ describe("InMemoryPaymentCheckout", () => {
 
   it("gives each session its own id", async () => {
     // arrange
-    const checkout = new InMemoryPaymentCheckoutAdapter();
-    const customer = await checkout.createCustomer({
+    const inMemoryPaymentCheckoutAdapter = new InMemoryPaymentCheckoutAdapter();
+    const customer = await inMemoryPaymentCheckoutAdapter.createCustomer({
       email: "sofia@example.com",
       assessmentCallId: ASSESSMENT_CALL_ID,
     });
 
     // act
-    const first = await checkout.createSession(sessionCommand(customer.id));
-    const second = await checkout.createSession(sessionCommand(customer.id));
+    const first = await inMemoryPaymentCheckoutAdapter.createSession(
+      sessionCommand(customer.id),
+    );
+    const second = await inMemoryPaymentCheckoutAdapter.createSession(
+      sessionCommand(customer.id),
+    );
 
     // assert
     expect(first.id).not.toBe(second.id);
@@ -99,10 +108,11 @@ describe("InMemoryPaymentCheckout", () => {
 
   it("finds nothing for a session it never created", async () => {
     // arrange
-    const checkout = new InMemoryPaymentCheckoutAdapter();
+    const inMemoryPaymentCheckoutAdapter = new InMemoryPaymentCheckoutAdapter();
 
     // act
-    const completion = await checkout.findCompletedSession("cs_unknown");
+    const completion =
+      await inMemoryPaymentCheckoutAdapter.findCompletedSession("cs_unknown");
 
     // assert
     expect(completion).toBeNull();
@@ -110,16 +120,19 @@ describe("InMemoryPaymentCheckout", () => {
 
   it("finds nothing for an expired session", async () => {
     // arrange
-    const checkout = new InMemoryPaymentCheckoutAdapter();
-    const customer = await checkout.createCustomer({
+    const inMemoryPaymentCheckoutAdapter = new InMemoryPaymentCheckoutAdapter();
+    const customer = await inMemoryPaymentCheckoutAdapter.createCustomer({
       email: "sofia@example.com",
       assessmentCallId: ASSESSMENT_CALL_ID,
     });
-    const session = await checkout.createSession(sessionCommand(customer.id));
-    await checkout.expireSession(session.id);
+    const session = await inMemoryPaymentCheckoutAdapter.createSession(
+      sessionCommand(customer.id),
+    );
+    await inMemoryPaymentCheckoutAdapter.expireSession(session.id);
 
     // act
-    const completion = await checkout.findCompletedSession(session.id);
+    const completion =
+      await inMemoryPaymentCheckoutAdapter.findCompletedSession(session.id);
 
     // assert
     expect(completion).toBeNull();
@@ -127,13 +140,14 @@ describe("InMemoryPaymentCheckout", () => {
 
   it("finds nothing for a session whose customer it never created", async () => {
     // arrange
-    const checkout = new InMemoryPaymentCheckoutAdapter();
-    const session = await checkout.createSession(
+    const inMemoryPaymentCheckoutAdapter = new InMemoryPaymentCheckoutAdapter();
+    const session = await inMemoryPaymentCheckoutAdapter.createSession(
       sessionCommand("cus_from_an_earlier_process"),
     );
 
     // act
-    const completion = await checkout.findCompletedSession(session.id);
+    const completion =
+      await inMemoryPaymentCheckoutAdapter.findCompletedSession(session.id);
 
     // assert
     expect(completion).toBeNull();

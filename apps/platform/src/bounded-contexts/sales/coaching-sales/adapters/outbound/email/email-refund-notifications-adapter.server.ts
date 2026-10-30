@@ -12,14 +12,14 @@ import { createRefundDueEmailContent } from "./refund-due-email.server";
 
 export type EmailRefundNotificationsOptions = {
   appBasePath: string;
-  clock: ClockPort;
+  clockPort: ClockPort;
   coachEmail: string;
   publicAppUrl: string;
 };
 
 export class EmailRefundNotificationsAdapter implements RefundNotificationsPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailRefundNotificationsOptions,
   ) {}
 
@@ -33,9 +33,9 @@ export class EmailRefundNotificationsAdapter implements RefundNotificationsPort 
         ),
         this.options.publicAppUrl,
       ).toString(),
-      currentYear: this.options.clock.now().getUTCFullYear(),
+      currentYear: this.options.clockPort.now().getUTCFullYear(),
     });
-    const result = await this.productEmail.send({
+    const result = await this.productEmailPort.send({
       html: content.html,
       idempotencyKey: `refund-due:${notice.subscriptionId}`,
       replyTo: notice.client.email,

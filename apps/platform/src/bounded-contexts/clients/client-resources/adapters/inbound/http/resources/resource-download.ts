@@ -7,6 +7,6 @@ export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
     args.context
       .get(clientResourcesContext)
-      .clientResources.download(args, args.params.resourceId),
+      .clientResourcesController.download(args, args.params.resourceId),
   );
 }

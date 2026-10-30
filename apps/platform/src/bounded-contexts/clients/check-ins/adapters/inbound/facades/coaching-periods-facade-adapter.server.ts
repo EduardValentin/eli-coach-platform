@@ -11,9 +11,12 @@ import type {
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type CoachingPeriodsFacadeOptions = {
-  cancelCheckInsAfterCoachingEnd: CancelCheckInsAfterCoachingEndUseCase;
-  extendCheckInSeries: ExtendCheckInSeriesUseCase;
-  incidents: Pick<CheckInIncidentsPort, "checkInSeriesExtensionFailed">;
+  cancelCheckInsAfterCoachingEndUseCase: CancelCheckInsAfterCoachingEndUseCase;
+  extendCheckInSeriesUseCase: ExtendCheckInSeriesUseCase;
+  checkInIncidentsPort: Pick<
+    CheckInIncidentsPort,
+    "checkInSeriesExtensionFailed"
+  >;
   unitOfWork: UnitOfWork;
 };
 
@@ -23,16 +26,19 @@ export class CoachingPeriodsFacadeAdapter implements CoachingPeriodsFacade {
   async startCoachingPeriod({ clientId }: CoachingPeriodDto) {
     try {
       await this.options.unitOfWork(() =>
-        this.options.extendCheckInSeries.execute({ clientId }),
+        this.options.extendCheckInSeriesUseCase.execute({ clientId }),
       );
     } catch (error) {
-      this.options.incidents.checkInSeriesExtensionFailed({ clientId, error });
+      this.options.checkInIncidentsPort.checkInSeriesExtensionFailed({
+        clientId,
+        error,
+      });
     }
   }
 
   async endCoaching({ clientId, endsAt }: CoachingEndDto) {
     await this.options.unitOfWork(() =>
-      this.options.cancelCheckInsAfterCoachingEnd.execute({
+      this.options.cancelCheckInsAfterCoachingEndUseCase.execute({
         clientId,
         endsAt: new Date(endsAt),
       }),

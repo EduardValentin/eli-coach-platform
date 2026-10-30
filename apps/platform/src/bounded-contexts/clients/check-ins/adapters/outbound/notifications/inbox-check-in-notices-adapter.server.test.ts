@@ -58,21 +58,21 @@ function createNotices() {
     record: vi.fn().mockResolvedValue(undefined),
     withdrawUnarrived: vi.fn().mockResolvedValue(undefined),
   } satisfies Pick<NotificationInboxPort, "record" | "withdrawUnarrived">;
-  const notices = new InboxCheckInNoticesAdapter({
-    clock: { now: () => NOW },
-    inbox,
+  const inboxCheckInNoticesAdapter = new InboxCheckInNoticesAdapter({
+    clockPort: { now: () => NOW },
+    notificationInboxPort: inbox,
   });
 
-  return { inbox, notices };
+  return { inbox, inboxCheckInNoticesAdapter };
 }
 
 describe("InboxCheckInNotices", () => {
   it("records a check-in event in the bell of the party it reaches, arriving now", async () => {
     // arrange
-    const { inbox, notices } = createNotices();
+    const { inbox, inboxCheckInNoticesAdapter } = createNotices();
 
     // act
-    await notices.checkInEvent("requested", {
+    await inboxCheckInNoticesAdapter.checkInEvent("requested", {
       checkIn: CHECK_IN,
       client: ANA,
       recipient: "coach",
@@ -99,10 +99,10 @@ describe("InboxCheckInNotices", () => {
 
   it("records a weekly check-in event in the client's bell", async () => {
     // arrange
-    const { inbox, notices } = createNotices();
+    const { inbox, inboxCheckInNoticesAdapter } = createNotices();
 
     // act
-    await notices.seriesEvent("seriesSetUp", {
+    await inboxCheckInNoticesAdapter.seriesEvent("seriesSetUp", {
       series: SERIES,
       weekStartsAt: WEEK_STARTS_AT,
       clientTimeZone: "Europe/London",
@@ -125,10 +125,10 @@ describe("InboxCheckInNotices", () => {
 
   it("records the clashing weeks a renewal added in the coach's bell", async () => {
     // arrange
-    const { inbox, notices } = createNotices();
+    const { inbox, inboxCheckInNoticesAdapter } = createNotices();
 
     // act
-    await notices.clashesAdded({
+    await inboxCheckInNoticesAdapter.clashesAdded({
       series: SERIES,
       client: ANA,
       clashes: 1,
@@ -149,12 +149,12 @@ describe("InboxCheckInNotices", () => {
 
   it("rethrows a failed write so the announcer reports it", async () => {
     // arrange
-    const { inbox, notices } = createNotices();
+    const { inbox, inboxCheckInNoticesAdapter } = createNotices();
     const failure = new Error("connection reset");
     inbox.record.mockRejectedValue(failure);
 
     // act
-    const recording = notices.checkInEvent("approved", {
+    const recording = inboxCheckInNoticesAdapter.checkInEvent("approved", {
       checkIn: CHECK_IN,
       client: ANA,
       recipient: "client",

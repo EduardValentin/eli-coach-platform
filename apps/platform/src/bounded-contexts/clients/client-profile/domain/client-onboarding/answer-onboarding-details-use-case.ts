@@ -27,11 +27,11 @@ type AnswerOnboardingDetailsResult =
 
 type AnswerOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSourcePort;
-  reviews: OnboardingReviewsPort;
-  settings: ClientSettingsSourcePort;
-  clock: ClockPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  onboardingReviewsPort: OnboardingReviewsPort;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
+  clockPort: ClockPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class AnswerOnboardingDetailsUseCase {
@@ -51,7 +51,7 @@ export class AnswerOnboardingDetailsUseCase {
     }
 
     const { client, identity } = participant;
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
 
     if (!client.standing.hasPortalAccessAt(now)) {
       return { status: "ended" };
@@ -59,9 +59,9 @@ export class AnswerOnboardingDetailsUseCase {
 
     const { clientId } = client;
     const [stored, reviewed, settings] = await Promise.all([
-      this.options.onboardings.findByClientId(clientId),
-      this.options.reviews.findByClientId(clientId),
-      this.options.settings.findByClientId(clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(clientId),
+      this.options.onboardingReviewsPort.findByClientId(clientId),
+      this.options.clientSettingsSourcePort.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
@@ -77,7 +77,7 @@ export class AnswerOnboardingDetailsUseCase {
     });
 
     if (outcome.status !== "answered") {
-      this.options.incidents.onboardingDetailsRefused({
+      this.options.clientOnboardingIncidentsPort.onboardingDetailsRefused({
         clientId,
         reason: outcome.status,
       });
@@ -85,14 +85,14 @@ export class AnswerOnboardingDetailsUseCase {
       return outcome;
     }
 
-    await this.options.reviews.recordAnswer({
+    await this.options.onboardingReviewsPort.recordAnswer({
       clientId,
       requestId: outcome.request.id,
       mergedAnswers: outcome.mergedAnswers,
       answeredAt: now,
       stamps: outcome.review.stamps(),
     });
-    this.options.incidents.onboardingDetailsAnswered({
+    this.options.clientOnboardingIncidentsPort.onboardingDetailsAnswered({
       clientId,
       questionCount: outcome.request.questionIds.length,
     });

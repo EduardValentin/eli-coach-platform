@@ -4,8 +4,8 @@ import type { CheckInRequestResult, CheckInsPort } from "./check-ins-port";
 import type { CoachTimePort } from "./coach-time-port";
 
 type CheckInRequestPlacementOptions = {
-  checkIns: Pick<CheckInsPort, "listForClientLocked" | "add">;
-  coachTime: Pick<CoachTimePort, "reserve">;
+  checkInsPort: Pick<CheckInsPort, "listForClientLocked" | "add">;
+  coachTimePort: Pick<CoachTimePort, "reserve">;
 };
 
 type CheckInRequestCommand = { checkIn: CheckIn; at: Date };
@@ -17,10 +17,10 @@ export class CheckInRequestPlacement {
     checkIn,
     at,
   }: CheckInRequestCommand): Promise<CheckInRequestResult> {
-    const { checkIns, coachTime } = this.options;
+    const { checkInsPort, coachTimePort } = this.options;
     const decision = CheckIn.decideRequest({
       initiatedBy: checkIn.initiatedBy,
-      clientCheckIns: await checkIns.listForClientLocked(checkIn.clientId),
+      clientCheckIns: await checkInsPort.listForClientLocked(checkIn.clientId),
       at,
     });
 
@@ -28,7 +28,7 @@ export class CheckInRequestPlacement {
       return { status: decision };
     }
 
-    const held = await coachTime.reserve(
+    const held = await coachTimePort.reserve(
       CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
     );
 
@@ -36,7 +36,7 @@ export class CheckInRequestPlacement {
       return { status: "time_taken" };
     }
 
-    await checkIns.add({ checkIn, reservationId: held.reservationId });
+    await checkInsPort.add({ checkIn, reservationId: held.reservationId });
 
     return { status: "requested", checkIn };
   }

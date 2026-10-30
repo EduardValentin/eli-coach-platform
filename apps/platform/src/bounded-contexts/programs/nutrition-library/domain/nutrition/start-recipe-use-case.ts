@@ -12,20 +12,21 @@ export type StartRecipeResult = {
 };
 
 type StartRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibraryPort, "list">;
-  foods: Pick<FoodLibraryPort, "list">;
-  tags: Pick<NutritionTagsPort, "list">;
+  recipeLibraryPort: Pick<RecipeLibraryPort, "list">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
 };
 
 export class StartRecipeUseCase {
   constructor(private readonly options: StartRecipeUseCaseOptions) {}
 
   async execute(ownerAccountId: string): Promise<StartRecipeResult> {
-    const { recipes, foods, tags } = this.options;
+    const { recipeLibraryPort, foodLibraryPort, nutritionTagsPort } =
+      this.options;
     const [storedRecipes, activeFoods, vocabulary] = await Promise.all([
-      recipes.list(ownerAccountId),
-      foods.list(ownerAccountId),
-      tags.list(),
+      recipeLibraryPort.list(ownerAccountId),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
 
     return {

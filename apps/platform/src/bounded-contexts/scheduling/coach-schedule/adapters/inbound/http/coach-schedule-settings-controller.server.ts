@@ -17,8 +17,8 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachScheduleSettingsControllerOptions = {
-  getSettings: GetCoachScheduleSettingsUseCase;
-  updateSettings: UpdateCoachScheduleSettingsUseCase;
+  getCoachScheduleSettingsUseCase: GetCoachScheduleSettingsUseCase;
+  updateCoachScheduleSettingsUseCase: UpdateCoachScheduleSettingsUseCase;
 };
 
 const FIELD_ERROR_CODES = {
@@ -46,7 +46,7 @@ export class CoachScheduleSettingsController {
 
   async loadSettingsPage(): Promise<CoachScheduleSettings> {
     return coachScheduleSettingsSchema.parse(
-      await this.options.getSettings.execute(),
+      await this.options.getCoachScheduleSettingsUseCase.execute(),
     );
   }
 
@@ -68,7 +68,10 @@ export class CoachScheduleSettingsController {
     }
 
     try {
-      const result = await this.options.updateSettings.execute(submission.data);
+      const result =
+        await this.options.updateCoachScheduleSettingsUseCase.execute(
+          submission.data,
+        );
 
       if (result.status === "invalid") {
         return this.createSettingsErrorResponse({

@@ -22,12 +22,14 @@ type SettingsPage = {
 };
 
 export async function loader(args: LoaderFunctionArgs): Promise<SettingsPage> {
-  const { clientSettings: settingsReader, ownProfile } =
+  const { clientSettingsController, ownClientProfileController } =
     args.context.get(clientProfileContext);
   const [subscription, clientSettings, profile] = await Promise.all([
-    args.context.get(coachingSalesContext).subscription.loadSettings(args),
-    settingsReader.load(args),
-    ownProfile.load(args),
+    args.context
+      .get(coachingSalesContext)
+      .subscriptionController.loadSettings(args),
+    clientSettingsController.load(args),
+    ownClientProfileController.load(args),
   ]);
 
   return { subscription, clientSettings, profile };

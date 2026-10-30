@@ -14,7 +14,10 @@ export async function action({ context, params, request }: ActionFunctionArgs) {
 
     return context
       .get(storeContext)
-      .management.publishProductVersion(request, params.productId);
+      .storeProductManagementController.publishProductVersion(
+        request,
+        params.productId,
+      );
   });
 }
 

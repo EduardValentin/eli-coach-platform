@@ -58,17 +58,23 @@ type ClientShell = ClientNavigationCounts & {
 
 export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
   const presentation = presentClientIdentity(
-    args.context.get(clientsContext).clientJourney.loadIdentity(args),
+    args.context.get(clientsContext).clientJourneyController.loadIdentity(args),
   );
 
-  const { clientCheckIns } = args.context.get(checkInsContext);
+  const { clientCheckInsController } = args.context.get(checkInsContext);
   const [avatarUrl, nextCheckIn, unopenedResources, checkInsAwaiting, bell] =
     await Promise.all([
-      args.context.get(clientProfileContext).ownAvatar.url(args),
-      clientCheckIns.loadNextCheckIn(args),
-      args.context.get(clientResourcesContext).ownResources.countUnopened(args),
-      clientCheckIns.loadAwaitingCount(args),
-      args.context.get(notificationsContext).notificationBell.loadBell(args),
+      args.context
+        .get(clientProfileContext)
+        .ownClientAvatarController.url(args),
+      clientCheckInsController.loadNextCheckIn(args),
+      args.context
+        .get(clientResourcesContext)
+        .ownResourcesController.countUnopened(args),
+      clientCheckInsController.loadAwaitingCount(args),
+      args.context
+        .get(notificationsContext)
+        .notificationBellController.loadBell(args),
     ]);
 
   return {

@@ -19,7 +19,7 @@ function editorArgs(params: Record<string, string>) {
   const loadNew = vi.fn().mockResolvedValue(NEW_EDITOR);
   const load = vi.fn().mockResolvedValue(SAVED_EDITOR);
   const feature = {
-    foodLibrary: { load, loadNew },
+    foodLibraryController: { load, loadNew },
   } as unknown as NutritionLibraryFeature;
   const args = createRequestArgs({
     contexts: [contextEntry(nutritionLibraryContext, feature)],

@@ -19,7 +19,7 @@ type CheckoutConfirmation =
   | { status: "not_paid" };
 
 type ReadCheckoutConfirmationUseCaseOptions = {
-  paymentCheckout: PaymentCheckoutPort;
+  paymentCheckoutPort: PaymentCheckoutPort;
   salesWindow: CoachingSalesWindow;
 };
 
@@ -34,7 +34,7 @@ export class ReadCheckoutConfirmationUseCase {
     }
 
     const completion =
-      await this.options.paymentCheckout.findCompletedSession(sessionId);
+      await this.options.paymentCheckoutPort.findCompletedSession(sessionId);
 
     if (!completion) {
       return { status: "not_paid" };

@@ -94,13 +94,15 @@ describe("PostgresStoreAcquisitionRepository", () => {
       ],
     });
     const transaction = vi.fn();
-    const repository = new PostgresStoreAcquisitionRepository({
-      execute,
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        execute,
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const result = await repository.resolveIdempotency(command);
+    const result =
+      await postgresStoreAcquisitionRepository.resolveIdempotency(command);
 
     // assert
     expect(result).toEqual({
@@ -134,12 +136,14 @@ describe("PostgresStoreAcquisitionRepository", () => {
       ],
     });
     const transaction = vi.fn((callback) => callback({ execute }));
-    const repository = new PostgresStoreAcquisitionRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const result = await repository.prepareAcquisition(command);
+    const result =
+      await postgresStoreAcquisitionRepository.prepareAcquisition(command);
 
     // assert
     expect(result).toEqual({
@@ -171,12 +175,14 @@ describe("PostgresStoreAcquisitionRepository", () => {
       ],
     });
     const transaction = vi.fn((callback) => callback({ execute }));
-    const repository = new PostgresStoreAcquisitionRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const result = await repository.prepareAcquisition(command);
+    const result =
+      await postgresStoreAcquisitionRepository.prepareAcquisition(command);
 
     // assert
     expect(result).toEqual({ status: "idempotency_conflict" });
@@ -196,12 +202,14 @@ describe("PostgresStoreAcquisitionRepository", () => {
         status: "created",
         requestId: 31,
       });
-    const repository = new PostgresStoreAcquisitionRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const result = await repository.prepareAcquisition(command);
+    const result =
+      await postgresStoreAcquisitionRepository.prepareAcquisition(command);
 
     // assert
     expect(result).toEqual({
@@ -226,12 +234,14 @@ describe("PostgresStoreAcquisitionRepository", () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce(deliveryUsageRows(usage));
       const transaction = vi.fn((callback) => callback({ execute }));
-      const repository = new PostgresStoreAcquisitionRepository({
-        transaction,
-      } as unknown as DatabaseClient);
+      const postgresStoreAcquisitionRepository =
+        new PostgresStoreAcquisitionRepository({
+          transaction,
+        } as unknown as DatabaseClient);
 
       // act
-      const result = await repository.prepareAcquisition(command);
+      const result =
+        await postgresStoreAcquisitionRepository.prepareAcquisition(command);
 
       // assert
       expect(result).toEqual({ status: "rate_limited", window });
@@ -267,12 +277,14 @@ describe("PostgresStoreAcquisitionRepository", () => {
         ],
       });
     const transaction = vi.fn((callback) => callback({ execute }));
-    const repository = new PostgresStoreAcquisitionRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    const result = await repository.prepareAcquisition(command);
+    const result =
+      await postgresStoreAcquisitionRepository.prepareAcquisition(command);
 
     // assert
     expect(result).toEqual({
@@ -290,12 +302,13 @@ describe("PostgresStoreAcquisitionRepository", () => {
         Object.assign(new Error("connection interrupted"), { code: "08006" }),
       )
       .mockResolvedValueOnce(undefined);
-    const repository = new PostgresStoreAcquisitionRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    await repository.recordDeliveryAccepted({
+    await postgresStoreAcquisitionRepository.recordDeliveryAccepted({
       deliveryAttemptId: 41,
       provider: "resend",
       providerMessageId: "message-31",
@@ -310,12 +323,13 @@ describe("PostgresStoreAcquisitionRepository", () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({ rows: [] });
     const transaction = vi.fn((callback) => callback({ execute }));
-    const repository = new PostgresStoreAcquisitionRepository({
-      transaction,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        transaction,
+      } as unknown as DatabaseClient);
 
     // act
-    await repository.recordDeliveryRejected({
+    await postgresStoreAcquisitionRepository.recordDeliveryRejected({
       deliveryAttemptId: 41,
       provider: "resend",
       requestId: 31,
@@ -329,12 +343,13 @@ describe("PostgresStoreAcquisitionRepository", () => {
   it("records an ambiguous outcome on the initial delivery attempt", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({ rows: [] });
-    const repository = new PostgresStoreAcquisitionRepository({
-      execute,
-    } as unknown as DatabaseClient);
+    const postgresStoreAcquisitionRepository =
+      new PostgresStoreAcquisitionRepository({
+        execute,
+      } as unknown as DatabaseClient);
 
     // act
-    await repository.recordDeliveryRetryable({
+    await postgresStoreAcquisitionRepository.recordDeliveryRetryable({
       deliveryAttemptId: 41,
       requestId: 31,
     });

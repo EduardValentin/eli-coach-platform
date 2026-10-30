@@ -16,8 +16,11 @@ type UpdateClientProfileAsCoachResult =
   | { status: "changed-meanwhile" };
 
 type UpdateClientProfileAsCoachUseCaseOptions = {
-  profiles: Pick<ClientProfilesPort, "findByClientId" | "saveCoachFacts">;
-  clock: ClockPort;
+  clientProfilesPort: Pick<
+    ClientProfilesPort,
+    "findByClientId" | "saveCoachFacts"
+  >;
+  clockPort: ClockPort;
 };
 
 export class UpdateClientProfileAsCoachUseCase {
@@ -28,7 +31,7 @@ export class UpdateClientProfileAsCoachUseCase {
   async execute(
     command: UpdateClientProfileAsCoachCommand,
   ): Promise<UpdateClientProfileAsCoachResult> {
-    const profile = await this.options.profiles.findByClientId(
+    const profile = await this.options.clientProfilesPort.findByClientId(
       command.clientId,
     );
 
@@ -38,14 +41,14 @@ export class UpdateClientProfileAsCoachUseCase {
 
     const outcome = profile.editCoachFacts(
       command.edit,
-      this.options.clock.now(),
+      this.options.clockPort.now(),
     );
 
     if (outcome.status !== "edited") {
       return outcome;
     }
 
-    const saved = await this.options.profiles.saveCoachFacts({
+    const saved = await this.options.clientProfilesPort.saveCoachFacts({
       profile: outcome.profile,
       expectedUpdatedAt: profile.toSnapshot().updatedAt,
     });

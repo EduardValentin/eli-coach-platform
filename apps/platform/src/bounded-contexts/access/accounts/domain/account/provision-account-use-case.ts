@@ -9,8 +9,8 @@ export type ProvisionAccountResult =
   | { outcome: "rejected-unprovisioned" };
 
 type ProvisionAccountUseCaseOptions = {
-  accounts: AccountsPort;
-  ids: AccountIdsPort;
+  accountsPort: AccountsPort;
+  accountIdsPort: AccountIdsPort;
   bootstrapCoachAuthSubjectId?: string;
   invitationGate: Pick<AccountInvitationGate, "admit">;
 };
@@ -26,7 +26,7 @@ export class ProvisionAccountUseCase {
 
   async execute(authSubjectId: string): Promise<ProvisionAccountResult> {
     const existing =
-      await this.options.accounts.findByAuthSubjectId(authSubjectId);
+      await this.options.accountsPort.findByAuthSubjectId(authSubjectId);
     if (existing) {
       return toProvisioningResult(existing);
     }
@@ -38,7 +38,7 @@ export class ProvisionAccountUseCase {
 
     return this.insert(
       Account.provisioned({
-        id: this.options.ids.generate(),
+        id: this.options.accountIdsPort.generate(),
         authSubjectId,
         role,
       }),
@@ -57,7 +57,7 @@ export class ProvisionAccountUseCase {
 
   private async insert(account: Account): Promise<ProvisionAccountResult> {
     try {
-      await this.options.accounts.insert(account);
+      await this.options.accountsPort.insert(account);
 
       return toProvisioningResult(account);
     } catch (error) {
@@ -65,7 +65,9 @@ export class ProvisionAccountUseCase {
       // Re-reading lets both requests converge on the row that won, instead
       // of surfacing a database-shaped error to the caller.
       const wonByConcurrentInsert =
-        await this.options.accounts.findByAuthSubjectId(account.authSubjectId);
+        await this.options.accountsPort.findByAuthSubjectId(
+          account.authSubjectId,
+        );
       if (!wonByConcurrentInsert) {
         throw error;
       }

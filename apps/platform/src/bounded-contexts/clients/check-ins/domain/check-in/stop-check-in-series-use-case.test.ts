@@ -85,11 +85,11 @@ function createStop(options?: {
     findById: vi.fn().mockResolvedValue(ANA_REACH),
   } satisfies Pick<ClientReachPort, "findById">;
   const ports = {
-    clients,
-    clock: { now: () => NOW },
-    coachTime: { release: vi.fn().mockResolvedValue(undefined) },
-    identities,
-    incidents: {
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    coachTimePort: { release: vi.fn().mockResolvedValue(undefined) },
+    clientIdentitiesPort: identities,
+    checkInIncidentsPort: {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
@@ -100,38 +100,43 @@ function createStop(options?: {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     },
-    inbox: {
+    checkInInboxPort: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
       scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
-    notifications,
-    series,
+    checkInNotificationsPort: notifications,
+    checkInSeriesRecordsPort: series,
   };
 
-  return { ports, stop: new StopCheckInSeriesUseCase(ports) };
+  return {
+    ports,
+    stopCheckInSeriesUseCase: new StopCheckInSeriesUseCase(ports),
+  };
 }
 
 describe("StopCheckInSeriesUseCase", () => {
   it("stops the series it read at the clock's instant in one write and emails the client", async () => {
     // arrange
-    const { ports, stop } = createStop();
+    const { ports, stopCheckInSeriesUseCase } = createStop();
 
     // act
-    const result = await stop.execute({ seriesId: "series-1" });
+    const result = await stopCheckInSeriesUseCase.execute({
+      seriesId: "series-1",
+    });
 
     // assert
     const stopped = { ...SERIES, stoppedAt: NOW };
     expect(result).toEqual({ status: "stopped", series: stopped });
-    expect(ports.series.stop).toHaveBeenCalledWith({
+    expect(ports.checkInSeriesRecordsPort.stop).toHaveBeenCalledWith({
       seriesId: "series-1",
       expected: { changedAt: CHANGED_AT },
       at: NOW,
     });
-    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-1");
-    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-2");
-    expect(ports.notifications.seriesStopped).toHaveBeenCalledWith({
+    expect(ports.coachTimePort.release).toHaveBeenCalledWith("reservation-1");
+    expect(ports.coachTimePort.release).toHaveBeenCalledWith("reservation-2");
+    expect(ports.checkInNotificationsPort.seriesStopped).toHaveBeenCalledWith({
       series: stopped,
       weekStartsAt: NEXT_WEDNESDAY_SIX_PM,
       clientTimeZone: "Europe/London",
@@ -142,34 +147,39 @@ describe("StopCheckInSeriesUseCase", () => {
 
   it("writes the stop to her inbox without a week to open", async () => {
     // arrange
-    const { ports, stop } = createStop();
+    const { ports, stopCheckInSeriesUseCase } = createStop();
 
     // act
-    await stop.execute({ seriesId: "series-1" });
+    await stopCheckInSeriesUseCase.execute({ seriesId: "series-1" });
 
     // assert
-    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesStopped", {
-      series: { ...SERIES, stoppedAt: NOW },
-      weekStartsAt: NEXT_WEDNESDAY_SIX_PM,
-      clientTimeZone: "Europe/London",
-      client: ANA,
-      recipient: "client",
-      firstWeekId: null,
-    });
+    expect(ports.checkInInboxPort.seriesEvent).toHaveBeenCalledWith(
+      "seriesStopped",
+      {
+        series: { ...SERIES, stoppedAt: NOW },
+        weekStartsAt: NEXT_WEDNESDAY_SIX_PM,
+        clientTimeZone: "Europe/London",
+        client: ANA,
+        recipient: "client",
+        firstWeekId: null,
+      },
+    );
   });
 
   it("answers changed_meanwhile without emailing when the series changed since it was read", async () => {
     // arrange
-    const { ports, stop } = createStop({
+    const { ports, stopCheckInSeriesUseCase } = createStop({
       stopped: { status: "changed_meanwhile" },
     });
 
     // act
-    const result = await stop.execute({ seriesId: "series-1" });
+    const result = await stopCheckInSeriesUseCase.execute({
+      seriesId: "series-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "changed_meanwhile" });
-    expect(ports.notifications.seriesStopped).not.toHaveBeenCalled();
+    expect(ports.checkInNotificationsPort.seriesStopped).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -180,42 +190,46 @@ describe("StopCheckInSeriesUseCase", () => {
     },
   ])("refuses $situation without writing", async ({ found }) => {
     // arrange
-    const { ports, stop } = createStop({ found });
+    const { ports, stopCheckInSeriesUseCase } = createStop({ found });
 
     // act
-    const result = await stop.execute({ seriesId: "series-1" });
+    const result = await stopCheckInSeriesUseCase.execute({
+      seriesId: "series-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "unknown_series" });
-    expect(ports.series.stop).not.toHaveBeenCalled();
+    expect(ports.checkInSeriesRecordsPort.stop).not.toHaveBeenCalled();
   });
 
   it("reads her zone before it stops, so a failed read changes nothing", async () => {
     // arrange
     const failure = new Error("connection refused");
-    const { ports, stop } = createStop();
-    ports.clients.findById.mockRejectedValue(failure);
+    const { ports, stopCheckInSeriesUseCase } = createStop();
+    ports.clientReachPort.findById.mockRejectedValue(failure);
 
     // act
-    const stopping = stop.execute({ seriesId: "series-1" });
+    const stopping = stopCheckInSeriesUseCase.execute({ seriesId: "series-1" });
 
     // assert
     await expect(stopping).rejects.toBe(failure);
-    expect(ports.series.stop).not.toHaveBeenCalled();
+    expect(ports.checkInSeriesRecordsPort.stop).not.toHaveBeenCalled();
   });
 
   it("keeps the stop and reports the email that failed", async () => {
     // arrange
-    const { ports, stop } = createStop();
-    ports.notifications.seriesStopped.mockResolvedValue("failed");
+    const { ports, stopCheckInSeriesUseCase } = createStop();
+    ports.checkInNotificationsPort.seriesStopped.mockResolvedValue("failed");
 
     // act
-    const result = await stop.execute({ seriesId: "series-1" });
+    const result = await stopCheckInSeriesUseCase.execute({
+      seriesId: "series-1",
+    });
 
     // assert
     expect(result.status).toBe("stopped");
     expect(
-      ports.incidents.checkInSeriesNotificationFailed,
+      ports.checkInIncidentsPort.checkInSeriesNotificationFailed,
     ).toHaveBeenCalledWith({
       seriesId: "series-1",
       notification: "seriesStopped",

@@ -25,13 +25,16 @@ export type CreateExerciseResult =
   | { status: "failed" };
 
 type CreateExerciseUseCaseOptions = {
-  library: ExerciseLibraryPort;
-  ids: ExerciseIdsPort;
-  clock: ClockPort;
-  incidents: ExerciseLibraryIncidentsPort;
-  formats: ExerciseVideoFormatDetectorPort;
-  videoIds: ExerciseVideoIdsPort;
-  store: Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
+  exerciseLibraryPort: ExerciseLibraryPort;
+  exerciseIdsPort: ExerciseIdsPort;
+  clockPort: ClockPort;
+  exerciseLibraryIncidentsPort: ExerciseLibraryIncidentsPort;
+  exerciseVideoFormatDetectorPort: ExerciseVideoFormatDetectorPort;
+  exerciseVideoIdsPort: ExerciseVideoIdsPort;
+  exerciseVideoStorePort: Pick<
+    ExerciseVideoStorePort,
+    "keep" | "discard" | "remove"
+  >;
 };
 
 export class CreateExerciseUseCase {
@@ -45,7 +48,9 @@ export class CreateExerciseUseCase {
     try {
       return await this.create(command);
     } catch (error) {
-      this.options.incidents.exerciseCreationFailed({ error });
+      this.options.exerciseLibraryIncidentsPort.exerciseCreationFailed({
+        error,
+      });
       await this.videos.discard(command.video);
 
       return { status: "failed" };
@@ -57,9 +62,9 @@ export class CreateExerciseUseCase {
     draft: input,
     video: choice,
   }: CreateExerciseCommand): Promise<CreateExerciseResult> {
-    const { library, ids, clock } = this.options;
+    const { exerciseLibraryPort, exerciseIdsPort, clockPort } = this.options;
     const otherNames = ExerciseNames.reservedBy(
-      await library.list(ownerAccountId),
+      await exerciseLibraryPort.list(ownerAccountId),
     );
     const draft = ExerciseDraft.from(input);
     const nameTaken = otherNames.includes(input.name);
@@ -80,16 +85,16 @@ export class CreateExerciseUseCase {
 
     const change = await this.videos.keepAccepted(video);
     const exercise = Exercise.added({
-      id: ids.generate(),
+      id: exerciseIdsPort.generate(),
       ownerAccountId,
       draft: draft.draft,
-      at: clock.now(),
+      at: clockPort.now(),
       video: change,
     });
 
     if (
       (await this.videos.writeOrRemoveKept(change, () =>
-        library.add(exercise),
+        exerciseLibraryPort.add(exercise),
       )) === "name-taken"
     ) {
       return { status: "invalid", problems: { name: "taken" } };

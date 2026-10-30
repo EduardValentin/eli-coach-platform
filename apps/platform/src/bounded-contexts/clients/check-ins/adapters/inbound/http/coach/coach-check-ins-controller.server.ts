@@ -28,11 +28,11 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachCheckInsControllerOptions = {
-  countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
-  listCoachCheckIns: ListCoachCheckInsUseCase;
-  listCoachCheckInsAwaiting: ListCoachCheckInsAwaitingUseCase;
-  readClientCheckInScheduling: ReadClientCheckInSchedulingUseCase;
-  scheduleCheckIn: ScheduleCheckInUseCase;
+  countCheckInsAwaitingUseCase: CountCheckInsAwaitingUseCase;
+  listCoachCheckInsUseCase: ListCoachCheckInsUseCase;
+  listCoachCheckInsAwaitingUseCase: ListCoachCheckInsAwaitingUseCase;
+  readClientCheckInSchedulingUseCase: ReadClientCheckInSchedulingUseCase;
+  scheduleCheckInUseCase: ScheduleCheckInUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -47,7 +47,7 @@ export class CoachCheckInsController {
   async loadCheckIns(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
     args.context.get(accessContext).requirePortalAccess("COACH");
 
-    const checkIns = await this.options.listCoachCheckIns.execute();
+    const checkIns = await this.options.listCoachCheckInsUseCase.execute();
 
     return coachCheckInsSchema.parse({
       checkIns: checkIns.map((view) => this.present(view)),
@@ -57,7 +57,8 @@ export class CoachCheckInsController {
   async loadAwaiting(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
     args.context.get(accessContext).requirePortalAccess("COACH");
 
-    const checkIns = await this.options.listCoachCheckInsAwaiting.execute();
+    const checkIns =
+      await this.options.listCoachCheckInsAwaitingUseCase.execute();
 
     return coachCheckInsSchema.parse({
       checkIns: checkIns.map((view) => this.present(view)),
@@ -67,7 +68,9 @@ export class CoachCheckInsController {
   async loadAwaitingCount(args: LoaderFunctionArgs): Promise<number> {
     args.context.get(accessContext).requirePortalAccess("COACH");
 
-    return this.options.countCheckInsAwaiting.execute({ party: "coach" });
+    return this.options.countCheckInsAwaitingUseCase.execute({
+      party: "coach",
+    });
   }
 
   async loadClientScheduling(
@@ -82,9 +85,8 @@ export class CoachCheckInsController {
       throw unknownClient();
     }
 
-    const scheduling = await this.options.readClientCheckInScheduling.execute(
-      id.data,
-    );
+    const scheduling =
+      await this.options.readClientCheckInSchedulingUseCase.execute(id.data);
 
     if (scheduling === "unknown") {
       throw unknownClient();
@@ -105,7 +107,7 @@ export class CoachCheckInsController {
     }
 
     const result = await this.options.unitOfWork(() =>
-      this.options.scheduleCheckIn.execute({
+      this.options.scheduleCheckInUseCase.execute({
         clientId: submission.data.clientId,
         startsAt: new Date(submission.data.startsAt),
         note: submission.data.note ?? null,

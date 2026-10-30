@@ -48,7 +48,9 @@ import {
 import { CheckInRequestDialog } from "./check-in-request-dialog";
 
 export function loader(args: LoaderFunctionArgs): Promise<ClientCheckIns> {
-  return args.context.get(checkInsContext).clientCheckIns.loadCheckIns(args);
+  return args.context
+    .get(checkInsContext)
+    .clientCheckInsController.loadCheckIns(args);
 }
 
 export const meta: MetaFunction = () => [

@@ -6,16 +6,16 @@ import type {
 import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time-facade";
 
 export class SchedulingCoachTimeAdapter implements CoachTimePort {
-  constructor(private readonly coachTime: CoachTimeFacade) {}
+  constructor(private readonly coachTimeFacade: CoachTimeFacade) {}
 
   reserve(span: CoachTimeSpan): Promise<CoachTimeHold> {
-    return this.coachTime.reserve({
+    return this.coachTimeFacade.reserve({
       startsAt: span.start.toISOString(),
       endsAt: span.end.toISOString(),
     });
   }
 
   release(reservationId: string): Promise<void> {
-    return this.coachTime.release(reservationId);
+    return this.coachTimeFacade.release(reservationId);
   }
 }

@@ -148,25 +148,28 @@ function createExtend(options?: {
   } satisfies CheckInNotificationsPort;
   const now = options?.now ?? RENEWAL_DAY;
   const ports = {
-    clients,
-    clock: { now: () => now },
-    coachTime,
-    identities,
-    ids: { generate: () => `week-${(generated += 1)}` },
-    inbox,
-    incidents,
-    notifications,
-    openSlots: openSlotsOn(
+    clientReachPort: clients,
+    clockPort: { now: () => now },
+    coachTimePort: coachTime,
+    clientIdentitiesPort: identities,
+    checkInIdsPort: { generate: () => `week-${(generated += 1)}` },
+    checkInInboxPort: inbox,
+    checkInIncidentsPort: incidents,
+    checkInNotificationsPort: notifications,
+    openSlotsPort: openSlotsOn(
       options?.weekdays ?? ["monday", "wednesday", "friday"],
     ),
-    series,
+    checkInSeriesRecordsPort: series,
   };
 
-  return { extend: new ExtendCheckInSeriesUseCase(ports), ports };
+  return {
+    extendCheckInSeriesUseCase: new ExtendCheckInSeriesUseCase(ports),
+    ports,
+  };
 }
 
 function recordedWeeksOf(ports: ReturnType<typeof createExtend>["ports"]) {
-  const [weeks] = ports.series.recordWeeks.mock.calls[0];
+  const [weeks] = ports.checkInSeriesRecordsPort.recordWeeks.mock.calls[0];
 
   return weeks;
 }
@@ -181,15 +184,19 @@ function weeksOf(weeks: readonly HeldCheckIn[]) {
 describe("ExtendCheckInSeriesUseCase", () => {
   it("adds the renewed period's weeks to her active series in one write against the cover it read", async () => {
     // arrange
-    const { extend, ports } = createExtend();
+    const { extendCheckInSeriesUseCase, ports } = createExtend();
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const result = await extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "extended", created: 4 });
-    expect(ports.series.findActiveForClient).toHaveBeenCalledWith("client-1");
-    const [command] = ports.series.widen.mock.calls[0];
+    expect(
+      ports.checkInSeriesRecordsPort.findActiveForClient,
+    ).toHaveBeenCalledWith("client-1");
+    const [command] = ports.checkInSeriesRecordsPort.widen.mock.calls[0];
     expect(command.series.toSnapshot()).toEqual({
       ...SERIES,
       coversUntil: RENEWED_THROUGH,
@@ -224,7 +231,7 @@ describe("ExtendCheckInSeriesUseCase", () => {
   it("adds the weeks between an early program start and the first week", async () => {
     // arrange
     const startedNow = new Date("2026-10-05T09:00:00.000Z");
-    const { extend, ports } = createExtend({
+    const { extendCheckInSeriesUseCase, ports } = createExtend({
       active: CheckInSeries.reconstitute({
         ...SERIES,
         coversFrom: new Date("2026-10-19T09:00:00.000Z"),
@@ -238,11 +245,13 @@ describe("ExtendCheckInSeriesUseCase", () => {
     });
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const result = await extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "extended", created: 2 });
-    const [command] = ports.series.widen.mock.calls[0];
+    const [command] = ports.checkInSeriesRecordsPort.widen.mock.calls[0];
     expect(weeksOf(recordedWeeksOf(ports))).toEqual([
       { startsAt: "2026-10-07T15:00:00.000Z", recordedStatus: "approved" },
       { startsAt: "2026-10-14T15:00:00.000Z", recordedStatus: "approved" },
@@ -252,36 +261,42 @@ describe("ExtendCheckInSeriesUseCase", () => {
 
   it("adds the weeks as clashes when the series hour is no longer inside the coach's availability", async () => {
     // arrange
-    const { extend, ports } = createExtend({ weekdays: ["monday"] });
+    const { extendCheckInSeriesUseCase, ports } = createExtend({
+      weekdays: ["monday"],
+    });
 
     // act
-    await extend.execute({ clientId: "client-1" });
+    await extendCheckInSeriesUseCase.execute({ clientId: "client-1" });
 
     // assert
     expect(weeksOf(recordedWeeksOf(ports))).toEqual(
       RENEWED_WEEKS.map((startsAt) => ({ startsAt, recordedStatus: "clash" })),
     );
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
   });
 
   it("writes one clash notice to the coach's inbox with the count and the earliest clashing week", async () => {
     // arrange
-    const { extend, ports } = createExtend({ clashingWeeks: [3, 1] });
+    const { extendCheckInSeriesUseCase, ports } = createExtend({
+      clashingWeeks: [3, 1],
+    });
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const result = await extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "extended", created: 4 });
-    expect(ports.inbox.clashesAdded).toHaveBeenCalledOnce();
-    expect(ports.inbox.clashesAdded).toHaveBeenCalledWith({
+    expect(ports.checkInInboxPort.clashesAdded).toHaveBeenCalledOnce();
+    expect(ports.checkInInboxPort.clashesAdded).toHaveBeenCalledWith({
       series: { ...SERIES, coversUntil: RENEWED_THROUGH },
       client: ANA,
       clashes: 2,
       earliest: { id: "week-2", startsAt: new Date(RENEWED_WEEKS[1]) },
     });
     expect(
-      Object.values(ports.notifications).every(
+      Object.values(ports.checkInNotificationsPort).every(
         (send) => send.mock.calls.length === 0,
       ),
     ).toBe(true);
@@ -289,14 +304,14 @@ describe("ExtendCheckInSeriesUseCase", () => {
 
   it("writes no clash notice when the added weeks hold no clash", async () => {
     // arrange
-    const { extend, ports } = createExtend();
+    const { extendCheckInSeriesUseCase, ports } = createExtend();
 
     // act
-    await extend.execute({ clientId: "client-1" });
+    await extendCheckInSeriesUseCase.execute({ clientId: "client-1" });
 
     // assert
-    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
-    expect(ports.identities.findByClientIds).not.toHaveBeenCalled();
+    expect(ports.checkInInboxPort.clashesAdded).not.toHaveBeenCalled();
+    expect(ports.clientIdentitiesPort.findByClientIds).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -316,44 +331,58 @@ describe("ExtendCheckInSeriesUseCase", () => {
     },
   ] as const)("has nothing to add for $situation", async (situation) => {
     // arrange
-    const { extend, ports } = createExtend(situation);
+    const { extendCheckInSeriesUseCase, ports } = createExtend(situation);
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const result = await extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "nothing_to_add" });
-    expect(ports.series.widen).not.toHaveBeenCalled();
-    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
+    expect(ports.checkInSeriesRecordsPort.widen).not.toHaveBeenCalled();
+    expect(ports.checkInInboxPort.clashesAdded).not.toHaveBeenCalled();
   });
 
   it("re-reads once when the series changed meanwhile", async () => {
     // arrange
-    const { extend, ports } = createExtend();
-    ports.series.widen.mockResolvedValueOnce("changed_meanwhile");
+    const { extendCheckInSeriesUseCase, ports } = createExtend();
+    ports.checkInSeriesRecordsPort.widen.mockResolvedValueOnce(
+      "changed_meanwhile",
+    );
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const result = await extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "extended", created: 4 });
-    expect(ports.series.findActiveForClient).toHaveBeenCalledTimes(2);
+    expect(
+      ports.checkInSeriesRecordsPort.findActiveForClient,
+    ).toHaveBeenCalledTimes(2);
   });
 
   it("reports and answers failed when the series keeps changing", async () => {
     // arrange
-    const { extend, ports } = createExtend();
-    ports.series.widen.mockResolvedValue("changed_meanwhile");
+    const { extendCheckInSeriesUseCase, ports } = createExtend();
+    ports.checkInSeriesRecordsPort.widen.mockResolvedValue("changed_meanwhile");
 
     // act
-    const result = await extend.execute({ clientId: "client-1" });
+    const result = await extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(ports.series.widen).toHaveBeenCalledTimes(2);
-    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
-    expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledOnce();
-    expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledWith({
+    expect(ports.checkInSeriesRecordsPort.widen).toHaveBeenCalledTimes(2);
+    expect(ports.checkInInboxPort.clashesAdded).not.toHaveBeenCalled();
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesExtensionFailed,
+    ).toHaveBeenCalledOnce();
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesExtensionFailed,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       error: expect.any(Error),
     });
@@ -362,14 +391,18 @@ describe("ExtendCheckInSeriesUseCase", () => {
   it("rethrows a failed read or write so its caller rolls the extension back before reporting it", async () => {
     // arrange
     const failure = new Error("connection refused");
-    const { extend, ports } = createExtend();
-    ports.series.widen.mockRejectedValue(failure);
+    const { extendCheckInSeriesUseCase, ports } = createExtend();
+    ports.checkInSeriesRecordsPort.widen.mockRejectedValue(failure);
 
     // act
-    const extending = extend.execute({ clientId: "client-1" });
+    const extending = extendCheckInSeriesUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     await expect(extending).rejects.toBe(failure);
-    expect(ports.incidents.checkInSeriesExtensionFailed).not.toHaveBeenCalled();
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesExtensionFailed,
+    ).not.toHaveBeenCalled();
   });
 });

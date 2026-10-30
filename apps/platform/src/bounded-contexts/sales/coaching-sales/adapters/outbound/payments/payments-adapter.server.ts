@@ -18,17 +18,19 @@ import { StripePaymentSubscriptionsAdapter } from "./stripe/stripe-payment-subsc
 import { STRIPE_VOCABULARY } from "./stripe/stripe-vocabulary.server";
 
 export class PaymentsAdapter {
-  readonly checkout: PaymentCheckoutPort;
-  readonly events: PaymentEventsPort;
-  readonly subscriptions: PaymentSubscriptionsPort;
-  readonly customerCards: PaymentCustomerCardsPort;
+  readonly paymentCheckoutPort: PaymentCheckoutPort;
+  readonly paymentEventsPort: PaymentEventsPort;
+  readonly paymentSubscriptionsPort: PaymentSubscriptionsPort;
+  readonly paymentCustomerCardsPort: PaymentCustomerCardsPort;
 
   constructor(config: PaymentsConfig) {
     if (config.PAYMENTS_PROVIDER === "memory") {
-      this.checkout = new InMemoryPaymentCheckoutAdapter();
-      this.events = new InMemoryPaymentEventsAdapter(STRIPE_VOCABULARY);
-      this.subscriptions = new InMemoryPaymentSubscriptionsAdapter();
-      this.customerCards = new InMemoryPaymentCustomerCardsAdapter();
+      this.paymentCheckoutPort = new InMemoryPaymentCheckoutAdapter();
+      this.paymentEventsPort = new InMemoryPaymentEventsAdapter(
+        STRIPE_VOCABULARY,
+      );
+      this.paymentSubscriptionsPort = new InMemoryPaymentSubscriptionsAdapter();
+      this.paymentCustomerCardsPort = new InMemoryPaymentCustomerCardsAdapter();
       return;
     }
 
@@ -38,14 +40,19 @@ export class PaymentsAdapter {
       throw new Error("Stripe payments require STRIPE_WEBHOOK_SIGNING_SECRET.");
     }
 
-    this.checkout = new StripePaymentCheckoutAdapter(client);
-    this.events = new StripePaymentEventsAdapter({
+    this.paymentCheckoutPort = new StripePaymentCheckoutAdapter(client);
+    this.paymentEventsPort = new StripePaymentEventsAdapter({
       webhooks: client.webhooks,
       signingSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
     });
-    this.subscriptions = new StripePaymentSubscriptionsAdapter(client, {
-      portalConfigurationId: config.STRIPE_PORTAL_CONFIGURATION_ID,
-    });
-    this.customerCards = new StripePaymentCustomerCardsAdapter(client);
+    this.paymentSubscriptionsPort = new StripePaymentSubscriptionsAdapter(
+      client,
+      {
+        portalConfigurationId: config.STRIPE_PORTAL_CONFIGURATION_ID,
+      },
+    );
+    this.paymentCustomerCardsPort = new StripePaymentCustomerCardsAdapter(
+      client,
+    );
   }
 }

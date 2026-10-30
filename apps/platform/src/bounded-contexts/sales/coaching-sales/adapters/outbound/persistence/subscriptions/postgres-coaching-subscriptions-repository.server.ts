@@ -16,9 +16,9 @@ import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 import { coachingSubscriptionsTable } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";
 
 type PostgresCoachingSubscriptionsOptions = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
-  standings: CoachingStandingWriterPort;
+  coachingStandingWriterPort: CoachingStandingWriterPort;
 };
 
 type CoachingSubscriptionRow = typeof coachingSubscriptionsTable.$inferSelect;
@@ -92,7 +92,7 @@ export class PostgresCoachingSubscriptionsRepository implements CoachingSubscrip
   ): Promise<"recorded" | "duplicate" | "stale"> {
     return recordEventOnce(this.options.database, {
       eventId: change.eventId,
-      receivedAt: this.options.clock.now(),
+      receivedAt: this.options.clockPort.now(),
       write: () => this.writeChange(change),
     });
   }
@@ -127,7 +127,7 @@ export class PostgresCoachingSubscriptionsRepository implements CoachingSubscrip
       (await this.updateHeld({ columns, previous }));
 
     if (written) {
-      await this.options.standings.record({
+      await this.options.coachingStandingWriterPort.record({
         clientId: previous.clientId,
         standing: change.subscription.standing(),
       });

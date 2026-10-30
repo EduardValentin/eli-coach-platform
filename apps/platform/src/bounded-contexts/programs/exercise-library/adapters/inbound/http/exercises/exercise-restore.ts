@@ -21,7 +21,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(exerciseLibraryContext)
-      .exerciseLibrary.restore(args, args.params.exerciseId);
+      .exerciseLibraryController.restore(args, args.params.exerciseId);
   });
 }
 

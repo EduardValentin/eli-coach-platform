@@ -59,119 +59,145 @@ import { ClientsIncidentsAdapter } from "~/bounded-contexts/clients/clients/adap
 
 type ClientsComposition = {
   facades: {
-    admissions: AdmissionsFacade;
-    clientLookup: ClientLookupFacade;
+    admissionsFacade: AdmissionsFacade;
+    clientLookupFacade: ClientLookupFacade;
   };
   feature: ClientsFeature;
   handles: {
-    clientIdentities: ClientIdentitiesPort;
-    clientReach: ClientReachPort;
-    onboardingStandings: OnboardingStandingsPort;
-    onboardingSubmissions: OnboardingSubmissionRecorderPort;
-    reviewStampRecorder: ReviewStampRecorderPort;
+    clientIdentitiesPort: ClientIdentitiesPort;
+    clientReachPort: ClientReachPort;
+    onboardingStandingsPort: OnboardingStandingsPort;
+    onboardingSubmissionRecorderPort: OnboardingSubmissionRecorderPort;
+    reviewStampRecorderPort: ReviewStampRecorderPort;
   };
 };
 
 export type ClientsFeatureHandles = {
-  accountInvitations: AccountInvitationsFacade;
-  clientCalls: ClientCallsFacade;
-  clock: ClockPort;
+  accountInvitationsFacade: AccountInvitationsFacade;
+  clientCallsFacade: ClientCallsFacade;
+  clockPort: ClockPort;
   database: DatabaseClient;
-  logger: LoggerPort;
+  loggerPort: LoggerPort;
 };
 
 export function composeClientsFeature(
   handles: ClientsFeatureHandles,
 ): ClientsComposition {
-  const incidents = new ClientsIncidentsAdapter(handles.logger);
-  const { clock, database } = handles;
-  const clientIdentities = new PostgresClientIdentitiesRepository(database);
-  const clientReach = new PostgresClientReachRepository({ clock, database });
-  const journeys = new PostgresClientJourneysRepository(database);
-  const accountInvitations = new AccessAccountInvitationsAdapter(
-    handles.accountInvitations,
+  const clientsIncidentsAdapter = new ClientsIncidentsAdapter(
+    handles.loggerPort,
   );
-  const admittedClients = new PostgresAdmittedClientsRepository(database);
-  const roster = new PostgresClientRosterRepository(database);
-  const identityChanges = new PostgresClientIdentityChangesRepository(database);
+  const { clockPort, database } = handles;
+  const postgresClientIdentitiesRepository =
+    new PostgresClientIdentitiesRepository(database);
+  const postgresClientReachRepository = new PostgresClientReachRepository({
+    clockPort,
+    database,
+  });
+  const postgresClientJourneysRepository = new PostgresClientJourneysRepository(
+    database,
+  );
+  const accessAccountInvitationsAdapter = new AccessAccountInvitationsAdapter(
+    handles.accountInvitationsFacade,
+  );
+  const postgresAdmittedClientsRepository =
+    new PostgresAdmittedClientsRepository(database);
+  const postgresClientRosterRepository = new PostgresClientRosterRepository(
+    database,
+  );
+  const postgresClientIdentityChangesRepository =
+    new PostgresClientIdentityChangesRepository(database);
   const countries = ClientCountries.of(COUNTRIES, phoneNumbers);
 
   const invitationPorts = {
-    accountInvitations,
-    clients: new PostgresInvitedClientsRepository(database),
+    accountInvitationsPort: accessAccountInvitationsAdapter,
+    invitedClientsPort: new PostgresInvitedClientsRepository(database),
   };
 
-  const readClientPortalStanding = new ReadClientPortalStandingUseCase({
-    clock,
-    journeys,
+  const readClientPortalStandingUseCase = new ReadClientPortalStandingUseCase({
+    clockPort,
+    clientJourneysPort: postgresClientJourneysRepository,
   });
 
   return {
     facades: {
-      admissions: new AdmissionsFacadeAdapter({
-        admitPaidClient: new AdmitPaidClientUseCase({
-          clients: admittedClients,
-          ids: new RandomClientIdsAdapter(),
+      admissionsFacade: new AdmissionsFacadeAdapter({
+        admitPaidClientUseCase: new AdmitPaidClientUseCase({
+          admittedClientsPort: postgresAdmittedClientsRepository,
+          clientIdsPort: new RandomClientIdsAdapter(),
         }),
-        invitePaidClient: new InvitePaidClientUseCase(invitationPorts),
-        recordCoachingStanding: new RecordCoachingStandingUseCase({
-          clients: admittedClients,
+        invitePaidClientUseCase: new InvitePaidClientUseCase(invitationPorts),
+        recordCoachingStandingUseCase: new RecordCoachingStandingUseCase({
+          admittedClientsPort: postgresAdmittedClientsRepository,
         }),
         unitOfWork: createUnitOfWork(database),
       }),
-      clientLookup: new ClientLookupFacadeAdapter({
-        identities: clientIdentities,
-        reach: clientReach,
-        readClientJourney: new ReadClientJourneyUseCase({ journeys }),
+      clientLookupFacade: new ClientLookupFacadeAdapter({
+        clientIdentitiesPort: postgresClientIdentitiesRepository,
+        clientReachPort: postgresClientReachRepository,
+        readClientJourneyUseCase: new ReadClientJourneyUseCase({
+          clientJourneysPort: postgresClientJourneysRepository,
+        }),
       }),
     },
     feature: {
-      acceptInvitation: new AcceptInvitationUseCase(invitationPorts),
-      clientJourney: new ClientJourneyController({
-        markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
-        readClientJourney: new ReadClientJourneyUseCase({ journeys }),
+      acceptInvitationUseCase: new AcceptInvitationUseCase(invitationPorts),
+      clientJourneyController: new ClientJourneyController({
+        markWelcomeSeenUseCase: new MarkWelcomeSeenUseCase({
+          clockPort,
+          clientJourneysPort: postgresClientJourneysRepository,
+        }),
+        readClientJourneyUseCase: new ReadClientJourneyUseCase({
+          clientJourneysPort: postgresClientJourneysRepository,
+        }),
       }),
-      coachClientIdentity: new CoachClientIdentityController({
-        updateClientIdentityAsCoach: new UpdateClientIdentityAsCoachUseCase({
-          changes: identityChanges,
-          clients: clientReach,
-          clock,
-          calendar: new WallClockCalendarDatesAdapter(),
+      coachClientIdentityController: new CoachClientIdentityController({
+        updateClientIdentityAsCoachUseCase:
+          new UpdateClientIdentityAsCoachUseCase({
+            clientIdentityChangesPort: postgresClientIdentityChangesRepository,
+            clientReachPort: postgresClientReachRepository,
+            clockPort,
+            calendarDatesPort: new WallClockCalendarDatesAdapter(),
+            countries,
+          }),
+      }),
+      coachClientsController: new CoachClientsController({
+        listClientsUseCase: new ListClientsUseCase({
+          clockPort,
+          clientRosterIncidentsPort: clientsIncidentsAdapter,
+          clientRosterPort: postgresClientRosterRepository,
+        }),
+        readClientInvitationUseCase: new ReadClientInvitationUseCase(
+          invitationPorts,
+        ),
+        readClientRecordUseCase: new ReadClientRecordUseCase({
+          clientCallsPort: new SchedulingClientCallsAdapter(
+            handles.clientCallsFacade,
+          ),
+          clockPort,
+          clientRosterPort: postgresClientRosterRepository,
+        }),
+        resendInvitationUseCase: new ResendInvitationUseCase(invitationPorts),
+      }),
+      ownClientIdentityController: new OwnClientIdentityController({
+        updateOwnClientIdentityUseCase: new UpdateOwnClientIdentityUseCase({
+          clientIdentityChangesPort: postgresClientIdentityChangesRepository,
+          clientReachPort: postgresClientReachRepository,
+          clockPort,
+          calendarDatesPort: new WallClockCalendarDatesAdapter(),
           countries,
+          clientIdentitiesPort: postgresClientIdentitiesRepository,
         }),
       }),
-      coachClients: new CoachClientsController({
-        listClients: new ListClientsUseCase({
-          clock,
-          incidents,
-          roster,
-        }),
-        readClientInvitation: new ReadClientInvitationUseCase(invitationPorts),
-        readClientRecord: new ReadClientRecordUseCase({
-          calls: new SchedulingClientCallsAdapter(handles.clientCalls),
-          clock,
-          roster,
-        }),
-        resendInvitation: new ResendInvitationUseCase(invitationPorts),
-      }),
-      ownClientIdentity: new OwnClientIdentityController({
-        updateOwnClientIdentity: new UpdateOwnClientIdentityUseCase({
-          changes: identityChanges,
-          clients: clientReach,
-          clock,
-          calendar: new WallClockCalendarDatesAdapter(),
-          countries,
-          identities: clientIdentities,
-        }),
-      }),
-      readClientPortalStanding,
+      readClientPortalStandingUseCase,
     },
     handles: {
-      clientIdentities,
-      clientReach,
-      onboardingStandings: new PostgresOnboardingStandingsRepository(database),
-      onboardingSubmissions: journeys,
-      reviewStampRecorder: journeys,
+      clientIdentitiesPort: postgresClientIdentitiesRepository,
+      clientReachPort: postgresClientReachRepository,
+      onboardingStandingsPort: new PostgresOnboardingStandingsRepository(
+        database,
+      ),
+      onboardingSubmissionRecorderPort: postgresClientJourneysRepository,
+      reviewStampRecorderPort: postgresClientJourneysRepository,
     },
   };
 }

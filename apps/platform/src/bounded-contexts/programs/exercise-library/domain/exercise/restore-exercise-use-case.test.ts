@@ -91,22 +91,22 @@ function createUseCase() {
   const incidents = {
     exerciseRestoreFailed: vi.fn(),
   } satisfies Pick<ExerciseLibraryIncidentsPort, "exerciseRestoreFailed">;
-  const useCase = new RestoreExerciseUseCase({
-    library,
-    clock: { now: () => NOW },
-    incidents,
+  const restoreExerciseUseCase = new RestoreExerciseUseCase({
+    exerciseLibraryPort: library,
+    clockPort: { now: () => NOW },
+    exerciseLibraryIncidentsPort: incidents,
   });
 
-  return { useCase, library, incidents };
+  return { restoreExerciseUseCase, library, incidents };
 }
 
 describe("RestoreExerciseUseCase", () => {
   it("restores her archived exercise under its own name when no active exercise holds it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { restoreExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: ARCHIVED_LUNGE_ID,
     });
@@ -119,10 +119,10 @@ describe("RestoreExerciseUseCase", () => {
 
   it("restores it numbered when an active exercise now holds its name, archived names left free", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { restoreExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: ARCHIVED_HIP_THRUST_ID,
     });
@@ -135,11 +135,11 @@ describe("RestoreExerciseUseCase", () => {
 
   it("tries the next number when the library finds the name taken meanwhile", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { restoreExerciseUseCase, library } = createUseCase();
     library.replace.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: ARCHIVED_HIP_THRUST_ID,
     });
@@ -156,11 +156,11 @@ describe("RestoreExerciseUseCase", () => {
 
   it("reports and answers failed once five names in a row are found taken", async () => {
     // arrange
-    const { useCase, library, incidents } = createUseCase();
+    const { restoreExerciseUseCase, library, incidents } = createUseCase();
     library.replace.mockResolvedValue("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: ARCHIVED_HIP_THRUST_ID,
     });
@@ -185,11 +185,11 @@ describe("RestoreExerciseUseCase", () => {
   it("reports a failed write and answers that the restore failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents } = createUseCase();
+    const { restoreExerciseUseCase, library, incidents } = createUseCase();
     library.replace.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: ARCHIVED_LUNGE_ID,
     });
@@ -204,10 +204,10 @@ describe("RestoreExerciseUseCase", () => {
 
   it("finds nothing to restore for an unknown exercise", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { restoreExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000404",
     });
@@ -219,10 +219,10 @@ describe("RestoreExerciseUseCase", () => {
 
   it("finds nothing to restore in another coach's library", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { restoreExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await restoreExerciseUseCase.execute({
       ownerAccountId: OTHER_COACH_ACCOUNT_ID,
       exerciseId: ARCHIVED_LUNGE_ID,
     });

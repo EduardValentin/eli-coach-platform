@@ -5,10 +5,10 @@ import type {
 import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls-facade";
 
 export class SchedulingClientCallsAdapter implements ClientCallsPort {
-  constructor(private readonly calls: ClientCallsFacade) {}
+  constructor(private readonly clientCallsFacade: ClientCallsFacade) {}
 
   async callOf(callId: string): Promise<ClientCall | null> {
-    const call = await this.calls.callOf(callId);
+    const call = await this.clientCallsFacade.callOf(callId);
 
     if (!call) {
       return null;

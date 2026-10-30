@@ -5,9 +5,9 @@ import type { CoachResourcesController } from "~/bounded-contexts/clients/client
 import type { ClientResourcesController } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/resources/client-resources-controller.server";
 
 export type ClientResourcesFeature = {
-  clientResources: ClientResourcesController;
-  coachResources: CoachResourcesController;
-  ownResources: OwnResourcesController;
+  clientResourcesController: ClientResourcesController;
+  coachResourcesController: CoachResourcesController;
+  ownResourcesController: OwnResourcesController;
 };
 
 export const clientResourcesContext: RouterContext<ClientResourcesFeature> =

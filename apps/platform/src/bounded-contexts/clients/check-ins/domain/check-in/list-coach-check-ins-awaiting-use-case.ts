@@ -9,10 +9,10 @@ import {
 } from "./coach-check-in-views";
 
 type ListCoachCheckInsAwaitingUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "listAll">;
-  clock: ClockPort;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  incidents: CheckInIncidentsPort;
+  checkInsPort: Pick<CheckInsPort, "listAll">;
+  clockPort: ClockPort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInIncidentsPort: CheckInIncidentsPort;
 };
 
 export class ListCoachCheckInsAwaitingUseCase {
@@ -26,12 +26,12 @@ export class ListCoachCheckInsAwaitingUseCase {
 
   async execute(): Promise<CoachCheckInView[]> {
     try {
-      const checkIns = await this.options.checkIns.listAll();
+      const checkIns = await this.options.checkInsPort.listAll();
       const views = await this.views.viewsOf(checkIns);
 
       return views.filter((view) => view.awaitsViewer);
     } catch (error) {
-      this.options.incidents.awaitingCheckInsListFailed({ error });
+      this.options.checkInIncidentsPort.awaitingCheckInsListFailed({ error });
 
       return [];
     }

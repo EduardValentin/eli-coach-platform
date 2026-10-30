@@ -18,8 +18,8 @@ export type PlanProductRevisionCommand = {
 export class PlanProductRevisionUseCase {
   constructor(
     private readonly options: {
-      digest: ProductAssetDigestPort;
-      publications: StoreProductPublicationsPort;
+      productAssetDigestPort: ProductAssetDigestPort;
+      storeProductPublicationsPort: StoreProductPublicationsPort;
     },
   ) {}
 
@@ -27,15 +27,17 @@ export class PlanProductRevisionUseCase {
     command: PlanProductRevisionCommand,
   ): Promise<PublicationPlanResult> {
     try {
-      const product = await this.options.publications.findProductBySlug(
-        command.productSlug,
-      );
-      const taxonomy = await this.options.publications.getTaxonomy();
+      const product =
+        await this.options.storeProductPublicationsPort.findProductBySlug(
+          command.productSlug,
+        );
+      const taxonomy =
+        await this.options.storeProductPublicationsPort.getTaxonomy();
 
       return ProductPublicationDraft.from(command).planRevision(
         product,
         taxonomy,
-        this.options.digest,
+        this.options.productAssetDigestPort,
       );
     } catch {
       return { status: "unavailable" };

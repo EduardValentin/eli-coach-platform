@@ -14,10 +14,12 @@ describe("createWaitlistIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new WaitlistIncidentsAdapter(new ConsoleLoggerAdapter());
+    const waitlistIncidentsAdapter = new WaitlistIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.confirmationDeliveryFailed();
+    waitlistIncidentsAdapter.confirmationDeliveryFailed();
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -33,10 +35,12 @@ describe("createWaitlistIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new WaitlistIncidentsAdapter(new ConsoleLoggerAdapter());
+    const waitlistIncidentsAdapter = new WaitlistIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.waitlistModeReadFailed();
+    waitlistIncidentsAdapter.waitlistModeReadFailed();
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(

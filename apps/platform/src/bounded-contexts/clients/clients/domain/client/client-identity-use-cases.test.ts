@@ -57,22 +57,22 @@ function createPorts(
     stored.reach === undefined ? reachOf("reachable") : stored.reach;
 
   return {
-    clients: {
+    clientReachPort: {
       findById: vi.fn().mockResolvedValue(reach),
       findByAuthSubjectId: vi.fn().mockResolvedValue(reach),
     } satisfies ClientReachPort,
-    identities: {
+    clientIdentitiesPort: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
           stored.identity === undefined ? STORED : stored.identity,
         ),
     } satisfies Pick<ClientIdentitiesPort, "findByClientId">,
-    changes: {
+    clientIdentityChangesPort: {
       save: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientIdentityChangesPort,
-    calendar: new WallClockCalendarDatesAdapter(),
-    clock: { now: () => NOW },
+    calendarDatesPort: new WallClockCalendarDatesAdapter(),
+    clockPort: { now: () => NOW },
     countries: ClientCountries.of(
       [
         { code: "RO", callingCode: "+40" },
@@ -87,18 +87,19 @@ describe("UpdateClientIdentityAsCoachUseCase", () => {
   it("saves her names, phone, date of birth, country and gender", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateClientIdentityAsCoachUseCase(ports);
+    const updateClientIdentityAsCoachUseCase =
+      new UpdateClientIdentityAsCoachUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientIdentityAsCoachUseCase.execute({
       clientId: "client-1",
       identity: { ...EDITED, gender: "prefer_not_to_say" },
     });
 
     // assert
     expect(result).toEqual({ status: "saved" });
-    expect(ports.clients.findById).toHaveBeenCalledWith("client-1");
-    const [edit] = ports.changes.save.mock.calls[0] ?? [];
+    expect(ports.clientReachPort.findById).toHaveBeenCalledWith("client-1");
+    const [edit] = ports.clientIdentityChangesPort.save.mock.calls[0] ?? [];
     expect(edit?.toSnapshot()).toEqual({
       clientId: "client-1",
       ...SAVED_EDIT,
@@ -109,26 +110,28 @@ describe("UpdateClientIdentityAsCoachUseCase", () => {
   it("answers not-found for someone who is not a client", async () => {
     // arrange
     const ports = createPorts({ reach: null });
-    const useCase = new UpdateClientIdentityAsCoachUseCase(ports);
+    const updateClientIdentityAsCoachUseCase =
+      new UpdateClientIdentityAsCoachUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientIdentityAsCoachUseCase.execute({
       clientId: "client-9",
       identity: { ...EDITED, gender: "female" },
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(ports.changes.save).not.toHaveBeenCalled();
+    expect(ports.clientIdentityChangesPort.save).not.toHaveBeenCalled();
   });
 
   it("names the problems and saves nothing", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateClientIdentityAsCoachUseCase(ports);
+    const updateClientIdentityAsCoachUseCase =
+      new UpdateClientIdentityAsCoachUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientIdentityAsCoachUseCase.execute({
       clientId: "client-1",
       identity: { ...EDITED, firstName: "", gender: "female" },
     });
@@ -138,7 +141,7 @@ describe("UpdateClientIdentityAsCoachUseCase", () => {
       status: "invalid",
       problems: { firstName: "missing" },
     });
-    expect(ports.changes.save).not.toHaveBeenCalled();
+    expect(ports.clientIdentityChangesPort.save).not.toHaveBeenCalled();
   });
 });
 
@@ -146,18 +149,22 @@ describe("UpdateOwnClientIdentityUseCase", () => {
   it("saves her names, phone, date of birth and country and keeps her gender", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateOwnClientIdentityUseCase(ports);
+    const updateOwnClientIdentityUseCase = new UpdateOwnClientIdentityUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientIdentityUseCase.execute({
       authSubjectId: "user_ana",
       identity: EDITED,
     });
 
     // assert
     expect(result).toEqual({ status: "saved" });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    const [edit] = ports.changes.save.mock.calls[0] ?? [];
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    const [edit] = ports.clientIdentityChangesPort.save.mock.calls[0] ?? [];
     expect(edit?.toSnapshot()).toEqual({
       clientId: "client-1",
       ...SAVED_EDIT,
@@ -172,26 +179,30 @@ describe("UpdateOwnClientIdentityUseCase", () => {
   ] as const)("saves nothing for %s", async (_label, stored, status) => {
     // arrange
     const ports = createPorts(stored);
-    const useCase = new UpdateOwnClientIdentityUseCase(ports);
+    const updateOwnClientIdentityUseCase = new UpdateOwnClientIdentityUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientIdentityUseCase.execute({
       authSubjectId: "user_ana",
       identity: EDITED,
     });
 
     // assert
     expect(result).toEqual({ status });
-    expect(ports.changes.save).not.toHaveBeenCalled();
+    expect(ports.clientIdentityChangesPort.save).not.toHaveBeenCalled();
   });
 
   it("names the problems and saves nothing", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateOwnClientIdentityUseCase(ports);
+    const updateOwnClientIdentityUseCase = new UpdateOwnClientIdentityUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientIdentityUseCase.execute({
       authSubjectId: "user_ana",
       identity: { ...EDITED, dateOfBirth: "2015-01-01" },
     });

@@ -29,12 +29,12 @@ import { readFormDataRequestBody } from "~/shared/http/index.server";
 
 type StoreProductManagementControllerOptions = {
   authConfig: ManagementAuthConfig;
-  authenticator: ManagementAuthenticatorPort;
-  planNewProduct: PlanNewProductUseCase;
-  planProductRevision: PlanProductRevisionUseCase;
-  publishNewProduct: PublishNewProductUseCase;
-  publishProductVersion: PublishProductVersionUseCase;
-  retireProduct: RetireProductUseCase;
+  managementAuthenticatorPort: ManagementAuthenticatorPort;
+  planNewProductUseCase: PlanNewProductUseCase;
+  planProductRevisionUseCase: PlanProductRevisionUseCase;
+  publishNewProductUseCase: PublishNewProductUseCase;
+  publishProductVersionUseCase: PublishProductVersionUseCase;
+  retireProductUseCase: RetireProductUseCase;
 };
 
 type AuthorizedRequest =
@@ -92,13 +92,13 @@ export class StoreProductManagementController {
 
     const result: PublicationPlanResult =
       target.kind === "revision"
-        ? await this.options.planProductRevision.execute({
+        ? await this.options.planProductRevisionUseCase.execute({
             cover,
             downloads,
             metadata: domainMetadata,
             productSlug: target.targetProductSlug,
           })
-        : await this.options.planNewProduct.execute({
+        : await this.options.planNewProductUseCase.execute({
             cover,
             downloads,
             metadata: domainMetadata,
@@ -136,7 +136,7 @@ export class StoreProductManagementController {
     const { cover, downloads, metadata } = parsed.payload;
 
     return publicationResponse(
-      await this.options.publishNewProduct.execute({
+      await this.options.publishNewProductUseCase.execute({
         cover,
         downloads,
         idempotencyKey: metadata.idempotencyKey,
@@ -175,7 +175,7 @@ export class StoreProductManagementController {
     const { cover, downloads, metadata } = parsed.payload;
 
     return publicationResponse(
-      await this.options.publishProductVersion.execute({
+      await this.options.publishProductVersionUseCase.execute({
         cover,
         downloads,
         idempotencyKey: metadata.idempotencyKey,
@@ -202,7 +202,7 @@ export class StoreProductManagementController {
       return errorResponse("not_found", "Unknown product.", 404);
     }
 
-    const result = await this.options.retireProduct.execute(productId);
+    const result = await this.options.retireProductUseCase.execute(productId);
 
     if (result.status === "unavailable") {
       return errorResponse(
@@ -244,7 +244,7 @@ export class StoreProductManagementController {
       };
     }
 
-    const result = await this.options.authenticator.authenticate({
+    const result = await this.options.managementAuthenticatorPort.authenticate({
       authorizationHeader: request.headers.get("authorization"),
     });
 

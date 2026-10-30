@@ -71,12 +71,13 @@ const READING: NonNullable<OwnMeasurementHistoryReading> = {
 describe("ClientMeasurementsController loadPage", () => {
   it("hands her history newest first, when she agreed to photos, her units and what is due now", async () => {
     // arrange
-    const { controller, readOwnMeasurementHistory } = createController({
-      reading: { ...READING, units: UnitPreference.of("imperial") },
-    });
+    const { clientMeasurementsController, readOwnMeasurementHistory } =
+      createController({
+        reading: { ...READING, units: UnitPreference.of("imperial") },
+      });
 
     // act
-    const page = await controller.loadPage(pageArgs());
+    const page = await clientMeasurementsController.loadPage(pageArgs());
 
     // assert
     expect(page).toEqual({
@@ -113,12 +114,12 @@ describe("ClientMeasurementsController loadPage", () => {
 
   it("hands no due line when nothing is due for her", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientMeasurementsController } = createController({
       reading: { ...READING, dueLine: null },
     });
 
     // act
-    const page = await controller.loadPage(pageArgs());
+    const page = await clientMeasurementsController.loadPage(pageArgs());
 
     // assert
     expect(page.dueLine).toBeNull();
@@ -126,10 +127,14 @@ describe("ClientMeasurementsController loadPage", () => {
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { clientMeasurementsController } = createController({
+      reading: null,
+    });
 
     // act
-    const thrown = await captureThrown(() => controller.loadPage(pageArgs()));
+    const thrown = await captureThrown(() =>
+      clientMeasurementsController.loadPage(pageArgs()),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(404);
@@ -137,11 +142,14 @@ describe("ClientMeasurementsController loadPage", () => {
 
   it("sends a visitor who is not signed in to sign in without reading anything", async () => {
     // arrange
-    const { controller, readOwnMeasurementHistory } = createController();
+    const { clientMeasurementsController, readOwnMeasurementHistory } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadPage(pageArgs({ session: ANONYMOUS_SESSION })),
+      clientMeasurementsController.loadPage(
+        pageArgs({ session: ANONYMOUS_SESSION }),
+      ),
     );
 
     // assert
@@ -153,10 +161,10 @@ describe("ClientMeasurementsController loadPage", () => {
 describe("ClientMeasurementsController loadNudge", () => {
   it("names the line that is due for her now", async () => {
     // arrange
-    const { controller } = createController();
+    const { clientMeasurementsController } = createController();
 
     // act
-    const nudge = await controller.loadNudge(pageArgs());
+    const nudge = await clientMeasurementsController.loadNudge(pageArgs());
 
     // assert
     expect(nudge).toEqual({ dueLine: "weigh-in" });
@@ -164,10 +172,12 @@ describe("ClientMeasurementsController loadNudge", () => {
 
   it("names no line for a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { clientMeasurementsController } = createController({
+      reading: null,
+    });
 
     // act
-    const nudge = await controller.loadNudge(pageArgs());
+    const nudge = await clientMeasurementsController.loadNudge(pageArgs());
 
     // assert
     expect(nudge).toEqual({ dueLine: null });
@@ -177,13 +187,14 @@ describe("ClientMeasurementsController loadNudge", () => {
 describe("ClientMeasurementsController record", () => {
   it("hands her canonical values, her consent and every photo part untouched to the recording, and answers the outcome per view", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController({
-      recorded: {
-        status: "recorded",
-        entryId: NEW_ENTRY_ID,
-        photos: { front: "stored", back: "refused" },
-      },
-    });
+    const { clientMeasurementsController, recordMeasurements } =
+      createController({
+        recorded: {
+          status: "recorded",
+          entryId: NEW_ENTRY_ID,
+          photos: { front: "stored", back: "refused" },
+        },
+      });
     const form = entryForm({ weightKg: 64.2, waistCm: 71.5, armCm: 28 });
     form.set("photoConsent", "given");
     form.set(
@@ -198,7 +209,9 @@ describe("ClientMeasurementsController record", () => {
     );
 
     // act
-    const response = await controller.record(recordArgs({ body: form }));
+    const response = await clientMeasurementsController.record(
+      recordArgs({ body: form }),
+    );
 
     // assert
     expect(response.status).toBe(201);
@@ -229,10 +242,11 @@ describe("ClientMeasurementsController record", () => {
 
   it("records her entry without consent or photos when the form carries neither", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: entryForm({ weightKg: 64.2, waistCm: 71.5 }) }),
     );
 
@@ -248,10 +262,11 @@ describe("ClientMeasurementsController record", () => {
 
   it("refuses a form whose entry is not canonical numbers without recording anything", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: entryForm({ weightKg: "64.2", waistCm: 71.5 }) }),
     );
 
@@ -262,10 +277,11 @@ describe("ClientMeasurementsController record", () => {
 
   it("refuses a form with no entry field without recording anything", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: new FormData() }),
     );
 
@@ -276,10 +292,11 @@ describe("ClientMeasurementsController record", () => {
 
   it("refuses a body that is not a form without recording anything", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: JSON.stringify({ weightKg: 64.2, waistCm: 71.5 }) }),
     );
 
@@ -290,10 +307,11 @@ describe("ClientMeasurementsController record", () => {
 
   it("refuses a body beyond 32 MiB without recording anything", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({
         body: entryForm({ weightKg: 64.2, waistCm: 71.5 }),
         headers: { "Content-Length": String(MAX_RECORD_BYTES + 1) },
@@ -307,12 +325,12 @@ describe("ClientMeasurementsController record", () => {
 
   it("answers bad request when the recording finds her values out of range", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientMeasurementsController } = createController({
       recorded: { status: "invalid" },
     });
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: entryForm({ weightKg: 900, waistCm: 71.5 }) }),
     );
 
@@ -322,12 +340,12 @@ describe("ClientMeasurementsController record", () => {
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientMeasurementsController } = createController({
       recorded: { status: "not-on-journey" },
     });
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: entryForm({ weightKg: 64.2, waistCm: 71.5 }) }),
     );
 
@@ -338,12 +356,12 @@ describe("ClientMeasurementsController record", () => {
 
   it("answers conflict to a client whose portal access has ended", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientMeasurementsController } = createController({
       recorded: { status: "ended" },
     });
 
     // act
-    const response = await controller.record(
+    const response = await clientMeasurementsController.record(
       recordArgs({ body: entryForm({ weightKg: 64.2, waistCm: 71.5 }) }),
     );
 
@@ -354,11 +372,12 @@ describe("ClientMeasurementsController record", () => {
 
   it("refuses a visitor who is not signed in without recording anything", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.record(
+      clientMeasurementsController.record(
         recordArgs({
           body: entryForm({ weightKg: 64.2, waistCm: 71.5 }),
           session: ANONYMOUS_SESSION,
@@ -373,11 +392,12 @@ describe("ClientMeasurementsController record", () => {
 
   it("refuses the coach without recording anything", async () => {
     // arrange
-    const { controller, recordMeasurements } = createController();
+    const { clientMeasurementsController, recordMeasurements } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.record(
+      clientMeasurementsController.record(
         recordArgs({
           body: entryForm({ weightKg: 64.2, waistCm: 71.5 }),
           session: COACH_SESSION,
@@ -409,16 +429,20 @@ function createController(
       photos: {},
     },
   );
-  const controller = new ClientMeasurementsController({
-    readOwnMeasurementHistory: {
+  const clientMeasurementsController = new ClientMeasurementsController({
+    readOwnMeasurementHistoryUseCase: {
       execute: readOwnMeasurementHistory,
     } as unknown as ReadOwnMeasurementHistoryUseCase,
-    recordMeasurements: {
+    recordMeasurementsUseCase: {
       execute: recordMeasurements,
     } as unknown as RecordMeasurementsUseCase,
   });
 
-  return { controller, readOwnMeasurementHistory, recordMeasurements };
+  return {
+    clientMeasurementsController,
+    readOwnMeasurementHistory,
+    recordMeasurements,
+  };
 }
 
 function entryForm(entry: Record<string, unknown>): FormData {

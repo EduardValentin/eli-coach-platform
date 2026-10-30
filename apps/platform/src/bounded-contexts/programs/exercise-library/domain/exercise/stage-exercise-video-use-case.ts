@@ -5,7 +5,7 @@ import type {
 } from "./exercise-video-store-port";
 
 type StageExerciseVideoUseCaseOptions = {
-  store: Pick<ExerciseVideoStorePort, "receive" | "discard">;
+  exerciseVideoStorePort: Pick<ExerciseVideoStorePort, "receive" | "discard">;
 };
 
 export class StageExerciseVideoUseCase {
@@ -14,10 +14,13 @@ export class StageExerciseVideoUseCase {
   async execute(
     bytes: AsyncIterable<Uint8Array>,
   ): Promise<StagedExerciseVideo> {
-    return this.options.store.receive(bytes, MAX_EXERCISE_VIDEO_BYTES + 1);
+    return this.options.exerciseVideoStorePort.receive(
+      bytes,
+      MAX_EXERCISE_VIDEO_BYTES + 1,
+    );
   }
 
   async discard(staged: StagedExerciseVideo): Promise<void> {
-    await this.options.store.discard(staged.stagingId);
+    await this.options.exerciseVideoStorePort.discard(staged.stagingId);
   }
 }

@@ -16,7 +16,9 @@ type StripePaymentEventsOptions = {
 };
 
 export class StripePaymentEventsAdapter implements PaymentEventsPort {
-  private readonly reader = new PaymentEventReaderAdapter(STRIPE_VOCABULARY);
+  private readonly paymentEventReaderAdapter = new PaymentEventReaderAdapter(
+    STRIPE_VOCABULARY,
+  );
 
   constructor(private readonly options: StripePaymentEventsOptions) {}
 
@@ -29,7 +31,7 @@ export class StripePaymentEventsAdapter implements PaymentEventsPort {
     }
 
     try {
-      return this.reader.read(
+      return this.paymentEventReaderAdapter.read(
         this.options.webhooks.constructEvent(
           rawBody,
           signature,

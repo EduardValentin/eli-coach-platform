@@ -26,11 +26,13 @@ describe("createClientResourceStore", () => {
     const thumbnail = Buffer.from([1, 2, 3]);
 
     // act
-    const store = createClientResourceStoreAdapter(workspace);
+    const clientResourceStorePort = createClientResourceStoreAdapter(workspace);
 
     // assert
-    await store.storeThumbnail(OWNER, thumbnail);
-    expect(await store.openThumbnail(OWNER)).toEqual(thumbnail);
+    await clientResourceStorePort.storeThumbnail(OWNER, thumbnail);
+    expect(await clientResourceStorePort.openThumbnail(OWNER)).toEqual(
+      thumbnail,
+    );
   });
 
   it("refuses a root that does not exist", () => {

@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(notificationsContext)
-      .notificationBell.markAllRead(args);
+      .notificationBellController.markAllRead(args);
   });
 }
 

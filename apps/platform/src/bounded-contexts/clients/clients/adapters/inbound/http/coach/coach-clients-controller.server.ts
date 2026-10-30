@@ -23,10 +23,10 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachClientsControllerOptions = {
-  listClients: ListClientsUseCase;
-  readClientRecord: ReadClientRecordUseCase;
-  readClientInvitation: ReadClientInvitationUseCase;
-  resendInvitation: ResendInvitationUseCase;
+  listClientsUseCase: ListClientsUseCase;
+  readClientRecordUseCase: ReadClientRecordUseCase;
+  readClientInvitationUseCase: ReadClientInvitationUseCase;
+  resendInvitationUseCase: ResendInvitationUseCase;
 };
 
 type ResendRefusal = Exclude<
@@ -65,7 +65,7 @@ export class CoachClientsController {
   async loadRoster(args: LoaderFunctionArgs): Promise<ClientRoster> {
     args.context.get(accessContext).requirePortalAccess("COACH");
 
-    const listing = await this.options.listClients.execute();
+    const listing = await this.options.listClientsUseCase.execute();
 
     if (listing.status === "unavailable") {
       return clientRosterSchema.parse({ clients: null });
@@ -89,8 +89,8 @@ export class CoachClientsController {
     }
 
     const [record, invitation] = await Promise.all([
-      this.options.readClientRecord.execute(id.data),
-      this.options.readClientInvitation.execute(id.data),
+      this.options.readClientRecordUseCase.execute(id.data),
+      this.options.readClientInvitationUseCase.execute(id.data),
     ]);
 
     if (!record) {
@@ -118,7 +118,7 @@ export class CoachClientsController {
       return errorResponse({ error: "invalid_request", status: 400 });
     }
 
-    const result = await this.options.resendInvitation.execute(
+    const result = await this.options.resendInvitationUseCase.execute(
       submission.data.clientId,
     );
 

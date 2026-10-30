@@ -60,11 +60,11 @@ type ReadOnboardingReviewResult =
 
 type ReadOnboardingReviewUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
-  onboardings: ClientOnboardingSourcePort;
-  reviews: OnboardingReviewsPort;
-  measurements: ClientMeasurementsSourcePort;
-  stamps: OnboardingReviewStampsPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  onboardingReviewsPort: OnboardingReviewsPort;
+  clientMeasurementsSourcePort: ClientMeasurementsSourcePort;
+  onboardingReviewStampsPort: OnboardingReviewStampsPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 function statedHeightCm(answers: OnboardingAnswersByForm): number | null {
@@ -99,8 +99,8 @@ export class ReadOnboardingReviewUseCase {
     const { client, identity } = participant;
 
     const [stored, reviewed] = await Promise.all([
-      this.options.onboardings.findByClientId(clientId),
-      this.options.reviews.findByClientId(clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(clientId),
+      this.options.onboardingReviewsPort.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
@@ -140,7 +140,9 @@ export class ReadOnboardingReviewUseCase {
       openRequest: review.openRequest()?.toSnapshot() ?? null,
       requests: review.requests.map((request) => request.toSnapshot()),
       submittedMeasurement: earliestMeasurementOf(
-        await this.options.measurements.listByClientId(clientId),
+        await this.options.clientMeasurementsSourcePort.listByClientId(
+          clientId,
+        ),
       ),
       statedHeightCm: statedHeightCm(answers),
     };
@@ -154,11 +156,11 @@ export class ReadOnboardingReviewUseCase {
       return;
     }
 
-    await this.options.stamps.record({
+    await this.options.onboardingReviewStampsPort.record({
       clientId: client.clientId,
       stamps: review.stamps(),
     });
-    this.options.incidents.onboardingReviewStampsRepaired({
+    this.options.clientOnboardingIncidentsPort.onboardingReviewStampsRepaired({
       clientId: client.clientId,
     });
   }

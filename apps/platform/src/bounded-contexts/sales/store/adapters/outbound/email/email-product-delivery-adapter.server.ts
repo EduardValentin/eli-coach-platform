@@ -19,10 +19,10 @@ export class EmailProductDeliveryAdapter implements ProductDeliveryPort {
   readonly provider: string;
 
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailProductDeliveryOptions,
   ) {
-    this.provider = productEmail.provider;
+    this.provider = productEmailPort.provider;
   }
 
   createProviderIdempotencyKey(applicationIdempotencyKey: string): string {
@@ -43,7 +43,7 @@ export class EmailProductDeliveryAdapter implements ProductDeliveryPort {
       downloadUrl: downloadUrl.toString(),
       resources: command.resources,
     });
-    const delivery = await this.productEmail.send({
+    const delivery = await this.productEmailPort.send({
       html: content.html,
       idempotencyKey: command.idempotencyKey,
       subject: content.subject,

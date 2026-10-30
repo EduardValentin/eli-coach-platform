@@ -17,7 +17,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return context.get(storeContext).acquisitions.acquire(request);
+    return context
+      .get(storeContext)
+      .storeAcquisitionController.acquire(request);
   });
 }
 

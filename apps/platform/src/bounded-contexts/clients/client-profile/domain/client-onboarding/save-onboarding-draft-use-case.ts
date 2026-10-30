@@ -25,10 +25,10 @@ type SaveOnboardingDraftResult =
 
 type SaveOnboardingDraftUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSourcePort;
-  changes: ClientOnboardingChangesPort;
-  clock: ClockPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  clientOnboardingChangesPort: ClientOnboardingChangesPort;
+  clockPort: ClockPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class SaveOnboardingDraftUseCase {
@@ -46,13 +46,13 @@ export class SaveOnboardingDraftUseCase {
     }
 
     const { client, identity } = participant;
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
 
     if (!client.standing.hasPortalAccessAt(now)) {
       return { status: "ended" };
     }
 
-    const stored = await this.options.onboardings.findByClientId(
+    const stored = await this.options.clientOnboardingSourcePort.findByClientId(
       client.clientId,
     );
     const onboarding = ClientOnboarding.reconstitute({
@@ -72,10 +72,12 @@ export class SaveOnboardingDraftUseCase {
       now,
     });
 
-    const saved = await this.options.changes
+    const saved = await this.options.clientOnboardingChangesPort
       .saveDraft({ clientId: client.clientId, draft })
       .catch((error: unknown) => {
-        this.options.incidents.onboardingDraftSaveFailed(incident);
+        this.options.clientOnboardingIncidentsPort.onboardingDraftSaveFailed(
+          incident,
+        );
         throw error;
       });
 
@@ -83,7 +85,7 @@ export class SaveOnboardingDraftUseCase {
       return { status: "already-submitted" };
     }
 
-    this.options.incidents.onboardingDraftSaved(incident);
+    this.options.clientOnboardingIncidentsPort.onboardingDraftSaved(incident);
 
     return { status: "saved" };
   }

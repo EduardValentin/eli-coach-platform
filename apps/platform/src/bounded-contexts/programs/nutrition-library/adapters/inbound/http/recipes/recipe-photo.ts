@@ -10,10 +10,12 @@ const ALLOWED_METHODS = ["GET"];
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    args.context.get(nutritionLibraryContext).recipeLibrary.openPhoto(args, {
-      recipeId: args.params.recipeId,
-      photoId: args.params.photoId,
-    }),
+    args.context
+      .get(nutritionLibraryContext)
+      .recipeLibraryController.openPhoto(args, {
+        recipeId: args.params.recipeId,
+        photoId: args.params.photoId,
+      }),
   );
 }
 

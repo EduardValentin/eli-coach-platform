@@ -7,7 +7,7 @@ import { createBadRequestResponse } from "~/shared/http/index.server";
 export class AccountWebhookController {
   constructor(
     private readonly options: {
-      deletion: DeleteAccountUseCase;
+      deleteAccountUseCase: DeleteAccountUseCase;
       signingSecret: string | undefined;
     },
   ) {}
@@ -37,7 +37,7 @@ export class AccountWebhookController {
       );
     }
 
-    await this.options.deletion.execute(authSubjectId);
+    await this.options.deleteAccountUseCase.execute(authSubjectId);
 
     return new Response(null, { status: 200 });
   }

@@ -10,10 +10,10 @@ import {
 export class TermsFacadeAdapter implements TermsFacade {
   private readonly terms;
 
-  constructor(private readonly hasher: DocumentHasherPort) {
+  constructor(private readonly documentHasherPort: DocumentHasherPort) {
     this.terms = {
       version: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-      hash: this.hasher.hash(
+      hash: this.documentHasherPort.hash(
         canonicalizeLegalDocument(WEBSITE_AND_STORE_TERMS_DOCUMENT),
       ),
     };

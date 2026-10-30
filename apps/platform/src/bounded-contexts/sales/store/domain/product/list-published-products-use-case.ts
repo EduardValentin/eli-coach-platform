@@ -6,13 +6,15 @@ export type PublishedCatalogResult =
   | { status: "unavailable" };
 
 export class ListPublishedProductsUseCase {
-  constructor(private readonly options: { catalog: StoreCatalogPort }) {}
+  constructor(
+    private readonly options: { storeCatalogPort: StoreCatalogPort },
+  ) {}
 
   async execute(): Promise<PublishedCatalogResult> {
     try {
       return {
         status: "available",
-        products: await this.options.catalog.getPublishedCatalog(),
+        products: await this.options.storeCatalogPort.getPublishedCatalog(),
       };
     } catch {
       return { status: "unavailable" };

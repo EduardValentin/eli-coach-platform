@@ -25,10 +25,10 @@ export type DownloadClientResourceResult =
   | { status: "not-found" };
 
 type DownloadClientResourceUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStorePort;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceStorePort: ClientResourceStorePort;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class DownloadClientResourceUseCase {
@@ -48,7 +48,7 @@ export class DownloadClientResourceUseCase {
 
     if (!resource) return { status: "not-found" };
 
-    const original = await this.options.store.openOriginal(
+    const original = await this.options.clientResourceStorePort.openOriginal(
       resource.storageOwner(),
     );
 

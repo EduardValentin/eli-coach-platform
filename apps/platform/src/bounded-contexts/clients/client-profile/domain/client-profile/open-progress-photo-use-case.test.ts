@@ -29,7 +29,7 @@ function createPorts(
   } = {},
 ) {
   return {
-    clients: {
+    clientReachPort: {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValue(
@@ -38,14 +38,14 @@ function createPorts(
             : stored.requesterClient,
         ),
     } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
-    photos: {
+    progressPhotosPort: {
       add: vi.fn(),
       findById: vi
         .fn()
         .mockResolvedValue(stored.photo === undefined ? PHOTO : stored.photo),
       delete: vi.fn(),
     } satisfies ProgressPhotosPort,
-    store: {
+    progressPhotoStorePort: {
       store: vi.fn(),
       open: vi
         .fn()
@@ -54,7 +54,7 @@ function createPorts(
         ),
       delete: vi.fn(),
     } satisfies ProgressPhotoStorePort,
-    incidents: {
+    measurementIncidentsPort: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
@@ -68,10 +68,10 @@ describe("OpenProgressPhotoUseCase", () => {
   it("opens her own photo for the client it belongs to", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new OpenProgressPhotoUseCase(ports);
+    const openProgressPhotoUseCase = new OpenProgressPhotoUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await openProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
@@ -82,17 +82,19 @@ describe("OpenProgressPhotoUseCase", () => {
       bytes: PHOTO_BYTES,
       mimeType: "image/jpeg",
     });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.store.open).toHaveBeenCalledWith(REFERENCE);
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.progressPhotoStorePort.open).toHaveBeenCalledWith(REFERENCE);
   });
 
   it("opens any client's photo for the coach", async () => {
     // arrange
     const ports = createPorts({ requesterClient: null });
-    const useCase = new OpenProgressPhotoUseCase(ports);
+    const openProgressPhotoUseCase = new OpenProgressPhotoUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await openProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "COACH", authSubjectId: "user_eli" },
     });
@@ -113,18 +115,20 @@ describe("OpenProgressPhotoUseCase", () => {
     async (_case, requesterClient) => {
       // arrange
       const ports = createPorts({ requesterClient });
-      const useCase = new OpenProgressPhotoUseCase(ports);
+      const openProgressPhotoUseCase = new OpenProgressPhotoUseCase(ports);
 
       // act
-      const result = await useCase.execute({
+      const result = await openProgressPhotoUseCase.execute({
         photoId: "photo-1",
         requester: { role: "CLIENT", authSubjectId: "user_other" },
       });
 
       // assert
       expect(result).toEqual({ status: "not-found" });
-      expect(ports.store.open).not.toHaveBeenCalled();
-      expect(ports.incidents.progressPhotoAccessRefused).toHaveBeenCalledWith({
+      expect(ports.progressPhotoStorePort.open).not.toHaveBeenCalled();
+      expect(
+        ports.measurementIncidentsPort.progressPhotoAccessRefused,
+      ).toHaveBeenCalledWith({
         requesterRole: "CLIENT",
         photoId: "photo-1",
       });
@@ -134,26 +138,28 @@ describe("OpenProgressPhotoUseCase", () => {
   it("finds nothing for a photo that does not exist, without reporting it", async () => {
     // arrange
     const ports = createPorts({ photo: null });
-    const useCase = new OpenProgressPhotoUseCase(ports);
+    const openProgressPhotoUseCase = new OpenProgressPhotoUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await openProgressPhotoUseCase.execute({
       photoId: "photo-missing",
       requester: { role: "COACH", authSubjectId: "user_eli" },
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(ports.incidents.progressPhotoAccessRefused).not.toHaveBeenCalled();
+    expect(
+      ports.measurementIncidentsPort.progressPhotoAccessRefused,
+    ).not.toHaveBeenCalled();
   });
 
   it("finds nothing when the stored file is gone", async () => {
     // arrange
     const ports = createPorts({ bytes: null });
-    const useCase = new OpenProgressPhotoUseCase(ports);
+    const openProgressPhotoUseCase = new OpenProgressPhotoUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await openProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });

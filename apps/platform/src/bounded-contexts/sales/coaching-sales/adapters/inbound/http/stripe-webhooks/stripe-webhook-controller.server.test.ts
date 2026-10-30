@@ -69,13 +69,16 @@ const cardAttached: PaymentCardChange = {
 describe("StripeWebhookController", () => {
   it("answers 503 without reading the event when no signing secret is configured", async () => {
     // arrange
-    const { controller, coachingHandler, verify } = createController({
-      signingSecret: undefined,
-      verdict: { kind: "ignored" },
-    });
+    const { stripeWebhookController, coachingHandler, verify } =
+      createController({
+        signingSecret: undefined,
+        verdict: { kind: "ignored" },
+      });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(503);
@@ -85,12 +88,12 @@ describe("StripeWebhookController", () => {
 
   it("verifies the raw body against the signature header", async () => {
     // arrange
-    const { controller, verify } = createController({
+    const { stripeWebhookController, verify } = createController({
       verdict: { kind: "ignored" },
     });
 
     // act
-    await controller.handleEvent(createWebhookRequest());
+    await stripeWebhookController.handleEvent(createWebhookRequest());
 
     // assert
     expect(verify).toHaveBeenCalledWith(RAW_BODY, SIGNATURE);
@@ -98,7 +101,7 @@ describe("StripeWebhookController", () => {
 
   it("refuses a body over the size limit without verifying it", async () => {
     // arrange
-    const { controller, verify } = createController({
+    const { stripeWebhookController, verify } = createController({
       verdict: { kind: "ignored" },
     });
     const request = new Request("https://evoa.example/api/stripe/webhooks", {
@@ -108,7 +111,7 @@ describe("StripeWebhookController", () => {
     });
 
     // act
-    const response = await controller.handleEvent(request);
+    const response = await stripeWebhookController.handleEvent(request);
 
     // assert
     expect(response.status).toBe(413);
@@ -117,12 +120,14 @@ describe("StripeWebhookController", () => {
 
   it("refuses an event whose signature does not verify", async () => {
     // arrange
-    const { controller, coachingHandler } = createController({
+    const { stripeWebhookController, coachingHandler } = createController({
       verdict: { kind: "invalid" },
     });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -132,12 +137,14 @@ describe("StripeWebhookController", () => {
 
   it("acknowledges an event it does not act on", async () => {
     // arrange
-    const { controller, coachingHandler } = createController({
+    const { stripeWebhookController, coachingHandler } = createController({
       verdict: { kind: "ignored" },
     });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -148,17 +155,20 @@ describe("StripeWebhookController", () => {
     "hands a paid session to the handler of its purpose and acknowledges the %s outcome",
     async (outcome) => {
       // arrange
-      const { controller, coachingHandler, incidents } = createController({
-        outcome,
-        verdict: {
-          kind: "checkout_completed",
-          eventId: "evt_1",
-          session: coachingSession,
-        },
-      });
+      const { stripeWebhookController, coachingHandler, incidents } =
+        createController({
+          outcome,
+          verdict: {
+            kind: "checkout_completed",
+            eventId: "evt_1",
+            session: coachingSession,
+          },
+        });
 
       // act
-      const response = await controller.handleEvent(createWebhookRequest());
+      const response = await stripeWebhookController.handleEvent(
+        createWebhookRequest(),
+      );
 
       // assert
       expect(response.status).toBe(200);
@@ -177,16 +187,19 @@ describe("StripeWebhookController", () => {
     "acknowledges a paid session with %s without handing it to any handler and reports it",
     async (_description, metadata, purpose) => {
       // arrange
-      const { controller, coachingHandler, incidents } = createController({
-        verdict: {
-          kind: "checkout_completed",
-          eventId: "evt_1",
-          session: paidSession(metadata),
-        },
-      });
+      const { stripeWebhookController, coachingHandler, incidents } =
+        createController({
+          verdict: {
+            kind: "checkout_completed",
+            eventId: "evt_1",
+            session: paidSession(metadata),
+          },
+        });
 
       // act
-      const response = await controller.handleEvent(createWebhookRequest());
+      const response = await stripeWebhookController.handleEvent(
+        createWebhookRequest(),
+      );
 
       // assert
       expect(response.status).toBe(200);
@@ -202,7 +215,7 @@ describe("StripeWebhookController", () => {
 describe("StripeWebhookController with a subscription change", () => {
   it("hands the change to the subscription handler of its purpose and acknowledges it", async () => {
     // arrange
-    const { controller, subscriptionHandler, coachingHandler } =
+    const { stripeWebhookController, subscriptionHandler, coachingHandler } =
       createController({
         verdict: {
           kind: "subscription_changed",
@@ -213,7 +226,9 @@ describe("StripeWebhookController with a subscription change", () => {
       });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -231,17 +246,20 @@ describe("StripeWebhookController with a subscription change", () => {
     "acknowledges a change with %s without handing it on and reports it",
     async (_description, purpose) => {
       // arrange
-      const { controller, subscriptionHandler, incidents } = createController({
-        verdict: {
-          kind: "subscription_changed",
-          eventId: "evt_deleted",
-          purpose,
-          change: subscriptionDeletion,
-        },
-      });
+      const { stripeWebhookController, subscriptionHandler, incidents } =
+        createController({
+          verdict: {
+            kind: "subscription_changed",
+            eventId: "evt_deleted",
+            purpose,
+            change: subscriptionDeletion,
+          },
+        });
 
       // act
-      const response = await controller.handleEvent(createWebhookRequest());
+      const response = await stripeWebhookController.handleEvent(
+        createWebhookRequest(),
+      );
 
       // assert
       expect(response.status).toBe(200);
@@ -255,18 +273,21 @@ describe("StripeWebhookController with a subscription change", () => {
 
   it("answers 500 so Stripe redelivers when the subscription handler fails", async () => {
     // arrange
-    const { controller, subscriptionHandler, incidents } = createController({
-      verdict: {
-        kind: "subscription_changed",
-        eventId: "evt_deleted",
-        purpose: "coaching-subscription",
-        change: subscriptionDeletion,
-      },
-    });
+    const { stripeWebhookController, subscriptionHandler, incidents } =
+      createController({
+        verdict: {
+          kind: "subscription_changed",
+          eventId: "evt_deleted",
+          purpose: "coaching-subscription",
+          change: subscriptionDeletion,
+        },
+      });
     subscriptionHandler.handle.mockRejectedValue(new RangeError("stale"));
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -281,7 +302,7 @@ describe("StripeWebhookController with a subscription change", () => {
 describe("StripeWebhookController with a refunded charge", () => {
   it("hands the refund to the one refund handler and acknowledges it", async () => {
     // arrange
-    const { controller, refundHandler } = createController({
+    const { stripeWebhookController, refundHandler } = createController({
       verdict: {
         kind: "charge_refunded",
         eventId: "evt_refunded",
@@ -290,7 +311,9 @@ describe("StripeWebhookController with a refunded charge", () => {
     });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -302,17 +325,20 @@ describe("StripeWebhookController with a refunded charge", () => {
 
   it("answers 500 and reports the refunds handler when it fails", async () => {
     // arrange
-    const { controller, refundHandler, incidents } = createController({
-      verdict: {
-        kind: "charge_refunded",
-        eventId: "evt_refunded",
-        refund: chargeRefund,
-      },
-    });
+    const { stripeWebhookController, refundHandler, incidents } =
+      createController({
+        verdict: {
+          kind: "charge_refunded",
+          eventId: "evt_refunded",
+          refund: chargeRefund,
+        },
+      });
     refundHandler.handle.mockRejectedValue(new Error("database down"));
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -327,7 +353,7 @@ describe("StripeWebhookController with a refunded charge", () => {
 describe("StripeWebhookController with a card change", () => {
   it("hands the change to the one card handler and acknowledges it", async () => {
     // arrange
-    const { controller, cardHandler } = createController({
+    const { stripeWebhookController, cardHandler } = createController({
       verdict: {
         kind: "payment_method_changed",
         eventId: "evt_card",
@@ -336,7 +362,9 @@ describe("StripeWebhookController with a card change", () => {
     });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -345,17 +373,20 @@ describe("StripeWebhookController with a card change", () => {
 
   it("answers 500 and reports the card handler when it fails", async () => {
     // arrange
-    const { controller, cardHandler, incidents } = createController({
-      verdict: {
-        kind: "payment_method_changed",
-        eventId: "evt_card",
-        change: cardAttached,
-      },
-    });
+    const { stripeWebhookController, cardHandler, incidents } =
+      createController({
+        verdict: {
+          kind: "payment_method_changed",
+          eventId: "evt_card",
+          change: cardAttached,
+        },
+      });
     cardHandler.handle.mockRejectedValue(new Error("database down"));
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -370,19 +401,22 @@ describe("StripeWebhookController with a card change", () => {
 describe("StripeWebhookController with a paid session without a customer", () => {
   it("reports it unrouted when its purpose names no handler", async () => {
     // arrange
-    const { controller, coachingHandler, incidents } = createController({
-      verdict: {
-        kind: "checkout_completed",
-        eventId: "evt_guest",
-        session: {
-          ...paidSession({ purpose: "store-order" }),
-          customerId: null,
+    const { stripeWebhookController, coachingHandler, incidents } =
+      createController({
+        verdict: {
+          kind: "checkout_completed",
+          eventId: "evt_guest",
+          session: {
+            ...paidSession({ purpose: "store-order" }),
+            customerId: null,
+          },
         },
-      },
-    });
+      });
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -397,13 +431,14 @@ describe("StripeWebhookController with a paid session without a customer", () =>
 describe("StripeWebhookController when the handler fails", () => {
   it("answers 500 so Stripe redelivers, reporting the event and the failure's kind but never its message", async () => {
     // arrange
-    const { controller, coachingHandler, incidents } = createController({
-      verdict: {
-        kind: "checkout_completed",
-        eventId: "evt_failing",
-        session: coachingSession,
-      },
-    });
+    const { stripeWebhookController, coachingHandler, incidents } =
+      createController({
+        verdict: {
+          kind: "checkout_completed",
+          eventId: "evt_failing",
+          session: coachingSession,
+        },
+      });
     coachingHandler.handle.mockRejectedValue(
       new TypeError(
         "Failed query: update ... params: https://accounts.evoa.fit/sign-up?__clerk_ticket=secret,ana@example.com",
@@ -411,7 +446,9 @@ describe("StripeWebhookController when the handler fails", () => {
     );
 
     // act
-    const response = await controller.handleEvent(createWebhookRequest());
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -444,16 +481,16 @@ function createController(options: {
     paymentEventHandlingFailed: vi.fn(),
     paymentEventUnrouted: vi.fn(),
   };
-  const paymentEvents: PaymentEventsPort = { verify };
-  const controller = new StripeWebhookController({
+  const paymentEventsPort: PaymentEventsPort = { verify };
+  const stripeWebhookController = new StripeWebhookController({
     unitOfWork: (work) => work(),
-    cardHandler,
+    paymentCardHandlerPort: cardHandler,
     completionHandlersByPurpose: new Map([
       [coachingHandler.purpose, coachingHandler],
     ]),
-    incidents,
-    paymentEvents,
-    refundHandler,
+    paymentWebhookIncidentsPort: incidents,
+    paymentEventsPort,
+    paymentRefundHandlerPort: refundHandler,
     subscriptionChangeHandlersByPurpose: new Map([
       [subscriptionHandler.purpose, subscriptionHandler],
     ]),
@@ -464,7 +501,7 @@ function createController(options: {
   return {
     cardHandler,
     coachingHandler,
-    controller,
+    stripeWebhookController,
     incidents,
     refundHandler,
     subscriptionHandler,

@@ -10,7 +10,7 @@ import type {
 import { ZipArchive } from "archiver";
 
 export class ZipDeliveryStream {
-  constructor(private readonly assetStore: ProductAssetsPort) {}
+  constructor(private readonly productAssetsPort: ProductAssetsPort) {}
 
   async create(grant: DownloadGrant): Promise<ProductAssetOpenResult> {
     const grantEntries = planGrantEntries(grant);
@@ -26,7 +26,7 @@ export class ZipDeliveryStream {
 
     try {
       for (const { asset, entryName } of grantEntries.entries) {
-        const opened = await this.assetStore.openVerified(asset);
+        const opened = await this.productAssetsPort.openVerified(asset);
 
         if (opened.kind === "unavailable") {
           closeStreams(openedEntries);

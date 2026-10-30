@@ -61,10 +61,11 @@ type UpdateResult = Awaited<
 describe("OwnClientProfileController load", () => {
   it("hands her her own profile with her avatar address and never the coach's notes", async () => {
     // arrange
-    const { controller, readOwnClientProfile } = createController();
+    const { ownClientProfileController, readOwnClientProfile } =
+      createController();
 
     // act
-    const profile = await controller.load(clientArgs());
+    const profile = await ownClientProfileController.load(clientArgs());
 
     // assert
     expect(profile).toEqual({
@@ -89,10 +90,12 @@ describe("OwnClientProfileController load", () => {
 
   it("answers not found to an account with no client record", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { ownClientProfileController } = createController({ reading: null });
 
     // act
-    const thrown = await captureThrown(() => controller.load(clientArgs()));
+    const thrown = await captureThrown(() =>
+      ownClientProfileController.load(clientArgs()),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(404);
@@ -102,10 +105,11 @@ describe("OwnClientProfileController load", () => {
 describe("OwnClientProfileController save", () => {
   it("saves the facts she shares with her coach and answers that it is saved", async () => {
     // arrange
-    const { controller, updateOwnClientProfile } = createController();
+    const { ownClientProfileController, updateOwnClientProfile } =
+      createController();
 
     // act
-    const response = await controller.save(
+    const response = await ownClientProfileController.save(
       clientArgs({ body: { facts: SHARED } }),
     );
 
@@ -128,10 +132,10 @@ describe("OwnClientProfileController save", () => {
     "answers %o with %d",
     async (update, status) => {
       // arrange
-      const { controller } = createController({ update });
+      const { ownClientProfileController } = createController({ update });
 
       // act
-      const response = await controller.save(
+      const response = await ownClientProfileController.save(
         clientArgs({ body: { facts: SHARED } }),
       );
 
@@ -142,10 +146,11 @@ describe("OwnClientProfileController save", () => {
 
   it("refuses equipment the profile does not know without saving anything", async () => {
     // arrange
-    const { controller, updateOwnClientProfile } = createController();
+    const { ownClientProfileController, updateOwnClientProfile } =
+      createController();
 
     // act
-    const response = await controller.save(
+    const response = await ownClientProfileController.save(
       clientArgs({
         body: { facts: { ...SHARED, equipment: ["Rowing machine"] } },
       }),
@@ -158,11 +163,12 @@ describe("OwnClientProfileController save", () => {
 
   it("refuses the coach without saving anything", async () => {
     // arrange
-    const { controller, updateOwnClientProfile } = createController();
+    const { ownClientProfileController, updateOwnClientProfile } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.save(
+      ownClientProfileController.save(
         clientArgs({ body: { facts: SHARED }, session: COACH_SESSION }),
       ),
     );
@@ -187,16 +193,20 @@ function createController(
   const updateOwnClientProfile = vi
     .fn()
     .mockResolvedValue(options.update ?? { status: "saved" });
-  const controller = new OwnClientProfileController({
-    readOwnClientProfile: {
+  const ownClientProfileController = new OwnClientProfileController({
+    readOwnClientProfileUseCase: {
       execute: readOwnClientProfile,
     } as unknown as ReadOwnClientProfileUseCase,
-    updateOwnClientProfile: {
+    updateOwnClientProfileUseCase: {
       execute: updateOwnClientProfile,
     } as unknown as UpdateOwnClientProfileUseCase,
   });
 
-  return { controller, readOwnClientProfile, updateOwnClientProfile };
+  return {
+    ownClientProfileController,
+    readOwnClientProfile,
+    updateOwnClientProfile,
+  };
 }
 
 function clientArgs(

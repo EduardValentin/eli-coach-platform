@@ -100,15 +100,15 @@ function createIncidents(): CoachingSalesIncidentsPort {
 
 function openSalesWindow(): CoachingSalesWindow {
   return new CoachingSalesWindow({
-    incidents: createIncidents(),
-    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(false) },
+    coachingSalesIncidentsPort: createIncidents(),
+    waitlistModePort: { isEnabled: vi.fn().mockResolvedValue(false) },
   });
 }
 
 function closedSalesWindow(): CoachingSalesWindow {
   return new CoachingSalesWindow({
-    incidents: createIncidents(),
-    waitlistMode: { isEnabled: vi.fn().mockResolvedValue(true) },
+    coachingSalesIncidentsPort: createIncidents(),
+    waitlistModePort: { isEnabled: vi.fn().mockResolvedValue(true) },
   });
 }
 
@@ -201,21 +201,21 @@ function startCheckoutDependencies(
   overrides?: Partial<ConstructorParameters<typeof StartCheckoutUseCase>[0]>,
 ) {
   return {
-    calls: createCalls(call),
-    callSalesStates: createCallSalesStates(
+    endedCallsPort: createCalls(call),
+    callSalesStatesPort: createCallSalesStates(
       new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
     ),
-    checkoutSessions: createCheckoutSessions([]),
-    clock,
-    emailAcceptance: createEmailAcceptance("allowed"),
-    paymentCheckout: createPaymentCheckout(null),
-    paymentLinks: createPaymentLinks({
+    checkoutSessionsPort: createCheckoutSessions([]),
+    clockPort: clock,
+    emailAcceptancePort: createEmailAcceptance("allowed"),
+    paymentCheckoutPort: createPaymentCheckout(null),
+    paymentLinksPort: createPaymentLinks({
       found: usableLink,
       paymentCustomerId: null,
     }),
-    pricingEligibility: createPricingEligibility("regular"),
+    pricingEligibilityPort: createPricingEligibility("regular"),
     salesWindow: openSalesWindow(),
-    tokenHasher: createTokenHasher(),
+    paymentLinkTokenHasherPort: createTokenHasher(),
     ...overrides,
   };
 }
@@ -234,30 +234,43 @@ describe("StartCheckoutUseCase", () => {
     const dependencies = startCheckoutDependencies({
       salesWindow: closedSalesWindow(),
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(startCommand);
+    const result = await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(dependencies.paymentLinks.findByTokenSha256).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinksPort.findByTokenSha256,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createCustomer,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers invalid_link for an implausible token without a lookup", async () => {
     // arrange
     const dependencies = startCheckoutDependencies();
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ ...startCommand, rawToken: "abc" });
+    const result = await startCheckoutUseCase.execute({
+      ...startCommand,
+      rawToken: "abc",
+    });
 
     // assert
     expect(result).toEqual({ status: "invalid_link" });
-    expect(dependencies.tokenHasher.sha256).not.toHaveBeenCalled();
-    expect(dependencies.paymentLinks.findByTokenSha256).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinkTokenHasherPort.sha256,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinksPort.findByTokenSha256,
+    ).not.toHaveBeenCalled();
   });
 
   it.each<[string, PaymentLink | null]>([
@@ -268,96 +281,116 @@ describe("StartCheckoutUseCase", () => {
   ])("answers invalid_link for %s link", async (_label, found) => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      paymentLinks: createPaymentLinks({ found, paymentCustomerId: null }),
+      paymentLinksPort: createPaymentLinks({ found, paymentCustomerId: null }),
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(startCommand);
+    const result = await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(result).toEqual({ status: "invalid_link" });
-    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers unknown_bundle without creating a customer or a session", async () => {
     // arrange
     const dependencies = startCheckoutDependencies();
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({
+    const result = await startCheckoutUseCase.execute({
       ...startCommand,
       bundleId: "12-months",
     });
 
     // assert
     expect(result).toEqual({ status: "unknown_bundle" });
-    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
-    expect(dependencies.checkoutSessions.remember).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createCustomer,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.checkoutSessionsPort.remember).not.toHaveBeenCalled();
   });
 
   it("answers invalid_link when the link's call no longer exists", async () => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      calls: createCalls(null),
+      endedCallsPort: createCalls(null),
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(startCommand);
+    const result = await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(result).toEqual({ status: "invalid_link" });
-    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers invalid_link for a still-valid link whose call is already paid, without provider calls", async () => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      callSalesStates: createCallSalesStates(
+      callSalesStatesPort: createCallSalesStates(
         new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
       ),
-      checkoutSessions: createCheckoutSessions([{ id: "cs_1" }]),
+      checkoutSessionsPort: createCheckoutSessions([{ id: "cs_1" }]),
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(startCommand);
+    const result = await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(result).toEqual({ status: "invalid_link" });
-    expect(dependencies.callSalesStates.forCalls).toHaveBeenCalledWith([
+    expect(dependencies.callSalesStatesPort.forCalls).toHaveBeenCalledWith([
       call.id,
     ]);
-    expect(dependencies.pricingEligibility.tierForEmail).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.expireSession).not.toHaveBeenCalled();
-    expect(dependencies.checkoutSessions.markExpired).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
+    expect(
+      dependencies.pricingEligibilityPort.tierForEmail,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createCustomer,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.expireSession,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.checkoutSessionsPort.markExpired,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).not.toHaveBeenCalled();
   });
 
   it("creates and remembers a payment customer on the call's first checkout", async () => {
     // arrange
     const dependencies = startCheckoutDependencies();
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    await useCase.execute(startCommand);
+    await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(
-      dependencies.paymentLinks.findPaymentCustomerForCall,
+      dependencies.paymentLinksPort.findPaymentCustomerForCall,
     ).toHaveBeenCalledWith(call.id);
-    expect(dependencies.paymentCheckout.createCustomer).toHaveBeenCalledWith({
+    expect(
+      dependencies.paymentCheckoutPort.createCustomer,
+    ).toHaveBeenCalledWith({
       email: call.visitorEmail,
       assessmentCallId: call.id,
     });
     expect(
-      dependencies.paymentLinks.rememberPaymentCustomer,
+      dependencies.paymentLinksPort.rememberPaymentCustomer,
     ).toHaveBeenCalledWith(usableLink.id, "cus_new");
-    expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledWith(
+    expect(dependencies.paymentCheckoutPort.createSession).toHaveBeenCalledWith(
       expect.objectContaining({ customerId: "cus_new" }),
     );
   });
@@ -365,22 +398,24 @@ describe("StartCheckoutUseCase", () => {
   it("reuses the call's payment customer on a later checkout", async () => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      paymentLinks: createPaymentLinks({
+      paymentLinksPort: createPaymentLinks({
         found: usableLink,
         paymentCustomerId: "cus_1",
       }),
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    await useCase.execute(startCommand);
+    await startCheckoutUseCase.execute(startCommand);
 
     // assert
-    expect(dependencies.paymentCheckout.createCustomer).not.toHaveBeenCalled();
     expect(
-      dependencies.paymentLinks.rememberPaymentCustomer,
+      dependencies.paymentCheckoutPort.createCustomer,
     ).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledWith(
+    expect(
+      dependencies.paymentLinksPort.rememberPaymentCustomer,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.paymentCheckoutPort.createSession).toHaveBeenCalledWith(
       expect.objectContaining({ customerId: "cus_1" }),
     );
   });
@@ -388,43 +423,43 @@ describe("StartCheckoutUseCase", () => {
   it("expires every open session of the call before creating the new one", async () => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      checkoutSessions: createCheckoutSessions([
+      checkoutSessionsPort: createCheckoutSessions([
         { id: "cs_voided_link" },
         { id: "cs_current_link" },
       ]),
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    await useCase.execute(startCommand);
+    await startCheckoutUseCase.execute(startCommand);
 
     // assert
-    expect(dependencies.checkoutSessions.findOpenForCall).toHaveBeenCalledWith(
-      call.id,
-    );
     expect(
-      vi.mocked(dependencies.paymentCheckout.expireSession).mock.calls,
+      dependencies.checkoutSessionsPort.findOpenForCall,
+    ).toHaveBeenCalledWith(call.id);
+    expect(
+      vi.mocked(dependencies.paymentCheckoutPort.expireSession).mock.calls,
     ).toEqual([["cs_voided_link"], ["cs_current_link"]]);
     expect(
-      vi.mocked(dependencies.checkoutSessions.markExpired).mock.calls,
+      vi.mocked(dependencies.checkoutSessionsPort.markExpired).mock.calls,
     ).toEqual([["cs_voided_link"], ["cs_current_link"]]);
-    const expired = vi.mocked(dependencies.paymentCheckout.expireSession).mock
+    const expired = vi.mocked(dependencies.paymentCheckoutPort.expireSession)
+      .mock.invocationCallOrder;
+    const marked = vi.mocked(dependencies.checkoutSessionsPort.markExpired).mock
       .invocationCallOrder;
-    const marked = vi.mocked(dependencies.checkoutSessions.markExpired).mock
-      .invocationCallOrder;
-    const [created] = vi.mocked(dependencies.paymentCheckout.createSession).mock
-      .invocationCallOrder;
+    const [created] = vi.mocked(dependencies.paymentCheckoutPort.createSession)
+      .mock.invocationCallOrder;
     expect(Math.max(...expired, ...marked)).toBeLessThan(created!);
   });
 
   it("answers invalid_link when one open session turns out paid, still expiring the others", async () => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      checkoutSessions: createCheckoutSessions([
+      checkoutSessionsPort: createCheckoutSessions([
         { id: "cs_paid" },
         { id: "cs_unpaid" },
       ]),
-      paymentCheckout: {
+      paymentCheckoutPort: {
         ...createPaymentCheckout(null),
         findCompletedSession: vi
           .fn()
@@ -435,39 +470,47 @@ describe("StartCheckoutUseCase", () => {
           ),
       },
     });
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(startCommand);
+    const result = await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(result).toEqual({ status: "invalid_link" });
     expect(
-      vi.mocked(dependencies.paymentCheckout.expireSession).mock.calls,
+      vi.mocked(dependencies.paymentCheckoutPort.expireSession).mock.calls,
     ).toEqual([["cs_paid"], ["cs_unpaid"]]);
     expect(
-      vi.mocked(dependencies.checkoutSessions.markExpired).mock.calls,
+      vi.mocked(dependencies.checkoutSessionsPort.markExpired).mock.calls,
     ).toEqual([["cs_unpaid"]]);
-    expect(dependencies.paymentCheckout.createSession).not.toHaveBeenCalled();
-    expect(dependencies.checkoutSessions.remember).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.checkoutSessionsPort.remember).not.toHaveBeenCalled();
   });
 
   it("proceeds without expiring anything when the call has no open session", async () => {
     // arrange
     const dependencies = startCheckoutDependencies();
-    const useCase = new StartCheckoutUseCase(dependencies);
+    const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(startCommand);
+    const result = await startCheckoutUseCase.execute(startCommand);
 
     // assert
     expect(result).toEqual({
       status: "redirect",
       url: "https://pay.example/cs_2",
     });
-    expect(dependencies.paymentCheckout.expireSession).not.toHaveBeenCalled();
-    expect(dependencies.checkoutSessions.markExpired).not.toHaveBeenCalled();
-    expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledOnce();
+    expect(
+      dependencies.paymentCheckoutPort.expireSession,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.checkoutSessionsPort.markExpired,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentCheckoutPort.createSession,
+    ).toHaveBeenCalledOnce();
   });
 
   it.each<[PriceTier, number]>([
@@ -478,26 +521,28 @@ describe("StartCheckoutUseCase", () => {
     async (tier, amountCents) => {
       // arrange
       const dependencies = startCheckoutDependencies({
-        paymentLinks: createPaymentLinks({
+        paymentLinksPort: createPaymentLinks({
           found: usableLink,
           paymentCustomerId: "cus_1",
         }),
-        pricingEligibility: createPricingEligibility(tier),
+        pricingEligibilityPort: createPricingEligibility(tier),
       });
-      const useCase = new StartCheckoutUseCase(dependencies);
+      const startCheckoutUseCase = new StartCheckoutUseCase(dependencies);
 
       // act
-      const result = await useCase.execute(startCommand);
+      const result = await startCheckoutUseCase.execute(startCommand);
 
       // assert
       expect(result).toEqual({
         status: "redirect",
         url: "https://pay.example/cs_2",
       });
-      expect(dependencies.pricingEligibility.tierForEmail).toHaveBeenCalledWith(
-        call.visitorEmail,
-      );
-      expect(dependencies.paymentCheckout.createSession).toHaveBeenCalledWith({
+      expect(
+        dependencies.pricingEligibilityPort.tierForEmail,
+      ).toHaveBeenCalledWith(call.visitorEmail);
+      expect(
+        dependencies.paymentCheckoutPort.createSession,
+      ).toHaveBeenCalledWith({
         customerId: "cus_1",
         bundle: { id: "3-months", title: "3 Months", months: 3, amountCents },
         currency: "eur",
@@ -511,7 +556,7 @@ describe("StartCheckoutUseCase", () => {
         successUrl: SUCCESS_URL,
         cancelUrl: CANCEL_URL,
       });
-      expect(dependencies.checkoutSessions.remember).toHaveBeenCalledWith({
+      expect(dependencies.checkoutSessionsPort.remember).toHaveBeenCalledWith({
         id: "cs_2",
         paymentLinkId: usableLink.id,
         bundleId: "3-months",
@@ -562,17 +607,19 @@ function checkoutPurchaseDependencies(
   } = {},
 ) {
   return {
-    admission: createAdmission(
+    paidClientAdmissionPort: createAdmission(
       answers.admitted ?? { status: "admitted", clientId: PAID_CLIENT_ID },
     ),
-    calls: createCalls(call),
-    incidents: createSubscriptionIncidents(),
-    paymentCheckout: createPaymentCheckout(completion),
-    paymentEventLedger: createPaymentEventLedger(answers.ledger ?? "recorded"),
-    paymentSubscriptions: createPaymentSubscriptions(),
-    purchases: createPurchases(),
-    subscriptionIds: { generate: () => "subscription-1" },
-    clock,
+    endedCallsPort: createCalls(call),
+    coachingSubscriptionIncidentsPort: createSubscriptionIncidents(),
+    paymentCheckoutPort: createPaymentCheckout(completion),
+    paymentEventLedgerPort: createPaymentEventLedger(
+      answers.ledger ?? "recorded",
+    ),
+    paymentSubscriptionsPort: createPaymentSubscriptions(),
+    coachingPurchasesPort: createPurchases(),
+    coachingSubscriptionIdsPort: { generate: () => "subscription-1" },
+    clockPort: clock,
   };
 }
 
@@ -620,10 +667,12 @@ describe("ReadCheckoutPurchaseUseCase", () => {
   it("drafts the purchase from the booking's client and the subscription the provider reports paid for the session under a fresh id, with no sales window consulted", async () => {
     // arrange
     const dependencies = checkoutPurchaseDependencies();
-    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+    const readCheckoutPurchaseUseCase = new ReadCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await readCheckoutPurchaseUseCase.execute({
       eventId: "evt_1",
       checkoutSessionId: "cs_2",
     });
@@ -631,31 +680,37 @@ describe("ReadCheckoutPurchaseUseCase", () => {
     // assert
     expect(result).toEqual({ status: "found", purchase: checkoutPurchase });
     expect(
-      dependencies.paymentCheckout.findCompletedSession,
+      dependencies.paymentCheckoutPort.findCompletedSession,
     ).toHaveBeenCalledWith("cs_2");
-    expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.paymentEventRejected,
+    ).not.toHaveBeenCalled();
   });
 
   it("rejects the event when the call does not exist", async () => {
     // arrange
     const dependencies = {
       ...checkoutPurchaseDependencies(),
-      calls: createCalls(null),
+      endedCallsPort: createCalls(null),
     };
-    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+    const readCheckoutPurchaseUseCase = new ReadCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await readCheckoutPurchaseUseCase.execute({
       eventId: "evt_1",
       checkoutSessionId: "cs_2",
     });
 
     // assert
     expect(result).toEqual({ status: "call_not_found" });
-    expect(dependencies.calls.findById).toHaveBeenCalledWith(
+    expect(dependencies.endedCallsPort.findById).toHaveBeenCalledWith(
       completion.assessmentCallId,
     );
-    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.paymentEventRejected,
+    ).toHaveBeenCalledWith({
       eventId: "evt_1",
       reason: "call_not_found",
     });
@@ -665,23 +720,27 @@ describe("ReadCheckoutPurchaseUseCase", () => {
     // arrange
     const dependencies = {
       ...checkoutPurchaseDependencies(),
-      paymentCheckout: createPaymentCheckout(null),
+      paymentCheckoutPort: createPaymentCheckout(null),
     };
-    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+    const readCheckoutPurchaseUseCase = new ReadCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await readCheckoutPurchaseUseCase.execute({
       eventId: "evt_3",
       checkoutSessionId: "cs_2",
     });
 
     // assert
     expect(result).toEqual({ status: "unreadable_checkout" });
-    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.paymentEventRejected,
+    ).toHaveBeenCalledWith({
       eventId: "evt_3",
       reason: "unreadable_checkout",
     });
-    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+    expect(dependencies.endedCallsPort.findById).not.toHaveBeenCalled();
   });
 
   it("propagates a failed read of the completion so the payment event is delivered again", async () => {
@@ -689,19 +748,21 @@ describe("ReadCheckoutPurchaseUseCase", () => {
     const failure = new Error("provider unavailable");
     const dependencies = checkoutPurchaseDependencies();
     vi.mocked(
-      dependencies.paymentCheckout.findCompletedSession,
+      dependencies.paymentCheckoutPort.findCompletedSession,
     ).mockRejectedValue(failure);
-    const useCase = new ReadCheckoutPurchaseUseCase(dependencies);
+    const readCheckoutPurchaseUseCase = new ReadCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const reading = useCase.execute({
+    const reading = readCheckoutPurchaseUseCase.execute({
       eventId: "evt_1",
       checkoutSessionId: "cs_2",
     });
 
     // assert
     await expect(reading).rejects.toBe(failure);
-    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+    expect(dependencies.endedCallsPort.findById).not.toHaveBeenCalled();
   });
 });
 
@@ -709,10 +770,13 @@ describe("RecordCheckoutPurchaseUseCase", () => {
   it("records the event in the ledger, admits the client with her standing, then records the subscription and spends its payment link", async () => {
     // arrange
     const dependencies = checkoutPurchaseDependencies();
-    const useCase = new RecordCheckoutPurchaseUseCase(dependencies);
+    const recordCheckoutPurchaseUseCase = new RecordCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute(checkoutPurchase);
+    const result =
+      await recordCheckoutPurchaseUseCase.execute(checkoutPurchase);
 
     // assert
     expect(result).toEqual({
@@ -720,17 +784,17 @@ describe("RecordCheckoutPurchaseUseCase", () => {
       clientId: PAID_CLIENT_ID,
       subscription: purchasedSubscription,
     });
-    expect(dependencies.paymentEventLedger.record).toHaveBeenCalledWith({
+    expect(dependencies.paymentEventLedgerPort.record).toHaveBeenCalledWith({
       eventId: "evt_1",
       receivedAt: NOW,
     });
-    expect(dependencies.admission.admit).toHaveBeenCalledWith({
+    expect(dependencies.paidClientAdmissionPort.admit).toHaveBeenCalledWith({
       client: paidClientIntake,
       standing: expect.anything(),
       at: NOW,
     });
     expect(
-      dependencies.admission.admit.mock.calls[0]?.[0].standing.toSnapshot(),
+      dependencies.paidClientAdmissionPort.admit.mock.calls[0]?.[0].standing.toSnapshot(),
     ).toEqual({
       status: "not-started",
       accessEndsAt: null,
@@ -739,34 +803,39 @@ describe("RecordCheckoutPurchaseUseCase", () => {
       programStartsAt: new Date("2026-10-10T10:05:00.000Z"),
       paidThrough: new Date("2026-12-26T10:05:00.000Z"),
     });
-    expect(dependencies.purchases.insertSubscription).toHaveBeenCalledWith({
+    expect(
+      dependencies.coachingPurchasesPort.insertSubscription,
+    ).toHaveBeenCalledWith({
       assessmentCallId: "call-1",
       clientId: PAID_CLIENT_ID,
       subscription: purchasedSubscription,
       receivedAt: NOW,
     });
-    expect(dependencies.purchases.spendPaymentLink).toHaveBeenCalledWith(
-      "cs_2",
-    );
+    expect(
+      dependencies.coachingPurchasesPort.spendPaymentLink,
+    ).toHaveBeenCalledWith("cs_2");
     const stepOrder = [
-      dependencies.paymentEventLedger.record,
-      dependencies.admission.admit,
-      dependencies.purchases.insertSubscription,
-      dependencies.purchases.spendPaymentLink,
+      dependencies.paymentEventLedgerPort.record,
+      dependencies.paidClientAdmissionPort.admit,
+      dependencies.coachingPurchasesPort.insertSubscription,
+      dependencies.coachingPurchasesPort.spendPaymentLink,
     ].map((step) => step.mock.invocationCallOrder[0] ?? 0);
     expect(stepOrder).toEqual(
       [...stepOrder].sort((first, second) => first - second),
     );
-    expect(dependencies.admission.invite).not.toHaveBeenCalled();
+    expect(dependencies.paidClientAdmissionPort.invite).not.toHaveBeenCalled();
   });
 
   it("answers duplicate for a replayed event with the client recorded for the call, without raising an incident or writing anything else, never the unused fresh id", async () => {
     // arrange
     const dependencies = checkoutPurchaseDependencies({ ledger: "duplicate" });
-    const useCase = new RecordCheckoutPurchaseUseCase(dependencies);
+    const recordCheckoutPurchaseUseCase = new RecordCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute(checkoutPurchase);
+    const result =
+      await recordCheckoutPurchaseUseCase.execute(checkoutPurchase);
 
     // assert
     expect(result).toEqual({
@@ -774,13 +843,19 @@ describe("RecordCheckoutPurchaseUseCase", () => {
       clientId: CLIENT_RECORDED_EARLIER_ID,
       subscription: purchasedSubscription,
     });
-    expect(dependencies.purchases.findClientIdForCall).toHaveBeenCalledWith(
-      "call-1",
-    );
-    expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
-    expect(dependencies.admission.admit).not.toHaveBeenCalled();
-    expect(dependencies.purchases.insertSubscription).not.toHaveBeenCalled();
-    expect(dependencies.purchases.spendPaymentLink).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingPurchasesPort.findClientIdForCall,
+    ).toHaveBeenCalledWith("call-1");
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.paymentEventRejected,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.paidClientAdmissionPort.admit).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingPurchasesPort.insertSubscription,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingPurchasesPort.spendPaymentLink,
+    ).not.toHaveBeenCalled();
   });
 
   it("reports the unrecorded charge and throws CallAlreadyPaid so the unit of work rolls the event back, recording nothing more, when the call already has a client", async () => {
@@ -788,23 +863,31 @@ describe("RecordCheckoutPurchaseUseCase", () => {
     const dependencies = checkoutPurchaseDependencies({
       admitted: { status: "call_already_has_client" },
     });
-    const useCase = new RecordCheckoutPurchaseUseCase(dependencies);
+    const recordCheckoutPurchaseUseCase = new RecordCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const recording = useCase.execute({
+    const recording = recordCheckoutPurchaseUseCase.execute({
       ...checkoutPurchase,
       eventId: "evt_2",
     });
 
     // assert
     await expect(recording).rejects.toBeInstanceOf(CallAlreadyPaid);
-    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.paymentEventRejected,
+    ).toHaveBeenCalledWith({
       eventId: "evt_2",
       reason: "call_already_paid",
     });
-    expect(dependencies.purchases.insertSubscription).not.toHaveBeenCalled();
-    expect(dependencies.purchases.spendPaymentLink).not.toHaveBeenCalled();
-    expect(dependencies.admission.invite).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingPurchasesPort.insertSubscription,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingPurchasesPort.spendPaymentLink,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.paidClientAdmissionPort.invite).not.toHaveBeenCalled();
   });
 });
 
@@ -817,25 +900,29 @@ describe("FinishCheckoutPurchaseUseCase", () => {
     async (_label, status) => {
       // arrange
       const dependencies = checkoutPurchaseDependencies();
-      const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
+      const finishCheckoutPurchaseUseCase = new FinishCheckoutPurchaseUseCase(
+        dependencies,
+      );
 
       // act
-      await useCase.execute(recordedPurchase(status));
+      await finishCheckoutPurchaseUseCase.execute(recordedPurchase(status));
 
       // assert
       expect(
-        dependencies.paymentSubscriptions.holdRenewal,
+        dependencies.paymentSubscriptionsPort.holdRenewal,
       ).toHaveBeenCalledWith({
         paymentSubscriptionId: "sub_1",
         until: new Date("2026-10-10T10:05:00.000Z"),
       });
       expect(
-        dependencies.admission.invite.mock.invocationCallOrder[0],
+        dependencies.paidClientAdmissionPort.invite.mock.invocationCallOrder[0],
       ).toBeLessThan(
-        dependencies.paymentSubscriptions.holdRenewal.mock
+        dependencies.paymentSubscriptionsPort.holdRenewal.mock
           .invocationCallOrder[0] ?? 0,
       );
-      expect(dependencies.incidents.renewalHoldApplied).toHaveBeenCalledWith({
+      expect(
+        dependencies.coachingSubscriptionIncidentsPort.renewalHoldApplied,
+      ).toHaveBeenCalledWith({
         paymentSubscriptionId: "sub_1",
       });
     },
@@ -849,69 +936,91 @@ describe("FinishCheckoutPurchaseUseCase", () => {
     async (status, clientId) => {
       // arrange
       const dependencies = checkoutPurchaseDependencies();
-      const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
+      const finishCheckoutPurchaseUseCase = new FinishCheckoutPurchaseUseCase(
+        dependencies,
+      );
 
       // act
-      await useCase.execute(recordedPurchase(status));
+      await finishCheckoutPurchaseUseCase.execute(recordedPurchase(status));
 
       // assert
-      expect(dependencies.admission.invite).toHaveBeenCalledWith({ clientId });
+      expect(dependencies.paidClientAdmissionPort.invite).toHaveBeenCalledWith({
+        clientId,
+      });
     },
   );
 
   it("holds no renewal when her program starts immediately", async () => {
     // arrange
     const dependencies = checkoutPurchaseDependencies();
-    const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
+    const finishCheckoutPurchaseUseCase = new FinishCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    await useCase.execute(
+    await finishCheckoutPurchaseUseCase.execute(
       recordedPurchase("recorded", { ...completion, startChoice: "immediate" }),
     );
 
     // assert
     expect(
-      dependencies.paymentSubscriptions.holdRenewal,
+      dependencies.paymentSubscriptionsPort.holdRenewal,
     ).not.toHaveBeenCalled();
-    expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.renewalHoldApplied,
+    ).not.toHaveBeenCalled();
   });
 
   it("reports a failed hold and propagates it so the payment event is delivered again, with the client already invited", async () => {
     // arrange
     const failure = new Error("provider unavailable");
     const dependencies = checkoutPurchaseDependencies();
-    dependencies.paymentSubscriptions.holdRenewal.mockRejectedValue(failure);
-    const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
+    dependencies.paymentSubscriptionsPort.holdRenewal.mockRejectedValue(
+      failure,
+    );
+    const finishCheckoutPurchaseUseCase = new FinishCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const finishing = useCase.execute(recordedPurchase("recorded"));
+    const finishing = finishCheckoutPurchaseUseCase.execute(
+      recordedPurchase("recorded"),
+    );
 
     // assert
     await expect(finishing).rejects.toBe(failure);
-    expect(dependencies.admission.invite).toHaveBeenCalledWith({
+    expect(dependencies.paidClientAdmissionPort.invite).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
     });
-    expect(dependencies.incidents.renewalHoldFailed).toHaveBeenCalledWith({
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.renewalHoldFailed,
+    ).toHaveBeenCalledWith({
       paymentSubscriptionId: "sub_1",
       error: failure,
     });
-    expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingSubscriptionIncidentsPort.renewalHoldApplied,
+    ).not.toHaveBeenCalled();
   });
 
   it("propagates an invitation failure without holding so the payment event is delivered again", async () => {
     // arrange
     const failure = new Error("identity provider unavailable");
     const dependencies = checkoutPurchaseDependencies();
-    dependencies.admission.invite.mockRejectedValue(failure);
-    const useCase = new FinishCheckoutPurchaseUseCase(dependencies);
+    dependencies.paidClientAdmissionPort.invite.mockRejectedValue(failure);
+    const finishCheckoutPurchaseUseCase = new FinishCheckoutPurchaseUseCase(
+      dependencies,
+    );
 
     // act
-    const finishing = useCase.execute(recordedPurchase("recorded"));
+    const finishing = finishCheckoutPurchaseUseCase.execute(
+      recordedPurchase("recorded"),
+    );
 
     // assert
     await expect(finishing).rejects.toBe(failure);
     expect(
-      dependencies.paymentSubscriptions.holdRenewal,
+      dependencies.paymentSubscriptionsPort.holdRenewal,
     ).not.toHaveBeenCalled();
   });
 });
@@ -919,29 +1028,33 @@ describe("FinishCheckoutPurchaseUseCase", () => {
 describe("ReadCheckoutConfirmationUseCase", () => {
   it("answers closed without a lookup while sales are closed", async () => {
     // arrange
-    const paymentCheckout = createPaymentCheckout(completion);
-    const useCase = new ReadCheckoutConfirmationUseCase({
-      paymentCheckout,
-      salesWindow: closedSalesWindow(),
-    });
+    const paymentCheckoutPort = createPaymentCheckout(completion);
+    const readCheckoutConfirmationUseCase = new ReadCheckoutConfirmationUseCase(
+      {
+        paymentCheckoutPort,
+        salesWindow: closedSalesWindow(),
+      },
+    );
 
     // act
-    const result = await useCase.execute("cs_2");
+    const result = await readCheckoutConfirmationUseCase.execute("cs_2");
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(paymentCheckout.findCompletedSession).not.toHaveBeenCalled();
+    expect(paymentCheckoutPort.findCompletedSession).not.toHaveBeenCalled();
   });
 
   it("answers not_paid for a session that has not completed", async () => {
     // arrange
-    const useCase = new ReadCheckoutConfirmationUseCase({
-      paymentCheckout: createPaymentCheckout(null),
-      salesWindow: openSalesWindow(),
-    });
+    const readCheckoutConfirmationUseCase = new ReadCheckoutConfirmationUseCase(
+      {
+        paymentCheckoutPort: createPaymentCheckout(null),
+        salesWindow: openSalesWindow(),
+      },
+    );
 
     // act
-    const result = await useCase.execute("cs_2");
+    const result = await readCheckoutConfirmationUseCase.execute("cs_2");
 
     // assert
     expect(result).toEqual({ status: "not_paid" });
@@ -949,14 +1062,16 @@ describe("ReadCheckoutConfirmationUseCase", () => {
 
   it("confirms the paid bundle with the program waiting 14 days after payment", async () => {
     // arrange
-    const paymentCheckout = createPaymentCheckout(completion);
-    const useCase = new ReadCheckoutConfirmationUseCase({
-      paymentCheckout,
-      salesWindow: openSalesWindow(),
-    });
+    const paymentCheckoutPort = createPaymentCheckout(completion);
+    const readCheckoutConfirmationUseCase = new ReadCheckoutConfirmationUseCase(
+      {
+        paymentCheckoutPort,
+        salesWindow: openSalesWindow(),
+      },
+    );
 
     // act
-    const result = await useCase.execute("cs_2");
+    const result = await readCheckoutConfirmationUseCase.execute("cs_2");
 
     // assert
     expect(result).toEqual({
@@ -969,6 +1084,8 @@ describe("ReadCheckoutConfirmationUseCase", () => {
       email: "ana@example.com",
       waitingStartsOn: new Date("2026-10-10T10:05:00.000Z"),
     });
-    expect(paymentCheckout.findCompletedSession).toHaveBeenCalledWith("cs_2");
+    expect(paymentCheckoutPort.findCompletedSession).toHaveBeenCalledWith(
+      "cs_2",
+    );
   });
 });

@@ -8,9 +8,9 @@ import {
 } from "./coach-check-in-views";
 
 type ListCoachCheckInsUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "listAll">;
-  clock: ClockPort;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInsPort: Pick<CheckInsPort, "listAll">;
+  clockPort: ClockPort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
 };
 
 export class ListCoachCheckInsUseCase {
@@ -21,6 +21,6 @@ export class ListCoachCheckInsUseCase {
   }
 
   async execute(): Promise<CoachCheckInView[]> {
-    return this.views.viewsOf(await this.options.checkIns.listAll());
+    return this.views.viewsOf(await this.options.checkInsPort.listAll());
   }
 }

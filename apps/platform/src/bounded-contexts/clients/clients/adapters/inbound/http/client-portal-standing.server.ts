@@ -7,7 +7,7 @@ import { clientJourneyContext } from "./client-journey-context.server";
 import { clientsContext, type ClientsFeature } from "./context.server";
 
 type PortalStandingReading = Awaited<
-  ReturnType<ClientsFeature["readClientPortalStanding"]["execute"]>
+  ReturnType<ClientsFeature["readClientPortalStandingUseCase"]["execute"]>
 >;
 
 export const clientPortalStandingMiddleware: MiddlewareFunction<
@@ -37,7 +37,7 @@ async function readClientStanding(
     ? null
     : context
         .get(clientsContext)
-        .readClientPortalStanding.execute(authSubjectId);
+        .readClientPortalStandingUseCase.execute(authSubjectId);
 }
 
 async function linkAcceptedInvitation(
@@ -51,7 +51,7 @@ async function linkAcceptedInvitation(
 
   const linked = await context
     .get(clientsContext)
-    .acceptInvitation.execute({ authSubjectId });
+    .acceptInvitationUseCase.execute({ authSubjectId });
 
   return linked === "accepted";
 }

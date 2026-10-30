@@ -8,10 +8,10 @@ import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import type { CheckInsPort } from "./check-ins-port";
 
 type CountCheckInsAwaitingUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "find" | "listAll" | "listForClient">;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  incidents: CheckInIncidentsPort;
+  checkInsPort: Pick<CheckInsPort, "find" | "listAll" | "listForClient">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
 };
 
 export class CountCheckInsAwaitingUseCase {
@@ -24,13 +24,13 @@ export class CountCheckInsAwaitingUseCase {
   async execute(actor: CheckInActor): Promise<number> {
     try {
       const checkIns = await this.checkInsSeenBy(actor);
-      const at = this.options.clock.now();
+      const at = this.options.clockPort.now();
 
       return checkIns.filter((checkIn) =>
         checkIn.awaitsAnswerOf({ party: actor.party, at }),
       ).length;
     } catch (error) {
-      this.options.incidents.awaitingCheckInsCountFailed({
+      this.options.checkInIncidentsPort.awaitingCheckInsCountFailed({
         party: actor.party,
         error,
       });
@@ -41,11 +41,11 @@ export class CountCheckInsAwaitingUseCase {
 
   private async checkInsSeenBy(actor: CheckInActor): Promise<CheckIn[]> {
     if (actor.party === "coach") {
-      return this.options.checkIns.listAll();
+      return this.options.checkInsPort.listAll();
     }
 
     const clientId = await this.reach.reachableClientIdOf(actor.authSubjectId);
 
-    return clientId ? this.options.checkIns.listForClient(clientId) : [];
+    return clientId ? this.options.checkInsPort.listForClient(clientId) : [];
   }
 }

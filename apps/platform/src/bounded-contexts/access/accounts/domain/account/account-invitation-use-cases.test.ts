@@ -104,19 +104,19 @@ describe("IssueInvitationUseCase", () => {
   it("issues a thirty-day CLIENT invitation under a fresh id and stores it", async () => {
     // arrange
     const dependencies = {
-      clock: clockAt(NOW),
-      ids: createIds(),
-      invitations: createInvitations(null),
-      tokenGenerator: createTokenGenerator(TOKEN_HASH),
+      clockPort: clockAt(NOW),
+      accountInvitationIdsPort: createIds(),
+      accountInvitationsPort: createInvitations(null),
+      invitationTokenGeneratorPort: createTokenGenerator(TOKEN_HASH),
     };
-    const useCase = new IssueInvitationUseCase(dependencies);
+    const issueInvitationUseCase = new IssueInvitationUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ email: EMAIL });
+    const result = await issueInvitationUseCase.execute({ email: EMAIL });
 
     // assert
     expect(result).toEqual({ invitationId: "invitation-1" });
-    expect(dependencies.invitations.insert).toHaveBeenCalledWith(
+    expect(dependencies.accountInvitationsPort.insert).toHaveBeenCalledWith(
       AccountInvitation.issue({
         id: "invitation-1",
         email: EMAIL,
@@ -134,12 +134,14 @@ describe("EnsureInvitationDeliveredUseCase", () => {
     delivery?: "sent" | "failed";
   }) {
     return {
-      clock: clockAt(NOW),
-      identity: createIdentity(),
-      incidents: createIncidents(),
-      invitations: createInvitations(overrides.existing),
-      notifications: createNotifications(overrides.delivery ?? "sent"),
-      tokenGenerator: createTokenGenerator(NEW_TOKEN_HASH),
+      clockPort: clockAt(NOW),
+      identityInvitationsPort: createIdentity(),
+      accountInvitationIncidentsPort: createIncidents(),
+      accountInvitationsPort: createInvitations(overrides.existing),
+      accountInvitationNotificationsPort: createNotifications(
+        overrides.delivery ?? "sent",
+      ),
+      invitationTokenGeneratorPort: createTokenGenerator(NEW_TOKEN_HASH),
     };
   }
 
@@ -147,25 +149,30 @@ describe("EnsureInvitationDeliveredUseCase", () => {
     // arrange
     const existing = invitation();
     const dependencies = deliveryDependencies({ existing });
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    await useCase.execute(DELIVERY);
+    await ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
     // assert
-    expect(dependencies.invitations.insert).not.toHaveBeenCalled();
-    expect(dependencies.invitations.reissue).toHaveBeenCalledWith(
+    expect(dependencies.accountInvitationsPort.insert).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.reissue).toHaveBeenCalledWith(
       existing.reissue({ tokenHash: NEW_TOKEN_HASH, sentAt: NOW }),
     );
-    expect(dependencies.identity.create).toHaveBeenCalledWith({
+    expect(dependencies.identityInvitationsPort.create).toHaveBeenCalledWith({
       email: EMAIL,
       invitationId: "invitation-1",
     });
-    expect(dependencies.invitations.recordProvider).toHaveBeenCalledWith({
+    expect(
+      dependencies.accountInvitationsPort.recordProvider,
+    ).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       provider: PROVIDER,
     });
-    expect(dependencies.notifications.sendInvitation).toHaveBeenCalledWith({
+    expect(
+      dependencies.accountInvitationNotificationsPort.sendInvitation,
+    ).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       email: EMAIL,
       firstName: "Ana",
@@ -173,12 +180,14 @@ describe("EnsureInvitationDeliveredUseCase", () => {
       sentAt: NOW,
       expiresAt: new Date("2026-10-27T10:00:00.000Z"),
     });
-    expect(dependencies.invitations.recordEmailSent).toHaveBeenCalledWith({
+    expect(
+      dependencies.accountInvitationsPort.recordEmailSent,
+    ).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       at: NOW,
     });
     expect(
-      dependencies.invitations.recordEmailDeliveryFailed,
+      dependencies.accountInvitationsPort.recordEmailDeliveryFailed,
     ).not.toHaveBeenCalled();
   });
 
@@ -187,17 +196,24 @@ describe("EnsureInvitationDeliveredUseCase", () => {
     const dependencies = deliveryDependencies({
       existing: invitation({ provider: PROVIDER, emailSentAt: EARLIER }),
     });
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    await useCase.execute(DELIVERY);
+    await ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
     // assert
-    expect(dependencies.tokenGenerator.create).not.toHaveBeenCalled();
-    expect(dependencies.invitations.reissue).not.toHaveBeenCalled();
-    expect(dependencies.identity.create).not.toHaveBeenCalled();
-    expect(dependencies.invitations.recordProvider).not.toHaveBeenCalled();
-    expect(dependencies.notifications.sendInvitation).not.toHaveBeenCalled();
+    expect(
+      dependencies.invitationTokenGeneratorPort.create,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.reissue).not.toHaveBeenCalled();
+    expect(dependencies.identityInvitationsPort.create).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationsPort.recordProvider,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationNotificationsPort.sendInvitation,
+    ).not.toHaveBeenCalled();
   });
 
   it("does not resend on a redelivery after the email delivery failed", async () => {
@@ -208,14 +224,17 @@ describe("EnsureInvitationDeliveredUseCase", () => {
         emailDeliveryFailedAt: EARLIER,
       }),
     });
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    await useCase.execute(DELIVERY);
+    await ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
     // assert
-    expect(dependencies.invitations.reissue).not.toHaveBeenCalled();
-    expect(dependencies.notifications.sendInvitation).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.reissue).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationNotificationsPort.sendInvitation,
+    ).not.toHaveBeenCalled();
   });
 
   it("keeps the identity invitation it already created when it reissues the token", async () => {
@@ -223,15 +242,20 @@ describe("EnsureInvitationDeliveredUseCase", () => {
     const dependencies = deliveryDependencies({
       existing: invitation({ provider: PROVIDER }),
     });
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    await useCase.execute(DELIVERY);
+    await ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
     // assert
-    expect(dependencies.invitations.reissue).toHaveBeenCalledTimes(1);
-    expect(dependencies.identity.create).not.toHaveBeenCalled();
-    expect(dependencies.notifications.sendInvitation).toHaveBeenCalledTimes(1);
+    expect(dependencies.accountInvitationsPort.reissue).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(dependencies.identityInvitationsPort.create).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationNotificationsPort.sendInvitation,
+    ).toHaveBeenCalledTimes(1);
   });
 
   it("delivering again after a reissue creates no second provider invitation", async () => {
@@ -241,32 +265,42 @@ describe("EnsureInvitationDeliveredUseCase", () => {
       sentAt: EARLIER,
     });
     const dependencies = deliveryDependencies({ existing: reissuedByResend });
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    await useCase.execute(DELIVERY);
+    await ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
     // assert
-    expect(dependencies.identity.create).not.toHaveBeenCalled();
-    expect(dependencies.identity.replace).not.toHaveBeenCalled();
-    expect(dependencies.invitations.recordProvider).not.toHaveBeenCalled();
+    expect(dependencies.identityInvitationsPort.create).not.toHaveBeenCalled();
+    expect(dependencies.identityInvitationsPort.replace).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationsPort.recordProvider,
+    ).not.toHaveBeenCalled();
   });
 
   it("propagates an identity provider failure before any email is sent", async () => {
     // arrange
     const failure = new Error("Clerk unavailable");
     const dependencies = deliveryDependencies({ existing: invitation() });
-    dependencies.identity.create.mockRejectedValue(failure);
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    dependencies.identityInvitationsPort.create.mockRejectedValue(failure);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    const delivery = useCase.execute(DELIVERY);
+    const delivery = ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
     // assert
     await expect(delivery).rejects.toBe(failure);
-    expect(dependencies.invitations.reissue).toHaveBeenCalledTimes(1);
-    expect(dependencies.invitations.recordProvider).not.toHaveBeenCalled();
-    expect(dependencies.notifications.sendInvitation).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.reissue).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(
+      dependencies.accountInvitationsPort.recordProvider,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationNotificationsPort.sendInvitation,
+    ).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -280,46 +314,51 @@ describe("EnsureInvitationDeliveredUseCase", () => {
     async (_label, sendInvitation) => {
       // arrange
       const dependencies = deliveryDependencies({ existing: invitation() });
-      dependencies.notifications.sendInvitation = sendInvitation();
-      const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+      dependencies.accountInvitationNotificationsPort.sendInvitation =
+        sendInvitation();
+      const ensureInvitationDeliveredUseCase =
+        new EnsureInvitationDeliveredUseCase(dependencies);
 
       // act
-      await useCase.execute(DELIVERY);
+      await ensureInvitationDeliveredUseCase.execute(DELIVERY);
 
       // assert
       expect(
-        dependencies.invitations.recordEmailDeliveryFailed,
+        dependencies.accountInvitationsPort.recordEmailDeliveryFailed,
       ).toHaveBeenCalledWith({ invitationId: "invitation-1", at: NOW });
-      expect(dependencies.incidents.invitationEmailFailed).toHaveBeenCalledWith(
-        { invitationId: "invitation-1" },
-      );
-      expect(dependencies.invitations.recordEmailSent).not.toHaveBeenCalled();
+      expect(
+        dependencies.accountInvitationIncidentsPort.invitationEmailFailed,
+      ).toHaveBeenCalledWith({ invitationId: "invitation-1" });
+      expect(
+        dependencies.accountInvitationsPort.recordEmailSent,
+      ).not.toHaveBeenCalled();
     },
   );
 
   it("refuses to deliver an invitation that does not exist", async () => {
     // arrange
     const dependencies = deliveryDependencies({ existing: null });
-    const useCase = new EnsureInvitationDeliveredUseCase(dependencies);
+    const ensureInvitationDeliveredUseCase =
+      new EnsureInvitationDeliveredUseCase(dependencies);
 
     // act
-    const delivery = useCase.execute({
+    const delivery = ensureInvitationDeliveredUseCase.execute({
       invitationId: "invitation-404",
       firstName: "Ana",
     });
 
     // assert
     await expect(delivery).rejects.toThrow("invitation-404");
-    expect(dependencies.invitations.reissue).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.reissue).not.toHaveBeenCalled();
   });
 });
 
 describe("ResolveInvitationUseCase", () => {
   function resolveDependencies(found: AccountInvitation | null, now = NOW) {
     return {
-      clock: clockAt(now),
-      invitations: createInvitations(found),
-      tokenHasher: createTokenHasher(),
+      clockPort: clockAt(now),
+      accountInvitationsPort: createInvitations(found),
+      invitationTokenHasherPort: createTokenHasher(),
     };
   }
 
@@ -328,20 +367,24 @@ describe("ResolveInvitationUseCase", () => {
     const dependencies = resolveDependencies(
       invitation({ provider: PROVIDER, emailSentAt: EARLIER }),
     );
-    const useCase = new ResolveInvitationUseCase(dependencies);
+    const resolveInvitationUseCase = new ResolveInvitationUseCase(dependencies);
 
     // act
-    const resolution = await useCase.execute({ rawToken: RAW_TOKEN });
+    const resolution = await resolveInvitationUseCase.execute({
+      rawToken: RAW_TOKEN,
+    });
 
     // assert
     expect(resolution).toEqual({
       state: "valid",
       signUpUrl: PROVIDER.url,
     });
-    expect(dependencies.tokenHasher.sha256).toHaveBeenCalledWith(RAW_TOKEN);
-    expect(dependencies.invitations.findByTokenHash).toHaveBeenCalledWith(
-      TOKEN_HASH,
+    expect(dependencies.invitationTokenHasherPort.sha256).toHaveBeenCalledWith(
+      RAW_TOKEN,
     );
+    expect(
+      dependencies.accountInvitationsPort.findByTokenHash,
+    ).toHaveBeenCalledWith(TOKEN_HASH);
   });
 
   it.each([
@@ -363,12 +406,14 @@ describe("ResolveInvitationUseCase", () => {
     ["an invitation without an identity invitation yet", invitation(), NOW],
   ])("answers unavailable for %s", async (_label, found, now) => {
     // arrange
-    const useCase = new ResolveInvitationUseCase(
+    const resolveInvitationUseCase = new ResolveInvitationUseCase(
       resolveDependencies(found, now),
     );
 
     // act
-    const resolution = await useCase.execute({ rawToken: RAW_TOKEN });
+    const resolution = await resolveInvitationUseCase.execute({
+      rawToken: RAW_TOKEN,
+    });
 
     // assert
     expect(resolution).toEqual({ state: "unavailable" });

@@ -23,10 +23,10 @@ describe("createProductEmail", () => {
     const config = createConfig({ PRODUCT_EMAIL_PROVIDER: "memory" });
 
     // act
-    const productEmail = createProductEmail(config);
+    const productEmailPort = createProductEmail(config);
 
     // assert
-    expect(productEmail).toBeInstanceOf(InMemoryProductEmailAdapter);
+    expect(productEmailPort).toBeInstanceOf(InMemoryProductEmailAdapter);
   });
 
   it("returns the Resend adapter for the resend provider", () => {
@@ -37,10 +37,10 @@ describe("createProductEmail", () => {
     });
 
     // act
-    const productEmail = createProductEmail(config);
+    const productEmailPort = createProductEmail(config);
 
     // assert
-    expect(productEmail).toBeInstanceOf(ResendProductEmailAdapter);
-    expect(productEmail.provider).toBe("resend");
+    expect(productEmailPort).toBeInstanceOf(ResendProductEmailAdapter);
+    expect(productEmailPort.provider).toBe("resend");
   });
 });

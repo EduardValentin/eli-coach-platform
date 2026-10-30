@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(checkInsContext)
-      .sharedCheckIns.decline(args, args.params.checkInId);
+      .sharedCheckInsController.decline(args, args.params.checkInId);
   });
 }
 

@@ -14,12 +14,12 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.coachingEndNotPropagated({
+    coachingSalesIncidentsAdapter.coachingEndNotPropagated({
       subscriptionId: "subscription-1",
       clientId: "client-1",
       endsAt: new Date("2027-01-21T08:00:00.000Z"),
@@ -44,12 +44,12 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.coachingPeriodNotPropagated({
+    coachingSalesIncidentsAdapter.coachingPeriodNotPropagated({
       subscriptionId: "subscription-1",
       clientId: "client-1",
       error: new TypeError("connection reset"),
@@ -72,12 +72,12 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.renewalHoldLiftFailed({
+    coachingSalesIncidentsAdapter.renewalHoldLiftFailed({
       paymentSubscriptionId: "sub_1",
       error: new TypeError("provider down"),
     });
@@ -98,7 +98,7 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const failure = Object.assign(new TypeError("flags unreadable"), {
@@ -106,7 +106,7 @@ describe("createCoachingSalesIncidents", () => {
     });
 
     // act
-    logger.salesModeReadFailed(failure);
+    coachingSalesIncidentsAdapter.salesModeReadFailed(failure);
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -124,12 +124,12 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.salesModeReadFailed("unreadable");
+    coachingSalesIncidentsAdapter.salesModeReadFailed("unreadable");
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -146,12 +146,14 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.paymentLinkEmailFailed("4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11");
+    coachingSalesIncidentsAdapter.paymentLinkEmailFailed(
+      "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+    );
 
     // assert
     expect(consoleError).toHaveBeenCalledWith("Payment link email failed.", {
@@ -165,12 +167,12 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.paymentEventRejected({
+    coachingSalesIncidentsAdapter.paymentEventRejected({
       eventId: "evt_1",
       reason: "call_already_paid",
     });
@@ -191,12 +193,15 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.paymentEventUnrouted({ eventId: "evt_1", purpose: "gift-card" });
+    coachingSalesIncidentsAdapter.paymentEventUnrouted({
+      eventId: "evt_1",
+      purpose: "gift-card",
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -214,12 +219,12 @@ describe("createCoachingSalesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CoachingSalesIncidentsAdapter(
+    const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.paymentEventHandlingFailed({
+    coachingSalesIncidentsAdapter.paymentEventHandlingFailed({
       error: Object.assign(new Error("relation is locked"), {
         name: "DrizzleQueryError",
       }),
@@ -244,8 +249,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a cancellation with its rule and the refund due",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.subscriptionCancelled({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.subscriptionCancelled({
             subscriptionId: "subscription-1",
             startChoice: "waiting",
             rule: "full-refund",
@@ -263,8 +268,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a cancellation the provider refused, by the failure's kind only",
         "error",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.subscriptionCancellationFailed({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.subscriptionCancellationFailed({
             subscriptionId: "subscription-1",
             rule: "no-refund",
             error: new TypeError("ana@example.com sub_1 refused"),
@@ -280,8 +285,10 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a program started now",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.programStartedNow({ subscriptionId: "subscription-1" }),
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.programStartedNow({
+            subscriptionId: "subscription-1",
+          }),
         "Coaching program started now.",
         {
           eventCategory: "coaching_program_started_now",
@@ -291,8 +298,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a reconciled provider event",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.subscriptionEventReconciled({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.subscriptionEventReconciled({
             eventId: "evt_1",
             eventKind: "ended",
             paymentReference: "sub_1",
@@ -310,8 +317,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a settled refund",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.refundSettled({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.refundSettled({
             subscriptionId: "subscription-1",
             refundedCents: 44700,
           }),
@@ -325,8 +332,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "an opened payment-method session",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.paymentMethodSessionOpened({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.paymentMethodSessionOpened({
             subscriptionId: "subscription-1",
           }),
         "Payment method session opened.",
@@ -338,8 +345,10 @@ describe("createCoachingSalesIncidents", () => {
       [
         "an applied renewal hold",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.renewalHoldApplied({ paymentSubscriptionId: "sub_1" }),
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.renewalHoldApplied({
+            paymentSubscriptionId: "sub_1",
+          }),
         "Coaching subscription renewal hold applied.",
         {
           eventCategory: "coaching_subscription_renewal_hold_applied",
@@ -349,8 +358,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a failed renewal hold, by the failure's kind only",
         "error",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.renewalHoldFailed({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.renewalHoldFailed({
             paymentSubscriptionId: "sub_1",
             error: new RangeError("ana@example.com"),
           }),
@@ -364,8 +373,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a mirrored card event by ids only",
         "info",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.paymentCardEventMirrored({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.paymentCardEventMirrored({
             eventId: "evt_card",
             eventKind: "card-attached",
             paymentCustomerId: "cus_1",
@@ -383,8 +392,8 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a card on file that could not be mirrored, by the failure's kind only",
         "error",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.paymentCardRefreshFailed({
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.paymentCardRefreshFailed({
             paymentCustomerId: "cus_1",
             error: new TypeError("4242"),
           }),
@@ -398,8 +407,10 @@ describe("createCoachingSalesIncidents", () => {
       [
         "a refund notice the coach did not get",
         "error",
-        (logger: CoachingSalesIncidentsAdapter) =>
-          logger.refundNotificationFailed({ subscriptionId: "subscription-1" }),
+        (coachingSalesIncidentsAdapter: CoachingSalesIncidentsAdapter) =>
+          coachingSalesIncidentsAdapter.refundNotificationFailed({
+            subscriptionId: "subscription-1",
+          }),
         "Refund due email to the coach failed.",
         {
           errorCategory: "coaching_subscription_refund_notification_failure",
@@ -411,12 +422,12 @@ describe("createCoachingSalesIncidents", () => {
       const output = vi
         .spyOn(console, level)
         .mockImplementation(() => undefined);
-      const logger = new CoachingSalesIncidentsAdapter(
+      const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
         new ConsoleLoggerAdapter(),
       );
 
       // act
-      report(logger);
+      report(coachingSalesIncidentsAdapter);
 
       // assert
       expect(output).toHaveBeenCalledWith(message, fields);

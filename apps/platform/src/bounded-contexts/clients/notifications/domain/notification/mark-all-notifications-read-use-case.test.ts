@@ -25,25 +25,32 @@ function createMarkAllRead(options?: { client?: ClientReachReading | null }) {
   const inbox = {
     markAllRead: vi.fn().mockResolvedValue(undefined),
   } satisfies Pick<NotificationInboxPort, "markAllRead">;
-  const ports = { clients, clock: { now: () => NOW }, inbox };
+  const ports = {
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    notificationInboxPort: inbox,
+  };
 
-  return { markAllRead: new MarkAllNotificationsReadUseCase(ports), ports };
+  return {
+    markAllNotificationsReadUseCase: new MarkAllNotificationsReadUseCase(ports),
+    ports,
+  };
 }
 
 describe("MarkAllNotificationsReadUseCase", () => {
   it("marks every notification of hers read now", async () => {
     // arrange
-    const { markAllRead, ports } = createMarkAllRead();
+    const { markAllNotificationsReadUseCase, ports } = createMarkAllRead();
 
     // act
-    const result = await markAllRead.execute({
+    const result = await markAllNotificationsReadUseCase.execute({
       party: "client",
       authSubjectId: "user_ana",
     });
 
     // assert
     expect(result).toBe("marked");
-    expect(ports.inbox.markAllRead).toHaveBeenCalledWith({
+    expect(ports.notificationInboxPort.markAllRead).toHaveBeenCalledWith({
       recipient: { party: "client", clientId: "client-1" },
       at: NOW,
     });
@@ -51,14 +58,16 @@ describe("MarkAllNotificationsReadUseCase", () => {
 
   it("marks every notification of the coach read for the coach only", async () => {
     // arrange
-    const { markAllRead, ports } = createMarkAllRead();
+    const { markAllNotificationsReadUseCase, ports } = createMarkAllRead();
 
     // act
-    const result = await markAllRead.execute({ party: "coach" });
+    const result = await markAllNotificationsReadUseCase.execute({
+      party: "coach",
+    });
 
     // assert
     expect(result).toBe("marked");
-    expect(ports.inbox.markAllRead).toHaveBeenCalledWith({
+    expect(ports.notificationInboxPort.markAllRead).toHaveBeenCalledWith({
       recipient: { party: "coach" },
       at: NOW,
     });
@@ -69,16 +78,18 @@ describe("MarkAllNotificationsReadUseCase", () => {
     { situation: "who is unknown", client: null },
   ] as const)("answers unknown to a client $situation", async ({ client }) => {
     // arrange
-    const { markAllRead, ports } = createMarkAllRead({ client });
+    const { markAllNotificationsReadUseCase, ports } = createMarkAllRead({
+      client,
+    });
 
     // act
-    const result = await markAllRead.execute({
+    const result = await markAllNotificationsReadUseCase.execute({
       party: "client",
       authSubjectId: "user_ana",
     });
 
     // assert
     expect(result).toBe("unknown");
-    expect(ports.inbox.markAllRead).not.toHaveBeenCalled();
+    expect(ports.notificationInboxPort.markAllRead).not.toHaveBeenCalled();
   });
 });

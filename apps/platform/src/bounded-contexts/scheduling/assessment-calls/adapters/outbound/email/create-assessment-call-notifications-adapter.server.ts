@@ -7,8 +7,8 @@ import {
 } from "./email-assessment-call-notifications-adapter.server";
 
 export function createAssessmentCallNotificationsAdapter(
-  productEmail: ProductEmailPort,
+  productEmailPort: ProductEmailPort,
   options: EmailAssessmentCallNotificationsOptions,
 ): AssessmentCallNotificationsPort {
-  return new EmailAssessmentCallNotificationsAdapter(productEmail, options);
+  return new EmailAssessmentCallNotificationsAdapter(productEmailPort, options);
 }

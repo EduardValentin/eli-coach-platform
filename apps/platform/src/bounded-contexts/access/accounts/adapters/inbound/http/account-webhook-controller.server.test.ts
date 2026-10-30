@@ -26,14 +26,14 @@ describe("AccountWebhookController", () => {
   it("returns 503 and never attempts verification when no signing secret is configured", async () => {
     // arrange
     const execute = vi.fn();
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: undefined,
     });
     const request = createWebhookRequest();
 
     // act
-    const response = await controller.handleClerkEvent(request);
+    const response = await accountWebhookController.handleClerkEvent(request);
 
     // assert
     expect(response.status).toBe(503);
@@ -45,14 +45,14 @@ describe("AccountWebhookController", () => {
     // arrange
     mocks.verifyWebhook.mockRejectedValue(new Error("bad signature"));
     const execute = vi.fn();
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
 
     // act
-    const response = await controller.handleClerkEvent(request);
+    const response = await accountWebhookController.handleClerkEvent(request);
 
     // assert
     expect(response.status).toBe(400);
@@ -68,14 +68,14 @@ describe("AccountWebhookController", () => {
       createUserDeletedEvent(CLERK_USER_ID),
     );
     const execute = vi.fn().mockResolvedValue(undefined);
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
 
     // act
-    const response = await controller.handleClerkEvent(request);
+    const response = await accountWebhookController.handleClerkEvent(request);
 
     // assert
     expect(response.status).toBe(200);
@@ -91,14 +91,14 @@ describe("AccountWebhookController", () => {
       type: "user.created",
     });
     const execute = vi.fn();
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
 
     // act
-    const response = await controller.handleClerkEvent(request);
+    const response = await accountWebhookController.handleClerkEvent(request);
 
     // assert
     expect(response.status).toBe(200);
@@ -109,14 +109,14 @@ describe("AccountWebhookController", () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue(createUserDeletedEvent(undefined));
     const execute = vi.fn();
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
 
     // act
-    const response = await controller.handleClerkEvent(request);
+    const response = await accountWebhookController.handleClerkEvent(request);
 
     // assert
     expect(response.status).toBe(400);
@@ -130,14 +130,15 @@ describe("AccountWebhookController", () => {
     );
     const deletionFault = new Error("connection reset");
     const execute = vi.fn().mockRejectedValue(deletionFault);
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
 
     // act
-    const handleClerkEvent = () => controller.handleClerkEvent(request);
+    const handleClerkEvent = () =>
+      accountWebhookController.handleClerkEvent(request);
 
     // assert
     await expect(handleClerkEvent).rejects.toThrow(deletionFault);
@@ -151,16 +152,16 @@ describe("AccountWebhookController", () => {
     // Marking deletion is idempotent by construction, so a repeated delivery
     // resolves the same way as the first.
     const execute = vi.fn().mockResolvedValue(undefined);
-    const controller = new AccountWebhookController({
-      deletion: createDeleteAccountUseCase({ execute }),
+    const accountWebhookController = new AccountWebhookController({
+      deleteAccountUseCase: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
 
     // act
-    const firstResponse = await controller.handleClerkEvent(
+    const firstResponse = await accountWebhookController.handleClerkEvent(
       createWebhookRequest(),
     );
-    const secondResponse = await controller.handleClerkEvent(
+    const secondResponse = await accountWebhookController.handleClerkEvent(
       createWebhookRequest(),
     );
 
@@ -174,11 +175,11 @@ describe("AccountWebhookController", () => {
 });
 
 function createDeleteAccountUseCase(
-  overrides: Partial<DeleteAccountUseCase>,
+  deleteAccountUseCase: Partial<DeleteAccountUseCase>,
 ): DeleteAccountUseCase {
   return {
     execute: vi.fn(),
-    ...overrides,
+    ...deleteAccountUseCase,
   } as DeleteAccountUseCase;
 }
 

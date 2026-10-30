@@ -10,22 +10,25 @@ import {
 } from "~/shared/logging/error-fields.server";
 
 export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   awaitingCheckInsCountFailed({
     error,
     party,
   }: Parameters<CheckInIncidentsPort["awaitingCheckInsCountFailed"]>[0]) {
-    this.logger.error("Check-ins awaiting an answer could not be counted.", {
-      errorCategory: "check_in_awaiting_count_failure",
-      errorClass: errorClassOf(error),
-      party,
-      ...errorCodeOf(error),
-    });
+    this.loggerPort.error(
+      "Check-ins awaiting an answer could not be counted.",
+      {
+        errorCategory: "check_in_awaiting_count_failure",
+        errorClass: errorClassOf(error),
+        party,
+        ...errorCodeOf(error),
+      },
+    );
   }
 
   awaitingCheckInsListFailed({ error }: { error: unknown }) {
-    this.logger.error("Check-ins awaiting an answer could not be listed.", {
+    this.loggerPort.error("Check-ins awaiting an answer could not be listed.", {
       errorCategory: "check_in_awaiting_list_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -39,7 +42,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
     checkInId: string;
     event: CheckInNotification;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Check-in notification could not be recorded in the bell.",
       {
         checkInId,
@@ -56,7 +59,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
     checkInId: string;
     notification: CheckInNotification;
   }) {
-    this.logger.error("Check-in notification failed.", {
+    this.loggerPort.error("Check-in notification failed.", {
       checkInId,
       errorCategory: "check_in_notification_failure",
       notification,
@@ -70,7 +73,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
     seriesId: string;
     event: CheckInSeriesNotification | "clashesAdded";
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Weekly check-in notification could not be recorded in the bell.",
       {
         errorCategory: "check_in_series_inbox_failure",
@@ -87,7 +90,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
     seriesId: string;
     notification: CheckInSeriesNotification;
   }) {
-    this.logger.error("Weekly check-in notification failed.", {
+    this.loggerPort.error("Weekly check-in notification failed.", {
       errorCategory: "check_in_series_notification_failure",
       notification,
       seriesId,
@@ -101,7 +104,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
     clientId: string;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Weekly check-in could not be extended; its new weeks are missing.",
       {
         clientId,
@@ -119,7 +122,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
     clientId: string;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "Weekly check-in could not be read; the client record shows none.",
       {
         clientId,
@@ -131,7 +134,7 @@ export class CheckInsIncidentsAdapter implements CheckInIncidentsPort {
   }
 
   nextCheckInLookupFailed({ error }: { error: unknown }) {
-    this.logger.error("The client's next check-in could not be found.", {
+    this.loggerPort.error("The client's next check-in could not be found.", {
       errorCategory: "check_in_next_lookup_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),

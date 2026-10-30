@@ -133,12 +133,12 @@ function createPorts(options?: {
   const now = options?.now ?? NOW;
 
   return {
-    checkIns,
-    clients,
-    clock: { now: () => now },
-    coachTime: { release: vi.fn().mockResolvedValue(undefined) },
-    identities,
-    incidents: {
+    checkInsPort: checkIns,
+    clientReachPort: clients,
+    clockPort: { now: () => now },
+    coachTimePort: { release: vi.fn().mockResolvedValue(undefined) },
+    clientIdentitiesPort: identities,
+    checkInIncidentsPort: {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
@@ -149,13 +149,13 @@ function createPorts(options?: {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     },
-    inbox: {
+    checkInInboxPort: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
       scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
-    notifications,
+    checkInNotificationsPort: notifications,
   };
 }
 
@@ -199,7 +199,7 @@ describe.each(ANSWERS)(
           answeredAt: NOW,
         }),
       });
-      expect(ports.checkIns.settle).toHaveBeenCalledWith({
+      expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
         id: "check-in-1",
         outcome,
         at: NOW,
@@ -215,11 +215,13 @@ describe.each(ANSWERS)(
       await create(ports).execute(command);
 
       // assert
-      expect(ports.notifications[notification]).toHaveBeenCalledWith({
-        checkIn: expect.objectContaining({ recordedStatus: outcome }),
-        client: ANA,
-        recipient: "client",
-      });
+      expect(ports.checkInNotificationsPort[notification]).toHaveBeenCalledWith(
+        {
+          checkIn: expect.objectContaining({ recordedStatus: outcome }),
+          client: ANA,
+          recipient: "client",
+        },
+      );
     });
 
     it("ignores a zone sent with the coach's answer", async () => {
@@ -237,7 +239,7 @@ describe.each(ANSWERS)(
         status: notification,
         checkIn: expect.objectContaining({ clientTimeZone: "Europe/London" }),
       });
-      expect(ports.checkIns.settle).toHaveBeenCalledWith({
+      expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
         id: "check-in-1",
         outcome,
         at: NOW,
@@ -276,8 +278,10 @@ describe.each(ANSWERS)(
 
         // assert
         expect(result).toEqual({ status: refusal });
-        expect(ports.checkIns.settle).not.toHaveBeenCalled();
-        expect(ports.notifications[notification]).not.toHaveBeenCalled();
+        expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
+        expect(
+          ports.checkInNotificationsPort[notification],
+        ).not.toHaveBeenCalled();
       },
     );
 
@@ -306,20 +310,26 @@ describe.each(ANSWERS)(
 
       // assert
       expect(result).toEqual({ status: "changed_meanwhile" });
-      expect(ports.notifications[notification]).not.toHaveBeenCalled();
+      expect(
+        ports.checkInNotificationsPort[notification],
+      ).not.toHaveBeenCalled();
     });
 
     it("keeps the answer and reports the email that failed", async () => {
       // arrange
       const ports = createPorts();
-      ports.notifications[notification].mockRejectedValue(new Error("down"));
+      ports.checkInNotificationsPort[notification].mockRejectedValue(
+        new Error("down"),
+      );
 
       // act
       const result = await create(ports).execute(command);
 
       // assert
       expect(result.status).toBe(notification);
-      expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+      expect(
+        ports.checkInIncidentsPort.checkInNotificationFailed,
+      ).toHaveBeenCalledWith({
         checkInId: "check-in-1",
         notification,
       });
@@ -362,12 +372,16 @@ describe.each(ANSWERS)(
       await create(ports).execute(command);
 
       // assert
-      expect(ports.notifications[newTimeNotification]).toHaveBeenCalledWith({
+      expect(
+        ports.checkInNotificationsPort[newTimeNotification],
+      ).toHaveBeenCalledWith({
         checkIn: expect.objectContaining({ id: "check-in-1" }),
         client: ANA,
         recipient: "coach",
       });
-      expect(ports.notifications[notification]).not.toHaveBeenCalled();
+      expect(
+        ports.checkInNotificationsPort[notification],
+      ).not.toHaveBeenCalled();
     });
 
     it("refuses the coach answering the new time she proposed", async () => {
@@ -382,7 +396,7 @@ describe.each(ANSWERS)(
 
       // assert
       expect(result).toEqual({ status: "not_your_turn" });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
     });
   },
 );
@@ -412,10 +426,10 @@ describe.each(ANSWERS)(
           answeredAt: NOW,
         }),
       });
-      expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith(
+      expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
         "user_ana",
       );
-      expect(ports.checkIns.settle).toHaveBeenCalledWith({
+      expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
         id: "check-in-1",
         outcome,
         at: NOW,
@@ -432,11 +446,13 @@ describe.each(ANSWERS)(
       await create(ports).execute(command);
 
       // assert
-      expect(ports.notifications[notification]).toHaveBeenCalledWith({
-        checkIn: expect.objectContaining({ clientTimeZone: "Asia/Tokyo" }),
-        client: ANA,
-        recipient: "coach",
-      });
+      expect(ports.checkInNotificationsPort[notification]).toHaveBeenCalledWith(
+        {
+          checkIn: expect.objectContaining({ clientTimeZone: "Asia/Tokyo" }),
+          client: ANA,
+          recipient: "coach",
+        },
+      );
     });
 
     it("keeps the recorded zone when her answer names none", async () => {
@@ -450,7 +466,7 @@ describe.each(ANSWERS)(
       });
 
       // assert
-      expect(ports.checkIns.settle).toHaveBeenCalledWith({
+      expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
         id: "check-in-1",
         outcome,
         at: NOW,
@@ -467,7 +483,7 @@ describe.each(ANSWERS)(
 
       // assert
       expect(result).toEqual({ status: "not_your_turn" });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
     });
 
     it("answers unknown for another client's check-in", async () => {
@@ -481,7 +497,7 @@ describe.each(ANSWERS)(
 
       // assert
       expect(result).toEqual({ status: "unknown" });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
     });
 
     it.each([["awaiting_onboarding"], ["ended"]] as const)(
@@ -505,7 +521,7 @@ describe.each(ANSWERS)(
 
         // assert
         expect(result).toEqual({ status: "ended" });
-        expect(ports.checkIns.settle).not.toHaveBeenCalled();
+        expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
       },
     );
 
@@ -521,7 +537,7 @@ describe.each(ANSWERS)(
 
       // assert
       expect(result).toEqual({ status: "invalid_time_zone" });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
     });
   },
 );
@@ -543,13 +559,13 @@ describe("WithdrawCheckInRequestUseCase", () => {
       status: "withdrawn",
       checkIn: expect.objectContaining({ recordedStatus: "cancelled" }),
     });
-    expect(ports.checkIns.settle).toHaveBeenCalledWith({
+    expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
       id: "check-in-1",
       outcome: "cancelled",
       at: NOW,
       expectedStatus: "pending",
     });
-    expect(ports.notifications.withdrawn).toHaveBeenCalledWith({
+    expect(ports.checkInNotificationsPort.withdrawn).toHaveBeenCalledWith({
       checkIn: expect.objectContaining({ id: "check-in-1" }),
       client: ANA,
       recipient: "coach",
@@ -571,8 +587,8 @@ describe("WithdrawCheckInRequestUseCase", () => {
       status: "withdrawn",
       checkIn: expect.objectContaining({ recordedStatus: "cancelled" }),
     });
-    expect(ports.clients.findByAuthSubjectId).not.toHaveBeenCalled();
-    expect(ports.notifications.withdrawn).toHaveBeenCalledWith({
+    expect(ports.clientReachPort.findByAuthSubjectId).not.toHaveBeenCalled();
+    expect(ports.checkInNotificationsPort.withdrawn).toHaveBeenCalledWith({
       checkIn: expect.objectContaining({ id: "check-in-1" }),
       client: ANA,
       recipient: "client",
@@ -622,8 +638,8 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: refusal });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
-      expect(ports.notifications.withdrawn).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
+      expect(ports.checkInNotificationsPort.withdrawn).not.toHaveBeenCalled();
     },
   );
 
@@ -639,7 +655,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not_your_turn" });
-    expect(ports.checkIns.settle).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
   });
 
   it("answers unknown for another client's request", async () => {
@@ -653,7 +669,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "unknown" });
-    expect(ports.checkIns.settle).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
   });
 
   it("answers unknown for a check-in that does not exist", async () => {
@@ -689,7 +705,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.checkIns.settle).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
   });
 
   it("refuses when the coach answered first", async () => {
@@ -703,13 +719,13 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "changed_meanwhile" });
-    expect(ports.notifications.withdrawn).not.toHaveBeenCalled();
+    expect(ports.checkInNotificationsPort.withdrawn).not.toHaveBeenCalled();
   });
 
   it("keeps the withdrawal and reports the email the provider refused", async () => {
     // arrange
     const ports = createPorts();
-    ports.notifications.withdrawn.mockResolvedValue("failed");
+    ports.checkInNotificationsPort.withdrawn.mockResolvedValue("failed");
 
     // act
     const result = await new WithdrawCheckInRequestUseCase(ports).execute(
@@ -718,7 +734,9 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result.status).toBe("withdrawn");
-    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+    expect(
+      ports.checkInIncidentsPort.checkInNotificationFailed,
+    ).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "withdrawn",
     });
@@ -727,7 +745,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
   it("reports the email when her identity cannot be read", async () => {
     // arrange
     const ports = createPorts();
-    ports.identities.findByClientIds.mockResolvedValue([]);
+    ports.clientIdentitiesPort.findByClientIds.mockResolvedValue([]);
 
     // act
     const result = await new WithdrawCheckInRequestUseCase(ports).execute(
@@ -736,8 +754,10 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result.status).toBe("withdrawn");
-    expect(ports.notifications.withdrawn).not.toHaveBeenCalled();
-    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+    expect(ports.checkInNotificationsPort.withdrawn).not.toHaveBeenCalled();
+    expect(
+      ports.checkInIncidentsPort.checkInNotificationFailed,
+    ).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "withdrawn",
     });
@@ -774,14 +794,14 @@ describe("CancelCheckInUseCase", () => {
           answeredAt: NOW,
         }),
       });
-      expect(ports.checkIns.settle).toHaveBeenCalledWith({
+      expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
         id: "check-in-1",
         outcome: "cancelled",
         at: NOW,
         expectedStatus: "approved",
       });
-      expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-1");
-      expect(ports.notifications.cancelled).toHaveBeenCalledWith({
+      expect(ports.coachTimePort.release).toHaveBeenCalledWith("reservation-1");
+      expect(ports.checkInNotificationsPort.cancelled).toHaveBeenCalledWith({
         checkIn: expect.objectContaining({ id: "check-in-1" }),
         client: ANA,
         recipient,
@@ -817,8 +837,8 @@ describe("CancelCheckInUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: refusal });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
-      expect(ports.notifications.cancelled).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
+      expect(ports.checkInNotificationsPort.cancelled).not.toHaveBeenCalled();
     },
   );
 
@@ -844,8 +864,8 @@ describe("CancelCheckInUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "not_allowed" });
-      expect(ports.checkIns.settle).not.toHaveBeenCalled();
-      expect(ports.notifications.cancelled).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
+      expect(ports.checkInNotificationsPort.cancelled).not.toHaveBeenCalled();
     },
   );
 
@@ -867,7 +887,7 @@ describe("CancelCheckInUseCase", () => {
 
     // assert
     expect(result).toMatchObject({ status: "cancelled" });
-    expect(ports.checkIns.settle).toHaveBeenCalledWith({
+    expect(ports.checkInsPort.settle).toHaveBeenCalledWith({
       id: "check-in-1",
       outcome: "cancelled",
       at: NOW,
@@ -889,7 +909,7 @@ describe("CancelCheckInUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not_allowed" });
-    expect(ports.checkIns.settle).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.settle).not.toHaveBeenCalled();
   });
 
   it("refuses when the check-in stopped being approved meanwhile", async () => {
@@ -907,7 +927,7 @@ describe("CancelCheckInUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "changed_meanwhile" });
-    expect(ports.notifications.cancelled).not.toHaveBeenCalled();
+    expect(ports.checkInNotificationsPort.cancelled).not.toHaveBeenCalled();
   });
 
   it("answers unknown for another client's check-in", async () => {
@@ -931,7 +951,7 @@ describe("CancelCheckInUseCase", () => {
     const ports = createPorts({
       found: approvedCheckIn({ initiatedBy: "coach", proposedBy: "coach" }),
     });
-    ports.notifications.cancelled.mockResolvedValue("failed");
+    ports.checkInNotificationsPort.cancelled.mockResolvedValue("failed");
 
     // act
     const result = await new CancelCheckInUseCase(ports).execute({
@@ -941,7 +961,9 @@ describe("CancelCheckInUseCase", () => {
 
     // assert
     expect(result.status).toBe("cancelled");
-    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+    expect(
+      ports.checkInIncidentsPort.checkInNotificationFailed,
+    ).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "cancelled",
     });

@@ -39,12 +39,12 @@ type RemoveProgressPhotoResult = Awaited<
 describe("ProgressPhotoController open", () => {
   it("answers the photo privately, never cached, sniffed or scripted", async () => {
     // arrange
-    const { controller, openProgressPhoto } = createController({
+    const { progressPhotoController, openProgressPhoto } = createController({
       opened: { status: "opened", bytes: PHOTO_BYTES, mimeType: "image/jpeg" },
     });
 
     // act
-    const response = await controller.open(photoArgs(), PHOTO_ID);
+    const response = await progressPhotoController.open(photoArgs(), PHOTO_ID);
 
     // assert
     expect(response.status).toBe(200);
@@ -65,12 +65,15 @@ describe("ProgressPhotoController open", () => {
 
   it("asks for the photo on behalf of the coach with her role", async () => {
     // arrange
-    const { controller, openProgressPhoto } = createController({
+    const { progressPhotoController, openProgressPhoto } = createController({
       opened: { status: "opened", bytes: PHOTO_BYTES, mimeType: "image/jpeg" },
     });
 
     // act
-    await controller.open(photoArgs({ session: COACH_SESSION }), PHOTO_ID);
+    await progressPhotoController.open(
+      photoArgs({ session: COACH_SESSION }),
+      PHOTO_ID,
+    );
 
     // assert
     expect(openProgressPhoto).toHaveBeenCalledWith({
@@ -81,12 +84,12 @@ describe("ProgressPhotoController open", () => {
 
   it("answers not found to anyone the photo is not shown to", async () => {
     // arrange
-    const { controller } = createController({
+    const { progressPhotoController } = createController({
       opened: { status: "not-found" },
     });
 
     // act
-    const response = await controller.open(photoArgs(), PHOTO_ID);
+    const response = await progressPhotoController.open(photoArgs(), PHOTO_ID);
 
     // assert
     expect(response.status).toBe(404);
@@ -94,10 +97,13 @@ describe("ProgressPhotoController open", () => {
 
   it("answers not found to an id that is not a uuid without looking for a photo", async () => {
     // arrange
-    const { controller, openProgressPhoto } = createController();
+    const { progressPhotoController, openProgressPhoto } = createController();
 
     // act
-    const response = await controller.open(photoArgs(), "../../etc/passwd");
+    const response = await progressPhotoController.open(
+      photoArgs(),
+      "../../etc/passwd",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -106,11 +112,14 @@ describe("ProgressPhotoController open", () => {
 
   it("refuses a visitor who is not signed in without looking for a photo", async () => {
     // arrange
-    const { controller, openProgressPhoto } = createController();
+    const { progressPhotoController, openProgressPhoto } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.open(photoArgs({ session: ANONYMOUS_SESSION }), PHOTO_ID),
+      progressPhotoController.open(
+        photoArgs({ session: ANONYMOUS_SESSION }),
+        PHOTO_ID,
+      ),
     );
 
     // assert
@@ -122,12 +131,15 @@ describe("ProgressPhotoController open", () => {
 describe("ProgressPhotoController remove", () => {
   it("removes her photo and answers no content", async () => {
     // arrange
-    const { controller, removeProgressPhoto } = createController({
+    const { progressPhotoController, removeProgressPhoto } = createController({
       removed: { status: "removed" },
     });
 
     // act
-    const response = await controller.remove(photoArgs(), PHOTO_ID);
+    const response = await progressPhotoController.remove(
+      photoArgs(),
+      PHOTO_ID,
+    );
 
     // assert
     expect(response.status).toBe(204);
@@ -139,12 +151,12 @@ describe("ProgressPhotoController remove", () => {
 
   it("answers not found to anyone who does not own the photo, the coach included", async () => {
     // arrange
-    const { controller } = createController({
+    const { progressPhotoController } = createController({
       removed: { status: "not-found" },
     });
 
     // act
-    const response = await controller.remove(
+    const response = await progressPhotoController.remove(
       photoArgs({ session: COACH_SESSION }),
       PHOTO_ID,
     );
@@ -155,10 +167,13 @@ describe("ProgressPhotoController remove", () => {
 
   it("answers not found to an id that is not a uuid without removing anything", async () => {
     // arrange
-    const { controller, removeProgressPhoto } = createController();
+    const { progressPhotoController, removeProgressPhoto } = createController();
 
     // act
-    const response = await controller.remove(photoArgs(), undefined);
+    const response = await progressPhotoController.remove(
+      photoArgs(),
+      undefined,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -167,12 +182,12 @@ describe("ProgressPhotoController remove", () => {
 
   it("lets a failure to delete the stored file surface once the record is gone", async () => {
     // arrange
-    const { controller } = createController({
+    const { progressPhotoController } = createController({
       removeFailure: new Error("EACCES"),
     });
 
     // act
-    const removing = controller.remove(photoArgs(), PHOTO_ID);
+    const removing = progressPhotoController.remove(photoArgs(), PHOTO_ID);
 
     // assert
     await expect(removing).rejects.toThrow("EACCES");
@@ -180,11 +195,14 @@ describe("ProgressPhotoController remove", () => {
 
   it("refuses a visitor who is not signed in without removing anything", async () => {
     // arrange
-    const { controller, removeProgressPhoto } = createController();
+    const { progressPhotoController, removeProgressPhoto } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.remove(photoArgs({ session: ANONYMOUS_SESSION }), PHOTO_ID),
+      progressPhotoController.remove(
+        photoArgs({ session: ANONYMOUS_SESSION }),
+        PHOTO_ID,
+      ),
     );
 
     // assert
@@ -206,16 +224,16 @@ function createController(
   const removeProgressPhoto = options.removeFailure
     ? vi.fn().mockRejectedValue(options.removeFailure)
     : vi.fn().mockResolvedValue(options.removed ?? { status: "not-found" });
-  const controller = new ProgressPhotoController({
-    openProgressPhoto: {
+  const progressPhotoController = new ProgressPhotoController({
+    openProgressPhotoUseCase: {
       execute: openProgressPhoto,
     } as unknown as OpenProgressPhotoUseCase,
-    removeProgressPhoto: {
+    removeProgressPhotoUseCase: {
       execute: removeProgressPhoto,
     } as unknown as RemoveProgressPhotoUseCase,
   });
 
-  return { controller, openProgressPhoto, removeProgressPhoto };
+  return { progressPhotoController, openProgressPhoto, removeProgressPhoto };
 }
 
 function photoArgs(options: { session?: ResolvedSession } = {}) {

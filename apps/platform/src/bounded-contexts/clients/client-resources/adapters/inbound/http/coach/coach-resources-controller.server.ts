@@ -10,7 +10,7 @@ import { resourceBrowseInputOf } from "~/bounded-contexts/clients/client-resourc
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachResourcesControllerOptions = {
-  listClientResources: ListClientResourcesUseCase;
+  listClientResourcesUseCase: ListClientResourcesUseCase;
 };
 
 const UNAVAILABLE_LISTING: CoachResourceListing = { status: "unavailable" };
@@ -31,7 +31,7 @@ export class CoachResourcesController {
       throw notFoundResponse();
     }
 
-    const listing = await this.options.listClientResources.execute({
+    const listing = await this.options.listClientResourcesUseCase.execute({
       requester: { role: coach.role, authSubjectId: coach.authSubjectId },
       clientId: target.data,
       browse: resourceBrowseInputOf(args.url.searchParams),

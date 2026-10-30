@@ -336,7 +336,7 @@ function createSubject(options: {
 }) {
   const accounts = {
     portal: options.portal,
-    provisioning: { execute: options.execute },
+    provisionAccountUseCase: { execute: options.execute },
   } as unknown as AccountsFeature;
   const context = { set: vi.fn() } as unknown as RouterContextProvider & {
     set: ReturnType<typeof vi.fn>;

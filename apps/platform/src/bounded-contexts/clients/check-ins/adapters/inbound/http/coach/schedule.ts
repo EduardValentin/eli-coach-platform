@@ -17,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return args.context.get(checkInsContext).coachCheckIns.schedule(args);
+    return args.context
+      .get(checkInsContext)
+      .coachCheckInsController.schedule(args);
   });
 }
 

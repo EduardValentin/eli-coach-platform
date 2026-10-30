@@ -26,22 +26,22 @@ type BirthDateProblem = "impossible" | "too-young";
 export class ClientToday {
   private constructor(
     private readonly date: CalendarDate,
-    private readonly calendar: CalendarDatesPort,
+    private readonly calendarDatesPort: CalendarDatesPort,
   ) {}
 
   static on(
     moment: { on: Date; timeZone: string },
-    calendar: CalendarDatesPort,
+    calendarDatesPort: CalendarDatesPort,
   ): ClientToday {
-    return new ClientToday(calendar.dateOn(moment), calendar);
+    return new ClientToday(calendarDatesPort.dateOn(moment), calendarDatesPort);
   }
 
   birthDateProblemOf(isoDate: string): BirthDateProblem | null {
-    const birthDate = this.calendar.dateOf(isoDate);
+    const birthDate = this.calendarDatesPort.dateOf(isoDate);
 
     if (!birthDate) return "impossible";
 
-    const age = this.calendar.yearsBetween(birthDate, this.date);
+    const age = this.calendarDatesPort.yearsBetween(birthDate, this.date);
 
     if (age < 0 || age > MAX_CLIENT_AGE) return "impossible";
 
@@ -56,16 +56,16 @@ type ClientCountry = { code: string; callingCode: string };
 export class ClientCountries {
   private constructor(
     private readonly callingCodes: ReadonlyMap<string, string>,
-    private readonly phoneNumbers: PhoneNumbersPort,
+    private readonly phoneNumbersPort: PhoneNumbersPort,
   ) {}
 
   static of(
     countries: readonly ClientCountry[],
-    phoneNumbers: PhoneNumbersPort,
+    phoneNumbersPort: PhoneNumbersPort,
   ): ClientCountries {
     return new ClientCountries(
       new Map(countries.map((country) => [country.code, country.callingCode])),
-      phoneNumbers,
+      phoneNumbersPort,
     );
   }
 
@@ -74,7 +74,7 @@ export class ClientCountries {
   }
 
   phoneOf(entry: ClientPhoneEntry): ClientPhoneReading {
-    return this.phoneNumbers.normalize({
+    return this.phoneNumbersPort.normalize({
       callingCode: this.callingCodes.get(entry.country) ?? "",
       nationalNumber: entry.nationalNumber,
     });

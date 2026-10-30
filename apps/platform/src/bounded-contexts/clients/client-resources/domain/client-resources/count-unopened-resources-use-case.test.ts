@@ -98,11 +98,11 @@ const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
 
 function createUseCase(
   options: {
-    resources?: ClientResourcesPort;
-    clients?: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+    clientResourcesPort?: ClientResourcesPort;
+    clientReachPort?: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   } = {},
 ) {
-  const clients = options.clients ?? {
+  const clientReachPort = options.clientReachPort ?? {
     findById: vi.fn(async (clientId: string) =>
       reachReading(clientId, "reachable"),
     ),
@@ -122,22 +122,23 @@ function createUseCase(
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new CountUnopenedResourcesUseCase({
-    resources: options.resources ?? new InMemoryClientResourcesAdapter(),
-    clients,
-    incidents,
+  const countUnopenedResourcesUseCase = new CountUnopenedResourcesUseCase({
+    clientResourcesPort:
+      options.clientResourcesPort ?? new InMemoryClientResourcesAdapter(),
+    clientReachPort,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, incidents };
+  return { countUnopenedResourcesUseCase, incidents };
 }
 
 describe("CountUnopenedResourcesUseCase", () => {
   it("counts the resources she has not opened yet, ignoring the opened ones and other clients'", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { countUnopenedResourcesUseCase } = createUseCase();
 
     // act
-    const count = await useCase.execute({
+    const count = await countUnopenedResourcesUseCase.execute({
       role: "CLIENT",
       authSubjectId: "user_ana",
     });
@@ -162,10 +163,10 @@ describe("CountUnopenedResourcesUseCase", () => {
     ],
   ] as const)("counts nothing for %s", async (_case, requester) => {
     // arrange
-    const { useCase, incidents } = createUseCase();
+    const { countUnopenedResourcesUseCase, incidents } = createUseCase();
 
     // act
-    const count = await useCase.execute(requester);
+    const count = await countUnopenedResourcesUseCase.execute(requester);
 
     // assert
     expect(count).toBe(0);
@@ -175,12 +176,17 @@ describe("CountUnopenedResourcesUseCase", () => {
   it("reports a failed count and counts nothing", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const unreadable = new InMemoryClientResourcesAdapter();
-    vi.spyOn(unreadable, "countUnopenedForClient").mockRejectedValue(failure);
-    const { useCase, incidents } = createUseCase({ resources: unreadable });
+    const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
+    vi.spyOn(
+      inMemoryClientResourcesAdapter,
+      "countUnopenedForClient",
+    ).mockRejectedValue(failure);
+    const { countUnopenedResourcesUseCase, incidents } = createUseCase({
+      clientResourcesPort: inMemoryClientResourcesAdapter,
+    });
 
     // act
-    const count = await useCase.execute({
+    const count = await countUnopenedResourcesUseCase.execute({
       role: "CLIENT",
       authSubjectId: "user_ana",
     });
@@ -196,8 +202,8 @@ describe("CountUnopenedResourcesUseCase", () => {
   it("reports a failed read of her client and counts nothing", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, incidents } = createUseCase({
-      clients: {
+    const { countUnopenedResourcesUseCase, incidents } = createUseCase({
+      clientReachPort: {
         findById: vi.fn(async (clientId: string) =>
           reachReading(clientId, "reachable"),
         ),
@@ -206,7 +212,7 @@ describe("CountUnopenedResourcesUseCase", () => {
     });
 
     // act
-    const count = await useCase.execute({
+    const count = await countUnopenedResourcesUseCase.execute({
       role: "CLIENT",
       authSubjectId: "user_ana",
     });

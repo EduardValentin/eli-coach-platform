@@ -6,8 +6,8 @@ type MarkWelcomeSeenResult =
   { status: "welcome-seen" } | { status: "not-on-journey" };
 
 type MarkWelcomeSeenUseCaseOptions = {
-  clock: ClockPort;
-  journeys: ClientJourneysPort;
+  clockPort: ClockPort;
+  clientJourneysPort: ClientJourneysPort;
 };
 
 export class MarkWelcomeSeenUseCase {
@@ -15,16 +15,16 @@ export class MarkWelcomeSeenUseCase {
 
   async execute(authSubjectId: string): Promise<MarkWelcomeSeenResult> {
     const journey =
-      await this.options.journeys.findByAuthSubjectId(authSubjectId);
+      await this.options.clientJourneysPort.findByAuthSubjectId(authSubjectId);
 
     if (!journey) {
       return { status: "not-on-journey" };
     }
 
     if (journey.step() === "welcome") {
-      await this.options.journeys.recordWelcomeSeen({
+      await this.options.clientJourneysPort.recordWelcomeSeen({
         clientId: journey.clientId,
-        at: this.options.clock.now(),
+        at: this.options.clockPort.now(),
       });
     }
 

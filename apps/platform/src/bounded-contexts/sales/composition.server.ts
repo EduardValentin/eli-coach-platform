@@ -22,7 +22,7 @@ type SalesHandles = Omit<
   StoreFeatureHandles &
     Parameters<typeof composeWaitlistFeature>[0] &
     CoachingSalesFeatureHandles,
-  "managementAuth" | "pricingEligibility" | keyof PaymentHandles
+  "managementAuth" | "pricingEligibilitySourceFacade" | keyof PaymentHandles
 > & {
   managementApiConfig: ManagementApiConfig;
   paymentsConfig: PaymentsConfig;
@@ -41,7 +41,8 @@ export function composeSales(handles: SalesHandles): SalesComposition {
   const coachingSales = composeCoachingSalesFeature({
     ...handles,
     ...composePayments(handles.paymentsConfig),
-    pricingEligibility: waitlist.handles.pricingEligibility,
+    pricingEligibilitySourceFacade:
+      waitlist.handles.pricingEligibilitySourceFacade,
   });
 
   return {

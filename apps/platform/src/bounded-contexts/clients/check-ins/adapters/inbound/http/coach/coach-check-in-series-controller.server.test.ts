@@ -48,12 +48,15 @@ const SERIES: CheckInSeriesSnapshot = {
 describe("CoachCheckInSeriesController loadClientSeries", () => {
   it("hands the coach her client's series", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachCheckInSeriesController } = createController({
       read: { series: SERIES, coachingEnds: false },
     });
 
     // act
-    const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
+    const panel = await coachCheckInSeriesController.loadClientSeries(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(panel).toEqual({
@@ -69,10 +72,13 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
 
   it("hands no series when the client has none", async () => {
     // arrange
-    const { controller } = createController();
+    const { coachCheckInSeriesController } = createController();
 
     // act
-    const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
+    const panel = await coachCheckInSeriesController.loadClientSeries(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(panel).toEqual({
@@ -83,12 +89,15 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
 
   it("hands that her coaching ends so the panel offers no weekly check-in", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachCheckInSeriesController } = createController({
       read: { series: null, coachingEnds: true },
     });
 
     // act
-    const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
+    const panel = await coachCheckInSeriesController.loadClientSeries(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(panel).toEqual({ series: null, coachingEnds: true });
@@ -96,11 +105,15 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
 
   it("answers 404 for a client id that is not one", async () => {
     // arrange
-    const { controller, readCoachClientSeries } = createController();
+    const { coachCheckInSeriesController, readCoachClientSeries } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadClientSeries(coachArgs(), "not-a-client"),
+      coachCheckInSeriesController.loadClientSeries(
+        coachArgs(),
+        "not-a-client",
+      ),
     );
 
     // assert
@@ -110,11 +123,12 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
 
   it("refuses a client without reading anything", async () => {
     // arrange
-    const { controller, readCoachClientSeries } = createController();
+    const { coachCheckInSeriesController, readCoachClientSeries } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadClientSeries(
+      coachCheckInSeriesController.loadClientSeries(
         coachArgs({ session: CLIENT_SESSION }),
         CLIENT_ID,
       ),
@@ -129,16 +143,17 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
 describe("CoachCheckInSeriesController preview", () => {
   it("answers the weekdays and each hour's weeks and clashes for the weekday asked", async () => {
     // arrange
-    const { controller, previewCheckInSeries } = createController({
-      previewed: {
-        status: "previewed",
-        weekdays: ["monday", "wednesday"],
-        hours: [{ hour: 18, occurrences: 13, clashes: 1 }],
-      },
-    });
+    const { coachCheckInSeriesController, previewCheckInSeries } =
+      createController({
+        previewed: {
+          status: "previewed",
+          weekdays: ["monday", "wednesday"],
+          hours: [{ hour: 18, occurrences: 13, clashes: 1 }],
+        },
+      });
 
     // act
-    const response = await controller.preview(
+    const response = await coachCheckInSeriesController.preview(
       coachArgs({ query: { clientId: CLIENT_ID, weekday: "wednesday" } }),
     );
 
@@ -159,10 +174,12 @@ describe("CoachCheckInSeriesController preview", () => {
     { status: "client_cannot_answer", code: 409 },
   ] as const)("answers $status with $code", async ({ status, code }) => {
     // arrange
-    const { controller } = createController({ previewed: { status } });
+    const { coachCheckInSeriesController } = createController({
+      previewed: { status },
+    });
 
     // act
-    const response = await controller.preview(
+    const response = await coachCheckInSeriesController.preview(
       coachArgs({ query: { clientId: CLIENT_ID, weekday: "wednesday" } }),
     );
 
@@ -172,10 +189,11 @@ describe("CoachCheckInSeriesController preview", () => {
 
   it("refuses a query without a weekday as invalid", async () => {
     // arrange
-    const { controller, previewCheckInSeries } = createController();
+    const { coachCheckInSeriesController, previewCheckInSeries } =
+      createController();
 
     // act
-    const response = await controller.preview(
+    const response = await coachCheckInSeriesController.preview(
       coachArgs({ query: { clientId: CLIENT_ID, weekday: "someday" } }),
     );
 
@@ -189,12 +207,13 @@ describe("CoachCheckInSeriesController preview", () => {
 describe("CoachCheckInSeriesController setUp", () => {
   it("sets the series up and answers 201 with its id", async () => {
     // arrange
-    const { controller, setUpCheckInSeries } = createController({
-      setUp: { status: "set_up", series: SERIES, occurrences: [] },
-    });
+    const { coachCheckInSeriesController, setUpCheckInSeries } =
+      createController({
+        setUp: { status: "set_up", series: SERIES, occurrences: [] },
+      });
 
     // act
-    const response = await controller.setUp(
+    const response = await coachCheckInSeriesController.setUp(
       coachArgs({
         body: { clientId: CLIENT_ID, weekday: "wednesday", hour: 18 },
       }),
@@ -220,10 +239,12 @@ describe("CoachCheckInSeriesController setUp", () => {
     "nothing_to_create",
   ] as const)("refuses %s with 409", async (status) => {
     // arrange
-    const { controller } = createController({ setUp: { status } });
+    const { coachCheckInSeriesController } = createController({
+      setUp: { status },
+    });
 
     // act
-    const response = await controller.setUp(
+    const response = await coachCheckInSeriesController.setUp(
       coachArgs({
         body: { clientId: CLIENT_ID, weekday: "wednesday", hour: 18 },
       }),
@@ -236,12 +257,12 @@ describe("CoachCheckInSeriesController setUp", () => {
 
   it("answers 404 for an unknown client", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachCheckInSeriesController } = createController({
       setUp: { status: "unknown_client" },
     });
 
     // act
-    const response = await controller.setUp(
+    const response = await coachCheckInSeriesController.setUp(
       coachArgs({
         body: { clientId: CLIENT_ID, weekday: "wednesday", hour: 18 },
       }),
@@ -253,10 +274,11 @@ describe("CoachCheckInSeriesController setUp", () => {
 
   it("refuses an hour outside the day as invalid without setting anything up", async () => {
     // arrange
-    const { controller, setUpCheckInSeries } = createController();
+    const { coachCheckInSeriesController, setUpCheckInSeries } =
+      createController();
 
     // act
-    const response = await controller.setUp(
+    const response = await coachCheckInSeriesController.setUp(
       coachArgs({
         body: { clientId: CLIENT_ID, weekday: "wednesday", hour: 24 },
       }),
@@ -269,11 +291,12 @@ describe("CoachCheckInSeriesController setUp", () => {
 
   it("refuses a client without setting anything up", async () => {
     // arrange
-    const { controller, setUpCheckInSeries } = createController();
+    const { coachCheckInSeriesController, setUpCheckInSeries } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.setUp(
+      coachCheckInSeriesController.setUp(
         coachArgs({
           session: CLIENT_SESSION,
           body: { clientId: CLIENT_ID, weekday: "wednesday", hour: 18 },
@@ -290,16 +313,17 @@ describe("CoachCheckInSeriesController setUp", () => {
 describe("CoachCheckInSeriesController change", () => {
   it("changes the series named in the path and answers 200", async () => {
     // arrange
-    const { controller, changeCheckInSeries } = createController({
-      changed: {
-        status: "changed",
-        series: { ...SERIES, weekday: "friday", hour: 9 },
-        occurrences: [],
-      },
-    });
+    const { coachCheckInSeriesController, changeCheckInSeries } =
+      createController({
+        changed: {
+          status: "changed",
+          series: { ...SERIES, weekday: "friday", hour: 9 },
+          occurrences: [],
+        },
+      });
 
     // act
-    const response = await controller.change(
+    const response = await coachCheckInSeriesController.change(
       coachArgs({ body: { weekday: "friday", hour: 9 } }),
       SERIES_ID,
     );
@@ -324,10 +348,12 @@ describe("CoachCheckInSeriesController change", () => {
     { status: "changed_meanwhile", code: 409 },
   ] as const)("answers $status with $code", async ({ status, code }) => {
     // arrange
-    const { controller } = createController({ changed: { status } });
+    const { coachCheckInSeriesController } = createController({
+      changed: { status },
+    });
 
     // act
-    const response = await controller.change(
+    const response = await coachCheckInSeriesController.change(
       coachArgs({ body: { weekday: "friday", hour: 9 } }),
       SERIES_ID,
     );
@@ -338,10 +364,11 @@ describe("CoachCheckInSeriesController change", () => {
 
   it("answers 404 for a series id that is not one", async () => {
     // arrange
-    const { controller, changeCheckInSeries } = createController();
+    const { coachCheckInSeriesController, changeCheckInSeries } =
+      createController();
 
     // act
-    const response = await controller.change(
+    const response = await coachCheckInSeriesController.change(
       coachArgs({ body: { weekday: "friday", hour: 9 } }),
       "not-a-series",
     );
@@ -355,12 +382,16 @@ describe("CoachCheckInSeriesController change", () => {
 describe("CoachCheckInSeriesController stop", () => {
   it("stops the series named in the path and answers 200", async () => {
     // arrange
-    const { controller, stopCheckInSeries } = createController({
-      stopped: { status: "stopped", series: { ...SERIES, stoppedAt: NOW } },
-    });
+    const { coachCheckInSeriesController, stopCheckInSeries } =
+      createController({
+        stopped: { status: "stopped", series: { ...SERIES, stoppedAt: NOW } },
+      });
 
     // act
-    const response = await controller.stop(coachArgs(), SERIES_ID);
+    const response = await coachCheckInSeriesController.stop(
+      coachArgs(),
+      SERIES_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -376,10 +407,15 @@ describe("CoachCheckInSeriesController stop", () => {
     { status: "changed_meanwhile", code: 409 },
   ] as const)("answers $status with $code", async ({ status, code }) => {
     // arrange
-    const { controller } = createController({ stopped: { status } });
+    const { coachCheckInSeriesController } = createController({
+      stopped: { status },
+    });
 
     // act
-    const response = await controller.stop(coachArgs(), SERIES_ID);
+    const response = await coachCheckInSeriesController.stop(
+      coachArgs(),
+      SERIES_ID,
+    );
 
     // assert
     expect(response.status).toBe(code);
@@ -410,28 +446,28 @@ function createController(
   const stopCheckInSeries = vi
     .fn()
     .mockResolvedValue(answers.stopped ?? { status: "unknown_series" });
-  const controller = new CoachCheckInSeriesController({
+  const coachCheckInSeriesController = new CoachCheckInSeriesController({
     unitOfWork: (work) => work(),
-    changeCheckInSeries: {
+    changeCheckInSeriesUseCase: {
       execute: changeCheckInSeries,
     } as unknown as ChangeCheckInSeriesUseCase,
-    previewCheckInSeries: {
+    previewCheckInSeriesUseCase: {
       execute: previewCheckInSeries,
     } as unknown as PreviewCheckInSeriesUseCase,
-    readCoachClientSeries: {
+    readCoachClientSeriesUseCase: {
       execute: readCoachClientSeries,
     } as unknown as ReadCoachClientSeriesUseCase,
-    setUpCheckInSeries: {
+    setUpCheckInSeriesUseCase: {
       execute: setUpCheckInSeries,
     } as unknown as SetUpCheckInSeriesUseCase,
-    stopCheckInSeries: {
+    stopCheckInSeriesUseCase: {
       execute: stopCheckInSeries,
     } as unknown as StopCheckInSeriesUseCase,
   });
 
   return {
     changeCheckInSeries,
-    controller,
+    coachCheckInSeriesController,
     previewCheckInSeries,
     readCoachClientSeries,
     setUpCheckInSeries,

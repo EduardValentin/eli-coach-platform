@@ -13,7 +13,7 @@ import { coachingStandingColumns } from "~/bounded-contexts/clients/clients/adap
 import { clientsTable } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/schema.server";
 
 type PostgresClientReachOptions = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
 };
 
@@ -57,7 +57,7 @@ export class PostgresClientReachRepository implements ClientReachPort {
       portal: portalReachOf({
         standing,
         onboardingSubmittedAt: row.onboardingSubmittedAt,
-        now: this.options.clock.now(),
+        now: this.options.clockPort.now(),
       }),
       coachingEndsAt: standing.coachingEndsAt(),
       timeZone: row.timeZone,

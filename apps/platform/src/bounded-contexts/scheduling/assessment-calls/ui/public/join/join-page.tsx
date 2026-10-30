@@ -15,7 +15,7 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
 
   const link = await context
     .get(assessmentCallsContext)
-    .assessmentCalls.resolveJoin(params.bookingId);
+    .assessmentCallsController.resolveJoin(params.bookingId);
 
   if (link.status === "found") {
     throw redirect(link.url, 302);

@@ -258,27 +258,27 @@ function shellArguments(
     loadBell = vi.fn().mockResolvedValue(EMPTY_BELL),
     loadNextCheckIn = vi.fn().mockResolvedValue(null),
   } = reads;
-  const clientJourney = new ClientJourneyController({
-    markWelcomeSeen: {} as MarkWelcomeSeenUseCase,
-    readClientJourney: {} as ReadClientJourneyUseCase,
+  const clientJourneyController = new ClientJourneyController({
+    markWelcomeSeenUseCase: {} as MarkWelcomeSeenUseCase,
+    readClientJourneyUseCase: {} as ReadClientJourneyUseCase,
   });
 
   return createRequestArgs({
     contexts: [
       contextEntry(clientsContext, {
-        clientJourney,
+        clientJourneyController,
       } as unknown as ClientsFeature),
       contextEntry(clientProfileContext, {
-        ownAvatar: { url: avatarUrl },
+        ownClientAvatarController: { url: avatarUrl },
       } as unknown as ClientProfileFeature),
       contextEntry(clientResourcesContext, {
-        ownResources: { countUnopened },
+        ownResourcesController: { countUnopened },
       } as unknown as ClientResourcesFeature),
       contextEntry(checkInsContext, {
-        clientCheckIns: { loadAwaitingCount, loadNextCheckIn },
+        clientCheckInsController: { loadAwaitingCount, loadNextCheckIn },
       } as unknown as CheckInsFeature),
       contextEntry(notificationsContext, {
-        notificationBell: { loadBell },
+        notificationBellController: { loadBell },
       } as unknown as NotificationsFeature),
       ...journeyEntries,
     ],

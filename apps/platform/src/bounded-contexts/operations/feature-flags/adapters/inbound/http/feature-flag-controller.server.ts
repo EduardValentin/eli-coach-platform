@@ -3,10 +3,10 @@ import type { FeatureFlagReaderPort } from "~/bounded-contexts/operations/featur
 import { featureFlagSnapshotSchema } from "./feature-flags-contract";
 
 export class FeatureFlagController {
-  constructor(private readonly getFeatureFlags: FeatureFlagReaderPort) {}
+  constructor(private readonly featureFlagReaderPort: FeatureFlagReaderPort) {}
 
   async getSnapshot(): Promise<Response> {
-    const featureFlags = await this.getFeatureFlags.execute();
+    const featureFlags = await this.featureFlagReaderPort.execute();
     const responseBody = featureFlagSnapshotSchema.parse({
       flags: featureFlags,
     });

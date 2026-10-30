@@ -24,8 +24,12 @@ export async function loader(args: LoaderFunctionArgs) {
   }
 
   const [client, profile] = await Promise.all([
-    args.context.get(clientsContext).coachClients.loadClient(args, clientId),
-    args.context.get(clientProfileContext).coachProfile.load(args, clientId),
+    args.context
+      .get(clientsContext)
+      .coachClientsController.loadClient(args, clientId),
+    args.context
+      .get(clientProfileContext)
+      .clientProfileController.load(args, clientId),
   ]);
 
   return { clientId: client.clientId, profile };

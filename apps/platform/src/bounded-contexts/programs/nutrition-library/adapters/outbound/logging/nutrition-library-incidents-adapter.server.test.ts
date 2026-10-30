@@ -14,15 +14,14 @@ describe("createNutritionLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new NutritionLibraryIncidentsAdapter(
-      new ConsoleLoggerAdapter(),
-    );
+    const nutritionLibraryIncidentsAdapter =
+      new NutritionLibraryIncidentsAdapter(new ConsoleLoggerAdapter());
     const cause = Object.assign(new Error("secret row contents"), {
       code: "ECONNREFUSED",
     });
 
     // act
-    logger.foodCreationFailed({ error: cause });
+    nutritionLibraryIncidentsAdapter.foodCreationFailed({ error: cause });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith("Food could not be created.", {
@@ -37,15 +36,17 @@ describe("createNutritionLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new NutritionLibraryIncidentsAdapter(
-      new ConsoleLoggerAdapter(),
-    );
+    const nutritionLibraryIncidentsAdapter =
+      new NutritionLibraryIncidentsAdapter(new ConsoleLoggerAdapter());
     const cause = Object.assign(new Error("secret row contents"), {
       code: "ECONNREFUSED",
     });
 
     // act
-    logger.foodEditFailed({ foodId: "food-1", error: cause });
+    nutritionLibraryIncidentsAdapter.foodEditFailed({
+      foodId: "food-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -64,15 +65,14 @@ describe("createNutritionLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new NutritionLibraryIncidentsAdapter(
-      new ConsoleLoggerAdapter(),
-    );
+    const nutritionLibraryIncidentsAdapter =
+      new NutritionLibraryIncidentsAdapter(new ConsoleLoggerAdapter());
     const cause = Object.assign(new Error("secret row contents"), {
       code: "ECONNREFUSED",
     });
 
     // act
-    logger.recipeCreationFailed({ error: cause });
+    nutritionLibraryIncidentsAdapter.recipeCreationFailed({ error: cause });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith("Recipe could not be created.", {
@@ -87,15 +87,17 @@ describe("createNutritionLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new NutritionLibraryIncidentsAdapter(
-      new ConsoleLoggerAdapter(),
-    );
+    const nutritionLibraryIncidentsAdapter =
+      new NutritionLibraryIncidentsAdapter(new ConsoleLoggerAdapter());
     const cause = Object.assign(new Error("/srv/recipe-photos/photos/x"), {
       code: "EACCES",
     });
 
     // act
-    logger.recipePhotoCleanupFailed({ photoId: "photo-1", error: cause });
+    nutritionLibraryIncidentsAdapter.recipePhotoCleanupFailed({
+      photoId: "photo-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -114,15 +116,17 @@ describe("createNutritionLibraryIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new NutritionLibraryIncidentsAdapter(
-      new ConsoleLoggerAdapter(),
-    );
+    const nutritionLibraryIncidentsAdapter =
+      new NutritionLibraryIncidentsAdapter(new ConsoleLoggerAdapter());
     const cause = Object.assign(new Error("secret row contents"), {
       code: "ECONNREFUSED",
     });
 
     // act
-    logger.recipeEditFailed({ recipeId: "recipe-1", error: cause });
+    nutritionLibraryIncidentsAdapter.recipeEditFailed({
+      recipeId: "recipe-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(

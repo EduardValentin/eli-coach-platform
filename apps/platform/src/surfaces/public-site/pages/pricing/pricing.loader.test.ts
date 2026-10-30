@@ -66,10 +66,10 @@ function createLoaderArguments(waitlist: unknown) {
     `${tier} cards`,
   ]);
   const coachingSales = {
-    checkouts: { loadPricingCards },
+    checkoutsController: { loadPricingCards },
   } as unknown as CoachingSalesFeature;
   const waitlistFeature = {
-    waitlist: { getWaitlist: vi.fn().mockResolvedValue(waitlist) },
+    waitlistController: { getWaitlist: vi.fn().mockResolvedValue(waitlist) },
   } as unknown as WaitlistFeature;
 
   return {

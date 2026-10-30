@@ -11,11 +11,11 @@ type CoachingEndCommand = { clientId: string; endsAt: Date };
 type CoachingEndResult = { cancelled: number; seriesStopped: boolean };
 
 type CancelCheckInsAfterCoachingEndUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "endCoaching">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "release">;
-  inbox: Pick<CheckInInboxPort, "scheduleExpiries">;
-  incidents: Pick<CheckInIncidentsPort, "checkInInboxFailed">;
+  checkInsPort: Pick<CheckInsPort, "endCoaching">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "release">;
+  checkInInboxPort: Pick<CheckInInboxPort, "scheduleExpiries">;
+  checkInIncidentsPort: Pick<CheckInIncidentsPort, "checkInInboxFailed">;
 };
 
 export class CancelCheckInsAfterCoachingEndUseCase {
@@ -28,13 +28,13 @@ export class CancelCheckInsAfterCoachingEndUseCase {
     endsAt,
   }: CoachingEndCommand): Promise<CoachingEndResult> {
     const { cancelled, seriesStopped, freedReservationIds } =
-      await this.options.checkIns.endCoaching({
+      await this.options.checkInsPort.endCoaching({
         clientId,
         endsAt,
-        at: this.options.clock.now(),
+        at: this.options.clockPort.now(),
       });
 
-    await releaseFreedHours(this.options.coachTime, freedReservationIds);
+    await releaseFreedHours(this.options.coachTimePort, freedReservationIds);
     await this.withdrawExpiries(cancelled);
 
     return { cancelled: cancelled.length, seriesStopped };
@@ -42,7 +42,7 @@ export class CancelCheckInsAfterCoachingEndUseCase {
 
   private async withdrawExpiries(cancelled: readonly string[]): Promise<void> {
     try {
-      await this.options.inbox.scheduleExpiries({
+      await this.options.checkInInboxPort.scheduleExpiries({
         withdrawn: cancelled,
         upcoming: [],
       });
@@ -53,7 +53,7 @@ export class CancelCheckInsAfterCoachingEndUseCase {
 
   private reportInboxFailures(cancelled: readonly string[]): void {
     for (const checkInId of cancelled) {
-      this.options.incidents.checkInInboxFailed({
+      this.options.checkInIncidentsPort.checkInInboxFailed({
         checkInId,
         event: "cancelled",
       });

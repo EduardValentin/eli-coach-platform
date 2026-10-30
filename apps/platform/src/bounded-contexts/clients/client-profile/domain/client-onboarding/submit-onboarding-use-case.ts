@@ -41,13 +41,13 @@ type SubmitOnboardingResult =
 
 type SubmitOnboardingUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSourcePort;
-  settings: ClientSettingsSourcePort;
-  changes: ClientOnboardingChangesPort;
-  measurementIds: MeasurementIdsPort;
-  stamps: OnboardingSubmissionStampsPort;
-  clock: ClockPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
+  clientOnboardingChangesPort: ClientOnboardingChangesPort;
+  measurementIdsPort: MeasurementIdsPort;
+  onboardingSubmissionStampsPort: OnboardingSubmissionStampsPort;
+  clockPort: ClockPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class SubmitOnboardingUseCase {
@@ -65,15 +65,15 @@ export class SubmitOnboardingUseCase {
     }
 
     const { client, identity } = participant;
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
 
     if (!client.standing.hasPortalAccessAt(now)) {
       return { status: "ended" };
     }
 
     const [stored, settings] = await Promise.all([
-      this.options.onboardings.findByClientId(client.clientId),
-      this.options.settings.findByClientId(client.clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(client.clientId),
+      this.options.clientSettingsSourcePort.findByClientId(client.clientId),
     ]);
     const onboarding = ClientOnboarding.reconstitute({
       client: identity,
@@ -96,7 +96,7 @@ export class SubmitOnboardingUseCase {
     }
 
     if (outcome.status !== "submitted") {
-      this.options.incidents.onboardingSubmissionRefused({
+      this.options.clientOnboardingIncidentsPort.onboardingSubmissionRefused({
         clientId: client.clientId,
         reason: outcome.status,
       });
@@ -104,13 +104,14 @@ export class SubmitOnboardingUseCase {
       return outcome;
     }
 
-    const entryId = this.options.measurementIds.generate();
-    const recorded = await this.options.changes.recordSubmission({
-      clientId: client.clientId,
-      submission: outcome.submission,
-      entryId,
-      measurementEntry: outcome.measurementEntry,
-    });
+    const entryId = this.options.measurementIdsPort.generate();
+    const recorded =
+      await this.options.clientOnboardingChangesPort.recordSubmission({
+        clientId: client.clientId,
+        submission: outcome.submission,
+        entryId,
+        measurementEntry: outcome.measurementEntry,
+      });
 
     if (recorded.status === "already-submitted") {
       return this.refuseAlreadySubmitted({
@@ -120,11 +121,13 @@ export class SubmitOnboardingUseCase {
     }
 
     const { submittedAt } = outcome.submission;
-    await this.options.stamps.recordOnboardingSubmitted({
-      clientId: client.clientId,
-      at: submittedAt,
-    });
-    this.options.incidents.onboardingSubmissionAccepted({
+    await this.options.onboardingSubmissionStampsPort.recordOnboardingSubmitted(
+      {
+        clientId: client.clientId,
+        at: submittedAt,
+      },
+    );
+    this.options.clientOnboardingIncidentsPort.onboardingSubmissionAccepted({
       clientId: client.clientId,
       screeningOutcome: screeningOutcome({
         answers: outcome.submission.answers,
@@ -145,7 +148,8 @@ export class SubmitOnboardingUseCase {
     clientId: string,
     now: Date,
   ): Promise<Date> {
-    const stored = await this.options.onboardings.findByClientId(clientId);
+    const stored =
+      await this.options.clientOnboardingSourcePort.findByClientId(clientId);
 
     return stored.submission?.submittedAt ?? now;
   }
@@ -154,8 +158,10 @@ export class SubmitOnboardingUseCase {
     clientId: string;
     at: Date;
   }): Promise<SubmitOnboardingResult> {
-    await this.options.stamps.recordOnboardingSubmitted(stamp);
-    this.options.incidents.onboardingSubmissionRefused({
+    await this.options.onboardingSubmissionStampsPort.recordOnboardingSubmitted(
+      stamp,
+    );
+    this.options.clientOnboardingIncidentsPort.onboardingSubmissionRefused({
       clientId: stamp.clientId,
       reason: "already-submitted",
     });

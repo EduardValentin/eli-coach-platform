@@ -6,7 +6,7 @@ export type NotificationReader =
   { party: "coach" } | { party: "client"; authSubjectId: string };
 
 type NotificationRecipientReachOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class NotificationRecipientReach {
@@ -19,7 +19,7 @@ export class NotificationRecipientReach {
       return NotificationRecipient.coach();
     }
 
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       reader.authSubjectId,
     );
 

@@ -14,7 +14,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     return context
       .get(coachingSalesContext)
-      .stripeWebhooks.handleEvent(request);
+      .stripeWebhookController.handleEvent(request);
   });
 }
 

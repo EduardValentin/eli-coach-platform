@@ -34,35 +34,35 @@ function createPorts(consent: ProfileConsent = "consented") {
 
   return {
     added,
-    profiles: {
+    clientProfilesPort: {
       findByClientId: vi.fn().mockResolvedValue(profileWith(consent)),
       recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
     } satisfies Pick<
       ClientProfilesPort,
       "findByClientId" | "recordPhotoConsent"
     >,
-    photos: {
+    progressPhotosPort: {
       add: vi.fn(async (photo: ProgressPhoto) => {
         added.push(photo);
       }),
       findById: vi.fn().mockResolvedValue(null),
       delete: vi.fn().mockResolvedValue(undefined),
     } satisfies ProgressPhotosPort,
-    photoIds: { generate: () => `photo-${++photoNumber}` },
-    store: {
+    progressPhotoIdsPort: { generate: () => `photo-${++photoNumber}` },
+    progressPhotoStorePort: {
       store: vi.fn().mockResolvedValue({ storageKey: "key", keyId: "memory" }),
       open: vi.fn().mockResolvedValue(null),
       delete: vi.fn().mockResolvedValue(undefined),
     } satisfies ProgressPhotoStorePort,
-    renditions: {
+    progressPhotoRenditionsPort: {
       render: vi.fn().mockResolvedValue({
         status: "rendered",
         bytes: new Uint8Array([9, 9, 9]),
         mimeType: "image/jpeg",
       }),
     } satisfies ProgressPhotoRenditionsPort,
-    clock: { now: () => NOW },
-    incidents: {
+    clockPort: { now: () => NOW },
+    measurementIncidentsPort: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
@@ -91,10 +91,10 @@ describe("AttachProgressPhotosUseCase", () => {
   it("stores her photos against the entry, dated now, once she has agreed to share them", async () => {
     // arrange
     const ports = createPorts("consented");
-    const useCase = new AttachProgressPhotosUseCase(ports);
+    const attachProgressPhotosUseCase = new AttachProgressPhotosUseCase(ports);
 
     // act
-    const outcomes = await useCase.execute({
+    const outcomes = await attachProgressPhotosUseCase.execute({
       clientId: "client-1",
       entryId: "entry-1",
       photos: THREE_PHOTOS,
@@ -106,7 +106,9 @@ describe("AttachProgressPhotosUseCase", () => {
       side: "stored",
       back: "stored",
     });
-    expect(ports.profiles.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(ports.clientProfilesPort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
     expect(ports.added.map((photo) => photo.toSnapshot())).toEqual(
       ["front", "side", "back"].map((view) =>
         expect.objectContaining({
@@ -127,10 +129,12 @@ describe("AttachProgressPhotosUseCase", () => {
     async (_case, consent) => {
       // arrange
       const ports = createPorts(consent);
-      const useCase = new AttachProgressPhotosUseCase(ports);
+      const attachProgressPhotosUseCase = new AttachProgressPhotosUseCase(
+        ports,
+      );
 
       // act
-      const outcomes = await useCase.execute({
+      const outcomes = await attachProgressPhotosUseCase.execute({
         clientId: "client-1",
         entryId: "entry-1",
         photos: THREE_PHOTOS,
@@ -142,10 +146,14 @@ describe("AttachProgressPhotosUseCase", () => {
         side: "refused",
         back: "refused",
       });
-      expect(ports.renditions.render).not.toHaveBeenCalled();
+      expect(ports.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
       expect(ports.added).toEqual([]);
-      expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledTimes(3);
-      expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith({
+      expect(
+        ports.measurementIncidentsPort.progressPhotoRefused,
+      ).toHaveBeenCalledTimes(3);
+      expect(
+        ports.measurementIncidentsPort.progressPhotoRefused,
+      ).toHaveBeenCalledWith({
         clientId: "client-1",
         entryId: "entry-1",
         view: "front",
@@ -158,13 +166,13 @@ describe("AttachProgressPhotosUseCase", () => {
   it("refuses every photo it was handed, without throwing, when her profile cannot be read", async () => {
     // arrange
     const ports = createPorts("consented");
-    ports.profiles.findByClientId.mockRejectedValueOnce(
+    ports.clientProfilesPort.findByClientId.mockRejectedValueOnce(
       new Error("connection lost"),
     );
-    const useCase = new AttachProgressPhotosUseCase(ports);
+    const attachProgressPhotosUseCase = new AttachProgressPhotosUseCase(ports);
 
     // act
-    const outcomes = await useCase.execute({
+    const outcomes = await attachProgressPhotosUseCase.execute({
       clientId: "client-1",
       entryId: "entry-1",
       photos: [receivedPhoto("front"), receivedPhoto("back")],
@@ -172,9 +180,13 @@ describe("AttachProgressPhotosUseCase", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused", back: "refused" });
-    expect(ports.renditions.render).not.toHaveBeenCalled();
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledTimes(2);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith({
+    expect(ports.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledTimes(2);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
       view: "back",

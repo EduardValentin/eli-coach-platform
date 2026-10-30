@@ -14,7 +14,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(coachingSalesContext)
-      .subscription.openPaymentMethod(args);
+      .subscriptionController.openPaymentMethod(args);
   });
 }
 

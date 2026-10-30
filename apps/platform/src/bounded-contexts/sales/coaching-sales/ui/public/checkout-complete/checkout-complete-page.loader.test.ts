@@ -56,7 +56,7 @@ describe("checkout complete page loader", () => {
 
 function createLoaderArguments(loadConfirmation: ReturnType<typeof vi.fn>) {
   const feature = {
-    checkouts: { loadConfirmation },
+    checkoutsController: { loadConfirmation },
   } as unknown as CoachingSalesFeature;
 
   return createRequestArgs({

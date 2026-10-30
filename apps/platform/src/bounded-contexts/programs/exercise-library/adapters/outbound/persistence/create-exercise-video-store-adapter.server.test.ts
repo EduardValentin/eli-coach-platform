@@ -29,16 +29,25 @@ describe("createExerciseVideoStore", () => {
     const video = Buffer.from([1, 2, 3]);
 
     // act
-    const store = createExerciseVideoStoreAdapter(workspace);
+    const exerciseVideoStorePort = createExerciseVideoStoreAdapter(workspace);
 
     // assert
-    const staged = await store.receive(sourceOf(video), video.length);
-    await store.keep(staged.stagingId, "9c1b0000-0000-4000-8000-000000000001");
+    const staged = await exerciseVideoStorePort.receive(
+      sourceOf(video),
+      video.length,
+    );
+    await exerciseVideoStorePort.keep(
+      staged.stagingId,
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
     expect(
-      await store.open("9c1b0000-0000-4000-8000-000000000001", {
-        kind: "suffix",
-        length: 1,
-      }),
+      await exerciseVideoStorePort.open(
+        "9c1b0000-0000-4000-8000-000000000001",
+        {
+          kind: "suffix",
+          length: 1,
+        },
+      ),
     ).toMatchObject({
       status: "opened",
       sizeBytes: video.length,

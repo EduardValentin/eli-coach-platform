@@ -28,9 +28,9 @@ import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/publ
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientProfileControllerOptions = {
-  readClientMeasurementHistory: ReadClientMeasurementHistoryUseCase;
-  readClientProfile: ReadClientProfileUseCase;
-  updateClientProfile: UpdateClientProfileAsCoachUseCase;
+  readClientMeasurementHistoryUseCase: ReadClientMeasurementHistoryUseCase;
+  readClientProfileUseCase: ReadClientProfileUseCase;
+  updateClientProfileAsCoachUseCase: UpdateClientProfileAsCoachUseCase;
 };
 
 type UpdateClientProfileResult = Awaited<
@@ -55,7 +55,7 @@ export class ClientProfileController {
     clientId: string,
   ): Promise<ClientProfileView> {
     const target = this.requireCoachClientId(args, clientId);
-    const reading = await this.options.readClientProfile.execute(target);
+    const reading = await this.options.readClientProfileUseCase.execute(target);
 
     if (!reading) {
       throw this.notFoundResponse();
@@ -69,9 +69,10 @@ export class ClientProfileController {
     clientId: string,
   ): Promise<MeasurementRow[]> {
     const target = this.requireCoachClientId(args, clientId);
-    const history = await this.options.readClientMeasurementHistory.execute({
-      clientId: target,
-    });
+    const history =
+      await this.options.readClientMeasurementHistoryUseCase.execute({
+        clientId: target,
+      });
 
     return measurementHistorySchema.parse(
       presentMeasurements(history.newestFirst()),
@@ -100,7 +101,7 @@ export class ClientProfileController {
     }
 
     return this.savedResponse(
-      await this.options.updateClientProfile.execute({
+      await this.options.updateClientProfileAsCoachUseCase.execute({
         clientId: target.data,
         edit: request.data,
       }),

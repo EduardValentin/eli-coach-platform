@@ -2,14 +2,14 @@ import type { AcquisitionIncidentsPort } from "~/bounded-contexts/sales/store/do
 import type { LoggerPort } from "~/shared/logging/logger-port.server";
 
 export class StoreIncidentsAdapter implements AcquisitionIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   deliveryAcceptanceAuditPending({
     requestId,
   }: Parameters<
     AcquisitionIncidentsPort["deliveryAcceptanceAuditPending"]
   >[0]) {
-    this.logger.error(
+    this.loggerPort.error(
       "Store delivery acceptance audit requires reconciliation.",
       {
         errorCategory: "store_delivery_acceptance_audit_pending",
@@ -22,7 +22,7 @@ export class StoreIncidentsAdapter implements AcquisitionIncidentsPort {
     reason,
     requestId,
   }: Parameters<AcquisitionIncidentsPort["deliveryRejected"]>[0]) {
-    this.logger.error("Store delivery provider rejected the request.", {
+    this.loggerPort.error("Store delivery provider rejected the request.", {
       errorCategory: "store_delivery_rejected",
       providerRejectionReason: reason,
       requestId,
@@ -32,7 +32,7 @@ export class StoreIncidentsAdapter implements AcquisitionIncidentsPort {
   retryableDeliveryAuditPending({
     requestId,
   }: Parameters<AcquisitionIncidentsPort["retryableDeliveryAuditPending"]>[0]) {
-    this.logger.error(
+    this.loggerPort.error(
       "Store retryable delivery audit requires reconciliation.",
       {
         errorCategory: "store_delivery_retryable_audit_pending",

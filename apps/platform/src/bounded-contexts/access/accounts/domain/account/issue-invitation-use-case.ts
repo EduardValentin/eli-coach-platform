@@ -6,10 +6,10 @@ import type { AccountInvitationsPort } from "./account-invitations-port";
 import type { InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
 
 type IssueInvitationUseCaseOptions = {
-  clock: ClockPort;
-  ids: AccountInvitationIdsPort;
-  invitations: Pick<AccountInvitationsPort, "insert">;
-  tokenGenerator: InvitationTokenGeneratorPort;
+  clockPort: ClockPort;
+  accountInvitationIdsPort: AccountInvitationIdsPort;
+  accountInvitationsPort: Pick<AccountInvitationsPort, "insert">;
+  invitationTokenGeneratorPort: InvitationTokenGeneratorPort;
 };
 
 export class IssueInvitationUseCase {
@@ -17,14 +17,14 @@ export class IssueInvitationUseCase {
 
   async execute(command: { email: string }): Promise<{ invitationId: string }> {
     const invitation = AccountInvitation.issue({
-      id: this.options.ids.generate(),
+      id: this.options.accountInvitationIdsPort.generate(),
       email: command.email,
       role: "CLIENT",
-      tokenHash: this.options.tokenGenerator.create().sha256,
-      sentAt: this.options.clock.now(),
+      tokenHash: this.options.invitationTokenGeneratorPort.create().sha256,
+      sentAt: this.options.clockPort.now(),
     });
 
-    await this.options.invitations.insert(invitation);
+    await this.options.accountInvitationsPort.insert(invitation);
 
     return { invitationId: invitation.id };
   }

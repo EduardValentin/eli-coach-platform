@@ -151,7 +151,10 @@ function signedInOf(
   subscriptions: ReturnType<typeof createSubscriptions>,
   clientReach = createClientReach(),
 ) {
-  return new SignedInSubscriptions({ clients: clientReach, subscriptions });
+  return new SignedInSubscriptions({
+    clientLookupPort: clientReach,
+    coachingSubscriptionsPort: subscriptions,
+  });
 }
 
 function createCoachingEnd() {
@@ -178,18 +181,18 @@ function cancelUseCase(options: {
   clientReach?: ReturnType<typeof createClientReach>;
 }) {
   return new CancelSubscriptionUseCase({
-    clients: options.clients ?? createClients(),
-    clock: clockAt(options.now),
+    clientLookupPort: options.clients ?? createClients(),
+    clockPort: clockAt(options.now),
     coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
-    incidents: options.incidents ?? createIncidents(),
-    notifications: options.notifications ?? createNotifications(),
-    paymentSubscriptions:
+    coachingSubscriptionIncidentsPort: options.incidents ?? createIncidents(),
+    refundNotificationsPort: options.notifications ?? createNotifications(),
+    paymentSubscriptionsPort:
       options.paymentSubscriptions ?? createPaymentSubscriptions(),
     signedInSubscriptions: signedInOf(
       options.subscriptions,
       options.clientReach,
     ),
-    subscriptions: options.subscriptions,
+    coachingSubscriptionsPort: options.subscriptions,
   });
 }
 
@@ -201,7 +204,7 @@ describe("CancelSubscriptionUseCase", () => {
     const paymentSubscriptions = createPaymentSubscriptions();
     const notifications = createNotifications();
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       paymentSubscriptions,
@@ -220,7 +223,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -261,7 +264,7 @@ describe("CancelSubscriptionUseCase", () => {
     const paymentSubscriptions = createPaymentSubscriptions();
     const notifications = createNotifications();
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_14,
       subscriptions,
       paymentSubscriptions,
@@ -270,7 +273,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -304,7 +307,7 @@ describe("CancelSubscriptionUseCase", () => {
     );
     const paymentSubscriptions = createPaymentSubscriptions();
     const notifications = createNotifications();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       paymentSubscriptions,
@@ -312,7 +315,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -341,7 +344,7 @@ describe("CancelSubscriptionUseCase", () => {
     const paymentSubscriptions = createPaymentSubscriptions();
     paymentSubscriptions.endNow.mockRejectedValue(failure);
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       paymentSubscriptions,
@@ -349,7 +352,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "provider_unavailable" });
@@ -371,14 +374,14 @@ describe("CancelSubscriptionUseCase", () => {
       }),
     );
     const paymentSubscriptions = createPaymentSubscriptions();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_14,
       subscriptions,
       paymentSubscriptions,
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "nothing_to_cancel" });
@@ -388,13 +391,13 @@ describe("CancelSubscriptionUseCase", () => {
 
   it("finds nothing to cancel for a subject with no subscription", async () => {
     // arrange
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(null),
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -411,14 +414,14 @@ describe("CancelSubscriptionUseCase", () => {
       .mockResolvedValueOnce("stale")
       .mockResolvedValueOnce("saved");
     const paymentSubscriptions = createPaymentSubscriptions();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_14,
       subscriptions,
       paymentSubscriptions,
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toMatchObject({
@@ -454,7 +457,7 @@ describe("CancelSubscriptionUseCase", () => {
     const paymentSubscriptions = createPaymentSubscriptions();
     const notifications = createNotifications();
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       paymentSubscriptions,
@@ -473,7 +476,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -506,7 +509,7 @@ describe("CancelSubscriptionUseCase", () => {
     const paymentSubscriptions = createPaymentSubscriptions();
     const notifications = createNotifications();
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       paymentSubscriptions,
@@ -515,7 +518,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "nothing_to_cancel" });
@@ -538,7 +541,7 @@ describe("CancelSubscriptionUseCase", () => {
     subscriptions.save.mockResolvedValueOnce("stale");
     const notifications = createNotifications();
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       notifications,
@@ -546,7 +549,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "nothing_to_cancel" });
@@ -559,10 +562,13 @@ describe("CancelSubscriptionUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     subscriptions.save.mockResolvedValue("stale");
-    const useCase = cancelUseCase({ now: DAY_14, subscriptions });
+    const cancelSubscriptionUseCase = cancelUseCase({
+      now: DAY_14,
+      subscriptions,
+    });
 
     // act
-    const cancelling = useCase.execute(AUTH_SUBJECT_ID);
+    const cancelling = cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     await expect(cancelling).rejects.toThrow();
@@ -589,7 +595,7 @@ describe("CancelSubscriptionUseCase", () => {
       const notifications = create();
       fail(notifications);
       const incidents = createIncidents();
-      const useCase = cancelUseCase({
+      const cancelSubscriptionUseCase = cancelUseCase({
         now: DAY_13,
         subscriptions: createSubscriptions(subscriptionOf()),
         notifications,
@@ -597,7 +603,7 @@ describe("CancelSubscriptionUseCase", () => {
       });
 
       // act
-      const result = await useCase.execute(AUTH_SUBJECT_ID);
+      const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
       // assert
       expect(result).toMatchObject({ status: "cancelled" });
@@ -615,14 +621,14 @@ describe("CancelSubscriptionUseCase", () => {
     async ({ now, endsAt }) => {
       // arrange
       const coachingEnd = createCoachingEnd();
-      const useCase = cancelUseCase({
+      const cancelSubscriptionUseCase = cancelUseCase({
         now,
         subscriptions: createSubscriptions(subscriptionOf()),
         coachingEnd,
       });
 
       // act
-      await useCase.execute(AUTH_SUBJECT_ID);
+      await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
       // assert
       expect(coachingEnd.coachingEnds).toHaveBeenCalledWith({
@@ -640,19 +646,19 @@ describe("CancelSubscriptionUseCase", () => {
     const listening = createCoachingEnd();
     const incidents = createIncidents();
     const subscriptions = createSubscriptions(subscriptionOf());
-    const useCase = new CancelSubscriptionUseCase({
-      clients: createClients(),
-      clock: clockAt(DAY_14),
+    const cancelSubscriptionUseCase = new CancelSubscriptionUseCase({
+      clientLookupPort: createClients(),
+      clockPort: clockAt(DAY_14),
       coachingEnds: [failing, listening],
-      incidents,
-      notifications: createNotifications(),
-      paymentSubscriptions: createPaymentSubscriptions(),
+      coachingSubscriptionIncidentsPort: incidents,
+      refundNotificationsPort: createNotifications(),
+      paymentSubscriptionsPort: createPaymentSubscriptions(),
       signedInSubscriptions: signedInOf(subscriptions),
-      subscriptions,
+      coachingSubscriptionsPort: subscriptions,
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
@@ -675,7 +681,7 @@ describe("CancelSubscriptionUseCase", () => {
     const coachingEnd = createCoachingEnd();
     coachingEnd.coachingEnds.mockRejectedValue(failure);
     const incidents = createIncidents();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_14,
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingEnd,
@@ -683,7 +689,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
@@ -719,7 +725,7 @@ describe("CancelSubscriptionUseCase", () => {
     // arrange
     const { subscription, paymentSubscriptions } = arrange();
     const coachingEnd = createCoachingEnd();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(subscription),
       paymentSubscriptions,
@@ -727,7 +733,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    await useCase.execute(AUTH_SUBJECT_ID);
+    await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(coachingEnd.coachingEnds).not.toHaveBeenCalled();
@@ -737,7 +743,7 @@ describe("CancelSubscriptionUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const notifications = createNotifications();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(subscriptionOf()),
       clients: createClients(null),
@@ -746,7 +752,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    await useCase.execute(AUTH_SUBJECT_ID);
+    await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(notifications.notifyRefundDue).not.toHaveBeenCalled();
@@ -759,7 +765,7 @@ describe("CancelSubscriptionUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     const paymentSubscriptions = createPaymentSubscriptions();
-    const useCase = cancelUseCase({
+    const cancelSubscriptionUseCase = cancelUseCase({
       now: DAY_13,
       subscriptions,
       paymentSubscriptions,
@@ -767,7 +773,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await cancelSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -786,16 +792,16 @@ describe("StartProgramNowUseCase", () => {
     paymentSubscriptions?: ReturnType<typeof createPaymentSubscriptions>;
   }) {
     return new StartProgramNowUseCase({
-      clock: clockAt(options.now),
+      clockPort: clockAt(options.now),
       coachingPeriods: [options.coachingPeriod ?? createCoachingPeriod()],
-      incidents: options.incidents ?? createIncidents(),
-      paymentSubscriptions:
+      coachingSubscriptionIncidentsPort: options.incidents ?? createIncidents(),
+      paymentSubscriptionsPort:
         options.paymentSubscriptions ?? createPaymentSubscriptions(),
       signedInSubscriptions: signedInOf(
         options.subscriptions,
         options.clientReach,
       ),
-      subscriptions: options.subscriptions,
+      coachingSubscriptionsPort: options.subscriptions,
     });
   }
 
@@ -804,10 +810,14 @@ describe("StartProgramNowUseCase", () => {
     const current = subscriptionOf();
     const subscriptions = createSubscriptions(current);
     const incidents = createIncidents();
-    const useCase = startNowUseCase({ now: DAY_13, subscriptions, incidents });
+    const startProgramNowUseCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions,
+      incidents,
+    });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "started" });
@@ -835,10 +845,10 @@ describe("StartProgramNowUseCase", () => {
   ] as const)("refuses %s", async (_label, current, now, reason) => {
     // arrange
     const subscriptions = createSubscriptions(current);
-    const useCase = startNowUseCase({ now, subscriptions });
+    const startProgramNowUseCase = startNowUseCase({ now, subscriptions });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "refused", reason });
@@ -850,7 +860,7 @@ describe("StartProgramNowUseCase", () => {
     const coachingPeriod = createCoachingPeriod();
     const paymentSubscriptions = createPaymentSubscriptions();
     const subscriptions = createSubscriptions(subscriptionOf());
-    const useCase = startNowUseCase({
+    const startProgramNowUseCase = startNowUseCase({
       now: DAY_13,
       subscriptions,
       coachingPeriod,
@@ -858,7 +868,7 @@ describe("StartProgramNowUseCase", () => {
     });
 
     // act
-    await useCase.execute(AUTH_SUBJECT_ID);
+    await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(coachingPeriod.programStarted).toHaveBeenCalledWith({
@@ -883,7 +893,7 @@ describe("StartProgramNowUseCase", () => {
     coachingPeriod.programStarted.mockRejectedValue(failure);
     const incidents = createIncidents();
     const paymentSubscriptions = createPaymentSubscriptions();
-    const useCase = startNowUseCase({
+    const startProgramNowUseCase = startNowUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingPeriod,
@@ -892,7 +902,7 @@ describe("StartProgramNowUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "started" });
@@ -910,7 +920,7 @@ describe("StartProgramNowUseCase", () => {
     const paymentSubscriptions = createPaymentSubscriptions();
     paymentSubscriptions.liftRenewalHold.mockRejectedValue(failure);
     const incidents = createIncidents();
-    const useCase = startNowUseCase({
+    const startProgramNowUseCase = startNowUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(subscriptionOf()),
       incidents,
@@ -918,7 +928,7 @@ describe("StartProgramNowUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "started" });
@@ -932,7 +942,7 @@ describe("StartProgramNowUseCase", () => {
     // arrange
     const coachingPeriod = createCoachingPeriod();
     const paymentSubscriptions = createPaymentSubscriptions();
-    const useCase = startNowUseCase({
+    const startProgramNowUseCase = startNowUseCase({
       now: DAY_14,
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingPeriod,
@@ -940,7 +950,7 @@ describe("StartProgramNowUseCase", () => {
     });
 
     // act
-    await useCase.execute(AUTH_SUBJECT_ID);
+    await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(coachingPeriod.programStarted).not.toHaveBeenCalled();
@@ -949,13 +959,13 @@ describe("StartProgramNowUseCase", () => {
 
   it("finds nothing to start for a subject with no subscription", async () => {
     // arrange
-    const useCase = startNowUseCase({
+    const startProgramNowUseCase = startNowUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(null),
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -965,14 +975,14 @@ describe("StartProgramNowUseCase", () => {
     // arrange
     const clientReach = createClientReach(null);
     const subscriptions = createSubscriptions(subscriptionOf());
-    const useCase = startNowUseCase({
+    const startProgramNowUseCase = startNowUseCase({
       now: DAY_13,
       subscriptions,
       clientReach,
     });
 
     // act
-    const result = await useCase.execute(AUTH_SUBJECT_ID);
+    const result = await startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -984,10 +994,13 @@ describe("StartProgramNowUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     subscriptions.save.mockResolvedValue("stale");
-    const useCase = startNowUseCase({ now: DAY_13, subscriptions });
+    const startProgramNowUseCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions,
+    });
 
     // act
-    const starting = useCase.execute(AUTH_SUBJECT_ID);
+    const starting = startProgramNowUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     await expect(starting).rejects.toThrow();
@@ -1004,9 +1017,9 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new OpenPaymentMethodSessionUseCase({
-      clock: clockAt(options.now),
-      incidents: options.incidents ?? createIncidents(),
-      paymentSubscriptions:
+      clockPort: clockAt(options.now),
+      coachingSubscriptionIncidentsPort: options.incidents ?? createIncidents(),
+      paymentSubscriptionsPort:
         options.paymentSubscriptions ?? createPaymentSubscriptions(),
       signedInSubscriptions: signedInOf(
         options.subscriptions,
@@ -1019,7 +1032,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     // arrange
     const paymentSubscriptions = createPaymentSubscriptions();
     const incidents = createIncidents();
-    const useCase = openUseCase({
+    const openPaymentMethodSessionUseCase = openUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(subscriptionOf()),
       paymentSubscriptions,
@@ -1027,7 +1040,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await openPaymentMethodSessionUseCase.execute({
       authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
@@ -1049,7 +1062,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
   it("refuses once the subscription has ended", async () => {
     // arrange
     const paymentSubscriptions = createPaymentSubscriptions();
-    const useCase = openUseCase({
+    const openPaymentMethodSessionUseCase = openUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(
         subscriptionOf({ status: "ended", accessEndsAt: DAY_13 }),
@@ -1058,7 +1071,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await openPaymentMethodSessionUseCase.execute({
       authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
@@ -1072,13 +1085,13 @@ describe("OpenPaymentMethodSessionUseCase", () => {
 
   it("finds no session for a subject with no subscription", async () => {
     // arrange
-    const useCase = openUseCase({
+    const openPaymentMethodSessionUseCase = openUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(null),
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await openPaymentMethodSessionUseCase.execute({
       authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
@@ -1090,14 +1103,14 @@ describe("OpenPaymentMethodSessionUseCase", () => {
   it("finds no session for a subject bound to no client", async () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
-    const useCase = openUseCase({
+    const openPaymentMethodSessionUseCase = openUseCase({
       now: DAY_13,
       subscriptions,
       clientReach: createClientReach(null),
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await openPaymentMethodSessionUseCase.execute({
       authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
@@ -1113,14 +1126,14 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     paymentSubscriptions.openPaymentMethodSession.mockRejectedValue(
       new Error("down"),
     );
-    const useCase = openUseCase({
+    const openPaymentMethodSessionUseCase = openUseCase({
       now: DAY_13,
       subscriptions: createSubscriptions(subscriptionOf()),
       paymentSubscriptions,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await openPaymentMethodSessionUseCase.execute({
       authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
@@ -1134,14 +1147,15 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads her subscription with the rules that apply now", async () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_13),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_13),
       signedInSubscriptions: signedInOf(subscriptions),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toEqual({
@@ -1161,16 +1175,17 @@ describe("ReadClientSubscriptionUseCase", () => {
 
   it("reads the immediate path within the 14 days as a cancellation without a refund", async () => {
     // arrange
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_13),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_13),
       signedInSubscriptions: signedInOf(
         createSubscriptions(subscriptionOf({ startChoice: "immediate" })),
       ),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({
@@ -1182,14 +1197,15 @@ describe("ReadClientSubscriptionUseCase", () => {
 
   it("reads the waiting path at its withdrawal deadline with no start now", async () => {
     // arrange
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_14),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_14),
       signedInSubscriptions: signedInOf(createSubscriptions(subscriptionOf())),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({
@@ -1201,9 +1217,9 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads an ended subscription with a refund still owed", async () => {
     // arrange
     const refund = RefundDue.full({ amountCents: 44700, cancelledAt: DAY_13 });
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_14),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_14),
       signedInSubscriptions: signedInOf(
         createSubscriptions(
           subscriptionOf({
@@ -1217,7 +1233,8 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({
@@ -1230,16 +1247,17 @@ describe("ReadClientSubscriptionUseCase", () => {
 
   it("reads a payment problem the provider flagged", async () => {
     // arrange
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_13),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_13),
       signedInSubscriptions: signedInOf(
         createSubscriptions(subscriptionOf({ paymentProblemSince: DAY_13 })),
       ),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({ paymentProblem: true });
@@ -1255,14 +1273,15 @@ describe("ReadClientSubscriptionUseCase", () => {
       paymentMethodId: "pm_visa",
     });
     const cards = createCards(card);
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards,
-      clock: clockAt(DAY_13),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: cards,
+      clockPort: clockAt(DAY_13),
       signedInSubscriptions: signedInOf(createSubscriptions(subscriptionOf())),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({ card: card.toSnapshot() });
@@ -1271,14 +1290,15 @@ describe("ReadClientSubscriptionUseCase", () => {
 
   it("reads nothing for a subject with no subscription", async () => {
     // arrange
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_13),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_13),
       signedInSubscriptions: signedInOf(createSubscriptions(null)),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toBeNull();
@@ -1287,14 +1307,15 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads nothing for a subject bound to no client", async () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
-    const useCase = new ReadClientSubscriptionUseCase({
-      cards: createCards(null),
-      clock: clockAt(DAY_13),
+    const readClientSubscriptionUseCase = new ReadClientSubscriptionUseCase({
+      paymentCardsPort: createCards(null),
+      clockPort: clockAt(DAY_13),
       signedInSubscriptions: signedInOf(subscriptions, createClientReach(null)),
     });
 
     // act
-    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+    const reading =
+      await readClientSubscriptionUseCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toBeNull();
@@ -1314,8 +1335,8 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     return new ReconcileSubscriptionEventUseCase({
       coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
       coachingPeriods: [options.coachingPeriod ?? createCoachingPeriod()],
-      incidents: options.incidents ?? createIncidents(),
-      subscriptions: options.subscriptions,
+      coachingSubscriptionIncidentsPort: options.incidents ?? createIncidents(),
+      coachingSubscriptionsPort: options.subscriptions,
     });
   }
 
@@ -1398,10 +1419,16 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       // arrange
       const subscriptions = createSubscriptions(current);
       const incidents = createIncidents();
-      const useCase = reconcileUseCase({ subscriptions, incidents });
+      const reconcileSubscriptionEventUseCase = reconcileUseCase({
+        subscriptions,
+        incidents,
+      });
 
       // act
-      const result = await useCase.execute({ eventId: "evt_1", event });
+      const result = await reconcileSubscriptionEventUseCase.execute({
+        eventId: "evt_1",
+        event,
+      });
 
       // assert
       expect(result).toEqual({ status: "recorded" });
@@ -1433,10 +1460,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     });
     const subscriptions = createSubscriptions(current);
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({ subscriptions, incidents });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      incidents,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_2",
       event: {
         kind: "charge-refunded",
@@ -1476,10 +1506,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       }),
     );
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({ subscriptions, incidents });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      incidents,
+    });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_2",
       event: {
         kind: "charge-refunded",
@@ -1497,10 +1530,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(null);
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({ subscriptions, incidents });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      incidents,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_3",
       event: {
         kind: "ended",
@@ -1524,10 +1560,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(null);
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({ subscriptions, incidents });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      incidents,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_4",
       event: {
         kind: "charge-refunded",
@@ -1553,10 +1592,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     const subscriptions = createSubscriptions(subscriptionOf());
     subscriptions.saveForEvent.mockResolvedValue("duplicate");
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({ subscriptions, incidents });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      incidents,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "ended",
@@ -1586,10 +1628,12 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     subscriptions.saveForEvent
       .mockResolvedValueOnce("stale")
       .mockResolvedValueOnce("recorded");
-    const useCase = reconcileUseCase({ subscriptions });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_4",
       event: {
         kind: "payment-problem",
@@ -1645,13 +1689,16 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     async (_label, current, event, endsAt) => {
       // arrange
       const coachingEnd = createCoachingEnd();
-      const useCase = reconcileUseCase({
+      const reconcileSubscriptionEventUseCase = reconcileUseCase({
         subscriptions: createSubscriptions(current),
         coachingEnd,
       });
 
       // act
-      await useCase.execute({ eventId: "evt_1", event });
+      await reconcileSubscriptionEventUseCase.execute({
+        eventId: "evt_1",
+        event,
+      });
 
       // assert
       expect(coachingEnd.coachingEnds).toHaveBeenCalledWith({
@@ -1664,13 +1711,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
   it("tells check-ins her paid-through date once a paid renewal is recorded", async () => {
     // arrange
     const coachingPeriod = createCoachingPeriod();
-    const useCase = reconcileUseCase({
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingPeriod,
     });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "renewal-paid",
@@ -1692,10 +1739,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     const subscriptions = createSubscriptions(subscriptionOf());
     subscriptions.saveForEvent.mockResolvedValue("duplicate");
     const coachingPeriod = createCoachingPeriod();
-    const useCase = reconcileUseCase({ subscriptions, coachingPeriod });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      coachingPeriod,
+    });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "renewal-paid",
@@ -1712,7 +1762,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
   it("tells check-ins no paid-through date for an event that is not a renewal", async () => {
     // arrange
     const coachingPeriod = createCoachingPeriod();
-    const useCase = reconcileUseCase({
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
       subscriptions: createSubscriptions(
         subscriptionOf({ paymentProblemSince: DAY_13 }),
       ),
@@ -1720,7 +1770,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "payment-recovered",
@@ -1739,14 +1789,14 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     const coachingPeriod = createCoachingPeriod();
     coachingPeriod.paidThroughExtended.mockRejectedValue(failure);
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingPeriod,
       incidents,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "renewal-paid",
@@ -1768,7 +1818,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
   it("tells check-ins nothing when a scheduled end is lifted", async () => {
     // arrange
     const coachingEnd = createCoachingEnd();
-    const useCase = reconcileUseCase({
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
       subscriptions: createSubscriptions(
         subscriptionOf({
           status: "cancelled",
@@ -1780,7 +1830,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "end-lifted",
@@ -1798,10 +1848,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     const subscriptions = createSubscriptions(subscriptionOf());
     subscriptions.saveForEvent.mockResolvedValue("duplicate");
     const coachingEnd = createCoachingEnd();
-    const useCase = reconcileUseCase({ subscriptions, coachingEnd });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+      coachingEnd,
+    });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "ended",
@@ -1817,13 +1870,13 @@ describe("ReconcileSubscriptionEventUseCase", () => {
   it("tells check-ins nothing for an event on coaching that has no end", async () => {
     // arrange
     const coachingEnd = createCoachingEnd();
-    const useCase = reconcileUseCase({
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingEnd,
     });
 
     // act
-    await useCase.execute({
+    await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "payment-problem",
@@ -1842,14 +1895,14 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     const coachingEnd = createCoachingEnd();
     coachingEnd.coachingEnds.mockRejectedValue(failure);
     const incidents = createIncidents();
-    const useCase = reconcileUseCase({
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
       subscriptions: createSubscriptions(subscriptionOf()),
       coachingEnd,
       incidents,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "ended",
@@ -1913,11 +1966,16 @@ describe("ReconcileSubscriptionEventUseCase", () => {
         saved = change.subscription;
         return Promise.resolve("recorded");
       });
-      const useCase = reconcileUseCase({ subscriptions });
+      const reconcileSubscriptionEventUseCase = reconcileUseCase({
+        subscriptions,
+      });
 
       // act
       for (const [index, event] of events.entries()) {
-        await useCase.execute({ eventId: `evt_${index}`, event });
+        await reconcileSubscriptionEventUseCase.execute({
+          eventId: `evt_${index}`,
+          event,
+        });
       }
 
       // assert
@@ -1940,10 +1998,12 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     subscriptions.saveForEvent.mockResolvedValue("stale");
-    const useCase = reconcileUseCase({ subscriptions });
+    const reconcileSubscriptionEventUseCase = reconcileUseCase({
+      subscriptions,
+    });
 
     // act
-    const reconciling = useCase.execute({
+    const reconciling = reconcileSubscriptionEventUseCase.execute({
       eventId: "evt_5",
       event: {
         kind: "ended",

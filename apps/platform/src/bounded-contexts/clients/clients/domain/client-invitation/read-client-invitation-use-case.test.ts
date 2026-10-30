@@ -17,14 +17,14 @@ const invitedClient: InvitedClient = {
 
 function readDependencies(client: InvitedClient | null) {
   return {
-    accountInvitations: {
+    accountInvitationsPort: {
       standingOf: vi.fn().mockResolvedValue({
         state: "email-failed",
         sentAt: SENT_AT,
         expiresAt: EXPIRES_AT,
       }),
     },
-    clients: { findById: vi.fn().mockResolvedValue(client) },
+    invitedClientsPort: { findById: vi.fn().mockResolvedValue(client) },
   };
 }
 
@@ -32,10 +32,12 @@ describe("ReadClientInvitationUseCase", () => {
   it("reads the standing of the account invitation she holds", async () => {
     // arrange
     const dependencies = readDependencies(invitedClient);
-    const useCase = new ReadClientInvitationUseCase(dependencies);
+    const readClientInvitationUseCase = new ReadClientInvitationUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute("client-1");
+    const result = await readClientInvitationUseCase.execute("client-1");
 
     // assert
     expect(result).toEqual({
@@ -43,7 +45,7 @@ describe("ReadClientInvitationUseCase", () => {
       sentAt: SENT_AT,
       expiresAt: EXPIRES_AT,
     });
-    expect(dependencies.accountInvitations.standingOf).toHaveBeenCalledWith(
+    expect(dependencies.accountInvitationsPort.standingOf).toHaveBeenCalledWith(
       "invitation-1",
     );
   });
@@ -57,13 +59,17 @@ describe("ReadClientInvitationUseCase", () => {
   ])("reads nothing for %s", async (_label, client) => {
     // arrange
     const dependencies = readDependencies(client);
-    const useCase = new ReadClientInvitationUseCase(dependencies);
+    const readClientInvitationUseCase = new ReadClientInvitationUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute("client-1");
+    const result = await readClientInvitationUseCase.execute("client-1");
 
     // assert
     expect(result).toBeNull();
-    expect(dependencies.accountInvitations.standingOf).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationsPort.standingOf,
+    ).not.toHaveBeenCalled();
   });
 });

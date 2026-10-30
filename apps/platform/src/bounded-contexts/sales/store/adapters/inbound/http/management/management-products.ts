@@ -12,7 +12,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return context.get(storeContext).management.publishProduct(request);
+    return context
+      .get(storeContext)
+      .storeProductManagementController.publishProduct(request);
   });
 }
 

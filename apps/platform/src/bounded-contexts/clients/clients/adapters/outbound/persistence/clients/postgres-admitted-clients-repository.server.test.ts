@@ -56,10 +56,11 @@ describe("PostgresAdmittedClients#admit", () => {
   it("inserts the admitted client's row under the id the domain gave her, then her standing, through the caller's transaction", async () => {
     // arrange
     const transaction = createTransactionRecordingWrites([{ id: CLIENT_ID }]);
-    const clients = new PostgresAdmittedClientsRepository(transaction.handle);
+    const postgresAdmittedClientsRepository =
+      new PostgresAdmittedClientsRepository(transaction.handle);
 
     // act
-    const admitted = await clients.admit({
+    const admitted = await postgresAdmittedClientsRepository.admit({
       client: ADMITTED_CLIENT,
       standing: STANDING,
     });
@@ -81,10 +82,11 @@ describe("PostgresAdmittedClients#admit", () => {
   it("answers that the call already has a client when its call is already taken, writing no standing", async () => {
     // arrange
     const transaction = createTransactionRecordingWrites([]);
-    const clients = new PostgresAdmittedClientsRepository(transaction.handle);
+    const postgresAdmittedClientsRepository =
+      new PostgresAdmittedClientsRepository(transaction.handle);
 
     // act
-    const admitted = await clients.admit({
+    const admitted = await postgresAdmittedClientsRepository.admit({
       client: ADMITTED_CLIENT,
       standing: STANDING,
     });
@@ -99,10 +101,14 @@ describe("PostgresAdmittedClients#recordStanding", () => {
   it("copies the standing onto the client's row through the caller's transaction", async () => {
     // arrange
     const transaction = createTransactionRecordingWrites([]);
-    const clients = new PostgresAdmittedClientsRepository(transaction.handle);
+    const postgresAdmittedClientsRepository =
+      new PostgresAdmittedClientsRepository(transaction.handle);
 
     // act
-    await clients.recordStanding({ clientId: CLIENT_ID, standing: STANDING });
+    await postgresAdmittedClientsRepository.recordStanding({
+      clientId: CLIENT_ID,
+      standing: STANDING,
+    });
 
     // assert
     expect(transaction.updates).toEqual([

@@ -21,12 +21,12 @@ export type ClientAvatarUpload =
   | { status: "refused"; reason: "not-accepted" | "rendition-refused" };
 
 export type ClientAvatarIntakeOptions = {
-  avatars: ClientAvatarsPort;
-  avatarIds: ClientAvatarIdsPort;
-  store: ClientAvatarStorePort;
-  renditions: ClientAvatarRenditionsPort;
-  incidents: ClientAvatarIncidentsPort;
-  clock: ClockPort;
+  clientAvatarsPort: ClientAvatarsPort;
+  clientAvatarIdsPort: ClientAvatarIdsPort;
+  clientAvatarStorePort: ClientAvatarStorePort;
+  clientAvatarRenditionsPort: ClientAvatarRenditionsPort;
+  clientAvatarIncidentsPort: ClientAvatarIncidentsPort;
+  clockPort: ClockPort;
 };
 
 const REFUSED_RENDITION: ClientAvatarRendition = { status: "refused" };
@@ -42,7 +42,7 @@ export class ClientAvatarIntake {
       return { status: "refused", reason: "not-accepted" };
     }
 
-    const rendition = await this.options.renditions
+    const rendition = await this.options.clientAvatarRenditionsPort
       .render(received.bytes)
       .catch(() => REFUSED_RENDITION);
 
@@ -50,20 +50,21 @@ export class ClientAvatarIntake {
       return { status: "refused", reason: "rendition-refused" };
     }
 
-    const previous = await this.options.avatars.findByClientId(clientId);
-    const avatarId = this.options.avatarIds.generate();
-    const reference = await this.options.store.store(
+    const previous =
+      await this.options.clientAvatarsPort.findByClientId(clientId);
+    const avatarId = this.options.clientAvatarIdsPort.generate();
+    const reference = await this.options.clientAvatarStorePort.store(
       { clientId, avatarId },
       rendition.bytes,
     );
 
-    await this.options.avatars.save(
+    await this.options.clientAvatarsPort.save(
       ClientAvatar.uploaded({
         avatarId,
         clientId,
         reference,
         rendition,
-        at: this.options.clock.now(),
+        at: this.options.clockPort.now(),
       }),
     );
     await new ClientAvatarRemoval(this.options).discardFileOf(previous);

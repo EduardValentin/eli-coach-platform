@@ -11,7 +11,7 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CheckInJoinControllerOptions = {
-  resolveCheckInJoin: ResolveCheckInJoinUseCase;
+  resolveCheckInJoinUseCase: ResolveCheckInJoinUseCase;
 };
 
 type RoomNotReady = { status: "link_not_set" };
@@ -54,7 +54,7 @@ export class CheckInJoinController {
       throw unknownCheckIn();
     }
 
-    const room = await this.options.resolveCheckInJoin.execute({
+    const room = await this.options.resolveCheckInJoinUseCase.execute({
       actor,
       checkInId: id.data,
     });

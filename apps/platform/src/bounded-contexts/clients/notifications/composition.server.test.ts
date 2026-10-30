@@ -29,7 +29,9 @@ describe("composeNotificationInbox", () => {
     const { handles } = composeNotificationInbox({ database });
 
     // assert
-    expect(handles.inbox).toBeInstanceOf(PostgresNotificationInboxRepository);
+    expect(handles.notificationInboxPort).toBeInstanceOf(
+      PostgresNotificationInboxRepository,
+    );
   });
 });
 
@@ -40,10 +42,10 @@ describe("composeNotificationsFeature", () => {
     const feature = composeNotificationsFeature(handles);
 
     // act
-    const bell = await feature.notificationBell.loadBell(coachArgs());
+    const bell = await feature.notificationBellController.loadBell(coachArgs());
 
     // assert
-    expect(handles.inbox.latestFor).toHaveBeenCalledWith(
+    expect(handles.notificationInboxPort.latestFor).toHaveBeenCalledWith(
       expect.objectContaining({ recipient: { party: "coach" }, at: NOW }),
     );
     expect(bell).toEqual({
@@ -59,11 +61,12 @@ describe("composeNotificationsFeature", () => {
     const feature = composeNotificationsFeature(handles);
 
     // act
-    const response = await feature.notificationBell.markAllRead(coachArgs());
+    const response =
+      await feature.notificationBellController.markAllRead(coachArgs());
 
     // assert
     expect(response.status).toBe(200);
-    expect(handles.inbox.markAllRead).toHaveBeenCalledWith({
+    expect(handles.notificationInboxPort.markAllRead).toHaveBeenCalledWith({
       recipient: { party: "coach" },
       at: NOW,
     });
@@ -81,13 +84,13 @@ function createHandles() {
   } satisfies NotificationInboxPort;
 
   return {
-    clientReach: {
+    clientReachPort: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       findById: vi.fn().mockResolvedValue(null),
     },
-    clock: { now: () => NOW },
-    inbox,
-    logger: {
+    clockPort: { now: () => NOW },
+    notificationInboxPort: inbox,
+    loggerPort: {
       error: vi.fn(),
       warn: vi.fn(),
       info: vi.fn(),

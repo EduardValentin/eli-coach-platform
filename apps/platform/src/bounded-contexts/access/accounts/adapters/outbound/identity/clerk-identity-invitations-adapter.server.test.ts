@@ -22,20 +22,23 @@ function createClerkClient() {
 function createAdapter(client = createClerkClient()) {
   return {
     client,
-    identity: new ClerkIdentityInvitationsAdapter(client, {
-      signUpUrl: SIGN_UP_URL,
-      returnUrl: RETURN_URL,
-    }),
+    clerkIdentityInvitationsAdapter: new ClerkIdentityInvitationsAdapter(
+      client,
+      {
+        signUpUrl: SIGN_UP_URL,
+        returnUrl: RETURN_URL,
+      },
+    ),
   };
 }
 
 describe("ClerkIdentityInvitations#create", () => {
   it("creates a silent thirty-day invitation that carries our invitation id, is created even when one is already pending for the email, and returns through the hosted sign-up to our portal", async () => {
     // arrange
-    const { client, identity } = createAdapter();
+    const { client, clerkIdentityInvitationsAdapter } = createAdapter();
 
     // act
-    const invitation = await identity.create({
+    const invitation = await clerkIdentityInvitationsAdapter.create({
       email: "ana@example.com",
       invitationId: "invitation-1",
     });
@@ -62,10 +65,10 @@ describe("ClerkIdentityInvitations#create", () => {
     client.invitations.createInvitation.mockResolvedValue({
       id: "inv_clerk_1",
     });
-    const { identity } = createAdapter(client);
+    const { clerkIdentityInvitationsAdapter } = createAdapter(client);
 
     // act
-    const creation = identity.create({
+    const creation = clerkIdentityInvitationsAdapter.create({
       email: "ana@example.com",
       invitationId: "invitation-1",
     });
@@ -82,10 +85,10 @@ describe("ClerkIdentityInvitations#create", () => {
         status: 422,
       }),
     );
-    const { identity } = createAdapter(client);
+    const { clerkIdentityInvitationsAdapter } = createAdapter(client);
 
     // act
-    const creation = identity.create({
+    const creation = clerkIdentityInvitationsAdapter.create({
       email: "ana@example.com",
       invitationId: "invitation-1",
     });
@@ -103,10 +106,10 @@ describe("ClerkIdentityInvitations#create", () => {
     client.invitations.createInvitation.mockRejectedValue(
       new Error("socket hang up"),
     );
-    const { identity } = createAdapter(client);
+    const { clerkIdentityInvitationsAdapter } = createAdapter(client);
 
     // act
-    const creation = identity.create({
+    const creation = clerkIdentityInvitationsAdapter.create({
       email: "ana@example.com",
       invitationId: "invitation-1",
     });
@@ -133,10 +136,10 @@ function clerkRefusal(status: number, code: string) {
 describe("ClerkIdentityInvitations#replace", () => {
   it("revokes the earlier invitation before it creates the fresh one", async () => {
     // arrange
-    const { client, identity } = createAdapter();
+    const { client, clerkIdentityInvitationsAdapter } = createAdapter();
 
     // act
-    const invitation = await identity.replace({
+    const invitation = await clerkIdentityInvitationsAdapter.replace({
       email: "ana@example.com",
       invitationId: "invitation-1",
       previous: PREVIOUS,
@@ -180,10 +183,10 @@ describe("ClerkIdentityInvitations#replace", () => {
       // arrange
       const client = createClerkClient();
       client.invitations.revokeInvitation.mockRejectedValue(refusal);
-      const { identity } = createAdapter(client);
+      const { clerkIdentityInvitationsAdapter } = createAdapter(client);
 
       // act
-      const invitation = await identity.replace({
+      const invitation = await clerkIdentityInvitationsAdapter.replace({
         email: "ana@example.com",
         invitationId: "invitation-1",
         previous: PREVIOUS,
@@ -208,10 +211,10 @@ describe("ClerkIdentityInvitations#replace", () => {
       // arrange
       const client = createClerkClient();
       client.invitations.revokeInvitation.mockRejectedValue(refusal);
-      const { identity } = createAdapter(client);
+      const { clerkIdentityInvitationsAdapter } = createAdapter(client);
 
       // act
-      const replacement = identity.replace({
+      const replacement = clerkIdentityInvitationsAdapter.replace({
         email: "ana@example.com",
         invitationId: "invitation-1",
         previous: PREVIOUS,
@@ -232,10 +235,10 @@ describe("ClerkIdentityInvitations#replace", () => {
     client.invitations.createInvitation.mockRejectedValue(
       Object.assign(new Error("boom"), { status: 503 }),
     );
-    const { identity } = createAdapter(client);
+    const { clerkIdentityInvitationsAdapter } = createAdapter(client);
 
     // act
-    const replacement = identity.replace({
+    const replacement = clerkIdentityInvitationsAdapter.replace({
       email: "ana@example.com",
       invitationId: "invitation-1",
       previous: PREVIOUS,

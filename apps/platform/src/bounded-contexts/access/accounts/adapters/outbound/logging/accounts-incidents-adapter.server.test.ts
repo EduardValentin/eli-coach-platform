@@ -14,10 +14,12 @@ describe("createAccountsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new AccountsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const accountsIncidentsAdapter = new AccountsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.invitationEmailFailed({
+    accountsIncidentsAdapter.invitationEmailFailed({
       invitationId: "5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
     });
 
@@ -36,10 +38,12 @@ describe("createAccountsIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new AccountsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const accountsIncidentsAdapter = new AccountsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.invitationResent({ invitationId: "invitation-1" });
+    accountsIncidentsAdapter.invitationResent({ invitationId: "invitation-1" });
 
     // assert
     expect(consoleInfo).toHaveBeenCalledWith("Client invitation re-sent.", {
@@ -53,10 +57,12 @@ describe("createAccountsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new AccountsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const accountsIncidentsAdapter = new AccountsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.invitationResendFailed({
+    accountsIncidentsAdapter.invitationResendFailed({
       invitationId: "invitation-1",
       step: "provider",
     });

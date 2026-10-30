@@ -66,14 +66,15 @@ function everyOpenedFileIsClosed(): boolean {
 describe("FilesystemClientResourceStore", () => {
   let workspace: string;
   let root: string;
-  let store: FilesystemClientResourceStoreAdapter;
+  let filesystemClientResourceStoreAdapter: FilesystemClientResourceStoreAdapter;
 
   beforeEach(async () => {
     openedFiles.length = 0;
     workspace = await mkdtemp(join(tmpdir(), "client-resource-store-"));
     root = join(workspace, "resources");
     await mkdir(root);
-    store = new FilesystemClientResourceStoreAdapter(root);
+    filesystemClientResourceStoreAdapter =
+      new FilesystemClientResourceStoreAdapter(root);
   });
 
   afterEach(async () => {
@@ -81,10 +82,16 @@ describe("FilesystemClientResourceStore", () => {
   });
 
   async function storeEverything(owner: ClientResourceOwner): Promise<void> {
-    await store.storeOriginal(owner, ORIGINAL);
-    await store.storePage(owner, { pageNumber: 1, bytes: PAGE_ONE });
-    await store.storePage(owner, { pageNumber: 2, bytes: PAGE_TWO });
-    await store.storeThumbnail(owner, THUMBNAIL);
+    await filesystemClientResourceStoreAdapter.storeOriginal(owner, ORIGINAL);
+    await filesystemClientResourceStoreAdapter.storePage(owner, {
+      pageNumber: 1,
+      bytes: PAGE_ONE,
+    });
+    await filesystemClientResourceStoreAdapter.storePage(owner, {
+      pageNumber: 2,
+      bytes: PAGE_TWO,
+    });
+    await filesystemClientResourceStoreAdapter.storeThumbnail(owner, THUMBNAIL);
   }
 
   it("opens the original, each page and the thumbnail it stored, as plain files under the owner's folder", async () => {
@@ -92,12 +99,14 @@ describe("FilesystemClientResourceStore", () => {
     await storeEverything(OWNER);
 
     // act
-    const original = await store.openOriginal(OWNER);
+    const original =
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER);
     const pages = [
-      await store.openPage(OWNER, 1),
-      await store.openPage(OWNER, 2),
+      await filesystemClientResourceStoreAdapter.openPage(OWNER, 1),
+      await filesystemClientResourceStoreAdapter.openPage(OWNER, 2),
     ];
-    const thumbnail = await store.openThumbnail(OWNER);
+    const thumbnail =
+      await filesystemClientResourceStoreAdapter.openThumbnail(OWNER);
 
     // assert
     expect(original?.sizeBytes).toBe(ORIGINAL.length);
@@ -117,10 +126,11 @@ describe("FilesystemClientResourceStore", () => {
 
   it("streams the original in more than one chunk", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
 
     // act
-    const original = await store.openOriginal(OWNER);
+    const original =
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER);
 
     // assert
     let chunkCount = 0;
@@ -132,16 +142,16 @@ describe("FilesystemClientResourceStore", () => {
 
   it("opens nothing for a resource with no files behind it", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
     const unknown = { clientId: "client-1", resourceId: "resource-2" };
 
     // act
     const opened = [
-      await store.openOriginal(unknown),
-      await store.openPage(unknown, 1),
-      await store.openThumbnail(unknown),
-      await store.openPage(OWNER, 1),
-      await store.openThumbnail(OWNER),
+      await filesystemClientResourceStoreAdapter.openOriginal(unknown),
+      await filesystemClientResourceStoreAdapter.openPage(unknown, 1),
+      await filesystemClientResourceStoreAdapter.openThumbnail(unknown),
+      await filesystemClientResourceStoreAdapter.openPage(OWNER, 1),
+      await filesystemClientResourceStoreAdapter.openThumbnail(OWNER),
     ];
 
     // assert
@@ -153,9 +163,11 @@ describe("FilesystemClientResourceStore", () => {
     await storeEverything(OWNER);
 
     // act
-    await readAll((await store.openOriginal(OWNER))!.bytes);
-    await store.openPage(OWNER, 1);
-    await store.openThumbnail(OWNER);
+    await readAll(
+      (await filesystemClientResourceStoreAdapter.openOriginal(OWNER))!.bytes,
+    );
+    await filesystemClientResourceStoreAdapter.openPage(OWNER, 1);
+    await filesystemClientResourceStoreAdapter.openThumbnail(OWNER);
 
     // assert
     expect(openedFiles.length).toBeGreaterThan(0);
@@ -164,11 +176,12 @@ describe("FilesystemClientResourceStore", () => {
 
   it("opens the original's file only once its bytes are first pulled", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
     openedFiles.length = 0;
 
     // act
-    const original = await store.openOriginal(OWNER);
+    const original =
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER);
     const openedBeforePulling = openedFiles.length;
     const firstChunk = await original!.bytes[Symbol.asyncIterator]().next();
 
@@ -181,11 +194,12 @@ describe("FilesystemClientResourceStore", () => {
 
   it("leaves no file open when the original is opened and dropped unread", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
     openedFiles.length = 0;
 
     // act
-    const original = await store.openOriginal(OWNER);
+    const original =
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER);
     await original!.bytes[Symbol.asyncIterator]().return?.();
 
     // assert
@@ -195,8 +209,9 @@ describe("FilesystemClientResourceStore", () => {
 
   it("releases the original's file when the reader stops after the first chunk", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
-    const original = await store.openOriginal(OWNER);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
+    const original =
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER);
 
     // act
     for await (const _chunk of original!.bytes) {
@@ -209,8 +224,9 @@ describe("FilesystemClientResourceStore", () => {
 
   it("releases the original's file when the reader gives up before reading", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
-    const original = await store.openOriginal(OWNER);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
+    const original =
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER);
 
     // act
     await original!.bytes[Symbol.asyncIterator]().return?.();
@@ -221,32 +237,45 @@ describe("FilesystemClientResourceStore", () => {
 
   it("refuses to overwrite an original already stored for the owner, rejecting so the upload fails", async () => {
     // arrange
-    await store.storeOriginal(OWNER, ORIGINAL);
+    await filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL);
 
     // act
-    const storing = store.storeOriginal(OWNER, new Uint8Array([9]));
+    const storing = filesystemClientResourceStoreAdapter.storeOriginal(
+      OWNER,
+      new Uint8Array([9]),
+    );
 
     // assert
     await expect(storing).rejects.toThrow(
       "A client resource file is already stored at this location.",
     );
-    expect(await readAll((await store.openOriginal(OWNER))!.bytes)).toEqual(
-      ORIGINAL,
-    );
+    expect(
+      await readAll(
+        (await filesystemClientResourceStoreAdapter.openOriginal(OWNER))!.bytes,
+      ),
+    ).toEqual(ORIGINAL);
   });
 
   it("refuses to overwrite a page already stored for the owner", async () => {
     // arrange
-    await store.storePage(OWNER, { pageNumber: 1, bytes: PAGE_ONE });
+    await filesystemClientResourceStoreAdapter.storePage(OWNER, {
+      pageNumber: 1,
+      bytes: PAGE_ONE,
+    });
 
     // act
-    const storing = store.storePage(OWNER, { pageNumber: 1, bytes: PAGE_TWO });
+    const storing = filesystemClientResourceStoreAdapter.storePage(OWNER, {
+      pageNumber: 1,
+      bytes: PAGE_TWO,
+    });
 
     // assert
     await expect(storing).rejects.toThrow(
       "A client resource file is already stored at this location.",
     );
-    expect(await store.openPage(OWNER, 1)).toEqual(PAGE_ONE);
+    expect(
+      await filesystemClientResourceStoreAdapter.openPage(OWNER, 1),
+    ).toEqual(PAGE_ONE);
   });
 
   it("removes every file of the resource and leaves the client's other resources alone", async () => {
@@ -256,14 +285,22 @@ describe("FilesystemClientResourceStore", () => {
     await storeEverything(sibling);
 
     // act
-    await store.remove(OWNER);
+    await filesystemClientResourceStoreAdapter.remove(OWNER);
 
     // assert
     expect(await readdir(join(root, "client-1"))).toEqual(["resource-2"]);
-    expect(await store.openOriginal(OWNER)).toBeNull();
-    expect(await store.openPage(OWNER, 1)).toBeNull();
-    expect(await store.openThumbnail(OWNER)).toBeNull();
-    expect(await store.openThumbnail(sibling)).toEqual(THUMBNAIL);
+    expect(
+      await filesystemClientResourceStoreAdapter.openOriginal(OWNER),
+    ).toBeNull();
+    expect(
+      await filesystemClientResourceStoreAdapter.openPage(OWNER, 1),
+    ).toBeNull();
+    expect(
+      await filesystemClientResourceStoreAdapter.openThumbnail(OWNER),
+    ).toBeNull();
+    expect(
+      await filesystemClientResourceStoreAdapter.openThumbnail(sibling),
+    ).toEqual(THUMBNAIL);
   });
 
   it("removes again, and removes what was never stored, without failing", async () => {
@@ -272,9 +309,9 @@ describe("FilesystemClientResourceStore", () => {
     const neverStored = { clientId: "client-2", resourceId: "resource-9" };
 
     // act
-    await store.remove(OWNER);
-    await store.remove(OWNER);
-    await store.remove(neverStored);
+    await filesystemClientResourceStoreAdapter.remove(OWNER);
+    await filesystemClientResourceStoreAdapter.remove(OWNER);
+    await filesystemClientResourceStoreAdapter.remove(neverStored);
 
     // assert
     expect(await readdir(root)).toEqual(["client-1"]);
@@ -285,13 +322,19 @@ describe("FilesystemClientResourceStore", () => {
     async (owner) => {
       // arrange
       const calls = [
-        () => store.storeOriginal(owner, ORIGINAL),
-        () => store.storePage(owner, { pageNumber: 1, bytes: PAGE_ONE }),
-        () => store.storeThumbnail(owner, THUMBNAIL),
-        () => store.openOriginal(owner),
-        () => store.openPage(owner, 1),
-        () => store.openThumbnail(owner),
-        () => store.remove(owner),
+        () =>
+          filesystemClientResourceStoreAdapter.storeOriginal(owner, ORIGINAL),
+        () =>
+          filesystemClientResourceStoreAdapter.storePage(owner, {
+            pageNumber: 1,
+            bytes: PAGE_ONE,
+          }),
+        () =>
+          filesystemClientResourceStoreAdapter.storeThumbnail(owner, THUMBNAIL),
+        () => filesystemClientResourceStoreAdapter.openOriginal(owner),
+        () => filesystemClientResourceStoreAdapter.openPage(owner, 1),
+        () => filesystemClientResourceStoreAdapter.openThumbnail(owner),
+        () => filesystemClientResourceStoreAdapter.remove(owner),
       ];
 
       // act
@@ -315,8 +358,14 @@ describe("FilesystemClientResourceStore", () => {
     async (pageNumber) => {
       // arrange
       // act
-      const storing = store.storePage(OWNER, { pageNumber, bytes: PAGE_ONE });
-      const opening = store.openPage(OWNER, pageNumber);
+      const storing = filesystemClientResourceStoreAdapter.storePage(OWNER, {
+        pageNumber,
+        bytes: PAGE_ONE,
+      });
+      const opening = filesystemClientResourceStoreAdapter.openPage(
+        OWNER,
+        pageNumber,
+      );
 
       // assert
       await expect(storing).rejects.toThrow(
@@ -343,12 +392,24 @@ describe("FilesystemClientResourceStore", () => {
     });
 
     it.each([
-      ["the original", () => store.storeOriginal(OWNER, ORIGINAL)],
+      [
+        "the original",
+        () =>
+          filesystemClientResourceStoreAdapter.storeOriginal(OWNER, ORIGINAL),
+      ],
       [
         "a page",
-        () => store.storePage(OWNER, { pageNumber: 2, bytes: PAGE_TWO }),
+        () =>
+          filesystemClientResourceStoreAdapter.storePage(OWNER, {
+            pageNumber: 2,
+            bytes: PAGE_TWO,
+          }),
       ],
-      ["the thumbnail", () => store.storeThumbnail(OWNER, THUMBNAIL)],
+      [
+        "the thumbnail",
+        () =>
+          filesystemClientResourceStoreAdapter.storeThumbnail(OWNER, THUMBNAIL),
+      ],
     ])("refuses to store %s through it", async (_file, storing) => {
       // arrange
       // act
@@ -364,9 +425,15 @@ describe("FilesystemClientResourceStore", () => {
     });
 
     it.each([
-      ["the original", () => store.openOriginal(OWNER)],
-      ["a page", () => store.openPage(OWNER, 1)],
-      ["the thumbnail", () => store.openThumbnail(OWNER)],
+      [
+        "the original",
+        () => filesystemClientResourceStoreAdapter.openOriginal(OWNER),
+      ],
+      ["a page", () => filesystemClientResourceStoreAdapter.openPage(OWNER, 1)],
+      [
+        "the thumbnail",
+        () => filesystemClientResourceStoreAdapter.openThumbnail(OWNER),
+      ],
     ])("refuses to open %s through it", async (_file, opening) => {
       // arrange
       // act
@@ -380,7 +447,7 @@ describe("FilesystemClientResourceStore", () => {
     it("refuses to remove through it and leaves the linked folder's files", async () => {
       // arrange
       // act
-      const removing = store.remove(OWNER);
+      const removing = filesystemClientResourceStoreAdapter.remove(OWNER);
 
       // assert
       await expect(removing).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -399,7 +466,10 @@ describe("FilesystemClientResourceStore", () => {
     await symlink(outside, join(root, "client-1"));
 
     // act
-    const storing = store.storeOriginal(OWNER, ORIGINAL);
+    const storing = filesystemClientResourceStoreAdapter.storeOriginal(
+      OWNER,
+      ORIGINAL,
+    );
 
     // assert
     await expect(storing).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -414,7 +484,7 @@ describe("FilesystemClientResourceStore", () => {
     await symlink(outsideFile, join(root, "client-1/resource-1/original"));
 
     // act
-    const opening = store.openOriginal(OWNER);
+    const opening = filesystemClientResourceStoreAdapter.openOriginal(OWNER);
 
     // assert
     await expect(opening).rejects.toThrow(LOCATION_LEAVES_ROOT);

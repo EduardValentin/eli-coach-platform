@@ -40,16 +40,19 @@ export type ChangeCheckInSeriesResult =
     };
 
 type ChangeCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  clock: ClockPort;
-  coachTime: CoachTimePort;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  ids: CheckInIdsPort;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
-  openSlots: Pick<OpenSlotsPort, "coachWeek">;
-  series: Pick<CheckInSeriesRecordsPort, "find" | "change" | "recordWeeks">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clockPort: ClockPort;
+  coachTimePort: CoachTimePort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInIdsPort: CheckInIdsPort;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
+  openSlotsPort: Pick<OpenSlotsPort, "coachWeek">;
+  checkInSeriesRecordsPort: Pick<
+    CheckInSeriesRecordsPort,
+    "find" | "change" | "recordWeeks"
+  >;
 };
 
 export class ChangeCheckInSeriesUseCase {
@@ -64,25 +67,29 @@ export class ChangeCheckInSeriesUseCase {
   async execute(
     command: ChangeCheckInSeriesCommand,
   ): Promise<ChangeCheckInSeriesResult> {
-    const current = await this.options.series.find(command.seriesId);
+    const current = await this.options.checkInSeriesRecordsPort.find(
+      command.seriesId,
+    );
 
     if (!current || current.isStopped()) {
       return { status: "unknown_series" };
     }
 
-    const client = await this.options.clients.findById(current.clientId);
+    const client = await this.options.clientReachPort.findById(
+      current.clientId,
+    );
 
     if (!client || !CheckInSeriesBounds.admits(client)) {
       return { status: "client_cannot_answer" };
     }
 
-    const week = await this.options.openSlots.coachWeek();
+    const week = await this.options.openSlotsPort.coachWeek();
 
     if (!week.holdsWeeklyHour(command)) {
       return { status: "outside_availability" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const { series, starts } = current.changedTo({
       rule: CheckInSeriesRule.of({
         weekday: command.weekday,
@@ -92,7 +99,7 @@ export class ChangeCheckInSeriesUseCase {
       now,
       lead: CHECK_IN_RULES,
     });
-    const changed = await this.options.series.change({
+    const changed = await this.options.checkInSeriesRecordsPort.change({
       series,
       expected: {
         changedAt: current.changedAt,
@@ -108,7 +115,7 @@ export class ChangeCheckInSeriesUseCase {
     }
 
     await releaseFreedHours(
-      this.options.coachTime,
+      this.options.coachTimePort,
       changed.freedReservationIds,
     );
 
@@ -118,7 +125,7 @@ export class ChangeCheckInSeriesUseCase {
         clientTimeZone: client.timeZone,
         availability: "open",
         at: now,
-        newId: () => this.options.ids.generate(),
+        newId: () => this.options.checkInIdsPort.generate(),
       }),
     );
 

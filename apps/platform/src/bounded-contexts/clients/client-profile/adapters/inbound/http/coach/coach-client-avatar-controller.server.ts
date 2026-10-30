@@ -19,9 +19,9 @@ import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/publ
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachClientAvatarControllerOptions = {
-  listClientAvatars: ListClientAvatarsUseCase;
-  removeClientAvatarAsCoach: RemoveClientAvatarAsCoachUseCase;
-  uploadClientAvatarAsCoach: UploadClientAvatarAsCoachUseCase;
+  listClientAvatarsUseCase: ListClientAvatarsUseCase;
+  removeClientAvatarAsCoachUseCase: RemoveClientAvatarAsCoachUseCase;
+  uploadClientAvatarAsCoachUseCase: UploadClientAvatarAsCoachUseCase;
 };
 
 const clientIdSchema = z.uuid();
@@ -47,7 +47,7 @@ export class CoachClientAvatarController {
     }
 
     return avatarWrittenResponse(
-      await this.options.uploadClientAvatarAsCoach.execute({
+      await this.options.uploadClientAvatarAsCoachUseCase.execute({
         clientId: target.data,
         avatar: part.avatar,
       }),
@@ -66,7 +66,7 @@ export class CoachClientAvatarController {
     }
 
     return avatarWrittenResponse(
-      await this.options.removeClientAvatarAsCoach.execute(target.data),
+      await this.options.removeClientAvatarAsCoachUseCase.execute(target.data),
     );
   }
 
@@ -75,7 +75,8 @@ export class CoachClientAvatarController {
     clientIds: readonly string[],
   ): Promise<ClientAvatarUrls> {
     args.context.get(accessContext).requirePortalAccess("COACH");
-    const avatars = await this.options.listClientAvatars.execute(clientIds);
+    const avatars =
+      await this.options.listClientAvatarsUseCase.execute(clientIds);
     const avatarOf = new Map(
       avatars.map((avatar) => [avatar.clientId, avatar]),
     );

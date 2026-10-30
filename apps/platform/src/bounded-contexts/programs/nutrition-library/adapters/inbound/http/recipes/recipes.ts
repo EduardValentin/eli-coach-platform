@@ -19,7 +19,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
     }
 
-    return args.context.get(nutritionLibraryContext).recipeLibrary.create(args);
+    return args.context
+      .get(nutritionLibraryContext)
+      .recipeLibraryController.create(args);
   });
 }
 

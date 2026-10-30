@@ -18,7 +18,7 @@ import {
 } from "~/bounded-contexts/operations/feature-flags/config.server";
 
 type FeatureFlagsComposition = {
-  facades: { featureFlags: FeatureFlagsFacade };
+  facades: { featureFlagsFacade: FeatureFlagsFacade };
   feature: FeatureFlagsFeature;
   middleware: MiddlewareFunction<Response>;
 };
@@ -32,23 +32,27 @@ type FeatureFlagsFeatureHandles = {
 export function composeFeatureFlagsFeature(
   handles: FeatureFlagsFeatureHandles,
 ): FeatureFlagsComposition {
-  const storedFlags = new GetFeatureFlagsUseCase({
-    featureFlags: new PostgresFeatureFlagRepository(handles.database),
+  const getFeatureFlagsUseCase = new GetFeatureFlagsUseCase({
+    featureFlagsPort: new PostgresFeatureFlagRepository(handles.database),
   });
   const overrides =
     resolveFeatureFlagOverridesMode(handles.featureFlagsConfig) === "browser"
       ? composeBrowserFeatureFlagOverrides({
           appBasePath: handles.appBasePath,
-          featureFlags: storedFlags,
+          featureFlagReaderPort: getFeatureFlagsUseCase,
         })
-      : composeWithoutFeatureFlagOverrides(storedFlags);
+      : composeWithoutFeatureFlagOverrides(getFeatureFlagsUseCase);
 
   return {
     facades: {
-      featureFlags: new FeatureFlagsFacadeAdapter(overrides.featureFlags),
+      featureFlagsFacade: new FeatureFlagsFacadeAdapter(
+        overrides.featureFlagReaderPort,
+      ),
     },
     feature: {
-      featureFlags: new FeatureFlagController(overrides.featureFlags),
+      featureFlagController: new FeatureFlagController(
+        overrides.featureFlagReaderPort,
+      ),
     },
     middleware: overrides.middleware,
   };

@@ -36,10 +36,12 @@ describe("ListExercisesUseCase", () => {
       replace: vi.fn(),
       remove: vi.fn(),
     } satisfies ExerciseLibraryPort;
-    const useCase = new ListExercisesUseCase({ library });
+    const listExercisesUseCase = new ListExercisesUseCase({
+      exerciseLibraryPort: library,
+    });
 
     // act
-    const result = await useCase.execute(COACH_ACCOUNT_ID);
+    const result = await listExercisesUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
     expect(result).toEqual({ status: "listed", exercises: [HIP_THRUST] });

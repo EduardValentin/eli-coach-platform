@@ -45,10 +45,12 @@ describe("client media stores", () => {
     };
 
     // act
-    const store = createProgressPhotoStoreAdapter(config);
+    const progressPhotoStorePort = createProgressPhotoStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(InMemoryClientMediaStoreAdapter);
+    expect(progressPhotoStorePort).toBeInstanceOf(
+      InMemoryClientMediaStoreAdapter,
+    );
   });
 
   it("returns the encrypted filesystem store over a ready root, stamping the configured key id", async () => {
@@ -56,11 +58,15 @@ describe("client media stores", () => {
     const config = filesystemConfig(workspace);
 
     // act
-    const store = createProgressPhotoStoreAdapter(config);
+    const progressPhotoStorePort = createProgressPhotoStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(EncryptedFilesystemClientMediaStoreAdapter);
-    expect(await store.store(OWNER, new Uint8Array([1]))).toEqual({
+    expect(progressPhotoStorePort).toBeInstanceOf(
+      EncryptedFilesystemClientMediaStoreAdapter,
+    );
+    expect(
+      await progressPhotoStorePort.store(OWNER, new Uint8Array([1])),
+    ).toEqual({
       storageKey: "client-1/entry-1/photo-1.bin",
       keyId: "unit-1",
     });
@@ -125,12 +131,14 @@ describe("client media stores", () => {
     const config = filesystemConfig(workspace);
 
     // act
-    const store = createClientAvatarStoreAdapter(config);
+    const clientAvatarStorePort = createClientAvatarStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(EncryptedFilesystemClientMediaStoreAdapter);
+    expect(clientAvatarStorePort).toBeInstanceOf(
+      EncryptedFilesystemClientMediaStoreAdapter,
+    );
     expect(
-      await store.store(
+      await clientAvatarStorePort.store(
         { clientId: "client-1", avatarId: "avatar-1" },
         new Uint8Array([1]),
       ),
@@ -145,9 +153,11 @@ describe("client media stores", () => {
     };
 
     // act
-    const store = createClientAvatarStoreAdapter(config);
+    const clientAvatarStorePort = createClientAvatarStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(InMemoryClientMediaStoreAdapter);
+    expect(clientAvatarStorePort).toBeInstanceOf(
+      InMemoryClientMediaStoreAdapter,
+    );
   });
 });

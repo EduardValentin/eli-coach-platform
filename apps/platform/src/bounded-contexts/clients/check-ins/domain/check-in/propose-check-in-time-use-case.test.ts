@@ -131,10 +131,10 @@ function createProposeCheckInTime(options?: {
     seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotificationsPort;
   const ports = {
-    checkIns,
-    clients,
-    clock: { now: () => NOW },
-    coachTime: {
+    checkInsPort: checkIns,
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    coachTimePort: {
       reserve: vi.fn().mockResolvedValue(
         options?.hold ?? {
           status: "reserved",
@@ -143,8 +143,8 @@ function createProposeCheckInTime(options?: {
       ),
       release: vi.fn().mockResolvedValue(undefined),
     },
-    identities,
-    incidents: {
+    clientIdentitiesPort: identities,
+    checkInIncidentsPort: {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
@@ -155,28 +155,31 @@ function createProposeCheckInTime(options?: {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     },
-    inbox: {
+    checkInInboxPort: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
       scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
-    notifications,
-    openSlots: startsBeyondADay(),
+    checkInNotificationsPort: notifications,
+    openSlotsPort: startsBeyondADay(),
   };
 
-  return { ports, proposeCheckInTime: new ProposeCheckInTimeUseCase(ports) };
+  return {
+    ports,
+    proposeCheckInTimeUseCase: new ProposeCheckInTimeUseCase(ports),
+  };
 }
 
 describe("ProposeCheckInTimeUseCase", () => {
   it("moves an approved check-in to the new time, waiting for the client, as it was read", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       moved: { status: "moved", freedReservationId: "reservation-1" },
     });
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result).toEqual({
@@ -191,22 +194,22 @@ describe("ProposeCheckInTimeUseCase", () => {
         answeredAt: null,
       }),
     });
-    expect(ports.coachTime.reserve).toHaveBeenCalledWith({
+    expect(ports.coachTimePort.reserve).toHaveBeenCalledWith({
       start: NEW_START,
       end: new Date("2026-06-04T10:00:00.000Z"),
     });
-    expect(ports.checkIns.move).toHaveBeenCalledWith({
+    expect(ports.checkInsPort.move).toHaveBeenCalledWith({
       checkIn: expect.any(CheckIn),
       expected: { recordedStatus: "approved", startsAt: STARTS_AT },
       reservationId: "reservation-2",
       at: NOW,
     });
-    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-1");
+    expect(ports.coachTimePort.release).toHaveBeenCalledWith("reservation-1");
   });
 
   it("moves a clash to the coach's new time from the clash she read, waiting for the client without spending a move", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       found: checkIn({
         seriesId: "series-1",
         kind: "recurring",
@@ -218,7 +221,7 @@ describe("ProposeCheckInTimeUseCase", () => {
     });
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result).toEqual({
@@ -231,7 +234,7 @@ describe("ProposeCheckInTimeUseCase", () => {
         moves: 0,
       }),
     });
-    expect(ports.checkIns.move).toHaveBeenCalledWith({
+    expect(ports.checkInsPort.move).toHaveBeenCalledWith({
       checkIn: expect.any(CheckIn),
       expected: { recordedStatus: "clash", startsAt: STARTS_AT },
       reservationId: "reservation-2",
@@ -241,19 +244,19 @@ describe("ProposeCheckInTimeUseCase", () => {
 
   it("refuses the client moving a clash her coach is rescheduling", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       found: checkIn({ seriesId: "series-1", recordedStatus: "clash" }),
     });
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       ...COACH_PROPOSAL,
       actor: ANA_ACTOR,
     });
 
     // assert
     expect(result).toEqual({ status: "not_your_turn" });
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
   });
 
   describe("on a weekly check-in", () => {
@@ -273,13 +276,13 @@ describe("ProposeCheckInTimeUseCase", () => {
 
     it("refuses the client a later week while an earlier one is upcoming, without moving or emailing", async () => {
       // arrange
-      const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
         found: LATER_WEEK,
         clientCheckIns: [NEXT_WEEK, LATER_WEEK],
       });
 
       // act
-      const result = await proposeCheckInTime.execute({
+      const result = await proposeCheckInTimeUseCase.execute({
         ...COACH_PROPOSAL,
         checkInId: "week-1",
         actor: ANA_ACTOR,
@@ -287,9 +290,11 @@ describe("ProposeCheckInTimeUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "not_next_weekly" });
-      expect(ports.checkIns.listForClient).toHaveBeenCalledWith("client-1");
-      expect(ports.checkIns.move).not.toHaveBeenCalled();
-      expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.listForClient).toHaveBeenCalledWith("client-1");
+      expect(ports.checkInsPort.move).not.toHaveBeenCalled();
+      expect(
+        ports.checkInNotificationsPort.newTimeProposed,
+      ).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -297,13 +302,13 @@ describe("ProposeCheckInTimeUseCase", () => {
       { party: "coach", actor: COACH, found: LATER_WEEK },
     ])("moves the week the $party may move", async ({ actor, found }) => {
       // arrange
-      const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
         found,
         clientCheckIns: [NEXT_WEEK, LATER_WEEK],
       });
 
       // act
-      const result = await proposeCheckInTime.execute({
+      const result = await proposeCheckInTimeUseCase.execute({
         ...COACH_PROPOSAL,
         checkInId: found.id,
         actor,
@@ -311,31 +316,33 @@ describe("ProposeCheckInTimeUseCase", () => {
 
       // assert
       expect(result.status).toBe("proposed");
-      expect(ports.checkIns.move).toHaveBeenCalled();
+      expect(ports.checkInsPort.move).toHaveBeenCalled();
     });
   });
 
   it("emails the client the coach's new time", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime();
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime();
 
     // act
-    await proposeCheckInTime.execute(COACH_PROPOSAL);
+    await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
-    expect(ports.notifications.newTimeProposed).toHaveBeenCalledWith({
-      checkIn: expect.objectContaining({
-        startsAt: NEW_START,
-        earlierStartsAt: STARTS_AT,
-      }),
-      client: ANA,
-      recipient: "client",
-    });
+    expect(ports.checkInNotificationsPort.newTimeProposed).toHaveBeenCalledWith(
+      {
+        checkIn: expect.objectContaining({
+          startsAt: NEW_START,
+          earlierStartsAt: STARTS_AT,
+        }),
+        client: ANA,
+        recipient: "client",
+      },
+    );
   });
 
   it("lets the client counter-propose the coach's request from her zone and emails the coach", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       found: checkIn({
         recordedStatus: "pending",
         initiatedBy: "coach",
@@ -345,7 +352,7 @@ describe("ProposeCheckInTimeUseCase", () => {
     });
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       checkInId: "check-in-1",
       actor: ANA_ACTOR,
       startsAt: NEW_START,
@@ -362,12 +369,12 @@ describe("ProposeCheckInTimeUseCase", () => {
         newTimeNote: null,
       }),
     });
-    expect(ports.checkIns.move).toHaveBeenCalledWith(
+    expect(ports.checkInsPort.move).toHaveBeenCalledWith(
       expect.objectContaining({
         expected: { recordedStatus: "pending", startsAt: STARTS_AT },
       }),
     );
-    expect(ports.notifications.newTimeProposed).toHaveBeenCalledWith(
+    expect(ports.checkInNotificationsPort.newTimeProposed).toHaveBeenCalledWith(
       expect.objectContaining({ recipient: "coach" }),
     );
   });
@@ -400,106 +407,114 @@ describe("ProposeCheckInTimeUseCase", () => {
     "refuses a new time for $situation without moving or emailing",
     async ({ actor, found, refusal }) => {
       // arrange
-      const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
         found,
       });
 
       // act
-      const result = await proposeCheckInTime.execute({
+      const result = await proposeCheckInTimeUseCase.execute({
         ...COACH_PROPOSAL,
         actor,
       });
 
       // assert
       expect(result).toEqual({ status: refusal });
-      expect(ports.checkIns.move).not.toHaveBeenCalled();
-      expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+      expect(ports.checkInsPort.move).not.toHaveBeenCalled();
+      expect(
+        ports.checkInNotificationsPort.newTimeProposed,
+      ).not.toHaveBeenCalled();
     },
   );
 
   it("refuses a new time inside the next 24 hours without moving", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime();
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime();
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       ...COACH_PROPOSAL,
       startsAt: INSIDE_A_DAY,
     });
 
     // assert
     expect(result).toEqual({ status: "time_taken" });
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
   });
 
   it("refuses a new time at the client's coaching end without moving", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       reference: { ...REACHABLE_ANA, coachingEndsAt: NEW_START },
     });
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result).toEqual({ status: "time_taken" });
-    expect(ports.clients.findById).toHaveBeenCalledWith("client-1");
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.clientReachPort.findById).toHaveBeenCalledWith("client-1");
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
   });
 
   it("refuses when the new hour was taken meanwhile, moving nothing and emailing nobody", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       hold: { status: "taken" },
     });
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result).toEqual({ status: "time_taken" });
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
-    expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
+    expect(
+      ports.checkInNotificationsPort.newTimeProposed,
+    ).not.toHaveBeenCalled();
   });
 
   it("refuses when the check-in changed meanwhile, giving back the new hour and emailing nobody", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       moved: { status: "changed_meanwhile" },
     });
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result).toEqual({ status: "changed_meanwhile" });
-    expect(ports.coachTime.release).toHaveBeenCalledWith("reservation-2");
-    expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.release).toHaveBeenCalledWith("reservation-2");
+    expect(
+      ports.checkInNotificationsPort.newTimeProposed,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers unknown for another client's check-in", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       found: checkIn({ clientId: "client-2" }),
     });
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       ...COACH_PROPOSAL,
       actor: ANA_ACTOR,
     });
 
     // assert
     expect(result).toEqual({ status: "unknown" });
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
   });
 
   it("answers unknown for a check-in that does not exist", async () => {
     // arrange
-    const { proposeCheckInTime } = createProposeCheckInTime({ found: null });
+    const { proposeCheckInTimeUseCase } = createProposeCheckInTime({
+      found: null,
+    });
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result).toEqual({ status: "unknown" });
@@ -507,42 +522,42 @@ describe("ProposeCheckInTimeUseCase", () => {
 
   it("refuses a client whose coaching ended", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime({
       client: { ...REACHABLE_ANA, portal: "ended" },
     });
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       ...COACH_PROPOSAL,
       actor: ANA_ACTOR,
     });
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
   });
 
   it("refuses a note longer than 500 characters", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime();
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime();
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       ...COACH_PROPOSAL,
       note: "a".repeat(501),
     });
 
     // assert
     expect(result).toEqual({ status: "note_too_long" });
-    expect(ports.checkIns.find).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.find).not.toHaveBeenCalled();
   });
 
   it("refuses a client zone that names no place", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime();
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime();
 
     // act
-    const result = await proposeCheckInTime.execute({
+    const result = await proposeCheckInTimeUseCase.execute({
       ...COACH_PROPOSAL,
       actor: ANA_ACTOR,
       clientTimeZone: "+02:00",
@@ -550,20 +565,22 @@ describe("ProposeCheckInTimeUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "invalid_time_zone" });
-    expect(ports.checkIns.move).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.move).not.toHaveBeenCalled();
   });
 
   it("keeps the new time and reports the email the provider refused", async () => {
     // arrange
-    const { proposeCheckInTime, ports } = createProposeCheckInTime();
-    ports.notifications.newTimeProposed.mockResolvedValue("failed");
+    const { proposeCheckInTimeUseCase, ports } = createProposeCheckInTime();
+    ports.checkInNotificationsPort.newTimeProposed.mockResolvedValue("failed");
 
     // act
-    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+    const result = await proposeCheckInTimeUseCase.execute(COACH_PROPOSAL);
 
     // assert
     expect(result.status).toBe("proposed");
-    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+    expect(
+      ports.checkInIncidentsPort.checkInNotificationFailed,
+    ).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "newTimeProposed",
     });

@@ -22,7 +22,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(exerciseLibraryContext)
-      .exerciseLibrary.create(args);
+      .exerciseLibraryController.create(args);
   });
 }
 

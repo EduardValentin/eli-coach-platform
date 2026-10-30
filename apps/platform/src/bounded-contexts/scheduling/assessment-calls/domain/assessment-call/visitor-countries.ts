@@ -8,16 +8,16 @@ export type VisitorPhoneEntry = { country: string; nationalNumber: string };
 export class VisitorCountries {
   private constructor(
     private readonly callingCodes: ReadonlyMap<string, string>,
-    private readonly phoneNumbers: PhoneNumbersPort,
+    private readonly phoneNumbersPort: PhoneNumbersPort,
   ) {}
 
   static of(
     countries: readonly VisitorCountry[],
-    phoneNumbers: PhoneNumbersPort,
+    phoneNumbersPort: PhoneNumbersPort,
   ): VisitorCountries {
     return new VisitorCountries(
       new Map(countries.map((country) => [country.code, country.callingCode])),
-      phoneNumbers,
+      phoneNumbersPort,
     );
   }
 
@@ -31,7 +31,7 @@ export class VisitorCountries {
         callingCode: this.callingCodes.get(entry.country) ?? "",
         nationalNumber: entry.nationalNumber,
       },
-      this.phoneNumbers,
+      this.phoneNumbersPort,
     );
   }
 }

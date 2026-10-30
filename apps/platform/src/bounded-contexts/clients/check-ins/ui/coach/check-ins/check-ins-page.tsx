@@ -40,7 +40,9 @@ import {
 import { clientFullName } from "~/bounded-contexts/clients/clients/public/clients";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
-  return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
+  return args.context
+    .get(checkInsContext)
+    .coachCheckInsController.loadCheckIns(args);
 }
 
 export const meta: MetaFunction = () => [{ title: "Check-ins | Evoa" }];

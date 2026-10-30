@@ -100,7 +100,7 @@ class InMemoryOriginalsAdapter implements ClientResourceStorePort {
 }
 
 function createUseCase() {
-  const store = new InMemoryOriginalsAdapter();
+  const inMemoryOriginalsAdapter = new InMemoryOriginalsAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -134,14 +134,14 @@ function createUseCase() {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new DownloadClientResourceUseCase({
-    resources: new InMemoryClientResourcesAdapter(),
-    clients,
-    store,
-    incidents,
+  const downloadClientResourceUseCase = new DownloadClientResourceUseCase({
+    clientResourcesPort: new InMemoryClientResourcesAdapter(),
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryOriginalsAdapter,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, store, incidents };
+  return { downloadClientResourceUseCase, inMemoryOriginalsAdapter, incidents };
 }
 
 describe("DownloadClientResourceUseCase", () => {
@@ -152,10 +152,10 @@ describe("DownloadClientResourceUseCase", () => {
     "streams the unchanged original, named for its real format, to %s",
     async (_case, requester) => {
       // arrange
-      const { useCase } = createUseCase();
+      const { downloadClientResourceUseCase } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await downloadClientResourceUseCase.execute({
         requester,
         resourceId: "resource-1",
       });
@@ -176,17 +176,21 @@ describe("DownloadClientResourceUseCase", () => {
 
   it("finds nothing for another client and reports the refusal", async () => {
     // arrange
-    const { useCase, store, incidents } = createUseCase();
+    const {
+      downloadClientResourceUseCase,
+      inMemoryOriginalsAdapter,
+      incidents,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await downloadClientResourceUseCase.execute({
       requester: { role: "CLIENT", authSubjectId: "user_bea" },
       resourceId: "resource-1",
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(store.openOriginal).not.toHaveBeenCalled();
+    expect(inMemoryOriginalsAdapter.openOriginal).not.toHaveBeenCalled();
     expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
       requesterRole: "CLIENT",
       clientId: "client-ana",
@@ -196,10 +200,10 @@ describe("DownloadClientResourceUseCase", () => {
 
   it("finds nothing for an unknown id", async () => {
     // arrange
-    const { useCase, incidents } = createUseCase();
+    const { downloadClientResourceUseCase, incidents } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await downloadClientResourceUseCase.execute({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       resourceId: "resource-404",
     });
@@ -211,11 +215,12 @@ describe("DownloadClientResourceUseCase", () => {
 
   it("finds nothing when the stored original is gone", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
-    store.openOriginal.mockResolvedValueOnce(null);
+    const { downloadClientResourceUseCase, inMemoryOriginalsAdapter } =
+      createUseCase();
+    inMemoryOriginalsAdapter.openOriginal.mockResolvedValueOnce(null);
 
     // act
-    const result = await useCase.execute({
+    const result = await downloadClientResourceUseCase.execute({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       resourceId: "resource-1",
     });

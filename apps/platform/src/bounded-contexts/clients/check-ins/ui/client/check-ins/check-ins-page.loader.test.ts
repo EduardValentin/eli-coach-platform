@@ -68,7 +68,7 @@ describe("the client's check-ins loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(checkInsContext, {
-          clientCheckIns: { loadCheckIns },
+          clientCheckInsController: { loadCheckIns },
         } as unknown as CheckInsFeature),
       ],
       request: new Request("https://evoa.fit/client/checkins"),

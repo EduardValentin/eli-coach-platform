@@ -38,16 +38,19 @@ type RecordMeasurementsResult =
   | { status: "invalid" };
 
 type RecordMeasurementsUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  profiles: Pick<ClientProfilesPort, "findByClientId" | "recordPhotoConsent">;
-  records: ClientMeasurementRecordsPort;
-  measurementIds: MeasurementIdsPort;
-  photos: ProgressPhotosPort;
-  photoIds: ProgressPhotoIdsPort;
-  store: ProgressPhotoStorePort;
-  renditions: ProgressPhotoRenditionsPort;
-  clock: ClockPort;
-  incidents: MeasurementIncidentsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientProfilesPort: Pick<
+    ClientProfilesPort,
+    "findByClientId" | "recordPhotoConsent"
+  >;
+  clientMeasurementRecordsPort: ClientMeasurementRecordsPort;
+  measurementIdsPort: MeasurementIdsPort;
+  progressPhotosPort: ProgressPhotosPort;
+  progressPhotoIdsPort: ProgressPhotoIdsPort;
+  progressPhotoStorePort: ProgressPhotoStorePort;
+  progressPhotoRenditionsPort: ProgressPhotoRenditionsPort;
+  clockPort: ClockPort;
+  measurementIncidentsPort: MeasurementIncidentsPort;
 };
 
 export class RecordMeasurementsUseCase {
@@ -60,7 +63,7 @@ export class RecordMeasurementsUseCase {
   async execute(
     command: RecordMeasurementsCommand,
   ): Promise<RecordMeasurementsResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       command.authSubjectId,
     );
 
@@ -72,28 +75,33 @@ export class RecordMeasurementsUseCase {
       return { status: "ended" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const entry = measurementEntryOf(command.values, now);
 
     if (!entry || hasMeasurementProblem(command.values)) {
       return { status: "invalid" };
     }
 
-    const profile = await this.options.profiles.findByClientId(client.clientId);
+    const profile = await this.options.clientProfilesPort.findByClientId(
+      client.clientId,
+    );
     const consentsNow =
       command.consentGiven && profile !== null && !profile.hasPhotoConsent();
 
     if (consentsNow) {
-      await this.options.profiles.recordPhotoConsent(client.clientId, now);
+      await this.options.clientProfilesPort.recordPhotoConsent(
+        client.clientId,
+        now,
+      );
     }
 
-    const entryId = this.options.measurementIds.generate();
-    await this.options.records.record({
+    const entryId = this.options.measurementIdsPort.generate();
+    await this.options.clientMeasurementRecordsPort.record({
       clientId: client.clientId,
       entryId,
       entry,
     });
-    this.options.incidents.measurementEntrySaved({
+    this.options.measurementIncidentsPort.measurementEntrySaved({
       clientId: client.clientId,
       entryId,
     });

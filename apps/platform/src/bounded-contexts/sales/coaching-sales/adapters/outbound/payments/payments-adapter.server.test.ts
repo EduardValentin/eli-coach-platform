@@ -62,15 +62,19 @@ describe("PaymentsAdapter", () => {
     const config: PaymentsConfig = { PAYMENTS_PROVIDER: "memory" };
 
     // act
-    const payments = new PaymentsAdapter(config);
+    const paymentsAdapter = new PaymentsAdapter(config);
 
     // assert
-    expect(payments.checkout).toBeInstanceOf(InMemoryPaymentCheckoutAdapter);
-    expect(payments.events).toBeInstanceOf(InMemoryPaymentEventsAdapter);
-    expect(payments.subscriptions).toBeInstanceOf(
+    expect(paymentsAdapter.paymentCheckoutPort).toBeInstanceOf(
+      InMemoryPaymentCheckoutAdapter,
+    );
+    expect(paymentsAdapter.paymentEventsPort).toBeInstanceOf(
+      InMemoryPaymentEventsAdapter,
+    );
+    expect(paymentsAdapter.paymentSubscriptionsPort).toBeInstanceOf(
       InMemoryPaymentSubscriptionsAdapter,
     );
-    expect(payments.customerCards).toBeInstanceOf(
+    expect(paymentsAdapter.paymentCustomerCardsPort).toBeInstanceOf(
       InMemoryPaymentCustomerCardsAdapter,
     );
   });
@@ -80,15 +84,19 @@ describe("PaymentsAdapter", () => {
     const config = STRIPE_CONFIG;
 
     // act
-    const payments = new PaymentsAdapter(config);
+    const paymentsAdapter = new PaymentsAdapter(config);
 
     // assert
-    expect(payments.checkout).toBeInstanceOf(StripePaymentCheckoutAdapter);
-    expect(payments.events).toBeInstanceOf(StripePaymentEventsAdapter);
-    expect(payments.subscriptions).toBeInstanceOf(
+    expect(paymentsAdapter.paymentCheckoutPort).toBeInstanceOf(
+      StripePaymentCheckoutAdapter,
+    );
+    expect(paymentsAdapter.paymentEventsPort).toBeInstanceOf(
+      StripePaymentEventsAdapter,
+    );
+    expect(paymentsAdapter.paymentSubscriptionsPort).toBeInstanceOf(
       StripePaymentSubscriptionsAdapter,
     );
-    expect(payments.customerCards).toBeInstanceOf(
+    expect(paymentsAdapter.paymentCustomerCardsPort).toBeInstanceOf(
       StripePaymentCustomerCardsAdapter,
     );
   });
@@ -123,7 +131,7 @@ describe("PaymentsAdapter", () => {
 
   it("verifies Stripe signatures with the configured signing secret", async () => {
     // arrange
-    const { events } = new PaymentsAdapter(STRIPE_CONFIG);
+    const { paymentEventsPort } = new PaymentsAdapter(STRIPE_CONFIG);
     const rawBody = JSON.stringify({
       id: "evt_unit",
       type: "customer.created",
@@ -136,7 +144,7 @@ describe("PaymentsAdapter", () => {
     });
 
     // act
-    const verdict = await events.verify(rawBody, signature);
+    const verdict = await paymentEventsPort.verify(rawBody, signature);
 
     // assert
     expect(verdict).toEqual({ kind: "ignored" });
@@ -144,7 +152,7 @@ describe("PaymentsAdapter", () => {
 
   it("refuses an event signed with another secret", async () => {
     // arrange
-    const { events } = new PaymentsAdapter(STRIPE_CONFIG);
+    const { paymentEventsPort } = new PaymentsAdapter(STRIPE_CONFIG);
     const rawBody = JSON.stringify({
       id: "evt_unit",
       type: "customer.created",
@@ -157,7 +165,7 @@ describe("PaymentsAdapter", () => {
     });
 
     // act
-    const verdict = await events.verify(rawBody, signature);
+    const verdict = await paymentEventsPort.verify(rawBody, signature);
 
     // assert
     expect(verdict).toEqual({ kind: "invalid" });
@@ -166,13 +174,13 @@ describe("PaymentsAdapter", () => {
   it("sends Stripe API calls to the configured base URL", async () => {
     // arrange
     const stripeApi = await startStripeApiStub();
-    const { checkout } = new PaymentsAdapter({
+    const { paymentCheckoutPort } = new PaymentsAdapter({
       ...STRIPE_CONFIG,
       STRIPE_API_BASE_URL: stripeApi.baseUrl,
     });
 
     // act
-    const customer = await checkout
+    const customer = await paymentCheckoutPort
       .createCustomer({
         email: "sofia@example.com",
         assessmentCallId: "call-1",

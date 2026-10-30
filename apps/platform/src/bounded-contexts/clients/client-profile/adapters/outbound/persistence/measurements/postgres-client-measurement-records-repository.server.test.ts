@@ -26,31 +26,35 @@ const SECOND_ENTRY_COLUMNS = {
 describe("PostgresClientMeasurementRecords#listByClientId", () => {
   it("gathers each entry with its photos and leaves out the circumferences she skipped", async () => {
     // arrange
-    const records = new PostgresClientMeasurementRecordsRepository(
-      createDatabaseAnswering([
-        {
-          id: FIRST_ENTRY_ID,
-          recordedAt: FIRST_RECORDED_AT,
-          weightKg: 66.1,
-          waistCm: 74,
-          hipsCm: null,
-          thighCm: null,
-          armCm: null,
-          photo: null,
-        },
-        {
-          ...SECOND_ENTRY_COLUMNS,
-          photo: photoColumns(FRONT_PHOTO_ID, "front"),
-        },
-        {
-          ...SECOND_ENTRY_COLUMNS,
-          photo: photoColumns(BACK_PHOTO_ID, "back"),
-        },
-      ]),
-    );
+    const postgresClientMeasurementRecordsRepository =
+      new PostgresClientMeasurementRecordsRepository(
+        createDatabaseAnswering([
+          {
+            id: FIRST_ENTRY_ID,
+            recordedAt: FIRST_RECORDED_AT,
+            weightKg: 66.1,
+            waistCm: 74,
+            hipsCm: null,
+            thighCm: null,
+            armCm: null,
+            photo: null,
+          },
+          {
+            ...SECOND_ENTRY_COLUMNS,
+            photo: photoColumns(FRONT_PHOTO_ID, "front"),
+          },
+          {
+            ...SECOND_ENTRY_COLUMNS,
+            photo: photoColumns(BACK_PHOTO_ID, "back"),
+          },
+        ]),
+      );
 
     // act
-    const listed = await records.listByClientId(CLIENT_ID);
+    const listed =
+      await postgresClientMeasurementRecordsRepository.listByClientId(
+        CLIENT_ID,
+      );
 
     // assert
     expect(listed).toEqual([
@@ -78,12 +82,16 @@ describe("PostgresClientMeasurementRecords#listByClientId", () => {
 
   it("answers no records when she has no measurements", async () => {
     // arrange
-    const records = new PostgresClientMeasurementRecordsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresClientMeasurementRecordsRepository =
+      new PostgresClientMeasurementRecordsRepository(
+        createDatabaseAnswering([]),
+      );
 
     // act
-    const listed = await records.listByClientId(CLIENT_ID);
+    const listed =
+      await postgresClientMeasurementRecordsRepository.listByClientId(
+        CLIENT_ID,
+      );
 
     // assert
     expect(listed).toEqual([]);
@@ -94,12 +102,11 @@ describe("PostgresClientMeasurementRecords#record", () => {
   it("inserts her entry under the id the domain gave it, with the circumferences she skipped left empty", async () => {
     // arrange
     const database = createDatabaseRecordingInserts();
-    const records = new PostgresClientMeasurementRecordsRepository(
-      database.client,
-    );
+    const postgresClientMeasurementRecordsRepository =
+      new PostgresClientMeasurementRecordsRepository(database.client);
 
     // act
-    await records.record({
+    await postgresClientMeasurementRecordsRepository.record({
       clientId: CLIENT_ID,
       entryId: FIRST_ENTRY_ID,
       entry: {

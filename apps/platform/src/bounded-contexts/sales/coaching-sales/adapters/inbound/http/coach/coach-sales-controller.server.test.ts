@@ -22,15 +22,15 @@ describe("CoachSalesController", () => {
         ["call-3", { state: "paid", clientId: CLIENT_ID }],
       ]),
     );
-    const controller = new CoachSalesController({
-      emailAcceptance: createEmailAcceptance("allowed"),
-      readCallSalesStates: { execute } as never,
-      readPricingTiers: { execute: vi.fn() } as never,
-      readSubscriptionSummary: { execute: vi.fn() } as never,
+    const coachSalesController = new CoachSalesController({
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      readCallSalesStatesUseCase: { execute } as never,
+      readPricingTiersUseCase: { execute: vi.fn() } as never,
+      readSubscriptionSummaryUseCase: { execute: vi.fn() } as never,
     });
 
     // act
-    const states = await controller.loadCallSales([
+    const states = await coachSalesController.loadCallSales([
       "call-1",
       "call-2",
       "call-3",
@@ -53,15 +53,15 @@ describe("CoachSalesController", () => {
         ["bea@example.com", "regular"],
       ]),
     );
-    const controller = new CoachSalesController({
-      emailAcceptance: createEmailAcceptance("allowed"),
-      readCallSalesStates: { execute: vi.fn() } as never,
-      readPricingTiers: { execute } as never,
-      readSubscriptionSummary: { execute: vi.fn() } as never,
+    const coachSalesController = new CoachSalesController({
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      readCallSalesStatesUseCase: { execute: vi.fn() } as never,
+      readPricingTiersUseCase: { execute } as never,
+      readSubscriptionSummaryUseCase: { execute: vi.fn() } as never,
     });
 
     // act
-    const tiers = await controller.loadPricingTiers([
+    const tiers = await coachSalesController.loadPricingTiers([
       { email: " Ana@Example.com ", id: "call-1" },
       { email: "bea@example.com", id: "call-2" },
       { email: "ana@example.com", id: "call-3" },
@@ -115,11 +115,11 @@ const COACH: SessionAccount = {
 describe("CoachSalesController#loadClientSubscription", () => {
   it("reads her subscription for the coach's client record", async () => {
     // arrange
-    const { controller, readSubscriptionSummary } =
+    const { coachSalesController, readSubscriptionSummary } =
       subscriptionController(summaryOf());
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -141,7 +141,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("reads when a cancelled subscription ends", async () => {
     // arrange
-    const { controller } = subscriptionController(
+    const { coachSalesController } = subscriptionController(
       summaryOf(
         {
           status: "cancelled",
@@ -153,7 +153,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
     );
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -168,7 +168,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("reads when an ended subscription ended and the refund still owed", async () => {
     // arrange
-    const { controller } = subscriptionController(
+    const { coachSalesController } = subscriptionController(
       summaryOf(
         {
           status: "ended",
@@ -187,7 +187,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
     );
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -211,7 +211,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("reads the day a refund was settled", async () => {
     // arrange
-    const { controller } = subscriptionController(
+    const { coachSalesController } = subscriptionController(
       summaryOf(
         {
           status: "ended",
@@ -230,7 +230,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
     );
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -244,12 +244,12 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("reads a reduced price for a subscription bought at the reduced tier", async () => {
     // arrange
-    const { controller } = subscriptionController(
+    const { coachSalesController } = subscriptionController(
       summaryOf({ tier: "reduced" }),
     );
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -260,7 +260,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("names the day her work starts when she chose to wait", async () => {
     // arrange
-    const { controller } = subscriptionController(
+    const { coachSalesController } = subscriptionController(
       summaryOf(
         { startChoice: "waiting" },
         { workStartsOn: new Date("2026-10-10T10:00:00.000Z") },
@@ -268,7 +268,7 @@ describe("CoachSalesController#loadClientSubscription", () => {
     );
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -279,10 +279,10 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("reads no subscription for a client without one", async () => {
     // arrange
-    const { controller } = subscriptionController(null);
+    const { coachSalesController } = subscriptionController(null);
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       CLIENT_ID,
     );
@@ -293,11 +293,11 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("reads no subscription without asking for one when the client id is not a uuid", async () => {
     // arrange
-    const { controller, readSubscriptionSummary } =
+    const { coachSalesController, readSubscriptionSummary } =
       subscriptionController(summaryOf());
 
     // act
-    const subscription = await controller.loadClientSubscription(
+    const subscription = await coachSalesController.loadClientSubscription(
       coachArgs(),
       "not-a-uuid",
     );
@@ -309,11 +309,11 @@ describe("CoachSalesController#loadClientSubscription", () => {
 
   it("refuses a client account with 403 without reading a subscription", async () => {
     // arrange
-    const { controller, readSubscriptionSummary } =
+    const { coachSalesController, readSubscriptionSummary } =
       subscriptionController(summaryOf());
 
     // act
-    const thrown = await controller
+    const thrown = await coachSalesController
       .loadClientSubscription(
         coachArgs({
           account: { ...COACH, role: "CLIENT" },
@@ -348,14 +348,16 @@ function summaryOf(
 
 function subscriptionController(summary: unknown) {
   const readSubscriptionSummary = vi.fn().mockResolvedValue(summary);
-  const controller = new CoachSalesController({
-    emailAcceptance: createEmailAcceptance("allowed"),
-    readCallSalesStates: { execute: vi.fn() } as never,
-    readPricingTiers: { execute: vi.fn() } as never,
-    readSubscriptionSummary: { execute: readSubscriptionSummary } as never,
+  const coachSalesController = new CoachSalesController({
+    emailAcceptancePort: createEmailAcceptance("allowed"),
+    readCallSalesStatesUseCase: { execute: vi.fn() } as never,
+    readPricingTiersUseCase: { execute: vi.fn() } as never,
+    readSubscriptionSummaryUseCase: {
+      execute: readSubscriptionSummary,
+    } as never,
   });
 
-  return { controller, readSubscriptionSummary };
+  return { coachSalesController, readSubscriptionSummary };
 }
 
 function coachArgs(

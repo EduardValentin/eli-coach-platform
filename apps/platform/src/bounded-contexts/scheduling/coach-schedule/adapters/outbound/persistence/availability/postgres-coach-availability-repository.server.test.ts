@@ -37,13 +37,14 @@ function configuredAvailabilityOrThrow(
 describe("PostgresCoachAvailability#current", () => {
   it("rebuilds the availability the stored row holds", async () => {
     // arrange
-    const availability = new PostgresCoachAvailabilityRepository({
-      database: createDatabaseReturning([STORED_ROW]),
-      clock,
-    });
+    const postgresCoachAvailabilityRepository =
+      new PostgresCoachAvailabilityRepository({
+        database: createDatabaseReturning([STORED_ROW]),
+        clockPort: clock,
+      });
 
     // act
-    const current = await availability.current();
+    const current = await postgresCoachAvailabilityRepository.current();
 
     // assert
     expect({
@@ -61,13 +62,14 @@ describe("PostgresCoachAvailability#current", () => {
 
   it("answers Monday to Friday, 17 to 20, Europe/Bucharest when no row exists", async () => {
     // arrange
-    const availability = new PostgresCoachAvailabilityRepository({
-      database: createDatabaseReturning([]),
-      clock,
-    });
+    const postgresCoachAvailabilityRepository =
+      new PostgresCoachAvailabilityRepository({
+        database: createDatabaseReturning([]),
+        clockPort: clock,
+      });
 
     // act
-    const current = await availability.current();
+    const current = await postgresCoachAvailabilityRepository.current();
 
     // assert
     expect({
@@ -85,15 +87,16 @@ describe("PostgresCoachAvailability#current", () => {
 
   it("throws when a stored row fails to rebuild", async () => {
     // arrange
-    const availability = new PostgresCoachAvailabilityRepository({
-      database: createDatabaseReturning([
-        { ...STORED_ROW, startHour: 20, endHour: 17 },
-      ]),
-      clock,
-    });
+    const postgresCoachAvailabilityRepository =
+      new PostgresCoachAvailabilityRepository({
+        database: createDatabaseReturning([
+          { ...STORED_ROW, startHour: 20, endHour: 17 },
+        ]),
+        clockPort: clock,
+      });
 
     // act
-    const current = availability.current();
+    const current = postgresCoachAvailabilityRepository.current();
 
     // assert
     await expect(current).rejects.toThrow(/validation/i);
@@ -104,13 +107,14 @@ describe("PostgresCoachAvailability#save", () => {
   it("upserts the singleton row and stamps updated_at from the clock", async () => {
     // arrange
     const database = createUpsertingDatabase();
-    const availability = new PostgresCoachAvailabilityRepository({
-      database: database.client,
-      clock,
-    });
+    const postgresCoachAvailabilityRepository =
+      new PostgresCoachAvailabilityRepository({
+        database: database.client,
+        clockPort: clock,
+      });
 
     // act
-    await availability.save(
+    await postgresCoachAvailabilityRepository.save(
       configuredAvailabilityOrThrow({
         timeZone: "Europe/Bucharest",
         weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],

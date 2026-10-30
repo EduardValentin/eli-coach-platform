@@ -7,9 +7,9 @@ type RefreshPaymentCardCommand = {
 };
 
 type RefreshPaymentCardUseCaseOptions = {
-  cards: PaymentCardsPort;
-  customerCards: PaymentCustomerCardsPort;
-  incidents: CoachingSubscriptionIncidentsPort;
+  paymentCardsPort: PaymentCardsPort;
+  paymentCustomerCardsPort: PaymentCustomerCardsPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
 };
 
 export class RefreshPaymentCardUseCase {
@@ -20,13 +20,21 @@ export class RefreshPaymentCardUseCase {
 
     try {
       const previous =
-        await this.options.cards.findByPaymentCustomerId(paymentCustomerId);
+        await this.options.paymentCardsPort.findByPaymentCustomerId(
+          paymentCustomerId,
+        );
       const card =
-        await this.options.customerCards.readDefaultCard(paymentCustomerId);
+        await this.options.paymentCustomerCardsPort.readDefaultCard(
+          paymentCustomerId,
+        );
 
-      await this.options.cards.save({ paymentCustomerId, card, previous });
+      await this.options.paymentCardsPort.save({
+        paymentCustomerId,
+        card,
+        previous,
+      });
     } catch (error) {
-      this.options.incidents.paymentCardRefreshFailed({
+      this.options.coachingSubscriptionIncidentsPort.paymentCardRefreshFailed({
         paymentCustomerId,
         error,
       });

@@ -20,10 +20,10 @@ function invitationMessage(): AccountInvitationMessage {
   };
 }
 
-function createNotifications(productEmail: ProductEmailPort) {
-  return new EmailAccountInvitationNotificationsAdapter(productEmail, {
+function createNotifications(productEmailPort: ProductEmailPort) {
+  return new EmailAccountInvitationNotificationsAdapter(productEmailPort, {
     appBasePath: "/eli-coach-platform",
-    clock: { now: () => new Date("2026-10-21T10:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-10-21T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     publicAppUrl: "https://evoa.fit",
   });
@@ -32,47 +32,62 @@ function createNotifications(productEmail: ProductEmailPort) {
 describe("EmailAccountInvitationNotifications", () => {
   it("emails the paid client with the coach's contact address as the reply-to", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailAccountInvitationNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    const result = await notifications.sendInvitation(invitationMessage());
+    const result =
+      await emailAccountInvitationNotificationsAdapter.sendInvitation(
+        invitationMessage(),
+      );
 
     // assert
     expect(result).toBe("sent");
-    expect(productEmail.sent).toHaveLength(1);
-    expect(productEmail.sent[0]?.to).toBe("ana@example.com");
-    expect(productEmail.sent[0]?.replyTo).toBe("contact@evoa.fit");
-    expect(productEmail.sent[0]?.subject).toBe(
+    expect(inMemoryProductEmailAdapter.sent).toHaveLength(1);
+    expect(inMemoryProductEmailAdapter.sent[0]?.to).toBe("ana@example.com");
+    expect(inMemoryProductEmailAdapter.sent[0]?.replyTo).toBe(
+      "contact@evoa.fit",
+    );
+    expect(inMemoryProductEmailAdapter.sent[0]?.subject).toBe(
       "Your place is booked — create your account.",
     );
   });
 
   it("keys the send by the invitation and the moment its token was sent, so a retry cannot double-send and a reissued token is not swallowed", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailAccountInvitationNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.sendInvitation(invitationMessage());
+    await emailAccountInvitationNotificationsAdapter.sendInvitation(
+      invitationMessage(),
+    );
 
     // assert
-    expect(productEmail.sent[0]?.idempotencyKey).toBe(
+    expect(inMemoryProductEmailAdapter.sent[0]?.idempotencyKey).toBe(
       "client-invitation:5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22:2026-10-21T10:00:00.000Z",
     );
   });
 
   it("links to the invitation page under the app base path with the token in the fragment", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailAccountInvitationNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
     const expectedUrl = `https://evoa.fit/eli-coach-platform/invitation#${RAW_TOKEN}`;
 
     // act
-    await notifications.sendInvitation(invitationMessage());
+    await emailAccountInvitationNotificationsAdapter.sendInvitation(
+      invitationMessage(),
+    );
 
     // assert
-    const sent = productEmail.sent[0];
+    const sent = inMemoryProductEmailAdapter.sent[0];
 
     expect(sent?.html).toContain(`href="${expectedUrl}"`);
     expect(sent?.text).toContain(`Create your account: ${expectedUrl}`);
@@ -81,14 +96,18 @@ describe("EmailAccountInvitationNotifications", () => {
 
   it("never exposes the raw token outside the invitation link", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailAccountInvitationNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.sendInvitation(invitationMessage());
+    await emailAccountInvitationNotificationsAdapter.sendInvitation(
+      invitationMessage(),
+    );
 
     // assert
-    const sent = productEmail.sent[0];
+    const sent = inMemoryProductEmailAdapter.sent[0];
 
     expect(sent?.html.split(RAW_TOKEN)).toHaveLength(2);
     expect(sent?.text.split(RAW_TOKEN)).toHaveLength(2);
@@ -105,10 +124,14 @@ describe("EmailAccountInvitationNotifications", () => {
         provider: "resend",
         send: vi.fn().mockResolvedValue(outcome),
       } satisfies ProductEmailPort;
-      const notifications = createNotifications(productEmail);
+      const emailAccountInvitationNotificationsAdapter =
+        createNotifications(productEmail);
 
       // act
-      const result = await notifications.sendInvitation(invitationMessage());
+      const result =
+        await emailAccountInvitationNotificationsAdapter.sendInvitation(
+          invitationMessage(),
+        );
 
       // assert
       expect(result).toBe("failed");

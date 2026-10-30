@@ -29,10 +29,15 @@ function paidCheckoutEvent(type = "checkout.session.completed") {
 describe("InMemoryPaymentEvents", () => {
   it("accepts a completed and paid checkout event carrying the memory signature", async () => {
     // arrange
-    const events = new InMemoryPaymentEventsAdapter(STRIPE_VOCABULARY);
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
 
     // act
-    const verdict = await events.verify(paidCheckoutEvent(), "memory");
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      paidCheckoutEvent(),
+      "memory",
+    );
 
     // assert
     expect(verdict).toEqual({
@@ -54,7 +59,9 @@ describe("InMemoryPaymentEvents", () => {
 
   it("accepts a subscription deletion carrying the memory signature", async () => {
     // arrange
-    const events = new InMemoryPaymentEventsAdapter(STRIPE_VOCABULARY);
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
     const body = JSON.stringify({
       id: "evt_memory_deleted",
       type: "customer.subscription.deleted",
@@ -72,7 +79,7 @@ describe("InMemoryPaymentEvents", () => {
     });
 
     // act
-    const verdict = await events.verify(body, "memory");
+    const verdict = await inMemoryPaymentEventsAdapter.verify(body, "memory");
 
     // assert
     expect(verdict).toMatchObject({
@@ -85,10 +92,12 @@ describe("InMemoryPaymentEvents", () => {
 
   it("ignores another event type", async () => {
     // arrange
-    const events = new InMemoryPaymentEventsAdapter(STRIPE_VOCABULARY);
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
 
     // act
-    const verdict = await events.verify(
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
       paidCheckoutEvent("customer.created"),
       "memory",
     );
@@ -102,10 +111,15 @@ describe("InMemoryPaymentEvents", () => {
     ["another signature", "t=1,v1=abc"],
   ])("refuses an event with %s", async (_description, signature) => {
     // arrange
-    const events = new InMemoryPaymentEventsAdapter(STRIPE_VOCABULARY);
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
 
     // act
-    const verdict = await events.verify(paidCheckoutEvent(), signature);
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      paidCheckoutEvent(),
+      signature,
+    );
 
     // assert
     expect(verdict).toEqual({ kind: "invalid" });
@@ -113,10 +127,15 @@ describe("InMemoryPaymentEvents", () => {
 
   it("refuses a body that is not JSON", async () => {
     // arrange
-    const events = new InMemoryPaymentEventsAdapter(STRIPE_VOCABULARY);
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
 
     // act
-    const verdict = await events.verify("not json", "memory");
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      "not json",
+      "memory",
+    );
 
     // assert
     expect(verdict).toEqual({ kind: "invalid" });

@@ -64,11 +64,12 @@ describe("createResourceFileFormatDetector", () => {
     "reports $file as $type with no archive entries",
     async ({ bytes, type }) => {
       // arrange
-      const detector = createResourceFileFormatDetectorAdapter();
+      const resourceFileFormatDetectorPort =
+        createResourceFileFormatDetectorAdapter();
       const file = await bytes();
 
       // act
-      const detected = await detector.detect(file);
+      const detected = await resourceFileFormatDetectorPort.detect(file);
 
       // assert
       expect(detected).toEqual({ type, archiveEntries: [] });
@@ -120,11 +121,12 @@ describe("createResourceFileFormatDetector", () => {
     "reports $file as $type with the names of its archive entries",
     async ({ bytes, type, archiveEntries }) => {
       // arrange
-      const detector = createResourceFileFormatDetectorAdapter();
+      const resourceFileFormatDetectorPort =
+        createResourceFileFormatDetectorAdapter();
       const file = await bytes();
 
       // act
-      const detected = await detector.detect(file);
+      const detected = await resourceFileFormatDetectorPort.detect(file);
 
       // assert
       expect(detected).toEqual({ type, archiveEntries });
@@ -133,10 +135,11 @@ describe("createResourceFileFormatDetector", () => {
 
   it("reports plain text as unidentified", async () => {
     // arrange
-    const detector = createResourceFileFormatDetectorAdapter();
+    const resourceFileFormatDetectorPort =
+      createResourceFileFormatDetectorAdapter();
 
     // act
-    const detected = await detector.detect(plainText());
+    const detected = await resourceFileFormatDetectorPort.detect(plainText());
 
     // assert
     expect(detected).toEqual({ type: null, archiveEntries: [] });
@@ -144,12 +147,13 @@ describe("createResourceFileFormatDetector", () => {
 
   it("reports a Word file whose archive directory is cut off as unidentified", async () => {
     // arrange
-    const detector = createResourceFileFormatDetectorAdapter();
+    const resourceFileFormatDetectorPort =
+      createResourceFileFormatDetectorAdapter();
     const whole = await wordDocument();
     const truncated = whole.subarray(0, whole.byteLength - 30);
 
     // act
-    const detected = await detector.detect(truncated);
+    const detected = await resourceFileFormatDetectorPort.detect(truncated);
 
     // assert
     expect(detected).toEqual({ type: null, archiveEntries: [] });

@@ -185,10 +185,10 @@ function createLoaderArguments(readers: {
   loadCallSales?: ReturnType<typeof vi.fn>;
 }) {
   const assessmentCalls = {
-    coachAssessmentCalls: { loadCalls: readers.loadCalls },
+    coachAssessmentCallsController: { loadCalls: readers.loadCalls },
   } as unknown as AssessmentCallsFeature;
   const coachingSales = {
-    coachSales: {
+    coachSalesController: {
       loadPricingTiers: readers.loadPricingTiers ?? vi.fn(),
       loadCallSales: readers.loadCallSales ?? vi.fn(),
     },

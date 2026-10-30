@@ -227,7 +227,9 @@ function createLoaderArgs(options: {
     : null;
 
   const waitlist = {
-    waitlist: { getWaitlist: vi.fn().mockResolvedValue(liveWaitlist) },
+    waitlistController: {
+      getWaitlist: vi.fn().mockResolvedValue(liveWaitlist),
+    },
   } as unknown as WaitlistFeature;
 
   return createRequestArgs({

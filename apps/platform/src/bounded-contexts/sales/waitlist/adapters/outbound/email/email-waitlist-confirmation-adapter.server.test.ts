@@ -16,13 +16,14 @@ describe("EmailWaitlistConfirmation", () => {
           providerMessageId: "email_123",
         }),
       } satisfies ProductEmailPort;
-      const confirmation = new EmailWaitlistConfirmationAdapter(productEmail, {
-        contactEmail: "contact@evoa.fit",
-        privacyEmail: "privacy@evoa.fit",
-      });
+      const emailWaitlistConfirmationAdapter =
+        new EmailWaitlistConfirmationAdapter(productEmail, {
+          contactEmail: "contact@evoa.fit",
+          privacyEmail: "privacy@evoa.fit",
+        });
 
       // act
-      await confirmation.sendConfirmation({
+      await emailWaitlistConfirmationAdapter.sendConfirmation({
         email: "eli@example.com",
         offer: {
           plan: "all-bundles",
@@ -62,13 +63,14 @@ describe("EmailWaitlistConfirmation", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmailPort;
-    const confirmation = new EmailWaitlistConfirmationAdapter(productEmail, {
-      contactEmail: "contact@evoa.fit",
-      privacyEmail: "privacy@evoa.fit",
-    });
+    const emailWaitlistConfirmationAdapter =
+      new EmailWaitlistConfirmationAdapter(productEmail, {
+        contactEmail: "contact@evoa.fit",
+        privacyEmail: "privacy@evoa.fit",
+      });
 
     // act
-    await confirmation.sendConfirmation({
+    await emailWaitlistConfirmationAdapter.sendConfirmation({
       email: "reduced@example.com",
       offer: { plan: "all-bundles", campaignSlug: "all-bundles-launch-1" },
       pricing: "reduced",
@@ -91,22 +93,23 @@ describe("EmailWaitlistConfirmation", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmailPort;
-    const confirmation = new EmailWaitlistConfirmationAdapter(productEmail, {
-      contactEmail: "contact@evoa.fit",
-      privacyEmail: "privacy@evoa.fit",
-    });
+    const emailWaitlistConfirmationAdapter =
+      new EmailWaitlistConfirmationAdapter(productEmail, {
+        contactEmail: "contact@evoa.fit",
+        privacyEmail: "privacy@evoa.fit",
+      });
     const offer = {
       plan: "all-bundles",
       campaignSlug: "all-bundles-launch-1",
     } as const;
 
     // act
-    await confirmation.sendConfirmation({
+    await emailWaitlistConfirmationAdapter.sendConfirmation({
       email: "reduced@example.com",
       offer,
       pricing: "reduced",
     });
-    await confirmation.sendConfirmation({
+    await emailWaitlistConfirmationAdapter.sendConfirmation({
       email: "regular@example.com",
       offer,
       pricing: "regular",

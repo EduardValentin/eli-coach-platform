@@ -72,7 +72,7 @@ const OUTSIDE_ANY_TRANSACTION = {} as DatabaseClient;
 describe("PostgresOnboardingReviews#findByClientId", () => {
   it("reads the review moments and her requests into one stored review", async () => {
     // arrange
-    const reviews = reviewsOver(
+    const postgresOnboardingReviewsRepository = reviewsOver(
       createDatabaseAnswering({
         reviews: [{ openedAt: OPENED_AT, approvedAt: APPROVED_AT }],
         requests: [
@@ -86,7 +86,8 @@ describe("PostgresOnboardingReviews#findByClientId", () => {
     );
 
     // act
-    const stored = await reviews.findByClientId(CLIENT_ID);
+    const stored =
+      await postgresOnboardingReviewsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(stored).toEqual({
@@ -107,12 +108,13 @@ describe("PostgresOnboardingReviews#findByClientId", () => {
 
   it("answers no moments and no requests before the coach has touched her review", async () => {
     // arrange
-    const reviews = reviewsOver(
+    const postgresOnboardingReviewsRepository = reviewsOver(
       createDatabaseAnswering({ reviews: [], requests: [] }).client,
     );
 
     // act
-    const stored = await reviews.findByClientId(CLIENT_ID);
+    const stored =
+      await postgresOnboardingReviewsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(stored).toEqual({ openedAt: null, approvedAt: null, requests: [] });
@@ -120,7 +122,7 @@ describe("PostgresOnboardingReviews#findByClientId", () => {
 
   it("returns both requests of a second round with the newer one still open", async () => {
     // arrange
-    const reviews = reviewsOver(
+    const postgresOnboardingReviewsRepository = reviewsOver(
       createDatabaseAnswering({
         reviews: [{ openedAt: OPENED_AT, approvedAt: null }],
         requests: [
@@ -139,7 +141,8 @@ describe("PostgresOnboardingReviews#findByClientId", () => {
     );
 
     // act
-    const stored = await reviews.findByClientId(CLIENT_ID);
+    const stored =
+      await postgresOnboardingReviewsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(stored.requests.map((request) => request.id)).toEqual([
@@ -155,10 +158,10 @@ describe("PostgresOnboardingReviews#findByClientId", () => {
   it("asks for her requests oldest first", async () => {
     // arrange
     const database = createDatabaseAnswering({ reviews: [], requests: [] });
-    const reviews = reviewsOver(database.client);
+    const postgresOnboardingReviewsRepository = reviewsOver(database.client);
 
     // act
-    await reviews.findByClientId(CLIENT_ID);
+    await postgresOnboardingReviewsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(database.orderings).toHaveLength(1);
@@ -173,10 +176,13 @@ describe("PostgresOnboardingReviews#recordOpened", () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const postgresOnboardingReviewsRepository = reviewsOver(
+      database.client,
+      writer,
+    );
 
     // act
-    await reviews.recordOpened({
+    await postgresOnboardingReviewsRepository.recordOpened({
       clientId: CLIENT_ID,
       at: OPENED_AT,
       stamps: OPENED_STAMPS,
@@ -211,10 +217,14 @@ describe("PostgresOnboardingReviews#recordApproval", () => {
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
     const seedWriter = createSeedWriter();
-    const reviews = reviewsOver(database.client, writer, seedWriter);
+    const postgresOnboardingReviewsRepository = reviewsOver(
+      database.client,
+      writer,
+      seedWriter,
+    );
 
     // act
-    await reviews.recordApproval({
+    await postgresOnboardingReviewsRepository.recordApproval({
       clientId: CLIENT_ID,
       at: APPROVED_AT,
       stamps: APPROVED_STAMPS,
@@ -258,7 +268,10 @@ describe("PostgresOnboardingReviews#recordRequest", () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const postgresOnboardingReviewsRepository = reviewsOver(
+      database.client,
+      writer,
+    );
     const request = DetailRequest.raise({
       id: FIRST_REQUEST_ID,
       clientId: CLIENT_ID,
@@ -271,7 +284,7 @@ describe("PostgresOnboardingReviews#recordRequest", () => {
     });
 
     // act
-    const outcome = await reviews.recordRequest({
+    const outcome = await postgresOnboardingReviewsRepository.recordRequest({
       request,
       stamps: REQUESTED_STAMPS,
     });
@@ -308,7 +321,7 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
   it("answers already open without projecting stamps when the open-request-per-client index refuses the insert", async () => {
     // arrange
     const writer = createStampWriter();
-    const reviews = reviewsOver(
+    const postgresOnboardingReviewsRepository = reviewsOver(
       createTransactionalDatabase({
         insertFailure: uniqueViolation(
           clientOnboardingConstraints.openDetailRequestPerClient,
@@ -318,7 +331,10 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
     );
 
     // act
-    const outcome = await reviews.recordRequest(requestWithStamps());
+    const outcome =
+      await postgresOnboardingReviewsRepository.recordRequest(
+        requestWithStamps(),
+      );
 
     // assert
     expect(outcome).toBe("already-open");
@@ -328,12 +344,13 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
   it("rethrows a unique violation on any other constraint", async () => {
     // arrange
     const failure = uniqueViolation("client_onboarding_detail_requests_pkey");
-    const reviews = reviewsOver(
+    const postgresOnboardingReviewsRepository = reviewsOver(
       createTransactionalDatabase({ insertFailure: failure }).client,
     );
 
     // act
-    const recording = reviews.recordRequest(requestWithStamps());
+    const recording =
+      postgresOnboardingReviewsRepository.recordRequest(requestWithStamps());
 
     // assert
     await expect(recording).rejects.toBe(failure);
@@ -342,12 +359,13 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
   it("rethrows a database failure it cannot name", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const reviews = reviewsOver(
+    const postgresOnboardingReviewsRepository = reviewsOver(
       createTransactionalDatabase({ insertFailure: failure }).client,
     );
 
     // act
-    const recording = reviews.recordRequest(requestWithStamps());
+    const recording =
+      postgresOnboardingReviewsRepository.recordRequest(requestWithStamps());
 
     // assert
     await expect(recording).rejects.toBe(failure);
@@ -359,10 +377,13 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const postgresOnboardingReviewsRepository = reviewsOver(
+      database.client,
+      writer,
+    );
 
     // act
-    await reviews.recordAnswer(
+    await postgresOnboardingReviewsRepository.recordAnswer(
       answerOf(answersWith({ "goal-availability": { weight: 64.5 } })),
     );
 
@@ -386,10 +407,10 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
   it("stamps the request only while it is still open and hers", async () => {
     // arrange
     const database = createTransactionalDatabase();
-    const reviews = reviewsOver(database.client);
+    const postgresOnboardingReviewsRepository = reviewsOver(database.client);
 
     // act
-    await reviews.recordAnswer(
+    await postgresOnboardingReviewsRepository.recordAnswer(
       answerOf(answersWith({ "goal-availability": { weight: 64.5 } })),
     );
 
@@ -407,10 +428,13 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     // arrange
     const database = createTransactionalDatabase({ answeredRows: [] });
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const postgresOnboardingReviewsRepository = reviewsOver(
+      database.client,
+      writer,
+    );
 
     // act
-    const recording = reviews.recordAnswer(
+    const recording = postgresOnboardingReviewsRepository.recordAnswer(
       answerOf(answersWith({ "goal-availability": { weight: 64.5 } })),
     );
 
@@ -425,10 +449,10 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
   it("merges only the fields she was asked, leaving every other answer alone", async () => {
     // arrange
     const database = createTransactionalDatabase();
-    const reviews = reviewsOver(database.client);
+    const postgresOnboardingReviewsRepository = reviewsOver(database.client);
 
     // act
-    await reviews.recordAnswer(
+    await postgresOnboardingReviewsRepository.recordAnswer(
       answerOf(
         answersWith({
           "goal-availability": { weight: 64.5 },
@@ -455,10 +479,12 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
   it("leaves her submission answers as they are when nothing was merged", async () => {
     // arrange
     const database = createTransactionalDatabase();
-    const reviews = reviewsOver(database.client);
+    const postgresOnboardingReviewsRepository = reviewsOver(database.client);
 
     // act
-    await reviews.recordAnswer(answerOf(answersWith({})));
+    await postgresOnboardingReviewsRepository.recordAnswer(
+      answerOf(answersWith({})),
+    );
 
     // assert
     const merged = new PgDialect().sqlToQuery(mergedAnswersOf(database));
@@ -473,8 +499,10 @@ describe("PostgresOnboardingReviews when the stamp write fails", () => {
   it.each([
     [
       "the opening",
-      (reviews: PostgresOnboardingReviewsRepository) =>
-        reviews.recordOpened({
+      (
+        postgresOnboardingReviewsRepository: PostgresOnboardingReviewsRepository,
+      ) =>
+        postgresOnboardingReviewsRepository.recordOpened({
           clientId: CLIENT_ID,
           at: OPENED_AT,
           stamps: OPENED_STAMPS,
@@ -482,20 +510,26 @@ describe("PostgresOnboardingReviews when the stamp write fails", () => {
     ],
     [
       "the request",
-      (reviews: PostgresOnboardingReviewsRepository) =>
-        reviews.recordRequest(requestWithStamps()),
+      (
+        postgresOnboardingReviewsRepository: PostgresOnboardingReviewsRepository,
+      ) =>
+        postgresOnboardingReviewsRepository.recordRequest(requestWithStamps()),
     ],
     [
       "the answer",
-      (reviews: PostgresOnboardingReviewsRepository) =>
-        reviews.recordAnswer(
+      (
+        postgresOnboardingReviewsRepository: PostgresOnboardingReviewsRepository,
+      ) =>
+        postgresOnboardingReviewsRepository.recordAnswer(
           answerOf(answersWith({ "goal-availability": { weight: 64.5 } })),
         ),
     ],
     [
       "the approval",
-      (reviews: PostgresOnboardingReviewsRepository) =>
-        reviews.recordApproval({
+      (
+        postgresOnboardingReviewsRepository: PostgresOnboardingReviewsRepository,
+      ) =>
+        postgresOnboardingReviewsRepository.recordApproval({
           clientId: CLIENT_ID,
           at: APPROVED_AT,
           stamps: APPROVED_STAMPS,
@@ -506,10 +540,13 @@ describe("PostgresOnboardingReviews when the stamp write fails", () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createFailingStampWriter(stampFailure);
-    const reviews = reviewsOver(database.client, writer);
+    const postgresOnboardingReviewsRepository = reviewsOver(
+      database.client,
+      writer,
+    );
 
     // act
-    const recording = record(reviews);
+    const recording = record(postgresOnboardingReviewsRepository);
 
     // assert
     await expect(recording).rejects.toBe(stampFailure);
@@ -525,7 +562,7 @@ function reviewsOver(
 ): PostgresOnboardingReviewsRepository {
   return new PostgresOnboardingReviewsRepository({
     database,
-    reviewStamps: { record: writer.write },
+    onboardingReviewStampsPort: { record: writer.write },
     coachingSeedWriter: seedWriter.write,
   });
 }

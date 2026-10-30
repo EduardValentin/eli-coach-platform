@@ -66,7 +66,7 @@ describe("select bundle page loader", () => {
 
 function createLoaderArguments(loadBundlePageShell: ReturnType<typeof vi.fn>) {
   const feature = {
-    checkouts: { loadBundlePageShell },
+    checkoutsController: { loadBundlePageShell },
   } as unknown as CoachingSalesFeature;
 
   return createRequestArgs({

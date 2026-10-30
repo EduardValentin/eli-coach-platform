@@ -33,15 +33,15 @@ export type BookAssessmentCallResult =
   | { status: "closed" };
 
 type BookAssessmentCallUseCaseOptions = {
-  availability: CoachAvailabilityPort;
+  coachAvailabilityPort: CoachAvailabilityPort;
   bookingWindow: AssessmentCallBookingWindow;
-  clock: ClockPort;
-  coachTime: CoachTimePort;
-  emailAcceptance: EmailAcceptancePort;
-  ids: AssessmentCallIdsPort;
-  incidents: AssessmentCallIncidentsPort;
-  notifications: AssessmentCallNotificationsPort;
-  reservations: AssessmentCallReservationsPort;
+  clockPort: ClockPort;
+  coachTimePort: CoachTimePort;
+  emailAcceptancePort: EmailAcceptancePort;
+  assessmentCallIdsPort: AssessmentCallIdsPort;
+  assessmentCallIncidentsPort: AssessmentCallIncidentsPort;
+  assessmentCallNotificationsPort: AssessmentCallNotificationsPort;
+  assessmentCallReservationsPort: AssessmentCallReservationsPort;
 };
 
 const RECIPIENTS = ["visitor", "coach"] as const;
@@ -52,9 +52,9 @@ export class BookAssessmentCallUseCase {
   async execute(
     command: BookAssessmentCallCommand,
   ): Promise<BookAssessmentCallResult> {
-    const email = this.options.emailAcceptance.normalize(command.email);
+    const email = this.options.emailAcceptancePort.normalize(command.email);
 
-    if (!this.options.emailAcceptance.accepts(email)) {
+    if (!this.options.emailAcceptancePort.accepts(email)) {
       return { status: "subaddress_refused" };
     }
 
@@ -62,15 +62,15 @@ export class BookAssessmentCallUseCase {
       return { status: "closed" };
     }
 
-    const now = this.options.clock.now();
-    const availability = await this.options.availability.current();
+    const now = this.options.clockPort.now();
+    const availability = await this.options.coachAvailabilityPort.current();
 
     if (!availability.offersStart({ start: command.startsAt, now })) {
       return { status: "slot_unavailable" };
     }
 
     const call = AssessmentCall.booked({
-      id: this.options.ids.generate(),
+      id: this.options.assessmentCallIdsPort.generate(),
       firstName: command.firstName,
       lastName: command.lastName,
       visitorEmail: email,
@@ -94,15 +94,16 @@ export class BookAssessmentCallUseCase {
     call: AssessmentCall,
     now: Date,
   ): Promise<ReservationDecision> {
-    const { coachTime, reservations } = this.options;
+    const { coachTimePort, assessmentCallReservationsPort } = this.options;
 
-    await reservations.lockVisitorEmail(call.visitorEmail);
+    await assessmentCallReservationsPort.lockVisitorEmail(call.visitorEmail);
 
-    const upcomingCallForEmail = await reservations.findUpcomingCallFor({
-      visitorEmail: call.visitorEmail,
-      now,
-    });
-    const held = await coachTime.reserve(call.coachTimeSpan());
+    const upcomingCallForEmail =
+      await assessmentCallReservationsPort.findUpcomingCallFor({
+        visitorEmail: call.visitorEmail,
+        now,
+      });
+    const held = await coachTimePort.reserve(call.coachTimeSpan());
     const decision = AssessmentCall.decideReservation({
       coachTime: held.status,
       upcomingCallForEmail,
@@ -113,9 +114,12 @@ export class BookAssessmentCallUseCase {
     }
 
     if (decision.status === "reserved") {
-      await reservations.add({ call, reservationId: held.reservationId });
+      await assessmentCallReservationsPort.add({
+        call,
+        reservationId: held.reservationId,
+      });
     } else {
-      await coachTime.release(held.reservationId);
+      await coachTimePort.release(held.reservationId);
     }
 
     return decision;
@@ -140,18 +144,23 @@ export class BookAssessmentCallUseCase {
 
   private async notifyBooked(call: AssessmentCall): Promise<void> {
     try {
-      const delivery = await this.options.notifications.notifyBooked(
-        call.toSnapshot(),
-      );
+      const delivery =
+        await this.options.assessmentCallNotificationsPort.notifyBooked(
+          call.toSnapshot(),
+        );
 
       for (const recipient of RECIPIENTS) {
         if (delivery[recipient] === "failed") {
-          this.options.incidents.notificationFailed({ recipient });
+          this.options.assessmentCallIncidentsPort.notificationFailed({
+            recipient,
+          });
         }
       }
     } catch {
       for (const recipient of RECIPIENTS) {
-        this.options.incidents.notificationFailed({ recipient });
+        this.options.assessmentCallIncidentsPort.notificationFailed({
+          recipient,
+        });
       }
     }
   }

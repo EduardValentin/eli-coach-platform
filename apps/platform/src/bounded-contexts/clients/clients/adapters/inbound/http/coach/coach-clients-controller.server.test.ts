@@ -80,7 +80,7 @@ function rosterEntry(
 describe("CoachClientsController#loadRoster", () => {
   it("lists every client with her status, bundle length and join moment", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachClientsController } = createController({
       listed: {
         status: "listed",
         clients: [
@@ -99,7 +99,7 @@ describe("CoachClientsController#loadRoster", () => {
     });
 
     // act
-    const roster = await controller.loadRoster(coachArgs());
+    const roster = await coachClientsController.loadRoster(coachArgs());
 
     // assert
     expect(roster).toEqual({
@@ -130,12 +130,12 @@ describe("CoachClientsController#loadRoster", () => {
 
   it("answers no clients when the roster cannot be read", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachClientsController } = createController({
       listed: { status: "unavailable" },
     });
 
     // act
-    const roster = await controller.loadRoster(coachArgs());
+    const roster = await coachClientsController.loadRoster(coachArgs());
 
     // assert
     expect(roster).toEqual({ clients: null });
@@ -145,11 +145,11 @@ describe("CoachClientsController#loadRoster", () => {
     "refuses %s with 403 without reading the roster",
     async (_label, session) => {
       // arrange
-      const { controller, listClients } = createController({});
+      const { coachClientsController, listClients } = createController({});
 
       // act
       const thrown = await captureThrown(() =>
-        controller.loadRoster(coachArgs({ session })),
+        coachClientsController.loadRoster(coachArgs({ session })),
       );
 
       // assert
@@ -160,11 +160,13 @@ describe("CoachClientsController#loadRoster", () => {
 
   it("sends an anonymous visitor to sign in without reading the roster", async () => {
     // arrange
-    const { controller, listClients } = createController({});
+    const { coachClientsController, listClients } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadRoster(coachArgs({ session: { kind: "anonymous" } })),
+      coachClientsController.loadRoster(
+        coachArgs({ session: { kind: "anonymous" } }),
+      ),
     );
 
     // assert
@@ -176,7 +178,7 @@ describe("CoachClientsController#loadRoster", () => {
 describe("CoachClientsController#loadClient", () => {
   it("reads her record with her gender, the call as she booked it and pending invitation", async () => {
     // arrange
-    const { controller, readClientInvitation, readClientRecord } =
+    const { coachClientsController, readClientInvitation, readClientRecord } =
       createController({
         record: {
           ...rosterEntry(),
@@ -191,7 +193,10 @@ describe("CoachClientsController#loadClient", () => {
       });
 
     // act
-    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+    const client = await coachClientsController.loadClient(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(client).toEqual({
@@ -227,7 +232,7 @@ describe("CoachClientsController#loadClient", () => {
 
   it("reads her coaching as cancelled or ended and the refund she is owed from her record", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachClientsController } = createController({
       record: {
         ...rosterEntry(),
         ...RECORD_READINGS,
@@ -239,7 +244,10 @@ describe("CoachClientsController#loadClient", () => {
     });
 
     // act
-    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+    const client = await coachClientsController.loadClient(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(client.needsRefund).toBe(true);
@@ -248,7 +256,7 @@ describe("CoachClientsController#loadClient", () => {
 
   it("reads no invitation once her account is bound", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachClientsController } = createController({
       record: {
         ...rosterEntry({ accountBound: true }),
         ...RECORD_READINGS,
@@ -259,7 +267,10 @@ describe("CoachClientsController#loadClient", () => {
     });
 
     // act
-    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+    const client = await coachClientsController.loadClient(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(client.invitation).toBeNull();
@@ -267,11 +278,11 @@ describe("CoachClientsController#loadClient", () => {
 
   it("answers 404 for an unknown client", async () => {
     // arrange
-    const { controller } = createController({ record: null });
+    const { coachClientsController } = createController({ record: null });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadClient(coachArgs(), CLIENT_ID),
+      coachClientsController.loadClient(coachArgs(), CLIENT_ID),
     );
 
     // assert
@@ -280,11 +291,11 @@ describe("CoachClientsController#loadClient", () => {
 
   it("answers 404 without reading anything for an id that is not a uuid", async () => {
     // arrange
-    const { controller, readClientRecord } = createController({});
+    const { coachClientsController, readClientRecord } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadClient(coachArgs(), "client-1"),
+      coachClientsController.loadClient(coachArgs(), "client-1"),
     );
 
     // assert
@@ -296,11 +307,11 @@ describe("CoachClientsController#loadClient", () => {
     "refuses %s with 403 without reading her record",
     async (_label, session) => {
       // arrange
-      const { controller, readClientRecord } = createController({});
+      const { coachClientsController, readClientRecord } = createController({});
 
       // act
       const thrown = await captureThrown(() =>
-        controller.loadClient(coachArgs({ session }), CLIENT_ID),
+        coachClientsController.loadClient(coachArgs({ session }), CLIENT_ID),
       );
 
       // assert
@@ -311,11 +322,11 @@ describe("CoachClientsController#loadClient", () => {
 
   it("sends an anonymous visitor to sign in without reading her record", async () => {
     // arrange
-    const { controller, readClientRecord } = createController({});
+    const { coachClientsController, readClientRecord } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadClient(
+      coachClientsController.loadClient(
         coachArgs({ session: { kind: "anonymous" } }),
         CLIENT_ID,
       ),
@@ -330,12 +341,14 @@ describe("CoachClientsController#loadClient", () => {
 describe("CoachClientsController#resendInvitation", () => {
   it("re-sends her invitation and answers 200 with the address it went to", async () => {
     // arrange
-    const { controller, resendInvitation } = createController({
+    const { coachClientsController, resendInvitation } = createController({
       resent: { status: "sent", email: "ana@example.com" },
     });
 
     // act
-    const response = await controller.resendInvitation(resendArgs({}));
+    const response = await coachClientsController.resendInvitation(
+      resendArgs({}),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -355,10 +368,14 @@ describe("CoachClientsController#resendInvitation", () => {
     "answers the %s outcome with %i and names it %s",
     async (status, httpStatus, error) => {
       // arrange
-      const { controller } = createController({ resent: { status } });
+      const { coachClientsController } = createController({
+        resent: { status },
+      });
 
       // act
-      const response = await controller.resendInvitation(resendArgs({}));
+      const response = await coachClientsController.resendInvitation(
+        resendArgs({}),
+      );
 
       // assert
       expect(response.status).toBe(httpStatus);
@@ -375,10 +392,12 @@ describe("CoachClientsController#resendInvitation", () => {
     ],
   ])("answers 400 and re-sends nothing when %s", async (_label, body) => {
     // arrange
-    const { controller, resendInvitation } = createController({});
+    const { coachClientsController, resendInvitation } = createController({});
 
     // act
-    const response = await controller.resendInvitation(resendArgs({ body }));
+    const response = await coachClientsController.resendInvitation(
+      resendArgs({ body }),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -390,11 +409,11 @@ describe("CoachClientsController#resendInvitation", () => {
 
   it("refuses an anonymous caller with 401 and re-sends nothing", async () => {
     // arrange
-    const { controller, resendInvitation } = createController({});
+    const { coachClientsController, resendInvitation } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resendInvitation(
+      coachClientsController.resendInvitation(
         resendArgs({ session: { kind: "anonymous" } }),
       ),
     );
@@ -406,11 +425,11 @@ describe("CoachClientsController#resendInvitation", () => {
 
   it("refuses a client account with 403 and re-sends nothing", async () => {
     // arrange
-    const { controller, resendInvitation } = createController({});
+    const { coachClientsController, resendInvitation } = createController({});
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resendInvitation(
+      coachClientsController.resendInvitation(
         resendArgs({ session: authenticatedAs("CLIENT") }),
       ),
     );
@@ -437,15 +456,15 @@ function createController(outcomes: {
     .fn()
     .mockResolvedValue(outcomes.invitation ?? null);
   const resendInvitation = vi.fn().mockResolvedValue(outcomes.resent);
-  const controller = new CoachClientsController({
-    listClients: { execute: listClients } as never,
-    readClientRecord: { execute: readClientRecord } as never,
-    readClientInvitation: { execute: readClientInvitation } as never,
-    resendInvitation: { execute: resendInvitation } as never,
+  const coachClientsController = new CoachClientsController({
+    listClientsUseCase: { execute: listClients } as never,
+    readClientRecordUseCase: { execute: readClientRecord } as never,
+    readClientInvitationUseCase: { execute: readClientInvitation } as never,
+    resendInvitationUseCase: { execute: resendInvitation } as never,
   });
 
   return {
-    controller,
+    coachClientsController,
     listClients,
     readClientInvitation,
     readClientRecord,

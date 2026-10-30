@@ -21,7 +21,7 @@ describe("composeAccountsFeature", () => {
     const { feature } = composeAccountsFeature({
       bootstrapCoachAuthSubjectId: "user_coach",
       clerkWebhookSigningSecret: undefined,
-      clock: { now: () => new Date("2026-10-27T10:00:00.000Z") },
+      clockPort: { now: () => new Date("2026-10-27T10:00:00.000Z") },
       contactEmail: "contact@evoa.fit",
       database: {} as DatabaseClient,
       identityConfig: {
@@ -33,12 +33,12 @@ describe("composeAccountsFeature", () => {
         generator: createTokenGenerator(),
         hasher: createTokenHasher(),
       },
-      logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+      loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
       portal,
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
     });
 
-    const response = await feature.webhooks.handleClerkEvent(
+    const response = await feature.accountWebhookController.handleClerkEvent(
       new Request("http://localhost/api/clerk/webhooks", { method: "POST" }),
     );
 

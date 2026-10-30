@@ -30,8 +30,8 @@ const RATE_LIMIT_ERROR_CODES = {
 
 export class StoreAcquisitionController {
   constructor(
-    private readonly acquireProducts: AcquireProductsUseCase,
-    private readonly botVerifier: BotVerifierPort,
+    private readonly acquireProductsUseCase: AcquireProductsUseCase,
+    private readonly botVerifierPort: BotVerifierPort,
   ) {}
 
   async acquire(request: Request): Promise<Response> {
@@ -59,7 +59,7 @@ export class StoreAcquisitionController {
       return createErrorResponse("invalid_request", 400);
     }
 
-    const verification = await this.botVerifier.verifySubmission({
+    const verification = await this.botVerifierPort.verifySubmission({
       action: STORE_ACQUISITION_TURNSTILE_ACTION,
       remoteIp: resolveRequestRemoteIp(request),
       token: resolveTurnstileToken(formData),
@@ -74,7 +74,7 @@ export class StoreAcquisitionController {
     }
 
     try {
-      const result = await this.acquireProducts.execute({
+      const result = await this.acquireProductsUseCase.execute({
         email: parsedRequest.data.email,
         idempotencyKey: parsedRequest.data.idempotencyKey,
         marketingConsent: parsedRequest.data.marketingConsent,

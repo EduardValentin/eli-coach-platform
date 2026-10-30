@@ -17,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
     }
 
-    return args.context.get(clientsContext).ownClientIdentity.save(args);
+    return args.context
+      .get(clientsContext)
+      .ownClientIdentityController.save(args);
   });
 }
 

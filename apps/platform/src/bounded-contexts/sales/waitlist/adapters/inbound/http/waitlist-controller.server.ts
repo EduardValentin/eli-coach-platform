@@ -29,16 +29,18 @@ type JoinRequestValidationError = {
 const WAITLIST_ERROR_MESSAGE = "Unable to process waitlist signup.";
 
 type WaitlistControllerOptions = {
-  botVerifier: BotVerifierPort;
-  getWaitlist: GetWaitlistUseCase;
-  joinWaitlist: JoinWaitlistUseCase;
+  botVerifierPort: BotVerifierPort;
+  getWaitlistUseCase: GetWaitlistUseCase;
+  joinWaitlistUseCase: JoinWaitlistUseCase;
 };
 
 export class WaitlistController {
   constructor(private readonly options: WaitlistControllerOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
-    return waitlistSchema.parse(await this.options.getWaitlist.execute());
+    return waitlistSchema.parse(
+      await this.options.getWaitlistUseCase.execute(),
+    );
   }
 
   async join(request: Request): Promise<Response> {
@@ -52,13 +54,13 @@ export class WaitlistController {
     }
 
     await verifyWaitlistSignup({
-      botVerifier: this.options.botVerifier,
+      botVerifierPort: this.options.botVerifierPort,
       formData,
       request,
     });
 
     const result = await joinWaitlistSafely(
-      this.options.joinWaitlist,
+      this.options.joinWaitlistUseCase,
       requestBody.data.email,
     );
 
@@ -74,11 +76,11 @@ export class WaitlistController {
 }
 
 async function verifyWaitlistSignup(options: {
-  botVerifier: BotVerifierPort;
+  botVerifierPort: BotVerifierPort;
   formData: FormData;
   request: Request;
 }): Promise<void> {
-  const result = await options.botVerifier.verifySubmission({
+  const result = await options.botVerifierPort.verifySubmission({
     action: WAITLIST_TURNSTILE_ACTION,
     remoteIp: resolveRequestRemoteIp(options.request),
     token: resolveTurnstileToken(options.formData),
@@ -100,11 +102,11 @@ function resolveTurnstileToken(formData: FormData): string | null {
 }
 
 async function joinWaitlistSafely(
-  joinWaitlist: JoinWaitlistUseCase,
+  joinWaitlistUseCase: JoinWaitlistUseCase,
   email: string,
 ): Promise<JoinWaitlistResult> {
   try {
-    return await joinWaitlist.execute({ email });
+    return await joinWaitlistUseCase.execute({ email });
   } catch {
     console.error("Waitlist signup failed.", {
       errorCategory: "waitlist_join_failure",

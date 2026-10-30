@@ -115,37 +115,40 @@ function createSetUp(options?: {
     checkInSeriesInboxFailed: vi.fn(),
   };
   const ports = {
-    clients,
-    clock: { now: () => NOW },
-    coachTime,
-    identities,
-    ids: { generate: () => `id-${(generated += 1)}` },
-    incidents,
-    inbox: {
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    coachTimePort: coachTime,
+    clientIdentitiesPort: identities,
+    checkInIdsPort: { generate: () => `id-${(generated += 1)}` },
+    checkInIncidentsPort: incidents,
+    checkInInboxPort: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
       scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
-    notifications,
-    openSlots: openSlotsOf(),
-    series,
+    checkInNotificationsPort: notifications,
+    openSlotsPort: openSlotsOf(),
+    checkInSeriesRecordsPort: series,
   };
 
-  return { ports, setUp: new SetUpCheckInSeriesUseCase(ports) };
+  return {
+    ports,
+    setUpCheckInSeriesUseCase: new SetUpCheckInSeriesUseCase(ports),
+  };
 }
 
 describe("SetUpCheckInSeriesUseCase", () => {
   it("records the series with one approved week per week of her paid period, in one write", async () => {
     // arrange
-    const { ports, setUp } = createSetUp();
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp();
 
     // act
-    const result = await setUp.execute(WEDNESDAY_EVENINGS);
+    const result = await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    const [series] = ports.series.start.mock.calls[0];
-    const [weeks] = ports.series.recordWeeks.mock.calls[0];
+    const [series] = ports.checkInSeriesRecordsPort.start.mock.calls[0];
+    const [weeks] = ports.checkInSeriesRecordsPort.recordWeeks.mock.calls[0];
     expect(series).toBeInstanceOf(CheckInSeries);
     expect(series.toSnapshot()).toEqual({
       id: "id-1",
@@ -189,13 +192,15 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
   it("answers with the weeks as recorded, a week whose hour is taken as a clash holding no time", async () => {
     // arrange
-    const { ports, setUp } = createSetUp({ hold: { status: "taken" } });
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp({
+      hold: { status: "taken" },
+    });
 
     // act
-    const result = await setUp.execute(WEDNESDAY_EVENINGS);
+    const result = await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    const [weeks] = ports.series.recordWeeks.mock.calls[0];
+    const [weeks] = ports.checkInSeriesRecordsPort.recordWeeks.mock.calls[0];
     expect(weeks[0]).toMatchObject({ reservationId: null });
     expect(weeks[0]?.checkIn.recordedStatus).toBe("clash");
     expect(result).toMatchObject({
@@ -208,13 +213,13 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
   it("emails the client the series and its first week", async () => {
     // arrange
-    const { ports, setUp } = createSetUp();
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp();
 
     // act
-    await setUp.execute(WEDNESDAY_EVENINGS);
+    await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    expect(ports.notifications.seriesSetUp).toHaveBeenCalledWith({
+    expect(ports.checkInNotificationsPort.seriesSetUp).toHaveBeenCalledWith({
       series: expect.objectContaining({ id: "id-1", weekday: "wednesday" }),
       weekStartsAt: new Date(WEEK_STARTS[0]),
       clientTimeZone: "Europe/London",
@@ -225,40 +230,43 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
   it("keeps the series and reports the email that failed", async () => {
     // arrange
-    const { ports, setUp } = createSetUp();
-    ports.notifications.seriesSetUp.mockResolvedValue("failed");
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp();
+    ports.checkInNotificationsPort.seriesSetUp.mockResolvedValue("failed");
 
     // act
-    const result = await setUp.execute(WEDNESDAY_EVENINGS);
+    const result = await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
     expect(result.status).toBe("set_up");
     expect(
-      ports.incidents.checkInSeriesNotificationFailed,
+      ports.checkInIncidentsPort.checkInSeriesNotificationFailed,
     ).toHaveBeenCalledWith({ seriesId: "id-1", notification: "seriesSetUp" });
   });
 
   it("writes the series to her inbox, opening her earliest recorded week", async () => {
     // arrange
-    const { ports, setUp } = createSetUp();
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp();
 
     // act
-    await setUp.execute(WEDNESDAY_EVENINGS);
+    await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesSetUp", {
-      series: expect.objectContaining({ id: "id-1" }),
-      weekStartsAt: new Date(WEEK_STARTS[0]),
-      clientTimeZone: "Europe/London",
-      client: ANA,
-      recipient: "client",
-      firstWeekId: "id-2",
-    });
+    expect(ports.checkInInboxPort.seriesEvent).toHaveBeenCalledWith(
+      "seriesSetUp",
+      {
+        series: expect.objectContaining({ id: "id-1" }),
+        weekStartsAt: new Date(WEEK_STARTS[0]),
+        clientTimeZone: "Europe/London",
+        client: ANA,
+        recipient: "client",
+        firstWeekId: "id-2",
+      },
+    );
   });
 
   it("starts a waiting client's weeks at her program start", async () => {
     // arrange
-    const { ports, setUp } = createSetUp({
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp({
       client: {
         ...ANA_REACH,
         programStartsAt: new Date("2026-10-19T09:00:00.000Z"),
@@ -266,10 +274,10 @@ describe("SetUpCheckInSeriesUseCase", () => {
     });
 
     // act
-    await setUp.execute(WEDNESDAY_EVENINGS);
+    await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
-    const [weeks] = ports.series.recordWeeks.mock.calls[0];
+    const [weeks] = ports.checkInSeriesRecordsPort.recordWeeks.mock.calls[0];
     expect(weeks.map(({ checkIn }) => checkIn.startsAt.toISOString())).toEqual(
       WEEK_STARTS.slice(2),
     );
@@ -277,16 +285,18 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
   it("refuses a second active series without emailing", async () => {
     // arrange
-    const { ports, setUp } = createSetUp({ started: "series_exists" });
+    const { ports, setUpCheckInSeriesUseCase } = createSetUp({
+      started: "series_exists",
+    });
 
     // act
-    const result = await setUp.execute(WEDNESDAY_EVENINGS);
+    const result = await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
     // assert
     expect(result).toEqual({ status: "series_exists" });
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
-    expect(ports.series.recordWeeks).not.toHaveBeenCalled();
-    expect(ports.notifications.seriesSetUp).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
+    expect(ports.checkInSeriesRecordsPort.recordWeeks).not.toHaveBeenCalled();
+    expect(ports.checkInNotificationsPort.seriesSetUp).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -320,14 +330,15 @@ describe("SetUpCheckInSeriesUseCase", () => {
     "refuses $situation with $status without writing",
     async ({ client, status }) => {
       // arrange
-      const { ports, setUp } = createSetUp({ client });
+      const { ports, setUpCheckInSeriesUseCase } = createSetUp({ client });
 
       // act
-      const result = await setUp.execute(WEDNESDAY_EVENINGS);
+      const result =
+        await setUpCheckInSeriesUseCase.execute(WEDNESDAY_EVENINGS);
 
       // assert
       expect(result).toEqual({ status });
-      expect(ports.series.start).not.toHaveBeenCalled();
+      expect(ports.checkInSeriesRecordsPort.start).not.toHaveBeenCalled();
     },
   );
 
@@ -346,10 +357,10 @@ describe("SetUpCheckInSeriesUseCase", () => {
     "refuses $situation without writing",
     async ({ weekday, hour }) => {
       // arrange
-      const { ports, setUp } = createSetUp();
+      const { ports, setUpCheckInSeriesUseCase } = createSetUp();
 
       // act
-      const result = await setUp.execute({
+      const result = await setUpCheckInSeriesUseCase.execute({
         clientId: "client-1",
         weekday,
         hour,
@@ -357,7 +368,7 @@ describe("SetUpCheckInSeriesUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "outside_availability" });
-      expect(ports.series.start).not.toHaveBeenCalled();
+      expect(ports.checkInSeriesRecordsPort.start).not.toHaveBeenCalled();
     },
   );
 });

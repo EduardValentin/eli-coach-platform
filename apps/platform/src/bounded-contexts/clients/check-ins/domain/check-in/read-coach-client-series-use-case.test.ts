@@ -43,30 +43,39 @@ function createRead(options: {
     findActiveForClient: vi.fn().mockResolvedValue(options.active),
   } satisfies Pick<CheckInSeriesRecordsPort, "findActiveForClient">;
   const ports = {
-    clients,
-    incidents: { checkInSeriesReadFailed: vi.fn() },
-    series,
+    clientReachPort: clients,
+    checkInIncidentsPort: { checkInSeriesReadFailed: vi.fn() },
+    checkInSeriesRecordsPort: series,
   };
 
-  return { ports, read: new ReadCoachClientSeriesUseCase(ports) };
+  return {
+    ports,
+    readCoachClientSeriesUseCase: new ReadCoachClientSeriesUseCase(ports),
+  };
 }
 
 describe("ReadCoachClientSeriesUseCase", () => {
   it("reads no series and reports the failure when her series cannot be read", async () => {
     // arrange
     const failure = new Error("database down");
-    const { ports, read } = createRead({ active: null });
-    ports.series.findActiveForClient.mockRejectedValue(failure);
+    const { ports, readCoachClientSeriesUseCase } = createRead({
+      active: null,
+    });
+    ports.checkInSeriesRecordsPort.findActiveForClient.mockRejectedValue(
+      failure,
+    );
 
     // act
-    const result = await read.execute("client-1");
+    const result = await readCoachClientSeriesUseCase.execute("client-1");
 
     // assert
     expect(result).toEqual({
       series: null,
       coachingEnds: false,
     });
-    expect(ports.incidents.checkInSeriesReadFailed).toHaveBeenCalledWith({
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesReadFailed,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       error: failure,
     });
@@ -74,24 +83,26 @@ describe("ReadCoachClientSeriesUseCase", () => {
 
   it("reads her active series", async () => {
     // arrange
-    const { ports, read } = createRead({
+    const { ports, readCoachClientSeriesUseCase } = createRead({
       active: CheckInSeries.reconstitute(SERIES),
     });
 
     // act
-    const result = await read.execute("client-1");
+    const result = await readCoachClientSeriesUseCase.execute("client-1");
 
     // assert
-    expect(ports.series.findActiveForClient).toHaveBeenCalledWith("client-1");
+    expect(
+      ports.checkInSeriesRecordsPort.findActiveForClient,
+    ).toHaveBeenCalledWith("client-1");
     expect(result).toEqual({ series: SERIES, coachingEnds: false });
   });
 
   it("reads no series for a client without an active series", async () => {
     // arrange
-    const { read } = createRead({ active: null });
+    const { readCoachClientSeriesUseCase } = createRead({ active: null });
 
     // act
-    const result = await read.execute("client-1");
+    const result = await readCoachClientSeriesUseCase.execute("client-1");
 
     // assert
     expect(result).toEqual({
@@ -120,10 +131,13 @@ describe("ReadCoachClientSeriesUseCase", () => {
     "reads that her coaching ends when it is $situation",
     async ({ client }) => {
       // arrange
-      const { read } = createRead({ active: null, client });
+      const { readCoachClientSeriesUseCase } = createRead({
+        active: null,
+        client,
+      });
 
       // act
-      const result = await read.execute("client-1");
+      const result = await readCoachClientSeriesUseCase.execute("client-1");
 
       // assert
       expect(result).toEqual({

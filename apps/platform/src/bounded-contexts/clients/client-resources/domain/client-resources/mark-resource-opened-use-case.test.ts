@@ -103,7 +103,7 @@ const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
 ]);
 
 function createUseCase() {
-  const resources = new InMemoryClientResourcesAdapter();
+  const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) =>
       reachReading(clientId, "reachable"),
@@ -124,14 +124,18 @@ function createUseCase() {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new MarkResourceOpenedUseCase({
-    resources,
-    clients,
-    incidents,
-    clock: { now: () => NOW },
+  const markResourceOpenedUseCase = new MarkResourceOpenedUseCase({
+    clientResourcesPort: inMemoryClientResourcesAdapter,
+    clientReachPort: clients,
+    clientResourceIncidentsPort: incidents,
+    clockPort: { now: () => NOW },
   });
 
-  return { useCase, resources, incidents };
+  return {
+    markResourceOpenedUseCase,
+    inMemoryClientResourcesAdapter,
+    incidents,
+  };
 }
 
 const ANA = { role: "CLIENT", authSubjectId: "user_ana" } as const;
@@ -139,26 +143,33 @@ const ANA = { role: "CLIENT", authSubjectId: "user_ana" } as const;
 describe("MarkResourceOpenedUseCase", () => {
   it("records the moment a client first opens her resource", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
+    const { markResourceOpenedUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await markResourceOpenedUseCase.execute({
       requester: ANA,
       resourceId: "resource-new",
     });
 
     // assert
     expect(result).toEqual({ status: "opened" });
-    expect(resources.openedAtOf("resource-new")).toEqual(NOW);
+    expect(inMemoryClientResourcesAdapter.openedAtOf("resource-new")).toEqual(
+      NOW,
+    );
   });
 
   it("answers opened without writing when she opened it before", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
-    const recordOpened = vi.spyOn(resources, "recordOpened");
+    const { markResourceOpenedUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
+    const recordOpened = vi.spyOn(
+      inMemoryClientResourcesAdapter,
+      "recordOpened",
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await markResourceOpenedUseCase.execute({
       requester: ANA,
       resourceId: "resource-opened",
     });
@@ -166,16 +177,19 @@ describe("MarkResourceOpenedUseCase", () => {
     // assert
     expect(result).toEqual({ status: "opened" });
     expect(recordOpened).not.toHaveBeenCalled();
-    expect(resources.openedAtOf("resource-opened")).toEqual(FIRST_OPENED_AT);
+    expect(
+      inMemoryClientResourcesAdapter.openedAtOf("resource-opened"),
+    ).toEqual(FIRST_OPENED_AT);
   });
 
   it("lets the coach mark nothing, without looking the resource up", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
-    const findResource = vi.spyOn(resources, "findById");
+    const { markResourceOpenedUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
+    const findResource = vi.spyOn(inMemoryClientResourcesAdapter, "findById");
 
     // act
-    const result = await useCase.execute({
+    const result = await markResourceOpenedUseCase.execute({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       resourceId: "resource-new",
     });
@@ -183,7 +197,9 @@ describe("MarkResourceOpenedUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-found" });
     expect(findResource).not.toHaveBeenCalled();
-    expect(resources.openedAtOf("resource-new")).toBeNull();
+    expect(
+      inMemoryClientResourcesAdapter.openedAtOf("resource-new"),
+    ).toBeNull();
   });
 
   it.each([
@@ -201,24 +217,31 @@ describe("MarkResourceOpenedUseCase", () => {
     "lets %s mark nothing and reports the refusal",
     async (_case, requester, resourceId) => {
       // arrange
-      const { useCase, resources, incidents } = createUseCase();
+      const {
+        markResourceOpenedUseCase,
+        inMemoryClientResourcesAdapter,
+        incidents,
+      } = createUseCase();
 
       // act
-      const result = await useCase.execute({ requester, resourceId });
+      const result = await markResourceOpenedUseCase.execute({
+        requester,
+        resourceId,
+      });
 
       // assert
       expect(result).toEqual({ status: "not-found" });
-      expect(resources.openedAtOf(resourceId)).toBeNull();
+      expect(inMemoryClientResourcesAdapter.openedAtOf(resourceId)).toBeNull();
       expect(incidents.resourceAccessRefused).toHaveBeenCalledOnce();
     },
   );
 
   it("finds nothing to mark for an unknown resource", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { markResourceOpenedUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await markResourceOpenedUseCase.execute({
       requester: ANA,
       resourceId: "resource-404",
     });
@@ -230,11 +253,17 @@ describe("MarkResourceOpenedUseCase", () => {
   it("reports a failed write and answers that the mark failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, resources, incidents } = createUseCase();
-    vi.spyOn(resources, "recordOpened").mockRejectedValue(failure);
+    const {
+      markResourceOpenedUseCase,
+      inMemoryClientResourcesAdapter,
+      incidents,
+    } = createUseCase();
+    vi.spyOn(inMemoryClientResourcesAdapter, "recordOpened").mockRejectedValue(
+      failure,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await markResourceOpenedUseCase.execute({
       requester: ANA,
       resourceId: "resource-new",
     });

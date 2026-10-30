@@ -4,8 +4,8 @@ import type { ClientSettingsSnapshot } from "./client-settings";
 import type { ClientSettingsSourcePort } from "./client-settings-source-port";
 
 type ReadOwnClientSettingsUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  settings: ClientSettingsSourcePort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
 };
 
 export class ReadOwnClientSettingsUseCase {
@@ -13,13 +13,13 @@ export class ReadOwnClientSettingsUseCase {
 
   async execute(authSubjectId: string): Promise<ClientSettingsSnapshot | null> {
     const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+      await this.options.clientReachPort.findByAuthSubjectId(authSubjectId);
 
     if (!client) {
       return null;
     }
 
-    const settings = await this.options.settings.findByClientId(
+    const settings = await this.options.clientSettingsSourcePort.findByClientId(
       client.clientId,
     );
 

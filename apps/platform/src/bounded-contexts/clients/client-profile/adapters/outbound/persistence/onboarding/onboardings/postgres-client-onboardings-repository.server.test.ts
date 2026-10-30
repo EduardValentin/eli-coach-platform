@@ -32,7 +32,7 @@ const OUTSIDE_ANY_TRANSACTION = {} as DatabaseClient;
 describe("PostgresClientOnboardings#findByClientId", () => {
   it("reads her draft with its consents and no submission", async () => {
     // arrange
-    const onboardings = onboardingsOver(
+    const postgresClientOnboardingsRepository = onboardingsOver(
       createDatabaseAnswering({
         drafts: [
           {
@@ -49,7 +49,8 @@ describe("PostgresClientOnboardings#findByClientId", () => {
     );
 
     // act
-    const stored = await onboardings.findByClientId(CLIENT_ID);
+    const stored =
+      await postgresClientOnboardingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(stored).toEqual({
@@ -69,7 +70,7 @@ describe("PostgresClientOnboardings#findByClientId", () => {
 
   it("reads her submission with its consents and no draft", async () => {
     // arrange
-    const onboardings = onboardingsOver(
+    const postgresClientOnboardingsRepository = onboardingsOver(
       createDatabaseAnswering({
         drafts: [],
         submissions: [
@@ -85,7 +86,8 @@ describe("PostgresClientOnboardings#findByClientId", () => {
     );
 
     // act
-    const stored = await onboardings.findByClientId(CLIENT_ID);
+    const stored =
+      await postgresClientOnboardingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(stored).toEqual({
@@ -104,12 +106,13 @@ describe("PostgresClientOnboardings#findByClientId", () => {
 
   it("answers neither a draft nor a submission before she starts", async () => {
     // arrange
-    const onboardings = onboardingsOver(
+    const postgresClientOnboardingsRepository = onboardingsOver(
       createDatabaseAnswering({ drafts: [], submissions: [] }),
     );
 
     // act
-    const stored = await onboardings.findByClientId(CLIENT_ID);
+    const stored =
+      await postgresClientOnboardingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(stored).toEqual({ draft: null, submission: null });
@@ -122,10 +125,12 @@ describe("PostgresClientOnboardings#saveDraft", () => {
     const database = createDatabaseRecordingDraftWrites([
       { clientId: CLIENT_ID },
     ]);
-    const onboardings = onboardingsOver(database.client);
+    const postgresClientOnboardingsRepository = onboardingsOver(
+      database.client,
+    );
 
     // act
-    const outcome = await onboardings.saveDraft({
+    const outcome = await postgresClientOnboardingsRepository.saveDraft({
       clientId: CLIENT_ID,
       draft: emptyDraft(UPDATED_AT),
     });
@@ -144,10 +149,12 @@ describe("PostgresClientOnboardings#saveDraft", () => {
   it("answers already submitted when the guard lets no row through", async () => {
     // arrange
     const database = createDatabaseRecordingDraftWrites([]);
-    const onboardings = onboardingsOver(database.client);
+    const postgresClientOnboardingsRepository = onboardingsOver(
+      database.client,
+    );
 
     // act
-    const outcome = await onboardings.saveDraft({
+    const outcome = await postgresClientOnboardingsRepository.saveDraft({
       clientId: CLIENT_ID,
       draft: emptyDraft(UPDATED_AT),
     });
@@ -161,10 +168,12 @@ describe("PostgresClientOnboardings#saveDraft", () => {
     const database = createDatabaseRecordingDraftWrites([
       { clientId: CLIENT_ID },
     ]);
-    const onboardings = onboardingsOver(database.client);
+    const postgresClientOnboardingsRepository = onboardingsOver(
+      database.client,
+    );
 
     // act
-    await onboardings.saveDraft({
+    await postgresClientOnboardingsRepository.saveDraft({
       clientId: CLIENT_ID,
       draft: {
         ...emptyDraft(UPDATED_AT),
@@ -201,10 +210,13 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     // arrange
     const database = createDatabaseRecordingTransaction();
     const writers = createRecordingWriters();
-    const onboardings = onboardingsOver(database.client, writers);
+    const postgresClientOnboardingsRepository = onboardingsOver(
+      database.client,
+      writers,
+    );
 
     // act
-    const outcome = await onboardings.recordSubmission({
+    const outcome = await postgresClientOnboardingsRepository.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
       entryId: ENTRY_ID,
@@ -245,12 +257,15 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     // arrange
     const database = createDatabaseRecordingTransaction();
     const writers = createRecordingWriters();
-    const onboardings = onboardingsOver(database.client, writers);
+    const postgresClientOnboardingsRepository = onboardingsOver(
+      database.client,
+      writers,
+    );
     const consented = submission();
     consented.consents.progressPhotosAt = CONSENTED_AT;
 
     // act
-    await onboardings.recordSubmission({
+    await postgresClientOnboardingsRepository.recordSubmission({
       clientId: CLIENT_ID,
       submission: consented,
       entryId: ENTRY_ID,
@@ -268,14 +283,14 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
 
   it("answers already submitted when a submission already exists for her", async () => {
     // arrange
-    const onboardings = onboardingsOver(
+    const postgresClientOnboardingsRepository = onboardingsOver(
       createDatabaseFailingTransactionWith(
         uniqueViolation("client_onboarding_submissions_client_id_unique"),
       ),
     );
 
     // act
-    const outcome = await onboardings.recordSubmission({
+    const outcome = await postgresClientOnboardingsRepository.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
       entryId: ENTRY_ID,
@@ -289,12 +304,12 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
   it("rethrows any other unique violation", async () => {
     // arrange
     const failure = uniqueViolation("client_measurements_pkey");
-    const onboardings = onboardingsOver(
+    const postgresClientOnboardingsRepository = onboardingsOver(
       createDatabaseFailingTransactionWith(failure),
     );
 
     // act
-    const recording = onboardings.recordSubmission({
+    const recording = postgresClientOnboardingsRepository.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
       entryId: ENTRY_ID,
@@ -311,12 +326,12 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       code: "08006",
       constraint: "client_onboarding_submissions_client_id_unique",
     });
-    const onboardings = onboardingsOver(
+    const postgresClientOnboardingsRepository = onboardingsOver(
       createDatabaseFailingTransactionWith(failure),
     );
 
     // act
-    const recording = onboardings.recordSubmission({
+    const recording = postgresClientOnboardingsRepository.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
       entryId: ENTRY_ID,

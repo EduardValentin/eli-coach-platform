@@ -14,17 +14,21 @@ describe("EmailProductDelivery", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmailPort;
-    const delivery = new EmailProductDeliveryAdapter(productEmail, {
-      appBasePath: "/",
-      contactEmail: "contact@evoa.fit",
-      publicAppUrl: "https://eli.example",
-    });
-    const providerIdempotencyKey = delivery.createProviderIdempotencyKey(
-      "d744ad8e-632c-4dfe-ac70-033bd3221522",
+    const emailProductDeliveryAdapter = new EmailProductDeliveryAdapter(
+      productEmail,
+      {
+        appBasePath: "/",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://eli.example",
+      },
     );
+    const providerIdempotencyKey =
+      emailProductDeliveryAdapter.createProviderIdempotencyKey(
+        "d744ad8e-632c-4dfe-ac70-033bd3221522",
+      );
 
     // act
-    const result = await delivery.deliver({
+    const result = await emailProductDeliveryAdapter.deliver({
       email: "woman@example.com",
       idempotencyKey: providerIdempotencyKey,
       rawToken: "opaque-token",
@@ -64,11 +68,14 @@ describe("EmailProductDelivery", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmailPort;
-    const delivery = new EmailProductDeliveryAdapter(productEmail, {
-      appBasePath: "/eli",
-      contactEmail: "contact@evoa.fit",
-      publicAppUrl: "https://eli.example",
-    });
+    const emailProductDeliveryAdapter = new EmailProductDeliveryAdapter(
+      productEmail,
+      {
+        appBasePath: "/eli",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://eli.example",
+      },
+    );
     const command = {
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
@@ -88,8 +95,8 @@ describe("EmailProductDelivery", () => {
     };
 
     // act
-    await delivery.deliver(command);
-    await delivery.deliver(command);
+    await emailProductDeliveryAdapter.deliver(command);
+    await emailProductDeliveryAdapter.deliver(command);
 
     // assert
     const [firstCommand, replayCommand] = productEmail.send.mock.calls.map(
@@ -121,14 +128,17 @@ describe("EmailProductDelivery", () => {
       provider: "resend",
       send: vi.fn().mockResolvedValue(delivery),
     } satisfies ProductEmailPort;
-    const productDelivery = new EmailProductDeliveryAdapter(productEmail, {
-      appBasePath: "/",
-      contactEmail: "contact@evoa.fit",
-      publicAppUrl: "https://eli.example",
-    });
+    const emailProductDeliveryAdapter = new EmailProductDeliveryAdapter(
+      productEmail,
+      {
+        appBasePath: "/",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://eli.example",
+      },
+    );
 
     // act
-    const result = await productDelivery.deliver({
+    const result = await emailProductDeliveryAdapter.deliver({
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       rawToken: "opaque-token",
@@ -153,14 +163,17 @@ describe("EmailProductDelivery", () => {
       provider: "resend",
       send: vi.fn().mockRejectedValue(transportFailure),
     } satisfies ProductEmailPort;
-    const delivery = new EmailProductDeliveryAdapter(productEmail, {
-      appBasePath: "/",
-      contactEmail: "contact@evoa.fit",
-      publicAppUrl: "https://eli.example",
-    });
+    const emailProductDeliveryAdapter = new EmailProductDeliveryAdapter(
+      productEmail,
+      {
+        appBasePath: "/",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://eli.example",
+      },
+    );
 
     // act
-    const failedDelivery = delivery.deliver({
+    const failedDelivery = emailProductDeliveryAdapter.deliver({
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       rawToken: "opaque-token",

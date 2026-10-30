@@ -12,12 +12,12 @@ import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-l
 import { NutritionHub } from "./nutrition-hub";
 
 export async function loader(args: LoaderFunctionArgs) {
-  const { foodLibrary, recipeLibrary } = args.context.get(
+  const { foodLibraryController, recipeLibraryController } = args.context.get(
     nutritionLibraryContext,
   );
   const [{ foods, tags }, { recipes }] = await Promise.all([
-    foodLibrary.list(args),
-    recipeLibrary.list(args),
+    foodLibraryController.list(args),
+    recipeLibraryController.list(args),
   ]);
 
   return { foods, tags, recipes };

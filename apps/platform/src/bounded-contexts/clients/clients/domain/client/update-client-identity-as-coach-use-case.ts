@@ -25,10 +25,10 @@ type UpdateClientIdentityAsCoachResult =
   | { status: "invalid"; problems: ClientIdentityProblems };
 
 type UpdateClientIdentityAsCoachUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  changes: ClientIdentityChangesPort;
-  calendar: CalendarDatesPort;
-  clock: ClockPort;
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clientIdentityChangesPort: ClientIdentityChangesPort;
+  calendarDatesPort: CalendarDatesPort;
+  clockPort: ClockPort;
   countries: ClientCountries;
 };
 
@@ -40,7 +40,9 @@ export class UpdateClientIdentityAsCoachUseCase {
   async execute(
     command: UpdateClientIdentityAsCoachCommand,
   ): Promise<UpdateClientIdentityAsCoachResult> {
-    const client = await this.options.clients.findById(command.clientId);
+    const client = await this.options.clientReachPort.findById(
+      command.clientId,
+    );
 
     if (!client) {
       return { status: "not-found" };
@@ -49,8 +51,8 @@ export class UpdateClientIdentityAsCoachUseCase {
     const result = ClientIdentityEdit.of(
       { ...command.identity, clientId: client.clientId },
       ClientToday.on(
-        { on: this.options.clock.now(), timeZone: client.timeZone },
-        this.options.calendar,
+        { on: this.options.clockPort.now(), timeZone: client.timeZone },
+        this.options.calendarDatesPort,
       ),
       this.options.countries,
     );
@@ -59,7 +61,7 @@ export class UpdateClientIdentityAsCoachUseCase {
       return result;
     }
 
-    await this.options.changes.save(result.edit);
+    await this.options.clientIdentityChangesPort.save(result.edit);
 
     return { status: "saved" };
   }

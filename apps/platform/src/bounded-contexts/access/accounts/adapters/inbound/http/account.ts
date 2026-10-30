@@ -5,6 +5,6 @@ import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inb
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    args.context.get(accountsContext).account.getCurrentAccount(args),
+    args.context.get(accountsContext).accountController.getCurrentAccount(args),
   );
 }

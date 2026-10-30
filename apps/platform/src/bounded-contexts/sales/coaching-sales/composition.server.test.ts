@@ -26,7 +26,7 @@ describe("composeCoachingSalesFeature", () => {
     );
 
     // act
-    const response = await feature.paymentLinks.sendPaymentLink(
+    const response = await feature.paymentLinksController.sendPaymentLink(
       coachSendsPaymentLinkArgs(),
     );
 
@@ -40,23 +40,23 @@ describe("composeCoachingSalesFeature", () => {
     const logger = createLogger();
     const { feature } = composeCoachingSalesFeature({
       ...createHandles({}),
-      featureFlags: {
+      featureFlagsFacade: {
         isOn: async () => {
           throw new Error("database down");
         },
       },
-      logger,
+      loggerPort: logger,
     });
 
     // act
-    const confirmation = feature.checkouts.loadConfirmation(
+    const confirmation = feature.checkoutsController.loadConfirmation(
       createRequestArgs({
         request: new Request(
           "https://evoa.fit/checkout/complete?session=cs_test_1",
         ),
       }),
     );
-    const checkout = await feature.checkouts.startCheckout(
+    const checkout = await feature.checkoutsController.startCheckout(
       createRequestArgs({ request: checkoutRequest() }),
     );
 
@@ -79,7 +79,7 @@ describe("composeCoachingSalesFeature", () => {
     const { feature } = composeCoachingSalesFeature(createHandles({}));
 
     // act
-    const response = await feature.checkouts.resolveBundlePage(
+    const response = await feature.checkoutsController.resolveBundlePage(
       createRequestArgs({ request: bundlePageRequest("abc") }),
     );
 
@@ -90,11 +90,14 @@ describe("composeCoachingSalesFeature", () => {
   it("hands a completed checkout to purchase recording while the site is in waitlist mode", async () => {
     // arrange
     const logger = createLogger();
-    const handles = { ...createHandles({ WAITLIST_MODE: true }), logger };
-    const paidSession = await openCheckoutSession(handles.paymentCheckout);
+    const handles = {
+      ...createHandles({ WAITLIST_MODE: true }),
+      loggerPort: logger,
+    };
+    const paidSession = await openCheckoutSession(handles.paymentCheckoutPort);
     const { feature } = composeCoachingSalesFeature({
       ...handles,
-      paymentEvents: {
+      paymentEventsPort: {
         verify: async () => ({
           kind: "checkout_completed",
           eventId: "evt_1",
@@ -114,7 +117,7 @@ describe("composeCoachingSalesFeature", () => {
     });
 
     // act
-    const response = await feature.stripeWebhooks.handleEvent(
+    const response = await feature.stripeWebhookController.handleEvent(
       new Request("https://evoa.fit/api/stripe/webhooks", {
         body: "{}",
         headers: { "stripe-signature": "t=1,v1=signed" },
@@ -143,11 +146,11 @@ describe("composeCoachingSalesFeature buyer controllers", () => {
     );
 
     // act
-    const loading = feature.checkouts.loadBundlePageShell();
-    const resolution = await feature.checkouts.resolveBundlePage(
+    const loading = feature.checkoutsController.loadBundlePageShell();
+    const resolution = await feature.checkoutsController.resolveBundlePage(
       createRequestArgs({ request: bundlePageRequest("raw-token-value") }),
     );
-    const checkout = await feature.checkouts.startCheckout(
+    const checkout = await feature.checkoutsController.startCheckout(
       createRequestArgs({ request: checkoutRequest() }),
     );
 
@@ -198,14 +201,14 @@ function coachArgs(request: Request) {
 }
 
 async function openCheckoutSession(
-  paymentCheckout: PaymentCheckoutPort,
+  paymentCheckoutPort: PaymentCheckoutPort,
 ): Promise<{ id: string }> {
-  const customer = await paymentCheckout.createCustomer({
+  const customer = await paymentCheckoutPort.createCustomer({
     email: "ana@example.com",
     assessmentCallId: CALL_ID,
   });
 
-  return paymentCheckout.createSession({
+  return paymentCheckoutPort.createSession({
     customerId: customer.id,
     bundle: {
       id: "3-months",
@@ -230,47 +233,47 @@ async function openCheckoutSession(
 function createHandles(
   featureFlags: Record<string, boolean>,
 ): CoachingSalesFeatureHandles {
-  const payments = new PaymentsAdapter({ PAYMENTS_PROVIDER: "memory" });
+  const paymentsAdapter = new PaymentsAdapter({ PAYMENTS_PROVIDER: "memory" });
 
   return {
-    admissions: {
+    admissionsFacade: {
       admitPaidClient: async () => ({ status: "call_already_has_client" }),
       invitePaidClient: async () => undefined,
       recordCoachingStanding: async () => undefined,
     },
     appBasePath: "/eli-coach-platform",
-    emailAcceptance: createEmailAcceptance("allowed"),
-    endedCalls: { callOf: async () => null },
-    clientLookup: {
+    emailAcceptancePort: createEmailAcceptance("allowed"),
+    endedCallsFacade: { callOf: async () => null },
+    clientLookupFacade: {
       identityOf: async () => null,
       journeyStepOf: async () => null,
       reachOf: async () => null,
       reachOfSubject: async () => null,
     },
-    clientProfile: { openClientProfile: async () => undefined },
-    clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
+    clientProfileFacade: { openClientProfile: async () => undefined },
+    clockPort: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     coachEmail: "eli@evoa.fit",
-    coachingPeriods: {
+    coachingPeriodsFacade: {
       endCoaching: async () => undefined,
       startCoachingPeriod: async () => undefined,
     },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
-    featureFlags: { isOn: async (flag) => featureFlags[flag] === true },
+    featureFlagsFacade: { isOn: async (flag) => featureFlags[flag] === true },
     linkTokens: {
       generator: createTokenGenerator(),
       hasher: createTokenHasher(),
     },
-    logger: createLogger(),
-    paymentCheckout: payments.checkout,
-    paymentCustomerCards: payments.customerCards,
-    paymentEvents: payments.events,
-    paymentSubscriptions: payments.subscriptions,
-    pricingEligibility: {
+    loggerPort: createLogger(),
+    paymentCheckoutPort: paymentsAdapter.paymentCheckoutPort,
+    paymentCustomerCardsPort: paymentsAdapter.paymentCustomerCardsPort,
+    paymentEventsPort: paymentsAdapter.paymentEventsPort,
+    paymentSubscriptionsPort: paymentsAdapter.paymentSubscriptionsPort,
+    pricingEligibilitySourceFacade: {
       tierForEmail: async () => "regular",
       tiersForEmails: async () => new Map(),
     },
-    productEmail: new InMemoryProductEmailAdapter(),
+    productEmailPort: new InMemoryProductEmailAdapter(),
     publicAppUrl: "https://evoa.fit",
     webhookSigningSecret: "whsec_unit",
   };

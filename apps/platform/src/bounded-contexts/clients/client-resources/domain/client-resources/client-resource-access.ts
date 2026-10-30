@@ -21,9 +21,9 @@ function reachOf(requester: ResourceRequester): ResourceReach {
 }
 
 type ClientResourceAccessOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class ClientResourceAccess {
@@ -35,14 +35,15 @@ export class ClientResourceAccess {
   ): Promise<ClientResource | null> {
     if (reachOf(requester) === "none") return null;
 
-    const resource = await this.options.resources.findById(resourceId);
+    const resource =
+      await this.options.clientResourcesPort.findById(resourceId);
 
     if (!resource) return null;
     if (await this.reaches(requester, (clientId) => resource.isFor(clientId))) {
       return resource;
     }
 
-    this.options.incidents.resourceAccessRefused({
+    this.options.clientResourceIncidentsPort.resourceAccessRefused({
       requesterRole: requester.role,
       ...resource.storageOwner(),
     });
@@ -63,12 +64,13 @@ export class ClientResourceAccess {
     requester: ResourceRequester,
     resourceId: string,
   ): Promise<ClientResource | null> {
-    const resource = await this.options.resources.findById(resourceId);
+    const resource =
+      await this.options.clientResourcesPort.findById(resourceId);
 
     if (!resource) return null;
     if (reachOf(requester) === "every-client") return resource;
 
-    this.options.incidents.resourceAccessRefused({
+    this.options.clientResourceIncidentsPort.resourceAccessRefused({
       requesterRole: requester.role,
       ...resource.storageOwner(),
     });
@@ -81,7 +83,7 @@ export class ClientResourceAccess {
   ): Promise<string | null> {
     if (reachOf(requester) !== "own-client") return null;
 
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       requester.authSubjectId,
     );
 
@@ -91,7 +93,7 @@ export class ClientResourceAccess {
   mayAddFor(requester: ResourceRequester, clientId: string): boolean {
     if (reachOf(requester) === "every-client") return true;
 
-    this.options.incidents.resourceAccessRefused({
+    this.options.clientResourceIncidentsPort.resourceAccessRefused({
       requesterRole: requester.role,
       clientId,
       resourceId: null,
@@ -105,12 +107,13 @@ export class ClientResourceAccess {
     clientId: string,
   ): Promise<boolean> {
     if (reachOf(requester) === "none") return false;
-    if ((await this.options.clients.findById(clientId)) === null) return false;
+    if ((await this.options.clientReachPort.findById(clientId)) === null)
+      return false;
     if (await this.reaches(requester, (ownId) => ownId === clientId)) {
       return true;
     }
 
-    this.options.incidents.resourceAccessRefused({
+    this.options.clientResourceIncidentsPort.resourceAccessRefused({
       requesterRole: requester.role,
       clientId,
       resourceId: null,

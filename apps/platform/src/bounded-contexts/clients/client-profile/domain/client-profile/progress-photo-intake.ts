@@ -34,11 +34,11 @@ export type EntryReceivingPhotos = {
 };
 
 type ProgressPhotoIntakeOptions = {
-  photos: ProgressPhotosPort;
-  photoIds: ProgressPhotoIdsPort;
-  store: ProgressPhotoStorePort;
-  renditions: ProgressPhotoRenditionsPort;
-  incidents: MeasurementIncidentsPort;
+  progressPhotosPort: ProgressPhotosPort;
+  progressPhotoIdsPort: ProgressPhotoIdsPort;
+  progressPhotoStorePort: ProgressPhotoStorePort;
+  progressPhotoRenditionsPort: ProgressPhotoRenditionsPort;
+  measurementIncidentsPort: MeasurementIncidentsPort;
 };
 
 type RenderedProgressPhoto = Extract<
@@ -73,7 +73,7 @@ export class ProgressPhotoIntake {
     if (!entry.photosConsented)
       return this.refuse(entry, photo, "consent-missing");
 
-    const rendition = await this.options.renditions
+    const rendition = await this.options.progressPhotoRenditionsPort
       .render(photo.bytes)
       .catch(() => REFUSED_RENDITION);
 
@@ -86,7 +86,7 @@ export class ProgressPhotoIntake {
       return this.refuse(entry, photo, "storage-failed");
     }
 
-    this.options.incidents.progressPhotoStored({
+    this.options.measurementIncidentsPort.progressPhotoStored({
       clientId: entry.clientId,
       entryId: entry.entryId,
       view: photo.view,
@@ -102,13 +102,13 @@ export class ProgressPhotoIntake {
     view: ProgressPhotoView,
     rendition: RenderedProgressPhoto,
   ): Promise<void> {
-    const photoId = this.options.photoIds.generate();
-    const reference = await this.options.store.store(
+    const photoId = this.options.progressPhotoIdsPort.generate();
+    const reference = await this.options.progressPhotoStorePort.store(
       { clientId: entry.clientId, entryId: entry.entryId, photoId },
       rendition.bytes,
     );
 
-    await this.options.photos.add(
+    await this.options.progressPhotosPort.add(
       ProgressPhoto.stored({
         id: photoId,
         entryId: entry.entryId,
@@ -126,7 +126,7 @@ export class ProgressPhotoIntake {
     photo: ReceivedProgressPhoto,
     reason: ProgressPhotoRefusal,
   ): ProgressPhotoOutcome {
-    this.options.incidents.progressPhotoRefused({
+    this.options.measurementIncidentsPort.progressPhotoRefused({
       clientId: entry.clientId,
       entryId: entry.entryId,
       view: photo.view,

@@ -39,8 +39,12 @@ type CoachShell = CoachNavigationCounts & {
 
 export async function loader(args: LoaderFunctionArgs): Promise<CoachShell> {
   const [checkInsAwaiting, bell] = await Promise.all([
-    args.context.get(checkInsContext).coachCheckIns.loadAwaitingCount(args),
-    args.context.get(notificationsContext).notificationBell.loadBell(args),
+    args.context
+      .get(checkInsContext)
+      .coachCheckInsController.loadAwaitingCount(args),
+    args.context
+      .get(notificationsContext)
+      .notificationBellController.loadBell(args),
   ]);
 
   return { checkInsAwaiting, bell };

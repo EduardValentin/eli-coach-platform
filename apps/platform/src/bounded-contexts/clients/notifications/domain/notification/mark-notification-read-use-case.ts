@@ -8,9 +8,9 @@ import {
 } from "./notification-recipient-reach";
 
 type MarkNotificationReadUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  inbox: Pick<NotificationInboxPort, "markRead">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  notificationInboxPort: Pick<NotificationInboxPort, "markRead">;
 };
 
 export class MarkNotificationReadUseCase {
@@ -30,10 +30,10 @@ export class MarkNotificationReadUseCase {
       return "unknown";
     }
 
-    return this.options.inbox.markRead({
+    return this.options.notificationInboxPort.markRead({
       recipient: recipient.toSnapshot(),
       id: command.notificationId,
-      at: this.options.clock.now(),
+      at: this.options.clockPort.now(),
     });
   }
 }

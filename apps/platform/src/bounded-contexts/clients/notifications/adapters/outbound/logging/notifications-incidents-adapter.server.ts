@@ -9,7 +9,7 @@ import {
 } from "~/shared/logging/error-fields.server";
 
 export class NotificationsIncidentsAdapter implements NotificationIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   notificationBellReadFailed({
     error,
@@ -18,7 +18,7 @@ export class NotificationsIncidentsAdapter implements NotificationIncidentsPort 
     party: NotificationParty;
     error: unknown;
   }) {
-    this.logger.error(
+    this.loggerPort.error(
       "The notification bell could not be read; it shows no notifications.",
       {
         errorCategory: "notification_bell_read_failure",

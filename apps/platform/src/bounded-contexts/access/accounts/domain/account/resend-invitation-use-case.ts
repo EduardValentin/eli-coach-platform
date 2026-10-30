@@ -20,12 +20,12 @@ export type ResendInvitationResult =
   | { status: "not-found" };
 
 type ResendInvitationUseCaseOptions = {
-  clock: ClockPort;
-  identity: IdentityInvitationsPort;
-  incidents: AccountInvitationIncidentsPort;
-  invitations: AccountInvitationsPort;
-  notifications: AccountInvitationNotificationsPort;
-  tokenGenerator: InvitationTokenGeneratorPort;
+  clockPort: ClockPort;
+  identityInvitationsPort: IdentityInvitationsPort;
+  accountInvitationIncidentsPort: AccountInvitationIncidentsPort;
+  accountInvitationsPort: AccountInvitationsPort;
+  accountInvitationNotificationsPort: AccountInvitationNotificationsPort;
+  invitationTokenGeneratorPort: InvitationTokenGeneratorPort;
 };
 
 export class ResendInvitationUseCase {
@@ -35,7 +35,7 @@ export class ResendInvitationUseCase {
     invitationId: string;
     firstName: string;
   }): Promise<ResendInvitationResult> {
-    const invitation = await this.options.invitations.findById(
+    const invitation = await this.options.accountInvitationsPort.findById(
       command.invitationId,
     );
 
@@ -47,20 +47,20 @@ export class ResendInvitationUseCase {
       return { status: "already-accepted" };
     }
 
-    const now = this.options.clock.now();
-    const token = this.options.tokenGenerator.create();
+    const now = this.options.clockPort.now();
+    const token = this.options.invitationTokenGeneratorPort.create();
     const reissued = invitation.reissue({
       tokenHash: token.sha256,
       sentAt: now,
     });
-    await this.options.invitations.reissue(reissued);
+    await this.options.accountInvitationsPort.reissue(reissued);
 
     const provider = await this.replaceIdentityInvitation(reissued).catch(
       () => null,
     );
 
     if (!provider) {
-      this.options.incidents.invitationResendFailed({
+      this.options.accountInvitationIncidentsPort.invitationResendFailed({
         invitationId: reissued.id,
         step: "provider",
       });
@@ -68,7 +68,7 @@ export class ResendInvitationUseCase {
       return { status: "failed" };
     }
 
-    await this.options.invitations.recordProvider({
+    await this.options.accountInvitationsPort.recordProvider({
       invitationId: reissued.id,
       provider,
     });
@@ -89,36 +89,38 @@ export class ResendInvitationUseCase {
     const request = { email: invitation.email, invitationId: invitation.id };
 
     return invitation.provider
-      ? this.options.identity.replace({
+      ? this.options.identityInvitationsPort.replace({
           ...request,
           previous: invitation.provider,
         })
-      : this.options.identity.create(request);
+      : this.options.identityInvitationsPort.create(request);
   }
 
   private async sendInvitation(
     message: AccountInvitationMessage,
   ): Promise<ResendInvitationResult> {
     const { email, invitationId, sentAt } = message;
-    const delivery = await this.options.notifications
+    const delivery = await this.options.accountInvitationNotificationsPort
       .sendInvitation(message)
       .catch(() => "failed" as const);
 
     if (delivery === "sent") {
-      await this.options.invitations.recordEmailSent({
+      await this.options.accountInvitationsPort.recordEmailSent({
         invitationId,
         at: sentAt,
       });
-      this.options.incidents.invitationResent({ invitationId });
+      this.options.accountInvitationIncidentsPort.invitationResent({
+        invitationId,
+      });
 
       return { status: "sent", email };
     }
 
-    await this.options.invitations.recordEmailDeliveryFailed({
+    await this.options.accountInvitationsPort.recordEmailDeliveryFailed({
       invitationId,
       at: sentAt,
     });
-    this.options.incidents.invitationResendFailed({
+    this.options.accountInvitationIncidentsPort.invitationResendFailed({
       invitationId,
       step: "email",
     });

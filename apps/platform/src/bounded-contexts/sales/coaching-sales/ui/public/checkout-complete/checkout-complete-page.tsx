@@ -32,7 +32,7 @@ type PaidConfirmation = Extract<CheckoutConfirmation, { state: "paid" }>;
 export async function loader(args: LoaderFunctionArgs) {
   return args.context
     .get(coachingSalesContext)
-    .checkouts.loadConfirmation(args);
+    .checkoutsController.loadConfirmation(args);
 }
 
 export function headers({ loaderHeaders }: HeadersArgs) {

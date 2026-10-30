@@ -126,12 +126,12 @@ function createChange(options?: {
     seriesStopped: vi.fn(),
   } satisfies CheckInNotificationsPort;
   const ports = {
-    clients,
-    clock: { now: () => TUESDAY_NOON },
-    coachTime,
-    identities,
-    ids: { generate: () => `week-${(generated += 1)}` },
-    incidents: {
+    clientReachPort: clients,
+    clockPort: { now: () => TUESDAY_NOON },
+    coachTimePort: coachTime,
+    clientIdentitiesPort: identities,
+    checkInIdsPort: { generate: () => `week-${(generated += 1)}` },
+    checkInIncidentsPort: {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
@@ -142,30 +142,33 @@ function createChange(options?: {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     },
-    inbox: {
+    checkInInboxPort: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
       scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
-    notifications,
-    openSlots: openSlotsOf(),
-    series,
+    checkInNotificationsPort: notifications,
+    openSlotsPort: openSlotsOf(),
+    checkInSeriesRecordsPort: series,
   };
 
-  return { change: new ChangeCheckInSeriesUseCase(ports), ports };
+  return {
+    changeCheckInSeriesUseCase: new ChangeCheckInSeriesUseCase(ports),
+    ports,
+  };
 }
 
 describe("ChangeCheckInSeriesUseCase", () => {
   it("replaces every week to come with the new day and hour from the next matching day, in one write against the series it read", async () => {
     // arrange
-    const { change, ports } = createChange();
+    const { changeCheckInSeriesUseCase, ports } = createChange();
 
     // act
-    const result = await change.execute(FRIDAY_MORNINGS);
+    const result = await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
     // assert
-    const [command] = ports.series.change.mock.calls[0];
+    const [command] = ports.checkInSeriesRecordsPort.change.mock.calls[0];
     expect(command).toMatchObject({
       expected: { changedAt: null, weekday: "wednesday", hour: 18 },
       startsFrom: TUESDAY_NOON,
@@ -178,10 +181,10 @@ describe("ChangeCheckInSeriesUseCase", () => {
       changedAt: TUESDAY_NOON,
     };
     expect(command.series.toSnapshot()).toEqual(changed);
-    expect(ports.coachTime.release).toHaveBeenCalledWith(
+    expect(ports.coachTimePort.release).toHaveBeenCalledWith(
       "reservation-wednesday",
     );
-    const [weeks] = ports.series.recordWeeks.mock.calls[0];
+    const [weeks] = ports.checkInSeriesRecordsPort.recordWeeks.mock.calls[0];
     expect(
       weeks.map(({ checkIn, reservationId }) => ({
         reservationId,
@@ -204,13 +207,13 @@ describe("ChangeCheckInSeriesUseCase", () => {
 
   it("emails the client the changed series and its first week", async () => {
     // arrange
-    const { change, ports } = createChange();
+    const { changeCheckInSeriesUseCase, ports } = createChange();
 
     // act
-    await change.execute(FRIDAY_MORNINGS);
+    await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
     // assert
-    expect(ports.notifications.seriesChanged).toHaveBeenCalledWith({
+    expect(ports.checkInNotificationsPort.seriesChanged).toHaveBeenCalledWith({
       series: expect.objectContaining({ weekday: "friday", hour: 10 }),
       weekStartsAt: new Date(FRIDAY_STARTS[0]),
       clientTimeZone: "Europe/London",
@@ -221,25 +224,28 @@ describe("ChangeCheckInSeriesUseCase", () => {
 
   it("writes the changed series to her inbox, opening her earliest new week", async () => {
     // arrange
-    const { change, ports } = createChange();
+    const { changeCheckInSeriesUseCase, ports } = createChange();
 
     // act
-    await change.execute(FRIDAY_MORNINGS);
+    await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
     // assert
-    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesChanged", {
-      series: expect.objectContaining({ weekday: "friday", hour: 10 }),
-      weekStartsAt: new Date(FRIDAY_STARTS[0]),
-      clientTimeZone: "Europe/London",
-      client: ANA,
-      recipient: "client",
-      firstWeekId: "week-1",
-    });
+    expect(ports.checkInInboxPort.seriesEvent).toHaveBeenCalledWith(
+      "seriesChanged",
+      {
+        series: expect.objectContaining({ weekday: "friday", hour: 10 }),
+        weekStartsAt: new Date(FRIDAY_STARTS[0]),
+        clientTimeZone: "Europe/London",
+        client: ANA,
+        recipient: "client",
+        firstWeekId: "week-1",
+      },
+    );
   });
 
   it("writes the changed series to her inbox without a week to open when no new week was recorded", async () => {
     // arrange
-    const { change, ports } = createChange({
+    const { changeCheckInSeriesUseCase, ports } = createChange({
       found: CheckInSeries.reconstitute({
         ...SERIES,
         coversUntil: new Date("2026-10-14T00:00:00.000Z"),
@@ -247,10 +253,10 @@ describe("ChangeCheckInSeriesUseCase", () => {
     });
 
     // act
-    await change.execute(FRIDAY_MORNINGS);
+    await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
     // assert
-    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith(
+    expect(ports.checkInInboxPort.seriesEvent).toHaveBeenCalledWith(
       "seriesChanged",
       expect.objectContaining({ firstWeekId: null }),
     );
@@ -258,17 +264,17 @@ describe("ChangeCheckInSeriesUseCase", () => {
 
   it("answers changed_meanwhile without emailing when the series changed since it was read", async () => {
     // arrange
-    const { change, ports } = createChange({
+    const { changeCheckInSeriesUseCase, ports } = createChange({
       recorded: { status: "changed_meanwhile" },
     });
 
     // act
-    const result = await change.execute(FRIDAY_MORNINGS);
+    const result = await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
     // assert
     expect(result).toEqual({ status: "changed_meanwhile" });
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
-    expect(ports.notifications.seriesChanged).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
+    expect(ports.checkInNotificationsPort.seriesChanged).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -285,14 +291,14 @@ describe("ChangeCheckInSeriesUseCase", () => {
     "refuses $situation as $status without writing",
     async ({ found, status }) => {
       // arrange
-      const { change, ports } = createChange({ found });
+      const { changeCheckInSeriesUseCase, ports } = createChange({ found });
 
       // act
-      const result = await change.execute(FRIDAY_MORNINGS);
+      const result = await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
       // assert
       expect(result).toEqual({ status });
-      expect(ports.series.change).not.toHaveBeenCalled();
+      expect(ports.checkInSeriesRecordsPort.change).not.toHaveBeenCalled();
     },
   );
 
@@ -313,26 +319,29 @@ describe("ChangeCheckInSeriesUseCase", () => {
     "refuses changing the series of a client $situation",
     async ({ client }) => {
       // arrange
-      const { change, ports } = createChange({ client });
+      const { changeCheckInSeriesUseCase, ports } = createChange({ client });
 
       // act
-      const result = await change.execute(FRIDAY_MORNINGS);
+      const result = await changeCheckInSeriesUseCase.execute(FRIDAY_MORNINGS);
 
       // assert
       expect(result).toEqual({ status: "client_cannot_answer" });
-      expect(ports.series.change).not.toHaveBeenCalled();
+      expect(ports.checkInSeriesRecordsPort.change).not.toHaveBeenCalled();
     },
   );
 
   it("refuses a day or hour outside the coach's availability", async () => {
     // arrange
-    const { change, ports } = createChange();
+    const { changeCheckInSeriesUseCase, ports } = createChange();
 
     // act
-    const result = await change.execute({ ...FRIDAY_MORNINGS, hour: 8 });
+    const result = await changeCheckInSeriesUseCase.execute({
+      ...FRIDAY_MORNINGS,
+      hour: 8,
+    });
 
     // assert
     expect(result).toEqual({ status: "outside_availability" });
-    expect(ports.series.change).not.toHaveBeenCalled();
+    expect(ports.checkInSeriesRecordsPort.change).not.toHaveBeenCalled();
   });
 });

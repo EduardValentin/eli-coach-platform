@@ -14,12 +14,12 @@ describe("createAssessmentCallsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new AssessmentCallsIncidentsAdapter(
+    const assessmentCallsIncidentsAdapter = new AssessmentCallsIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.bookingModeReadFailed();
+    assessmentCallsIncidentsAdapter.bookingModeReadFailed();
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -35,12 +35,12 @@ describe("createAssessmentCallsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new AssessmentCallsIncidentsAdapter(
+    const assessmentCallsIncidentsAdapter = new AssessmentCallsIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.notificationFailed({ recipient: "coach" });
+    assessmentCallsIncidentsAdapter.notificationFailed({ recipient: "coach" });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -57,12 +57,12 @@ describe("createAssessmentCallsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new AssessmentCallsIncidentsAdapter(
+    const assessmentCallsIncidentsAdapter = new AssessmentCallsIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.slotsReadFailed();
+    assessmentCallsIncidentsAdapter.slotsReadFailed();
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(

@@ -18,9 +18,9 @@ import { clientAvatarPath } from "~/bounded-contexts/clients/client-profile/publ
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OwnClientAvatarControllerOptions = {
-  readOwnClientAvatar: ReadOwnClientAvatarUseCase;
-  removeOwnClientAvatar: RemoveOwnClientAvatarUseCase;
-  uploadOwnClientAvatar: UploadOwnClientAvatarUseCase;
+  readOwnClientAvatarUseCase: ReadOwnClientAvatarUseCase;
+  removeOwnClientAvatarUseCase: RemoveOwnClientAvatarUseCase;
+  uploadOwnClientAvatarUseCase: UploadOwnClientAvatarUseCase;
 };
 
 export class OwnClientAvatarController {
@@ -37,7 +37,7 @@ export class OwnClientAvatarController {
     }
 
     return avatarWrittenResponse(
-      await this.options.uploadOwnClientAvatar.execute({
+      await this.options.uploadOwnClientAvatarUseCase.execute({
         authSubjectId: client.authSubjectId,
         avatar: part.avatar,
       }),
@@ -50,7 +50,9 @@ export class OwnClientAvatarController {
       .requireAccount({ role: "CLIENT" });
 
     return avatarWrittenResponse(
-      await this.options.removeOwnClientAvatar.execute(client.authSubjectId),
+      await this.options.removeOwnClientAvatarUseCase.execute(
+        client.authSubjectId,
+      ),
     );
   }
 
@@ -58,7 +60,7 @@ export class OwnClientAvatarController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const avatar = await this.options.readOwnClientAvatar.execute(
+    const avatar = await this.options.readOwnClientAvatarUseCase.execute(
       client.authSubjectId,
     );
 

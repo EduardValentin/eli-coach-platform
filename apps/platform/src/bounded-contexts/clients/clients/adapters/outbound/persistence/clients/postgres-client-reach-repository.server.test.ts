@@ -28,7 +28,7 @@ const CLIENT_ROW = {
 
 function reachAnswering(rows: readonly Record<string, unknown>[]) {
   return new PostgresClientReachRepository({
-    clock: { now: () => NOW },
+    clockPort: { now: () => NOW },
     database: createDatabaseAnswering(rows),
   });
 }
@@ -36,10 +36,11 @@ function reachAnswering(rows: readonly Record<string, unknown>[]) {
 describe("PostgresClientReach#findByAuthSubjectId", () => {
   it("reads the client bound to the subject as reachable in her booking time zone, with her program start and paid-through date", async () => {
     // arrange
-    const reach = reachAnswering([CLIENT_ROW]);
+    const postgresClientReachRepository = reachAnswering([CLIENT_ROW]);
 
     // act
-    const reading = await reach.findByAuthSubjectId("user_ana");
+    const reading =
+      await postgresClientReachRepository.findByAuthSubjectId("user_ana");
 
     // assert
     expect(reading).toEqual({
@@ -54,10 +55,11 @@ describe("PostgresClientReach#findByAuthSubjectId", () => {
 
   it("answers null for a subject no client is bound to", async () => {
     // arrange
-    const reach = reachAnswering([]);
+    const postgresClientReachRepository = reachAnswering([]);
 
     // act
-    const reading = await reach.findByAuthSubjectId("user_unknown");
+    const reading =
+      await postgresClientReachRepository.findByAuthSubjectId("user_unknown");
 
     // assert
     expect(reading).toBeNull();
@@ -86,10 +88,12 @@ describe("PostgresClientReach#findById", () => {
     "reads a client %s through the standing on her row",
     async (_label, overrides, portal) => {
       // arrange
-      const reach = reachAnswering([{ ...CLIENT_ROW, ...overrides }]);
+      const postgresClientReachRepository = reachAnswering([
+        { ...CLIENT_ROW, ...overrides },
+      ]);
 
       // act
-      const reading = await reach.findById(CLIENT_ID);
+      const reading = await postgresClientReachRepository.findById(CLIENT_ID);
 
       // assert
       expect(reading?.portal).toBe(portal);
@@ -98,7 +102,7 @@ describe("PostgresClientReach#findById", () => {
 
   it("carries the end of a cancelled coaching", async () => {
     // arrange
-    const reach = reachAnswering([
+    const postgresClientReachRepository = reachAnswering([
       {
         ...CLIENT_ROW,
         standing: {
@@ -110,7 +114,7 @@ describe("PostgresClientReach#findById", () => {
     ]);
 
     // act
-    const reading = await reach.findById(CLIENT_ID);
+    const reading = await postgresClientReachRepository.findById(CLIENT_ID);
 
     // assert
     expect(reading?.coachingEndsAt).toEqual(ACCESS_ENDS_AT);
@@ -119,10 +123,10 @@ describe("PostgresClientReach#findById", () => {
 
   it("answers null for an unknown client", async () => {
     // arrange
-    const reach = reachAnswering([]);
+    const postgresClientReachRepository = reachAnswering([]);
 
     // act
-    const reading = await reach.findById(CLIENT_ID);
+    const reading = await postgresClientReachRepository.findById(CLIENT_ID);
 
     // assert
     expect(reading).toBeNull();

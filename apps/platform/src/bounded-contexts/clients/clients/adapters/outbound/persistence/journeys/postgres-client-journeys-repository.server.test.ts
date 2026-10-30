@@ -30,23 +30,27 @@ const REQUESTED_STAMPS = {
 describe("PostgresClientJourneys#findByAuthSubjectId", () => {
   it("reads the journey of the client bound to the subject", async () => {
     // arrange
-    const journeys = new PostgresClientJourneysRepository(
-      createDatabaseAnswering([
-        {
-          clientId: CLIENT_ID,
-          firstName: "Ana",
-          gender: "male",
-          lastName: "Popescu",
-          welcomeSeenAt: WELCOME_SEEN_AT,
-          onboardingSubmittedAt: null,
-          ...NO_REVIEW_STAMPS,
-          standing: NOT_STARTED,
-        },
-      ]),
-    );
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(
+        createDatabaseAnswering([
+          {
+            clientId: CLIENT_ID,
+            firstName: "Ana",
+            gender: "male",
+            lastName: "Popescu",
+            welcomeSeenAt: WELCOME_SEEN_AT,
+            onboardingSubmittedAt: null,
+            ...NO_REVIEW_STAMPS,
+            standing: NOT_STARTED,
+          },
+        ]),
+      );
 
     // act
-    const journey = await journeys.findByAuthSubjectId("user_invited");
+    const journey =
+      await postgresClientJourneysRepository.findByAuthSubjectId(
+        "user_invited",
+      );
 
     // assert
     expect(journey?.clientId).toBe(CLIENT_ID);
@@ -58,23 +62,27 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
 
   it("reads when the client sent her onboarding", async () => {
     // arrange
-    const journeys = new PostgresClientJourneysRepository(
-      createDatabaseAnswering([
-        {
-          clientId: CLIENT_ID,
-          firstName: "Ana",
-          gender: "female",
-          lastName: "Popescu",
-          welcomeSeenAt: WELCOME_SEEN_AT,
-          onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
-          ...NO_REVIEW_STAMPS,
-          standing: NOT_STARTED,
-        },
-      ]),
-    );
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(
+        createDatabaseAnswering([
+          {
+            clientId: CLIENT_ID,
+            firstName: "Ana",
+            gender: "female",
+            lastName: "Popescu",
+            welcomeSeenAt: WELCOME_SEEN_AT,
+            onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
+            ...NO_REVIEW_STAMPS,
+            standing: NOT_STARTED,
+          },
+        ]),
+      );
 
     // act
-    const journey = await journeys.findByAuthSubjectId("user_invited");
+    const journey =
+      await postgresClientJourneysRepository.findByAuthSubjectId(
+        "user_invited",
+      );
 
     // assert
     expect(journey?.onboardingSubmittedAt).toEqual(ONBOARDING_SUBMITTED_AT);
@@ -83,23 +91,27 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
 
   it("reads the review stamps the coach's review projected", async () => {
     // arrange
-    const journeys = new PostgresClientJourneysRepository(
-      createDatabaseAnswering([
-        {
-          clientId: CLIENT_ID,
-          firstName: "Ana",
-          gender: "female",
-          lastName: "Popescu",
-          welcomeSeenAt: WELCOME_SEEN_AT,
-          onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
-          ...REQUESTED_STAMPS,
-          standing: NOT_STARTED,
-        },
-      ]),
-    );
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(
+        createDatabaseAnswering([
+          {
+            clientId: CLIENT_ID,
+            firstName: "Ana",
+            gender: "female",
+            lastName: "Popescu",
+            welcomeSeenAt: WELCOME_SEEN_AT,
+            onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
+            ...REQUESTED_STAMPS,
+            standing: NOT_STARTED,
+          },
+        ]),
+      );
 
     // act
-    const journey = await journeys.findByAuthSubjectId("user_invited");
+    const journey =
+      await postgresClientJourneysRepository.findByAuthSubjectId(
+        "user_invited",
+      );
 
     // assert
     expect(journey?.toSnapshot()).toMatchObject(REQUESTED_STAMPS);
@@ -115,23 +127,27 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
       refundDue: false,
       bundleMonths: 3,
     };
-    const journeys = new PostgresClientJourneysRepository(
-      createDatabaseAnswering([
-        {
-          clientId: CLIENT_ID,
-          firstName: "Ana",
-          gender: "female",
-          lastName: "Popescu",
-          welcomeSeenAt: WELCOME_SEEN_AT,
-          onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
-          ...NO_REVIEW_STAMPS,
-          standing,
-        },
-      ]),
-    );
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(
+        createDatabaseAnswering([
+          {
+            clientId: CLIENT_ID,
+            firstName: "Ana",
+            gender: "female",
+            lastName: "Popescu",
+            welcomeSeenAt: WELCOME_SEEN_AT,
+            onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
+            ...NO_REVIEW_STAMPS,
+            standing,
+          },
+        ]),
+      );
 
     // act
-    const journey = await journeys.findByAuthSubjectId("user_invited");
+    const journey =
+      await postgresClientJourneysRepository.findByAuthSubjectId(
+        "user_invited",
+      );
 
     // assert
     expect(journey?.standing.toSnapshot()).toEqual(standing);
@@ -139,12 +155,14 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
 
   it("answers null for a subject no client is bound to", async () => {
     // arrange
-    const journeys = new PostgresClientJourneysRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(createDatabaseAnswering([]));
 
     // act
-    const journey = await journeys.findByAuthSubjectId("user_unknown");
+    const journey =
+      await postgresClientJourneysRepository.findByAuthSubjectId(
+        "user_unknown",
+      );
 
     // assert
     expect(journey).toBeNull();
@@ -155,10 +173,11 @@ describe("PostgresClientJourneys#recordWelcomeSeen", () => {
   it("records when the client saw the welcome screen", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneysRepository(database.client);
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(database.client);
 
     // act
-    await journeys.recordWelcomeSeen({
+    await postgresClientJourneysRepository.recordWelcomeSeen({
       clientId: CLIENT_ID,
       at: WELCOME_SEEN_AT,
     });
@@ -172,10 +191,11 @@ describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
   it("records when the client sent her onboarding", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneysRepository(database.client);
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(database.client);
 
     // act
-    await journeys.recordOnboardingSubmitted({
+    await postgresClientJourneysRepository.recordOnboardingSubmitted({
       clientId: CLIENT_ID,
       at: ONBOARDING_SUBMITTED_AT,
     });
@@ -191,10 +211,11 @@ describe("PostgresClientJourneys#recordReviewStamp", () => {
   it("writes the full set of review stamps on the client's row", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneysRepository(database.client);
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(database.client);
 
     // act
-    await journeys.recordReviewStamp({
+    await postgresClientJourneysRepository.recordReviewStamp({
       clientId: CLIENT_ID,
       stamps: REQUESTED_STAMPS,
     });
@@ -209,12 +230,13 @@ describe("PostgresClientJourneys#recordReviewStamp", () => {
   it("writes the same row when the same stamps are written twice", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneysRepository(database.client);
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(database.client);
     const input = { clientId: CLIENT_ID, stamps: REQUESTED_STAMPS };
 
     // act
-    await journeys.recordReviewStamp(input);
-    await journeys.recordReviewStamp(input);
+    await postgresClientJourneysRepository.recordReviewStamp(input);
+    await postgresClientJourneysRepository.recordReviewStamp(input);
 
     // assert
     expect(database.updates[1]).toEqual(database.updates[0]);
@@ -224,10 +246,11 @@ describe("PostgresClientJourneys#recordReviewStamp", () => {
   it("clears a stamp the review no longer carries", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneysRepository(database.client);
+    const postgresClientJourneysRepository =
+      new PostgresClientJourneysRepository(database.client);
 
     // act
-    await journeys.recordReviewStamp({
+    await postgresClientJourneysRepository.recordReviewStamp({
       clientId: CLIENT_ID,
       stamps: NO_REVIEW_STAMPS,
     });

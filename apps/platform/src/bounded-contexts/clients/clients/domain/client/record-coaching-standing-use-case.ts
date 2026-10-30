@@ -12,12 +12,12 @@ type RecordCoachingStandingCommand = {
 export class RecordCoachingStandingUseCase {
   constructor(
     private readonly options: {
-      clients: Pick<AdmittedClientsPort, "recordStanding">;
+      admittedClientsPort: Pick<AdmittedClientsPort, "recordStanding">;
     },
   ) {}
 
   async execute(command: RecordCoachingStandingCommand): Promise<void> {
-    await this.options.clients.recordStanding({
+    await this.options.admittedClientsPort.recordStanding({
       clientId: command.clientId,
       standing: CoachingStanding.of(command.standing),
     });

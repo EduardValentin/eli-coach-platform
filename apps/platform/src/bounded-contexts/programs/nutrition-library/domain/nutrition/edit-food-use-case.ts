@@ -20,10 +20,13 @@ export type EditFoodResult =
   | { status: "failed" };
 
 type EditFoodUseCaseOptions = {
-  library: Pick<FoodLibraryPort, "find" | "list" | "replace">;
-  tags: Pick<NutritionTagsPort, "list">;
-  clock: ClockPort;
-  incidents: Pick<NutritionLibraryIncidentsPort, "foodEditFailed">;
+  foodLibraryPort: Pick<FoodLibraryPort, "find" | "list" | "replace">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
+  clockPort: ClockPort;
+  nutritionLibraryIncidentsPort: Pick<
+    NutritionLibraryIncidentsPort,
+    "foodEditFailed"
+  >;
 };
 
 export class EditFoodUseCase {
@@ -33,7 +36,7 @@ export class EditFoodUseCase {
     try {
       return await this.edit(command);
     } catch (error) {
-      this.options.incidents.foodEditFailed({
+      this.options.nutritionLibraryIncidentsPort.foodEditFailed({
         foodId: command.foodId,
         error,
       });
@@ -47,11 +50,11 @@ export class EditFoodUseCase {
     foodId,
     draft: input,
   }: EditFoodCommand): Promise<EditFoodResult> {
-    const { library, tags, clock } = this.options;
+    const { foodLibraryPort, nutritionTagsPort, clockPort } = this.options;
     const [food, foods, vocabulary] = await Promise.all([
-      library.find({ ownerAccountId, foodId }),
-      library.list(ownerAccountId),
-      tags.list(),
+      foodLibraryPort.find({ ownerAccountId, foodId }),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
 
     if (!food) return { status: "not-found" };
@@ -65,9 +68,9 @@ export class EditFoodUseCase {
 
     if (draft.status === "invalid") return draft;
 
-    const edited = food.revised(draft.draft, clock.now());
+    const edited = food.revised(draft.draft, clockPort.now());
 
-    if ((await library.replace(edited)) === "name-taken") {
+    if ((await foodLibraryPort.replace(edited)) === "name-taken") {
       return { status: "invalid", problems: { name: "taken" } };
     }
 

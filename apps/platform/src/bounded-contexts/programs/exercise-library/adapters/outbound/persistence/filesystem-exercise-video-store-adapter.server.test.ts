@@ -87,14 +87,15 @@ function everyOpenedFileIsClosed(): boolean {
 describe("FilesystemExerciseVideoStore", () => {
   let workspace: string;
   let root: string;
-  let store: FilesystemExerciseVideoStoreAdapter;
+  let filesystemExerciseVideoStoreAdapter: FilesystemExerciseVideoStoreAdapter;
 
   beforeEach(async () => {
     openedFiles.length = 0;
     workspace = await mkdtemp(join(tmpdir(), "exercise-video-store-"));
     root = join(workspace, "videos-root");
     await mkdir(root);
-    store = new FilesystemExerciseVideoStoreAdapter(root);
+    filesystemExerciseVideoStoreAdapter =
+      new FilesystemExerciseVideoStoreAdapter(root);
   });
 
   afterEach(async () => {
@@ -102,9 +103,12 @@ describe("FilesystemExerciseVideoStore", () => {
   });
 
   async function keptVideo(bytes: Buffer): Promise<string> {
-    const staged = await store.receive(sourceOf(bytes).bytes, bytes.length);
+    const staged = await filesystemExerciseVideoStoreAdapter.receive(
+      sourceOf(bytes).bytes,
+      bytes.length,
+    );
     const videoId = randomUUID();
-    await store.keep(staged.stagingId, videoId);
+    await filesystemExerciseVideoStoreAdapter.keep(staged.stagingId, videoId);
 
     return videoId;
   }
@@ -115,7 +119,10 @@ describe("FilesystemExerciseVideoStore", () => {
       const source = sourceOf(...chunksOf(VIDEO, 1000));
 
       // act
-      const staged = await store.receive(source.bytes, VIDEO.length + 1);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        source.bytes,
+        VIDEO.length + 1,
+      );
 
       // assert
       expect(staged.sizeBytes).toBe(VIDEO.length);
@@ -133,7 +140,10 @@ describe("FilesystemExerciseVideoStore", () => {
       const short = randomBytes(100);
 
       // act
-      const staged = await store.receive(sourceOf(short).bytes, 1000);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(short).bytes,
+        1000,
+      );
 
       // assert
       expect(staged.sizeBytes).toBe(100);
@@ -146,7 +156,10 @@ describe("FilesystemExerciseVideoStore", () => {
       const countUpTo = 2500;
 
       // act
-      const staged = await store.receive(source.bytes, countUpTo);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        source.bytes,
+        countUpTo,
+      );
 
       // assert
       expect(staged.sizeBytes).toBe(countUpTo);
@@ -159,7 +172,10 @@ describe("FilesystemExerciseVideoStore", () => {
     it("leaves no incoming file and rethrows when the source fails midway", async () => {
       // arrange
       // act
-      const receiving = store.receive(failingSource(), 10_000);
+      const receiving = filesystemExerciseVideoStoreAdapter.receive(
+        failingSource(),
+        10_000,
+      );
 
       // assert
       await expect(receiving).rejects.toThrow("The upload was cut off.");
@@ -174,7 +190,10 @@ describe("FilesystemExerciseVideoStore", () => {
       await symlink(outside, join(root, ".incoming"));
 
       // act
-      const receiving = store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
+      const receiving = filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(VIDEO).bytes,
+        VIDEO.length,
+      );
 
       // assert
       await expect(receiving).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -185,10 +204,16 @@ describe("FilesystemExerciseVideoStore", () => {
   describe("keeping and discarding", () => {
     it("moves a staged video under the file id it is given and forgets the staging id", async () => {
       // arrange
-      const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(VIDEO).bytes,
+        VIDEO.length,
+      );
 
       // act
-      await store.keep(staged.stagingId, VIDEO_ID);
+      await filesystemExerciseVideoStoreAdapter.keep(
+        staged.stagingId,
+        VIDEO_ID,
+      );
 
       // assert
       expect(await readdir(join(root, "videos"))).toEqual([VIDEO_ID]);
@@ -200,12 +225,21 @@ describe("FilesystemExerciseVideoStore", () => {
     it("refuses to keep a staged video under an id already stored and leaves the stored file and the staged one in place", async () => {
       // arrange
       const stored = randomBytes(1024);
-      const first = await store.receive(sourceOf(stored).bytes, stored.length);
-      await store.keep(first.stagingId, VIDEO_ID);
-      const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
+      const first = await filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(stored).bytes,
+        stored.length,
+      );
+      await filesystemExerciseVideoStoreAdapter.keep(first.stagingId, VIDEO_ID);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(VIDEO).bytes,
+        VIDEO.length,
+      );
 
       // act
-      const keeping = store.keep(staged.stagingId, VIDEO_ID);
+      const keeping = filesystemExerciseVideoStoreAdapter.keep(
+        staged.stagingId,
+        VIDEO_ID,
+      );
 
       // assert
       await expect(keeping).rejects.toMatchObject({ code: "EEXIST" });
@@ -213,16 +247,19 @@ describe("FilesystemExerciseVideoStore", () => {
       expect(await readdir(join(root, ".incoming"))).toEqual([
         staged.stagingId,
       ]);
-      await store.discard(staged.stagingId);
+      await filesystemExerciseVideoStoreAdapter.discard(staged.stagingId);
       expect(await readdir(join(root, ".incoming"))).toEqual([]);
     });
 
     it("discards a staged video", async () => {
       // arrange
-      const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(VIDEO).bytes,
+        VIDEO.length,
+      );
 
       // act
-      await store.discard(staged.stagingId);
+      await filesystemExerciseVideoStoreAdapter.discard(staged.stagingId);
 
       // assert
       expect(await readdir(join(root, ".incoming"))).toEqual([]);
@@ -234,22 +271,24 @@ describe("FilesystemExerciseVideoStore", () => {
       const otherId = await keptVideo(VIDEO);
 
       // act
-      await store.remove(videoId);
+      await filesystemExerciseVideoStoreAdapter.remove(videoId);
 
       // assert
       expect(await readdir(join(root, "videos"))).toEqual([otherId]);
-      expect(await store.open(videoId, null)).toEqual({ status: "missing" });
+      expect(
+        await filesystemExerciseVideoStoreAdapter.open(videoId, null),
+      ).toEqual({ status: "missing" });
     });
 
     it("discards and removes what is not there without failing", async () => {
       // arrange
       const videoId = await keptVideo(VIDEO);
-      await store.remove(videoId);
+      await filesystemExerciseVideoStoreAdapter.remove(videoId);
 
       // act
       const outcomes = await Promise.allSettled([
-        store.remove(videoId),
-        store.discard("never-staged"),
+        filesystemExerciseVideoStoreAdapter.remove(videoId),
+        filesystemExerciseVideoStoreAdapter.discard("never-staged"),
         new FilesystemExerciseVideoStoreAdapter(
           join(workspace, "empty"),
         ).remove("never-kept"),
@@ -305,7 +344,10 @@ describe("FilesystemExerciseVideoStore", () => {
             : VIDEO.subarray(served.start, served.end + 1);
 
         // act
-        const opening = await store.open(videoId, requested);
+        const opening = await filesystemExerciseVideoStoreAdapter.open(
+          videoId,
+          requested,
+        );
 
         // assert
         expect(opening).toMatchObject({
@@ -330,7 +372,10 @@ describe("FilesystemExerciseVideoStore", () => {
       const videoId = await keptVideo(VIDEO);
 
       // act
-      const opening = await store.open(videoId, requested);
+      const opening = await filesystemExerciseVideoStoreAdapter.open(
+        videoId,
+        requested,
+      );
 
       // assert
       expect(opening).toEqual({
@@ -349,7 +394,10 @@ describe("FilesystemExerciseVideoStore", () => {
         const videoId = await keptVideo(Buffer.alloc(0));
 
         // act
-        const opening = await store.open(videoId, requested);
+        const opening = await filesystemExerciseVideoStoreAdapter.open(
+          videoId,
+          requested,
+        );
 
         // assert
         expect(opening).toEqual({ status: "unsatisfiable", sizeBytes: 0 });
@@ -361,7 +409,10 @@ describe("FilesystemExerciseVideoStore", () => {
       await keptVideo(VIDEO);
 
       // act
-      const opening = await store.open("never-kept", null);
+      const opening = await filesystemExerciseVideoStoreAdapter.open(
+        "never-kept",
+        null,
+      );
 
       // assert
       expect(opening).toEqual({ status: "missing" });
@@ -373,7 +424,10 @@ describe("FilesystemExerciseVideoStore", () => {
       openedFiles.length = 0;
 
       // act
-      const opening = await store.open(videoId, null);
+      const opening = await filesystemExerciseVideoStoreAdapter.open(
+        videoId,
+        null,
+      );
       const openedBeforePulling = openedFiles.length;
       const firstChunk =
         opening.status === "opened" &&
@@ -388,7 +442,10 @@ describe("FilesystemExerciseVideoStore", () => {
     it("releases the video's file when the reader stops after the first chunk", async () => {
       // arrange
       const videoId = await keptVideo(VIDEO);
-      const opening = await store.open(videoId, null);
+      const opening = await filesystemExerciseVideoStoreAdapter.open(
+        videoId,
+        null,
+      );
 
       // act
       if (opening.status === "opened") {
@@ -406,7 +463,10 @@ describe("FilesystemExerciseVideoStore", () => {
       // arrange
       const videoId = await keptVideo(VIDEO);
       openedFiles.length = 0;
-      const opening = await store.open(videoId, null);
+      const opening = await filesystemExerciseVideoStoreAdapter.open(
+        videoId,
+        null,
+      );
 
       // act
       if (opening.status === "opened") {
@@ -424,11 +484,11 @@ describe("FilesystemExerciseVideoStore", () => {
     async (id) => {
       // arrange
       const calls = [
-        () => store.keep(id, VIDEO_ID),
-        () => store.keep(VIDEO_ID, id),
-        () => store.discard(id),
-        () => store.remove(id),
-        () => store.open(id, null),
+        () => filesystemExerciseVideoStoreAdapter.keep(id, VIDEO_ID),
+        () => filesystemExerciseVideoStoreAdapter.keep(VIDEO_ID, id),
+        () => filesystemExerciseVideoStoreAdapter.discard(id),
+        () => filesystemExerciseVideoStoreAdapter.remove(id),
+        () => filesystemExerciseVideoStoreAdapter.open(id, null),
       ];
 
       // act
@@ -458,10 +518,16 @@ describe("FilesystemExerciseVideoStore", () => {
 
     it("refuses to keep a staged video through it", async () => {
       // arrange
-      const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
+      const staged = await filesystemExerciseVideoStoreAdapter.receive(
+        sourceOf(VIDEO).bytes,
+        VIDEO.length,
+      );
 
       // act
-      const keeping = store.keep(staged.stagingId, VIDEO_ID);
+      const keeping = filesystemExerciseVideoStoreAdapter.keep(
+        staged.stagingId,
+        VIDEO_ID,
+      );
 
       // assert
       await expect(keeping).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -471,7 +537,7 @@ describe("FilesystemExerciseVideoStore", () => {
     it("refuses to open a video through it", async () => {
       // arrange
       // act
-      const opening = store.open("video-1", null);
+      const opening = filesystemExerciseVideoStoreAdapter.open("video-1", null);
 
       // assert
       await expect(opening).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -481,7 +547,7 @@ describe("FilesystemExerciseVideoStore", () => {
     it("refuses to remove a video through it and leaves the linked file", async () => {
       // arrange
       // act
-      const removing = store.remove("video-1");
+      const removing = filesystemExerciseVideoStoreAdapter.remove("video-1");
 
       // assert
       await expect(removing).rejects.toThrow(LOCATION_LEAVES_ROOT);
@@ -497,7 +563,7 @@ describe("FilesystemExerciseVideoStore", () => {
     await symlink(outsideFile, join(root, "videos", "video-1"));
 
     // act
-    const opening = store.open("video-1", null);
+    const opening = filesystemExerciseVideoStoreAdapter.open("video-1", null);
 
     // assert
     await expect(opening).rejects.toThrow(LOCATION_LEAVES_ROOT);

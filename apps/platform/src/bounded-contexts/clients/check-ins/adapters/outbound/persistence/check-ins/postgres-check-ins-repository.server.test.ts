@@ -50,12 +50,12 @@ const APPROVED_ROW = {
 describe("PostgresCheckIns#find", () => {
   it("maps a stored row into the check-in the domain reads", async () => {
     // arrange
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([PENDING_ROW]),
     );
 
     // act
-    const checkIn = await checkIns.find(PENDING_ROW.id);
+    const checkIn = await postgresCheckInsRepository.find(PENDING_ROW.id);
 
     // assert
     expect(checkIn?.toSnapshot()).toEqual({
@@ -89,12 +89,12 @@ describe("PostgresCheckIns#find", () => {
       moves: 1,
       newTimeNote: "Does Thursday work instead?",
     };
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([movedRow]),
     );
 
     // act
-    const checkIn = await checkIns.find(PENDING_ROW.id);
+    const checkIn = await postgresCheckInsRepository.find(PENDING_ROW.id);
 
     // assert
     expect(checkIn?.toSnapshot()).toMatchObject({
@@ -115,12 +115,12 @@ describe("PostgresCheckIns#find", () => {
       initiatedBy: "coach",
       proposedBy: "coach",
     };
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([weeklyRow]),
     );
 
     // act
-    const checkIn = await checkIns.find(weeklyRow.id);
+    const checkIn = await postgresCheckInsRepository.find(weeklyRow.id);
 
     // assert
     expect(checkIn?.toSnapshot()).toMatchObject({
@@ -132,12 +132,12 @@ describe("PostgresCheckIns#find", () => {
 
   it("finds no check-in for an identifier that matches no row", async () => {
     // arrange
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([]),
     );
 
     // act
-    const checkIn = await checkIns.find(PENDING_ROW.id);
+    const checkIn = await postgresCheckInsRepository.find(PENDING_ROW.id);
 
     // assert
     expect(checkIn).toBeNull();
@@ -147,12 +147,14 @@ describe("PostgresCheckIns#find", () => {
 describe("PostgresCheckIns#listForClient", () => {
   it("maps every stored row of the client into the check-ins the domain reads", async () => {
     // arrange
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([PENDING_ROW, APPROVED_ROW]),
     );
 
     // act
-    const listed = await checkIns.listForClient(PENDING_ROW.clientId);
+    const listed = await postgresCheckInsRepository.listForClient(
+      PENDING_ROW.clientId,
+    );
 
     // assert
     expect(
@@ -181,12 +183,12 @@ describe("PostgresCheckIns#listForClient", () => {
 describe("PostgresCheckIns#listAll", () => {
   it("lists nothing when no check-in is stored", async () => {
     // arrange
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([]),
     );
 
     // act
-    const listed = await checkIns.listAll();
+    const listed = await postgresCheckInsRepository.listAll();
 
     // assert
     expect(listed).toEqual([]);
@@ -194,12 +196,12 @@ describe("PostgresCheckIns#listAll", () => {
 
   it("maps every stored row into the check-ins the domain reads", async () => {
     // arrange
-    const checkIns = new PostgresCheckInsRepository(
+    const postgresCheckInsRepository = new PostgresCheckInsRepository(
       createDatabaseReturning([PENDING_ROW, APPROVED_ROW]),
     );
 
     // act
-    const listed = await checkIns.listAll();
+    const listed = await postgresCheckInsRepository.listAll();
 
     // assert
     expect(listed.map((checkIn) => checkIn.id)).toEqual([

@@ -142,7 +142,9 @@ describe("platform container", () => {
     const context = await salesContextOf(container);
 
     // act
-    const waitlist = await context.get(waitlistContext).waitlist.getWaitlist();
+    const waitlist = await context
+      .get(waitlistContext)
+      .waitlistController.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({
@@ -162,7 +164,7 @@ describe("platform container", () => {
     // act
     const confirmation = context
       .get(coachingSalesContext)
-      .checkouts.loadConfirmation(
+      .checkoutsController.loadConfirmation(
         createRequestArgs({
           request: new Request(
             "https://eli.example/checkout/complete?session=cs_test_1",

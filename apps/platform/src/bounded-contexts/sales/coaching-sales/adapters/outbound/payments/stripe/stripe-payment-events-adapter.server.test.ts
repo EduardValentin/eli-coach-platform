@@ -44,14 +44,17 @@ function sign(payload: string, secret: string) {
 describe("StripePaymentEvents", () => {
   it("verifies a signed completed and paid checkout event as paid when the event was created", async () => {
     // arrange
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: Stripe.webhooks,
       signingSecret,
     });
     const rawBody = JSON.stringify(paidCheckoutEvent());
 
     // act
-    const verdict = await events.verify(rawBody, sign(rawBody, signingSecret));
+    const verdict = await stripePaymentEventsAdapter.verify(
+      rawBody,
+      sign(rawBody, signingSecret),
+    );
 
     // assert
     expect(verdict).toEqual({
@@ -73,7 +76,7 @@ describe("StripePaymentEvents", () => {
 
   it("ignores a signed event of another type", async () => {
     // arrange
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: Stripe.webhooks,
       signingSecret,
     });
@@ -83,7 +86,10 @@ describe("StripePaymentEvents", () => {
     });
 
     // act
-    const verdict = await events.verify(rawBody, sign(rawBody, signingSecret));
+    const verdict = await stripePaymentEventsAdapter.verify(
+      rawBody,
+      sign(rawBody, signingSecret),
+    );
 
     // assert
     expect(verdict).toEqual({ kind: "ignored" });
@@ -91,14 +97,14 @@ describe("StripePaymentEvents", () => {
 
   it("refuses an event signed with another secret", async () => {
     // arrange
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: Stripe.webhooks,
       signingSecret,
     });
     const rawBody = JSON.stringify(paidCheckoutEvent());
 
     // act
-    const verdict = await events.verify(
+    const verdict = await stripePaymentEventsAdapter.verify(
       rawBody,
       sign(rawBody, "whsec_another_account"),
     );
@@ -109,7 +115,7 @@ describe("StripePaymentEvents", () => {
 
   it("refuses a body changed after it was signed", async () => {
     // arrange
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: Stripe.webhooks,
       signingSecret,
     });
@@ -117,7 +123,7 @@ describe("StripePaymentEvents", () => {
     const tamperedBody = JSON.stringify(paidCheckoutEvent({ tier: "reduced" }));
 
     // act
-    const verdict = await events.verify(
+    const verdict = await stripePaymentEventsAdapter.verify(
       tamperedBody,
       sign(signedBody, signingSecret),
     );
@@ -131,14 +137,14 @@ describe("StripePaymentEvents", () => {
     ["a malformed signature", "not-a-stripe-signature"],
   ])("refuses an event with %s", async (_description, signature) => {
     // arrange
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: Stripe.webhooks,
       signingSecret,
     });
     const rawBody = JSON.stringify(paidCheckoutEvent());
 
     // act
-    const verdict = await events.verify(rawBody, signature);
+    const verdict = await stripePaymentEventsAdapter.verify(rawBody, signature);
 
     // assert
     expect(verdict).toEqual({ kind: "invalid" });
@@ -146,14 +152,17 @@ describe("StripePaymentEvents", () => {
 
   it("refuses a signed body that is not JSON", async () => {
     // arrange
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: Stripe.webhooks,
       signingSecret,
     });
     const rawBody = "not json";
 
     // act
-    const verdict = await events.verify(rawBody, sign(rawBody, signingSecret));
+    const verdict = await stripePaymentEventsAdapter.verify(
+      rawBody,
+      sign(rawBody, signingSecret),
+    );
 
     // assert
     expect(verdict).toEqual({ kind: "invalid" });
@@ -162,7 +171,7 @@ describe("StripePaymentEvents", () => {
   it("rethrows a failure that is not a verification refusal", async () => {
     // arrange
     const failure = new Error("crypto provider unavailable");
-    const events = new StripePaymentEventsAdapter({
+    const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({
       webhooks: {
         constructEvent: vi.fn(() => {
           throw failure;
@@ -172,7 +181,7 @@ describe("StripePaymentEvents", () => {
     });
 
     // act
-    const verifying = events.verify("{}", "t=1,v1=abc");
+    const verifying = stripePaymentEventsAdapter.verify("{}", "t=1,v1=abc");
 
     // assert
     await expect(verifying).rejects.toBe(failure);

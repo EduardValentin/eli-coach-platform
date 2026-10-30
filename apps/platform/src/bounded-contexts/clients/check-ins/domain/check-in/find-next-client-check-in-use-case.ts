@@ -7,10 +7,10 @@ import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import type { CheckInsPort } from "./check-ins-port";
 
 type FindNextClientCheckInUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "find" | "listForClient">;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  incidents: CheckInIncidentsPort;
+  checkInsPort: Pick<CheckInsPort, "find" | "listForClient">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
 };
 
 export class FindNextClientCheckInUseCase {
@@ -24,7 +24,7 @@ export class FindNextClientCheckInUseCase {
     try {
       return await this.nextApprovedCheckInOf(authSubjectId);
     } catch (error) {
-      this.options.incidents.nextCheckInLookupFailed({ error });
+      this.options.checkInIncidentsPort.nextCheckInLookupFailed({ error });
 
       return null;
     }
@@ -39,8 +39,8 @@ export class FindNextClientCheckInUseCase {
       return null;
     }
 
-    const checkIns = await this.options.checkIns.listForClient(clientId);
-    const at = this.options.clock.now();
+    const checkIns = await this.options.checkInsPort.listForClient(clientId);
+    const at = this.options.clockPort.now();
     const next = [...checkIns]
       .sort(CheckIn.byStart)
       .find((checkIn) => checkIn.statusAt(at) === "approved");

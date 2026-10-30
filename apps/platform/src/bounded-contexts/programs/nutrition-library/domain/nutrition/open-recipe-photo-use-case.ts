@@ -18,8 +18,8 @@ export type OpenRecipePhotoResult =
   | { status: "not-found" };
 
 type OpenRecipePhotoUseCaseOptions = {
-  recipes: Pick<RecipeLibraryPort, "find">;
-  store: Pick<RecipePhotoStorePort, "open">;
+  recipeLibraryPort: Pick<RecipeLibraryPort, "find">;
+  recipePhotoStorePort: Pick<RecipePhotoStorePort, "open">;
 };
 
 const NOT_FOUND: OpenRecipePhotoResult = { status: "not-found" };
@@ -34,7 +34,7 @@ export class OpenRecipePhotoUseCase {
 
     if (!ownerAccountId) return NOT_FOUND;
 
-    const recipe = await this.options.recipes.find({
+    const recipe = await this.options.recipeLibraryPort.find({
       ownerAccountId,
       recipeId: command.recipeId,
     });
@@ -45,7 +45,7 @@ export class OpenRecipePhotoUseCase {
 
     if (!photo?.isStoredAs(command.photoId)) return NOT_FOUND;
 
-    const opening = await this.options.store.open(photo.photoId);
+    const opening = await this.options.recipePhotoStorePort.open(photo.photoId);
 
     if (opening.status === "missing") return NOT_FOUND;
 

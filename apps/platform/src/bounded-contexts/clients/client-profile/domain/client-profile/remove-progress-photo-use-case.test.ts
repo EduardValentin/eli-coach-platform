@@ -66,12 +66,12 @@ class InMemoryProgressPhotoStoreAdapter implements ProgressPhotoStorePort {
 
 function createPorts(requesterClient: { clientId: string } | null) {
   return {
-    clients: {
+    clientReachPort: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(requesterClient),
     } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
-    photos: new InMemoryProgressPhotosAdapter(),
-    store: new InMemoryProgressPhotoStoreAdapter(),
-    incidents: {
+    progressPhotosPort: new InMemoryProgressPhotosAdapter(),
+    progressPhotoStorePort: new InMemoryProgressPhotoStoreAdapter(),
+    measurementIncidentsPort: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
@@ -85,20 +85,24 @@ describe("RemoveProgressPhotoUseCase", () => {
   it("deletes her photo's record and its file", async () => {
     // arrange
     const ports = createPorts({ clientId: "client-1" });
-    const useCase = new RemoveProgressPhotoUseCase(ports);
+    const removeProgressPhotoUseCase = new RemoveProgressPhotoUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await removeProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
     expect(result).toEqual({ status: "removed" });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.photos.rows.size).toBe(0);
-    expect(ports.store.files.size).toBe(0);
-    expect(ports.incidents.progressPhotoDeleted).toHaveBeenCalledWith({
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.progressPhotosPort.rows.size).toBe(0);
+    expect(ports.progressPhotoStorePort.files.size).toBe(0);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoDeleted,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
       photoId: "photo-1",
@@ -109,12 +113,12 @@ describe("RemoveProgressPhotoUseCase", () => {
   it("deletes the record before the file", async () => {
     // arrange
     const ports = createPorts({ clientId: "client-1" });
-    const deleteRecord = vi.spyOn(ports.photos, "delete");
-    const deleteFile = vi.spyOn(ports.store, "delete");
-    const useCase = new RemoveProgressPhotoUseCase(ports);
+    const deleteRecord = vi.spyOn(ports.progressPhotosPort, "delete");
+    const deleteFile = vi.spyOn(ports.progressPhotoStorePort, "delete");
+    const removeProgressPhotoUseCase = new RemoveProgressPhotoUseCase(ports);
 
     // act
-    await useCase.execute({
+    await removeProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
@@ -130,41 +134,41 @@ describe("RemoveProgressPhotoUseCase", () => {
   it("leaves both the record and the file when deleting the record fails", async () => {
     // arrange
     const ports = createPorts({ clientId: "client-1" });
-    vi.spyOn(ports.photos, "delete").mockRejectedValueOnce(
+    vi.spyOn(ports.progressPhotosPort, "delete").mockRejectedValueOnce(
       new Error("connection lost"),
     );
-    const useCase = new RemoveProgressPhotoUseCase(ports);
+    const removeProgressPhotoUseCase = new RemoveProgressPhotoUseCase(ports);
 
     // act
-    const removal = useCase.execute({
+    const removal = removeProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
     await expect(removal).rejects.toThrow("connection lost");
-    expect(ports.photos.rows.size).toBe(1);
-    expect(ports.store.files.size).toBe(1);
+    expect(ports.progressPhotosPort.rows.size).toBe(1);
+    expect(ports.progressPhotoStorePort.files.size).toBe(1);
   });
 
   it("leaves only an unreferenced file when deleting the file fails", async () => {
     // arrange
     const ports = createPorts({ clientId: "client-1" });
-    vi.spyOn(ports.store, "delete").mockRejectedValueOnce(
+    vi.spyOn(ports.progressPhotoStorePort, "delete").mockRejectedValueOnce(
       new Error("disk unavailable"),
     );
-    const useCase = new RemoveProgressPhotoUseCase(ports);
+    const removeProgressPhotoUseCase = new RemoveProgressPhotoUseCase(ports);
 
     // act
-    const removal = useCase.execute({
+    const removal = removeProgressPhotoUseCase.execute({
       photoId: "photo-1",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
     await expect(removal).rejects.toThrow("disk unavailable");
-    expect(ports.photos.rows.size).toBe(0);
-    expect(ports.store.files.size).toBe(1);
+    expect(ports.progressPhotosPort.rows.size).toBe(0);
+    expect(ports.progressPhotoStorePort.files.size).toBe(1);
   });
 
   it.each([
@@ -175,19 +179,21 @@ describe("RemoveProgressPhotoUseCase", () => {
     async (_case, requesterClient, role) => {
       // arrange
       const ports = createPorts(requesterClient);
-      const useCase = new RemoveProgressPhotoUseCase(ports);
+      const removeProgressPhotoUseCase = new RemoveProgressPhotoUseCase(ports);
 
       // act
-      const result = await useCase.execute({
+      const result = await removeProgressPhotoUseCase.execute({
         photoId: "photo-1",
         requester: { role, authSubjectId: "user_other" },
       });
 
       // assert
       expect(result).toEqual({ status: "not-found" });
-      expect(ports.photos.rows.size).toBe(1);
-      expect(ports.store.files.size).toBe(1);
-      expect(ports.incidents.progressPhotoAccessRefused).toHaveBeenCalledWith({
+      expect(ports.progressPhotosPort.rows.size).toBe(1);
+      expect(ports.progressPhotoStorePort.files.size).toBe(1);
+      expect(
+        ports.measurementIncidentsPort.progressPhotoAccessRefused,
+      ).toHaveBeenCalledWith({
         requesterRole: role,
         photoId: "photo-1",
       });
@@ -197,16 +203,18 @@ describe("RemoveProgressPhotoUseCase", () => {
   it("finds nothing to delete for a photo that does not exist", async () => {
     // arrange
     const ports = createPorts({ clientId: "client-1" });
-    const useCase = new RemoveProgressPhotoUseCase(ports);
+    const removeProgressPhotoUseCase = new RemoveProgressPhotoUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await removeProgressPhotoUseCase.execute({
       photoId: "photo-missing",
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(ports.incidents.progressPhotoAccessRefused).not.toHaveBeenCalled();
+    expect(
+      ports.measurementIncidentsPort.progressPhotoAccessRefused,
+    ).not.toHaveBeenCalled();
   });
 });

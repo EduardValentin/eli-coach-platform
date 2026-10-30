@@ -14,7 +14,7 @@ type EmailWaitlistConfirmationOptions = {
 
 export class EmailWaitlistConfirmationAdapter implements WaitlistConfirmationPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailWaitlistConfirmationOptions,
   ) {}
 
@@ -27,7 +27,7 @@ export class EmailWaitlistConfirmationAdapter implements WaitlistConfirmationPor
       pricing: command.pricing,
       privacyEmail: this.options.privacyEmail,
     });
-    const delivery = await this.productEmail.send({
+    const delivery = await this.productEmailPort.send({
       html: content.html,
       subject: content.subject,
       text: content.text,

@@ -100,9 +100,10 @@ function mirrorUseCase(options: {
   incidents?: ReturnType<typeof createIncidents>;
 }) {
   return new MirrorPaymentCardUseCase({
-    cards: options.cards,
-    incidents: options.incidents ?? createIncidents(),
-    subscriptions: options.subscriptions ?? createSubscriptions(SUBSCRIPTION),
+    paymentCardsPort: options.cards,
+    coachingSubscriptionIncidentsPort: options.incidents ?? createIncidents(),
+    coachingSubscriptionsPort:
+      options.subscriptions ?? createSubscriptions(SUBSCRIPTION),
   });
 }
 
@@ -111,10 +112,10 @@ describe("MirrorPaymentCardUseCase", () => {
     // arrange
     const cards = createCards(VISA);
     const incidents = createIncidents();
-    const useCase = mirrorUseCase({ cards, incidents });
+    const mirrorPaymentCardUseCase = mirrorUseCase({ cards, incidents });
 
     // act
-    const result = await useCase.execute({
+    const result = await mirrorPaymentCardUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "card-attached",
@@ -143,10 +144,10 @@ describe("MirrorPaymentCardUseCase", () => {
   it("clears the card on file when the mirrored card is detached", async () => {
     // arrange
     const cards = createCards(VISA);
-    const useCase = mirrorUseCase({ cards });
+    const mirrorPaymentCardUseCase = mirrorUseCase({ cards });
 
     // act
-    await useCase.execute({
+    await mirrorPaymentCardUseCase.execute({
       eventId: "evt_2",
       event: {
         kind: "card-detached",
@@ -167,10 +168,10 @@ describe("MirrorPaymentCardUseCase", () => {
   it("keeps the newer card when the detach of an earlier card arrives after it", async () => {
     // arrange
     const cards = createCards(MASTERCARD);
-    const useCase = mirrorUseCase({ cards });
+    const mirrorPaymentCardUseCase = mirrorUseCase({ cards });
 
     // act
-    await useCase.execute({
+    await mirrorPaymentCardUseCase.execute({
       eventId: "evt_3",
       event: {
         kind: "card-detached",
@@ -193,10 +194,10 @@ describe("MirrorPaymentCardUseCase", () => {
     const cards = createCards(VISA);
     cards.saveForEvent.mockResolvedValue("duplicate");
     const incidents = createIncidents();
-    const useCase = mirrorUseCase({ cards, incidents });
+    const mirrorPaymentCardUseCase = mirrorUseCase({ cards, incidents });
 
     // act
-    const result = await useCase.execute({
+    const result = await mirrorPaymentCardUseCase.execute({
       eventId: "evt_1",
       event: {
         kind: "card-updated",
@@ -216,14 +217,14 @@ describe("MirrorPaymentCardUseCase", () => {
     // arrange
     const cards = createCards(null);
     const incidents = createIncidents();
-    const useCase = mirrorUseCase({
+    const mirrorPaymentCardUseCase = mirrorUseCase({
       cards,
       incidents,
       subscriptions: createSubscriptions(null),
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await mirrorPaymentCardUseCase.execute({
       eventId: "evt_4",
       event: {
         kind: "card-attached",
@@ -252,10 +253,10 @@ describe("MirrorPaymentCardUseCase", () => {
     cards.saveForEvent
       .mockResolvedValueOnce("stale")
       .mockResolvedValueOnce("recorded");
-    const useCase = mirrorUseCase({ cards });
+    const mirrorPaymentCardUseCase = mirrorUseCase({ cards });
 
     // act
-    const result = await useCase.execute({
+    const result = await mirrorPaymentCardUseCase.execute({
       eventId: "evt_5",
       event: {
         kind: "card-detached",
@@ -278,10 +279,10 @@ describe("MirrorPaymentCardUseCase", () => {
     // arrange
     const cards = createCards(VISA);
     cards.saveForEvent.mockResolvedValue("stale");
-    const useCase = mirrorUseCase({ cards });
+    const mirrorPaymentCardUseCase = mirrorUseCase({ cards });
 
     // act
-    const mirroring = useCase.execute({
+    const mirroring = mirrorPaymentCardUseCase.execute({
       eventId: "evt_6",
       event: {
         kind: "card-attached",
@@ -301,14 +302,14 @@ describe("RefreshPaymentCardUseCase", () => {
     // arrange
     const cards = createCards(VISA);
     const customerCards = createCustomerCards(MASTERCARD);
-    const useCase = new RefreshPaymentCardUseCase({
-      cards,
-      customerCards,
-      incidents: createIncidents(),
+    const refreshPaymentCardUseCase = new RefreshPaymentCardUseCase({
+      paymentCardsPort: cards,
+      paymentCustomerCardsPort: customerCards,
+      coachingSubscriptionIncidentsPort: createIncidents(),
     });
 
     // act
-    await useCase.execute({ paymentCustomerId: CUSTOMER_ID });
+    await refreshPaymentCardUseCase.execute({ paymentCustomerId: CUSTOMER_ID });
 
     // assert
     expect(customerCards.readDefaultCard).toHaveBeenCalledWith(CUSTOMER_ID);
@@ -322,14 +323,14 @@ describe("RefreshPaymentCardUseCase", () => {
   it("clears the card on file when the provider holds no default card", async () => {
     // arrange
     const cards = createCards(VISA);
-    const useCase = new RefreshPaymentCardUseCase({
-      cards,
-      customerCards: createCustomerCards(null),
-      incidents: createIncidents(),
+    const refreshPaymentCardUseCase = new RefreshPaymentCardUseCase({
+      paymentCardsPort: cards,
+      paymentCustomerCardsPort: createCustomerCards(null),
+      coachingSubscriptionIncidentsPort: createIncidents(),
     });
 
     // act
-    await useCase.execute({ paymentCustomerId: CUSTOMER_ID });
+    await refreshPaymentCardUseCase.execute({ paymentCustomerId: CUSTOMER_ID });
 
     // assert
     expect(cards.save).toHaveBeenCalledWith({
@@ -343,14 +344,16 @@ describe("RefreshPaymentCardUseCase", () => {
     // arrange
     const cards = createCards(null);
     cards.save.mockResolvedValue("stale");
-    const useCase = new RefreshPaymentCardUseCase({
-      cards,
-      customerCards: createCustomerCards(VISA),
-      incidents: createIncidents(),
+    const refreshPaymentCardUseCase = new RefreshPaymentCardUseCase({
+      paymentCardsPort: cards,
+      paymentCustomerCardsPort: createCustomerCards(VISA),
+      coachingSubscriptionIncidentsPort: createIncidents(),
     });
 
     // act
-    const refreshing = useCase.execute({ paymentCustomerId: CUSTOMER_ID });
+    const refreshing = refreshPaymentCardUseCase.execute({
+      paymentCustomerId: CUSTOMER_ID,
+    });
 
     // assert
     await expect(refreshing).resolves.toBeUndefined();
@@ -364,14 +367,16 @@ describe("RefreshPaymentCardUseCase", () => {
     const incidents = createIncidents();
     const customerCards = createCustomerCards(null);
     customerCards.readDefaultCard.mockRejectedValue(failure);
-    const useCase = new RefreshPaymentCardUseCase({
-      cards,
-      customerCards,
-      incidents,
+    const refreshPaymentCardUseCase = new RefreshPaymentCardUseCase({
+      paymentCardsPort: cards,
+      paymentCustomerCardsPort: customerCards,
+      coachingSubscriptionIncidentsPort: incidents,
     });
 
     // act
-    const refreshing = useCase.execute({ paymentCustomerId: CUSTOMER_ID });
+    const refreshing = refreshPaymentCardUseCase.execute({
+      paymentCustomerId: CUSTOMER_ID,
+    });
 
     // assert
     await expect(refreshing).rejects.toBe(failure);

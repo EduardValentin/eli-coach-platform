@@ -210,7 +210,7 @@ export class ProductPublicationDraft {
   requestDigest(
     operation: PublicationOperation,
     target: string,
-    digest: ProductAssetDigestPort,
+    productAssetDigestPort: ProductAssetDigestPort,
   ): string {
     const canonical = [
       operation,
@@ -223,16 +223,16 @@ export class ProductPublicationDraft {
       this.metadata.typeSlugs.join(CANONICAL_LIST_SEPARATOR),
       this.metadata.goalSlugs.join(CANONICAL_LIST_SEPARATOR),
       this.cover.alt,
-      digest.sha256(this.cover.bytes),
+      productAssetDigestPort.sha256(this.cover.bytes),
       this.downloads
         .map(
           (download) =>
-            `${download.customerFilename}=${digest.sha256(download.bytes)}`,
+            `${download.customerFilename}=${productAssetDigestPort.sha256(download.bytes)}`,
         )
         .join(CANONICAL_LIST_SEPARATOR),
     ].join(CANONICAL_FIELD_SEPARATOR);
 
-    return digest.sha256(new TextEncoder().encode(canonical));
+    return productAssetDigestPort.sha256(new TextEncoder().encode(canonical));
   }
 
   /**
@@ -260,7 +260,7 @@ export class ProductPublicationDraft {
       slug: string;
     },
     taxonomy: StoreTaxonomySnapshot,
-    digest: ProductAssetDigestPort,
+    productAssetDigestPort: ProductAssetDigestPort,
   ): PublicationPlanResult {
     const formatIssue = validateSlugFormat(input.slug);
 
@@ -284,14 +284,14 @@ export class ProductPublicationDraft {
         versionSequence: 1,
       },
       taxonomy,
-      digest,
+      productAssetDigestPort,
     );
   }
 
   planRevision(
     product: Product | null,
     taxonomy: StoreTaxonomySnapshot,
-    digest: ProductAssetDigestPort,
+    productAssetDigestPort: ProductAssetDigestPort,
   ): PublicationPlanResult {
     if (!product) {
       return { status: "invalid", issues: [{ code: "product_not_found" }] };
@@ -301,17 +301,21 @@ export class ProductPublicationDraft {
       return { status: "invalid", issues: [{ code: "product_retired" }] };
     }
 
-    return this.plan(product.revisionPlacement(), taxonomy, digest);
+    return this.plan(
+      product.revisionPlacement(),
+      taxonomy,
+      productAssetDigestPort,
+    );
   }
 
   plan(
     placement: PublicationPlacement,
     taxonomy: StoreTaxonomySnapshot,
-    digest: ProductAssetDigestPort,
+    productAssetDigestPort: ProductAssetDigestPort,
   ): PublicationPlanResult {
     const issues: PublicationIssue[] = [];
-    const downloads = this.planDownloads(issues, digest);
-    const cover = this.planCover(issues, digest);
+    const downloads = this.planDownloads(issues, productAssetDigestPort);
+    const cover = this.planCover(issues, productAssetDigestPort);
     const types = resolveTaxonomy(
       this.metadata.typeSlugs,
       taxonomy.types,
@@ -403,7 +407,7 @@ export class ProductPublicationDraft {
 
   private planDownloads(
     issues: PublicationIssue[],
-    digest: ProductAssetDigestPort,
+    productAssetDigestPort: ProductAssetDigestPort,
   ): readonly PlannedProductAsset[] {
     if (this.downloads.length === 0) {
       issues.push({ code: "missing_downloads" });
@@ -447,7 +451,7 @@ export class ProductPublicationDraft {
         continue;
       }
 
-      const sha256 = digest.sha256(download.bytes);
+      const sha256 = productAssetDigestPort.sha256(download.bytes);
 
       planned.push({
         assetKey: buildDownloadAssetKey({
@@ -466,7 +470,7 @@ export class ProductPublicationDraft {
 
   private planCover(
     issues: PublicationIssue[],
-    digest: ProductAssetDigestPort,
+    productAssetDigestPort: ProductAssetDigestPort,
   ): PlannedProductCover | null {
     const resolution = resolveCoverFormat(this.cover.bytes);
 
@@ -479,7 +483,7 @@ export class ProductPublicationDraft {
       return null;
     }
 
-    const sha256 = digest.sha256(this.cover.bytes);
+    const sha256 = productAssetDigestPort.sha256(this.cover.bytes);
 
     return {
       alt: this.cover.alt,

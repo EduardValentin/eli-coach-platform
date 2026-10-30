@@ -21,10 +21,10 @@ type OpenProgressPhotoResult =
   | { status: "not-found" };
 
 type OpenProgressPhotoUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  photos: ProgressPhotosPort;
-  store: ProgressPhotoStorePort;
-  incidents: MeasurementIncidentsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  progressPhotosPort: ProgressPhotosPort;
+  progressPhotoStorePort: ProgressPhotoStorePort;
+  measurementIncidentsPort: MeasurementIncidentsPort;
 };
 
 export class OpenProgressPhotoUseCase {
@@ -33,14 +33,16 @@ export class OpenProgressPhotoUseCase {
   async execute(
     command: OpenProgressPhotoCommand,
   ): Promise<OpenProgressPhotoResult> {
-    const photo = await this.options.photos.findById(command.photoId);
+    const photo = await this.options.progressPhotosPort.findById(
+      command.photoId,
+    );
 
     if (!photo) {
       return { status: "not-found" };
     }
 
     if (!(await this.maySee(photo, command.requester))) {
-      this.options.incidents.progressPhotoAccessRefused({
+      this.options.measurementIncidentsPort.progressPhotoAccessRefused({
         requesterRole: command.requester.role,
         photoId: command.photoId,
       });
@@ -49,7 +51,7 @@ export class OpenProgressPhotoUseCase {
     }
 
     const { reference, mimeType } = photo.toSnapshot();
-    const bytes = await this.options.store.open(reference);
+    const bytes = await this.options.progressPhotoStorePort.open(reference);
 
     if (!bytes) {
       return { status: "not-found" };
@@ -64,7 +66,7 @@ export class OpenProgressPhotoUseCase {
   ): Promise<boolean> {
     if (requester.role === "COACH") return true;
 
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       requester.authSubjectId,
     );
 

@@ -10,9 +10,12 @@ export type CoachClientSeries = {
 };
 
 type ReadCoachClientSeriesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  incidents: Pick<CheckInIncidentsPort, "checkInSeriesReadFailed">;
-  series: Pick<CheckInSeriesRecordsPort, "findActiveForClient">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  checkInIncidentsPort: Pick<CheckInIncidentsPort, "checkInSeriesReadFailed">;
+  checkInSeriesRecordsPort: Pick<
+    CheckInSeriesRecordsPort,
+    "findActiveForClient"
+  >;
 };
 
 export class ReadCoachClientSeriesUseCase {
@@ -22,7 +25,10 @@ export class ReadCoachClientSeriesUseCase {
     try {
       return await this.seriesOf(clientId);
     } catch (error) {
-      this.options.incidents.checkInSeriesReadFailed({ clientId, error });
+      this.options.checkInIncidentsPort.checkInSeriesReadFailed({
+        clientId,
+        error,
+      });
 
       return { series: null, coachingEnds: false };
     }
@@ -30,8 +36,8 @@ export class ReadCoachClientSeriesUseCase {
 
   private async seriesOf(clientId: string): Promise<CoachClientSeries> {
     const [client, series] = await Promise.all([
-      this.options.clients.findById(clientId),
-      this.options.series.findActiveForClient(clientId),
+      this.options.clientReachPort.findById(clientId),
+      this.options.checkInSeriesRecordsPort.findActiveForClient(clientId),
     ]);
 
     return {

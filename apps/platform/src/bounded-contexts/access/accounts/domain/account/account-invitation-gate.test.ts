@@ -28,12 +28,12 @@ function gateDependencies(options: {
   now?: Date;
 }) {
   return {
-    clock: { now: () => options.now ?? NOW },
-    invitations: {
+    clockPort: { now: () => options.now ?? NOW },
+    accountInvitationsPort: {
       findById: vi.fn().mockResolvedValue(options.found),
       accept: vi.fn().mockResolvedValue("accepted"),
     },
-    references: {
+    invitationReferencesPort: {
       invitationIdOf: vi
         .fn()
         .mockResolvedValue(
@@ -56,13 +56,13 @@ describe("AccountInvitationGate", () => {
 
     // assert
     expect(role).toBe("CLIENT");
-    expect(dependencies.references.invitationIdOf).toHaveBeenCalledWith(
-      "user_ana",
-    );
-    expect(dependencies.invitations.findById).toHaveBeenCalledWith(
+    expect(
+      dependencies.invitationReferencesPort.invitationIdOf,
+    ).toHaveBeenCalledWith("user_ana");
+    expect(dependencies.accountInvitationsPort.findById).toHaveBeenCalledWith(
       "invitation-1",
     );
-    expect(dependencies.invitations.accept).toHaveBeenCalledWith({
+    expect(dependencies.accountInvitationsPort.accept).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       authSubjectId: "user_ana",
       at: NOW,
@@ -82,8 +82,8 @@ describe("AccountInvitationGate", () => {
 
     // assert
     expect(role).toBeNull();
-    expect(dependencies.invitations.findById).not.toHaveBeenCalled();
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.findById).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.accept).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -104,7 +104,7 @@ describe("AccountInvitationGate", () => {
 
       // assert
       expect(role).toBeNull();
-      expect(dependencies.invitations.accept).not.toHaveBeenCalled();
+      expect(dependencies.accountInvitationsPort.accept).not.toHaveBeenCalled();
     },
   );
 
@@ -121,7 +121,7 @@ describe("AccountInvitationGate", () => {
 
     // assert
     expect(role).toBeNull();
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.accept).not.toHaveBeenCalled();
   });
 
   it("accepts again without writing when the same subject replays an invitation it accepted", async () => {
@@ -140,7 +140,7 @@ describe("AccountInvitationGate", () => {
 
     // assert
     expect(role).toBe("CLIENT");
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.accept).not.toHaveBeenCalled();
   });
 
   it("refuses a second subject presenting an invitation another subject accepted", async () => {
@@ -158,7 +158,7 @@ describe("AccountInvitationGate", () => {
 
     // assert
     expect(role).toBeNull();
-    expect(dependencies.invitations.accept).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.accept).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -169,8 +169,8 @@ describe("AccountInvitationGate", () => {
     async (_label, winner, expected) => {
       // arrange
       const dependencies = gateDependencies({ found: invitation() });
-      dependencies.invitations.accept.mockResolvedValue("raced");
-      dependencies.invitations.findById
+      dependencies.accountInvitationsPort.accept.mockResolvedValue("raced");
+      dependencies.accountInvitationsPort.findById
         .mockResolvedValueOnce(invitation())
         .mockResolvedValueOnce(
           invitation({ acceptedAt: NOW, acceptedByAuthSubjectId: winner }),
@@ -182,7 +182,9 @@ describe("AccountInvitationGate", () => {
 
       // assert
       expect(role).toBe(expected);
-      expect(dependencies.invitations.findById).toHaveBeenCalledTimes(2);
+      expect(
+        dependencies.accountInvitationsPort.findById,
+      ).toHaveBeenCalledTimes(2);
     },
   );
 });

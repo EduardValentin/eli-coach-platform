@@ -12,18 +12,18 @@ export type FindFoodResult =
   | { status: "not-found" };
 
 type FindFoodUseCaseOptions = {
-  library: Pick<FoodLibraryPort, "list">;
-  tags: Pick<NutritionTagsPort, "list">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
 };
 
 export class FindFoodUseCase {
   constructor(private readonly options: FindFoodUseCaseOptions) {}
 
   async execute(reference: FoodReference): Promise<FindFoodResult> {
-    const { library, tags } = this.options;
+    const { foodLibraryPort, nutritionTagsPort } = this.options;
     const [foods, vocabulary] = await Promise.all([
-      library.list(reference.ownerAccountId),
-      tags.list(),
+      foodLibraryPort.list(reference.ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
     const food = foods.find(({ id }) => id === reference.foodId);
 

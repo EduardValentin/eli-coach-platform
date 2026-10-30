@@ -55,11 +55,11 @@ function createPorts(stored: {
   unitPreference?: UnitPreference | null;
 }) {
   return {
-    clock: { now: () => WEIGH_IN_DUE_AT },
-    clients: {
+    clockPort: { now: () => WEIGH_IN_DUE_AT },
+    clientReachPort: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(stored.client),
     } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
-    profiles: {
+    clientProfilesPort: {
       findByClientId: vi.fn().mockResolvedValue(
         ClientProfile.reconstitute({
           clientId: "client-1",
@@ -72,11 +72,11 @@ function createPorts(stored: {
         }),
       ),
     } satisfies Pick<ClientProfilesPort, "findByClientId">,
-    records: {
+    clientMeasurementRecordsPort: {
       listByClientId: vi.fn().mockResolvedValue([FIRST, LATEST]),
       record: vi.fn(),
     } satisfies ClientMeasurementRecordsPort,
-    settings: {
+    clientSettingsSourcePort: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
@@ -97,10 +97,13 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
       client: { clientId: "client-1" },
       consentedAt: CONSENTED_AT,
     });
-    const useCase = new ReadOwnMeasurementHistoryUseCase(ports);
+    const readOwnMeasurementHistoryUseCase =
+      new ReadOwnMeasurementHistoryUseCase(ports);
 
     // act
-    const reading = await useCase.execute({ authSubjectId: "user_ana" });
+    const reading = await readOwnMeasurementHistoryUseCase.execute({
+      authSubjectId: "user_ana",
+    });
 
     // assert
     expect(reading).toEqual({
@@ -110,10 +113,18 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
       units: IMPERIAL,
     });
     expect(reading?.history.newestFirst()).toEqual([LATEST, FIRST]);
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.records.listByClientId).toHaveBeenCalledWith("client-1");
-    expect(ports.profiles.findByClientId).toHaveBeenCalledWith("client-1");
-    expect(ports.settings.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(
+      ports.clientMeasurementRecordsPort.listByClientId,
+    ).toHaveBeenCalledWith("client-1");
+    expect(ports.clientProfilesPort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
+    expect(ports.clientSettingsSourcePort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
   });
 
   it("reads her units as metric while she has never chosen any", async () => {
@@ -123,10 +134,13 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
       consentedAt: null,
       unitPreference: null,
     });
-    const useCase = new ReadOwnMeasurementHistoryUseCase(ports);
+    const readOwnMeasurementHistoryUseCase =
+      new ReadOwnMeasurementHistoryUseCase(ports);
 
     // act
-    const reading = await useCase.execute({ authSubjectId: "user_ana" });
+    const reading = await readOwnMeasurementHistoryUseCase.execute({
+      authSubjectId: "user_ana",
+    });
 
     // assert
     expect(reading?.units).toEqual(UnitPreference.metric());
@@ -138,10 +152,13 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
       client: { clientId: "client-1" },
       consentedAt: null,
     });
-    const useCase = new ReadOwnMeasurementHistoryUseCase(ports);
+    const readOwnMeasurementHistoryUseCase =
+      new ReadOwnMeasurementHistoryUseCase(ports);
 
     // act
-    const reading = await useCase.execute({ authSubjectId: "user_ana" });
+    const reading = await readOwnMeasurementHistoryUseCase.execute({
+      authSubjectId: "user_ana",
+    });
 
     // assert
     expect(reading?.consentedAt).toBeNull();
@@ -150,14 +167,21 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
   it("reads nothing for a subject bound to no client", async () => {
     // arrange
     const ports = createPorts({ client: null, consentedAt: null });
-    const useCase = new ReadOwnMeasurementHistoryUseCase(ports);
+    const readOwnMeasurementHistoryUseCase =
+      new ReadOwnMeasurementHistoryUseCase(ports);
 
     // act
-    const reading = await useCase.execute({ authSubjectId: "user_stranger" });
+    const reading = await readOwnMeasurementHistoryUseCase.execute({
+      authSubjectId: "user_stranger",
+    });
 
     // assert
     expect(reading).toBeNull();
-    expect(ports.records.listByClientId).not.toHaveBeenCalled();
-    expect(ports.settings.findByClientId).not.toHaveBeenCalled();
+    expect(
+      ports.clientMeasurementRecordsPort.listByClientId,
+    ).not.toHaveBeenCalled();
+    expect(
+      ports.clientSettingsSourcePort.findByClientId,
+    ).not.toHaveBeenCalled();
   });
 });

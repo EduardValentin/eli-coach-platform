@@ -14,8 +14,8 @@ import {
 import { assessmentCallJoinPath } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 
 type CoachAssessmentCallsControllerOptions = {
-  clock: ClockPort;
-  listAssessmentCalls: ListAssessmentCallsUseCase;
+  clockPort: ClockPort;
+  listAssessmentCallsUseCase: ListAssessmentCallsUseCase;
 };
 
 export class CoachAssessmentCallsController {
@@ -24,7 +24,7 @@ export class CoachAssessmentCallsController {
   ) {}
 
   async loadCalls(): Promise<CoachAssessmentCalls> {
-    const listing = await this.options.listAssessmentCalls.execute();
+    const listing = await this.options.listAssessmentCallsUseCase.execute();
 
     if (listing.status === "unavailable") {
       throw new Response(COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE, {
@@ -35,7 +35,7 @@ export class CoachAssessmentCallsController {
     return coachAssessmentCallsSchema.parse({
       calls: listing.calls.map(serialiseCall),
       coachTimeZone: listing.coachTimeZone,
-      now: this.options.clock.now().toISOString(),
+      now: this.options.clockPort.now().toISOString(),
     });
   }
 }

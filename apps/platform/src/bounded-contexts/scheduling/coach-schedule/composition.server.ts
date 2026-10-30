@@ -26,53 +26,63 @@ import type { CoachScheduleFeature } from "~/bounded-contexts/scheduling/coach-s
 type CoachScheduleComposition = {
   feature: CoachScheduleFeature;
   handles: {
-    coachTime: CoachTimeReservationsPort;
-    meetingRoom: CoachMeetingRoomSourcePort;
+    coachTimeReservationsPort: CoachTimeReservationsPort;
+    coachMeetingRoomSourcePort: CoachMeetingRoomSourcePort;
     openings: CoachOpenings;
   };
   facades: {
-    coachTime: CoachTimeFacade;
-    meetingRoom: MeetingRoomFacade;
-    openSlots: OpenSlotsFacade;
+    coachTimeFacade: CoachTimeFacade;
+    meetingRoomFacade: MeetingRoomFacade;
+    openSlotsFacade: OpenSlotsFacade;
   };
 };
 
 type CoachScheduleFeatureHandles = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
 };
 
 export function composeCoachScheduleFeature(
   handles: CoachScheduleFeatureHandles,
 ): CoachScheduleComposition {
-  const availability = new PostgresCoachAvailabilityRepository(handles);
-  const meetingRoom = new PostgresCoachMeetingRoomRepository(handles);
-  const coachTime = new PostgresCoachTimeReservationsRepository(
-    handles.database,
-  );
+  const postgresCoachAvailabilityRepository =
+    new PostgresCoachAvailabilityRepository(handles);
+  const postgresCoachMeetingRoomRepository =
+    new PostgresCoachMeetingRoomRepository(handles);
+  const postgresCoachTimeReservationsRepository =
+    new PostgresCoachTimeReservationsRepository(handles.database);
   const openings = new CoachOpenings({
-    availability,
-    calendar: new PostgresCoachCalendarRepository(handles.database),
+    coachAvailabilitySourcePort: postgresCoachAvailabilityRepository,
+    coachCalendarPort: new PostgresCoachCalendarRepository(handles.database),
   });
 
   return {
     feature: {
-      coachScheduleSettings: new CoachScheduleSettingsController({
-        getSettings: new GetCoachScheduleSettingsUseCase({
-          availability,
-          meetingRoom,
+      coachScheduleSettingsController: new CoachScheduleSettingsController({
+        getCoachScheduleSettingsUseCase: new GetCoachScheduleSettingsUseCase({
+          coachAvailabilitySourcePort: postgresCoachAvailabilityRepository,
+          coachMeetingRoomSourcePort: postgresCoachMeetingRoomRepository,
         }),
-        updateSettings: new UpdateCoachScheduleSettingsUseCase({
-          availabilityChanges: availability,
-          meetingRoomChanges: meetingRoom,
-        }),
+        updateCoachScheduleSettingsUseCase:
+          new UpdateCoachScheduleSettingsUseCase({
+            coachAvailabilityChangesPort: postgresCoachAvailabilityRepository,
+            coachMeetingRoomChangesPort: postgresCoachMeetingRoomRepository,
+          }),
       }),
     },
-    handles: { coachTime, meetingRoom, openings },
+    handles: {
+      coachTimeReservationsPort: postgresCoachTimeReservationsRepository,
+      coachMeetingRoomSourcePort: postgresCoachMeetingRoomRepository,
+      openings,
+    },
     facades: {
-      coachTime: new CoachTimeFacadeAdapter(coachTime),
-      meetingRoom: new MeetingRoomFacadeAdapter(meetingRoom),
-      openSlots: new OpenSlotsFacadeAdapter(openings),
+      coachTimeFacade: new CoachTimeFacadeAdapter(
+        postgresCoachTimeReservationsRepository,
+      ),
+      meetingRoomFacade: new MeetingRoomFacadeAdapter(
+        postgresCoachMeetingRoomRepository,
+      ),
+      openSlotsFacade: new OpenSlotsFacadeAdapter(openings),
     },
   };
 }

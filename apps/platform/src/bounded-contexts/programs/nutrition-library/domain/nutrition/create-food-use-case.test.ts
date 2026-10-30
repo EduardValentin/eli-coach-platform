@@ -76,24 +76,24 @@ function createUseCase() {
     recipeEditFailed: vi.fn(),
     recipePhotoCleanupFailed: vi.fn(),
   } satisfies NutritionLibraryIncidentsPort;
-  const useCase = new CreateFoodUseCase({
-    library,
-    tags,
-    ids: { generate: () => "food-2" },
-    clock: { now: () => NOW },
-    incidents,
+  const createFoodUseCase = new CreateFoodUseCase({
+    foodLibraryPort: library,
+    nutritionTagsPort: tags,
+    foodIdsPort: { generate: () => "food-2" },
+    clockPort: { now: () => NOW },
+    nutritionLibraryIncidentsPort: incidents,
   });
 
-  return { useCase, library, tags, incidents };
+  return { createFoodUseCase, library, tags, incidents };
 }
 
 describe("CreateFoodUseCase", () => {
   it("adds the food under a new id, owned by the coach who created it, its name trimmed and a 0 portion made 100 grams, created now", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: CHICKEN,
     });
@@ -118,10 +118,10 @@ describe("CreateFoodUseCase", () => {
 
   it("refuses a draft that breaks a rule, naming each problem, without adding it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...CHICKEN, name: " ", kcal: 10_000 },
     });
@@ -136,10 +136,10 @@ describe("CreateFoodUseCase", () => {
 
   it("refuses a tag outside the vocabulary the tags answer, without adding it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...CHICKEN, tagIds: ["mt-lunch", "mt-brunch"] },
     });
@@ -154,10 +154,10 @@ describe("CreateFoodUseCase", () => {
 
   it("refuses a name another of her foods already has, whatever its case and spaces, without adding it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...CHICKEN, name: " OATS  " },
     });
@@ -169,10 +169,10 @@ describe("CreateFoodUseCase", () => {
 
   it("adds a name only another coach's food has", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...CHICKEN, name: "rice" },
     });
@@ -184,11 +184,11 @@ describe("CreateFoodUseCase", () => {
 
   it("refuses the name when the library finds it taken by a food added meanwhile", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { createFoodUseCase, library } = createUseCase();
     library.add.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: CHICKEN,
     });
@@ -200,11 +200,11 @@ describe("CreateFoodUseCase", () => {
   it("reports a failed read of the tags and answers that the creation failed without adding it", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, tags, incidents } = createUseCase();
+    const { createFoodUseCase, library, tags, incidents } = createUseCase();
     tags.list.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: CHICKEN,
     });
@@ -220,11 +220,11 @@ describe("CreateFoodUseCase", () => {
   it("reports a failed write and answers that the creation failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents } = createUseCase();
+    const { createFoodUseCase, library, incidents } = createUseCase();
     library.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: CHICKEN,
     });

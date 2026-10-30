@@ -44,7 +44,7 @@ describe("client resources loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(clientResourcesContext, {
-          ownResources: { load },
+          ownResourcesController: { load },
         } as unknown as ClientResourcesFeature),
       ],
       request: new Request(

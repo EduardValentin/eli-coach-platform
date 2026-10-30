@@ -6,14 +6,14 @@ import type {
 import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup-facade";
 
 export class ClientsClientLookupAdapter implements ClientLookupPort {
-  constructor(private readonly lookup: ClientLookupFacade) {}
+  constructor(private readonly clientLookupFacade: ClientLookupFacade) {}
 
   identityOf(clientId: string): Promise<SubscribedClient | null> {
-    return this.lookup.identityOf(clientId);
+    return this.clientLookupFacade.identityOf(clientId);
   }
 
   async clientIdOf(authSubjectId: string): Promise<string | null> {
-    const reach = await this.lookup.reachOfSubject(authSubjectId);
+    const reach = await this.clientLookupFacade.reachOfSubject(authSubjectId);
 
     return reach?.clientId ?? null;
   }
@@ -21,7 +21,7 @@ export class ClientsClientLookupAdapter implements ClientLookupPort {
   async journeyOf(
     authSubjectId: string,
   ): Promise<SubscribedClientJourney | null> {
-    const journey = await this.lookup.journeyStepOf(authSubjectId);
+    const journey = await this.clientLookupFacade.journeyStepOf(authSubjectId);
 
     if (!journey) {
       return null;

@@ -24,8 +24,8 @@ type ClientSubscriptionReading = {
 };
 
 type ReadClientSubscriptionUseCaseOptions = {
-  cards: PaymentCardsPort;
-  clock: ClockPort;
+  paymentCardsPort: PaymentCardsPort;
+  clockPort: ClockPort;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
 };
 
@@ -42,8 +42,8 @@ export class ReadClientSubscriptionUseCase {
       return null;
     }
 
-    const now = this.options.clock.now();
-    const card = await this.options.cards.findByPaymentCustomerId(
+    const now = this.options.clockPort.now();
+    const card = await this.options.paymentCardsPort.findByPaymentCustomerId(
       subscription.paymentCustomerId,
     );
 

@@ -56,8 +56,8 @@ describe("client profile loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(clientProfileContext, {
-          clientMeasurements: { loadPage },
-          ownProfile: { load },
+          clientMeasurementsController: { loadPage },
+          ownClientProfileController: { load },
         } as unknown as ClientProfileFeature),
       ],
       request: new Request("https://evoa.fit/client/profile"),

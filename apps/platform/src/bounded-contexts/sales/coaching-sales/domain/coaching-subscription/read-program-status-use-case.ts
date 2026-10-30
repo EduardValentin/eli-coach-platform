@@ -13,16 +13,20 @@ type ProgramStatus = {
 };
 
 type ReadProgramStatusUseCaseOptions = {
-  clock: ClockPort;
-  journeys: Pick<ClientLookupPort, "journeyOf">;
-  subscriptions: Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
+  clockPort: ClockPort;
+  clientLookupPort: Pick<ClientLookupPort, "journeyOf">;
+  coachingSubscriptionsPort: Pick<
+    CoachingSubscriptionsPort,
+    "findCurrentForClient"
+  >;
 };
 
 export class ReadProgramStatusUseCase {
   constructor(private readonly options: ReadProgramStatusUseCaseOptions) {}
 
   async execute(authSubjectId: string): Promise<ProgramStatus | null> {
-    const journey = await this.options.journeys.journeyOf(authSubjectId);
+    const journey =
+      await this.options.clientLookupPort.journeyOf(authSubjectId);
 
     if (!journey?.onboardingSubmittedAt) {
       return null;
@@ -34,12 +38,13 @@ export class ReadProgramStatusUseCase {
       return null;
     }
 
-    const subscription = await this.options.subscriptions.findCurrentForClient(
-      journey.clientId,
-    );
+    const subscription =
+      await this.options.coachingSubscriptionsPort.findCurrentForClient(
+        journey.clientId,
+      );
 
     const upcomingWorkStart =
-      subscription?.upcomingWorkStart(this.options.clock.now()) ?? null;
+      subscription?.upcomingWorkStart(this.options.clockPort.now()) ?? null;
 
     return {
       kind: step,

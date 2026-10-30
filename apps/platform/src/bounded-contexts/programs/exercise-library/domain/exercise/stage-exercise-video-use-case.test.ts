@@ -19,7 +19,12 @@ function createUseCase() {
     discard: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStorePort, "receive" | "discard">;
 
-  return { useCase: new StageExerciseVideoUseCase({ store }), store };
+  return {
+    stageExerciseVideoUseCase: new StageExerciseVideoUseCase({
+      exerciseVideoStorePort: store,
+    }),
+    store,
+  };
 }
 
 async function* bytesOf(...chunks: number[][]): AsyncIterable<Uint8Array> {
@@ -31,11 +36,11 @@ async function* bytesOf(...chunks: number[][]): AsyncIterable<Uint8Array> {
 describe("StageExerciseVideoUseCase", () => {
   it("receives the incoming video counting one byte past the cap, so a larger file is judged too large", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { stageExerciseVideoUseCase, store } = createUseCase();
     const bytes = bytesOf([1, 2], [3]);
 
     // act
-    const staged = await useCase.execute(bytes);
+    const staged = await stageExerciseVideoUseCase.execute(bytes);
 
     // assert
     expect(staged).toEqual(STAGED);
@@ -47,10 +52,10 @@ describe("StageExerciseVideoUseCase", () => {
 
   it("discards a staged video by its staging id", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { stageExerciseVideoUseCase, store } = createUseCase();
 
     // act
-    await useCase.discard(STAGED);
+    await stageExerciseVideoUseCase.discard(STAGED);
 
     // assert
     expect(store.discard).toHaveBeenCalledWith("staging-1");

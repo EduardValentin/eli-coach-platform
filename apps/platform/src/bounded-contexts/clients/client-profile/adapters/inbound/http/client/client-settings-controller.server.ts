@@ -20,8 +20,8 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientSettingsControllerOptions = {
-  readOwnClientSettings: ReadOwnClientSettingsUseCase;
-  saveUnitPreference: SaveUnitPreferenceUseCase;
+  readOwnClientSettingsUseCase: ReadOwnClientSettingsUseCase;
+  saveUnitPreferenceUseCase: SaveUnitPreferenceUseCase;
 };
 
 const UNIT_PREFERENCE_REQUEST_MAX_BYTES = 1024;
@@ -38,7 +38,7 @@ export class ClientSettingsController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const settings = await this.options.readOwnClientSettings.execute(
+    const settings = await this.options.readOwnClientSettingsUseCase.execute(
       client.authSubjectId,
     );
 
@@ -67,7 +67,7 @@ export class ClientSettingsController {
       return createBadRequestResponse("The units could not be read.");
     }
 
-    const result = await this.options.saveUnitPreference.execute({
+    const result = await this.options.saveUnitPreferenceUseCase.execute({
       authSubjectId: client.authSubjectId,
       preference: request.data,
     });

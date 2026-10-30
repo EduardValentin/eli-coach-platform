@@ -64,12 +64,12 @@ describe("PostgresStoreCatalogRepository", () => {
           },
         ],
       });
-    const repository = new PostgresStoreCatalogRepository({
+    const postgresStoreCatalogRepository = new PostgresStoreCatalogRepository({
       execute,
     } as unknown as DatabaseClient);
 
     // act
-    const products = await repository.getPublishedCatalog();
+    const products = await postgresStoreCatalogRepository.getPublishedCatalog();
 
     // assert
     expect(products).toEqual([

@@ -11,23 +11,23 @@ import { StoreCatalogController } from "./store-catalog-controller.server";
 describe("StoreCatalogController", () => {
   it("returns public catalog fields with a base-path-aware cover URL", async () => {
     // arrange
-    const listPublishedProducts = {
+    const listPublishedProductsUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         products: [createProduct()],
       }),
     } as unknown as ListPublishedProductsUseCase;
-    const findPublishedProduct = {
+    const findPublishedProductUseCase = {
       execute: vi.fn(),
     } as unknown as FindPublishedProductUseCase;
-    const controller = new StoreCatalogController({
+    const storeCatalogController = new StoreCatalogController({
       appBasePath: "/platform",
-      findPublishedProduct,
-      listPublishedProducts,
+      findPublishedProductUseCase,
+      listPublishedProductsUseCase,
     });
 
     // act
-    const response = await controller.getPublishedCatalog();
+    const response = await storeCatalogController.getPublishedCatalog();
 
     // assert
     expect(response.status).toBe(200);
@@ -48,20 +48,20 @@ describe("StoreCatalogController", () => {
 
   it("keeps an unavailable catalog distinct from an empty catalog", async () => {
     // arrange
-    const listPublishedProducts = {
+    const listPublishedProductsUseCase = {
       execute: vi.fn().mockResolvedValue({ status: "unavailable" }),
     } as unknown as ListPublishedProductsUseCase;
-    const findPublishedProduct = {
+    const findPublishedProductUseCase = {
       execute: vi.fn(),
     } as unknown as FindPublishedProductUseCase;
-    const controller = new StoreCatalogController({
+    const storeCatalogController = new StoreCatalogController({
       appBasePath: "/",
-      findPublishedProduct,
-      listPublishedProducts,
+      findPublishedProductUseCase,
+      listPublishedProductsUseCase,
     });
 
     // act
-    const response = await controller.getPublishedCatalog();
+    const response = await storeCatalogController.getPublishedCatalog();
 
     // assert
     expect(response.status).toBe(503);

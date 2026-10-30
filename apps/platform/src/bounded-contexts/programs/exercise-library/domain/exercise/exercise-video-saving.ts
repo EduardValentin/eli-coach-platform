@@ -35,10 +35,16 @@ type JudgedVideoChoice =
 type AcceptedVideoChoice = Exclude<JudgedVideoChoice, { kind: "refused" }>;
 
 type ExerciseVideoSavingOptions = {
-  formats: ExerciseVideoFormatDetectorPort;
-  videoIds: ExerciseVideoIdsPort;
-  store: Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
-  incidents: Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
+  exerciseVideoFormatDetectorPort: ExerciseVideoFormatDetectorPort;
+  exerciseVideoIdsPort: ExerciseVideoIdsPort;
+  exerciseVideoStorePort: Pick<
+    ExerciseVideoStorePort,
+    "keep" | "discard" | "remove"
+  >;
+  exerciseLibraryIncidentsPort: Pick<
+    ExerciseLibraryIncidentsPort,
+    "videoCleanupFailed"
+  >;
 };
 
 export class ExerciseVideoSaving {
@@ -53,7 +59,9 @@ export class ExerciseVideoSaving {
 
     const { staged } = choice;
     const inspection = ExerciseVideoUpload.inspect({
-      detectedType: await this.options.formats.detect(staged.leadingBytes),
+      detectedType: await this.options.exerciseVideoFormatDetectorPort.detect(
+        staged.leadingBytes,
+      ),
       sizeBytes: staged.sizeBytes,
     });
 
@@ -67,8 +75,11 @@ export class ExerciseVideoSaving {
   ): Promise<ExerciseVideoChange> {
     if (choice.kind !== "attach") return choice;
 
-    const videoId = this.options.videoIds.generate();
-    await this.options.store.keep(choice.staged.stagingId, videoId);
+    const videoId = this.options.exerciseVideoIdsPort.generate();
+    await this.options.exerciseVideoStorePort.keep(
+      choice.staged.stagingId,
+      videoId,
+    );
 
     return { kind: "attach", video: choice.upload.storedAs(videoId) };
   }

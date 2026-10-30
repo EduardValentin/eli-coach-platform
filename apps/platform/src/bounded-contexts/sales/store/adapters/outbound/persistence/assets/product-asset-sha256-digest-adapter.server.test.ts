@@ -6,11 +6,12 @@ import { ProductAssetSha256DigestAdapter } from "./product-asset-sha256-digest-a
 describe("ProductAssetSha256Digest", () => {
   it("produces the lowercase hex SHA-256 the catalog constraints expect", () => {
     // arrange
-    const digest = new ProductAssetSha256DigestAdapter();
+    const productAssetSha256DigestAdapter =
+      new ProductAssetSha256DigestAdapter();
     const bytes = new Uint8Array(Buffer.from("a published guide"));
 
     // act
-    const result = digest.sha256(bytes);
+    const result = productAssetSha256DigestAdapter.sha256(bytes);
 
     // assert
     expect(result).toBe(createHash("sha256").update(bytes).digest("hex"));
@@ -19,11 +20,16 @@ describe("ProductAssetSha256Digest", () => {
 
   it("separates different content", () => {
     // arrange
-    const digest = new ProductAssetSha256DigestAdapter();
+    const productAssetSha256DigestAdapter =
+      new ProductAssetSha256DigestAdapter();
 
     // act
-    const first = digest.sha256(new Uint8Array(Buffer.from("one")));
-    const second = digest.sha256(new Uint8Array(Buffer.from("two")));
+    const first = productAssetSha256DigestAdapter.sha256(
+      new Uint8Array(Buffer.from("one")),
+    );
+    const second = productAssetSha256DigestAdapter.sha256(
+      new Uint8Array(Buffer.from("two")),
+    );
 
     // assert
     expect(first).not.toBe(second);

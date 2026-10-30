@@ -10,12 +10,12 @@ import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-l
 import { RecipeBuilder } from "./recipe-builder";
 
 export async function loader(args: LoaderFunctionArgs) {
-  const { recipeLibrary } = args.context.get(nutritionLibraryContext);
+  const { recipeLibraryController } = args.context.get(nutritionLibraryContext);
   const { recipeId } = args.params;
 
   return recipeId === undefined
-    ? recipeLibrary.loadNew(args)
-    : recipeLibrary.load(args, recipeId);
+    ? recipeLibraryController.loadNew(args)
+    : recipeLibraryController.load(args, recipeId);
 }
 
 export const handle = RECIPE_BUILDER_ROUTE_HANDLE;

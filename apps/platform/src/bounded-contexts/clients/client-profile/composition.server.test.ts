@@ -30,7 +30,7 @@ describe("composeClientProfileFeature", () => {
     const { feature } = composeClientProfileFeature(handles);
 
     // act
-    const response = await feature.clientSettings.saveUnits(
+    const response = await feature.clientSettingsController.saveUnits(
       accountArgs({
         account: CLIENT,
         request: {
@@ -42,7 +42,7 @@ describe("composeClientProfileFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
+    expect(handles.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
       "user_uninvited",
     );
   });
@@ -53,13 +53,13 @@ describe("composeClientProfileFeature", () => {
     const { feature } = composeClientProfileFeature(handles);
 
     // act
-    const nudge = await feature.clientMeasurements.loadNudge(
+    const nudge = await feature.clientMeasurementsController.loadNudge(
       accountArgs({ account: CLIENT }),
     );
 
     // assert
     expect(nudge).toEqual({ dueLine: null });
-    expect(handles.clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
+    expect(handles.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
       "user_uninvited",
     );
   });
@@ -70,14 +70,14 @@ describe("composeClientProfileFeature", () => {
     const { feature } = composeClientProfileFeature(handles);
 
     // act
-    const loading = feature.coachProfile.load(
+    const loading = feature.clientProfileController.load(
       accountArgs({ account: COACH }),
       UNKNOWN_CLIENT_ID,
     );
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
-    expect(handles.clientIdentities.findByClientId).toHaveBeenCalledWith(
+    expect(handles.clientIdentitiesPort.findByClientId).toHaveBeenCalledWith(
       UNKNOWN_CLIENT_ID,
     );
   });
@@ -88,7 +88,7 @@ describe("composeClientProfileFeature", () => {
     const { handles: published } = composeClientProfileFeature(handles);
 
     // act
-    const outcomes = await published.attachProgressPhotos.execute({
+    const outcomes = await published.attachProgressPhotosUseCase.execute({
       clientId: UNKNOWN_CLIENT_ID,
       entryId: UNKNOWN_ENTRY_ID,
       photos: [
@@ -103,7 +103,7 @@ describe("composeClientProfileFeature", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused" });
-    expect(handles.logger.warn).toHaveBeenCalledWith(
+    expect(handles.loggerPort.warn).toHaveBeenCalledWith(
       "Progress photo refused.",
       {
         clientId: UNKNOWN_CLIENT_ID,
@@ -114,27 +114,27 @@ describe("composeClientProfileFeature", () => {
         view: "front",
       },
     );
-    expect(handles.progressPhotoRenditions.render).not.toHaveBeenCalled();
+    expect(handles.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
   });
 });
 
 function createHandles() {
   return {
-    clientAvatarRenditions: { render: vi.fn() },
-    clientAvatarStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
-    clientIdentities: {
+    clientAvatarRenditionsPort: { render: vi.fn() },
+    clientAvatarStorePort: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
+    clientIdentitiesPort: {
       findByClientId: vi.fn().mockResolvedValue(null),
       findByClientIds: vi.fn().mockResolvedValue([]),
     },
-    clientReach: {
+    clientReachPort: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       findById: vi.fn().mockResolvedValue(null),
     },
-    clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     database: createUnreachableDatabase(),
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-    progressPhotoRenditions: { render: vi.fn() },
-    progressPhotoStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
+    loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+    progressPhotoRenditionsPort: { render: vi.fn() },
+    progressPhotoStorePort: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
   };
 }
 
@@ -186,25 +186,27 @@ describe("composeClientOnboardingFeature", () => {
   it("answers not found to an account with no client record without reading any onboarding", async () => {
     // arrange
     const handles = createOnboardingHandles();
-    const { controller } = composeClientOnboardingFeature(handles);
+    const { clientOnboardingController } =
+      composeClientOnboardingFeature(handles);
 
     // act
-    const loading = controller.loadOnboarding(clientArgs());
+    const loading = clientOnboardingController.loadOnboarding(clientArgs());
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
     expect(
-      handles.onboardingStandings.findByAuthSubjectId,
+      handles.onboardingStandingsPort.findByAuthSubjectId,
     ).toHaveBeenCalledWith("user_uninvited");
   });
 
   it("refuses a draft from an account with no client record without writing anything", async () => {
     // arrange
     const handles = createOnboardingHandles();
-    const { controller } = composeClientOnboardingFeature(handles);
+    const { clientOnboardingController } =
+      composeClientOnboardingFeature(handles);
 
     // act
-    const response = await controller.saveDraft(
+    const response = await clientOnboardingController.saveDraft(
       clientArgs({
         method: "PUT",
         body: {
@@ -218,7 +220,7 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.logger.info).not.toHaveBeenCalledWith(
+    expect(handles.loggerPort.info).not.toHaveBeenCalledWith(
       "Client onboarding draft saved.",
       expect.anything(),
     );
@@ -227,7 +229,8 @@ describe("composeClientOnboardingFeature", () => {
   it("refuses a submission from an account with no client record without stamping anything or attaching its photos", async () => {
     // arrange
     const handles = createOnboardingHandles();
-    const { controller } = composeClientOnboardingFeature(handles);
+    const { clientOnboardingController } =
+      composeClientOnboardingFeature(handles);
     const form = new FormData();
     form.set(
       "submission",
@@ -241,7 +244,7 @@ describe("composeClientOnboardingFeature", () => {
     );
 
     // act
-    const response = await controller.submit(
+    const response = await clientOnboardingController.submit(
       createRequestArgs({
         ...clientAccess(),
         request: new Request(
@@ -254,18 +257,19 @@ describe("composeClientOnboardingFeature", () => {
     // assert
     expect(response.status).toBe(404);
     expect(
-      handles.onboardingSubmissions.recordOnboardingSubmitted,
+      handles.onboardingSubmissionRecorderPort.recordOnboardingSubmitted,
     ).not.toHaveBeenCalled();
-    expect(handles.attachProgressPhotos.execute).not.toHaveBeenCalled();
+    expect(handles.attachProgressPhotosUseCase.execute).not.toHaveBeenCalled();
   });
 
   it("refuses answers to a request from an account with no client record without stamping anything", async () => {
     // arrange
     const handles = createOnboardingHandles();
-    const { controller } = composeClientOnboardingFeature(handles);
+    const { clientOnboardingController } =
+      composeClientOnboardingFeature(handles);
 
     // act
-    const response = await controller.answerDetails(
+    const response = await clientOnboardingController.answerDetails(
       clientArgs({
         method: "POST",
         body: { answers: { "goal-availability": { weight: 64 } } },
@@ -275,24 +279,25 @@ describe("composeClientOnboardingFeature", () => {
     // assert
     expect(response.status).toBe(404);
     expect(
-      handles.reviewStampRecorder.recordReviewStamp,
+      handles.reviewStampRecorderPort.recordReviewStamp,
     ).not.toHaveBeenCalled();
   });
 
   it("answers not found to the coach's review of a client no one knows", async () => {
     // arrange
     const handles = createOnboardingHandles();
-    const { coachReview } = composeClientOnboardingFeature(handles);
+    const { onboardingReviewController } =
+      composeClientOnboardingFeature(handles);
 
     // act
-    const loading = coachReview.loadReview(
+    const loading = onboardingReviewController.loadReview(
       onboardingAccountArgs({ account: COACH }),
       UNKNOWN_CLIENT_ID,
     );
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
-    expect(handles.onboardingStandings.findByClientId).toHaveBeenCalledWith(
+    expect(handles.onboardingStandingsPort.findByClientId).toHaveBeenCalledWith(
       UNKNOWN_CLIENT_ID,
     );
   });
@@ -300,10 +305,11 @@ describe("composeClientOnboardingFeature", () => {
   it("refuses a detail request for a client no one knows without sending an email", async () => {
     // arrange
     const handles = createOnboardingHandles();
-    const { coachReview } = composeClientOnboardingFeature(handles);
+    const { onboardingReviewController } =
+      composeClientOnboardingFeature(handles);
 
     // act
-    const response = await coachReview.requestDetails(
+    const response = await onboardingReviewController.requestDetails(
       onboardingAccountArgs({
         account: COACH,
         request: {
@@ -319,41 +325,45 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.productEmail.send).not.toHaveBeenCalled();
+    expect(handles.productEmailPort.send).not.toHaveBeenCalled();
   });
 });
 
 function createOnboardingHandles() {
   return {
     appBasePath: "/",
-    attachProgressPhotos: {
+    attachProgressPhotosUseCase: {
       execute: vi.fn().mockResolvedValue({}),
     } as unknown as AttachProgressPhotosUseCase & {
       execute: ReturnType<typeof vi.fn>;
     },
-    clientIdentities: {
+    clientIdentitiesPort: {
       findByClientId: vi.fn().mockResolvedValue(null),
       findByClientIds: vi.fn().mockResolvedValue([]),
     },
-    clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
-    clientSettings: { findByClientId: vi.fn().mockResolvedValue(null) },
+    clientSettingsSourcePort: {
+      findByClientId: vi.fn().mockResolvedValue(null),
+    },
     database: createUnreachableDatabase(),
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-    measurementIds: { generate: () => "entry-1" },
-    measurements: { listByClientId: vi.fn().mockResolvedValue([]) },
-    onboardingStandings: {
+    loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+    measurementIdsPort: { generate: () => "entry-1" },
+    clientMeasurementsSourcePort: {
+      listByClientId: vi.fn().mockResolvedValue([]),
+    },
+    onboardingStandingsPort: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       findByClientId: vi.fn().mockResolvedValue(null),
     },
-    onboardingSubmissions: {
+    onboardingSubmissionRecorderPort: {
       recordOnboardingSubmitted: vi.fn().mockResolvedValue(undefined),
     },
-    productEmail: { provider: "memory", send: vi.fn() },
+    productEmailPort: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
     recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
     recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
-    reviewStampRecorder: {
+    reviewStampRecorderPort: {
       recordReviewStamp: vi.fn().mockResolvedValue(undefined),
     },
     seedCoaching: vi.fn().mockResolvedValue(undefined),

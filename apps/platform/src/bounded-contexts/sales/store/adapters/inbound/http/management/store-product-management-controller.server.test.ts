@@ -54,11 +54,11 @@ function createAuthenticator(
 }
 
 type PublicationUseCases = {
-  planNewProduct: PlanNewProductUseCase;
-  planProductRevision: PlanProductRevisionUseCase;
-  publishNewProduct: PublishNewProductUseCase;
-  publishProductVersion: PublishProductVersionUseCase;
-  retireProduct: RetireProductUseCase;
+  planNewProductUseCase: PlanNewProductUseCase;
+  planProductRevisionUseCase: PlanProductRevisionUseCase;
+  publishNewProductUseCase: PublishNewProductUseCase;
+  publishProductVersionUseCase: PublishProductVersionUseCase;
+  retireProductUseCase: RetireProductUseCase;
 };
 
 function useCaseReturning<UseCase>(result: unknown): UseCase {
@@ -71,20 +71,23 @@ function createUseCases(
   overrides: Partial<PublicationUseCases> = {},
 ): PublicationUseCases {
   return {
-    planNewProduct: useCaseReturning({ status: "valid", plan: {} }),
-    planProductRevision: useCaseReturning({ status: "valid", plan: {} }),
-    publishNewProduct: useCaseReturning({ status: "published", publication }),
-    publishProductVersion: useCaseReturning({
+    planNewProductUseCase: useCaseReturning({ status: "valid", plan: {} }),
+    planProductRevisionUseCase: useCaseReturning({ status: "valid", plan: {} }),
+    publishNewProductUseCase: useCaseReturning({
       status: "published",
       publication,
     }),
-    retireProduct: useCaseReturning({ status: "retired", productId: 7 }),
+    publishProductVersionUseCase: useCaseReturning({
+      status: "published",
+      publication,
+    }),
+    retireProductUseCase: useCaseReturning({ status: "retired", productId: 7 }),
     ...overrides,
   };
 }
 
 function createController(options: {
-  authenticator?: ManagementAuthenticatorPort;
+  managementAuthenticatorPort?: ManagementAuthenticatorPort;
   transportPolicy?: ManagementAuthConfig["transportPolicy"];
   useCases?: PublicationUseCases;
 }): StoreProductManagementController {
@@ -94,7 +97,8 @@ function createController(options: {
       secret: "a-management-secret-of-sufficient-length",
       transportPolicy: options.transportPolicy ?? "any",
     },
-    authenticator: options.authenticator ?? createAuthenticator(),
+    managementAuthenticatorPort:
+      options.managementAuthenticatorPort ?? createAuthenticator(),
     ...(options.useCases ?? createUseCases()),
   });
 }
@@ -128,15 +132,16 @@ describe("StoreProductManagementController authorization", () => {
     "maps %s to its own status without consuming the upload",
     async (_label, authResult, status, code) => {
       // arrange
-      const controller = createController({
-        authenticator: createAuthenticator(
+      const storeProductManagementController = createController({
+        managementAuthenticatorPort: createAuthenticator(
           authResult as ManagementAuthenticationResult,
         ),
       });
       const request = publicationRequest();
 
       // act
-      const response = await controller.publishProduct(request);
+      const response =
+        await storeProductManagementController.publishProduct(request);
 
       // assert
       expect(response.status).toBe(status);
@@ -150,14 +155,14 @@ describe("StoreProductManagementController authorization", () => {
 
   it("refuses plaintext transport before authenticating at all", async () => {
     // arrange
-    const authenticator = createAuthenticator();
-    const controller = createController({
-      authenticator,
+    const managementAuthenticatorPort = createAuthenticator();
+    const storeProductManagementController = createController({
+      managementAuthenticatorPort,
       transportPolicy: "https_required",
     });
 
     // act
-    const response = await controller.publishProduct(
+    const response = await storeProductManagementController.publishProduct(
       publicationRequest({
         url: "http://example.test/api/management/store/products",
       }),
@@ -168,12 +173,14 @@ describe("StoreProductManagementController authorization", () => {
     expect(await response.json()).toMatchObject({
       error: { code: "insecure_transport" },
     });
-    expect(authenticator.authenticate).not.toHaveBeenCalled();
+    expect(managementAuthenticatorPort.authenticate).not.toHaveBeenCalled();
   });
 
   it("accepts a proxied HTTPS request when the edge forwards the protocol", async () => {
     // arrange
-    const controller = createController({ transportPolicy: "https_required" });
+    const storeProductManagementController = createController({
+      transportPolicy: "https_required",
+    });
     const request = new Request(
       "http://example.test/api/management/store/products",
       {
@@ -192,7 +199,8 @@ describe("StoreProductManagementController authorization", () => {
     );
 
     // act
-    const response = await controller.publishProduct(request);
+    const response =
+      await storeProductManagementController.publishProduct(request);
 
     // assert
     expect(response.status).toBe(201);
@@ -202,7 +210,7 @@ describe("StoreProductManagementController authorization", () => {
 describe("StoreProductManagementController payload handling", () => {
   it("rejects an upload beyond the publication ceiling", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
     const request = new Request(
       "https://example.test/api/management/store/products",
       {
@@ -213,7 +221,8 @@ describe("StoreProductManagementController payload handling", () => {
     );
 
     // act
-    const response = await controller.publishProduct(request);
+    const response =
+      await storeProductManagementController.publishProduct(request);
 
     // assert
     expect(response.status).toBe(413);
@@ -224,10 +233,10 @@ describe("StoreProductManagementController payload handling", () => {
 
   it("rejects metadata that is not valid JSON", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
 
     // act
-    const response = await controller.publishProduct(
+    const response = await storeProductManagementController.publishProduct(
       publicationRequest({ metadata: "{not json" }),
     );
 
@@ -240,10 +249,10 @@ describe("StoreProductManagementController payload handling", () => {
 
   it("rejects metadata that does not match the publication schema", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
 
     // act
-    const response = await controller.publishProduct(
+    const response = await storeProductManagementController.publishProduct(
       publicationRequest({ metadata: { ...metadata, typeSlugs: [] } }),
     );
 
@@ -253,10 +262,10 @@ describe("StoreProductManagementController payload handling", () => {
 
   it("rejects a customer filename carrying a path separator", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
 
     // act
-    const response = await controller.publishProduct(
+    const response = await storeProductManagementController.publishProduct(
       publicationRequest({
         metadata: {
           ...metadata,
@@ -273,10 +282,10 @@ describe("StoreProductManagementController payload handling", () => {
 
   it("rejects a descriptor whose named file is absent", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
 
     // act
-    const response = await controller.publishProduct(
+    const response = await storeProductManagementController.publishProduct(
       publicationRequest({
         metadata: {
           ...metadata,
@@ -296,7 +305,7 @@ describe("StoreProductManagementController outcomes", () => {
     const controller = createController({});
     const replayController = createController({
       useCases: createUseCases({
-        publishNewProduct: useCaseReturning({
+        publishNewProductUseCase: useCaseReturning({
           status: "replayed",
           publication,
         }),
@@ -321,16 +330,19 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("reports a reused idempotency key with a different payload as a conflict", async () => {
     // arrange
-    const controller = createController({
+    const storeProductManagementController = createController({
       useCases: createUseCases({
-        publishNewProduct: useCaseReturning({
+        publishNewProductUseCase: useCaseReturning({
           status: "idempotency_conflict",
         }),
       }),
     });
 
     // act
-    const response = await controller.publishProduct(publicationRequest());
+    const response =
+      await storeProductManagementController.publishProduct(
+        publicationRequest(),
+      );
 
     // assert
     expect(response.status).toBe(409);
@@ -341,9 +353,9 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("returns the domain issues behind a rejected payload", async () => {
     // arrange
-    const controller = createController({
+    const storeProductManagementController = createController({
       useCases: createUseCases({
-        publishNewProduct: useCaseReturning({
+        publishNewProductUseCase: useCaseReturning({
           status: "invalid",
           issues: [
             {
@@ -357,7 +369,10 @@ describe("StoreProductManagementController outcomes", () => {
     });
 
     // act
-    const response = await controller.publishProduct(publicationRequest());
+    const response =
+      await storeProductManagementController.publishProduct(
+        publicationRequest(),
+      );
 
     // assert
     expect(response.status).toBe(400);
@@ -371,9 +386,9 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("maps a missing product to 404 rather than a validation failure", async () => {
     // arrange
-    const controller = createController({
+    const storeProductManagementController = createController({
       useCases: createUseCases({
-        publishProductVersion: useCaseReturning({
+        publishProductVersionUseCase: useCaseReturning({
           status: "invalid",
           issues: [{ code: "product_not_found" }],
         }),
@@ -381,10 +396,11 @@ describe("StoreProductManagementController outcomes", () => {
     });
 
     // act
-    const response = await controller.publishProductVersion(
-      publicationRequest(),
-      "404",
-    );
+    const response =
+      await storeProductManagementController.publishProductVersion(
+        publicationRequest(),
+        "404",
+      );
 
     // assert
     expect(response.status).toBe(404);
@@ -394,10 +410,10 @@ describe("StoreProductManagementController outcomes", () => {
     "rejects the product id %j as unknown",
     async (productId) => {
       // arrange
-      const controller = createController({});
+      const storeProductManagementController = createController({});
 
       // act
-      const response = await controller.retireProduct(
+      const response = await storeProductManagementController.retireProduct(
         new Request("https://example.test/api/management/store/products/x", {
           method: "PATCH",
         }),
@@ -411,10 +427,10 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("retires a product", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
 
     // act
-    const response = await controller.retireProduct(
+    const response = await storeProductManagementController.retireProduct(
       new Request("https://example.test/api/management/store/products/7", {
         method: "PATCH",
       }),
@@ -431,14 +447,14 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("reports infrastructure failure as unavailable rather than a business outcome", async () => {
     // arrange
-    const controller = createController({
+    const storeProductManagementController = createController({
       useCases: createUseCases({
-        retireProduct: useCaseReturning({ status: "unavailable" }),
+        retireProductUseCase: useCaseReturning({ status: "unavailable" }),
       }),
     });
 
     // act
-    const response = await controller.retireProduct(
+    const response = await storeProductManagementController.retireProduct(
       new Request("https://example.test/api/management/store/products/7", {
         method: "PATCH",
       }),
@@ -451,11 +467,11 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("requires the dry run to name either a new slug or a revision target", async () => {
     // arrange
-    const controller = createController({});
+    const storeProductManagementController = createController({});
     const { slug: _slug, idempotencyKey: _key, ...withoutTarget } = metadata;
 
     // act
-    const response = await controller.validate(
+    const response = await storeProductManagementController.validate(
       publicationRequest({ metadata: withoutTarget }),
     );
 
@@ -469,11 +485,11 @@ describe("StoreProductManagementController outcomes", () => {
   it("rejects a dry run naming both a new slug and a revision target", async () => {
     // arrange
     const useCases = createUseCases();
-    const controller = createController({ useCases });
+    const storeProductManagementController = createController({ useCases });
     const { idempotencyKey: _key, ...base } = metadata;
 
     // act
-    const response = await controller.validate(
+    const response = await storeProductManagementController.validate(
       publicationRequest({
         metadata: { ...base, targetProductSlug: "glute-growth-guide" },
       }),
@@ -481,27 +497,27 @@ describe("StoreProductManagementController outcomes", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(useCases.planNewProduct.execute).not.toHaveBeenCalled();
-    expect(useCases.planProductRevision.execute).not.toHaveBeenCalled();
+    expect(useCases.planNewProductUseCase.execute).not.toHaveBeenCalled();
+    expect(useCases.planProductRevisionUseCase.execute).not.toHaveBeenCalled();
   });
 
   it("routes a dry run naming a target product to the revision plan", async () => {
     // arrange
     const useCases = createUseCases();
-    const controller = createController({ useCases });
+    const storeProductManagementController = createController({ useCases });
     const { slug: _slug, idempotencyKey: _key, ...base } = metadata;
 
     // act
-    await controller.validate(
+    await storeProductManagementController.validate(
       publicationRequest({
         metadata: { ...base, targetProductSlug: "glute-growth-guide" },
       }),
     );
 
     // assert
-    expect(useCases.planProductRevision.execute).toHaveBeenCalledWith(
+    expect(useCases.planProductRevisionUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ productSlug: "glute-growth-guide" }),
     );
-    expect(useCases.planNewProduct.execute).not.toHaveBeenCalled();
+    expect(useCases.planNewProductUseCase.execute).not.toHaveBeenCalled();
   });
 });

@@ -23,11 +23,11 @@ type UpdateOwnClientIdentityResult =
   | { status: "invalid"; problems: ClientIdentityProblems };
 
 type UpdateOwnClientIdentityUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  identities: Pick<ClientIdentitiesPort, "findByClientId">;
-  changes: ClientIdentityChangesPort;
-  calendar: CalendarDatesPort;
-  clock: ClockPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientId">;
+  clientIdentityChangesPort: ClientIdentityChangesPort;
+  calendarDatesPort: CalendarDatesPort;
+  clockPort: ClockPort;
   countries: ClientCountries;
 };
 
@@ -39,7 +39,7 @@ export class UpdateOwnClientIdentityUseCase {
   async execute(
     command: UpdateOwnClientIdentityCommand,
   ): Promise<UpdateOwnClientIdentityResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       command.authSubjectId,
     );
 
@@ -51,7 +51,7 @@ export class UpdateOwnClientIdentityUseCase {
       return { status: "ended" };
     }
 
-    const current = await this.options.identities.findByClientId(
+    const current = await this.options.clientIdentitiesPort.findByClientId(
       client.clientId,
     );
 
@@ -66,8 +66,8 @@ export class UpdateOwnClientIdentityUseCase {
         gender: current.gender,
       },
       ClientToday.on(
-        { on: this.options.clock.now(), timeZone: client.timeZone },
-        this.options.calendar,
+        { on: this.options.clockPort.now(), timeZone: client.timeZone },
+        this.options.calendarDatesPort,
       ),
       this.options.countries,
     );
@@ -76,7 +76,7 @@ export class UpdateOwnClientIdentityUseCase {
       return result;
     }
 
-    await this.options.changes.save(result.edit);
+    await this.options.clientIdentityChangesPort.save(result.edit);
 
     return { status: "saved" };
   }

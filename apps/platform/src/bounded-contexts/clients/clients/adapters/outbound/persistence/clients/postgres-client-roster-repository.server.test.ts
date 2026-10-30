@@ -68,10 +68,12 @@ describe("PostgresClientRoster#list", () => {
   it("reads every client with her journey, the coaching standing on her row, her booking and when she joined, ended ones included", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
-    const roster = new PostgresClientRosterRepository(database.client);
+    const postgresClientRosterRepository = new PostgresClientRosterRepository(
+      database.client,
+    );
 
     // act
-    const entries = await roster.list();
+    const entries = await postgresClientRosterRepository.list();
 
     // assert
     expect(entries).toEqual([ROSTER_ENTRY]);
@@ -80,10 +82,12 @@ describe("PostgresClientRoster#list", () => {
   it("reads each client from her own row alone and orders the latest joined first", async () => {
     // arrange
     const database = createDatabaseAnswering([]);
-    const roster = new PostgresClientRosterRepository(database.client);
+    const postgresClientRosterRepository = new PostgresClientRosterRepository(
+      database.client,
+    );
 
     // act
-    await roster.list();
+    await postgresClientRosterRepository.list();
 
     // assert
     expect(database.joins).toEqual([]);
@@ -94,12 +98,12 @@ describe("PostgresClientRoster#list", () => {
 
   it("reads a client whose account is not bound yet as unbound", async () => {
     // arrange
-    const roster = new PostgresClientRosterRepository(
+    const postgresClientRosterRepository = new PostgresClientRosterRepository(
       createDatabaseAnswering([{ ...CLIENT_ROW, authSubjectId: null }]).client,
     );
 
     // act
-    const [entry] = await roster.list();
+    const [entry] = await postgresClientRosterRepository.list();
 
     // assert
     expect(entry?.accountBound).toBe(false);
@@ -110,10 +114,12 @@ describe("PostgresClientRoster#findById", () => {
   it("reads the client with the given id", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
-    const roster = new PostgresClientRosterRepository(database.client);
+    const postgresClientRosterRepository = new PostgresClientRosterRepository(
+      database.client,
+    );
 
     // act
-    const entry = await roster.findById(CLIENT_ID);
+    const entry = await postgresClientRosterRepository.findById(CLIENT_ID);
 
     // assert
     expect(entry).toEqual(ROSTER_ENTRY);
@@ -125,12 +131,12 @@ describe("PostgresClientRoster#findById", () => {
 
   it("answers null for an unknown client", async () => {
     // arrange
-    const roster = new PostgresClientRosterRepository(
+    const postgresClientRosterRepository = new PostgresClientRosterRepository(
       createDatabaseAnswering([]).client,
     );
 
     // act
-    const entry = await roster.findById(CLIENT_ID);
+    const entry = await postgresClientRosterRepository.findById(CLIENT_ID);
 
     // assert
     expect(entry).toBeNull();

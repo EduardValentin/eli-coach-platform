@@ -36,38 +36,42 @@ function createInvitedClients(found: InvitedClient | null) {
 describe("InvitePaidClientUseCase", () => {
   function inviteDependencies(client: InvitedClient | null) {
     return {
-      accountInvitations: createAccountInvitations(),
-      clients: createInvitedClients(client),
+      accountInvitationsPort: createAccountInvitations(),
+      invitedClientsPort: createInvitedClients(client),
     };
   }
 
   it("issues an account invitation for a client without one, records it on her and delivers it", async () => {
     // arrange
     const dependencies = inviteDependencies(invitedClient);
-    const useCase = new InvitePaidClientUseCase(dependencies);
+    const invitePaidClientUseCase = new InvitePaidClientUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ clientId: invitedClient.id });
+    const result = await invitePaidClientUseCase.execute({
+      clientId: invitedClient.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "invited" });
-    expect(dependencies.accountInvitations.issue).toHaveBeenCalledWith({
+    expect(dependencies.accountInvitationsPort.issue).toHaveBeenCalledWith({
       email: invitedClient.email,
     });
-    expect(dependencies.clients.recordAccountInvitation).toHaveBeenCalledWith({
+    expect(
+      dependencies.invitedClientsPort.recordAccountInvitation,
+    ).toHaveBeenCalledWith({
       clientId: invitedClient.id,
       invitationId: "invitation-1",
     });
     expect(
-      dependencies.accountInvitations.ensureDelivered,
+      dependencies.accountInvitationsPort.ensureDelivered,
     ).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       firstName: invitedClient.firstName,
     });
     const order = [
-      dependencies.accountInvitations.issue,
-      dependencies.clients.recordAccountInvitation,
-      dependencies.accountInvitations.ensureDelivered,
+      dependencies.accountInvitationsPort.issue,
+      dependencies.invitedClientsPort.recordAccountInvitation,
+      dependencies.accountInvitationsPort.ensureDelivered,
     ].map((step) => step.mock.invocationCallOrder[0]);
     expect(order).toEqual([...order].sort((left, right) => left - right));
   });
@@ -78,17 +82,21 @@ describe("InvitePaidClientUseCase", () => {
       ...invitedClient,
       accountInvitationId: "invitation-1",
     });
-    const useCase = new InvitePaidClientUseCase(dependencies);
+    const invitePaidClientUseCase = new InvitePaidClientUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ clientId: invitedClient.id });
+    const result = await invitePaidClientUseCase.execute({
+      clientId: invitedClient.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "invited" });
-    expect(dependencies.accountInvitations.issue).not.toHaveBeenCalled();
-    expect(dependencies.clients.recordAccountInvitation).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.issue).not.toHaveBeenCalled();
     expect(
-      dependencies.accountInvitations.ensureDelivered,
+      dependencies.invitedClientsPort.recordAccountInvitation,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.accountInvitationsPort.ensureDelivered,
     ).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       firstName: invitedClient.firstName,
@@ -101,30 +109,34 @@ describe("InvitePaidClientUseCase", () => {
       ...invitedClient,
       authSubjectId: "user_ana",
     });
-    const useCase = new InvitePaidClientUseCase(dependencies);
+    const invitePaidClientUseCase = new InvitePaidClientUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ clientId: invitedClient.id });
+    const result = await invitePaidClientUseCase.execute({
+      clientId: invitedClient.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "already-admitted" });
-    expect(dependencies.accountInvitations.issue).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.issue).not.toHaveBeenCalled();
     expect(
-      dependencies.accountInvitations.ensureDelivered,
+      dependencies.accountInvitationsPort.ensureDelivered,
     ).not.toHaveBeenCalled();
   });
 
   it("refuses to invite a client that does not exist", async () => {
     // arrange
     const dependencies = inviteDependencies(null);
-    const useCase = new InvitePaidClientUseCase(dependencies);
+    const invitePaidClientUseCase = new InvitePaidClientUseCase(dependencies);
 
     // act
-    const admission = useCase.execute({ clientId: "client-404" });
+    const admission = invitePaidClientUseCase.execute({
+      clientId: "client-404",
+    });
 
     // assert
     await expect(admission).rejects.toThrow("client-404");
-    expect(dependencies.accountInvitations.issue).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.issue).not.toHaveBeenCalled();
   });
 });
 
@@ -134,12 +146,12 @@ describe("AcceptInvitationUseCase", () => {
     found: InvitedClient | null;
   }) {
     return {
-      accountInvitations: createAccountInvitations(
+      accountInvitationsPort: createAccountInvitations(
         options.acceptedInvitationId === undefined
           ? "invitation-1"
           : options.acceptedInvitationId,
       ),
-      clients: createInvitedClients(options.found),
+      invitedClientsPort: createInvitedClients(options.found),
     };
   }
 
@@ -151,20 +163,24 @@ describe("AcceptInvitationUseCase", () => {
   it("links the client of the invitation the signed-in subject accepted", async () => {
     // arrange
     const dependencies = acceptDependencies({ found: heldInvitation });
-    const useCase = new AcceptInvitationUseCase(dependencies);
+    const acceptInvitationUseCase = new AcceptInvitationUseCase(dependencies);
 
     // act
-    const outcome = await useCase.execute({ authSubjectId: "user_ana" });
+    const outcome = await acceptInvitationUseCase.execute({
+      authSubjectId: "user_ana",
+    });
 
     // assert
     expect(outcome).toBe("accepted");
     expect(
-      dependencies.accountInvitations.acceptedInvitationOf,
+      dependencies.accountInvitationsPort.acceptedInvitationOf,
     ).toHaveBeenCalledWith("user_ana");
-    expect(dependencies.clients.findByAccountInvitationId).toHaveBeenCalledWith(
-      "invitation-1",
-    );
-    expect(dependencies.clients.bindAuthSubject).toHaveBeenCalledWith({
+    expect(
+      dependencies.invitedClientsPort.findByAccountInvitationId,
+    ).toHaveBeenCalledWith("invitation-1");
+    expect(
+      dependencies.invitedClientsPort.bindAuthSubject,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       authSubjectId: "user_ana",
     });
@@ -176,30 +192,38 @@ describe("AcceptInvitationUseCase", () => {
       acceptedInvitationId: null,
       found: heldInvitation,
     });
-    const useCase = new AcceptInvitationUseCase(dependencies);
+    const acceptInvitationUseCase = new AcceptInvitationUseCase(dependencies);
 
     // act
-    const outcome = await useCase.execute({ authSubjectId: "user_stranger" });
+    const outcome = await acceptInvitationUseCase.execute({
+      authSubjectId: "user_stranger",
+    });
 
     // assert
     expect(outcome).toBe("refused");
     expect(
-      dependencies.clients.findByAccountInvitationId,
+      dependencies.invitedClientsPort.findByAccountInvitationId,
     ).not.toHaveBeenCalled();
-    expect(dependencies.clients.bindAuthSubject).not.toHaveBeenCalled();
+    expect(
+      dependencies.invitedClientsPort.bindAuthSubject,
+    ).not.toHaveBeenCalled();
   });
 
   it("refuses a subject whose accepted invitation no client references", async () => {
     // arrange
     const dependencies = acceptDependencies({ found: null });
-    const useCase = new AcceptInvitationUseCase(dependencies);
+    const acceptInvitationUseCase = new AcceptInvitationUseCase(dependencies);
 
     // act
-    const outcome = await useCase.execute({ authSubjectId: "user_ana" });
+    const outcome = await acceptInvitationUseCase.execute({
+      authSubjectId: "user_ana",
+    });
 
     // assert
     expect(outcome).toBe("refused");
-    expect(dependencies.clients.bindAuthSubject).not.toHaveBeenCalled();
+    expect(
+      dependencies.invitedClientsPort.bindAuthSubject,
+    ).not.toHaveBeenCalled();
   });
 
   it("accepts again without writing when the client is already linked to the subject", async () => {
@@ -207,14 +231,18 @@ describe("AcceptInvitationUseCase", () => {
     const dependencies = acceptDependencies({
       found: { ...heldInvitation, authSubjectId: "user_ana" },
     });
-    const useCase = new AcceptInvitationUseCase(dependencies);
+    const acceptInvitationUseCase = new AcceptInvitationUseCase(dependencies);
 
     // act
-    const outcome = await useCase.execute({ authSubjectId: "user_ana" });
+    const outcome = await acceptInvitationUseCase.execute({
+      authSubjectId: "user_ana",
+    });
 
     // assert
     expect(outcome).toBe("accepted");
-    expect(dependencies.clients.bindAuthSubject).not.toHaveBeenCalled();
+    expect(
+      dependencies.invitedClientsPort.bindAuthSubject,
+    ).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -225,19 +253,25 @@ describe("AcceptInvitationUseCase", () => {
     async (_label, winner, expected) => {
       // arrange
       const dependencies = acceptDependencies({ found: heldInvitation });
-      dependencies.clients.bindAuthSubject.mockResolvedValue("raced");
-      dependencies.clients.findById.mockResolvedValue({
+      dependencies.invitedClientsPort.bindAuthSubject.mockResolvedValue(
+        "raced",
+      );
+      dependencies.invitedClientsPort.findById.mockResolvedValue({
         ...heldInvitation,
         authSubjectId: winner,
       });
-      const useCase = new AcceptInvitationUseCase(dependencies);
+      const acceptInvitationUseCase = new AcceptInvitationUseCase(dependencies);
 
       // act
-      const outcome = await useCase.execute({ authSubjectId: "user_ana" });
+      const outcome = await acceptInvitationUseCase.execute({
+        authSubjectId: "user_ana",
+      });
 
       // assert
       expect(outcome).toBe(expected);
-      expect(dependencies.clients.findById).toHaveBeenCalledWith("client-1");
+      expect(dependencies.invitedClientsPort.findById).toHaveBeenCalledWith(
+        "client-1",
+      );
     },
   );
 });

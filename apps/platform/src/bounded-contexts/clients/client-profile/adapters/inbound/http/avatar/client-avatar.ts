@@ -16,6 +16,6 @@ export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
     args.context
       .get(clientProfileContext)
-      .avatars.open(args, args.params.clientId),
+      .clientAvatarController.open(args, args.params.clientId),
   );
 }

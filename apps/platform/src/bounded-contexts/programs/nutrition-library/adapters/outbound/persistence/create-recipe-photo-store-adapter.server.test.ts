@@ -26,11 +26,11 @@ describe("createRecipePhotoStore", () => {
     const photo = Buffer.from([1, 2, 3]);
 
     // act
-    const store = createRecipePhotoStoreAdapter(workspace);
+    const recipePhotoStorePort = createRecipePhotoStoreAdapter(workspace);
 
     // assert
-    await store.store(PHOTO_ID, photo);
-    expect(await store.open(PHOTO_ID)).toMatchObject({
+    await recipePhotoStorePort.store(PHOTO_ID, photo);
+    expect(await recipePhotoStorePort.open(PHOTO_ID)).toMatchObject({
       status: "opened",
       sizeBytes: photo.length,
     });

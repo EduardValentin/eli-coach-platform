@@ -81,7 +81,7 @@ const EMPTY_LISTING = {
 describe("CoachResourcesController load", () => {
   it("hands the coach the client's resources narrowed as listed, each named for its real format, with the client's tag options, the browse it applied, the counts and every tag she has used", async () => {
     // arrange
-    const { controller } = createController({
+    const { coachResourcesController } = createController({
       status: "listed",
       browsing: {
         resources: [NEWER_PDF, OLDER_SPREADSHEET].map(
@@ -99,7 +99,7 @@ describe("CoachResourcesController load", () => {
     });
 
     // act
-    const listing = await controller.load(coachArgs(), CLIENT_ID);
+    const listing = await coachResourcesController.load(coachArgs(), CLIENT_ID);
 
     // assert
     expect(listing).toEqual({
@@ -146,10 +146,11 @@ describe("CoachResourcesController load", () => {
 
   it("lists the client's resources as the address narrows them, read raw", async () => {
     // arrange
-    const { controller, listClientResources } = createController();
+    const { coachResourcesController, listClientResources } =
+      createController();
 
     // act
-    await controller.load(
+    await coachResourcesController.load(
       coachArgs({
         url: `https://evoa.fit/coach/clients/${CLIENT_ID}/resources?tag=Meals&q=+plan+&sort=title&dir=desc`,
       }),
@@ -171,10 +172,11 @@ describe("CoachResourcesController load", () => {
 
   it("lists every resource of the client when the address narrows nothing", async () => {
     // arrange
-    const { controller, listClientResources } = createController();
+    const { coachResourcesController, listClientResources } =
+      createController();
 
     // act
-    await controller.load(coachArgs(), CLIENT_ID);
+    await coachResourcesController.load(coachArgs(), CLIENT_ID);
 
     // assert
     expect(listClientResources).toHaveBeenCalledWith({
@@ -186,10 +188,12 @@ describe("CoachResourcesController load", () => {
 
   it("answers an unavailable listing when the client's resources are unavailable", async () => {
     // arrange
-    const { controller } = createController({ status: "unavailable" });
+    const { coachResourcesController } = createController({
+      status: "unavailable",
+    });
 
     // act
-    const listing = await controller.load(coachArgs(), CLIENT_ID);
+    const listing = await coachResourcesController.load(coachArgs(), CLIENT_ID);
 
     // assert
     expect(listing).toEqual({ status: "unavailable" });
@@ -197,11 +201,13 @@ describe("CoachResourcesController load", () => {
 
   it("answers not found to a client who does not exist", async () => {
     // arrange
-    const { controller } = createController({ status: "not-found" });
+    const { coachResourcesController } = createController({
+      status: "not-found",
+    });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs(), CLIENT_ID),
+      coachResourcesController.load(coachArgs(), CLIENT_ID),
     );
 
     // assert
@@ -210,11 +216,12 @@ describe("CoachResourcesController load", () => {
 
   it("answers not found to an id that is not a uuid without listing anything", async () => {
     // arrange
-    const { controller, listClientResources } = createController();
+    const { coachResourcesController, listClientResources } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs(), "not-a-uuid"),
+      coachResourcesController.load(coachArgs(), "not-a-uuid"),
     );
 
     // assert
@@ -224,11 +231,15 @@ describe("CoachResourcesController load", () => {
 
   it("refuses a client account without listing anything", async () => {
     // arrange
-    const { controller, listClientResources } = createController();
+    const { coachResourcesController, listClientResources } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs({ session: CLIENT_SESSION }), CLIENT_ID),
+      coachResourcesController.load(
+        coachArgs({ session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -238,11 +249,15 @@ describe("CoachResourcesController load", () => {
 
   it("sends an anonymous visitor to sign in without listing anything", async () => {
     // arrange
-    const { controller, listClientResources } = createController();
+    const { coachResourcesController, listClientResources } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs({ session: ANONYMOUS_SESSION }), CLIENT_ID),
+      coachResourcesController.load(
+        coachArgs({ session: ANONYMOUS_SESSION }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -253,13 +268,13 @@ describe("CoachResourcesController load", () => {
 
 function createController(listed: ListClientResourcesResult = EMPTY_LISTING) {
   const listClientResources = vi.fn().mockResolvedValue(listed);
-  const controller = new CoachResourcesController({
-    listClientResources: {
+  const coachResourcesController = new CoachResourcesController({
+    listClientResourcesUseCase: {
       execute: listClientResources,
     } as unknown as ListClientResourcesUseCase,
   });
 
-  return { controller, listClientResources };
+  return { coachResourcesController, listClientResources };
 }
 
 function coachArgs(options: { session?: ResolvedSession; url?: string } = {}) {

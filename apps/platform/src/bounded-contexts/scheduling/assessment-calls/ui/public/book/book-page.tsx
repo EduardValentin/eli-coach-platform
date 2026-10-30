@@ -38,7 +38,9 @@ import { UnavailableSlots } from "./unavailable-slots";
 import "./book-page.css";
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  return context.get(assessmentCallsContext).assessmentCalls.loadBookingPage();
+  return context
+    .get(assessmentCallsContext)
+    .assessmentCallsController.loadBookingPage();
 }
 
 export function shouldRevalidate({

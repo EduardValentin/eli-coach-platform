@@ -21,7 +21,9 @@ export async function action(_args: ActionFunctionArgs) {
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    args.context.get(checkInsContext).coachCheckInSeries.preview(args),
+    args.context
+      .get(checkInsContext)
+      .coachCheckInSeriesController.preview(args),
   );
 }
 

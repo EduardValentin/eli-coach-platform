@@ -21,19 +21,20 @@ function configuredRoom(url: string): CoachMeetingRoom {
 describe("PostgresCoachMeetingRoom#current", () => {
   it("answers the room the stored row holds", async () => {
     // arrange
-    const meetingRoom = new PostgresCoachMeetingRoomRepository({
-      database: createDatabaseReturning([
-        {
-          id: 1,
-          url: "https://meet.example.com/room",
-          updatedAt: new Date("2026-09-18T08:00:00.000Z"),
-        },
-      ]),
-      clock,
-    });
+    const postgresCoachMeetingRoomRepository =
+      new PostgresCoachMeetingRoomRepository({
+        database: createDatabaseReturning([
+          {
+            id: 1,
+            url: "https://meet.example.com/room",
+            updatedAt: new Date("2026-09-18T08:00:00.000Z"),
+          },
+        ]),
+        clockPort: clock,
+      });
 
     // act
-    const current = await meetingRoom.current();
+    const current = await postgresCoachMeetingRoomRepository.current();
 
     // assert
     expect(current?.url).toBe("https://meet.example.com/room");
@@ -41,13 +42,14 @@ describe("PostgresCoachMeetingRoom#current", () => {
 
   it("answers null when no row exists", async () => {
     // arrange
-    const meetingRoom = new PostgresCoachMeetingRoomRepository({
-      database: createDatabaseReturning([]),
-      clock,
-    });
+    const postgresCoachMeetingRoomRepository =
+      new PostgresCoachMeetingRoomRepository({
+        database: createDatabaseReturning([]),
+        clockPort: clock,
+      });
 
     // act
-    const current = await meetingRoom.current();
+    const current = await postgresCoachMeetingRoomRepository.current();
 
     // assert
     expect(current).toBeNull();
@@ -55,15 +57,16 @@ describe("PostgresCoachMeetingRoom#current", () => {
 
   it("answers null when the stored row has no url", async () => {
     // arrange
-    const meetingRoom = new PostgresCoachMeetingRoomRepository({
-      database: createDatabaseReturning([
-        { id: 1, url: null, updatedAt: new Date("2026-09-18T08:00:00.000Z") },
-      ]),
-      clock,
-    });
+    const postgresCoachMeetingRoomRepository =
+      new PostgresCoachMeetingRoomRepository({
+        database: createDatabaseReturning([
+          { id: 1, url: null, updatedAt: new Date("2026-09-18T08:00:00.000Z") },
+        ]),
+        clockPort: clock,
+      });
 
     // act
-    const current = await meetingRoom.current();
+    const current = await postgresCoachMeetingRoomRepository.current();
 
     // assert
     expect(current).toBeNull();
@@ -74,13 +77,16 @@ describe("PostgresCoachMeetingRoom#save", () => {
   it("upserts the room's url and stamps updated_at from the clock", async () => {
     // arrange
     const database = createUpsertingDatabase();
-    const meetingRoom = new PostgresCoachMeetingRoomRepository({
-      database: database.client,
-      clock,
-    });
+    const postgresCoachMeetingRoomRepository =
+      new PostgresCoachMeetingRoomRepository({
+        database: database.client,
+        clockPort: clock,
+      });
 
     // act
-    await meetingRoom.save(configuredRoom("https://meet.example.com/room"));
+    await postgresCoachMeetingRoomRepository.save(
+      configuredRoom("https://meet.example.com/room"),
+    );
 
     // assert
     expect(database.values).toHaveBeenCalledWith({
@@ -96,13 +102,14 @@ describe("PostgresCoachMeetingRoom#save", () => {
   it("upserts a null url when the coach clears the room", async () => {
     // arrange
     const database = createUpsertingDatabase();
-    const meetingRoom = new PostgresCoachMeetingRoomRepository({
-      database: database.client,
-      clock,
-    });
+    const postgresCoachMeetingRoomRepository =
+      new PostgresCoachMeetingRoomRepository({
+        database: database.client,
+        clockPort: clock,
+      });
 
     // act
-    await meetingRoom.save(null);
+    await postgresCoachMeetingRoomRepository.save(null);
 
     // assert
     expect(database.values).toHaveBeenCalledWith({

@@ -9,7 +9,7 @@ type RemoveClientAvatarAsCoachResult =
   { status: "removed" } | { status: "not-found" };
 
 type RemoveClientAvatarAsCoachUseCaseOptions = ClientAvatarRemovalOptions & {
-  clients: Pick<ClientReachPort, "findById">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
 };
 
 export class RemoveClientAvatarAsCoachUseCase {
@@ -18,7 +18,7 @@ export class RemoveClientAvatarAsCoachUseCase {
   ) {}
 
   async execute(clientId: string): Promise<RemoveClientAvatarAsCoachResult> {
-    const client = await this.options.clients.findById(clientId);
+    const client = await this.options.clientReachPort.findById(clientId);
 
     if (!client) {
       return { status: "not-found" };

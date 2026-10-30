@@ -90,14 +90,14 @@ function createPorts(
   const entries: MeasurementEntry[] = [];
 
   return {
-    clients: {
+    clientReachPort: {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValue(
           options.client === undefined ? reachOf("reachable") : options.client,
         ),
     } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
-    profiles: {
+    clientProfilesPort: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(profileWith(options.consent ?? "consented")),
@@ -106,20 +106,22 @@ function createPorts(
       ClientProfilesPort,
       "findByClientId" | "recordPhotoConsent"
     >,
-    records: {
+    clientMeasurementRecordsPort: {
       entries,
       listByClientId: vi.fn().mockResolvedValue([]),
       record: vi.fn(async ({ entry }: { entry: MeasurementEntry }) => {
         entries.push(entry);
       }),
     } satisfies ClientMeasurementRecordsPort & { entries: MeasurementEntry[] },
-    measurementIds: { generate: () => "entry-1" } satisfies MeasurementIdsPort,
-    photos: new InMemoryProgressPhotosAdapter(),
-    photoIds: {
+    measurementIdsPort: {
+      generate: () => "entry-1",
+    } satisfies MeasurementIdsPort,
+    progressPhotosPort: new InMemoryProgressPhotosAdapter(),
+    progressPhotoIdsPort: {
       generate: () => `photo-${++photoNumber}`,
     } satisfies ProgressPhotoIdsPort,
-    store: new InMemoryProgressPhotoStoreAdapter(),
-    renditions: {
+    progressPhotoStorePort: new InMemoryProgressPhotoStoreAdapter(),
+    progressPhotoRenditionsPort: {
       render: vi.fn().mockResolvedValue(
         options.rendition ?? {
           status: "rendered",
@@ -128,8 +130,8 @@ function createPorts(
         },
       ),
     } satisfies ProgressPhotoRenditionsPort,
-    clock: { now: () => NOW },
-    incidents: {
+    clockPort: { now: () => NOW },
+    measurementIncidentsPort: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
@@ -166,10 +168,10 @@ describe("RecordMeasurementsUseCase", () => {
   it("records a new entry under a fresh id, dated now with the readings she gave", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -182,8 +184,10 @@ describe("RecordMeasurementsUseCase", () => {
       entryId: "entry-1",
       photos: {},
     });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.records.record).toHaveBeenCalledWith({
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.clientMeasurementRecordsPort.record).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
       entry: {
@@ -193,7 +197,9 @@ describe("RecordMeasurementsUseCase", () => {
         hipsCm: 97,
       },
     });
-    expect(ports.incidents.measurementEntrySaved).toHaveBeenCalledWith({
+    expect(
+      ports.measurementIncidentsPort.measurementEntrySaved,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
     });
@@ -202,10 +208,10 @@ describe("RecordMeasurementsUseCase", () => {
   it("records nothing for a subject bound to no client", async () => {
     // arrange
     const ports = createPorts({ client: null });
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_stranger",
       values: VALUES,
       consentGiven: true,
@@ -214,17 +220,17 @@ describe("RecordMeasurementsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
-    expect(ports.records.record).not.toHaveBeenCalled();
-    expect(ports.profiles.recordPhotoConsent).not.toHaveBeenCalled();
+    expect(ports.clientMeasurementRecordsPort.record).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
   });
 
   it("refuses a client whose portal access has ended, before reading her entry", async () => {
     // arrange
     const ports = createPorts({ client: reachOf("ended") });
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: { weightKg: 500 },
       consentGiven: true,
@@ -233,17 +239,17 @@ describe("RecordMeasurementsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.records.record).not.toHaveBeenCalled();
-    expect(ports.profiles.recordPhotoConsent).not.toHaveBeenCalled();
+    expect(ports.clientMeasurementRecordsPort.record).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
   });
 
   it("records the entry of a client still awaiting her onboarding", async () => {
     // arrange
     const ports = createPorts({ client: reachOf("awaiting_onboarding") });
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -264,10 +270,10 @@ describe("RecordMeasurementsUseCase", () => {
   ])("records nothing %s", async (_case, values) => {
     // arrange
     const ports = createPorts();
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values,
       consentGiven: true,
@@ -276,17 +282,17 @@ describe("RecordMeasurementsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "invalid" });
-    expect(ports.records.record).not.toHaveBeenCalled();
-    expect(ports.profiles.recordPhotoConsent).not.toHaveBeenCalled();
+    expect(ports.clientMeasurementRecordsPort.record).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
   });
 
   it("stores each accepted photo's rendition against her entry", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -300,7 +306,9 @@ describe("RecordMeasurementsUseCase", () => {
       photos: { front: "stored", back: "stored" },
     });
     expect(
-      [...ports.photos.rows.values()].map((photo) => photo.toSnapshot()),
+      [...ports.progressPhotosPort.rows.values()].map((photo) =>
+        photo.toSnapshot(),
+      ),
     ).toEqual([
       {
         id: "photo-1",
@@ -329,28 +337,32 @@ describe("RecordMeasurementsUseCase", () => {
         createdAt: NOW,
       },
     ]);
-    expect(ports.store.files.get("client-1/entry-1/photo-1.bin")).toBe(
-      RENDERED_BYTES,
-    );
-    expect(ports.incidents.progressPhotoStored).toHaveBeenCalledWith({
+    expect(
+      ports.progressPhotoStorePort.files.get("client-1/entry-1/photo-1.bin"),
+    ).toBe(RENDERED_BYTES);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoStored,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
       view: "front",
       receivedBytes: 2_000,
       storedBytes: 3,
     });
-    expect(ports.records.record.mock.invocationCallOrder[0]).toBeLessThan(
-      ports.renditions.render.mock.invocationCallOrder[0],
+    expect(
+      ports.clientMeasurementRecordsPort.record.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      ports.progressPhotoRenditionsPort.render.mock.invocationCallOrder[0],
     );
   });
 
   it("records her consent from the sheet before it stores her first photos", async () => {
     // arrange
     const ports = createPorts({ consent: "not-consented" });
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: true,
@@ -358,13 +370,15 @@ describe("RecordMeasurementsUseCase", () => {
     });
 
     // assert
-    expect(ports.profiles.recordPhotoConsent).toHaveBeenCalledWith(
+    expect(ports.clientProfilesPort.recordPhotoConsent).toHaveBeenCalledWith(
       "client-1",
       NOW,
     );
     expect(
-      ports.profiles.recordPhotoConsent.mock.invocationCallOrder[0],
-    ).toBeLessThan(ports.renditions.render.mock.invocationCallOrder[0]);
+      ports.clientProfilesPort.recordPhotoConsent.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      ports.progressPhotoRenditionsPort.render.mock.invocationCallOrder[0],
+    );
     expect(result).toEqual({
       status: "recorded",
       entryId: "entry-1",
@@ -375,10 +389,10 @@ describe("RecordMeasurementsUseCase", () => {
   it("keeps the date she first agreed when she has already consented", async () => {
     // arrange
     const ports = createPorts({ consent: "consented" });
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    await useCase.execute({
+    await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: true,
@@ -386,7 +400,7 @@ describe("RecordMeasurementsUseCase", () => {
     });
 
     // assert
-    expect(ports.profiles.recordPhotoConsent).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -397,10 +411,10 @@ describe("RecordMeasurementsUseCase", () => {
     async (_case, consent) => {
       // arrange
       const ports = createPorts({ consent });
-      const useCase = new RecordMeasurementsUseCase(ports);
+      const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
       // act
-      const result = await useCase.execute({
+      const result = await recordMeasurementsUseCase.execute({
         authSubjectId: "user_ana",
         values: VALUES,
         consentGiven: false,
@@ -413,9 +427,11 @@ describe("RecordMeasurementsUseCase", () => {
         entryId: "entry-1",
         photos: { front: "refused" },
       });
-      expect(ports.renditions.render).not.toHaveBeenCalled();
-      expect(ports.store.files.size).toBe(0);
-      expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith({
+      expect(ports.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
+      expect(ports.progressPhotoStorePort.files.size).toBe(0);
+      expect(
+        ports.measurementIncidentsPort.progressPhotoRefused,
+      ).toHaveBeenCalledWith({
         clientId: "client-1",
         entryId: "entry-1",
         view: "front",
@@ -431,10 +447,10 @@ describe("RecordMeasurementsUseCase", () => {
   ])("refuses %s without rendering it", async (_case, overrides) => {
     // arrange
     const ports = createPorts();
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -447,8 +463,10 @@ describe("RecordMeasurementsUseCase", () => {
       entryId: "entry-1",
       photos: { front: "refused", side: "stored" },
     });
-    expect(ports.renditions.render).toHaveBeenCalledTimes(1);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotoRenditionsPort.render).toHaveBeenCalledTimes(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "not-accepted" }),
     );
   });
@@ -456,10 +474,10 @@ describe("RecordMeasurementsUseCase", () => {
   it("refuses a photo the renditions cannot process, and keeps the entry", async () => {
     // arrange
     const ports = createPorts({ rendition: { status: "refused" } });
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -472,8 +490,10 @@ describe("RecordMeasurementsUseCase", () => {
       entryId: "entry-1",
       photos: { back: "refused" },
     });
-    expect(ports.store.files.size).toBe(0);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotoStorePort.files.size).toBe(0);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "back", reason: "rendition-refused" }),
     );
   });
@@ -481,11 +501,13 @@ describe("RecordMeasurementsUseCase", () => {
   it("answers refused rather than throwing when rendering throws", async () => {
     // arrange
     const ports = createPorts();
-    ports.renditions.render.mockRejectedValueOnce(new Error("decoder crashed"));
-    const useCase = new RecordMeasurementsUseCase(ports);
+    ports.progressPhotoRenditionsPort.render.mockRejectedValueOnce(
+      new Error("decoder crashed"),
+    );
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -498,7 +520,9 @@ describe("RecordMeasurementsUseCase", () => {
       entryId: "entry-1",
       photos: { front: "refused" },
     });
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "rendition-refused" }),
     );
   });
@@ -506,13 +530,13 @@ describe("RecordMeasurementsUseCase", () => {
   it("answers refused and goes on with the next photo when the store throws", async () => {
     // arrange
     const ports = createPorts();
-    vi.spyOn(ports.store, "store").mockRejectedValueOnce(
+    vi.spyOn(ports.progressPhotoStorePort, "store").mockRejectedValueOnce(
       new Error("disk full"),
     );
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -525,8 +549,10 @@ describe("RecordMeasurementsUseCase", () => {
       entryId: "entry-1",
       photos: { front: "refused", side: "stored" },
     });
-    expect(ports.photos.rows.size).toBe(1);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotosPort.rows.size).toBe(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "storage-failed" }),
     );
   });
@@ -534,13 +560,13 @@ describe("RecordMeasurementsUseCase", () => {
   it("answers refused when the photo record fails after its file is stored, leaving no record without a file", async () => {
     // arrange
     const ports = createPorts();
-    vi.spyOn(ports.photos, "add").mockRejectedValueOnce(
+    vi.spyOn(ports.progressPhotosPort, "add").mockRejectedValueOnce(
       new Error("connection lost"),
     );
-    const useCase = new RecordMeasurementsUseCase(ports);
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await recordMeasurementsUseCase.execute({
       authSubjectId: "user_ana",
       values: VALUES,
       consentGiven: false,
@@ -553,9 +579,11 @@ describe("RecordMeasurementsUseCase", () => {
       entryId: "entry-1",
       photos: { front: "refused" },
     });
-    expect(ports.photos.rows.size).toBe(0);
-    expect(ports.records.entries).toHaveLength(1);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotosPort.rows.size).toBe(0);
+    expect(ports.clientMeasurementRecordsPort.entries).toHaveLength(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "storage-failed" }),
     );
   });

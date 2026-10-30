@@ -152,10 +152,10 @@ const SERIES_NOTICE: CheckInSeriesNotice = {
   recipient: "client",
 };
 
-function createNotifications(productEmail: ProductEmailPort) {
-  return new EmailCheckInNotificationsAdapter(productEmail, {
+function createNotifications(productEmailPort: ProductEmailPort) {
+  return new EmailCheckInNotificationsAdapter(productEmailPort, {
     appBasePath: "/eli-coach-platform",
-    clock: { now: () => new Date("2026-10-19T08:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-10-19T08:00:00.000Z") },
     coachEmail: COACH_EMAIL,
     contactEmail: CONTACT_EMAIL,
     publicAppUrl: "https://evoa.fit",
@@ -224,22 +224,24 @@ describe("EmailCheckInNotifications", () => {
     "sends the $notification email for the $recipient to $to, keyed by the check-in, its moves and the event",
     async ({ notification, recipient, to, replyTo, subject }) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
 
       // act
-      const delivery = await notifications[notification]({
+      const delivery = await emailCheckInNotificationsAdapter[notification]({
         ...NOTICE,
         recipient,
       });
 
       // assert
       expect(delivery).toBe("sent");
-      expect(productEmail.sent).toHaveLength(1);
-      expect(productEmail.sent[0]?.to).toBe(to);
-      expect(productEmail.sent[0]?.replyTo).toBe(replyTo);
-      expect(productEmail.sent[0]?.subject).toBe(subject);
-      expect(productEmail.sent[0]?.idempotencyKey).toBe(
+      expect(inMemoryProductEmailAdapter.sent).toHaveLength(1);
+      expect(inMemoryProductEmailAdapter.sent[0]?.to).toBe(to);
+      expect(inMemoryProductEmailAdapter.sent[0]?.replyTo).toBe(replyTo);
+      expect(inMemoryProductEmailAdapter.sent[0]?.subject).toBe(subject);
+      expect(inMemoryProductEmailAdapter.sent[0]?.idempotencyKey).toBe(
         `check-in:${CHECK_IN_ID}:0:${notification}`,
       );
     },
@@ -249,11 +251,13 @@ describe("EmailCheckInNotifications", () => {
     "sends the $notification email for the $recipient to $to in that recipient's zone, keyed by the move",
     async ({ notification, recipient, to, replyTo, subject, zoneLine }) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
 
       // act
-      const delivery = await notifications[notification]({
+      const delivery = await emailCheckInNotificationsAdapter[notification]({
         ...NOTICE,
         checkIn: MOVED_CHECK_IN,
         recipient,
@@ -261,7 +265,7 @@ describe("EmailCheckInNotifications", () => {
 
       // assert
       expect(delivery).toBe("sent");
-      const [sent, ...others] = productEmail.sent;
+      const [sent, ...others] = inMemoryProductEmailAdapter.sent;
       expect(others).toEqual([]);
       expect(sent?.to).toBe(to);
       expect(sent?.replyTo).toBe(replyTo);
@@ -275,17 +279,19 @@ describe("EmailCheckInNotifications", () => {
 
   it("names both times and the proposer's note in the new-time email, linking the recipient's Check-ins page", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.newTimeProposed({
+    await emailCheckInNotificationsAdapter.newTimeProposed({
       ...NOTICE_TO_CLIENT,
       checkIn: MOVED_CHECK_IN,
     });
 
     // assert
-    const sent = productEmail.sent[0];
+    const sent = inMemoryProductEmailAdapter.sent[0];
     expect(sent?.text).toContain(
       "EARLIER: Thursday, 22 October 2026 at 3:00 PM",
     );
@@ -300,32 +306,36 @@ describe("EmailCheckInNotifications", () => {
 
   it("leaves the note out of the new-time email when the proposer wrote none", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.newTimeProposed({
+    await emailCheckInNotificationsAdapter.newTimeProposed({
       ...NOTICE,
       checkIn: { ...MOVED_CHECK_IN, newTimeNote: null },
     });
 
     // assert
-    expect(productEmail.sent[0]?.text).not.toContain("NOTE:");
+    expect(inMemoryProductEmailAdapter.sent[0]?.text).not.toContain("NOTE:");
   });
 
   it("attaches the accepted new time to the proposer's email as a calendar invite with her join link", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.newTimeAccepted({
+    await emailCheckInNotificationsAdapter.newTimeAccepted({
       ...NOTICE,
       checkIn: MOVED_CHECK_IN,
     });
 
     // assert
-    const sent = productEmail.sent[0];
+    const sent = inMemoryProductEmailAdapter.sent[0];
     expect(sent?.html).toContain(`href="${COACH_JOIN_URL}"`);
     const [invite, ...others] = sent?.attachments ?? [];
     expect(others).toEqual([]);
@@ -340,17 +350,19 @@ describe("EmailCheckInNotifications", () => {
     "attaches no calendar invite to the %s email",
     async (notification) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
 
       // act
-      await notifications[notification]({
+      await emailCheckInNotificationsAdapter[notification]({
         ...NOTICE_TO_CLIENT,
         checkIn: MOVED_CHECK_IN,
       });
 
       // assert
-      expect(productEmail.sent[0]?.attachments).toBeUndefined();
+      expect(inMemoryProductEmailAdapter.sent[0]?.attachments).toBeUndefined();
     },
   );
 
@@ -365,27 +377,35 @@ describe("EmailCheckInNotifications", () => {
     "attaches no calendar invite to the $notification email for the $recipient",
     async ({ notification, recipient }) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
 
       // act
-      await notifications[notification]({ ...NOTICE, recipient });
+      await emailCheckInNotificationsAdapter[notification]({
+        ...NOTICE,
+        recipient,
+      });
 
       // assert
-      expect(productEmail.sent[0]?.attachments).toBeUndefined();
+      expect(inMemoryProductEmailAdapter.sent[0]?.attachments).toBeUndefined();
     },
   );
 
   it("attaches the approved check-in to the client's email as a calendar invite", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.approved(NOTICE_TO_CLIENT);
+    await emailCheckInNotificationsAdapter.approved(NOTICE_TO_CLIENT);
 
     // assert
-    const [invite, ...others] = productEmail.sent[0]?.attachments ?? [];
+    const [invite, ...others] =
+      inMemoryProductEmailAdapter.sent[0]?.attachments ?? [];
     expect(others).toEqual([]);
     expect(invite?.filename).toBe("invite.ics");
     expect(invite?.contentType).toBe(
@@ -405,16 +425,18 @@ describe("EmailCheckInNotifications", () => {
 
   it("links the client's approval email to Google Calendar in her own zone", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.approved(NOTICE_TO_CLIENT);
+    await emailCheckInNotificationsAdapter.approved(NOTICE_TO_CLIENT);
 
     // assert
     const calendarUrl = new URL(
       /Add to Google Calendar: (\S+)/.exec(
-        productEmail.sent[0]?.text ?? "",
+        inMemoryProductEmailAdapter.sent[0]?.text ?? "",
       )?.[1] ?? "",
     );
     expect(calendarUrl.origin + calendarUrl.pathname).toBe(
@@ -433,8 +455,10 @@ describe("EmailCheckInNotifications", () => {
     "names the client on one line in the %s email's subject",
     async (notification) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
       const notice: CheckInNotice = {
         ...NOTICE,
         recipient: "coach",
@@ -446,10 +470,10 @@ describe("EmailCheckInNotifications", () => {
       };
 
       // act
-      await notifications[notification](notice);
+      await emailCheckInNotificationsAdapter[notification](notice);
 
       // assert
-      expect(productEmail.sent[0]?.subject).toMatch(
+      expect(inMemoryProductEmailAdapter.sent[0]?.subject).toMatch(
         /^Ana Bcc: someone@example\.com Popescu (asked|withdrew)/,
       );
     },
@@ -457,40 +481,48 @@ describe("EmailCheckInNotifications", () => {
 
   it("links the coach's request email to her Check-ins page on the public origin", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.requested(NOTICE);
+    await emailCheckInNotificationsAdapter.requested(NOTICE);
 
     // assert
-    expect(productEmail.sent[0]?.html).toContain(
+    expect(inMemoryProductEmailAdapter.sent[0]?.html).toContain(
       'href="https://evoa.fit/eli-coach-platform/coach/checkins"',
     );
   });
 
   it("links the client's approval email to her join link on the public origin", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.approved(NOTICE_TO_CLIENT);
+    await emailCheckInNotificationsAdapter.approved(NOTICE_TO_CLIENT);
 
     // assert
-    expect(productEmail.sent[0]?.html).toContain(`href="${JOIN_URL}"`);
+    expect(inMemoryProductEmailAdapter.sent[0]?.html).toContain(
+      `href="${JOIN_URL}"`,
+    );
   });
 
   it("links the client's decline email to her Check-ins page on the public origin", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.declined(NOTICE_TO_CLIENT);
+    await emailCheckInNotificationsAdapter.declined(NOTICE_TO_CLIENT);
 
     // assert
-    expect(productEmail.sent[0]?.html).toContain(
+    expect(inMemoryProductEmailAdapter.sent[0]?.html).toContain(
       'href="https://evoa.fit/eli-coach-platform/client/checkins"',
     );
   });
@@ -540,50 +572,59 @@ describe("EmailCheckInNotifications", () => {
     "words the $notification email for the $recipient in that recipient's zone",
     async ({ notification, recipient, zoneLine }) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
 
       // act
-      await notifications[notification]({ ...NOTICE, recipient });
+      await emailCheckInNotificationsAdapter[notification]({
+        ...NOTICE,
+        recipient,
+      });
 
       // assert
-      expect(productEmail.sent[0]?.text).toContain(zoneLine);
+      expect(inMemoryProductEmailAdapter.sent[0]?.text).toContain(zoneLine);
     },
   );
 
   it("links the client's email about the coach's request to her Check-ins page with the coach's note", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.requested({
+    await emailCheckInNotificationsAdapter.requested({
       ...COACH_REQUEST_NOTICE,
       recipient: "client",
     });
 
     // assert
-    expect(productEmail.sent[0]?.html).toContain(
+    expect(inMemoryProductEmailAdapter.sent[0]?.html).toContain(
       'href="https://evoa.fit/eli-coach-platform/client/checkins"',
     );
-    expect(productEmail.sent[0]?.text).toContain(
+    expect(inMemoryProductEmailAdapter.sent[0]?.text).toContain(
       "NOTE: Can we talk about my knees?",
     );
   });
 
   it("attaches the check-in the client approved to the coach's email as a calendar invite with her join link", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailCheckInNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.approved({
+    await emailCheckInNotificationsAdapter.approved({
       ...COACH_REQUEST_NOTICE,
       recipient: "coach",
     });
 
     // assert
-    const sent = productEmail.sent[0];
+    const sent = inMemoryProductEmailAdapter.sent[0];
     expect(sent?.html).toContain(`href="${COACH_JOIN_URL}"`);
     const [invite, ...others] = sent?.attachments ?? [];
     expect(others).toEqual([]);
@@ -629,17 +670,19 @@ describe("EmailCheckInNotifications", () => {
     "emails the client once per $notification with the weekly moment in her zone",
     async ({ notification, series, subject, idempotencyKey, firstWeek }) => {
       // arrange
-      const productEmail = new InMemoryProductEmailAdapter();
-      const notifications = createNotifications(productEmail);
+      const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+      const emailCheckInNotificationsAdapter = createNotifications(
+        inMemoryProductEmailAdapter,
+      );
 
       // act
-      const delivery = await notifications[notification]({
+      const delivery = await emailCheckInNotificationsAdapter[notification]({
         ...SERIES_NOTICE,
         series,
       });
 
       // assert
-      const sent = productEmail.sent[0];
+      const sent = inMemoryProductEmailAdapter.sent[0];
       expect(delivery).toBe("sent");
       expect(sent?.to).toBe("ana@example.com");
       expect(sent?.replyTo).toBeUndefined();
@@ -662,14 +705,16 @@ describe("EmailCheckInNotifications", () => {
 
   it("reports a send the provider refused as failed", async () => {
     // arrange
-    const refusing: ProductEmailPort = {
+    const productEmailPort: ProductEmailPort = {
       provider: "refusing",
       send: async () => ({ kind: "rejected", reason: "validation_error" }),
     };
-    const notifications = createNotifications(refusing);
+    const emailCheckInNotificationsAdapter =
+      createNotifications(productEmailPort);
 
     // act
-    const delivery = await notifications.approved(NOTICE_TO_CLIENT);
+    const delivery =
+      await emailCheckInNotificationsAdapter.approved(NOTICE_TO_CLIENT);
 
     // assert
     expect(delivery).toBe("failed");

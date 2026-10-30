@@ -44,7 +44,7 @@ function createPropagation(handlers: CoachingPeriodHandlerPort[]) {
     incidents,
     propagation: new CoachingPeriodPropagation({
       coachingPeriods: handlers,
-      incidents,
+      coachingSubscriptionIncidentsPort: incidents,
     }),
   };
 }

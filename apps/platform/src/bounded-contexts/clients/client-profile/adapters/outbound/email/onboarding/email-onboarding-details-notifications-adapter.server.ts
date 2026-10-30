@@ -13,14 +13,14 @@ type DetailsRequestMessage = Parameters<
 
 export type EmailOnboardingDetailsNotificationsOptions = {
   appBasePath: string;
-  clock: ClockPort;
+  clockPort: ClockPort;
   contactEmail: string;
   publicAppUrl: string;
 };
 
 export class EmailOnboardingDetailsNotificationsAdapter implements OnboardingDetailsNotificationsPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailOnboardingDetailsNotificationsOptions,
   ) {}
 
@@ -29,11 +29,11 @@ export class EmailOnboardingDetailsNotificationsAdapter implements OnboardingDet
   ): Promise<"sent" | "failed"> {
     const content = createDetailsRequestEmailContent({
       contactEmail: this.options.contactEmail,
-      currentYear: this.options.clock.now().getUTCFullYear(),
+      currentYear: this.options.clockPort.now().getUTCFullYear(),
       firstName: message.firstName,
       portalUrl: this.clientPortalUrl(),
     });
-    const result = await this.productEmail.send({
+    const result = await this.productEmailPort.send({
       html: content.html,
       idempotencyKey: `onboarding-details:${message.requestId}`,
       replyTo: this.options.contactEmail,

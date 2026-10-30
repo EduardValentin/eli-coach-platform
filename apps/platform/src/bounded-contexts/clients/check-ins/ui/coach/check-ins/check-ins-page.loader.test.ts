@@ -72,7 +72,7 @@ describe("the coach's check-ins loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(checkInsContext, {
-          coachCheckIns: { loadCheckIns },
+          coachCheckInsController: { loadCheckIns },
         } as unknown as CheckInsFeature),
       ],
       request: new Request("https://evoa.fit/coach/checkins"),

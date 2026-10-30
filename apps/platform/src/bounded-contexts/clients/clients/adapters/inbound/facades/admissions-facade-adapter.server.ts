@@ -13,9 +13,9 @@ import type {
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type AdmissionsFacadeOptions = {
-  admitPaidClient: AdmitPaidClientUseCase;
-  invitePaidClient: InvitePaidClientUseCase;
-  recordCoachingStanding: RecordCoachingStandingUseCase;
+  admitPaidClientUseCase: AdmitPaidClientUseCase;
+  invitePaidClientUseCase: InvitePaidClientUseCase;
+  recordCoachingStandingUseCase: RecordCoachingStandingUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -24,7 +24,7 @@ export class AdmissionsFacadeAdapter implements AdmissionsFacade {
 
   async admitPaidClient({ admittedAt, standing, ...intake }: PaidClientDto) {
     return this.options.unitOfWork(() =>
-      this.options.admitPaidClient.execute({
+      this.options.admitPaidClientUseCase.execute({
         intake,
         at: new Date(admittedAt),
         standing: this.standingOf(standing),
@@ -33,7 +33,7 @@ export class AdmissionsFacadeAdapter implements AdmissionsFacade {
   }
 
   async invitePaidClient({ clientId }: { clientId: string }) {
-    await this.options.invitePaidClient.execute({ clientId });
+    await this.options.invitePaidClientUseCase.execute({ clientId });
   }
 
   async recordCoachingStanding({
@@ -41,7 +41,7 @@ export class AdmissionsFacadeAdapter implements AdmissionsFacade {
     standing,
   }: CoachingStandingRecordDto) {
     return this.options.unitOfWork(() =>
-      this.options.recordCoachingStanding.execute({
+      this.options.recordCoachingStandingUseCase.execute({
         clientId,
         standing: this.standingOf(standing),
       }),

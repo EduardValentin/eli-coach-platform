@@ -33,13 +33,13 @@ describe("ReadInvitationStandingUseCase", () => {
     const invitations = createInvitations(
       invitation({ emailDeliveryFailedAt: SENT_AT, emailSentAt: null }),
     );
-    const useCase = new ReadInvitationStandingUseCase({
-      invitations,
-      clock: { now: () => NOW },
+    const readInvitationStandingUseCase = new ReadInvitationStandingUseCase({
+      accountInvitationsPort: invitations,
+      clockPort: { now: () => NOW },
     });
 
     // act
-    const result = await useCase.execute("invitation-1");
+    const result = await readInvitationStandingUseCase.execute("invitation-1");
 
     // assert
     expect(result).toEqual({
@@ -58,13 +58,13 @@ describe("ReadInvitationStandingUseCase", () => {
     ],
   ])("reads nothing for %s", async (_label, found) => {
     // arrange
-    const useCase = new ReadInvitationStandingUseCase({
-      invitations: createInvitations(found),
-      clock: { now: () => NOW },
+    const readInvitationStandingUseCase = new ReadInvitationStandingUseCase({
+      accountInvitationsPort: createInvitations(found),
+      clockPort: { now: () => NOW },
     });
 
     // act
-    const result = await useCase.execute("invitation-1");
+    const result = await readInvitationStandingUseCase.execute("invitation-1");
 
     // assert
     expect(result).toBeNull();

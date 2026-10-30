@@ -24,7 +24,7 @@ describe("coach settings page loader", () => {
     // arrange
     const loadSettingsPage = vi.fn().mockResolvedValue(SETTINGS);
     const feature = {
-      coachScheduleSettings: { loadSettingsPage },
+      coachScheduleSettingsController: { loadSettingsPage },
     } as unknown as CoachScheduleFeature;
 
     // act

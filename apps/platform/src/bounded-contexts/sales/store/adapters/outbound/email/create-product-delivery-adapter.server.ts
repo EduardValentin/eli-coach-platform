@@ -10,8 +10,8 @@ type CreateProductDeliveryOptions = {
 };
 
 export function createProductDeliveryAdapter(
-  productEmail: ProductEmailPort,
+  productEmailPort: ProductEmailPort,
   options: CreateProductDeliveryOptions,
 ): ProductDeliveryPort {
-  return new EmailProductDeliveryAdapter(productEmail, options);
+  return new EmailProductDeliveryAdapter(productEmailPort, options);
 }

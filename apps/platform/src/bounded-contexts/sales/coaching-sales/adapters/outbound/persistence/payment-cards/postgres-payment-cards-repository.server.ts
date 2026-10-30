@@ -13,7 +13,7 @@ import { and, eq, type SQL } from "drizzle-orm";
 import { paymentCardsTable } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";
 
 type PostgresPaymentCardsOptions = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
 };
 
@@ -52,7 +52,7 @@ export class PostgresPaymentCardsRepository implements PaymentCardsPort {
   async save(change: PaymentCardWrite): Promise<"saved" | "stale"> {
     const written = await writeCard(this.executor, {
       change,
-      updatedAt: this.options.clock.now(),
+      updatedAt: this.options.clockPort.now(),
     });
 
     return written ? "saved" : "stale";
@@ -61,7 +61,7 @@ export class PostgresPaymentCardsRepository implements PaymentCardsPort {
   saveForEvent(
     change: PaymentCardEventWrite,
   ): Promise<"recorded" | "duplicate" | "stale"> {
-    const receivedAt = this.options.clock.now();
+    const receivedAt = this.options.clockPort.now();
 
     return recordEventOnce(this.options.database, {
       eventId: change.eventId,

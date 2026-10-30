@@ -16,9 +16,9 @@ type OpenPaymentMethodSessionResult =
   | { status: "provider_unavailable" };
 
 type OpenPaymentMethodSessionUseCaseOptions = {
-  clock: ClockPort;
-  incidents: CoachingSubscriptionIncidentsPort;
-  paymentSubscriptions: PaymentSubscriptionsPort;
+  clockPort: ClockPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  paymentSubscriptionsPort: PaymentSubscriptionsPort;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
 };
 
@@ -38,20 +38,22 @@ export class OpenPaymentMethodSessionUseCase {
       return { status: "not_found" };
     }
 
-    if (!subscription.hasPortalAccessAt(this.options.clock.now())) {
+    if (!subscription.hasPortalAccessAt(this.options.clockPort.now())) {
       return { status: "ended" };
     }
 
     try {
       const session =
-        await this.options.paymentSubscriptions.openPaymentMethodSession({
+        await this.options.paymentSubscriptionsPort.openPaymentMethodSession({
           paymentCustomerId: subscription.paymentCustomerId,
           returnUrl: command.returnUrl,
         });
 
-      this.options.incidents.paymentMethodSessionOpened({
-        subscriptionId: subscription.id,
-      });
+      this.options.coachingSubscriptionIncidentsPort.paymentMethodSessionOpened(
+        {
+          subscriptionId: subscription.id,
+        },
+      );
 
       return { status: "opened", url: session.url };
     } catch {

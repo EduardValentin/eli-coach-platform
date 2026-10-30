@@ -6,12 +6,12 @@ import {
 } from "~/shared/logging/error-fields.server";
 
 export class NutritionLibraryIncidentsAdapter implements NutritionLibraryIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   foodCreationFailed({
     error,
   }: Parameters<NutritionLibraryIncidentsPort["foodCreationFailed"]>[0]) {
-    this.logger.error("Food could not be created.", {
+    this.loggerPort.error("Food could not be created.", {
       errorCategory: "food_creation_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -22,7 +22,7 @@ export class NutritionLibraryIncidentsAdapter implements NutritionLibraryInciden
     error,
     foodId,
   }: Parameters<NutritionLibraryIncidentsPort["foodEditFailed"]>[0]) {
-    this.logger.error("Food edit could not be written.", {
+    this.loggerPort.error("Food edit could not be written.", {
       errorCategory: "food_edit_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -33,7 +33,7 @@ export class NutritionLibraryIncidentsAdapter implements NutritionLibraryInciden
   recipeCreationFailed({
     error,
   }: Parameters<NutritionLibraryIncidentsPort["recipeCreationFailed"]>[0]) {
-    this.logger.error("Recipe could not be created.", {
+    this.loggerPort.error("Recipe could not be created.", {
       errorCategory: "recipe_creation_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -44,7 +44,7 @@ export class NutritionLibraryIncidentsAdapter implements NutritionLibraryInciden
     error,
     recipeId,
   }: Parameters<NutritionLibraryIncidentsPort["recipeEditFailed"]>[0]) {
-    this.logger.error("Recipe edit could not be written.", {
+    this.loggerPort.error("Recipe edit could not be written.", {
       errorCategory: "recipe_edit_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -56,7 +56,7 @@ export class NutritionLibraryIncidentsAdapter implements NutritionLibraryInciden
     error,
     photoId,
   }: Parameters<NutritionLibraryIncidentsPort["recipePhotoCleanupFailed"]>[0]) {
-    this.logger.error("Recipe photo file could not be removed.", {
+    this.loggerPort.error("Recipe photo file could not be removed.", {
       errorCategory: "recipe_photo_cleanup_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),

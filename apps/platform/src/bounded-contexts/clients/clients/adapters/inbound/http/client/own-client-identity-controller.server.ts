@@ -11,7 +11,7 @@ import { ownClientIdentityRequestSchema } from "~/bounded-contexts/clients/clien
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OwnClientIdentityControllerOptions = {
-  updateOwnClientIdentity: UpdateOwnClientIdentityUseCase;
+  updateOwnClientIdentityUseCase: UpdateOwnClientIdentityUseCase;
 };
 
 export class OwnClientIdentityController {
@@ -30,7 +30,7 @@ export class OwnClientIdentityController {
     }
 
     return identityUpdatedResponse(
-      await this.options.updateOwnClientIdentity.execute({
+      await this.options.updateOwnClientIdentityUseCase.execute({
         authSubjectId: client.authSubjectId,
         identity: enteredIdentityOf(request.data),
       }),

@@ -70,12 +70,12 @@ function createPorts(options: { rendition?: ProgressPhotoRendition } = {}) {
   let photoNumber = 0;
 
   return {
-    photos: new InMemoryProgressPhotosAdapter(),
-    photoIds: {
+    progressPhotosPort: new InMemoryProgressPhotosAdapter(),
+    progressPhotoIdsPort: {
       generate: () => `photo-${++photoNumber}`,
     } satisfies ProgressPhotoIdsPort,
-    store: new InMemoryProgressPhotoStoreAdapter(),
-    renditions: {
+    progressPhotoStorePort: new InMemoryProgressPhotoStoreAdapter(),
+    progressPhotoRenditionsPort: {
       render: vi.fn().mockResolvedValue(
         options.rendition ?? {
           status: "rendered",
@@ -84,7 +84,7 @@ function createPorts(options: { rendition?: ProgressPhotoRendition } = {}) {
         },
       ),
     } satisfies ProgressPhotoRenditionsPort,
-    incidents: {
+    measurementIncidentsPort: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
@@ -121,7 +121,9 @@ describe("ProgressPhotoIntake", () => {
     // assert
     expect(outcomes).toEqual({ front: "stored", back: "stored" });
     expect(
-      [...ports.photos.rows.values()].map((photo) => photo.toSnapshot()),
+      [...ports.progressPhotosPort.rows.values()].map((photo) =>
+        photo.toSnapshot(),
+      ),
     ).toEqual([
       {
         id: "photo-1",
@@ -150,10 +152,12 @@ describe("ProgressPhotoIntake", () => {
         createdAt: RECEIVED_AT,
       },
     ]);
-    expect(ports.store.files.get("client-1/entry-1/photo-1.bin")).toBe(
-      RENDERED_BYTES,
-    );
-    expect(ports.incidents.progressPhotoStored).toHaveBeenCalledWith({
+    expect(
+      ports.progressPhotoStorePort.files.get("client-1/entry-1/photo-1.bin"),
+    ).toBe(RENDERED_BYTES);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoStored,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
       view: "front",
@@ -172,7 +176,7 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({});
-    expect(ports.renditions.render).not.toHaveBeenCalled();
+    expect(ports.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -191,8 +195,10 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused", side: "stored" });
-    expect(ports.renditions.render).toHaveBeenCalledTimes(1);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotoRenditionsPort.render).toHaveBeenCalledTimes(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "not-accepted" }),
     );
   });
@@ -210,9 +216,11 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused", side: "refused" });
-    expect(ports.renditions.render).not.toHaveBeenCalled();
-    expect(ports.store.files.size).toBe(0);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith({
+    expect(ports.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
+    expect(ports.progressPhotoStorePort.files.size).toBe(0);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith({
       clientId: "client-1",
       entryId: "entry-1",
       view: "side",
@@ -233,8 +241,10 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({ back: "refused" });
-    expect(ports.store.files.size).toBe(0);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotoStorePort.files.size).toBe(0);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "back", reason: "rendition-refused" }),
     );
   });
@@ -242,7 +252,9 @@ describe("ProgressPhotoIntake", () => {
   it("answers refused rather than throwing when rendering throws", async () => {
     // arrange
     const ports = createPorts();
-    ports.renditions.render.mockRejectedValueOnce(new Error("decoder crashed"));
+    ports.progressPhotoRenditionsPort.render.mockRejectedValueOnce(
+      new Error("decoder crashed"),
+    );
     const intake = new ProgressPhotoIntake(ports);
 
     // act
@@ -253,7 +265,9 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused", side: "stored" });
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "rendition-refused" }),
     );
   });
@@ -261,7 +275,7 @@ describe("ProgressPhotoIntake", () => {
   it("answers refused and goes on with the next photo when the store throws", async () => {
     // arrange
     const ports = createPorts();
-    vi.spyOn(ports.store, "store").mockRejectedValueOnce(
+    vi.spyOn(ports.progressPhotoStorePort, "store").mockRejectedValueOnce(
       new Error("disk full"),
     );
     const intake = new ProgressPhotoIntake(ports);
@@ -274,8 +288,10 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused", side: "stored" });
-    expect(ports.photos.rows.size).toBe(1);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotosPort.rows.size).toBe(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "storage-failed" }),
     );
   });
@@ -283,7 +299,7 @@ describe("ProgressPhotoIntake", () => {
   it("answers refused when the photo record fails after its file is stored", async () => {
     // arrange
     const ports = createPorts();
-    vi.spyOn(ports.photos, "add").mockRejectedValueOnce(
+    vi.spyOn(ports.progressPhotosPort, "add").mockRejectedValueOnce(
       new Error("connection lost"),
     );
     const intake = new ProgressPhotoIntake(ports);
@@ -295,8 +311,10 @@ describe("ProgressPhotoIntake", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused" });
-    expect(ports.photos.rows.size).toBe(0);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+    expect(ports.progressPhotosPort.rows.size).toBe(0);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ view: "front", reason: "storage-failed" }),
     );
   });
@@ -304,18 +322,22 @@ describe("ProgressPhotoIntake", () => {
   it("never throws when every port behind the photos fails", async () => {
     // arrange
     const ports = createPorts();
-    ports.renditions.render
+    ports.progressPhotoRenditionsPort.render
       .mockResolvedValueOnce({
         status: "rendered",
         bytes: RENDERED_BYTES,
         mimeType: "image/jpeg",
       })
       .mockRejectedValueOnce(new Error("decoder crashed"));
-    vi.spyOn(ports.photoIds, "generate").mockImplementation(() => {
+    vi.spyOn(ports.progressPhotoIdsPort, "generate").mockImplementation(() => {
       throw new Error("no randomness");
     });
-    vi.spyOn(ports.store, "store").mockRejectedValue(new Error("disk full"));
-    vi.spyOn(ports.photos, "add").mockRejectedValue(new Error("offline"));
+    vi.spyOn(ports.progressPhotoStorePort, "store").mockRejectedValue(
+      new Error("disk full"),
+    );
+    vi.spyOn(ports.progressPhotosPort, "add").mockRejectedValue(
+      new Error("offline"),
+    );
     const intake = new ProgressPhotoIntake(ports);
 
     // act
@@ -331,7 +353,11 @@ describe("ProgressPhotoIntake", () => {
       side: "refused",
       back: "refused",
     });
-    expect(ports.incidents.progressPhotoStored).not.toHaveBeenCalled();
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledTimes(3);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoStored,
+    ).not.toHaveBeenCalled();
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledTimes(3);
   });
 });

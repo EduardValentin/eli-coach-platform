@@ -12,7 +12,7 @@ import type {
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
 
 type CoachingSubscriptionEventHandlerOptions = {
-  reconcileSubscriptionEvent: ReconcileSubscriptionEventUseCase;
+  reconcileSubscriptionEventUseCase: ReconcileSubscriptionEventUseCase;
 };
 
 export class CoachingSubscriptionEventHandler
@@ -34,10 +34,11 @@ export class CoachingSubscriptionEventHandler
       return "ignored";
     }
 
-    const reconciled = await this.options.reconcileSubscriptionEvent.execute({
-      eventId,
-      event,
-    });
+    const reconciled =
+      await this.options.reconcileSubscriptionEventUseCase.execute({
+        eventId,
+        event,
+      });
 
     return reconciled.status;
   }

@@ -43,10 +43,11 @@ describe("PostgresNotificationInbox#latestFor", () => {
   it("maps the coach's stored rows into her notifications", async () => {
     // arrange
     const { database } = createDatabaseSelecting([COACH_ROW]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    const notifications = await inbox.latestFor({
+    const notifications = await postgresNotificationInboxRepository.latestFor({
       recipient: { party: "coach" },
       since: SINCE,
       at: NOW,
@@ -71,10 +72,11 @@ describe("PostgresNotificationInbox#latestFor", () => {
   it("maps a client's stored rows into notifications addressed to her", async () => {
     // arrange
     const { database } = createDatabaseSelecting([CLIENT_ROW]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    const [notification] = await inbox.latestFor({
+    const [notification] = await postgresNotificationInboxRepository.latestFor({
       recipient: { party: "client", clientId: CLIENT_ID },
       since: SINCE,
       at: NOW,
@@ -92,10 +94,11 @@ describe("PostgresNotificationInbox#latestFor", () => {
   it("reads no more rows than the limit asks for", async () => {
     // arrange
     const { database, chain } = createDatabaseSelecting([]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    await inbox.latestFor({
+    await postgresNotificationInboxRepository.latestFor({
       recipient: { party: "coach" },
       since: SINCE,
       at: NOW,
@@ -111,10 +114,11 @@ describe("PostgresNotificationInbox#latestFor", () => {
     const { database } = createDatabaseSelecting([
       { ...COACH_ROW, facts: { nested: { startsAt: FACTS.startsAt } } },
     ]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    const latest = inbox.latestFor({
+    const latest = postgresNotificationInboxRepository.latestFor({
       recipient: { party: "coach" },
       since: SINCE,
       at: NOW,
@@ -130,10 +134,11 @@ describe("PostgresNotificationInbox#unreadCountFor", () => {
   it("answers the count of unread rows the database counted", async () => {
     // arrange
     const { database } = createDatabaseSelecting([{ unread: 3 }]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    const unread = await inbox.unreadCountFor({
+    const unread = await postgresNotificationInboxRepository.unreadCountFor({
       recipient: { party: "client", clientId: CLIENT_ID },
       since: SINCE,
       at: NOW,
@@ -148,10 +153,11 @@ describe("PostgresNotificationInbox#markRead", () => {
   it("answers marked when a notification of the recipient carries the id", async () => {
     // arrange
     const { database } = createDatabaseUpdating([{ id: NOTIFICATION_ID }]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    const result = await inbox.markRead({
+    const result = await postgresNotificationInboxRepository.markRead({
       recipient: { party: "coach" },
       id: NOTIFICATION_ID,
       at: READ_AT,
@@ -164,10 +170,11 @@ describe("PostgresNotificationInbox#markRead", () => {
   it("answers unknown when no notification of the recipient carries the id", async () => {
     // arrange
     const { database } = createDatabaseUpdating([]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    const result = await inbox.markRead({
+    const result = await postgresNotificationInboxRepository.markRead({
       recipient: { party: "client", clientId: CLIENT_ID },
       id: NOTIFICATION_ID,
       at: READ_AT,
@@ -182,10 +189,14 @@ describe("PostgresNotificationInbox#markAllRead", () => {
   it("stamps every unread notification of the recipient with the instant", async () => {
     // arrange
     const { database, chain } = createDatabaseUpdating([]);
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    await inbox.markAllRead({ recipient: { party: "coach" }, at: READ_AT });
+    await postgresNotificationInboxRepository.markAllRead({
+      recipient: { party: "coach" },
+      at: READ_AT,
+    });
 
     // assert
     expect(chain.set).toHaveBeenCalledWith({ readAt: READ_AT });
@@ -196,7 +207,8 @@ describe("PostgresNotificationInbox#record", () => {
   it("inserts every draft in one statement, skipping a once-key already recorded", async () => {
     // arrange
     const { database, chain } = createDatabaseInserting();
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
     const drafts: NotificationDraft[] = [
       {
         recipient: { party: "coach" },
@@ -215,7 +227,10 @@ describe("PostgresNotificationInbox#record", () => {
     ];
 
     // act
-    await inbox.record({ drafts, at: ARRIVED_AT });
+    await postgresNotificationInboxRepository.record({
+      drafts,
+      at: ARRIVED_AT,
+    });
 
     // assert
     expect(database.insert).toHaveBeenCalledTimes(1);
@@ -245,10 +260,14 @@ describe("PostgresNotificationInbox#record", () => {
   it("writes nothing when there is no draft to record", async () => {
     // arrange
     const { database } = createDatabaseInserting();
-    const inbox = new PostgresNotificationInboxRepository({ database });
+    const postgresNotificationInboxRepository =
+      new PostgresNotificationInboxRepository({ database });
 
     // act
-    await inbox.record({ drafts: [], at: ARRIVED_AT });
+    await postgresNotificationInboxRepository.record({
+      drafts: [],
+      at: ARRIVED_AT,
+    });
 
     // assert
     expect(database.insert).not.toHaveBeenCalled();

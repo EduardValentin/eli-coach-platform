@@ -12,7 +12,7 @@ import { coachClientIdentityRequestSchema } from "~/bounded-contexts/clients/cli
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachClientIdentityControllerOptions = {
-  updateClientIdentityAsCoach: UpdateClientIdentityAsCoachUseCase;
+  updateClientIdentityAsCoachUseCase: UpdateClientIdentityAsCoachUseCase;
 };
 
 const clientIdSchema = z.uuid();
@@ -40,7 +40,7 @@ export class CoachClientIdentityController {
     }
 
     return identityUpdatedResponse(
-      await this.options.updateClientIdentityAsCoach.execute({
+      await this.options.updateClientIdentityAsCoachUseCase.execute({
         clientId: target.data,
         identity: {
           ...enteredIdentityOf(request.data),

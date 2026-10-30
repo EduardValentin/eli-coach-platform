@@ -27,10 +27,13 @@ const COACH: SessionAccount = {
 describe("ClientAvatarController open", () => {
   it("serves her avatar inline and privately to the requester the use case lets see it", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { clientAvatarController, useCases } = createController();
 
     // act
-    const response = await controller.open(accountArgs(COACH), CLIENT_ID);
+    const response = await clientAvatarController.open(
+      accountArgs(COACH),
+      CLIENT_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -45,10 +48,13 @@ describe("ClientAvatarController open", () => {
 
   it("answers not found to an id that is not a uuid without opening anything", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { clientAvatarController, useCases } = createController();
 
     // act
-    const response = await controller.open(accountArgs(COACH), "nope");
+    const response = await clientAvatarController.open(
+      accountArgs(COACH),
+      "nope",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -57,10 +63,10 @@ describe("ClientAvatarController open", () => {
 
   it("serves her current avatar whatever version its address names", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { clientAvatarController, useCases } = createController();
 
     // act
-    const response = await controller.open(
+    const response = await clientAvatarController.open(
       accountArgs(
         COACH,
         {},
@@ -86,13 +92,13 @@ function createController() {
       mimeType: "image/jpeg",
     }),
   };
-  const controller = new ClientAvatarController({
-    openClientAvatar: {
+  const clientAvatarController = new ClientAvatarController({
+    openClientAvatarUseCase: {
       execute: useCases.openClientAvatar,
     } as unknown as OpenClientAvatarUseCase,
   });
 
-  return { controller, useCases };
+  return { clientAvatarController, useCases };
 }
 
 function accountArgs(

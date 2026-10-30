@@ -22,16 +22,16 @@ export type ExtendCheckInSeriesResult =
   | { status: "failed" };
 
 type ExtendCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "reserve">;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  ids: CheckInIdsPort;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
-  openSlots: Pick<OpenSlotsPort, "coachWeek">;
-  series: Pick<
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "reserve">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInIdsPort: CheckInIdsPort;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
+  openSlotsPort: Pick<OpenSlotsPort, "coachWeek">;
+  checkInSeriesRecordsPort: Pick<
     CheckInSeriesRecordsPort,
     "findActiveForClient" | "widen" | "recordWeeks"
   >;
@@ -97,19 +97,20 @@ export class ExtendCheckInSeriesUseCase {
   }
 
   private async attempt(clientId: string): Promise<ExtensionAttempt> {
-    const current = await this.options.series.findActiveForClient(clientId);
+    const current =
+      await this.options.checkInSeriesRecordsPort.findActiveForClient(clientId);
 
     if (!current) {
       return { status: "nothing_to_add" };
     }
 
-    const client = await this.options.clients.findById(clientId);
+    const client = await this.options.clientReachPort.findById(clientId);
 
     if (!client) {
       return { status: "nothing_to_add" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const bounds = CheckInSeriesBounds.ofCoaching({
       client,
       now,
@@ -126,8 +127,8 @@ export class ExtendCheckInSeriesUseCase {
       return { status: "nothing_to_add" };
     }
 
-    const week = await this.options.openSlots.coachWeek();
-    const widened = await this.options.series.widen({
+    const week = await this.options.openSlotsPort.coachWeek();
+    const widened = await this.options.checkInSeriesRecordsPort.widen({
       series,
       expected: {
         coversFrom: current.coversFrom,
@@ -145,7 +146,7 @@ export class ExtendCheckInSeriesUseCase {
         clientTimeZone: client.timeZone,
         availability: week.holdsWeeklyHour(series) ? "open" : "closed",
         at: now,
-        newId: () => this.options.ids.generate(),
+        newId: () => this.options.checkInIdsPort.generate(),
       }),
     );
 
@@ -153,7 +154,7 @@ export class ExtendCheckInSeriesUseCase {
   }
 
   private failed(failure: ExtensionFailure): { status: "failed" } {
-    this.options.incidents.checkInSeriesExtensionFailed(failure);
+    this.options.checkInIncidentsPort.checkInSeriesExtensionFailed(failure);
 
     return { status: "failed" };
   }

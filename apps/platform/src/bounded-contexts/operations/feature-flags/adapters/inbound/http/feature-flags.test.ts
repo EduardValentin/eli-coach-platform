@@ -26,7 +26,7 @@ describe("feature flags route", () => {
 
     // act
     const loaded = featureFlagsRoute.loader(
-      featureFlagsArgs({ featureFlags: { getSnapshot } as never }),
+      featureFlagsArgs({ featureFlagController: { getSnapshot } as never }),
     );
 
     // assert
@@ -38,7 +38,7 @@ describe("feature flags route", () => {
     // arrange
     const getSnapshot = vi.fn();
     const args = featureFlagsArgs(
-      { featureFlags: { getSnapshot } as never },
+      { featureFlagController: { getSnapshot } as never },
       new Request("https://eli.example/api/feature-flags", { method: "POST" }),
     );
 

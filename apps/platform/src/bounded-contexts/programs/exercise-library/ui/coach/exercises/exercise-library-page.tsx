@@ -20,7 +20,9 @@ import { EXERCISE_LISTING_PARAMS } from "./exercise-listing-params";
 import { libraryReturnState } from "./library-address";
 
 export async function loader(args: LoaderFunctionArgs) {
-  return args.context.get(exerciseLibraryContext).exerciseLibrary.list(args);
+  return args.context
+    .get(exerciseLibraryContext)
+    .exerciseLibraryController.list(args);
 }
 
 export const meta: MetaFunction = () => [{ title: "Exercises | Evoa" }];

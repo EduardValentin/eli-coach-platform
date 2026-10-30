@@ -30,11 +30,14 @@ describe("FilesystemProductAssetStore", () => {
       assetKey: "guides/guide.pdf",
       contents,
     });
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    await store.assertReady();
-    const streamed = await readOpenedAsset(await store.openVerified(asset));
+    await filesystemProductAssetStoreAdapter.assertReady();
+    const streamed = await readOpenedAsset(
+      await filesystemProductAssetStoreAdapter.openVerified(asset),
+    );
 
     // assert
     expect(streamed).toEqual(contents);
@@ -43,16 +46,17 @@ describe("FilesystemProductAssetStore", () => {
   it("rejects traversal and absolute asset keys", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    const traversalOpen = await store.openVerified(
+    const traversalOpen = await filesystemProductAssetStoreAdapter.openVerified(
       createAsset({
         assetKey: "../secret.txt",
         contents: Buffer.from("secret"),
       }),
     );
-    const absoluteOpen = await store.openVerified(
+    const absoluteOpen = await filesystemProductAssetStoreAdapter.openVerified(
       createAsset({
         assetKey: join(root, "secret.txt"),
         contents: Buffer.from("secret"),
@@ -73,10 +77,12 @@ describe("FilesystemProductAssetStore", () => {
       contents: originalContents,
     });
     await writeFile(join(root, "guide.pdf"), "changed guide");
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    const verifiedOpen = await store.openVerified(asset);
+    const verifiedOpen =
+      await filesystemProductAssetStoreAdapter.openVerified(asset);
 
     // assert
     expect(verifiedOpen).toEqual({ kind: "unavailable" });
@@ -85,14 +91,16 @@ describe("FilesystemProductAssetStore", () => {
   it("reports the asset unavailable when no file sits behind the published key", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
     const asset = createAsset({
       assetKey: "guides/never-written.pdf",
       contents: Buffer.from("a guide that was never written"),
     });
 
     // act
-    const missingOpen = await store.openVerified(asset);
+    const missingOpen =
+      await filesystemProductAssetStoreAdapter.openVerified(asset);
 
     // assert
     expect(missingOpen).toEqual({ kind: "unavailable" });
@@ -115,14 +123,16 @@ describe("FilesystemProductAssetStore", () => {
       assetKey: "guide.pdf",
       contents: originalContents,
     });
-    const store = new FilesystemProductAssetStoreAdapter(root);
-    const opened = await store.openVerified(asset);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
+    const opened = await filesystemProductAssetStoreAdapter.openVerified(asset);
 
     // act
     await rename(assetPath, archivedAssetPath);
     await symlink(outsidePath, assetPath);
     const streamed = await readOpenedAsset(opened);
-    const replacementOpen = await store.openVerified(asset);
+    const replacementOpen =
+      await filesystemProductAssetStoreAdapter.openVerified(asset);
 
     // assert
     expect(streamed).toEqual(originalContents);
@@ -135,10 +145,11 @@ describe("FilesystemProductAssetStore", () => {
       await mkdtemp(join(tmpdir(), "eli-store-assets-parent-")),
       "missing",
     );
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    const readiness = store.assertReady();
+    const readiness = filesystemProductAssetStoreAdapter.assertReady();
 
     // assert
     await expect(readiness).rejects.toThrow("Store asset root is not ready.");
@@ -154,11 +165,14 @@ describe("FilesystemProductAssetStore", () => {
       // arrange
       const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
       await chmod(root, 0o500);
-      const store = new FilesystemProductAssetStoreAdapter(root);
+      const filesystemProductAssetStoreAdapter =
+        new FilesystemProductAssetStoreAdapter(root);
 
       // act
-      const synchronousReadiness = () => store.assertReadyAtStartup();
-      const asynchronousReadiness = store.assertReady();
+      const synchronousReadiness = () =>
+        filesystemProductAssetStoreAdapter.assertReadyAtStartup();
+      const asynchronousReadiness =
+        filesystemProductAssetStoreAdapter.assertReady();
 
       // assert
       expect(synchronousReadiness).toThrow("Store asset root is not ready.");
@@ -174,16 +188,17 @@ describe("FilesystemProductAssetStore.write", () => {
   it("creates the key's directories and streams the bytes back verified", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
     const contents = Buffer.from("a freshly published guide");
 
     // act
-    await store.write({
+    await filesystemProductAssetStoreAdapter.write({
       assetKey: "products/published.pdf",
       bytes: new Uint8Array(contents),
     });
     const streamed = await readOpenedAsset(
-      await store.openVerified(
+      await filesystemProductAssetStoreAdapter.openVerified(
         createAsset({ assetKey: "products/published.pdf", contents }),
       ),
     );
@@ -195,12 +210,19 @@ describe("FilesystemProductAssetStore.write", () => {
   it("treats rewriting identical content as success, since keys are content-addressed", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
     const bytes = new Uint8Array(Buffer.from("republished bytes"));
 
     // act
-    await store.write({ assetKey: "products/same.pdf", bytes });
-    const rewrite = store.write({ assetKey: "products/same.pdf", bytes });
+    await filesystemProductAssetStoreAdapter.write({
+      assetKey: "products/same.pdf",
+      bytes,
+    });
+    const rewrite = filesystemProductAssetStoreAdapter.write({
+      assetKey: "products/same.pdf",
+      bytes,
+    });
 
     // assert
     await expect(rewrite).resolves.toBeUndefined();
@@ -209,14 +231,15 @@ describe("FilesystemProductAssetStore.write", () => {
   it("refuses to overwrite a key whose existing bytes differ", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    await store.write({
+    await filesystemProductAssetStoreAdapter.write({
       assetKey: "products/collision.pdf",
       bytes: new Uint8Array(Buffer.from("original")),
     });
-    const conflicting = store.write({
+    const conflicting = filesystemProductAssetStoreAdapter.write({
       assetKey: "products/collision.pdf",
       bytes: new Uint8Array(Buffer.from("different")),
     });
@@ -231,10 +254,11 @@ describe("FilesystemProductAssetStore.write", () => {
   ])("rejects %s", async (_description, assetKey) => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    const escaping = store.write({
+    const escaping = filesystemProductAssetStoreAdapter.write({
       assetKey,
       bytes: new Uint8Array(Buffer.from("escaped")),
     });
@@ -246,10 +270,11 @@ describe("FilesystemProductAssetStore.write", () => {
   it("rejects an absolute key", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // act
-    const escaping = store.write({
+    const escaping = filesystemProductAssetStoreAdapter.write({
       assetKey: join(root, "absolute.pdf"),
       bytes: new Uint8Array(Buffer.from("escaped")),
     });
@@ -262,14 +287,15 @@ describe("FilesystemProductAssetStore.write", () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
     const outside = await mkdtemp(join(tmpdir(), "eli-store-outside-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     // A directory-level link is followed by `mkdir -p`, so the leaf-only
     // `wx` guard never sees it.
     await symlink(outside, join(root, "products"));
 
     // act
-    const throughDirectorySymlink = store.write({
+    const throughDirectorySymlink = filesystemProductAssetStoreAdapter.write({
       assetKey: "products/escaped.pdf",
       bytes: new Uint8Array(Buffer.from("escaped")),
     });
@@ -287,7 +313,8 @@ describe("FilesystemProductAssetStore.write", () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
     const outside = await mkdtemp(join(tmpdir(), "eli-store-outside-"));
-    const store = new FilesystemProductAssetStoreAdapter(root);
+    const filesystemProductAssetStoreAdapter =
+      new FilesystemProductAssetStoreAdapter(root);
 
     await mkdir(join(root, "products"), { recursive: true });
     await writeFile(join(outside, "target.pdf"), "pre-existing");
@@ -297,7 +324,7 @@ describe("FilesystemProductAssetStore.write", () => {
     );
 
     // act
-    const throughSymlink = store.write({
+    const throughSymlink = filesystemProductAssetStoreAdapter.write({
       assetKey: "products/linked.pdf",
       bytes: new Uint8Array(Buffer.from("planted")),
     });

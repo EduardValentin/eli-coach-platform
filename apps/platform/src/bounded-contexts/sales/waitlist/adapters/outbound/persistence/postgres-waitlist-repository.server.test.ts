@@ -5,17 +5,16 @@ import { PostgresWaitlistRepository } from "./postgres-waitlist-repository.serve
 describe("PostgresWaitlistRepository availability observation", () => {
   it("returns the reduced pricing count before the availability cutoff", async () => {
     // arrange
-    const repository = new PostgresWaitlistRepository(
+    const postgresWaitlistRepository = new PostgresWaitlistRepository(
       createDatabaseWithCount(4),
     );
 
     // act
-    const entryCount = await repository.countReducedPricingSignupsCreatedBefore(
-      {
+    const entryCount =
+      await postgresWaitlistRepository.countReducedPricingSignupsCreatedBefore({
         campaignSlug: "all-bundles-launch-1",
         createdBefore: new Date("2026-07-26T10:00:00.000Z"),
-      },
-    );
+      });
 
     // assert
     expect(entryCount).toBe(4);
@@ -26,10 +25,13 @@ describe("PostgresWaitlistRepository pricing eligibility", () => {
   it("prices an email holding a reduced allocation in any campaign at the reduced tier", async () => {
     // arrange
     const database = createDatabaseWithReducedAllocations([{ id: 7 }]);
-    const repository = new PostgresWaitlistRepository(database.client);
+    const postgresWaitlistRepository = new PostgresWaitlistRepository(
+      database.client,
+    );
 
     // act
-    const tier = await repository.tierForEmail("ana@example.com");
+    const tier =
+      await postgresWaitlistRepository.tierForEmail("ana@example.com");
 
     // assert
     expect(tier).toBe("reduced");
@@ -39,10 +41,13 @@ describe("PostgresWaitlistRepository pricing eligibility", () => {
   it("prices an email without a reduced allocation at the regular tier", async () => {
     // arrange
     const database = createDatabaseWithReducedAllocations([]);
-    const repository = new PostgresWaitlistRepository(database.client);
+    const postgresWaitlistRepository = new PostgresWaitlistRepository(
+      database.client,
+    );
 
     // act
-    const tier = await repository.tierForEmail("ana@example.com");
+    const tier =
+      await postgresWaitlistRepository.tierForEmail("ana@example.com");
 
     // assert
     expect(tier).toBe("regular");
@@ -55,10 +60,12 @@ describe("PostgresWaitlistRepository pricing tiers for many emails", () => {
     const database = createDatabaseWithReducedEmails([
       { email: "ana@example.com" },
     ]);
-    const repository = new PostgresWaitlistRepository(database.client);
+    const postgresWaitlistRepository = new PostgresWaitlistRepository(
+      database.client,
+    );
 
     // act
-    const tiers = await repository.tiersForEmails([
+    const tiers = await postgresWaitlistRepository.tiersForEmails([
       "ana@example.com",
       "bea@example.com",
     ]);
@@ -76,10 +83,12 @@ describe("PostgresWaitlistRepository pricing tiers for many emails", () => {
   it("asks the database nothing when no email is named", async () => {
     // arrange
     const database = createDatabaseWithReducedEmails([]);
-    const repository = new PostgresWaitlistRepository(database.client);
+    const postgresWaitlistRepository = new PostgresWaitlistRepository(
+      database.client,
+    );
 
     // act
-    const tiers = await repository.tiersForEmails([]);
+    const tiers = await postgresWaitlistRepository.tiersForEmails([]);
 
     // assert
     expect(tiers).toEqual(new Map());

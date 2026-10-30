@@ -96,10 +96,12 @@ describe("StripePaymentCheckout", () => {
     // arrange
     const client = createStubClient();
     client.customers.create.mockResolvedValue({ id: "cus_created" });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const customer = await checkout.createCustomer({
+    const customer = await stripePaymentCheckoutAdapter.createCustomer({
       email: "sofia@example.com",
       assessmentCallId: "call-1",
     });
@@ -119,10 +121,12 @@ describe("StripePaymentCheckout", () => {
       id: "cs_test_created",
       url: "https://checkout.stripe.com/c/pay/cs_test_created",
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const session = await checkout.createSession(command);
+    const session = await stripePaymentCheckoutAdapter.createSession(command);
 
     // assert
     const metadata = {
@@ -167,10 +171,12 @@ describe("StripePaymentCheckout", () => {
       id: "cs_test_created",
       url: null,
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const creating = checkout.createSession(command);
+    const creating = stripePaymentCheckoutAdapter.createSession(command);
 
     // assert
     await expect(creating).rejects.toThrow("cs_test_created");
@@ -180,10 +186,12 @@ describe("StripePaymentCheckout", () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.expire.mockResolvedValue({ status: "expired" });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    await checkout.expireSession("cs_test_open");
+    await stripePaymentCheckoutAdapter.expireSession("cs_test_open");
 
     // assert
     expect(client.checkout.sessions.expire).toHaveBeenCalledWith(
@@ -198,10 +206,13 @@ describe("StripePaymentCheckout", () => {
       const client = createStubClient();
       client.checkout.sessions.expire.mockRejectedValue(invalidRequest());
       client.checkout.sessions.retrieve.mockResolvedValue({ status });
-      const checkout = new StripePaymentCheckoutAdapter(client);
+      const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+        client,
+      );
 
       // act
-      const expiring = checkout.expireSession("cs_test_closed");
+      const expiring =
+        stripePaymentCheckoutAdapter.expireSession("cs_test_closed");
 
       // assert
       await expect(expiring).resolves.toBeUndefined();
@@ -217,10 +228,12 @@ describe("StripePaymentCheckout", () => {
     const refusal = invalidRequest();
     client.checkout.sessions.expire.mockRejectedValue(refusal);
     client.checkout.sessions.retrieve.mockResolvedValue({ status: "open" });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const expiring = checkout.expireSession("cs_test_open");
+    const expiring = stripePaymentCheckoutAdapter.expireSession("cs_test_open");
 
     // assert
     await expect(expiring).rejects.toBe(refusal);
@@ -240,10 +253,12 @@ describe("StripePaymentCheckout", () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.expire.mockRejectedValue(failure);
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const expiring = checkout.expireSession("cs_test_open");
+    const expiring = stripePaymentCheckoutAdapter.expireSession("cs_test_open");
 
     // assert
     await expect(expiring).rejects.toBe(failure);
@@ -254,10 +269,13 @@ describe("StripePaymentCheckout", () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.retrieve.mockResolvedValue(paidSession());
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_paid");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
     // assert
     expect(client.checkout.sessions.retrieve).toHaveBeenCalledWith(
@@ -288,10 +306,13 @@ describe("StripePaymentCheckout", () => {
       status: "open",
       payment_status: "unpaid",
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_open");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_open");
 
     // assert
     expect(completion).toBeNull();
@@ -304,10 +325,13 @@ describe("StripePaymentCheckout", () => {
       ...paidSession(),
       invoice: "in_test",
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_paid");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
     // assert
     expect(completion).toMatchObject({
@@ -328,10 +352,13 @@ describe("StripePaymentCheckout", () => {
         ...paidSession(),
         subscription,
       });
-      const checkout = new StripePaymentCheckoutAdapter(client);
+      const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+        client,
+      );
 
       // act
-      const completion = await checkout.findCompletedSession("cs_test_paid");
+      const completion =
+        await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
       // assert
       expect(completion).toBeNull();
@@ -345,10 +372,13 @@ describe("StripePaymentCheckout", () => {
       ...paidSession(),
       metadata: { ...paidSession().metadata, purpose: "store-order" },
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_paid");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
     // assert
     expect(completion).toBeNull();
@@ -361,10 +391,13 @@ describe("StripePaymentCheckout", () => {
       ...paidSession(),
       customer: null,
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_paid");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
     // assert
     expect(completion).toBeNull();
@@ -391,10 +424,13 @@ describe("StripePaymentCheckout", () => {
         ...paidSession(),
         metadata: metadataWith(overrides),
       });
-      const checkout = new StripePaymentCheckoutAdapter(client);
+      const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+        client,
+      );
 
       // act
-      const completion = await checkout.findCompletedSession("cs_test_paid");
+      const completion =
+        await stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
       // assert
       expect(completion).toBeNull();
@@ -408,8 +444,10 @@ describe("StripePaymentCheckout", () => {
       id: "cs_test_created",
       url: "https://checkout.stripe.com/c/pay/cs_test_created",
     });
-    const checkout = new StripePaymentCheckoutAdapter(client);
-    await checkout.createSession({
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
+    await stripePaymentCheckoutAdapter.createSession({
       ...command,
       bundle: {
         id: "6-months",
@@ -431,7 +469,10 @@ describe("StripePaymentCheckout", () => {
     });
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_created");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession(
+        "cs_test_created",
+      );
 
     // assert
     expect(completion).toMatchObject({
@@ -448,10 +489,15 @@ describe("StripePaymentCheckout", () => {
     client.checkout.sessions.retrieve.mockRejectedValue(
       invalidRequest("resource_missing"),
     );
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const completion = await checkout.findCompletedSession("cs_test_unknown");
+    const completion =
+      await stripePaymentCheckoutAdapter.findCompletedSession(
+        "cs_test_unknown",
+      );
 
     // assert
     expect(completion).toBeNull();
@@ -468,10 +514,13 @@ describe("StripePaymentCheckout", () => {
     async (sessionId) => {
       // arrange
       const client = createStubClient();
-      const checkout = new StripePaymentCheckoutAdapter(client);
+      const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+        client,
+      );
 
       // act
-      const completion = await checkout.findCompletedSession(sessionId);
+      const completion =
+        await stripePaymentCheckoutAdapter.findCompletedSession(sessionId);
 
       // assert
       expect(completion).toBeNull();
@@ -489,10 +538,13 @@ describe("StripePaymentCheckout", () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.retrieve.mockRejectedValue(failure);
-    const checkout = new StripePaymentCheckoutAdapter(client);
+    const stripePaymentCheckoutAdapter = new StripePaymentCheckoutAdapter(
+      client,
+    );
 
     // act
-    const finding = checkout.findCompletedSession("cs_test_paid");
+    const finding =
+      stripePaymentCheckoutAdapter.findCompletedSession("cs_test_paid");
 
     // assert
     await expect(finding).rejects.toBe(failure);

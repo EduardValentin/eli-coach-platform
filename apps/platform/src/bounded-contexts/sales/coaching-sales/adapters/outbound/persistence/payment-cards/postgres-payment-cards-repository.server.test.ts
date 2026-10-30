@@ -30,13 +30,13 @@ describe("PostgresPaymentCards#save", () => {
   it("replaces the card only while the stored row still holds the card it was decided on", async () => {
     // arrange
     const database = createDatabaseWriting([{ stripeCustomerId: "cus_1" }]);
-    const cards = new PostgresPaymentCardsRepository({
-      clock: { now: () => NOW },
+    const postgresPaymentCardsRepository = new PostgresPaymentCardsRepository({
+      clockPort: { now: () => NOW },
       database: database.client,
     });
 
     // act
-    const outcome = await cards.save({
+    const outcome = await postgresPaymentCardsRepository.save({
       paymentCustomerId: "cus_1",
       card: MASTERCARD,
       previous: VISA,
@@ -53,13 +53,13 @@ describe("PostgresPaymentCards#save", () => {
   it("answers stale when another write changed the card meanwhile", async () => {
     // arrange
     const database = createDatabaseWriting([]);
-    const cards = new PostgresPaymentCardsRepository({
-      clock: { now: () => NOW },
+    const postgresPaymentCardsRepository = new PostgresPaymentCardsRepository({
+      clockPort: { now: () => NOW },
       database: database.client,
     });
 
     // act
-    const outcome = await cards.save({
+    const outcome = await postgresPaymentCardsRepository.save({
       paymentCustomerId: "cus_1",
       card: null,
       previous: VISA,

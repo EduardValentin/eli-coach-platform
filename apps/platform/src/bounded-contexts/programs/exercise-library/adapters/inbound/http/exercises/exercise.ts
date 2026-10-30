@@ -16,13 +16,15 @@ const ALLOWED_METHODS = ["PUT", "DELETE"];
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
-    const { exerciseLibrary } = args.context.get(exerciseLibraryContext);
+    const { exerciseLibraryController } = args.context.get(
+      exerciseLibraryContext,
+    );
 
     switch (args.request.method) {
       case "PUT":
-        return exerciseLibrary.edit(args, args.params.exerciseId);
+        return exerciseLibraryController.edit(args, args.params.exerciseId);
       case "DELETE":
-        return exerciseLibrary.delete(args, args.params.exerciseId);
+        return exerciseLibraryController.delete(args, args.params.exerciseId);
       default:
         throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
     }

@@ -16,14 +16,14 @@ import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import { NotificationsIncidentsAdapter } from "~/bounded-contexts/clients/notifications/adapters/outbound/logging/notifications-incidents-adapter.server";
 
 type NotificationInboxComposition = {
-  handles: { inbox: NotificationInboxPort };
+  handles: { notificationInboxPort: NotificationInboxPort };
 };
 
 type NotificationsFeatureHandles = {
-  clientReach: ClientReachPort;
-  clock: ClockPort;
-  inbox: NotificationInboxPort;
-  logger: LoggerPort;
+  clientReachPort: ClientReachPort;
+  clockPort: ClockPort;
+  notificationInboxPort: NotificationInboxPort;
+  loggerPort: LoggerPort;
 };
 
 export function composeNotificationInbox(handles: {
@@ -31,7 +31,7 @@ export function composeNotificationInbox(handles: {
 }): NotificationInboxComposition {
   return {
     handles: {
-      inbox: new PostgresNotificationInboxRepository({
+      notificationInboxPort: new PostgresNotificationInboxRepository({
         database: handles.database,
       }),
     },
@@ -41,20 +41,24 @@ export function composeNotificationInbox(handles: {
 export function composeNotificationsFeature(
   handles: NotificationsFeatureHandles,
 ): NotificationsFeature {
-  const incidents = new NotificationsIncidentsAdapter(handles.logger);
+  const notificationsIncidentsAdapter = new NotificationsIncidentsAdapter(
+    handles.loggerPort,
+  );
   const ports = {
-    clients: new ClientsClientReachAdapter(handles.clientReach),
-    clock: handles.clock,
-    inbox: handles.inbox,
+    clientReachPort: new ClientsClientReachAdapter(handles.clientReachPort),
+    clockPort: handles.clockPort,
+    notificationInboxPort: handles.notificationInboxPort,
   };
 
   return {
-    notificationBell: new NotificationBellController({
-      markAllNotificationsRead: new MarkAllNotificationsReadUseCase(ports),
-      markNotificationRead: new MarkNotificationReadUseCase(ports),
-      readNotificationBell: new ReadNotificationBellUseCase({
+    notificationBellController: new NotificationBellController({
+      markAllNotificationsReadUseCase: new MarkAllNotificationsReadUseCase(
+        ports,
+      ),
+      markNotificationReadUseCase: new MarkNotificationReadUseCase(ports),
+      readNotificationBellUseCase: new ReadNotificationBellUseCase({
         ...ports,
-        incidents,
+        notificationIncidentsPort: notificationsIncidentsAdapter,
       }),
     }),
   };

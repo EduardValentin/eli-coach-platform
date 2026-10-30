@@ -49,13 +49,13 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientOnboardingControllerOptions = {
-  answerOnboardingDetails: AnswerOnboardingDetailsUseCase;
-  attachProgressPhotos: AttachProgressPhotosUseCase;
-  clock: ClockPort;
-  readClientOnboarding: ReadClientOnboardingUseCase;
-  readOpenDetailRequest: ReadOpenDetailRequestUseCase;
-  saveOnboardingDraft: SaveOnboardingDraftUseCase;
-  submitOnboarding: SubmitOnboardingUseCase;
+  answerOnboardingDetailsUseCase: AnswerOnboardingDetailsUseCase;
+  attachProgressPhotosUseCase: AttachProgressPhotosUseCase;
+  clockPort: ClockPort;
+  readClientOnboardingUseCase: ReadClientOnboardingUseCase;
+  readOpenDetailRequestUseCase: ReadOpenDetailRequestUseCase;
+  saveOnboardingDraftUseCase: SaveOnboardingDraftUseCase;
+  submitOnboardingUseCase: SubmitOnboardingUseCase;
 };
 
 type OnboardingRefusal =
@@ -94,8 +94,8 @@ export class ClientOnboardingController {
       .get(accessContext)
       .requirePortalAccess("CLIENT");
     const [reading, openRequest] = await Promise.all([
-      this.options.readClientOnboarding.execute(client.authSubjectId),
-      this.options.readOpenDetailRequest.execute(client.authSubjectId),
+      this.options.readClientOnboardingUseCase.execute(client.authSubjectId),
+      this.options.readOpenDetailRequestUseCase.execute(client.authSubjectId),
     ]);
 
     if (!reading) {
@@ -113,7 +113,7 @@ export class ClientOnboardingController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const openRequest = await this.options.readOpenDetailRequest.execute(
+    const openRequest = await this.options.readOpenDetailRequestUseCase.execute(
       client.authSubjectId,
     );
 
@@ -138,7 +138,7 @@ export class ClientOnboardingController {
       );
     }
 
-    const result = await this.options.saveOnboardingDraft.execute({
+    const result = await this.options.saveOnboardingDraftUseCase.execute({
       authSubjectId: client.authSubjectId,
       formId: request.data.formId,
       answers: request.data.answers,
@@ -178,7 +178,7 @@ export class ClientOnboardingController {
       return unreadableSubmissionResponse();
     }
 
-    const result = await this.options.submitOnboarding.execute({
+    const result = await this.options.submitOnboardingUseCase.execute({
       authSubjectId: client.authSubjectId,
       answers: request.answers,
       consents: consentsOf(request.consents),
@@ -218,7 +218,7 @@ export class ClientOnboardingController {
       return createBadRequestResponse("The answers could not be read.");
     }
 
-    const result = await this.options.answerOnboardingDetails.execute({
+    const result = await this.options.answerOnboardingDetailsUseCase.execute({
       authSubjectId: client.authSubjectId,
       answers: request.data.answers,
     });
@@ -248,7 +248,7 @@ export class ClientOnboardingController {
       return {};
     }
 
-    return this.options.attachProgressPhotos.execute({
+    return this.options.attachProgressPhotosUseCase.execute({
       clientId: submitted.clientId,
       entryId: submitted.entryId,
       photos,
@@ -256,7 +256,7 @@ export class ClientOnboardingController {
   }
 
   private wizardPageOf({ onboarding, unitPreference }: OnboardingReading) {
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const draft = onboarding.draft ?? emptyDraft(now);
 
     return {

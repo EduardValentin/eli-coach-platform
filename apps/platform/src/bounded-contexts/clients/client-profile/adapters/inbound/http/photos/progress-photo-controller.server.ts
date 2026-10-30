@@ -8,8 +8,8 @@ import { z } from "zod";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ProgressPhotoControllerOptions = {
-  openProgressPhoto: OpenProgressPhotoUseCase;
-  removeProgressPhoto: RemoveProgressPhotoUseCase;
+  openProgressPhotoUseCase: OpenProgressPhotoUseCase;
+  removeProgressPhotoUseCase: RemoveProgressPhotoUseCase;
 };
 
 const photoIdSchema = z.uuid();
@@ -28,7 +28,7 @@ export class ProgressPhotoController {
       return notFoundResponse();
     }
 
-    const result = await this.options.openProgressPhoto.execute({
+    const result = await this.options.openProgressPhotoUseCase.execute({
       photoId: id.data,
       requester: { role: account.role, authSubjectId: account.authSubjectId },
     });
@@ -51,7 +51,7 @@ export class ProgressPhotoController {
       return notFoundResponse();
     }
 
-    const result = await this.options.removeProgressPhoto.execute({
+    const result = await this.options.removeProgressPhotoUseCase.execute({
       photoId: id.data,
       requester: { role: account.role, authSubjectId: account.authSubjectId },
     });

@@ -78,258 +78,299 @@ type CoachingSalesComposition = {
 };
 
 export type CoachingSalesFeatureHandles = {
-  admissions: AdmissionsFacade;
+  admissionsFacade: AdmissionsFacade;
   appBasePath: string;
-  endedCalls: EndedCallsFacade;
-  clientLookup: ClientLookupFacade;
-  clientProfile: ClientProfileFacade;
-  clock: ClockPort;
+  endedCallsFacade: EndedCallsFacade;
+  clientLookupFacade: ClientLookupFacade;
+  clientProfileFacade: ClientProfileFacade;
+  clockPort: ClockPort;
   coachEmail: string;
-  coachingPeriods: CoachingPeriodsFacade;
+  coachingPeriodsFacade: CoachingPeriodsFacade;
   contactEmail: string;
   database: DatabaseClient;
-  emailAcceptance: EmailAcceptancePort;
-  featureFlags: FeatureFlagsFacade;
-  logger: LoggerPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  featureFlagsFacade: FeatureFlagsFacade;
+  loggerPort: LoggerPort;
   linkTokens: {
     generator: PaymentLinkTokenGeneratorPort;
     hasher: PaymentLinkTokenHasherPort;
   };
-  paymentCheckout: PaymentCheckoutPort;
-  paymentCustomerCards: PaymentCustomerCardsPort;
-  paymentEvents: PaymentEventsPort;
-  paymentSubscriptions: PaymentSubscriptionsPort;
-  pricingEligibility: PricingEligibilitySourceFacade;
-  productEmail: ProductEmailPort;
+  paymentCheckoutPort: PaymentCheckoutPort;
+  paymentCustomerCardsPort: PaymentCustomerCardsPort;
+  paymentEventsPort: PaymentEventsPort;
+  paymentSubscriptionsPort: PaymentSubscriptionsPort;
+  pricingEligibilitySourceFacade: PricingEligibilitySourceFacade;
+  productEmailPort: ProductEmailPort;
   publicAppUrl: string;
   webhookSigningSecret: string | undefined;
 };
 
 export type PaymentHandles = Pick<
   CoachingSalesFeatureHandles,
-  | "paymentCheckout"
-  | "paymentCustomerCards"
-  | "paymentEvents"
-  | "paymentSubscriptions"
+  | "paymentCheckoutPort"
+  | "paymentCustomerCardsPort"
+  | "paymentEventsPort"
+  | "paymentSubscriptionsPort"
   | "webhookSigningSecret"
 >;
 
 export function composeCoachingSalesFeature(
   handles: CoachingSalesFeatureHandles,
 ): CoachingSalesComposition {
-  const incidents = new CoachingSalesIncidentsAdapter(handles.logger);
-  const { clock, database } = handles;
+  const coachingSalesIncidentsAdapter = new CoachingSalesIncidentsAdapter(
+    handles.loggerPort,
+  );
+  const { clockPort, database } = handles;
   const unitOfWork = createUnitOfWork(database);
-  const clients = new ClientsClientLookupAdapter(handles.clientLookup);
-  const admission = new ClientsPaidClientAdmissionAdapter(
-    handles.admissions,
-    handles.clientProfile,
+  const clientsClientLookupAdapter = new ClientsClientLookupAdapter(
+    handles.clientLookupFacade,
   );
-  const paymentLinks = new PostgresPaymentLinksRepository({ clock, database });
-  const purchases = new PostgresCoachingPurchasesRepository({
-    clock,
+  const clientsPaidClientAdmissionAdapter =
+    new ClientsPaidClientAdmissionAdapter(
+      handles.admissionsFacade,
+      handles.clientProfileFacade,
+    );
+  const postgresPaymentLinksRepository = new PostgresPaymentLinksRepository({
+    clockPort,
     database,
   });
-  const subscriptions = new PostgresCoachingSubscriptionsRepository({
-    clock,
+  const postgresCoachingPurchasesRepository =
+    new PostgresCoachingPurchasesRepository({
+      clockPort,
+      database,
+    });
+  const postgresCoachingSubscriptionsRepository =
+    new PostgresCoachingSubscriptionsRepository({
+      clockPort,
+      database,
+      coachingStandingWriterPort: new ClientsCoachingStandingWriterAdapter(
+        handles.admissionsFacade,
+      ),
+    });
+  const postgresPaymentCardsRepository = new PostgresPaymentCardsRepository({
+    clockPort,
     database,
-    standings: new ClientsCoachingStandingWriterAdapter(handles.admissions),
   });
-  const paymentCards = new PostgresPaymentCardsRepository({ clock, database });
-  const { generator: tokenGenerator, hasher: tokenHasher } = handles.linkTokens;
+  const {
+    generator: paymentLinkTokenGeneratorPort,
+    hasher: paymentLinkTokenHasherPort,
+  } = handles.linkTokens;
   const salesWindow = new CoachingSalesWindow({
-    incidents,
-    waitlistMode: new OperationsWaitlistModeAdapter(handles.featureFlags),
+    coachingSalesIncidentsPort: coachingSalesIncidentsAdapter,
+    waitlistModePort: new OperationsWaitlistModeAdapter(
+      handles.featureFlagsFacade,
+    ),
   });
-  const calls = new SchedulingEndedCallsAdapter(handles.endedCalls);
-  const pricingEligibility = new WaitlistPricingEligibilityAdapter(
-    handles.pricingEligibility,
+  const schedulingEndedCallsAdapter = new SchedulingEndedCallsAdapter(
+    handles.endedCallsFacade,
   );
+  const waitlistPricingEligibilityAdapter =
+    new WaitlistPricingEligibilityAdapter(
+      handles.pricingEligibilitySourceFacade,
+    );
   const paymentLinkPorts = {
-    calls,
-    callSalesStates: purchases,
-    clock,
-    emailAcceptance: handles.emailAcceptance,
-    paymentLinks,
-    pricingEligibility,
+    endedCallsPort: schedulingEndedCallsAdapter,
+    callSalesStatesPort: postgresCoachingPurchasesRepository,
+    clockPort,
+    emailAcceptancePort: handles.emailAcceptancePort,
+    paymentLinksPort: postgresPaymentLinksRepository,
+    pricingEligibilityPort: waitlistPricingEligibilityAdapter,
     salesWindow,
   };
 
   const signedInSubscriptions = new SignedInSubscriptions({
-    clients,
-    subscriptions,
+    clientLookupPort: clientsClientLookupAdapter,
+    coachingSubscriptionsPort: postgresCoachingSubscriptionsRepository,
   });
   const subscriptionPorts = {
-    clock,
+    clockPort,
     coachingEnds: [
-      new ClientsCoachingEndHandlerAdapter(handles.coachingPeriods),
+      new ClientsCoachingEndHandlerAdapter(handles.coachingPeriodsFacade),
     ],
     coachingPeriods: [
-      new ClientsCoachingPeriodHandlerAdapter(handles.coachingPeriods),
+      new ClientsCoachingPeriodHandlerAdapter(handles.coachingPeriodsFacade),
     ],
-    incidents,
-    paymentSubscriptions: handles.paymentSubscriptions,
-    subscriptions,
+    coachingSubscriptionIncidentsPort: coachingSalesIncidentsAdapter,
+    paymentSubscriptionsPort: handles.paymentSubscriptionsPort,
+    coachingSubscriptionsPort: postgresCoachingSubscriptionsRepository,
   };
   const subscriptionUseCases = {
-    cancelSubscription: new CancelSubscriptionUseCase({
+    cancelSubscriptionUseCase: new CancelSubscriptionUseCase({
       ...subscriptionPorts,
-      clients,
-      notifications: createRefundNotificationsAdapter(handles.productEmail, {
-        appBasePath: handles.appBasePath,
-        clock,
-        coachEmail: handles.coachEmail,
-        publicAppUrl: handles.publicAppUrl,
-      }),
+      clientLookupPort: clientsClientLookupAdapter,
+      refundNotificationsPort: createRefundNotificationsAdapter(
+        handles.productEmailPort,
+        {
+          appBasePath: handles.appBasePath,
+          clockPort,
+          coachEmail: handles.coachEmail,
+          publicAppUrl: handles.publicAppUrl,
+        },
+      ),
       signedInSubscriptions,
     }),
-    openPaymentMethodSession: new OpenPaymentMethodSessionUseCase({
+    openPaymentMethodSessionUseCase: new OpenPaymentMethodSessionUseCase({
       ...subscriptionPorts,
       signedInSubscriptions,
     }),
-    mirrorPaymentCard: new MirrorPaymentCardUseCase({
-      cards: paymentCards,
-      incidents,
-      subscriptions,
+    mirrorPaymentCardUseCase: new MirrorPaymentCardUseCase({
+      paymentCardsPort: postgresPaymentCardsRepository,
+      coachingSubscriptionIncidentsPort: coachingSalesIncidentsAdapter,
+      coachingSubscriptionsPort: postgresCoachingSubscriptionsRepository,
     }),
-    readClientSubscription: new ReadClientSubscriptionUseCase({
-      cards: paymentCards,
-      clock,
+    readClientSubscriptionUseCase: new ReadClientSubscriptionUseCase({
+      paymentCardsPort: postgresPaymentCardsRepository,
+      clockPort,
       signedInSubscriptions,
     }),
-    readProgramStatus: new ReadProgramStatusUseCase({
-      clock,
-      journeys: clients,
-      subscriptions,
+    readProgramStatusUseCase: new ReadProgramStatusUseCase({
+      clockPort,
+      clientLookupPort: clientsClientLookupAdapter,
+      coachingSubscriptionsPort: postgresCoachingSubscriptionsRepository,
     }),
-    reconcileSubscriptionEvent: new ReconcileSubscriptionEventUseCase(
+    reconcileSubscriptionEventUseCase: new ReconcileSubscriptionEventUseCase(
       subscriptionPorts,
     ),
-    refreshPaymentCard: new RefreshPaymentCardUseCase({
-      cards: paymentCards,
-      customerCards: handles.paymentCustomerCards,
-      incidents,
+    refreshPaymentCardUseCase: new RefreshPaymentCardUseCase({
+      paymentCardsPort: postgresPaymentCardsRepository,
+      paymentCustomerCardsPort: handles.paymentCustomerCardsPort,
+      coachingSubscriptionIncidentsPort: coachingSalesIncidentsAdapter,
     }),
-    startProgramNow: new StartProgramNowUseCase({
+    startProgramNowUseCase: new StartProgramNowUseCase({
       ...subscriptionPorts,
       signedInSubscriptions,
     }),
   };
 
   const useCases = {
-    openBundlePage: new OpenBundlePageUseCase({ salesWindow }),
-    readCallSalesStates: new ReadCallSalesStatesUseCase({
-      callSalesStates: purchases,
+    openBundlePageUseCase: new OpenBundlePageUseCase({ salesWindow }),
+    readCallSalesStatesUseCase: new ReadCallSalesStatesUseCase({
+      callSalesStatesPort: postgresCoachingPurchasesRepository,
     }),
-    readPricingTiers: new ReadPricingTiersUseCase({ pricingEligibility }),
-    readCheckoutConfirmation: new ReadCheckoutConfirmationUseCase({
-      paymentCheckout: handles.paymentCheckout,
+    readPricingTiersUseCase: new ReadPricingTiersUseCase({
+      pricingEligibilityPort: waitlistPricingEligibilityAdapter,
+    }),
+    readCheckoutConfirmationUseCase: new ReadCheckoutConfirmationUseCase({
+      paymentCheckoutPort: handles.paymentCheckoutPort,
       salesWindow,
     }),
-    readSubscriptionSummary: new ReadSubscriptionSummaryUseCase({
-      clock,
-      subscriptions,
+    readSubscriptionSummaryUseCase: new ReadSubscriptionSummaryUseCase({
+      clockPort,
+      coachingSubscriptionsPort: postgresCoachingSubscriptionsRepository,
     }),
-    finishCheckoutPurchase: new FinishCheckoutPurchaseUseCase({
-      admission,
-      incidents,
-      paymentSubscriptions: handles.paymentSubscriptions,
+    finishCheckoutPurchaseUseCase: new FinishCheckoutPurchaseUseCase({
+      paidClientAdmissionPort: clientsPaidClientAdmissionAdapter,
+      coachingSubscriptionIncidentsPort: coachingSalesIncidentsAdapter,
+      paymentSubscriptionsPort: handles.paymentSubscriptionsPort,
     }),
-    readCheckoutPurchase: new ReadCheckoutPurchaseUseCase({
-      calls,
-      clock,
-      incidents,
-      paymentCheckout: handles.paymentCheckout,
-      subscriptionIds: new RandomCoachingSubscriptionIdsAdapter(),
+    readCheckoutPurchaseUseCase: new ReadCheckoutPurchaseUseCase({
+      endedCallsPort: schedulingEndedCallsAdapter,
+      clockPort,
+      coachingSubscriptionIncidentsPort: coachingSalesIncidentsAdapter,
+      paymentCheckoutPort: handles.paymentCheckoutPort,
+      coachingSubscriptionIdsPort: new RandomCoachingSubscriptionIdsAdapter(),
     }),
-    recordCheckoutPurchase: new RecordCheckoutPurchaseUseCase({
-      admission,
-      incidents,
-      paymentEventLedger: new PostgresPaymentEventLedgerRepository(database),
-      purchases,
+    recordCheckoutPurchaseUseCase: new RecordCheckoutPurchaseUseCase({
+      paidClientAdmissionPort: clientsPaidClientAdmissionAdapter,
+      coachingSubscriptionIncidentsPort: coachingSalesIncidentsAdapter,
+      paymentEventLedgerPort: new PostgresPaymentEventLedgerRepository(
+        database,
+      ),
+      coachingPurchasesPort: postgresCoachingPurchasesRepository,
     }),
-    resolvePaymentLink: new ResolvePaymentLinkUseCase({
+    resolvePaymentLinkUseCase: new ResolvePaymentLinkUseCase({
       ...paymentLinkPorts,
-      tokenHasher,
+      paymentLinkTokenHasherPort,
     }),
-    sendPaymentLink: new SendPaymentLinkUseCase({
+    sendPaymentLinkUseCase: new SendPaymentLinkUseCase({
       ...paymentLinkPorts,
-      ids: new RandomPaymentLinkIdsAdapter(),
-      incidents,
-      notifications: createCoachingSalesNotificationsAdapter(
-        handles.productEmail,
+      paymentLinkIdsPort: new RandomPaymentLinkIdsAdapter(),
+      coachingSalesIncidentsPort: coachingSalesIncidentsAdapter,
+      coachingSalesNotificationsPort: createCoachingSalesNotificationsAdapter(
+        handles.productEmailPort,
         {
           appBasePath: handles.appBasePath,
-          clock,
+          clockPort,
           contactEmail: handles.contactEmail,
           publicAppUrl: handles.publicAppUrl,
         },
       ),
-      tokenGenerator,
+      paymentLinkTokenGeneratorPort,
     }),
-    startCheckout: new StartCheckoutUseCase({
+    startCheckoutUseCase: new StartCheckoutUseCase({
       ...paymentLinkPorts,
-      checkoutSessions: paymentLinks,
-      paymentCheckout: handles.paymentCheckout,
-      tokenHasher,
+      checkoutSessionsPort: postgresPaymentLinksRepository,
+      paymentCheckoutPort: handles.paymentCheckoutPort,
+      paymentLinkTokenHasherPort,
     }),
   };
 
-  const subscriptionChangeHandler = new CoachingSubscriptionEventHandler({
-    reconcileSubscriptionEvent: subscriptionUseCases.reconcileSubscriptionEvent,
-  });
-  const paymentCompletionHandler = new CoachingPurchaseCompletionHandler({
-    finishCheckoutPurchase: useCases.finishCheckoutPurchase,
-    readCheckoutPurchase: useCases.readCheckoutPurchase,
-    recordCheckoutPurchase: useCases.recordCheckoutPurchase,
-    refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
-    unitOfWork,
-  });
+  const coachingSubscriptionEventHandler = new CoachingSubscriptionEventHandler(
+    {
+      reconcileSubscriptionEventUseCase:
+        subscriptionUseCases.reconcileSubscriptionEventUseCase,
+    },
+  );
+  const coachingPurchaseCompletionHandler =
+    new CoachingPurchaseCompletionHandler({
+      finishCheckoutPurchaseUseCase: useCases.finishCheckoutPurchaseUseCase,
+      readCheckoutPurchaseUseCase: useCases.readCheckoutPurchaseUseCase,
+      recordCheckoutPurchaseUseCase: useCases.recordCheckoutPurchaseUseCase,
+      refreshPaymentCardUseCase: subscriptionUseCases.refreshPaymentCardUseCase,
+      unitOfWork,
+    });
 
   return {
     feature: {
-      checkouts: new CheckoutsController({
+      checkoutsController: new CheckoutsController({
         appBasePath: handles.appBasePath,
-        clock,
-        openBundlePage: useCases.openBundlePage,
+        clockPort,
+        openBundlePageUseCase: useCases.openBundlePageUseCase,
         publicAppUrl: handles.publicAppUrl,
-        readCheckoutConfirmation: useCases.readCheckoutConfirmation,
-        resolvePaymentLink: useCases.resolvePaymentLink,
-        startCheckout: useCases.startCheckout,
+        readCheckoutConfirmationUseCase:
+          useCases.readCheckoutConfirmationUseCase,
+        resolvePaymentLinkUseCase: useCases.resolvePaymentLinkUseCase,
+        startCheckoutUseCase: useCases.startCheckoutUseCase,
         unitOfWork,
       }),
-      coachSales: new CoachSalesController({
-        emailAcceptance: handles.emailAcceptance,
-        readCallSalesStates: useCases.readCallSalesStates,
-        readPricingTiers: useCases.readPricingTiers,
-        readSubscriptionSummary: useCases.readSubscriptionSummary,
+      coachSalesController: new CoachSalesController({
+        emailAcceptancePort: handles.emailAcceptancePort,
+        readCallSalesStatesUseCase: useCases.readCallSalesStatesUseCase,
+        readPricingTiersUseCase: useCases.readPricingTiersUseCase,
+        readSubscriptionSummaryUseCase: useCases.readSubscriptionSummaryUseCase,
       }),
-      paymentLinks: new PaymentLinksController({
-        sendPaymentLink: useCases.sendPaymentLink,
+      paymentLinksController: new PaymentLinksController({
+        sendPaymentLinkUseCase: useCases.sendPaymentLinkUseCase,
         unitOfWork,
       }),
-      stripeWebhooks: new StripeWebhookController({
-        cardHandler: new CoachingPaymentCardHandler({
-          mirrorPaymentCard: subscriptionUseCases.mirrorPaymentCard,
+      stripeWebhookController: new StripeWebhookController({
+        paymentCardHandlerPort: new CoachingPaymentCardHandler({
+          mirrorPaymentCardUseCase:
+            subscriptionUseCases.mirrorPaymentCardUseCase,
         }),
-        completionHandlersByPurpose: byPurpose(paymentCompletionHandler),
-        incidents,
-        paymentEvents: handles.paymentEvents,
-        refundHandler: subscriptionChangeHandler,
+        completionHandlersByPurpose: byPurpose(
+          coachingPurchaseCompletionHandler,
+        ),
+        paymentWebhookIncidentsPort: coachingSalesIncidentsAdapter,
+        paymentEventsPort: handles.paymentEventsPort,
+        paymentRefundHandlerPort: coachingSubscriptionEventHandler,
         signingSecret: handles.webhookSigningSecret,
         subscriptionChangeHandlersByPurpose: byPurpose(
-          subscriptionChangeHandler,
+          coachingSubscriptionEventHandler,
         ),
         unitOfWork,
       }),
-      subscription: new SubscriptionController({
+      subscriptionController: new SubscriptionController({
         appBasePath: handles.appBasePath,
-        cancelSubscription: subscriptionUseCases.cancelSubscription,
-        openPaymentMethodSession: subscriptionUseCases.openPaymentMethodSession,
+        cancelSubscriptionUseCase:
+          subscriptionUseCases.cancelSubscriptionUseCase,
+        openPaymentMethodSessionUseCase:
+          subscriptionUseCases.openPaymentMethodSessionUseCase,
         publicAppUrl: handles.publicAppUrl,
-        readClientSubscription: subscriptionUseCases.readClientSubscription,
-        readProgramStatus: subscriptionUseCases.readProgramStatus,
-        startProgramNow: subscriptionUseCases.startProgramNow,
+        readClientSubscriptionUseCase:
+          subscriptionUseCases.readClientSubscriptionUseCase,
+        readProgramStatusUseCase: subscriptionUseCases.readProgramStatusUseCase,
+        startProgramNowUseCase: subscriptionUseCases.startProgramNowUseCase,
       }),
     },
   };
@@ -342,13 +383,13 @@ function byPurpose<Handler extends { readonly purpose: string }>(
 }
 
 export function composePayments(config: PaymentsConfig): PaymentHandles {
-  const payments = new PaymentsAdapter(config);
+  const paymentsAdapter = new PaymentsAdapter(config);
 
   return {
-    paymentCheckout: payments.checkout,
-    paymentCustomerCards: payments.customerCards,
-    paymentEvents: payments.events,
-    paymentSubscriptions: payments.subscriptions,
+    paymentCheckoutPort: paymentsAdapter.paymentCheckoutPort,
+    paymentCustomerCardsPort: paymentsAdapter.paymentCustomerCardsPort,
+    paymentEventsPort: paymentsAdapter.paymentEventsPort,
+    paymentSubscriptionsPort: paymentsAdapter.paymentSubscriptionsPort,
     webhookSigningSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
   };
 }

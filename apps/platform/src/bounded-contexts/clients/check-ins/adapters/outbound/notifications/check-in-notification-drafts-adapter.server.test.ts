@@ -84,10 +84,15 @@ function lapsedFor(
 describe("CheckInNotificationDrafts#checkInEvent", () => {
   it("addresses the coach with the check-in, its time and the client's full name", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.checkInEvent("requested", noticeTo("coach"), NOW);
+    const draft = checkInNotificationDraftsAdapter.checkInEvent(
+      "requested",
+      noticeTo("coach"),
+      NOW,
+    );
 
     // assert
     expect(draft).toEqual({
@@ -105,10 +110,15 @@ describe("CheckInNotificationDrafts#checkInEvent", () => {
 
   it("addresses the client by her id without naming her", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.checkInEvent("approved", noticeTo("client"), NOW);
+    const draft = checkInNotificationDraftsAdapter.checkInEvent(
+      "approved",
+      noticeTo("client"),
+      NOW,
+    );
 
     // assert
     expect(draft).toEqual({
@@ -122,14 +132,16 @@ describe("CheckInNotificationDrafts#checkInEvent", () => {
 
   it("refuses to draft facts the bell could not read back", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
     const notice = {
       ...noticeTo("client"),
       checkIn: { ...CHECK_IN, id: "not-a-check-in-id" },
     };
 
     // act
-    const drafting = () => drafts.checkInEvent("approved", notice, NOW);
+    const drafting = () =>
+      checkInNotificationDraftsAdapter.checkInEvent("approved", notice, NOW);
 
     // assert
     expect(drafting).toThrow();
@@ -146,10 +158,15 @@ describe("CheckInNotificationDrafts#checkInEvent", () => {
     { event: "cancelled", kind: "check-in.cancelled" },
   ] as const)("names the $event event $kind", ({ event, kind }) => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.checkInEvent(event, noticeTo("client"), NOW);
+    const draft = checkInNotificationDraftsAdapter.checkInEvent(
+      event,
+      noticeTo("client"),
+      NOW,
+    );
 
     // assert
     expect(draft.kind).toBe(kind);
@@ -164,10 +181,15 @@ describe("CheckInNotificationDrafts#seriesEvent", () => {
     "addresses the client with her first week for $event",
     ({ event, kind }) => {
       // arrange
-      const drafts = new CheckInNotificationDraftsAdapter();
+      const checkInNotificationDraftsAdapter =
+        new CheckInNotificationDraftsAdapter();
 
       // act
-      const draft = drafts.seriesEvent(event, seriesNotice(FIRST_WEEK_ID), NOW);
+      const draft = checkInNotificationDraftsAdapter.seriesEvent(
+        event,
+        seriesNotice(FIRST_WEEK_ID),
+        NOW,
+      );
 
       // assert
       expect(draft).toEqual({
@@ -185,10 +207,15 @@ describe("CheckInNotificationDrafts#seriesEvent", () => {
 
   it("leaves the first week out when no week was recorded", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.seriesEvent("seriesChanged", seriesNotice(null), NOW);
+    const draft = checkInNotificationDraftsAdapter.seriesEvent(
+      "seriesChanged",
+      seriesNotice(null),
+      NOW,
+    );
 
     // assert
     expect(draft.facts).toEqual({
@@ -198,10 +225,15 @@ describe("CheckInNotificationDrafts#seriesEvent", () => {
 
   it("tells the client her weekly check-in stopped with no further facts", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.seriesEvent("seriesStopped", seriesNotice(null), NOW);
+    const draft = checkInNotificationDraftsAdapter.seriesEvent(
+      "seriesStopped",
+      seriesNotice(null),
+      NOW,
+    );
 
     // assert
     expect(draft).toEqual({
@@ -217,10 +249,11 @@ describe("CheckInNotificationDrafts#seriesEvent", () => {
 describe("CheckInNotificationDrafts#clashesAdded", () => {
   it("tells the coach how many new weeks clash, whose they are and the earliest one", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.clashesAdded(
+    const draft = checkInNotificationDraftsAdapter.clashesAdded(
       {
         series: SERIES,
         client: ANA,
@@ -249,10 +282,11 @@ describe("CheckInNotificationDrafts#clashesAdded", () => {
 describe("CheckInNotificationDrafts#lapseOf", () => {
   it("records the coach's expiry once, arriving when the check-in's time passed and naming the client", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.lapseOf(lapsedFor("coach"));
+    const draft = checkInNotificationDraftsAdapter.lapseOf(lapsedFor("coach"));
 
     // assert
     expect(draft).toEqual({
@@ -270,10 +304,11 @@ describe("CheckInNotificationDrafts#lapseOf", () => {
 
   it("records the client's expiry under a once-key of her own", () => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.lapseOf(lapsedFor("client"));
+    const draft = checkInNotificationDraftsAdapter.lapseOf(lapsedFor("client"));
 
     // assert
     expect(draft.recipient).toEqual({ party: "client", clientId: CLIENT_ID });
@@ -292,10 +327,11 @@ describe("CheckInNotificationDrafts#lapseOf", () => {
     { lapseKind: "clash_missed", kind: "check-in.clash-missed" },
   ] as const)("names the $lapseKind lapse $kind", ({ lapseKind, kind }) => {
     // arrange
-    const drafts = new CheckInNotificationDraftsAdapter();
+    const checkInNotificationDraftsAdapter =
+      new CheckInNotificationDraftsAdapter();
 
     // act
-    const draft = drafts.lapseOf({
+    const draft = checkInNotificationDraftsAdapter.lapseOf({
       ...lapsedFor("coach"),
       lapse: { kind: lapseKind, lapsedAt: STARTS_AT },
     });

@@ -17,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return args.context.get(clientOnboardingContext).controller.submit(args);
+    return args.context
+      .get(clientOnboardingContext)
+      .clientOnboardingController.submit(args);
   });
 }
 

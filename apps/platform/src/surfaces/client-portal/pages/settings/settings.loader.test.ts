@@ -69,11 +69,11 @@ describe("settings page route", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(coachingSalesContext, {
-          subscription,
+          subscriptionController: subscription,
         } as unknown as CoachingSalesFeature),
         contextEntry(clientProfileContext, {
-          clientSettings,
-          ownProfile,
+          clientSettingsController: clientSettings,
+          ownClientProfileController: ownProfile,
         } as unknown as ClientProfileFeature),
       ],
       request: new Request("https://evoa.fit/client/settings"),

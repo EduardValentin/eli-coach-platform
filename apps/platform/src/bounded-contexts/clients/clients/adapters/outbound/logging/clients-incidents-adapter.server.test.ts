@@ -14,10 +14,12 @@ describe("createClientsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const clientsIncidentsAdapter = new ClientsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.rosterReadFailed(
+    clientsIncidentsAdapter.rosterReadFailed(
       new TypeError('Failed query: select "email" from "app"."clients"'),
     );
 
@@ -36,10 +38,12 @@ describe("createClientsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const clientsIncidentsAdapter = new ClientsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.rosterReadFailed("database down");
+    clientsIncidentsAdapter.rosterReadFailed("database down");
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(

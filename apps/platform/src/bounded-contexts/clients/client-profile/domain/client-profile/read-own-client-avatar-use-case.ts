@@ -4,8 +4,8 @@ import type { ClientAvatarSnapshot } from "./client-avatar";
 import type { ClientAvatarsPort } from "./client-avatars-port";
 
 type ReadOwnClientAvatarUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  avatars: Pick<ClientAvatarsPort, "findByClientId">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientAvatarsPort: Pick<ClientAvatarsPort, "findByClientId">;
 };
 
 export class ReadOwnClientAvatarUseCase {
@@ -13,13 +13,15 @@ export class ReadOwnClientAvatarUseCase {
 
   async execute(authSubjectId: string): Promise<ClientAvatarSnapshot | null> {
     const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+      await this.options.clientReachPort.findByAuthSubjectId(authSubjectId);
 
     if (!client) {
       return null;
     }
 
-    const avatar = await this.options.avatars.findByClientId(client.clientId);
+    const avatar = await this.options.clientAvatarsPort.findByClientId(
+      client.clientId,
+    );
 
     return avatar?.toSnapshot() ?? null;
   }

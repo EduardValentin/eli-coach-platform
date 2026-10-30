@@ -6,12 +6,12 @@ import {
 } from "~/shared/logging/error-fields.server";
 
 export class ExerciseLibraryIncidentsAdapter implements ExerciseLibraryIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   exerciseCreationFailed({
     error,
   }: Parameters<ExerciseLibraryIncidentsPort["exerciseCreationFailed"]>[0]) {
-    this.logger.error("Exercise could not be created.", {
+    this.loggerPort.error("Exercise could not be created.", {
       errorCategory: "exercise_creation_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -22,7 +22,7 @@ export class ExerciseLibraryIncidentsAdapter implements ExerciseLibraryIncidents
     error,
     exerciseId,
   }: Parameters<ExerciseLibraryIncidentsPort["exerciseEditFailed"]>[0]) {
-    this.logger.error("Exercise edit could not be written.", {
+    this.loggerPort.error("Exercise edit could not be written.", {
       errorCategory: "exercise_edit_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -34,7 +34,7 @@ export class ExerciseLibraryIncidentsAdapter implements ExerciseLibraryIncidents
     error,
     exerciseId,
   }: Parameters<ExerciseLibraryIncidentsPort["exerciseRestoreFailed"]>[0]) {
-    this.logger.error("Exercise restore could not be written.", {
+    this.loggerPort.error("Exercise restore could not be written.", {
       errorCategory: "exercise_restore_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),
@@ -46,7 +46,7 @@ export class ExerciseLibraryIncidentsAdapter implements ExerciseLibraryIncidents
     error,
     ...file
   }: Parameters<ExerciseLibraryIncidentsPort["videoCleanupFailed"]>[0]) {
-    this.logger.error("Exercise video file could not be removed.", {
+    this.loggerPort.error("Exercise video file could not be removed.", {
       errorCategory: "exercise_video_cleanup_failure",
       errorClass: errorClassOf(error),
       ...errorCodeOf(error),

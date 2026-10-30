@@ -28,12 +28,15 @@ export type EditExerciseResult =
   | { status: "failed" };
 
 type EditExerciseUseCaseOptions = {
-  library: ExerciseLibraryPort;
-  clock: ClockPort;
-  incidents: ExerciseLibraryIncidentsPort;
-  formats: ExerciseVideoFormatDetectorPort;
-  videoIds: ExerciseVideoIdsPort;
-  store: Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
+  exerciseLibraryPort: ExerciseLibraryPort;
+  clockPort: ClockPort;
+  exerciseLibraryIncidentsPort: ExerciseLibraryIncidentsPort;
+  exerciseVideoFormatDetectorPort: ExerciseVideoFormatDetectorPort;
+  exerciseVideoIdsPort: ExerciseVideoIdsPort;
+  exerciseVideoStorePort: Pick<
+    ExerciseVideoStorePort,
+    "keep" | "discard" | "remove"
+  >;
 };
 
 export class EditExerciseUseCase {
@@ -47,7 +50,7 @@ export class EditExerciseUseCase {
     try {
       return await this.edit(command);
     } catch (error) {
-      this.options.incidents.exerciseEditFailed({
+      this.options.exerciseLibraryIncidentsPort.exerciseEditFailed({
         exerciseId: command.exerciseId,
         error,
       });
@@ -63,10 +66,10 @@ export class EditExerciseUseCase {
     draft: input,
     video: choice,
   }: EditExerciseCommand): Promise<EditExerciseResult> {
-    const { library, clock } = this.options;
+    const { exerciseLibraryPort, clockPort } = this.options;
     const [exercise, exercises] = await Promise.all([
-      library.find({ ownerAccountId, exerciseId }),
-      library.list(ownerAccountId),
+      exerciseLibraryPort.find({ ownerAccountId, exerciseId }),
+      exerciseLibraryPort.list(ownerAccountId),
     ]);
 
     if (!exercise) {
@@ -102,13 +105,13 @@ export class EditExerciseUseCase {
     const change = await this.videos.keepAccepted(video);
     const revision = exercise.revised({
       draft: draft.draft,
-      at: clock.now(),
+      at: clockPort.now(),
       video: change,
     });
 
     if (
       (await this.videos.writeOrRemoveKept(change, () =>
-        library.replace(revision.exercise),
+        exerciseLibraryPort.replace(revision.exercise),
       )) === "name-taken"
     ) {
       return { status: "invalid", problems: { name: "taken" } };

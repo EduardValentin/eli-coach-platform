@@ -14,7 +14,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(coachingSalesContext)
-      .checkouts.resolveBundlePage(args);
+      .checkoutsController.resolveBundlePage(args);
   });
 }
 

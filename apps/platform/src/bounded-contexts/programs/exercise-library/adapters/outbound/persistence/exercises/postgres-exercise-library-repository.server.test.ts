@@ -107,10 +107,13 @@ describe("PostgresExerciseLibrary#add", () => {
   it("inserts the exercise with its form cues in their own column and answers that it was added", async () => {
     // arrange
     const database = createDatabase();
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const answer = await library.add(Exercise.reconstitute(SQUAT));
+    const answer = await postgresExerciseLibraryRepository.add(
+      Exercise.reconstitute(SQUAT),
+    );
 
     // assert
     expect(answer).toBe("added");
@@ -122,14 +125,15 @@ describe("PostgresExerciseLibrary#add", () => {
   it("writes the exercise's video in its video id, format and size columns", async () => {
     // arrange
     const database = createDatabase();
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
     const withVideo = Exercise.reconstitute({
       ...SQUAT,
       video: { videoId: VIDEO_ID, format: "mov", sizeBytes: 4_096 },
     });
 
     // act
-    await library.add(withVideo);
+    await postgresExerciseLibraryRepository.add(withVideo);
 
     // assert
     expect(database.writes).toEqual([
@@ -148,10 +152,13 @@ describe("PostgresExerciseLibrary#add", () => {
   it("answers that the name is taken when the unique name index refuses the row", async () => {
     // arrange
     const database = createDatabase(NAME_TAKEN);
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const answer = await library.add(Exercise.reconstitute(SQUAT));
+    const answer = await postgresExerciseLibraryRepository.add(
+      Exercise.reconstitute(SQUAT),
+    );
 
     // assert
     expect(answer).toBe("name-taken");
@@ -160,10 +167,13 @@ describe("PostgresExerciseLibrary#add", () => {
   it("passes any other refusal on", async () => {
     // arrange
     const database = createDatabase(OTHER_UNIQUE_VIOLATION);
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const adding = library.add(Exercise.reconstitute(SQUAT));
+    const adding = postgresExerciseLibraryRepository.add(
+      Exercise.reconstitute(SQUAT),
+    );
 
     // assert
     await expect(adding).rejects.toBe(OTHER_UNIQUE_VIOLATION);
@@ -182,10 +192,12 @@ describe("PostgresExerciseLibrary#list", () => {
         videoSizeBytes: 2_048,
       },
     ]);
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const exercises = await library.list(COACH_ACCOUNT_ID);
+    const exercises =
+      await postgresExerciseLibraryRepository.list(COACH_ACCOUNT_ID);
 
     // assert
     expect(exercises.map((exercise) => exercise.toSnapshot().video)).toEqual([
@@ -199,10 +211,11 @@ describe("PostgresExerciseLibrary#list", () => {
     const database = createDatabase(undefined, [
       { ...SQUAT_ROW, unit: "breaths" },
     ]);
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const listing = library.list(COACH_ACCOUNT_ID);
+    const listing = postgresExerciseLibraryRepository.list(COACH_ACCOUNT_ID);
 
     // assert
     await expect(listing).rejects.toThrow(InvalidStoredExerciseError);
@@ -213,7 +226,8 @@ describe("PostgresExerciseLibrary#replace", () => {
   it("writes every field but the id, the owner and the moment it was created, and answers that it was replaced", async () => {
     // arrange
     const database = createDatabase();
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
     const revised = Exercise.reconstitute({
       ...SQUAT,
       name: "Front squat",
@@ -221,7 +235,7 @@ describe("PostgresExerciseLibrary#replace", () => {
     });
 
     // act
-    const answer = await library.replace(revised);
+    const answer = await postgresExerciseLibraryRepository.replace(revised);
 
     // assert
     const {
@@ -242,10 +256,13 @@ describe("PostgresExerciseLibrary#replace", () => {
   it("answers that the name is taken when the unique name index refuses the rename", async () => {
     // arrange
     const database = createDatabase(NAME_TAKEN);
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const answer = await library.replace(Exercise.reconstitute(SQUAT));
+    const answer = await postgresExerciseLibraryRepository.replace(
+      Exercise.reconstitute(SQUAT),
+    );
 
     // assert
     expect(answer).toBe("name-taken");
@@ -255,10 +272,13 @@ describe("PostgresExerciseLibrary#replace", () => {
     // arrange
     const failure = new Error("connection terminated");
     const database = createDatabase(failure);
-    const library = new PostgresExerciseLibraryRepository(database.client);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
 
     // act
-    const replacing = library.replace(Exercise.reconstitute(SQUAT));
+    const replacing = postgresExerciseLibraryRepository.replace(
+      Exercise.reconstitute(SQUAT),
+    );
 
     // assert
     await expect(replacing).rejects.toBe(failure);

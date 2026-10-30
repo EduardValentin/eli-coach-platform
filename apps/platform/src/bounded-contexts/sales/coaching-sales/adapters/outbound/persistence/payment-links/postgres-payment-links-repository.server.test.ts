@@ -11,7 +11,7 @@ const NOW = new Date("2026-10-20T10:00:00.000Z");
 describe("PostgresPaymentLinks#findByTokenSha256", () => {
   it("reconstitutes the stored link with its paid customer", async () => {
     // arrange
-    const paymentLinks = createPaymentLinks(
+    const postgresPaymentLinksRepository = createPaymentLinks(
       createDatabaseAnswering([
         {
           id: "9b0f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
@@ -26,7 +26,9 @@ describe("PostgresPaymentLinks#findByTokenSha256", () => {
     );
 
     // act
-    const link = await paymentLinks.findByTokenSha256("a".repeat(64));
+    const link = await postgresPaymentLinksRepository.findByTokenSha256(
+      "a".repeat(64),
+    );
 
     // assert
     expect(link?.id).toBe("9b0f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11");
@@ -36,10 +38,14 @@ describe("PostgresPaymentLinks#findByTokenSha256", () => {
 
   it("answers null for a hash no link carries", async () => {
     // arrange
-    const paymentLinks = createPaymentLinks(createDatabaseAnswering([]));
+    const postgresPaymentLinksRepository = createPaymentLinks(
+      createDatabaseAnswering([]),
+    );
 
     // act
-    const link = await paymentLinks.findByTokenSha256("b".repeat(64));
+    const link = await postgresPaymentLinksRepository.findByTokenSha256(
+      "b".repeat(64),
+    );
 
     // assert
     expect(link).toBeNull();
@@ -50,7 +56,7 @@ describe("PostgresPaymentLinks#issue", () => {
   it("stores the issued link under the id the domain gave it", async () => {
     // arrange
     const database = createDatabaseRecordingInserts();
-    const paymentLinks = createPaymentLinks(database.handle);
+    const postgresPaymentLinksRepository = createPaymentLinks(database.handle);
     const link = PaymentLink.issued({
       id: "9b0f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
       assessmentCallId: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
@@ -59,7 +65,7 @@ describe("PostgresPaymentLinks#issue", () => {
     });
 
     // act
-    await paymentLinks.issue(link);
+    await postgresPaymentLinksRepository.issue(link);
 
     // assert
     expect(database.inserts).toEqual([
@@ -83,7 +89,7 @@ function createPaymentLinks(
   database: DatabaseClient,
 ): PostgresPaymentLinksRepository {
   return new PostgresPaymentLinksRepository({
-    clock: { now: () => NOW },
+    clockPort: { now: () => NOW },
     database,
   });
 }

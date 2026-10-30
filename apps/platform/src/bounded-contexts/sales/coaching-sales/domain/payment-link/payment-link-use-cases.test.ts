@@ -73,10 +73,10 @@ function createIncidents(): CoachingSalesIncidentsPort {
   };
 }
 
-function salesWindowReading(waitlistMode: WaitlistModePort) {
+function salesWindowReading(waitlistModePort: WaitlistModePort) {
   return new CoachingSalesWindow({
-    incidents: createIncidents(),
-    waitlistMode,
+    coachingSalesIncidentsPort: createIncidents(),
+    waitlistModePort,
   });
 }
 
@@ -140,17 +140,17 @@ function sendPaymentLinkDependencies(
   overrides?: Partial<ConstructorParameters<typeof SendPaymentLinkUseCase>[0]>,
 ) {
   return {
-    calls: createCalls(call),
-    callSalesStates: createCallSalesStates(new Map()),
-    clock: clockAt(NOW),
-    emailAcceptance: createEmailAcceptance("allowed"),
-    incidents: createIncidents(),
-    notifications: createNotifications("sent"),
-    paymentLinks: createPaymentLinks(null),
-    pricingEligibility: createPricingEligibility("regular"),
+    endedCallsPort: createCalls(call),
+    callSalesStatesPort: createCallSalesStates(new Map()),
+    clockPort: clockAt(NOW),
+    emailAcceptancePort: createEmailAcceptance("allowed"),
+    coachingSalesIncidentsPort: createIncidents(),
+    coachingSalesNotificationsPort: createNotifications("sent"),
+    paymentLinksPort: createPaymentLinks(null),
+    pricingEligibilityPort: createPricingEligibility("regular"),
     salesWindow: openSalesWindow(),
-    tokenGenerator: createTokenGenerator(),
-    ids: { generate: () => NEW_LINK_ID },
+    paymentLinkTokenGeneratorPort: createTokenGenerator(),
+    paymentLinkIdsPort: { generate: () => NEW_LINK_ID },
     ...overrides,
   };
 }
@@ -161,16 +161,16 @@ function resolvePaymentLinkDependencies(
   >,
 ) {
   return {
-    calls: createCalls(call),
-    callSalesStates: createCallSalesStates(
+    endedCallsPort: createCalls(call),
+    callSalesStatesPort: createCallSalesStates(
       new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
     ),
-    clock: clockAt(NOW),
-    emailAcceptance: createEmailAcceptance("allowed"),
-    paymentLinks: createPaymentLinks(usableLink),
-    pricingEligibility: createPricingEligibility("regular"),
+    clockPort: clockAt(NOW),
+    emailAcceptancePort: createEmailAcceptance("allowed"),
+    paymentLinksPort: createPaymentLinks(usableLink),
+    pricingEligibilityPort: createPricingEligibility("regular"),
     salesWindow: openSalesWindow(),
-    tokenHasher: createTokenHasher(),
+    paymentLinkTokenHasherPort: createTokenHasher(),
     ...overrides,
   };
 }
@@ -199,55 +199,69 @@ describe("SendPaymentLinkUseCase", () => {
     const dependencies = sendPaymentLinkDependencies({
       salesWindow: closedSalesWindow(),
     });
-    const useCase = new SendPaymentLinkUseCase(dependencies);
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ assessmentCallId: call.id });
+    const result = await sendPaymentLinkUseCase.execute({
+      assessmentCallId: call.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(dependencies.calls.findById).not.toHaveBeenCalled();
-    expect(dependencies.callSalesStates.forCalls).not.toHaveBeenCalled();
-    expect(dependencies.tokenGenerator.create).not.toHaveBeenCalled();
-    expect(dependencies.paymentLinks.issue).not.toHaveBeenCalled();
-    expect(dependencies.notifications.sendPaymentLink).not.toHaveBeenCalled();
+    expect(dependencies.endedCallsPort.findById).not.toHaveBeenCalled();
+    expect(dependencies.callSalesStatesPort.forCalls).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinkTokenGeneratorPort.create,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.paymentLinksPort.issue).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingSalesNotificationsPort.sendPaymentLink,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers closed and records the incident when the sales mode cannot be read", async () => {
     // arrange
     const failure = new Error("flags unavailable");
-    const incidents = createIncidents();
+    const coachingSalesIncidentsPort = createIncidents();
     const dependencies = sendPaymentLinkDependencies({
       salesWindow: new CoachingSalesWindow({
-        incidents,
-        waitlistMode: { isEnabled: vi.fn().mockRejectedValue(failure) },
+        coachingSalesIncidentsPort,
+        waitlistModePort: { isEnabled: vi.fn().mockRejectedValue(failure) },
       }),
     });
-    const useCase = new SendPaymentLinkUseCase(dependencies);
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ assessmentCallId: call.id });
+    const result = await sendPaymentLinkUseCase.execute({
+      assessmentCallId: call.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(incidents.salesModeReadFailed).toHaveBeenCalledWith(failure);
-    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+    expect(coachingSalesIncidentsPort.salesModeReadFailed).toHaveBeenCalledWith(
+      failure,
+    );
+    expect(dependencies.endedCallsPort.findById).not.toHaveBeenCalled();
   });
 
   it("answers call_not_found for an unknown call", async () => {
     // arrange
     const dependencies = sendPaymentLinkDependencies({
-      calls: createCalls(null),
+      endedCallsPort: createCalls(null),
     });
-    const useCase = new SendPaymentLinkUseCase(dependencies);
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ assessmentCallId: "call-404" });
+    const result = await sendPaymentLinkUseCase.execute({
+      assessmentCallId: "call-404",
+    });
 
     // assert
     expect(result).toEqual({ status: "call_not_found" });
-    expect(dependencies.calls.findById).toHaveBeenCalledWith("call-404");
-    expect(dependencies.paymentLinks.issue).not.toHaveBeenCalled();
+    expect(dependencies.endedCallsPort.findById).toHaveBeenCalledWith(
+      "call-404",
+    );
+    expect(dependencies.paymentLinksPort.issue).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -263,12 +277,14 @@ describe("SendPaymentLinkUseCase", () => {
     ],
   ])("answers by the call's end %s", async (_label, now, expected) => {
     // arrange
-    const useCase = new SendPaymentLinkUseCase(
-      sendPaymentLinkDependencies({ clock: clockAt(now) }),
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(
+      sendPaymentLinkDependencies({ clockPort: clockAt(now) }),
     );
 
     // act
-    const result = await useCase.execute({ assessmentCallId: call.id });
+    const result = await sendPaymentLinkUseCase.execute({
+      assessmentCallId: call.id,
+    });
 
     // assert
     expect(result).toEqual(expected);
@@ -277,44 +293,52 @@ describe("SendPaymentLinkUseCase", () => {
   it("answers already_paid without issuing a link for a paid call", async () => {
     // arrange
     const dependencies = sendPaymentLinkDependencies({
-      callSalesStates: createCallSalesStates(
+      callSalesStatesPort: createCallSalesStates(
         new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
       ),
     });
-    const useCase = new SendPaymentLinkUseCase(dependencies);
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ assessmentCallId: call.id });
+    const result = await sendPaymentLinkUseCase.execute({
+      assessmentCallId: call.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "already_paid" });
-    expect(dependencies.callSalesStates.forCalls).toHaveBeenCalledWith([
+    expect(dependencies.callSalesStatesPort.forCalls).toHaveBeenCalledWith([
       call.id,
     ]);
-    expect(dependencies.tokenGenerator.create).not.toHaveBeenCalled();
-    expect(dependencies.paymentLinks.issue).not.toHaveBeenCalled();
-    expect(dependencies.notifications.sendPaymentLink).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinkTokenGeneratorPort.create,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.paymentLinksPort.issue).not.toHaveBeenCalled();
+    expect(
+      dependencies.coachingSalesNotificationsPort.sendPaymentLink,
+    ).not.toHaveBeenCalled();
   });
 
   it("sends a 30-day link priced at the visitor's tier to the booking email", async () => {
     // arrange
     const dependencies = sendPaymentLinkDependencies({
-      callSalesStates: createCallSalesStates(
+      callSalesStatesPort: createCallSalesStates(
         new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
       ),
-      pricingEligibility: createPricingEligibility("reduced"),
+      pricingEligibilityPort: createPricingEligibility("reduced"),
     });
-    const useCase = new SendPaymentLinkUseCase(dependencies);
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ assessmentCallId: call.id });
+    const result = await sendPaymentLinkUseCase.execute({
+      assessmentCallId: call.id,
+    });
 
     // assert
     expect(result).toEqual({ status: "sent", email: "ana@example.com" });
-    expect(dependencies.pricingEligibility.tierForEmail).toHaveBeenCalledWith(
-      call.visitorEmail,
-    );
-    expect(dependencies.paymentLinks.issue).toHaveBeenCalledWith(
+    expect(
+      dependencies.pricingEligibilityPort.tierForEmail,
+    ).toHaveBeenCalledWith(call.visitorEmail);
+    expect(dependencies.paymentLinksPort.issue).toHaveBeenCalledWith(
       PaymentLink.issued({
         id: NEW_LINK_ID,
         assessmentCallId: call.id,
@@ -322,34 +346,37 @@ describe("SendPaymentLinkUseCase", () => {
         at: NOW,
       }),
     );
-    expect(dependencies.notifications.sendPaymentLink).toHaveBeenCalledWith({
+    expect(
+      dependencies.coachingSalesNotificationsPort.sendPaymentLink,
+    ).toHaveBeenCalledWith({
       call,
       paymentLinkId: NEW_LINK_ID,
       rawToken: RAW_TOKEN,
       tier: "reduced",
     });
-    expect(dependencies.paymentLinks.void).not.toHaveBeenCalled();
+    expect(dependencies.paymentLinksPort.void).not.toHaveBeenCalled();
   });
 
   it("voids the call's earlier links, keeping the new one, only after the email is sent", async () => {
     // arrange
     const dependencies = sendPaymentLinkDependencies();
-    const useCase = new SendPaymentLinkUseCase(dependencies);
+    const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
     // act
-    await useCase.execute({ assessmentCallId: call.id });
+    await sendPaymentLinkUseCase.execute({ assessmentCallId: call.id });
 
     // assert
-    expect(dependencies.paymentLinks.voidOtherLinksOf).toHaveBeenCalledWith(
+    expect(dependencies.paymentLinksPort.voidOtherLinksOf).toHaveBeenCalledWith(
       call.id,
       NEW_LINK_ID,
     );
-    const [issued] = vi.mocked(dependencies.paymentLinks.issue).mock
+    const [issued] = vi.mocked(dependencies.paymentLinksPort.issue).mock
       .invocationCallOrder;
-    const [sent] = vi.mocked(dependencies.notifications.sendPaymentLink).mock
-      .invocationCallOrder;
-    const [voided] = vi.mocked(dependencies.paymentLinks.voidOtherLinksOf).mock
-      .invocationCallOrder;
+    const [sent] = vi.mocked(
+      dependencies.coachingSalesNotificationsPort.sendPaymentLink,
+    ).mock.invocationCallOrder;
+    const [voided] = vi.mocked(dependencies.paymentLinksPort.voidOtherLinksOf)
+      .mock.invocationCallOrder;
     expect(issued).toBeLessThan(sent!);
     expect(sent).toBeLessThan(voided!);
   });
@@ -364,22 +391,28 @@ describe("SendPaymentLinkUseCase", () => {
     ],
   ])(
     "voids only the new link, keeps the earlier ones working and records the incident when the email %s",
-    async (_label, notifications) => {
+    async (_label, coachingSalesNotificationsPort) => {
       // arrange
-      const dependencies = sendPaymentLinkDependencies({ notifications });
-      const useCase = new SendPaymentLinkUseCase(dependencies);
+      const dependencies = sendPaymentLinkDependencies({
+        coachingSalesNotificationsPort,
+      });
+      const sendPaymentLinkUseCase = new SendPaymentLinkUseCase(dependencies);
 
       // act
-      const result = await useCase.execute({ assessmentCallId: call.id });
+      const result = await sendPaymentLinkUseCase.execute({
+        assessmentCallId: call.id,
+      });
 
       // assert
       expect(result).toEqual({ status: "delivery_failed" });
-      expect(vi.mocked(dependencies.paymentLinks.void).mock.calls).toEqual([
+      expect(vi.mocked(dependencies.paymentLinksPort.void).mock.calls).toEqual([
         [NEW_LINK_ID],
       ]);
-      expect(dependencies.paymentLinks.voidOtherLinksOf).not.toHaveBeenCalled();
       expect(
-        dependencies.incidents.paymentLinkEmailFailed,
+        dependencies.paymentLinksPort.voidOtherLinksOf,
+      ).not.toHaveBeenCalled();
+      expect(
+        dependencies.coachingSalesIncidentsPort.paymentLinkEmailFailed,
       ).toHaveBeenCalledWith(call.id);
     },
   );
@@ -391,28 +424,38 @@ describe("ResolvePaymentLinkUseCase", () => {
     const dependencies = resolvePaymentLinkDependencies({
       salesWindow: closedSalesWindow(),
     });
-    const useCase = new ResolvePaymentLinkUseCase(dependencies);
+    const resolvePaymentLinkUseCase = new ResolvePaymentLinkUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute(RAW_TOKEN);
+    const result = await resolvePaymentLinkUseCase.execute(RAW_TOKEN);
 
     // assert
     expect(result).toEqual({ status: "closed" });
-    expect(dependencies.paymentLinks.findByTokenSha256).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinksPort.findByTokenSha256,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers invalid for an implausible token without hashing or a lookup", async () => {
     // arrange
     const dependencies = resolvePaymentLinkDependencies();
-    const useCase = new ResolvePaymentLinkUseCase(dependencies);
+    const resolvePaymentLinkUseCase = new ResolvePaymentLinkUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute("abcde");
+    const result = await resolvePaymentLinkUseCase.execute("abcde");
 
     // assert
     expect(result).toEqual({ status: "invalid" });
-    expect(dependencies.tokenHasher.sha256).not.toHaveBeenCalled();
-    expect(dependencies.paymentLinks.findByTokenSha256).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinkTokenHasherPort.sha256,
+    ).not.toHaveBeenCalled();
+    expect(
+      dependencies.paymentLinksPort.findByTokenSha256,
+    ).not.toHaveBeenCalled();
   });
 
   it.each<[string, PaymentLink | null]>([
@@ -436,14 +479,14 @@ describe("ResolvePaymentLinkUseCase", () => {
     ],
   ])("answers invalid for %s link", async (_label, found) => {
     // arrange
-    const useCase = new ResolvePaymentLinkUseCase(
+    const resolvePaymentLinkUseCase = new ResolvePaymentLinkUseCase(
       resolvePaymentLinkDependencies({
-        paymentLinks: createPaymentLinks(found),
+        paymentLinksPort: createPaymentLinks(found),
       }),
     );
 
     // act
-    const result = await useCase.execute(RAW_TOKEN);
+    const result = await resolvePaymentLinkUseCase.execute(RAW_TOKEN);
 
     // assert
     expect(result).toEqual({ status: "invalid" });
@@ -451,12 +494,12 @@ describe("ResolvePaymentLinkUseCase", () => {
 
   it("answers invalid when the link's call no longer exists", async () => {
     // arrange
-    const useCase = new ResolvePaymentLinkUseCase(
-      resolvePaymentLinkDependencies({ calls: createCalls(null) }),
+    const resolvePaymentLinkUseCase = new ResolvePaymentLinkUseCase(
+      resolvePaymentLinkDependencies({ endedCallsPort: createCalls(null) }),
     );
 
     // act
-    const result = await useCase.execute(RAW_TOKEN);
+    const result = await resolvePaymentLinkUseCase.execute(RAW_TOKEN);
 
     // assert
     expect(result).toEqual({ status: "invalid" });
@@ -465,32 +508,38 @@ describe("ResolvePaymentLinkUseCase", () => {
   it("answers invalid for a still-valid link whose call is already paid", async () => {
     // arrange
     const dependencies = resolvePaymentLinkDependencies({
-      callSalesStates: createCallSalesStates(
+      callSalesStatesPort: createCallSalesStates(
         new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
       ),
     });
-    const useCase = new ResolvePaymentLinkUseCase(dependencies);
+    const resolvePaymentLinkUseCase = new ResolvePaymentLinkUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute(RAW_TOKEN);
+    const result = await resolvePaymentLinkUseCase.execute(RAW_TOKEN);
 
     // assert
     expect(result).toEqual({ status: "invalid" });
-    expect(dependencies.callSalesStates.forCalls).toHaveBeenCalledWith([
+    expect(dependencies.callSalesStatesPort.forCalls).toHaveBeenCalledWith([
       call.id,
     ]);
-    expect(dependencies.pricingEligibility.tierForEmail).not.toHaveBeenCalled();
+    expect(
+      dependencies.pricingEligibilityPort.tierForEmail,
+    ).not.toHaveBeenCalled();
   });
 
   it("resolves a usable link with its call and the visitor's tier", async () => {
     // arrange
     const dependencies = resolvePaymentLinkDependencies({
-      pricingEligibility: createPricingEligibility("reduced"),
+      pricingEligibilityPort: createPricingEligibility("reduced"),
     });
-    const useCase = new ResolvePaymentLinkUseCase(dependencies);
+    const resolvePaymentLinkUseCase = new ResolvePaymentLinkUseCase(
+      dependencies,
+    );
 
     // act
-    const result = await useCase.execute(RAW_TOKEN);
+    const result = await resolvePaymentLinkUseCase.execute(RAW_TOKEN);
 
     // assert
     expect(result).toEqual({
@@ -499,28 +548,30 @@ describe("ResolvePaymentLinkUseCase", () => {
       call,
       tier: "reduced",
     });
-    expect(dependencies.tokenHasher.sha256).toHaveBeenCalledWith(RAW_TOKEN);
-    expect(dependencies.paymentLinks.findByTokenSha256).toHaveBeenCalledWith(
-      TOKEN_SHA256,
+    expect(dependencies.paymentLinkTokenHasherPort.sha256).toHaveBeenCalledWith(
+      RAW_TOKEN,
     );
-    expect(dependencies.calls.findById).toHaveBeenCalledWith(
+    expect(
+      dependencies.paymentLinksPort.findByTokenSha256,
+    ).toHaveBeenCalledWith(TOKEN_SHA256);
+    expect(dependencies.endedCallsPort.findById).toHaveBeenCalledWith(
       usableLink.assessmentCallId,
     );
-    expect(dependencies.pricingEligibility.tierForEmail).toHaveBeenCalledWith(
-      call.visitorEmail,
-    );
+    expect(
+      dependencies.pricingEligibilityPort.tierForEmail,
+    ).toHaveBeenCalledWith(call.visitorEmail);
   });
 });
 
 describe("OpenBundlePageUseCase", () => {
   it("answers open while sales are open", async () => {
     // arrange
-    const useCase = new OpenBundlePageUseCase({
+    const openBundlePageUseCase = new OpenBundlePageUseCase({
       salesWindow: openSalesWindow(),
     });
 
     // act
-    const result = await useCase.execute();
+    const result = await openBundlePageUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "open" });
@@ -528,12 +579,12 @@ describe("OpenBundlePageUseCase", () => {
 
   it("answers closed while sales are closed", async () => {
     // arrange
-    const useCase = new OpenBundlePageUseCase({
+    const openBundlePageUseCase = new OpenBundlePageUseCase({
       salesWindow: closedSalesWindow(),
     });
 
     // act
-    const result = await useCase.execute();
+    const result = await openBundlePageUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "closed" });
@@ -551,15 +602,21 @@ describe("ReadCallSalesStatesUseCase", () => {
       ["call-2", { state: "payment-link-sent", clientId: null }],
       ["call-3", { state: "paid", clientId: "client-3" }],
     ]);
-    const callSalesStates = createCallSalesStates(states);
-    const useCase = new ReadCallSalesStatesUseCase({ callSalesStates });
+    const callSalesStatesPort = createCallSalesStates(states);
+    const readCallSalesStatesUseCase = new ReadCallSalesStatesUseCase({
+      callSalesStatesPort,
+    });
 
     // act
-    const result = await useCase.execute(["call-1", "call-2", "call-3"]);
+    const result = await readCallSalesStatesUseCase.execute([
+      "call-1",
+      "call-2",
+      "call-3",
+    ]);
 
     // assert
     expect(result).toBe(states);
-    expect(callSalesStates.forCalls).toHaveBeenCalledWith([
+    expect(callSalesStatesPort.forCalls).toHaveBeenCalledWith([
       "call-1",
       "call-2",
       "call-3",

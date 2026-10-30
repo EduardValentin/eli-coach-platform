@@ -14,12 +14,12 @@ describe("createNotificationsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new NotificationsIncidentsAdapter(
+    const notificationsIncidentsAdapter = new NotificationsIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.notificationBellReadFailed({
+    notificationsIncidentsAdapter.notificationBellReadFailed({
       party: "client",
       error: Object.assign(new Error("secret row contents"), {
         code: "57P01",

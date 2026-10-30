@@ -25,10 +25,10 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientCheckInsControllerOptions = {
-  countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
-  findNextClientCheckIn: FindNextClientCheckInUseCase;
-  listClientCheckIns: ListClientCheckInsUseCase;
-  requestCheckIn: RequestCheckInUseCase;
+  countCheckInsAwaitingUseCase: CountCheckInsAwaitingUseCase;
+  findNextClientCheckInUseCase: FindNextClientCheckInUseCase;
+  listClientCheckInsUseCase: ListClientCheckInsUseCase;
+  requestCheckInUseCase: RequestCheckInUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -42,7 +42,7 @@ export class ClientCheckInsController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const listing = await this.options.listClientCheckIns.execute(
+    const listing = await this.options.listClientCheckInsUseCase.execute(
       client.authSubjectId,
     );
 
@@ -61,7 +61,7 @@ export class ClientCheckInsController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const next = await this.options.findNextClientCheckIn.execute(
+    const next = await this.options.findNextClientCheckInUseCase.execute(
       client.authSubjectId,
     );
 
@@ -77,7 +77,7 @@ export class ClientCheckInsController {
       .get(accessContext)
       .requirePortalAccess("CLIENT");
 
-    return this.options.countCheckInsAwaiting.execute({
+    return this.options.countCheckInsAwaitingUseCase.execute({
       party: "client",
       authSubjectId: client.authSubjectId,
     });
@@ -96,7 +96,7 @@ export class ClientCheckInsController {
     }
 
     const result = await this.options.unitOfWork(() =>
-      this.options.requestCheckIn.execute({
+      this.options.requestCheckInUseCase.execute({
         authSubjectId: client.authSubjectId,
         startsAt: new Date(submission.data.startsAt),
         clientTimeZone: submission.data.timeZone,

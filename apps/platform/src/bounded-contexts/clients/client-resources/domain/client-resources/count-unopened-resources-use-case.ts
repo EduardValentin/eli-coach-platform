@@ -7,9 +7,9 @@ import type { ClientResourceIncidentsPort } from "./client-resource-incidents-po
 import type { ClientResourcesPort } from "./client-resources-port";
 
 type CountUnopenedResourcesUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class CountUnopenedResourcesUseCase {
@@ -26,10 +26,15 @@ export class CountUnopenedResourcesUseCase {
       clientId = await this.access.clientWithReachablePortalOf(requester);
 
       return clientId
-        ? await this.options.resources.countUnopenedForClient(clientId)
+        ? await this.options.clientResourcesPort.countUnopenedForClient(
+            clientId,
+          )
         : 0;
     } catch (error) {
-      this.options.incidents.unopenedCountFailed({ clientId, error });
+      this.options.clientResourceIncidentsPort.unopenedCountFailed({
+        clientId,
+        error,
+      });
 
       return 0;
     }

@@ -14,8 +14,8 @@ type ClientOnboardingReading = {
 
 type ReadClientOnboardingUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSourcePort;
-  settings: ClientSettingsSourcePort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
 };
 
 export class ReadClientOnboardingUseCase {
@@ -34,8 +34,8 @@ export class ReadClientOnboardingUseCase {
     const { client, identity } = participant;
 
     const [stored, settings] = await Promise.all([
-      this.options.onboardings.findByClientId(client.clientId),
-      this.options.settings.findByClientId(client.clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(client.clientId),
+      this.options.clientSettingsSourcePort.findByClientId(client.clientId),
     ]);
 
     return {

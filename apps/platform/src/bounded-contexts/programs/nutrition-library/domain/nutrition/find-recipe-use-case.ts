@@ -15,27 +15,28 @@ export type FindRecipeResult =
   | { status: "not-found" };
 
 type FindRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibraryPort, "list">;
-  foods: Pick<FoodLibraryPort, "list" | "referenced">;
-  tags: Pick<NutritionTagsPort, "list">;
+  recipeLibraryPort: Pick<RecipeLibraryPort, "list">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list" | "referenced">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
 };
 
 export class FindRecipeUseCase {
   constructor(private readonly options: FindRecipeUseCaseOptions) {}
 
   async execute(reference: RecipeReference): Promise<FindRecipeResult> {
-    const { recipes, foods, tags } = this.options;
+    const { recipeLibraryPort, foodLibraryPort, nutritionTagsPort } =
+      this.options;
     const { ownerAccountId, recipeId } = reference;
     const [storedRecipes, activeFoods, vocabulary] = await Promise.all([
-      recipes.list(ownerAccountId),
-      foods.list(ownerAccountId),
-      tags.list(),
+      recipeLibraryPort.list(ownerAccountId),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
     const recipe = storedRecipes.find(({ id }) => id === recipeId);
 
     if (!recipe) return { status: "not-found" };
 
-    const referencedFoods = await foods.referenced({
+    const referencedFoods = await foodLibraryPort.referenced({
       ownerAccountId,
       foodIds: recipe.ingredientFoodIds,
     });

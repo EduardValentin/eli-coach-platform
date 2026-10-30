@@ -16,11 +16,11 @@ import type {
 } from "./check-in-notifications-port";
 
 type CheckInAnnouncerOptions = {
-  clock: ClockPort;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
+  clockPort: ClockPort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
 };
 
 type AnnouncedClient = CheckInNotice["client"];
@@ -59,16 +59,18 @@ export class CheckInAnnouncer {
     });
 
     const reportInboxFailure = () =>
-      this.options.incidents.checkInInboxFailed({
+      this.options.checkInIncidentsPort.checkInInboxFailed({
         checkInId,
         event: notification,
       });
     const client = await this.deliverTo(checkIn.clientId, [
       {
         deliver: (client) =>
-          this.options.notifications[notification](noticeFor(client)),
+          this.options.checkInNotificationsPort[notification](
+            noticeFor(client),
+          ),
         reportFailure: () =>
-          this.options.incidents.checkInNotificationFailed({
+          this.options.checkInIncidentsPort.checkInNotificationFailed({
             checkInId,
             notification,
           }),
@@ -76,7 +78,10 @@ export class CheckInAnnouncer {
       {
         deliver: (client) =>
           this.sentOnceRecorded(
-            this.options.inbox.checkInEvent(notification, noticeFor(client)),
+            this.options.checkInInboxPort.checkInEvent(
+              notification,
+              noticeFor(client),
+            ),
           ),
         reportFailure: reportInboxFailure,
       },
@@ -93,7 +98,7 @@ export class CheckInAnnouncer {
     series: CheckInSeries,
     change: { current: readonly CheckIn[]; withdrawn: readonly string[] },
   ): Promise<void> {
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const lapsing = change.current.some((checkIn) =>
       checkIn.upcomingLapseAfter(now),
     );
@@ -102,7 +107,7 @@ export class CheckInAnnouncer {
     await this.scheduleExpiries(client, {
       ...change,
       reportFailure: () =>
-        this.options.incidents.checkInSeriesInboxFailed({
+        this.options.checkInIncidentsPort.checkInSeriesInboxFailed({
           seriesId: series.id,
           event: "clashesAdded",
         }),
@@ -125,9 +130,11 @@ export class CheckInAnnouncer {
     await this.deliverTo(series.clientId, [
       {
         deliver: (client) =>
-          this.options.notifications[notification](noticeFor(client)),
+          this.options.checkInNotificationsPort[notification](
+            noticeFor(client),
+          ),
         reportFailure: () =>
-          this.options.incidents.checkInSeriesNotificationFailed({
+          this.options.checkInIncidentsPort.checkInSeriesNotificationFailed({
             seriesId: series.id,
             notification,
           }),
@@ -135,13 +142,13 @@ export class CheckInAnnouncer {
       {
         deliver: (client) =>
           this.sentOnceRecorded(
-            this.options.inbox.seriesEvent(notification, {
+            this.options.checkInInboxPort.seriesEvent(notification, {
               ...noticeFor(client),
               firstWeekId,
             }),
           ),
         reportFailure: () =>
-          this.options.incidents.checkInSeriesInboxFailed({
+          this.options.checkInIncidentsPort.checkInSeriesInboxFailed({
             seriesId: series.id,
             event: notification,
           }),
@@ -163,7 +170,7 @@ export class CheckInAnnouncer {
       {
         deliver: (client) =>
           this.sentOnceRecorded(
-            this.options.inbox.clashesAdded({
+            this.options.checkInInboxPort.clashesAdded({
               series: series.toSnapshot(),
               client,
               clashes: clashes.length,
@@ -171,7 +178,7 @@ export class CheckInAnnouncer {
             }),
           ),
         reportFailure: () =>
-          this.options.incidents.checkInSeriesInboxFailed({
+          this.options.checkInIncidentsPort.checkInSeriesInboxFailed({
             seriesId: series.id,
             event: "clashesAdded",
           }),
@@ -196,7 +203,7 @@ export class CheckInAnnouncer {
     client: AnnouncedClient | null,
     change: ExpiryChange,
   ): Promise<void> {
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const upcoming = client
       ? change.current.flatMap((checkIn): CheckInExpiry[] => {
           const lapse = checkIn.upcomingLapseAfter(now);
@@ -218,7 +225,10 @@ export class CheckInAnnouncer {
     ];
 
     try {
-      await this.options.inbox.scheduleExpiries({ withdrawn, upcoming });
+      await this.options.checkInInboxPort.scheduleExpiries({
+        withdrawn,
+        upcoming,
+      });
     } catch {
       change.reportFailure();
     }
@@ -239,7 +249,7 @@ export class CheckInAnnouncer {
 
   private async identityOf(clientId: string): Promise<AnnouncedClient | null> {
     try {
-      const [client] = await this.options.identities.findByClientIds([
+      const [client] = await this.options.clientIdentitiesPort.findByClientIds([
         clientId,
       ]);
 

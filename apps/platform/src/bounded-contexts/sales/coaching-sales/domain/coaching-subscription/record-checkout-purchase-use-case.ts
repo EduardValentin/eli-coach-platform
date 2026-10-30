@@ -9,10 +9,10 @@ import type { PaidClientAdmissionPort } from "./paid-client-admission-port";
 import type { PaymentEventLedgerPort } from "./payment-event-ledger-port";
 
 type RecordCheckoutPurchaseUseCaseOptions = {
-  admission: Pick<PaidClientAdmissionPort, "admit">;
-  incidents: CoachingSubscriptionIncidentsPort;
-  paymentEventLedger: PaymentEventLedgerPort;
-  purchases: CoachingPurchasesPort;
+  paidClientAdmissionPort: Pick<PaidClientAdmissionPort, "admit">;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  paymentEventLedgerPort: PaymentEventLedgerPort;
+  coachingPurchasesPort: CoachingPurchasesPort;
 };
 
 export class RecordCheckoutPurchaseUseCase {
@@ -20,7 +20,7 @@ export class RecordCheckoutPurchaseUseCase {
 
   async execute(purchase: CheckoutPurchase): Promise<RecordedCheckoutPurchase> {
     const { client, eventId, receivedAt, subscription } = purchase;
-    const ledgerOutcome = await this.options.paymentEventLedger.record({
+    const ledgerOutcome = await this.options.paymentEventLedgerPort.record({
       eventId,
       receivedAt,
     });
@@ -28,7 +28,7 @@ export class RecordCheckoutPurchaseUseCase {
     if (ledgerOutcome === "duplicate") {
       return {
         status: "duplicate",
-        clientId: await this.options.purchases.findClientIdForCall(
+        clientId: await this.options.coachingPurchasesPort.findClientIdForCall(
           client.assessmentCallId,
         ),
         subscription,
@@ -37,13 +37,13 @@ export class RecordCheckoutPurchaseUseCase {
 
     const clientId = await this.admit(purchase);
 
-    await this.options.purchases.insertSubscription({
+    await this.options.coachingPurchasesPort.insertSubscription({
       assessmentCallId: client.assessmentCallId,
       clientId,
       subscription,
       receivedAt,
     });
-    await this.options.purchases.spendPaymentLink(
+    await this.options.coachingPurchasesPort.spendPaymentLink(
       subscription.checkoutSessionId,
     );
 
@@ -56,14 +56,14 @@ export class RecordCheckoutPurchaseUseCase {
     receivedAt,
     subscription,
   }: CheckoutPurchase): Promise<string> {
-    const admitted = await this.options.admission.admit({
+    const admitted = await this.options.paidClientAdmissionPort.admit({
       client,
       standing: subscription.standing(),
       at: receivedAt,
     });
 
     if (admitted.status === "call_already_has_client") {
-      this.options.incidents.paymentEventRejected({
+      this.options.coachingSubscriptionIncidentsPort.paymentEventRejected({
         eventId,
         reason: "call_already_paid",
       });

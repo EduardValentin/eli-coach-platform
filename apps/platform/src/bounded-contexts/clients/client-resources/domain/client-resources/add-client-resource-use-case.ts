@@ -49,15 +49,15 @@ export type AddClientResourceResult =
   | { status: "failed" };
 
 type AddClientResourceUseCaseOptions = {
-  resources: ClientResourcesPort;
-  resourceIds: ClientResourceIdsPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStorePort;
-  documentPages: ResourceDocumentPagesPort;
-  imagePages: ResourceImagePagesPort;
-  fileFormats: ResourceFileFormatDetectorPort;
-  clock: ClockPort;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientResourceIdsPort: ClientResourceIdsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceStorePort: ClientResourceStorePort;
+  resourceDocumentPagesPort: ResourceDocumentPagesPort;
+  resourceImagePagesPort: ResourceImagePagesPort;
+  resourceFileFormatDetectorPort: ResourceFileFormatDetectorPort;
+  clockPort: ClockPort;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 type KeptFile =
@@ -88,7 +88,9 @@ export class AddClientResourceUseCase {
       return { status: "not-found" };
     }
 
-    if ((await this.options.clients.findById(command.clientId)) === null) {
+    if (
+      (await this.options.clientReachPort.findById(command.clientId)) === null
+    ) {
       return { status: "not-found" };
     }
 
@@ -106,7 +108,7 @@ export class AddClientResourceUseCase {
 
     const owner = {
       clientId: command.clientId,
-      resourceId: this.options.resourceIds.generate(),
+      resourceId: this.options.clientResourceIdsPort.generate(),
     };
 
     try {
@@ -126,7 +128,7 @@ export class AddClientResourceUseCase {
     if (size.status === "refused") return size;
 
     return ResourceFileIntake.judgeFormat(
-      await this.options.fileFormats.detect(bytes),
+      await this.options.resourceFileFormatDetectorPort.detect(bytes),
     );
   }
 
@@ -139,7 +141,7 @@ export class AddClientResourceUseCase {
 
     if (kept.status === "refused") return this.refuse(command, kept.refusal);
 
-    const vocabulary = await this.options.resources.tagVocabulary();
+    const vocabulary = await this.options.clientResourcesPort.tagVocabulary();
     const resource = ClientResource.added({
       id: owner.resourceId,
       clientId: owner.clientId,
@@ -150,11 +152,11 @@ export class AddClientResourceUseCase {
         sizeBytes: bytes.byteLength,
         pageCount: kept.pageCount,
       }),
-      at: this.options.clock.now(),
+      at: this.options.clockPort.now(),
     });
 
-    await this.options.resources.add(resource);
-    this.options.incidents.resourceStored({
+    await this.options.clientResourcesPort.add(resource);
+    this.options.clientResourceIncidentsPort.resourceStored({
       ...owner,
       format: judgement.format,
       sizeBytes: bytes.byteLength,
@@ -175,7 +177,9 @@ export class AddClientResourceUseCase {
   }
 
   private async keepDocument(file: AcceptedFile): Promise<KeptFile> {
-    const reading = await this.options.documentPages.read(file.bytes.slice());
+    const reading = await this.options.resourceDocumentPagesPort.read(
+      file.bytes.slice(),
+    );
 
     if (reading.status === "unreadable") {
       return { status: "refused", refusal: "unreadable" };
@@ -198,36 +202,47 @@ export class AddClientResourceUseCase {
     file: AcceptedFile,
     document: ReadableResourceDocument,
   ): Promise<void> {
-    const { store } = this.options;
+    const { clientResourceStorePort } = this.options;
 
-    await store.storeOriginal(file.owner, file.bytes);
+    await clientResourceStorePort.storeOriginal(file.owner, file.bytes);
     for await (const page of document.pages()) {
-      await store.storePage(file.owner, page);
+      await clientResourceStorePort.storePage(file.owner, page);
     }
-    await store.storeThumbnail(file.owner, await document.thumbnail());
+    await clientResourceStorePort.storeThumbnail(
+      file.owner,
+      await document.thumbnail(),
+    );
   }
 
   private async keepImage(file: AcceptedFile): Promise<KeptFile> {
-    const rendering = await this.options.imagePages.render(file.bytes);
+    const rendering = await this.options.resourceImagePagesPort.render(
+      file.bytes,
+    );
 
     if (rendering.status === "refused") {
       return { status: "refused", refusal: "unsupported-type" };
     }
 
-    const { store } = this.options;
+    const { clientResourceStorePort } = this.options;
 
-    await store.storeOriginal(file.owner, file.bytes);
-    await store.storePage(file.owner, {
+    await clientResourceStorePort.storeOriginal(file.owner, file.bytes);
+    await clientResourceStorePort.storePage(file.owner, {
       pageNumber: SINGLE_PAGE,
       bytes: rendering.page,
     });
-    await store.storeThumbnail(file.owner, rendering.thumbnail);
+    await clientResourceStorePort.storeThumbnail(
+      file.owner,
+      rendering.thumbnail,
+    );
 
     return { status: "kept", pageCount: SINGLE_PAGE };
   }
 
   private async keepOriginalOnly(file: AcceptedFile): Promise<KeptFile> {
-    await this.options.store.storeOriginal(file.owner, file.bytes);
+    await this.options.clientResourceStorePort.storeOriginal(
+      file.owner,
+      file.bytes,
+    );
 
     return { status: "kept", pageCount: null };
   }
@@ -236,7 +251,7 @@ export class AddClientResourceUseCase {
     command: AddClientResourceCommand,
     refusal: ResourceRefusal,
   ): AddClientResourceResult {
-    this.options.incidents.resourceRefused({
+    this.options.clientResourceIncidentsPort.resourceRefused({
       clientId: command.clientId,
       receivedBytes: command.file.bytes.byteLength,
       reason: refusal,
@@ -249,8 +264,13 @@ export class AddClientResourceUseCase {
     owner: ClientResourceOwner,
     error: unknown,
   ): Promise<AddClientResourceResult> {
-    await this.options.store.remove(owner).catch(() => undefined);
-    this.options.incidents.resourceStorageFailed({ ...owner, error });
+    await this.options.clientResourceStorePort
+      .remove(owner)
+      .catch(() => undefined);
+    this.options.clientResourceIncidentsPort.resourceStorageFailed({
+      ...owner,
+      error,
+    });
 
     return { status: "failed" };
   }

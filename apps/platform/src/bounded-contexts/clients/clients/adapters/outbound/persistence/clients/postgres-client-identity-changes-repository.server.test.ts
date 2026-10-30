@@ -19,9 +19,8 @@ describe("PostgresClientIdentityChanges#save", () => {
   it("rewrites her names, phone, date of birth, country and gender on her client row, never her email", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
-    const changes = new PostgresClientIdentityChangesRepository(
-      database.client,
-    );
+    const postgresClientIdentityChangesRepository =
+      new PostgresClientIdentityChangesRepository(database.client);
     const result = ClientIdentityEdit.of(
       {
         clientId: CLIENT_ID,
@@ -47,7 +46,7 @@ describe("PostgresClientIdentityChanges#save", () => {
     if (result.status !== "valid") throw new Error(result.status);
 
     // act
-    await changes.save(result.edit);
+    await postgresClientIdentityChangesRepository.save(result.edit);
 
     // assert
     expect(database.updates).toEqual([

@@ -14,12 +14,12 @@ describe("createClientResourcesIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.resourceStored({
+    clientResourcesIncidentsAdapter.resourceStored({
       clientId: "client-1",
       resourceId: "resource-1",
       format: "pdf",
@@ -43,12 +43,12 @@ describe("createClientResourcesIncidents", () => {
     const consoleWarn = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.resourceRefused({
+    clientResourcesIncidentsAdapter.resourceRefused({
       clientId: "client-1",
       receivedBytes: 12,
       reason: "unsupported-type",
@@ -68,12 +68,12 @@ describe("createClientResourcesIncidents", () => {
     const consoleWarn = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.resourceAccessRefused({
+    clientResourcesIncidentsAdapter.resourceAccessRefused({
       requesterRole: "CLIENT",
       clientId: "client-1",
       resourceId: null,
@@ -96,7 +96,7 @@ describe("createClientResourcesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(
@@ -105,7 +105,7 @@ describe("createClientResourcesIncidents", () => {
     );
 
     // act
-    logger.resourceStorageFailed({
+    clientResourcesIncidentsAdapter.resourceStorageFailed({
       clientId: "client-1",
       resourceId: "resource-1",
       error: cause,
@@ -129,7 +129,7 @@ describe("createClientResourcesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(
@@ -138,7 +138,10 @@ describe("createClientResourcesIncidents", () => {
     );
 
     // act
-    logger.resourceListingFailed({ clientId: "client-1", error: cause });
+    clientResourcesIncidentsAdapter.resourceListingFailed({
+      clientId: "client-1",
+      error: cause,
+    });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -157,7 +160,7 @@ describe("createClientResourcesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("secret row contents"), {
@@ -165,7 +168,7 @@ describe("createClientResourcesIncidents", () => {
     });
 
     // act
-    logger.resourceOpeningFailed({
+    clientResourcesIncidentsAdapter.resourceOpeningFailed({
       clientId: "client-1",
       resourceId: "resource-1",
       error: cause,
@@ -189,7 +192,7 @@ describe("createClientResourcesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(new Error("secret row contents"), {
@@ -197,7 +200,7 @@ describe("createClientResourcesIncidents", () => {
     });
 
     // act
-    logger.resourceChangeFailed({
+    clientResourcesIncidentsAdapter.resourceChangeFailed({
       clientId: "client-1",
       resourceId: "resource-1",
       error: cause,
@@ -221,7 +224,7 @@ describe("createClientResourcesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
     const cause = Object.assign(
@@ -230,7 +233,7 @@ describe("createClientResourcesIncidents", () => {
     );
 
     // act
-    logger.resourceFilesOrphaned({
+    clientResourcesIncidentsAdapter.resourceFilesOrphaned({
       clientId: "client-1",
       resourceId: "resource-1",
       error: cause,
@@ -259,12 +262,11 @@ describe("createClientResourcesIncidents", () => {
       const consoleError = vi
         .spyOn(console, "error")
         .mockImplementation(() => undefined);
-      const logger = new ClientResourcesIncidentsAdapter(
-        new ConsoleLoggerAdapter(),
-      );
+      const clientResourcesIncidentsAdapter =
+        new ClientResourcesIncidentsAdapter(new ConsoleLoggerAdapter());
 
       // act
-      logger.unopenedCountFailed({
+      clientResourcesIncidentsAdapter.unopenedCountFailed({
         clientId,
         error: new TypeError("secret row contents"),
       });
@@ -286,12 +288,12 @@ describe("createClientResourcesIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientResourcesIncidentsAdapter(
+    const clientResourcesIncidentsAdapter = new ClientResourcesIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.resourceStorageFailed({
+    clientResourcesIncidentsAdapter.resourceStorageFailed({
       clientId: "client-1",
       resourceId: "resource-1",
       error: new TypeError("page renderer stopped"),

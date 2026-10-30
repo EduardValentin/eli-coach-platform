@@ -26,11 +26,11 @@ function createDatabaseStub(): DatabaseClient {
 }
 
 function createManagementAuth(): {
-  authenticator: ManagementAuthenticatorPort;
+  managementAuthenticatorPort: ManagementAuthenticatorPort;
   config: ManagementAuthConfig;
 } {
   return {
-    authenticator: {
+    managementAuthenticatorPort: {
       authenticate: async () => ({ status: "unauthenticated" }),
     },
     config: {
@@ -54,21 +54,25 @@ describe("composeStoreFeature", () => {
     // arrange
     const feature = composeStoreFeature({
       appBasePath: "/",
-      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-      clock: { now: () => new Date() },
+      botVerifierPort: {
+        verifySubmission: async () => ({ status: "verified" }),
+      },
+      clockPort: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      emailAcceptance: createEmailAcceptance("allowed"),
-      logger: createLogger(),
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      loggerPort: createLogger(),
       managementAuth: createManagementAuth(),
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
-      terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
+      termsFacade: {
+        currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+      },
     });
 
     // act
-    const response = await feature.catalog.getPublishedCatalog();
+    const response = await feature.storeCatalogController.getPublishedCatalog();
     const body = await response.json();
 
     // assert
@@ -80,23 +84,27 @@ describe("composeStoreFeature", () => {
     // arrange
     const feature = composeStoreFeature({
       appBasePath: "/",
-      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-      clock: { now: () => new Date() },
+      botVerifierPort: {
+        verifySubmission: async () => ({ status: "verified" }),
+      },
+      clockPort: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      emailAcceptance: createEmailAcceptance("allowed"),
-      logger: createLogger(),
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      loggerPort: createLogger(),
       managementAuth: createManagementAuth(),
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
-      terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
+      termsFacade: {
+        currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+      },
     });
     const formData = new FormData();
     formData.set("token", "unit-test-grant-token");
 
     // act
-    const response = await feature.downloads.download(
+    const response = await feature.storeDownloadController.download(
       new Request("http://localhost/api/store/downloads", {
         method: "POST",
         body: formData,
@@ -113,17 +121,21 @@ describe("composeStoreFeature", () => {
     // arrange
     const feature = composeStoreFeature({
       appBasePath: "/",
-      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-      clock: { now: () => new Date() },
+      botVerifierPort: {
+        verifySubmission: async () => ({ status: "verified" }),
+      },
+      clockPort: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      emailAcceptance: createEmailAcceptance("refused"),
-      logger: createLogger(),
+      emailAcceptancePort: createEmailAcceptance("refused"),
+      loggerPort: createLogger(),
       managementAuth: createManagementAuth(),
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
-      terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
+      termsFacade: {
+        currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+      },
     });
     const formData = new FormData();
     formData.set("email", "woman+guides@example.com");
@@ -133,7 +145,7 @@ describe("composeStoreFeature", () => {
     formData.set("termsAccepted", "true");
 
     // act
-    const response = await feature.acquisitions.acquire(
+    const response = await feature.storeAcquisitionController.acquire(
       new Request("http://localhost/api/store/acquisitions", {
         method: "POST",
         body: formData,

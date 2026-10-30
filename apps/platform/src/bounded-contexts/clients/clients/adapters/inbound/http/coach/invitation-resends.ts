@@ -17,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return args.context.get(clientsContext).coachClients.resendInvitation(args);
+    return args.context
+      .get(clientsContext)
+      .coachClientsController.resendInvitation(args);
   });
 }
 

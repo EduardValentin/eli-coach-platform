@@ -19,7 +19,7 @@ describe("StoreCoverAssetController", () => {
       sha256: "a".repeat(64),
       sizeBytes: 5,
     };
-    const findPublishedCover = {
+    const findPublishedCoverUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         cover,
@@ -32,13 +32,13 @@ describe("StoreCoverAssetController", () => {
         bytes: Readable.from([Buffer.from("cover")]),
       }),
     } satisfies ProductAssetsPort;
-    const controller = new StoreCoverAssetController({
-      assetStore,
-      findPublishedCover,
+    const storeCoverAssetController = new StoreCoverAssetController({
+      productAssetsPort: assetStore,
+      findPublishedCoverUseCase,
     });
 
     // act
-    const response = await controller.getCover(cover.assetKey);
+    const response = await storeCoverAssetController.getCover(cover.assetKey);
 
     // assert
     expect(response.status).toBe(200);
@@ -52,20 +52,22 @@ describe("StoreCoverAssetController", () => {
 
   it("does not expose unpublished or unknown asset keys", async () => {
     // arrange
-    const findPublishedCover = {
+    const findPublishedCoverUseCase = {
       execute: vi.fn().mockResolvedValue({ status: "not_found" }),
     } as unknown as FindPublishedCoverUseCase;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
     } satisfies ProductAssetsPort;
-    const controller = new StoreCoverAssetController({
-      assetStore,
-      findPublishedCover,
+    const storeCoverAssetController = new StoreCoverAssetController({
+      productAssetsPort: assetStore,
+      findPublishedCoverUseCase,
     });
 
     // act
-    const response = await controller.getCover("private/secret.webp");
+    const response = await storeCoverAssetController.getCover(
+      "private/secret.webp",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -93,7 +95,7 @@ describe("StoreCoverAssetController", () => {
         sha256: "a".repeat(64),
         sizeBytes: 5,
       };
-      const findPublishedCover = {
+      const findPublishedCoverUseCase = {
         execute: vi.fn().mockResolvedValue({
           status: "available",
           cover,
@@ -103,13 +105,13 @@ describe("StoreCoverAssetController", () => {
         assertReady: vi.fn(),
         openVerified,
       } satisfies ProductAssetsPort;
-      const controller = new StoreCoverAssetController({
-        assetStore,
-        findPublishedCover,
+      const storeCoverAssetController = new StoreCoverAssetController({
+        productAssetsPort: assetStore,
+        findPublishedCoverUseCase,
       });
 
       // act
-      const response = await controller.getCover(cover.assetKey);
+      const response = await storeCoverAssetController.getCover(cover.assetKey);
 
       // assert
       expect(response.status).toBe(503);
@@ -119,7 +121,7 @@ describe("StoreCoverAssetController", () => {
 
   it("rejects an active cover MIME type before opening asset bytes", async () => {
     // arrange
-    const findPublishedCover = {
+    const findPublishedCoverUseCase = {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         cover: {
@@ -136,13 +138,14 @@ describe("StoreCoverAssetController", () => {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
     } satisfies ProductAssetsPort;
-    const controller = new StoreCoverAssetController({
-      assetStore,
-      findPublishedCover,
+    const storeCoverAssetController = new StoreCoverAssetController({
+      productAssetsPort: assetStore,
+      findPublishedCoverUseCase,
     });
 
     // act
-    const response = await controller.getCover("covers/unsafe.html");
+    const response =
+      await storeCoverAssetController.getCover("covers/unsafe.html");
 
     // assert
     expect(response.status).toBe(503);

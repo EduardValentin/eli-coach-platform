@@ -67,7 +67,7 @@ function existingProduct(
   });
 }
 
-const digest: ProductAssetDigestPort = {
+const productAssetDigestPort: ProductAssetDigestPort = {
   sha256: (bytes) => `sha-${bytes.byteLength}`,
 };
 
@@ -129,7 +129,7 @@ describe("ProductPublicationDraft.plan", () => {
     const draft = draftOf();
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -171,7 +171,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result.status === "valid" && result.plan.types).toEqual([
@@ -191,7 +191,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -218,7 +218,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -236,7 +236,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -265,7 +265,7 @@ describe("ProductPublicationDraft.plan", () => {
     const draft = draftOf({ cover: { alt: "Cover", bytes: PDF_BYTES } });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -284,7 +284,7 @@ describe("ProductPublicationDraft.plan", () => {
     const draft = draftOf({ downloads: [] });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -303,7 +303,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -325,7 +325,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -353,7 +353,7 @@ describe("ProductPublicationDraft.plan", () => {
     });
 
     // act
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result.status).toBe("valid");
@@ -369,12 +369,12 @@ describe("ProductPublicationDraft.requestDigest", () => {
     const first = draft.requestDigest(
       "create_product",
       "glute-growth-guide",
-      digest,
+      productAssetDigestPort,
     );
     const second = draftOf().requestDigest(
       "create_product",
       "glute-growth-guide",
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -391,12 +391,12 @@ describe("ProductPublicationDraft.requestDigest", () => {
     const original = draftOf().requestDigest(
       "create_product",
       "glute-growth-guide",
-      digest,
+      productAssetDigestPort,
     );
     const changed = renamed.requestDigest(
       "create_product",
       "glute-growth-guide",
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -408,11 +408,15 @@ describe("ProductPublicationDraft.requestDigest", () => {
     const draft = draftOf();
 
     // act
-    const original = draft.requestDigest("create_product", "guide", digest);
+    const original = draft.requestDigest(
+      "create_product",
+      "guide",
+      productAssetDigestPort,
+    );
     const retargeted = draft.requestDigest(
       "create_product",
       "glute-growth-guide",
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -483,7 +487,7 @@ describe("ProductPublicationDraft.planCreation", () => {
         slug: "glute-growth-guide",
       },
       taxonomy,
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -504,7 +508,7 @@ describe("ProductPublicationDraft.planCreation", () => {
     const result = draft.planCreation(
       { displayOrder: 9, existingProduct: null, slug: "Glute-Growth" },
       taxonomy,
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -526,7 +530,7 @@ describe("ProductPublicationDraft.planCreation", () => {
         slug: "glute-growth-guide",
       },
       taxonomy,
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -543,7 +547,11 @@ describe("ProductPublicationDraft.planRevision", () => {
     const draft = draftOf();
 
     // act
-    const result = draft.planRevision(existingProduct(), taxonomy, digest);
+    const result = draft.planRevision(
+      existingProduct(),
+      taxonomy,
+      productAssetDigestPort,
+    );
 
     // assert
     expect(result.status === "valid" && result.plan).toMatchObject({
@@ -560,7 +568,7 @@ describe("ProductPublicationDraft.planRevision", () => {
     const draft = draftOf();
 
     // act
-    const result = draft.planRevision(null, taxonomy, digest);
+    const result = draft.planRevision(null, taxonomy, productAssetDigestPort);
 
     // assert
     expect(result).toEqual({
@@ -577,7 +585,7 @@ describe("ProductPublicationDraft.planRevision", () => {
     const result = draft.planRevision(
       existingProduct("archived"),
       taxonomy,
-      digest,
+      productAssetDigestPort,
     );
 
     // assert
@@ -592,7 +600,7 @@ describe("ProductPublicationDraft.persistCommand", () => {
   it("carries the plan and the request identity into the port command", () => {
     // arrange
     const draft = draftOf();
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
     const plan = result.status === "valid" ? result.plan : null;
 
     // act
@@ -631,7 +639,7 @@ describe("ProductPublicationDraft.plannedAssetContents", () => {
         { bytes: secondDownloadBytes, customerFilename: "Workbook.pdf" },
       ],
     });
-    const result = draft.plan(placement, taxonomy, digest);
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
 
     // act
     const contents =

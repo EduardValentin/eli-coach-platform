@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientOnboardingContext)
-      .controller.answerDetails(args);
+      .clientOnboardingController.answerDetails(args);
   });
 }
 

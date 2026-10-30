@@ -12,8 +12,11 @@ type SubscriptionSummary = {
 };
 
 type ReadSubscriptionSummaryUseCaseOptions = {
-  clock: ClockPort;
-  subscriptions: Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
+  clockPort: ClockPort;
+  coachingSubscriptionsPort: Pick<
+    CoachingSubscriptionsPort,
+    "findCurrentForClient"
+  >;
 };
 
 export class ReadSubscriptionSummaryUseCase {
@@ -23,7 +26,9 @@ export class ReadSubscriptionSummaryUseCase {
 
   async execute(clientId: string): Promise<SubscriptionSummary | null> {
     const subscription =
-      await this.options.subscriptions.findCurrentForClient(clientId);
+      await this.options.coachingSubscriptionsPort.findCurrentForClient(
+        clientId,
+      );
 
     if (!subscription) {
       return null;
@@ -31,7 +36,7 @@ export class ReadSubscriptionSummaryUseCase {
 
     return {
       subscription: subscription.toSnapshot(),
-      status: subscription.statusAt(this.options.clock.now()),
+      status: subscription.statusAt(this.options.clockPort.now()),
       workStartsOn: subscription.programWorkStart(),
       refundOutstandingCents: subscription.refund?.outstandingCents() ?? null,
     };

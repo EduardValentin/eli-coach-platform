@@ -21,10 +21,12 @@ describe("PostgresCoachingPurchases#insertSubscription", () => {
   it("records the purchase for the admitted client under the id the domain gave it", async () => {
     // arrange
     const database = createRecordingDatabase();
-    const { purchases } = createPurchases(database.client);
+    const { postgresCoachingPurchasesRepository } = createPurchases(
+      database.client,
+    );
 
     // act
-    await purchases.insertSubscription(purchase());
+    await postgresCoachingPurchasesRepository.insertSubscription(purchase());
 
     // assert
     expect(database.insertedRows).toEqual([
@@ -45,10 +47,12 @@ describe("PostgresCoachingPurchases#spendPaymentLink", () => {
   it("spends the payment link behind the checkout session", async () => {
     // arrange
     const database = createRecordingDatabase();
-    const { purchases } = createPurchases(database.client);
+    const { postgresCoachingPurchasesRepository } = createPurchases(
+      database.client,
+    );
 
     // act
-    await purchases.spendPaymentLink("cs_1");
+    await postgresCoachingPurchasesRepository.spendPaymentLink("cs_1");
 
     // assert
     expect(database.update).toHaveBeenCalledTimes(1);
@@ -59,10 +63,15 @@ describe("PostgresCoachingPurchases#spendPaymentLink", () => {
 describe("PostgresCoachingPurchases#findClientIdForCall", () => {
   it("answers the client recorded for the call", async () => {
     // arrange
-    const { purchases } = createPurchases(createRecordingDatabase().client);
+    const { postgresCoachingPurchasesRepository } = createPurchases(
+      createRecordingDatabase().client,
+    );
 
     // act
-    const clientId = await purchases.findClientIdForCall(PAID_CALL_ID);
+    const clientId =
+      await postgresCoachingPurchasesRepository.findClientIdForCall(
+        PAID_CALL_ID,
+      );
 
     // assert
     expect(clientId).toBe("client-recorded-earlier");
@@ -70,12 +79,13 @@ describe("PostgresCoachingPurchases#findClientIdForCall", () => {
 
   it("refuses a call whose recorded client cannot be found", async () => {
     // arrange
-    const { purchases } = createPurchases(
+    const { postgresCoachingPurchasesRepository } = createPurchases(
       createRecordingDatabase({ recordedClients: [] }).client,
     );
 
     // act
-    const lookup = purchases.findClientIdForCall(PAID_CALL_ID);
+    const lookup =
+      postgresCoachingPurchasesRepository.findClientIdForCall(PAID_CALL_ID);
 
     // assert
     await expect(lookup).rejects.toThrow(PAID_CALL_ID);
@@ -85,7 +95,7 @@ describe("PostgresCoachingPurchases#findClientIdForCall", () => {
 describe("PostgresCoachingPurchases#forCalls", () => {
   it("answers a state for every requested call, held when nothing is recorded, and lets paid outrank a sent link", async () => {
     // arrange
-    const { purchases } = createPurchases(
+    const { postgresCoachingPurchasesRepository } = createPurchases(
       createDatabaseAnsweringSalesRows([
         {
           assessmentCallId: PAID_CALL_ID,
@@ -102,7 +112,7 @@ describe("PostgresCoachingPurchases#forCalls", () => {
     );
 
     // act
-    const states = await purchases.forCalls([
+    const states = await postgresCoachingPurchasesRepository.forCalls([
       HELD_CALL_ID,
       LINK_SENT_CALL_ID,
       PAID_CALL_ID,
@@ -118,7 +128,7 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
   it("keeps the client a paid call created when a sent link is read after it", async () => {
     // arrange
-    const { purchases } = createPurchases(
+    const { postgresCoachingPurchasesRepository } = createPurchases(
       createDatabaseAnsweringSalesRows([
         { assessmentCallId: PAID_CALL_ID, state: "paid", clientId: CLIENT_ID },
         {
@@ -130,7 +140,9 @@ describe("PostgresCoachingPurchases#forCalls", () => {
     );
 
     // act
-    const states = await purchases.forCalls([PAID_CALL_ID]);
+    const states = await postgresCoachingPurchasesRepository.forCalls([
+      PAID_CALL_ID,
+    ]);
 
     // assert
     expect(states.get(PAID_CALL_ID)).toEqual({
@@ -141,10 +153,12 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
   it("answers an empty map without querying when no call is asked for", async () => {
     // arrange
-    const { purchases } = createPurchases(createUnreachableDatabase());
+    const { postgresCoachingPurchasesRepository } = createPurchases(
+      createUnreachableDatabase(),
+    );
 
     // act
-    const states = await purchases.forCalls([]);
+    const states = await postgresCoachingPurchasesRepository.forCalls([]);
 
     // assert
     expect(states.size).toBe(0);
@@ -152,12 +166,13 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 });
 
 function createPurchases(database: DatabaseClient) {
-  const purchases = new PostgresCoachingPurchasesRepository({
-    clock: { now: () => NOW },
-    database,
-  });
+  const postgresCoachingPurchasesRepository =
+    new PostgresCoachingPurchasesRepository({
+      clockPort: { now: () => NOW },
+      database,
+    });
 
-  return { purchases };
+  return { postgresCoachingPurchasesRepository };
 }
 
 function purchase(): CoachingPurchase {

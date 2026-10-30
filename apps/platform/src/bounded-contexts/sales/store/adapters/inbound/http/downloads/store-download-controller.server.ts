@@ -27,8 +27,8 @@ const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
 
 export class StoreDownloadController {
   constructor(
-    private readonly resolveDownloadGrant: ResolveDownloadGrantUseCase,
-    private readonly assetStore: ProductAssetsPort,
+    private readonly resolveDownloadGrantUseCase: ResolveDownloadGrantUseCase,
+    private readonly productAssetsPort: ProductAssetsPort,
     private readonly options: {
       appBasePath: string;
       zipDeliveryStream: ZipDeliveryStream;
@@ -62,7 +62,7 @@ export class StoreDownloadController {
     let resolution: DownloadGrantResolution;
 
     try {
-      resolution = await this.resolveDownloadGrant.execute(
+      resolution = await this.resolveDownloadGrantUseCase.execute(
         parsedRequest.data.token,
       );
     } catch {
@@ -102,7 +102,7 @@ export class StoreDownloadController {
   }
 
   private async streamSingleAsset(asset: ProductAsset): Promise<Response> {
-    const opened = await this.assetStore.openVerified(asset);
+    const opened = await this.productAssetsPort.openVerified(asset);
 
     if (opened.kind === "unavailable") {
       return createUnavailableResponse();

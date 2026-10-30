@@ -29,7 +29,7 @@ export async function loader(
 ): Promise<StoreCatalogLoaderData> {
   const response = await args.context
     .get(storeContext)
-    .catalog.getPublishedCatalog();
+    .storeCatalogController.getPublishedCatalog();
 
   if (!response.ok) {
     throw response;

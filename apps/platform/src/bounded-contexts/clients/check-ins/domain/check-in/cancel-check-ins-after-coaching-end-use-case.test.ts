@@ -17,27 +17,29 @@ function createCancelAfterEnd(ended: CheckInsAtCoachingEnd) {
     checkIns,
     coachTime,
     inbox,
-    cancelAfterEnd: new CancelCheckInsAfterCoachingEndUseCase({
-      checkIns,
-      clock: { now: () => NOW },
-      coachTime,
-      inbox,
-      incidents: { checkInInboxFailed: vi.fn() },
-    }),
+    cancelCheckInsAfterCoachingEndUseCase:
+      new CancelCheckInsAfterCoachingEndUseCase({
+        checkInsPort: checkIns,
+        clockPort: { now: () => NOW },
+        coachTimePort: coachTime,
+        checkInInboxPort: inbox,
+        checkInIncidentsPort: { checkInInboxFailed: vi.fn() },
+      }),
   };
 }
 
 describe("CancelCheckInsAfterCoachingEndUseCase", () => {
   it("ends the client's check-ins from her coaching end at the clock's instant, stopping her weekly series", async () => {
     // arrange
-    const { cancelAfterEnd, checkIns, coachTime } = createCancelAfterEnd({
-      cancelled: ["check-in-2", "check-in-3"],
-      seriesStopped: true,
-      freedReservationIds: ["reservation-2", "reservation-3"],
-    });
+    const { cancelCheckInsAfterCoachingEndUseCase, checkIns, coachTime } =
+      createCancelAfterEnd({
+        cancelled: ["check-in-2", "check-in-3"],
+        seriesStopped: true,
+        freedReservationIds: ["reservation-2", "reservation-3"],
+      });
 
     // act
-    const result = await cancelAfterEnd.execute({
+    const result = await cancelCheckInsAfterCoachingEndUseCase.execute({
       clientId: "client-1",
       endsAt: COACHING_ENDS_AT,
     });
@@ -55,14 +57,14 @@ describe("CancelCheckInsAfterCoachingEndUseCase", () => {
 
   it("cancels nothing again once her later check-ins are cancelled and her series stopped", async () => {
     // arrange
-    const { cancelAfterEnd } = createCancelAfterEnd({
+    const { cancelCheckInsAfterCoachingEndUseCase } = createCancelAfterEnd({
       cancelled: [],
       seriesStopped: false,
       freedReservationIds: [],
     });
 
     // act
-    const result = await cancelAfterEnd.execute({
+    const result = await cancelCheckInsAfterCoachingEndUseCase.execute({
       clientId: "client-1",
       endsAt: COACHING_ENDS_AT,
     });

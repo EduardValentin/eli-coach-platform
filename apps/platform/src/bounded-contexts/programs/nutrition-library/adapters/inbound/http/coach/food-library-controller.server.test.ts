@@ -106,14 +106,14 @@ function createController() {
       food: Food.reconstitute(OATS),
     })),
   };
-  const controller = new FoodLibraryController({
-    listFoods: listFoods as unknown as ListFoodsUseCase,
-    findFood: findFood as unknown as FindFoodUseCase,
-    createFood: createFood as unknown as CreateFoodUseCase,
-    editFood: editFood as unknown as EditFoodUseCase,
+  const foodLibraryController = new FoodLibraryController({
+    listFoodsUseCase: listFoods as unknown as ListFoodsUseCase,
+    findFoodUseCase: findFood as unknown as FindFoodUseCase,
+    createFoodUseCase: createFood as unknown as CreateFoodUseCase,
+    editFoodUseCase: editFood as unknown as EditFoodUseCase,
   });
 
-  return { controller, listFoods, findFood, createFood, editFood };
+  return { foodLibraryController, listFoods, findFood, createFood, editFood };
 }
 
 function argsFor(
@@ -152,10 +152,10 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
 describe("FoodLibraryController#list", () => {
   it("presents every food the signed-in coach's library lists with the tag vocabulary", async () => {
     // arrange
-    const { controller, listFoods } = createController();
+    const { foodLibraryController, listFoods } = createController();
 
     // act
-    const library = await controller.list(argsFor());
+    const library = await foodLibraryController.list(argsFor());
 
     // assert
     expect(library).toEqual({ foods: [OATS_VIEW], tags: TAG_VIEWS });
@@ -164,11 +164,11 @@ describe("FoodLibraryController#list", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller } = createController();
+    const { foodLibraryController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.list(argsFor({ session: CLIENT_SESSION })),
+      foodLibraryController.list(argsFor({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -179,10 +179,10 @@ describe("FoodLibraryController#list", () => {
 describe("FoodLibraryController#loadNew", () => {
   it("opens a blank food with the names of every food in the signed-in coach's library and the tag vocabulary", async () => {
     // arrange
-    const { controller, listFoods } = createController();
+    const { foodLibraryController, listFoods } = createController();
 
     // act
-    const editor = await controller.loadNew(argsFor());
+    const editor = await foodLibraryController.loadNew(argsFor());
 
     // assert
     expect(editor).toEqual({
@@ -195,11 +195,11 @@ describe("FoodLibraryController#loadNew", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller } = createController();
+    const { foodLibraryController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadNew(argsFor({ session: CLIENT_SESSION })),
+      foodLibraryController.loadNew(argsFor({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -210,10 +210,10 @@ describe("FoodLibraryController#loadNew", () => {
 describe("FoodLibraryController#load", () => {
   it("presents the signed-in coach's food with the names of her other foods and the tag vocabulary", async () => {
     // arrange
-    const { controller, findFood } = createController();
+    const { foodLibraryController, findFood } = createController();
 
     // act
-    const editor = await controller.load(argsFor(), FOOD_ID);
+    const editor = await foodLibraryController.load(argsFor(), FOOD_ID);
 
     // assert
     expect(editor).toEqual({
@@ -232,11 +232,13 @@ describe("FoodLibraryController#load", () => {
     ["an id that is not a uuid", "not-a-food"],
   ])("sends the coach back to the library for %s", async (_case, id) => {
     // arrange
-    const { controller, findFood } = createController();
+    const { foodLibraryController, findFood } = createController();
     findFood.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const thrown = await captureThrown(() => controller.load(argsFor(), id));
+    const thrown = await captureThrown(() =>
+      foodLibraryController.load(argsFor(), id),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(302);
@@ -249,10 +251,10 @@ describe("FoodLibraryController#load", () => {
 describe("FoodLibraryController#create", () => {
   it("creates the food for the signed-in coach and names the library as the next page", async () => {
     // arrange
-    const { controller, createFood } = createController();
+    const { foodLibraryController, createFood } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await foodLibraryController.create(
       argsFor({ request: jsonRequest("POST", OATS_REQUEST) }),
     );
 
@@ -267,14 +269,14 @@ describe("FoodLibraryController#create", () => {
 
   it("answers 422 with the problems of a draft that breaks a rule", async () => {
     // arrange
-    const { controller, createFood } = createController();
+    const { foodLibraryController, createFood } = createController();
     createFood.execute.mockResolvedValueOnce({
       status: "invalid",
       problems: { name: "taken", kcal: "out-of-range" },
     });
 
     // act
-    const response = await controller.create(
+    const response = await foodLibraryController.create(
       argsFor({ request: jsonRequest("POST", OATS_REQUEST) }),
     );
 
@@ -292,10 +294,10 @@ describe("FoodLibraryController#create", () => {
     ["a tag that is not text", { ...OATS_REQUEST, tagIds: [3] }],
   ])("answers 400 to %s without creating", async (_case, body) => {
     // arrange
-    const { controller, createFood } = createController();
+    const { foodLibraryController, createFood } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await foodLibraryController.create(
       argsFor({ request: jsonRequest("POST", body) }),
     );
 
@@ -306,11 +308,11 @@ describe("FoodLibraryController#create", () => {
 
   it("answers 500 when the creation failed", async () => {
     // arrange
-    const { controller, createFood } = createController();
+    const { foodLibraryController, createFood } = createController();
     createFood.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.create(
+    const response = await foodLibraryController.create(
       argsFor({ request: jsonRequest("POST", OATS_REQUEST) }),
     );
 
@@ -323,11 +325,11 @@ describe("FoodLibraryController#create", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, createFood } = createController();
+    const { foodLibraryController, createFood } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.create(
+      foodLibraryController.create(
         argsFor({ session, request: jsonRequest("POST", OATS_REQUEST) }),
       ),
     );
@@ -341,10 +343,10 @@ describe("FoodLibraryController#create", () => {
 describe("FoodLibraryController#edit", () => {
   it("edits the signed-in coach's food and names the library as the next page", async () => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await foodLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", OATS_REQUEST) }),
       FOOD_ID,
     );
@@ -361,14 +363,14 @@ describe("FoodLibraryController#edit", () => {
 
   it("answers 422 with the problems of a draft that breaks a rule", async () => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
     editFood.execute.mockResolvedValueOnce({
       status: "invalid",
       problems: { defaultPortionGrams: "out-of-range" },
     });
 
     // act
-    const response = await controller.edit(
+    const response = await foodLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", OATS_REQUEST) }),
       FOOD_ID,
     );
@@ -382,11 +384,11 @@ describe("FoodLibraryController#edit", () => {
 
   it("answers 404 for an unknown food", async () => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
     editFood.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const response = await controller.edit(
+    const response = await foodLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", OATS_REQUEST) }),
       FOOD_ID,
     );
@@ -397,10 +399,10 @@ describe("FoodLibraryController#edit", () => {
 
   it("answers 404 for an id that is not a uuid without editing", async () => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await foodLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", OATS_REQUEST) }),
       "not-a-food",
     );
@@ -412,10 +414,10 @@ describe("FoodLibraryController#edit", () => {
 
   it("answers 400 to a malformed body without editing", async () => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await foodLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", { name: "Oats" }) }),
       FOOD_ID,
     );
@@ -427,11 +429,11 @@ describe("FoodLibraryController#edit", () => {
 
   it("answers 500 when the edit failed", async () => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
     editFood.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.edit(
+    const response = await foodLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", OATS_REQUEST) }),
       FOOD_ID,
     );
@@ -445,11 +447,11 @@ describe("FoodLibraryController#edit", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, editFood } = createController();
+    const { foodLibraryController, editFood } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.edit(
+      foodLibraryController.edit(
         argsFor({ session, request: jsonRequest("PUT", OATS_REQUEST) }),
         FOOD_ID,
       ),

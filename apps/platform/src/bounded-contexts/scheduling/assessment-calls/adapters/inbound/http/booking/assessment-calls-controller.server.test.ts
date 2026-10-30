@@ -57,12 +57,12 @@ const bookingConfirmed: BookAssessmentCallResult = {
 describe("AssessmentCallsController booking page", () => {
   it("hides the booking page while booking is closed", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       openSlots: { status: "closed" },
     });
 
     // act
-    const loading = controller.loadBookingPage();
+    const loading = assessmentCallsController.loadBookingPage();
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
@@ -70,7 +70,7 @@ describe("AssessmentCallsController booking page", () => {
 
   it("serialises open slots with the bot detection the page renders", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       openSlots: {
         status: "open",
         coachTimeZone: "Europe/Bucharest",
@@ -79,7 +79,7 @@ describe("AssessmentCallsController booking page", () => {
     });
 
     // act
-    const page = await controller.loadBookingPage();
+    const page = await assessmentCallsController.loadBookingPage();
 
     // assert
     expect(page).toEqual({
@@ -92,12 +92,12 @@ describe("AssessmentCallsController booking page", () => {
 
   it("lets a fault in working out the slots reach the framework's error page", async () => {
     // arrange
-    const { controller, listSlots } = createController({});
+    const { assessmentCallsController, listSlots } = createController({});
     const fault = new Error("slot arithmetic failed");
     listSlots.mockRejectedValue(fault);
 
     // act
-    const loading = controller.loadBookingPage();
+    const loading = assessmentCallsController.loadBookingPage();
 
     // assert
     await expect(loading).rejects.toBe(fault);
@@ -105,12 +105,12 @@ describe("AssessmentCallsController booking page", () => {
 
   it("reports unreadable availability to the page", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       openSlots: { status: "unavailable" },
     });
 
     // act
-    const page = await controller.loadBookingPage();
+    const page = await assessmentCallsController.loadBookingPage();
 
     // assert
     expect(page).toEqual({ botDetection, status: "unavailable" });
@@ -120,12 +120,12 @@ describe("AssessmentCallsController booking page", () => {
 describe("AssessmentCallsController slots endpoint", () => {
   it("hides the slots endpoint while booking is closed", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       openSlots: { status: "closed" },
     });
 
     // act
-    const response = await controller.listSlots();
+    const response = await assessmentCallsController.listSlots();
 
     // assert
     expect(response.status).toBe(404);
@@ -133,7 +133,7 @@ describe("AssessmentCallsController slots endpoint", () => {
 
   it("answers open slots without allowing them to be cached", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       openSlots: {
         status: "open",
         coachTimeZone: "Europe/Bucharest",
@@ -142,7 +142,7 @@ describe("AssessmentCallsController slots endpoint", () => {
     });
 
     // act
-    const response = await controller.listSlots();
+    const response = await assessmentCallsController.listSlots();
 
     // assert
     expect(response.status).toBe(200);
@@ -155,12 +155,12 @@ describe("AssessmentCallsController slots endpoint", () => {
 
   it("lets a fault in working out the slots reach the framework instead of posing as unavailability", async () => {
     // arrange
-    const { controller, listSlots } = createController({});
+    const { assessmentCallsController, listSlots } = createController({});
     const fault = new Error("slot arithmetic failed");
     listSlots.mockRejectedValue(fault);
 
     // act
-    const listing = controller.listSlots();
+    const listing = assessmentCallsController.listSlots();
 
     // assert
     await expect(listing).rejects.toBe(fault);
@@ -168,12 +168,12 @@ describe("AssessmentCallsController slots endpoint", () => {
 
   it("answers unreadable availability as a temporary failure", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       openSlots: { status: "unavailable" },
     });
 
     // act
-    const response = await controller.listSlots();
+    const response = await assessmentCallsController.listSlots();
 
     // assert
     expect(response.status).toBe(503);
@@ -201,10 +201,10 @@ describe("AssessmentCallsController booking submissions", () => {
     "rejects an invalid %s before anything is booked",
     async (field, value, code) => {
       // arrange
-      const { book, controller } = createController({});
+      const { book, assessmentCallsController } = createController({});
 
       // act
-      const response = await controller.book(
+      const response = await assessmentCallsController.book(
         createBookingRequest({ [field]: value }),
       );
 
@@ -220,12 +220,14 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("stores nothing when bot verification rejects the submission", async () => {
     // arrange
-    const { book, controller } = createController({
+    const { book, assessmentCallsController } = createController({
       verification: { status: "rejected" },
     });
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -238,12 +240,14 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("stores nothing when bot verification cannot be reached", async () => {
     // arrange
-    const { book, controller } = createController({
+    const { book, assessmentCallsController } = createController({
       verification: { status: "unavailable" },
     });
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -256,12 +260,12 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("judges the visitor's age on the server's clock, not the wall clock", async () => {
     // arrange
-    const { book, controller } = createController({
+    const { book, assessmentCallsController } = createController({
       now: new Date("2012-10-19T08:00:00.000Z"),
     });
 
     // act
-    const response = await controller.book(
+    const response = await assessmentCallsController.book(
       createBookingRequest({ dateOfBirth: "1994-10-20" }),
     );
 
@@ -276,10 +280,10 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("confirms a booking with the link the visitor joins from", async () => {
     // arrange
-    const { book, controller } = createController({});
+    const { book, assessmentCallsController } = createController({});
 
     // act
-    const response = await controller.book(
+    const response = await assessmentCallsController.book(
       createBookingRequest({ notes: "  Training three times a week.  " }),
     );
 
@@ -311,10 +315,12 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("stores no phone when the number is left blank", async () => {
     // arrange
-    const { book, controller } = createController({});
+    const { book, assessmentCallsController } = createController({});
 
     // act
-    await controller.book(createBookingRequest({ phoneNumber: "  " }));
+    await assessmentCallsController.book(
+      createBookingRequest({ phoneNumber: "  " }),
+    );
 
     // assert
     expect(book).toHaveBeenCalledWith(expect.objectContaining({ phone: null }));
@@ -322,10 +328,10 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("stores no phone when neither phone field is sent", async () => {
     // arrange
-    const { book, controller } = createController({});
+    const { book, assessmentCallsController } = createController({});
 
     // act
-    await controller.book(
+    await assessmentCallsController.book(
       createBookingRequest({}, ["phoneCountry", "phoneNumber"]),
     );
 
@@ -335,10 +341,10 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("stores the phone in E.164 under the chosen calling code", async () => {
     // arrange
-    const { book, controller } = createController({});
+    const { book, assessmentCallsController } = createController({});
 
     // act
-    await controller.book(
+    await assessmentCallsController.book(
       createBookingRequest({
         phoneCountry: "GB",
         phoneNumber: "(07700) 900-123",
@@ -353,10 +359,12 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("names a blank note as no note at all", async () => {
     // arrange
-    const { book, controller } = createController({});
+    const { book, assessmentCallsController } = createController({});
 
     // act
-    await controller.book(createBookingRequest({ notes: "   " }));
+    await assessmentCallsController.book(
+      createBookingRequest({ notes: "   " }),
+    );
 
     // assert
     expect(book).toHaveBeenCalledWith(expect.objectContaining({ notes: null }));
@@ -364,10 +372,10 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("verifies the submission before anything is booked", async () => {
     // arrange
-    const { controller, verify } = createController({});
+    const { assessmentCallsController, verify } = createController({});
 
     // act
-    await controller.book(createBookingRequest());
+    await assessmentCallsController.book(createBookingRequest());
 
     // assert
     expect(verify).toHaveBeenCalledWith(
@@ -377,10 +385,14 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("hides the booking endpoint while booking is closed", async () => {
     // arrange
-    const { controller } = createController({ bookings: { status: "closed" } });
+    const { assessmentCallsController } = createController({
+      bookings: { status: "closed" },
+    });
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -388,12 +400,14 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("reports a slot taken while the visitor was filling in their details", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       bookings: { status: "slot_unavailable" },
     });
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     expect(response.status).toBe(409);
@@ -405,12 +419,14 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("refuses a repeat email without revealing whether or when that address holds a call", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       bookings: { status: "email_already_booked" },
     });
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     const text = await response.text();
@@ -431,12 +447,14 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("answers a refused subaddress as an email field error with the approved copy", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       bookings: { status: "subaddress_refused" },
     });
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -451,11 +469,13 @@ describe("AssessmentCallsController booking submissions", () => {
 
   it("answers a failed booking as a server error", async () => {
     // arrange
-    const { book, controller } = createController({});
+    const { book, assessmentCallsController } = createController({});
     book.mockRejectedValue(new Error("database down"));
 
     // act
-    const response = await controller.book(createBookingRequest());
+    const response = await assessmentCallsController.book(
+      createBookingRequest(),
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -469,12 +489,12 @@ describe("AssessmentCallsController booking submissions", () => {
 describe("AssessmentCallsController join links", () => {
   it("answers the meeting room of a known booking", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       joinLink: { status: "found", url: "https://meet.example/eli" },
     });
 
     // act
-    const resolved = await controller.resolveJoin(bookedCall.id);
+    const resolved = await assessmentCallsController.resolveJoin(bookedCall.id);
 
     // assert
     expect(resolved).toEqual({
@@ -485,12 +505,13 @@ describe("AssessmentCallsController join links", () => {
 
   it("keeps an unknown booking indistinguishable from any other", async () => {
     // arrange
-    const { controller } = createController({
+    const { assessmentCallsController } = createController({
       joinLink: { status: "unknown" },
     });
 
     // act
-    const resolved = await controller.resolveJoin("not-a-booking");
+    const resolved =
+      await assessmentCallsController.resolveJoin("not-a-booking");
 
     // assert
     expect(resolved).toEqual({ status: "unknown" });
@@ -515,16 +536,18 @@ function createController(options: ControllerOptions) {
 
   return {
     book,
-    controller: new AssessmentCallsController({
+    assessmentCallsController: new AssessmentCallsController({
       unitOfWork: (work) => work(),
       botDetection,
-      botVerifier: { verifySubmission: verify },
-      bookAssessmentCall: {
+      botVerifierPort: { verifySubmission: verify },
+      bookAssessmentCallUseCase: {
         execute: book,
       } as unknown as BookAssessmentCallUseCase,
-      clock: { now: () => options.now ?? NOW },
-      listOpenSlots: { execute: listSlots } as unknown as ListOpenSlotsUseCase,
-      resolveJoinLink: {
+      clockPort: { now: () => options.now ?? NOW },
+      listOpenSlotsUseCase: {
+        execute: listSlots,
+      } as unknown as ListOpenSlotsUseCase,
+      resolveJoinLinkUseCase: {
         execute: resolveJoin,
       } as unknown as ResolveJoinLinkUseCase,
     }),

@@ -37,11 +37,11 @@ export type BookingPageData =
 
 type AssessmentCallsControllerOptions = {
   botDetection: BotDetectionConfig;
-  botVerifier: BotVerifierPort;
-  bookAssessmentCall: BookAssessmentCallUseCase;
-  clock: ClockPort;
-  listOpenSlots: ListOpenSlotsUseCase;
-  resolveJoinLink: ResolveJoinLinkUseCase;
+  botVerifierPort: BotVerifierPort;
+  bookAssessmentCallUseCase: BookAssessmentCallUseCase;
+  clockPort: ClockPort;
+  listOpenSlotsUseCase: ListOpenSlotsUseCase;
+  resolveJoinLinkUseCase: ResolveJoinLinkUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -93,7 +93,7 @@ export class AssessmentCallsController {
   constructor(private readonly options: AssessmentCallsControllerOptions) {}
 
   async loadBookingPage(): Promise<BookingPageData> {
-    const result = await this.options.listOpenSlots.execute();
+    const result = await this.options.listOpenSlotsUseCase.execute();
 
     if (result.status === "closed") {
       throw createNotFoundResponse();
@@ -111,7 +111,7 @@ export class AssessmentCallsController {
   }
 
   async listSlots(): Promise<Response> {
-    const result = await this.options.listOpenSlots.execute();
+    const result = await this.options.listOpenSlotsUseCase.execute();
 
     if (result.status === "closed") {
       return createNotFoundResponse();
@@ -129,7 +129,7 @@ export class AssessmentCallsController {
   async book(request: Request): Promise<Response> {
     const formData = await request.formData();
     const submission = createBookAssessmentCallRequestSchema({
-      now: this.options.clock.now(),
+      now: this.options.clockPort.now(),
     }).safeParse({
       country: formData.get("country"),
       dateOfBirth: formData.get("dateOfBirth"),
@@ -156,7 +156,7 @@ export class AssessmentCallsController {
       });
     }
 
-    const verification = await this.options.botVerifier.verifySubmission({
+    const verification = await this.options.botVerifierPort.verifySubmission({
       action: ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
       remoteIp: resolveRequestRemoteIp(request),
       token: readTurnstileToken(formData),
@@ -188,7 +188,7 @@ export class AssessmentCallsController {
         visitorTimeZone: submission.data.visitorTimeZone,
       };
       const result = await this.options.unitOfWork(() =>
-        this.options.bookAssessmentCall.execute(command),
+        this.options.bookAssessmentCallUseCase.execute(command),
       );
 
       return createBookingResponse(result);
@@ -202,7 +202,7 @@ export class AssessmentCallsController {
   }
 
   async resolveJoin(bookingId: string): Promise<JoinLinkResult> {
-    return this.options.resolveJoinLink.execute(bookingId);
+    return this.options.resolveJoinLinkUseCase.execute(bookingId);
   }
 }
 

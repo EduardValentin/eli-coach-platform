@@ -9,8 +9,8 @@ export type ListFoodsResult = {
 };
 
 type ListFoodsUseCaseOptions = {
-  library: Pick<FoodLibraryPort, "list">;
-  tags: Pick<NutritionTagsPort, "list">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
 };
 
 export class ListFoodsUseCase {
@@ -18,8 +18,8 @@ export class ListFoodsUseCase {
 
   async execute(ownerAccountId: string): Promise<ListFoodsResult> {
     const [foods, tags] = await Promise.all([
-      this.options.library.list(ownerAccountId),
-      this.options.tags.list(),
+      this.options.foodLibraryPort.list(ownerAccountId),
+      this.options.nutritionTagsPort.list(),
     ]);
 
     return { status: "listed", foods, tags };

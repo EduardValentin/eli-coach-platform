@@ -14,10 +14,12 @@ describe("createStoreIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new StoreIncidentsAdapter(new ConsoleLoggerAdapter());
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.deliveryRejected({
+    storeIncidentsAdapter.deliveryRejected({
       reason: "invalid_from_address",
       requestId: 31,
     });
@@ -38,10 +40,12 @@ describe("createStoreIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new StoreIncidentsAdapter(new ConsoleLoggerAdapter());
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.deliveryAcceptanceAuditPending({ requestId: 31 });
+    storeIncidentsAdapter.deliveryAcceptanceAuditPending({ requestId: 31 });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -58,10 +62,12 @@ describe("createStoreIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new StoreIncidentsAdapter(new ConsoleLoggerAdapter());
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.retryableDeliveryAuditPending({ requestId: 31 });
+    storeIncidentsAdapter.retryableDeliveryAuditPending({ requestId: 31 });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(

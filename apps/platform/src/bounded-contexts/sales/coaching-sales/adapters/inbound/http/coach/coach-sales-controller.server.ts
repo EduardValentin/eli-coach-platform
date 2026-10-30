@@ -21,10 +21,10 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachSalesControllerOptions = {
-  emailAcceptance: EmailAcceptancePort;
-  readCallSalesStates: ReadCallSalesStatesUseCase;
-  readPricingTiers: ReadPricingTiersUseCase;
-  readSubscriptionSummary: ReadSubscriptionSummaryUseCase;
+  emailAcceptancePort: EmailAcceptancePort;
+  readCallSalesStatesUseCase: ReadCallSalesStatesUseCase;
+  readPricingTiersUseCase: ReadPricingTiersUseCase;
+  readSubscriptionSummaryUseCase: ReadSubscriptionSummaryUseCase;
 };
 
 type SubscriptionSummary = NonNullable<
@@ -39,7 +39,8 @@ export class CoachSalesController {
   constructor(private readonly options: CoachSalesControllerOptions) {}
 
   async loadCallSales(callIds: readonly string[]): Promise<CallSales> {
-    const sales = await this.options.readCallSalesStates.execute(callIds);
+    const sales =
+      await this.options.readCallSalesStatesUseCase.execute(callIds);
 
     return callSalesSchema.parse(Object.fromEntries(sales));
   }
@@ -56,7 +57,9 @@ export class CoachSalesController {
       return null;
     }
 
-    const summary = await this.options.readSubscriptionSummary.execute(id.data);
+    const summary = await this.options.readSubscriptionSummaryUseCase.execute(
+      id.data,
+    );
 
     return summary
       ? clientSubscriptionSchema.parse(this.subscriptionOf(summary))
@@ -67,10 +70,10 @@ export class CoachSalesController {
     calls: readonly CallVisitorEmail[],
   ): Promise<PricingTiers> {
     const normalizedCalls = calls.map((call) => ({
-      email: this.options.emailAcceptance.normalize(call.email),
+      email: this.options.emailAcceptancePort.normalize(call.email),
       id: call.id,
     }));
-    const tiers = await this.options.readPricingTiers.execute(
+    const tiers = await this.options.readPricingTiersUseCase.execute(
       normalizedCalls.map((call) => call.email),
     );
 

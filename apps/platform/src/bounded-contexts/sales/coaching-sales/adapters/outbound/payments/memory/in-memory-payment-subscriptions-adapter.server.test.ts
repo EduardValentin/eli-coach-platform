@@ -6,18 +6,18 @@ import { InMemoryPaymentSubscriptionsAdapter } from "./in-memory-payment-subscri
 describe("InMemoryPaymentSubscriptions", () => {
   it("accepts the hold, its lift and both kinds of end without a provider", async () => {
     // arrange
-    const subscriptions: PaymentSubscriptionsPort =
+    const paymentSubscriptionsPort: PaymentSubscriptionsPort =
       new InMemoryPaymentSubscriptionsAdapter();
 
     // act
     const calls = Promise.all([
-      subscriptions.holdRenewal({
+      paymentSubscriptionsPort.holdRenewal({
         paymentSubscriptionId: "sub_memory_1",
         until: new Date("2026-11-01T10:00:00.000Z"),
       }),
-      subscriptions.liftRenewalHold("sub_memory_1"),
-      subscriptions.endNow("sub_memory_1"),
-      subscriptions.endAt({
+      paymentSubscriptionsPort.liftRenewalHold("sub_memory_1"),
+      paymentSubscriptionsPort.endNow("sub_memory_1"),
+      paymentSubscriptionsPort.endAt({
         paymentSubscriptionId: "sub_memory_1",
         at: new Date("2027-01-02T10:00:00.000Z"),
       }),
@@ -34,13 +34,15 @@ describe("InMemoryPaymentSubscriptions", () => {
 
   it("sends her straight back to where she came from instead of a provider page", async () => {
     // arrange
-    const subscriptions = new InMemoryPaymentSubscriptionsAdapter();
+    const inMemoryPaymentSubscriptionsAdapter =
+      new InMemoryPaymentSubscriptionsAdapter();
 
     // act
-    const session = await subscriptions.openPaymentMethodSession({
-      paymentCustomerId: "cus_memory_1",
-      returnUrl: "http://localhost:3000/client/settings",
-    });
+    const session =
+      await inMemoryPaymentSubscriptionsAdapter.openPaymentMethodSession({
+        paymentCustomerId: "cus_memory_1",
+        returnUrl: "http://localhost:3000/client/settings",
+      });
 
     // assert
     expect(session).toEqual({ url: "http://localhost:3000/client/settings" });

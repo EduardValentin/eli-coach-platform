@@ -15,7 +15,10 @@ import { createAccessRequestContext } from "./portal-access.server";
 type RefusalReason =
   Exclude<ProvisionAccountResult["outcome"], "active"> | "provisioning-error";
 
-type AccountResolution = Pick<AccountsFeature, "portal" | "provisioning">;
+type AccountResolution = Pick<
+  AccountsFeature,
+  "portal" | "provisionAccountUseCase"
+>;
 
 function targetsSignInFailedPage(url: URL, appBasePath: string): boolean {
   return url.pathname === buildRedirectPath(appBasePath, SIGN_IN_FAILED_PATH);
@@ -47,7 +50,9 @@ export function createAccountResolutionMiddleware(
     let refusalReason: RefusalReason = "provisioning-error";
 
     try {
-      const result = await accounts.provisioning.execute(auth.userId);
+      const result = await accounts.provisionAccountUseCase.execute(
+        auth.userId,
+      );
 
       if (result.outcome === "active") {
         publishSession({ account: result.account, kind: "authenticated" });

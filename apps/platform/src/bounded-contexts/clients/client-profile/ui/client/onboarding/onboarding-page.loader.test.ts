@@ -22,7 +22,7 @@ describe("onboarding page route", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(clientOnboardingContext, {
-          controller,
+          clientOnboardingController: controller,
         } as unknown as ClientOnboardingFeature),
       ],
       request: new Request("https://evoa.fit/client/onboarding"),

@@ -29,12 +29,12 @@ type RequestOnboardingDetailsResult =
 
 type RequestOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
-  onboardings: ClientOnboardingSourcePort;
-  reviews: OnboardingReviewsPort;
-  ids: DetailRequestIdsPort;
-  notifications: OnboardingDetailsNotificationsPort;
-  clock: ClockPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  onboardingReviewsPort: OnboardingReviewsPort;
+  detailRequestIdsPort: DetailRequestIdsPort;
+  onboardingDetailsNotificationsPort: OnboardingDetailsNotificationsPort;
+  clockPort: ClockPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class RequestOnboardingDetailsUseCase {
@@ -59,8 +59,8 @@ export class RequestOnboardingDetailsUseCase {
     }
 
     const [stored, reviewed] = await Promise.all([
-      this.options.onboardings.findByClientId(clientId),
-      this.options.reviews.findByClientId(clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(clientId),
+      this.options.onboardingReviewsPort.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
@@ -68,17 +68,17 @@ export class RequestOnboardingDetailsUseCase {
       ...reviewed,
     });
     const outcome = review.requestDetails({
-      id: this.options.ids.generate(),
+      id: this.options.detailRequestIdsPort.generate(),
       questionIds: command.questionIds,
       note: command.note,
-      now: this.options.clock.now(),
+      now: this.options.clockPort.now(),
     });
 
     if (outcome.status !== "requested") {
       return outcome;
     }
 
-    const recorded = await this.options.reviews.recordRequest({
+    const recorded = await this.options.onboardingReviewsPort.recordRequest({
       request: outcome.request,
       stamps: outcome.review.stamps(),
     });
@@ -87,7 +87,7 @@ export class RequestOnboardingDetailsUseCase {
       return { status: "not-in-review" };
     }
 
-    this.options.incidents.onboardingDetailsRequested({
+    this.options.clientOnboardingIncidentsPort.onboardingDetailsRequested({
       clientId,
       questionCount: outcome.request.questionIds.length,
     });
@@ -100,7 +100,7 @@ export class RequestOnboardingDetailsUseCase {
     client: ClientIdentity,
     request: DetailRequest,
   ): Promise<void> {
-    const delivery = await this.options.notifications
+    const delivery = await this.options.onboardingDetailsNotificationsPort
       .sendDetailsRequest({
         requestId: request.id,
         clientId: client.clientId,
@@ -110,10 +110,12 @@ export class RequestOnboardingDetailsUseCase {
       .catch(() => "failed" as const);
 
     if (delivery === "failed") {
-      this.options.incidents.onboardingDetailsRequestEmailFailed({
-        clientId: client.clientId,
-        requestId: request.id,
-      });
+      this.options.clientOnboardingIncidentsPort.onboardingDetailsRequestEmailFailed(
+        {
+          clientId: client.clientId,
+          requestId: request.id,
+        },
+      );
     }
   }
 }

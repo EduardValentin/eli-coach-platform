@@ -45,7 +45,7 @@ function createWaitlist(): Waitlist {
 }
 
 function createWaitlistEntries(
-  options?: Partial<WaitlistEntriesPort>,
+  waitlistEntriesPort?: Partial<WaitlistEntriesPort>,
 ): WaitlistEntriesPort {
   return {
     countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
@@ -55,7 +55,7 @@ function createWaitlistEntries(
     registerRegularPricingSignup: vi.fn().mockResolvedValue({
       status: "registered",
     }),
-    ...options,
+    ...waitlistEntriesPort,
   };
 }
 
@@ -66,38 +66,38 @@ function createConfirmation(): WaitlistConfirmationPort {
 }
 
 function createJoinWaitlist(options: {
-  confirmation: WaitlistConfirmationPort;
+  waitlistConfirmationPort: WaitlistConfirmationPort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createWaitlistIncidents>;
-  waitlistEntries: WaitlistEntriesPort;
+  waitlistEntriesPort: WaitlistEntriesPort;
 }): JoinWaitlistUseCase {
   return new JoinWaitlistUseCase({
-    confirmation: options.confirmation,
-    consentVersions: { current: () => consentVersions },
-    emailAcceptance: createEmailAcceptance(
+    waitlistConfirmationPort: options.waitlistConfirmationPort,
+    consentVersionsPort: { current: () => consentVersions },
+    emailAcceptancePort: createEmailAcceptance(
       options.emailSubaddresses ?? "allowed",
     ),
-    incidents: options.incidents,
+    waitlistIncidentsPort: options.incidents,
     waitlist: createWaitlist(),
-    waitlistEntries: options.waitlistEntries,
+    waitlistEntriesPort: options.waitlistEntriesPort,
   });
 }
 
 describe("GetWaitlistUseCase", () => {
   it("returns the persisted mode independently of availability", async () => {
     // arrange
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: disabledWaitlistMode(),
-      incidents: createWaitlistIncidents(),
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: disabledWaitlistMode(),
+      waitlistIncidentsPort: createWaitlistIncidents(),
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries({
+      waitlistEntriesPort: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
       }),
     });
 
     // act
-    const waitlist = await getWaitlist.execute();
+    const waitlist = await getWaitlistUseCase.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -109,18 +109,18 @@ describe("GetWaitlistUseCase", () => {
 
   it("uses safe waitlist mode without availability when feature flags are unreachable", async () => {
     // arrange
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: {
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: {
         isEnabled: vi.fn().mockRejectedValue(new Error("database unavailable")),
       },
-      incidents: createWaitlistIncidents(),
+      waitlistIncidentsPort: createWaitlistIncidents(),
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries(),
+      waitlistEntriesPort: createWaitlistEntries(),
     });
 
     // act
-    const waitlist = await getWaitlist.execute();
+    const waitlist = await getWaitlistUseCase.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -133,18 +133,18 @@ describe("GetWaitlistUseCase", () => {
   it("records a failed feature flag read", async () => {
     // arrange
     const incidents = createWaitlistIncidents();
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: {
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: {
         isEnabled: vi.fn().mockRejectedValue(new Error("database unavailable")),
       },
-      incidents,
+      waitlistIncidentsPort: incidents,
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries(),
+      waitlistEntriesPort: createWaitlistEntries(),
     });
 
     // act
-    await getWaitlist.execute();
+    await getWaitlistUseCase.execute();
 
     // assert
     expect(incidents.waitlistModeReadFailed).toHaveBeenCalledWith();
@@ -153,16 +153,16 @@ describe("GetWaitlistUseCase", () => {
   it("records nothing when the feature flags are read", async () => {
     // arrange
     const incidents = createWaitlistIncidents();
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: enabledWaitlistMode(),
-      incidents,
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: enabledWaitlistMode(),
+      waitlistIncidentsPort: incidents,
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries(),
+      waitlistEntriesPort: createWaitlistEntries(),
     });
 
     // act
-    await getWaitlist.execute();
+    await getWaitlistUseCase.execute();
 
     // assert
     expect(incidents.waitlistModeReadFailed).not.toHaveBeenCalled();
@@ -170,19 +170,19 @@ describe("GetWaitlistUseCase", () => {
 
   it("returns the delayed available waitlist snapshot", async () => {
     // arrange
-    const waitlistEntries = createWaitlistEntries({
+    const waitlistEntriesPort = createWaitlistEntries({
       countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
     });
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: { now: () => new Date("2026-07-26T10:12:00.000Z") },
-      waitlistMode: enabledWaitlistMode(),
-      incidents: createWaitlistIncidents(),
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: { now: () => new Date("2026-07-26T10:12:00.000Z") },
+      waitlistModePort: enabledWaitlistMode(),
+      waitlistIncidentsPort: createWaitlistIncidents(),
       waitlist: createWaitlist(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const waitlist = await getWaitlist.execute();
+    const waitlist = await getWaitlistUseCase.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -191,7 +191,7 @@ describe("GetWaitlistUseCase", () => {
       availability: "available",
     });
     expect(
-      waitlistEntries.countReducedPricingSignupsCreatedBefore,
+      waitlistEntriesPort.countReducedPricingSignupsCreatedBefore,
     ).toHaveBeenCalledWith({
       campaignSlug: activeOffer.campaignSlug,
       createdBefore: new Date("2026-07-26T10:00:00.000Z"),
@@ -200,18 +200,18 @@ describe("GetWaitlistUseCase", () => {
 
   it("returns the delayed limited waitlist snapshot", async () => {
     // arrange
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: enabledWaitlistMode(),
-      incidents: createWaitlistIncidents(),
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: enabledWaitlistMode(),
+      waitlistIncidentsPort: createWaitlistIncidents(),
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries({
+      waitlistEntriesPort: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
       }),
     });
 
     // act
-    const waitlist = await getWaitlist.execute();
+    const waitlist = await getWaitlistUseCase.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -223,18 +223,18 @@ describe("GetWaitlistUseCase", () => {
 
   it("returns the delayed closed waitlist snapshot when persisted mode is disabled", async () => {
     // arrange
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: disabledWaitlistMode(),
-      incidents: createWaitlistIncidents(),
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: disabledWaitlistMode(),
+      waitlistIncidentsPort: createWaitlistIncidents(),
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries({
+      waitlistEntriesPort: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
       }),
     });
 
     // act
-    const waitlist = await getWaitlist.execute();
+    const waitlist = await getWaitlistUseCase.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -246,12 +246,12 @@ describe("GetWaitlistUseCase", () => {
 
   it("retains the persisted mode when delayed availability is unreachable", async () => {
     // arrange
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      waitlistMode: disabledWaitlistMode(),
-      incidents: createWaitlistIncidents(),
+    const getWaitlistUseCase = new GetWaitlistUseCase({
+      clockPort: fixedClock,
+      waitlistModePort: disabledWaitlistMode(),
+      waitlistIncidentsPort: createWaitlistIncidents(),
       waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries({
+      waitlistEntriesPort: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi
           .fn()
           .mockRejectedValue(new Error("database unavailable")),
@@ -259,7 +259,7 @@ describe("GetWaitlistUseCase", () => {
     });
 
     // act
-    const waitlist = await getWaitlist.execute();
+    const waitlist = await getWaitlistUseCase.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -273,28 +273,34 @@ describe("GetWaitlistUseCase", () => {
 describe("JoinWaitlistUseCase", () => {
   it("normalizes the email before registering a reduced pricing signup", async () => {
     // arrange
-    const waitlistEntries = createWaitlistEntries();
-    const confirmation = createConfirmation();
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const waitlistEntriesPort = createWaitlistEntries();
+    const waitlistConfirmationPort = createConfirmation();
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       incidents: createWaitlistIncidents(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const result = await joinWaitlist.execute({ email: " ELI@Example.COM " });
+    const result = await joinWaitlistUseCase.execute({
+      email: " ELI@Example.COM ",
+    });
 
     // assert
     expect(result).toEqual({
       status: "registered",
     });
-    expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
+    expect(
+      waitlistEntriesPort.registerReducedPricingSignup,
+    ).toHaveBeenCalledWith({
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(waitlistEntries.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
+    expect(
+      waitlistEntriesPort.registerRegularPricingSignup,
+    ).not.toHaveBeenCalled();
+    expect(waitlistConfirmationPort.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "reduced",
@@ -304,7 +310,7 @@ describe("JoinWaitlistUseCase", () => {
   it("returns before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const confirmation: WaitlistConfirmationPort = {
+    const waitlistConfirmationPort: WaitlistConfirmationPort = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<{ kind: "sent" }>((resolve) => {
@@ -312,15 +318,17 @@ describe("JoinWaitlistUseCase", () => {
           }),
       ),
     };
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       incidents: createWaitlistIncidents(),
-      waitlistEntries: createWaitlistEntries(),
+      waitlistEntriesPort: createWaitlistEntries(),
     });
     const timeoutResult = Symbol("timeout");
 
     // act
-    const resultPromise = joinWaitlist.execute({ email: "eli@example.com" });
+    const resultPromise = joinWaitlistUseCase.execute({
+      email: "eli@example.com",
+    });
     const result = await Promise.race([
       resultPromise,
       new Promise<typeof timeoutResult>((resolve) => {
@@ -334,7 +342,7 @@ describe("JoinWaitlistUseCase", () => {
     expect(result).toEqual({
       status: "registered",
     });
-    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
+    expect(waitlistConfirmationPort.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "reduced",
@@ -346,8 +354,8 @@ describe("JoinWaitlistUseCase", () => {
     async (failureMode) => {
       // arrange
       const incidents = createWaitlistIncidents();
-      const joinWaitlist = createJoinWaitlist({
-        confirmation: {
+      const joinWaitlistUseCase = createJoinWaitlist({
+        waitlistConfirmationPort: {
           sendConfirmation: vi.fn(
             failureMode === "a reported failure"
               ? async () => ({ kind: "failed" as const })
@@ -357,11 +365,13 @@ describe("JoinWaitlistUseCase", () => {
           ),
         },
         incidents,
-        waitlistEntries: createWaitlistEntries(),
+        waitlistEntriesPort: createWaitlistEntries(),
       });
 
       // act
-      const result = await joinWaitlist.execute({ email: "eli@example.com" });
+      const result = await joinWaitlistUseCase.execute({
+        email: "eli@example.com",
+      });
 
       // assert
       expect(result).toEqual({
@@ -373,20 +383,20 @@ describe("JoinWaitlistUseCase", () => {
 
   it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
     // arrange
-    const confirmation = createConfirmation();
-    const waitlistEntries = createWaitlistEntries({
+    const waitlistConfirmationPort = createConfirmation();
+    const waitlistEntriesPort = createWaitlistEntries({
       registerReducedPricingSignup: vi.fn().mockResolvedValue({
         status: "already_registered",
       }),
     });
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       incidents: createWaitlistIncidents(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const result = await joinWaitlist.execute({
+    const result = await joinWaitlistUseCase.execute({
       email: "eli@example.com",
     });
 
@@ -394,42 +404,50 @@ describe("JoinWaitlistUseCase", () => {
     expect(result).toEqual({
       status: "already_registered",
     });
-    expect(waitlistEntries.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
+    expect(
+      waitlistEntriesPort.registerRegularPricingSignup,
+    ).not.toHaveBeenCalled();
+    expect(waitlistConfirmationPort.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
     // arrange
-    const waitlistEntries = createWaitlistEntries({
+    const waitlistEntriesPort = createWaitlistEntries({
       registerReducedPricingSignup: vi
         .fn()
         .mockResolvedValue({ status: "capacity_reached" }),
     });
-    const confirmation = createConfirmation();
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const waitlistConfirmationPort = createConfirmation();
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       incidents: createWaitlistIncidents(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const result = await joinWaitlist.execute({ email: " ELI@Example.COM " });
+    const result = await joinWaitlistUseCase.execute({
+      email: " ELI@Example.COM ",
+    });
 
     // assert
     expect(result).toEqual({
       status: "registered",
     });
-    expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
+    expect(
+      waitlistEntriesPort.registerReducedPricingSignup,
+    ).toHaveBeenCalledWith({
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(waitlistEntries.registerRegularPricingSignup).toHaveBeenCalledWith({
+    expect(
+      waitlistEntriesPort.registerRegularPricingSignup,
+    ).toHaveBeenCalledWith({
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
+    expect(waitlistConfirmationPort.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "regular",
@@ -439,7 +457,7 @@ describe("JoinWaitlistUseCase", () => {
   it("returns regular pricing registration before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const confirmation: WaitlistConfirmationPort = {
+    const waitlistConfirmationPort: WaitlistConfirmationPort = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<{ kind: "sent" }>((resolve) => {
@@ -447,10 +465,10 @@ describe("JoinWaitlistUseCase", () => {
           }),
       ),
     };
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       incidents: createWaitlistIncidents(),
-      waitlistEntries: createWaitlistEntries({
+      waitlistEntriesPort: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()
           .mockResolvedValue({ status: "capacity_reached" }),
@@ -459,7 +477,9 @@ describe("JoinWaitlistUseCase", () => {
     const timeoutResult = Symbol("timeout");
 
     // act
-    const resultPromise = joinWaitlist.execute({ email: "eli@example.com" });
+    const resultPromise = joinWaitlistUseCase.execute({
+      email: "eli@example.com",
+    });
     const result = await Promise.race([
       resultPromise,
       new Promise<typeof timeoutResult>((resolve) => {
@@ -473,7 +493,7 @@ describe("JoinWaitlistUseCase", () => {
     expect(result).toEqual({
       status: "registered",
     });
-    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
+    expect(waitlistConfirmationPort.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "regular",
@@ -482,11 +502,11 @@ describe("JoinWaitlistUseCase", () => {
 
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
     // arrange
-    const confirmation = createConfirmation();
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const waitlistConfirmationPort = createConfirmation();
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       incidents: createWaitlistIncidents(),
-      waitlistEntries: createWaitlistEntries({
+      waitlistEntriesPort: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()
           .mockResolvedValue({ status: "capacity_reached" }),
@@ -497,50 +517,58 @@ describe("JoinWaitlistUseCase", () => {
     });
 
     // act
-    const result = await joinWaitlist.execute({ email: "eli@example.com" });
+    const result = await joinWaitlistUseCase.execute({
+      email: "eli@example.com",
+    });
 
     // assert
     expect(result).toEqual({
       status: "already_registered",
     });
-    expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
+    expect(waitlistConfirmationPort.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("refuses a subaddressed email without registering or confirming anything", async () => {
     // arrange
-    const confirmation = createConfirmation();
-    const waitlistEntries = createWaitlistEntries();
-    const joinWaitlist = createJoinWaitlist({
-      confirmation,
+    const waitlistConfirmationPort = createConfirmation();
+    const waitlistEntriesPort = createWaitlistEntries();
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort,
       emailSubaddresses: "refused",
       incidents: createWaitlistIncidents(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const result = await joinWaitlist.execute({
+    const result = await joinWaitlistUseCase.execute({
       email: "Eli+Launch@Example.com",
     });
 
     // assert
     expect(result).toEqual({ status: "subaddress_refused" });
-    expect(waitlistEntries.registerReducedPricingSignup).not.toHaveBeenCalled();
-    expect(waitlistEntries.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
+    expect(
+      waitlistEntriesPort.registerReducedPricingSignup,
+    ).not.toHaveBeenCalled();
+    expect(
+      waitlistEntriesPort.registerRegularPricingSignup,
+    ).not.toHaveBeenCalled();
+    expect(waitlistConfirmationPort.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("registers a main address where subaddresses are refused", async () => {
     // arrange
-    const waitlistEntries = createWaitlistEntries();
-    const joinWaitlist = createJoinWaitlist({
-      confirmation: createConfirmation(),
+    const waitlistEntriesPort = createWaitlistEntries();
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort: createConfirmation(),
       emailSubaddresses: "refused",
       incidents: createWaitlistIncidents(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const result = await joinWaitlist.execute({ email: "eli@example.com" });
+    const result = await joinWaitlistUseCase.execute({
+      email: "eli@example.com",
+    });
 
     // assert
     expect(result).toEqual({ status: "registered" });
@@ -548,22 +576,24 @@ describe("JoinWaitlistUseCase", () => {
 
   it("registers a subaddressed email as entered where subaddresses are allowed", async () => {
     // arrange
-    const waitlistEntries = createWaitlistEntries();
-    const joinWaitlist = createJoinWaitlist({
-      confirmation: createConfirmation(),
+    const waitlistEntriesPort = createWaitlistEntries();
+    const joinWaitlistUseCase = createJoinWaitlist({
+      waitlistConfirmationPort: createConfirmation(),
       emailSubaddresses: "allowed",
       incidents: createWaitlistIncidents(),
-      waitlistEntries,
+      waitlistEntriesPort,
     });
 
     // act
-    const result = await joinWaitlist.execute({
+    const result = await joinWaitlistUseCase.execute({
       email: "Eli+Launch@Example.com",
     });
 
     // assert
     expect(result).toEqual({ status: "registered" });
-    expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith(
+    expect(
+      waitlistEntriesPort.registerReducedPricingSignup,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({ normalizedEmail: "eli+launch@example.com" }),
     );
   });

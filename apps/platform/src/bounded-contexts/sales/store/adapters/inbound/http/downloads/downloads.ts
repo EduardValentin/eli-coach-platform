@@ -12,7 +12,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return context.get(storeContext).downloads.download(request);
+    return context.get(storeContext).storeDownloadController.download(request);
   });
 }
 

@@ -4,7 +4,7 @@ import type { ExerciseLibraryPort } from "./exercise-library-port";
 export type ListExercisesResult = { status: "listed"; exercises: Exercise[] };
 
 type ListExercisesUseCaseOptions = {
-  library: ExerciseLibraryPort;
+  exerciseLibraryPort: ExerciseLibraryPort;
 };
 
 export class ListExercisesUseCase {
@@ -13,7 +13,7 @@ export class ListExercisesUseCase {
   async execute(ownerAccountId: string): Promise<ListExercisesResult> {
     return {
       status: "listed",
-      exercises: await this.options.library.list(ownerAccountId),
+      exercises: await this.options.exerciseLibraryPort.list(ownerAccountId),
     };
   }
 }

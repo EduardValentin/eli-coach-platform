@@ -8,7 +8,7 @@ import { COACH_SETTINGS_PATH } from "~/bounded-contexts/scheduling/public/paths"
 export async function loader(args: LoaderFunctionArgs) {
   return args.context
     .get(checkInsContext)
-    .checkInJoin.resolveForCoach(args, args.params.checkInId);
+    .checkInJoinController.resolveForCoach(args, args.params.checkInId);
 }
 
 export const meta: MetaFunction = () => [

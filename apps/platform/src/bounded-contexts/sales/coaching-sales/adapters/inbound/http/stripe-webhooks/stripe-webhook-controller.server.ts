@@ -18,14 +18,14 @@ import type { PaymentEventsPort } from "~/bounded-contexts/sales/coaching-sales/
 import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
 
 type StripeWebhookControllerOptions = {
-  cardHandler: PaymentCardHandlerPort;
+  paymentCardHandlerPort: PaymentCardHandlerPort;
   completionHandlersByPurpose: ReadonlyMap<
     string,
     PaymentCompletionHandlerPort
   >;
-  incidents: PaymentWebhookIncidents;
-  paymentEvents: PaymentEventsPort;
-  refundHandler: PaymentRefundHandlerPort;
+  paymentWebhookIncidentsPort: PaymentWebhookIncidents;
+  paymentEventsPort: PaymentEventsPort;
+  paymentRefundHandlerPort: PaymentRefundHandlerPort;
   signingSecret: string | undefined;
   subscriptionChangeHandlersByPurpose: ReadonlyMap<
     string,
@@ -69,7 +69,7 @@ export class StripeWebhookController {
       return new Response(null, { status: PAYLOAD_TOO_LARGE });
     }
 
-    const verdict = await this.options.paymentEvents.verify(
+    const verdict = await this.options.paymentEventsPort.verify(
       body.text,
       request.headers.get(SIGNATURE_HEADER),
     );
@@ -102,7 +102,8 @@ export class StripeWebhookController {
         purpose: session.metadata[PAYMENT_PURPOSE_METADATA_KEY] ?? null,
         handlersByPurpose: this.options.completionHandlersByPurpose,
       },
-      (handler) => handler.handle(eventId, session),
+      (paymentCompletionHandlerPort) =>
+        paymentCompletionHandlerPort.handle(eventId, session),
     );
   }
 
@@ -117,9 +118,12 @@ export class StripeWebhookController {
         purpose: verdict.purpose,
         handlersByPurpose: this.options.subscriptionChangeHandlersByPurpose,
       },
-      (handler) =>
+      (paymentSubscriptionChangeHandlerPort) =>
         this.options.unitOfWork(() =>
-          handler.handle(verdict.eventId, verdict.change),
+          paymentSubscriptionChangeHandlerPort.handle(
+            verdict.eventId,
+            verdict.change,
+          ),
         ),
     );
   }
@@ -153,7 +157,7 @@ export class StripeWebhookController {
       handler: REFUNDS_HANDLER,
       handle: () =>
         this.options.unitOfWork(() =>
-          this.options.refundHandler.handle(eventId, refund),
+          this.options.paymentRefundHandlerPort.handle(eventId, refund),
         ),
     });
   }
@@ -167,7 +171,7 @@ export class StripeWebhookController {
       handler: CARDS_HANDLER,
       handle: () =>
         this.options.unitOfWork(() =>
-          this.options.cardHandler.handle(eventId, change),
+          this.options.paymentCardHandlerPort.handle(eventId, change),
         ),
     });
   }
@@ -176,14 +180,17 @@ export class StripeWebhookController {
     eventId: string,
     purpose: string | null,
   ): Promise<Response> {
-    this.options.incidents.paymentEventUnrouted({ eventId, purpose });
+    this.options.paymentWebhookIncidentsPort.paymentEventUnrouted({
+      eventId,
+      purpose,
+    });
 
     return acknowledged();
   }
 
   private deliver(delivery: Delivery): Promise<Response> {
     return delivery.handle().then(acknowledged, (error) => {
-      this.options.incidents.paymentEventHandlingFailed({
+      this.options.paymentWebhookIncidentsPort.paymentEventHandlingFailed({
         error,
         eventId: delivery.eventId,
         handler: delivery.handler,

@@ -21,7 +21,7 @@ export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
     args.context
       .get(notificationsContext)
-      .notificationBell.respondWithBell(args),
+      .notificationBellController.respondWithBell(args),
   );
 }
 

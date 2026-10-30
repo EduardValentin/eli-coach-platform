@@ -77,12 +77,14 @@ function videoUploadStateOf(
 }
 
 export async function loader(args: LoaderFunctionArgs) {
-  const { exerciseLibrary } = args.context.get(exerciseLibraryContext);
+  const { exerciseLibraryController } = args.context.get(
+    exerciseLibraryContext,
+  );
   const { exerciseId } = args.params;
 
   return exerciseId === undefined
-    ? exerciseLibrary.loadNew(args)
-    : exerciseLibrary.load(args, exerciseId);
+    ? exerciseLibraryController.loadNew(args)
+    : exerciseLibraryController.load(args, exerciseId);
 }
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [

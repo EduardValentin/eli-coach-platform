@@ -41,10 +41,10 @@ const validResolution = {
 describe("CheckoutsController bundle page shell", () => {
   it("serves the page shell uncached without looking up any link", async () => {
     // arrange
-    const { controller, resolvePaymentLink } = createController({});
+    const { checkoutsController, resolvePaymentLink } = createController({});
 
     // act
-    const shell = await controller.loadBundlePageShell();
+    const shell = await checkoutsController.loadBundlePageShell();
 
     // assert
     expect(shell.data).toBeNull();
@@ -56,10 +56,10 @@ describe("CheckoutsController bundle page shell", () => {
 
   it("answers not found while coaching sales are closed", async () => {
     // arrange
-    const { controller } = createController({ bundlePage: "closed" });
+    const { checkoutsController } = createController({ bundlePage: "closed" });
 
     // act
-    const loading = controller.loadBundlePageShell();
+    const loading = checkoutsController.loadBundlePageShell();
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
@@ -69,12 +69,12 @@ describe("CheckoutsController bundle page shell", () => {
 describe("CheckoutsController bundle page resolution", () => {
   it("answers the valid page with the tier's cards and the waiting start instant only", async () => {
     // arrange
-    const { controller, resolvePaymentLink } = createController({
+    const { checkoutsController, resolvePaymentLink } = createController({
       resolution: validResolution,
     });
 
     // act
-    const response = await controller.resolveBundlePage(
+    const response = await checkoutsController.resolveBundlePage(
       bundlePageArgs(JSON.stringify({ token: TOKEN })),
     );
 
@@ -108,12 +108,12 @@ describe("CheckoutsController bundle page resolution", () => {
 
   it("answers the call-first page with the regular cards for a link that does not work", async () => {
     // arrange
-    const { controller } = createController({
+    const { checkoutsController } = createController({
       resolution: { status: "invalid" },
     });
 
     // act
-    const response = await controller.resolveBundlePage(
+    const response = await checkoutsController.resolveBundlePage(
       bundlePageArgs(JSON.stringify({ token: TOKEN })),
     );
 
@@ -129,12 +129,12 @@ describe("CheckoutsController bundle page resolution", () => {
 
   it("reads an oversized token as no token at all", async () => {
     // arrange
-    const { controller, resolvePaymentLink } = createController({
+    const { checkoutsController, resolvePaymentLink } = createController({
       resolution: { status: "invalid" },
     });
 
     // act
-    await controller.resolveBundlePage(
+    await checkoutsController.resolveBundlePage(
       bundlePageArgs(JSON.stringify({ token: "a".repeat(300) })),
     );
 
@@ -144,12 +144,12 @@ describe("CheckoutsController bundle page resolution", () => {
 
   it("answers not found while coaching sales are closed", async () => {
     // arrange
-    const { controller } = createController({
+    const { checkoutsController } = createController({
       resolution: { status: "closed" },
     });
 
     // act
-    const response = await controller.resolveBundlePage(
+    const response = await checkoutsController.resolveBundlePage(
       bundlePageArgs(JSON.stringify({ token: TOKEN })),
     );
 
@@ -163,12 +163,14 @@ describe("CheckoutsController bundle page resolution", () => {
     ["a body over the size limit", JSON.stringify({ token: "a".repeat(2048) })],
   ])("refuses %s without looking up any link", async (_case, body) => {
     // arrange
-    const { controller, resolvePaymentLink } = createController({
+    const { checkoutsController, resolvePaymentLink } = createController({
       resolution: validResolution,
     });
 
     // act
-    const response = await controller.resolveBundlePage(bundlePageArgs(body));
+    const response = await checkoutsController.resolveBundlePage(
+      bundlePageArgs(body),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -179,10 +181,10 @@ describe("CheckoutsController bundle page resolution", () => {
 describe("CheckoutsController pricing cards", () => {
   it("presents the cards of the tier it is given", () => {
     // arrange
-    const { controller } = createController({});
+    const { checkoutsController } = createController({});
 
     // act
-    const cards = controller.loadPricingCards({ tier: "reduced" });
+    const cards = checkoutsController.loadPricingCards({ tier: "reduced" });
 
     // assert
     expect(cards.map((card) => card.total)).toEqual([139, 375, 714]);
@@ -192,12 +194,12 @@ describe("CheckoutsController pricing cards", () => {
 describe("CheckoutsController checkout start", () => {
   it("redirects to the provider with return addresses built from the configured app url", async () => {
     // arrange
-    const { controller, startCheckout } = createController({
+    const { checkoutsController, startCheckout } = createController({
       checkout: { status: "redirect", url: PROVIDER_URL },
     });
 
     // act
-    const response = await controller.startCheckout(
+    const response = await checkoutsController.startCheckout(
       checkoutArgs({
         bundleId: "6-months",
         startChoice: "waiting",
@@ -221,12 +223,12 @@ describe("CheckoutsController checkout start", () => {
 
   it("answers not found while coaching sales are closed", async () => {
     // arrange
-    const { controller } = createController({
+    const { checkoutsController } = createController({
       checkout: { status: "closed" },
     });
 
     // act
-    const response = await controller.startCheckout(
+    const response = await checkoutsController.startCheckout(
       checkoutArgs({
         bundleId: "1-month",
         startChoice: "immediate",
@@ -242,10 +244,12 @@ describe("CheckoutsController checkout start", () => {
     "returns to the bundle page for the link when the checkout answers %s",
     async (status) => {
       // arrange
-      const { controller } = createController({ checkout: { status } });
+      const { checkoutsController } = createController({
+        checkout: { status },
+      });
 
       // act
-      const response = await controller.startCheckout(
+      const response = await checkoutsController.startCheckout(
         checkoutArgs({
           bundleId: "1-month",
           startChoice: "immediate",
@@ -261,12 +265,13 @@ describe("CheckoutsController checkout start", () => {
 
   it("returns to the bundle page with the chosen bundle when the start choice is missing", async () => {
     // arrange
-    const { controller, resolvePaymentLink, startCheckout } = createController({
-      resolution: validResolution,
-    });
+    const { checkoutsController, resolvePaymentLink, startCheckout } =
+      createController({
+        resolution: validResolution,
+      });
 
     // act
-    const response = await controller.startCheckout(
+    const response = await checkoutsController.startCheckout(
       checkoutArgs({ bundleId: "6-months", token: TOKEN }),
     );
 
@@ -281,10 +286,12 @@ describe("CheckoutsController checkout start", () => {
 
   it("returns to the bundle page without an unknown bundle", async () => {
     // arrange
-    const { controller } = createController({ resolution: validResolution });
+    const { checkoutsController } = createController({
+      resolution: validResolution,
+    });
 
     // act
-    const response = await controller.startCheckout(
+    const response = await checkoutsController.startCheckout(
       checkoutArgs({
         bundleId: "12-months",
         startChoice: "immediate",
@@ -298,12 +305,12 @@ describe("CheckoutsController checkout start", () => {
 
   it("answers not found for an incomplete checkout while coaching sales are closed", async () => {
     // arrange
-    const { controller } = createController({
+    const { checkoutsController } = createController({
       resolution: { status: "closed" },
     });
 
     // act
-    const response = await controller.startCheckout(
+    const response = await checkoutsController.startCheckout(
       checkoutArgs({ token: TOKEN }),
     );
 
@@ -313,7 +320,7 @@ describe("CheckoutsController checkout start", () => {
 
   it("refuses a body that is not a form", async () => {
     // arrange
-    const { controller, startCheckout } = createController({});
+    const { checkoutsController, startCheckout } = createController({});
     const request = new Request("https://evoa.example/api/checkouts", {
       body: JSON.stringify({ token: TOKEN }),
       headers: { "Content-Type": "application/json" },
@@ -321,7 +328,7 @@ describe("CheckoutsController checkout start", () => {
     });
 
     // act
-    const response = await controller.startCheckout(
+    const response = await checkoutsController.startCheckout(
       createRequestArgs({ request }),
     );
 
@@ -334,7 +341,7 @@ describe("CheckoutsController checkout start", () => {
 describe("CheckoutsController confirmation", () => {
   it("serves the paid readings without caching or a referrer", async () => {
     // arrange
-    const { controller, readCheckoutConfirmation } = createController({
+    const { checkoutsController, readCheckoutConfirmation } = createController({
       confirmation: {
         status: "paid",
         bundleId: "3-months",
@@ -348,7 +355,7 @@ describe("CheckoutsController confirmation", () => {
     });
 
     // act
-    const page = await controller.loadConfirmation(
+    const page = await checkoutsController.loadConfirmation(
       pageArgs("/checkout/complete?session=cs_test_1"),
     );
 
@@ -370,12 +377,12 @@ describe("CheckoutsController confirmation", () => {
 
   it("serves the call-first state for a session that is not paid", async () => {
     // arrange
-    const { controller } = createController({
+    const { checkoutsController } = createController({
       confirmation: { status: "not_paid" },
     });
 
     // act
-    const page = await controller.loadConfirmation(
+    const page = await checkoutsController.loadConfirmation(
       pageArgs("/checkout/complete?session=cs_test_1"),
     );
 
@@ -385,12 +392,12 @@ describe("CheckoutsController confirmation", () => {
 
   it("answers not found while coaching sales are closed", async () => {
     // arrange
-    const { controller } = createController({
+    const { checkoutsController } = createController({
       confirmation: { status: "closed" },
     });
 
     // act
-    const loading = controller.loadConfirmation(
+    const loading = checkoutsController.loadConfirmation(
       pageArgs("/checkout/complete?session=cs_test_1"),
     );
 
@@ -412,27 +419,27 @@ function createController(options: ControllerOptions) {
   const openBundlePage = vi
     .fn()
     .mockResolvedValue({ status: options.bundlePage ?? "open" });
-  const controller = new CheckoutsController({
+  const checkoutsController = new CheckoutsController({
     unitOfWork: (work) => work(),
     appBasePath: APP_BASE_PATH,
-    clock: { now: () => NOW },
-    openBundlePage: {
+    clockPort: { now: () => NOW },
+    openBundlePageUseCase: {
       execute: openBundlePage,
     } as unknown as OpenBundlePageUseCase,
     publicAppUrl: PUBLIC_APP_URL,
-    readCheckoutConfirmation: {
+    readCheckoutConfirmationUseCase: {
       execute: readCheckoutConfirmation,
     } as unknown as ReadCheckoutConfirmationUseCase,
-    resolvePaymentLink: {
+    resolvePaymentLinkUseCase: {
       execute: resolvePaymentLink,
     } as unknown as ResolvePaymentLinkUseCase,
-    startCheckout: {
+    startCheckoutUseCase: {
       execute: startCheckout,
     } as unknown as StartCheckoutUseCase,
   });
 
   return {
-    controller,
+    checkoutsController,
     readCheckoutConfirmation,
     resolvePaymentLink,
     startCheckout,

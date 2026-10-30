@@ -5,9 +5,11 @@ import type {
 import type { ReviewStampRecorderPort } from "~/bounded-contexts/clients/clients/public";
 
 export class ClientsReviewStampsAdapter implements OnboardingReviewStampsPort {
-  constructor(private readonly recorder: ReviewStampRecorderPort) {}
+  constructor(
+    private readonly reviewStampRecorderPort: ReviewStampRecorderPort,
+  ) {}
 
   record(input: { clientId: string; stamps: ReviewStamps }): Promise<void> {
-    return this.recorder.recordReviewStamp(input);
+    return this.reviewStampRecorderPort.recordReviewStamp(input);
   }
 }

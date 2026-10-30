@@ -82,10 +82,10 @@ const DUPLICATE: RecordedCheckoutPurchase = {
 describe("CoachingPurchaseCompletionHandler", () => {
   it("serves the coaching subscription purpose", () => {
     // arrange
-    const { handler } = createHandler();
+    const { coachingPurchaseCompletionHandler } = createHandler();
 
     // act
-    const purpose = handler.purpose;
+    const purpose = coachingPurchaseCompletionHandler.purpose;
 
     // assert
     expect(purpose).toBe("coaching-subscription");
@@ -98,12 +98,19 @@ describe("CoachingPurchaseCompletionHandler", () => {
     "reads the notified session for the event, records the purchase it drafts and answers %o as %s",
     async (recorded, expected) => {
       // arrange
-      const { handler, readCheckout, recordCheckout } = createHandler({
+      const {
+        coachingPurchaseCompletionHandler,
+        readCheckout,
+        recordCheckout,
+      } = createHandler({
         recorded,
       });
 
       // act
-      const outcome = await handler.handle("evt_1", notifiedSession);
+      const outcome = await coachingPurchaseCompletionHandler.handle(
+        "evt_1",
+        notifiedSession,
+      );
 
       // assert
       expect(outcome).toBe(expected);
@@ -122,11 +129,18 @@ describe("CoachingPurchaseCompletionHandler", () => {
     "answers %o as ignored and records, finishes and mirrors nothing",
     async (read) => {
       // arrange
-      const { handler, recordCheckout, finishCheckout, refreshCard } =
-        createHandler({ read });
+      const {
+        coachingPurchaseCompletionHandler,
+        recordCheckout,
+        finishCheckout,
+        refreshCard,
+      } = createHandler({ read });
 
       // act
-      const outcome = await handler.handle("evt_1", notifiedSession);
+      const outcome = await coachingPurchaseCompletionHandler.handle(
+        "evt_1",
+        notifiedSession,
+      );
 
       // assert
       expect(outcome).toBe("ignored");
@@ -138,12 +152,19 @@ describe("CoachingPurchaseCompletionHandler", () => {
 
   it("answers an already paid call as ignored and finishes nothing", async () => {
     // arrange
-    const { handler, recordCheckout, finishCheckout, refreshCard } =
-      createHandler();
+    const {
+      coachingPurchaseCompletionHandler,
+      recordCheckout,
+      finishCheckout,
+      refreshCard,
+    } = createHandler();
     recordCheckout.mockRejectedValue(new CallAlreadyPaid());
 
     // act
-    const outcome = await handler.handle("evt_1", notifiedSession);
+    const outcome = await coachingPurchaseCompletionHandler.handle(
+      "evt_1",
+      notifiedSession,
+    );
 
     // assert
     expect(outcome).toBe("ignored");
@@ -155,12 +176,13 @@ describe("CoachingPurchaseCompletionHandler", () => {
     "finishes the purchase and mirrors the card on file of her payment customer once the purchase answers %o",
     async (recorded) => {
       // arrange
-      const { handler, finishCheckout, refreshCard } = createHandler({
-        recorded,
-      });
+      const { coachingPurchaseCompletionHandler, finishCheckout, refreshCard } =
+        createHandler({
+          recorded,
+        });
 
       // act
-      await handler.handle("evt_1", notifiedSession);
+      await coachingPurchaseCompletionHandler.handle("evt_1", notifiedSession);
 
       // assert
       expect(finishCheckout).toHaveBeenCalledWith(recorded);
@@ -171,7 +193,7 @@ describe("CoachingPurchaseCompletionHandler", () => {
   it("reads the checkout before the unit of work, records the purchase inside it and finishes it and mirrors the card after that unit commits", async () => {
     // arrange
     const {
-      handler,
+      coachingPurchaseCompletionHandler,
       readCheckout,
       recordCheckout,
       finishCheckout,
@@ -180,7 +202,7 @@ describe("CoachingPurchaseCompletionHandler", () => {
     } = createHandler();
 
     // act
-    await handler.handle("evt_1", notifiedSession);
+    await coachingPurchaseCompletionHandler.handle("evt_1", notifiedSession);
 
     // assert
     expect(ranInside.get(readCheckout)).toBe(false);
@@ -192,14 +214,19 @@ describe("CoachingPurchaseCompletionHandler", () => {
   it("fails the delivery when the purchase's unit of work fails, so the provider redelivers", async () => {
     // arrange
     const failure = new Error("connection reset");
-    const { handler, finishCheckout } = createHandler({
-      unitOfWork: async () => {
-        throw failure;
+    const { coachingPurchaseCompletionHandler, finishCheckout } = createHandler(
+      {
+        unitOfWork: async () => {
+          throw failure;
+        },
       },
-    });
+    );
 
     // act
-    const handling = handler.handle("evt_1", notifiedSession);
+    const handling = coachingPurchaseCompletionHandler.handle(
+      "evt_1",
+      notifiedSession,
+    );
 
     // assert
     await expect(handling).rejects.toBe(failure);
@@ -209,11 +236,14 @@ describe("CoachingPurchaseCompletionHandler", () => {
   it("fails the delivery when the card on file cannot be mirrored, so the provider redelivers", async () => {
     // arrange
     const failure = new Error("provider down");
-    const { handler, refreshCard } = createHandler();
+    const { coachingPurchaseCompletionHandler, refreshCard } = createHandler();
     refreshCard.mockRejectedValue(failure);
 
     // act
-    const handling = handler.handle("evt_1", notifiedSession);
+    const handling = coachingPurchaseCompletionHandler.handle(
+      "evt_1",
+      notifiedSession,
+    );
 
     // assert
     await expect(handling).rejects.toBe(failure);
@@ -256,24 +286,25 @@ function createHandler(
       }
     });
 
-  const handler = new CoachingPurchaseCompletionHandler({
-    finishCheckoutPurchase: {
-      execute: finishCheckout,
-    } as unknown as FinishCheckoutPurchaseUseCase,
-    readCheckoutPurchase: {
-      execute: readCheckout,
-    } as unknown as ReadCheckoutPurchaseUseCase,
-    recordCheckoutPurchase: {
-      execute: recordCheckout,
-    } as unknown as RecordCheckoutPurchaseUseCase,
-    refreshPaymentCard: {
-      execute: refreshCard,
-    } as unknown as RefreshPaymentCardUseCase,
-    unitOfWork,
-  });
+  const coachingPurchaseCompletionHandler =
+    new CoachingPurchaseCompletionHandler({
+      finishCheckoutPurchaseUseCase: {
+        execute: finishCheckout,
+      } as unknown as FinishCheckoutPurchaseUseCase,
+      readCheckoutPurchaseUseCase: {
+        execute: readCheckout,
+      } as unknown as ReadCheckoutPurchaseUseCase,
+      recordCheckoutPurchaseUseCase: {
+        execute: recordCheckout,
+      } as unknown as RecordCheckoutPurchaseUseCase,
+      refreshPaymentCardUseCase: {
+        execute: refreshCard,
+      } as unknown as RefreshPaymentCardUseCase,
+      unitOfWork,
+    });
 
   return {
-    handler,
+    coachingPurchaseCompletionHandler,
     readCheckout,
     recordCheckout,
     finishCheckout,

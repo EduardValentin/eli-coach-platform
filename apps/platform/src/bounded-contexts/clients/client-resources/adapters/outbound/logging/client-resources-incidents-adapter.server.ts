@@ -6,14 +6,14 @@ import {
 } from "~/shared/logging/error-fields.server";
 
 export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   resourceAccessRefused({
     clientId,
     requesterRole,
     resourceId,
   }: Parameters<ClientResourceIncidentsPort["resourceAccessRefused"]>[0]) {
-    this.logger.warn("Client resource access refused.", {
+    this.loggerPort.warn("Client resource access refused.", {
       clientId,
       eventCategory: "client_resource_access_refused",
       requesterRole,
@@ -26,7 +26,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     reason,
     receivedBytes,
   }: Parameters<ClientResourceIncidentsPort["resourceRefused"]>[0]) {
-    this.logger.warn("Client resource refused.", {
+    this.loggerPort.warn("Client resource refused.", {
       clientId,
       eventCategory: "client_resource_refused",
       reason,
@@ -39,7 +39,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     error,
     resourceId,
   }: Parameters<ClientResourceIncidentsPort["resourceChangeFailed"]>[0]) {
-    this.logger.error("Client resource change could not be written.", {
+    this.loggerPort.error("Client resource change could not be written.", {
       clientId,
       errorCategory: "client_resource_change_failure",
       errorClass: errorClassOf(error),
@@ -53,7 +53,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     error,
     resourceId,
   }: Parameters<ClientResourceIncidentsPort["resourceFilesOrphaned"]>[0]) {
-    this.logger.error(
+    this.loggerPort.error(
       "Client resource files were left behind after its removal.",
       {
         clientId,
@@ -69,7 +69,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     clientId,
     error,
   }: Parameters<ClientResourceIncidentsPort["resourceListingFailed"]>[0]) {
-    this.logger.error("Client resources could not be listed.", {
+    this.loggerPort.error("Client resources could not be listed.", {
       clientId,
       errorCategory: "client_resource_listing_failure",
       errorClass: errorClassOf(error),
@@ -82,7 +82,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     error,
     resourceId,
   }: Parameters<ClientResourceIncidentsPort["resourceOpeningFailed"]>[0]) {
-    this.logger.error("Client resource opening could not be recorded.", {
+    this.loggerPort.error("Client resource opening could not be recorded.", {
       clientId,
       errorCategory: "client_resource_opening_failure",
       errorClass: errorClassOf(error),
@@ -96,7 +96,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     error,
     resourceId,
   }: Parameters<ClientResourceIncidentsPort["resourceStorageFailed"]>[0]) {
-    this.logger.error("Client resource could not be stored.", {
+    this.loggerPort.error("Client resource could not be stored.", {
       clientId,
       errorCategory: "client_resource_storage_failure",
       errorClass: errorClassOf(error),
@@ -112,7 +112,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     resourceId,
     sizeBytes,
   }: Parameters<ClientResourceIncidentsPort["resourceStored"]>[0]) {
-    this.logger.info("Client resource stored.", {
+    this.loggerPort.info("Client resource stored.", {
       clientId,
       eventCategory: "client_resource_stored",
       format,
@@ -126,7 +126,7 @@ export class ClientResourcesIncidentsAdapter implements ClientResourceIncidentsP
     clientId,
     error,
   }: Parameters<ClientResourceIncidentsPort["unopenedCountFailed"]>[0]) {
-    this.logger.error("Unopened client resources could not be counted.", {
+    this.loggerPort.error("Unopened client resources could not be counted.", {
       clientId,
       errorCategory: "client_resource_unopened_count_failure",
       errorClass: errorClassOf(error),

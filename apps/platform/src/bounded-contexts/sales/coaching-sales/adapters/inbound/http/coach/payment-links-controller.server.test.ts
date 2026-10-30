@@ -13,11 +13,15 @@ type Session =
 describe("PaymentLinksController", () => {
   it("refuses an anonymous caller with 401 and sends nothing", async () => {
     // arrange
-    const { controller, execute } = createController({ status: "sent" });
+    const { paymentLinksController, execute } = createController({
+      status: "sent",
+    });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.sendPaymentLink(sendArgs({ session: { kind: "anonymous" } })),
+      paymentLinksController.sendPaymentLink(
+        sendArgs({ session: { kind: "anonymous" } }),
+      ),
     );
 
     // assert
@@ -27,11 +31,13 @@ describe("PaymentLinksController", () => {
 
   it("refuses a client account with 403 and sends nothing", async () => {
     // arrange
-    const { controller, execute } = createController({ status: "sent" });
+    const { paymentLinksController, execute } = createController({
+      status: "sent",
+    });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.sendPaymentLink(
+      paymentLinksController.sendPaymentLink(
         sendArgs({ session: authenticatedAs("CLIENT") }),
       ),
     );
@@ -43,10 +49,12 @@ describe("PaymentLinksController", () => {
 
   it("answers 400 and sends nothing when the call id is not a uuid", async () => {
     // arrange
-    const { controller, execute } = createController({ status: "sent" });
+    const { paymentLinksController, execute } = createController({
+      status: "sent",
+    });
 
     // act
-    const response = await controller.sendPaymentLink(
+    const response = await paymentLinksController.sendPaymentLink(
       sendArgs({ body: JSON.stringify({ assessmentCallId: "call-1" }) }),
     );
 
@@ -60,10 +68,12 @@ describe("PaymentLinksController", () => {
 
   it("answers 400 and sends nothing when the body is not JSON", async () => {
     // arrange
-    const { controller, execute } = createController({ status: "sent" });
+    const { paymentLinksController, execute } = createController({
+      status: "sent",
+    });
 
     // act
-    const response = await controller.sendPaymentLink(
+    const response = await paymentLinksController.sendPaymentLink(
       sendArgs({ body: "assessmentCallId=call-1" }),
     );
 
@@ -74,13 +84,13 @@ describe("PaymentLinksController", () => {
 
   it("sends the link for the named call and answers 200 with the address it went to", async () => {
     // arrange
-    const { controller, execute } = createController({
+    const { paymentLinksController, execute } = createController({
       email: "ana@example.com",
       status: "sent",
     });
 
     // act
-    const response = await controller.sendPaymentLink(sendArgs({}));
+    const response = await paymentLinksController.sendPaymentLink(sendArgs({}));
 
     // assert
     expect(response.status).toBe(200);
@@ -101,10 +111,12 @@ describe("PaymentLinksController", () => {
     "answers the %s refusal with %i and names it",
     async (status, httpStatus) => {
       // arrange
-      const { controller } = createController({ status });
+      const { paymentLinksController } = createController({ status });
 
       // act
-      const response = await controller.sendPaymentLink(sendArgs({}));
+      const response = await paymentLinksController.sendPaymentLink(
+        sendArgs({}),
+      );
 
       // assert
       expect(response.status).toBe(httpStatus);
@@ -115,12 +127,12 @@ describe("PaymentLinksController", () => {
 
 function createController(result: unknown) {
   const execute = vi.fn().mockResolvedValue(result);
-  const controller = new PaymentLinksController({
+  const paymentLinksController = new PaymentLinksController({
     unitOfWork: (work) => work(),
-    sendPaymentLink: { execute } as never,
+    sendPaymentLinkUseCase: { execute } as never,
   });
 
-  return { controller, execute };
+  return { paymentLinksController, execute };
 }
 
 function sendArgs(options: { body?: string; session?: Session }) {

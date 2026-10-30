@@ -19,7 +19,7 @@ import {
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server";
 
 type PostgresCoachingPurchasesOptions = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
 };
 
@@ -65,7 +65,7 @@ export class PostgresCoachingPurchasesRepository
             and(
               inArray(paymentLinksTable.assessmentCallId, [...callIds]),
               eq(paymentLinksTable.state, "valid"),
-              gt(paymentLinksTable.expiresAt, this.options.clock.now()),
+              gt(paymentLinksTable.expiresAt, this.options.clockPort.now()),
             ),
           ),
       );

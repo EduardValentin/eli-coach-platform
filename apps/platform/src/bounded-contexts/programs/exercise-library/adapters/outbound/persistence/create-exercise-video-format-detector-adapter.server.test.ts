@@ -36,11 +36,12 @@ describe("createExerciseVideoFormatDetector", () => {
     },
   ])("reports the leading bytes of $file as $type", async ({ bytes, type }) => {
     // arrange
-    const detector = createExerciseVideoFormatDetectorAdapter();
+    const exerciseVideoFormatDetectorPort =
+      createExerciseVideoFormatDetectorAdapter();
     const leadingBytes = await bytes();
 
     // act
-    const detected = await detector.detect(leadingBytes);
+    const detected = await exerciseVideoFormatDetectorPort.detect(leadingBytes);
 
     // assert
     expect(detected).toBe(type);
@@ -52,10 +53,11 @@ describe("createExerciseVideoFormatDetector", () => {
     { file: "no bytes", bytes: () => new Uint8Array() },
   ])("reports $file as unidentified", async ({ bytes }) => {
     // arrange
-    const detector = createExerciseVideoFormatDetectorAdapter();
+    const exerciseVideoFormatDetectorPort =
+      createExerciseVideoFormatDetectorAdapter();
 
     // act
-    const detected = await detector.detect(bytes());
+    const detected = await exerciseVideoFormatDetectorPort.detect(bytes());
 
     // assert
     expect(detected).toBeNull();

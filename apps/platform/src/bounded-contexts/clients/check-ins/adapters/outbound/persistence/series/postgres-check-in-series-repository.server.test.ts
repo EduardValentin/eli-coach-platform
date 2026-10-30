@@ -47,10 +47,12 @@ const WEEK_ROW = {
 describe("PostgresCheckInSeries#find", () => {
   it("maps a stored row into the series the domain reads", async () => {
     // arrange
-    const records = seriesOver(createDatabaseReturning([SERIES_ROW]));
+    const postgresCheckInSeriesRepository = seriesOver(
+      createDatabaseReturning([SERIES_ROW]),
+    );
 
     // act
-    const series = await records.find(SERIES_ROW.id);
+    const series = await postgresCheckInSeriesRepository.find(SERIES_ROW.id);
 
     // assert
     expect(series?.toSnapshot()).toEqual(SERIES_ROW);
@@ -58,10 +60,12 @@ describe("PostgresCheckInSeries#find", () => {
 
   it("finds no series for an identifier that matches no row", async () => {
     // arrange
-    const records = seriesOver(createDatabaseReturning([]));
+    const postgresCheckInSeriesRepository = seriesOver(
+      createDatabaseReturning([]),
+    );
 
     // act
-    const series = await records.find(SERIES_ROW.id);
+    const series = await postgresCheckInSeriesRepository.find(SERIES_ROW.id);
 
     // assert
     expect(series).toBeNull();
@@ -71,10 +75,13 @@ describe("PostgresCheckInSeries#find", () => {
 describe("PostgresCheckInSeries#findActiveForClient", () => {
   it("maps the client's series that is not stopped", async () => {
     // arrange
-    const records = seriesOver(createDatabaseReturning([SERIES_ROW]));
+    const postgresCheckInSeriesRepository = seriesOver(
+      createDatabaseReturning([SERIES_ROW]),
+    );
 
     // act
-    const series = await records.findActiveForClient(CLIENT_ID);
+    const series =
+      await postgresCheckInSeriesRepository.findActiveForClient(CLIENT_ID);
 
     // assert
     expect(series?.id).toBe(SERIES_ROW.id);
@@ -85,10 +92,14 @@ describe("PostgresCheckInSeries#findActiveForClient", () => {
 describe("PostgresCheckInSeries#listOccurrences", () => {
   it("maps every week of the series into the check-ins the domain reads", async () => {
     // arrange
-    const records = seriesOver(createDatabaseReturning([WEEK_ROW]));
+    const postgresCheckInSeriesRepository = seriesOver(
+      createDatabaseReturning([WEEK_ROW]),
+    );
 
     // act
-    const weeks = await records.listOccurrences(SERIES_ROW.id);
+    const weeks = await postgresCheckInSeriesRepository.listOccurrences(
+      SERIES_ROW.id,
+    );
 
     // assert
     expect(weeks.map((week) => week.toSnapshot())).toEqual([
@@ -105,7 +116,7 @@ describe("PostgresCheckInSeries#listOccurrences", () => {
 describe("PostgresCheckInSeries#start", () => {
   it("answers that a series exists when the one-active-series index refuses the insert", async () => {
     // arrange
-    const records = seriesOver(
+    const postgresCheckInSeriesRepository = seriesOver(
       createDatabaseFailingTransactions(
         Object.assign(new Error("duplicate key value"), {
           cause: {
@@ -117,7 +128,9 @@ describe("PostgresCheckInSeries#start", () => {
     );
 
     // act
-    const result = await records.start(CheckInSeries.reconstitute(SERIES_ROW));
+    const result = await postgresCheckInSeriesRepository.start(
+      CheckInSeries.reconstitute(SERIES_ROW),
+    );
 
     // assert
     expect(result).toBe("series_exists");
@@ -126,10 +139,14 @@ describe("PostgresCheckInSeries#start", () => {
   it("rethrows any other failure of the set-up transaction", async () => {
     // arrange
     const failure = new Error("connection reset");
-    const records = seriesOver(createDatabaseFailingTransactions(failure));
+    const postgresCheckInSeriesRepository = seriesOver(
+      createDatabaseFailingTransactions(failure),
+    );
 
     // act
-    const start = records.start(CheckInSeries.reconstitute(SERIES_ROW));
+    const start = postgresCheckInSeriesRepository.start(
+      CheckInSeries.reconstitute(SERIES_ROW),
+    );
 
     // assert
     await expect(start).rejects.toBe(failure);

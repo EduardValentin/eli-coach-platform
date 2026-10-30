@@ -8,7 +8,7 @@ describe("ResendProductEmail", () => {
     const send = vi
       .fn()
       .mockResolvedValue({ data: { id: "email_123" }, error: null });
-    const productEmail = new ResendProductEmailAdapter({
+    const resendProductEmailAdapter = new ResendProductEmailAdapter({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -16,7 +16,7 @@ describe("ResendProductEmail", () => {
     });
 
     // act
-    const result = await productEmail.send({
+    const result = await resendProductEmailAdapter.send({
       html: "<p>You are on the waitlist.</p>",
       idempotencyKey: "waitlist-signup-31",
       subject: "You're on the Eli waitlist",
@@ -44,7 +44,7 @@ describe("ResendProductEmail", () => {
     const send = vi
       .fn()
       .mockResolvedValue({ data: { id: "email_123" }, error: null });
-    const productEmail = new ResendProductEmailAdapter({
+    const resendProductEmailAdapter = new ResendProductEmailAdapter({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -52,7 +52,7 @@ describe("ResendProductEmail", () => {
     });
 
     // act
-    await productEmail.send({
+    await resendProductEmailAdapter.send({
       html: "<p>New assessment call booked.</p>",
       replyTo: "sofia@example.com",
       subject: "New assessment call booked.",
@@ -71,7 +71,7 @@ describe("ResendProductEmail", () => {
     const send = vi
       .fn()
       .mockResolvedValue({ data: { id: "email_123" }, error: null });
-    const productEmail = new ResendProductEmailAdapter({
+    const resendProductEmailAdapter = new ResendProductEmailAdapter({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -80,7 +80,7 @@ describe("ResendProductEmail", () => {
     const calendarInvite = new Uint8Array([66, 69, 71, 73, 78]);
 
     // act
-    await productEmail.send({
+    await resendProductEmailAdapter.send({
       attachments: [
         {
           content: calendarInvite,
@@ -113,7 +113,7 @@ describe("ResendProductEmail", () => {
     const send = vi
       .fn()
       .mockResolvedValue({ data: { id: "email_123" }, error: null });
-    const productEmail = new ResendProductEmailAdapter({
+    const resendProductEmailAdapter = new ResendProductEmailAdapter({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -121,7 +121,7 @@ describe("ResendProductEmail", () => {
     });
 
     // act
-    await productEmail.send({
+    await resendProductEmailAdapter.send({
       html: "<p>You are on the waitlist.</p>",
       subject: "You're on the Eli waitlist",
       text: "You are on the waitlist.",
@@ -144,7 +144,7 @@ describe("ResendProductEmail", () => {
         statusCode: 400,
       },
     });
-    const productEmail = new ResendProductEmailAdapter({
+    const resendProductEmailAdapter = new ResendProductEmailAdapter({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -152,7 +152,7 @@ describe("ResendProductEmail", () => {
     });
 
     // act
-    const result = await productEmail.send({
+    const result = await resendProductEmailAdapter.send({
       html: "<p>You are on the waitlist.</p>",
       subject: "You're on the Eli waitlist",
       text: "You are on the waitlist.",
@@ -200,7 +200,7 @@ describe("ResendProductEmail", () => {
   ])("leaves a $scenario unconfirmed", async ({ error }) => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: null, error });
-    const productEmail = new ResendProductEmailAdapter({
+    const resendProductEmailAdapter = new ResendProductEmailAdapter({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -208,7 +208,7 @@ describe("ResendProductEmail", () => {
     });
 
     // act
-    const result = await productEmail.send({
+    const result = await resendProductEmailAdapter.send({
       html: "<p>You are on the waitlist.</p>",
       idempotencyKey: "waitlist-signup-31",
       subject: "You're on the Eli waitlist",
@@ -250,7 +250,7 @@ describe("ResendProductEmail", () => {
     async ({ error }) => {
       // arrange
       const send = vi.fn().mockResolvedValue({ data: null, error });
-      const productEmail = new ResendProductEmailAdapter({
+      const resendProductEmailAdapter = new ResendProductEmailAdapter({
         client: { emails: { send } },
         fromAddress: "hello@test.evoa.fit",
         fromName: "Evoa",
@@ -258,7 +258,7 @@ describe("ResendProductEmail", () => {
       });
 
       // act
-      const result = await productEmail.send({
+      const result = await resendProductEmailAdapter.send({
         html: "<p>You are on the waitlist.</p>",
         subject: "You're on the Eli waitlist",
         text: "You are on the waitlist.",

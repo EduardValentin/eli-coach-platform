@@ -59,141 +59,171 @@ import { CheckInsIncidentsAdapter } from "~/bounded-contexts/clients/check-ins/a
 
 type CheckInsFeatureHandles = {
   appBasePath: string;
-  clientIdentities: ClientIdentitiesPort;
-  clientReach: ClientReachPort;
-  clock: ClockPort;
+  clientIdentitiesPort: ClientIdentitiesPort;
+  clientReachPort: ClientReachPort;
+  clockPort: ClockPort;
   coachEmail: string;
-  coachTime: CoachTimeFacade;
+  coachTimeFacade: CoachTimeFacade;
   contactEmail: string;
   database: DatabaseClient;
-  inbox: NotificationInboxPort;
-  logger: LoggerPort;
-  meetingRoom: MeetingRoomFacade;
-  openSlots: OpenSlotsFacade;
-  productEmail: ProductEmailPort;
+  notificationInboxPort: NotificationInboxPort;
+  loggerPort: LoggerPort;
+  meetingRoomFacade: MeetingRoomFacade;
+  openSlotsFacade: OpenSlotsFacade;
+  productEmailPort: ProductEmailPort;
   publicAppUrl: string;
 };
 
 type CheckInsComposition = {
-  facades: { coachingPeriods: CoachingPeriodsFacade };
+  facades: { coachingPeriodsFacade: CoachingPeriodsFacade };
   feature: CheckInsFeature;
 };
 
 export function composeCheckInsFeature(
   handles: CheckInsFeatureHandles,
 ): CheckInsComposition {
-  const incidents = new CheckInsIncidentsAdapter(handles.logger);
-  const { clock } = handles;
+  const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+    handles.loggerPort,
+  );
+  const { clockPort } = handles;
   const unitOfWork = createUnitOfWork(handles.database);
-  const checkIns = new PostgresCheckInsRepository(handles.database);
-  const coachTime = new SchedulingCoachTimeAdapter(handles.coachTime);
-  const openSlots = new SchedulingOpenSlotsAdapter({
-    openSlots: handles.openSlots,
+  const postgresCheckInsRepository = new PostgresCheckInsRepository(
+    handles.database,
+  );
+  const schedulingCoachTimeAdapter = new SchedulingCoachTimeAdapter(
+    handles.coachTimeFacade,
+  );
+  const schedulingOpenSlotsAdapter = new SchedulingOpenSlotsAdapter({
+    openSlotsFacade: handles.openSlotsFacade,
     rules: CHECK_IN_RULES,
   });
-  const clients = new ClientsClientReachAdapter(handles.clientReach);
-  const inbox = new InboxCheckInNoticesAdapter({ clock, inbox: handles.inbox });
-  const cancelCheckInsAfterCoachingEnd =
+  const clientsClientReachAdapter = new ClientsClientReachAdapter(
+    handles.clientReachPort,
+  );
+  const inboxCheckInNoticesAdapter = new InboxCheckInNoticesAdapter({
+    clockPort,
+    notificationInboxPort: handles.notificationInboxPort,
+  });
+  const cancelCheckInsAfterCoachingEndUseCase =
     new CancelCheckInsAfterCoachingEndUseCase({
-      checkIns,
-      clock,
-      coachTime,
-      inbox,
-      incidents,
+      checkInsPort: postgresCheckInsRepository,
+      clockPort,
+      coachTimePort: schedulingCoachTimeAdapter,
+      checkInInboxPort: inboxCheckInNoticesAdapter,
+      checkInIncidentsPort: checkInsIncidentsAdapter,
     });
   const readPorts = {
-    checkIns,
-    clients,
-    clock,
-    identities: new ClientsClientIdentitiesAdapter(handles.clientIdentities),
+    checkInsPort: postgresCheckInsRepository,
+    clientReachPort: clientsClientReachAdapter,
+    clockPort,
+    clientIdentitiesPort: new ClientsClientIdentitiesAdapter(
+      handles.clientIdentitiesPort,
+    ),
   };
   const answerPorts = {
     ...readPorts,
-    coachTime,
-    inbox,
-    incidents,
-    notifications: new EmailCheckInNotificationsAdapter(handles.productEmail, {
-      appBasePath: handles.appBasePath,
-      clock,
-      coachEmail: handles.coachEmail,
-      contactEmail: handles.contactEmail,
-      publicAppUrl: handles.publicAppUrl,
-    }),
+    coachTimePort: schedulingCoachTimeAdapter,
+    checkInInboxPort: inboxCheckInNoticesAdapter,
+    checkInIncidentsPort: checkInsIncidentsAdapter,
+    checkInNotificationsPort: new EmailCheckInNotificationsAdapter(
+      handles.productEmailPort,
+      {
+        appBasePath: handles.appBasePath,
+        clockPort,
+        coachEmail: handles.coachEmail,
+        contactEmail: handles.contactEmail,
+        publicAppUrl: handles.publicAppUrl,
+      },
+    ),
   };
-  const observedReadPorts = { ...readPorts, incidents };
-  const countCheckInsAwaiting = new CountCheckInsAwaitingUseCase(
+  const observedReadPorts = {
+    ...readPorts,
+    checkInIncidentsPort: checkInsIncidentsAdapter,
+  };
+  const countCheckInsAwaitingUseCase = new CountCheckInsAwaitingUseCase(
     observedReadPorts,
   );
   const requestPorts = {
     ...answerPorts,
-    ids: new RandomCheckInIdsAdapter(),
-    openSlots,
+    checkInIdsPort: new RandomCheckInIdsAdapter(),
+    openSlotsPort: schedulingOpenSlotsAdapter,
   };
   const seriesPorts = {
     ...requestPorts,
-    series: new PostgresCheckInSeriesRepository(handles.database),
+    checkInSeriesRecordsPort: new PostgresCheckInSeriesRepository(
+      handles.database,
+    ),
   };
-  const extendCheckInSeries = new ExtendCheckInSeriesUseCase(seriesPorts);
+  const extendCheckInSeriesUseCase = new ExtendCheckInSeriesUseCase(
+    seriesPorts,
+  );
 
   return {
     facades: {
-      coachingPeriods: new CoachingPeriodsFacadeAdapter({
-        cancelCheckInsAfterCoachingEnd,
-        extendCheckInSeries,
-        incidents,
+      coachingPeriodsFacade: new CoachingPeriodsFacadeAdapter({
+        cancelCheckInsAfterCoachingEndUseCase,
+        extendCheckInSeriesUseCase,
+        checkInIncidentsPort: checkInsIncidentsAdapter,
         unitOfWork,
       }),
     },
     feature: {
-      checkInJoin: new CheckInJoinController({
-        resolveCheckInJoin: new ResolveCheckInJoinUseCase({
+      checkInJoinController: new CheckInJoinController({
+        resolveCheckInJoinUseCase: new ResolveCheckInJoinUseCase({
           ...readPorts,
-          meetingRoom: new SchedulingMeetingRoomAdapter(handles.meetingRoom),
+          meetingRoomPort: new SchedulingMeetingRoomAdapter(
+            handles.meetingRoomFacade,
+          ),
         }),
       }),
-      clientCheckIns: new ClientCheckInsController({
-        countCheckInsAwaiting,
-        findNextClientCheckIn: new FindNextClientCheckInUseCase(
+      clientCheckInsController: new ClientCheckInsController({
+        countCheckInsAwaitingUseCase,
+        findNextClientCheckInUseCase: new FindNextClientCheckInUseCase(
           observedReadPorts,
         ),
-        listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
-        requestCheckIn: new RequestCheckInUseCase(requestPorts),
+        listClientCheckInsUseCase: new ListClientCheckInsUseCase(readPorts),
+        requestCheckInUseCase: new RequestCheckInUseCase(requestPorts),
         unitOfWork,
       }),
-      coachCheckIns: new CoachCheckInsController({
-        countCheckInsAwaiting,
-        listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
-        listCoachCheckInsAwaiting: new ListCoachCheckInsAwaitingUseCase(
+      coachCheckInsController: new CoachCheckInsController({
+        countCheckInsAwaitingUseCase,
+        listCoachCheckInsUseCase: new ListCoachCheckInsUseCase(readPorts),
+        listCoachCheckInsAwaitingUseCase: new ListCoachCheckInsAwaitingUseCase(
           observedReadPorts,
         ),
-        readClientCheckInScheduling: new ReadClientCheckInSchedulingUseCase(
-          readPorts,
+        readClientCheckInSchedulingUseCase:
+          new ReadClientCheckInSchedulingUseCase(readPorts),
+        scheduleCheckInUseCase: new ScheduleCheckInUseCase(requestPorts),
+        unitOfWork,
+      }),
+      coachCheckInSeriesController: new CoachCheckInSeriesController({
+        changeCheckInSeriesUseCase: new ChangeCheckInSeriesUseCase(seriesPorts),
+        previewCheckInSeriesUseCase: new PreviewCheckInSeriesUseCase(
+          seriesPorts,
         ),
-        scheduleCheckIn: new ScheduleCheckInUseCase(requestPorts),
+        readCoachClientSeriesUseCase: new ReadCoachClientSeriesUseCase(
+          seriesPorts,
+        ),
+        setUpCheckInSeriesUseCase: new SetUpCheckInSeriesUseCase(seriesPorts),
+        stopCheckInSeriesUseCase: new StopCheckInSeriesUseCase(seriesPorts),
         unitOfWork,
       }),
-      coachCheckInSeries: new CoachCheckInSeriesController({
-        changeCheckInSeries: new ChangeCheckInSeriesUseCase(seriesPorts),
-        previewCheckInSeries: new PreviewCheckInSeriesUseCase(seriesPorts),
-        readCoachClientSeries: new ReadCoachClientSeriesUseCase(seriesPorts),
-        setUpCheckInSeries: new SetUpCheckInSeriesUseCase(seriesPorts),
-        stopCheckInSeries: new StopCheckInSeriesUseCase(seriesPorts),
-        unitOfWork,
-      }),
-      sharedCheckIns: new SharedCheckInsController({
-        approveCheckIn: new ApproveCheckInUseCase(answerPorts),
-        cancelCheckIn: new CancelCheckInUseCase(answerPorts),
-        declineCheckIn: new DeclineCheckInUseCase(answerPorts),
-        listOpenCheckInTimes: new ListOpenCheckInTimesUseCase({
-          clients,
-          clock,
-          openSlots,
+      sharedCheckInsController: new SharedCheckInsController({
+        approveCheckInUseCase: new ApproveCheckInUseCase(answerPorts),
+        cancelCheckInUseCase: new CancelCheckInUseCase(answerPorts),
+        declineCheckInUseCase: new DeclineCheckInUseCase(answerPorts),
+        listOpenCheckInTimesUseCase: new ListOpenCheckInTimesUseCase({
+          clientReachPort: clientsClientReachAdapter,
+          clockPort,
+          openSlotsPort: schedulingOpenSlotsAdapter,
         }),
-        proposeCheckInTime: new ProposeCheckInTimeUseCase({
+        proposeCheckInTimeUseCase: new ProposeCheckInTimeUseCase({
           ...answerPorts,
-          openSlots,
+          openSlotsPort: schedulingOpenSlotsAdapter,
         }),
-        withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(answerPorts),
+        withdrawCheckInRequestUseCase: new WithdrawCheckInRequestUseCase(
+          answerPorts,
+        ),
         unitOfWork,
       }),
     },

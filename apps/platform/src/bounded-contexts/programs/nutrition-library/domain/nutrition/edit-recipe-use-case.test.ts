@@ -157,30 +157,37 @@ function createUseCase(porridge: RecipeSnapshot = PORRIDGE) {
     store: vi.fn(async (_photoId: string, _bytes: Uint8Array) => undefined),
     remove: vi.fn(async (_photoId: string) => undefined),
   };
-  const useCase = new EditRecipeUseCase({
-    recipes,
-    foods,
-    tags,
-    clock: { now: () => NOW },
-    incidents,
+  const editRecipeUseCase = new EditRecipeUseCase({
+    recipeLibraryPort: recipes,
+    foodLibraryPort: foods,
+    nutritionTagsPort: tags,
+    clockPort: { now: () => NOW },
+    nutritionLibraryIncidentsPort: incidents,
     photos: new RecipePhotoSaving({
-      renditions,
-      ids: { generate: () => NEW_PHOTO_ID },
-      store: photoStore,
-      incidents,
+      recipePhotoRenditionsPort: renditions,
+      recipePhotoIdsPort: { generate: () => NEW_PHOTO_ID },
+      recipePhotoStorePort: photoStore,
+      nutritionLibraryIncidentsPort: incidents,
     }),
   });
 
-  return { useCase, recipes, foods, incidents, renditions, photoStore };
+  return {
+    editRecipeUseCase,
+    recipes,
+    foods,
+    incidents,
+    renditions,
+    photoStore,
+  };
 }
 
 describe("EditRecipeUseCase", () => {
   it("replaces her recipe as a whole, ingredients and tags included, keeping its id, owner and creation moment, updated now", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { editRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -210,10 +217,10 @@ describe("EditRecipeUseCase", () => {
 
   it("reads the referenced foods only for the foods the stored recipe uses", async () => {
     // arrange
-    const { useCase, foods } = createUseCase();
+    const { editRecipeUseCase, foods } = createUseCase();
 
     // act
-    await useCase.execute({
+    await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -229,10 +236,10 @@ describe("EditRecipeUseCase", () => {
 
   it("keeps its own name, recased and spaced", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { editRecipeUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -245,10 +252,10 @@ describe("EditRecipeUseCase", () => {
 
   it("refuses a rename onto another of her recipes, without replacing it", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { editRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -262,10 +269,10 @@ describe("EditRecipeUseCase", () => {
 
   it("renames onto a name only another coach's recipe has", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { editRecipeUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -284,10 +291,10 @@ describe("EditRecipeUseCase", () => {
     "refuses an ingredient naming %s at its position, without replacing the recipe",
     async (_case, foodId) => {
       // arrange
-      const { useCase, recipes } = createUseCase();
+      const { editRecipeUseCase, recipes } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         photo: KEEP,
@@ -311,10 +318,10 @@ describe("EditRecipeUseCase", () => {
 
   it("refuses a draft that breaks a rule, without replacing the recipe", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { editRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -331,11 +338,11 @@ describe("EditRecipeUseCase", () => {
 
   it("refuses the name when the library finds it taken by a recipe renamed meanwhile", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { editRecipeUseCase, recipes } = createUseCase();
     recipes.replace.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -351,10 +358,10 @@ describe("EditRecipeUseCase", () => {
     ["another coach's recipe", "recipe-3"],
   ])("finds nothing to edit for %s", async (_case, recipeId) => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { editRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId,
       photo: KEEP,
@@ -369,11 +376,11 @@ describe("EditRecipeUseCase", () => {
   it("reports a failed write with the recipe's id and answers that the edit failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, recipes, incidents } = createUseCase();
+    const { editRecipeUseCase, recipes, incidents } = createUseCase();
     recipes.replace.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
       photo: KEEP,
@@ -402,11 +409,11 @@ describe("EditRecipeUseCase", () => {
 
     it("keeps the stored photo, rendering, storing and removing nothing", async () => {
       // arrange
-      const { useCase, recipes, renditions, photoStore } =
+      const { editRecipeUseCase, recipes, renditions, photoStore } =
         createUseCase(PHOTOGRAPHED);
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -423,10 +430,11 @@ describe("EditRecipeUseCase", () => {
 
     it("removes the stored photo's file once the recipe without it is written", async () => {
       // arrange
-      const { useCase, recipes, photoStore } = createUseCase(PHOTOGRAPHED);
+      const { editRecipeUseCase, recipes, photoStore } =
+        createUseCase(PHOTOGRAPHED);
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -446,10 +454,11 @@ describe("EditRecipeUseCase", () => {
 
     it("replaces the stored photo with the new rendition and removes the old file after the write", async () => {
       // arrange
-      const { useCase, recipes, photoStore } = createUseCase(PHOTOGRAPHED);
+      const { editRecipeUseCase, recipes, photoStore } =
+        createUseCase(PHOTOGRAPHED);
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -470,12 +479,12 @@ describe("EditRecipeUseCase", () => {
 
     it("refuses a photo the renderer cannot read, leaving the recipe and its photo as they were", async () => {
       // arrange
-      const { useCase, recipes, renditions, photoStore } =
+      const { editRecipeUseCase, recipes, renditions, photoStore } =
         createUseCase(PHOTOGRAPHED);
       renditions.render.mockResolvedValueOnce({ status: "refused" });
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -494,11 +503,12 @@ describe("EditRecipeUseCase", () => {
 
     it("removes the new photo but keeps the stored one when the library finds the name taken meanwhile", async () => {
       // arrange
-      const { useCase, recipes, photoStore } = createUseCase(PHOTOGRAPHED);
+      const { editRecipeUseCase, recipes, photoStore } =
+        createUseCase(PHOTOGRAPHED);
       recipes.replace.mockResolvedValueOnce("name-taken");
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -516,12 +526,12 @@ describe("EditRecipeUseCase", () => {
     it("removes the new photo but keeps the stored one when the write fails, answering that the edit failed", async () => {
       // arrange
       const failure = new Error("connection terminated");
-      const { useCase, recipes, photoStore, incidents } =
+      const { editRecipeUseCase, recipes, photoStore, incidents } =
         createUseCase(PHOTOGRAPHED);
       recipes.replace.mockRejectedValueOnce(failure);
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -540,11 +550,12 @@ describe("EditRecipeUseCase", () => {
     it("answers that a stored photo it could not remove is an incident, never a refusal", async () => {
       // arrange
       const failure = new Error("disk unavailable");
-      const { useCase, photoStore, incidents } = createUseCase(PHOTOGRAPHED);
+      const { editRecipeUseCase, photoStore, incidents } =
+        createUseCase(PHOTOGRAPHED);
       photoStore.remove.mockRejectedValueOnce(failure);
 
       // act
-      const result = await useCase.execute({
+      const result = await editRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
         draft: MILKY_OATS,
@@ -562,10 +573,10 @@ describe("EditRecipeUseCase", () => {
 
   it("renders nothing for a recipe it cannot find", async () => {
     // arrange
-    const { useCase, renditions, photoStore } = createUseCase();
+    const { editRecipeUseCase, renditions, photoStore } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-9",
       draft: MILKY_OATS,

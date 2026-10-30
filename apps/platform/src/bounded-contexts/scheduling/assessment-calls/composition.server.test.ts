@@ -37,7 +37,7 @@ describe("composeAssessmentCallsFeature", () => {
     );
 
     // act
-    const loading = feature.assessmentCalls.loadBookingPage();
+    const loading = feature.assessmentCallsController.loadBookingPage();
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
@@ -51,7 +51,7 @@ describe("composeAssessmentCallsFeature", () => {
     });
 
     // act
-    const page = await feature.assessmentCalls.loadBookingPage();
+    const page = await feature.assessmentCallsController.loadBookingPage();
 
     // assert
     expect(page).toEqual({
@@ -68,7 +68,7 @@ describe("composeAssessmentCallsFeature", () => {
     });
 
     // act
-    const listing = await feature.coachAssessmentCalls.loadCalls();
+    const listing = await feature.coachAssessmentCallsController.loadCalls();
 
     // assert
     expect(listing.calls.map((call) => call.id)).toEqual([
@@ -84,7 +84,7 @@ describe("composeAssessmentCallsFeature subaddress policy", () => {
     // arrange
     const { feature } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      emailAcceptance: createEmailAcceptance("refused"),
+      emailAcceptancePort: createEmailAcceptance("refused"),
     });
     const formData = new FormData();
     formData.set("country", "RO");
@@ -98,7 +98,7 @@ describe("composeAssessmentCallsFeature subaddress policy", () => {
     formData.set("visitorTimeZone", "Europe/Bucharest");
 
     // act
-    const response = await feature.assessmentCalls.book(
+    const response = await feature.assessmentCallsController.book(
       new Request("http://localhost/api/bookings", {
         method: "POST",
         body: formData,
@@ -124,7 +124,7 @@ describe("composeAssessmentCallsFeature ended calls facade", () => {
     });
 
     // act
-    const call = await facades.endedCalls.callOf(BOOKED_ROW.id);
+    const call = await facades.endedCallsFacade.callOf(BOOKED_ROW.id);
 
     // assert
     expect(call).toMatchObject({
@@ -142,7 +142,7 @@ describe("composeAssessmentCallsFeature ended calls facade", () => {
     });
 
     // act
-    const call = await facades.endedCalls.callOf(BOOKED_ROW.id);
+    const call = await facades.endedCallsFacade.callOf(BOOKED_ROW.id);
 
     // assert
     expect(call).toBeNull();
@@ -153,25 +153,25 @@ function createHandles(
   featureFlags: Record<string, boolean>,
 ): AssessmentCallsFeatureHandles {
   return {
-    emailAcceptance: createEmailAcceptance("allowed"),
+    emailAcceptancePort: createEmailAcceptance("allowed"),
     appBasePath: "/eli-coach-platform",
     assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
     },
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
-    botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-    clock: { now: () => new Date("2026-10-19T08:00:00.000Z") },
-    coachTime: {
+    botVerifierPort: { verifySubmission: async () => ({ status: "verified" }) },
+    clockPort: { now: () => new Date("2026-10-19T08:00:00.000Z") },
+    coachTimeReservationsPort: {
       reserve: async () => ({ status: "reserved", reservationId: "held" }),
       release: async () => {},
     },
     contactEmail: "contact@evoa.fit",
     database: createDatabaseStub(),
-    featureFlags: { isOn: async (flag) => featureFlags[flag] === true },
-    logger: { error: () => {}, warn: () => {}, info: () => {} },
-    meetingRoom: { current: async () => null },
+    featureFlagsFacade: { isOn: async (flag) => featureFlags[flag] === true },
+    loggerPort: { error: () => {}, warn: () => {}, info: () => {} },
+    coachMeetingRoomSourcePort: { current: async () => null },
     openings: openingsOver(createBucharestEveningAvailability()),
-    productEmail: new InMemoryProductEmailAdapter(),
+    productEmailPort: new InMemoryProductEmailAdapter(),
     publicAppUrl: "https://evoa.fit",
   };
 }
@@ -198,12 +198,12 @@ function createDatabaseWithBookedCalls(
 
 type CoachAvailabilitySource = ConstructorParameters<
   typeof CoachOpenings
->[0]["availability"];
+>[0]["coachAvailabilitySourcePort"];
 
 function openingsOver(availability: CoachAvailabilitySource): CoachOpenings {
   return new CoachOpenings({
-    availability,
-    calendar: { busyFrom: async () => [] },
+    coachAvailabilitySourcePort: availability,
+    coachCalendarPort: { busyFrom: async () => [] },
   });
 }
 

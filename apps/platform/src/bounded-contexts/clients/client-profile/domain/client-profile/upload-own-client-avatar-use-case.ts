@@ -16,7 +16,7 @@ type UploadOwnClientAvatarResult =
   ClientAvatarUpload | { status: "not-on-journey" } | { status: "ended" };
 
 type UploadOwnClientAvatarUseCaseOptions = ClientAvatarIntakeOptions & {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class UploadOwnClientAvatarUseCase {
@@ -25,7 +25,7 @@ export class UploadOwnClientAvatarUseCase {
   async execute(
     command: UploadOwnClientAvatarCommand,
   ): Promise<UploadOwnClientAvatarResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       command.authSubjectId,
     );
 

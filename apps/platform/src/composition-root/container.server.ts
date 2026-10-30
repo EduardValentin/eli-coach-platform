@@ -72,10 +72,10 @@ export function createPlatformContainer(options: {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock = systemClock();
-  const logger = new ConsoleLoggerAdapter();
+  const consoleLoggerAdapter = new ConsoleLoggerAdapter();
   const botDetection = createBotDetectionConfig(environment);
-  const botVerifier = createBotVerifier(environment);
-  const productEmail = createProductEmail(environment);
+  const botVerifierPort = createBotVerifier(environment);
+  const productEmailPort = createProductEmail(environment);
   const emailAcceptance = createEmailAcceptance(
     resolveEmailSubaddressPolicy(environment),
   );
@@ -88,84 +88,84 @@ export function createPlatformContainer(options: {
     database: database.client,
     featureFlagsConfig: environment,
   });
-  const legal = composeLegal({ documentHasher: createSha256Hasher() });
+  const legal = composeLegal({ documentHasherPort: createSha256Hasher() });
   const access = composeAccess({
     bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
     clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
-    clock,
+    clockPort: clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     identityConfig: environment,
     linkTokens,
-    logger,
+    loggerPort: consoleLoggerAdapter,
     portal: {
       appBasePath: environment.APP_BASE_PATH,
       publicAppUrl: environment.PUBLIC_APP_URL,
       signInUrl: environment.CLERK_SIGN_IN_URL,
     },
-    productEmail,
+    productEmailPort,
   });
   const scheduling = composeScheduling({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallsConfig: environment,
     botDetection,
-    botVerifier,
-    clock,
+    botVerifierPort,
+    clockPort: clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
-    emailAcceptance,
-    featureFlags: operations.facades.featureFlags,
-    logger,
-    productEmail,
+    emailAcceptancePort: emailAcceptance,
+    featureFlagsFacade: operations.facades.featureFlagsFacade,
+    loggerPort: consoleLoggerAdapter,
+    productEmailPort,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const clients = composeClients({
-    accountInvitations: access.facades.accountInvitations,
+    accountInvitationsFacade: access.facades.accountInvitationsFacade,
     appBasePath: environment.APP_BASE_PATH,
-    clientCalls: scheduling.facades.clientCalls,
+    clientCallsFacade: scheduling.facades.clientCallsFacade,
     clientFilesConfig: environment,
-    clock,
+    clockPort: clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    coachTime: scheduling.facades.coachTime,
+    coachTimeFacade: scheduling.facades.coachTimeFacade,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     documentPagesWorkerUrl: pdfPagesWorkerUrl(),
-    logger,
-    meetingRoom: scheduling.facades.meetingRoom,
-    openSlots: scheduling.facades.openSlots,
-    productEmail,
+    loggerPort: consoleLoggerAdapter,
+    meetingRoomFacade: scheduling.facades.meetingRoomFacade,
+    openSlotsFacade: scheduling.facades.openSlotsFacade,
+    productEmailPort,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const programs = composePrograms({
-    clock,
+    clockPort: clock,
     database: database.client,
     exerciseVideosConfig: environment,
-    logger,
+    loggerPort: consoleLoggerAdapter,
     recipePhotosConfig: environment,
   });
   const sales = composeSales({
-    admissions: clients.facades.admissions,
+    admissionsFacade: clients.facades.admissionsFacade,
     appBasePath: environment.APP_BASE_PATH,
-    botVerifier,
-    clientLookup: clients.facades.clientLookup,
-    clientProfile: clients.facades.clientProfile,
-    clock,
+    botVerifierPort,
+    clientLookupFacade: clients.facades.clientLookupFacade,
+    clientProfileFacade: clients.facades.clientProfileFacade,
+    clockPort: clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    coachingPeriods: clients.facades.coachingPeriods,
+    coachingPeriodsFacade: clients.facades.coachingPeriodsFacade,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
-    emailAcceptance,
-    endedCalls: scheduling.facades.endedCalls,
-    featureFlags: operations.facades.featureFlags,
+    emailAcceptancePort: emailAcceptance,
+    endedCallsFacade: scheduling.facades.endedCallsFacade,
+    featureFlagsFacade: operations.facades.featureFlagsFacade,
     linkTokens,
-    logger,
+    loggerPort: consoleLoggerAdapter,
     managementApiConfig: environment,
     paymentsConfig: environment,
     privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
-    productEmail,
+    productEmailPort,
     publicAppUrl: environment.PUBLIC_APP_URL,
     storeAssetRoot: environment.STORE_ASSET_ROOT,
-    terms: legal.facades.terms,
+    termsFacade: legal.facades.terms,
     waitlist: environment,
   });
   const platform = composePlatformFeature({

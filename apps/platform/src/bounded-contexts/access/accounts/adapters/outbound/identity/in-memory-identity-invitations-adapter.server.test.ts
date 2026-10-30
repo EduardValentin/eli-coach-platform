@@ -6,17 +6,17 @@ import { InMemoryIdentityInvitationsAdapter } from "./in-memory-identity-invitat
 describe("InMemoryIdentityInvitations", () => {
   it("hands out a numbered invitation whose URL is the sign-up page with a stand-in ticket", async () => {
     // arrange
-    const identity: IdentityInvitationsPort =
+    const identityInvitationsPort: IdentityInvitationsPort =
       new InMemoryIdentityInvitationsAdapter({
         signUpUrl: "https://accounts.evoa.example/sign-up",
       });
 
     // act
-    const first = await identity.create({
+    const first = await identityInvitationsPort.create({
       email: "ana@example.com",
       invitationId: "invitation-1",
     });
-    const second = await identity.create({
+    const second = await identityInvitationsPort.create({
       email: "maria@example.com",
       invitationId: "invitation-2",
     });
@@ -31,17 +31,17 @@ describe("InMemoryIdentityInvitations", () => {
 
   it("replaces an invitation with the next numbered one", async () => {
     // arrange
-    const identity: IdentityInvitationsPort =
+    const identityInvitationsPort: IdentityInvitationsPort =
       new InMemoryIdentityInvitationsAdapter({
         signUpUrl: "https://accounts.evoa.example/sign-up",
       });
-    const previous = await identity.create({
+    const previous = await identityInvitationsPort.create({
       email: "ana@example.com",
       invitationId: "invitation-1",
     });
 
     // act
-    const replacement = await identity.replace({
+    const replacement = await identityInvitationsPort.replace({
       email: "ana@example.com",
       invitationId: "invitation-1",
       previous,

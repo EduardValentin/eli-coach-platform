@@ -22,6 +22,8 @@ export async function loader({ context, params, request }: LoaderFunctionArgs) {
       return new Response("Not Found", { status: 404 });
     }
 
-    return context.get(storeContext).covers.getCover(params.assetKey);
+    return context
+      .get(storeContext)
+      .storeCoverAssetController.getCover(params.assetKey);
   });
 }

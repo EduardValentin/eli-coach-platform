@@ -39,43 +39,48 @@ function createUseCase(input: {
   stored: ClientSettings | null;
 }) {
   const ports = {
-    clients: {
+    clientReachPort: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(input.reach),
     } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
-    settings: {
+    clientSettingsSourcePort: {
       findByClientId: vi.fn().mockResolvedValue(input.stored),
     } satisfies ClientSettingsSourcePort,
-    changes: {
+    clientSettingsChangesPort: {
       saveUnits: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientSettingsChangesPort,
   };
-  const useCase = new SaveUnitPreferenceUseCase({
+  const saveUnitPreferenceUseCase = new SaveUnitPreferenceUseCase({
     ...ports,
-    clock: { now: () => NOW },
+    clockPort: { now: () => NOW },
   });
 
-  return { ports, useCase };
+  return { ports, saveUnitPreferenceUseCase };
 }
 
 describe("SaveUnitPreferenceUseCase", () => {
   it("saves her units now on her settings, keeping her preferences", async () => {
     // arrange
-    const { ports, useCase } = createUseCase({
+    const { ports, saveUnitPreferenceUseCase } = createUseCase({
       reach: reachOf("reachable"),
       stored: SEEDED_SETTINGS,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await saveUnitPreferenceUseCase.execute({
       authSubjectId: "user_ana",
       preference: IMPERIAL,
     });
 
     // assert
     expect(result).toEqual({ status: "saved" });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.settings.findByClientId).toHaveBeenCalledWith("client-1");
-    const [saved] = ports.changes.saveUnits.mock.calls[0] ?? [];
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.clientSettingsSourcePort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
+    const [saved] =
+      ports.clientSettingsChangesPort.saveUnits.mock.calls[0] ?? [];
     expect(saved?.toSnapshot()).toEqual({
       ...SEEDED_SETTINGS.toSnapshot(),
       unitPreference: IMPERIAL,
@@ -85,64 +90,67 @@ describe("SaveUnitPreferenceUseCase", () => {
 
   it("saves nothing for a client with no stored settings", async () => {
     // arrange
-    const { ports, useCase } = createUseCase({
+    const { ports, saveUnitPreferenceUseCase } = createUseCase({
       reach: reachOf("reachable"),
       stored: null,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await saveUnitPreferenceUseCase.execute({
       authSubjectId: "user_ana",
       preference: IMPERIAL,
     });
 
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
-    expect(ports.changes.saveUnits).not.toHaveBeenCalled();
+    expect(ports.clientSettingsChangesPort.saveUnits).not.toHaveBeenCalled();
   });
 
   it("saves nothing for a subject bound to no client", async () => {
     // arrange
-    const { ports, useCase } = createUseCase({ reach: null, stored: null });
+    const { ports, saveUnitPreferenceUseCase } = createUseCase({
+      reach: null,
+      stored: null,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await saveUnitPreferenceUseCase.execute({
       authSubjectId: "user_stranger",
       preference: IMPERIAL,
     });
 
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
-    expect(ports.changes.saveUnits).not.toHaveBeenCalled();
+    expect(ports.clientSettingsChangesPort.saveUnits).not.toHaveBeenCalled();
   });
 
   it("saves nothing for a client whose portal access has ended", async () => {
     // arrange
-    const { ports, useCase } = createUseCase({
+    const { ports, saveUnitPreferenceUseCase } = createUseCase({
       reach: reachOf("ended"),
       stored: SEEDED_SETTINGS,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await saveUnitPreferenceUseCase.execute({
       authSubjectId: "user_ana",
       preference: IMPERIAL,
     });
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.changes.saveUnits).not.toHaveBeenCalled();
+    expect(ports.clientSettingsChangesPort.saveUnits).not.toHaveBeenCalled();
   });
 
   it("saves the units of a client still awaiting her onboarding", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { saveUnitPreferenceUseCase } = createUseCase({
       reach: reachOf("awaiting_onboarding"),
       stored: SEEDED_SETTINGS,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await saveUnitPreferenceUseCase.execute({
       authSubjectId: "user_ana",
       preference: IMPERIAL,
     });

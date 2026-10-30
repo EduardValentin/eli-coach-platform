@@ -4,8 +4,8 @@ import type { InvitedClient, InvitedClientsPort } from "./invited-clients-port";
 type InvitationAcceptanceOutcome = "accepted" | "refused";
 
 type AcceptInvitationUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitationsPort, "acceptedInvitationOf">;
-  clients: Pick<
+  accountInvitationsPort: Pick<AccountInvitationsPort, "acceptedInvitationOf">;
+  invitedClientsPort: Pick<
     InvitedClientsPort,
     "findById" | "findByAccountInvitationId" | "bindAuthSubject"
   >;
@@ -18,7 +18,7 @@ export class AcceptInvitationUseCase {
     authSubjectId: string;
   }): Promise<InvitationAcceptanceOutcome> {
     const invitationId =
-      await this.options.accountInvitations.acceptedInvitationOf(
+      await this.options.accountInvitationsPort.acceptedInvitationOf(
         command.authSubjectId,
       );
 
@@ -27,7 +27,9 @@ export class AcceptInvitationUseCase {
     }
 
     const client =
-      await this.options.clients.findByAccountInvitationId(invitationId);
+      await this.options.invitedClientsPort.findByAccountInvitationId(
+        invitationId,
+      );
 
     if (!client) {
       return "refused";
@@ -44,7 +46,7 @@ export class AcceptInvitationUseCase {
       return "accepted";
     }
 
-    const write = await this.options.clients.bindAuthSubject({
+    const write = await this.options.invitedClientsPort.bindAuthSubject({
       clientId: client.id,
       authSubjectId,
     });
@@ -53,7 +55,7 @@ export class AcceptInvitationUseCase {
       return "accepted";
     }
 
-    const winner = await this.options.clients.findById(client.id);
+    const winner = await this.options.invitedClientsPort.findById(client.id);
 
     return winner?.authSubjectId === authSubjectId ? "accepted" : "refused";
   }

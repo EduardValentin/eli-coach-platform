@@ -19,8 +19,8 @@ import { clientJourneyContext } from "~/bounded-contexts/clients/clients/adapter
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientJourneyControllerOptions = {
-  markWelcomeSeen: MarkWelcomeSeenUseCase;
-  readClientJourney: ReadClientJourneyUseCase;
+  markWelcomeSeenUseCase: MarkWelcomeSeenUseCase;
+  readClientJourneyUseCase: ReadClientJourneyUseCase;
 };
 
 export class ClientJourneyController {
@@ -30,7 +30,7 @@ export class ClientJourneyController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const journey = await this.options.readClientJourney.execute(
+    const journey = await this.options.readClientJourneyUseCase.execute(
       client.authSubjectId,
     );
 
@@ -61,7 +61,7 @@ export class ClientJourneyController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const result = await this.options.markWelcomeSeen.execute(
+    const result = await this.options.markWelcomeSeenUseCase.execute(
       client.authSubjectId,
     );
 

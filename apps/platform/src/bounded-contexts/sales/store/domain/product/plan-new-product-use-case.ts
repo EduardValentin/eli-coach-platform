@@ -19,8 +19,8 @@ export type PlanNewProductCommand = {
 export class PlanNewProductUseCase {
   constructor(
     private readonly options: {
-      digest: ProductAssetDigestPort;
-      publications: StoreProductPublicationsPort;
+      productAssetDigestPort: ProductAssetDigestPort;
+      storeProductPublicationsPort: StoreProductPublicationsPort;
     },
   ) {}
 
@@ -34,17 +34,19 @@ export class PlanNewProductUseCase {
     }
 
     try {
-      const existingProduct = await this.options.publications.findProductBySlug(
-        command.slug,
-      );
+      const existingProduct =
+        await this.options.storeProductPublicationsPort.findProductBySlug(
+          command.slug,
+        );
       const displayOrder =
-        await this.options.publications.getNextDisplayOrder();
-      const taxonomy = await this.options.publications.getTaxonomy();
+        await this.options.storeProductPublicationsPort.getNextDisplayOrder();
+      const taxonomy =
+        await this.options.storeProductPublicationsPort.getTaxonomy();
 
       return ProductPublicationDraft.from(command).planCreation(
         { displayOrder, existingProduct, slug: command.slug },
         taxonomy,
-        this.options.digest,
+        this.options.productAssetDigestPort,
       );
     } catch {
       return { status: "unavailable" };

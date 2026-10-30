@@ -178,10 +178,10 @@ function routeArguments(
   const args = createRequestArgs({
     contexts: [
       contextEntry(clientsContext, {
-        coachClients: { loadClient },
+        coachClientsController: { loadClient },
       } as unknown as ClientsFeature),
       contextEntry(clientResourcesContext, {
-        coachResources: { load: loadResources },
+        coachResourcesController: { load: loadResources },
       } as unknown as ClientResourcesFeature),
     ],
     params: options.params ?? { clientId: CLIENT_ID },

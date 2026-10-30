@@ -2,8 +2,8 @@ import type { AssessmentCallIncidentsPort } from "./assessment-call-incidents-po
 import type { WaitlistModePort } from "./waitlist-mode-port";
 
 type AssessmentCallBookingWindowOptions = {
-  incidents: AssessmentCallIncidentsPort;
-  waitlistMode: WaitlistModePort;
+  assessmentCallIncidentsPort: AssessmentCallIncidentsPort;
+  waitlistModePort: WaitlistModePort;
 };
 
 export class AssessmentCallBookingWindow {
@@ -11,9 +11,9 @@ export class AssessmentCallBookingWindow {
 
   async isOpen(): Promise<boolean> {
     try {
-      return !(await this.options.waitlistMode.isEnabled());
+      return !(await this.options.waitlistModePort.isEnabled());
     } catch {
-      this.options.incidents.bookingModeReadFailed();
+      this.options.assessmentCallIncidentsPort.bookingModeReadFailed();
 
       return false;
     }

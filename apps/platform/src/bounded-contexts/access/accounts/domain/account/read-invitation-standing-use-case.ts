@@ -10,8 +10,8 @@ type InvitationStandingReading = {
 };
 
 type ReadInvitationStandingUseCaseOptions = {
-  invitations: Pick<AccountInvitationsPort, "findById">;
-  clock: ClockPort;
+  accountInvitationsPort: Pick<AccountInvitationsPort, "findById">;
+  clockPort: ClockPort;
 };
 
 export class ReadInvitationStandingUseCase {
@@ -20,14 +20,15 @@ export class ReadInvitationStandingUseCase {
   async execute(
     invitationId: string,
   ): Promise<InvitationStandingReading | null> {
-    const invitation = await this.options.invitations.findById(invitationId);
+    const invitation =
+      await this.options.accountInvitationsPort.findById(invitationId);
 
     if (!invitation || invitation.isAccepted()) {
       return null;
     }
 
     return {
-      state: invitation.standing(this.options.clock.now()),
+      state: invitation.standing(this.options.clockPort.now()),
       sentAt: invitation.sentAt,
       expiresAt: invitation.expiresAt,
     };

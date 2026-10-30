@@ -85,7 +85,7 @@ const NARROWED_BROWSE: ResourceBrowseSnapshot = {
 describe("OwnResourcesController load", () => {
   it("hands the client her own resources narrowed as listed, with her tag options, the browse it applied and the counts", async () => {
     // arrange
-    const { controller } = createController({
+    const { ownResourcesController } = createController({
       listed: {
         status: "listed",
         browsing: {
@@ -102,7 +102,7 @@ describe("OwnResourcesController load", () => {
     });
 
     // act
-    const listing = await controller.load(clientArgs());
+    const listing = await ownResourcesController.load(clientArgs());
 
     // assert
     expect(listing).toEqual({
@@ -156,10 +156,10 @@ describe("OwnResourcesController load", () => {
 
   it("lists her resources as the address narrows them, read raw", async () => {
     // arrange
-    const { controller, listOwnResources } = createController();
+    const { ownResourcesController, listOwnResources } = createController();
 
     // act
-    await controller.load(
+    await ownResourcesController.load(
       clientArgs({
         url: "https://evoa.fit/client/resources?tag=MEALS&q=50%25&sort=title&dir=up",
       }),
@@ -174,10 +174,10 @@ describe("OwnResourcesController load", () => {
 
   it("lists every resource of hers when the address narrows nothing", async () => {
     // arrange
-    const { controller, listOwnResources } = createController();
+    const { ownResourcesController, listOwnResources } = createController();
 
     // act
-    const listing = await controller.load(clientArgs());
+    const listing = await ownResourcesController.load(clientArgs());
 
     // assert
     expect(listOwnResources).toHaveBeenCalledWith({
@@ -196,12 +196,12 @@ describe("OwnResourcesController load", () => {
 
   it("answers an unavailable listing when her resources are unavailable", async () => {
     // arrange
-    const { controller } = createController({
+    const { ownResourcesController } = createController({
       listed: { status: "unavailable" },
     });
 
     // act
-    const listing = await controller.load(clientArgs());
+    const listing = await ownResourcesController.load(clientArgs());
 
     // assert
     expect(listing).toEqual({ status: "unavailable" });
@@ -209,12 +209,14 @@ describe("OwnResourcesController load", () => {
 
   it("answers not found when she reaches no resources", async () => {
     // arrange
-    const { controller } = createController({
+    const { ownResourcesController } = createController({
       listed: { status: "not-found" },
     });
 
     // act
-    const thrown = await captureThrown(() => controller.load(clientArgs()));
+    const thrown = await captureThrown(() =>
+      ownResourcesController.load(clientArgs()),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(404);
@@ -222,11 +224,11 @@ describe("OwnResourcesController load", () => {
 
   it("refuses the coach without listing anything", async () => {
     // arrange
-    const { controller, listOwnResources } = createController();
+    const { ownResourcesController, listOwnResources } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(clientArgs({ session: COACH_SESSION })),
+      ownResourcesController.load(clientArgs({ session: COACH_SESSION })),
     );
 
     // assert
@@ -236,11 +238,11 @@ describe("OwnResourcesController load", () => {
 
   it("sends an anonymous visitor to sign in without listing anything", async () => {
     // arrange
-    const { controller, listOwnResources } = createController();
+    const { ownResourcesController, listOwnResources } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(clientArgs({ session: ANONYMOUS_SESSION })),
+      ownResourcesController.load(clientArgs({ session: ANONYMOUS_SESSION })),
     );
 
     // assert
@@ -252,12 +254,14 @@ describe("OwnResourcesController load", () => {
 describe("OwnResourcesController countUnopened", () => {
   it("answers how many of her resources she has not opened", async () => {
     // arrange
-    const { controller, countUnopenedResources } = createController({
-      unopened: 2,
-    });
+    const { ownResourcesController, countUnopenedResources } = createController(
+      {
+        unopened: 2,
+      },
+    );
 
     // act
-    const count = await controller.countUnopened(clientArgs());
+    const count = await ownResourcesController.countUnopened(clientArgs());
 
     // assert
     expect(count).toBe(2);
@@ -269,12 +273,14 @@ describe("OwnResourcesController countUnopened", () => {
 
   it("counts nothing for a visitor who is not signed in, without asking", async () => {
     // arrange
-    const { controller, countUnopenedResources } = createController({
-      unopened: 2,
-    });
+    const { ownResourcesController, countUnopenedResources } = createController(
+      {
+        unopened: 2,
+      },
+    );
 
     // act
-    const count = await controller.countUnopened(
+    const count = await ownResourcesController.countUnopened(
       clientArgs({ session: ANONYMOUS_SESSION }),
     );
 
@@ -287,12 +293,15 @@ describe("OwnResourcesController countUnopened", () => {
 describe("OwnResourcesController markOpened", () => {
   it("answers that her resource is opened once it is marked", async () => {
     // arrange
-    const { controller, markResourceOpened } = createController({
+    const { ownResourcesController, markResourceOpened } = createController({
       marked: { status: "opened" },
     });
 
     // act
-    const response = await controller.markOpened(markArgs(), NEW_ID);
+    const response = await ownResourcesController.markOpened(
+      markArgs(),
+      NEW_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -305,12 +314,15 @@ describe("OwnResourcesController markOpened", () => {
 
   it("answers not found to a resource she does not reach", async () => {
     // arrange
-    const { controller } = createController({
+    const { ownResourcesController } = createController({
       marked: { status: "not-found" },
     });
 
     // act
-    const response = await controller.markOpened(markArgs(), NEW_ID);
+    const response = await ownResourcesController.markOpened(
+      markArgs(),
+      NEW_ID,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -318,10 +330,15 @@ describe("OwnResourcesController markOpened", () => {
 
   it("answers a server error when the mark could not be kept", async () => {
     // arrange
-    const { controller } = createController({ marked: { status: "failed" } });
+    const { ownResourcesController } = createController({
+      marked: { status: "failed" },
+    });
 
     // act
-    const response = await controller.markOpened(markArgs(), NEW_ID);
+    const response = await ownResourcesController.markOpened(
+      markArgs(),
+      NEW_ID,
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -329,10 +346,13 @@ describe("OwnResourcesController markOpened", () => {
 
   it("answers not found to a resource id that is not a uuid without marking anything", async () => {
     // arrange
-    const { controller, markResourceOpened } = createController();
+    const { ownResourcesController, markResourceOpened } = createController();
 
     // act
-    const response = await controller.markOpened(markArgs(), "../etc/passwd");
+    const response = await ownResourcesController.markOpened(
+      markArgs(),
+      "../etc/passwd",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -348,11 +368,11 @@ describe("OwnResourcesController markOpened", () => {
     },
   ])("refuses $who without marking anything", async ({ session, status }) => {
     // arrange
-    const { controller, markResourceOpened } = createController();
+    const { ownResourcesController, markResourceOpened } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.markOpened(markArgs({ session }), NEW_ID),
+      ownResourcesController.markOpened(markArgs({ session }), NEW_ID),
     );
 
     // assert
@@ -377,20 +397,20 @@ function createController(
   const markResourceOpened = vi
     .fn()
     .mockResolvedValue(answers.marked ?? { status: "opened" });
-  const controller = new OwnResourcesController({
-    listOwnResources: {
+  const ownResourcesController = new OwnResourcesController({
+    listOwnResourcesUseCase: {
       execute: listOwnResources,
     } as unknown as ListOwnResourcesUseCase,
-    countUnopenedResources: {
+    countUnopenedResourcesUseCase: {
       execute: countUnopenedResources,
     } as unknown as CountUnopenedResourcesUseCase,
-    markResourceOpened: {
+    markResourceOpenedUseCase: {
       execute: markResourceOpened,
     } as unknown as MarkResourceOpenedUseCase,
   });
 
   return {
-    controller,
+    ownResourcesController,
     listOwnResources,
     countUnopenedResources,
     markResourceOpened,

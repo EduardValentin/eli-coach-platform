@@ -16,7 +16,7 @@ type UploadClientAvatarAsCoachResult =
   ClientAvatarUpload | { status: "not-found" };
 
 type UploadClientAvatarAsCoachUseCaseOptions = ClientAvatarIntakeOptions & {
-  clients: Pick<ClientReachPort, "findById">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
 };
 
 export class UploadClientAvatarAsCoachUseCase {
@@ -27,7 +27,9 @@ export class UploadClientAvatarAsCoachUseCase {
   async execute(
     command: UploadClientAvatarAsCoachCommand,
   ): Promise<UploadClientAvatarAsCoachResult> {
-    const client = await this.options.clients.findById(command.clientId);
+    const client = await this.options.clientReachPort.findById(
+      command.clientId,
+    );
 
     if (!client) {
       return { status: "not-found" };

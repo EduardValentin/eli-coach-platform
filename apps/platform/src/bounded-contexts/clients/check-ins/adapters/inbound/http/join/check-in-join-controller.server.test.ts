@@ -27,14 +27,17 @@ const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 describe("CheckInJoinController resolveForClient", () => {
   it("sends the client to the coach's meeting room", async () => {
     // arrange
-    const { controller, resolveCheckInJoin } = createController({
+    const { checkInJoinController, resolveCheckInJoin } = createController({
       status: "found",
       url: ROOM_URL,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resolveForClient(argsFor(CLIENT_SESSION), CHECK_IN_ID),
+      checkInJoinController.resolveForClient(
+        argsFor(CLIENT_SESSION),
+        CHECK_IN_ID,
+      ),
     );
 
     // assert
@@ -48,10 +51,12 @@ describe("CheckInJoinController resolveForClient", () => {
 
   it("tells the client the room is not ready while none is set", async () => {
     // arrange
-    const { controller } = createController({ status: "link_not_set" });
+    const { checkInJoinController } = createController({
+      status: "link_not_set",
+    });
 
     // act
-    const resolution = await controller.resolveForClient(
+    const resolution = await checkInJoinController.resolveForClient(
       argsFor(CLIENT_SESSION),
       CHECK_IN_ID,
     );
@@ -62,11 +67,14 @@ describe("CheckInJoinController resolveForClient", () => {
 
   it("answers not found to a check-in the client cannot join", async () => {
     // arrange
-    const { controller } = createController({ status: "unknown" });
+    const { checkInJoinController } = createController({ status: "unknown" });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resolveForClient(argsFor(CLIENT_SESSION), CHECK_IN_ID),
+      checkInJoinController.resolveForClient(
+        argsFor(CLIENT_SESSION),
+        CHECK_IN_ID,
+      ),
     );
 
     // assert
@@ -75,14 +83,17 @@ describe("CheckInJoinController resolveForClient", () => {
 
   it("answers not found to an id that is not a uuid without resolving anything", async () => {
     // arrange
-    const { controller, resolveCheckInJoin } = createController({
+    const { checkInJoinController, resolveCheckInJoin } = createController({
       status: "found",
       url: ROOM_URL,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resolveForClient(argsFor(CLIENT_SESSION), "not-an-id"),
+      checkInJoinController.resolveForClient(
+        argsFor(CLIENT_SESSION),
+        "not-an-id",
+      ),
     );
 
     // assert
@@ -92,14 +103,17 @@ describe("CheckInJoinController resolveForClient", () => {
 
   it("sends a visitor who is not signed in to sign in, coming back to the link", async () => {
     // arrange
-    const { controller, resolveCheckInJoin } = createController({
+    const { checkInJoinController, resolveCheckInJoin } = createController({
       status: "found",
       url: ROOM_URL,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resolveForClient(argsFor(ANONYMOUS_SESSION), CHECK_IN_ID),
+      checkInJoinController.resolveForClient(
+        argsFor(ANONYMOUS_SESSION),
+        CHECK_IN_ID,
+      ),
     );
 
     // assert
@@ -116,14 +130,17 @@ describe("CheckInJoinController resolveForClient", () => {
 describe("CheckInJoinController resolveForCoach", () => {
   it("sends the coach to her meeting room", async () => {
     // arrange
-    const { controller, resolveCheckInJoin } = createController({
+    const { checkInJoinController, resolveCheckInJoin } = createController({
       status: "found",
       url: ROOM_URL,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resolveForCoach(argsFor(COACH_SESSION), CHECK_IN_ID),
+      checkInJoinController.resolveForCoach(
+        argsFor(COACH_SESSION),
+        CHECK_IN_ID,
+      ),
     );
 
     // assert
@@ -136,14 +153,17 @@ describe("CheckInJoinController resolveForCoach", () => {
 
   it("refuses a client on the coach's link without resolving anything", async () => {
     // arrange
-    const { controller, resolveCheckInJoin } = createController({
+    const { checkInJoinController, resolveCheckInJoin } = createController({
       status: "found",
       url: ROOM_URL,
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.resolveForCoach(argsFor(CLIENT_SESSION), CHECK_IN_ID),
+      checkInJoinController.resolveForCoach(
+        argsFor(CLIENT_SESSION),
+        CHECK_IN_ID,
+      ),
     );
 
     // assert
@@ -154,13 +174,13 @@ describe("CheckInJoinController resolveForCoach", () => {
 
 function createController(resolution: CheckInJoinResult) {
   const resolveCheckInJoin = vi.fn().mockResolvedValue(resolution);
-  const controller = new CheckInJoinController({
-    resolveCheckInJoin: {
+  const checkInJoinController = new CheckInJoinController({
+    resolveCheckInJoinUseCase: {
       execute: resolveCheckInJoin,
     } as unknown as ResolveCheckInJoinUseCase,
   });
 
-  return { controller, resolveCheckInJoin };
+  return { checkInJoinController, resolveCheckInJoin };
 }
 
 function argsFor(session: ResolvedSession) {

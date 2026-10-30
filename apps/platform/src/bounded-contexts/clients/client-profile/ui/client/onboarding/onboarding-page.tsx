@@ -33,7 +33,7 @@ function headerOf(page: OnboardingPage | undefined): OnboardingHeader {
 export function loader(args: LoaderFunctionArgs): Promise<OnboardingPage> {
   return args.context
     .get(clientOnboardingContext)
-    .controller.loadOnboarding(args);
+    .clientOnboardingController.loadOnboarding(args);
 }
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [

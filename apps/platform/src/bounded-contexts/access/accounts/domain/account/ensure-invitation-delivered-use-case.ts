@@ -11,12 +11,12 @@ import type { IdentityInvitationsPort } from "./identity-invitations-port";
 import type { InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
 
 type EnsureInvitationDeliveredUseCaseOptions = {
-  clock: ClockPort;
-  identity: IdentityInvitationsPort;
-  incidents: AccountInvitationIncidentsPort;
-  invitations: AccountInvitationsPort;
-  notifications: AccountInvitationNotificationsPort;
-  tokenGenerator: InvitationTokenGeneratorPort;
+  clockPort: ClockPort;
+  identityInvitationsPort: IdentityInvitationsPort;
+  accountInvitationIncidentsPort: AccountInvitationIncidentsPort;
+  accountInvitationsPort: AccountInvitationsPort;
+  accountInvitationNotificationsPort: AccountInvitationNotificationsPort;
+  invitationTokenGeneratorPort: InvitationTokenGeneratorPort;
 };
 
 export class EnsureInvitationDeliveredUseCase {
@@ -28,7 +28,7 @@ export class EnsureInvitationDeliveredUseCase {
     invitationId: string;
     firstName: string;
   }): Promise<void> {
-    const existing = await this.options.invitations.findById(
+    const existing = await this.options.accountInvitationsPort.findById(
       command.invitationId,
     );
 
@@ -42,14 +42,14 @@ export class EnsureInvitationDeliveredUseCase {
       return;
     }
 
-    const now = this.options.clock.now();
-    const token = this.options.tokenGenerator.create();
+    const now = this.options.clockPort.now();
+    const token = this.options.invitationTokenGeneratorPort.create();
     const invitation = existing.reissue({
       tokenHash: token.sha256,
       sentAt: now,
     });
 
-    await this.options.invitations.reissue(invitation);
+    await this.options.accountInvitationsPort.reissue(invitation);
     await this.ensureIdentityInvitation(invitation);
     await this.sendInvitation({
       invitationId: invitation.id,
@@ -68,12 +68,12 @@ export class EnsureInvitationDeliveredUseCase {
       return;
     }
 
-    const provider = await this.options.identity.create({
+    const provider = await this.options.identityInvitationsPort.create({
       email: invitation.email,
       invitationId: invitation.id,
     });
 
-    await this.options.invitations.recordProvider({
+    await this.options.accountInvitationsPort.recordProvider({
       invitationId: invitation.id,
       provider,
     });
@@ -83,22 +83,24 @@ export class EnsureInvitationDeliveredUseCase {
     message: AccountInvitationMessage,
   ): Promise<void> {
     const { invitationId, sentAt } = message;
-    const delivery = await this.options.notifications
+    const delivery = await this.options.accountInvitationNotificationsPort
       .sendInvitation(message)
       .catch(() => "failed" as const);
 
     if (delivery === "sent") {
-      await this.options.invitations.recordEmailSent({
+      await this.options.accountInvitationsPort.recordEmailSent({
         invitationId,
         at: sentAt,
       });
       return;
     }
 
-    await this.options.invitations.recordEmailDeliveryFailed({
+    await this.options.accountInvitationsPort.recordEmailDeliveryFailed({
       invitationId,
       at: sentAt,
     });
-    this.options.incidents.invitationEmailFailed({ invitationId });
+    this.options.accountInvitationIncidentsPort.invitationEmailFailed({
+      invitationId,
+    });
   }
 }

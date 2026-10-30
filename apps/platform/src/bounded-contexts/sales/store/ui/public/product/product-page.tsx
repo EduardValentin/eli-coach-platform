@@ -20,7 +20,7 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
 
   const response = await context
     .get(storeContext)
-    .catalog.getPublishedProductBySlug(params.slug);
+    .storeCatalogController.getPublishedProductBySlug(params.slug);
 
   if (!response.ok) {
     throw response;

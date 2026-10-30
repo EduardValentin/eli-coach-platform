@@ -72,7 +72,7 @@ function createWriter(): ProductAssetWriterPort {
 }
 
 function createPublications(
-  overrides: Partial<StoreProductPublicationsPort> = {},
+  storeProductPublicationsPort: Partial<StoreProductPublicationsPort> = {},
 ): StoreProductPublicationsPort {
   return {
     findProductById: vi.fn().mockResolvedValue(existingProduct()),
@@ -91,22 +91,25 @@ function createPublications(
       }),
     ),
     retireProduct: vi.fn().mockResolvedValue(true),
-    ...overrides,
+    ...storeProductPublicationsPort,
   };
 }
 
 function createOptions(
   overrides: Partial<StoreProductPublicationsPort> = {},
-  writer: ProductAssetWriterPort = createWriter(),
+  productAssetWriterPort: ProductAssetWriterPort = createWriter(),
 ) {
   const publications = createPublications(overrides);
-  const planOptions = { digest: createDigest(), publications };
+  const planOptions = {
+    productAssetDigestPort: createDigest(),
+    storeProductPublicationsPort: publications,
+  };
 
   return {
-    options: { assetWriter: writer, ...planOptions },
+    options: { productAssetWriterPort, ...planOptions },
     planOptions,
-    publications,
-    writer,
+    storeProductPublicationsPort: publications,
+    productAssetWriterPort,
   };
 }
 
@@ -163,7 +166,7 @@ describe("PlanNewProductUseCase", () => {
 
   it("rejects a malformed slug without asking the catalog", async () => {
     // arrange
-    const { planOptions, publications } = createOptions();
+    const { planOptions, storeProductPublicationsPort } = createOptions();
 
     // act
     const result = await new PlanNewProductUseCase(planOptions).execute({
@@ -176,7 +179,9 @@ describe("PlanNewProductUseCase", () => {
       status: "invalid",
       issues: [{ code: "invalid_slug", slug: "Glute-Growth" }],
     });
-    expect(publications.findProductBySlug).not.toHaveBeenCalled();
+    expect(
+      storeProductPublicationsPort.findProductBySlug,
+    ).not.toHaveBeenCalled();
   });
 
   it("reports unavailable when the catalog fails", async () => {
@@ -264,7 +269,8 @@ describe("PlanProductRevisionUseCase", () => {
 describe("PublishNewProductUseCase", () => {
   it("writes every asset before recording the publication", async () => {
     // arrange
-    const { options, publications, writer } = createOptions();
+    const { options, storeProductPublicationsPort, productAssetWriterPort } =
+      createOptions();
 
     // act
     const result = await new PublishNewProductUseCase(options).execute(
@@ -276,8 +282,10 @@ describe("PublishNewProductUseCase", () => {
       status: "published",
       publication: { operation: "create_product", productVersionId: 91 },
     });
-    expect(writer.write).toHaveBeenCalledTimes(2);
-    expect(publications.persistPublication).toHaveBeenCalledWith(
+    expect(productAssetWriterPort.write).toHaveBeenCalledTimes(2);
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({
         idempotencyKey: "publish-1",
         operation: "create_product",
@@ -290,33 +298,42 @@ describe("PublishNewProductUseCase", () => {
 
   it("replays an existing publication without writing or persisting again", async () => {
     // arrange
-    const { options, publications, writer } = createOptions();
-    const useCase = new PublishNewProductUseCase(options);
-    const first = await useCase.execute(publishNewProductCommand);
-    const persisted = publications.persistPublication as ReturnType<
-      typeof vi.fn
-    >;
+    const { options, storeProductPublicationsPort, productAssetWriterPort } =
+      createOptions();
+    const publishNewProductUseCase = new PublishNewProductUseCase(options);
+    const first = await publishNewProductUseCase.execute(
+      publishNewProductCommand,
+    );
+    const persisted =
+      storeProductPublicationsPort.persistPublication as ReturnType<
+        typeof vi.fn
+      >;
     const storedDigest = persisted.mock.calls[0]![0].payloadDigest;
 
-    publications.findPublicationByIdempotencyKey = vi.fn().mockResolvedValue({
-      payloadDigest: storedDigest,
-      publication: first.status === "published" ? first.publication : undefined,
-    });
+    storeProductPublicationsPort.findPublicationByIdempotencyKey = vi
+      .fn()
+      .mockResolvedValue({
+        payloadDigest: storedDigest,
+        publication:
+          first.status === "published" ? first.publication : undefined,
+      });
     persisted.mockClear();
-    (writer.write as ReturnType<typeof vi.fn>).mockClear();
+    (productAssetWriterPort.write as ReturnType<typeof vi.fn>).mockClear();
 
     // act
-    const result = await useCase.execute(publishNewProductCommand);
+    const result = await publishNewProductUseCase.execute(
+      publishNewProductCommand,
+    );
 
     // assert
     expect(result.status).toBe("replayed");
-    expect(writer.write).not.toHaveBeenCalled();
+    expect(productAssetWriterPort.write).not.toHaveBeenCalled();
     expect(persisted).not.toHaveBeenCalled();
   });
 
   it("rejects an idempotency key reused with a different payload", async () => {
     // arrange
-    const { options, writer } = createOptions({
+    const { options, productAssetWriterPort } = createOptions({
       findPublicationByIdempotencyKey: vi.fn().mockResolvedValue({
         payloadDigest: "a".repeat(64),
         publication: {
@@ -337,12 +354,13 @@ describe("PublishNewProductUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "idempotency_conflict" });
-    expect(writer.write).not.toHaveBeenCalled();
+    expect(productAssetWriterPort.write).not.toHaveBeenCalled();
   });
 
   it("writes nothing when validation fails", async () => {
     // arrange
-    const { options, publications, writer } = createOptions();
+    const { options, storeProductPublicationsPort, productAssetWriterPort } =
+      createOptions();
 
     // act
     const result = await new PublishNewProductUseCase(options).execute({
@@ -352,8 +370,10 @@ describe("PublishNewProductUseCase", () => {
 
     // assert
     expect(result.status).toBe("invalid");
-    expect(writer.write).not.toHaveBeenCalled();
-    expect(publications.persistPublication).not.toHaveBeenCalled();
+    expect(productAssetWriterPort.write).not.toHaveBeenCalled();
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).not.toHaveBeenCalled();
   });
 
   it("reports unavailable and persists nothing when an asset write fails", async () => {
@@ -361,7 +381,7 @@ describe("PublishNewProductUseCase", () => {
     const writer = {
       write: vi.fn().mockRejectedValue(new Error("disk full")),
     } satisfies ProductAssetWriterPort;
-    const { options, publications } = createOptions({}, writer);
+    const { options, storeProductPublicationsPort } = createOptions({}, writer);
 
     // act
     const result = await new PublishNewProductUseCase(options).execute(
@@ -370,14 +390,16 @@ describe("PublishNewProductUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
-    expect(publications.persistPublication).not.toHaveBeenCalled();
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).not.toHaveBeenCalled();
   });
 });
 
 describe("PublishProductVersionUseCase", () => {
   it("publishes the next version of an existing product", async () => {
     // arrange
-    const { options, publications } = createOptions();
+    const { options, storeProductPublicationsPort } = createOptions();
 
     // act
     const result = await new PublishProductVersionUseCase(options).execute({
@@ -391,7 +413,9 @@ describe("PublishProductVersionUseCase", () => {
 
     // assert
     expect(result).toMatchObject({ status: "published" });
-    expect(publications.persistPublication).toHaveBeenCalledWith(
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({
         displayOrder: 2,
         operation: "revise_product",
@@ -426,8 +450,10 @@ describe("PublishProductVersionUseCase", () => {
 
   it("replays an existing publication before looking the product up", async () => {
     // arrange
-    const { options, publications } = createOptions();
-    const useCase = new PublishProductVersionUseCase(options);
+    const { options, storeProductPublicationsPort } = createOptions();
+    const publishProductVersionUseCase = new PublishProductVersionUseCase(
+      options,
+    );
     const command = {
       cover,
       downloads,
@@ -436,24 +462,30 @@ describe("PublishProductVersionUseCase", () => {
       productId: 7,
       publishedBy: AGENT,
     };
-    const first = await useCase.execute(command);
-    const persisted = publications.persistPublication as ReturnType<
-      typeof vi.fn
-    >;
+    const first = await publishProductVersionUseCase.execute(command);
+    const persisted =
+      storeProductPublicationsPort.persistPublication as ReturnType<
+        typeof vi.fn
+      >;
 
-    publications.findPublicationByIdempotencyKey = vi.fn().mockResolvedValue({
-      payloadDigest: persisted.mock.calls[0]![0].payloadDigest,
-      publication: first.status === "published" ? first.publication : undefined,
-    });
+    storeProductPublicationsPort.findPublicationByIdempotencyKey = vi
+      .fn()
+      .mockResolvedValue({
+        payloadDigest: persisted.mock.calls[0]![0].payloadDigest,
+        publication:
+          first.status === "published" ? first.publication : undefined,
+      });
     persisted.mockClear();
-    (publications.findProductById as ReturnType<typeof vi.fn>).mockClear();
+    (
+      storeProductPublicationsPort.findProductById as ReturnType<typeof vi.fn>
+    ).mockClear();
 
     // act
-    const result = await useCase.execute(command);
+    const result = await publishProductVersionUseCase.execute(command);
 
     // assert
     expect(result.status).toBe("replayed");
-    expect(publications.findProductById).not.toHaveBeenCalled();
+    expect(storeProductPublicationsPort.findProductById).not.toHaveBeenCalled();
     expect(persisted).not.toHaveBeenCalled();
   });
 
@@ -483,26 +515,28 @@ describe("PublishProductVersionUseCase", () => {
 describe("RetireProductUseCase", () => {
   it("retires a published product", async () => {
     // arrange
-    const publications = createPublications();
+    const storeProductPublicationsPort = createPublications();
 
     // act
-    const result = await new RetireProductUseCase({ publications }).execute(7);
+    const result = await new RetireProductUseCase({
+      storeProductPublicationsPort,
+    }).execute(7);
 
     // assert
     expect(result).toEqual({ status: "retired", productId: 7 });
-    expect(publications.retireProduct).toHaveBeenCalledWith(7);
+    expect(storeProductPublicationsPort.retireProduct).toHaveBeenCalledWith(7);
   });
 
   it("reports an unknown product as not found", async () => {
     // arrange
-    const publications = createPublications({
+    const storeProductPublicationsPort = createPublications({
       retireProduct: vi.fn().mockResolvedValue(false),
     });
 
     // act
-    const result = await new RetireProductUseCase({ publications }).execute(
-      404,
-    );
+    const result = await new RetireProductUseCase({
+      storeProductPublicationsPort,
+    }).execute(404);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -510,12 +544,14 @@ describe("RetireProductUseCase", () => {
 
   it("reports unavailable when retirement fails", async () => {
     // arrange
-    const publications = createPublications({
+    const storeProductPublicationsPort = createPublications({
       retireProduct: vi.fn().mockRejectedValue(new Error("connection lost")),
     });
 
     // act
-    const result = await new RetireProductUseCase({ publications }).execute(7);
+    const result = await new RetireProductUseCase({
+      storeProductPublicationsPort,
+    }).execute(7);
 
     // assert
     expect(result).toEqual({ status: "unavailable" });

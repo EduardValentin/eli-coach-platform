@@ -66,7 +66,10 @@ function createUseCase(snapshot: ExerciseSnapshot | null = SQUAT) {
   } satisfies Pick<ExerciseVideoStorePort, "open">;
 
   return {
-    useCase: new OpenExerciseVideoUseCase({ library, store }),
+    openExerciseVideoUseCase: new OpenExerciseVideoUseCase({
+      exerciseLibraryPort: library,
+      exerciseVideoStorePort: store,
+    }),
     library,
     store,
   };
@@ -75,11 +78,11 @@ function createUseCase(snapshot: ExerciseSnapshot | null = SQUAT) {
 describe("OpenExerciseVideoUseCase", () => {
   it("opens the requested range of the current video for the coach, in its stored media type", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openExerciseVideoUseCase, store } = createUseCase();
     const requested = { kind: "from", start: 0, end: 2 } as const;
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
@@ -102,10 +105,10 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("looks for the exercise in the coach's own library", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { openExerciseVideoUseCase, library } = createUseCase();
 
     // act
-    await useCase.execute({
+    await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
@@ -121,10 +124,10 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("answers not found to another coach without opening the file", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openExerciseVideoUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: {
         kind: "coach",
         accountId: "c0000000-0000-4000-8000-000000000002",
@@ -141,14 +144,14 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("passes an unsatisfiable range through with the video's size", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openExerciseVideoUseCase, store } = createUseCase();
     store.open.mockResolvedValueOnce({
       status: "unsatisfiable",
       sizeBytes: 4_096,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
@@ -166,10 +169,10 @@ describe("OpenExerciseVideoUseCase", () => {
     "answers not found to a $viewer.kind without opening the file",
     async ({ viewer }) => {
       // arrange
-      const { useCase, library, store } = createUseCase();
+      const { openExerciseVideoUseCase, library, store } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await openExerciseVideoUseCase.execute({
         viewer,
         exerciseId: "e0000000-0000-4000-8000-000000000001",
         videoId: "9c1b0000-0000-4000-8000-000000000001",
@@ -185,10 +188,10 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("answers not found for a video id that is no longer the exercise's video", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openExerciseVideoUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000000",
@@ -202,10 +205,13 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("answers not found for an exercise without a video", async () => {
     // arrange
-    const { useCase } = createUseCase({ ...SQUAT, video: null });
+    const { openExerciseVideoUseCase } = createUseCase({
+      ...SQUAT,
+      video: null,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
@@ -218,10 +224,10 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("answers not found for a missing exercise", async () => {
     // arrange
-    const { useCase } = createUseCase(null);
+    const { openExerciseVideoUseCase } = createUseCase(null);
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000009",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
@@ -234,11 +240,11 @@ describe("OpenExerciseVideoUseCase", () => {
 
   it("answers not found when the stored file has gone", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { openExerciseVideoUseCase, store } = createUseCase();
     store.open.mockResolvedValueOnce({ status: "missing" });
 
     // act
-    const result = await useCase.execute({
+    const result = await openExerciseVideoUseCase.execute({
       viewer: COACH,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",

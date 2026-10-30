@@ -38,92 +38,105 @@ import { AssessmentCallsIncidentsAdapter } from "~/bounded-contexts/scheduling/a
 
 type AssessmentCallsComposition = {
   feature: AssessmentCallsFeature;
-  facades: { clientCalls: ClientCallsFacade; endedCalls: EndedCallsFacade };
+  facades: {
+    clientCallsFacade: ClientCallsFacade;
+    endedCallsFacade: EndedCallsFacade;
+  };
 };
 
 export type AssessmentCallsFeatureHandles = {
   appBasePath: string;
   assessmentCallsConfig: AssessmentCallsConfig;
   botDetection: BotDetectionConfig;
-  botVerifier: BotVerifierPort;
-  clock: ClockPort;
-  coachTime: CoachTimeReservationsPort;
+  botVerifierPort: BotVerifierPort;
+  clockPort: ClockPort;
+  coachTimeReservationsPort: CoachTimeReservationsPort;
   contactEmail: string;
   database: DatabaseClient;
-  emailAcceptance: EmailAcceptancePort;
-  featureFlags: FeatureFlagsFacade;
-  logger: LoggerPort;
-  meetingRoom: CoachMeetingRoomSourcePort;
+  emailAcceptancePort: EmailAcceptancePort;
+  featureFlagsFacade: FeatureFlagsFacade;
+  loggerPort: LoggerPort;
+  coachMeetingRoomSourcePort: CoachMeetingRoomSourcePort;
   openings: CoachOpenings;
-  productEmail: ProductEmailPort;
+  productEmailPort: ProductEmailPort;
   publicAppUrl: string;
 };
 
 export function composeAssessmentCallsFeature(
   handles: AssessmentCallsFeatureHandles,
 ): AssessmentCallsComposition {
-  const incidents = new AssessmentCallsIncidentsAdapter(handles.logger);
-  const availability = new CoachScheduleAvailabilityAdapter({
-    openings: handles.openings,
-    rules: ASSESSMENT_CALL_RULES,
-  });
+  const assessmentCallsIncidentsAdapter = new AssessmentCallsIncidentsAdapter(
+    handles.loggerPort,
+  );
+  const coachScheduleAvailabilityAdapter = new CoachScheduleAvailabilityAdapter(
+    {
+      openings: handles.openings,
+      rules: ASSESSMENT_CALL_RULES,
+    },
+  );
   const unitOfWork = createUnitOfWork(handles.database);
-  const reservations = new PostgresAssessmentCallRepository(handles.database);
+  const postgresAssessmentCallRepository = new PostgresAssessmentCallRepository(
+    handles.database,
+  );
   const bookingWindow = new AssessmentCallBookingWindow({
-    incidents,
-    waitlistMode: new OperationsWaitlistModeAdapter(handles.featureFlags),
+    assessmentCallIncidentsPort: assessmentCallsIncidentsAdapter,
+    waitlistModePort: new OperationsWaitlistModeAdapter(
+      handles.featureFlagsFacade,
+    ),
   });
 
   return {
     feature: {
-      assessmentCalls: new AssessmentCallsController({
+      assessmentCallsController: new AssessmentCallsController({
         botDetection: handles.botDetection,
-        botVerifier: handles.botVerifier,
-        bookAssessmentCall: new BookAssessmentCallUseCase({
-          availability,
+        botVerifierPort: handles.botVerifierPort,
+        bookAssessmentCallUseCase: new BookAssessmentCallUseCase({
+          coachAvailabilityPort: coachScheduleAvailabilityAdapter,
           bookingWindow,
-          clock: handles.clock,
-          coachTime: handles.coachTime,
-          emailAcceptance: handles.emailAcceptance,
-          ids: new RandomAssessmentCallIdsAdapter(),
-          incidents,
-          notifications: createAssessmentCallNotificationsAdapter(
-            handles.productEmail,
-            {
+          clockPort: handles.clockPort,
+          coachTimePort: handles.coachTimeReservationsPort,
+          emailAcceptancePort: handles.emailAcceptancePort,
+          assessmentCallIdsPort: new RandomAssessmentCallIdsAdapter(),
+          assessmentCallIncidentsPort: assessmentCallsIncidentsAdapter,
+          assessmentCallNotificationsPort:
+            createAssessmentCallNotificationsAdapter(handles.productEmailPort, {
               appBasePath: handles.appBasePath,
               coachEmail:
                 handles.assessmentCallsConfig.ASSESSMENT_CALL_COACH_EMAIL,
               contactEmail: handles.contactEmail,
               publicAppUrl: handles.publicAppUrl,
-            },
-          ),
-          reservations,
+            }),
+          assessmentCallReservationsPort: postgresAssessmentCallRepository,
         }),
-        clock: handles.clock,
-        listOpenSlots: new ListOpenSlotsUseCase({
-          availability,
+        clockPort: handles.clockPort,
+        listOpenSlotsUseCase: new ListOpenSlotsUseCase({
+          coachAvailabilityPort: coachScheduleAvailabilityAdapter,
           bookingWindow,
-          clock: handles.clock,
-          incidents,
+          clockPort: handles.clockPort,
+          assessmentCallIncidentsPort: assessmentCallsIncidentsAdapter,
         }),
-        resolveJoinLink: new ResolveJoinLinkUseCase({
-          meetingRoom: handles.meetingRoom,
-          reservations,
+        resolveJoinLinkUseCase: new ResolveJoinLinkUseCase({
+          meetingRoomPort: handles.coachMeetingRoomSourcePort,
+          assessmentCallReservationsPort: postgresAssessmentCallRepository,
         }),
         unitOfWork,
       }),
-      coachAssessmentCalls: new CoachAssessmentCallsController({
-        clock: handles.clock,
-        listAssessmentCalls: new ListAssessmentCallsUseCase({
-          availability,
-          incidents,
-          reservations,
+      coachAssessmentCallsController: new CoachAssessmentCallsController({
+        clockPort: handles.clockPort,
+        listAssessmentCallsUseCase: new ListAssessmentCallsUseCase({
+          coachAvailabilityPort: coachScheduleAvailabilityAdapter,
+          assessmentCallIncidentsPort: assessmentCallsIncidentsAdapter,
+          assessmentCallReservationsPort: postgresAssessmentCallRepository,
         }),
       }),
     },
     facades: {
-      clientCalls: new ClientCallsFacadeAdapter(reservations),
-      endedCalls: new EndedCallsFacadeAdapter(reservations),
+      clientCallsFacade: new ClientCallsFacadeAdapter(
+        postgresAssessmentCallRepository,
+      ),
+      endedCallsFacade: new EndedCallsFacadeAdapter(
+        postgresAssessmentCallRepository,
+      ),
     },
   };
 }

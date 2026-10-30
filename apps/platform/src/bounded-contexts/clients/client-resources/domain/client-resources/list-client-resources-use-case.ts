@@ -33,9 +33,9 @@ export type ListClientResourcesResult =
   | { status: "unavailable" };
 
 type ListClientResourcesUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class ListClientResourcesUseCase {
@@ -67,20 +67,23 @@ export class ListClientResourcesUseCase {
     clientId,
     browse: input,
   }: ListClientResourcesCommand): Promise<ClientResourceListing | null> {
-    const { resources } = this.options;
+    const { clientResourcesPort } = this.options;
 
     try {
       const browse = ResourceBrowse.from(input)
-        .withTagAmong(await resources.tagsHeldBy(clientId))
+        .withTagAmong(await clientResourcesPort.tagsHeldBy(clientId))
         .toSnapshot();
       const [browsing, vocabulary] = await Promise.all([
-        resources.browseForClient(clientId, browse),
-        resources.tagVocabulary(),
+        clientResourcesPort.browseForClient(clientId, browse),
+        clientResourcesPort.tagVocabulary(),
       ]);
 
       return { browsing, browse, vocabulary };
     } catch (error) {
-      this.options.incidents.resourceListingFailed({ clientId, error });
+      this.options.clientResourceIncidentsPort.resourceListingFailed({
+        clientId,
+        error,
+      });
 
       return null;
     }

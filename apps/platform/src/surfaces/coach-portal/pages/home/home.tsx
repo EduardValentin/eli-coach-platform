@@ -19,8 +19,12 @@ export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/bounded-context
 
 export async function loader(args: LoaderFunctionArgs) {
   const [listing, pendingCheckIns] = await Promise.all([
-    args.context.get(assessmentCallsContext).coachAssessmentCalls.loadCalls(),
-    args.context.get(checkInsContext).coachCheckIns.loadAwaiting(args),
+    args.context
+      .get(assessmentCallsContext)
+      .coachAssessmentCallsController.loadCalls(),
+    args.context
+      .get(checkInsContext)
+      .coachCheckInsController.loadAwaiting(args),
   ]);
 
   return { listing, pendingCheckIns };

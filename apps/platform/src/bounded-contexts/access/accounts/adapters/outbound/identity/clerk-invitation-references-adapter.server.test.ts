@@ -19,10 +19,12 @@ describe("ClerkInvitationReferences#invitationIdOf", () => {
     // arrange
     const client = { users: { getUser: vi.fn() } };
     client.users.getUser.mockResolvedValue({ publicMetadata });
-    const references = new ClerkInvitationReferencesAdapter(client);
+    const clerkInvitationReferencesAdapter =
+      new ClerkInvitationReferencesAdapter(client);
 
     // act
-    const invitationId = await references.invitationIdOf("user_ana");
+    const invitationId =
+      await clerkInvitationReferencesAdapter.invitationIdOf("user_ana");
 
     // assert
     expect(invitationId).toBe(expected);

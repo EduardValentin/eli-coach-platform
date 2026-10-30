@@ -42,12 +42,12 @@ import {
 } from "~/bounded-contexts/access/public/session";
 
 type RecipeLibraryControllerOptions = {
-  listRecipes: ListRecipesUseCase;
-  startRecipe: StartRecipeUseCase;
-  findRecipe: FindRecipeUseCase;
-  createRecipe: CreateRecipeUseCase;
-  editRecipe: EditRecipeUseCase;
-  openRecipePhoto: OpenRecipePhotoUseCase;
+  listRecipesUseCase: ListRecipesUseCase;
+  startRecipeUseCase: StartRecipeUseCase;
+  findRecipeUseCase: FindRecipeUseCase;
+  createRecipeUseCase: CreateRecipeUseCase;
+  editRecipeUseCase: EditRecipeUseCase;
+  openRecipePhotoUseCase: OpenRecipePhotoUseCase;
 };
 
 type RecipePhotoAddress = {
@@ -75,7 +75,9 @@ export class RecipeLibraryController {
 
   async list(args: LoaderFunctionArgs): Promise<RecipeLibraryView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { recipes, foods } = await this.options.listRecipes.execute(coach.id);
+    const { recipes, foods } = await this.options.listRecipesUseCase.execute(
+      coach.id,
+    );
 
     return {
       recipes: recipes.map((recipe) => presentRecipeCard(recipe, foods)),
@@ -84,7 +86,7 @@ export class RecipeLibraryController {
 
   async loadNew(args: LoaderFunctionArgs): Promise<RecipeBuilderView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const started = await this.options.startRecipe.execute(coach.id);
+    const started = await this.options.startRecipeUseCase.execute(coach.id);
 
     return presentRecipeBuilder({ ...started, recipe: null });
   }
@@ -100,7 +102,7 @@ export class RecipeLibraryController {
       throw this.backToRecipes();
     }
 
-    const found = await this.options.findRecipe.execute({
+    const found = await this.options.findRecipeUseCase.execute({
       ownerAccountId: coach.id,
       recipeId: id.data,
     });
@@ -122,7 +124,7 @@ export class RecipeLibraryController {
       return this.unreadSaveResponse(save);
     }
 
-    const result = await this.options.createRecipe.execute({
+    const result = await this.options.createRecipeUseCase.execute({
       ownerAccountId: coach.id,
       draft: save.draft,
       photo: save.photo,
@@ -157,7 +159,7 @@ export class RecipeLibraryController {
       return this.unreadSaveResponse(save);
     }
 
-    const result = await this.options.editRecipe.execute({
+    const result = await this.options.editRecipeUseCase.execute({
       ownerAccountId: coach.id,
       recipeId: id.data,
       draft: save.draft,
@@ -187,7 +189,7 @@ export class RecipeLibraryController {
       return this.notFoundResponse();
     }
 
-    const result = await this.options.openRecipePhoto.execute({
+    const result = await this.options.openRecipePhotoUseCase.execute({
       viewer: this.viewerOf(args),
       recipeId: recipeId.data,
       photoId: photoId.data,

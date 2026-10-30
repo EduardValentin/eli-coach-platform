@@ -43,10 +43,13 @@ describe("PostgresProgressPhotos#add", () => {
   it("inserts the photo record with its storage reference spread into columns", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
-    const photos = new PostgresProgressPhotosRepository(database.client);
+    const postgresProgressPhotosRepository =
+      new PostgresProgressPhotosRepository(database.client);
 
     // act
-    await photos.add(ProgressPhoto.reconstitute(SNAPSHOT));
+    await postgresProgressPhotosRepository.add(
+      ProgressPhoto.reconstitute(SNAPSHOT),
+    );
 
     // assert
     expect(database.writes).toEqual([
@@ -58,12 +61,11 @@ describe("PostgresProgressPhotos#add", () => {
 describe("PostgresProgressPhotos#findById", () => {
   it("rebuilds the photo with its storage reference from its row", async () => {
     // arrange
-    const photos = new PostgresProgressPhotosRepository(
-      createDatabaseAnswering([ROW]),
-    );
+    const postgresProgressPhotosRepository =
+      new PostgresProgressPhotosRepository(createDatabaseAnswering([ROW]));
 
     // act
-    const photo = await photos.findById(PHOTO_ID);
+    const photo = await postgresProgressPhotosRepository.findById(PHOTO_ID);
 
     // assert
     expect(photo?.toSnapshot()).toEqual(SNAPSHOT);
@@ -71,12 +73,11 @@ describe("PostgresProgressPhotos#findById", () => {
 
   it("answers no photo for an id it does not hold", async () => {
     // arrange
-    const photos = new PostgresProgressPhotosRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresProgressPhotosRepository =
+      new PostgresProgressPhotosRepository(createDatabaseAnswering([]));
 
     // act
-    const photo = await photos.findById(PHOTO_ID);
+    const photo = await postgresProgressPhotosRepository.findById(PHOTO_ID);
 
     // assert
     expect(photo).toBeNull();
@@ -87,10 +88,11 @@ describe("PostgresProgressPhotos#delete", () => {
   it("deletes only the record of that photo", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
-    const photos = new PostgresProgressPhotosRepository(database.client);
+    const postgresProgressPhotosRepository =
+      new PostgresProgressPhotosRepository(database.client);
 
     // act
-    await photos.delete(PHOTO_ID);
+    await postgresProgressPhotosRepository.delete(PHOTO_ID);
 
     // assert
     expect(database.writes).toEqual([

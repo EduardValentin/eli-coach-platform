@@ -4,8 +4,8 @@ import type { FoodLibraryController } from "~/bounded-contexts/programs/nutritio
 import type { RecipeLibraryController } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/coach/recipe-library-controller.server";
 
 export type NutritionLibraryFeature = {
-  foodLibrary: FoodLibraryController;
-  recipeLibrary: RecipeLibraryController;
+  foodLibraryController: FoodLibraryController;
+  recipeLibraryController: RecipeLibraryController;
 };
 
 export const nutritionLibraryContext: RouterContext<NutritionLibraryFeature> =

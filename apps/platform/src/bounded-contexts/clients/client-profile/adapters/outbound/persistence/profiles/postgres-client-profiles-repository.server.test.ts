@@ -86,12 +86,14 @@ const OPENED_ROW = {
 describe("PostgresClientProfiles#findByClientId", () => {
   it("rebuilds her seeded coaching facts, the coach's notes and her consent from its row", async () => {
     // arrange
-    const profiles = new PostgresClientProfilesRepository(
-      createDatabaseAnswering([SEEDED_ROW]),
-    );
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(
+        createDatabaseAnswering([SEEDED_ROW]),
+      );
 
     // act
-    const profile = await profiles.findByClientId(CLIENT_ID);
+    const profile =
+      await postgresClientProfilesRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(profile?.toSnapshot()).toEqual(SEEDED);
@@ -99,12 +101,14 @@ describe("PostgresClientProfiles#findByClientId", () => {
 
   it("rebuilds an opened profile with no coaching facts before her answers are approved", async () => {
     // arrange
-    const profiles = new PostgresClientProfilesRepository(
-      createDatabaseAnswering([OPENED_ROW]),
-    );
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(
+        createDatabaseAnswering([OPENED_ROW]),
+      );
 
     // act
-    const profile = await profiles.findByClientId(CLIENT_ID);
+    const profile =
+      await postgresClientProfilesRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(profile?.toSnapshot()).toEqual({
@@ -120,12 +124,12 @@ describe("PostgresClientProfiles#findByClientId", () => {
 
   it("answers no profile for a client without a row", async () => {
     // arrange
-    const profiles = new PostgresClientProfilesRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(createDatabaseAnswering([]));
 
     // act
-    const profile = await profiles.findByClientId(CLIENT_ID);
+    const profile =
+      await postgresClientProfilesRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(profile).toBeNull();
@@ -136,7 +140,8 @@ describe("PostgresClientProfiles#saveSharedFacts", () => {
   it("writes only the shared facts and the update moment while the row is as it was read", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([{ clientId: CLIENT_ID }]);
-    const profiles = new PostgresClientProfilesRepository(database.client);
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(database.client);
     const edited = ClientProfile.reconstitute({
       ...SEEDED,
       coaching: { ...COACHING, heightCm: 170, level: "advanced" },
@@ -144,7 +149,7 @@ describe("PostgresClientProfiles#saveSharedFacts", () => {
     });
 
     // act
-    const outcome = await profiles.saveSharedFacts({
+    const outcome = await postgresClientProfilesRepository.saveSharedFacts({
       profile: edited,
       expectedUpdatedAt: SEEDED_AT,
     });
@@ -174,10 +179,11 @@ describe("PostgresClientProfiles#saveSharedFacts", () => {
   it("answers changed-meanwhile when no row matched the moment it was read", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([]);
-    const profiles = new PostgresClientProfilesRepository(database.client);
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(database.client);
 
     // act
-    const outcome = await profiles.saveSharedFacts({
+    const outcome = await postgresClientProfilesRepository.saveSharedFacts({
       profile: ClientProfile.reconstitute({ ...SEEDED, updatedAt: SAVED_AT }),
       expectedUpdatedAt: SEEDED_AT,
     });
@@ -189,10 +195,11 @@ describe("PostgresClientProfiles#saveSharedFacts", () => {
   it("refuses to save a profile edited without coaching facts", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([{ clientId: CLIENT_ID }]);
-    const profiles = new PostgresClientProfilesRepository(database.client);
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(database.client);
 
     // act
-    const saving = profiles.saveSharedFacts({
+    const saving = postgresClientProfilesRepository.saveSharedFacts({
       profile: ClientProfile.reconstitute({ ...SEEDED, coaching: null }),
       expectedUpdatedAt: SEEDED_AT,
     });
@@ -208,7 +215,8 @@ describe("PostgresClientProfiles#saveCoachFacts", () => {
   it("writes every coaching fact, the coach's notes and the update moment while the row is as it was read", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([{ clientId: CLIENT_ID }]);
-    const profiles = new PostgresClientProfilesRepository(database.client);
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(database.client);
     const edited = ClientProfile.reconstitute({
       ...SEEDED,
       coaching: { ...COACHING, trainingDays: 4 },
@@ -217,7 +225,7 @@ describe("PostgresClientProfiles#saveCoachFacts", () => {
     });
 
     // act
-    const outcome = await profiles.saveCoachFacts({
+    const outcome = await postgresClientProfilesRepository.saveCoachFacts({
       profile: edited,
       expectedUpdatedAt: SEEDED_AT,
     });
@@ -256,10 +264,14 @@ describe("PostgresClientProfiles#recordPhotoConsent", () => {
   it("stamps the moment she agreed to progress photos on her profile row only", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([]);
-    const profiles = new PostgresClientProfilesRepository(database.client);
+    const postgresClientProfilesRepository =
+      new PostgresClientProfilesRepository(database.client);
 
     // act
-    await profiles.recordPhotoConsent(CLIENT_ID, CONSENTED_AT);
+    await postgresClientProfilesRepository.recordPhotoConsent(
+      CLIENT_ID,
+      CONSENTED_AT,
+    );
 
     // assert
     expect(database.updates).toEqual([

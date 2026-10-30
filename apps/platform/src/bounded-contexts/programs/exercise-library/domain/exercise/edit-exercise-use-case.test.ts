@@ -150,25 +150,27 @@ function createUseCase() {
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
-  const useCase = new EditExerciseUseCase({
-    library,
-    videoIds: { generate: () => "9c1b0000-0000-4000-8000-000000000002" },
-    clock: { now: () => NOW },
-    incidents,
-    formats,
-    store,
+  const editExerciseUseCase = new EditExerciseUseCase({
+    exerciseLibraryPort: library,
+    exerciseVideoIdsPort: {
+      generate: () => "9c1b0000-0000-4000-8000-000000000002",
+    },
+    clockPort: { now: () => NOW },
+    exerciseLibraryIncidentsPort: incidents,
+    exerciseVideoFormatDetectorPort: formats,
+    exerciseVideoStorePort: store,
   });
 
-  return { useCase, library, incidents, formats, store };
+  return { editExerciseUseCase, library, incidents, formats, store };
 }
 
 describe("EditExerciseUseCase", () => {
   it("replaces the whole exercise, its name trimmed, keeping its id, its owner and the moment it was created", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -183,10 +185,10 @@ describe("EditExerciseUseCase", () => {
 
   it("keeps its own name, whatever its case and spaces", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: " back SQUAT " },
@@ -200,10 +202,10 @@ describe("EditExerciseUseCase", () => {
 
   it("refuses a rename onto the name of another of her exercises without replacing it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "hip THRUST" },
@@ -217,10 +219,10 @@ describe("EditExerciseUseCase", () => {
 
   it("renames onto a name only another coach's exercise has", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "plank" },
@@ -234,10 +236,10 @@ describe("EditExerciseUseCase", () => {
 
   it("renames onto a name only an archived exercise of hers has", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "LUNGE " },
@@ -251,10 +253,10 @@ describe("EditExerciseUseCase", () => {
 
   it("refuses to edit an archived exercise, discarding the staged video without replacing it", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { editExerciseUseCase, library, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000004",
       draft: SQUAT_REVISED,
@@ -270,10 +272,10 @@ describe("EditExerciseUseCase", () => {
 
   it("refuses a draft that breaks a rule without replacing it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, type: "stretching", unit: "reps" },
@@ -290,11 +292,11 @@ describe("EditExerciseUseCase", () => {
 
   it("refuses the name when the library finds it taken by an exercise renamed meanwhile", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
     library.replace.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -307,10 +309,10 @@ describe("EditExerciseUseCase", () => {
 
   it("finds nothing to edit for an unknown exercise", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000404",
       draft: SQUAT_REVISED,
@@ -324,10 +326,10 @@ describe("EditExerciseUseCase", () => {
 
   it("finds nothing to edit in another coach's library", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: OTHER_COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -342,11 +344,11 @@ describe("EditExerciseUseCase", () => {
   it("reports a failed read and answers that the edit failed without replacing it", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents } = createUseCase();
+    const { editExerciseUseCase, library, incidents } = createUseCase();
     library.find.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -365,11 +367,11 @@ describe("EditExerciseUseCase", () => {
   it("reports a failed write and answers that the edit failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents } = createUseCase();
+    const { editExerciseUseCase, library, incidents } = createUseCase();
     library.replace.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -386,10 +388,10 @@ describe("EditExerciseUseCase", () => {
 
   it("replaces the video with an accepted new one and removes the replaced file once the edit is written", async () => {
     // arrange
-    const { useCase, library, formats, store } = createUseCase();
+    const { editExerciseUseCase, library, formats, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -422,10 +424,10 @@ describe("EditExerciseUseCase", () => {
 
   it("removes the video and deletes its file once the edit is written", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { editExerciseUseCase, library, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -444,11 +446,11 @@ describe("EditExerciseUseCase", () => {
   it("reports a replaced file it could not delete and still answers the exercise edited", async () => {
     // arrange
     const failure = new Error("disk unavailable");
-    const { useCase, incidents, store } = createUseCase();
+    const { editExerciseUseCase, incidents, store } = createUseCase();
     store.remove.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -465,11 +467,11 @@ describe("EditExerciseUseCase", () => {
 
   it("refuses content that is not an .mp4 or .mov video, discards it and keeps the current video", async () => {
     // arrange
-    const { useCase, library, formats, store } = createUseCase();
+    const { editExerciseUseCase, library, formats, store } = createUseCase();
     formats.detect.mockResolvedValueOnce(null);
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -488,11 +490,11 @@ describe("EditExerciseUseCase", () => {
 
   it("removes the new file and keeps the current one when the library finds the name taken", async () => {
     // arrange
-    const { useCase, library, store } = createUseCase();
+    const { editExerciseUseCase, library, store } = createUseCase();
     library.replace.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -509,11 +511,11 @@ describe("EditExerciseUseCase", () => {
   it("removes the new file, keeps the current one and answers failed when the write throws", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents, store } = createUseCase();
+    const { editExerciseUseCase, library, incidents, store } = createUseCase();
     library.replace.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -533,10 +535,10 @@ describe("EditExerciseUseCase", () => {
 
   it("discards the staged video when there is no exercise to edit", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { editExerciseUseCase, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000404",
       draft: SQUAT_REVISED,
@@ -552,11 +554,11 @@ describe("EditExerciseUseCase", () => {
   it("discards the staged video when the read fails", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, store } = createUseCase();
+    const { editExerciseUseCase, library, store } = createUseCase();
     library.list.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
@@ -570,10 +572,10 @@ describe("EditExerciseUseCase", () => {
 
   it("names a taken name beside the draft's other problems", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editExerciseUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editExerciseUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: " hip thrust", primaryMuscles: [] },

@@ -14,21 +14,23 @@ const SAVED_AT = new Date("2026-10-22T09:00:00.000Z");
 describe("PostgresClientSettings#findByClientId", () => {
   it("reads her units and her two preferences", async () => {
     // arrange
-    const settings = new PostgresClientSettingsRepository(
-      createDatabaseAnswering([
-        {
-          clientId: CLIENT_ID,
-          weightUnit: "lb",
-          heightUnit: "ft-in",
-          preferredCheckInWeekday: "friday",
-          preferredChannel: "whatsapp",
-          updatedAt: OPENED_AT,
-        },
-      ]),
-    );
+    const postgresClientSettingsRepository =
+      new PostgresClientSettingsRepository(
+        createDatabaseAnswering([
+          {
+            clientId: CLIENT_ID,
+            weightUnit: "lb",
+            heightUnit: "ft-in",
+            preferredCheckInWeekday: "friday",
+            preferredChannel: "whatsapp",
+            updatedAt: OPENED_AT,
+          },
+        ]),
+      );
 
     // act
-    const found = await settings.findByClientId(CLIENT_ID);
+    const found =
+      await postgresClientSettingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(found?.toSnapshot()).toEqual({
@@ -42,12 +44,12 @@ describe("PostgresClientSettings#findByClientId", () => {
 
   it("answers null for a client without settings", async () => {
     // arrange
-    const settings = new PostgresClientSettingsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresClientSettingsRepository =
+      new PostgresClientSettingsRepository(createDatabaseAnswering([]));
 
     // act
-    const found = await settings.findByClientId(CLIENT_ID);
+    const found =
+      await postgresClientSettingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(found).toBeNull();
@@ -58,7 +60,8 @@ describe("PostgresClientSettings#saveUnits", () => {
   it("writes her settings, and over stored ones replaces only her units and the update moment", async () => {
     // arrange
     const database = createDatabaseRecordingUpserts();
-    const settings = new PostgresClientSettingsRepository(database.client);
+    const postgresClientSettingsRepository =
+      new PostgresClientSettingsRepository(database.client);
     const changed = ClientSettings.reconstitute({
       clientId: CLIENT_ID,
       unitPreference: { weightUnit: "kg", heightUnit: "cm" },
@@ -68,7 +71,7 @@ describe("PostgresClientSettings#saveUnits", () => {
     }).withUnits(UnitPreference.of("imperial"), SAVED_AT);
 
     // act
-    await settings.saveUnits(changed);
+    await postgresClientSettingsRepository.saveUnits(changed);
 
     // assert
     expect(database.inserted).toEqual([

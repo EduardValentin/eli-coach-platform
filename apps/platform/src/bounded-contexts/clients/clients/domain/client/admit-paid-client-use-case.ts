@@ -17,8 +17,8 @@ type AdmitPaidClientResult =
   | { status: "call_already_has_client" };
 
 type AdmitPaidClientUseCaseOptions = {
-  clients: Pick<AdmittedClientsPort, "admit">;
-  ids: ClientIdsPort;
+  admittedClientsPort: Pick<AdmittedClientsPort, "admit">;
+  clientIdsPort: ClientIdsPort;
 };
 
 export class AdmitPaidClientUseCase {
@@ -28,11 +28,11 @@ export class AdmitPaidClientUseCase {
     command: AdmitPaidClientCommand,
   ): Promise<AdmitPaidClientResult> {
     const client = Client.admitted({
-      id: this.options.ids.generate(),
+      id: this.options.clientIdsPort.generate(),
       intake: command.intake,
       at: command.at,
     });
-    const admission = await this.options.clients.admit({
+    const admission = await this.options.admittedClientsPort.admit({
       client,
       standing: CoachingStanding.of(command.standing),
     });

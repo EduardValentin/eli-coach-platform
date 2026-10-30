@@ -9,7 +9,7 @@ type RemoveOwnClientAvatarResult =
   { status: "removed" } | { status: "not-on-journey" } | { status: "ended" };
 
 type RemoveOwnClientAvatarUseCaseOptions = ClientAvatarRemovalOptions & {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class RemoveOwnClientAvatarUseCase {
@@ -17,7 +17,7 @@ export class RemoveOwnClientAvatarUseCase {
 
   async execute(authSubjectId: string): Promise<RemoveOwnClientAvatarResult> {
     const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+      await this.options.clientReachPort.findByAuthSubjectId(authSubjectId);
 
     if (!client) {
       return { status: "not-on-journey" };

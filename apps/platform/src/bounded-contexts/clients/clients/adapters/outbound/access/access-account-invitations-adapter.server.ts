@@ -7,21 +7,23 @@ import type {
 import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations-facade";
 
 export class AccessAccountInvitationsAdapter implements AccountInvitationsPort {
-  constructor(private readonly accountInvitations: AccountInvitationsFacade) {}
+  constructor(
+    private readonly accountInvitationsFacade: AccountInvitationsFacade,
+  ) {}
 
   issue(invitation: { email: string }): Promise<{ invitationId: string }> {
-    return this.accountInvitations.issue({ email: invitation.email });
+    return this.accountInvitationsFacade.issue({ email: invitation.email });
   }
 
   ensureDelivered(delivery: InvitationDelivery): Promise<void> {
-    return this.accountInvitations.ensureDelivered({
+    return this.accountInvitationsFacade.ensureDelivered({
       invitationId: delivery.invitationId,
       firstName: delivery.firstName,
     });
   }
 
   resend(delivery: InvitationDelivery): Promise<InvitationResendOutcome> {
-    return this.accountInvitations.resend({
+    return this.accountInvitationsFacade.resend({
       invitationId: delivery.invitationId,
       firstName: delivery.firstName,
     });
@@ -30,7 +32,8 @@ export class AccessAccountInvitationsAdapter implements AccountInvitationsPort {
   async standingOf(
     invitationId: string,
   ): Promise<ClientInvitationStanding | null> {
-    const standing = await this.accountInvitations.standingOf(invitationId);
+    const standing =
+      await this.accountInvitationsFacade.standingOf(invitationId);
 
     return standing
       ? {
@@ -42,6 +45,6 @@ export class AccessAccountInvitationsAdapter implements AccountInvitationsPort {
   }
 
   acceptedInvitationOf(authSubjectId: string): Promise<string | null> {
-    return this.accountInvitations.acceptedInvitationOf(authSubjectId);
+    return this.accountInvitationsFacade.acceptedInvitationOf(authSubjectId);
   }
 }

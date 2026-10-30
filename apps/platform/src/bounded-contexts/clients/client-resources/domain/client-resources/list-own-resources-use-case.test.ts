@@ -103,7 +103,7 @@ const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
 ]);
 
 function createUseCase(
-  resources: ClientResourcesPort = new InMemoryClientResourcesAdapter(),
+  clientResourcesPort: ClientResourcesPort = new InMemoryClientResourcesAdapter(),
 ) {
   const clients = {
     findById: vi.fn(async (clientId: string) =>
@@ -125,22 +125,22 @@ function createUseCase(
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new ListOwnResourcesUseCase({
-    resources,
-    clients,
-    incidents,
+  const listOwnResourcesUseCase = new ListOwnResourcesUseCase({
+    clientResourcesPort,
+    clientReachPort: clients,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, clients, incidents };
+  return { listOwnResourcesUseCase, clients, incidents };
 }
 
 describe("ListOwnResourcesUseCase", () => {
   it("answers only her own resources, newest first, with her tag options, to a client whose portal is reachable", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { listOwnResourcesUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await listOwnResourcesUseCase.execute({
       requester: ANA,
       browse: NOTHING_CHOSEN,
     });
@@ -160,9 +160,14 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("browses by a tag she holds in its stored spelling, with the search and sort chosen", async () => {
     // arrange
-    const resources = new InMemoryClientResourcesAdapter();
-    const browseForClient = vi.spyOn(resources, "browseForClient");
-    const { useCase } = createUseCase(resources);
+    const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
+    const browseForClient = vi.spyOn(
+      inMemoryClientResourcesAdapter,
+      "browseForClient",
+    );
+    const { listOwnResourcesUseCase } = createUseCase(
+      inMemoryClientResourcesAdapter,
+    );
     const expectedBrowse = {
       tag: MEAL_PREP,
       search: "plan",
@@ -171,7 +176,7 @@ describe("ListOwnResourcesUseCase", () => {
     };
 
     // act
-    const result = await useCase.execute({
+    const result = await listOwnResourcesUseCase.execute({
       requester: ANA,
       browse: {
         tag: "MEAL PREP",
@@ -188,12 +193,17 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("browses with no tag when she holds none like the one asked for, even if another client does", async () => {
     // arrange
-    const resources = new InMemoryClientResourcesAdapter();
-    const browseForClient = vi.spyOn(resources, "browseForClient");
-    const { useCase } = createUseCase(resources);
+    const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
+    const browseForClient = vi.spyOn(
+      inMemoryClientResourcesAdapter,
+      "browseForClient",
+    );
+    const { listOwnResourcesUseCase } = createUseCase(
+      inMemoryClientResourcesAdapter,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await listOwnResourcesUseCase.execute({
       requester: ANA,
       browse: { ...NOTHING_CHOSEN, tag: "Glutes" },
     });
@@ -211,12 +221,17 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("never reads the coach's vocabulary for a client", async () => {
     // arrange
-    const resources = new InMemoryClientResourcesAdapter();
-    const tagVocabulary = vi.spyOn(resources, "tagVocabulary");
-    const { useCase } = createUseCase(resources);
+    const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
+    const tagVocabulary = vi.spyOn(
+      inMemoryClientResourcesAdapter,
+      "tagVocabulary",
+    );
+    const { listOwnResourcesUseCase } = createUseCase(
+      inMemoryClientResourcesAdapter,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await listOwnResourcesUseCase.execute({
       requester: ANA,
       browse: NOTHING_CHOSEN,
     });
@@ -232,10 +247,10 @@ describe("ListOwnResourcesUseCase", () => {
     ["an account bound to no client", "user_nobody"],
   ])("finds nothing for %s", async (_case, authSubjectId) => {
     // arrange
-    const { useCase, incidents } = createUseCase();
+    const { listOwnResourcesUseCase, incidents } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await listOwnResourcesUseCase.execute({
       requester: { role: "CLIENT", authSubjectId },
       browse: NOTHING_CHOSEN,
     });
@@ -247,10 +262,10 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("finds nothing for the coach, who has no resources of her own", async () => {
     // arrange
-    const { useCase, clients } = createUseCase();
+    const { listOwnResourcesUseCase, clients } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await listOwnResourcesUseCase.execute({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       browse: NOTHING_CHOSEN,
     });
@@ -265,12 +280,15 @@ describe("ListOwnResourcesUseCase", () => {
     async (read) => {
       // arrange
       const failure = new Error("connection terminated");
-      const unreadable = new InMemoryClientResourcesAdapter();
-      vi.spyOn(unreadable, read).mockRejectedValue(failure);
-      const { useCase, incidents } = createUseCase(unreadable);
+      const inMemoryClientResourcesAdapter =
+        new InMemoryClientResourcesAdapter();
+      vi.spyOn(inMemoryClientResourcesAdapter, read).mockRejectedValue(failure);
+      const { listOwnResourcesUseCase, incidents } = createUseCase(
+        inMemoryClientResourcesAdapter,
+      );
 
       // act
-      const result = await useCase.execute({
+      const result = await listOwnResourcesUseCase.execute({
         requester: ANA,
         browse: NOTHING_CHOSEN,
       });

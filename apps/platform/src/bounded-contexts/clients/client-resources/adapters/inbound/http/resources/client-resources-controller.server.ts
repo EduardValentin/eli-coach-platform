@@ -35,11 +35,11 @@ import {
 } from "~/bounded-contexts/access/public/session";
 
 type ClientResourcesControllerOptions = {
-  addClientResource: AddClientResourceUseCase;
-  openResourcePreview: OpenResourcePreviewUseCase;
-  downloadClientResource: DownloadClientResourceUseCase;
-  changeResourceDetails: ChangeResourceDetailsUseCase;
-  removeClientResource: RemoveClientResourceUseCase;
+  addClientResourceUseCase: AddClientResourceUseCase;
+  openResourcePreviewUseCase: OpenResourcePreviewUseCase;
+  downloadClientResourceUseCase: DownloadClientResourceUseCase;
+  changeResourceDetailsUseCase: ChangeResourceDetailsUseCase;
+  removeClientResourceUseCase: RemoveClientResourceUseCase;
 };
 
 const MULTIPART_ALLOWANCE_BYTES = 1024 * 1024;
@@ -91,7 +91,7 @@ export class ClientResourcesController {
       return createBadRequestResponse("The resource could not be read.");
     }
 
-    const result = await this.options.addClientResource.execute({
+    const result = await this.options.addClientResourceUseCase.execute({
       requester,
       clientId: target.data,
       ...upload,
@@ -119,7 +119,7 @@ export class ClientResourcesController {
       return createBadRequestResponse("The details could not be read.");
     }
 
-    const result = await this.options.changeResourceDetails.execute({
+    const result = await this.options.changeResourceDetailsUseCase.execute({
       requester,
       resourceId: id.data,
       details: details.data,
@@ -157,7 +157,7 @@ export class ClientResourcesController {
       return notFoundResponse();
     }
 
-    const result = await this.options.removeClientResource.execute({
+    const result = await this.options.removeClientResourceUseCase.execute({
       requester,
       resourceId: id.data,
     });
@@ -208,7 +208,7 @@ export class ClientResourcesController {
       return notFoundResponse();
     }
 
-    const result = await this.options.downloadClientResource.execute({
+    const result = await this.options.downloadClientResourceUseCase.execute({
       requester,
       resourceId: id.data,
     });
@@ -235,7 +235,7 @@ export class ClientResourcesController {
       return notFoundResponse();
     }
 
-    const result = await this.options.openResourcePreview.execute({
+    const result = await this.options.openResourcePreviewUseCase.execute({
       requester,
       resourceId: id.data,
       preview: wanted.preview,

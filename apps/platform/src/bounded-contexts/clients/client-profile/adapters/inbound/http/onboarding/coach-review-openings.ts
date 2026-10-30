@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientOnboardingContext)
-      .coachReview.openReview(args);
+      .onboardingReviewController.openReview(args);
   });
 }
 

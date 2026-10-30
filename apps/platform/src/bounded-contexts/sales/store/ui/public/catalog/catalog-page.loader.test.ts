@@ -143,7 +143,9 @@ function createLoaderArguments(url: string, products: readonly unknown[]) {
 
 function createLoaderArgumentsForResponse(url: string, response: Response) {
   const feature = {
-    catalog: { getPublishedCatalog: vi.fn().mockResolvedValue(response) },
+    storeCatalogController: {
+      getPublishedCatalog: vi.fn().mockResolvedValue(response),
+    },
   } as unknown as StoreFeature;
 
   return {

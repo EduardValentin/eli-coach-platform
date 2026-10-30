@@ -27,11 +27,14 @@ export type EditRecipeResult =
   | { status: "failed" };
 
 type EditRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibraryPort, "find" | "list" | "replace">;
-  foods: Pick<FoodLibraryPort, "list" | "referenced">;
-  tags: Pick<NutritionTagsPort, "list">;
-  clock: ClockPort;
-  incidents: Pick<NutritionLibraryIncidentsPort, "recipeEditFailed">;
+  recipeLibraryPort: Pick<RecipeLibraryPort, "find" | "list" | "replace">;
+  foodLibraryPort: Pick<FoodLibraryPort, "list" | "referenced">;
+  nutritionTagsPort: Pick<NutritionTagsPort, "list">;
+  clockPort: ClockPort;
+  nutritionLibraryIncidentsPort: Pick<
+    NutritionLibraryIncidentsPort,
+    "recipeEditFailed"
+  >;
   photos: RecipePhotoSavingPort;
 };
 
@@ -42,7 +45,7 @@ export class EditRecipeUseCase {
     try {
       return await this.edit(command);
     } catch (error) {
-      this.options.incidents.recipeEditFailed({
+      this.options.nutritionLibraryIncidentsPort.recipeEditFailed({
         recipeId: command.recipeId,
         error,
       });
@@ -57,17 +60,23 @@ export class EditRecipeUseCase {
     draft: input,
     photo: choice,
   }: EditRecipeCommand): Promise<EditRecipeResult> {
-    const { recipes, foods, tags, clock, photos } = this.options;
+    const {
+      recipeLibraryPort,
+      foodLibraryPort,
+      nutritionTagsPort,
+      clockPort,
+      photos,
+    } = this.options;
     const [recipe, storedRecipes, activeFoods, vocabulary] = await Promise.all([
-      recipes.find({ ownerAccountId, recipeId }),
-      recipes.list(ownerAccountId),
-      foods.list(ownerAccountId),
-      tags.list(),
+      recipeLibraryPort.find({ ownerAccountId, recipeId }),
+      recipeLibraryPort.list(ownerAccountId),
+      foodLibraryPort.list(ownerAccountId),
+      nutritionTagsPort.list(),
     ]);
 
     if (!recipe) return { status: "not-found" };
 
-    const referencedFoods = await foods.referenced({
+    const referencedFoods = await foodLibraryPort.referenced({
       ownerAccountId,
       foodIds: recipe.ingredientFoodIds,
     });
@@ -92,12 +101,12 @@ export class EditRecipeUseCase {
     const revision = recipe.revised({
       draft: draft.draft,
       photo: change,
-      at: clock.now(),
+      at: clockPort.now(),
     });
 
     if (
       (await photos.writeOrRemoveStored(change, () =>
-        recipes.replace(revision.recipe),
+        recipeLibraryPort.replace(revision.recipe),
       )) === "name-taken"
     ) {
       return { status: "invalid", problems: { name: "taken" } };

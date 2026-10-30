@@ -31,10 +31,12 @@ export async function loader(args: LoaderFunctionArgs) {
   }
 
   const [client, listing] = await Promise.all([
-    args.context.get(clientsContext).coachClients.loadClient(args, clientId),
+    args.context
+      .get(clientsContext)
+      .coachClientsController.loadClient(args, clientId),
     args.context
       .get(clientResourcesContext)
-      .coachResources.load(args, clientId),
+      .coachResourcesController.load(args, clientId),
   ]);
 
   return { client, listing };

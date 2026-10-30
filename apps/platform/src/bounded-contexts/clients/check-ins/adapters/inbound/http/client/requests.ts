@@ -17,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return args.context.get(checkInsContext).clientCheckIns.request(args);
+    return args.context
+      .get(checkInsContext)
+      .clientCheckInsController.request(args);
   });
 }
 

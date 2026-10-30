@@ -114,8 +114,12 @@ class InMemoryResourceStoreAdapter implements ClientResourceStorePort {
 
 function createUseCase() {
   const removals: string[] = [];
-  const resources = new InMemoryClientResourcesAdapter(removals);
-  const store = new InMemoryResourceStoreAdapter(removals);
+  const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter(
+    removals,
+  );
+  const inMemoryResourceStoreAdapter = new InMemoryResourceStoreAdapter(
+    removals,
+  );
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -145,23 +149,35 @@ function createUseCase() {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const useCase = new RemoveClientResourceUseCase({
-    resources,
-    clients,
-    store,
-    incidents,
+  const removeClientResourceUseCase = new RemoveClientResourceUseCase({
+    clientResourcesPort: inMemoryClientResourcesAdapter,
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryResourceStoreAdapter,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, resources, store, incidents, removals };
+  return {
+    removeClientResourceUseCase,
+    inMemoryClientResourcesAdapter,
+    inMemoryResourceStoreAdapter,
+    incidents,
+    removals,
+  };
 }
 
 describe("RemoveClientResourceUseCase", () => {
   it("removes the row before the files", async () => {
     // arrange
-    const { useCase, resources, store, incidents, removals } = createUseCase();
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+      removals,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await removeClientResourceUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
     });
@@ -169,27 +185,32 @@ describe("RemoveClientResourceUseCase", () => {
     // assert
     expect(result).toEqual({ status: "removed" });
     expect(removals).toEqual(["row resource-1", "files resource-1"]);
-    expect(store.remove).toHaveBeenCalledWith(OWNER);
-    expect(resources.has("resource-1")).toBe(false);
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.remove).toHaveBeenCalledWith(OWNER);
+    expect(inMemoryClientResourcesAdapter.has("resource-1")).toBe(false);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
     expect(incidents.resourceFilesOrphaned).not.toHaveBeenCalled();
   });
 
   it("answers removed and reports the orphaned files when they cannot be removed after the row", async () => {
     // arrange
     const failure = new Error("EACCES: permission denied");
-    const { useCase, resources, store, incidents } = createUseCase();
-    store.remove.mockRejectedValueOnce(failure);
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryResourceStoreAdapter.remove.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await removeClientResourceUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
     });
 
     // assert
     expect(result).toEqual({ status: "removed" });
-    expect(resources.has("resource-1")).toBe(false);
+    expect(inMemoryClientResourcesAdapter.has("resource-1")).toBe(false);
     expect(incidents.resourceFilesOrphaned).toHaveBeenCalledWith({
       ...OWNER,
       error: failure,
@@ -199,19 +220,28 @@ describe("RemoveClientResourceUseCase", () => {
   it("answers failed, leaves the files and reports the failed change when the row cannot be removed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, resources, store, incidents } = createUseCase();
-    resources.remove.mockRejectedValueOnce(failure);
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryClientResourcesAdapter.remove.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await removeClientResourceUseCase.execute({
       requester: COACH,
       resourceId: "resource-1",
     });
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(store.remove).not.toHaveBeenCalled();
-    expect(store.storedNames()).toEqual(["original", "page-1", "thumbnail"]);
+    expect(inMemoryResourceStoreAdapter.remove).not.toHaveBeenCalled();
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([
+      "original",
+      "page-1",
+      "thumbnail",
+    ]);
     expect(incidents.resourceChangeFailed).toHaveBeenCalledWith({
       ...OWNER,
       error: failure,
@@ -228,35 +258,44 @@ describe("RemoveClientResourceUseCase", () => {
     "finds nothing for %s and reports the refusal",
     async (_case, requester) => {
       // arrange
-      const { useCase, resources, store, incidents } = createUseCase();
+      const {
+        removeClientResourceUseCase,
+        inMemoryClientResourcesAdapter,
+        inMemoryResourceStoreAdapter,
+        incidents,
+      } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await removeClientResourceUseCase.execute({
         requester,
         resourceId: "resource-1",
       });
 
       // assert
       expect(result).toEqual({ status: "not-found" });
-      expect(resources.has("resource-1")).toBe(true);
-      expect(store.remove).not.toHaveBeenCalled();
+      expect(inMemoryClientResourcesAdapter.has("resource-1")).toBe(true);
+      expect(inMemoryResourceStoreAdapter.remove).not.toHaveBeenCalled();
       expect(incidents.resourceAccessRefused).toHaveBeenCalledOnce();
     },
   );
 
   it("finds nothing to remove for an unknown resource", async () => {
     // arrange
-    const { useCase, resources, store } = createUseCase();
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await removeClientResourceUseCase.execute({
       requester: COACH,
       resourceId: "resource-404",
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(resources.remove).not.toHaveBeenCalled();
-    expect(store.remove).not.toHaveBeenCalled();
+    expect(inMemoryClientResourcesAdapter.remove).not.toHaveBeenCalled();
+    expect(inMemoryResourceStoreAdapter.remove).not.toHaveBeenCalled();
   });
 });

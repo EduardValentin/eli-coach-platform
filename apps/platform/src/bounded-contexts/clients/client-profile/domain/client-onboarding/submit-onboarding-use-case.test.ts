@@ -220,27 +220,33 @@ function createIncidents() {
 
 function createUseCase(
   ports: {
-    clients?: OnboardingClientsPort;
-    identities?: Pick<ClientIdentitiesPort, "findByClientId">;
-    onboardings?: ClientOnboardingSourcePort;
-    settings?: ClientSettingsSourcePort;
-    changes?: ClientOnboardingChangesPort;
-    stamps?: OnboardingSubmissionStampsPort;
-    incidents?: ClientOnboardingIncidentsPort;
+    onboardingClientsPort?: OnboardingClientsPort;
+    clientIdentitiesPort?: Pick<ClientIdentitiesPort, "findByClientId">;
+    clientOnboardingSourcePort?: ClientOnboardingSourcePort;
+    clientSettingsSourcePort?: ClientSettingsSourcePort;
+    clientOnboardingChangesPort?: ClientOnboardingChangesPort;
+    onboardingSubmissionStampsPort?: OnboardingSubmissionStampsPort;
+    clientOnboardingIncidentsPort?: ClientOnboardingIncidentsPort;
   } = {},
 ) {
   return new SubmitOnboardingUseCase({
     participants: new OnboardingParticipants({
-      clients: ports.clients ?? createClients(CLIENT),
-      identities: ports.identities ?? createIdentities(),
+      onboardingClientsPort:
+        ports.onboardingClientsPort ?? createClients(CLIENT),
+      clientIdentitiesPort: ports.clientIdentitiesPort ?? createIdentities(),
     }),
-    onboardings: ports.onboardings ?? createOnboardings(),
-    settings: ports.settings ?? createSettings(),
-    changes: ports.changes ?? createChanges(),
-    measurementIds: { generate: () => "entry-1" },
-    stamps: ports.stamps ?? createStamps(),
-    clock: { now: () => NOW },
-    incidents: ports.incidents ?? createIncidents(),
+    clientOnboardingSourcePort:
+      ports.clientOnboardingSourcePort ?? createOnboardings(),
+    clientSettingsSourcePort:
+      ports.clientSettingsSourcePort ?? createSettings(),
+    clientOnboardingChangesPort:
+      ports.clientOnboardingChangesPort ?? createChanges(),
+    measurementIdsPort: { generate: () => "entry-1" },
+    onboardingSubmissionStampsPort:
+      ports.onboardingSubmissionStampsPort ?? createStamps(),
+    clockPort: { now: () => NOW },
+    clientOnboardingIncidentsPort:
+      ports.clientOnboardingIncidentsPort ?? createIncidents(),
   });
 }
 
@@ -250,11 +256,15 @@ describe("SubmitOnboardingUseCase", () => {
     const changes = createChanges();
     const stamps = createStamps();
     const incidents = createIncidents();
-    const useCase = createUseCase({ changes, stamps, incidents });
+    const submitOnboardingUseCase = createUseCase({
+      clientOnboardingChangesPort: changes,
+      onboardingSubmissionStampsPort: stamps,
+      clientOnboardingIncidentsPort: incidents,
+    });
     const consents = givenConsents();
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_radu",
       answers: completeAnswers(),
       consents,
@@ -289,13 +299,16 @@ describe("SubmitOnboardingUseCase", () => {
   it("reports the manual screening outcome for a client screened by hand", async () => {
     // arrange
     const incidents = createIncidents();
-    const useCase = createUseCase({
-      identities: createIdentities({ ...IDENTITY, dateOfBirth: "2012-01-01" }),
-      incidents,
+    const submitOnboardingUseCase = createUseCase({
+      clientIdentitiesPort: createIdentities({
+        ...IDENTITY,
+        dateOfBirth: "2012-01-01",
+      }),
+      clientOnboardingIncidentsPort: incidents,
     });
 
     // act
-    await useCase.execute({
+    await submitOnboardingUseCase.execute({
       authSubjectId: "user_radu",
       answers: completeAnswers(),
       consents: givenConsents(),
@@ -322,15 +335,15 @@ describe("SubmitOnboardingUseCase", () => {
       const changes = createChanges();
       const stamps = createStamps();
       const incidents = createIncidents();
-      const useCase = createUseCase({
-        settings: createSettings(preference),
-        changes,
-        stamps,
-        incidents,
+      const submitOnboardingUseCase = createUseCase({
+        clientSettingsSourcePort: createSettings(preference),
+        clientOnboardingChangesPort: changes,
+        onboardingSubmissionStampsPort: stamps,
+        clientOnboardingIncidentsPort: incidents,
       });
 
       // act
-      const result = await useCase.execute({
+      const result = await submitOnboardingUseCase.execute({
         authSubjectId: "user_radu",
         answers: answersWithWeight(20),
         consents: givenConsents(),
@@ -354,10 +367,13 @@ describe("SubmitOnboardingUseCase", () => {
     // arrange
     const changes = createChanges();
     const incidents = createIncidents();
-    const useCase = createUseCase({ changes, incidents });
+    const submitOnboardingUseCase = createUseCase({
+      clientOnboardingChangesPort: changes,
+      clientOnboardingIncidentsPort: incidents,
+    });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_radu",
       answers: completeAnswers(),
       consents: { ...givenConsents(), disclaimerAt: null },
@@ -380,19 +396,19 @@ describe("SubmitOnboardingUseCase", () => {
     const changes = createChanges();
     const stamps = createStamps();
     const incidents = createIncidents();
-    const useCase = createUseCase({
-      onboardings: createOnboardings({
+    const submitOnboardingUseCase = createUseCase({
+      clientOnboardingSourcePort: createOnboardings({
         answers: completeAnswers(),
         consents: givenConsents(),
         submittedAt: EARLIER_SUBMITTED_AT,
       }),
-      changes,
-      stamps,
-      incidents,
+      clientOnboardingChangesPort: changes,
+      onboardingSubmissionStampsPort: stamps,
+      clientOnboardingIncidentsPort: incidents,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_radu",
       answers: completeAnswers(),
       consents: givenConsents(),
@@ -415,14 +431,16 @@ describe("SubmitOnboardingUseCase", () => {
     // arrange
     const stamps = createStamps();
     const incidents = createIncidents();
-    const useCase = createUseCase({
-      changes: createChanges({ status: "already-submitted" }),
-      stamps,
-      incidents,
+    const submitOnboardingUseCase = createUseCase({
+      clientOnboardingChangesPort: createChanges({
+        status: "already-submitted",
+      }),
+      onboardingSubmissionStampsPort: stamps,
+      clientOnboardingIncidentsPort: incidents,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_radu",
       answers: completeAnswers(),
       consents: givenConsents(),
@@ -446,7 +464,7 @@ describe("SubmitOnboardingUseCase", () => {
     const stamps = createStamps();
     const incidents = createIncidents();
     const concurrentSubmittedAt = new Date("2026-09-28T09:55:00.000Z");
-    const onboardings: ClientOnboardingSourcePort = {
+    const clientOnboardingSourcePort: ClientOnboardingSourcePort = {
       findByClientId: vi
         .fn()
         .mockResolvedValueOnce({ draft: null, submission: null })
@@ -459,15 +477,17 @@ describe("SubmitOnboardingUseCase", () => {
           },
         }),
     };
-    const useCase = createUseCase({
-      onboardings,
-      changes: createChanges({ status: "already-submitted" }),
-      stamps,
-      incidents,
+    const submitOnboardingUseCase = createUseCase({
+      clientOnboardingSourcePort,
+      clientOnboardingChangesPort: createChanges({
+        status: "already-submitted",
+      }),
+      onboardingSubmissionStampsPort: stamps,
+      clientOnboardingIncidentsPort: incidents,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_radu",
       answers: completeAnswers(),
       consents: givenConsents(),
@@ -475,7 +495,7 @@ describe("SubmitOnboardingUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "already-submitted" });
-    expect(onboardings.findByClientId).toHaveBeenCalledTimes(2);
+    expect(clientOnboardingSourcePort.findByClientId).toHaveBeenCalledTimes(2);
     expect(stamps.recordOnboardingSubmitted).toHaveBeenCalledWith({
       clientId: "client-1",
       at: concurrentSubmittedAt,
@@ -488,16 +508,16 @@ describe("SubmitOnboardingUseCase", () => {
     const changes = createChanges();
     const stamps = createStamps();
     const incidents = createIncidents();
-    const useCase = createUseCase({
-      clients: createClients(null),
-      onboardings,
-      changes,
-      stamps,
-      incidents,
+    const submitOnboardingUseCase = createUseCase({
+      onboardingClientsPort: createClients(null),
+      clientOnboardingSourcePort: onboardings,
+      clientOnboardingChangesPort: changes,
+      onboardingSubmissionStampsPort: stamps,
+      clientOnboardingIncidentsPort: incidents,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_stranger",
       answers: completeAnswers(),
       consents: givenConsents(),
@@ -515,14 +535,16 @@ describe("SubmitOnboardingUseCase", () => {
     // arrange
     const changes = createChanges();
     const stamps = createStamps();
-    const useCase = createUseCase({
-      clients: createClients(clientWithAccessEndingAt(ENDED_ACCESS_AT)),
-      changes,
-      stamps,
+    const submitOnboardingUseCase = createUseCase({
+      onboardingClientsPort: createClients(
+        clientWithAccessEndingAt(ENDED_ACCESS_AT),
+      ),
+      clientOnboardingChangesPort: changes,
+      onboardingSubmissionStampsPort: stamps,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_ana",
       answers: completeAnswers(),
       consents: givenConsents(),
@@ -537,13 +559,15 @@ describe("SubmitOnboardingUseCase", () => {
   it("submits the answers of a client who cancelled while her access runs on", async () => {
     // arrange
     const changes = createChanges();
-    const useCase = createUseCase({
-      clients: createClients(clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT)),
-      changes,
+    const submitOnboardingUseCase = createUseCase({
+      onboardingClientsPort: createClients(
+        clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT),
+      ),
+      clientOnboardingChangesPort: changes,
     });
 
     // act
-    const result = await useCase.execute({
+    const result = await submitOnboardingUseCase.execute({
       authSubjectId: "user_ana",
       answers: completeAnswers(),
       consents: givenConsents(),

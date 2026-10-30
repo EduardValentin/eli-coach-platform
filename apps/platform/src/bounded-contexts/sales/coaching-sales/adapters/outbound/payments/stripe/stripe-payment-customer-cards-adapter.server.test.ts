@@ -51,10 +51,12 @@ describe("StripePaymentCustomerCards", () => {
         invoice_settings: { default_payment_method: "pm_visa" },
       }),
     });
-    const cards = new StripePaymentCustomerCardsAdapter(client);
+    const stripePaymentCustomerCardsAdapter =
+      new StripePaymentCustomerCardsAdapter(client);
 
     // act
-    const card = await cards.readDefaultCard("cus_1");
+    const card =
+      await stripePaymentCustomerCardsAdapter.readDefaultCard("cus_1");
 
     // assert
     expect(card).toEqual(VISA);
@@ -77,10 +79,12 @@ describe("StripePaymentCustomerCards", () => {
         },
       }),
     });
-    const cards = new StripePaymentCustomerCardsAdapter(client);
+    const stripePaymentCustomerCardsAdapter =
+      new StripePaymentCustomerCardsAdapter(client);
 
     // act
-    const card = await cards.readDefaultCard("cus_1");
+    const card =
+      await stripePaymentCustomerCardsAdapter.readDefaultCard("cus_1");
 
     // assert
     expect(card).toEqual(VISA);
@@ -90,10 +94,12 @@ describe("StripePaymentCustomerCards", () => {
   it("reads no card without asking for a payment method when none is the default", async () => {
     // arrange
     const client = createStubClient({ customer: customer() });
-    const cards = new StripePaymentCustomerCardsAdapter(client);
+    const stripePaymentCustomerCardsAdapter =
+      new StripePaymentCustomerCardsAdapter(client);
 
     // act
-    const card = await cards.readDefaultCard("cus_1");
+    const card =
+      await stripePaymentCustomerCardsAdapter.readDefaultCard("cus_1");
 
     // assert
     expect(card).toBeNull();
@@ -105,10 +111,12 @@ describe("StripePaymentCustomerCards", () => {
     const client = createStubClient({
       customer: { id: "cus_1", object: "customer", deleted: true },
     });
-    const cards = new StripePaymentCustomerCardsAdapter(client);
+    const stripePaymentCustomerCardsAdapter =
+      new StripePaymentCustomerCardsAdapter(client);
 
     // act
-    const card = await cards.readDefaultCard("cus_1");
+    const card =
+      await stripePaymentCustomerCardsAdapter.readDefaultCard("cus_1");
 
     // assert
     expect(card).toBeNull();
@@ -127,10 +135,12 @@ describe("StripePaymentCustomerCards", () => {
         customer: "cus_1",
       },
     });
-    const cards = new StripePaymentCustomerCardsAdapter(client);
+    const stripePaymentCustomerCardsAdapter =
+      new StripePaymentCustomerCardsAdapter(client);
 
     // act
-    const card = await cards.readDefaultCard("cus_1");
+    const card =
+      await stripePaymentCustomerCardsAdapter.readDefaultCard("cus_1");
 
     // assert
     expect(card).toBeNull();
@@ -141,10 +151,11 @@ describe("StripePaymentCustomerCards", () => {
     const failure = new Error("Stripe is down");
     const client = createStubClient({ customer: customer() });
     client.customers.retrieve.mockRejectedValue(failure);
-    const cards = new StripePaymentCustomerCardsAdapter(client);
+    const stripePaymentCustomerCardsAdapter =
+      new StripePaymentCustomerCardsAdapter(client);
 
     // act
-    const reading = cards.readDefaultCard("cus_1");
+    const reading = stripePaymentCustomerCardsAdapter.readDefaultCard("cus_1");
 
     // assert
     await expect(reading).rejects.toBe(failure);

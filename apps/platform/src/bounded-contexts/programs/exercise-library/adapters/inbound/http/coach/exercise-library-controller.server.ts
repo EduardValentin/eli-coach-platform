@@ -50,15 +50,15 @@ import {
 } from "~/bounded-contexts/access/public/session";
 
 type ExerciseLibraryControllerOptions = {
-  listExercises: ListExercisesUseCase;
-  findExercise: FindExerciseUseCase;
-  createExercise: CreateExerciseUseCase;
-  editExercise: EditExerciseUseCase;
-  stageExerciseVideo: StageExerciseVideoUseCase;
-  openExerciseVideo: OpenExerciseVideoUseCase;
-  archiveExercise: ArchiveExerciseUseCase;
-  restoreExercise: RestoreExerciseUseCase;
-  deleteExercise: DeleteExerciseUseCase;
+  listExercisesUseCase: ListExercisesUseCase;
+  findExerciseUseCase: FindExerciseUseCase;
+  createExerciseUseCase: CreateExerciseUseCase;
+  editExerciseUseCase: EditExerciseUseCase;
+  stageExerciseVideoUseCase: StageExerciseVideoUseCase;
+  openExerciseVideoUseCase: OpenExerciseVideoUseCase;
+  archiveExerciseUseCase: ArchiveExerciseUseCase;
+  restoreExerciseUseCase: RestoreExerciseUseCase;
+  deleteExerciseUseCase: DeleteExerciseUseCase;
 };
 
 type ExerciseVideoAddress = {
@@ -86,14 +86,18 @@ export class ExerciseLibraryController {
 
   async list(args: LoaderFunctionArgs): Promise<ExerciseLibraryView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { exercises } = await this.options.listExercises.execute(coach.id);
+    const { exercises } = await this.options.listExercisesUseCase.execute(
+      coach.id,
+    );
 
     return { exercises: exercises.map(presentExercise) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { exercises } = await this.options.listExercises.execute(coach.id);
+    const { exercises } = await this.options.listExercisesUseCase.execute(
+      coach.id,
+    );
 
     return {
       exercise: null,
@@ -112,7 +116,7 @@ export class ExerciseLibraryController {
       throw this.backToLibrary();
     }
 
-    const found = await this.options.findExercise.execute({
+    const found = await this.options.findExerciseUseCase.execute({
       ownerAccountId: coach.id,
       exerciseId: id.data,
     });
@@ -137,7 +141,7 @@ export class ExerciseLibraryController {
       return this.unreadSaveResponse(save);
     }
 
-    const result = await this.options.createExercise.execute({
+    const result = await this.options.createExerciseUseCase.execute({
       ownerAccountId: coach.id,
       draft: save.draft,
       video: save.video,
@@ -172,7 +176,7 @@ export class ExerciseLibraryController {
       return this.unreadSaveResponse(save);
     }
 
-    const result = await this.options.editExercise.execute({
+    const result = await this.options.editExerciseUseCase.execute({
       ownerAccountId: coach.id,
       exerciseId: id.data,
       draft: save.draft,
@@ -206,7 +210,7 @@ export class ExerciseLibraryController {
       return this.notFoundResponse();
     }
 
-    const result = await this.options.archiveExercise.execute(reference);
+    const result = await this.options.archiveExerciseUseCase.execute(reference);
 
     switch (result.status) {
       case "archived":
@@ -229,7 +233,7 @@ export class ExerciseLibraryController {
       return this.notFoundResponse();
     }
 
-    const result = await this.options.restoreExercise.execute(reference);
+    const result = await this.options.restoreExerciseUseCase.execute(reference);
 
     switch (result.status) {
       case "restored":
@@ -254,7 +258,7 @@ export class ExerciseLibraryController {
       return this.notFoundResponse();
     }
 
-    const result = await this.options.deleteExercise.execute(reference);
+    const result = await this.options.deleteExerciseUseCase.execute(reference);
 
     switch (result.status) {
       case "deleted":
@@ -275,7 +279,7 @@ export class ExerciseLibraryController {
       return this.notFoundResponse();
     }
 
-    const result = await this.options.openExerciseVideo.execute({
+    const result = await this.options.openExerciseVideoUseCase.execute({
       viewer: this.viewerOf(args),
       exerciseId: exerciseId.data,
       videoId: videoId.data,
@@ -324,7 +328,8 @@ export class ExerciseLibraryController {
     const form = await readStreamingFormData(request, {
       maxTotalBytes: MAX_EXERCISE_VIDEO_BYTES + MULTIPART_ALLOWANCE_BYTES,
       fileField: EXERCISE_FORM_FIELDS.video,
-      receiveFile: (bytes) => this.options.stageExerciseVideo.execute(bytes),
+      receiveFile: (bytes) =>
+        this.options.stageExerciseVideoUseCase.execute(bytes),
     });
 
     if (form.status !== "valid") {
@@ -368,7 +373,7 @@ export class ExerciseLibraryController {
 
   private async discardStaged(staged: StagedExerciseVideo | null) {
     if (staged) {
-      await this.options.stageExerciseVideo.discard(staged);
+      await this.options.stageExerciseVideoUseCase.discard(staged);
     }
   }
 

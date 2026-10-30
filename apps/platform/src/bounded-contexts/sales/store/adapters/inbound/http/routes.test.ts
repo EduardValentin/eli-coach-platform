@@ -37,7 +37,7 @@ describe("Store API routes", () => {
     const getPublishedCatalog = vi.fn().mockResolvedValue(response);
     const args = storeArgs(
       new Request("https://eli.example/api/store/catalog"),
-      { catalog: { getPublishedCatalog } as never },
+      { storeCatalogController: { getPublishedCatalog } as never },
     );
 
     // act
@@ -70,10 +70,14 @@ describe("Store API routes", () => {
 
     // act
     const acquired = await acquisitionsRoute.action(
-      storeArgs(acquisitionRequest, { acquisitions: { acquire } as never }),
+      storeArgs(acquisitionRequest, {
+        storeAcquisitionController: { acquire } as never,
+      }),
     );
     const downloaded = await downloadsRoute.action(
-      storeArgs(downloadRequest, { downloads: { download } as never }),
+      storeArgs(downloadRequest, {
+        storeDownloadController: { download } as never,
+      }),
     );
 
     // assert
@@ -90,7 +94,7 @@ describe("Store API routes", () => {
     const request = new Request(
       "https://eli.example/api/store/covers/cover.webp",
     );
-    const feature = { covers: { getCover } as never };
+    const feature = { storeCoverAssetController: { getCover } as never };
 
     // act
     const loaded = await coverRoute.loader(
@@ -116,7 +120,7 @@ describe("Store API routes", () => {
       retireProduct: vi.fn().mockResolvedValue(retired),
       validate: vi.fn().mockResolvedValue(planned),
     };
-    const feature = { management: management as never };
+    const feature = { storeProductManagementController: management as never };
     const validationRequest = new Request(
       "https://eli.example/api/management/store/product-validations",
       { method: "POST" },
@@ -170,7 +174,7 @@ describe("Store API routes", () => {
       retireProduct: vi.fn(),
       validate: vi.fn(),
     };
-    const feature = { management: management as never };
+    const feature = { storeProductManagementController: management as never };
     const readRequest = new Request(
       "https://eli.example/api/management/store/products",
       { method: "GET" },

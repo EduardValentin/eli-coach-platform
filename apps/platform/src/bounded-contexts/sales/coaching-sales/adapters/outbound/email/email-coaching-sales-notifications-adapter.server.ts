@@ -12,7 +12,7 @@ import { createPaymentLinkEmailContent } from "./payment-link-email.server";
 
 export type EmailCoachingSalesNotificationsOptions = {
   appBasePath: string;
-  clock: ClockPort;
+  clockPort: ClockPort;
   contactEmail: string;
   publicAppUrl: string;
 };
@@ -21,7 +21,7 @@ const TERMS_PATH = "/terms";
 
 export class EmailCoachingSalesNotificationsAdapter implements CoachingSalesNotificationsPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailCoachingSalesNotificationsOptions,
   ) {}
 
@@ -31,12 +31,12 @@ export class EmailCoachingSalesNotificationsAdapter implements CoachingSalesNoti
     const content = createPaymentLinkEmailContent({
       chooseUrl: this.buildUrl(selectBundlePath({ token: message.rawToken })),
       contactEmail: this.options.contactEmail,
-      currentYear: this.options.clock.now().getUTCFullYear(),
+      currentYear: this.options.clockPort.now().getUTCFullYear(),
       firstName: message.call.firstName,
       termsUrl: this.buildUrl(TERMS_PATH),
       tier: message.tier,
     });
-    const result = await this.productEmail.send({
+    const result = await this.productEmailPort.send({
       html: content.html,
       idempotencyKey: `payment-link:${message.paymentLinkId}`,
       replyTo: this.options.contactEmail,

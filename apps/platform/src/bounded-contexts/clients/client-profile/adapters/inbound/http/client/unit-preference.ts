@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientProfileContext)
-      .clientSettings.saveUnits(args);
+      .clientSettingsController.saveUnits(args);
   });
 }
 

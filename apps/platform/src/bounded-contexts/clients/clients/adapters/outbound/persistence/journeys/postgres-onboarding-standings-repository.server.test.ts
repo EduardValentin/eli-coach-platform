@@ -50,12 +50,16 @@ const ONBOARDING_CLIENT = {
 describe("PostgresOnboardingStandings#findByAuthSubjectId", () => {
   it("reads the client bound to the subject with her submission, review stamps and coaching standing", async () => {
     // arrange
-    const clients = new PostgresOnboardingStandingsRepository(
-      createDatabaseAnswering([CLIENT_ROW]),
-    );
+    const postgresOnboardingStandingsRepository =
+      new PostgresOnboardingStandingsRepository(
+        createDatabaseAnswering([CLIENT_ROW]),
+      );
 
     // act
-    const client = await clients.findByAuthSubjectId("user_ana");
+    const client =
+      await postgresOnboardingStandingsRepository.findByAuthSubjectId(
+        "user_ana",
+      );
 
     // assert
     expect(client).toEqual(ONBOARDING_CLIENT);
@@ -63,12 +67,14 @@ describe("PostgresOnboardingStandings#findByAuthSubjectId", () => {
 
   it("answers null for a subject no client is bound to", async () => {
     // arrange
-    const clients = new PostgresOnboardingStandingsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresOnboardingStandingsRepository =
+      new PostgresOnboardingStandingsRepository(createDatabaseAnswering([]));
 
     // act
-    const client = await clients.findByAuthSubjectId("user_unknown");
+    const client =
+      await postgresOnboardingStandingsRepository.findByAuthSubjectId(
+        "user_unknown",
+      );
 
     // assert
     expect(client).toBeNull();
@@ -78,12 +84,14 @@ describe("PostgresOnboardingStandings#findByAuthSubjectId", () => {
 describe("PostgresOnboardingStandings#findByClientId", () => {
   it("reads the client with her submission and review stamps", async () => {
     // arrange
-    const clients = new PostgresOnboardingStandingsRepository(
-      createDatabaseAnswering([CLIENT_ROW]),
-    );
+    const postgresOnboardingStandingsRepository =
+      new PostgresOnboardingStandingsRepository(
+        createDatabaseAnswering([CLIENT_ROW]),
+      );
 
     // act
-    const client = await clients.findByClientId(CLIENT_ID);
+    const client =
+      await postgresOnboardingStandingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(client).toEqual(ONBOARDING_CLIENT);
@@ -91,14 +99,16 @@ describe("PostgresOnboardingStandings#findByClientId", () => {
 
   it("reads no submission moment before she sent her onboarding", async () => {
     // arrange
-    const clients = new PostgresOnboardingStandingsRepository(
-      createDatabaseAnswering([
-        { ...CLIENT_ROW, submittedAt: null, reviewOpenedAt: null },
-      ]),
-    );
+    const postgresOnboardingStandingsRepository =
+      new PostgresOnboardingStandingsRepository(
+        createDatabaseAnswering([
+          { ...CLIENT_ROW, submittedAt: null, reviewOpenedAt: null },
+        ]),
+      );
 
     // act
-    const client = await clients.findByClientId(CLIENT_ID);
+    const client =
+      await postgresOnboardingStandingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(client?.submittedAt).toBeNull();
@@ -114,14 +124,16 @@ describe("PostgresOnboardingStandings#findByClientId", () => {
     "reads her coaching as closed for a %s standing on her row: %s",
     async (status, expected) => {
       // arrange
-      const clients = new PostgresOnboardingStandingsRepository(
-        createDatabaseAnswering([
-          { ...CLIENT_ROW, standing: standingOf(status) },
-        ]),
-      );
+      const postgresOnboardingStandingsRepository =
+        new PostgresOnboardingStandingsRepository(
+          createDatabaseAnswering([
+            { ...CLIENT_ROW, standing: standingOf(status) },
+          ]),
+        );
 
       // act
-      const client = await clients.findByClientId(CLIENT_ID);
+      const client =
+        await postgresOnboardingStandingsRepository.findByClientId(CLIENT_ID);
 
       // assert
       expect(client?.standing.isCancelledOrEnded()).toBe(expected);
@@ -130,12 +142,12 @@ describe("PostgresOnboardingStandings#findByClientId", () => {
 
   it("answers null for an unknown client", async () => {
     // arrange
-    const clients = new PostgresOnboardingStandingsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresOnboardingStandingsRepository =
+      new PostgresOnboardingStandingsRepository(createDatabaseAnswering([]));
 
     // act
-    const client = await clients.findByClientId(CLIENT_ID);
+    const client =
+      await postgresOnboardingStandingsRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(client).toBeNull();

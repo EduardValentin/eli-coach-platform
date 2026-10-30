@@ -34,16 +34,19 @@ const REFERENCES_LEAVING_THE_ROOT = [
 describe("EncryptedFilesystemClientMediaStore", () => {
   let workspace: string;
   let root: string;
-  let store: EncryptedFilesystemClientMediaStoreAdapter<typeof OWNER>;
+  let encryptedFilesystemClientMediaStoreAdapter: EncryptedFilesystemClientMediaStoreAdapter<
+    typeof OWNER
+  >;
 
   beforeEach(async () => {
     workspace = await mkdtemp(join(tmpdir(), "progress-photo-store-"));
     root = join(workspace, "media");
     await mkdir(root);
-    store = new EncryptedFilesystemClientMediaStoreAdapter(
-      { root, key: randomBytes(32), keyId: KEY_ID },
-      progressPhotoStorageKey,
-    );
+    encryptedFilesystemClientMediaStoreAdapter =
+      new EncryptedFilesystemClientMediaStoreAdapter(
+        { root, key: randomBytes(32), keyId: KEY_ID },
+        progressPhotoStorageKey,
+      );
   });
 
   afterEach(async () => {
@@ -53,8 +56,12 @@ describe("EncryptedFilesystemClientMediaStore", () => {
   it("opens the bytes it stored under the owner's layout and the configured key id", async () => {
     // arrange
     // act
-    const reference = await store.store(OWNER, PHOTO);
-    const opened = await store.open(reference);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
+    const opened =
+      await encryptedFilesystemClientMediaStoreAdapter.open(reference);
 
     // assert
     expect(reference).toEqual({
@@ -67,7 +74,10 @@ describe("EncryptedFilesystemClientMediaStore", () => {
   it("writes the photo encrypted, never as its plaintext", async () => {
     // arrange
     // act
-    const reference = await store.store(OWNER, PHOTO);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
 
     // assert
     const written = await readFile(join(root, reference.storageKey));
@@ -77,14 +87,17 @@ describe("EncryptedFilesystemClientMediaStore", () => {
 
   it("refuses a photo whose ciphertext was tampered with", async () => {
     // arrange
-    const reference = await store.store(OWNER, PHOTO);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
     const path = join(root, reference.storageKey);
     const written = await readFile(path);
     written[IV_BYTES] ^= 0xff;
     await writeFile(path, written);
 
     // act
-    const opening = store.open(reference);
+    const opening = encryptedFilesystemClientMediaStoreAdapter.open(reference);
 
     // assert
     await expect(opening).rejects.toThrow(
@@ -94,7 +107,10 @@ describe("EncryptedFilesystemClientMediaStore", () => {
 
   it("refuses a photo moved under another owner's storage key", async () => {
     // arrange
-    const reference = await store.store(OWNER, PHOTO);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
     const otherOwnerKey = "client-2/entry-2/photo-2.bin";
     await mkdir(join(root, "client-2/entry-2"), { recursive: true });
     await writeFile(
@@ -103,7 +119,10 @@ describe("EncryptedFilesystemClientMediaStore", () => {
     );
 
     // act
-    const opening = store.open({ storageKey: otherOwnerKey, keyId: KEY_ID });
+    const opening = encryptedFilesystemClientMediaStoreAdapter.open({
+      storageKey: otherOwnerKey,
+      keyId: KEY_ID,
+    });
 
     // assert
     await expect(opening).rejects.toThrow(
@@ -113,10 +132,16 @@ describe("EncryptedFilesystemClientMediaStore", () => {
 
   it("refuses a reference stored under a key id it is not configured with", async () => {
     // arrange
-    const reference = await store.store(OWNER, PHOTO);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
 
     // act
-    const opening = store.open({ ...reference, keyId: "retired-0" });
+    const opening = encryptedFilesystemClientMediaStoreAdapter.open({
+      ...reference,
+      keyId: "retired-0",
+    });
 
     // assert
     await expect(opening).rejects.toThrow(
@@ -127,7 +152,7 @@ describe("EncryptedFilesystemClientMediaStore", () => {
   it("opens nothing for a reference with no file behind it", async () => {
     // arrange
     // act
-    const opened = await store.open({
+    const opened = await encryptedFilesystemClientMediaStoreAdapter.open({
       storageKey: "client-1/entry-1/missing.bin",
       keyId: KEY_ID,
     });
@@ -143,7 +168,8 @@ describe("EncryptedFilesystemClientMediaStore", () => {
       const reference = { storageKey: key, keyId: KEY_ID };
 
       // act
-      const opening = store.open(reference);
+      const opening =
+        encryptedFilesystemClientMediaStoreAdapter.open(reference);
 
       // assert
       await expect(opening).rejects.toThrow("Invalid client media reference.");
@@ -157,7 +183,8 @@ describe("EncryptedFilesystemClientMediaStore", () => {
       const reference = { storageKey: key, keyId: KEY_ID };
 
       // act
-      const deleting = store.delete(reference);
+      const deleting =
+        encryptedFilesystemClientMediaStoreAdapter.delete(reference);
 
       // assert
       await expect(deleting).rejects.toThrow("Invalid client media reference.");
@@ -171,7 +198,10 @@ describe("EncryptedFilesystemClientMediaStore", () => {
   ])("refuses to store for the owner %j", async (owner) => {
     // arrange
     // act
-    const storing = store.store(owner, PHOTO);
+    const storing = encryptedFilesystemClientMediaStoreAdapter.store(
+      owner,
+      PHOTO,
+    );
 
     // assert
     await expect(storing).rejects.toThrow("Invalid progress photo owner.");
@@ -185,7 +215,7 @@ describe("EncryptedFilesystemClientMediaStore", () => {
     await symlink(outside, join(root, "client-1/entry-1/photo-1.bin"));
 
     // act
-    const opening = store.open({
+    const opening = encryptedFilesystemClientMediaStoreAdapter.open({
       storageKey: "client-1/entry-1/photo-1.bin",
       keyId: KEY_ID,
     });
@@ -201,7 +231,10 @@ describe("EncryptedFilesystemClientMediaStore", () => {
     await symlink(outside, join(root, "client-1"));
 
     // act
-    const storing = store.store(OWNER, PHOTO);
+    const storing = encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
 
     // assert
     await expect(storing).rejects.toThrow(
@@ -218,7 +251,7 @@ describe("EncryptedFilesystemClientMediaStore", () => {
     await symlink(outside, join(root, "client-1"));
 
     // act
-    const deleting = store.delete({
+    const deleting = encryptedFilesystemClientMediaStoreAdapter.delete({
       storageKey: "client-1/entry-1/photo-1.bin",
       keyId: KEY_ID,
     });
@@ -232,39 +265,53 @@ describe("EncryptedFilesystemClientMediaStore", () => {
 
   it("refuses to overwrite a photo already stored for the owner", async () => {
     // arrange
-    const reference = await store.store(OWNER, PHOTO);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
 
     // act
-    const storing = store.store(OWNER, new Uint8Array([9]));
+    const storing = encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      new Uint8Array([9]),
+    );
 
     // assert
     await expect(storing).rejects.toThrow(
       "A client media file is already stored under this key.",
     );
-    expect(await store.open(reference)).toEqual(PHOTO);
+    expect(
+      await encryptedFilesystemClientMediaStoreAdapter.open(reference),
+    ).toEqual(PHOTO);
   });
 
   it("deletes a stored photo and deletes again without failing", async () => {
     // arrange
-    const reference = await store.store(OWNER, PHOTO);
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
+      OWNER,
+      PHOTO,
+    );
 
     // act
-    await store.delete(reference);
-    await store.delete(reference);
+    await encryptedFilesystemClientMediaStoreAdapter.delete(reference);
+    await encryptedFilesystemClientMediaStoreAdapter.delete(reference);
 
     // assert
-    expect(await store.open(reference)).toBeNull();
+    expect(
+      await encryptedFilesystemClientMediaStoreAdapter.open(reference),
+    ).toBeNull();
   });
 
   it("stores a client avatar under her avatar folder with the avatar layout it is given", async () => {
     // arrange
-    const avatars = new EncryptedFilesystemClientMediaStoreAdapter(
-      { root, key: randomBytes(32), keyId: KEY_ID },
-      clientAvatarStorageKey,
-    );
+    const encryptedFilesystemClientMediaStoreAdapter =
+      new EncryptedFilesystemClientMediaStoreAdapter(
+        { root, key: randomBytes(32), keyId: KEY_ID },
+        clientAvatarStorageKey,
+      );
 
     // act
-    const reference = await avatars.store(
+    const reference = await encryptedFilesystemClientMediaStoreAdapter.store(
       { clientId: "client-1", avatarId: "avatar-1" },
       PHOTO,
     );
@@ -274,7 +321,9 @@ describe("EncryptedFilesystemClientMediaStore", () => {
       storageKey: "client-1/avatar/avatar-1.bin",
       keyId: KEY_ID,
     });
-    expect(await avatars.open(reference)).toEqual(PHOTO);
+    expect(
+      await encryptedFilesystemClientMediaStoreAdapter.open(reference),
+    ).toEqual(PHOTO);
   });
 
   it.each([
@@ -282,13 +331,17 @@ describe("EncryptedFilesystemClientMediaStore", () => {
     { clientId: "client-1", avatarId: "a/b" },
   ])("refuses to store an avatar for the owner %j", async (owner) => {
     // arrange
-    const avatars = new EncryptedFilesystemClientMediaStoreAdapter(
-      { root, key: randomBytes(32), keyId: KEY_ID },
-      clientAvatarStorageKey,
-    );
+    const encryptedFilesystemClientMediaStoreAdapter =
+      new EncryptedFilesystemClientMediaStoreAdapter(
+        { root, key: randomBytes(32), keyId: KEY_ID },
+        clientAvatarStorageKey,
+      );
 
     // act
-    const storing = avatars.store(owner, PHOTO);
+    const storing = encryptedFilesystemClientMediaStoreAdapter.store(
+      owner,
+      PHOTO,
+    );
 
     // assert
     await expect(storing).rejects.toThrow("Invalid client avatar owner.");

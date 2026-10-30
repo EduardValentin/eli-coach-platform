@@ -8,7 +8,7 @@ import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/i
 export async function loader(args: LoaderFunctionArgs) {
   return args.context
     .get(checkInsContext)
-    .checkInJoin.resolveForClient(args, args.params.checkInId);
+    .checkInJoinController.resolveForClient(args, args.params.checkInId);
 }
 
 export const meta: MetaFunction = () => [

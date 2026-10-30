@@ -19,8 +19,8 @@ type ReconcileSubscriptionEventResult = {
 type ReconcileSubscriptionEventUseCaseOptions = {
   coachingEnds: readonly CoachingEndHandlerPort[];
   coachingPeriods: readonly CoachingPeriodHandlerPort[];
-  incidents: CoachingSubscriptionIncidentsPort;
-  subscriptions: CoachingSubscriptionsPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  coachingSubscriptionsPort: CoachingSubscriptionsPort;
 };
 
 export class ReconcileSubscriptionEventUseCase {
@@ -61,16 +61,18 @@ export class ReconcileSubscriptionEventUseCase {
     };
 
     if (!current) {
-      this.options.incidents.subscriptionEventReconciled({
-        ...incident,
-        outcome: "unknown-subscription",
-      });
+      this.options.coachingSubscriptionIncidentsPort.subscriptionEventReconciled(
+        {
+          ...incident,
+          outcome: "unknown-subscription",
+        },
+      );
 
       return { status: "ignored" };
     }
 
     const mirrored = mirror(current, event);
-    const saved = await this.options.subscriptions.saveForEvent({
+    const saved = await this.options.coachingSubscriptionsPort.saveForEvent({
       eventId,
       subscription: mirrored,
       previous: current,
@@ -80,7 +82,7 @@ export class ReconcileSubscriptionEventUseCase {
       return "stale";
     }
 
-    this.options.incidents.subscriptionEventReconciled({
+    this.options.coachingSubscriptionIncidentsPort.subscriptionEventReconciled({
       ...incident,
       outcome: saved,
     });
@@ -101,12 +103,12 @@ export class ReconcileSubscriptionEventUseCase {
     event: SubscriptionEvent,
   ): Promise<CoachingSubscription | null> {
     if (event.kind === "charge-refunded") {
-      return this.options.subscriptions.findByPaymentIntentId(
+      return this.options.coachingSubscriptionsPort.findByPaymentIntentId(
         event.paymentIntentId,
       );
     }
 
-    return this.options.subscriptions.findByPaymentSubscriptionId(
+    return this.options.coachingSubscriptionsPort.findByPaymentSubscriptionId(
       event.paymentSubscriptionId,
     );
   }
@@ -121,7 +123,7 @@ export class ReconcileSubscriptionEventUseCase {
       return;
     }
 
-    this.options.incidents.refundSettled({
+    this.options.coachingSubscriptionIncidentsPort.refundSettled({
       subscriptionId: mirrored.id,
       refundedCents: refund.refundedCents,
     });

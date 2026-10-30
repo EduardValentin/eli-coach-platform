@@ -18,10 +18,10 @@ export type CheckInJoinResult =
   | { status: "unknown" };
 
 type ResolveCheckInJoinUseCaseOptions = {
-  checkIns: CheckInsPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  meetingRoom: MeetingRoomPort;
+  checkInsPort: CheckInsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  meetingRoomPort: MeetingRoomPort;
 };
 
 export class ResolveCheckInJoinUseCase {
@@ -34,9 +34,9 @@ export class ResolveCheckInJoinUseCase {
   async execute(
     command: ResolveCheckInJoinCommand,
   ): Promise<CheckInJoinResult> {
-    const checkIn = await this.options.checkIns.find(command.checkInId);
+    const checkIn = await this.options.checkInsPort.find(command.checkInId);
 
-    if (!checkIn?.isJoinableAt(this.options.clock.now())) {
+    if (!checkIn?.isJoinableAt(this.options.clockPort.now())) {
       return { status: "unknown" };
     }
 
@@ -44,7 +44,7 @@ export class ResolveCheckInJoinUseCase {
       return { status: "unknown" };
     }
 
-    const url = await this.options.meetingRoom.currentJoinUrl();
+    const url = await this.options.meetingRoomPort.currentJoinUrl();
 
     if (url === null) {
       return { status: "link_not_set" };

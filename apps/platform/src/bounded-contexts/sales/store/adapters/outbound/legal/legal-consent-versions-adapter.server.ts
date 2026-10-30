@@ -9,13 +9,13 @@ import {
 } from "~/bounded-contexts/legal/public";
 
 export class LegalConsentVersionsAdapter implements ConsentVersionsPort {
-  constructor(private readonly terms: TermsFacade) {}
+  constructor(private readonly termsFacade: TermsFacade) {}
 
   current(): StoreConsentVersions {
     return {
       marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
       privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-      termsVersion: this.terms.currentTerms().version,
+      termsVersion: this.termsFacade.currentTerms().version,
     };
   }
 }

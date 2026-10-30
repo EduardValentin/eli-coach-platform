@@ -24,12 +24,16 @@ describe("PostgresDownloadGrantRepository", () => {
         },
       ],
     });
-    const repository = new PostgresDownloadGrantRepository({
-      execute,
-    } as unknown as DatabaseClient);
+    const postgresDownloadGrantRepository = new PostgresDownloadGrantRepository(
+      {
+        execute,
+      } as unknown as DatabaseClient,
+    );
 
     // act
-    const grant = await repository.findByTokenSha256("b".repeat(64));
+    const grant = await postgresDownloadGrantRepository.findByTokenSha256(
+      "b".repeat(64),
+    );
 
     // assert
     expect(grant).toEqual({

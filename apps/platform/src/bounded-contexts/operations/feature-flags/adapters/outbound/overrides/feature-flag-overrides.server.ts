@@ -5,16 +5,18 @@ import { FeatureFlagOverrideReaderAdapter } from "./feature-flag-override-reader
 import { createFeatureFlagOverrideMiddleware } from "./feature-flag-overrides-http.server";
 
 export type FeatureFlagOverrides = {
-  featureFlags: FeatureFlagReaderPort;
+  featureFlagReaderPort: FeatureFlagReaderPort;
   middleware: MiddlewareFunction<Response>;
 };
 
 export function composeBrowserFeatureFlagOverrides(options: {
   appBasePath: string;
-  featureFlags: FeatureFlagReaderPort;
+  featureFlagReaderPort: FeatureFlagReaderPort;
 }): FeatureFlagOverrides {
   return {
-    featureFlags: new FeatureFlagOverrideReaderAdapter(options.featureFlags),
+    featureFlagReaderPort: new FeatureFlagOverrideReaderAdapter(
+      options.featureFlagReaderPort,
+    ),
     middleware: createFeatureFlagOverrideMiddleware({
       appBasePath: options.appBasePath,
     }),
@@ -22,10 +24,10 @@ export function composeBrowserFeatureFlagOverrides(options: {
 }
 
 export function composeWithoutFeatureFlagOverrides(
-  featureFlags: FeatureFlagReaderPort,
+  featureFlagReaderPort: FeatureFlagReaderPort,
 ): FeatureFlagOverrides {
   return {
-    featureFlags,
+    featureFlagReaderPort,
     middleware: (_args, next) => next(),
   };
 }

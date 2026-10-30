@@ -20,14 +20,14 @@ type PaymentLinkResolution =
   | { status: "invalid" };
 
 type ResolvePaymentLinkUseCaseOptions = {
-  calls: EndedCallsPort;
-  callSalesStates: CallSalesStatesPort;
-  clock: ClockPort;
-  emailAcceptance: EmailAcceptancePort;
-  paymentLinks: PaymentLinksPort;
-  pricingEligibility: PricingEligibilityPort;
+  endedCallsPort: EndedCallsPort;
+  callSalesStatesPort: CallSalesStatesPort;
+  clockPort: ClockPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  paymentLinksPort: PaymentLinksPort;
+  pricingEligibilityPort: PricingEligibilityPort;
   salesWindow: CoachingSalesWindow;
-  tokenHasher: PaymentLinkTokenHasherPort;
+  paymentLinkTokenHasherPort: PaymentLinkTokenHasherPort;
 };
 
 export class ResolvePaymentLinkUseCase {
@@ -42,28 +42,32 @@ export class ResolvePaymentLinkUseCase {
       return { status: "invalid" };
     }
 
-    const link = await this.options.paymentLinks.findByTokenSha256(
-      this.options.tokenHasher.sha256(rawToken),
+    const link = await this.options.paymentLinksPort.findByTokenSha256(
+      this.options.paymentLinkTokenHasherPort.sha256(rawToken),
     );
 
-    if (!link || !link.isUsable(this.options.clock.now())) {
+    if (!link || !link.isUsable(this.options.clockPort.now())) {
       return { status: "invalid" };
     }
 
-    const call = await this.options.calls.findById(link.assessmentCallId);
+    const call = await this.options.endedCallsPort.findById(
+      link.assessmentCallId,
+    );
 
     if (!call) {
       return { status: "invalid" };
     }
 
-    const salesStates = await this.options.callSalesStates.forCalls([call.id]);
+    const salesStates = await this.options.callSalesStatesPort.forCalls([
+      call.id,
+    ]);
 
     if (salesStates.get(call.id)?.state === "paid") {
       return { status: "invalid" };
     }
 
-    const tier = await this.options.pricingEligibility.tierForEmail(
-      this.options.emailAcceptance.normalize(call.visitorEmail),
+    const tier = await this.options.pricingEligibilityPort.tierForEmail(
+      this.options.emailAcceptancePort.normalize(call.visitorEmail),
     );
 
     return { status: "valid", link, call, tier };

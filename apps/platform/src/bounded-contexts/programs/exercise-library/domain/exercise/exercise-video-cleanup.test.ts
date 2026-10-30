@@ -24,7 +24,10 @@ function createCleanup() {
   const incidents = {
     videoCleanupFailed: vi.fn(),
   } satisfies Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
-  const cleanup = new ExerciseVideoCleanup({ store, incidents });
+  const cleanup = new ExerciseVideoCleanup({
+    exerciseVideoStorePort: store,
+    exerciseLibraryIncidentsPort: incidents,
+  });
 
   return { cleanup, store, incidents };
 }

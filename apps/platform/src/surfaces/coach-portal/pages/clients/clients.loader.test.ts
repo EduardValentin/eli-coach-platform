@@ -119,10 +119,10 @@ function createLoaderArguments(
   urlsFor: ReturnType<typeof vi.fn> = vi.fn().mockResolvedValue({}),
 ) {
   const clients = {
-    coachClients: { loadRoster },
+    coachClientsController: { loadRoster },
   } as unknown as ClientsFeature;
   const clientProfile = {
-    coachAvatars: { urlsFor },
+    coachClientAvatarController: { urlsFor },
   } as unknown as ClientProfileFeature;
 
   return createRequestArgs({

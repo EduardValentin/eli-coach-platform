@@ -12,7 +12,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
     }
 
-    return args.context.get(clientOnboardingContext).controller.saveDraft(args);
+    return args.context
+      .get(clientOnboardingContext)
+      .clientOnboardingController.saveDraft(args);
   });
 }
 

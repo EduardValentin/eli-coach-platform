@@ -40,16 +40,19 @@ export type SetUpCheckInSeriesResult =
     };
 
 type SetUpCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "reserve">;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  ids: CheckInIdsPort;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
-  openSlots: Pick<OpenSlotsPort, "coachWeek">;
-  series: Pick<CheckInSeriesRecordsPort, "start" | "recordWeeks">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "reserve">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInIdsPort: CheckInIdsPort;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
+  openSlotsPort: Pick<OpenSlotsPort, "coachWeek">;
+  checkInSeriesRecordsPort: Pick<
+    CheckInSeriesRecordsPort,
+    "start" | "recordWeeks"
+  >;
 };
 
 export class SetUpCheckInSeriesUseCase {
@@ -64,13 +67,15 @@ export class SetUpCheckInSeriesUseCase {
   async execute(
     command: SetUpCheckInSeriesCommand,
   ): Promise<SetUpCheckInSeriesResult> {
-    const client = await this.options.clients.findById(command.clientId);
+    const client = await this.options.clientReachPort.findById(
+      command.clientId,
+    );
 
     if (!client) {
       return { status: "unknown_client" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const bounds = CheckInSeriesBounds.ofCoaching({
       client,
       now,
@@ -81,7 +86,7 @@ export class SetUpCheckInSeriesUseCase {
       return { status: bounds };
     }
 
-    const week = await this.options.openSlots.coachWeek();
+    const week = await this.options.openSlotsPort.coachWeek();
 
     if (!week.holdsWeeklyHour(command)) {
       return { status: "outside_availability" };
@@ -92,7 +97,7 @@ export class SetUpCheckInSeriesUseCase {
     }
 
     const { series, starts } = CheckInSeries.setUp({
-      id: this.options.ids.generate(),
+      id: this.options.checkInIdsPort.generate(),
       clientId: client.clientId,
       rule: CheckInSeriesRule.of({
         weekday: command.weekday,
@@ -107,7 +112,10 @@ export class SetUpCheckInSeriesUseCase {
       return { status: "nothing_to_create" };
     }
 
-    if ((await this.options.series.start(series)) === "series_exists") {
+    if (
+      (await this.options.checkInSeriesRecordsPort.start(series)) ===
+      "series_exists"
+    ) {
       return { status: "series_exists" };
     }
 
@@ -117,7 +125,7 @@ export class SetUpCheckInSeriesUseCase {
         clientTimeZone: client.timeZone,
         availability: "open",
         at: now,
-        newId: () => this.options.ids.generate(),
+        newId: () => this.options.checkInIdsPort.generate(),
       }),
     );
 

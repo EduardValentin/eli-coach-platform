@@ -24,13 +24,17 @@ import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/e
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  const { waitlist } = context.get(waitlistContext);
-  const { showsBundleOffer } = presentWaitlist(await waitlist.getWaitlist());
+  const { waitlistController } = context.get(waitlistContext);
+  const { showsBundleOffer } = presentWaitlist(
+    await waitlistController.getWaitlist(),
+  );
 
   return {
-    cards: context.get(coachingSalesContext).checkouts.loadPricingCards({
-      tier: showsBundleOffer ? "reduced" : "regular",
-    }),
+    cards: context
+      .get(coachingSalesContext)
+      .checkoutsController.loadPricingCards({
+        tier: showsBundleOffer ? "reduced" : "regular",
+      }),
     pricing: showsBundleOffer ? "waitlist" : "regular",
   } as const;
 }

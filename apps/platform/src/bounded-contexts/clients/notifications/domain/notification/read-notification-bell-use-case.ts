@@ -22,10 +22,13 @@ export type NotificationBell = {
 };
 
 type ReadNotificationBellUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  inbox: Pick<NotificationInboxPort, "latestFor" | "unreadCountFor">;
-  incidents: NotificationIncidentsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  notificationInboxPort: Pick<
+    NotificationInboxPort,
+    "latestFor" | "unreadCountFor"
+  >;
+  notificationIncidentsPort: NotificationIncidentsPort;
 };
 
 type BellWindow = {
@@ -44,7 +47,7 @@ export class ReadNotificationBellUseCase {
   }
 
   async execute(reader: NotificationReader): Promise<NotificationBell> {
-    const at = this.options.clock.now();
+    const at = this.options.clockPort.now();
 
     try {
       const recipient = await this.reach.recipientOf(reader);
@@ -64,7 +67,7 @@ export class ReadNotificationBellUseCase {
 
       return await this.readBell(window);
     } catch (error) {
-      this.options.incidents.notificationBellReadFailed({
+      this.options.notificationIncidentsPort.notificationBellReadFailed({
         party: reader.party,
         error,
       });
@@ -79,13 +82,17 @@ export class ReadNotificationBellUseCase {
     at,
   }: BellWindow): Promise<NotificationBell> {
     const [notifications, unreadCount] = await Promise.all([
-      this.options.inbox.latestFor({
+      this.options.notificationInboxPort.latestFor({
         recipient,
         since,
         at,
         limit: NOTIFICATION_BELL_RULES.latest,
       }),
-      this.options.inbox.unreadCountFor({ recipient, since, at }),
+      this.options.notificationInboxPort.unreadCountFor({
+        recipient,
+        since,
+        at,
+      }),
     ]);
 
     return {

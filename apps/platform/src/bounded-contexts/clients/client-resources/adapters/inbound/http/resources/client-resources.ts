@@ -20,7 +20,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientResourcesContext)
-      .clientResources.add(args, args.params.clientId);
+      .clientResourcesController.add(args, args.params.clientId);
   });
 }
 

@@ -21,9 +21,9 @@ type OpenTimesClient =
   | Exclude<ListOpenCheckInTimesResult, { status: "listed" }>;
 
 type ListOpenCheckInTimesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  clock: ClockPort;
-  openSlots: Pick<OpenSlotsPort, "openStarts">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clockPort: ClockPort;
+  openSlotsPort: Pick<OpenSlotsPort, "openStarts">;
 };
 
 export class ListOpenCheckInTimesUseCase {
@@ -38,8 +38,8 @@ export class ListOpenCheckInTimesUseCase {
       return found;
     }
 
-    const now = this.options.clock.now();
-    const starts = await this.options.openSlots.openStarts(now);
+    const now = this.options.clockPort.now();
+    const starts = await this.options.openSlotsPort.openStarts(now);
     const { coachingEndsAt } = found.client;
 
     return {
@@ -55,7 +55,7 @@ export class ListOpenCheckInTimesUseCase {
     clientId,
   }: ListOpenCheckInTimesCommand): Promise<OpenTimesClient> {
     if (actor.party === "client") {
-      const client = await this.options.clients.findByAuthSubjectId(
+      const client = await this.options.clientReachPort.findByAuthSubjectId(
         actor.authSubjectId,
       );
 
@@ -66,7 +66,7 @@ export class ListOpenCheckInTimesUseCase {
       return { status: "client_required" };
     }
 
-    const client = await this.options.clients.findById(clientId);
+    const client = await this.options.clientReachPort.findById(clientId);
 
     return client ? { status: "found", client } : { status: "unknown_client" };
   }

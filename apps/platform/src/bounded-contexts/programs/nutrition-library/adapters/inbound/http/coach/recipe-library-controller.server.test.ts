@@ -223,17 +223,18 @@ function createController() {
   const openRecipePhoto = {
     execute: vi.fn(async (): Promise<OpenRecipePhotoResult> => OPENED),
   };
-  const controller = new RecipeLibraryController({
-    listRecipes: listRecipes as unknown as ListRecipesUseCase,
-    startRecipe: startRecipe as unknown as StartRecipeUseCase,
-    findRecipe: findRecipe as unknown as FindRecipeUseCase,
-    createRecipe: createRecipe as unknown as CreateRecipeUseCase,
-    editRecipe: editRecipe as unknown as EditRecipeUseCase,
-    openRecipePhoto: openRecipePhoto as unknown as OpenRecipePhotoUseCase,
+  const recipeLibraryController = new RecipeLibraryController({
+    listRecipesUseCase: listRecipes as unknown as ListRecipesUseCase,
+    startRecipeUseCase: startRecipe as unknown as StartRecipeUseCase,
+    findRecipeUseCase: findRecipe as unknown as FindRecipeUseCase,
+    createRecipeUseCase: createRecipe as unknown as CreateRecipeUseCase,
+    editRecipeUseCase: editRecipe as unknown as EditRecipeUseCase,
+    openRecipePhotoUseCase:
+      openRecipePhoto as unknown as OpenRecipePhotoUseCase,
   });
 
   return {
-    controller,
+    recipeLibraryController,
     listRecipes,
     startRecipe,
     findRecipe,
@@ -315,10 +316,10 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
 describe("RecipeLibraryController#list", () => {
   it("presents every recipe of the signed-in coach as a card with its total minutes, the macros its foods give and its meal roles before its tags", async () => {
     // arrange
-    const { controller, listRecipes } = createController();
+    const { recipeLibraryController, listRecipes } = createController();
 
     // act
-    const library = await controller.list(argsFor());
+    const library = await recipeLibraryController.list(argsFor());
 
     // assert
     expect(library).toEqual({
@@ -339,7 +340,7 @@ describe("RecipeLibraryController#list", () => {
 
   it("names the address of a recipe's stored photo on its card, never the stored file itself", async () => {
     // arrange
-    const { controller, listRecipes } = createController();
+    const { recipeLibraryController, listRecipes } = createController();
     listRecipes.execute.mockResolvedValueOnce({
       status: "listed",
       recipes: [
@@ -350,7 +351,7 @@ describe("RecipeLibraryController#list", () => {
     });
 
     // act
-    const library = await controller.list(argsFor());
+    const library = await recipeLibraryController.list(argsFor());
 
     // assert
     expect(library.recipes[0]?.photo).toEqual({
@@ -360,11 +361,11 @@ describe("RecipeLibraryController#list", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller } = createController();
+    const { recipeLibraryController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.list(argsFor({ session: CLIENT_SESSION })),
+      recipeLibraryController.list(argsFor({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -375,10 +376,10 @@ describe("RecipeLibraryController#list", () => {
 describe("RecipeLibraryController#loadNew", () => {
   it("opens a blank recipe offering her active foods, with the names of her recipes and the tag vocabulary", async () => {
     // arrange
-    const { controller, startRecipe } = createController();
+    const { recipeLibraryController, startRecipe } = createController();
 
     // act
-    const builder = await controller.loadNew(argsFor());
+    const builder = await recipeLibraryController.loadNew(argsFor());
 
     // assert
     expect(builder).toEqual({
@@ -393,11 +394,11 @@ describe("RecipeLibraryController#loadNew", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller } = createController();
+    const { recipeLibraryController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadNew(argsFor({ session: CLIENT_SESSION })),
+      recipeLibraryController.loadNew(argsFor({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -408,10 +409,10 @@ describe("RecipeLibraryController#loadNew", () => {
 describe("RecipeLibraryController#load", () => {
   it("presents her recipe with the foods it may use, the archived ones it already uses apart, the names of her other recipes and the tag vocabulary", async () => {
     // arrange
-    const { controller, findRecipe } = createController();
+    const { recipeLibraryController, findRecipe } = createController();
 
     // act
-    const builder = await controller.load(argsFor(), RECIPE_ID);
+    const builder = await recipeLibraryController.load(argsFor(), RECIPE_ID);
 
     // assert
     expect(builder).toEqual({
@@ -432,11 +433,13 @@ describe("RecipeLibraryController#load", () => {
     ["an id that is not a uuid", "not-a-recipe"],
   ])("sends the coach back to the Recipes tab for %s", async (_case, id) => {
     // arrange
-    const { controller, findRecipe } = createController();
+    const { recipeLibraryController, findRecipe } = createController();
     findRecipe.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const thrown = await captureThrown(() => controller.load(argsFor(), id));
+    const thrown = await captureThrown(() =>
+      recipeLibraryController.load(argsFor(), id),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(302);
@@ -447,11 +450,14 @@ describe("RecipeLibraryController#load", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller, findRecipe } = createController();
+    const { recipeLibraryController, findRecipe } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(argsFor({ session: CLIENT_SESSION }), RECIPE_ID),
+      recipeLibraryController.load(
+        argsFor({ session: CLIENT_SESSION }),
+        RECIPE_ID,
+      ),
     );
 
     // assert
@@ -463,10 +469,10 @@ describe("RecipeLibraryController#load", () => {
 describe("RecipeLibraryController#create", () => {
   it("creates the recipe for the signed-in coach and names the Recipes tab as the next page", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({ request: jsonRequest("POST", PORRIDGE_REQUEST) }),
     );
 
@@ -482,11 +488,11 @@ describe("RecipeLibraryController#create", () => {
 
   it("creates a recipe without an icon or ingredients", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     const bare = { ...PORRIDGE_REQUEST, icon: null, ingredients: [] };
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({ request: jsonRequest("POST", bare) }),
     );
 
@@ -501,7 +507,7 @@ describe("RecipeLibraryController#create", () => {
 
   it("answers 422 with the problems of a draft that breaks a rule, each ingredient's at its position", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     const problems = {
       name: "taken" as const,
       ingredients: [{ position: 1, problem: "unknown-food" as const }],
@@ -510,7 +516,7 @@ describe("RecipeLibraryController#create", () => {
     createRecipe.execute.mockResolvedValueOnce({ status: "invalid", problems });
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({ request: jsonRequest("POST", PORRIDGE_REQUEST) }),
     );
 
@@ -541,10 +547,10 @@ describe("RecipeLibraryController#create", () => {
     ],
   ])("answers 400 to %s without creating", async (_case, body) => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({ request: jsonRequest("POST", body) }),
     );
 
@@ -555,11 +561,11 @@ describe("RecipeLibraryController#create", () => {
 
   it("reads a body of 60 KiB", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     const long = { ...PORRIDGE_REQUEST, instructions: "i".repeat(60 * 1024) };
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({ request: jsonRequest("POST", long) }),
     );
 
@@ -570,11 +576,11 @@ describe("RecipeLibraryController#create", () => {
 
   it("answers 500 when the creation failed", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     createRecipe.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({ request: jsonRequest("POST", PORRIDGE_REQUEST) }),
     );
 
@@ -587,11 +593,11 @@ describe("RecipeLibraryController#create", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.create(
+      recipeLibraryController.create(
         argsFor({ session, request: jsonRequest("POST", PORRIDGE_REQUEST) }),
       ),
     );
@@ -605,10 +611,10 @@ describe("RecipeLibraryController#create", () => {
 describe("RecipeLibraryController#edit", () => {
   it("edits the signed-in coach's recipe and names the Recipes tab as the next page", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", PORRIDGE_REQUEST) }),
       RECIPE_ID,
     );
@@ -626,14 +632,14 @@ describe("RecipeLibraryController#edit", () => {
 
   it("answers 422 with the problems of a draft that breaks a rule", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
     editRecipe.execute.mockResolvedValueOnce({
       status: "invalid",
       problems: { instructions: "too-long" },
     });
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", PORRIDGE_REQUEST) }),
       RECIPE_ID,
     );
@@ -647,11 +653,11 @@ describe("RecipeLibraryController#edit", () => {
 
   it("answers 404 for an unknown recipe", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
     editRecipe.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", PORRIDGE_REQUEST) }),
       RECIPE_ID,
     );
@@ -662,10 +668,10 @@ describe("RecipeLibraryController#edit", () => {
 
   it("answers 404 for an id that is not a uuid without editing", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", PORRIDGE_REQUEST) }),
       "not-a-recipe",
     );
@@ -677,10 +683,10 @@ describe("RecipeLibraryController#edit", () => {
 
   it("answers 400 to a malformed body without editing", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", { name: "Porridge" }) }),
       RECIPE_ID,
     );
@@ -692,11 +698,11 @@ describe("RecipeLibraryController#edit", () => {
 
   it("answers 500 when the edit failed", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
     editRecipe.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", PORRIDGE_REQUEST) }),
       RECIPE_ID,
     );
@@ -710,11 +716,11 @@ describe("RecipeLibraryController#edit", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.edit(
+      recipeLibraryController.edit(
         argsFor({ session, request: jsonRequest("PUT", PORRIDGE_REQUEST) }),
         RECIPE_ID,
       ),
@@ -734,10 +740,10 @@ describe("RecipeLibraryController saving a photo", () => {
     "hands the use case a %s choice read from a JSON body",
     async (photo, choice) => {
       // arrange
-      const { controller, createRecipe } = createController();
+      const { recipeLibraryController, createRecipe } = createController();
 
       // act
-      const response = await controller.create(
+      const response = await recipeLibraryController.create(
         argsFor({
           request: jsonRequest("POST", { ...PORRIDGE_REQUEST, photo }),
         }),
@@ -755,10 +761,10 @@ describe("RecipeLibraryController saving a photo", () => {
 
   it("answers 400 to a JSON body attaching a photo it does not carry", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({
         request: jsonRequest("POST", { ...PORRIDGE_REQUEST, photo: "attach" }),
       }),
@@ -771,10 +777,10 @@ describe("RecipeLibraryController saving a photo", () => {
 
   it("reads the recipe part and the photo's bytes from a multipart body and creates the recipe with them", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({
         request: multipartRequest("POST", {
           recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
@@ -795,10 +801,10 @@ describe("RecipeLibraryController saving a photo", () => {
 
   it("edits the recipe with the photo read from a multipart body", async () => {
     // arrange
-    const { controller, editRecipe } = createController();
+    const { recipeLibraryController, editRecipe } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await recipeLibraryController.edit(
       argsFor({
         request: multipartRequest("PUT", {
           recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
@@ -857,10 +863,10 @@ describe("RecipeLibraryController saving a photo", () => {
     "answers 400 to a multipart body with %s without saving",
     async (_case, parts) => {
       // arrange
-      const { controller, createRecipe } = createController();
+      const { recipeLibraryController, createRecipe } = createController();
 
       // act
-      const response = await controller.create(
+      const response = await recipeLibraryController.create(
         argsFor({ request: multipartRequest("POST", parts) }),
       );
 
@@ -872,7 +878,7 @@ describe("RecipeLibraryController saving a photo", () => {
 
   it("answers 400 to a multipart body it cannot parse", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     const broken = new Request("https://evoa.fit/api/coach/recipes", {
       body: "not multipart at all",
       headers: { "Content-Type": "multipart/form-data; boundary=missing" },
@@ -880,7 +886,9 @@ describe("RecipeLibraryController saving a photo", () => {
     });
 
     // act
-    const response = await controller.create(argsFor({ request: broken }));
+    const response = await recipeLibraryController.create(
+      argsFor({ request: broken }),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -889,7 +897,7 @@ describe("RecipeLibraryController saving a photo", () => {
 
   it("answers 413 naming the photo too large to a body beyond 10 MB and its 1 MB allowance, without saving", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     const oversized = multipartRequest("POST", {
       recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
       photo: new Uint8Array(MAX_RECIPE_PHOTO_BYTES + 1024 * 1024 + 1),
@@ -901,7 +909,7 @@ describe("RecipeLibraryController saving a photo", () => {
     });
 
     // act
-    const response = await controller.create(argsFor({ request }));
+    const response = await recipeLibraryController.create(argsFor({ request }));
 
     // assert
     expect(response.status).toBe(413);
@@ -913,12 +921,12 @@ describe("RecipeLibraryController saving a photo", () => {
 
   it("answers 422 with the photo's refusal beside the draft's problems", async () => {
     // arrange
-    const { controller, createRecipe } = createController();
+    const { recipeLibraryController, createRecipe } = createController();
     const problems = { name: "taken" as const, photo: "unsupported" as const };
     createRecipe.execute.mockResolvedValueOnce({ status: "invalid", problems });
 
     // act
-    const response = await controller.create(
+    const response = await recipeLibraryController.create(
       argsFor({
         request: multipartRequest("POST", {
           recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
@@ -936,10 +944,10 @@ describe("RecipeLibraryController saving a photo", () => {
 describe("RecipeLibraryController#openPhoto", () => {
   it("serves the coach the whole stored photo, privately cached for good", async () => {
     // arrange
-    const { controller, openRecipePhoto } = createController();
+    const { recipeLibraryController, openRecipePhoto } = createController();
 
     // act
-    const response = await controller.openPhoto(
+    const response = await recipeLibraryController.openPhoto(
       argsFor({ request: photoRequest() }),
       { recipeId: RECIPE_ID, photoId: PHOTO_ID },
     );
@@ -973,11 +981,11 @@ describe("RecipeLibraryController#openPhoto", () => {
     "asks the access rule on behalf of %s and answers 404 when it refuses",
     async (_case, session, viewer) => {
       // arrange
-      const { controller, openRecipePhoto } = createController();
+      const { recipeLibraryController, openRecipePhoto } = createController();
       openRecipePhoto.execute.mockResolvedValueOnce({ status: "not-found" });
 
       // act
-      const response = await controller.openPhoto(
+      const response = await recipeLibraryController.openPhoto(
         argsFor({ session, request: photoRequest() }),
         { recipeId: RECIPE_ID, photoId: PHOTO_ID },
       );
@@ -997,10 +1005,10 @@ describe("RecipeLibraryController#openPhoto", () => {
     "answers 404 to %s that is not a uuid without opening anything",
     async (_case, address) => {
       // arrange
-      const { controller, openRecipePhoto } = createController();
+      const { recipeLibraryController, openRecipePhoto } = createController();
 
       // act
-      const response = await controller.openPhoto(
+      const response = await recipeLibraryController.openPhoto(
         argsFor({ request: photoRequest() }),
         address,
       );

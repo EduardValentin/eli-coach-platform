@@ -31,11 +31,11 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachCheckInSeriesControllerOptions = {
-  changeCheckInSeries: ChangeCheckInSeriesUseCase;
-  previewCheckInSeries: PreviewCheckInSeriesUseCase;
-  readCoachClientSeries: ReadCoachClientSeriesUseCase;
-  setUpCheckInSeries: SetUpCheckInSeriesUseCase;
-  stopCheckInSeries: StopCheckInSeriesUseCase;
+  changeCheckInSeriesUseCase: ChangeCheckInSeriesUseCase;
+  previewCheckInSeriesUseCase: PreviewCheckInSeriesUseCase;
+  readCoachClientSeriesUseCase: ReadCoachClientSeriesUseCase;
+  setUpCheckInSeriesUseCase: SetUpCheckInSeriesUseCase;
+  stopCheckInSeriesUseCase: StopCheckInSeriesUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -61,7 +61,7 @@ export class CoachCheckInSeriesController {
     }
 
     const { series, coachingEnds } =
-      await this.options.readCoachClientSeries.execute(id.data);
+      await this.options.readCoachClientSeriesUseCase.execute(id.data);
 
     return coachClientSeriesSchema.parse({
       series: series && {
@@ -86,7 +86,7 @@ export class CoachCheckInSeriesController {
     }
 
     return this.respondToPreview(
-      await this.options.previewCheckInSeries.execute(query.data),
+      await this.options.previewCheckInSeriesUseCase.execute(query.data),
     );
   }
 
@@ -103,7 +103,7 @@ export class CoachCheckInSeriesController {
 
     return this.respondToSetUp(
       await this.options.unitOfWork(() =>
-        this.options.setUpCheckInSeries.execute(submission.data),
+        this.options.setUpCheckInSeriesUseCase.execute(submission.data),
       ),
     );
   }
@@ -130,7 +130,7 @@ export class CoachCheckInSeriesController {
 
     return this.respondToChange(
       await this.options.unitOfWork(() =>
-        this.options.changeCheckInSeries.execute({
+        this.options.changeCheckInSeriesUseCase.execute({
           seriesId: id.data,
           ...submission.data,
         }),
@@ -152,7 +152,7 @@ export class CoachCheckInSeriesController {
 
     return this.respondToStop(
       await this.options.unitOfWork(() =>
-        this.options.stopCheckInSeries.execute({ seriesId: id.data }),
+        this.options.stopCheckInSeriesUseCase.execute({ seriesId: id.data }),
       ),
     );
   }

@@ -14,10 +14,10 @@ type SaveUnitPreferenceResult =
   { status: "saved" } | { status: "not-on-journey" } | { status: "ended" };
 
 type SaveUnitPreferenceUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  settings: ClientSettingsSourcePort;
-  changes: ClientSettingsChangesPort;
-  clock: ClockPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
+  clientSettingsChangesPort: ClientSettingsChangesPort;
+  clockPort: ClockPort;
 };
 
 export class SaveUnitPreferenceUseCase {
@@ -26,7 +26,7 @@ export class SaveUnitPreferenceUseCase {
   async execute(
     command: SaveUnitPreferenceCommand,
   ): Promise<SaveUnitPreferenceResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       command.authSubjectId,
     );
 
@@ -38,7 +38,7 @@ export class SaveUnitPreferenceUseCase {
       return { status: "ended" };
     }
 
-    const settings = await this.options.settings.findByClientId(
+    const settings = await this.options.clientSettingsSourcePort.findByClientId(
       client.clientId,
     );
 
@@ -46,10 +46,10 @@ export class SaveUnitPreferenceUseCase {
       return { status: "not-on-journey" };
     }
 
-    await this.options.changes.saveUnits(
+    await this.options.clientSettingsChangesPort.saveUnits(
       settings.withUnits(
         UnitPreference.from(command.preference),
-        this.options.clock.now(),
+        this.options.clockPort.now(),
       ),
     );
 

@@ -17,7 +17,7 @@ const MONDAY_LATE_MORNING = new Date("2026-06-01T08:30:00.000Z");
 
 type OpeningsSources = ConstructorParameters<typeof CoachOpenings>[0];
 
-function workingDays(): OpeningsSources["availability"] {
+function workingDays(): OpeningsSources["coachAvailabilitySourcePort"] {
   const result = CoachAvailability.from({
     timeZone: "Europe/Bucharest",
     weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
@@ -35,12 +35,12 @@ function workingDays(): OpeningsSources["availability"] {
 function calendarBusyWith(busy: CoachTimeSpan[]) {
   return {
     busyFrom: vi.fn().mockResolvedValue(busy),
-  } satisfies OpeningsSources["calendar"];
+  } satisfies OpeningsSources["coachCalendarPort"];
 }
 
 function openSlotsOver(sources: OpeningsSources): SchedulingOpenSlotsAdapter {
   return new SchedulingOpenSlotsAdapter({
-    openSlots: new OpenSlotsFacadeAdapter(new CoachOpenings(sources)),
+    openSlotsFacade: new OpenSlotsFacadeAdapter(new CoachOpenings(sources)),
     rules: CHECK_IN_RULES,
   });
 }
@@ -65,7 +65,10 @@ function createListOpenTimes(options?: {
   const calendar = calendarBusyWith(options?.busy ?? []);
   const ports = {
     calendar,
-    openSlots: openSlotsOver({ availability: workingDays(), calendar }),
+    schedulingOpenSlotsAdapter: openSlotsOver({
+      coachAvailabilitySourcePort: workingDays(),
+      coachCalendarPort: calendar,
+    }),
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(client),
       findById: vi.fn().mockResolvedValue(client),
@@ -75,10 +78,10 @@ function createListOpenTimes(options?: {
 
   return {
     ports,
-    listOpenTimes: new ListOpenCheckInTimesUseCase({
-      clients: ports.clients,
-      clock: ports.clock,
-      openSlots: ports.openSlots,
+    listOpenCheckInTimesUseCase: new ListOpenCheckInTimesUseCase({
+      clientReachPort: ports.clients,
+      clockPort: ports.clock,
+      openSlotsPort: ports.schedulingOpenSlotsAdapter,
     }),
   };
 }
@@ -87,9 +90,11 @@ async function openTimes(options?: {
   busy?: CoachTimeSpan[];
   client?: ClientReachReading;
 }): Promise<string[]> {
-  const { listOpenTimes } = createListOpenTimes(options);
+  const { listOpenCheckInTimesUseCase } = createListOpenTimes(options);
 
-  const result = await listOpenTimes.execute({ actor: ANA_ACTOR });
+  const result = await listOpenCheckInTimesUseCase.execute({
+    actor: ANA_ACTOR,
+  });
 
   if (result.status !== "listed") {
     throw new Error(`expected open times, got ${result.status}`);
@@ -145,10 +150,10 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("reads the coach's schedule from the instant it lists", async () => {
     // arrange
-    const { listOpenTimes, ports } = createListOpenTimes();
+    const { listOpenCheckInTimesUseCase, ports } = createListOpenTimes();
 
     // act
-    await listOpenTimes.execute({ actor: ANA_ACTOR });
+    await listOpenCheckInTimesUseCase.execute({ actor: ANA_ACTOR });
 
     // assert
     expect(ports.calendar.busyFrom).toHaveBeenCalledWith(MONDAY_LATE_MORNING);
@@ -183,10 +188,10 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("lists the client's own times by her sign-in, ignoring a client named in the request", async () => {
     // arrange
-    const { listOpenTimes, ports } = createListOpenTimes();
+    const { listOpenCheckInTimesUseCase, ports } = createListOpenTimes();
 
     // act
-    const result = await listOpenTimes.execute({
+    const result = await listOpenCheckInTimesUseCase.execute({
       actor: ANA_ACTOR,
       clientId: "client-2",
     });
@@ -199,10 +204,14 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("answers ended to a signed-in client with no client record", async () => {
     // arrange
-    const { listOpenTimes, ports } = createListOpenTimes({ client: null });
+    const { listOpenCheckInTimesUseCase, ports } = createListOpenTimes({
+      client: null,
+    });
 
     // act
-    const result = await listOpenTimes.execute({ actor: ANA_ACTOR });
+    const result = await listOpenCheckInTimesUseCase.execute({
+      actor: ANA_ACTOR,
+    });
 
     // assert
     expect(result).toEqual({ status: "ended" });
@@ -211,7 +220,7 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("stops the coach's times at the coaching end of the client she names", async () => {
     // arrange
-    const { listOpenTimes, ports } = createListOpenTimes({
+    const { listOpenCheckInTimesUseCase, ports } = createListOpenTimes({
       client: {
         ...ANA,
         coachingEndsAt: new Date("2026-06-02T10:00:00.000Z"),
@@ -219,7 +228,7 @@ describe("ListOpenCheckInTimesUseCase", () => {
     });
 
     // act
-    const result = await listOpenTimes.execute({
+    const result = await listOpenCheckInTimesUseCase.execute({
       actor: COACH,
       clientId: "client-1",
     });
@@ -234,10 +243,10 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("requires the coach to name the client", async () => {
     // arrange
-    const { listOpenTimes, ports } = createListOpenTimes();
+    const { listOpenCheckInTimesUseCase, ports } = createListOpenTimes();
 
     // act
-    const result = await listOpenTimes.execute({ actor: COACH });
+    const result = await listOpenCheckInTimesUseCase.execute({ actor: COACH });
 
     // assert
     expect(result).toEqual({ status: "client_required" });
@@ -246,10 +255,12 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("answers unknown_client when the coach names a client with no record", async () => {
     // arrange
-    const { listOpenTimes } = createListOpenTimes({ client: null });
+    const { listOpenCheckInTimesUseCase } = createListOpenTimes({
+      client: null,
+    });
 
     // act
-    const result = await listOpenTimes.execute({
+    const result = await listOpenCheckInTimesUseCase.execute({
       actor: COACH,
       clientId: "client-404",
     });

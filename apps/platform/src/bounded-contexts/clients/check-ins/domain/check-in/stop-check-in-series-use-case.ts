@@ -16,14 +16,14 @@ export type StopCheckInSeriesResult =
   | { status: "unknown_series" | "changed_meanwhile" };
 
 type StopCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "release">;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
-  series: Pick<CheckInSeriesRecordsPort, "find" | "stop">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "release">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
+  checkInSeriesRecordsPort: Pick<CheckInSeriesRecordsPort, "find" | "stop">;
 };
 
 export class StopCheckInSeriesUseCase {
@@ -36,15 +36,19 @@ export class StopCheckInSeriesUseCase {
   async execute(command: {
     seriesId: string;
   }): Promise<StopCheckInSeriesResult> {
-    const current = await this.options.series.find(command.seriesId);
+    const current = await this.options.checkInSeriesRecordsPort.find(
+      command.seriesId,
+    );
 
     if (!current || current.isStopped()) {
       return { status: "unknown_series" };
     }
 
-    const client = await this.options.clients.findById(current.clientId);
-    const now = this.options.clock.now();
-    const recorded = await this.options.series.stop({
+    const client = await this.options.clientReachPort.findById(
+      current.clientId,
+    );
+    const now = this.options.clockPort.now();
+    const recorded = await this.options.checkInSeriesRecordsPort.stop({
       seriesId: current.id,
       expected: { changedAt: current.changedAt },
       at: now,
@@ -55,7 +59,7 @@ export class StopCheckInSeriesUseCase {
     }
 
     await releaseFreedHours(
-      this.options.coachTime,
+      this.options.coachTimePort,
       recorded.freedReservationIds,
     );
 

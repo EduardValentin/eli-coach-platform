@@ -37,7 +37,9 @@ const CHECKOUTS_API_URL = joinBasePath(
 const PAYMENT_PARAM = "payment";
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  return context.get(coachingSalesContext).checkouts.loadBundlePageShell();
+  return context
+    .get(coachingSalesContext)
+    .checkoutsController.loadBundlePageShell();
 }
 
 export function headers({ loaderHeaders }: HeadersArgs) {

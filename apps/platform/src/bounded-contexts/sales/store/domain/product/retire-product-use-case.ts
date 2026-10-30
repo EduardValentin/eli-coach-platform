@@ -3,12 +3,17 @@ import type { StoreProductPublicationsPort } from "./store-product-publications-
 
 export class RetireProductUseCase {
   constructor(
-    private readonly options: { publications: StoreProductPublicationsPort },
+    private readonly options: {
+      storeProductPublicationsPort: StoreProductPublicationsPort;
+    },
   ) {}
 
   async execute(productId: number): Promise<RetireProductResult> {
     try {
-      const retired = await this.options.publications.retireProduct(productId);
+      const retired =
+        await this.options.storeProductPublicationsPort.retireProduct(
+          productId,
+        );
 
       return retired
         ? { status: "retired", productId }

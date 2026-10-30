@@ -37,15 +37,15 @@ export type AcquireProductsResult =
     };
 
 type AcquireProductsUseCaseOptions = {
-  acquisitions: StoreAcquisitionsPort;
-  catalog: StoreCatalogPort;
-  clock: ClockPort;
-  consentVersions: ConsentVersionsPort;
-  delivery: ProductDeliveryPort;
-  emailAcceptance: EmailAcceptancePort;
-  incidents: AcquisitionIncidentsPort;
-  payloadDigestGenerator: PayloadDigestGeneratorPort;
-  tokenGenerator: DownloadTokenGeneratorPort;
+  storeAcquisitionsPort: StoreAcquisitionsPort;
+  storeCatalogPort: StoreCatalogPort;
+  clockPort: ClockPort;
+  consentVersionsPort: ConsentVersionsPort;
+  productDeliveryPort: ProductDeliveryPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  acquisitionIncidentsPort: AcquisitionIncidentsPort;
+  payloadDigestGeneratorPort: PayloadDigestGeneratorPort;
+  downloadTokenGeneratorPort: DownloadTokenGeneratorPort;
 };
 
 export class AcquireProductsUseCase {
@@ -56,21 +56,22 @@ export class AcquireProductsUseCase {
   ): Promise<AcquireProductsResult> {
     const request = AcquisitionRequest.from(
       command,
-      this.options.clock.now(),
-      this.options.emailAcceptance,
+      this.options.clockPort.now(),
+      this.options.emailAcceptancePort,
     );
 
-    if (!this.options.emailAcceptance.accepts(request.email)) {
+    if (!this.options.emailAcceptancePort.accepts(request.email)) {
       return { status: "subaddress_refused" };
     }
 
-    const payloadDigest = this.options.payloadDigestGenerator.digest(
+    const payloadDigest = this.options.payloadDigestGeneratorPort.digest(
       request.canonicalPayload(),
     );
-    const priorOutcome = await this.options.acquisitions.resolveIdempotency({
-      idempotencyKey: request.idempotencyKey,
-      payloadDigest,
-    });
+    const priorOutcome =
+      await this.options.storeAcquisitionsPort.resolveIdempotency({
+        idempotencyKey: request.idempotencyKey,
+        payloadDigest,
+      });
 
     if (priorOutcome) {
       return this.resolvePriorOutcome(priorOutcome);
@@ -89,34 +90,35 @@ export class AcquireProductsUseCase {
     }
 
     const products = selection.products;
-    const token = this.options.tokenGenerator.create();
-    const consentVersions = this.options.consentVersions.current();
+    const token = this.options.downloadTokenGeneratorPort.create();
+    const consentVersions = this.options.consentVersionsPort.current();
     const providerIdempotencyKey =
-      this.options.delivery.createProviderIdempotencyKey(
+      this.options.productDeliveryPort.createProviderIdempotencyKey(
         request.idempotencyKey,
       );
-    const preparation = await this.options.acquisitions.prepareAcquisition({
-      cooldownSince: request.windows.cooldownSince,
-      dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
-      dailyWindowSince: request.windows.dailyWindowSince,
-      deliveryLimitKey: request.deliveryLimitKey,
-      deliveryProvider: this.options.delivery.provider,
-      expiresAt: request.windows.expiresAt,
-      idempotencyKey: request.idempotencyKey,
-      marketingConsent: request.marketingConsent,
-      marketingConsentedAt: request.marketingConsent
-        ? request.requestedAt
-        : null,
-      marketingConsentVersion: consentVersions.marketingConsentVersion,
-      normalizedEmail: request.email,
-      payloadDigest,
-      privacyPolicyVersion: consentVersions.privacyPolicyVersion,
-      products,
-      providerIdempotencyKey,
-      requestedAt: request.requestedAt,
-      termsVersion: consentVersions.termsVersion,
-      tokenSha256: token.sha256,
-    });
+    const preparation =
+      await this.options.storeAcquisitionsPort.prepareAcquisition({
+        cooldownSince: request.windows.cooldownSince,
+        dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
+        dailyWindowSince: request.windows.dailyWindowSince,
+        deliveryLimitKey: request.deliveryLimitKey,
+        deliveryProvider: this.options.productDeliveryPort.provider,
+        expiresAt: request.windows.expiresAt,
+        idempotencyKey: request.idempotencyKey,
+        marketingConsent: request.marketingConsent,
+        marketingConsentedAt: request.marketingConsent
+          ? request.requestedAt
+          : null,
+        marketingConsentVersion: consentVersions.marketingConsentVersion,
+        normalizedEmail: request.email,
+        payloadDigest,
+        privacyPolicyVersion: consentVersions.privacyPolicyVersion,
+        products,
+        providerIdempotencyKey,
+        requestedAt: request.requestedAt,
+        termsVersion: consentVersions.termsVersion,
+        tokenSha256: token.sha256,
+      });
 
     if (
       preparation.status === "unavailable_products" ||
@@ -156,7 +158,7 @@ export class AcquireProductsUseCase {
       return { status: "delivery_unavailable" };
     }
 
-    if (outcome.expiresAt.getTime() <= this.options.clock.now().getTime()) {
+    if (outcome.expiresAt.getTime() <= this.options.clockPort.now().getTime()) {
       return { status: "delivery_unavailable" };
     }
 
@@ -175,7 +177,7 @@ export class AcquireProductsUseCase {
      * verdict.
      */
     try {
-      delivery = await this.options.delivery.deliver(
+      delivery = await this.options.productDeliveryPort.deliver(
         createProductDeliveryCommand(command),
       );
     } catch {
@@ -197,13 +199,13 @@ export class AcquireProductsUseCase {
     command: AuditedProductDeliveryCommand,
     reason: string,
   ): Promise<AcquireProductsResult> {
-    this.options.incidents.deliveryRejected({
+    this.options.acquisitionIncidentsPort.deliveryRejected({
       reason,
       requestId: command.requestId,
     });
 
     try {
-      await this.options.acquisitions.recordDeliveryRejected({
+      await this.options.storeAcquisitionsPort.recordDeliveryRejected({
         deliveryAttemptId: command.deliveryAttemptId,
         provider: command.provider,
         requestId: command.requestId,
@@ -219,12 +221,12 @@ export class AcquireProductsUseCase {
     command: AuditedProductDeliveryCommand,
   ): Promise<AcquireProductsResult> {
     try {
-      await this.options.acquisitions.recordDeliveryRetryable({
+      await this.options.storeAcquisitionsPort.recordDeliveryRetryable({
         deliveryAttemptId: command.deliveryAttemptId,
         requestId: command.requestId,
       });
     } catch {
-      this.options.incidents.retryableDeliveryAuditPending({
+      this.options.acquisitionIncidentsPort.retryableDeliveryAuditPending({
         requestId: command.requestId,
       });
     }
@@ -241,14 +243,14 @@ export class AcquireProductsUseCase {
     }
 
     try {
-      await this.options.acquisitions.recordDeliveryAccepted({
+      await this.options.storeAcquisitionsPort.recordDeliveryAccepted({
         deliveryAttemptId: command.deliveryAttemptId,
         provider: delivery.provider,
         providerMessageId: delivery.providerMessageId,
         requestId: command.requestId,
       });
     } catch {
-      this.options.incidents.deliveryAcceptanceAuditPending({
+      this.options.acquisitionIncidentsPort.deliveryAcceptanceAuditPending({
         requestId: command.requestId,
       });
 
@@ -260,7 +262,7 @@ export class AcquireProductsUseCase {
 
   private async loadCatalog(): Promise<readonly PublishedProduct[] | null> {
     try {
-      return await this.options.catalog.getPublishedCatalog();
+      return await this.options.storeCatalogPort.getPublishedCatalog();
     } catch {
       return null;
     }

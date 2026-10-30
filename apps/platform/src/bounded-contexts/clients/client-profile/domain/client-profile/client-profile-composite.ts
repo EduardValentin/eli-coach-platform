@@ -27,28 +27,29 @@ export type ClientProfileReading = {
 };
 
 export type ClientProfileReadingPorts = {
-  identities: Pick<ClientIdentitiesPort, "findByClientId">;
-  profiles: Pick<ClientProfilesPort, "findByClientId">;
-  settings: ClientSettingsSourcePort;
-  avatars: Pick<ClientAvatarsPort, "findByClientId">;
-  measurements: ClientMeasurementsSourcePort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientId">;
+  clientProfilesPort: Pick<ClientProfilesPort, "findByClientId">;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
+  clientAvatarsPort: Pick<ClientAvatarsPort, "findByClientId">;
+  clientMeasurementsSourcePort: ClientMeasurementsSourcePort;
 };
 
 export class ClientProfileComposite {
   constructor(private readonly ports: ClientProfileReadingPorts) {}
 
   async readFor(clientId: string): Promise<ClientProfileReading | null> {
-    const identity = await this.ports.identities.findByClientId(clientId);
+    const identity =
+      await this.ports.clientIdentitiesPort.findByClientId(clientId);
 
     if (!identity) {
       return null;
     }
 
     const [profile, settings, avatar, measurements] = await Promise.all([
-      this.ports.profiles.findByClientId(clientId),
-      this.ports.settings.findByClientId(clientId),
-      this.ports.avatars.findByClientId(clientId),
-      this.ports.measurements.listByClientId(clientId),
+      this.ports.clientProfilesPort.findByClientId(clientId),
+      this.ports.clientSettingsSourcePort.findByClientId(clientId),
+      this.ports.clientAvatarsPort.findByClientId(clientId),
+      this.ports.clientMeasurementsSourcePort.listByClientId(clientId),
     ]);
     const stored = profile?.toSnapshot();
     const chosen = settings?.toSnapshot();

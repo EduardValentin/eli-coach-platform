@@ -20,7 +20,7 @@ describe("product details loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(storeContext, {
-          catalog: { getPublishedProductBySlug },
+          storeCatalogController: { getPublishedProductBySlug },
         } as unknown as StoreFeature),
       ],
       params: { slug: "unpublished-guide" },

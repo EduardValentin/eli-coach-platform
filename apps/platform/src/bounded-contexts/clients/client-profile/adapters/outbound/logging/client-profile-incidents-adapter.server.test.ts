@@ -14,12 +14,12 @@ describe("createClientProfileIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.onboardingDraftSaved({
+    clientProfileIncidentsAdapter.onboardingDraftSaved({
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       formId: "safety-screening",
     });
@@ -37,12 +37,12 @@ describe("createClientProfileIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.onboardingDraftSaveFailed({
+    clientProfileIncidentsAdapter.onboardingDraftSaveFailed({
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       formId: "measurements",
     });
@@ -63,12 +63,12 @@ describe("createClientProfileIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.onboardingSubmissionAccepted({
+    clientProfileIncidentsAdapter.onboardingSubmissionAccepted({
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       screeningOutcome: "needs-review",
     });
@@ -89,12 +89,12 @@ describe("createClientProfileIncidents", () => {
     const consoleWarn = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.onboardingSubmissionRefused({
+    clientProfileIncidentsAdapter.onboardingSubmissionRefused({
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       reason: "invalid",
     });
@@ -115,12 +115,15 @@ describe("createClientProfileIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.measurementEntrySaved({ clientId: "client-1", entryId: "entry-1" });
+    clientProfileIncidentsAdapter.measurementEntrySaved({
+      clientId: "client-1",
+      entryId: "entry-1",
+    });
 
     // assert
     expect(consoleInfo).toHaveBeenCalledWith("Measurement entry saved.", {
@@ -135,12 +138,12 @@ describe("createClientProfileIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.progressPhotoStored({
+    clientProfileIncidentsAdapter.progressPhotoStored({
       clientId: "client-1",
       entryId: "entry-1",
       view: "front",
@@ -164,12 +167,12 @@ describe("createClientProfileIncidents", () => {
     const consoleWarn = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.progressPhotoRefused({
+    clientProfileIncidentsAdapter.progressPhotoRefused({
       clientId: "client-1",
       entryId: "entry-1",
       view: "side",
@@ -193,12 +196,12 @@ describe("createClientProfileIncidents", () => {
     const consoleInfo = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.progressPhotoDeleted({
+    clientProfileIncidentsAdapter.progressPhotoDeleted({
       clientId: "client-1",
       entryId: "entry-1",
       photoId: "photo-1",
@@ -220,12 +223,12 @@ describe("createClientProfileIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.clientAvatarFileOrphaned({
+    clientProfileIncidentsAdapter.clientAvatarFileOrphaned({
       clientId: "client-1",
       storageKey: "client-1/avatar/avatar-1.bin",
     });
@@ -246,12 +249,12 @@ describe("createClientProfileIncidents", () => {
     const consoleWarn = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
-    const logger = new ClientProfileIncidentsAdapter(
+    const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
       new ConsoleLoggerAdapter(),
     );
 
     // act
-    logger.progressPhotoAccessRefused({
+    clientProfileIncidentsAdapter.progressPhotoAccessRefused({
       requesterRole: "CLIENT",
       photoId: "photo-1",
     });

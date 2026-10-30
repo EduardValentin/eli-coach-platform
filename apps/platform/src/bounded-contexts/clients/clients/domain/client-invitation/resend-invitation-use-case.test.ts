@@ -20,14 +20,14 @@ function resendDependencies(
   } = {},
 ) {
   return {
-    accountInvitations: {
+    accountInvitationsPort: {
       resend: vi
         .fn()
         .mockResolvedValue(
           overrides.outcome ?? { status: "sent", email: "ana@example.com" },
         ),
     },
-    clients: {
+    invitedClientsPort: {
       findById: vi
         .fn()
         .mockResolvedValue(
@@ -41,14 +41,14 @@ describe("ResendInvitationUseCase", () => {
   it("re-sends the account invitation she holds and answers the address it went to", async () => {
     // arrange
     const dependencies = resendDependencies();
-    const useCase = new ResendInvitationUseCase(dependencies);
+    const resendInvitationUseCase = new ResendInvitationUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(invitedClient.id);
+    const result = await resendInvitationUseCase.execute(invitedClient.id);
 
     // assert
     expect(result).toEqual({ status: "sent", email: "ana@example.com" });
-    expect(dependencies.accountInvitations.resend).toHaveBeenCalledWith({
+    expect(dependencies.accountInvitationsPort.resend).toHaveBeenCalledWith({
       invitationId: "invitation-1",
       firstName: "Ana",
     });
@@ -66,12 +66,12 @@ describe("ResendInvitationUseCase", () => {
     "answers the account invitation's %s outcome in the coach's terms",
     async (_label, outcome, expected) => {
       // arrange
-      const useCase = new ResendInvitationUseCase(
+      const resendInvitationUseCase = new ResendInvitationUseCase(
         resendDependencies({ outcome }),
       );
 
       // act
-      const result = await useCase.execute(invitedClient.id);
+      const result = await resendInvitationUseCase.execute(invitedClient.id);
 
       // assert
       expect(result).toEqual(expected);
@@ -83,14 +83,14 @@ describe("ResendInvitationUseCase", () => {
     const dependencies = resendDependencies({
       client: { ...invitedClient, authSubjectId: "user_ana" },
     });
-    const useCase = new ResendInvitationUseCase(dependencies);
+    const resendInvitationUseCase = new ResendInvitationUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(invitedClient.id);
+    const result = await resendInvitationUseCase.execute(invitedClient.id);
 
     // assert
     expect(result).toEqual({ status: "already-admitted" });
-    expect(dependencies.accountInvitations.resend).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.resend).not.toHaveBeenCalled();
   });
 
   it("refuses a resend once her coaching is cancelled or ended, touching nothing", async () => {
@@ -98,14 +98,14 @@ describe("ResendInvitationUseCase", () => {
     const dependencies = resendDependencies({
       client: { ...invitedClient, coachingCancelledOrEnded: true },
     });
-    const useCase = new ResendInvitationUseCase(dependencies);
+    const resendInvitationUseCase = new ResendInvitationUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(invitedClient.id);
+    const result = await resendInvitationUseCase.execute(invitedClient.id);
 
     // assert
     expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
-    expect(dependencies.accountInvitations.resend).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.resend).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -117,13 +117,13 @@ describe("ResendInvitationUseCase", () => {
   ] as const)("answers not-found for %s", async (_label, overrides) => {
     // arrange
     const dependencies = resendDependencies(overrides);
-    const useCase = new ResendInvitationUseCase(dependencies);
+    const resendInvitationUseCase = new ResendInvitationUseCase(dependencies);
 
     // act
-    const result = await useCase.execute(invitedClient.id);
+    const result = await resendInvitationUseCase.execute(invitedClient.id);
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(dependencies.accountInvitations.resend).not.toHaveBeenCalled();
+    expect(dependencies.accountInvitationsPort.resend).not.toHaveBeenCalled();
   });
 });

@@ -8,7 +8,7 @@ describe("GetFeatureFlagsUseCase", () => {
     // arrange
     const createdAt = new Date("2026-01-01");
     const updatedAt = new Date("2026-01-02");
-    const repository: FeatureFlagsPort = {
+    const featureFlagsPort: FeatureFlagsPort = {
       listAll: vi.fn().mockResolvedValue([
         FeatureFlag.reconstitute({
           id: 1,
@@ -20,10 +20,12 @@ describe("GetFeatureFlagsUseCase", () => {
         }),
       ]),
     };
-    const useCase = new GetFeatureFlagsUseCase({ featureFlags: repository });
+    const getFeatureFlagsUseCase = new GetFeatureFlagsUseCase({
+      featureFlagsPort,
+    });
 
     // act
-    const result = await useCase.execute();
+    const result = await getFeatureFlagsUseCase.execute();
 
     // assert
     expect(result).toEqual({
@@ -33,13 +35,15 @@ describe("GetFeatureFlagsUseCase", () => {
 
   it("returns an empty feature flag set when storage has no rows", async () => {
     // arrange
-    const repository: FeatureFlagsPort = {
+    const featureFlagsPort: FeatureFlagsPort = {
       listAll: vi.fn().mockResolvedValue([]),
     };
-    const useCase = new GetFeatureFlagsUseCase({ featureFlags: repository });
+    const getFeatureFlagsUseCase = new GetFeatureFlagsUseCase({
+      featureFlagsPort,
+    });
 
     // act
-    const result = await useCase.execute();
+    const result = await getFeatureFlagsUseCase.execute();
 
     // assert
     expect(result).toEqual({});

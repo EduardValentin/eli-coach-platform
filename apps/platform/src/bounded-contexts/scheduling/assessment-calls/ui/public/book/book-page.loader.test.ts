@@ -91,7 +91,7 @@ describe("assessment call booking page revalidation", () => {
 
 function createLoaderArguments(loadBookingPage: ReturnType<typeof vi.fn>) {
   const feature = {
-    assessmentCalls: { loadBookingPage },
+    assessmentCallsController: { loadBookingPage },
   } as unknown as AssessmentCallsFeature;
 
   return createRequestArgs({

@@ -26,10 +26,10 @@ export type PreviewCheckInSeriesResult =
   | { status: "unknown_client" | "client_cannot_answer" };
 
 type PreviewCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findById">;
-  clock: ClockPort;
-  openSlots: Pick<OpenSlotsPort, "coachWeek" | "busyFrom">;
-  series: Pick<
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clockPort: ClockPort;
+  openSlotsPort: Pick<OpenSlotsPort, "coachWeek" | "busyFrom">;
+  checkInSeriesRecordsPort: Pick<
     CheckInSeriesRecordsPort,
     "findActiveForClient" | "listOccurrences"
   >;
@@ -43,13 +43,15 @@ export class PreviewCheckInSeriesUseCase {
   async execute(
     command: PreviewCheckInSeriesCommand,
   ): Promise<PreviewCheckInSeriesResult> {
-    const client = await this.options.clients.findById(command.clientId);
+    const client = await this.options.clientReachPort.findById(
+      command.clientId,
+    );
 
     if (!client) {
       return { status: "unknown_client" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const bounds = CheckInSeriesBounds.ofCoaching({
       client,
       now,
@@ -61,7 +63,7 @@ export class PreviewCheckInSeriesUseCase {
     }
 
     if (bounds === "nothing_to_create") {
-      const week = await this.options.openSlots.coachWeek();
+      const week = await this.options.openSlotsPort.coachWeek();
 
       return {
         status: "previewed",
@@ -71,7 +73,7 @@ export class PreviewCheckInSeriesUseCase {
     }
 
     const [week, busy] = await Promise.all([
-      this.options.openSlots.coachWeek(),
+      this.options.openSlotsPort.coachWeek(),
       this.busyBesideOwnWeeksOf({ clientId: client.clientId, now }),
     ]);
 
@@ -92,15 +94,17 @@ export class PreviewCheckInSeriesUseCase {
     now,
   }: BusyOfClient): Promise<CoachTimeSpan[]> {
     const [busy, series] = await Promise.all([
-      this.options.openSlots.busyFrom(now),
-      this.options.series.findActiveForClient(clientId),
+      this.options.openSlotsPort.busyFrom(now),
+      this.options.checkInSeriesRecordsPort.findActiveForClient(clientId),
     ]);
 
     if (!series) {
       return busy;
     }
 
-    const weeks = await this.options.series.listOccurrences(series.id);
+    const weeks = await this.options.checkInSeriesRecordsPort.listOccurrences(
+      series.id,
+    );
 
     return series.busyBesideOwnWeeks({ busy, weeks, at: now });
   }

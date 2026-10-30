@@ -71,7 +71,7 @@ function createResolveJoin(options?: {
         : options.client,
     ),
   } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
-  const meetingRoom: MeetingRoomPort = {
+  const meetingRoomPort: MeetingRoomPort = {
     currentJoinUrl: vi
       .fn()
       .mockResolvedValue(
@@ -81,10 +81,10 @@ function createResolveJoin(options?: {
   const now = options?.now ?? NOW;
 
   return new ResolveCheckInJoinUseCase({
-    checkIns,
-    clients,
-    clock: { now: () => now },
-    meetingRoom,
+    checkInsPort: checkIns,
+    clientReachPort: clients,
+    clockPort: { now: () => now },
+    meetingRoomPort,
   });
 }
 
@@ -94,10 +94,10 @@ describe("ResolveCheckInJoinUseCase", () => {
     ["the coach", COACH],
   ])("sends %s to the coach's meeting room", async (_situation, actor) => {
     // arrange
-    const resolveJoin = createResolveJoin();
+    const resolveCheckInJoinUseCase = createResolveJoin();
 
     // act
-    const result = await resolveJoin.execute({
+    const result = await resolveCheckInJoinUseCase.execute({
       actor,
       checkInId: "check-in-1",
     });
@@ -108,12 +108,12 @@ describe("ResolveCheckInJoinUseCase", () => {
 
   it("lets the coach join any client's check-in", async () => {
     // arrange
-    const resolveJoin = createResolveJoin({
+    const resolveCheckInJoinUseCase = createResolveJoin({
       found: checkIn({ clientId: "client-2" }),
     });
 
     // act
-    const result = await resolveJoin.execute({
+    const result = await resolveCheckInJoinUseCase.execute({
       actor: COACH,
       checkInId: "check-in-1",
     });
@@ -124,10 +124,10 @@ describe("ResolveCheckInJoinUseCase", () => {
 
   it("answers link not set while the coach has no meeting room", async () => {
     // arrange
-    const resolveJoin = createResolveJoin({ joinUrl: null });
+    const resolveCheckInJoinUseCase = createResolveJoin({ joinUrl: null });
 
     // act
-    const result = await resolveJoin.execute({
+    const result = await resolveCheckInJoinUseCase.execute({
       actor: ANA,
       checkInId: "check-in-1",
     });
@@ -166,10 +166,10 @@ describe("ResolveCheckInJoinUseCase", () => {
     ],
   ])("answers unknown to the client for %s", async (_situation, options) => {
     // arrange
-    const resolveJoin = createResolveJoin(options);
+    const resolveCheckInJoinUseCase = createResolveJoin(options);
 
     // act
-    const result = await resolveJoin.execute({
+    const result = await resolveCheckInJoinUseCase.execute({
       actor: ANA,
       checkInId: "check-in-1",
     });
@@ -193,10 +193,10 @@ describe("ResolveCheckInJoinUseCase", () => {
     ],
   ])("answers unknown to the coach for %s", async (_situation, options) => {
     // arrange
-    const resolveJoin = createResolveJoin(options);
+    const resolveCheckInJoinUseCase = createResolveJoin(options);
 
     // act
-    const result = await resolveJoin.execute({
+    const result = await resolveCheckInJoinUseCase.execute({
       actor: COACH,
       checkInId: "check-in-1",
     });

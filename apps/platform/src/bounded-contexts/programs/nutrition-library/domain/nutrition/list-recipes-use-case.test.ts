@@ -70,9 +70,13 @@ function createUseCase(stored: { recipes: Recipe[]; foods: Food[] }) {
     ),
   };
   const tags = { list: vi.fn(async () => TAGS) };
-  const useCase = new ListRecipesUseCase({ recipes, foods, tags });
+  const listRecipesUseCase = new ListRecipesUseCase({
+    recipeLibraryPort: recipes,
+    foodLibraryPort: foods,
+    nutritionTagsPort: tags,
+  });
 
-  return { useCase, recipes, foods };
+  return { listRecipesUseCase, recipes, foods };
 }
 
 describe("ListRecipesUseCase", () => {
@@ -80,13 +84,13 @@ describe("ListRecipesUseCase", () => {
     // arrange
     const porridge = recipeUsing("recipe-1", ["food-oats", "food-honey"]);
     const shake = recipeUsing("recipe-2", ["food-milk", "food-honey"]);
-    const { useCase, recipes, foods } = createUseCase({
+    const { listRecipesUseCase, recipes, foods } = createUseCase({
       recipes: [porridge, shake],
       foods: [HONEY, MILK, OATS],
     });
 
     // act
-    const result = await useCase.execute(COACH_ACCOUNT_ID);
+    const result = await listRecipesUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
     expect(result).toEqual({
@@ -105,13 +109,13 @@ describe("ListRecipesUseCase", () => {
   it("reads no referenced foods when every food her recipes use is active", async () => {
     // arrange
     const porridge = recipeUsing("recipe-1", ["food-oats", "food-milk"]);
-    const { useCase, foods } = createUseCase({
+    const { listRecipesUseCase, foods } = createUseCase({
       recipes: [porridge],
       foods: [MILK, OATS],
     });
 
     // act
-    const result = await useCase.execute(COACH_ACCOUNT_ID);
+    const result = await listRecipesUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
     expect(result.foods).toEqual([MILK, OATS]);

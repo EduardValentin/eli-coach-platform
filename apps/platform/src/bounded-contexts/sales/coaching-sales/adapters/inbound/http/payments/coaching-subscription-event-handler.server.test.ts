@@ -36,22 +36,24 @@ const refund: PaymentRefund = {
 
 function createHandler(status: ReconcileStatus = "recorded") {
   const reconcile = vi.fn().mockResolvedValue({ status });
-  const handler = new CoachingSubscriptionEventHandler({
-    reconcileSubscriptionEvent: {
-      execute: reconcile,
-    } as unknown as ReconcileSubscriptionEventUseCase,
-  });
+  const coachingSubscriptionEventHandler = new CoachingSubscriptionEventHandler(
+    {
+      reconcileSubscriptionEventUseCase: {
+        execute: reconcile,
+      } as unknown as ReconcileSubscriptionEventUseCase,
+    },
+  );
 
-  return { handler, reconcile };
+  return { coachingSubscriptionEventHandler, reconcile };
 }
 
 describe("CoachingSubscriptionEventHandler", () => {
   it("serves the coaching subscription purpose", () => {
     // arrange
-    const { handler } = createHandler();
+    const { coachingSubscriptionEventHandler } = createHandler();
 
     // act
-    const purpose = handler.purpose;
+    const purpose = coachingSubscriptionEventHandler.purpose;
 
     // assert
     expect(purpose).toBe("coaching-subscription");
@@ -61,10 +63,14 @@ describe("CoachingSubscriptionEventHandler", () => {
     "reconciles a subscription change as its domain event and answers %s",
     async (status) => {
       // arrange
-      const { handler, reconcile } = createHandler(status);
+      const { coachingSubscriptionEventHandler, reconcile } =
+        createHandler(status);
 
       // act
-      const outcome = await handler.handle("evt_1", deletion);
+      const outcome = await coachingSubscriptionEventHandler.handle(
+        "evt_1",
+        deletion,
+      );
 
       // assert
       expect(outcome).toBe(status);
@@ -81,10 +87,10 @@ describe("CoachingSubscriptionEventHandler", () => {
 
   it("reconciles a refunded charge against the refunded total of its payment intent", async () => {
     // arrange
-    const { handler, reconcile } = createHandler();
+    const { coachingSubscriptionEventHandler, reconcile } = createHandler();
 
     // act
-    await handler.handle("evt_2", refund);
+    await coachingSubscriptionEventHandler.handle("evt_2", refund);
 
     // assert
     expect(reconcile).toHaveBeenCalledWith({
@@ -100,10 +106,10 @@ describe("CoachingSubscriptionEventHandler", () => {
 
   it("ignores a change that means nothing to the coaching subscription", async () => {
     // arrange
-    const { handler, reconcile } = createHandler();
+    const { coachingSubscriptionEventHandler, reconcile } = createHandler();
 
     // act
-    const outcome = await handler.handle("evt_3", {
+    const outcome = await coachingSubscriptionEventHandler.handle("evt_3", {
       ...deletion,
       standing: "healthy",
       endedAt: null,

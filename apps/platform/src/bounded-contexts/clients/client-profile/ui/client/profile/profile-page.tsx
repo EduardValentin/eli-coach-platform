@@ -26,11 +26,11 @@ type ClientProfilePage = {
 export async function loader(
   args: LoaderFunctionArgs,
 ): Promise<ClientProfilePage> {
-  const { clientMeasurements, ownProfile } =
+  const { clientMeasurementsController, ownClientProfileController } =
     args.context.get(clientProfileContext);
   const [profile, measurements] = await Promise.all([
-    ownProfile.load(args),
-    clientMeasurements.loadPage(args),
+    ownClientProfileController.load(args),
+    clientMeasurementsController.loadPage(args),
   ]);
 
   return { profile, measurements };

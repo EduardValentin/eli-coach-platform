@@ -3,15 +3,15 @@ import { TermsFacadeAdapter } from "~/bounded-contexts/legal/legal/adapters/inbo
 import type { DocumentHasherPort } from "~/bounded-contexts/legal/legal/domain/legal-document";
 
 export type LegalFeature = {
-  terms: TermsFacade;
+  termsFacade: TermsFacade;
 };
 
 export type LegalFeatureHandles = {
-  documentHasher: DocumentHasherPort;
+  documentHasherPort: DocumentHasherPort;
 };
 
 export function composeLegalFeature(
   handles: LegalFeatureHandles,
 ): LegalFeature {
-  return { terms: new TermsFacadeAdapter(handles.documentHasher) };
+  return { termsFacade: new TermsFacadeAdapter(handles.documentHasherPort) };
 }

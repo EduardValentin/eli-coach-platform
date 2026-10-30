@@ -35,7 +35,10 @@ describe("Stripe webhook route", () => {
 
     // act
     const answered = await stripeWebhooksRoute.action(
-      coachingSalesArgs({ stripeWebhooks: { handleEvent } as never }, request),
+      coachingSalesArgs(
+        { stripeWebhookController: { handleEvent } as never },
+        request,
+      ),
     );
 
     // assert
@@ -49,7 +52,7 @@ describe("Stripe webhook route", () => {
 
     // act
     const response = await stripeWebhooksRoute.loader(
-      coachingSalesArgs({ stripeWebhooks: { handleEvent } as never }),
+      coachingSalesArgs({ stripeWebhookController: { handleEvent } as never }),
     );
 
     // assert

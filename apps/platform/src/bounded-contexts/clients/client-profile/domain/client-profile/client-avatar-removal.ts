@@ -4,22 +4,23 @@ import type { ClientAvatarStorePort } from "./client-avatar-store-port";
 import type { ClientAvatarsPort } from "./client-avatars-port";
 
 export type ClientAvatarRemovalOptions = {
-  avatars: Pick<ClientAvatarsPort, "findByClientId" | "remove">;
-  store: Pick<ClientAvatarStorePort, "delete">;
-  incidents: ClientAvatarIncidentsPort;
+  clientAvatarsPort: Pick<ClientAvatarsPort, "findByClientId" | "remove">;
+  clientAvatarStorePort: Pick<ClientAvatarStorePort, "delete">;
+  clientAvatarIncidentsPort: ClientAvatarIncidentsPort;
 };
 
 export class ClientAvatarRemoval {
   constructor(private readonly options: ClientAvatarRemovalOptions) {}
 
   async remove(clientId: string): Promise<void> {
-    const current = await this.options.avatars.findByClientId(clientId);
+    const current =
+      await this.options.clientAvatarsPort.findByClientId(clientId);
 
     if (!current) {
       return;
     }
 
-    await this.options.avatars.remove(clientId);
+    await this.options.clientAvatarsPort.remove(clientId);
     await this.discardFileOf(current);
   }
 
@@ -31,9 +32,9 @@ export class ClientAvatarRemoval {
     const { clientId, reference } = avatar.toSnapshot();
 
     try {
-      await this.options.store.delete(reference);
+      await this.options.clientAvatarStorePort.delete(reference);
     } catch {
-      this.options.incidents.clientAvatarFileOrphaned({
+      this.options.clientAvatarIncidentsPort.clientAvatarFileOrphaned({
         clientId,
         storageKey: reference.storageKey,
       });

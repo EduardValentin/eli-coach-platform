@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(checkInsContext)
-      .sharedCheckIns.withdraw(args, args.params.checkInId);
+      .sharedCheckInsController.withdraw(args, args.params.checkInId);
   });
 }
 

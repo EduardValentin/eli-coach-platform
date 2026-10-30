@@ -4,7 +4,7 @@ import { MeasurementHistory } from "./measurement-history";
 type ReadClientMeasurementHistoryCommand = { clientId: string };
 
 type ReadClientMeasurementHistoryUseCaseOptions = {
-  records: ClientMeasurementRecordsPort;
+  clientMeasurementRecordsPort: ClientMeasurementRecordsPort;
 };
 
 export class ReadClientMeasurementHistoryUseCase {
@@ -16,7 +16,9 @@ export class ReadClientMeasurementHistoryUseCase {
     command: ReadClientMeasurementHistoryCommand,
   ): Promise<MeasurementHistory> {
     return MeasurementHistory.of(
-      await this.options.records.listByClientId(command.clientId),
+      await this.options.clientMeasurementRecordsPort.listByClientId(
+        command.clientId,
+      ),
     );
   }
 }

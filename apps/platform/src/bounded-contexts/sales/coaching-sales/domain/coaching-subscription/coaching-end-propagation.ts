@@ -4,7 +4,7 @@ import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-
 
 type CoachingEndPropagationOptions = {
   coachingEnds: readonly CoachingEndHandlerPort[];
-  incidents: CoachingSubscriptionIncidentsPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
 };
 
 type CoachingEndNotice = {
@@ -29,21 +29,24 @@ export class CoachingEndPropagation {
       endsAt,
     };
 
-    for (const handler of this.options.coachingEnds) {
-      await this.tell(handler, notice);
+    for (const coachingEndHandlerPort of this.options.coachingEnds) {
+      await this.tell(coachingEndHandlerPort, notice);
     }
   }
 
   private async tell(
-    handler: CoachingEndHandlerPort,
+    coachingEndHandlerPort: CoachingEndHandlerPort,
     notice: CoachingEndNotice,
   ): Promise<void> {
     const { clientId, endsAt } = notice;
 
     try {
-      await handler.coachingEnds({ clientId, endsAt });
+      await coachingEndHandlerPort.coachingEnds({ clientId, endsAt });
     } catch (error) {
-      this.options.incidents.coachingEndNotPropagated({ ...notice, error });
+      this.options.coachingSubscriptionIncidentsPort.coachingEndNotPropagated({
+        ...notice,
+        error,
+      });
     }
   }
 }

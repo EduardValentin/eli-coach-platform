@@ -41,14 +41,14 @@ const AVATAR_SNAPSHOT = {
 describe("CoachClientAvatarController writes", () => {
   it("uploads and removes a client's avatar for the coach", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { coachClientAvatarController, useCases } = createController();
 
     // act
-    const uploaded = await controller.upload(
+    const uploaded = await coachClientAvatarController.upload(
       accountArgs(COACH, avatarUpload()),
       CLIENT_ID,
     );
-    const removed = await controller.remove(
+    const removed = await coachClientAvatarController.remove(
       accountArgs(COACH, { method: "DELETE" }),
       CLIENT_ID,
     );
@@ -66,11 +66,14 @@ describe("CoachClientAvatarController writes", () => {
 
   it("refuses a client on the coach's routes", async () => {
     // arrange
-    const { controller } = createController();
+    const { coachClientAvatarController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.remove(accountArgs(CLIENT, { method: "DELETE" }), CLIENT_ID),
+      coachClientAvatarController.remove(
+        accountArgs(CLIENT, { method: "DELETE" }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -81,10 +84,10 @@ describe("CoachClientAvatarController writes", () => {
 describe("CoachClientAvatarController urlsFor", () => {
   it("hands the coach an avatar address for each client that has one", async () => {
     // arrange
-    const { controller } = createController();
+    const { coachClientAvatarController } = createController();
 
     // act
-    const urls = await controller.urlsFor(accountArgs(COACH), [
+    const urls = await coachClientAvatarController.urlsFor(accountArgs(COACH), [
       CLIENT_ID,
       OTHER_CLIENT_ID,
     ]);
@@ -105,19 +108,19 @@ function createController() {
       .fn()
       .mockResolvedValue({ status: "uploaded" }),
   };
-  const controller = new CoachClientAvatarController({
-    listClientAvatars: {
+  const coachClientAvatarController = new CoachClientAvatarController({
+    listClientAvatarsUseCase: {
       execute: useCases.listClientAvatars,
     } as unknown as ListClientAvatarsUseCase,
-    removeClientAvatarAsCoach: {
+    removeClientAvatarAsCoachUseCase: {
       execute: useCases.removeClientAvatarAsCoach,
     } as unknown as RemoveClientAvatarAsCoachUseCase,
-    uploadClientAvatarAsCoach: {
+    uploadClientAvatarAsCoachUseCase: {
       execute: useCases.uploadClientAvatarAsCoach,
     } as unknown as UploadClientAvatarAsCoachUseCase,
   });
 
-  return { controller, useCases };
+  return { coachClientAvatarController, useCases };
 }
 
 function avatarUpload(body?: FormData): RequestInit {

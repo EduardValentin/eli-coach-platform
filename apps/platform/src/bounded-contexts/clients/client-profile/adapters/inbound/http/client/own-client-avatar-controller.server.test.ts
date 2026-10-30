@@ -40,10 +40,10 @@ const AVATAR_SNAPSHOT = {
 describe("OwnClientAvatarController upload", () => {
   it("hands her photo to the use case and answers that it is uploaded once it is her avatar", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { ownClientAvatarController, useCases } = createController();
 
     // act
-    const response = await controller.upload(
+    const response = await ownClientAvatarController.upload(
       accountArgs(CLIENT, avatarUpload()),
     );
 
@@ -71,10 +71,12 @@ describe("OwnClientAvatarController upload", () => {
     [{ status: "ended" }, 409, "ended"],
   ] as const)("answers %o with %d", async (result, status, error) => {
     // arrange
-    const { controller } = createController({ uploadOwn: result });
+    const { ownClientAvatarController } = createController({
+      uploadOwn: result,
+    });
 
     // act
-    const response = await controller.upload(
+    const response = await ownClientAvatarController.upload(
       accountArgs(CLIENT, avatarUpload()),
     );
 
@@ -85,10 +87,10 @@ describe("OwnClientAvatarController upload", () => {
 
   it("refuses a body with no avatar part without uploading anything", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { ownClientAvatarController, useCases } = createController();
 
     // act
-    const response = await controller.upload(
+    const response = await ownClientAvatarController.upload(
       accountArgs(CLIENT, avatarUpload(new FormData())),
     );
 
@@ -99,11 +101,11 @@ describe("OwnClientAvatarController upload", () => {
 
   it("refuses the coach on her own route", async () => {
     // arrange
-    const { controller } = createController();
+    const { ownClientAvatarController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.upload(accountArgs(COACH, avatarUpload())),
+      ownClientAvatarController.upload(accountArgs(COACH, avatarUpload())),
     );
 
     // assert
@@ -114,10 +116,10 @@ describe("OwnClientAvatarController upload", () => {
 describe("OwnClientAvatarController remove", () => {
   it("removes her avatar and answers that it is removed", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { ownClientAvatarController, useCases } = createController();
 
     // act
-    const response = await controller.remove(
+    const response = await ownClientAvatarController.remove(
       accountArgs(CLIENT, { method: "DELETE" }),
     );
 
@@ -131,10 +133,10 @@ describe("OwnClientAvatarController remove", () => {
 describe("OwnClientAvatarController url", () => {
   it("hands her the address of her own avatar", async () => {
     // arrange
-    const { controller, useCases } = createController();
+    const { ownClientAvatarController, useCases } = createController();
 
     // act
-    const url = await controller.url(accountArgs(CLIENT));
+    const url = await ownClientAvatarController.url(accountArgs(CLIENT));
 
     // assert
     expect(url).toBe(`/api/client-profile/avatar/${CLIENT_ID}?v=avatar-1`);
@@ -154,19 +156,19 @@ function createController(
       .fn()
       .mockResolvedValue(results.uploadOwn ?? { status: "uploaded" }),
   };
-  const controller = new OwnClientAvatarController({
-    readOwnClientAvatar: {
+  const ownClientAvatarController = new OwnClientAvatarController({
+    readOwnClientAvatarUseCase: {
       execute: useCases.readOwnClientAvatar,
     } as unknown as ReadOwnClientAvatarUseCase,
-    removeOwnClientAvatar: {
+    removeOwnClientAvatarUseCase: {
       execute: useCases.removeOwnClientAvatar,
     } as unknown as RemoveOwnClientAvatarUseCase,
-    uploadOwnClientAvatar: {
+    uploadOwnClientAvatarUseCase: {
       execute: useCases.uploadOwnClientAvatar,
     } as unknown as UploadOwnClientAvatarUseCase,
   });
 
-  return { controller, useCases };
+  return { ownClientAvatarController, useCases };
 }
 
 function avatarUpload(body?: FormData): RequestInit {

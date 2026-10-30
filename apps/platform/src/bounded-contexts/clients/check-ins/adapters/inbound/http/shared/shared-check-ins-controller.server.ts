@@ -35,12 +35,12 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type SharedCheckInsControllerOptions = {
-  approveCheckIn: ApproveCheckInUseCase;
-  cancelCheckIn: CancelCheckInUseCase;
-  declineCheckIn: DeclineCheckInUseCase;
-  listOpenCheckInTimes: ListOpenCheckInTimesUseCase;
-  proposeCheckInTime: ProposeCheckInTimeUseCase;
-  withdrawCheckInRequest: WithdrawCheckInRequestUseCase;
+  approveCheckInUseCase: ApproveCheckInUseCase;
+  cancelCheckInUseCase: CancelCheckInUseCase;
+  declineCheckInUseCase: DeclineCheckInUseCase;
+  listOpenCheckInTimesUseCase: ListOpenCheckInTimesUseCase;
+  proposeCheckInTimeUseCase: ProposeCheckInTimeUseCase;
+  withdrawCheckInRequestUseCase: WithdrawCheckInRequestUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -75,7 +75,8 @@ export class SharedCheckInsController {
       return unknownClient();
     }
 
-    const result = await this.options.listOpenCheckInTimes.execute(command);
+    const result =
+      await this.options.listOpenCheckInTimesUseCase.execute(command);
 
     return this.respondToOpenTimes(result);
   }
@@ -100,7 +101,7 @@ export class SharedCheckInsController {
     }
 
     const result = await this.options.unitOfWork(() =>
-      this.options.proposeCheckInTime.execute({
+      this.options.proposeCheckInTimeUseCase.execute({
         checkInId: id.data,
         actor,
         startsAt: new Date(newTime.data.startsAt),
@@ -119,7 +120,7 @@ export class SharedCheckInsController {
     return this.decide({
       args,
       checkInId,
-      decision: this.options.cancelCheckIn,
+      decision: this.options.cancelCheckInUseCase,
     });
   }
 
@@ -130,7 +131,7 @@ export class SharedCheckInsController {
     return this.decide({
       args,
       checkInId,
-      decision: this.options.approveCheckIn,
+      decision: this.options.approveCheckInUseCase,
     });
   }
 
@@ -141,7 +142,7 @@ export class SharedCheckInsController {
     return this.decide({
       args,
       checkInId,
-      decision: this.options.declineCheckIn,
+      decision: this.options.declineCheckInUseCase,
     });
   }
 
@@ -152,7 +153,7 @@ export class SharedCheckInsController {
     return this.decide({
       args,
       checkInId,
-      decision: this.options.withdrawCheckInRequest,
+      decision: this.options.withdrawCheckInRequestUseCase,
     });
   }
 

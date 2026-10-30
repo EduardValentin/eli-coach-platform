@@ -5,11 +5,14 @@ import { visitorOf } from "./visitor.server";
 
 export class ClientCallsFacadeAdapter implements ClientCallsFacade {
   constructor(
-    private readonly calls: Pick<AssessmentCallReservationsPort, "findById">,
+    private readonly assessmentCallReservationsPort: Pick<
+      AssessmentCallReservationsPort,
+      "findById"
+    >,
   ) {}
 
   async callOf(callId: string) {
-    const call = await this.calls.findById(callId);
+    const call = await this.assessmentCallReservationsPort.findById(callId);
 
     return call
       ? {

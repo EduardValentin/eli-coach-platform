@@ -63,8 +63,8 @@ function createViews(options: {
     findByClientIds: vi.fn().mockResolvedValue(options.identities),
   } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const views = new CoachCheckInViews({
-    clock: { now: () => NOW },
-    identities,
+    clockPort: { now: () => NOW },
+    clientIdentitiesPort: identities,
   });
 
   return { checkIns: options.checkIns, identities, views };

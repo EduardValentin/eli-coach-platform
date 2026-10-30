@@ -28,12 +28,12 @@ function createRuntimeEnvironment(
 describe("ReadyzController", () => {
   it("reports healthy when ENVIRONMENT is local, even without database configuration", async () => {
     // arrange
-    const controller = new ReadyzController(
+    const readyzController = new ReadyzController(
       createRuntimeEnvironment({ ENVIRONMENT: "local" }),
     );
 
     // act
-    const response = controller.getStatus();
+    const response = readyzController.getStatus();
 
     // assert
     expect(response.status).toBe(200);
@@ -45,12 +45,12 @@ describe("ReadyzController", () => {
 
   it("reports unhealthy when non-local and database configuration is incomplete", async () => {
     // arrange
-    const controller = new ReadyzController(
+    const readyzController = new ReadyzController(
       createRuntimeEnvironment({ ENVIRONMENT: "test" }),
     );
 
     // act
-    const response = controller.getStatus();
+    const response = readyzController.getStatus();
 
     // assert
     expect(response.status).toBe(503);
@@ -62,7 +62,7 @@ describe("ReadyzController", () => {
 
   it("reports healthy when non-local and database configuration is complete", async () => {
     // arrange
-    const controller = new ReadyzController(
+    const readyzController = new ReadyzController(
       createRuntimeEnvironment({
         ENVIRONMENT: "test",
         DATABASE_HOST: "localhost",
@@ -74,7 +74,7 @@ describe("ReadyzController", () => {
     );
 
     // act
-    const response = controller.getStatus();
+    const response = readyzController.getStatus();
 
     // assert
     expect(response.status).toBe(200);

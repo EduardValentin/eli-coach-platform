@@ -28,8 +28,8 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientMeasurementsControllerOptions = {
-  readOwnMeasurementHistory: ReadOwnMeasurementHistoryUseCase;
-  recordMeasurements: RecordMeasurementsUseCase;
+  readOwnMeasurementHistoryUseCase: ReadOwnMeasurementHistoryUseCase;
+  recordMeasurementsUseCase: RecordMeasurementsUseCase;
 };
 
 type RecordMeasurementsResult = Awaited<
@@ -50,9 +50,11 @@ export class ClientMeasurementsController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const reading = await this.options.readOwnMeasurementHistory.execute({
-      authSubjectId: client.authSubjectId,
-    });
+    const reading = await this.options.readOwnMeasurementHistoryUseCase.execute(
+      {
+        authSubjectId: client.authSubjectId,
+      },
+    );
 
     if (!reading) {
       throw new Response("Not Found", { status: 404 });
@@ -70,9 +72,11 @@ export class ClientMeasurementsController {
     const client = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const reading = await this.options.readOwnMeasurementHistory.execute({
-      authSubjectId: client.authSubjectId,
-    });
+    const reading = await this.options.readOwnMeasurementHistoryUseCase.execute(
+      {
+        authSubjectId: client.authSubjectId,
+      },
+    );
 
     return measurementsNudgeSchema.parse({
       dueLine: reading?.dueLine ?? null,
@@ -104,7 +108,7 @@ export class ClientMeasurementsController {
       return unreadableMeasurementsResponse();
     }
 
-    const result = await this.options.recordMeasurements.execute({
+    const result = await this.options.recordMeasurementsUseCase.execute({
       authSubjectId: client.authSubjectId,
       values,
       consentGiven: photoConsentGivenIn(body.formData),

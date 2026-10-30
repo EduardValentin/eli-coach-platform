@@ -14,7 +14,10 @@ export async function action({ context, params, request }: ActionFunctionArgs) {
 
     return context
       .get(storeContext)
-      .management.retireProduct(request, params.productId);
+      .storeProductManagementController.retireProduct(
+        request,
+        params.productId,
+      );
   });
 }
 

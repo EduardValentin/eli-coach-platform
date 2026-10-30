@@ -17,10 +17,10 @@ export type RemoveClientResourceResult =
   { status: "removed" } | { status: "not-found" } | { status: "failed" };
 
 type RemoveClientResourceUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStorePort;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceStorePort: ClientResourceStorePort;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class RemoveClientResourceUseCase {
@@ -43,9 +43,12 @@ export class RemoveClientResourceUseCase {
     const owner = resource.storageOwner();
 
     try {
-      await this.options.resources.remove(owner.resourceId);
+      await this.options.clientResourcesPort.remove(owner.resourceId);
     } catch (error) {
-      this.options.incidents.resourceChangeFailed({ ...owner, error });
+      this.options.clientResourceIncidentsPort.resourceChangeFailed({
+        ...owner,
+        error,
+      });
 
       return { status: "failed" };
     }
@@ -57,9 +60,12 @@ export class RemoveClientResourceUseCase {
 
   private async removeFiles(owner: ClientResourceOwner): Promise<void> {
     try {
-      await this.options.store.remove(owner);
+      await this.options.clientResourceStorePort.remove(owner);
     } catch (error) {
-      this.options.incidents.resourceFilesOrphaned({ ...owner, error });
+      this.options.clientResourceIncidentsPort.resourceFilesOrphaned({
+        ...owner,
+        error,
+      });
     }
   }
 }

@@ -7,9 +7,9 @@ type InvitationLandingResolution =
   { state: "valid"; signUpUrl: string } | { state: "unavailable" };
 
 type ResolveInvitationUseCaseOptions = {
-  clock: ClockPort;
-  invitations: Pick<AccountInvitationsPort, "findByTokenHash">;
-  tokenHasher: InvitationTokenHasherPort;
+  clockPort: ClockPort;
+  accountInvitationsPort: Pick<AccountInvitationsPort, "findByTokenHash">;
+  invitationTokenHasherPort: InvitationTokenHasherPort;
 };
 
 export class ResolveInvitationUseCase {
@@ -18,13 +18,14 @@ export class ResolveInvitationUseCase {
   async execute(command: {
     rawToken: string;
   }): Promise<InvitationLandingResolution> {
-    const invitation = await this.options.invitations.findByTokenHash(
-      this.options.tokenHasher.sha256(command.rawToken),
-    );
+    const invitation =
+      await this.options.accountInvitationsPort.findByTokenHash(
+        this.options.invitationTokenHasherPort.sha256(command.rawToken),
+      );
 
     if (
       !invitation?.provider ||
-      !invitation.isPending(this.options.clock.now())
+      !invitation.isPending(this.options.clockPort.now())
     ) {
       return { state: "unavailable" };
     }

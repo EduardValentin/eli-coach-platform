@@ -5,8 +5,8 @@ import type { SlotPolicy } from "./slot-policy";
 import type { TimeInterval } from "./time-interval";
 
 type CoachOpeningsOptions = {
-  availability: CoachAvailabilitySourcePort;
-  calendar: CoachCalendarPort;
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort;
+  coachCalendarPort: CoachCalendarPort;
 };
 
 type OpeningsQuestion = { now: Date; policy: SlotPolicy };
@@ -17,7 +17,7 @@ export class CoachOpenings {
   constructor(private readonly options: CoachOpeningsOptions) {}
 
   week(): Promise<CoachAvailability> {
-    return this.options.availability.current();
+    return this.options.coachAvailabilitySourcePort.current();
   }
 
   async timeZone(): Promise<string> {
@@ -36,6 +36,6 @@ export class CoachOpenings {
   }
 
   busyFrom(from: Date): Promise<TimeInterval[]> {
-    return this.options.calendar.busyFrom(from);
+    return this.options.coachCalendarPort.busyFrom(from);
   }
 }

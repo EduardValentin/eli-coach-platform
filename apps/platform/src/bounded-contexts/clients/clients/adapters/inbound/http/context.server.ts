@@ -8,12 +8,12 @@ import type { CoachClientIdentityController } from "~/bounded-contexts/clients/c
 import type { CoachClientsController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/coach/coach-clients-controller.server";
 
 export type ClientsFeature = {
-  acceptInvitation: AcceptInvitationUseCase;
-  clientJourney: ClientJourneyController;
-  coachClientIdentity: CoachClientIdentityController;
-  coachClients: CoachClientsController;
-  ownClientIdentity: OwnClientIdentityController;
-  readClientPortalStanding: ReadClientPortalStandingUseCase;
+  acceptInvitationUseCase: AcceptInvitationUseCase;
+  clientJourneyController: ClientJourneyController;
+  coachClientIdentityController: CoachClientIdentityController;
+  coachClientsController: CoachClientsController;
+  ownClientIdentityController: OwnClientIdentityController;
+  readClientPortalStandingUseCase: ReadClientPortalStandingUseCase;
 };
 
 export const clientsContext: RouterContext<ClientsFeature> =

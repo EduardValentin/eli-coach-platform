@@ -108,20 +108,20 @@ function createUseCase(options: {
     checkInInboxFailed: vi.fn(),
     checkInSeriesInboxFailed: vi.fn(),
   } satisfies CheckInIncidentsPort;
-  const useCase = new CountCheckInsAwaitingUseCase({
-    checkIns,
-    clients,
-    clock: { now: () => NOW },
-    incidents,
+  const countCheckInsAwaitingUseCase = new CountCheckInsAwaitingUseCase({
+    checkInsPort: checkIns,
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    checkInIncidentsPort: incidents,
   });
 
-  return { checkIns, incidents, useCase };
+  return { checkIns, incidents, countCheckInsAwaitingUseCase };
 }
 
 describe("CountCheckInsAwaitingUseCase", () => {
   it("counts the coach's check-ins waiting for her answer, leaving out lapsed, answered and her own", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { countCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(
         CLIENT_REQUEST,
         COACH_PROPOSAL,
@@ -131,7 +131,9 @@ describe("CountCheckInsAwaitingUseCase", () => {
     });
 
     // act
-    const count = await useCase.execute({ party: "coach" });
+    const count = await countCheckInsAwaitingUseCase.execute({
+      party: "coach",
+    });
 
     // assert
     expect(count).toBe(1);
@@ -139,14 +141,17 @@ describe("CountCheckInsAwaitingUseCase", () => {
 
   it("counts a clash as waiting for the coach until its start, never for the client", async () => {
     // arrange
-    const { useCase } = createUseCase({
+    const { countCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(CLASH, LAPSED_CLASH),
     });
 
     // act
     const counts = [
-      await useCase.execute({ party: "coach" }),
-      await useCase.execute({ party: "client", authSubjectId: "user_ana" }),
+      await countCheckInsAwaitingUseCase.execute({ party: "coach" }),
+      await countCheckInsAwaitingUseCase.execute({
+        party: "client",
+        authSubjectId: "user_ana",
+      }),
     ];
 
     // assert
@@ -155,12 +160,12 @@ describe("CountCheckInsAwaitingUseCase", () => {
 
   it("counts the client's own check-ins waiting for her answer", async () => {
     // arrange
-    const { checkIns, useCase } = createUseCase({
+    const { checkIns, countCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(CLIENT_REQUEST, COACH_PROPOSAL, APPROVED),
     });
 
     // act
-    const count = await useCase.execute({
+    const count = await countCheckInsAwaitingUseCase.execute({
       party: "client",
       authSubjectId: "user_ana",
     });
@@ -172,13 +177,13 @@ describe("CountCheckInsAwaitingUseCase", () => {
 
   it("counts nothing for a client whose portal is no longer reachable", async () => {
     // arrange
-    const { checkIns, useCase } = createUseCase({
+    const { checkIns, countCheckInsAwaitingUseCase } = createUseCase({
       checkIns: checkInsOf(COACH_PROPOSAL),
       client: { ...REACHABLE, portal: "ended" },
     });
 
     // act
-    const count = await useCase.execute({
+    const count = await countCheckInsAwaitingUseCase.execute({
       party: "client",
       authSubjectId: "user_ana",
     });
@@ -191,10 +196,15 @@ describe("CountCheckInsAwaitingUseCase", () => {
   it("reports a failed read and counts nothing", async () => {
     // arrange
     const failure = new Error("connection refused");
-    const { incidents, useCase } = createUseCase({ checkIns: [], failure });
+    const { incidents, countCheckInsAwaitingUseCase } = createUseCase({
+      checkIns: [],
+      failure,
+    });
 
     // act
-    const count = await useCase.execute({ party: "coach" });
+    const count = await countCheckInsAwaitingUseCase.execute({
+      party: "coach",
+    });
 
     // assert
     expect(count).toBe(0);

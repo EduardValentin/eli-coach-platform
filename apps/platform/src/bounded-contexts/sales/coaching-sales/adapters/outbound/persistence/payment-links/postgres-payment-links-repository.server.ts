@@ -19,7 +19,7 @@ import {
 type PaymentLinkRow = typeof paymentLinksTable.$inferSelect;
 
 type PostgresPaymentLinksOptions = {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
 };
 
@@ -141,7 +141,7 @@ export class PostgresPaymentLinksRepository
   async markExpired(id: string): Promise<void> {
     await this.executor
       .update(checkoutSessionsTable)
-      .set({ expiredAt: this.options.clock.now() })
+      .set({ expiredAt: this.options.clockPort.now() })
       .where(
         and(
           eq(checkoutSessionsTable.id, id),

@@ -55,11 +55,11 @@ function entry(
   };
 }
 
-function createRoster(overrides: Partial<ClientRosterPort> = {}) {
+function createRoster(clientRosterPort: Partial<ClientRosterPort> = {}) {
   return {
     list: vi.fn().mockResolvedValue([]),
     findById: vi.fn().mockResolvedValue(null),
-    ...overrides,
+    ...clientRosterPort,
   } satisfies ClientRosterPort;
 }
 
@@ -75,16 +75,16 @@ describe("ListClientsUseCase", () => {
       clientId: "client-2",
       onboardingSubmittedAt: SUBMITTED_AT,
     });
-    const useCase = new ListClientsUseCase({
-      roster: createRoster({
+    const listClientsUseCase = new ListClientsUseCase({
+      clientRosterPort: createRoster({
         list: vi.fn().mockResolvedValue([invited, submitted]),
       }),
-      incidents: createIncidents(),
-      clock,
+      clientRosterIncidentsPort: createIncidents(),
+      clockPort: clock,
     });
 
     // act
-    const result = await useCase.execute();
+    const result = await listClientsUseCase.execute();
 
     // assert
     expect(result).toEqual({
@@ -110,14 +110,16 @@ describe("ListClientsUseCase", () => {
         paidThrough: null,
       },
     });
-    const useCase = new ListClientsUseCase({
-      roster: createRoster({ list: vi.fn().mockResolvedValue([ended]) }),
-      incidents: createIncidents(),
-      clock,
+    const listClientsUseCase = new ListClientsUseCase({
+      clientRosterPort: createRoster({
+        list: vi.fn().mockResolvedValue([ended]),
+      }),
+      clientRosterIncidentsPort: createIncidents(),
+      clockPort: clock,
     });
 
     // act
-    const result = await useCase.execute();
+    const result = await listClientsUseCase.execute();
 
     // assert
     expect(result).toEqual({
@@ -130,14 +132,16 @@ describe("ListClientsUseCase", () => {
     // arrange
     const failure = new Error("database down");
     const incidents = createIncidents();
-    const useCase = new ListClientsUseCase({
-      roster: createRoster({ list: vi.fn().mockRejectedValue(failure) }),
-      incidents,
-      clock,
+    const listClientsUseCase = new ListClientsUseCase({
+      clientRosterPort: createRoster({
+        list: vi.fn().mockRejectedValue(failure),
+      }),
+      clientRosterIncidentsPort: incidents,
+      clockPort: clock,
     });
 
     // act
-    const result = await useCase.execute();
+    const result = await listClientsUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
@@ -168,10 +172,14 @@ describe("ReadClientRecordUseCase", () => {
     const found = entry({ onboardingSubmittedAt: SUBMITTED_AT });
     const calls = callReader("I train at home.");
     const roster = createRoster({ findById: vi.fn().mockResolvedValue(found) });
-    const useCase = new ReadClientRecordUseCase({ roster, calls, clock });
+    const readClientRecordUseCase = new ReadClientRecordUseCase({
+      clientRosterPort: roster,
+      clientCallsPort: calls,
+      clockPort: clock,
+    });
 
     // act
-    const result = await useCase.execute("client-1");
+    const result = await readClientRecordUseCase.execute("client-1");
 
     // assert
     expect(result).toEqual({
@@ -237,16 +245,16 @@ describe("ReadClientRecordUseCase", () => {
     "reads a client whose coaching is %s from her standing",
     async (_label, standing, expected) => {
       // arrange
-      const useCase = new ReadClientRecordUseCase({
-        roster: createRoster({
+      const readClientRecordUseCase = new ReadClientRecordUseCase({
+        clientRosterPort: createRoster({
           findById: vi.fn().mockResolvedValue(entry({ standing })),
         }),
-        calls: callReader(null),
-        clock,
+        clientCallsPort: callReader(null),
+        clockPort: clock,
       });
 
       // act
-      const result = await useCase.execute("client-1");
+      const result = await readClientRecordUseCase.execute("client-1");
 
       // assert
       expect(result).toMatchObject(expected);
@@ -255,14 +263,16 @@ describe("ReadClientRecordUseCase", () => {
 
   it("reads no notes when she left none when booking", async () => {
     // arrange
-    const useCase = new ReadClientRecordUseCase({
-      roster: createRoster({ findById: vi.fn().mockResolvedValue(entry()) }),
-      calls: callReader(null),
-      clock,
+    const readClientRecordUseCase = new ReadClientRecordUseCase({
+      clientRosterPort: createRoster({
+        findById: vi.fn().mockResolvedValue(entry()),
+      }),
+      clientCallsPort: callReader(null),
+      clockPort: clock,
     });
 
     // act
-    const result = await useCase.execute("client-1");
+    const result = await readClientRecordUseCase.execute("client-1");
 
     // assert
     expect(result?.assessmentCall.notes).toBeNull();
@@ -270,14 +280,16 @@ describe("ReadClientRecordUseCase", () => {
 
   it("reads nothing when her call is gone", async () => {
     // arrange
-    const useCase = new ReadClientRecordUseCase({
-      roster: createRoster({ findById: vi.fn().mockResolvedValue(entry()) }),
-      calls: { callOf: vi.fn().mockResolvedValue(null) },
-      clock,
+    const readClientRecordUseCase = new ReadClientRecordUseCase({
+      clientRosterPort: createRoster({
+        findById: vi.fn().mockResolvedValue(entry()),
+      }),
+      clientCallsPort: { callOf: vi.fn().mockResolvedValue(null) },
+      clockPort: clock,
     });
 
     // act
-    const result = await useCase.execute("client-1");
+    const result = await readClientRecordUseCase.execute("client-1");
 
     // assert
     expect(result).toBeNull();
@@ -286,14 +298,14 @@ describe("ReadClientRecordUseCase", () => {
   it("reads nothing for an unknown client", async () => {
     // arrange
     const calls = callReader(null);
-    const useCase = new ReadClientRecordUseCase({
-      roster: createRoster(),
-      calls,
-      clock,
+    const readClientRecordUseCase = new ReadClientRecordUseCase({
+      clientRosterPort: createRoster(),
+      clientCallsPort: calls,
+      clockPort: clock,
     });
 
     // act
-    const result = await useCase.execute("client-9");
+    const result = await readClientRecordUseCase.execute("client-9");
 
     // assert
     expect(result).toBeNull();

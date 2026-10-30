@@ -27,59 +27,68 @@ import { createExerciseVideoStoreAdapter } from "~/bounded-contexts/programs/exe
 import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
 
 type ExerciseVideoFiles = {
-  videoFormats: ExerciseVideoFormatDetectorPort;
-  videoStore: ExerciseVideoStorePort;
+  exerciseVideoFormatDetectorPort: ExerciseVideoFormatDetectorPort;
+  exerciseVideoStorePort: ExerciseVideoStorePort;
 };
 
 type ExerciseLibraryFeatureHandles = ExerciseVideoFiles & {
-  clock: ClockPort;
+  clockPort: ClockPort;
   database: DatabaseClient;
-  logger: LoggerPort;
+  loggerPort: LoggerPort;
 };
 
 export function composeExerciseLibraryFeature(
   handles: ExerciseLibraryFeatureHandles,
 ): ExerciseLibraryFeature {
-  const incidents = new ExerciseLibraryIncidentsAdapter(handles.logger);
-  const library = new PostgresExerciseLibraryRepository(handles.database);
-  const { videoStore } = handles;
+  const exerciseLibraryIncidentsAdapter = new ExerciseLibraryIncidentsAdapter(
+    handles.loggerPort,
+  );
+  const postgresExerciseLibraryRepository =
+    new PostgresExerciseLibraryRepository(handles.database);
+  const { exerciseVideoStorePort } = handles;
   const exerciseWriteDependencies = {
-    library,
-    clock: handles.clock,
-    incidents,
-    formats: handles.videoFormats,
-    videoIds: new RandomExerciseVideoIdsAdapter(),
-    store: videoStore,
+    exerciseLibraryPort: postgresExerciseLibraryRepository,
+    clockPort: handles.clockPort,
+    exerciseLibraryIncidentsPort: exerciseLibraryIncidentsAdapter,
+    exerciseVideoFormatDetectorPort: handles.exerciseVideoFormatDetectorPort,
+    exerciseVideoIdsPort: new RandomExerciseVideoIdsAdapter(),
+    exerciseVideoStorePort,
   };
 
   return {
-    exerciseLibrary: new ExerciseLibraryController({
-      listExercises: new ListExercisesUseCase({ library }),
-      findExercise: new FindExerciseUseCase({ library }),
-      createExercise: new CreateExerciseUseCase({
+    exerciseLibraryController: new ExerciseLibraryController({
+      listExercisesUseCase: new ListExercisesUseCase({
+        exerciseLibraryPort: postgresExerciseLibraryRepository,
+      }),
+      findExerciseUseCase: new FindExerciseUseCase({
+        exerciseLibraryPort: postgresExerciseLibraryRepository,
+      }),
+      createExerciseUseCase: new CreateExerciseUseCase({
         ...exerciseWriteDependencies,
-        ids: new RandomExerciseIdsAdapter(),
+        exerciseIdsPort: new RandomExerciseIdsAdapter(),
       }),
-      editExercise: new EditExerciseUseCase(exerciseWriteDependencies),
-      stageExerciseVideo: new StageExerciseVideoUseCase({ store: videoStore }),
-      openExerciseVideo: new OpenExerciseVideoUseCase({
-        library,
-        store: videoStore,
+      editExerciseUseCase: new EditExerciseUseCase(exerciseWriteDependencies),
+      stageExerciseVideoUseCase: new StageExerciseVideoUseCase({
+        exerciseVideoStorePort,
       }),
-      archiveExercise: new ArchiveExerciseUseCase({
-        library,
-        clock: handles.clock,
+      openExerciseVideoUseCase: new OpenExerciseVideoUseCase({
+        exerciseLibraryPort: postgresExerciseLibraryRepository,
+        exerciseVideoStorePort,
       }),
-      restoreExercise: new RestoreExerciseUseCase({
-        library,
-        clock: handles.clock,
-        incidents,
+      archiveExerciseUseCase: new ArchiveExerciseUseCase({
+        exerciseLibraryPort: postgresExerciseLibraryRepository,
+        clockPort: handles.clockPort,
       }),
-      deleteExercise: new DeleteExerciseUseCase({
-        library,
+      restoreExerciseUseCase: new RestoreExerciseUseCase({
+        exerciseLibraryPort: postgresExerciseLibraryRepository,
+        clockPort: handles.clockPort,
+        exerciseLibraryIncidentsPort: exerciseLibraryIncidentsAdapter,
+      }),
+      deleteExerciseUseCase: new DeleteExerciseUseCase({
+        exerciseLibraryPort: postgresExerciseLibraryRepository,
         videos: new ExerciseVideoCleanup({
-          store: videoStore,
-          incidents,
+          exerciseVideoStorePort,
+          exerciseLibraryIncidentsPort: exerciseLibraryIncidentsAdapter,
         }),
       }),
     }),
@@ -90,7 +99,9 @@ export function composeExerciseVideoFiles(
   config: ExerciseVideosConfig,
 ): ExerciseVideoFiles {
   return {
-    videoFormats: createExerciseVideoFormatDetectorAdapter(),
-    videoStore: createExerciseVideoStoreAdapter(config.EXERCISE_VIDEO_ROOT),
+    exerciseVideoFormatDetectorPort: createExerciseVideoFormatDetectorAdapter(),
+    exerciseVideoStorePort: createExerciseVideoStoreAdapter(
+      config.EXERCISE_VIDEO_ROOT,
+    ),
   };
 }

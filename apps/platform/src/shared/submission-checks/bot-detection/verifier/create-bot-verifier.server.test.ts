@@ -22,17 +22,17 @@ describe("createBotVerifier", () => {
     };
 
     // act
-    const verifier = createBotVerifier(staticSettings);
+    const botVerifierPort = createBotVerifier(staticSettings);
 
     // assert
-    expect(verifier).toBeInstanceOf(StaticTokenBotVerifierAdapter);
-    const result = await verifier.verifySubmission({
+    expect(botVerifierPort).toBeInstanceOf(StaticTokenBotVerifierAdapter);
+    const result = await botVerifierPort.verifySubmission({
       action: "test",
       remoteIp: null,
       token: "XXXX.DUMMY.TOKEN.XXXX",
     });
     expect(result).toEqual({ status: "verified" });
-    const rejectedResult = await verifier.verifySubmission({
+    const rejectedResult = await botVerifierPort.verifySubmission({
       action: "test",
       remoteIp: null,
       token: "WRONG.TOKEN.VALUE",
@@ -48,9 +48,9 @@ describe("createBotVerifier", () => {
     };
 
     // act
-    const verifier = createBotVerifier(turnstileSettings);
+    const botVerifierPort = createBotVerifier(turnstileSettings);
 
     // assert
-    expect(verifier).toBeInstanceOf(TurnstileBotVerifierAdapter);
+    expect(botVerifierPort).toBeInstanceOf(TurnstileBotVerifierAdapter);
   });
 });

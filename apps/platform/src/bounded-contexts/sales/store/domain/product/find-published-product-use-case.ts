@@ -7,12 +7,14 @@ export type PublishedProductResult =
   | { status: "unavailable" };
 
 export class FindPublishedProductUseCase {
-  constructor(private readonly options: { catalog: StoreCatalogPort }) {}
+  constructor(
+    private readonly options: { storeCatalogPort: StoreCatalogPort },
+  ) {}
 
   async execute(slug: string): Promise<PublishedProductResult> {
     try {
       const product =
-        await this.options.catalog.getPublishedProductBySlug(slug);
+        await this.options.storeCatalogPort.getPublishedProductBySlug(slug);
 
       return product
         ? { status: "available", product }

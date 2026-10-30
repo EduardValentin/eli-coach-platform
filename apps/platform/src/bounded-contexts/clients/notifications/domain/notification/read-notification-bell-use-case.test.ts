@@ -58,14 +58,14 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
     notificationBellReadFailed: vi.fn(),
   } satisfies NotificationIncidentsPort;
   const ports = {
-    clients,
-    clock: { now: () => NOW },
-    inbox,
-    incidents,
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    notificationInboxPort: inbox,
+    notificationIncidentsPort: incidents,
   };
 
   return {
-    readBell: new ReadNotificationBellUseCase(ports),
+    readNotificationBellUseCase: new ReadNotificationBellUseCase(ports),
     ports,
     calls,
   };
@@ -76,11 +76,11 @@ const ANA_READS = { party: "client", authSubjectId: "user_ana" } as const;
 describe("ReadNotificationBellUseCase", () => {
   it("tells each notification apart as unread or read", async () => {
     // arrange
-    const { readBell, ports } = createReadBell();
-    ports.inbox.latestFor.mockResolvedValue([APPROVED, SEEN]);
+    const { readNotificationBellUseCase, ports } = createReadBell();
+    ports.notificationInboxPort.latestFor.mockResolvedValue([APPROVED, SEEN]);
 
     // act
-    const bell = await readBell.execute(ANA_READS);
+    const bell = await readNotificationBellUseCase.execute(ANA_READS);
 
     // assert
     expect(
@@ -93,10 +93,10 @@ describe("ReadNotificationBellUseCase", () => {
 
   it("answers her latest notifications and unread count from the last 90 days", async () => {
     // arrange
-    const { readBell, ports } = createReadBell();
+    const { readNotificationBellUseCase, ports } = createReadBell();
 
     // act
-    const bell = await readBell.execute(ANA_READS);
+    const bell = await readNotificationBellUseCase.execute(ANA_READS);
 
     // assert
     expect(bell).toEqual({
@@ -104,14 +104,16 @@ describe("ReadNotificationBellUseCase", () => {
       unreadCount: 1,
       checkedAt: NOW,
     });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.inbox.latestFor).toHaveBeenCalledWith({
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.notificationInboxPort.latestFor).toHaveBeenCalledWith({
       recipient: { party: "client", clientId: "client-1" },
       since: NINETY_DAYS_AGO,
       at: NOW,
       limit: 30,
     });
-    expect(ports.inbox.unreadCountFor).toHaveBeenCalledWith({
+    expect(ports.notificationInboxPort.unreadCountFor).toHaveBeenCalledWith({
       recipient: { party: "client", clientId: "client-1" },
       since: NINETY_DAYS_AGO,
       at: NOW,
@@ -120,14 +122,14 @@ describe("ReadNotificationBellUseCase", () => {
 
   it("reads the coach's bell without looking up a client", async () => {
     // arrange
-    const { readBell, ports } = createReadBell();
+    const { readNotificationBellUseCase, ports } = createReadBell();
 
     // act
-    await readBell.execute({ party: "coach" });
+    await readNotificationBellUseCase.execute({ party: "coach" });
 
     // assert
-    expect(ports.clients.findByAuthSubjectId).not.toHaveBeenCalled();
-    expect(ports.inbox.latestFor).toHaveBeenCalledWith({
+    expect(ports.clientReachPort.findByAuthSubjectId).not.toHaveBeenCalled();
+    expect(ports.notificationInboxPort.latestFor).toHaveBeenCalledWith({
       recipient: { party: "coach" },
       since: NINETY_DAYS_AGO,
       at: NOW,
@@ -138,14 +140,16 @@ describe("ReadNotificationBellUseCase", () => {
   it("reports a failed bell read and answers an empty bell", async () => {
     // arrange
     const failure = new Error("connection refused");
-    const { readBell, ports } = createReadBell();
-    ports.inbox.latestFor.mockRejectedValue(failure);
+    const { readNotificationBellUseCase, ports } = createReadBell();
+    ports.notificationInboxPort.latestFor.mockRejectedValue(failure);
 
     // act
-    const bell = await readBell.execute({ party: "coach" });
+    const bell = await readNotificationBellUseCase.execute({ party: "coach" });
 
     // assert
-    expect(ports.incidents.notificationBellReadFailed).toHaveBeenCalledWith({
+    expect(
+      ports.notificationIncidentsPort.notificationBellReadFailed,
+    ).toHaveBeenCalledWith({
       party: "coach",
       error: failure,
     });
@@ -159,10 +163,10 @@ describe("ReadNotificationBellUseCase", () => {
     "answers an empty bell to a client $situation",
     async ({ client }) => {
       // arrange
-      const { readBell, ports } = createReadBell({ client });
+      const { readNotificationBellUseCase, ports } = createReadBell({ client });
 
       // act
-      const bell = await readBell.execute(ANA_READS);
+      const bell = await readNotificationBellUseCase.execute(ANA_READS);
 
       // assert
       expect(bell).toEqual({
@@ -170,7 +174,7 @@ describe("ReadNotificationBellUseCase", () => {
         unreadCount: 0,
         checkedAt: NOW,
       });
-      expect(ports.inbox.latestFor).not.toHaveBeenCalled();
+      expect(ports.notificationInboxPort.latestFor).not.toHaveBeenCalled();
     },
   );
 });

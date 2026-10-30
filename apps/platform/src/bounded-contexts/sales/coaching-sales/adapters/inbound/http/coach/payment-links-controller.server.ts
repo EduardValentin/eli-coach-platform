@@ -10,7 +10,7 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type PaymentLinksControllerOptions = {
-  sendPaymentLink: SendPaymentLinkUseCase;
+  sendPaymentLinkUseCase: SendPaymentLinkUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -41,7 +41,7 @@ export class PaymentLinksController {
     }
 
     const result = await this.options.unitOfWork(() =>
-      this.options.sendPaymentLink.execute(submission.data),
+      this.options.sendPaymentLinkUseCase.execute(submission.data),
     );
 
     if (result.status === "sent") {

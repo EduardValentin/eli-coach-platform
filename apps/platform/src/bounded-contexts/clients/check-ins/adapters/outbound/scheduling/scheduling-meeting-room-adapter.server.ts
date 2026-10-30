@@ -2,9 +2,9 @@ import type { MeetingRoomPort } from "~/bounded-contexts/clients/check-ins/domai
 import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room-facade";
 
 export class SchedulingMeetingRoomAdapter implements MeetingRoomPort {
-  constructor(private readonly meetingRoom: MeetingRoomFacade) {}
+  constructor(private readonly meetingRoomFacade: MeetingRoomFacade) {}
 
   currentJoinUrl(): Promise<string | null> {
-    return this.meetingRoom.currentJoinUrl();
+    return this.meetingRoomFacade.currentJoinUrl();
   }
 }

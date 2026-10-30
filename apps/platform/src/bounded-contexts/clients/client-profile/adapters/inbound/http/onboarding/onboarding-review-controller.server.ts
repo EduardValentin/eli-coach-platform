@@ -25,10 +25,10 @@ import { presentSubmittedReview } from "./onboarding-review-presenter.server";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type OnboardingReviewControllerOptions = {
-  approveOnboardingAnswers: ApproveOnboardingAnswersUseCase;
-  openOnboardingReview: OpenOnboardingReviewUseCase;
-  readOnboardingReview: ReadOnboardingReviewUseCase;
-  requestOnboardingDetails: RequestOnboardingDetailsUseCase;
+  approveOnboardingAnswersUseCase: ApproveOnboardingAnswersUseCase;
+  openOnboardingReviewUseCase: OpenOnboardingReviewUseCase;
+  readOnboardingReviewUseCase: ReadOnboardingReviewUseCase;
+  requestOnboardingDetailsUseCase: RequestOnboardingDetailsUseCase;
 };
 
 type ReviewActionOutcome = "opened" | "already-open" | "requested" | "approved";
@@ -61,7 +61,7 @@ export class OnboardingReviewController {
       throw notFoundResponse();
     }
 
-    const reading = await this.options.readOnboardingReview.execute(
+    const reading = await this.options.readOnboardingReviewUseCase.execute(
       target.data,
     );
 
@@ -98,7 +98,7 @@ export class OnboardingReviewController {
       return createBadRequestResponse(UNREADABLE_REQUEST);
     }
 
-    const result = await this.options.openOnboardingReview.execute(
+    const result = await this.options.openOnboardingReviewUseCase.execute(
       request.data.clientId,
     );
 
@@ -119,7 +119,7 @@ export class OnboardingReviewController {
       return createBadRequestResponse(UNREADABLE_REQUEST);
     }
 
-    const result = await this.options.requestOnboardingDetails.execute({
+    const result = await this.options.requestOnboardingDetailsUseCase.execute({
       clientId: request.data.clientId,
       questionIds: request.data.questions,
       note: request.data.note,
@@ -142,7 +142,7 @@ export class OnboardingReviewController {
       return createBadRequestResponse(UNREADABLE_REQUEST);
     }
 
-    const result = await this.options.approveOnboardingAnswers.execute(
+    const result = await this.options.approveOnboardingAnswersUseCase.execute(
       request.data.clientId,
     );
 

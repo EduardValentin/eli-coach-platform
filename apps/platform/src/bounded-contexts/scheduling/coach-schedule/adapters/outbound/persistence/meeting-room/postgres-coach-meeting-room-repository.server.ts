@@ -15,7 +15,7 @@ import {
 
 type PostgresCoachMeetingRoomOptions = {
   database: DatabaseClient;
-  clock: ClockPort;
+  clockPort: ClockPort;
 };
 
 export class PostgresCoachMeetingRoomRepository
@@ -47,7 +47,7 @@ export class PostgresCoachMeetingRoomRepository
     const values = {
       id: SINGLETON_COACH_MEETING_ROOM_ID,
       url: room ? room.url : null,
-      updatedAt: this.options.clock.now(),
+      updatedAt: this.options.clockPort.now(),
     };
 
     await this.executor

@@ -26,12 +26,14 @@ const CLIENT_ROW = {
 describe("PostgresClientIdentities#findByClientId", () => {
   it("reads her identity from her client record and nothing else", async () => {
     // arrange
-    const identities = new PostgresClientIdentitiesRepository(
-      createDatabaseAnswering([CLIENT_ROW]),
-    );
+    const postgresClientIdentitiesRepository =
+      new PostgresClientIdentitiesRepository(
+        createDatabaseAnswering([CLIENT_ROW]),
+      );
 
     // act
-    const identity = await identities.findByClientId(CLIENT_ID);
+    const identity =
+      await postgresClientIdentitiesRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(identity).toEqual(IDENTITY);
@@ -39,12 +41,12 @@ describe("PostgresClientIdentities#findByClientId", () => {
 
   it("answers null for an unknown client", async () => {
     // arrange
-    const identities = new PostgresClientIdentitiesRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresClientIdentitiesRepository =
+      new PostgresClientIdentitiesRepository(createDatabaseAnswering([]));
 
     // act
-    const identity = await identities.findByClientId(CLIENT_ID);
+    const identity =
+      await postgresClientIdentitiesRepository.findByClientId(CLIENT_ID);
 
     // assert
     expect(identity).toBeNull();
@@ -61,10 +63,14 @@ describe("PostgresClientIdentities#findByClientIds", () => {
       email: "maria@example.com",
     };
     const database = createDatabaseAnswering([CLIENT_ROW, maria]);
-    const identities = new PostgresClientIdentitiesRepository(database);
+    const postgresClientIdentitiesRepository =
+      new PostgresClientIdentitiesRepository(database);
 
     // act
-    const found = await identities.findByClientIds([CLIENT_ID, maria.clientId]);
+    const found = await postgresClientIdentitiesRepository.findByClientIds([
+      CLIENT_ID,
+      maria.clientId,
+    ]);
 
     // assert
     expect(found).toEqual([
@@ -82,10 +88,11 @@ describe("PostgresClientIdentities#findByClientIds", () => {
   it("reads nothing for no clients", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
-    const identities = new PostgresClientIdentitiesRepository(database);
+    const postgresClientIdentitiesRepository =
+      new PostgresClientIdentitiesRepository(database);
 
     // act
-    const found = await identities.findByClientIds([]);
+    const found = await postgresClientIdentitiesRepository.findByClientIds([]);
 
     // assert
     expect(found).toEqual([]);

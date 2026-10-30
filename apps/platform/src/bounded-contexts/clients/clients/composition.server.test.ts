@@ -26,7 +26,7 @@ describe("composeClientsFeature invitation acceptance", () => {
     const { feature } = composeClientsFeature(createHandles());
 
     // act
-    const outcome = await feature.acceptInvitation.execute({
+    const outcome = await feature.acceptInvitationUseCase.execute({
       authSubjectId: "user_uninvited",
     });
 
@@ -41,7 +41,8 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const reading = handles.onboardingStandings.findByAuthSubjectId("user_ana");
+    const reading =
+      handles.onboardingStandingsPort.findByAuthSubjectId("user_ana");
 
     // assert
     await expect(reading).rejects.toThrow("database down");
@@ -52,7 +53,7 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const reading = handles.clientIdentities.findByClientId(CLIENT_ID);
+    const reading = handles.clientIdentitiesPort.findByClientId(CLIENT_ID);
 
     // assert
     await expect(reading).rejects.toThrow("database down");
@@ -63,10 +64,11 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const stamping = handles.onboardingSubmissions.recordOnboardingSubmitted({
-      clientId: CLIENT_ID,
-      at: new Date("2026-10-20T10:00:00.000Z"),
-    });
+    const stamping =
+      handles.onboardingSubmissionRecorderPort.recordOnboardingSubmitted({
+        clientId: CLIENT_ID,
+        at: new Date("2026-10-20T10:00:00.000Z"),
+      });
 
     // assert
     await expect(stamping).rejects.toThrow("database down");
@@ -77,7 +79,7 @@ describe("composeClientsFeature client handles", () => {
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const stamping = handles.reviewStampRecorder.recordReviewStamp({
+    const stamping = handles.reviewStampRecorderPort.recordReviewStamp({
       clientId: CLIENT_ID,
       stamps: {
         reviewOpenedAt: new Date("2026-10-20T10:00:00.000Z"),
@@ -96,7 +98,7 @@ describe("composeClientsFeature client handles", () => {
     const { facades } = composeClientsFeature(createHandles());
 
     // act
-    const writing = facades.admissions.recordCoachingStanding({
+    const writing = facades.admissionsFacade.recordCoachingStanding({
       clientId: CLIENT_ID,
       standing: {
         status: "not-started",
@@ -135,7 +137,8 @@ describe("composeClientsFeature client reach", () => {
     });
 
     // act
-    const reading = await handles.clientReach.findByAuthSubjectId("user_ana");
+    const reading =
+      await handles.clientReachPort.findByAuthSubjectId("user_ana");
 
     // assert
     expect(reading).toEqual({
@@ -158,7 +161,7 @@ describe("composeClientsFeature client reach", () => {
     });
 
     // act
-    const reading = await handles.clientReach.findById(CLIENT_ID);
+    const reading = await handles.clientReachPort.findById(CLIENT_ID);
 
     // assert
     expect(reading?.portal).toBe("awaiting_onboarding");
@@ -172,7 +175,7 @@ describe("composeClientsFeature client reach", () => {
     });
 
     // act
-    const reading = await handles.clientReach.findById(CLIENT_ID);
+    const reading = await handles.clientReachPort.findById(CLIENT_ID);
 
     // assert
     expect(reading).toBeNull();
@@ -185,11 +188,11 @@ describe("composeClientsFeature coach clients", () => {
     const logger = createLogger();
     const { feature } = composeClientsFeature({
       ...createHandles(),
-      logger,
+      loggerPort: logger,
     });
 
     // act
-    const roster = await feature.coachClients.loadRoster(
+    const roster = await feature.coachClientsController.loadRoster(
       coachArgs(new Request("https://evoa.fit/coach/clients")),
     );
 
@@ -209,7 +212,7 @@ describe("composeClientsFeature coach clients", () => {
     const { feature } = composeClientsFeature(createHandles());
 
     // act
-    const resending = feature.coachClients.resendInvitation(
+    const resending = feature.coachClientsController.resendInvitation(
       coachArgs(
         new Request("https://evoa.fit/api/clients/invitation-resends", {
           body: JSON.stringify({ clientId: CLIENT_ID }),
@@ -249,17 +252,17 @@ function coachArgs(request: Request) {
 
 function createHandles(): ClientsFeatureHandles {
   return {
-    accountInvitations: {
+    accountInvitationsFacade: {
       acceptedInvitationOf: async () => null,
       ensureDelivered: unexpectedAccountInvitation,
       issue: unexpectedAccountInvitation,
       resend: unexpectedAccountInvitation,
       standingOf: unexpectedAccountInvitation,
     },
-    clientCalls: { callOf: async () => null },
-    clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
+    clientCallsFacade: { callOf: async () => null },
+    clockPort: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     database: createUnreachableDatabase(),
-    logger: createLogger(),
+    loggerPort: createLogger(),
   };
 }
 

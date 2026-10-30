@@ -15,10 +15,10 @@ type ApproveOnboardingAnswersResult =
 
 type ApproveOnboardingAnswersUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
-  onboardings: ClientOnboardingSourcePort;
-  reviews: OnboardingReviewsPort;
-  clock: ClockPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  onboardingReviewsPort: OnboardingReviewsPort;
+  clockPort: ClockPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class ApproveOnboardingAnswersUseCase {
@@ -40,28 +40,30 @@ export class ApproveOnboardingAnswersUseCase {
     }
 
     const [stored, reviewed] = await Promise.all([
-      this.options.onboardings.findByClientId(clientId),
-      this.options.reviews.findByClientId(clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(clientId),
+      this.options.onboardingReviewsPort.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
       submission: stored.submission,
       ...reviewed,
     });
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const outcome = review.approve(now);
 
     if (outcome.status !== "approved") {
       return outcome;
     }
 
-    await this.options.reviews.recordApproval({
+    await this.options.onboardingReviewsPort.recordApproval({
       clientId,
       at: now,
       stamps: outcome.review.stamps(),
       seed: coachingSeedOf(outcome.submission.answers, identity.gender),
     });
-    this.options.incidents.onboardingAnswersApproved({ clientId });
+    this.options.clientOnboardingIncidentsPort.onboardingAnswersApproved({
+      clientId,
+    });
 
     return { status: "approved" };
   }

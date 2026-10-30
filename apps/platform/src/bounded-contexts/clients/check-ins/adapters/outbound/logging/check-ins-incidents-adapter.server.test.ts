@@ -14,10 +14,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.checkInNotificationFailed({
+    checkInsIncidentsAdapter.checkInNotificationFailed({
       checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
       notification: "approved",
     });
@@ -35,10 +37,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.awaitingCheckInsCountFailed({
+    checkInsIncidentsAdapter.awaitingCheckInsCountFailed({
       error: new TypeError("secret row contents"),
       party: "client",
     });
@@ -59,10 +63,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.awaitingCheckInsListFailed({
+    checkInsIncidentsAdapter.awaitingCheckInsListFailed({
       error: new TypeError("secret row contents"),
     });
 
@@ -81,10 +87,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.nextCheckInLookupFailed({
+    checkInsIncidentsAdapter.nextCheckInLookupFailed({
       error: new TypeError("secret row contents"),
     });
 
@@ -103,10 +111,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.checkInSeriesNotificationFailed({
+    checkInsIncidentsAdapter.checkInSeriesNotificationFailed({
       seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
       notification: "seriesSetUp",
     });
@@ -127,10 +137,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.checkInInboxFailed({
+    checkInsIncidentsAdapter.checkInInboxFailed({
       checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
       event: "approved",
     });
@@ -151,10 +163,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.checkInSeriesInboxFailed({
+    checkInsIncidentsAdapter.checkInSeriesInboxFailed({
       seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
       event: "clashesAdded",
     });
@@ -175,10 +189,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.checkInSeriesExtensionFailed({
+    checkInsIncidentsAdapter.checkInSeriesExtensionFailed({
       clientId: "client-1",
       error: Object.assign(new Error("deadlock detected"), { code: "40P01" }),
     });
@@ -200,10 +216,12 @@ describe("createCheckInsIncidents", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const logger = new CheckInsIncidentsAdapter(new ConsoleLoggerAdapter());
+    const checkInsIncidentsAdapter = new CheckInsIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
 
     // act
-    logger.checkInSeriesReadFailed({
+    checkInsIncidentsAdapter.checkInSeriesReadFailed({
       clientId: "client-1",
       error: Object.assign(new Error("connection reset"), { code: "08006" }),
     });

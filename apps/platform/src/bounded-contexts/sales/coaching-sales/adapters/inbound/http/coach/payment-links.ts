@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(coachingSalesContext)
-      .paymentLinks.sendPaymentLink(args);
+      .paymentLinksController.sendPaymentLink(args);
   });
 }
 

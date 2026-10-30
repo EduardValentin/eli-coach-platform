@@ -12,7 +12,7 @@ import type {
 } from "~/bounded-contexts/scheduling/public/open-slots-facade";
 
 type SchedulingOpenSlotsOptions = {
-  openSlots: OpenSlotsFacade;
+  openSlotsFacade: OpenSlotsFacade;
   rules: CheckInSlotRules;
 };
 
@@ -20,7 +20,7 @@ export class SchedulingOpenSlotsAdapter implements OpenSlotsPort {
   constructor(private readonly options: SchedulingOpenSlotsOptions) {}
 
   async coachWeek(): Promise<CoachWeek> {
-    const week = await this.options.openSlots.coachWeek();
+    const week = await this.options.openSlotsFacade.coachWeek();
 
     return CoachWeek.of({
       timeZone: week.timeZone,
@@ -34,14 +34,14 @@ export class SchedulingOpenSlotsAdapter implements OpenSlotsPort {
   }
 
   offersStart({ start, now }: { start: Date; now: Date }): Promise<boolean> {
-    return this.options.openSlots.offersStart({
+    return this.options.openSlotsFacade.offersStart({
       ...this.requestFrom(now),
       startsAt: start.toISOString(),
     });
   }
 
   async openStarts(now: Date): Promise<Date[]> {
-    const starts = await this.options.openSlots.openStarts(
+    const starts = await this.options.openSlotsFacade.openStarts(
       this.requestFrom(now),
     );
 
@@ -49,7 +49,9 @@ export class SchedulingOpenSlotsAdapter implements OpenSlotsPort {
   }
 
   async busyFrom(from: Date): Promise<CoachTimeSpan[]> {
-    const busy = await this.options.openSlots.busyFrom(from.toISOString());
+    const busy = await this.options.openSlotsFacade.busyFrom(
+      from.toISOString(),
+    );
 
     return busy.map((interval) => ({
       start: new Date(interval.startsAt),

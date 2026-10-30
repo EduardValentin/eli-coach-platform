@@ -8,28 +8,36 @@ import { EmailWaitlistConfirmationAdapter } from "./email-waitlist-confirmation-
 describe("createWaitlistConfirmation", () => {
   it("returns the email waitlist confirmation", () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
 
     // act
-    const confirmation = createWaitlistConfirmationAdapter(productEmail, {
-      contactEmail: "contact@evoa.fit",
-      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
-    });
+    const waitlistConfirmationPort = createWaitlistConfirmationAdapter(
+      inMemoryProductEmailAdapter,
+      {
+        contactEmail: "contact@evoa.fit",
+        privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+      },
+    );
 
     // assert
-    expect(confirmation).toBeInstanceOf(EmailWaitlistConfirmationAdapter);
+    expect(waitlistConfirmationPort).toBeInstanceOf(
+      EmailWaitlistConfirmationAdapter,
+    );
   });
 
   it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const confirmation = createWaitlistConfirmationAdapter(productEmail, {
-      contactEmail: "questions@evoa.fit",
-      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
-    });
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const waitlistConfirmationPort = createWaitlistConfirmationAdapter(
+      inMemoryProductEmailAdapter,
+      {
+        contactEmail: "questions@evoa.fit",
+        privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+      },
+    );
 
     // act
-    await confirmation.sendConfirmation({
+    await waitlistConfirmationPort.sendConfirmation({
       email: "eli@example.com",
       offer: {
         plan: "all-bundles",
@@ -38,10 +46,10 @@ describe("createWaitlistConfirmation", () => {
       pricing: "reduced",
     });
 
-    const sentEmail = productEmail.sent[0];
+    const sentEmail = inMemoryProductEmailAdapter.sent[0];
 
     // assert
-    expect(productEmail.sent).toHaveLength(1);
+    expect(inMemoryProductEmailAdapter.sent).toHaveLength(1);
     expect(sentEmail).toEqual(
       expect.objectContaining({
         to: "eli@example.com",

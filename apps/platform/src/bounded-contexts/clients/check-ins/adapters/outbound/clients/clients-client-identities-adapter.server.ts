@@ -5,13 +5,15 @@ import type {
 import type { ClientIdentitiesPort as PublishedClientIdentities } from "~/bounded-contexts/clients/clients/public";
 
 export class ClientsClientIdentitiesAdapter implements ClientIdentitiesPort {
-  constructor(private readonly identities: PublishedClientIdentities) {}
+  constructor(
+    private readonly clientIdentitiesPort: PublishedClientIdentities,
+  ) {}
 
   findByClientId(clientId: string): Promise<ClientIdentity | null> {
-    return this.identities.findByClientId(clientId);
+    return this.clientIdentitiesPort.findByClientId(clientId);
   }
 
   findByClientIds(clientIds: readonly string[]): Promise<ClientIdentity[]> {
-    return this.identities.findByClientIds(clientIds);
+    return this.clientIdentitiesPort.findByClientIds(clientIds);
   }
 }

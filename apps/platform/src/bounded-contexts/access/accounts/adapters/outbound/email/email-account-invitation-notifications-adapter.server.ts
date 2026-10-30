@@ -12,14 +12,14 @@ import { createAccountInvitationEmailContent } from "./account-invitation-email.
 
 export type EmailAccountInvitationNotificationsOptions = {
   appBasePath: string;
-  clock: ClockPort;
+  clockPort: ClockPort;
   contactEmail: string;
   publicAppUrl: string;
 };
 
 export class EmailAccountInvitationNotificationsAdapter implements AccountInvitationNotificationsPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailAccountInvitationNotificationsOptions,
   ) {}
 
@@ -29,10 +29,10 @@ export class EmailAccountInvitationNotificationsAdapter implements AccountInvita
     const content = createAccountInvitationEmailContent({
       acceptUrl: this.invitationUrl(message.rawToken),
       contactEmail: this.options.contactEmail,
-      currentYear: this.options.clock.now().getUTCFullYear(),
+      currentYear: this.options.clockPort.now().getUTCFullYear(),
       firstName: message.firstName,
     });
-    const result = await this.productEmail.send({
+    const result = await this.productEmailPort.send({
       html: content.html,
       idempotencyKey: `client-invitation:${message.invitationId}:${message.sentAt.toISOString()}`,
       replyTo: this.options.contactEmail,

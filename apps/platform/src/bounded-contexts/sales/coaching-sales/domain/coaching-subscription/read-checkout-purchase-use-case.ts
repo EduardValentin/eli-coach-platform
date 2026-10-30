@@ -19,11 +19,11 @@ type ReadCheckoutPurchaseResult =
   | { status: "unreadable_checkout" };
 
 type ReadCheckoutPurchaseUseCaseOptions = {
-  calls: EndedCallsPort;
-  clock: ClockPort;
-  incidents: CoachingSubscriptionIncidentsPort;
-  paymentCheckout: PaymentCheckoutPort;
-  subscriptionIds: CoachingSubscriptionIdsPort;
+  endedCallsPort: EndedCallsPort;
+  clockPort: ClockPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  paymentCheckoutPort: PaymentCheckoutPort;
+  coachingSubscriptionIdsPort: CoachingSubscriptionIdsPort;
 };
 
 export class ReadCheckoutPurchaseUseCase {
@@ -33,12 +33,13 @@ export class ReadCheckoutPurchaseUseCase {
     command: ReadCheckoutPurchaseCommand,
   ): Promise<ReadCheckoutPurchaseResult> {
     const { eventId } = command;
-    const completion = await this.options.paymentCheckout.findCompletedSession(
-      command.checkoutSessionId,
-    );
+    const completion =
+      await this.options.paymentCheckoutPort.findCompletedSession(
+        command.checkoutSessionId,
+      );
 
     if (!completion) {
-      this.options.incidents.paymentEventRejected({
+      this.options.coachingSubscriptionIncidentsPort.paymentEventRejected({
         eventId,
         reason: "unreadable_checkout",
       });
@@ -46,10 +47,12 @@ export class ReadCheckoutPurchaseUseCase {
       return { status: "unreadable_checkout" };
     }
 
-    const call = await this.options.calls.findById(completion.assessmentCallId);
+    const call = await this.options.endedCallsPort.findById(
+      completion.assessmentCallId,
+    );
 
     if (!call) {
-      this.options.incidents.paymentEventRejected({
+      this.options.coachingSubscriptionIncidentsPort.paymentEventRejected({
         eventId,
         reason: "call_not_found",
       });
@@ -61,10 +64,10 @@ export class ReadCheckoutPurchaseUseCase {
       status: "found",
       purchase: {
         eventId,
-        receivedAt: this.options.clock.now(),
+        receivedAt: this.options.clockPort.now(),
         client: this.intakeOf(call),
         subscription: PurchasedSubscription.fromCompletedCheckout({
-          id: this.options.subscriptionIds.generate(),
+          id: this.options.coachingSubscriptionIdsPort.generate(),
           completion,
         }),
       },

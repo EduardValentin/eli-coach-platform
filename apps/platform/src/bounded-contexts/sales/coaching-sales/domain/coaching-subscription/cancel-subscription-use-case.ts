@@ -36,14 +36,14 @@ type RecordedCancellation = Extract<
 >;
 
 type CancelSubscriptionUseCaseOptions = {
-  clients: Pick<ClientLookupPort, "identityOf">;
-  clock: ClockPort;
+  clientLookupPort: Pick<ClientLookupPort, "identityOf">;
+  clockPort: ClockPort;
   coachingEnds: readonly CoachingEndHandlerPort[];
-  incidents: CoachingSubscriptionIncidentsPort;
-  notifications: RefundNotificationsPort;
-  paymentSubscriptions: PaymentSubscriptionsPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  refundNotificationsPort: RefundNotificationsPort;
+  paymentSubscriptionsPort: PaymentSubscriptionsPort;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
-  subscriptions: CoachingSubscriptionsPort;
+  coachingSubscriptionsPort: CoachingSubscriptionsPort;
 };
 
 type CancellationRecording = {
@@ -67,7 +67,7 @@ export class CancelSubscriptionUseCase {
       return { status: "not_found" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const decision = current.cancel(now);
 
     if (decision.outcome === "nothing-to-cancel") {
@@ -77,11 +77,13 @@ export class CancelSubscriptionUseCase {
     try {
       await this.instructProvider(current, decision.instruction);
     } catch (error) {
-      this.options.incidents.subscriptionCancellationFailed({
-        subscriptionId: current.id,
-        rule: decision.rule,
-        error,
-      });
+      this.options.coachingSubscriptionIncidentsPort.subscriptionCancellationFailed(
+        {
+          subscriptionId: current.id,
+          rule: decision.rule,
+          error,
+        },
+      );
 
       return { status: "provider_unavailable" };
     }
@@ -96,7 +98,7 @@ export class CancelSubscriptionUseCase {
       return { status: "nothing_to_cancel" };
     }
 
-    this.options.incidents.subscriptionCancelled({
+    this.options.coachingSubscriptionIncidentsPort.subscriptionCancelled({
       subscriptionId: recorded.subscription.id,
       startChoice: recorded.subscription.startChoice,
       rule: recorded.rule,
@@ -118,13 +120,13 @@ export class CancelSubscriptionUseCase {
     instruction: ProviderInstruction,
   ): Promise<void> {
     if (instruction.kind === "end-now") {
-      await this.options.paymentSubscriptions.endNow(
+      await this.options.paymentSubscriptionsPort.endNow(
         subscription.paymentSubscriptionId,
       );
       return;
     }
 
-    await this.options.paymentSubscriptions.endAt({
+    await this.options.paymentSubscriptionsPort.endAt({
       paymentSubscriptionId: subscription.paymentSubscriptionId,
       at: instruction.at,
     });
@@ -134,7 +136,7 @@ export class CancelSubscriptionUseCase {
     decision: RecordedCancellation,
     recording: CancellationRecording,
   ): Promise<RecordedCancellation | null> {
-    const saved = await this.options.subscriptions.save({
+    const saved = await this.options.coachingSubscriptionsPort.save({
       subscription: decision.subscription,
       previous: recording.previous,
     });
@@ -143,9 +145,10 @@ export class CancelSubscriptionUseCase {
       return decision;
     }
 
-    const fresh = await this.options.subscriptions.findCurrentForClient(
-      recording.clientId,
-    );
+    const fresh =
+      await this.options.coachingSubscriptionsPort.findCurrentForClient(
+        recording.clientId,
+      );
 
     if (!fresh) {
       return null;
@@ -160,7 +163,7 @@ export class CancelSubscriptionUseCase {
       return null;
     }
 
-    const savedAgain = await this.options.subscriptions.save({
+    const savedAgain = await this.options.coachingSubscriptionsPort.save({
       subscription: redecided.subscription,
       previous: fresh,
     });
@@ -187,7 +190,8 @@ export class CancelSubscriptionUseCase {
         return;
       }
 
-      const delivery = await this.options.notifications.notifyRefundDue(notice);
+      const delivery =
+        await this.options.refundNotificationsPort.notifyRefundDue(notice);
 
       if (delivery === "failed") {
         this.reportNotificationFailure(subscription);
@@ -206,7 +210,9 @@ export class CancelSubscriptionUseCase {
       return null;
     }
 
-    const client = await this.options.clients.identityOf(subscription.clientId);
+    const client = await this.options.clientLookupPort.identityOf(
+      subscription.clientId,
+    );
 
     if (!client) {
       return null;
@@ -231,7 +237,7 @@ export class CancelSubscriptionUseCase {
   }
 
   private reportNotificationFailure(subscription: CoachingSubscription): void {
-    this.options.incidents.refundNotificationFailed({
+    this.options.coachingSubscriptionIncidentsPort.refundNotificationFailed({
       subscriptionId: subscription.id,
     });
   }

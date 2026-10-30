@@ -7,11 +7,11 @@ import type { CheckoutsController } from "~/bounded-contexts/sales/coaching-sale
 import type { StripeWebhookController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/stripe-webhooks/stripe-webhook-controller.server";
 
 export type CoachingSalesFeature = {
-  checkouts: CheckoutsController;
-  coachSales: CoachSalesController;
-  paymentLinks: PaymentLinksController;
-  stripeWebhooks: StripeWebhookController;
-  subscription: SubscriptionController;
+  checkoutsController: CheckoutsController;
+  coachSalesController: CoachSalesController;
+  paymentLinksController: PaymentLinksController;
+  stripeWebhookController: StripeWebhookController;
+  subscriptionController: SubscriptionController;
 };
 
 export const coachingSalesContext: RouterContext<CoachingSalesFeature> =

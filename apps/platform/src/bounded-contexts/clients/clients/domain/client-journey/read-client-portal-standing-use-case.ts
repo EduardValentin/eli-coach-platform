@@ -10,8 +10,8 @@ type ClientPortalStandingReading = {
 };
 
 type ReadClientPortalStandingUseCaseOptions = {
-  clock: ClockPort;
-  journeys: ClientJourneysPort;
+  clockPort: ClockPort;
+  clientJourneysPort: ClientJourneysPort;
 };
 
 export class ReadClientPortalStandingUseCase {
@@ -23,7 +23,7 @@ export class ReadClientPortalStandingUseCase {
     authSubjectId: string,
   ): Promise<ClientPortalStandingReading | null> {
     const journey =
-      await this.options.journeys.findByAuthSubjectId(authSubjectId);
+      await this.options.clientJourneysPort.findByAuthSubjectId(authSubjectId);
 
     if (!journey) {
       return null;
@@ -34,7 +34,7 @@ export class ReadClientPortalStandingUseCase {
       portal: portalReachOf({
         standing: journey.standing,
         onboardingSubmittedAt: journey.onboardingSubmittedAt,
-        now: this.options.clock.now(),
+        now: this.options.clockPort.now(),
       }),
     };
   }

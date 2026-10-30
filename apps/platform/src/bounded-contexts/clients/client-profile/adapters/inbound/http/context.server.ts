@@ -12,19 +12,19 @@ import type { ClientOnboardingController } from "~/bounded-contexts/clients/clie
 import type { OnboardingReviewController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/onboarding-review-controller.server";
 
 export type ClientProfileFeature = {
-  avatars: ClientAvatarController;
-  clientMeasurements: ClientMeasurementsController;
-  clientSettings: ClientSettingsController;
-  coachAvatars: CoachClientAvatarController;
-  coachProfile: ClientProfileController;
-  ownAvatar: OwnClientAvatarController;
-  ownProfile: OwnClientProfileController;
-  progressPhotos: ProgressPhotoController;
+  clientAvatarController: ClientAvatarController;
+  clientMeasurementsController: ClientMeasurementsController;
+  clientSettingsController: ClientSettingsController;
+  coachClientAvatarController: CoachClientAvatarController;
+  clientProfileController: ClientProfileController;
+  ownClientAvatarController: OwnClientAvatarController;
+  ownClientProfileController: OwnClientProfileController;
+  progressPhotoController: ProgressPhotoController;
 };
 
 export type ClientOnboardingFeature = {
-  controller: ClientOnboardingController;
-  coachReview: OnboardingReviewController;
+  clientOnboardingController: ClientOnboardingController;
+  onboardingReviewController: OnboardingReviewController;
 };
 
 export const clientProfileContext: RouterContext<ClientProfileFeature> =

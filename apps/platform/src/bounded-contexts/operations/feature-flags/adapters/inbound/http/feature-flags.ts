@@ -16,6 +16,6 @@ export async function action(_args: ActionFunctionArgs) {
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    context.get(featureFlagsContext).featureFlags.getSnapshot(),
+    context.get(featureFlagsContext).featureFlagController.getSnapshot(),
   );
 }

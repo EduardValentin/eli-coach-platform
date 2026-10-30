@@ -149,7 +149,7 @@ function readPorts(
 ) {
   return {
     participants: new OnboardingParticipants({
-      clients: {
+      onboardingClientsPort: {
         findByAuthSubjectId: vi.fn().mockResolvedValue(null),
         findByClientId: vi
           .fn()
@@ -157,13 +157,13 @@ function readPorts(
             overrides.client === undefined ? CLIENT : overrides.client,
           ),
       } satisfies OnboardingClientsPort,
-      identities: {
+      clientIdentitiesPort: {
         findByClientId: vi
           .fn()
           .mockResolvedValue(overrides.identity ?? IDENTITY),
       } satisfies Pick<ClientIdentitiesPort, "findByClientId">,
     }),
-    onboardings: {
+    clientOnboardingSourcePort: {
       findByClientId: vi.fn().mockResolvedValue({
         draft: null,
         submission:
@@ -172,7 +172,7 @@ function readPorts(
             : overrides.submission,
       }),
     } satisfies ClientOnboardingSourcePort,
-    reviews: {
+    onboardingReviewsPort: {
       findByClientId: vi.fn().mockResolvedValue({
         openedAt: null,
         approvedAt: null,
@@ -184,13 +184,13 @@ function readPorts(
       recordAnswer: vi.fn(),
       recordApproval: vi.fn(),
     } satisfies OnboardingReviewsPort,
-    measurements: {
+    clientMeasurementsSourcePort: {
       listByClientId: vi.fn().mockResolvedValue(MEASUREMENTS),
     } satisfies ClientMeasurementsSourcePort,
-    stamps: {
+    onboardingReviewStampsPort: {
       record: vi.fn().mockResolvedValue(undefined),
     } satisfies OnboardingReviewStampsPort,
-    incidents: createIncidents(),
+    clientOnboardingIncidentsPort: createIncidents(),
   };
 }
 
@@ -198,10 +198,10 @@ describe("ReadOnboardingReviewUseCase", () => {
   it("reads her submitted answers with the safety and cycle signals derived", async () => {
     // arrange
     const ports = readPorts();
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result.status).toBe("submitted");
@@ -222,19 +222,19 @@ describe("ReadOnboardingReviewUseCase", () => {
     expect(result.requests).toEqual([]);
     expect(result.submittedMeasurement).toEqual(SUBMITTED_MEASUREMENT);
     expect(result.statedHeightCm).toBe(168);
-    expect(ports.measurements.listByClientId).toHaveBeenCalledWith(
-      CLIENT.clientId,
-    );
+    expect(
+      ports.clientMeasurementsSourcePort.listByClientId,
+    ).toHaveBeenCalledWith(CLIENT.clientId);
   });
 
   it("reads no submitted measurement while none is recorded for her", async () => {
     // arrange
     const ports = readPorts();
-    ports.measurements.listByClientId.mockResolvedValue([]);
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    ports.clientMeasurementsSourcePort.listByClientId.mockResolvedValue([]);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
@@ -244,10 +244,10 @@ describe("ReadOnboardingReviewUseCase", () => {
   it("lists only the forms and questions her answers made reachable, with answered and total counts", async () => {
     // arrange
     const ports = readPorts();
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
@@ -272,10 +272,10 @@ describe("ReadOnboardingReviewUseCase", () => {
   it("reads no cycle form for a male client", async () => {
     // arrange
     const ports = readPorts({ identity: { ...IDENTITY, gender: "male" } });
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
@@ -288,10 +288,10 @@ describe("ReadOnboardingReviewUseCase", () => {
     // arrange
     const submitted = { ...answers(), "cycle-context": {} };
     const ports = readPorts({ submission: submission(submitted) });
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
@@ -318,58 +318,60 @@ describe("ReadOnboardingReviewUseCase", () => {
       },
       stored: { openedAt: OPENED_AT, requests: [request] },
     });
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
     expect(result.stage).toBe("needs-details");
     expect(result.openRequest).toEqual(request.toSnapshot());
     expect(result.requests).toEqual([request.toSnapshot()]);
-    expect(ports.stamps.record).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewStampsPort.record).not.toHaveBeenCalled();
   });
 
   it("repairs lagging stamps on the coach's read", async () => {
     // arrange
     const ports = readPorts({ stored: { openedAt: OPENED_AT } });
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toMatchObject({ status: "submitted", stage: "in-review" });
-    expect(ports.stamps.record).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewStampsPort.record).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       stamps: { ...NO_STAMPS, reviewOpenedAt: OPENED_AT },
     });
-    expect(ports.incidents.onboardingReviewStampsRepaired).toHaveBeenCalledWith(
-      { clientId: CLIENT.clientId },
-    );
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingReviewStampsRepaired,
+    ).toHaveBeenCalledWith({ clientId: CLIENT.clientId });
   });
 
   it("reads only that her answers are not in before she submits", async () => {
     // arrange
     const ports = readPorts({ submission: null });
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await readOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toEqual({ status: "not-submitted" });
-    expect(ports.measurements.listByClientId).not.toHaveBeenCalled();
+    expect(
+      ports.clientMeasurementsSourcePort.listByClientId,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers not-found for an unknown client", async () => {
     // arrange
     const ports = readPorts({ client: null });
-    const useCase = new ReadOnboardingReviewUseCase(ports);
+    const readOnboardingReviewUseCase = new ReadOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute("client-9");
+    const result = await readOnboardingReviewUseCase.execute("client-9");
 
     // assert
     expect(result).toEqual({ status: "not-found" });

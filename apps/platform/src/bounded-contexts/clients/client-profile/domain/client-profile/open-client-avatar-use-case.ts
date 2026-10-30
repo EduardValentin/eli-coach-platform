@@ -20,9 +20,9 @@ type OpenClientAvatarResult =
   | { status: "not-found" };
 
 type OpenClientAvatarUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  avatars: Pick<ClientAvatarsPort, "findByClientId">;
-  store: Pick<ClientAvatarStorePort, "open">;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientAvatarsPort: Pick<ClientAvatarsPort, "findByClientId">;
+  clientAvatarStorePort: Pick<ClientAvatarStorePort, "open">;
 };
 
 export class OpenClientAvatarUseCase {
@@ -31,14 +31,16 @@ export class OpenClientAvatarUseCase {
   async execute(
     command: OpenClientAvatarCommand,
   ): Promise<OpenClientAvatarResult> {
-    const avatar = await this.options.avatars.findByClientId(command.clientId);
+    const avatar = await this.options.clientAvatarsPort.findByClientId(
+      command.clientId,
+    );
 
     if (!avatar || !(await this.maySee(avatar, command.requester))) {
       return { status: "not-found" };
     }
 
     const { reference, mimeType } = avatar.toSnapshot();
-    const bytes = await this.options.store.open(reference);
+    const bytes = await this.options.clientAvatarStorePort.open(reference);
 
     return bytes
       ? { status: "opened", bytes, mimeType }
@@ -51,7 +53,7 @@ export class OpenClientAvatarUseCase {
   ): Promise<boolean> {
     if (requester.role === "COACH") return true;
 
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       requester.authSubjectId,
     );
 

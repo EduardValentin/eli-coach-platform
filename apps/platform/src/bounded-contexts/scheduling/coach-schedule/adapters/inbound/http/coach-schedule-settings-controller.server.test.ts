@@ -21,13 +21,14 @@ describe("CoachScheduleSettingsController", () => {
       const getSettings = {
         execute: vi.fn().mockResolvedValue(VALID_SETTINGS),
       };
-      const controller = new CoachScheduleSettingsController({
-        getSettings: getSettings as never,
-        updateSettings: { execute: vi.fn() } as never,
-      });
+      const coachScheduleSettingsController =
+        new CoachScheduleSettingsController({
+          getCoachScheduleSettingsUseCase: getSettings as never,
+          updateCoachScheduleSettingsUseCase: { execute: vi.fn() } as never,
+        });
 
       // act
-      const settings = await controller.loadSettingsPage();
+      const settings = await coachScheduleSettingsController.loadSettingsPage();
 
       // assert
       expect(settings).toEqual(VALID_SETTINGS);
@@ -37,14 +38,16 @@ describe("CoachScheduleSettingsController", () => {
   describe("updateSettings", () => {
     it("propagates the guard's 401 for an anonymous caller", async () => {
       // arrange
-      const controller = createController();
+      const coachScheduleSettingsController = createController();
       const args = createActionArgs({
         body: VALID_SETTINGS,
         session: { kind: "anonymous" },
       });
 
       // act
-      const thrown = await captureThrown(() => controller.updateSettings(args));
+      const thrown = await captureThrown(() =>
+        coachScheduleSettingsController.updateSettings(args),
+      );
 
       // assert
       expect(thrown).toBeInstanceOf(Response);
@@ -53,7 +56,7 @@ describe("CoachScheduleSettingsController", () => {
 
     it("propagates the guard's 403 for a client account", async () => {
       // arrange
-      const controller = createController();
+      const coachScheduleSettingsController = createController();
       const args = createActionArgs({
         body: VALID_SETTINGS,
         session: {
@@ -63,7 +66,9 @@ describe("CoachScheduleSettingsController", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => controller.updateSettings(args));
+      const thrown = await captureThrown(() =>
+        coachScheduleSettingsController.updateSettings(args),
+      );
 
       // assert
       expect(thrown).toBeInstanceOf(Response);
@@ -72,14 +77,15 @@ describe("CoachScheduleSettingsController", () => {
 
     it("answers 400 no_weekday for an empty weekday list", async () => {
       // arrange
-      const controller = createController();
+      const coachScheduleSettingsController = createController();
       const args = createCoachArgs({
         ...VALID_SETTINGS,
         weekdays: [],
       });
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(400);
@@ -91,11 +97,12 @@ describe("CoachScheduleSettingsController", () => {
 
     it("answers 400 invalid_hours for an out-of-range start hour", async () => {
       // arrange
-      const controller = createController();
+      const coachScheduleSettingsController = createController();
       const args = createCoachArgs({ ...VALID_SETTINGS, startHour: -1 });
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(400);
@@ -106,14 +113,15 @@ describe("CoachScheduleSettingsController", () => {
 
     it("answers 400 invalid_meeting_link for a non-https link", async () => {
       // arrange
-      const controller = createController();
+      const coachScheduleSettingsController = createController();
       const args = createCoachArgs({
         ...VALID_SETTINGS,
         meetingLink: "http://meet.example/eli",
       });
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(400);
@@ -124,14 +132,15 @@ describe("CoachScheduleSettingsController", () => {
 
     it("answers 400 invalid_time_zone for a zone the runtime does not know", async () => {
       // arrange
-      const controller = createController();
+      const coachScheduleSettingsController = createController();
       const args = createCoachArgs({
         ...VALID_SETTINGS,
         timeZone: "Mars/Olympus_Mons",
       });
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(400);
@@ -147,14 +156,16 @@ describe("CoachScheduleSettingsController", () => {
           .fn()
           .mockResolvedValue({ problems: ["no_weekday"], status: "invalid" }),
       };
-      const controller = new CoachScheduleSettingsController({
-        getSettings: { execute: vi.fn() } as never,
-        updateSettings: updateSettings as never,
-      });
+      const coachScheduleSettingsController =
+        new CoachScheduleSettingsController({
+          getCoachScheduleSettingsUseCase: { execute: vi.fn() } as never,
+          updateCoachScheduleSettingsUseCase: updateSettings as never,
+        });
       const args = createCoachArgs(VALID_SETTINGS);
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(400);
@@ -170,14 +181,16 @@ describe("CoachScheduleSettingsController", () => {
           .fn()
           .mockResolvedValue({ settings: VALID_SETTINGS, status: "saved" }),
       };
-      const controller = new CoachScheduleSettingsController({
-        getSettings: { execute: vi.fn() } as never,
-        updateSettings: updateSettings as never,
-      });
+      const coachScheduleSettingsController =
+        new CoachScheduleSettingsController({
+          getCoachScheduleSettingsUseCase: { execute: vi.fn() } as never,
+          updateCoachScheduleSettingsUseCase: updateSettings as never,
+        });
       const args = createCoachArgs(VALID_SETTINGS);
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(200);
@@ -193,14 +206,16 @@ describe("CoachScheduleSettingsController", () => {
       const updateSettings = {
         execute: vi.fn().mockRejectedValue(new Error("database down")),
       };
-      const controller = new CoachScheduleSettingsController({
-        getSettings: { execute: vi.fn() } as never,
-        updateSettings: updateSettings as never,
-      });
+      const coachScheduleSettingsController =
+        new CoachScheduleSettingsController({
+          getCoachScheduleSettingsUseCase: { execute: vi.fn() } as never,
+          updateCoachScheduleSettingsUseCase: updateSettings as never,
+        });
       const args = createCoachArgs(VALID_SETTINGS);
 
       // act
-      const response = await controller.updateSettings(args);
+      const response =
+        await coachScheduleSettingsController.updateSettings(args);
 
       // assert
       expect(response.status).toBe(500);
@@ -213,8 +228,8 @@ describe("CoachScheduleSettingsController", () => {
 
 function createController(): CoachScheduleSettingsController {
   return new CoachScheduleSettingsController({
-    getSettings: { execute: vi.fn() } as never,
-    updateSettings: { execute: vi.fn() } as never,
+    getCoachScheduleSettingsUseCase: { execute: vi.fn() } as never,
+    updateCoachScheduleSettingsUseCase: { execute: vi.fn() } as never,
   });
 }
 

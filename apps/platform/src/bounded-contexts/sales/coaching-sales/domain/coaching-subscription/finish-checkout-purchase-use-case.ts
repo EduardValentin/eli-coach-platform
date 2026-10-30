@@ -5,16 +5,18 @@ import type { PurchasedSubscription } from "./purchased-subscription";
 import type { RecordedCheckoutPurchase } from "./checkout-purchase";
 
 type FinishCheckoutPurchaseUseCaseOptions = {
-  admission: Pick<PaidClientAdmissionPort, "invite">;
-  incidents: CoachingSubscriptionIncidentsPort;
-  paymentSubscriptions: PaymentSubscriptionsPort;
+  paidClientAdmissionPort: Pick<PaidClientAdmissionPort, "invite">;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  paymentSubscriptionsPort: PaymentSubscriptionsPort;
 };
 
 export class FinishCheckoutPurchaseUseCase {
   constructor(private readonly options: FinishCheckoutPurchaseUseCaseOptions) {}
 
   async execute(purchase: RecordedCheckoutPurchase): Promise<void> {
-    await this.options.admission.invite({ clientId: purchase.clientId });
+    await this.options.paidClientAdmissionPort.invite({
+      clientId: purchase.clientId,
+    });
     await this.holdRenewal(purchase.subscription);
   }
 
@@ -29,12 +31,12 @@ export class FinishCheckoutPurchaseUseCase {
     }
 
     try {
-      await this.options.paymentSubscriptions.holdRenewal({
+      await this.options.paymentSubscriptionsPort.holdRenewal({
         paymentSubscriptionId,
         until,
       });
     } catch (error) {
-      this.options.incidents.renewalHoldFailed({
+      this.options.coachingSubscriptionIncidentsPort.renewalHoldFailed({
         paymentSubscriptionId,
         error,
       });
@@ -42,6 +44,8 @@ export class FinishCheckoutPurchaseUseCase {
       throw error;
     }
 
-    this.options.incidents.renewalHoldApplied({ paymentSubscriptionId });
+    this.options.coachingSubscriptionIncidentsPort.renewalHoldApplied({
+      paymentSubscriptionId,
+    });
   }
 }

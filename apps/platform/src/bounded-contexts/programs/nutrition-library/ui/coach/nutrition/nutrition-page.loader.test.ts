@@ -21,8 +21,8 @@ describe("nutrition page loader", () => {
     const listFoods = vi.fn().mockResolvedValue({ foods: FOODS, tags: TAGS });
     const listRecipes = vi.fn().mockResolvedValue({ recipes: RECIPES });
     const feature = {
-      foodLibrary: { list: listFoods },
-      recipeLibrary: { list: listRecipes },
+      foodLibraryController: { list: listFoods },
+      recipeLibraryController: { list: listRecipes },
     } as unknown as NutritionLibraryFeature;
     const args = createRequestArgs({
       contexts: [contextEntry(nutritionLibraryContext, feature)],

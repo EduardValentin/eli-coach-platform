@@ -30,16 +30,16 @@ export type ScheduleCheckInResult =
   | { status: "invalid_time_zone" };
 
 type ScheduleCheckInUseCaseOptions = {
-  checkIns: Pick<CheckInsPort, "listForClientLocked" | "add">;
-  clients: Pick<ClientReachPort, "findById">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "reserve">;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  ids: CheckInIdsPort;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
-  openSlots: Pick<OpenSlotsPort, "coachWeek" | "offersStart">;
+  checkInsPort: Pick<CheckInsPort, "listForClientLocked" | "add">;
+  clientReachPort: Pick<ClientReachPort, "findById">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "reserve">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInIdsPort: CheckInIdsPort;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
+  openSlotsPort: Pick<OpenSlotsPort, "coachWeek" | "offersStart">;
 };
 
 export class ScheduleCheckInUseCase {
@@ -60,7 +60,9 @@ export class ScheduleCheckInUseCase {
       return { status: "note_too_long" };
     }
 
-    const client = await this.options.clients.findById(command.clientId);
+    const client = await this.options.clientReachPort.findById(
+      command.clientId,
+    );
 
     if (!client) {
       return { status: "unknown_client" };
@@ -85,17 +87,17 @@ export class ScheduleCheckInUseCase {
       return { status: "time_taken" };
     }
 
-    const now = this.options.clock.now();
-    const { openSlots } = this.options;
+    const now = this.options.clockPort.now();
+    const { openSlotsPort } = this.options;
 
-    if (!(await openSlots.offersStart({ start: command.startsAt, now }))) {
+    if (!(await openSlotsPort.offersStart({ start: command.startsAt, now }))) {
       return { status: "time_taken" };
     }
 
-    const { timeZone: coachTimeZone } = await openSlots.coachWeek();
+    const { timeZone: coachTimeZone } = await openSlotsPort.coachWeek();
     const requested = await this.placement.place({
       checkIn: CheckIn.scheduledByCoach({
-        id: this.options.ids.generate(),
+        id: this.options.checkInIdsPort.generate(),
         clientId: client.clientId,
         startsAt: command.startsAt,
         clientTimeZone: zone.timeZone,

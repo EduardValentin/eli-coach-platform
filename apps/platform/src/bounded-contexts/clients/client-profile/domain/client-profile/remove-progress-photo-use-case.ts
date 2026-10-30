@@ -16,10 +16,10 @@ type RemoveProgressPhotoResult =
   { status: "removed" } | { status: "not-found" };
 
 type RemoveProgressPhotoUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  photos: ProgressPhotosPort;
-  store: ProgressPhotoStorePort;
-  incidents: MeasurementIncidentsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  progressPhotosPort: ProgressPhotosPort;
+  progressPhotoStorePort: ProgressPhotoStorePort;
+  measurementIncidentsPort: MeasurementIncidentsPort;
 };
 
 export class RemoveProgressPhotoUseCase {
@@ -29,8 +29,10 @@ export class RemoveProgressPhotoUseCase {
     command: RemoveProgressPhotoCommand,
   ): Promise<RemoveProgressPhotoResult> {
     const [client, photo] = await Promise.all([
-      this.options.clients.findByAuthSubjectId(command.requester.authSubjectId),
-      this.options.photos.findById(command.photoId),
+      this.options.clientReachPort.findByAuthSubjectId(
+        command.requester.authSubjectId,
+      ),
+      this.options.progressPhotosPort.findById(command.photoId),
     ]);
 
     if (!photo) {
@@ -38,7 +40,7 @@ export class RemoveProgressPhotoUseCase {
     }
 
     if (!client || !photo.isOwnedBy(client.clientId)) {
-      this.options.incidents.progressPhotoAccessRefused({
+      this.options.measurementIncidentsPort.progressPhotoAccessRefused({
         requesterRole: command.requester.role,
         photoId: command.photoId,
       });
@@ -47,9 +49,9 @@ export class RemoveProgressPhotoUseCase {
     }
 
     const { id, entryId, clientId, view, reference } = photo.toSnapshot();
-    await this.options.photos.delete(id);
-    await this.options.store.delete(reference);
-    this.options.incidents.progressPhotoDeleted({
+    await this.options.progressPhotosPort.delete(id);
+    await this.options.progressPhotoStorePort.delete(reference);
+    this.options.measurementIncidentsPort.progressPhotoDeleted({
       clientId,
       entryId,
       photoId: id,

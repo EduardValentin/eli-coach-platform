@@ -32,12 +32,12 @@ type SaveUnitPreferenceResult = Awaited<
 describe("ClientSettingsController saveUnits", () => {
   it("saves the units she chose and answers no content", async () => {
     // arrange
-    const { controller, saveUnitPreference } = createController({
+    const { clientSettingsController, saveUnitPreference } = createController({
       status: "saved",
     });
 
     // act
-    const response = await controller.saveUnits(
+    const response = await clientSettingsController.saveUnits(
       clientArgs({
         body: JSON.stringify({ weightUnit: "lb", heightUnit: "ft-in" }),
       }),
@@ -54,10 +54,12 @@ describe("ClientSettingsController saveUnits", () => {
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ status: "not-on-journey" });
+    const { clientSettingsController } = createController({
+      status: "not-on-journey",
+    });
 
     // act
-    const response = await controller.saveUnits(
+    const response = await clientSettingsController.saveUnits(
       clientArgs({
         body: JSON.stringify({ weightUnit: "kg", heightUnit: "cm" }),
       }),
@@ -70,10 +72,10 @@ describe("ClientSettingsController saveUnits", () => {
 
   it("answers conflict to a client whose portal access has ended", async () => {
     // arrange
-    const { controller } = createController({ status: "ended" });
+    const { clientSettingsController } = createController({ status: "ended" });
 
     // act
-    const response = await controller.saveUnits(
+    const response = await clientSettingsController.saveUnits(
       clientArgs({
         body: JSON.stringify({ weightUnit: "kg", heightUnit: "cm" }),
       }),
@@ -86,12 +88,12 @@ describe("ClientSettingsController saveUnits", () => {
 
   it("refuses a unit the platform does not offer without saving anything", async () => {
     // arrange
-    const { controller, saveUnitPreference } = createController({
+    const { clientSettingsController, saveUnitPreference } = createController({
       status: "saved",
     });
 
     // act
-    const response = await controller.saveUnits(
+    const response = await clientSettingsController.saveUnits(
       clientArgs({
         body: JSON.stringify({ weightUnit: "stone", heightUnit: "cm" }),
       }),
@@ -104,12 +106,12 @@ describe("ClientSettingsController saveUnits", () => {
 
   it("refuses a body beyond its size limit without saving anything", async () => {
     // arrange
-    const { controller, saveUnitPreference } = createController({
+    const { clientSettingsController, saveUnitPreference } = createController({
       status: "saved",
     });
 
     // act
-    const response = await controller.saveUnits(
+    const response = await clientSettingsController.saveUnits(
       clientArgs({
         body: JSON.stringify({
           weightUnit: "kg",
@@ -126,13 +128,13 @@ describe("ClientSettingsController saveUnits", () => {
 
   it("refuses the coach without saving anything", async () => {
     // arrange
-    const { controller, saveUnitPreference } = createController({
+    const { clientSettingsController, saveUnitPreference } = createController({
       status: "saved",
     });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.saveUnits(
+      clientSettingsController.saveUnits(
         clientArgs({
           body: JSON.stringify({ weightUnit: "kg", heightUnit: "cm" }),
           session: COACH_SESSION,
@@ -149,12 +151,15 @@ describe("ClientSettingsController saveUnits", () => {
 describe("ClientSettingsController load", () => {
   it("hands her her units and her two preferences", async () => {
     // arrange
-    const { controller, readOwnClientSettings } = createController({
-      status: "saved",
-    });
+    const { clientSettingsController, readOwnClientSettings } =
+      createController({
+        status: "saved",
+      });
 
     // act
-    const settings = await controller.load(clientArgs({ body: "" }));
+    const settings = await clientSettingsController.load(
+      clientArgs({ body: "" }),
+    );
 
     // assert
     expect(settings).toEqual({
@@ -167,13 +172,16 @@ describe("ClientSettingsController load", () => {
 
   it("refuses the coach without reading any settings", async () => {
     // arrange
-    const { controller, readOwnClientSettings } = createController({
-      status: "saved",
-    });
+    const { clientSettingsController, readOwnClientSettings } =
+      createController({
+        status: "saved",
+      });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(clientArgs({ body: "", session: COACH_SESSION })),
+      clientSettingsController.load(
+        clientArgs({ body: "", session: COACH_SESSION }),
+      ),
     );
 
     // assert
@@ -191,16 +199,20 @@ function createController(result: SaveUnitPreferenceResult) {
     preferredChannel: "whatsapp",
     updatedAt: new Date("2026-10-01T08:00:00.000Z"),
   });
-  const controller = new ClientSettingsController({
-    readOwnClientSettings: {
+  const clientSettingsController = new ClientSettingsController({
+    readOwnClientSettingsUseCase: {
       execute: readOwnClientSettings,
     } as unknown as ReadOwnClientSettingsUseCase,
-    saveUnitPreference: {
+    saveUnitPreferenceUseCase: {
       execute: saveUnitPreference,
     } as unknown as SaveUnitPreferenceUseCase,
   });
 
-  return { controller, readOwnClientSettings, saveUnitPreference };
+  return {
+    clientSettingsController,
+    readOwnClientSettings,
+    saveUnitPreference,
+  };
 }
 
 function clientArgs(options: { body: string; session?: ResolvedSession }) {

@@ -27,10 +27,10 @@ export type OpenResourcePreviewResult =
   | { status: "not-found" };
 
 type OpenResourcePreviewUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStorePort;
-  incidents: ClientResourceIncidentsPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceStorePort: ClientResourceStorePort;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
 };
 
 export class OpenResourcePreviewUseCase {
@@ -66,11 +66,14 @@ export class OpenResourcePreviewUseCase {
     if (preview.kind === "thumbnail") {
       if (!resource.file.hasPagePreview()) return null;
 
-      return this.options.store.openThumbnail(owner);
+      return this.options.clientResourceStorePort.openThumbnail(owner);
     }
 
     if (!resource.file.hasPage(preview.pageNumber)) return null;
 
-    return this.options.store.openPage(owner, preview.pageNumber);
+    return this.options.clientResourceStorePort.openPage(
+      owner,
+      preview.pageNumber,
+    );
   }
 }

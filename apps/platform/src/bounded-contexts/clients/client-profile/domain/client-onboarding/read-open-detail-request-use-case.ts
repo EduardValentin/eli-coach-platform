@@ -15,10 +15,10 @@ type OpenDetailRequestReading = {
 
 type ReadOpenDetailRequestUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSourcePort;
-  reviews: OnboardingReviewsPort;
-  stamps: OnboardingReviewStampsPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  onboardingReviewsPort: OnboardingReviewsPort;
+  onboardingReviewStampsPort: OnboardingReviewStampsPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class ReadOpenDetailRequestUseCase {
@@ -37,8 +37,8 @@ export class ReadOpenDetailRequestUseCase {
     const { client, identity } = participant;
 
     const [stored, reviewed] = await Promise.all([
-      this.options.onboardings.findByClientId(client.clientId),
-      this.options.reviews.findByClientId(client.clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(client.clientId),
+      this.options.onboardingReviewsPort.findByClientId(client.clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
@@ -67,11 +67,11 @@ export class ReadOpenDetailRequestUseCase {
       return;
     }
 
-    await this.options.stamps.record({
+    await this.options.onboardingReviewStampsPort.record({
       clientId: client.clientId,
       stamps: review.stamps(),
     });
-    this.options.incidents.onboardingReviewStampsRepaired({
+    this.options.clientOnboardingIncidentsPort.onboardingReviewStampsRepaired({
       clientId: client.clientId,
     });
   }

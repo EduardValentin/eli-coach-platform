@@ -41,25 +41,25 @@ const product = PublishedProduct.reconstitute({
 });
 
 function createCatalog(
-  overrides: Partial<StoreCatalogPort> = {},
+  storeCatalogPort: Partial<StoreCatalogPort> = {},
 ): StoreCatalogPort {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue([product]),
     getPublishedProductBySlug: vi.fn().mockResolvedValue(product),
     getPublishedCoverByAssetKey: vi.fn().mockResolvedValue(null),
-    ...overrides,
+    ...storeCatalogPort,
   };
 }
 
 describe("ListPublishedProductsUseCase", () => {
   it("returns the database-authoritative published catalog", async () => {
     // arrange
-    const useCase = new ListPublishedProductsUseCase({
-      catalog: createCatalog(),
+    const listPublishedProductsUseCase = new ListPublishedProductsUseCase({
+      storeCatalogPort: createCatalog(),
     });
 
     // act
-    const result = await useCase.execute();
+    const result = await listPublishedProductsUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "available", products: [product] });
@@ -67,15 +67,17 @@ describe("ListPublishedProductsUseCase", () => {
 
   it("keeps an infrastructure failure distinct from an empty catalog", async () => {
     // arrange
-    const catalog = createCatalog({
+    const storeCatalogPort = createCatalog({
       getPublishedCatalog: vi
         .fn()
         .mockRejectedValue(new Error("database unavailable")),
     });
-    const useCase = new ListPublishedProductsUseCase({ catalog });
+    const listPublishedProductsUseCase = new ListPublishedProductsUseCase({
+      storeCatalogPort,
+    });
 
     // act
-    const result = await useCase.execute();
+    const result = await listPublishedProductsUseCase.execute();
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
@@ -85,12 +87,12 @@ describe("ListPublishedProductsUseCase", () => {
 describe("FindPublishedProductUseCase", () => {
   it("returns the published product for a known slug", async () => {
     // arrange
-    const useCase = new FindPublishedProductUseCase({
-      catalog: createCatalog(),
+    const findPublishedProductUseCase = new FindPublishedProductUseCase({
+      storeCatalogPort: createCatalog(),
     });
 
     // act
-    const result = await useCase.execute("hormone-harmony");
+    const result = await findPublishedProductUseCase.execute("hormone-harmony");
 
     // assert
     expect(result).toEqual({ status: "available", product });
@@ -98,13 +100,15 @@ describe("FindPublishedProductUseCase", () => {
 
   it("returns a genuine not-found result for an unpublished slug", async () => {
     // arrange
-    const catalog = createCatalog({
+    const storeCatalogPort = createCatalog({
       getPublishedProductBySlug: vi.fn().mockResolvedValue(null),
     });
-    const useCase = new FindPublishedProductUseCase({ catalog });
+    const findPublishedProductUseCase = new FindPublishedProductUseCase({
+      storeCatalogPort,
+    });
 
     // act
-    const result = await useCase.execute("unpublished");
+    const result = await findPublishedProductUseCase.execute("unpublished");
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -112,15 +116,17 @@ describe("FindPublishedProductUseCase", () => {
 
   it("keeps an infrastructure failure distinct from a not-found slug", async () => {
     // arrange
-    const catalog = createCatalog({
+    const storeCatalogPort = createCatalog({
       getPublishedProductBySlug: vi
         .fn()
         .mockRejectedValue(new Error("database unavailable")),
     });
-    const useCase = new FindPublishedProductUseCase({ catalog });
+    const findPublishedProductUseCase = new FindPublishedProductUseCase({
+      storeCatalogPort,
+    });
 
     // act
-    const result = await useCase.execute("hormone-harmony");
+    const result = await findPublishedProductUseCase.execute("hormone-harmony");
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
@@ -138,13 +144,15 @@ describe("FindPublishedCoverUseCase", () => {
 
   it("returns the published cover for a known asset key", async () => {
     // arrange
-    const catalog = createCatalog({
+    const storeCatalogPort = createCatalog({
       getPublishedCoverByAssetKey: vi.fn().mockResolvedValue(cover),
     });
-    const useCase = new FindPublishedCoverUseCase({ catalog });
+    const findPublishedCoverUseCase = new FindPublishedCoverUseCase({
+      storeCatalogPort,
+    });
 
     // act
-    const result = await useCase.execute(cover.assetKey);
+    const result = await findPublishedCoverUseCase.execute(cover.assetKey);
 
     // assert
     expect(result).toEqual({ status: "available", cover });
@@ -152,12 +160,14 @@ describe("FindPublishedCoverUseCase", () => {
 
   it("returns a genuine not-found result for an unknown asset key", async () => {
     // arrange
-    const useCase = new FindPublishedCoverUseCase({
-      catalog: createCatalog(),
+    const findPublishedCoverUseCase = new FindPublishedCoverUseCase({
+      storeCatalogPort: createCatalog(),
     });
 
     // act
-    const result = await useCase.execute("covers/unknown.webp");
+    const result = await findPublishedCoverUseCase.execute(
+      "covers/unknown.webp",
+    );
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -165,15 +175,17 @@ describe("FindPublishedCoverUseCase", () => {
 
   it("keeps an infrastructure failure distinct from a not-found cover", async () => {
     // arrange
-    const catalog = createCatalog({
+    const storeCatalogPort = createCatalog({
       getPublishedCoverByAssetKey: vi
         .fn()
         .mockRejectedValue(new Error("database unavailable")),
     });
-    const useCase = new FindPublishedCoverUseCase({ catalog });
+    const findPublishedCoverUseCase = new FindPublishedCoverUseCase({
+      storeCatalogPort,
+    });
 
     // act
-    const result = await useCase.execute(cover.assetKey);
+    const result = await findPublishedCoverUseCase.execute(cover.assetKey);
 
     // assert
     expect(result).toEqual({ status: "unavailable" });

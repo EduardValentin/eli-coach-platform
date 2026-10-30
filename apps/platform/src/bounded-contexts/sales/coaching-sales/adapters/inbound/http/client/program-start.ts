@@ -17,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return args.context.get(coachingSalesContext).subscription.startNow(args);
+    return args.context
+      .get(coachingSalesContext)
+      .subscriptionController.startNow(args);
   });
 }
 

@@ -5,10 +5,10 @@ import type {
 import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls-facade";
 
 export class SchedulingEndedCallsAdapter implements EndedCallsPort {
-  constructor(private readonly calls: EndedCallsFacade) {}
+  constructor(private readonly endedCallsFacade: EndedCallsFacade) {}
 
   async findById(callId: string): Promise<SalesCall | null> {
-    const call = await this.calls.callOf(callId);
+    const call = await this.endedCallsFacade.callOf(callId);
 
     if (!call) {
       return null;

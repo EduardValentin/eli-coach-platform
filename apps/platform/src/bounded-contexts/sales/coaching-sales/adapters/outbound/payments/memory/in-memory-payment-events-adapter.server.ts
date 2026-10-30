@@ -6,10 +6,10 @@ import type { PaymentProviderVocabulary } from "~/bounded-contexts/sales/coachin
 const MEMORY_SIGNATURE = "memory";
 
 export class InMemoryPaymentEventsAdapter implements PaymentEventsPort {
-  private readonly reader: PaymentEventReaderAdapter;
+  private readonly paymentEventReaderAdapter: PaymentEventReaderAdapter;
 
   constructor(vocabulary: PaymentProviderVocabulary) {
-    this.reader = new PaymentEventReaderAdapter(vocabulary);
+    this.paymentEventReaderAdapter = new PaymentEventReaderAdapter(vocabulary);
   }
 
   async verify(
@@ -21,7 +21,7 @@ export class InMemoryPaymentEventsAdapter implements PaymentEventsPort {
     }
 
     try {
-      return this.reader.read(JSON.parse(rawBody));
+      return this.paymentEventReaderAdapter.read(JSON.parse(rawBody));
     } catch (error) {
       if (error instanceof SyntaxError) {
         return { kind: "invalid" };

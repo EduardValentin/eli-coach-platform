@@ -44,18 +44,18 @@ type ReviewStampProjection = {
 
 type OnboardingReviewsOptions = {
   database: DatabaseClient;
-  reviewStamps: OnboardingReviewStampsPort;
+  onboardingReviewStampsPort: OnboardingReviewStampsPort;
   coachingSeedWriter: CoachingSeedWriter;
 };
 
 export class PostgresOnboardingReviewsRepository implements OnboardingReviewsPort {
   private readonly database: DatabaseClient;
-  private readonly reviewStamps: OnboardingReviewStampsPort;
+  private readonly onboardingReviewStampsPort: OnboardingReviewStampsPort;
   private readonly coachingSeedWriter: CoachingSeedWriter;
 
   constructor(options: OnboardingReviewsOptions) {
     this.database = options.database;
-    this.reviewStamps = options.reviewStamps;
+    this.onboardingReviewStampsPort = options.onboardingReviewStampsPort;
     this.coachingSeedWriter = options.coachingSeedWriter;
   }
 
@@ -189,7 +189,7 @@ export class PostgresOnboardingReviewsRepository implements OnboardingReviewsPor
   ): Promise<void> {
     await createUnitOfWork(this.database)(async () => {
       await writeRows();
-      await this.reviewStamps.record(projection);
+      await this.onboardingReviewStampsPort.record(projection);
     });
   }
 }

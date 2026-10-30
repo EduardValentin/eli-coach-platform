@@ -19,9 +19,9 @@ type ListClientsResult =
   { status: "listed"; clients: ListedClient[] } | { status: "unavailable" };
 
 type ListClientsUseCaseOptions = {
-  clock: ClockPort;
-  incidents: ClientRosterIncidentsPort;
-  roster: ClientRosterPort;
+  clockPort: ClockPort;
+  clientRosterIncidentsPort: ClientRosterIncidentsPort;
+  clientRosterPort: ClientRosterPort;
 };
 
 export class ListClientsUseCase {
@@ -29,8 +29,8 @@ export class ListClientsUseCase {
 
   async execute(): Promise<ListClientsResult> {
     try {
-      const entries = await this.options.roster.list();
-      const now = this.options.clock.now();
+      const entries = await this.options.clientRosterPort.list();
+      const now = this.options.clockPort.now();
 
       return {
         status: "listed",
@@ -45,7 +45,7 @@ export class ListClientsUseCase {
         })),
       };
     } catch (error) {
-      this.options.incidents.rosterReadFailed(error);
+      this.options.clientRosterIncidentsPort.rosterReadFailed(error);
 
       return { status: "unavailable" };
     }

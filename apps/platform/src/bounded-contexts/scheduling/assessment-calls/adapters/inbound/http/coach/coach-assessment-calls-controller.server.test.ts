@@ -30,14 +30,14 @@ const bookedCall = AssessmentCall.reconstitute({
 describe("CoachAssessmentCallsController", () => {
   it("publishes every booked call with the visitor's profile, its instants and the link the coach joins on", async () => {
     // arrange
-    const controller = createController({
+    const coachAssessmentCallsController = createController({
       status: "ok",
       coachTimeZone: "Europe/Bucharest",
       calls: [bookedCall.toSnapshot()],
     });
 
     // act
-    const dashboard = await controller.loadCalls();
+    const dashboard = await coachAssessmentCallsController.loadCalls();
 
     // assert
     expect(dashboard).toEqual({
@@ -72,14 +72,14 @@ describe("CoachAssessmentCallsController", () => {
       phone: null,
       visitorNotes: null,
     });
-    const controller = createController({
+    const coachAssessmentCallsController = createController({
       status: "ok",
       coachTimeZone: "Europe/Bucharest",
       calls: [withoutNotes.toSnapshot()],
     });
 
     // act
-    const dashboard = await controller.loadCalls();
+    const dashboard = await coachAssessmentCallsController.loadCalls();
 
     // assert
     expect(dashboard.calls[0]?.visitorNotes).toBeNull();
@@ -88,14 +88,14 @@ describe("CoachAssessmentCallsController", () => {
 
   it("names the coach's zone and the instant it read at when nothing is booked", async () => {
     // arrange
-    const controller = createController({
+    const coachAssessmentCallsController = createController({
       status: "ok",
       coachTimeZone: "Europe/Chisinau",
       calls: [],
     });
 
     // act
-    const dashboard = await controller.loadCalls();
+    const dashboard = await coachAssessmentCallsController.loadCalls();
 
     // assert
     expect(dashboard).toEqual({
@@ -107,10 +107,12 @@ describe("CoachAssessmentCallsController", () => {
 
   it("answers 503 with the coach's copy when the listing is unavailable", async () => {
     // arrange
-    const controller = createController({ status: "unavailable" });
+    const coachAssessmentCallsController = createController({
+      status: "unavailable",
+    });
 
     // act
-    const loading = controller.loadCalls();
+    const loading = coachAssessmentCallsController.loadCalls();
 
     // assert
     const thrown = await loading.catch((error: unknown) => error);
@@ -126,8 +128,8 @@ function createController(
   listing: AssessmentCallListingResult,
 ): CoachAssessmentCallsController {
   return new CoachAssessmentCallsController({
-    clock: { now: () => NOW },
-    listAssessmentCalls: {
+    clockPort: { now: () => NOW },
+    listAssessmentCallsUseCase: {
       execute: vi.fn().mockResolvedValue(listing),
     } as unknown as ListAssessmentCallsUseCase,
   });

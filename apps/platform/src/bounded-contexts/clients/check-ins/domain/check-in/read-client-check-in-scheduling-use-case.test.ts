@@ -11,7 +11,9 @@ function createReadScheduling(client: ClientReachReading | null) {
 
   return {
     clients,
-    readScheduling: new ReadClientCheckInSchedulingUseCase({ clients }),
+    readClientCheckInSchedulingUseCase: new ReadClientCheckInSchedulingUseCase({
+      clientReachPort: clients,
+    }),
   };
 }
 
@@ -24,17 +26,19 @@ describe("ReadClientCheckInSchedulingUseCase", () => {
     "answers $scheduling for a client whose portal reach is $portal",
     async ({ portal, scheduling }) => {
       // arrange
-      const { readScheduling, clients } = createReadScheduling({
-        clientId: "client-1",
-        portal,
-        coachingEndsAt: null,
-        programStartsAt: null,
-        paidThrough: null,
-        timeZone: "Europe/London",
-      });
+      const { readClientCheckInSchedulingUseCase, clients } =
+        createReadScheduling({
+          clientId: "client-1",
+          portal,
+          coachingEndsAt: null,
+          programStartsAt: null,
+          paidThrough: null,
+          timeZone: "Europe/London",
+        });
 
       // act
-      const result = await readScheduling.execute("client-1");
+      const result =
+        await readClientCheckInSchedulingUseCase.execute("client-1");
 
       // assert
       expect(result).toBe(scheduling);
@@ -44,10 +48,11 @@ describe("ReadClientCheckInSchedulingUseCase", () => {
 
   it("answers unknown for a client with no record", async () => {
     // arrange
-    const { readScheduling } = createReadScheduling(null);
+    const { readClientCheckInSchedulingUseCase } = createReadScheduling(null);
 
     // act
-    const result = await readScheduling.execute("client-404");
+    const result =
+      await readClientCheckInSchedulingUseCase.execute("client-404");
 
     // assert
     expect(result).toBe("unknown");

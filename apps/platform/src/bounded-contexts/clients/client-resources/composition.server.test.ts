@@ -31,12 +31,12 @@ describe("composeClientResourcesFeature", () => {
 
     // act
     const thrown = await captureThrown(() =>
-      feature.coachResources.load(coachArgs(), UNKNOWN_CLIENT_ID),
+      feature.coachResourcesController.load(coachArgs(), UNKNOWN_CLIENT_ID),
     );
 
     // assert
     expect((thrown as Response).status).toBe(404);
-    expect(handles.clientReach.findById).toHaveBeenCalledWith(
+    expect(handles.clientReachPort.findById).toHaveBeenCalledWith(
       UNKNOWN_CLIENT_ID,
     );
   });
@@ -46,7 +46,10 @@ describe("composeClientResourcesFeature", () => {
     const feature = composeClientResourcesFeature(createHandles());
 
     // act
-    const opening = feature.clientResources.download(coachArgs(), RESOURCE_ID);
+    const opening = feature.clientResourcesController.download(
+      coachArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     await expect(opening).rejects.toThrow("database down");
@@ -69,7 +72,7 @@ describe("composeClientResourcesFeature", () => {
     );
 
     // act
-    const changing = feature.clientResources.changeDetails(
+    const changing = feature.clientResourcesController.changeDetails(
       coachArgs(request),
       RESOURCE_ID,
     );
@@ -87,7 +90,7 @@ describe("composeClientResourcesFeature", () => {
     );
 
     // act
-    const removing = feature.clientResources.remove(
+    const removing = feature.clientResourcesController.remove(
       coachArgs(request),
       RESOURCE_ID,
     );
@@ -101,7 +104,7 @@ describe("composeClientResourcesFeature, for the client herself", () => {
   it("lists her own resources from the clients' resources table and reports a failed read", async () => {
     // arrange
     const handles = createHandles();
-    handles.clientReach.findByAuthSubjectId.mockResolvedValue({
+    handles.clientReachPort.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
       portal: "reachable",
       coachingEndsAt: null,
@@ -110,11 +113,11 @@ describe("composeClientResourcesFeature, for the client herself", () => {
     const feature = composeClientResourcesFeature(handles);
 
     // act
-    const listing = await feature.ownResources.load(clientArgs());
+    const listing = await feature.ownResourcesController.load(clientArgs());
 
     // assert
     expect(listing).toEqual({ status: "unavailable" });
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Client resources could not be listed.",
       {
         clientId: CLIENT_ID,
@@ -127,7 +130,7 @@ describe("composeClientResourcesFeature, for the client herself", () => {
   it("counts her unopened resources in the clients' resources table and reports a failed count", async () => {
     // arrange
     const handles = createHandles();
-    handles.clientReach.findByAuthSubjectId.mockResolvedValue({
+    handles.clientReachPort.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
       portal: "reachable",
       coachingEndsAt: null,
@@ -136,11 +139,12 @@ describe("composeClientResourcesFeature, for the client herself", () => {
     const feature = composeClientResourcesFeature(handles);
 
     // act
-    const count = await feature.ownResources.countUnopened(clientArgs());
+    const count =
+      await feature.ownResourcesController.countUnopened(clientArgs());
 
     // assert
     expect(count).toBe(0);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Unopened client resources could not be counted.",
       {
         clientId: CLIENT_ID,
@@ -153,7 +157,7 @@ describe("composeClientResourcesFeature, for the client herself", () => {
   it("looks the resource she opened up in the clients' resources table", async () => {
     // arrange
     const handles = createHandles();
-    handles.clientReach.findByAuthSubjectId.mockResolvedValue({
+    handles.clientReachPort.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
       portal: "reachable",
       coachingEndsAt: null,
@@ -162,7 +166,10 @@ describe("composeClientResourcesFeature, for the client herself", () => {
     const feature = composeClientResourcesFeature(handles);
 
     // act
-    const marking = feature.ownResources.markOpened(clientArgs(), RESOURCE_ID);
+    const marking = feature.ownResourcesController.markOpened(
+      clientArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     await expect(marking).rejects.toThrow("database down");
@@ -171,17 +178,17 @@ describe("composeClientResourcesFeature, for the client herself", () => {
 
 function createHandles() {
   return {
-    clientReach: {
+    clientReachPort: {
       findById: vi.fn().mockResolvedValue(null),
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
     },
-    clock: { now: () => new Date("2026-10-05T09:30:00.000Z") },
+    clockPort: { now: () => new Date("2026-10-05T09:30:00.000Z") },
     database: createUnreachableDatabase(),
-    documentPages: { read: vi.fn() },
-    fileFormats: { detect: vi.fn() },
-    imagePages: { render: vi.fn() },
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-    store: {
+    resourceDocumentPagesPort: { read: vi.fn() },
+    resourceFileFormatDetectorPort: { detect: vi.fn() },
+    resourceImagePagesPort: { render: vi.fn() },
+    loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+    clientResourceStorePort: {
       storeOriginal: vi.fn(),
       storePage: vi.fn(),
       storeThumbnail: vi.fn(),

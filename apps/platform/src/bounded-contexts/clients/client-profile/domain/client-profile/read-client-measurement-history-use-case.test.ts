@@ -27,10 +27,15 @@ describe("ReadClientMeasurementHistoryUseCase", () => {
       listByClientId: vi.fn().mockResolvedValue([FIRST, LATEST]),
       record: vi.fn(),
     } satisfies ClientMeasurementRecordsPort;
-    const useCase = new ReadClientMeasurementHistoryUseCase({ records });
+    const readClientMeasurementHistoryUseCase =
+      new ReadClientMeasurementHistoryUseCase({
+        clientMeasurementRecordsPort: records,
+      });
 
     // act
-    const history = await useCase.execute({ clientId: "client-1" });
+    const history = await readClientMeasurementHistoryUseCase.execute({
+      clientId: "client-1",
+    });
 
     // assert
     expect(history.newestFirst()).toEqual([LATEST, FIRST]);

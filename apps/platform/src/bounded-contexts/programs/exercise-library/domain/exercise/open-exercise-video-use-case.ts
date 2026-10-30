@@ -26,8 +26,8 @@ export type OpenExerciseVideoResult =
   | { status: "not-found" };
 
 type OpenExerciseVideoUseCaseOptions = {
-  library: Pick<ExerciseLibraryPort, "find">;
-  store: Pick<ExerciseVideoStorePort, "open">;
+  exerciseLibraryPort: Pick<ExerciseLibraryPort, "find">;
+  exerciseVideoStorePort: Pick<ExerciseVideoStorePort, "open">;
 };
 
 const NOT_FOUND: OpenExerciseVideoResult = { status: "not-found" };
@@ -46,7 +46,7 @@ export class OpenExerciseVideoUseCase {
 
     if (!ownerAccountId) return NOT_FOUND;
 
-    const exercise = await this.options.library.find({
+    const exercise = await this.options.exerciseLibraryPort.find({
       ownerAccountId,
       exerciseId: command.exerciseId,
     });
@@ -58,7 +58,7 @@ export class OpenExerciseVideoUseCase {
 
     if (!video?.isStoredAs(command.videoId)) return NOT_FOUND;
 
-    const opening = await this.options.store.open(
+    const opening = await this.options.exerciseVideoStorePort.open(
       video.videoId,
       command.requested,
     );

@@ -19,14 +19,14 @@ export type DeclineCheckInResult =
   | { status: CheckInAnswerRefusal | "changed_meanwhile" };
 
 type DeclineCheckInUseCaseOptions = {
-  checkIns: CheckInsPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  coachTime: Pick<CoachTimePort, "release">;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
-  inbox: CheckInInboxPort;
-  incidents: CheckInIncidentsPort;
-  notifications: CheckInNotificationsPort;
+  checkInsPort: CheckInsPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  coachTimePort: Pick<CoachTimePort, "release">;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
+  checkInInboxPort: CheckInInboxPort;
+  checkInIncidentsPort: CheckInIncidentsPort;
+  checkInNotificationsPort: CheckInNotificationsPort;
 };
 
 export class DeclineCheckInUseCase {

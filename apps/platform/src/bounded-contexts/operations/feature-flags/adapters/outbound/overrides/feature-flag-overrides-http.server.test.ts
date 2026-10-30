@@ -202,12 +202,14 @@ describe("feature flag override middleware", () => {
 });
 
 function recordFlagsSeenByApplication() {
-  const featureFlags = new FeatureFlagOverrideReaderAdapter({
-    execute: async () => ({ WAITLIST_MODE: true }),
-  });
+  const featureFlagOverrideReaderAdapter = new FeatureFlagOverrideReaderAdapter(
+    {
+      execute: async () => ({ WAITLIST_MODE: true }),
+    },
+  );
   const flagsSeenByApplication = vi.fn();
   const next = vi.fn(async () => {
-    flagsSeenByApplication(await featureFlags.execute());
+    flagsSeenByApplication(await featureFlagOverrideReaderAdapter.execute());
 
     return new Response("ok");
   });

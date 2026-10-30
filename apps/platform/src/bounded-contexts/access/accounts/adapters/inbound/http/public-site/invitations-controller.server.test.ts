@@ -14,13 +14,13 @@ type Resolution = Awaited<ReturnType<ResolveInvitationUseCase["execute"]>>;
 describe("InvitationsController resolution", () => {
   it("answers a live invitation with the hosted sign-up link only, uncached", async () => {
     // arrange
-    const { controller, resolveInvitation } = createController({
+    const { invitationsController, resolveInvitation } = createController({
       state: "valid",
       signUpUrl: SIGN_UP_URL,
     });
 
     // act
-    const response = await controller.resolve(
+    const response = await invitationsController.resolve(
       invitationArgs(JSON.stringify({ token: TOKEN })),
     );
 
@@ -36,10 +36,12 @@ describe("InvitationsController resolution", () => {
 
   it("answers an invitation that cannot be used as unavailable and nothing more", async () => {
     // arrange
-    const { controller } = createController({ state: "unavailable" });
+    const { invitationsController } = createController({
+      state: "unavailable",
+    });
 
     // act
-    const response = await controller.resolve(
+    const response = await invitationsController.resolve(
       invitationArgs(JSON.stringify({ token: TOKEN })),
     );
 
@@ -51,13 +53,13 @@ describe("InvitationsController resolution", () => {
 
   it("never hands out a sign-up link that is not a web address", async () => {
     // arrange
-    const { controller } = createController({
+    const { invitationsController } = createController({
       state: "valid",
       signUpUrl: "javascript:alert(1)",
     });
 
     // act
-    const resolving = controller.resolve(
+    const resolving = invitationsController.resolve(
       invitationArgs(JSON.stringify({ token: TOKEN })),
     );
 
@@ -76,12 +78,14 @@ describe("InvitationsController resolution", () => {
     "refuses %s without resolving anything or naming the token",
     async (_label, body) => {
       // arrange
-      const { controller, resolveInvitation } = createController({
+      const { invitationsController, resolveInvitation } = createController({
         state: "unavailable",
       });
 
       // act
-      const response = await controller.resolve(invitationArgs(body));
+      const response = await invitationsController.resolve(
+        invitationArgs(body),
+      );
 
       // assert
       expect(response.status).toBe(400);
@@ -95,13 +99,13 @@ describe("InvitationsController resolution", () => {
 
 function createController(resolution: Resolution) {
   const resolveInvitation = vi.fn().mockResolvedValue(resolution);
-  const controller = new InvitationsController({
-    resolveInvitation: {
+  const invitationsController = new InvitationsController({
+    resolveInvitationUseCase: {
       execute: resolveInvitation,
     } as unknown as ResolveInvitationUseCase,
   });
 
-  return { controller, resolveInvitation };
+  return { invitationsController, resolveInvitation };
 }
 
 function invitationArgs(body: string) {

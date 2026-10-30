@@ -30,7 +30,7 @@ describe("internal routes", () => {
 
     // act
     const loaded = metadataRoute.loader(
-      platformArgs({ metadata: { getMetadata } as never }),
+      platformArgs({ appMetadataController: { getMetadata } as never }),
     );
 
     // assert
@@ -45,7 +45,7 @@ describe("internal routes", () => {
 
     // act
     const loaded = readyzRoute.loader(
-      platformArgs({ readyz: { getStatus } as never }),
+      platformArgs({ readyzController: { getStatus } as never }),
     );
 
     // assert

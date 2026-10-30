@@ -6,8 +6,8 @@ import {
 } from "./email-refund-notifications-adapter.server";
 
 export function createRefundNotificationsAdapter(
-  productEmail: ProductEmailPort,
+  productEmailPort: ProductEmailPort,
   options: EmailRefundNotificationsOptions,
 ): RefundNotificationsPort {
-  return new EmailRefundNotificationsAdapter(productEmail, options);
+  return new EmailRefundNotificationsAdapter(productEmailPort, options);
 }

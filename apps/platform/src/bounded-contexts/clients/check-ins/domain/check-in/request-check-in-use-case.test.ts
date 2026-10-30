@@ -142,18 +142,18 @@ function createRequestCheckIn(options?: {
   coachTime?: ReturnType<typeof createCoachTime>;
   client?: ClientReachReading | null;
   notifications?: ReturnType<typeof createNotifications>;
-  incidents?: CheckInIncidentsPort;
+  checkInIncidentsPort?: CheckInIncidentsPort;
 }) {
   const ports = {
-    checkIns: options?.checkIns ?? createCheckIns(),
-    clients: createClients(
+    checkInsPort: options?.checkIns ?? createCheckIns(),
+    clientReachPort: createClients(
       options?.client === undefined ? REACHABLE_ANA : options.client,
     ),
-    clock: { now: () => NOW },
-    coachTime: options?.coachTime ?? createCoachTime(),
-    identities: createIdentities(),
-    ids: { generate: () => "check-in-1" },
-    incidents: options?.incidents ?? {
+    clockPort: { now: () => NOW },
+    coachTimePort: options?.coachTime ?? createCoachTime(),
+    clientIdentitiesPort: createIdentities(),
+    checkInIdsPort: { generate: () => "check-in-1" },
+    checkInIncidentsPort: options?.checkInIncidentsPort ?? {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
@@ -164,26 +164,26 @@ function createRequestCheckIn(options?: {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     },
-    inbox: {
+    checkInInboxPort: {
       checkInEvent: vi.fn().mockResolvedValue(undefined),
       seriesEvent: vi.fn().mockResolvedValue(undefined),
       clashesAdded: vi.fn().mockResolvedValue(undefined),
       scheduleExpiries: vi.fn().mockResolvedValue(undefined),
     },
-    notifications: options?.notifications ?? createNotifications(),
-    openSlots: workingDays(),
+    checkInNotificationsPort: options?.notifications ?? createNotifications(),
+    openSlotsPort: workingDays(),
   };
 
-  return { ports, requestCheckIn: new RequestCheckInUseCase(ports) };
+  return { ports, requestCheckInUseCase: new RequestCheckInUseCase(ports) };
 }
 
 describe("RequestCheckInUseCase", () => {
   it("records a pending request for an open time with her note and both zones", async () => {
     // arrange
-    const { requestCheckIn, ports } = createRequestCheckIn();
+    const { requestCheckInUseCase, ports } = createRequestCheckIn();
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({
@@ -200,12 +200,14 @@ describe("RequestCheckInUseCase", () => {
         requestedAt: NOW,
       }),
     });
-    expect(ports.checkIns.listForClientLocked).toHaveBeenCalledWith("client-1");
-    expect(ports.coachTime.reserve).toHaveBeenCalledWith({
+    expect(ports.checkInsPort.listForClientLocked).toHaveBeenCalledWith(
+      "client-1",
+    );
+    expect(ports.coachTimePort.reserve).toHaveBeenCalledWith({
       start: OPEN_START,
       end: new Date("2026-06-03T10:00:00.000Z"),
     });
-    expect(ports.checkIns.add).toHaveBeenCalledWith({
+    expect(ports.checkInsPort.add).toHaveBeenCalledWith({
       checkIn: expect.any(CheckIn),
       reservationId: "reservation-1",
     });
@@ -214,10 +216,10 @@ describe("RequestCheckInUseCase", () => {
   it("emails the coach the request with the client's name", async () => {
     // arrange
     const notifications = createNotifications();
-    const { requestCheckIn } = createRequestCheckIn({ notifications });
+    const { requestCheckInUseCase } = createRequestCheckIn({ notifications });
 
     // act
-    await requestCheckIn.execute(COMMAND);
+    await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(notifications.requested).toHaveBeenCalledWith({
@@ -229,10 +231,13 @@ describe("RequestCheckInUseCase", () => {
 
   it("records no note when she left it blank", async () => {
     // arrange
-    const { requestCheckIn } = createRequestCheckIn();
+    const { requestCheckInUseCase } = createRequestCheckIn();
 
     // act
-    const result = await requestCheckIn.execute({ ...COMMAND, note: "   " });
+    const result = await requestCheckInUseCase.execute({
+      ...COMMAND,
+      note: "   ",
+    });
 
     // assert
     expect(result).toEqual({
@@ -246,47 +251,50 @@ describe("RequestCheckInUseCase", () => {
     ["outside the coach's hours", OUTSIDE_THE_WINDOW],
   ])("refuses a time %s without holding it", async (_situation, startsAt) => {
     // arrange
-    const { requestCheckIn, ports } = createRequestCheckIn();
+    const { requestCheckInUseCase, ports } = createRequestCheckIn();
 
     // act
-    const result = await requestCheckIn.execute({ ...COMMAND, startsAt });
+    const result = await requestCheckInUseCase.execute({
+      ...COMMAND,
+      startsAt,
+    });
 
     // assert
     expect(result).toEqual({ status: "time_taken" });
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
   });
 
   it("refuses the request while her earlier request waits, before holding any time, and emails nobody", async () => {
     // arrange
     const notifications = createNotifications();
-    const { requestCheckIn, ports } = createRequestCheckIn({
+    const { requestCheckInUseCase, ports } = createRequestCheckIn({
       checkIns: createCheckIns([waitingRequest()]),
       notifications,
     });
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({ status: "request_waiting" });
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
     expect(notifications.requested).not.toHaveBeenCalled();
   });
 
   it("refuses the request when the hour was taken meanwhile, storing nothing and emailing nobody", async () => {
     // arrange
     const notifications = createNotifications();
-    const { requestCheckIn, ports } = createRequestCheckIn({
+    const { requestCheckInUseCase, ports } = createRequestCheckIn({
       coachTime: createCoachTime({ status: "taken" }),
       notifications,
     });
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({ status: "time_taken" });
-    expect(ports.checkIns.add).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.add).not.toHaveBeenCalled();
     expect(notifications.requested).not.toHaveBeenCalled();
   });
 
@@ -299,14 +307,14 @@ describe("RequestCheckInUseCase", () => {
     ["with no client record", null],
   ] as const)("refuses a requester %s", async (_situation, client) => {
     // arrange
-    const { requestCheckIn, ports } = createRequestCheckIn({ client });
+    const { requestCheckInUseCase, ports } = createRequestCheckIn({ client });
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -316,22 +324,22 @@ describe("RequestCheckInUseCase", () => {
     "refuses a time when her coaching ends %s without holding it",
     async (_situation, coachingEndsAt) => {
       // arrange
-      const { requestCheckIn, ports } = createRequestCheckIn({
+      const { requestCheckInUseCase, ports } = createRequestCheckIn({
         client: { ...REACHABLE_ANA, coachingEndsAt },
       });
 
       // act
-      const result = await requestCheckIn.execute(COMMAND);
+      const result = await requestCheckInUseCase.execute(COMMAND);
 
       // assert
       expect(result).toEqual({ status: "time_taken" });
-      expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+      expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
     },
   );
 
   it("requests a time that starts before her coaching end", async () => {
     // arrange
-    const { requestCheckIn } = createRequestCheckIn({
+    const { requestCheckInUseCase } = createRequestCheckIn({
       client: {
         ...REACHABLE_ANA,
         coachingEndsAt: new Date("2026-06-03T09:00:00.001Z"),
@@ -339,7 +347,7 @@ describe("RequestCheckInUseCase", () => {
     });
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result.status).toBe("requested");
@@ -347,34 +355,34 @@ describe("RequestCheckInUseCase", () => {
 
   it("refuses a note longer than 500 characters", async () => {
     // arrange
-    const { requestCheckIn, ports } = createRequestCheckIn();
+    const { requestCheckInUseCase, ports } = createRequestCheckIn();
 
     // act
-    const result = await requestCheckIn.execute({
+    const result = await requestCheckInUseCase.execute({
       ...COMMAND,
       note: "a".repeat(501),
     });
 
     // assert
     expect(result).toEqual({ status: "note_too_long" });
-    expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+    expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
   });
 
   it.each([["Mars/Olympus_Mons"], ["+02:00"], [""]])(
     "refuses the unknown time zone %j",
     async (clientTimeZone) => {
       // arrange
-      const { requestCheckIn, ports } = createRequestCheckIn();
+      const { requestCheckInUseCase, ports } = createRequestCheckIn();
 
       // act
-      const result = await requestCheckIn.execute({
+      const result = await requestCheckInUseCase.execute({
         ...COMMAND,
         clientTimeZone,
       });
 
       // assert
       expect(result).toEqual({ status: "invalid_time_zone" });
-      expect(ports.coachTime.reserve).not.toHaveBeenCalled();
+      expect(ports.coachTimePort.reserve).not.toHaveBeenCalled();
     },
   );
 
@@ -393,13 +401,13 @@ describe("RequestCheckInUseCase", () => {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     };
-    const { requestCheckIn } = createRequestCheckIn({
+    const { requestCheckInUseCase } = createRequestCheckIn({
       notifications,
-      incidents,
+      checkInIncidentsPort: incidents,
     });
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result.status).toBe("requested");
@@ -424,13 +432,13 @@ describe("RequestCheckInUseCase", () => {
       checkInInboxFailed: vi.fn(),
       checkInSeriesInboxFailed: vi.fn(),
     };
-    const { requestCheckIn } = createRequestCheckIn({
+    const { requestCheckInUseCase } = createRequestCheckIn({
       notifications,
-      incidents,
+      checkInIncidentsPort: incidents,
     });
 
     // act
-    const result = await requestCheckIn.execute(COMMAND);
+    const result = await requestCheckInUseCase.execute(COMMAND);
 
     // assert
     expect(result.status).toBe("requested");

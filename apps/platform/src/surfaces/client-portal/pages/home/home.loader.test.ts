@@ -81,13 +81,13 @@ function routeArguments() {
   const args = createRequestArgs({
     contexts: [
       contextEntry(coachingSalesContext, {
-        subscription,
+        subscriptionController: subscription,
       } as unknown as CoachingSalesFeature),
       contextEntry(clientOnboardingContext, {
-        controller,
+        clientOnboardingController: controller,
       } as unknown as ClientOnboardingFeature),
       contextEntry(clientProfileContext, {
-        clientMeasurements,
+        clientMeasurementsController: clientMeasurements,
       } as unknown as ClientProfileFeature),
     ],
     request: new Request("https://evoa.fit/client"),

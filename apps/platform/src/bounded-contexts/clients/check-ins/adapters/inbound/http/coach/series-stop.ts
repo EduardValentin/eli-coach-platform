@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(checkInsContext)
-      .coachCheckInSeries.stop(args, args.params.seriesId);
+      .coachCheckInSeriesController.stop(args, args.params.seriesId);
   });
 }
 

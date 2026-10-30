@@ -24,17 +24,17 @@ type SendPaymentLinkResult =
   | { status: "delivery_failed" };
 
 type SendPaymentLinkUseCaseOptions = {
-  calls: EndedCallsPort;
-  callSalesStates: CallSalesStatesPort;
-  clock: ClockPort;
-  emailAcceptance: EmailAcceptancePort;
-  ids: PaymentLinkIdsPort;
-  incidents: CoachingSalesIncidentsPort;
-  notifications: CoachingSalesNotificationsPort;
-  paymentLinks: PaymentLinksPort;
-  pricingEligibility: PricingEligibilityPort;
+  endedCallsPort: EndedCallsPort;
+  callSalesStatesPort: CallSalesStatesPort;
+  clockPort: ClockPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  paymentLinkIdsPort: PaymentLinkIdsPort;
+  coachingSalesIncidentsPort: CoachingSalesIncidentsPort;
+  coachingSalesNotificationsPort: CoachingSalesNotificationsPort;
+  paymentLinksPort: PaymentLinksPort;
+  pricingEligibilityPort: PricingEligibilityPort;
   salesWindow: CoachingSalesWindow;
-  tokenGenerator: PaymentLinkTokenGeneratorPort;
+  paymentLinkTokenGeneratorPort: PaymentLinkTokenGeneratorPort;
 };
 
 export class SendPaymentLinkUseCase {
@@ -47,19 +47,23 @@ export class SendPaymentLinkUseCase {
       return { status: "closed" };
     }
 
-    const call = await this.options.calls.findById(command.assessmentCallId);
+    const call = await this.options.endedCallsPort.findById(
+      command.assessmentCallId,
+    );
 
     if (!call) {
       return { status: "call_not_found" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
 
     if (call.endsAt > now) {
       return { status: "call_not_ended" };
     }
 
-    const salesStates = await this.options.callSalesStates.forCalls([call.id]);
+    const salesStates = await this.options.callSalesStatesPort.forCalls([
+      call.id,
+    ]);
 
     if (salesStates.get(call.id)?.state === "paid") {
       return { status: "already_paid" };
@@ -72,18 +76,18 @@ export class SendPaymentLinkUseCase {
     call: SalesCall,
     now: Date,
   ): Promise<SendPaymentLinkResult> {
-    const tier = await this.options.pricingEligibility.tierForEmail(
-      this.options.emailAcceptance.normalize(call.visitorEmail),
+    const tier = await this.options.pricingEligibilityPort.tierForEmail(
+      this.options.emailAcceptancePort.normalize(call.visitorEmail),
     );
-    const token = this.options.tokenGenerator.create();
+    const token = this.options.paymentLinkTokenGeneratorPort.create();
     const link = PaymentLink.issued({
-      id: this.options.ids.generate(),
+      id: this.options.paymentLinkIdsPort.generate(),
       assessmentCallId: call.id,
       tokenSha256: token.sha256,
       at: now,
     });
 
-    await this.options.paymentLinks.issue(link);
+    await this.options.paymentLinksPort.issue(link);
 
     const delivery = await this.deliver({
       call,
@@ -93,13 +97,13 @@ export class SendPaymentLinkUseCase {
     });
 
     if (delivery === "failed") {
-      await this.options.paymentLinks.void(link.id);
-      this.options.incidents.paymentLinkEmailFailed(call.id);
+      await this.options.paymentLinksPort.void(link.id);
+      this.options.coachingSalesIncidentsPort.paymentLinkEmailFailed(call.id);
 
       return { status: "delivery_failed" };
     }
 
-    await this.options.paymentLinks.voidOtherLinksOf(call.id, link.id);
+    await this.options.paymentLinksPort.voidOtherLinksOf(call.id, link.id);
 
     return { status: "sent", email: call.visitorEmail };
   }
@@ -108,7 +112,9 @@ export class SendPaymentLinkUseCase {
     message: PaymentLinkMessage,
   ): Promise<"sent" | "failed"> {
     try {
-      return await this.options.notifications.sendPaymentLink(message);
+      return await this.options.coachingSalesNotificationsPort.sendPaymentLink(
+        message,
+      );
     } catch {
       return "failed";
     }

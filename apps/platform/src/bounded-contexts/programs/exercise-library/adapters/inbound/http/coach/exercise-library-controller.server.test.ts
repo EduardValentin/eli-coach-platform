@@ -184,21 +184,24 @@ function createController() {
       exercise: Exercise.reconstitute(HIP_THRUST),
     })),
   };
-  const controller = new ExerciseLibraryController({
-    listExercises: listExercises as unknown as ListExercisesUseCase,
-    findExercise: findExercise as unknown as FindExerciseUseCase,
-    createExercise: createExercise as unknown as CreateExerciseUseCase,
-    editExercise: editExercise as unknown as EditExerciseUseCase,
-    stageExerciseVideo:
+  const exerciseLibraryController = new ExerciseLibraryController({
+    listExercisesUseCase: listExercises as unknown as ListExercisesUseCase,
+    findExerciseUseCase: findExercise as unknown as FindExerciseUseCase,
+    createExerciseUseCase: createExercise as unknown as CreateExerciseUseCase,
+    editExerciseUseCase: editExercise as unknown as EditExerciseUseCase,
+    stageExerciseVideoUseCase:
       stageExerciseVideo as unknown as StageExerciseVideoUseCase,
-    openExerciseVideo: openExerciseVideo as unknown as OpenExerciseVideoUseCase,
-    archiveExercise: archiveExercise as unknown as ArchiveExerciseUseCase,
-    restoreExercise: restoreExercise as unknown as RestoreExerciseUseCase,
-    deleteExercise: deleteExercise as unknown as DeleteExerciseUseCase,
+    openExerciseVideoUseCase:
+      openExerciseVideo as unknown as OpenExerciseVideoUseCase,
+    archiveExerciseUseCase:
+      archiveExercise as unknown as ArchiveExerciseUseCase,
+    restoreExerciseUseCase:
+      restoreExercise as unknown as RestoreExerciseUseCase,
+    deleteExerciseUseCase: deleteExercise as unknown as DeleteExerciseUseCase,
   });
 
   return {
-    controller,
+    exerciseLibraryController,
     listExercises,
     findExercise,
     createExercise,
@@ -304,10 +307,10 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
 describe("ExerciseLibraryController#list", () => {
   it("presents every exercise the signed-in coach's library lists", async () => {
     // arrange
-    const { controller, listExercises } = createController();
+    const { exerciseLibraryController, listExercises } = createController();
 
     // act
-    const library = await controller.list(argsFor());
+    const library = await exerciseLibraryController.list(argsFor());
 
     // assert
     expect(library).toEqual({
@@ -327,11 +330,11 @@ describe("ExerciseLibraryController#list", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller } = createController();
+    const { exerciseLibraryController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.list(argsFor({ session: CLIENT_SESSION })),
+      exerciseLibraryController.list(argsFor({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -342,10 +345,10 @@ describe("ExerciseLibraryController#list", () => {
 describe("ExerciseLibraryController#loadNew", () => {
   it("opens a blank exercise with the names of the active exercises in the signed-in coach's library", async () => {
     // arrange
-    const { controller, listExercises } = createController();
+    const { exerciseLibraryController, listExercises } = createController();
 
     // act
-    const editor = await controller.loadNew(argsFor());
+    const editor = await exerciseLibraryController.loadNew(argsFor());
 
     // assert
     expect(editor).toEqual({ exercise: null, otherNames: ["Hip thrust"] });
@@ -354,11 +357,11 @@ describe("ExerciseLibraryController#loadNew", () => {
 
   it("refuses a signed-in client", async () => {
     // arrange
-    const { controller } = createController();
+    const { exerciseLibraryController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadNew(argsFor({ session: CLIENT_SESSION })),
+      exerciseLibraryController.loadNew(argsFor({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -369,10 +372,10 @@ describe("ExerciseLibraryController#loadNew", () => {
 describe("ExerciseLibraryController#load", () => {
   it("presents the signed-in coach's exercise with the names of her other exercises", async () => {
     // arrange
-    const { controller, findExercise } = createController();
+    const { exerciseLibraryController, findExercise } = createController();
 
     // act
-    const editor = await controller.load(argsFor(), EXERCISE_ID);
+    const editor = await exerciseLibraryController.load(argsFor(), EXERCISE_ID);
 
     // assert
     expect(editor).toEqual({
@@ -390,11 +393,13 @@ describe("ExerciseLibraryController#load", () => {
     ["an id that is not a uuid", "not-an-exercise"],
   ])("sends the coach back to the library for %s", async (_case, id) => {
     // arrange
-    const { controller, findExercise } = createController();
+    const { exerciseLibraryController, findExercise } = createController();
     findExercise.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const thrown = await captureThrown(() => controller.load(argsFor(), id));
+    const thrown = await captureThrown(() =>
+      exerciseLibraryController.load(argsFor(), id),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(302);
@@ -405,12 +410,12 @@ describe("ExerciseLibraryController#load", () => {
 
   it("sends the coach back to the library for an archived exercise", async () => {
     // arrange
-    const { controller, findExercise } = createController();
+    const { exerciseLibraryController, findExercise } = createController();
     findExercise.execute.mockResolvedValueOnce({ status: "archived" });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(argsFor(), EXERCISE_ID),
+      exerciseLibraryController.load(argsFor(), EXERCISE_ID),
     );
 
     // assert
@@ -424,10 +429,10 @@ describe("ExerciseLibraryController#load", () => {
 describe("ExerciseLibraryController#create", () => {
   it("creates the exercise for the signed-in coach and names the library as the next page", async () => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await exerciseLibraryController.create(
       argsFor({ request: jsonRequest("POST", HIP_THRUST_REQUEST) }),
     );
 
@@ -443,15 +448,21 @@ describe("ExerciseLibraryController#create", () => {
 
   it("stages the video of a multipart save and creates the exercise with it attached", async () => {
     // arrange
-    const { controller, createExercise, stageExerciseVideo, received } =
-      createController();
+    const {
+      exerciseLibraryController,
+      createExercise,
+      stageExerciseVideo,
+      received,
+    } = createController();
     const request = multipartRequest("POST", {
       exercise: { ...HIP_THRUST_DRAFT, video: "attach" },
       video: VIDEO_BYTES,
     });
 
     // act
-    const response = await controller.create(argsFor({ request }));
+    const response = await exerciseLibraryController.create(
+      argsFor({ request }),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -467,7 +478,8 @@ describe("ExerciseLibraryController#create", () => {
 
   it("reads a multipart save whose media type comes in capitals and padded before its parameters", async () => {
     // arrange
-    const { controller, createExercise, received } = createController();
+    const { exerciseLibraryController, createExercise, received } =
+      createController();
     const request = await withMediaTypeSpelled(
       multipartRequest("POST", {
         exercise: { ...HIP_THRUST_DRAFT, video: "attach" },
@@ -477,7 +489,9 @@ describe("ExerciseLibraryController#create", () => {
     );
 
     // act
-    const response = await controller.create(argsFor({ request }));
+    const response = await exerciseLibraryController.create(
+      argsFor({ request }),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -491,7 +505,7 @@ describe("ExerciseLibraryController#create", () => {
 
   it("answers 422 naming the video when the save refuses its content", async () => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
     createExercise.execute.mockResolvedValueOnce({
       status: "invalid",
       problems: { video: "unsupported" },
@@ -502,7 +516,9 @@ describe("ExerciseLibraryController#create", () => {
     });
 
     // act
-    const response = await controller.create(argsFor({ request }));
+    const response = await exerciseLibraryController.create(
+      argsFor({ request }),
+    );
 
     // assert
     expect(response.status).toBe(422);
@@ -522,7 +538,7 @@ describe("ExerciseLibraryController#create", () => {
     "discards the staged video and answers 400 to %s",
     async (_case, exercise) => {
       // arrange
-      const { controller, createExercise, stageExerciseVideo } =
+      const { exerciseLibraryController, createExercise, stageExerciseVideo } =
         createController();
       const request = multipartRequest("POST", {
         exercise,
@@ -530,7 +546,9 @@ describe("ExerciseLibraryController#create", () => {
       });
 
       // act
-      const response = await controller.create(argsFor({ request }));
+      const response = await exerciseLibraryController.create(
+        argsFor({ request }),
+      );
 
       // assert
       expect(response.status).toBe(400);
@@ -541,13 +559,15 @@ describe("ExerciseLibraryController#create", () => {
 
   it("answers 400 to an attached video with no file", async () => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
     const request = multipartRequest("POST", {
       exercise: { ...HIP_THRUST_DRAFT, video: "attach" },
     });
 
     // act
-    const response = await controller.create(argsFor({ request }));
+    const response = await exerciseLibraryController.create(
+      argsFor({ request }),
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -556,10 +576,10 @@ describe("ExerciseLibraryController#create", () => {
 
   it("answers 400 to a JSON save that claims an attached video", async () => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await exerciseLibraryController.create(
       argsFor({
         request: jsonRequest("POST", {
           ...HIP_THRUST_DRAFT,
@@ -575,7 +595,7 @@ describe("ExerciseLibraryController#create", () => {
 
   it("answers 413 naming the video, without staging it, to a body declared over the upload cap", async () => {
     // arrange
-    const { controller, createExercise, stageExerciseVideo } =
+    const { exerciseLibraryController, createExercise, stageExerciseVideo } =
       createController();
     const request = new Request("https://evoa.fit/api/coach/exercises", {
       body: "--x--",
@@ -587,7 +607,9 @@ describe("ExerciseLibraryController#create", () => {
     });
 
     // act
-    const response = await controller.create(argsFor({ request }));
+    const response = await exerciseLibraryController.create(
+      argsFor({ request }),
+    );
 
     // assert
     expect(response.status).toBe(413);
@@ -600,14 +622,14 @@ describe("ExerciseLibraryController#create", () => {
 
   it("answers 422 with the problems of a draft that breaks a rule", async () => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
     createExercise.execute.mockResolvedValueOnce({
       status: "invalid",
       problems: { name: "taken", cues: "too-long" },
     });
 
     // act
-    const response = await controller.create(
+    const response = await exerciseLibraryController.create(
       argsFor({ request: jsonRequest("POST", HIP_THRUST_REQUEST) }),
     );
 
@@ -624,10 +646,10 @@ describe("ExerciseLibraryController#create", () => {
     ["a muscle that is not text", { ...HIP_THRUST_REQUEST, tags: [3] }],
   ])("answers 400 to %s without creating", async (_case, body) => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
 
     // act
-    const response = await controller.create(
+    const response = await exerciseLibraryController.create(
       argsFor({ request: jsonRequest("POST", body) }),
     );
 
@@ -638,11 +660,11 @@ describe("ExerciseLibraryController#create", () => {
 
   it("answers 500 when the creation failed", async () => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
     createExercise.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.create(
+    const response = await exerciseLibraryController.create(
       argsFor({ request: jsonRequest("POST", HIP_THRUST_REQUEST) }),
     );
 
@@ -655,11 +677,11 @@ describe("ExerciseLibraryController#create", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, createExercise } = createController();
+    const { exerciseLibraryController, createExercise } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.create(
+      exerciseLibraryController.create(
         argsFor({ session, request: jsonRequest("POST", HIP_THRUST_REQUEST) }),
       ),
     );
@@ -673,10 +695,10 @@ describe("ExerciseLibraryController#create", () => {
 describe("ExerciseLibraryController#edit", () => {
   it("edits the signed-in coach's exercise and names the library as the next page", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
       EXERCISE_ID,
     );
@@ -694,10 +716,10 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("passes a removed video on to the edit", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
 
     // act
-    await controller.edit(
+    await exerciseLibraryController.edit(
       argsFor({
         request: jsonRequest("PUT", { ...HIP_THRUST_DRAFT, video: "remove" }),
       }),
@@ -715,14 +737,17 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("stages the video of a multipart save and edits the exercise with it attached", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
     const request = multipartRequest("PUT", {
       exercise: { ...HIP_THRUST_DRAFT, video: "attach" },
       video: VIDEO_BYTES,
     });
 
     // act
-    const response = await controller.edit(argsFor({ request }), EXERCISE_ID);
+    const response = await exerciseLibraryController.edit(
+      argsFor({ request }),
+      EXERCISE_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -736,14 +761,15 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 404 to a multipart save for an id that is not a uuid without staging its video", async () => {
     // arrange
-    const { controller, stageExerciseVideo } = createController();
+    const { exerciseLibraryController, stageExerciseVideo } =
+      createController();
     const request = multipartRequest("PUT", {
       exercise: { ...HIP_THRUST_DRAFT, video: "attach" },
       video: VIDEO_BYTES,
     });
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request }),
       "not-an-exercise",
     );
@@ -755,14 +781,14 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 422 with the problems of a draft that breaks a rule", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
     editExercise.execute.mockResolvedValueOnce({
       status: "invalid",
       problems: { primaryMuscles: "missing" },
     });
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
       EXERCISE_ID,
     );
@@ -776,11 +802,11 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 404 for an unknown exercise", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
     editExercise.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
       EXERCISE_ID,
     );
@@ -791,11 +817,11 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 409 for an archived exercise", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
     editExercise.execute.mockResolvedValueOnce({ status: "archived" });
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
       EXERCISE_ID,
     );
@@ -806,10 +832,10 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 404 for an id that is not a uuid without editing", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
       "not-an-exercise",
     );
@@ -821,10 +847,10 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 400 to a malformed body without editing", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", { name: "Hip thrust" }) }),
       EXERCISE_ID,
     );
@@ -836,11 +862,11 @@ describe("ExerciseLibraryController#edit", () => {
 
   it("answers 500 when the edit failed", async () => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
     editExercise.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.edit(
+    const response = await exerciseLibraryController.edit(
       argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
       EXERCISE_ID,
     );
@@ -854,11 +880,11 @@ describe("ExerciseLibraryController#edit", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, editExercise } = createController();
+    const { exerciseLibraryController, editExercise } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.edit(
+      exerciseLibraryController.edit(
         argsFor({ session, request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
         EXERCISE_ID,
       ),
@@ -873,10 +899,10 @@ describe("ExerciseLibraryController#edit", () => {
 describe("ExerciseLibraryController#openVideo", () => {
   it("plays the requested range of the video to the coach", async () => {
     // arrange
-    const { controller, openExerciseVideo } = createController();
+    const { exerciseLibraryController, openExerciseVideo } = createController();
 
     // act
-    const response = await controller.openVideo(
+    const response = await exerciseLibraryController.openVideo(
       argsFor({ request: videoRequest("bytes=1-2") }),
       { exerciseId: EXERCISE_ID, videoId: VIDEO_ID },
     );
@@ -898,13 +924,16 @@ describe("ExerciseLibraryController#openVideo", () => {
 
   it("asks for the whole video when no range is requested", async () => {
     // arrange
-    const { controller, openExerciseVideo } = createController();
+    const { exerciseLibraryController, openExerciseVideo } = createController();
 
     // act
-    await controller.openVideo(argsFor({ request: videoRequest() }), {
-      exerciseId: EXERCISE_ID,
-      videoId: VIDEO_ID,
-    });
+    await exerciseLibraryController.openVideo(
+      argsFor({ request: videoRequest() }),
+      {
+        exerciseId: EXERCISE_ID,
+        videoId: VIDEO_ID,
+      },
+    );
 
     // assert
     expect(openExerciseVideo.execute).toHaveBeenCalledWith(
@@ -923,11 +952,12 @@ describe("ExerciseLibraryController#openVideo", () => {
     "asks the access rule on behalf of %s and answers 404 when it refuses",
     async (_case, session, viewer) => {
       // arrange
-      const { controller, openExerciseVideo } = createController();
+      const { exerciseLibraryController, openExerciseVideo } =
+        createController();
       openExerciseVideo.execute.mockResolvedValueOnce({ status: "not-found" });
 
       // act
-      const response = await controller.openVideo(
+      const response = await exerciseLibraryController.openVideo(
         argsFor({ session, request: videoRequest() }),
         { exerciseId: EXERCISE_ID, videoId: VIDEO_ID },
       );
@@ -947,10 +977,11 @@ describe("ExerciseLibraryController#openVideo", () => {
     "answers 404 to %s that is not a uuid without opening anything",
     async (_case, ids) => {
       // arrange
-      const { controller, openExerciseVideo } = createController();
+      const { exerciseLibraryController, openExerciseVideo } =
+        createController();
 
       // act
-      const response = await controller.openVideo(
+      const response = await exerciseLibraryController.openVideo(
         argsFor({ request: videoRequest() }),
         ids,
       );
@@ -963,14 +994,14 @@ describe("ExerciseLibraryController#openVideo", () => {
 
   it("answers 416 with the video's size to a range beyond it", async () => {
     // arrange
-    const { controller, openExerciseVideo } = createController();
+    const { exerciseLibraryController, openExerciseVideo } = createController();
     openExerciseVideo.execute.mockResolvedValueOnce({
       status: "unsatisfiable",
       sizeBytes: 2_048,
     });
 
     // act
-    const response = await controller.openVideo(
+    const response = await exerciseLibraryController.openVideo(
       argsFor({ request: videoRequest("bytes=9000-") }),
       { exerciseId: EXERCISE_ID, videoId: VIDEO_ID },
     );
@@ -984,10 +1015,10 @@ describe("ExerciseLibraryController#openVideo", () => {
 describe("ExerciseLibraryController#archive", () => {
   it("archives the signed-in coach's exercise and answers its name", async () => {
     // arrange
-    const { controller, archiveExercise } = createController();
+    const { exerciseLibraryController, archiveExercise } = createController();
 
     // act
-    const response = await controller.archive(
+    const response = await exerciseLibraryController.archive(
       argsFor({ request: lifecycleRequest("POST") }),
       EXERCISE_ID,
     );
@@ -1003,11 +1034,11 @@ describe("ExerciseLibraryController#archive", () => {
 
   it("answers 404 for an unknown exercise", async () => {
     // arrange
-    const { controller, archiveExercise } = createController();
+    const { exerciseLibraryController, archiveExercise } = createController();
     archiveExercise.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const response = await controller.archive(
+    const response = await exerciseLibraryController.archive(
       argsFor({ request: lifecycleRequest("POST") }),
       EXERCISE_ID,
     );
@@ -1018,10 +1049,10 @@ describe("ExerciseLibraryController#archive", () => {
 
   it("answers 404 for an id that is not a uuid without archiving", async () => {
     // arrange
-    const { controller, archiveExercise } = createController();
+    const { exerciseLibraryController, archiveExercise } = createController();
 
     // act
-    const response = await controller.archive(
+    const response = await exerciseLibraryController.archive(
       argsFor({ request: lifecycleRequest("POST") }),
       "not-an-exercise",
     );
@@ -1036,11 +1067,11 @@ describe("ExerciseLibraryController#archive", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, archiveExercise } = createController();
+    const { exerciseLibraryController, archiveExercise } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.archive(
+      exerciseLibraryController.archive(
         argsFor({ session, request: lifecycleRequest("POST") }),
         EXERCISE_ID,
       ),
@@ -1055,10 +1086,10 @@ describe("ExerciseLibraryController#archive", () => {
 describe("ExerciseLibraryController#restore", () => {
   it("restores the signed-in coach's exercise and answers the name it came back under", async () => {
     // arrange
-    const { controller, restoreExercise } = createController();
+    const { exerciseLibraryController, restoreExercise } = createController();
 
     // act
-    const response = await controller.restore(
+    const response = await exerciseLibraryController.restore(
       argsFor({ request: lifecycleRequest("POST") }),
       ARCHIVED_LUNGE.id,
     );
@@ -1074,11 +1105,11 @@ describe("ExerciseLibraryController#restore", () => {
 
   it("answers 404 for an unknown exercise", async () => {
     // arrange
-    const { controller, restoreExercise } = createController();
+    const { exerciseLibraryController, restoreExercise } = createController();
     restoreExercise.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const response = await controller.restore(
+    const response = await exerciseLibraryController.restore(
       argsFor({ request: lifecycleRequest("POST") }),
       EXERCISE_ID,
     );
@@ -1089,10 +1120,10 @@ describe("ExerciseLibraryController#restore", () => {
 
   it("answers 404 for an id that is not a uuid without restoring", async () => {
     // arrange
-    const { controller, restoreExercise } = createController();
+    const { exerciseLibraryController, restoreExercise } = createController();
 
     // act
-    const response = await controller.restore(
+    const response = await exerciseLibraryController.restore(
       argsFor({ request: lifecycleRequest("POST") }),
       "not-an-exercise",
     );
@@ -1104,11 +1135,11 @@ describe("ExerciseLibraryController#restore", () => {
 
   it("answers 500 when the restore failed", async () => {
     // arrange
-    const { controller, restoreExercise } = createController();
+    const { exerciseLibraryController, restoreExercise } = createController();
     restoreExercise.execute.mockResolvedValueOnce({ status: "failed" });
 
     // act
-    const response = await controller.restore(
+    const response = await exerciseLibraryController.restore(
       argsFor({ request: lifecycleRequest("POST") }),
       EXERCISE_ID,
     );
@@ -1122,11 +1153,11 @@ describe("ExerciseLibraryController#restore", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, restoreExercise } = createController();
+    const { exerciseLibraryController, restoreExercise } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.restore(
+      exerciseLibraryController.restore(
         argsFor({ session, request: lifecycleRequest("POST") }),
         EXERCISE_ID,
       ),
@@ -1141,10 +1172,10 @@ describe("ExerciseLibraryController#restore", () => {
 describe("ExerciseLibraryController#delete", () => {
   it("deletes the signed-in coach's exercise and answers its name", async () => {
     // arrange
-    const { controller, deleteExercise } = createController();
+    const { exerciseLibraryController, deleteExercise } = createController();
 
     // act
-    const response = await controller.delete(
+    const response = await exerciseLibraryController.delete(
       argsFor({ request: lifecycleRequest("DELETE") }),
       EXERCISE_ID,
     );
@@ -1160,11 +1191,11 @@ describe("ExerciseLibraryController#delete", () => {
 
   it("answers 404 for an unknown exercise", async () => {
     // arrange
-    const { controller, deleteExercise } = createController();
+    const { exerciseLibraryController, deleteExercise } = createController();
     deleteExercise.execute.mockResolvedValueOnce({ status: "not-found" });
 
     // act
-    const response = await controller.delete(
+    const response = await exerciseLibraryController.delete(
       argsFor({ request: lifecycleRequest("DELETE") }),
       EXERCISE_ID,
     );
@@ -1175,10 +1206,10 @@ describe("ExerciseLibraryController#delete", () => {
 
   it("answers 404 for an id that is not a uuid without deleting", async () => {
     // arrange
-    const { controller, deleteExercise } = createController();
+    const { exerciseLibraryController, deleteExercise } = createController();
 
     // act
-    const response = await controller.delete(
+    const response = await exerciseLibraryController.delete(
       argsFor({ request: lifecycleRequest("DELETE") }),
       "not-an-exercise",
     );
@@ -1193,11 +1224,11 @@ describe("ExerciseLibraryController#delete", () => {
     ["a signed-out visitor", ANONYMOUS_SESSION, 401],
   ])("refuses %s", async (_case, session, status) => {
     // arrange
-    const { controller, deleteExercise } = createController();
+    const { exerciseLibraryController, deleteExercise } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.delete(
+      exerciseLibraryController.delete(
         argsFor({ session, request: lifecycleRequest("DELETE") }),
         EXERCISE_ID,
       ),

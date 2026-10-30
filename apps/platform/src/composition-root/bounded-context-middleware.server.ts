@@ -14,8 +14,8 @@ export function createBoundedContextMiddleware(
     const container = getContainer();
 
     args.context.set(platformContext, {
-      metadata: container.platform.metadata,
-      readyz: container.platform.readyz,
+      appMetadataController: container.platform.appMetadataController,
+      readyzController: container.platform.readyzController,
     });
     args.context.set(runtimeConfigContext, {
       appBasePath: container.platform.appBasePath,

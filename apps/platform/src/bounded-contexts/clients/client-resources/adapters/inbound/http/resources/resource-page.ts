@@ -7,7 +7,7 @@ export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
     args.context
       .get(clientResourcesContext)
-      .clientResources.openPage(
+      .clientResourcesController.openPage(
         args,
         args.params.resourceId,
         args.params.pageNumber,

@@ -37,10 +37,10 @@ function refundNotice(
   };
 }
 
-function createNotifications(productEmail: ProductEmailPort) {
-  return new EmailRefundNotificationsAdapter(productEmail, {
+function createNotifications(productEmailPort: ProductEmailPort) {
+  return new EmailRefundNotificationsAdapter(productEmailPort, {
     appBasePath: "/eli-coach-platform",
-    clock: { now: () => new Date("2026-10-02T16:10:00.000Z") },
+    clockPort: { now: () => new Date("2026-10-02T16:10:00.000Z") },
     coachEmail: "eli@evoa.fit",
     publicAppUrl: "https://evoa.fit",
   });
@@ -49,16 +49,19 @@ function createNotifications(productEmail: ProductEmailPort) {
 describe("EmailRefundNotifications", () => {
   it("tells the coach who cancelled, what to refund and by when, with replies going to the client", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailRefundNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    const result = await notifications.notifyRefundDue(refundNotice());
+    const result =
+      await emailRefundNotificationsAdapter.notifyRefundDue(refundNotice());
 
     // assert
     expect(result).toBe("sent");
-    expect(productEmail.sent).toHaveLength(1);
-    expect(productEmail.sent[0]).toMatchObject({
+    expect(inMemoryProductEmailAdapter.sent).toHaveLength(1);
+    expect(inMemoryProductEmailAdapter.sent[0]).toMatchObject({
       to: "eli@evoa.fit",
       replyTo: "ana@example.com",
       subject: "Ana Popescu cancelled — refund due €447 by 16 October",
@@ -68,14 +71,16 @@ describe("EmailRefundNotifications", () => {
 
   it("words the reason, the payment and the cancellation, and links to her client page", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createNotifications(productEmail);
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const emailRefundNotificationsAdapter = createNotifications(
+      inMemoryProductEmailAdapter,
+    );
 
     // act
-    await notifications.notifyRefundDue(refundNotice());
+    await emailRefundNotificationsAdapter.notifyRefundDue(refundNotice());
 
     // assert
-    const text = productEmail.sent[0]?.text ?? "";
+    const text = inMemoryProductEmailAdapter.sent[0]?.text ?? "";
     expect(text).toContain("Refund due: €447");
     expect(text).toContain("Refund by: 16 October");
     expect(text).toContain(
@@ -86,21 +91,23 @@ describe("EmailRefundNotifications", () => {
     expect(text).toContain(
       `Open her client page: https://evoa.fit/eli-coach-platform/coach/clients/${CLIENT_ID}`,
     );
-    expect(productEmail.sent[0]?.html).toContain(
+    expect(inMemoryProductEmailAdapter.sent[0]?.html).toContain(
       `href="https://evoa.fit/eli-coach-platform/coach/clients/${CLIENT_ID}"`,
     );
   });
 
   it("answers failed when the email provider refuses the message", async () => {
     // arrange
-    const productEmail: ProductEmailPort = {
+    const productEmailPort: ProductEmailPort = {
       provider: "memory",
       send: vi.fn().mockResolvedValue({ kind: "rejected", reason: "refused" }),
     };
-    const notifications = createNotifications(productEmail);
+    const emailRefundNotificationsAdapter =
+      createNotifications(productEmailPort);
 
     // act
-    const result = await notifications.notifyRefundDue(refundNotice());
+    const result =
+      await emailRefundNotificationsAdapter.notifyRefundDue(refundNotice());
 
     // assert
     expect(result).toBe("failed");

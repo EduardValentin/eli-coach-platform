@@ -8,11 +8,14 @@ import { ReadyzController } from "~/composition-root/api/readyz/readyz-controlle
 export type PlatformFeature = {
   appBasePath: string;
   botDetection: BotDetectionConfig;
-  metadata: AppMetadataController;
-  readyz: ReadyzController;
+  appMetadataController: AppMetadataController;
+  readyzController: ReadyzController;
 };
 
-export type PlatformControllers = Pick<PlatformFeature, "metadata" | "readyz">;
+export type PlatformControllers = Pick<
+  PlatformFeature,
+  "appMetadataController" | "readyzController"
+>;
 
 export type RuntimeConfig = Pick<
   PlatformFeature,
@@ -31,11 +34,11 @@ export function composePlatformFeature(
   return {
     appBasePath: handles.app.APP_BASE_PATH,
     botDetection: handles.botDetection,
-    metadata: new AppMetadataController({
+    appMetadataController: new AppMetadataController({
       appName: handles.app.APP_NAME,
       environment: handles.app.ENVIRONMENT,
       version: handles.version,
     }),
-    readyz: new ReadyzController(handles.app),
+    readyzController: new ReadyzController(handles.app),
   };
 }

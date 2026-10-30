@@ -19,29 +19,29 @@ export type JoinWaitlistResult = {
 };
 
 type JoinWaitlistUseCaseOptions = {
-  confirmation: WaitlistConfirmationPort;
-  consentVersions: ConsentVersionsPort;
-  emailAcceptance: EmailAcceptancePort;
-  incidents: WaitlistIncidentsPort;
+  waitlistConfirmationPort: WaitlistConfirmationPort;
+  consentVersionsPort: ConsentVersionsPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  waitlistIncidentsPort: WaitlistIncidentsPort;
   waitlist: Waitlist;
-  waitlistEntries: WaitlistEntriesPort;
+  waitlistEntriesPort: WaitlistEntriesPort;
 };
 
 export class JoinWaitlistUseCase {
   constructor(private readonly options: JoinWaitlistUseCaseOptions) {}
 
   async execute(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
-    const normalizedEmail = this.options.emailAcceptance.normalize(
+    const normalizedEmail = this.options.emailAcceptancePort.normalize(
       command.email,
     );
 
-    if (!this.options.emailAcceptance.accepts(normalizedEmail)) {
+    if (!this.options.emailAcceptancePort.accepts(normalizedEmail)) {
       return { status: "subaddress_refused" };
     }
 
     const reducedPricingSignup =
-      await this.options.waitlistEntries.registerReducedPricingSignup({
-        consentVersions: this.options.consentVersions.current(),
+      await this.options.waitlistEntriesPort.registerReducedPricingSignup({
+        consentVersions: this.options.consentVersionsPort.current(),
         normalizedEmail,
         offer: this.options.waitlist.offer,
       });
@@ -69,8 +69,8 @@ export class JoinWaitlistUseCase {
     normalizedEmail: string,
   ): Promise<JoinWaitlistResult> {
     const registration =
-      await this.options.waitlistEntries.registerRegularPricingSignup({
-        consentVersions: this.options.consentVersions.current(),
+      await this.options.waitlistEntriesPort.registerRegularPricingSignup({
+        consentVersions: this.options.consentVersionsPort.current(),
         normalizedEmail,
         offer: this.options.waitlist.offer,
       });
@@ -104,17 +104,18 @@ export class JoinWaitlistUseCase {
     pricing: WaitlistSignupPricing;
   }): Promise<void> {
     try {
-      const confirmation = await this.options.confirmation.sendConfirmation({
-        email: command.normalizedEmail,
-        offer: command.offer,
-        pricing: command.pricing,
-      });
+      const confirmation =
+        await this.options.waitlistConfirmationPort.sendConfirmation({
+          email: command.normalizedEmail,
+          offer: command.offer,
+          pricing: command.pricing,
+        });
 
       if (confirmation.kind === "failed") {
-        this.options.incidents.confirmationDeliveryFailed();
+        this.options.waitlistIncidentsPort.confirmationDeliveryFailed();
       }
     } catch {
-      this.options.incidents.confirmationDeliveryFailed();
+      this.options.waitlistIncidentsPort.confirmationDeliveryFailed();
     }
   }
 }

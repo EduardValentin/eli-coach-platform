@@ -41,8 +41,8 @@ function createProductEmail() {
   } satisfies ProductEmailPort;
 }
 
-function createNotifications(productEmail: ProductEmailPort) {
-  return new EmailAssessmentCallNotificationsAdapter(productEmail, {
+function createNotifications(productEmailPort: ProductEmailPort) {
+  return new EmailAssessmentCallNotificationsAdapter(productEmailPort, {
     appBasePath: "/",
     coachEmail: "eli@evoa.fit",
     contactEmail: "contact@evoa.fit",
@@ -69,10 +69,12 @@ describe("EmailAssessmentCallNotifications", () => {
   it("writes to the visitor and the coach, each in their own time zone", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    const result = await notifications.notifyBooked(createCall());
+    const result =
+      await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(result).toEqual({ coach: "sent", visitor: "sent" });
@@ -94,18 +96,16 @@ describe("EmailAssessmentCallNotifications", () => {
   it("carries the absolute join link and a matching Google Calendar link into both emails", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = new EmailAssessmentCallNotificationsAdapter(
-      productEmail,
-      {
+    const emailAssessmentCallNotificationsAdapter =
+      new EmailAssessmentCallNotificationsAdapter(productEmail, {
         appBasePath: "/eli-coach-platform",
         coachEmail: "eli@evoa.fit",
         contactEmail: "contact@evoa.fit",
         publicAppUrl: "https://evoa.fit",
-      },
-    );
+      });
 
     // act
-    await notifications.notifyBooked(createCall());
+    await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     const joinUrl = "https://evoa.fit/eli-coach-platform/book/ac-demo/join";
@@ -130,10 +130,11 @@ describe("EmailAssessmentCallNotifications", () => {
   it("attaches the same calendar invite to both emails", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    await notifications.notifyBooked(createCall());
+    await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     const attachments = ["sofia@example.com", "eli@evoa.fit"].map(
@@ -158,10 +159,11 @@ describe("EmailAssessmentCallNotifications", () => {
   it("names the invite after the assessment call, stamps it at booking and says who booked it", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    await notifications.notifyBooked(createCall());
+    await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     const invite = new TextDecoder()
@@ -184,10 +186,11 @@ describe("EmailAssessmentCallNotifications", () => {
   it("routes the coach's reply to the visitor and leaves the visitor's on the default", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    await notifications.notifyBooked(createCall());
+    await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(sentTo(productEmail, "eli@evoa.fit").replyTo).toBe(
@@ -199,10 +202,11 @@ describe("EmailAssessmentCallNotifications", () => {
   it("keys each send so a retry cannot double-send either email", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    await notifications.notifyBooked(createCall());
+    await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(sentTo(productEmail, "sofia@example.com").idempotencyKey).toBe(
@@ -225,10 +229,12 @@ describe("EmailAssessmentCallNotifications", () => {
         })
         .mockResolvedValueOnce({ kind: "rejected", reason: "invalid_to" }),
     } satisfies ProductEmailPort;
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    const result = await notifications.notifyBooked(createCall());
+    const result =
+      await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(result).toEqual({ coach: "failed", visitor: "sent" });
@@ -246,10 +252,12 @@ describe("EmailAssessmentCallNotifications", () => {
         return { kind: "sent" as const, providerMessageId: "email_123" };
       }),
     } satisfies ProductEmailPort;
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    const result = await notifications.notifyBooked(createCall());
+    const result =
+      await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(result).toEqual({ coach: "sent", visitor: "failed" });
@@ -270,10 +278,12 @@ describe("EmailAssessmentCallNotifications", () => {
         return { kind: "sent" as const, providerMessageId: "email_123" };
       }),
     } satisfies ProductEmailPort;
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    const result = await notifications.notifyBooked(createCall());
+    const result =
+      await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(result).toEqual({ coach: "failed", visitor: "sent" });
@@ -285,10 +295,12 @@ describe("EmailAssessmentCallNotifications", () => {
       provider: "resend",
       send: vi.fn().mockResolvedValue({ kind: "unconfirmed" }),
     } satisfies ProductEmailPort;
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    const result = await notifications.notifyBooked(createCall());
+    const result =
+      await emailAssessmentCallNotificationsAdapter.notifyBooked(createCall());
 
     // assert
     expect(result).toEqual({ coach: "failed", visitor: "failed" });
@@ -297,10 +309,11 @@ describe("EmailAssessmentCallNotifications", () => {
   it("passes the visitor's note on to the coach and back to her", async () => {
     // arrange
     const productEmail = createProductEmail();
-    const notifications = createNotifications(productEmail);
+    const emailAssessmentCallNotificationsAdapter =
+      createNotifications(productEmail);
 
     // act
-    await notifications.notifyBooked(
+    await emailAssessmentCallNotificationsAdapter.notifyBooked(
       createCall({ visitorNotes: "Recovering from a knee injury" }),
     );
 

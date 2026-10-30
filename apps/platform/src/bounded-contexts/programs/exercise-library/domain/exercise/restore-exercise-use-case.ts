@@ -15,9 +15,12 @@ export type RestoreExerciseResult =
   | { status: "failed" };
 
 type RestoreExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibraryPort, "list" | "replace">;
-  clock: ClockPort;
-  incidents: Pick<ExerciseLibraryIncidentsPort, "exerciseRestoreFailed">;
+  exerciseLibraryPort: Pick<ExerciseLibraryPort, "list" | "replace">;
+  clockPort: ClockPort;
+  exerciseLibraryIncidentsPort: Pick<
+    ExerciseLibraryIncidentsPort,
+    "exerciseRestoreFailed"
+  >;
 };
 
 type RestoreAttempt = {
@@ -41,7 +44,8 @@ export class RestoreExerciseUseCase {
     ownerAccountId,
     exerciseId,
   }: ExerciseReference): Promise<RestoreExerciseResult> {
-    const exercises = await this.options.library.list(ownerAccountId);
+    const exercises =
+      await this.options.exerciseLibraryPort.list(ownerAccountId);
     const exercise = exercises.find(({ id }) => id === exerciseId);
 
     if (!exercise) return { status: "not-found" };
@@ -69,10 +73,12 @@ export class RestoreExerciseUseCase {
 
     const restored = exercise.restored({
       name: names.freeVariantOf(exercise.name),
-      at: this.options.clock.now(),
+      at: this.options.clockPort.now(),
     });
 
-    if ((await this.options.library.replace(restored)) === "replaced") {
+    if (
+      (await this.options.exerciseLibraryPort.replace(restored)) === "replaced"
+    ) {
       return { status: "restored", exercise: restored };
     }
 
@@ -84,7 +90,10 @@ export class RestoreExerciseUseCase {
   }
 
   private failed(exerciseId: string, error: unknown): RestoreExerciseResult {
-    this.options.incidents.exerciseRestoreFailed({ exerciseId, error });
+    this.options.exerciseLibraryIncidentsPort.exerciseRestoreFailed({
+      exerciseId,
+      error,
+    });
 
     return { status: "failed" };
   }

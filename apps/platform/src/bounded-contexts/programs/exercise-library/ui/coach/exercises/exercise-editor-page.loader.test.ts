@@ -21,7 +21,7 @@ function editorArgs(params: Record<string, string>) {
   const loadNew = vi.fn().mockResolvedValue(NEW_EDITOR);
   const load = vi.fn().mockResolvedValue(SAVED_EDITOR);
   const feature = {
-    exerciseLibrary: { load, loadNew },
+    exerciseLibraryController: { load, loadNew },
   } as unknown as ExerciseLibraryFeature;
   const args = createRequestArgs({
     contexts: [contextEntry(exerciseLibraryContext, feature)],

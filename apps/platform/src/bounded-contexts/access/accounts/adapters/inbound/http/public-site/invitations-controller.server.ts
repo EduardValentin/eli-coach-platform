@@ -11,7 +11,7 @@ import {
 } from "~/bounded-contexts/access/accounts/public/invitation";
 
 type InvitationsControllerOptions = {
-  resolveInvitation: ResolveInvitationUseCase;
+  resolveInvitationUseCase: ResolveInvitationUseCase;
 };
 
 const INVITATION_REQUEST_MAX_BYTES = 1024;
@@ -31,7 +31,7 @@ export class InvitationsController {
       return createBadRequestResponse("The invitation could not be read.");
     }
 
-    const resolution = await this.options.resolveInvitation.execute({
+    const resolution = await this.options.resolveInvitationUseCase.execute({
       rawToken: submission.data.token,
     });
 

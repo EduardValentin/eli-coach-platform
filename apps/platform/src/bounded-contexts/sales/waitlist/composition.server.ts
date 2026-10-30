@@ -23,61 +23,67 @@ import { OperationsWaitlistModeAdapter } from "~/bounded-contexts/sales/waitlist
 
 type WaitlistComposition = {
   feature: WaitlistFeature;
-  handles: { pricingEligibility: PricingEligibilitySourceFacade };
+  handles: { pricingEligibilitySourceFacade: PricingEligibilitySourceFacade };
 };
 
 type WaitlistFeatureHandles = {
-  botVerifier: BotVerifierPort;
-  clock: ClockPort;
+  botVerifierPort: BotVerifierPort;
+  clockPort: ClockPort;
   contactEmail: string;
   database: DatabaseClient;
-  emailAcceptance: EmailAcceptancePort;
-  featureFlags: FeatureFlagsFacade;
-  logger: LoggerPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  featureFlagsFacade: FeatureFlagsFacade;
+  loggerPort: LoggerPort;
   privacyEmail: string;
-  productEmail: ProductEmailPort;
+  productEmailPort: ProductEmailPort;
   waitlist: WaitlistConfig;
 };
 
 export function composeWaitlistFeature(
   handles: WaitlistFeatureHandles,
 ): WaitlistComposition {
-  const incidents = new WaitlistIncidentsAdapter(handles.logger);
+  const waitlistIncidentsAdapter = new WaitlistIncidentsAdapter(
+    handles.loggerPort,
+  );
   const waitlist = Waitlist.configure({
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
   });
-  const waitlistEntries = new PostgresWaitlistRepository(handles.database);
+  const postgresWaitlistRepository = new PostgresWaitlistRepository(
+    handles.database,
+  );
 
   return {
     feature: {
-      waitlist: new WaitlistController({
-        botVerifier: handles.botVerifier,
-        getWaitlist: new GetWaitlistUseCase({
-          clock: handles.clock,
-          incidents,
+      waitlistController: new WaitlistController({
+        botVerifierPort: handles.botVerifierPort,
+        getWaitlistUseCase: new GetWaitlistUseCase({
+          clockPort: handles.clockPort,
+          waitlistIncidentsPort: waitlistIncidentsAdapter,
           waitlist,
-          waitlistEntries,
-          waitlistMode: new OperationsWaitlistModeAdapter(handles.featureFlags),
+          waitlistEntriesPort: postgresWaitlistRepository,
+          waitlistModePort: new OperationsWaitlistModeAdapter(
+            handles.featureFlagsFacade,
+          ),
         }),
-        joinWaitlist: new JoinWaitlistUseCase({
-          confirmation: createWaitlistConfirmationAdapter(
-            handles.productEmail,
+        joinWaitlistUseCase: new JoinWaitlistUseCase({
+          waitlistConfirmationPort: createWaitlistConfirmationAdapter(
+            handles.productEmailPort,
             {
               contactEmail: handles.contactEmail,
               privacyEmail: handles.privacyEmail,
             },
           ),
-          consentVersions: new LegalConsentVersionsAdapter(),
-          emailAcceptance: handles.emailAcceptance,
-          incidents,
+          consentVersionsPort: new LegalConsentVersionsAdapter(),
+          emailAcceptancePort: handles.emailAcceptancePort,
+          waitlistIncidentsPort: waitlistIncidentsAdapter,
           waitlist,
-          waitlistEntries,
+          waitlistEntriesPort: postgresWaitlistRepository,
         }),
       }),
     },
-    handles: { pricingEligibility: waitlistEntries },
+    handles: { pricingEligibilitySourceFacade: postgresWaitlistRepository },
   };
 }

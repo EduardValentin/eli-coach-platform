@@ -6,8 +6,8 @@ import type { HeldCheckIn } from "./check-ins-port";
 import type { CoachTimePort } from "./coach-time-port";
 
 type CheckInWeekRecorderOptions = {
-  coachTime: Pick<CoachTimePort, "reserve">;
-  series: Pick<CheckInSeriesRecordsPort, "recordWeeks">;
+  coachTimePort: Pick<CoachTimePort, "reserve">;
+  checkInSeriesRecordsPort: Pick<CheckInSeriesRecordsPort, "recordWeeks">;
 };
 
 export class CheckInWeekRecorder {
@@ -22,7 +22,7 @@ export class CheckInWeekRecorder {
       weeks.push(await this.held(occurrence));
     }
 
-    await this.options.series.recordWeeks(weeks);
+    await this.options.checkInSeriesRecordsPort.recordWeeks(weeks);
 
     return weeks.map((week) => week.checkIn);
   }
@@ -42,7 +42,7 @@ export class CheckInWeekRecorder {
       };
     }
 
-    const held = await this.options.coachTime.reserve(
+    const held = await this.options.coachTimePort.reserve(
       CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
     );
 

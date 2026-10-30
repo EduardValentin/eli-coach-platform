@@ -14,9 +14,9 @@ export class VisitorPhone {
 
   static read(
     parts: VisitorPhoneParts,
-    phoneNumbers: PhoneNumbersPort,
+    phoneNumbersPort: PhoneNumbersPort,
   ): VisitorPhoneReading {
-    const reading = phoneNumbers.normalize(parts);
+    const reading = phoneNumbersPort.normalize(parts);
 
     return reading.status === "valid"
       ? { status: "valid", phone: new VisitorPhone({ e164: reading.e164 }) }

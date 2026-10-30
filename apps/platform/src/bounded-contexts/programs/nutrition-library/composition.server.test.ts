@@ -44,7 +44,7 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(createHandles());
 
     // act
-    const listing = feature.foodLibrary.list(coachArgs());
+    const listing = feature.foodLibraryController.list(coachArgs());
 
     // assert
     await expect(listing).rejects.toThrow("database down");
@@ -56,13 +56,13 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(handles);
 
     // act
-    const response = await feature.foodLibrary.create(
+    const response = await feature.foodLibraryController.create(
       coachArgs(jsonRequest("POST")),
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Food could not be created.",
       { errorCategory: "food_creation_failure", errorClass: "Error" },
     );
@@ -74,14 +74,14 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(handles);
 
     // act
-    const response = await feature.foodLibrary.edit(
+    const response = await feature.foodLibraryController.edit(
       coachArgs(jsonRequest("PUT")),
       FOOD_ID,
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Food edit could not be written.",
       {
         errorCategory: "food_edit_failure",
@@ -96,7 +96,7 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(createHandles());
 
     // act
-    const listing = feature.recipeLibrary.list(coachArgs());
+    const listing = feature.recipeLibraryController.list(coachArgs());
 
     // assert
     await expect(listing).rejects.toThrow("database down");
@@ -108,13 +108,13 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(handles);
 
     // act
-    const response = await feature.recipeLibrary.create(
+    const response = await feature.recipeLibraryController.create(
       coachArgs(jsonRequest("POST", PORRIDGE_REQUEST)),
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Recipe could not be created.",
       { errorCategory: "recipe_creation_failure", errorClass: "Error" },
     );
@@ -126,14 +126,14 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(handles);
 
     // act
-    const response = await feature.recipeLibrary.edit(
+    const response = await feature.recipeLibraryController.edit(
       coachArgs(jsonRequest("PUT", PORRIDGE_REQUEST)),
       RECIPE_ID,
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Recipe edit could not be written.",
       {
         errorCategory: "recipe_edit_failure",
@@ -149,14 +149,14 @@ describe("composeNutritionLibraryFeature", () => {
     const feature = composeNutritionLibraryFeature(handles);
 
     // act
-    const opening = feature.recipeLibrary.openPhoto(coachArgs(), {
+    const opening = feature.recipeLibraryController.openPhoto(coachArgs(), {
       recipeId: RECIPE_ID,
       photoId: PHOTO_ID,
     });
 
     // assert
     await expect(opening).rejects.toThrow("database down");
-    expect(handles.photoStore.open).not.toHaveBeenCalled();
+    expect(handles.recipePhotoStorePort.open).not.toHaveBeenCalled();
   });
 
   it("renders and stores nothing for a recipe creation that could not reach the recipes table", async () => {
@@ -171,7 +171,7 @@ describe("composeNutritionLibraryFeature", () => {
     form.set("photo", new File([new Uint8Array([1, 2, 3])], "porridge.jpg"));
 
     // act
-    const response = await feature.recipeLibrary.create(
+    const response = await feature.recipeLibraryController.create(
       coachArgs(
         new Request("https://evoa.fit/api/coach/recipes", {
           body: form,
@@ -182,18 +182,18 @@ describe("composeNutritionLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.photoRenditions.render).not.toHaveBeenCalled();
-    expect(handles.photoStore.store).not.toHaveBeenCalled();
+    expect(handles.recipePhotoRenditionsPort.render).not.toHaveBeenCalled();
+    expect(handles.recipePhotoStorePort.store).not.toHaveBeenCalled();
   });
 });
 
 function createHandles() {
   return {
-    clock: { now: () => new Date("2026-10-14T09:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-10-14T09:00:00.000Z") },
     database: createUnreachableDatabase(),
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-    photoRenditions: { render: vi.fn() },
-    photoStore: { store: vi.fn(), open: vi.fn(), remove: vi.fn() },
+    loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+    recipePhotoRenditionsPort: { render: vi.fn() },
+    recipePhotoStorePort: { store: vi.fn(), open: vi.fn(), remove: vi.fn() },
   };
 }
 

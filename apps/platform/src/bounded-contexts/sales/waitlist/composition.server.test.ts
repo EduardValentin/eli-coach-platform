@@ -26,24 +26,26 @@ describe("composeWaitlistFeature", () => {
   it("answers the waitlist snapshot when the repository is unreachable", async () => {
     // arrange
     const { feature } = composeWaitlistFeature({
-      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-      clock: { now: () => new Date() },
+      botVerifierPort: {
+        verifySubmission: async () => ({ status: "verified" }),
+      },
+      clockPort: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
-      emailAcceptance: createEmailAcceptance("allowed"),
-      featureFlags: {
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      featureFlagsFacade: {
         isOn: async () => {
           throw new Error("database down");
         },
       },
-      logger: { error: () => {}, warn: () => {}, info: () => {} },
+      loggerPort: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
       waitlist: createWaitlistConfig(),
     });
 
     // act
-    const waitlist = await feature.waitlist.getWaitlist();
+    const waitlist = await feature.waitlistController.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({ availability: null, enabled: true });
@@ -52,21 +54,25 @@ describe("composeWaitlistFeature", () => {
   it("hands coaching sales the pricing eligibility the waitlist entries earn", async () => {
     // arrange
     const { handles } = composeWaitlistFeature({
-      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-      clock: { now: () => new Date() },
+      botVerifierPort: {
+        verifySubmission: async () => ({ status: "verified" }),
+      },
+      clockPort: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseWithReducedAllocation(),
-      emailAcceptance: createEmailAcceptance("allowed"),
-      featureFlags: { isOn: async () => false },
-      logger: { error: () => {}, warn: () => {}, info: () => {} },
+      emailAcceptancePort: createEmailAcceptance("allowed"),
+      featureFlagsFacade: { isOn: async () => false },
+      loggerPort: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
       waitlist: createWaitlistConfig(),
     });
 
     // act
     const tier =
-      await handles.pricingEligibility.tierForEmail("ana@example.com");
+      await handles.pricingEligibilitySourceFacade.tierForEmail(
+        "ana@example.com",
+      );
 
     // assert
     expect(tier).toBe("reduced");
@@ -75,21 +81,23 @@ describe("composeWaitlistFeature", () => {
   it("hands the subaddress policy to the waitlist join", async () => {
     // arrange
     const { feature } = composeWaitlistFeature({
-      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
-      clock: { now: () => new Date() },
+      botVerifierPort: {
+        verifySubmission: async () => ({ status: "verified" }),
+      },
+      clockPort: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
-      emailAcceptance: createEmailAcceptance("refused"),
-      featureFlags: { isOn: async () => false },
-      logger: { error: () => {}, warn: () => {}, info: () => {} },
+      emailAcceptancePort: createEmailAcceptance("refused"),
+      featureFlagsFacade: { isOn: async () => false },
+      loggerPort: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
-      productEmail: new InMemoryProductEmailAdapter(),
+      productEmailPort: new InMemoryProductEmailAdapter(),
       waitlist: createWaitlistConfig(),
     });
 
     // act
     const response = await handleHttpErrorResponse(() =>
-      feature.waitlist.join(
+      feature.waitlistController.join(
         new Request("http://localhost/api/waitlist", {
           body: new URLSearchParams({ email: "eli+launch@example.com" }),
           headers: { "content-type": "application/x-www-form-urlencoded" },

@@ -189,15 +189,16 @@ function imagePages(rendering: ResourceImageRendering): ResourceImagePagesPort {
 }
 
 type Setup = {
-  documentPages?: FakeDocumentPagesAdapter;
-  imagePages?: ResourceImagePagesPort;
+  fakeDocumentPagesAdapter?: FakeDocumentPagesAdapter;
+  resourceImagePagesPort?: ResourceImagePagesPort;
   clientExists?: boolean;
 };
 
 function createUseCase(setup: Setup = {}) {
-  const resources = new InMemoryClientResourcesAdapter();
-  const store = new InMemoryResourceStoreAdapter();
-  const documentPages = setup.documentPages ?? new FakeDocumentPagesAdapter(3);
+  const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter();
+  const inMemoryResourceStoreAdapter = new InMemoryResourceStoreAdapter();
+  const fakeDocumentPagesAdapter =
+    setup.fakeDocumentPagesAdapter ?? new FakeDocumentPagesAdapter(3);
   const clients = {
     findById: vi.fn(async (clientId: string) =>
       (setup.clientExists ?? true)
@@ -224,27 +225,34 @@ function createUseCase(setup: Setup = {}) {
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidentsPort;
-  const clock: ClockPort = { now: () => NOW };
-  const fileFormats = new InTestFileFormatsAdapter();
-  const useCase = new AddClientResourceUseCase({
-    resources,
-    resourceIds: { generate: () => "resource-1" },
-    clients,
-    store,
-    documentPages,
-    imagePages:
-      setup.imagePages ??
+  const clockPort: ClockPort = { now: () => NOW };
+  const inTestFileFormatsAdapter = new InTestFileFormatsAdapter();
+  const addClientResourceUseCase = new AddClientResourceUseCase({
+    clientResourcesPort: inMemoryClientResourcesAdapter,
+    clientResourceIdsPort: { generate: () => "resource-1" },
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryResourceStoreAdapter,
+    resourceDocumentPagesPort: fakeDocumentPagesAdapter,
+    resourceImagePagesPort:
+      setup.resourceImagePagesPort ??
       imagePages({
         status: "rendered",
         page: Uint8Array.of(1),
         thumbnail: Uint8Array.of(0),
       }),
-    fileFormats,
-    clock,
-    incidents,
+    resourceFileFormatDetectorPort: inTestFileFormatsAdapter,
+    clockPort,
+    clientResourceIncidentsPort: incidents,
   });
 
-  return { useCase, resources, store, documentPages, incidents, fileFormats };
+  return {
+    addClientResourceUseCase,
+    inMemoryClientResourcesAdapter,
+    inMemoryResourceStoreAdapter,
+    fakeDocumentPagesAdapter,
+    incidents,
+    inTestFileFormatsAdapter,
+  };
 }
 
 function addCommand(file: { originalName: string; bytes: Uint8Array }) {
@@ -254,17 +262,26 @@ function addCommand(file: { originalName: string; bytes: Uint8Array }) {
 describe("AddClientResourceUseCase", () => {
   it("keeps a PDF's original, every page and a thumbnail, then records it", async () => {
     // arrange
-    const { useCase, resources, store, documentPages, incidents } =
-      createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      fakeDocumentPagesAdapter,
+      incidents,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "Meal plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result.status).toBe("added");
-    expect(resources.added.map((resource) => resource.toSnapshot())).toEqual([
+    expect(
+      inMemoryClientResourcesAdapter.added.map((resource) =>
+        resource.toSnapshot(),
+      ),
+    ).toEqual([
       {
         id: "resource-1",
         clientId: "client-ana",
@@ -281,17 +298,17 @@ describe("AddClientResourceUseCase", () => {
         openedAt: null,
       },
     ]);
-    expect(store.storedNames()).toEqual([
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([
       "client-ana/resource-1/original",
       "client-ana/resource-1/page-1",
       "client-ana/resource-1/page-2",
       "client-ana/resource-1/page-3",
       "client-ana/resource-1/thumbnail",
     ]);
-    expect(store.files.get("client-ana/resource-1/original")).toEqual(
-      PDF_BYTES,
-    );
-    expect(documentPages.closed).toBe(true);
+    expect(
+      inMemoryResourceStoreAdapter.files.get("client-ana/resource-1/original"),
+    ).toEqual(PDF_BYTES);
+    expect(fakeDocumentPagesAdapter.closed).toBe(true);
     expect(incidents.resourceStored).toHaveBeenCalledWith({
       clientId: "client-ana",
       resourceId: "resource-1",
@@ -303,54 +320,70 @@ describe("AddClientResourceUseCase", () => {
 
   it("hands the page reader its own copy of the bytes and stores the original from the bytes it was given", async () => {
     // arrange
-    const { useCase, store, documentPages } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryResourceStoreAdapter,
+      fakeDocumentPagesAdapter,
+    } = createUseCase();
 
     // act
-    await useCase.execute(
+    await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
-    expect(documentPages.received[0]).toEqual(PDF_BYTES);
-    expect(documentPages.received[0]).not.toBe(PDF_BYTES);
-    expect(documentPages.received[0].buffer).not.toBe(PDF_BYTES.buffer);
-    expect(store.files.get("client-ana/resource-1/original")).toBe(PDF_BYTES);
+    expect(fakeDocumentPagesAdapter.received[0]).toEqual(PDF_BYTES);
+    expect(fakeDocumentPagesAdapter.received[0]).not.toBe(PDF_BYTES);
+    expect(fakeDocumentPagesAdapter.received[0].buffer).not.toBe(
+      PDF_BYTES.buffer,
+    );
+    expect(
+      inMemoryResourceStoreAdapter.files.get("client-ana/resource-1/original"),
+    ).toBe(PDF_BYTES);
   });
 
   it("accepts a PDF of exactly 50 pages", async () => {
     // arrange
-    const { useCase, resources } = createUseCase({
-      documentPages: new FakeDocumentPagesAdapter(50),
-    });
+    const { addClientResourceUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase({
+        fakeDocumentPagesAdapter: new FakeDocumentPagesAdapter(50),
+      });
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result.status).toBe("added");
-    expect(resources.added[0].toSnapshot().file.pageCount).toBe(50);
+    expect(
+      inMemoryClientResourcesAdapter.added[0].toSnapshot().file.pageCount,
+    ).toBe(50);
   });
 
   it("refuses a PDF of 51 pages before any page is rendered or stored", async () => {
     // arrange
-    const documentPages = new FakeDocumentPagesAdapter(51);
-    const { useCase, store, resources, incidents } = createUseCase({
-      documentPages,
+    const fakeDocumentPagesAdapter = new FakeDocumentPagesAdapter(51);
+    const {
+      addClientResourceUseCase,
+      inMemoryResourceStoreAdapter,
+      inMemoryClientResourcesAdapter,
+      incidents,
+    } = createUseCase({
+      fakeDocumentPagesAdapter,
     });
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "refused", refusal: "too-many-pages" });
-    expect(documentPages.renderedPages).toBe(0);
-    expect(documentPages.closed).toBe(true);
-    expect(store.storedNames()).toEqual([]);
-    expect(resources.added).toEqual([]);
+    expect(fakeDocumentPagesAdapter.renderedPages).toBe(0);
+    expect(fakeDocumentPagesAdapter.closed).toBe(true);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
+    expect(inMemoryClientResourcesAdapter.added).toEqual([]);
     expect(incidents.resourceRefused).toHaveBeenCalledWith({
       clientId: "client-ana",
       receivedBytes: PDF_BYTES.byteLength,
@@ -360,39 +393,47 @@ describe("AddClientResourceUseCase", () => {
 
   it("refuses a PDF that cannot be read", async () => {
     // arrange
-    const { useCase, store, resources } = createUseCase({
-      documentPages: new FakeDocumentPagesAdapter("unreadable"),
+    const {
+      addClientResourceUseCase,
+      inMemoryResourceStoreAdapter,
+      inMemoryClientResourcesAdapter,
+    } = createUseCase({
+      fakeDocumentPagesAdapter: new FakeDocumentPagesAdapter("unreadable"),
     });
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "locked.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "refused", refusal: "unreadable" });
-    expect(store.storedNames()).toEqual([]);
-    expect(resources.added).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
+    expect(inMemoryClientResourcesAdapter.added).toEqual([]);
   });
 
   it("keeps an image's original, its single page and a thumbnail", async () => {
     // arrange
-    const { useCase, store, resources } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryResourceStoreAdapter,
+      inMemoryClientResourcesAdapter,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "Plate.png", bytes: PNG_BYTES }),
     );
 
     // assert
     expect(result.status).toBe("added");
-    expect(resources.added[0].toSnapshot().file).toEqual({
+    expect(inMemoryClientResourcesAdapter.added[0].toSnapshot().file).toEqual({
       originalName: "Plate.png",
       format: "png",
       sizeBytes: PNG_BYTES.byteLength,
       pageCount: 1,
     });
-    expect(store.storedNames()).toEqual([
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([
       "client-ana/resource-1/original",
       "client-ana/resource-1/page-1",
       "client-ana/resource-1/thumbnail",
@@ -401,18 +442,19 @@ describe("AddClientResourceUseCase", () => {
 
   it("refuses an image the renderer will not decode as an unsupported type", async () => {
     // arrange
-    const { useCase, store } = createUseCase({
-      imagePages: imagePages({ status: "refused" }),
-    });
+    const { addClientResourceUseCase, inMemoryResourceStoreAdapter } =
+      createUseCase({
+        resourceImagePagesPort: imagePages({ status: "refused" }),
+      });
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "Plate.png", bytes: PNG_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "refused", refusal: "unsupported-type" });
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
   });
 
   it.each([
@@ -432,21 +474,32 @@ describe("AddClientResourceUseCase", () => {
     "keeps only the original of $file",
     async ({ originalName, bytes, format }) => {
       // arrange
-      const { useCase, store, resources, documentPages } = createUseCase();
+      const {
+        addClientResourceUseCase,
+        inMemoryResourceStoreAdapter,
+        inMemoryClientResourcesAdapter,
+        fakeDocumentPagesAdapter,
+      } = createUseCase();
 
       // act
-      const result = await useCase.execute(addCommand({ originalName, bytes }));
+      const result = await addClientResourceUseCase.execute(
+        addCommand({ originalName, bytes }),
+      );
 
       // assert
       expect(result.status).toBe("added");
-      expect(resources.added[0].toSnapshot().file).toEqual({
-        originalName,
-        format,
-        sizeBytes: bytes.byteLength,
-        pageCount: null,
-      });
-      expect(store.storedNames()).toEqual(["client-ana/resource-1/original"]);
-      expect(documentPages.received).toEqual([]);
+      expect(inMemoryClientResourcesAdapter.added[0].toSnapshot().file).toEqual(
+        {
+          originalName,
+          format,
+          sizeBytes: bytes.byteLength,
+          pageCount: null,
+        },
+      );
+      expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([
+        "client-ana/resource-1/original",
+      ]);
+      expect(fakeDocumentPagesAdapter.received).toEqual([]);
     },
   );
 
@@ -479,13 +532,18 @@ describe("AddClientResourceUseCase", () => {
     "judges $file by its bytes and keeps the name it came with",
     async ({ originalName, bytes, format }) => {
       // arrange
-      const { useCase, resources } = createUseCase();
+      const { addClientResourceUseCase, inMemoryClientResourcesAdapter } =
+        createUseCase();
 
       // act
-      await useCase.execute(addCommand({ originalName, bytes }));
+      await addClientResourceUseCase.execute(
+        addCommand({ originalName, bytes }),
+      );
 
       // assert
-      expect(resources.added[0].toSnapshot().file).toMatchObject({
+      expect(
+        inMemoryClientResourcesAdapter.added[0].toSnapshot().file,
+      ).toMatchObject({
         originalName,
         format,
       });
@@ -494,17 +552,21 @@ describe("AddClientResourceUseCase", () => {
 
   it("refuses bytes of no accepted type, whatever the file is called", async () => {
     // arrange
-    const { useCase, store, incidents } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
     const bytes = ascii("MZ this is an executable");
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes }),
     );
 
     // assert
     expect(result).toEqual({ status: "refused", refusal: "unsupported-type" });
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
     expect(incidents.resourceRefused).toHaveBeenCalledWith({
       clientId: "client-ana",
       receivedBytes: bytes.byteLength,
@@ -514,26 +576,31 @@ describe("AddClientResourceUseCase", () => {
 
   it("refuses a file over 25 MB before detecting its format", async () => {
     // arrange
-    const { useCase, documentPages, fileFormats } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      fakeDocumentPagesAdapter,
+      inTestFileFormatsAdapter,
+    } = createUseCase();
     const bytes = new Uint8Array(MAX_RESOURCE_FILE_BYTES + 1);
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "big.pdf", bytes }),
     );
 
     // assert
     expect(result).toEqual({ status: "refused", refusal: "too-large" });
-    expect(fileFormats.detect).not.toHaveBeenCalled();
-    expect(documentPages.received).toEqual([]);
+    expect(inTestFileFormatsAdapter.detect).not.toHaveBeenCalled();
+    expect(fakeDocumentPagesAdapter.received).toEqual([]);
   });
 
   it("names each problem with the details and keeps nothing", async () => {
     // arrange
-    const { useCase, store } = createUseCase();
+    const { addClientResourceUseCase, inMemoryResourceStoreAdapter } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await addClientResourceUseCase.execute({
       ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
       details: { title: "  ", description: "", tags: [] },
     });
@@ -543,22 +610,23 @@ describe("AddClientResourceUseCase", () => {
       status: "invalid-details",
       problems: { title: "missing" },
     });
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
   });
 
   it("tags the resource in the spelling the coach already uses and keeps a new tag as typed", async () => {
     // arrange
-    const { useCase, resources } = createUseCase();
+    const { addClientResourceUseCase, inMemoryClientResourcesAdapter } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await addClientResourceUseCase.execute({
       ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
       details: { ...DETAILS, tags: ["MEAL  prep", " Recovery ", "meal prep"] },
     });
 
     // assert
     expect(result.status).toBe("added");
-    expect(resources.added[0].toSnapshot().tags).toEqual([
+    expect(inMemoryClientResourcesAdapter.added[0].toSnapshot().tags).toEqual([
       MEAL_PREP,
       { tag: "Recovery", folded: "recovery" },
     ]);
@@ -566,10 +634,15 @@ describe("AddClientResourceUseCase", () => {
 
   it("names a tag that is too long with the details' problems, reading nothing and keeping nothing", async () => {
     // arrange
-    const { useCase, resources, store, fileFormats } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      inTestFileFormatsAdapter,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await addClientResourceUseCase.execute({
       ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
       details: {
         title: "",
@@ -583,26 +656,31 @@ describe("AddClientResourceUseCase", () => {
       status: "invalid-details",
       problems: { title: "missing", tags: "too-long" },
     });
-    expect(fileFormats.detect).not.toHaveBeenCalled();
-    expect(resources.tagVocabulary).not.toHaveBeenCalled();
-    expect(store.storedNames()).toEqual([]);
+    expect(inTestFileFormatsAdapter.detect).not.toHaveBeenCalled();
+    expect(inMemoryClientResourcesAdapter.tagVocabulary).not.toHaveBeenCalled();
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
   });
 
   it("removes the stored files when the tag vocabulary cannot be read, reporting why", async () => {
     // arrange
-    const { useCase, resources, store, incidents } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
     const failure = new Error("database down");
-    resources.tagVocabulary.mockRejectedValueOnce(failure);
+    inMemoryClientResourcesAdapter.tagVocabulary.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(store.storedNames()).toEqual([]);
-    expect(resources.added).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
+    expect(inMemoryClientResourcesAdapter.added).toEqual([]);
     expect(incidents.resourceStorageFailed).toHaveBeenCalledWith({
       ...OWNER,
       error: failure,
@@ -611,31 +689,36 @@ describe("AddClientResourceUseCase", () => {
 
   it("finds no client who does not exist", async () => {
     // arrange
-    const { useCase, store } = createUseCase({ clientExists: false });
+    const { addClientResourceUseCase, inMemoryResourceStoreAdapter } =
+      createUseCase({ clientExists: false });
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
   });
 
   it("lets only the coach add a resource, reporting anyone else", async () => {
     // arrange
-    const { useCase, store, incidents } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await addClientResourceUseCase.execute({
       ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
     expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
       requesterRole: "CLIENT",
       clientId: "client-ana",
@@ -645,19 +728,24 @@ describe("AddClientResourceUseCase", () => {
 
   it("removes the stored files when the record cannot be written, reporting why", async () => {
     // arrange
-    const { useCase, resources, store, incidents } = createUseCase();
+    const {
+      addClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
     const failure = new Error("database down");
-    resources.add.mockRejectedValueOnce(failure);
+    inMemoryClientResourcesAdapter.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(store.remove).toHaveBeenCalledWith(OWNER);
-    expect(store.storedNames()).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.remove).toHaveBeenCalledWith(OWNER);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
     expect(incidents.resourceStorageFailed).toHaveBeenCalledWith({
       ...OWNER,
       error: failure,
@@ -667,29 +755,45 @@ describe("AddClientResourceUseCase", () => {
 
   it("removes the stored files and closes the document when a page cannot be stored", async () => {
     // arrange
-    const { useCase, resources, store, documentPages } = createUseCase();
-    store.storePage.mockRejectedValueOnce(new Error("disk full"));
+    const {
+      addClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      fakeDocumentPagesAdapter,
+    } = createUseCase();
+    inMemoryResourceStoreAdapter.storePage.mockRejectedValueOnce(
+      new Error("disk full"),
+    );
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(store.storedNames()).toEqual([]);
-    expect(documentPages.closed).toBe(true);
-    expect(resources.added).toEqual([]);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
+    expect(fakeDocumentPagesAdapter.closed).toBe(true);
+    expect(inMemoryClientResourcesAdapter.added).toEqual([]);
   });
 
   it("fails without throwing when the cleanup fails too", async () => {
     // arrange
-    const { useCase, resources, store, incidents } = createUseCase();
-    resources.add.mockRejectedValueOnce(new Error("database down"));
-    store.remove.mockRejectedValueOnce(new Error("disk gone"));
+    const {
+      addClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryClientResourcesAdapter.add.mockRejectedValueOnce(
+      new Error("database down"),
+    );
+    inMemoryResourceStoreAdapter.remove.mockRejectedValueOnce(
+      new Error("disk gone"),
+    );
 
     // act
-    const result = await useCase.execute(
+    const result = await addClientResourceUseCase.execute(
       addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
     );
 

@@ -3,8 +3,11 @@ import type { CoachingSubscription } from "./coaching-subscription";
 import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 
 type SignedInSubscriptionsOptions = {
-  clients: Pick<ClientLookupPort, "clientIdOf">;
-  subscriptions: Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
+  clientLookupPort: Pick<ClientLookupPort, "clientIdOf">;
+  coachingSubscriptionsPort: Pick<
+    CoachingSubscriptionsPort,
+    "findCurrentForClient"
+  >;
 };
 
 export class SignedInSubscriptions {
@@ -13,12 +16,15 @@ export class SignedInSubscriptions {
   async currentFor(
     authSubjectId: string,
   ): Promise<CoachingSubscription | null> {
-    const clientId = await this.options.clients.clientIdOf(authSubjectId);
+    const clientId =
+      await this.options.clientLookupPort.clientIdOf(authSubjectId);
 
     if (!clientId) {
       return null;
     }
 
-    return this.options.subscriptions.findCurrentForClient(clientId);
+    return this.options.coachingSubscriptionsPort.findCurrentForClient(
+      clientId,
+    );
   }
 }

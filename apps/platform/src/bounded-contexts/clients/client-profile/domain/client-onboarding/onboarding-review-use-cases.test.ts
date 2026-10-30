@@ -191,41 +191,46 @@ function reviewPorts(
   return {
     clients,
     participants: new OnboardingParticipants({
-      clients,
-      identities: createIdentities(
+      onboardingClientsPort: clients,
+      clientIdentitiesPort: createIdentities(
         overrides.identity === undefined ? IDENTITY : overrides.identity,
       ),
     }),
-    onboardings: createOnboardings(
+    clientOnboardingSourcePort: createOnboardings(
       overrides.submission === undefined ? SUBMISSION : overrides.submission,
     ),
-    reviews: createReviews(overrides.stored),
-    clock: { now: () => NOW },
-    incidents: createIncidents(),
+    onboardingReviewsPort: createReviews(overrides.stored),
+    clockPort: { now: () => NOW },
+    clientOnboardingIncidentsPort: createIncidents(),
   };
 }
 
 function readPorts(overrides: Parameters<typeof reviewPorts>[0] = {}) {
-  return { ...reviewPorts(overrides), stamps: createStamps() };
+  return {
+    ...reviewPorts(overrides),
+    onboardingReviewStampsPort: createStamps(),
+  };
 }
 
 describe("OpenOnboardingReviewUseCase", () => {
   it("records the opened review with its stamps in one write and logs it", async () => {
     // arrange
     const ports = reviewPorts();
-    const useCase = new OpenOnboardingReviewUseCase(ports);
+    const openOnboardingReviewUseCase = new OpenOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await openOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toEqual({ status: "opened" });
-    expect(ports.reviews.recordOpened).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewsPort.recordOpened).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       at: NOW,
       stamps: { ...NO_STAMPS, reviewOpenedAt: NOW },
     });
-    expect(ports.incidents.onboardingReviewOpened).toHaveBeenCalledWith({
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingReviewOpened,
+    ).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
     });
   });
@@ -233,14 +238,14 @@ describe("OpenOnboardingReviewUseCase", () => {
   it("answers already-open without writing", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
-    const useCase = new OpenOnboardingReviewUseCase(ports);
+    const openOnboardingReviewUseCase = new OpenOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await openOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toEqual({ status: "already-open" });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordOpened).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -249,41 +254,43 @@ describe("OpenOnboardingReviewUseCase", () => {
   ] as const)("answers %s", async (expected, overrides) => {
     // arrange
     const ports = reviewPorts(overrides);
-    const useCase = new OpenOnboardingReviewUseCase(ports);
+    const openOnboardingReviewUseCase = new OpenOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await openOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toEqual({ status: expected });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordOpened).not.toHaveBeenCalled();
   });
 
   it("refuses to open the review once her coaching is cancelled or ended", async () => {
     // arrange
     const ports = reviewPorts({ client: CANCELLED_OR_ENDED_CLIENT });
-    const useCase = new OpenOnboardingReviewUseCase(ports);
+    const openOnboardingReviewUseCase = new OpenOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await openOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
-    expect(ports.incidents.onboardingReviewOpened).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordOpened).not.toHaveBeenCalled();
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingReviewOpened,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers not-found for a client with no identity", async () => {
     // arrange
     const ports = reviewPorts({ identity: null });
-    const useCase = new OpenOnboardingReviewUseCase(ports);
+    const openOnboardingReviewUseCase = new OpenOnboardingReviewUseCase(ports);
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await openOnboardingReviewUseCase.execute(CLIENT.clientId);
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordOpened).not.toHaveBeenCalled();
   });
 });
 
@@ -294,8 +301,8 @@ describe("RequestOnboardingDetailsUseCase", () => {
   ) {
     return new RequestOnboardingDetailsUseCase({
       ...ports,
-      ids: createRequestIds(),
-      notifications,
+      detailRequestIdsPort: createRequestIds(),
+      onboardingDetailsNotificationsPort: notifications,
     });
   }
 
@@ -303,10 +310,13 @@ describe("RequestOnboardingDetailsUseCase", () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const notifications = createNotifications();
-    const useCase = requestUseCase(ports, notifications);
+    const requestOnboardingDetailsUseCase = requestUseCase(
+      ports,
+      notifications,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: NOTE,
@@ -314,7 +324,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "requested" });
-    expect(ports.reviews.recordRequest).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewsPort.recordRequest).toHaveBeenCalledWith({
       request: DetailRequest.raise({
         id: "request-1",
         clientId: CLIENT.clientId,
@@ -335,11 +345,13 @@ describe("RequestOnboardingDetailsUseCase", () => {
       firstName: IDENTITY.firstName,
     });
     expect(
-      ports.reviews.recordRequest.mock.invocationCallOrder[0],
+      ports.onboardingReviewsPort.recordRequest.mock.invocationCallOrder[0],
     ).toBeLessThan(
       notifications.sendDetailsRequest.mock.invocationCallOrder[0],
     );
-    expect(ports.incidents.onboardingDetailsRequested).toHaveBeenCalledWith({
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingDetailsRequested,
+    ).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       questionCount: 1,
     });
@@ -351,10 +363,13 @@ describe("RequestOnboardingDetailsUseCase", () => {
     const notifications = {
       sendDetailsRequest: vi.fn().mockRejectedValue(new Error("down")),
     } satisfies OnboardingDetailsNotificationsPort;
-    const useCase = requestUseCase(ports, notifications);
+    const requestOnboardingDetailsUseCase = requestUseCase(
+      ports,
+      notifications,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: NOTE,
@@ -362,9 +377,9 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "requested" });
-    expect(ports.reviews.recordRequest).toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordRequest).toHaveBeenCalled();
     expect(
-      ports.incidents.onboardingDetailsRequestEmailFailed,
+      ports.clientOnboardingIncidentsPort.onboardingDetailsRequestEmailFailed,
     ).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       requestId: "request-1",
@@ -374,12 +389,15 @@ describe("RequestOnboardingDetailsUseCase", () => {
   it("answers not-in-review without emailing when another request was recorded first", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
-    ports.reviews.recordRequest.mockResolvedValue("already-open");
+    ports.onboardingReviewsPort.recordRequest.mockResolvedValue("already-open");
     const notifications = createNotifications();
-    const useCase = requestUseCase(ports, notifications);
+    const requestOnboardingDetailsUseCase = requestUseCase(
+      ports,
+      notifications,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: NOTE,
@@ -388,7 +406,9 @@ describe("RequestOnboardingDetailsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-in-review" });
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
-    expect(ports.incidents.onboardingDetailsRequested).not.toHaveBeenCalled();
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingDetailsRequested,
+    ).not.toHaveBeenCalled();
   });
 
   it("refuses a second request while one is open and writes nothing", async () => {
@@ -397,10 +417,13 @@ describe("RequestOnboardingDetailsUseCase", () => {
       stored: { openedAt: OPENED_AT, requests: [openRequest()] },
     });
     const notifications = createNotifications();
-    const useCase = requestUseCase(ports, notifications);
+    const requestOnboardingDetailsUseCase = requestUseCase(
+      ports,
+      notifications,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: NOTE,
@@ -408,17 +431,17 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-in-review" });
-    expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordRequest).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
   });
 
   it("refuses an empty note as invalid", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
-    const useCase = requestUseCase(ports);
+    const requestOnboardingDetailsUseCase = requestUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: " ",
@@ -426,16 +449,16 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "invalid", reason: "empty-note" });
-    expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordRequest).not.toHaveBeenCalled();
   });
 
   it("answers not-found for an unknown client", async () => {
     // arrange
     const ports = reviewPorts({ client: null });
-    const useCase = requestUseCase(ports);
+    const requestOnboardingDetailsUseCase = requestUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: "client-9",
       questionIds: [WEIGHT],
       note: NOTE,
@@ -452,10 +475,13 @@ describe("RequestOnboardingDetailsUseCase", () => {
       stored: { openedAt: OPENED_AT },
     });
     const notifications = createNotifications();
-    const useCase = requestUseCase(ports, notifications);
+    const requestOnboardingDetailsUseCase = requestUseCase(
+      ports,
+      notifications,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: NOTE,
@@ -463,7 +489,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
-    expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordRequest).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
   });
 
@@ -474,10 +500,13 @@ describe("RequestOnboardingDetailsUseCase", () => {
       stored: { openedAt: OPENED_AT },
     });
     const notifications = createNotifications();
-    const useCase = requestUseCase(ports, notifications);
+    const requestOnboardingDetailsUseCase = requestUseCase(
+      ports,
+      notifications,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await requestOnboardingDetailsUseCase.execute({
       clientId: CLIENT.clientId,
       questionIds: [WEIGHT],
       note: NOTE,
@@ -485,7 +514,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordRequest).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
   });
 });
@@ -494,15 +523,19 @@ describe("ApproveOnboardingAnswersUseCase", () => {
   it("records the approval with its stamps and the coaching seed of her answers in one write and logs it", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
-    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+    const approveOnboardingAnswersUseCase = new ApproveOnboardingAnswersUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await approveOnboardingAnswersUseCase.execute(
+      CLIENT.clientId,
+    );
 
     // assert
     expect(result).toEqual({ status: "approved" });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
-    expect(ports.reviews.recordApproval).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewsPort.recordOpened).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordApproval).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       at: NOW,
       stamps: {
@@ -528,7 +561,9 @@ describe("ApproveOnboardingAnswersUseCase", () => {
         preferences: { preferredCheckInWeekday: null, preferredChannel: null },
       },
     });
-    expect(ports.incidents.onboardingAnswersApproved).toHaveBeenCalledWith({
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingAnswersApproved,
+    ).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
     });
   });
@@ -536,15 +571,19 @@ describe("ApproveOnboardingAnswersUseCase", () => {
   it("opens an unopened review within the approval write", async () => {
     // arrange
     const ports = reviewPorts();
-    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+    const approveOnboardingAnswersUseCase = new ApproveOnboardingAnswersUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await approveOnboardingAnswersUseCase.execute(
+      CLIENT.clientId,
+    );
 
     // assert
     expect(result).toEqual({ status: "approved" });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
-    expect(ports.reviews.recordApproval).toHaveBeenCalledWith(
+    expect(ports.onboardingReviewsPort.recordOpened).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordApproval).toHaveBeenCalledWith(
       expect.objectContaining({
         clientId: CLIENT.clientId,
         at: NOW,
@@ -558,23 +597,29 @@ describe("ApproveOnboardingAnswersUseCase", () => {
     const ports = reviewPorts({
       stored: { openedAt: OPENED_AT, requests: [openRequest()] },
     });
-    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+    const approveOnboardingAnswersUseCase = new ApproveOnboardingAnswersUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await approveOnboardingAnswersUseCase.execute(
+      CLIENT.clientId,
+    );
 
     // assert
     expect(result).toEqual({ status: "not-reviewable" });
-    expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordApproval).not.toHaveBeenCalled();
   });
 
   it("answers not-found for an unknown client", async () => {
     // arrange
     const ports = reviewPorts({ client: null });
-    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+    const approveOnboardingAnswersUseCase = new ApproveOnboardingAnswersUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute("client-9");
+    const result = await approveOnboardingAnswersUseCase.execute("client-9");
 
     // assert
     expect(result).toEqual({ status: "not-found" });
@@ -586,15 +631,21 @@ describe("ApproveOnboardingAnswersUseCase", () => {
       client: CANCELLED_OR_ENDED_CLIENT,
       stored: { openedAt: OPENED_AT },
     });
-    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+    const approveOnboardingAnswersUseCase = new ApproveOnboardingAnswersUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await approveOnboardingAnswersUseCase.execute(
+      CLIENT.clientId,
+    );
 
     // assert
     expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
-    expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
-    expect(ports.incidents.onboardingAnswersApproved).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordApproval).not.toHaveBeenCalled();
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingAnswersApproved,
+    ).not.toHaveBeenCalled();
   });
 
   it("answers not-found for a client with no identity", async () => {
@@ -603,14 +654,18 @@ describe("ApproveOnboardingAnswersUseCase", () => {
       identity: null,
       stored: { openedAt: OPENED_AT },
     });
-    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+    const approveOnboardingAnswersUseCase = new ApproveOnboardingAnswersUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute(CLIENT.clientId);
+    const result = await approveOnboardingAnswersUseCase.execute(
+      CLIENT.clientId,
+    );
 
     // assert
     expect(result).toEqual({ status: "not-found" });
-    expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordApproval).not.toHaveBeenCalled();
   });
 });
 
@@ -628,10 +683,12 @@ describe("ReadOpenDetailRequestUseCase", () => {
       },
       stored: { openedAt: OPENED_AT, requests: [openRequest()] },
     });
-    const useCase = new ReadOpenDetailRequestUseCase(ports);
+    const readOpenDetailRequestUseCase = new ReadOpenDetailRequestUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readOpenDetailRequestUseCase.execute("user_ana");
 
     // assert
     expect(result).toEqual({
@@ -640,7 +697,7 @@ describe("ReadOpenDetailRequestUseCase", () => {
       fields: [WEIGHT],
     });
     expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.stamps.record).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewStampsPort.record).not.toHaveBeenCalled();
   });
 
   it("re-applies a lagging projection and reads nothing when no request is open", async () => {
@@ -659,14 +716,16 @@ describe("ReadOpenDetailRequestUseCase", () => {
         requests: [openRequest().answer(NOW)],
       },
     });
-    const useCase = new ReadOpenDetailRequestUseCase(ports);
+    const readOpenDetailRequestUseCase = new ReadOpenDetailRequestUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readOpenDetailRequestUseCase.execute("user_ana");
 
     // assert
     expect(result).toBeNull();
-    expect(ports.stamps.record).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewStampsPort.record).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       stamps: {
         ...NO_STAMPS,
@@ -680,10 +739,12 @@ describe("ReadOpenDetailRequestUseCase", () => {
   it("reads nothing for a subject with no client", async () => {
     // arrange
     const ports = readPorts({ client: null });
-    const useCase = new ReadOpenDetailRequestUseCase(ports);
+    const readOpenDetailRequestUseCase = new ReadOpenDetailRequestUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute("user_unknown");
+    const result = await readOpenDetailRequestUseCase.execute("user_unknown");
 
     // assert
     expect(result).toBeNull();
@@ -692,13 +753,15 @@ describe("ReadOpenDetailRequestUseCase", () => {
   it("reads nothing for a client with no identity", async () => {
     // arrange
     const ports = readPorts({ identity: null });
-    const useCase = new ReadOpenDetailRequestUseCase(ports);
+    const readOpenDetailRequestUseCase = new ReadOpenDetailRequestUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readOpenDetailRequestUseCase.execute("user_ana");
 
     // assert
     expect(result).toBeNull();
-    expect(ports.stamps.record).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewStampsPort.record).not.toHaveBeenCalled();
   });
 });

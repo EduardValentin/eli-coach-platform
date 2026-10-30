@@ -104,7 +104,12 @@ function createPorts(options: {
     findByClientIds: vi.fn().mockResolvedValue(options.identities ?? []),
   } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
 
-  return { checkIns, clients, clock: { now: () => NOW }, identities };
+  return {
+    checkInsPort: checkIns,
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    clientIdentitiesPort: identities,
+  };
 }
 
 describe("ListClientCheckInsUseCase", () => {
@@ -151,7 +156,7 @@ describe("ListClientCheckInsUseCase", () => {
         },
       ],
     });
-    expect(ports.checkIns.listForClient).toHaveBeenCalledWith("client-1");
+    expect(ports.checkInsPort.listForClient).toHaveBeenCalledWith("client-1");
   });
 
   it("shows her waiting request as hers to withdraw, not hers to answer", async () => {
@@ -201,7 +206,7 @@ describe("ListClientCheckInsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.checkIns.listForClient).not.toHaveBeenCalled();
+    expect(ports.checkInsPort.listForClient).not.toHaveBeenCalled();
   });
 });
 
@@ -319,8 +324,8 @@ describe("ListCoachCheckInsUseCase", () => {
     await new ListCoachCheckInsUseCase(ports).execute();
 
     // assert
-    expect(ports.identities.findByClientIds).toHaveBeenCalledTimes(1);
-    expect(ports.identities.findByClientIds).toHaveBeenCalledWith([
+    expect(ports.clientIdentitiesPort.findByClientIds).toHaveBeenCalledTimes(1);
+    expect(ports.clientIdentitiesPort.findByClientIds).toHaveBeenCalledWith([
       "client-1",
       "client-2",
     ]);

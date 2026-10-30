@@ -108,8 +108,8 @@ describe("createBoundedContextMiddleware", () => {
     expect(context.get(waitlistContext)).toBeDefined();
     expect(context.get(coachingSalesContext)).toBeDefined();
     expect(context.get(platformContext)).toEqual({
-      metadata: container.platform.metadata,
-      readyz: container.platform.readyz,
+      appMetadataController: container.platform.appMetadataController,
+      readyzController: container.platform.readyzController,
     });
     expect(context.get(runtimeConfigContext)).toEqual({
       appBasePath: container.platform.appBasePath,

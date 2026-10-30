@@ -85,22 +85,25 @@ function createPreview(
     "findActiveForClient" | "listOccurrences"
   >;
   const ports = {
-    clients,
-    clock: { now: () => NOW },
-    openSlots,
-    series,
+    clientReachPort: clients,
+    clockPort: { now: () => NOW },
+    openSlotsPort: openSlots,
+    checkInSeriesRecordsPort: series,
   };
 
-  return { ports, preview: new PreviewCheckInSeriesUseCase(ports) };
+  return {
+    ports,
+    previewCheckInSeriesUseCase: new PreviewCheckInSeriesUseCase(ports),
+  };
 }
 
 describe("PreviewCheckInSeriesUseCase", () => {
   it("offers the coach's weekdays and every hour of her window with its weeks and the ones already taken", async () => {
     // arrange
-    const { ports, preview } = createPreview();
+    const { ports, previewCheckInSeriesUseCase } = createPreview();
 
     // act
-    const result = await preview.execute({
+    const result = await previewCheckInSeriesUseCase.execute({
       clientId: "client-1",
       weekday: "wednesday",
     });
@@ -115,18 +118,18 @@ describe("PreviewCheckInSeriesUseCase", () => {
         { hour: 19, occurrences: 5, clashes: 1 },
       ],
     });
-    expect(ports.openSlots.busyFrom).toHaveBeenCalledWith(NOW);
+    expect(ports.openSlotsPort.busyFrom).toHaveBeenCalledWith(NOW);
   });
 
   it("leaves the hours her own weekly check-in holds out of the clashes, since a change replaces them", async () => {
     // arrange
-    const { preview } = createPreview(ANA_REACH, {
+    const { previewCheckInSeriesUseCase } = createPreview(ANA_REACH, {
       series: ANA_SERIES,
       weeks: [seriesWeekAt(HELD_WEDNESDAY_SIX_PM.start)],
     });
 
     // act
-    const result = await preview.execute({
+    const result = await previewCheckInSeriesUseCase.execute({
       clientId: "client-1",
       weekday: "wednesday",
     });
@@ -144,13 +147,13 @@ describe("PreviewCheckInSeriesUseCase", () => {
 
   it("still counts an hour her own weekly check-in no longer holds", async () => {
     // arrange
-    const { preview } = createPreview(ANA_REACH, {
+    const { previewCheckInSeriesUseCase } = createPreview(ANA_REACH, {
       series: ANA_SERIES,
       weeks: [seriesWeekAt(HELD_WEDNESDAY_SIX_PM.start).asClash()],
     });
 
     // act
-    const result = await preview.execute({
+    const result = await previewCheckInSeriesUseCase.execute({
       clientId: "client-1",
       weekday: "wednesday",
     });
@@ -167,13 +170,13 @@ describe("PreviewCheckInSeriesUseCase", () => {
 
   it("offers every hour with no week when her paid period has none left", async () => {
     // arrange
-    const { preview } = createPreview({
+    const { previewCheckInSeriesUseCase } = createPreview({
       ...ANA_REACH,
       paidThrough: new Date("2026-10-06T08:00:00.000Z"),
     });
 
     // act
-    const result = await preview.execute({
+    const result = await previewCheckInSeriesUseCase.execute({
       clientId: "client-1",
       weekday: "wednesday",
     });
@@ -211,16 +214,16 @@ describe("PreviewCheckInSeriesUseCase", () => {
     },
   ] as const)("refuses $situation as $status", async ({ client, status }) => {
     // arrange
-    const { ports, preview } = createPreview(client);
+    const { ports, previewCheckInSeriesUseCase } = createPreview(client);
 
     // act
-    const result = await preview.execute({
+    const result = await previewCheckInSeriesUseCase.execute({
       clientId: "client-1",
       weekday: "wednesday",
     });
 
     // assert
     expect(result).toEqual({ status });
-    expect(ports.openSlots.busyFrom).not.toHaveBeenCalled();
+    expect(ports.openSlotsPort.busyFrom).not.toHaveBeenCalled();
   });
 });

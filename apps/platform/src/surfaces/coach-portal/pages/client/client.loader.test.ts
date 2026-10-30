@@ -240,20 +240,20 @@ function routeArguments() {
   const args = createRequestArgs({
     contexts: [
       contextEntry(clientsContext, {
-        coachClients: { loadClient },
+        coachClientsController: { loadClient },
       } as unknown as ClientsFeature),
       contextEntry(coachingSalesContext, {
-        coachSales: { loadClientSubscription },
+        coachSalesController: { loadClientSubscription },
       } as unknown as CoachingSalesFeature),
       contextEntry(clientOnboardingContext, {
-        coachReview: { loadReview },
+        onboardingReviewController: { loadReview },
       } as unknown as ClientOnboardingFeature),
       contextEntry(clientProfileContext, {
-        coachProfile: { load: loadProfile, loadMeasurements },
+        clientProfileController: { load: loadProfile, loadMeasurements },
       } as unknown as ClientProfileFeature),
       contextEntry(checkInsContext, {
-        coachCheckIns: { loadClientScheduling },
-        coachCheckInSeries: { loadClientSeries },
+        coachCheckInsController: { loadClientScheduling },
+        coachCheckInSeriesController: { loadClientSeries },
       } as unknown as CheckInsFeature),
     ],
     params: { clientId: CLIENT_ID },

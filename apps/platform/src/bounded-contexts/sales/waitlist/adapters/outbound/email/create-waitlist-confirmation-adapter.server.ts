@@ -9,8 +9,8 @@ type CreateWaitlistConfirmationOptions = {
 };
 
 export function createWaitlistConfirmationAdapter(
-  productEmail: ProductEmailPort,
+  productEmailPort: ProductEmailPort,
   options: CreateWaitlistConfirmationOptions,
 ): WaitlistConfirmationPort {
-  return new EmailWaitlistConfirmationAdapter(productEmail, options);
+  return new EmailWaitlistConfirmationAdapter(productEmailPort, options);
 }

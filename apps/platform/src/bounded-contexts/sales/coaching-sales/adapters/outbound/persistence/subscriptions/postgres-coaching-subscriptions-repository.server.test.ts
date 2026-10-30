@@ -50,11 +50,13 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("writes only while the stored row still holds every value the change was decided on", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions } = createSubscriptions(database.client);
+    const { postgresCoachingSubscriptionsRepository } = createSubscriptions(
+      database.client,
+    );
     const previous = subscriptionOf();
 
     // act
-    const outcome = await subscriptions.save({
+    const outcome = await postgresCoachingSubscriptionsRepository.save({
       subscription: previous.flagPaymentProblem(PROBLEM_AT),
       previous,
     });
@@ -70,7 +72,9 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("writes the renewed paid-through date", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions } = createSubscriptions(database.client);
+    const { postgresCoachingSubscriptionsRepository } = createSubscriptions(
+      database.client,
+    );
     const previous = subscriptionOf({
       status: "active",
       cancelledAt: null,
@@ -78,7 +82,7 @@ describe("PostgresCoachingSubscriptions#save", () => {
     });
 
     // act
-    await subscriptions.save({
+    await postgresCoachingSubscriptionsRepository.save({
       subscription: previous.renewalPaid(RENEWED_THROUGH),
       previous,
     });
@@ -90,7 +94,9 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("writes the program start moved by an early start", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions } = createSubscriptions(database.client);
+    const { postgresCoachingSubscriptionsRepository } = createSubscriptions(
+      database.client,
+    );
     const waiting = {
       status: "not-started",
       cancelledAt: null,
@@ -108,7 +114,10 @@ describe("PostgresCoachingSubscriptions#save", () => {
     });
 
     // act
-    await subscriptions.save({ subscription, previous });
+    await postgresCoachingSubscriptionsRepository.save({
+      subscription,
+      previous,
+    });
 
     // assert
     expect(database.writes).toEqual([
@@ -119,8 +128,11 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("copies the saved subscription's standing onto her client in the same transaction", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions, standingWrittenIn, writeCoachingStanding } =
-      createSubscriptions(database.client);
+    const {
+      postgresCoachingSubscriptionsRepository,
+      standingWrittenIn,
+      writeCoachingStanding,
+    } = createSubscriptions(database.client);
     const previous = subscriptionOf({
       status: "active",
       cancelledAt: null,
@@ -129,7 +141,10 @@ describe("PostgresCoachingSubscriptions#save", () => {
     const cancelled = subscriptionOf();
 
     // act
-    await subscriptions.save({ subscription: cancelled, previous });
+    await postgresCoachingSubscriptionsRepository.save({
+      subscription: cancelled,
+      previous,
+    });
 
     // assert
     expect(standingWrittenIn).toEqual([database.transaction]);
@@ -145,13 +160,12 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("copies the standing again when the change leaves every column as it was", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions, writeCoachingStanding } = createSubscriptions(
-      database.client,
-    );
+    const { postgresCoachingSubscriptionsRepository, writeCoachingStanding } =
+      createSubscriptions(database.client);
     const unchanged = subscriptionOf();
 
     // act
-    const outcome = await subscriptions.save({
+    const outcome = await postgresCoachingSubscriptionsRepository.save({
       subscription: unchanged,
       previous: unchanged,
     });
@@ -165,13 +179,12 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("copies no standing when the stored row no longer holds what the change was decided on", async () => {
     // arrange
     const database = createDatabaseUpdating({ written: [] });
-    const { subscriptions, writeCoachingStanding } = createSubscriptions(
-      database.client,
-    );
+    const { postgresCoachingSubscriptionsRepository, writeCoachingStanding } =
+      createSubscriptions(database.client);
     const previous = subscriptionOf();
 
     // act
-    const outcome = await subscriptions.save({
+    const outcome = await postgresCoachingSubscriptionsRepository.save({
       subscription: previous.flagPaymentProblem(PROBLEM_AT),
       previous,
     });
@@ -186,8 +199,11 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
   it("copies the reconciled subscription's standing onto her client in the transaction that records the event", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const { subscriptions, standingWrittenIn, writeCoachingStanding } =
-      createSubscriptions(database.client);
+    const {
+      postgresCoachingSubscriptionsRepository,
+      standingWrittenIn,
+      writeCoachingStanding,
+    } = createSubscriptions(database.client);
     const previous = subscriptionOf({
       status: "active",
       cancelledAt: null,
@@ -196,7 +212,7 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
     const cancelled = subscriptionOf();
 
     // act
-    const outcome = await subscriptions.saveForEvent({
+    const outcome = await postgresCoachingSubscriptionsRepository.saveForEvent({
       eventId: "evt_1",
       subscription: cancelled,
       previous,
@@ -218,13 +234,12 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
   it("copies no standing for an event decided on a row that has changed since", async () => {
     // arrange
     const database = createDatabaseUpdating({ written: [] });
-    const { subscriptions, writeCoachingStanding } = createSubscriptions(
-      database.client,
-    );
+    const { postgresCoachingSubscriptionsRepository, writeCoachingStanding } =
+      createSubscriptions(database.client);
     const previous = subscriptionOf();
 
     // act
-    const outcome = await subscriptions.saveForEvent({
+    const outcome = await postgresCoachingSubscriptionsRepository.saveForEvent({
       eventId: "evt_2",
       subscription: previous.flagPaymentProblem(PROBLEM_AT),
       previous,
@@ -241,13 +256,12 @@ describe("PostgresCoachingSubscriptions#saveForEvent", () => {
       written: [{ id: "written" }],
       heldEvents: ["evt_3"],
     });
-    const { subscriptions, writeCoachingStanding } = createSubscriptions(
-      database.client,
-    );
+    const { postgresCoachingSubscriptionsRepository, writeCoachingStanding } =
+      createSubscriptions(database.client);
     const previous = subscriptionOf();
 
     // act
-    const outcome = await subscriptions.saveForEvent({
+    const outcome = await postgresCoachingSubscriptionsRepository.saveForEvent({
       eventId: "evt_3",
       subscription: previous.flagPaymentProblem(PROBLEM_AT),
       previous,
@@ -265,13 +279,18 @@ function createSubscriptions(database: DatabaseClient) {
   const writeCoachingStanding = vi.fn().mockImplementation(async () => {
     standingWrittenIn.push(executorOf(database));
   });
-  const subscriptions = new PostgresCoachingSubscriptionsRepository({
-    clock: { now: () => PROBLEM_AT },
-    database,
-    standings: { record: writeCoachingStanding },
-  });
+  const postgresCoachingSubscriptionsRepository =
+    new PostgresCoachingSubscriptionsRepository({
+      clockPort: { now: () => PROBLEM_AT },
+      database,
+      coachingStandingWriterPort: { record: writeCoachingStanding },
+    });
 
-  return { subscriptions, standingWrittenIn, writeCoachingStanding };
+  return {
+    postgresCoachingSubscriptionsRepository,
+    standingWrittenIn,
+    writeCoachingStanding,
+  };
 }
 
 function createDatabaseUpdating(

@@ -30,10 +30,12 @@ const ENTERED = {
 describe("OwnClientIdentityController save", () => {
   it("hands her names, date of birth, country and phone as she entered them and answers that it is saved", async () => {
     // arrange
-    const { controller, updateOwn } = createController();
+    const { ownClientIdentityController, updateOwn } = createController();
 
     // act
-    const response = await controller.save(accountArgs(CLIENT, ENTERED));
+    const response = await ownClientIdentityController.save(
+      accountArgs(CLIENT, ENTERED),
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -52,7 +54,7 @@ describe("OwnClientIdentityController save", () => {
 
   it("hands an empty phone when she leaves it out", async () => {
     // arrange
-    const { controller, updateOwn } = createController();
+    const { ownClientIdentityController, updateOwn } = createController();
     const {
       phoneCountry: _country,
       phoneNumber: _number,
@@ -60,7 +62,7 @@ describe("OwnClientIdentityController save", () => {
     } = ENTERED;
 
     // act
-    await controller.save(accountArgs(CLIENT, withoutPhone));
+    await ownClientIdentityController.save(accountArgs(CLIENT, withoutPhone));
 
     // assert
     expect(updateOwn).toHaveBeenCalledWith(
@@ -80,12 +82,12 @@ describe("OwnClientIdentityController save", () => {
       phone: "invalid",
       country: "invalid",
     } as const;
-    const { controller, updateOwn } = createController({
+    const { ownClientIdentityController, updateOwn } = createController({
       own: { status: "invalid", problems },
     });
 
     // act
-    const response = await controller.save(
+    const response = await ownClientIdentityController.save(
       accountArgs(CLIENT, {
         ...ENTERED,
         firstName: " ",
@@ -110,10 +112,12 @@ describe("OwnClientIdentityController save", () => {
     number,
   ][])("answers %o with %d", async (result, status) => {
     // arrange
-    const { controller } = createController({ own: result });
+    const { ownClientIdentityController } = createController({ own: result });
 
     // act
-    const response = await controller.save(accountArgs(CLIENT, ENTERED));
+    const response = await ownClientIdentityController.save(
+      accountArgs(CLIENT, ENTERED),
+    );
 
     // assert
     expect(response.status).toBe(status);
@@ -121,11 +125,11 @@ describe("OwnClientIdentityController save", () => {
 
   it("refuses the coach on her own route", async () => {
     // arrange
-    const { controller } = createController();
+    const { ownClientIdentityController } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.save(accountArgs(COACH, ENTERED)),
+      ownClientIdentityController.save(accountArgs(COACH, ENTERED)),
     );
 
     // assert
@@ -141,13 +145,13 @@ function createController(
   const updateOwn = vi
     .fn()
     .mockResolvedValue(results.own ?? { status: "saved" });
-  const controller = new OwnClientIdentityController({
-    updateOwnClientIdentity: {
+  const ownClientIdentityController = new OwnClientIdentityController({
+    updateOwnClientIdentityUseCase: {
       execute: updateOwn,
     } as unknown as UpdateOwnClientIdentityUseCase,
   });
 
-  return { controller, updateOwn };
+  return { ownClientIdentityController, updateOwn };
 }
 
 function accountArgs(account: SessionAccount, body: unknown) {

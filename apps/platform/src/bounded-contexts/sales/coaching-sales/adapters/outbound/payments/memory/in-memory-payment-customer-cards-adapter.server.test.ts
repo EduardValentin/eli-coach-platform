@@ -6,11 +6,11 @@ import { InMemoryPaymentCustomerCardsAdapter } from "./in-memory-payment-custome
 describe("InMemoryPaymentCustomerCards", () => {
   it("reads the fixed test card for any customer", async () => {
     // arrange
-    const cards: PaymentCustomerCardsPort =
+    const paymentCustomerCardsPort: PaymentCustomerCardsPort =
       new InMemoryPaymentCustomerCardsAdapter();
 
     // act
-    const card = await cards.readDefaultCard("cus_memory_1");
+    const card = await paymentCustomerCardsPort.readDefaultCard("cus_memory_1");
 
     // assert
     expect(card?.toSnapshot()).toEqual({

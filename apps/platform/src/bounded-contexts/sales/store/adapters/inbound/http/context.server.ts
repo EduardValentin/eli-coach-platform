@@ -7,11 +7,11 @@ import type { StoreDownloadController } from "~/bounded-contexts/sales/store/ada
 import type { StoreProductManagementController } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/store-product-management-controller.server";
 
 export type StoreFeature = {
-  acquisitions: StoreAcquisitionController;
-  catalog: StoreCatalogController;
-  covers: StoreCoverAssetController;
-  downloads: StoreDownloadController;
-  management: StoreProductManagementController;
+  storeAcquisitionController: StoreAcquisitionController;
+  storeCatalogController: StoreCatalogController;
+  storeCoverAssetController: StoreCoverAssetController;
+  storeDownloadController: StoreDownloadController;
+  storeProductManagementController: StoreProductManagementController;
 };
 
 export const storeContext: RouterContext<StoreFeature> =

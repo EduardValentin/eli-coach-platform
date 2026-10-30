@@ -11,13 +11,13 @@ export class ClientProfileIncidentsAdapter
     MeasurementIncidentsPort,
     ClientOnboardingIncidentsPort
 {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   clientAvatarFileOrphaned({
     clientId,
     storageKey,
   }: Parameters<ClientAvatarIncidentsPort["clientAvatarFileOrphaned"]>[0]) {
-    this.logger.error("Client avatar file could not be deleted.", {
+    this.loggerPort.error("Client avatar file could not be deleted.", {
       clientId,
       errorCategory: "client_avatar_file_orphaned",
       storageKey,
@@ -28,7 +28,7 @@ export class ClientProfileIncidentsAdapter
     clientId,
     entryId,
   }: Parameters<MeasurementIncidentsPort["measurementEntrySaved"]>[0]) {
-    this.logger.info("Measurement entry saved.", {
+    this.loggerPort.info("Measurement entry saved.", {
       clientId,
       entryId,
       eventCategory: "measurement_entry_saved",
@@ -40,7 +40,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingAnswersApproved"]
   >[0]) {
-    this.logger.info("Client onboarding answers approved.", {
+    this.loggerPort.info("Client onboarding answers approved.", {
       clientId,
       eventCategory: "client_onboarding_answers_approved",
     });
@@ -52,7 +52,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingDetailsAnswered"]
   >[0]) {
-    this.logger.info("Client onboarding details answered.", {
+    this.loggerPort.info("Client onboarding details answered.", {
       clientId,
       eventCategory: "client_onboarding_details_answered",
       questionCount,
@@ -63,7 +63,7 @@ export class ClientProfileIncidentsAdapter
     clientId,
     reason,
   }: Parameters<ClientOnboardingIncidentsPort["onboardingDetailsRefused"]>[0]) {
-    this.logger.warn("Client onboarding details refused.", {
+    this.loggerPort.warn("Client onboarding details refused.", {
       clientId,
       eventCategory: "client_onboarding_details_refused",
       reason,
@@ -76,7 +76,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingDetailsRequestEmailFailed"]
   >[0]) {
-    this.logger.error("Client onboarding details request email failed.", {
+    this.loggerPort.error("Client onboarding details request email failed.", {
       clientId,
       errorCategory: "client_onboarding_details_request_email_failure",
       requestId,
@@ -89,7 +89,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingDetailsRequested"]
   >[0]) {
-    this.logger.info("Client onboarding details requested.", {
+    this.loggerPort.info("Client onboarding details requested.", {
       clientId,
       eventCategory: "client_onboarding_details_requested",
       questionCount,
@@ -100,7 +100,7 @@ export class ClientProfileIncidentsAdapter
     clientId,
     formId,
   }: Parameters<ClientOnboardingIncidentsPort["onboardingDraftSaved"]>[0]) {
-    this.logger.info("Client onboarding draft saved.", {
+    this.loggerPort.info("Client onboarding draft saved.", {
       clientId,
       eventCategory: "client_onboarding_draft_saved",
       formId,
@@ -113,7 +113,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingDraftSaveFailed"]
   >[0]) {
-    this.logger.error("Client onboarding draft save failed.", {
+    this.loggerPort.error("Client onboarding draft save failed.", {
       clientId,
       errorCategory: "client_onboarding_draft_save_failure",
       formId,
@@ -123,7 +123,7 @@ export class ClientProfileIncidentsAdapter
   onboardingReviewOpened({
     clientId,
   }: Parameters<ClientOnboardingIncidentsPort["onboardingReviewOpened"]>[0]) {
-    this.logger.info("Client onboarding review opened.", {
+    this.loggerPort.info("Client onboarding review opened.", {
       clientId,
       eventCategory: "client_onboarding_review_opened",
     });
@@ -134,7 +134,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingReviewStampsRepaired"]
   >[0]) {
-    this.logger.warn("Client onboarding review stamps repaired.", {
+    this.loggerPort.warn("Client onboarding review stamps repaired.", {
       clientId,
       eventCategory: "client_onboarding_review_stamps_repaired",
     });
@@ -146,7 +146,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingSubmissionAccepted"]
   >[0]) {
-    this.logger.info("Client onboarding submission accepted.", {
+    this.loggerPort.info("Client onboarding submission accepted.", {
       clientId,
       eventCategory: "client_onboarding_submission_accepted",
       screeningOutcome,
@@ -159,7 +159,7 @@ export class ClientProfileIncidentsAdapter
   }: Parameters<
     ClientOnboardingIncidentsPort["onboardingSubmissionRefused"]
   >[0]) {
-    this.logger.warn("Client onboarding submission refused.", {
+    this.loggerPort.warn("Client onboarding submission refused.", {
       clientId,
       eventCategory: "client_onboarding_submission_refused",
       reason,
@@ -170,7 +170,7 @@ export class ClientProfileIncidentsAdapter
     photoId,
     requesterRole,
   }: Parameters<MeasurementIncidentsPort["progressPhotoAccessRefused"]>[0]) {
-    this.logger.warn("Progress photo access refused.", {
+    this.loggerPort.warn("Progress photo access refused.", {
       eventCategory: "progress_photo_access_refused",
       photoId,
       requesterRole,
@@ -183,7 +183,7 @@ export class ClientProfileIncidentsAdapter
     photoId,
     view,
   }: Parameters<MeasurementIncidentsPort["progressPhotoDeleted"]>[0]) {
-    this.logger.info("Progress photo deleted.", {
+    this.loggerPort.info("Progress photo deleted.", {
       clientId,
       entryId,
       eventCategory: "progress_photo_deleted",
@@ -199,7 +199,7 @@ export class ClientProfileIncidentsAdapter
     receivedBytes,
     view,
   }: Parameters<MeasurementIncidentsPort["progressPhotoRefused"]>[0]) {
-    this.logger.warn("Progress photo refused.", {
+    this.loggerPort.warn("Progress photo refused.", {
       clientId,
       entryId,
       eventCategory: "progress_photo_refused",
@@ -216,7 +216,7 @@ export class ClientProfileIncidentsAdapter
     storedBytes,
     view,
   }: Parameters<MeasurementIncidentsPort["progressPhotoStored"]>[0]) {
-    this.logger.info("Progress photo stored.", {
+    this.loggerPort.info("Progress photo stored.", {
       clientId,
       entryId,
       eventCategory: "progress_photo_stored",

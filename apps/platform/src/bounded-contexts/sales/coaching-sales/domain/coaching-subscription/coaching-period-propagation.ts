@@ -4,14 +4,14 @@ import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-
 
 type CoachingPeriodPropagationOptions = {
   coachingPeriods: readonly CoachingPeriodHandlerPort[];
-  incidents: Pick<
+  coachingSubscriptionIncidentsPort: Pick<
     CoachingSubscriptionIncidentsPort,
     "coachingPeriodNotPropagated"
   >;
 };
 
 type CoachingPeriodNotice = (
-  handler: CoachingPeriodHandlerPort,
+  coachingPeriodHandlerPort: CoachingPeriodHandlerPort,
 ) => Promise<void>;
 
 export class CoachingPeriodPropagation {
@@ -25,8 +25,8 @@ export class CoachingPeriodPropagation {
       paidThrough: subscription.paidThrough,
     };
 
-    await this.tellEach(subscription, (handler) =>
-      handler.paidThroughExtended(notice),
+    await this.tellEach(subscription, (coachingPeriodHandlerPort) =>
+      coachingPeriodHandlerPort.paidThroughExtended(notice),
     );
   }
 
@@ -38,8 +38,8 @@ export class CoachingPeriodPropagation {
       startsAt: subscription.programStartsAt,
     };
 
-    await this.tellEach(subscription, (handler) =>
-      handler.programStarted(notice),
+    await this.tellEach(subscription, (coachingPeriodHandlerPort) =>
+      coachingPeriodHandlerPort.programStarted(notice),
     );
   }
 
@@ -47,15 +47,17 @@ export class CoachingPeriodPropagation {
     subscription: CoachingSubscription,
     tell: CoachingPeriodNotice,
   ): Promise<void> {
-    for (const handler of this.options.coachingPeriods) {
+    for (const coachingPeriodHandlerPort of this.options.coachingPeriods) {
       try {
-        await tell(handler);
+        await tell(coachingPeriodHandlerPort);
       } catch (error) {
-        this.options.incidents.coachingPeriodNotPropagated({
-          subscriptionId: subscription.id,
-          clientId: subscription.clientId,
-          error,
-        });
+        this.options.coachingSubscriptionIncidentsPort.coachingPeriodNotPropagated(
+          {
+            subscriptionId: subscription.id,
+            clientId: subscription.clientId,
+            error,
+          },
+        );
       }
     }
   }

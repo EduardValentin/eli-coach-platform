@@ -12,7 +12,7 @@ describe("TurnstileBotVerifier", () => {
         success: true,
       }),
     );
-    const verifier = new TurnstileBotVerifierAdapter({
+    const turnstileBotVerifierAdapter = new TurnstileBotVerifierAdapter({
       fetchSiteverify,
       secretKey: "turnstile-secret",
       siteverifyUrl:
@@ -20,7 +20,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // act
-    const verification = verifier.verifySubmission({
+    const verification = turnstileBotVerifierAdapter.verifySubmission({
       action: "waitlist_join",
       remoteIp: "203.0.113.4",
       token: "turnstile-token",
@@ -44,7 +44,7 @@ describe("TurnstileBotVerifier", () => {
   it("rejects missing tokens without calling Siteverify", async () => {
     // arrange
     const fetchSiteverify = vi.fn();
-    const verifier = new TurnstileBotVerifierAdapter({
+    const turnstileBotVerifierAdapter = new TurnstileBotVerifierAdapter({
       fetchSiteverify,
       secretKey: "turnstile-secret",
       siteverifyUrl:
@@ -52,7 +52,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // act
-    const verification = verifier.verifySubmission({
+    const verification = turnstileBotVerifierAdapter.verifySubmission({
       action: "waitlist_join",
       remoteIp: null,
       token: null,
@@ -72,7 +72,7 @@ describe("TurnstileBotVerifier", () => {
         success: true,
       }),
     );
-    const verifier = new TurnstileBotVerifierAdapter({
+    const turnstileBotVerifierAdapter = new TurnstileBotVerifierAdapter({
       fetchSiteverify,
       secretKey: "turnstile-secret",
       siteverifyUrl:
@@ -80,7 +80,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // act
-    const verification = verifier.verifySubmission({
+    const verification = turnstileBotVerifierAdapter.verifySubmission({
       action: "waitlist_join",
       remoteIp: null,
       token: "turnstile-token",
@@ -95,7 +95,7 @@ describe("TurnstileBotVerifier", () => {
     const fetchSiteverify = vi
       .fn()
       .mockRejectedValue(new Error("network unavailable"));
-    const verifier = new TurnstileBotVerifierAdapter({
+    const turnstileBotVerifierAdapter = new TurnstileBotVerifierAdapter({
       fetchSiteverify,
       secretKey: "turnstile-secret",
       siteverifyUrl:
@@ -103,7 +103,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // act
-    const verification = verifier.verifySubmission({
+    const verification = turnstileBotVerifierAdapter.verifySubmission({
       action: "waitlist_join",
       remoteIp: null,
       token: "turnstile-token",
@@ -118,7 +118,7 @@ describe("TurnstileBotVerifier", () => {
     const fetchSiteverify = vi
       .fn()
       .mockResolvedValue(new Response(null, { status: 503 }));
-    const verifier = new TurnstileBotVerifierAdapter({
+    const turnstileBotVerifierAdapter = new TurnstileBotVerifierAdapter({
       fetchSiteverify,
       secretKey: "turnstile-secret",
       siteverifyUrl:
@@ -126,7 +126,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // act
-    const verification = verifier.verifySubmission({
+    const verification = turnstileBotVerifierAdapter.verifySubmission({
       action: "waitlist_join",
       remoteIp: null,
       token: "turnstile-token",
@@ -141,7 +141,7 @@ describe("TurnstileBotVerifier", () => {
     const fetchSiteverify = vi
       .fn()
       .mockResolvedValue(Response.json({ action: "waitlist_join" }));
-    const verifier = new TurnstileBotVerifierAdapter({
+    const turnstileBotVerifierAdapter = new TurnstileBotVerifierAdapter({
       fetchSiteverify,
       secretKey: "turnstile-secret",
       siteverifyUrl:
@@ -149,7 +149,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // act
-    const verification = verifier.verifySubmission({
+    const verification = turnstileBotVerifierAdapter.verifySubmission({
       action: "waitlist_join",
       remoteIp: null,
       token: "turnstile-token",

@@ -36,7 +36,7 @@ describe("composeExerciseLibraryFeature", () => {
     const feature = composeExerciseLibraryFeature(createHandles());
 
     // act
-    const listing = feature.exerciseLibrary.list(coachArgs());
+    const listing = feature.exerciseLibraryController.list(coachArgs());
 
     // assert
     await expect(listing).rejects.toThrow("database down");
@@ -48,13 +48,13 @@ describe("composeExerciseLibraryFeature", () => {
     const feature = composeExerciseLibraryFeature(handles);
 
     // act
-    const response = await feature.exerciseLibrary.create(
+    const response = await feature.exerciseLibraryController.create(
       coachArgs(jsonRequest("POST")),
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Exercise could not be created.",
       { errorCategory: "exercise_creation_failure", errorClass: "Error" },
     );
@@ -66,14 +66,14 @@ describe("composeExerciseLibraryFeature", () => {
     const feature = composeExerciseLibraryFeature(handles);
 
     // act
-    const response = await feature.exerciseLibrary.edit(
+    const response = await feature.exerciseLibraryController.edit(
       coachArgs(jsonRequest("PUT")),
       EXERCISE_ID,
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.logger.error).toHaveBeenCalledWith(
+    expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Exercise edit could not be written.",
       {
         errorCategory: "exercise_edit_failure",
@@ -91,14 +91,16 @@ describe("composeExerciseLibraryFeature with exercise videos", () => {
     const feature = composeExerciseLibraryFeature(handles);
 
     // act
-    const response = await feature.exerciseLibrary.create(
+    const response = await feature.exerciseLibraryController.create(
       coachArgs(multipartRequest()),
     );
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.videoStore.receive).toHaveBeenCalledOnce();
-    expect(handles.videoStore.discard).toHaveBeenCalledWith("staging-1");
+    expect(handles.exerciseVideoStorePort.receive).toHaveBeenCalledOnce();
+    expect(handles.exerciseVideoStorePort.discard).toHaveBeenCalledWith(
+      "staging-1",
+    );
   });
 
   it("reads the exercise from the exercises table before opening its video", async () => {
@@ -107,24 +109,24 @@ describe("composeExerciseLibraryFeature with exercise videos", () => {
     const feature = composeExerciseLibraryFeature(handles);
 
     // act
-    const opening = feature.exerciseLibrary.openVideo(coachArgs(), {
+    const opening = feature.exerciseLibraryController.openVideo(coachArgs(), {
       exerciseId: EXERCISE_ID,
       videoId: VIDEO_ID,
     });
 
     // assert
     await expect(opening).rejects.toThrow("database down");
-    expect(handles.videoStore.open).not.toHaveBeenCalled();
+    expect(handles.exerciseVideoStorePort.open).not.toHaveBeenCalled();
   });
 });
 
 function createHandles() {
   return {
-    clock: { now: () => new Date("2026-10-14T09:00:00.000Z") },
+    clockPort: { now: () => new Date("2026-10-14T09:00:00.000Z") },
     database: createUnreachableDatabase(),
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-    videoFormats: { detect: vi.fn(async () => "mp4") },
-    videoStore: {
+    loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+    exerciseVideoFormatDetectorPort: { detect: vi.fn(async () => "mp4") },
+    exerciseVideoStorePort: {
       receive: vi.fn(async (bytes: AsyncIterable<Uint8Array>) => {
         for await (const _chunk of bytes) {
           continue;

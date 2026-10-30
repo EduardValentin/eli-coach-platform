@@ -16,10 +16,10 @@ type OpenOnboardingReviewResult =
 
 type OpenOnboardingReviewUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
-  onboardings: ClientOnboardingSourcePort;
-  reviews: OnboardingReviewsPort;
-  clock: ClockPort;
-  incidents: ClientOnboardingIncidentsPort;
+  clientOnboardingSourcePort: ClientOnboardingSourcePort;
+  onboardingReviewsPort: OnboardingReviewsPort;
+  clockPort: ClockPort;
+  clientOnboardingIncidentsPort: ClientOnboardingIncidentsPort;
 };
 
 export class OpenOnboardingReviewUseCase {
@@ -39,27 +39,29 @@ export class OpenOnboardingReviewUseCase {
     }
 
     const [stored, reviewed] = await Promise.all([
-      this.options.onboardings.findByClientId(clientId),
-      this.options.reviews.findByClientId(clientId),
+      this.options.clientOnboardingSourcePort.findByClientId(clientId),
+      this.options.onboardingReviewsPort.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
       submission: stored.submission,
       ...reviewed,
     });
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const outcome = review.open(now);
 
     if (outcome.status !== "opened") {
       return outcome;
     }
 
-    await this.options.reviews.recordOpened({
+    await this.options.onboardingReviewsPort.recordOpened({
       clientId,
       at: now,
       stamps: outcome.review.stamps(),
     });
-    this.options.incidents.onboardingReviewOpened({ clientId });
+    this.options.clientOnboardingIncidentsPort.onboardingReviewOpened({
+      clientId,
+    });
 
     return { status: "opened" };
   }

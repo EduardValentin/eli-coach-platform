@@ -7,13 +7,13 @@ import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissi
 import { coachingStandingDtoOf } from "./coaching-standing-dto.server";
 
 export class ClientsCoachingStandingWriterAdapter implements CoachingStandingWriterPort {
-  constructor(private readonly admissions: AdmissionsFacade) {}
+  constructor(private readonly admissionsFacade: AdmissionsFacade) {}
 
   record(input: {
     clientId: string;
     standing: CoachingStanding;
   }): Promise<void> {
-    return this.admissions.recordCoachingStanding({
+    return this.admissionsFacade.recordCoachingStanding({
       clientId: input.clientId,
       standing: coachingStandingDtoOf(input.standing),
     });

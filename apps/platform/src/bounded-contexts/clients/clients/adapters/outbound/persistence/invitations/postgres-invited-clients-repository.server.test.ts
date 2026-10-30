@@ -22,21 +22,22 @@ function standingOf(status: string) {
 describe("PostgresInvitedClients#findById", () => {
   it("answers the paid client with the subject she is bound to", async () => {
     // arrange
-    const invitedClients = new PostgresInvitedClientsRepository(
-      createDatabaseAnswering([
-        {
-          id: CLIENT_ID,
-          email: "ana@example.com",
-          firstName: "Ana",
-          authSubjectId: null,
-          accountInvitationId: INVITATION_ID,
-          standing: standingOf("not-started"),
-        },
-      ]),
-    );
+    const postgresInvitedClientsRepository =
+      new PostgresInvitedClientsRepository(
+        createDatabaseAnswering([
+          {
+            id: CLIENT_ID,
+            email: "ana@example.com",
+            firstName: "Ana",
+            authSubjectId: null,
+            accountInvitationId: INVITATION_ID,
+            standing: standingOf("not-started"),
+          },
+        ]),
+      );
 
     // act
-    const client = await invitedClients.findById(CLIENT_ID);
+    const client = await postgresInvitedClientsRepository.findById(CLIENT_ID);
 
     // assert
     expect(client).toEqual({
@@ -58,21 +59,22 @@ describe("PostgresInvitedClients#findById", () => {
     "reads her coaching as closed for a %s standing on her row: %s",
     async (status, expected) => {
       // arrange
-      const invitedClients = new PostgresInvitedClientsRepository(
-        createDatabaseAnswering([
-          {
-            id: CLIENT_ID,
-            email: "ana@example.com",
-            firstName: "Ana",
-            authSubjectId: null,
-            accountInvitationId: null,
-            standing: standingOf(status),
-          },
-        ]),
-      );
+      const postgresInvitedClientsRepository =
+        new PostgresInvitedClientsRepository(
+          createDatabaseAnswering([
+            {
+              id: CLIENT_ID,
+              email: "ana@example.com",
+              firstName: "Ana",
+              authSubjectId: null,
+              accountInvitationId: null,
+              standing: standingOf(status),
+            },
+          ]),
+        );
 
       // act
-      const client = await invitedClients.findById(CLIENT_ID);
+      const client = await postgresInvitedClientsRepository.findById(CLIENT_ID);
 
       // assert
       expect(client?.coachingCancelledOrEnded).toBe(expected);
@@ -81,12 +83,11 @@ describe("PostgresInvitedClients#findById", () => {
 
   it("answers null for a client that does not exist", async () => {
     // arrange
-    const invitedClients = new PostgresInvitedClientsRepository(
-      createDatabaseAnswering([]),
-    );
+    const postgresInvitedClientsRepository =
+      new PostgresInvitedClientsRepository(createDatabaseAnswering([]));
 
     // act
-    const client = await invitedClients.findById(CLIENT_ID);
+    const client = await postgresInvitedClientsRepository.findById(CLIENT_ID);
 
     // assert
     expect(client).toBeNull();
@@ -97,12 +98,11 @@ describe("PostgresInvitedClients#bindAuthSubject", () => {
   it("binds the client to the subject", async () => {
     // arrange
     const database = createDatabaseBinding([{ id: CLIENT_ID }]);
-    const invitedClients = new PostgresInvitedClientsRepository(
-      database.client,
-    );
+    const postgresInvitedClientsRepository =
+      new PostgresInvitedClientsRepository(database.client);
 
     // act
-    const outcome = await invitedClients.bindAuthSubject({
+    const outcome = await postgresInvitedClientsRepository.bindAuthSubject({
       clientId: CLIENT_ID,
       authSubjectId: SUBJECT,
     });
@@ -115,12 +115,11 @@ describe("PostgresInvitedClients#bindAuthSubject", () => {
   it("answers raced when another request bound the client first", async () => {
     // arrange
     const database = createDatabaseBinding([]);
-    const invitedClients = new PostgresInvitedClientsRepository(
-      database.client,
-    );
+    const postgresInvitedClientsRepository =
+      new PostgresInvitedClientsRepository(database.client);
 
     // act
-    const outcome = await invitedClients.bindAuthSubject({
+    const outcome = await postgresInvitedClientsRepository.bindAuthSubject({
       clientId: CLIENT_ID,
       authSubjectId: SUBJECT,
     });
@@ -131,14 +130,15 @@ describe("PostgresInvitedClients#bindAuthSubject", () => {
 
   it("answers raced when the subject is already bound to another client", async () => {
     // arrange
-    const invitedClients = new PostgresInvitedClientsRepository(
-      createDatabaseFailingTransactionWith(
-        uniqueViolation("clients_auth_subject_id_unique"),
-      ),
-    );
+    const postgresInvitedClientsRepository =
+      new PostgresInvitedClientsRepository(
+        createDatabaseFailingTransactionWith(
+          uniqueViolation("clients_auth_subject_id_unique"),
+        ),
+      );
 
     // act
-    const outcome = await invitedClients.bindAuthSubject({
+    const outcome = await postgresInvitedClientsRepository.bindAuthSubject({
       clientId: CLIENT_ID,
       authSubjectId: SUBJECT,
     });
@@ -150,12 +150,13 @@ describe("PostgresInvitedClients#bindAuthSubject", () => {
   it("rethrows any other failure", async () => {
     // arrange
     const failure = uniqueViolation("clients_account_invitation_id_unique");
-    const invitedClients = new PostgresInvitedClientsRepository(
-      createDatabaseFailingTransactionWith(failure),
-    );
+    const postgresInvitedClientsRepository =
+      new PostgresInvitedClientsRepository(
+        createDatabaseFailingTransactionWith(failure),
+      );
 
     // act
-    const binding = invitedClients.bindAuthSubject({
+    const binding = postgresInvitedClientsRepository.bindAuthSubject({
       clientId: CLIENT_ID,
       authSubjectId: SUBJECT,
     });

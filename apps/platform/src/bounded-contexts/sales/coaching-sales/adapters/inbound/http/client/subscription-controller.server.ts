@@ -34,12 +34,12 @@ import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type SubscriptionControllerOptions = {
   appBasePath: string;
-  cancelSubscription: CancelSubscriptionUseCase;
-  openPaymentMethodSession: OpenPaymentMethodSessionUseCase;
+  cancelSubscriptionUseCase: CancelSubscriptionUseCase;
+  openPaymentMethodSessionUseCase: OpenPaymentMethodSessionUseCase;
   publicAppUrl: string;
-  readClientSubscription: ReadClientSubscriptionUseCase;
-  readProgramStatus: ReadProgramStatusUseCase;
-  startProgramNow: StartProgramNowUseCase;
+  readClientSubscriptionUseCase: ReadClientSubscriptionUseCase;
+  readProgramStatusUseCase: ReadProgramStatusUseCase;
+  startProgramNowUseCase: StartProgramNowUseCase;
 };
 
 type SubscriptionReading = NonNullable<
@@ -76,7 +76,7 @@ export class SubscriptionController {
     const account = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const reading = await this.options.readClientSubscription.execute(
+    const reading = await this.options.readClientSubscriptionUseCase.execute(
       account.authSubjectId,
     );
 
@@ -91,7 +91,7 @@ export class SubscriptionController {
     const account = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const reading = await this.options.readClientSubscription.execute(
+    const reading = await this.options.readClientSubscriptionUseCase.execute(
       account.authSubjectId,
     );
 
@@ -106,7 +106,7 @@ export class SubscriptionController {
     const account = args.context
       .get(accessContext)
       .requirePortalAccess("CLIENT");
-    const status = await this.options.readProgramStatus.execute(
+    const status = await this.options.readProgramStatusUseCase.execute(
       account.authSubjectId,
     );
 
@@ -126,7 +126,7 @@ export class SubscriptionController {
     const account = args.context
       .get(accessContext)
       .requireAccount({ role: "CLIENT" });
-    const result = await this.options.cancelSubscription.execute(
+    const result = await this.options.cancelSubscriptionUseCase.execute(
       account.authSubjectId,
     );
 
@@ -148,7 +148,7 @@ export class SubscriptionController {
     const account = args.context
       .get(accessContext)
       .requireAccount({ role: "CLIENT" });
-    const result = await this.options.startProgramNow.execute(
+    const result = await this.options.startProgramNowUseCase.execute(
       account.authSubjectId,
     );
 
@@ -170,7 +170,7 @@ export class SubscriptionController {
     const account = args.context
       .get(accessContext)
       .requireAccount({ role: "CLIENT" });
-    const result = await this.options.openPaymentMethodSession.execute({
+    const result = await this.options.openPaymentMethodSessionUseCase.execute({
       authSubjectId: account.authSubjectId,
       returnUrl: this.publicUrl(CLIENT_SETTINGS_PATH),
     });

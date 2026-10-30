@@ -11,8 +11,8 @@ import { coachingStandingDtoOf } from "./coaching-standing-dto.server";
 
 export class ClientsPaidClientAdmissionAdapter implements PaidClientAdmissionPort {
   constructor(
-    private readonly admissions: AdmissionsFacade,
-    private readonly clientProfile: ClientProfileFacade,
+    private readonly admissionsFacade: AdmissionsFacade,
+    private readonly clientProfileFacade: ClientProfileFacade,
   ) {}
 
   async admit(admission: {
@@ -21,14 +21,14 @@ export class ClientsPaidClientAdmissionAdapter implements PaidClientAdmissionPor
     at: Date;
   }): Promise<PaidClientAdmissionOutcome> {
     const admittedAt = admission.at.toISOString();
-    const admitted = await this.admissions.admitPaidClient({
+    const admitted = await this.admissionsFacade.admitPaidClient({
       ...admission.client,
       admittedAt,
       standing: coachingStandingDtoOf(admission.standing),
     });
 
     if (admitted.status === "admitted") {
-      await this.clientProfile.openClientProfile({
+      await this.clientProfileFacade.openClientProfile({
         clientId: admitted.clientId,
         openedAt: admittedAt,
       });
@@ -38,6 +38,6 @@ export class ClientsPaidClientAdmissionAdapter implements PaidClientAdmissionPor
   }
 
   invite(input: { clientId: string }): Promise<void> {
-    return this.admissions.invitePaidClient(input);
+    return this.admissionsFacade.invitePaidClient(input);
   }
 }

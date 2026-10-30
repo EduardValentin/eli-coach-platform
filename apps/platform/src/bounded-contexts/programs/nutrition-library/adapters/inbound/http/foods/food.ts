@@ -21,7 +21,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(nutritionLibraryContext)
-      .foodLibrary.edit(args, args.params.foodId);
+      .foodLibraryController.edit(args, args.params.foodId);
   });
 }
 

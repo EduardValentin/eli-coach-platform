@@ -99,11 +99,11 @@ function createAnnouncer() {
     checkInSeriesReadFailed: vi.fn(),
   } satisfies CheckInIncidentsPort;
   const ports = {
-    clock: { now: () => NOW },
-    identities,
-    inbox,
-    incidents,
-    notifications,
+    clockPort: { now: () => NOW },
+    clientIdentitiesPort: identities,
+    checkInInboxPort: inbox,
+    checkInIncidentsPort: incidents,
+    checkInNotificationsPort: notifications,
   };
 
   return { announcer: new CheckInAnnouncer(ports), ports };
@@ -125,14 +125,20 @@ describe("CheckInAnnouncer#announce", () => {
 
       // assert
       const notice = { checkIn: checkIn.toSnapshot(), client: ANA, recipient };
-      expect(ports.notifications.requested).toHaveBeenCalledWith(notice);
-      expect(ports.inbox.checkInEvent).toHaveBeenCalledWith(
+      expect(ports.checkInNotificationsPort.requested).toHaveBeenCalledWith(
+        notice,
+      );
+      expect(ports.checkInInboxPort.checkInEvent).toHaveBeenCalledWith(
         "requested",
         notice,
       );
-      expect(ports.identities.findByClientIds).toHaveBeenCalledOnce();
-      expect(ports.incidents.checkInNotificationFailed).not.toHaveBeenCalled();
-      expect(ports.incidents.checkInInboxFailed).not.toHaveBeenCalled();
+      expect(ports.clientIdentitiesPort.findByClientIds).toHaveBeenCalledOnce();
+      expect(
+        ports.checkInIncidentsPort.checkInNotificationFailed,
+      ).not.toHaveBeenCalled();
+      expect(
+        ports.checkInIncidentsPort.checkInInboxFailed,
+      ).not.toHaveBeenCalled();
     },
   );
 
@@ -152,7 +158,7 @@ describe("CheckInAnnouncer#announce", () => {
     async ({ fail }) => {
       // arrange
       const { announcer, ports } = createAnnouncer();
-      fail(ports.notifications.approved);
+      fail(ports.checkInNotificationsPort.approved);
 
       // act
       await announcer.announce(
@@ -162,19 +168,25 @@ describe("CheckInAnnouncer#announce", () => {
       );
 
       // assert
-      expect(ports.inbox.checkInEvent).toHaveBeenCalledOnce();
-      expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+      expect(ports.checkInInboxPort.checkInEvent).toHaveBeenCalledOnce();
+      expect(
+        ports.checkInIncidentsPort.checkInNotificationFailed,
+      ).toHaveBeenCalledWith({
         checkInId: "check-in-1",
         notification: "approved",
       });
-      expect(ports.incidents.checkInInboxFailed).not.toHaveBeenCalled();
+      expect(
+        ports.checkInIncidentsPort.checkInInboxFailed,
+      ).not.toHaveBeenCalled();
     },
   );
 
   it("still emails and reports the inbox when writing to the inbox fails", async () => {
     // arrange
     const { announcer, ports } = createAnnouncer();
-    ports.inbox.checkInEvent.mockRejectedValue(new Error("connection refused"));
+    ports.checkInInboxPort.checkInEvent.mockRejectedValue(
+      new Error("connection refused"),
+    );
 
     // act
     await announcer.announce(
@@ -184,12 +196,14 @@ describe("CheckInAnnouncer#announce", () => {
     );
 
     // assert
-    expect(ports.notifications.declined).toHaveBeenCalledOnce();
-    expect(ports.incidents.checkInInboxFailed).toHaveBeenCalledWith({
+    expect(ports.checkInNotificationsPort.declined).toHaveBeenCalledOnce();
+    expect(ports.checkInIncidentsPort.checkInInboxFailed).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       event: "declined",
     });
-    expect(ports.incidents.checkInNotificationFailed).not.toHaveBeenCalled();
+    expect(
+      ports.checkInIncidentsPort.checkInNotificationFailed,
+    ).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -200,7 +214,7 @@ describe("CheckInAnnouncer#announce", () => {
     async ({ read }) => {
       // arrange
       const { announcer, ports } = createAnnouncer();
-      ports.identities.findByClientIds = read;
+      ports.clientIdentitiesPort.findByClientIds = read;
 
       // act
       await announcer.announce(
@@ -210,13 +224,17 @@ describe("CheckInAnnouncer#announce", () => {
       );
 
       // assert
-      expect(ports.notifications.cancelled).not.toHaveBeenCalled();
-      expect(ports.inbox.checkInEvent).not.toHaveBeenCalled();
-      expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+      expect(ports.checkInNotificationsPort.cancelled).not.toHaveBeenCalled();
+      expect(ports.checkInInboxPort.checkInEvent).not.toHaveBeenCalled();
+      expect(
+        ports.checkInIncidentsPort.checkInNotificationFailed,
+      ).toHaveBeenCalledWith({
         checkInId: "check-in-1",
         notification: "cancelled",
       });
-      expect(ports.incidents.checkInInboxFailed).toHaveBeenCalledWith({
+      expect(
+        ports.checkInIncidentsPort.checkInInboxFailed,
+      ).toHaveBeenCalledWith({
         checkInId: "check-in-1",
         event: "cancelled",
       });
@@ -245,17 +263,22 @@ describe("CheckInAnnouncer#announceSeries", () => {
       client: ANA,
       recipient: "client",
     };
-    expect(ports.notifications.seriesSetUp).toHaveBeenCalledWith(notice);
-    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesSetUp", {
-      ...notice,
-      firstWeekId: "week-1",
-    });
+    expect(ports.checkInNotificationsPort.seriesSetUp).toHaveBeenCalledWith(
+      notice,
+    );
+    expect(ports.checkInInboxPort.seriesEvent).toHaveBeenCalledWith(
+      "seriesSetUp",
+      {
+        ...notice,
+        firstWeekId: "week-1",
+      },
+    );
   });
 
   it("still writes to the inbox and reports the email when the series email fails", async () => {
     // arrange
     const { announcer, ports } = createAnnouncer();
-    ports.notifications.seriesChanged.mockResolvedValue("failed");
+    ports.checkInNotificationsPort.seriesChanged.mockResolvedValue("failed");
 
     // act
     await announcer.announceSeries("seriesChanged", {
@@ -266,20 +289,24 @@ describe("CheckInAnnouncer#announceSeries", () => {
     });
 
     // assert
-    expect(ports.inbox.seriesEvent).toHaveBeenCalledOnce();
+    expect(ports.checkInInboxPort.seriesEvent).toHaveBeenCalledOnce();
     expect(
-      ports.incidents.checkInSeriesNotificationFailed,
+      ports.checkInIncidentsPort.checkInSeriesNotificationFailed,
     ).toHaveBeenCalledWith({
       seriesId: "series-1",
       notification: "seriesChanged",
     });
-    expect(ports.incidents.checkInSeriesInboxFailed).not.toHaveBeenCalled();
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesInboxFailed,
+    ).not.toHaveBeenCalled();
   });
 
   it("still emails and reports the inbox when writing the series to the inbox fails", async () => {
     // arrange
     const { announcer, ports } = createAnnouncer();
-    ports.inbox.seriesEvent.mockRejectedValue(new Error("connection refused"));
+    ports.checkInInboxPort.seriesEvent.mockRejectedValue(
+      new Error("connection refused"),
+    );
 
     // act
     await announcer.announceSeries("seriesStopped", {
@@ -290,13 +317,15 @@ describe("CheckInAnnouncer#announceSeries", () => {
     });
 
     // assert
-    expect(ports.notifications.seriesStopped).toHaveBeenCalledOnce();
-    expect(ports.incidents.checkInSeriesInboxFailed).toHaveBeenCalledWith({
+    expect(ports.checkInNotificationsPort.seriesStopped).toHaveBeenCalledOnce();
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesInboxFailed,
+    ).toHaveBeenCalledWith({
       seriesId: "series-1",
       event: "seriesStopped",
     });
     expect(
-      ports.incidents.checkInSeriesNotificationFailed,
+      ports.checkInIncidentsPort.checkInSeriesNotificationFailed,
     ).not.toHaveBeenCalled();
   });
 });
@@ -315,14 +344,14 @@ describe("CheckInAnnouncer#announceClashes", () => {
     ]);
 
     // assert
-    expect(ports.inbox.clashesAdded).toHaveBeenCalledWith({
+    expect(ports.checkInInboxPort.clashesAdded).toHaveBeenCalledWith({
       series: SERIES,
       client: ANA,
       clashes: 2,
       earliest: { id: "week-1", startsAt: earliest.startsAt },
     });
     expect(
-      Object.values(ports.notifications).every(
+      Object.values(ports.checkInNotificationsPort).every(
         (send) => send.mock.calls.length === 0,
       ),
     ).toBe(true);
@@ -331,7 +360,9 @@ describe("CheckInAnnouncer#announceClashes", () => {
   it("reports the inbox when writing the clash notice fails", async () => {
     // arrange
     const { announcer, ports } = createAnnouncer();
-    ports.inbox.clashesAdded.mockRejectedValue(new Error("connection refused"));
+    ports.checkInInboxPort.clashesAdded.mockRejectedValue(
+      new Error("connection refused"),
+    );
 
     // act
     await announcer.announceClashes(CheckInSeries.reconstitute(SERIES), [
@@ -339,7 +370,9 @@ describe("CheckInAnnouncer#announceClashes", () => {
     ]);
 
     // assert
-    expect(ports.incidents.checkInSeriesInboxFailed).toHaveBeenCalledWith({
+    expect(
+      ports.checkInIncidentsPort.checkInSeriesInboxFailed,
+    ).toHaveBeenCalledWith({
       seriesId: "series-1",
       event: "clashesAdded",
     });
@@ -353,7 +386,7 @@ describe("CheckInAnnouncer#announceClashes", () => {
     await announcer.announceClashes(CheckInSeries.reconstitute(SERIES), []);
 
     // assert
-    expect(ports.identities.findByClientIds).not.toHaveBeenCalled();
-    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
+    expect(ports.clientIdentitiesPort.findByClientIds).not.toHaveBeenCalled();
+    expect(ports.checkInInboxPort.clashesAdded).not.toHaveBeenCalled();
   });
 });

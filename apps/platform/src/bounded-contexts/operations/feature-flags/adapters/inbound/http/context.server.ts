@@ -3,7 +3,7 @@ import { createContext, type RouterContext } from "react-router";
 import type { FeatureFlagController } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/feature-flag-controller.server";
 
 export type FeatureFlagsFeature = {
-  featureFlags: FeatureFlagController;
+  featureFlagController: FeatureFlagController;
 };
 
 export const featureFlagsContext: RouterContext<FeatureFlagsFeature> =

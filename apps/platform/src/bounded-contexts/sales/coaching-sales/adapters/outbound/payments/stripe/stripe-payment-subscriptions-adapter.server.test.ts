@@ -24,10 +24,11 @@ describe("StripePaymentSubscriptions", () => {
   it("holds the renewal until an instant by pausing collection with every cycle invoice voided", async () => {
     // arrange
     const client = createStubClient();
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client);
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client);
 
     // act
-    await subscriptions.holdRenewal({
+    await stripePaymentSubscriptionsAdapter.holdRenewal({
       paymentSubscriptionId: "sub_1",
       until: new Date("2027-01-02T10:00:00.000Z"),
     });
@@ -41,10 +42,11 @@ describe("StripePaymentSubscriptions", () => {
   it("lifts the renewal hold by clearing the paused collection", async () => {
     // arrange
     const client = createStubClient();
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client);
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client);
 
     // act
-    await subscriptions.liftRenewalHold("sub_1");
+    await stripePaymentSubscriptionsAdapter.liftRenewalHold("sub_1");
 
     // assert
     expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
@@ -55,10 +57,11 @@ describe("StripePaymentSubscriptions", () => {
   it("ends a subscription now without proration or a final invoice", async () => {
     // arrange
     const client = createStubClient();
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client);
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client);
 
     // act
-    await subscriptions.endNow("sub_1");
+    await stripePaymentSubscriptionsAdapter.endNow("sub_1");
 
     // assert
     expect(client.subscriptions.cancel).toHaveBeenCalledWith("sub_1", {
@@ -70,10 +73,11 @@ describe("StripePaymentSubscriptions", () => {
   it("schedules the end at an explicit instant without proration", async () => {
     // arrange
     const client = createStubClient();
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client);
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client);
 
     // act
-    await subscriptions.endAt({
+    await stripePaymentSubscriptionsAdapter.endAt({
       paymentSubscriptionId: "sub_1",
       at: new Date("2027-01-02T10:00:00.000Z"),
     });
@@ -88,13 +92,15 @@ describe("StripePaymentSubscriptions", () => {
   it("opens the portal on the payment-method update flow and sends her back when she is done", async () => {
     // arrange
     const client = createStubClient();
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client);
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client);
 
     // act
-    const session = await subscriptions.openPaymentMethodSession({
-      paymentCustomerId: "cus_1",
-      returnUrl: RETURN_URL,
-    });
+    const session =
+      await stripePaymentSubscriptionsAdapter.openPaymentMethodSession({
+        paymentCustomerId: "cus_1",
+        returnUrl: RETURN_URL,
+      });
 
     // assert
     expect(session).toEqual({ url: "https://billing.stripe.com/p/session" });
@@ -114,12 +120,13 @@ describe("StripePaymentSubscriptions", () => {
   it("opens the portal on the pinned customer-portal configuration when one is set", async () => {
     // arrange
     const client = createStubClient();
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client, {
-      portalConfigurationId: "bpc_pinned",
-    });
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client, {
+        portalConfigurationId: "bpc_pinned",
+      });
 
     // act
-    await subscriptions.openPaymentMethodSession({
+    await stripePaymentSubscriptionsAdapter.openPaymentMethodSession({
       paymentCustomerId: "cus_1",
       returnUrl: RETURN_URL,
     });
@@ -138,10 +145,11 @@ describe("StripePaymentSubscriptions", () => {
     const failure = new Error("provider down");
     const client = createStubClient();
     client.subscriptions.cancel.mockRejectedValue(failure);
-    const subscriptions = new StripePaymentSubscriptionsAdapter(client);
+    const stripePaymentSubscriptionsAdapter =
+      new StripePaymentSubscriptionsAdapter(client);
 
     // act
-    const ending = subscriptions.endNow("sub_1");
+    const ending = stripePaymentSubscriptionsAdapter.endNow("sub_1");
 
     // assert
     await expect(ending).rejects.toBe(failure);

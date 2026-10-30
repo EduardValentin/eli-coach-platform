@@ -7,40 +7,36 @@ import { EmailAssessmentCallNotificationsAdapter } from "./email-assessment-call
 describe("createAssessmentCallNotifications", () => {
   it("returns the email assessment call notifications", () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
 
     // act
-    const notifications = createAssessmentCallNotificationsAdapter(
-      productEmail,
-      {
+    const assessmentCallNotificationsPort =
+      createAssessmentCallNotificationsAdapter(inMemoryProductEmailAdapter, {
         appBasePath: "/",
         coachEmail: "eli@evoa.fit",
         contactEmail: "contact@evoa.fit",
         publicAppUrl: "https://evoa.fit",
-      },
-    );
+      });
 
     // assert
-    expect(notifications).toBeInstanceOf(
+    expect(assessmentCallNotificationsPort).toBeInstanceOf(
       EmailAssessmentCallNotificationsAdapter,
     );
   });
 
   it("sends both emails through the product email it was given", async () => {
     // arrange
-    const productEmail = new InMemoryProductEmailAdapter();
-    const notifications = createAssessmentCallNotificationsAdapter(
-      productEmail,
-      {
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const assessmentCallNotificationsPort =
+      createAssessmentCallNotificationsAdapter(inMemoryProductEmailAdapter, {
         appBasePath: "/",
         coachEmail: "eli@evoa.fit",
         contactEmail: "contact@evoa.fit",
         publicAppUrl: "https://evoa.fit",
-      },
-    );
+      });
 
     // act
-    const result = await notifications.notifyBooked({
+    const result = await assessmentCallNotificationsPort.notifyBooked({
       id: "ac-demo",
       firstName: "Sofia",
       lastName: "Marin",
@@ -61,9 +57,8 @@ describe("createAssessmentCallNotifications", () => {
 
     // assert
     expect(result).toEqual({ coach: "sent", visitor: "sent" });
-    expect(productEmail.sent.map((command) => command.to)).toEqual([
-      "sofia@example.com",
-      "eli@evoa.fit",
-    ]);
+    expect(
+      inMemoryProductEmailAdapter.sent.map((command) => command.to),
+    ).toEqual(["sofia@example.com", "eli@evoa.fit"]);
   });
 });

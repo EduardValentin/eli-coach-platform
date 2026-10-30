@@ -12,6 +12,8 @@ export async function action({ context, request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return context.get(accountsContext).webhooks.handleClerkEvent(request);
+    return context
+      .get(accountsContext)
+      .accountWebhookController.handleClerkEvent(request);
   });
 }

@@ -31,7 +31,12 @@ function createSaving() {
   const incidents = {
     recipePhotoCleanupFailed: vi.fn(),
   } satisfies Pick<NutritionLibraryIncidentsPort, "recipePhotoCleanupFailed">;
-  const saving = new RecipePhotoSaving({ renditions, ids, store, incidents });
+  const saving = new RecipePhotoSaving({
+    recipePhotoRenditionsPort: renditions,
+    recipePhotoIdsPort: ids,
+    recipePhotoStorePort: store,
+    nutritionLibraryIncidentsPort: incidents,
+  });
 
   return { saving, renditions, ids, store, incidents };
 }

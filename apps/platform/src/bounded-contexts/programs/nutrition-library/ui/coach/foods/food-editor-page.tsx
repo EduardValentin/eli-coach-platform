@@ -49,12 +49,12 @@ import {
 const SAVE_FAILED = "We couldn't save the food. Try again in a moment.";
 
 export async function loader(args: LoaderFunctionArgs) {
-  const { foodLibrary } = args.context.get(nutritionLibraryContext);
+  const { foodLibraryController } = args.context.get(nutritionLibraryContext);
   const { foodId } = args.params;
 
   return foodId === undefined
-    ? foodLibrary.loadNew(args)
-    : foodLibrary.load(args, foodId);
+    ? foodLibraryController.loadNew(args)
+    : foodLibraryController.load(args, foodId);
 }
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [

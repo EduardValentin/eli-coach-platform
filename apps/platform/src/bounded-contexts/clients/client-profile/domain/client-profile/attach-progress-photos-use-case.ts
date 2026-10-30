@@ -19,13 +19,13 @@ type AttachProgressPhotosCommand = {
 };
 
 type AttachProgressPhotosUseCaseOptions = {
-  profiles: Pick<ClientProfilesPort, "findByClientId">;
-  photos: ProgressPhotosPort;
-  photoIds: ProgressPhotoIdsPort;
-  store: ProgressPhotoStorePort;
-  renditions: ProgressPhotoRenditionsPort;
-  clock: ClockPort;
-  incidents: MeasurementIncidentsPort;
+  clientProfilesPort: Pick<ClientProfilesPort, "findByClientId">;
+  progressPhotosPort: ProgressPhotosPort;
+  progressPhotoIdsPort: ProgressPhotoIdsPort;
+  progressPhotoStorePort: ProgressPhotoStorePort;
+  progressPhotoRenditionsPort: ProgressPhotoRenditionsPort;
+  clockPort: ClockPort;
+  measurementIncidentsPort: MeasurementIncidentsPort;
 };
 
 const UNREADABLE_CONSENT = null;
@@ -40,7 +40,7 @@ export class AttachProgressPhotosUseCase {
   async execute(
     command: AttachProgressPhotosCommand,
   ): Promise<ProgressPhotoOutcomes> {
-    const photosConsented = await this.options.profiles
+    const photosConsented = await this.options.clientProfilesPort
       .findByClientId(command.clientId)
       .then(
         (profile) => profile?.hasPhotoConsent() ?? false,
@@ -55,7 +55,7 @@ export class AttachProgressPhotosUseCase {
       {
         clientId: command.clientId,
         entryId: command.entryId,
-        receivedAt: this.options.clock.now(),
+        receivedAt: this.options.clockPort.now(),
         photosConsented,
       },
       command.photos,
@@ -68,7 +68,7 @@ export class AttachProgressPhotosUseCase {
     const outcomes: ProgressPhotoOutcomes = {};
 
     for (const photo of command.photos) {
-      this.options.incidents.progressPhotoRefused({
+      this.options.measurementIncidentsPort.progressPhotoRefused({
         clientId: command.clientId,
         entryId: command.entryId,
         view: photo.view,

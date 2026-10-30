@@ -88,12 +88,12 @@ type UpdateResult = Awaited<
 describe("ClientProfileController load", () => {
   it("hands the coach her identity, coaching facts, notes, preferences, avatar and weights", async () => {
     // arrange
-    const { controller, readClientProfile } = createController({
+    const { clientProfileController, readClientProfile } = createController({
       reading: SEEDED_READING,
     });
 
     // act
-    const profile = await controller.load(coachArgs(), CLIENT_ID);
+    const profile = await clientProfileController.load(coachArgs(), CLIENT_ID);
 
     // assert
     expect(profile).toEqual({
@@ -113,7 +113,7 @@ describe("ClientProfileController load", () => {
 
   it("hands the coach her identity alone before her answers are approved", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientProfileController } = createController({
       reading: {
         ...SEEDED_READING,
         coaching: null,
@@ -124,7 +124,7 @@ describe("ClientProfileController load", () => {
     });
 
     // act
-    const profile = await controller.load(coachArgs(), CLIENT_ID);
+    const profile = await clientProfileController.load(coachArgs(), CLIENT_ID);
 
     // assert
     expect(profile).toMatchObject({
@@ -136,11 +136,11 @@ describe("ClientProfileController load", () => {
 
   it("answers not found to a uuid that is no client", async () => {
     // arrange
-    const { controller } = createController({ reading: null });
+    const { clientProfileController } = createController({ reading: null });
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs(), CLIENT_ID),
+      clientProfileController.load(coachArgs(), CLIENT_ID),
     );
 
     // assert
@@ -149,11 +149,11 @@ describe("ClientProfileController load", () => {
 
   it("answers not found to an id that is not a uuid without reading any profile", async () => {
     // arrange
-    const { controller, readClientProfile } = createController();
+    const { clientProfileController, readClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs(), "not-a-uuid"),
+      clientProfileController.load(coachArgs(), "not-a-uuid"),
     );
 
     // assert
@@ -163,11 +163,14 @@ describe("ClientProfileController load", () => {
 
   it("refuses a client account without reading any profile", async () => {
     // arrange
-    const { controller, readClientProfile } = createController();
+    const { clientProfileController, readClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs({ session: CLIENT_SESSION }), CLIENT_ID),
+      clientProfileController.load(
+        coachArgs({ session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -177,11 +180,14 @@ describe("ClientProfileController load", () => {
 
   it("sends an anonymous visitor to sign in without reading any profile", async () => {
     // arrange
-    const { controller, readClientProfile } = createController();
+    const { clientProfileController, readClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.load(coachArgs({ session: ANONYMOUS_SESSION }), CLIENT_ID),
+      clientProfileController.load(
+        coachArgs({ session: ANONYMOUS_SESSION }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -193,12 +199,12 @@ describe("ClientProfileController load", () => {
 describe("ClientProfileController save", () => {
   it("saves her coaching facts and the coach's notes and answers that it is saved", async () => {
     // arrange
-    const { controller, updateClientProfile } = createController({
+    const { clientProfileController, updateClientProfile } = createController({
       update: { status: "saved" },
     });
 
     // act
-    const response = await controller.save(
+    const response = await clientProfileController.save(
       saveArgs({ coaching: COACHING, coachNotes: "Moved to mornings." }),
       CLIENT_ID,
     );
@@ -225,10 +231,10 @@ describe("ClientProfileController save", () => {
     "answers %o with %d",
     async (update, status, body) => {
       // arrange
-      const { controller } = createController({ update });
+      const { clientProfileController } = createController({ update });
 
       // act
-      const response = await controller.save(
+      const response = await clientProfileController.save(
         saveArgs({ coaching: COACHING, coachNotes: null }),
         CLIENT_ID,
       );
@@ -241,10 +247,10 @@ describe("ClientProfileController save", () => {
 
   it("refuses a level the profile does not know without saving anything", async () => {
     // arrange
-    const { controller, updateClientProfile } = createController();
+    const { clientProfileController, updateClientProfile } = createController();
 
     // act
-    const response = await controller.save(
+    const response = await clientProfileController.save(
       saveArgs({ coaching: { ...COACHING, level: "elite" }, coachNotes: null }),
       CLIENT_ID,
     );
@@ -256,10 +262,10 @@ describe("ClientProfileController save", () => {
 
   it("answers not found to an id that is not a uuid without saving anything", async () => {
     // arrange
-    const { controller, updateClientProfile } = createController();
+    const { clientProfileController, updateClientProfile } = createController();
 
     // act
-    const response = await controller.save(
+    const response = await clientProfileController.save(
       saveArgs({ coaching: COACHING, coachNotes: null }),
       "not-a-uuid",
     );
@@ -271,11 +277,11 @@ describe("ClientProfileController save", () => {
 
   it("refuses a client account without saving anything", async () => {
     // arrange
-    const { controller, updateClientProfile } = createController();
+    const { clientProfileController, updateClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.save(
+      clientProfileController.save(
         saveArgs(
           { coaching: COACHING, coachNotes: null },
           { session: CLIENT_SESSION },
@@ -293,42 +299,46 @@ describe("ClientProfileController save", () => {
 describe("ClientProfileController load measurements", () => {
   it("hands the coach her entries newest first as rows with their photo ids and never where the photos are stored", async () => {
     // arrange
-    const { controller, readClientMeasurementHistory } = createController({
-      records: [
-        {
-          id: FIRST_ENTRY_ID,
-          recordedAt: new Date("2026-09-01T09:00:00.000Z"),
-          weightKg: 66.1,
-          waistCm: 74,
-          photos: [],
-        },
-        {
-          id: SECOND_ENTRY_ID,
-          recordedAt: new Date("2026-09-29T09:00:00.000Z"),
-          weightKg: 64.5,
-          waistCm: 72,
-          hipsCm: 96.5,
-          photos: [
-            {
-              id: FRONT_PHOTO_ID,
-              entryId: SECOND_ENTRY_ID,
-              clientId: CLIENT_ID,
-              view: "front",
-              reference: {
-                storageKey: `${CLIENT_ID}/${SECOND_ENTRY_ID}/${FRONT_PHOTO_ID}.bin`,
-                keyId: "local-1",
+    const { clientProfileController, readClientMeasurementHistory } =
+      createController({
+        records: [
+          {
+            id: FIRST_ENTRY_ID,
+            recordedAt: new Date("2026-09-01T09:00:00.000Z"),
+            weightKg: 66.1,
+            waistCm: 74,
+            photos: [],
+          },
+          {
+            id: SECOND_ENTRY_ID,
+            recordedAt: new Date("2026-09-29T09:00:00.000Z"),
+            weightKg: 64.5,
+            waistCm: 72,
+            hipsCm: 96.5,
+            photos: [
+              {
+                id: FRONT_PHOTO_ID,
+                entryId: SECOND_ENTRY_ID,
+                clientId: CLIENT_ID,
+                view: "front",
+                reference: {
+                  storageKey: `${CLIENT_ID}/${SECOND_ENTRY_ID}/${FRONT_PHOTO_ID}.bin`,
+                  keyId: "local-1",
+                },
+                mimeType: "image/jpeg",
+                sizeBytes: 182_431,
+                createdAt: new Date("2026-09-29T09:00:00.000Z"),
               },
-              mimeType: "image/jpeg",
-              sizeBytes: 182_431,
-              createdAt: new Date("2026-09-29T09:00:00.000Z"),
-            },
-          ],
-        },
-      ],
-    });
+            ],
+          },
+        ],
+      });
 
     // act
-    const rows = await controller.loadMeasurements(coachArgs(), CLIENT_ID);
+    const rows = await clientProfileController.loadMeasurements(
+      coachArgs(),
+      CLIENT_ID,
+    );
 
     // assert
     expect(rows).toEqual([
@@ -360,11 +370,12 @@ describe("ClientProfileController load measurements", () => {
 
   it("answers not found to an id that is not a uuid without reading any measurement", async () => {
     // arrange
-    const { controller, readClientMeasurementHistory } = createController();
+    const { clientProfileController, readClientMeasurementHistory } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadMeasurements(coachArgs(), "not-a-uuid"),
+      clientProfileController.loadMeasurements(coachArgs(), "not-a-uuid"),
     );
 
     // assert
@@ -374,11 +385,12 @@ describe("ClientProfileController load measurements", () => {
 
   it("refuses a client account without reading any measurement", async () => {
     // arrange
-    const { controller, readClientMeasurementHistory } = createController();
+    const { clientProfileController, readClientMeasurementHistory } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadMeasurements(
+      clientProfileController.loadMeasurements(
         coachArgs({ session: CLIENT_SESSION }),
         CLIENT_ID,
       ),
@@ -404,20 +416,20 @@ function createController(
   const readClientMeasurementHistory = vi
     .fn()
     .mockResolvedValue(MeasurementHistory.of(options.records ?? []));
-  const controller = new ClientProfileController({
-    readClientMeasurementHistory: {
+  const clientProfileController = new ClientProfileController({
+    readClientMeasurementHistoryUseCase: {
       execute: readClientMeasurementHistory,
     } as unknown as ReadClientMeasurementHistoryUseCase,
-    readClientProfile: {
+    readClientProfileUseCase: {
       execute: readClientProfile,
     } as unknown as ReadClientProfileUseCase,
-    updateClientProfile: {
+    updateClientProfileAsCoachUseCase: {
       execute: updateClientProfile,
     } as unknown as UpdateClientProfileAsCoachUseCase,
   });
 
   return {
-    controller,
+    clientProfileController,
     readClientMeasurementHistory,
     readClientProfile,
     updateClientProfile,

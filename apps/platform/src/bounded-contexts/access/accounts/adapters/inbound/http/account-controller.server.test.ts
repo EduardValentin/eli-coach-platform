@@ -16,10 +16,10 @@ describe("AccountController", () => {
     const args = createLoaderArgs({
       session: { account, kind: "authenticated" },
     });
-    const controller = new AccountController();
+    const accountController = new AccountController();
 
     // act
-    const response = await controller.getCurrentAccount(args);
+    const response = await accountController.getCurrentAccount(args);
 
     // assert
     expect(response.status).toBe(200);
@@ -29,11 +29,11 @@ describe("AccountController", () => {
   it("propagates the guard's 401 for an anonymous caller", async () => {
     // arrange
     const args = createLoaderArgs({ session: { kind: "anonymous" } });
-    const controller = new AccountController();
+    const accountController = new AccountController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.getCurrentAccount(args),
+      accountController.getCurrentAccount(args),
     );
 
     // assert

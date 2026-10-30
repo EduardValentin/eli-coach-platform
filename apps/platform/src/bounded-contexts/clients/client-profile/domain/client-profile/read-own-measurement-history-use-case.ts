@@ -21,11 +21,11 @@ export type OwnMeasurementHistoryReading = {
 };
 
 type ReadOwnMeasurementHistoryUseCaseOptions = {
-  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
-  clock: ClockPort;
-  profiles: Pick<ClientProfilesPort, "findByClientId">;
-  records: ClientMeasurementRecordsPort;
-  settings: ClientSettingsSourcePort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clockPort: ClockPort;
+  clientProfilesPort: Pick<ClientProfilesPort, "findByClientId">;
+  clientMeasurementRecordsPort: ClientMeasurementRecordsPort;
+  clientSettingsSourcePort: ClientSettingsSourcePort;
 };
 
 export class ReadOwnMeasurementHistoryUseCase {
@@ -36,7 +36,7 @@ export class ReadOwnMeasurementHistoryUseCase {
   async execute(
     command: ReadOwnMeasurementHistoryCommand,
   ): Promise<OwnMeasurementHistoryReading | null> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
       command.authSubjectId,
     );
 
@@ -45,16 +45,16 @@ export class ReadOwnMeasurementHistoryUseCase {
     }
 
     const [records, profile, settings] = await Promise.all([
-      this.options.records.listByClientId(client.clientId),
-      this.options.profiles.findByClientId(client.clientId),
-      this.options.settings.findByClientId(client.clientId),
+      this.options.clientMeasurementRecordsPort.listByClientId(client.clientId),
+      this.options.clientProfilesPort.findByClientId(client.clientId),
+      this.options.clientSettingsSourcePort.findByClientId(client.clientId),
     ]);
     const history = MeasurementHistory.of(records);
 
     return {
       history,
       consentedAt: profile?.toSnapshot().progressPhotosConsentedAt ?? null,
-      dueLine: history.dueLine(this.options.clock.now()),
+      dueLine: history.dueLine(this.options.clockPort.now()),
       units: settings?.unitPreference() ?? UnitPreference.metric(),
     };
   }

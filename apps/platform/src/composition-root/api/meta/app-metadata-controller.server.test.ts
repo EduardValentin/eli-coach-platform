@@ -6,14 +6,14 @@ import { appMetadataSchema } from "./service-metadata";
 describe("AppMetadataController", () => {
   it("returns application metadata from the controller", async () => {
     // arrange
-    const controller = new AppMetadataController({
+    const appMetadataController = new AppMetadataController({
       appName: "eli-coach-platform",
       environment: "test",
       version: "sha-123",
     });
 
     // act
-    const response = controller.getMetadata();
+    const response = appMetadataController.getMetadata();
 
     // assert
     expect(response.status).toBe(200);

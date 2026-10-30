@@ -47,12 +47,12 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type CheckoutsControllerOptions = {
   appBasePath: string;
-  clock: ClockPort;
-  openBundlePage: OpenBundlePageUseCase;
+  clockPort: ClockPort;
+  openBundlePageUseCase: OpenBundlePageUseCase;
   publicAppUrl: string;
-  readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
-  resolvePaymentLink: ResolvePaymentLinkUseCase;
-  startCheckout: StartCheckoutUseCase;
+  readCheckoutConfirmationUseCase: ReadCheckoutConfirmationUseCase;
+  resolvePaymentLinkUseCase: ResolvePaymentLinkUseCase;
+  startCheckoutUseCase: StartCheckoutUseCase;
   unitOfWork: UnitOfWork;
 };
 
@@ -79,7 +79,7 @@ export class CheckoutsController {
   constructor(private readonly options: CheckoutsControllerOptions) {}
 
   async loadBundlePageShell() {
-    const bundlePage = await this.options.openBundlePage.execute();
+    const bundlePage = await this.options.openBundlePageUseCase.execute();
 
     if (bundlePage.status === "closed") {
       throw createNotFoundResponse();
@@ -99,7 +99,7 @@ export class CheckoutsController {
       return createBadRequestResponse("The payment link could not be read.");
     }
 
-    const link = await this.options.resolvePaymentLink.execute(
+    const link = await this.options.resolvePaymentLinkUseCase.execute(
       submission.data.token,
     );
 
@@ -143,7 +143,7 @@ export class CheckoutsController {
 
     const { bundleId, startChoice } = choice.data;
     const checkout = await this.options.unitOfWork(() =>
-      this.options.startCheckout.execute({
+      this.options.startCheckoutUseCase.execute({
         rawToken: token,
         bundleId,
         startChoice,
@@ -174,7 +174,7 @@ export class CheckoutsController {
       url.searchParams.get("session"),
     );
     const confirmation =
-      await this.options.readCheckoutConfirmation.execute(sessionId);
+      await this.options.readCheckoutConfirmationUseCase.execute(sessionId);
 
     if (confirmation.status === "closed") {
       throw createNotFoundResponse();
@@ -198,7 +198,7 @@ export class CheckoutsController {
             tier: link.tier,
             cards: this.loadPricingCards({ tier: link.tier }),
             waitingStartsOn: withdrawalDeadline(
-              this.options.clock.now(),
+              this.options.clockPort.now(),
             ).toISOString(),
           }
         : {
@@ -213,7 +213,9 @@ export class CheckoutsController {
     token: string;
     bundle?: string;
   }): Promise<Response> {
-    const link = await this.options.resolvePaymentLink.execute(query.token);
+    const link = await this.options.resolvePaymentLinkUseCase.execute(
+      query.token,
+    );
 
     if (link.status === "closed") {
       return createNotFoundResponse();

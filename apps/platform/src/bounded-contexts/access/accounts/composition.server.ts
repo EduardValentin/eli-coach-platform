@@ -38,7 +38,7 @@ import type { AccountsFeature } from "~/bounded-contexts/access/accounts/adapter
 export type AccountsFeatureHandles = {
   bootstrapCoachAuthSubjectId: string | undefined;
   clerkWebhookSigningSecret: string | undefined;
-  clock: ClockPort;
+  clockPort: ClockPort;
   contactEmail: string;
   database: DatabaseClient;
   identityConfig: IdentityConfig;
@@ -46,83 +46,88 @@ export type AccountsFeatureHandles = {
     generator: InvitationTokenGeneratorPort;
     hasher: InvitationTokenHasherPort;
   };
-  logger: LoggerPort;
+  loggerPort: LoggerPort;
   portal: AccountsFeature["portal"] & { publicAppUrl: string };
-  productEmail: ProductEmailPort;
+  productEmailPort: ProductEmailPort;
 };
 
 type AccountsComposition = {
-  facades: { accountInvitations: AccountInvitationsFacade };
+  facades: { accountInvitationsFacade: AccountInvitationsFacade };
   feature: AccountsFeature;
 };
 
 export function composeAccountsFeature(
   handles: AccountsFeatureHandles,
 ): AccountsComposition {
-  const { clock, database } = handles;
-  const repository = new PostgresAccountRepository(database);
-  const invitations = new PostgresAccountInvitationsRepository(database);
+  const { clockPort, database } = handles;
+  const postgresAccountRepository = new PostgresAccountRepository(database);
+  const postgresAccountInvitationsRepository =
+    new PostgresAccountInvitationsRepository(database);
   const deliveryPorts = {
-    clock,
-    identity: composeIdentityInvitations(handles),
-    incidents: new AccountsIncidentsAdapter(handles.logger),
-    invitations,
-    notifications: new EmailAccountInvitationNotificationsAdapter(
-      handles.productEmail,
-      {
+    clockPort,
+    identityInvitationsPort: composeIdentityInvitations(handles),
+    accountInvitationIncidentsPort: new AccountsIncidentsAdapter(
+      handles.loggerPort,
+    ),
+    accountInvitationsPort: postgresAccountInvitationsRepository,
+    accountInvitationNotificationsPort:
+      new EmailAccountInvitationNotificationsAdapter(handles.productEmailPort, {
         appBasePath: handles.portal.appBasePath,
-        clock,
+        clockPort,
         contactEmail: handles.contactEmail,
         publicAppUrl: handles.portal.publicAppUrl,
-      },
-    ),
-    tokenGenerator: handles.linkTokens.generator,
+      }),
+    invitationTokenGeneratorPort: handles.linkTokens.generator,
   };
 
   return {
     facades: {
-      accountInvitations: new AccountInvitationsFacadeAdapter({
-        ensureInvitationDelivered: new EnsureInvitationDeliveredUseCase(
+      accountInvitationsFacade: new AccountInvitationsFacadeAdapter({
+        ensureInvitationDeliveredUseCase: new EnsureInvitationDeliveredUseCase(
           deliveryPorts,
         ),
-        findAcceptedInvitation: new FindAcceptedInvitationUseCase({
-          invitations,
+        findAcceptedInvitationUseCase: new FindAcceptedInvitationUseCase({
+          accountInvitationsPort: postgresAccountInvitationsRepository,
         }),
-        issueInvitation: new IssueInvitationUseCase({
-          clock,
-          ids: new RandomAccountInvitationIdsAdapter(),
-          invitations,
-          tokenGenerator: handles.linkTokens.generator,
+        issueInvitationUseCase: new IssueInvitationUseCase({
+          clockPort,
+          accountInvitationIdsPort: new RandomAccountInvitationIdsAdapter(),
+          accountInvitationsPort: postgresAccountInvitationsRepository,
+          invitationTokenGeneratorPort: handles.linkTokens.generator,
         }),
-        readInvitationStanding: new ReadInvitationStandingUseCase({
-          clock,
-          invitations,
+        readInvitationStandingUseCase: new ReadInvitationStandingUseCase({
+          clockPort,
+          accountInvitationsPort: postgresAccountInvitationsRepository,
         }),
-        resendInvitation: new ResendInvitationUseCase(deliveryPorts),
+        resendInvitationUseCase: new ResendInvitationUseCase(deliveryPorts),
       }),
     },
     feature: {
-      account: new AccountController(),
-      invitations: new InvitationsController({
-        resolveInvitation: new ResolveInvitationUseCase({
-          clock,
-          invitations,
-          tokenHasher: handles.linkTokens.hasher,
+      accountController: new AccountController(),
+      invitationsController: new InvitationsController({
+        resolveInvitationUseCase: new ResolveInvitationUseCase({
+          clockPort,
+          accountInvitationsPort: postgresAccountInvitationsRepository,
+          invitationTokenHasherPort: handles.linkTokens.hasher,
         }),
       }),
       portal: handles.portal,
-      provisioning: new ProvisionAccountUseCase({
-        accounts: repository,
-        ids: new RandomAccountIdsAdapter(),
+      provisionAccountUseCase: new ProvisionAccountUseCase({
+        accountsPort: postgresAccountRepository,
+        accountIdsPort: new RandomAccountIdsAdapter(),
         bootstrapCoachAuthSubjectId: handles.bootstrapCoachAuthSubjectId,
         invitationGate: new AccountInvitationGate({
-          clock,
-          invitations,
-          references: createInvitationReferencesAdapter(handles.identityConfig),
+          clockPort,
+          accountInvitationsPort: postgresAccountInvitationsRepository,
+          invitationReferencesPort: createInvitationReferencesAdapter(
+            handles.identityConfig,
+          ),
         }),
       }),
-      webhooks: new AccountWebhookController({
-        deletion: new DeleteAccountUseCase({ accounts: repository }),
+      accountWebhookController: new AccountWebhookController({
+        deleteAccountUseCase: new DeleteAccountUseCase({
+          accountsPort: postgresAccountRepository,
+        }),
         signingSecret: handles.clerkWebhookSigningSecret,
       }),
     },

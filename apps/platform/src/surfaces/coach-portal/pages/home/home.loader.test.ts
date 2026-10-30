@@ -75,10 +75,10 @@ function createLoaderArguments(reads: {
   loadCalls: ReturnType<typeof vi.fn>;
 }) {
   const assessmentCalls = {
-    coachAssessmentCalls: { loadCalls: reads.loadCalls },
+    coachAssessmentCallsController: { loadCalls: reads.loadCalls },
   } as unknown as AssessmentCallsFeature;
   const checkIns = {
-    coachCheckIns: { loadAwaiting: reads.loadAwaiting },
+    coachCheckInsController: { loadAwaiting: reads.loadAwaiting },
   } as unknown as CheckInsFeature;
 
   return createRequestArgs({

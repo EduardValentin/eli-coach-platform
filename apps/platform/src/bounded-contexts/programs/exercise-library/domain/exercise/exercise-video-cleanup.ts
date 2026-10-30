@@ -9,8 +9,11 @@ import type {
 } from "./exercise-video-store-port";
 
 type ExerciseVideoCleanupOptions = {
-  store: Pick<ExerciseVideoStorePort, "discard" | "remove">;
-  incidents: Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
+  exerciseVideoStorePort: Pick<ExerciseVideoStorePort, "discard" | "remove">;
+  exerciseLibraryIncidentsPort: Pick<
+    ExerciseLibraryIncidentsPort,
+    "videoCleanupFailed"
+  >;
 };
 
 export class ExerciseVideoCleanup {
@@ -20,7 +23,7 @@ export class ExerciseVideoCleanup {
     const { stagingId } = staged;
 
     await this.cleanUp({ stagingId }, () =>
-      this.options.store.discard(stagingId),
+      this.options.exerciseVideoStorePort.discard(stagingId),
     );
   }
 
@@ -29,7 +32,9 @@ export class ExerciseVideoCleanup {
 
     const { videoId } = video;
 
-    await this.cleanUp({ videoId }, () => this.options.store.remove(videoId));
+    await this.cleanUp({ videoId }, () =>
+      this.options.exerciseVideoStorePort.remove(videoId),
+    );
   }
 
   private async cleanUp(
@@ -39,7 +44,10 @@ export class ExerciseVideoCleanup {
     try {
       await removal();
     } catch (error) {
-      this.options.incidents.videoCleanupFailed({ ...file, error });
+      this.options.exerciseLibraryIncidentsPort.videoCleanupFailed({
+        ...file,
+        error,
+      });
     }
   }
 }

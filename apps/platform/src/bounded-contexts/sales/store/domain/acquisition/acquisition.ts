@@ -84,10 +84,10 @@ export class AcquisitionRequest {
   static from(
     command: AcquireProductsCommand,
     requestedAt: Date,
-    emailAcceptance: EmailAcceptancePort,
+    emailAcceptancePort: EmailAcceptancePort,
   ): AcquisitionRequest {
     return new AcquisitionRequest({
-      email: emailAcceptance.normalize(command.email),
+      email: emailAcceptancePort.normalize(command.email),
       idempotencyKey: command.idempotencyKey,
       marketingConsent: command.marketingConsent,
       productSlugs: [...new Set(command.productSlugs)].sort(),

@@ -8,11 +8,12 @@ const RANDOM_UUID =
 describe("RandomAccountInvitationIds", () => {
   it("names every invitation with a fresh random uuid, never a sequence another environment could repeat", () => {
     // arrange
-    const invitationIds = new RandomAccountInvitationIdsAdapter();
+    const randomAccountInvitationIdsAdapter =
+      new RandomAccountInvitationIdsAdapter();
 
     // act
-    const first = invitationIds.generate();
-    const second = invitationIds.generate();
+    const first = randomAccountInvitationIdsAdapter.generate();
+    const second = randomAccountInvitationIdsAdapter.generate();
 
     // assert
     expect(first).toMatch(RANDOM_UUID);

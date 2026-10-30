@@ -34,7 +34,7 @@ function builderArgs(params: Record<string, string>) {
     return SAVED_BUILDER;
   });
   const feature = {
-    recipeLibrary: { load, loadNew },
+    recipeLibraryController: { load, loadNew },
   } as unknown as NutritionLibraryFeature;
   const args = createRequestArgs({
     contexts: [contextEntry(nutritionLibraryContext, feature)],

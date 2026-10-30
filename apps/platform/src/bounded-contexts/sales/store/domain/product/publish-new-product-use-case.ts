@@ -23,9 +23,9 @@ export type PublishNewProductCommand = {
 export class PublishNewProductUseCase {
   constructor(
     private readonly options: {
-      assetWriter: ProductAssetWriterPort;
-      digest: ProductAssetDigestPort;
-      publications: StoreProductPublicationsPort;
+      productAssetWriterPort: ProductAssetWriterPort;
+      productAssetDigestPort: ProductAssetDigestPort;
+      storeProductPublicationsPort: StoreProductPublicationsPort;
     },
   ) {}
 
@@ -37,10 +37,10 @@ export class PublishNewProductUseCase {
       const payloadDigest = draft.requestDigest(
         "create_product",
         command.slug,
-        this.options.digest,
+        this.options.productAssetDigestPort,
       );
       const settled = draft.settle(
-        await this.options.publications.findPublicationByIdempotencyKey(
+        await this.options.storeProductPublicationsPort.findPublicationByIdempotencyKey(
           command.idempotencyKey,
         ),
         payloadDigest,
@@ -50,19 +50,21 @@ export class PublishNewProductUseCase {
         return settled;
       }
 
-      const existingProduct = await this.options.publications.findProductBySlug(
-        command.slug,
-      );
+      const existingProduct =
+        await this.options.storeProductPublicationsPort.findProductBySlug(
+          command.slug,
+        );
       const displayOrder =
-        await this.options.publications.getNextDisplayOrder();
-      const taxonomy = await this.options.publications.getTaxonomy();
+        await this.options.storeProductPublicationsPort.getNextDisplayOrder();
+      const taxonomy =
+        await this.options.storeProductPublicationsPort.getTaxonomy();
 
       return await this.commit(
         draft,
         draft.planCreation(
           { displayOrder, existingProduct, slug: command.slug },
           taxonomy,
-          this.options.digest,
+          this.options.productAssetDigestPort,
         ),
         {
           idempotencyKey: command.idempotencyKey,
@@ -91,14 +93,15 @@ export class PublishNewProductUseCase {
     }
 
     for (const content of draft.plannedAssetContents(planResult.plan)) {
-      await this.options.assetWriter.write(content);
+      await this.options.productAssetWriterPort.write(content);
     }
 
     return {
       status: "published",
-      publication: await this.options.publications.persistPublication(
-        draft.persistCommand(planResult.plan, input),
-      ),
+      publication:
+        await this.options.storeProductPublicationsPort.persistPublication(
+          draft.persistCommand(planResult.plan, input),
+        ),
     };
   }
 }

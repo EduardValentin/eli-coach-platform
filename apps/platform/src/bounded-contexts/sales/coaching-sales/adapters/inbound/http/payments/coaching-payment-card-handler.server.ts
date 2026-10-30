@@ -8,7 +8,7 @@ import type { PaymentEventHandling } from "~/bounded-contexts/sales/coaching-sal
 import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-card-handler-port.server";
 
 type CoachingPaymentCardHandlerOptions = {
-  mirrorPaymentCard: MirrorPaymentCardUseCase;
+  mirrorPaymentCardUseCase: MirrorPaymentCardUseCase;
 };
 
 export class CoachingPaymentCardHandler implements PaymentCardHandlerPort {
@@ -18,7 +18,7 @@ export class CoachingPaymentCardHandler implements PaymentCardHandlerPort {
     eventId: string,
     change: PaymentCardChange,
   ): Promise<PaymentEventHandling> {
-    const mirrored = await this.options.mirrorPaymentCard.execute({
+    const mirrored = await this.options.mirrorPaymentCardUseCase.execute({
       eventId,
       event: toPaymentCardEvent(change),
     });

@@ -13,32 +13,35 @@ import type {
 export class AccountInvitationsFacadeAdapter implements AccountInvitationsFacade {
   constructor(
     private readonly useCases: {
-      ensureInvitationDelivered: EnsureInvitationDeliveredUseCase;
-      findAcceptedInvitation: FindAcceptedInvitationUseCase;
-      issueInvitation: IssueInvitationUseCase;
-      readInvitationStanding: ReadInvitationStandingUseCase;
-      resendInvitation: ResendInvitationUseCase;
+      ensureInvitationDeliveredUseCase: EnsureInvitationDeliveredUseCase;
+      findAcceptedInvitationUseCase: FindAcceptedInvitationUseCase;
+      issueInvitationUseCase: IssueInvitationUseCase;
+      readInvitationStandingUseCase: ReadInvitationStandingUseCase;
+      resendInvitationUseCase: ResendInvitationUseCase;
     },
   ) {}
 
   issue({ email }: { email: string }) {
-    return this.useCases.issueInvitation.execute({ email });
+    return this.useCases.issueInvitationUseCase.execute({ email });
   }
 
   ensureDelivered({ invitationId, firstName }: InvitationDeliveryDto) {
-    return this.useCases.ensureInvitationDelivered.execute({
+    return this.useCases.ensureInvitationDeliveredUseCase.execute({
       invitationId,
       firstName,
     });
   }
 
   resend({ invitationId, firstName }: InvitationDeliveryDto) {
-    return this.useCases.resendInvitation.execute({ invitationId, firstName });
+    return this.useCases.resendInvitationUseCase.execute({
+      invitationId,
+      firstName,
+    });
   }
 
   async standingOf(invitationId: string) {
     const standing =
-      await this.useCases.readInvitationStanding.execute(invitationId);
+      await this.useCases.readInvitationStandingUseCase.execute(invitationId);
 
     return standing
       ? {
@@ -50,6 +53,6 @@ export class AccountInvitationsFacadeAdapter implements AccountInvitationsFacade
   }
 
   acceptedInvitationOf(authSubjectId: string) {
-    return this.useCases.findAcceptedInvitation.execute(authSubjectId);
+    return this.useCases.findAcceptedInvitationUseCase.execute(authSubjectId);
   }
 }

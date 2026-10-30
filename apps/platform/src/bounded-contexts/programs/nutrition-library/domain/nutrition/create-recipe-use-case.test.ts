@@ -123,31 +123,39 @@ function createUseCase() {
     store: vi.fn(async (_photoId: string, _bytes: Uint8Array) => undefined),
     remove: vi.fn(async (_photoId: string) => undefined),
   };
-  const useCase = new CreateRecipeUseCase({
-    recipes,
-    foods,
-    tags,
-    ids: { generate: () => "recipe-3" },
-    clock: { now: () => NOW },
-    incidents,
+  const createRecipeUseCase = new CreateRecipeUseCase({
+    recipeLibraryPort: recipes,
+    foodLibraryPort: foods,
+    nutritionTagsPort: tags,
+    recipeIdsPort: { generate: () => "recipe-3" },
+    clockPort: { now: () => NOW },
+    nutritionLibraryIncidentsPort: incidents,
     photos: new RecipePhotoSaving({
-      renditions,
-      ids: { generate: () => PHOTO_ID },
-      store: photoStore,
-      incidents,
+      recipePhotoRenditionsPort: renditions,
+      recipePhotoIdsPort: { generate: () => PHOTO_ID },
+      recipePhotoStorePort: photoStore,
+      nutritionLibraryIncidentsPort: incidents,
     }),
   });
 
-  return { useCase, recipes, foods, tags, incidents, renditions, photoStore };
+  return {
+    createRecipeUseCase,
+    recipes,
+    foods,
+    tags,
+    incidents,
+    renditions,
+    photoStore,
+  };
 }
 
 describe("CreateRecipeUseCase", () => {
   it("adds the recipe under a new id, owned by the coach who created it, its name trimmed and its meal roles apart from its tags, created now", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { createRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: PORRIDGE,
@@ -179,10 +187,10 @@ describe("CreateRecipeUseCase", () => {
 
   it("adds a recipe with no ingredients", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { createRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: { ...PORRIDGE, ingredients: [] },
@@ -195,10 +203,10 @@ describe("CreateRecipeUseCase", () => {
 
   it("refuses a draft that breaks a rule, naming each problem, without adding it", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { createRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: { ...PORRIDGE, name: " ", cookMinutes: 10_000 },
@@ -219,10 +227,10 @@ describe("CreateRecipeUseCase", () => {
     "refuses an ingredient naming %s at its position, without adding it",
     async (_case, foodId) => {
       // arrange
-      const { useCase, recipes } = createUseCase();
+      const { createRecipeUseCase, recipes } = createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await createRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         photo: KEEP,
         draft: {
@@ -245,10 +253,10 @@ describe("CreateRecipeUseCase", () => {
 
   it("refuses a name another of her recipes already has, whatever its case and spaces, without adding it", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { createRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: { ...PORRIDGE, name: " OMELETTE  " },
@@ -261,10 +269,10 @@ describe("CreateRecipeUseCase", () => {
 
   it("adds a name only another coach's recipe has", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { createRecipeUseCase, recipes } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: { ...PORRIDGE, name: "pancakes" },
@@ -277,11 +285,11 @@ describe("CreateRecipeUseCase", () => {
 
   it("refuses the name when the library finds it taken by a recipe added meanwhile", async () => {
     // arrange
-    const { useCase, recipes } = createUseCase();
+    const { createRecipeUseCase, recipes } = createUseCase();
     recipes.add.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: PORRIDGE,
@@ -294,11 +302,11 @@ describe("CreateRecipeUseCase", () => {
   it("reports a failed read of her foods and answers that the creation failed without adding it", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, recipes, foods, incidents } = createUseCase();
+    const { createRecipeUseCase, recipes, foods, incidents } = createUseCase();
     foods.list.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: PORRIDGE,
@@ -315,11 +323,11 @@ describe("CreateRecipeUseCase", () => {
   it("reports a failed write and answers that the creation failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, recipes, incidents } = createUseCase();
+    const { createRecipeUseCase, recipes, incidents } = createUseCase();
     recipes.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       photo: KEEP,
       draft: PORRIDGE,
@@ -334,10 +342,11 @@ describe("CreateRecipeUseCase", () => {
 
   it("stores the rendition of the photo she attached under a new photo id and adds the recipe holding it", async () => {
     // arrange
-    const { useCase, recipes, renditions, photoStore } = createUseCase();
+    const { createRecipeUseCase, recipes, renditions, photoStore } =
+      createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: PORRIDGE,
       photo: ATTACH,
@@ -360,10 +369,11 @@ describe("CreateRecipeUseCase", () => {
     "adds a recipe without a photo for a $kind choice, rendering and storing nothing",
     async (photo) => {
       // arrange
-      const { useCase, recipes, renditions, photoStore } = createUseCase();
+      const { createRecipeUseCase, recipes, renditions, photoStore } =
+        createUseCase();
 
       // act
-      const result = await useCase.execute({
+      const result = await createRecipeUseCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         draft: PORRIDGE,
         photo,
@@ -379,11 +389,12 @@ describe("CreateRecipeUseCase", () => {
 
   it("refuses a photo the renderer cannot read, storing nothing and adding nothing", async () => {
     // arrange
-    const { useCase, recipes, renditions, photoStore } = createUseCase();
+    const { createRecipeUseCase, recipes, renditions, photoStore } =
+      createUseCase();
     renditions.render.mockResolvedValueOnce({ status: "refused" });
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: PORRIDGE,
       photo: ATTACH,
@@ -400,10 +411,10 @@ describe("CreateRecipeUseCase", () => {
 
   it("names a photo over 10 MB beside the draft's own problems, storing nothing", async () => {
     // arrange
-    const { useCase, recipes, photoStore } = createUseCase();
+    const { createRecipeUseCase, recipes, photoStore } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...PORRIDGE, name: " " },
       photo: {
@@ -423,11 +434,11 @@ describe("CreateRecipeUseCase", () => {
 
   it("removes the stored photo when the library finds the name taken meanwhile", async () => {
     // arrange
-    const { useCase, recipes, photoStore } = createUseCase();
+    const { createRecipeUseCase, recipes, photoStore } = createUseCase();
     recipes.add.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: PORRIDGE,
       photo: ATTACH,
@@ -441,11 +452,12 @@ describe("CreateRecipeUseCase", () => {
   it("removes the stored photo when the write fails and answers that the creation failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, recipes, photoStore, incidents } = createUseCase();
+    const { createRecipeUseCase, recipes, photoStore, incidents } =
+      createUseCase();
     recipes.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await createRecipeUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: PORRIDGE,
       photo: ATTACH,

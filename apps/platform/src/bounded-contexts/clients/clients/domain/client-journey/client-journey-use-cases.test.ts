@@ -64,10 +64,12 @@ describe("ReadClientJourneyUseCase", () => {
   ])("answers %s", async (_label, found) => {
     // arrange
     const journeys = createJourneys(found);
-    const useCase = new ReadClientJourneyUseCase({ journeys });
+    const readClientJourneyUseCase = new ReadClientJourneyUseCase({
+      clientJourneysPort: journeys,
+    });
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await readClientJourneyUseCase.execute("user_ana");
 
     // assert
     expect(result).toBe(found);
@@ -79,13 +81,13 @@ describe("MarkWelcomeSeenUseCase", () => {
   it("records welcome as seen now for a client on the welcome step", async () => {
     // arrange
     const journeys = createJourneys(journey(null));
-    const useCase = new MarkWelcomeSeenUseCase({
-      clock: { now: () => NOW },
-      journeys,
+    const markWelcomeSeenUseCase = new MarkWelcomeSeenUseCase({
+      clockPort: { now: () => NOW },
+      clientJourneysPort: journeys,
     });
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await markWelcomeSeenUseCase.execute("user_ana");
 
     // assert
     expect(result).toEqual({ status: "welcome-seen" });
@@ -100,13 +102,13 @@ describe("MarkWelcomeSeenUseCase", () => {
     const journeys = createJourneys(
       journey(new Date("2026-09-26T10:00:00.000Z")),
     );
-    const useCase = new MarkWelcomeSeenUseCase({
-      clock: { now: () => NOW },
-      journeys,
+    const markWelcomeSeenUseCase = new MarkWelcomeSeenUseCase({
+      clockPort: { now: () => NOW },
+      clientJourneysPort: journeys,
     });
 
     // act
-    const result = await useCase.execute("user_ana");
+    const result = await markWelcomeSeenUseCase.execute("user_ana");
 
     // assert
     expect(result).toEqual({ status: "welcome-seen" });
@@ -116,13 +118,13 @@ describe("MarkWelcomeSeenUseCase", () => {
   it("answers not-on-journey for a subject bound to no client", async () => {
     // arrange
     const journeys = createJourneys(null);
-    const useCase = new MarkWelcomeSeenUseCase({
-      clock: { now: () => NOW },
-      journeys,
+    const markWelcomeSeenUseCase = new MarkWelcomeSeenUseCase({
+      clockPort: { now: () => NOW },
+      clientJourneysPort: journeys,
     });
 
     // act
-    const result = await useCase.execute("user_coach");
+    const result = await markWelcomeSeenUseCase.execute("user_coach");
 
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
@@ -149,9 +151,9 @@ describe("ReadClientPortalStandingUseCase", () => {
 
     return {
       journeys,
-      useCase: new ReadClientPortalStandingUseCase({
-        clock: { now: () => options.now },
-        journeys,
+      readClientPortalStandingUseCase: new ReadClientPortalStandingUseCase({
+        clockPort: { now: () => options.now },
+        clientJourneysPort: journeys,
       }),
     };
   }
@@ -168,10 +170,13 @@ describe("ReadClientPortalStandingUseCase", () => {
         paidThrough: null,
       },
     });
-    const { useCase, journeys } = standingUseCase({ found, now: NOW });
+    const { readClientPortalStandingUseCase, journeys } = standingUseCase({
+      found,
+      now: NOW,
+    });
 
     // act
-    const standing = await useCase.execute("user_ana");
+    const standing = await readClientPortalStandingUseCase.execute("user_ana");
 
     // assert
     expect(standing).toEqual({ journey: found, portal: "reachable" });
@@ -184,10 +189,13 @@ describe("ReadClientPortalStandingUseCase", () => {
       reviewOpenedAt: OPENED_AT,
       detailsRequestedAt: ASKED_AT,
     });
-    const { useCase } = standingUseCase({ found, now: NOW });
+    const { readClientPortalStandingUseCase } = standingUseCase({
+      found,
+      now: NOW,
+    });
 
     // act
-    const standing = await useCase.execute("user_ana");
+    const standing = await readClientPortalStandingUseCase.execute("user_ana");
 
     // assert
     expect(standing).toEqual({ journey: found, portal: "reachable" });
@@ -200,10 +208,14 @@ describe("ReadClientPortalStandingUseCase", () => {
     "answers her portal awaiting onboarding to a client who %s, though her coaching is active",
     async (_label, found) => {
       // arrange
-      const { useCase } = standingUseCase({ found, now: NOW });
+      const { readClientPortalStandingUseCase } = standingUseCase({
+        found,
+        now: NOW,
+      });
 
       // act
-      const standing = await useCase.execute("user_ana");
+      const standing =
+        await readClientPortalStandingUseCase.execute("user_ana");
 
       // assert
       expect(standing).toEqual({
@@ -234,10 +246,14 @@ describe("ReadClientPortalStandingUseCase", () => {
       const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT, {
         standing: standingSnapshot,
       });
-      const { useCase } = standingUseCase({ found, now });
+      const { readClientPortalStandingUseCase } = standingUseCase({
+        found,
+        now,
+      });
 
       // act
-      const standing = await useCase.execute("user_ana");
+      const standing =
+        await readClientPortalStandingUseCase.execute("user_ana");
 
       // assert
       expect(standing).toEqual({ journey: found, portal: "ended" });
@@ -247,10 +263,13 @@ describe("ReadClientPortalStandingUseCase", () => {
   it("answers her portal ended to a client who never submitted onboarding", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, null, { standing: ENDED });
-    const { useCase } = standingUseCase({ found, now: NOW });
+    const { readClientPortalStandingUseCase } = standingUseCase({
+      found,
+      now: NOW,
+    });
 
     // act
-    const standing = await useCase.execute("user_ana");
+    const standing = await readClientPortalStandingUseCase.execute("user_ana");
 
     // assert
     expect(standing).toEqual({ journey: found, portal: "ended" });
@@ -259,10 +278,13 @@ describe("ReadClientPortalStandingUseCase", () => {
   it("answers her portal reachable to a submitted client whose coaching has not started", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
-    const { useCase } = standingUseCase({ found, now: NOW });
+    const { readClientPortalStandingUseCase } = standingUseCase({
+      found,
+      now: NOW,
+    });
 
     // act
-    const standing = await useCase.execute("user_ana");
+    const standing = await readClientPortalStandingUseCase.execute("user_ana");
 
     // assert
     expect(standing).toEqual({ journey: found, portal: "reachable" });
@@ -270,10 +292,13 @@ describe("ReadClientPortalStandingUseCase", () => {
 
   it("answers no standing for a subject bound to no client", async () => {
     // arrange
-    const { useCase } = standingUseCase({ found: null, now: NOW });
+    const { readClientPortalStandingUseCase } = standingUseCase({
+      found: null,
+      now: NOW,
+    });
 
     // act
-    const standing = await useCase.execute("user_ana");
+    const standing = await readClientPortalStandingUseCase.execute("user_ana");
 
     // assert
     expect(standing).toBeNull();

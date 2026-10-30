@@ -78,23 +78,23 @@ function createUseCase() {
     recipeEditFailed: vi.fn(),
     recipePhotoCleanupFailed: vi.fn(),
   } satisfies NutritionLibraryIncidentsPort;
-  const useCase = new EditFoodUseCase({
-    library,
-    tags,
-    clock: { now: () => NOW },
-    incidents,
+  const editFoodUseCase = new EditFoodUseCase({
+    foodLibraryPort: library,
+    nutritionTagsPort: tags,
+    clockPort: { now: () => NOW },
+    nutritionLibraryIncidentsPort: incidents,
   });
 
-  return { useCase, library, incidents };
+  return { editFoodUseCase, library, incidents };
 }
 
 describe("EditFoodUseCase", () => {
   it("replaces her food as a whole, keeping its id, owner and creation moment, updated now", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: ROLLED_OATS,
@@ -116,10 +116,10 @@ describe("EditFoodUseCase", () => {
 
   it("keeps its own name, recased and spaced", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { editFoodUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: { ...ROLLED_OATS, name: "  OATS " },
@@ -131,10 +131,10 @@ describe("EditFoodUseCase", () => {
 
   it("refuses a rename onto another of her foods, without replacing it", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: { ...ROLLED_OATS, name: "rice" },
@@ -147,10 +147,10 @@ describe("EditFoodUseCase", () => {
 
   it("renames onto a name only another coach's food has", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { editFoodUseCase } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: { ...ROLLED_OATS, name: "Quinoa" },
@@ -162,10 +162,10 @@ describe("EditFoodUseCase", () => {
 
   it("refuses a draft that breaks a rule, without replacing the food", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: { ...ROLLED_OATS, defaultPortionGrams: 0.5, tagIds: ["x"] },
@@ -181,11 +181,11 @@ describe("EditFoodUseCase", () => {
 
   it("refuses the name when the library finds it taken by a food renamed meanwhile", async () => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editFoodUseCase, library } = createUseCase();
     library.replace.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: ROLLED_OATS,
@@ -200,10 +200,10 @@ describe("EditFoodUseCase", () => {
     ["another coach's food", "food-3"],
   ])("finds nothing to edit for %s", async (_case, foodId) => {
     // arrange
-    const { useCase, library } = createUseCase();
+    const { editFoodUseCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId,
       draft: ROLLED_OATS,
@@ -217,11 +217,11 @@ describe("EditFoodUseCase", () => {
   it("reports a failed write with the food's id and answers that the edit failed", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const { useCase, library, incidents } = createUseCase();
+    const { editFoodUseCase, library, incidents } = createUseCase();
     library.replace.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({
+    const result = await editFoodUseCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       foodId: "food-1",
       draft: ROLLED_OATS,

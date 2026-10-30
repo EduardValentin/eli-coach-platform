@@ -141,7 +141,7 @@ function answerPorts(
 ) {
   return {
     participants: new OnboardingParticipants({
-      clients: {
+      onboardingClientsPort: {
         findByAuthSubjectId: vi
           .fn()
           .mockResolvedValue(
@@ -149,24 +149,26 @@ function answerPorts(
           ),
         findByClientId: vi.fn().mockResolvedValue(null),
       } satisfies OnboardingClientsPort,
-      identities: {
+      clientIdentitiesPort: {
         findByClientId: vi.fn().mockResolvedValue(IDENTITY),
       } satisfies Pick<ClientIdentitiesPort, "findByClientId">,
     }),
-    onboardings: {
+    clientOnboardingSourcePort: {
       findByClientId: vi
         .fn()
         .mockResolvedValue({ draft: null, submission: SUBMISSION }),
     } satisfies ClientOnboardingSourcePort,
-    reviews: createReviews(overrides.requests ?? [askedRequest()]),
-    settings: {
+    onboardingReviewsPort: createReviews(
+      overrides.requests ?? [askedRequest()],
+    ),
+    clientSettingsSourcePort: {
       findByClientId: vi.fn().mockResolvedValue(null),
     } satisfies ClientSettingsSourcePort,
-    stamps: {
+    onboardingReviewStampsPort: {
       record: vi.fn().mockResolvedValue(undefined),
     } satisfies OnboardingReviewStampsPort,
-    clock: { now: () => NOW },
-    incidents: createIncidents(),
+    clockPort: { now: () => NOW },
+    clientOnboardingIncidentsPort: createIncidents(),
   };
 }
 
@@ -174,17 +176,19 @@ describe("AnswerOnboardingDetailsUseCase", () => {
   it("records her asked answers and the answered request with the stamps that return her to in-review", async () => {
     // arrange
     const ports = answerPorts();
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+    const answerOnboardingDetailsUseCase = new AnswerOnboardingDetailsUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await answerOnboardingDetailsUseCase.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 72 } },
     });
 
     // assert
     expect(result).toEqual({ status: "answered" });
-    expect(ports.reviews.recordAnswer).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewsPort.recordAnswer).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       requestId: "request-1",
       mergedAnswers: {
@@ -194,7 +198,9 @@ describe("AnswerOnboardingDetailsUseCase", () => {
       answeredAt: NOW,
       stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
     });
-    expect(ports.incidents.onboardingDetailsAnswered).toHaveBeenCalledWith({
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingDetailsAnswered,
+    ).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       questionCount: 1,
     });
@@ -203,7 +209,7 @@ describe("AnswerOnboardingDetailsUseCase", () => {
   it("the answer and its stamps are one port write; a lagging stamp is repaired on read", async () => {
     // arrange
     const ports = answerPorts();
-    ports.reviews.findByClientId
+    ports.onboardingReviewsPort.findByClientId
       .mockResolvedValueOnce({
         openedAt: OPENED_AT,
         approvedAt: null,
@@ -214,41 +220,48 @@ describe("AnswerOnboardingDetailsUseCase", () => {
         approvedAt: null,
         requests: [askedRequest().answer(NOW)],
       });
-    const answering = new AnswerOnboardingDetailsUseCase(ports);
-    const reading = new ReadOpenDetailRequestUseCase(ports);
+    const answerOnboardingDetailsUseCase = new AnswerOnboardingDetailsUseCase(
+      ports,
+    );
+    const readOpenDetailRequestUseCase = new ReadOpenDetailRequestUseCase(
+      ports,
+    );
 
     // act
-    await answering.execute({
+    await answerOnboardingDetailsUseCase.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 72 } },
     });
-    const stampsAfterAnswer = ports.stamps.record.mock.calls.length;
-    const openRequest = await reading.execute("user_ana");
+    const stampsAfterAnswer =
+      ports.onboardingReviewStampsPort.record.mock.calls.length;
+    const openRequest = await readOpenDetailRequestUseCase.execute("user_ana");
 
     // assert
-    expect(ports.reviews.recordAnswer).toHaveBeenCalledWith(
+    expect(ports.onboardingReviewsPort.recordAnswer).toHaveBeenCalledWith(
       expect.objectContaining({
         stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
       }),
     );
     expect(stampsAfterAnswer).toBe(0);
     expect(openRequest).toBeNull();
-    expect(ports.stamps.record).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewStampsPort.record).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
     });
-    expect(ports.incidents.onboardingReviewStampsRepaired).toHaveBeenCalledWith(
-      { clientId: CLIENT.clientId },
-    );
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingReviewStampsRepaired,
+    ).toHaveBeenCalledWith({ clientId: CLIENT.clientId });
   });
 
   it("refuses an answer to a question she was not asked and writes nothing", async () => {
     // arrange
     const ports = answerPorts();
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+    const answerOnboardingDetailsUseCase = new AnswerOnboardingDetailsUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await answerOnboardingDetailsUseCase.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 72, height: 150 } },
     });
@@ -264,8 +277,10 @@ describe("AnswerOnboardingDetailsUseCase", () => {
         },
       ],
     });
-    expect(ports.reviews.recordAnswer).not.toHaveBeenCalled();
-    expect(ports.incidents.onboardingDetailsRefused).toHaveBeenCalledWith({
+    expect(ports.onboardingReviewsPort.recordAnswer).not.toHaveBeenCalled();
+    expect(
+      ports.clientOnboardingIncidentsPort.onboardingDetailsRefused,
+    ).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       reason: "invalid",
     });
@@ -274,17 +289,19 @@ describe("AnswerOnboardingDetailsUseCase", () => {
   it("answers not-on-journey for a subject with no client", async () => {
     // arrange
     const ports = answerPorts({ client: null });
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+    const answerOnboardingDetailsUseCase = new AnswerOnboardingDetailsUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await answerOnboardingDetailsUseCase.execute({
       authSubjectId: "user_unknown",
       answers: {},
     });
 
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
-    expect(ports.reviews.findByClientId).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.findByClientId).not.toHaveBeenCalled();
   });
 
   it("answers nothing for a client whose portal access has ended", async () => {
@@ -292,17 +309,19 @@ describe("AnswerOnboardingDetailsUseCase", () => {
     const ports = answerPorts({
       client: clientWithAccessEndingAt(ENDED_ACCESS_AT),
     });
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+    const answerOnboardingDetailsUseCase = new AnswerOnboardingDetailsUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await answerOnboardingDetailsUseCase.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 82 } },
     });
 
     // assert
     expect(result).toEqual({ status: "ended" });
-    expect(ports.reviews.recordAnswer).not.toHaveBeenCalled();
+    expect(ports.onboardingReviewsPort.recordAnswer).not.toHaveBeenCalled();
   });
 
   it("records the answers of a client who cancelled while her access runs on", async () => {
@@ -310,10 +329,12 @@ describe("AnswerOnboardingDetailsUseCase", () => {
     const ports = answerPorts({
       client: clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT),
     });
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+    const answerOnboardingDetailsUseCase = new AnswerOnboardingDetailsUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await answerOnboardingDetailsUseCase.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 82 } },
     });

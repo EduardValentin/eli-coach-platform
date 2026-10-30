@@ -84,7 +84,7 @@ function createLoaderArguments(
   bookingId?: string,
 ) {
   const feature = {
-    assessmentCalls: { resolveJoin },
+    assessmentCallsController: { resolveJoin },
   } as unknown as AssessmentCallsFeature;
 
   return createRequestArgs({

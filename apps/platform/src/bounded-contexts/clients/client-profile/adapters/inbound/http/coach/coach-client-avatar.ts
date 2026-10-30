@@ -15,13 +15,14 @@ const ALLOWED_METHODS = ["POST", "DELETE"];
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
-    const { coachAvatars } = args.context.get(clientProfileContext);
+    const { coachClientAvatarController } =
+      args.context.get(clientProfileContext);
 
     switch (args.request.method) {
       case "POST":
-        return coachAvatars.upload(args, args.params.clientId);
+        return coachClientAvatarController.upload(args, args.params.clientId);
       case "DELETE":
-        return coachAvatars.remove(args, args.params.clientId);
+        return coachClientAvatarController.remove(args, args.params.clientId);
       default:
         throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
     }

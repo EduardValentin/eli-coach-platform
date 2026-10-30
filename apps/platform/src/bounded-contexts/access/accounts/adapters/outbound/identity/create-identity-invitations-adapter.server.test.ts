@@ -75,10 +75,15 @@ describe("createIdentityInvitations", () => {
     const config = createConfig({ IDENTITY_PROVIDER: "memory" });
 
     // act
-    const identity = createIdentityInvitationsAdapter(config, URLS);
+    const identityInvitationsPort = createIdentityInvitationsAdapter(
+      config,
+      URLS,
+    );
 
     // assert
-    expect(identity).toBeInstanceOf(InMemoryIdentityInvitationsAdapter);
+    expect(identityInvitationsPort).toBeInstanceOf(
+      InMemoryIdentityInvitationsAdapter,
+    );
   });
 
   it("returns the Clerk adapter for the clerk provider", () => {
@@ -86,22 +91,27 @@ describe("createIdentityInvitations", () => {
     const config = createConfig({ IDENTITY_PROVIDER: "clerk" });
 
     // act
-    const identity = createIdentityInvitationsAdapter(config, URLS);
+    const identityInvitationsPort = createIdentityInvitationsAdapter(
+      config,
+      URLS,
+    );
 
     // assert
-    expect(identity).toBeInstanceOf(ClerkIdentityInvitationsAdapter);
+    expect(identityInvitationsPort).toBeInstanceOf(
+      ClerkIdentityInvitationsAdapter,
+    );
   });
 
   it("sends Backend API calls to the configured Clerk API URL with the secret key", async () => {
     // arrange
     const clerkApi = await startClerkApiStub();
-    const identity = createIdentityInvitationsAdapter(
+    const identityInvitationsPort = createIdentityInvitationsAdapter(
       createConfig({ CLERK_API_URL: clerkApi.baseUrl }),
       URLS,
     );
 
     // act
-    const invitation = await identity
+    const invitation = await identityInvitationsPort
       .create({ email: "ana@example.com", invitationId: "invitation-1" })
       .finally(clerkApi.stop);
 

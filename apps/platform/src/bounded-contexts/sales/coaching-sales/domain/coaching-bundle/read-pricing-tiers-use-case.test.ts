@@ -15,11 +15,13 @@ describe("ReadPricingTiersUseCase", () => {
       tierForEmail: vi.fn(),
       tiersForEmails: vi.fn().mockResolvedValue(tiers),
     } satisfies PricingEligibilityPort;
-    const useCase = new ReadPricingTiersUseCase({ pricingEligibility });
+    const readPricingTiersUseCase = new ReadPricingTiersUseCase({
+      pricingEligibilityPort: pricingEligibility,
+    });
     const emails = ["ana@example.com", "bea@example.com"];
 
     // act
-    const result = await useCase.execute(emails);
+    const result = await readPricingTiersUseCase.execute(emails);
 
     // assert
     expect(result).toBe(tiers);

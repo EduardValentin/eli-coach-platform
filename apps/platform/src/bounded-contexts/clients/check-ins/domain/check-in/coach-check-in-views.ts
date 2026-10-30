@@ -11,21 +11,21 @@ export type CoachCheckInView = CheckInView & {
 };
 
 type CoachCheckInViewsOptions = {
-  clock: ClockPort;
-  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  clockPort: ClockPort;
+  clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientIds">;
 };
 
 export class CoachCheckInViews {
   constructor(private readonly options: CoachCheckInViewsOptions) {}
 
   async viewsOf(checkIns: readonly CheckIn[]): Promise<CoachCheckInView[]> {
-    const identities = await this.options.identities.findByClientIds(
+    const identities = await this.options.clientIdentitiesPort.findByClientIds(
       this.clientIdsOf(checkIns),
     );
     const identityByClientId = new Map(
       identities.map((identity) => [identity.clientId, identity]),
     );
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
 
     return [...checkIns].sort(CheckIn.byStart).flatMap((checkIn) => {
       const identity = identityByClientId.get(checkIn.clientId);

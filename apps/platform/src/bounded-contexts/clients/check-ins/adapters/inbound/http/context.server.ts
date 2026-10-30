@@ -7,11 +7,11 @@ import type { CheckInJoinController } from "~/bounded-contexts/clients/check-ins
 import type { SharedCheckInsController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/shared-check-ins-controller.server";
 
 export type CheckInsFeature = {
-  checkInJoin: CheckInJoinController;
-  clientCheckIns: ClientCheckInsController;
-  coachCheckIns: CoachCheckInsController;
-  coachCheckInSeries: CoachCheckInSeriesController;
-  sharedCheckIns: SharedCheckInsController;
+  checkInJoinController: CheckInJoinController;
+  clientCheckInsController: ClientCheckInsController;
+  coachCheckInsController: CoachCheckInsController;
+  coachCheckInSeriesController: CoachCheckInSeriesController;
+  sharedCheckInsController: SharedCheckInsController;
 };
 
 export const checkInsContext: RouterContext<CheckInsFeature> =

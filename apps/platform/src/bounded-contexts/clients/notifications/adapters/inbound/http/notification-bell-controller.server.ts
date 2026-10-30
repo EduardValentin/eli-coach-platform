@@ -15,9 +15,9 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type NotificationBellControllerOptions = {
-  markAllNotificationsRead: MarkAllNotificationsReadUseCase;
-  markNotificationRead: MarkNotificationReadUseCase;
-  readNotificationBell: ReadNotificationBellUseCase;
+  markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase;
+  markNotificationReadUseCase: MarkNotificationReadUseCase;
+  readNotificationBellUseCase: ReadNotificationBellUseCase;
 };
 
 type MarkResult = "marked" | "unknown";
@@ -28,7 +28,7 @@ export class NotificationBellController {
   constructor(private readonly options: NotificationBellControllerOptions) {}
 
   async loadBell(args: LoaderFunctionArgs): Promise<NotificationBellReply> {
-    const bell = await this.options.readNotificationBell.execute(
+    const bell = await this.options.readNotificationBellUseCase.execute(
       this.requireReader(args),
     );
 
@@ -53,7 +53,7 @@ export class NotificationBellController {
     }
 
     return this.respondToMark(
-      await this.options.markNotificationRead.execute({
+      await this.options.markNotificationReadUseCase.execute({
         reader,
         notificationId: id.data,
       }),
@@ -62,7 +62,7 @@ export class NotificationBellController {
 
   async markAllRead(args: ActionFunctionArgs): Promise<Response> {
     return this.respondToMark(
-      await this.options.markAllNotificationsRead.execute(
+      await this.options.markAllNotificationsReadUseCase.execute(
         this.requireReader(args),
       ),
     );

@@ -42,7 +42,7 @@ describe("ZipDeliveryStream", () => {
     const firstContents = Buffer.from("meal plan");
     const firstStream = Readable.from([firstContents]);
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
-    const store: ProductAssetsPort = {
+    const productAssetsPort: ProductAssetsPort = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -52,7 +52,7 @@ describe("ZipDeliveryStream", () => {
         })
         .mockResolvedValueOnce({ kind: "unavailable" }),
     };
-    const delivery = new ZipDeliveryStream(store);
+    const delivery = new ZipDeliveryStream(productAssetsPort);
     const grant = createGrant([
       ["guides/meal-plan.pdf", firstContents],
       ["guides/workout.pdf", Buffer.from("workout")],
@@ -63,7 +63,7 @@ describe("ZipDeliveryStream", () => {
 
     // assert
     expect(archive).toEqual({ kind: "unavailable" });
-    expect(store.openVerified).toHaveBeenCalledTimes(2);
+    expect(productAssetsPort.openVerified).toHaveBeenCalledTimes(2);
     await vi.waitFor(() => expect(closeFirstStream).toHaveBeenCalledOnce());
   });
 
@@ -92,7 +92,7 @@ describe("ZipDeliveryStream", () => {
     const secondStream = new PassThrough();
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssetsPort = {
+    const productAssetsPort: ProductAssetsPort = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -105,7 +105,7 @@ describe("ZipDeliveryStream", () => {
           bytes: releasableBytes(secondStream),
         }),
     };
-    const delivery = new ZipDeliveryStream(store);
+    const delivery = new ZipDeliveryStream(productAssetsPort);
     const archive = openedArchive(
       await delivery.create(
         createGrant([
@@ -136,7 +136,7 @@ describe("ZipDeliveryStream", () => {
     });
     const secondStream = new PassThrough();
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssetsPort = {
+    const productAssetsPort: ProductAssetsPort = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -149,7 +149,7 @@ describe("ZipDeliveryStream", () => {
           bytes: releasableBytes(secondStream),
         }),
     };
-    const delivery = new ZipDeliveryStream(store);
+    const delivery = new ZipDeliveryStream(productAssetsPort);
     const archive = await delivery.create(
       createGrant([
         ["guides/meal-plan.pdf", Buffer.from("meal plan")],

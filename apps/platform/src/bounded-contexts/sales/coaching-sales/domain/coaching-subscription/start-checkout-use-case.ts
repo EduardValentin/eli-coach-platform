@@ -36,16 +36,16 @@ type StartCheckoutResult =
   | { status: "unknown_bundle" };
 
 type StartCheckoutUseCaseOptions = {
-  calls: EndedCallsPort;
-  callSalesStates: CallSalesStatesPort;
-  checkoutSessions: CheckoutSessionsPort;
-  clock: ClockPort;
-  emailAcceptance: EmailAcceptancePort;
-  paymentCheckout: PaymentCheckoutPort;
-  paymentLinks: PaymentLinksPort;
-  pricingEligibility: PricingEligibilityPort;
+  endedCallsPort: EndedCallsPort;
+  callSalesStatesPort: CallSalesStatesPort;
+  checkoutSessionsPort: CheckoutSessionsPort;
+  clockPort: ClockPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  paymentCheckoutPort: PaymentCheckoutPort;
+  paymentLinksPort: PaymentLinksPort;
+  pricingEligibilityPort: PricingEligibilityPort;
   salesWindow: CoachingSalesWindow;
-  tokenHasher: PaymentLinkTokenHasherPort;
+  paymentLinkTokenHasherPort: PaymentLinkTokenHasherPort;
 };
 
 type SessionsClearingOutcome = "cleared" | "already_paid";
@@ -60,7 +60,7 @@ export class StartCheckoutUseCase {
       return { status: "closed" };
     }
 
-    const now = this.options.clock.now();
+    const now = this.options.clockPort.now();
     const link = await this.findUsableLink(command.rawToken, now);
 
     if (!link) {
@@ -73,20 +73,24 @@ export class StartCheckoutUseCase {
       return { status: "unknown_bundle" };
     }
 
-    const call = await this.options.calls.findById(link.assessmentCallId);
+    const call = await this.options.endedCallsPort.findById(
+      link.assessmentCallId,
+    );
 
     if (!call) {
       return { status: "invalid_link" };
     }
 
-    const salesStates = await this.options.callSalesStates.forCalls([call.id]);
+    const salesStates = await this.options.callSalesStatesPort.forCalls([
+      call.id,
+    ]);
 
     if (salesStates.get(call.id)?.state === "paid") {
       return { status: "invalid_link" };
     }
 
-    const tier = await this.options.pricingEligibility.tierForEmail(
-      this.options.emailAcceptance.normalize(call.visitorEmail),
+    const tier = await this.options.pricingEligibilityPort.tierForEmail(
+      this.options.emailAcceptancePort.normalize(call.visitorEmail),
     );
     const customerId = await this.paymentCustomerFor(call, link.id);
 
@@ -97,7 +101,7 @@ export class StartCheckoutUseCase {
     }
 
     const amountCents = bundle.totalCents(tier);
-    const session = await this.options.paymentCheckout.createSession({
+    const session = await this.options.paymentCheckoutPort.createSession({
       customerId,
       bundle: {
         id: bundle.id,
@@ -117,7 +121,7 @@ export class StartCheckoutUseCase {
       cancelUrl: command.cancelUrl,
     });
 
-    await this.options.checkoutSessions.remember({
+    await this.options.checkoutSessionsPort.remember({
       id: session.id,
       paymentLinkId: link.id,
       bundleId: bundle.id,
@@ -139,8 +143,8 @@ export class StartCheckoutUseCase {
       return null;
     }
 
-    const link = await this.options.paymentLinks.findByTokenSha256(
-      this.options.tokenHasher.sha256(rawToken),
+    const link = await this.options.paymentLinksPort.findByTokenSha256(
+      this.options.paymentLinkTokenHasherPort.sha256(rawToken),
     );
 
     return link?.isUsable(now) ? link : null;
@@ -150,20 +154,19 @@ export class StartCheckoutUseCase {
     call: SalesCall,
     paymentLinkId: string,
   ): Promise<string> {
-    const existing = await this.options.paymentLinks.findPaymentCustomerForCall(
-      call.id,
-    );
+    const existing =
+      await this.options.paymentLinksPort.findPaymentCustomerForCall(call.id);
 
     if (existing) {
       return existing;
     }
 
-    const customer = await this.options.paymentCheckout.createCustomer({
+    const customer = await this.options.paymentCheckoutPort.createCustomer({
       email: call.visitorEmail,
       assessmentCallId: call.id,
     });
 
-    await this.options.paymentLinks.rememberPaymentCustomer(
+    await this.options.paymentLinksPort.rememberPaymentCustomer(
       paymentLinkId,
       customer.id,
     );
@@ -175,7 +178,7 @@ export class StartCheckoutUseCase {
     assessmentCallId: string,
   ): Promise<SessionsClearingOutcome> {
     const openSessions =
-      await this.options.checkoutSessions.findOpenForCall(assessmentCallId);
+      await this.options.checkoutSessionsPort.findOpenForCall(assessmentCallId);
     const outcomes: SessionExpiryOutcome[] = [];
 
     for (const session of openSessions) {
@@ -188,13 +191,15 @@ export class StartCheckoutUseCase {
   private async expireOpenSession(
     sessionId: string,
   ): Promise<SessionExpiryOutcome> {
-    await this.options.paymentCheckout.expireSession(sessionId);
+    await this.options.paymentCheckoutPort.expireSession(sessionId);
 
-    if (await this.options.paymentCheckout.findCompletedSession(sessionId)) {
+    if (
+      await this.options.paymentCheckoutPort.findCompletedSession(sessionId)
+    ) {
       return "already_paid";
     }
 
-    await this.options.checkoutSessions.markExpired(sessionId);
+    await this.options.checkoutSessionsPort.markExpired(sessionId);
 
     return "expired";
   }

@@ -13,7 +13,7 @@ import { CoachScheduleSettingsSection } from "./coach-schedule-settings-section"
 export async function loader({ context }: LoaderFunctionArgs) {
   return context
     .get(coachScheduleContext)
-    .coachScheduleSettings.loadSettingsPage();
+    .coachScheduleSettingsController.loadSettingsPage();
 }
 
 export const meta: MetaFunction = () => [{ title: "Settings | Evoa" }];

@@ -18,6 +18,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["GET", "HEAD"] });
     }
 
-    return context.get(storeContext).catalog.getPublishedCatalog();
+    return context
+      .get(storeContext)
+      .storeCatalogController.getPublishedCatalog();
   });
 }

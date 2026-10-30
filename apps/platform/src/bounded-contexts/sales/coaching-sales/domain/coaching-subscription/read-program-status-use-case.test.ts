@@ -110,14 +110,14 @@ describe("ReadProgramStatusUseCase", () => {
     const subscriptions = createSubscriptions(
       subscriptionOf({ startChoice: "immediate" }),
     );
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions,
+    const readProgramStatusUseCase = new ReadProgramStatusUseCase({
+      clockPort: { now: () => NOW },
+      clientLookupPort: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
+      coachingSubscriptionsPort: subscriptions,
     });
 
     // act
-    const status = await useCase.execute("user_ana");
+    const status = await readProgramStatusUseCase.execute("user_ana");
 
     // assert
     expect(status).toEqual({
@@ -131,16 +131,16 @@ describe("ReadProgramStatusUseCase", () => {
 
   it("answers her submission with the day the work starts and until when she can start now when she waits out the withdrawal window", async () => {
     // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(
+    const readProgramStatusUseCase = new ReadProgramStatusUseCase({
+      clockPort: { now: () => NOW },
+      clientLookupPort: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
+      coachingSubscriptionsPort: createSubscriptions(
         subscriptionOf({ startChoice: "waiting" }),
       ),
     });
 
     // act
-    const status = await useCase.execute("user_ana");
+    const status = await readProgramStatusUseCase.execute("user_ana");
 
     // assert
     expect(status).toEqual({
@@ -153,16 +153,16 @@ describe("ReadProgramStatusUseCase", () => {
 
   it("answers neither a coming work start nor start now once her withdrawal deadline has passed on the waiting path", async () => {
     // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => new Date("2026-10-10T10:00:00.000Z") },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(
+    const readProgramStatusUseCase = new ReadProgramStatusUseCase({
+      clockPort: { now: () => new Date("2026-10-10T10:00:00.000Z") },
+      clientLookupPort: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
+      coachingSubscriptionsPort: createSubscriptions(
         subscriptionOf({ startChoice: "waiting" }),
       ),
     });
 
     // act
-    const status = await useCase.execute("user_ana");
+    const status = await readProgramStatusUseCase.execute("user_ana");
 
     // assert
     expect(status).toMatchObject({
@@ -173,14 +173,14 @@ describe("ReadProgramStatusUseCase", () => {
 
   it("answers her submission with no start day when she holds no subscription", async () => {
     // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(null),
+    const readProgramStatusUseCase = new ReadProgramStatusUseCase({
+      clockPort: { now: () => NOW },
+      clientLookupPort: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
+      coachingSubscriptionsPort: createSubscriptions(null),
     });
 
     // act
-    const status = await useCase.execute("user_ana");
+    const status = await readProgramStatusUseCase.execute("user_ana");
 
     // assert
     expect(status).toEqual({
@@ -202,16 +202,16 @@ describe("ReadProgramStatusUseCase", () => {
     "answers %s once the coach's review reaches it",
     async (expected, reviewStamps) => {
       // arrange
-      const useCase = new ReadProgramStatusUseCase({
-        clock: { now: () => NOW },
-        journeys: createJourneys(
+      const readProgramStatusUseCase = new ReadProgramStatusUseCase({
+        clockPort: { now: () => NOW },
+        clientLookupPort: createJourneys(
           journey(WELCOME_SEEN_AT, SUBMITTED_AT, reviewStamps),
         ),
-        subscriptions: createSubscriptions(null),
+        coachingSubscriptionsPort: createSubscriptions(null),
       });
 
       // act
-      const status = await useCase.execute("user_ana");
+      const status = await readProgramStatusUseCase.execute("user_ana");
 
       // assert
       expect(status).toMatchObject({
@@ -229,14 +229,14 @@ describe("ReadProgramStatusUseCase", () => {
     const subscriptions = createSubscriptions(
       subscriptionOf({ startChoice: "waiting" }),
     );
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(found),
-      subscriptions,
+    const readProgramStatusUseCase = new ReadProgramStatusUseCase({
+      clockPort: { now: () => NOW },
+      clientLookupPort: createJourneys(found),
+      coachingSubscriptionsPort: subscriptions,
     });
 
     // act
-    const status = await useCase.execute("user_ana");
+    const status = await readProgramStatusUseCase.execute("user_ana");
 
     // assert
     expect(status).toBeNull();

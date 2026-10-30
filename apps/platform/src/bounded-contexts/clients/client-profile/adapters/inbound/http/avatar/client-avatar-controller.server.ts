@@ -5,7 +5,7 @@ import { z } from "zod";
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type ClientAvatarControllerOptions = {
-  openClientAvatar: OpenClientAvatarUseCase;
+  openClientAvatarUseCase: OpenClientAvatarUseCase;
 };
 
 const clientIdSchema = z.uuid();
@@ -24,7 +24,7 @@ export class ClientAvatarController {
       return this.notFoundResponse();
     }
 
-    const result = await this.options.openClientAvatar.execute({
+    const result = await this.options.openClientAvatarUseCase.execute({
       clientId: target.data,
       requester: { role: account.role, authSubjectId: account.authSubjectId },
     });

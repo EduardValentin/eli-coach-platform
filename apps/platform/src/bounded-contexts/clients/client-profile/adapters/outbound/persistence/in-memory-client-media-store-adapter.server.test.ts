@@ -9,11 +9,13 @@ const PHOTO = new Uint8Array([1, 2, 3, 4]);
 describe("InMemoryClientMediaStore", () => {
   it("opens the bytes it stored under a reference derived from the owner", async () => {
     // arrange
-    const store = new InMemoryClientMediaStoreAdapter(progressPhotoStorageKey);
+    const inMemoryClientMediaStoreAdapter = new InMemoryClientMediaStoreAdapter(
+      progressPhotoStorageKey,
+    );
 
     // act
-    const reference = await store.store(OWNER, PHOTO);
-    const opened = await store.open(reference);
+    const reference = await inMemoryClientMediaStoreAdapter.store(OWNER, PHOTO);
+    const opened = await inMemoryClientMediaStoreAdapter.open(reference);
 
     // assert
     expect(reference).toEqual({
@@ -25,10 +27,12 @@ describe("InMemoryClientMediaStore", () => {
 
   it("opens nothing for a reference it never stored", async () => {
     // arrange
-    const store = new InMemoryClientMediaStoreAdapter(progressPhotoStorageKey);
+    const inMemoryClientMediaStoreAdapter = new InMemoryClientMediaStoreAdapter(
+      progressPhotoStorageKey,
+    );
 
     // act
-    const opened = await store.open({
+    const opened = await inMemoryClientMediaStoreAdapter.open({
       storageKey: "client-1/entry-1/unknown.bin",
       keyId: "memory",
     });
@@ -39,29 +43,38 @@ describe("InMemoryClientMediaStore", () => {
 
   it("refuses to store a second photo for the same owner", async () => {
     // arrange
-    const store = new InMemoryClientMediaStoreAdapter(progressPhotoStorageKey);
-    const reference = await store.store(OWNER, PHOTO);
+    const inMemoryClientMediaStoreAdapter = new InMemoryClientMediaStoreAdapter(
+      progressPhotoStorageKey,
+    );
+    const reference = await inMemoryClientMediaStoreAdapter.store(OWNER, PHOTO);
 
     // act
-    const storeAgain = store.store(OWNER, new Uint8Array([9]));
+    const storeAgain = inMemoryClientMediaStoreAdapter.store(
+      OWNER,
+      new Uint8Array([9]),
+    );
 
     // assert
     await expect(storeAgain).rejects.toThrow(
       "A client media file is already stored under this key.",
     );
-    expect(await store.open(reference)).toEqual(PHOTO);
+    expect(await inMemoryClientMediaStoreAdapter.open(reference)).toEqual(
+      PHOTO,
+    );
   });
 
   it("deletes a stored photo and deletes again without failing", async () => {
     // arrange
-    const store = new InMemoryClientMediaStoreAdapter(progressPhotoStorageKey);
-    const reference = await store.store(OWNER, PHOTO);
+    const inMemoryClientMediaStoreAdapter = new InMemoryClientMediaStoreAdapter(
+      progressPhotoStorageKey,
+    );
+    const reference = await inMemoryClientMediaStoreAdapter.store(OWNER, PHOTO);
 
     // act
-    await store.delete(reference);
-    await store.delete(reference);
+    await inMemoryClientMediaStoreAdapter.delete(reference);
+    await inMemoryClientMediaStoreAdapter.delete(reference);
 
     // assert
-    expect(await store.open(reference)).toBeNull();
+    expect(await inMemoryClientMediaStoreAdapter.open(reference)).toBeNull();
   });
 });

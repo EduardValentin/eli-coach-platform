@@ -7,8 +7,8 @@ import {
 } from "./coach-schedule";
 
 type GetCoachScheduleSettingsUseCaseOptions = {
-  availability: CoachAvailabilitySourcePort;
-  meetingRoom: CoachMeetingRoomSourcePort;
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort;
+  coachMeetingRoomSourcePort: CoachMeetingRoomSourcePort;
 };
 
 export class GetCoachScheduleSettingsUseCase {
@@ -18,8 +18,8 @@ export class GetCoachScheduleSettingsUseCase {
 
   async execute(): Promise<CoachScheduleSettingsSnapshot> {
     const [availability, room] = await Promise.all([
-      this.options.availability.current(),
-      this.options.meetingRoom.current(),
+      this.options.coachAvailabilitySourcePort.current(),
+      this.options.coachMeetingRoomSourcePort.current(),
     ]);
 
     return coachScheduleSettingsOf(availability, room);

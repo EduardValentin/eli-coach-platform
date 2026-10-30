@@ -23,11 +23,15 @@ import {
 } from "./welcome-copy";
 
 export function loader(args: LoaderFunctionArgs): Promise<WelcomePage> {
-  return args.context.get(clientsContext).clientJourney.loadWelcome(args);
+  return args.context
+    .get(clientsContext)
+    .clientJourneyController.loadWelcome(args);
 }
 
 export function action(args: ActionFunctionArgs): Promise<Response> {
-  return args.context.get(clientsContext).clientJourney.markWelcomeSeen(args);
+  return args.context
+    .get(clientsContext)
+    .clientJourneyController.markWelcomeSeen(args);
 }
 
 export const meta: MetaFunction = () => [

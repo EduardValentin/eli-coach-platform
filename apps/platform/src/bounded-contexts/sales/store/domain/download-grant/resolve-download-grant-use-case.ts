@@ -11,9 +11,9 @@ export type DownloadGrantResolution =
 export class ResolveDownloadGrantUseCase {
   constructor(
     private readonly options: {
-      clock: ClockPort;
-      downloadGrants: DownloadGrantsPort;
-      tokenHasher: DownloadTokenHasherPort;
+      clockPort: ClockPort;
+      downloadGrantsPort: DownloadGrantsPort;
+      downloadTokenHasherPort: DownloadTokenHasherPort;
     },
   ) {}
 
@@ -22,11 +22,11 @@ export class ResolveDownloadGrantUseCase {
       return { status: "unavailable" };
     }
 
-    const grant = await this.options.downloadGrants.findByTokenSha256(
-      this.options.tokenHasher.sha256(rawToken),
+    const grant = await this.options.downloadGrantsPort.findByTokenSha256(
+      this.options.downloadTokenHasherPort.sha256(rawToken),
     );
 
-    if (!grant || !grant.isActive(this.options.clock.now())) {
+    if (!grant || !grant.isActive(this.options.clockPort.now())) {
       return { status: "unavailable" };
     }
 

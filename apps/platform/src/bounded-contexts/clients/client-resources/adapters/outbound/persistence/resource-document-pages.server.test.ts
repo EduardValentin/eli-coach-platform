@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createResourceDocumentPagesAdapter } from "./create-resource-document-pages-adapter.server";
 
-const documentPages = createResourceDocumentPagesAdapter({
+const resourceDocumentPagesPort = createResourceDocumentPagesAdapter({
   workerUrl: new URL(
     "../../../../../../shared/documents/pdf-pages-worker.server.ts",
     import.meta.url,
@@ -35,7 +35,7 @@ function pdfOf(pageCount: number, options = {}): Promise<Uint8Array> {
 }
 
 async function readable(bytes: Uint8Array): Promise<ReadableResourceDocument> {
-  const reading = await documentPages.read(bytes);
+  const reading = await resourceDocumentPagesPort.read(bytes);
 
   if (reading.status !== "readable") {
     throw new Error("Expected the PDF to be readable.");
@@ -148,7 +148,7 @@ describe("createResourceDocumentPages", () => {
     const bytes = await pdfOf(1, { userPassword: "secret" });
 
     // act
-    const reading = await documentPages.read(bytes);
+    const reading = await resourceDocumentPagesPort.read(bytes);
 
     // assert
     expect(reading).toEqual({ status: "unreadable" });

@@ -32,7 +32,7 @@ const INVITE_PRODUCT_NAME = "Assessment Call";
 
 export class EmailAssessmentCallNotificationsAdapter implements AssessmentCallNotificationsPort {
   constructor(
-    private readonly productEmail: ProductEmailPort,
+    private readonly productEmailPort: ProductEmailPort,
     private readonly options: EmailAssessmentCallNotificationsOptions,
   ) {}
 
@@ -100,7 +100,7 @@ export class EmailAssessmentCallNotificationsAdapter implements AssessmentCallNo
   }
 
   private async send(command: ProductEmailCommand): Promise<Delivery> {
-    const delivery = await this.productEmail.send(command);
+    const delivery = await this.productEmailPort.send(command);
 
     return delivery.kind === "sent" ? "sent" : "failed";
   }

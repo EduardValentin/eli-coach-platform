@@ -73,12 +73,12 @@ const CHANGED_PDF = ClientResource.reconstitute({
 describe("ClientResourcesController add", () => {
   it("adds the file she sent with her title, description and tags and answers the resource as the page shows it", async () => {
     // arrange
-    const { controller, addClientResource } = createController({
+    const { clientResourcesController, addClientResource } = createController({
       added: { status: "added", resource: ADDED_PDF },
     });
 
     // act
-    const response = await controller.add(
+    const response = await clientResourcesController.add(
       uploadArgs({ form: uploadForm() }),
       CLIENT_ID,
     );
@@ -123,12 +123,12 @@ describe("ClientResourcesController add", () => {
     "answers a refused file as unprocessable with its reason: %s",
     async (refusal) => {
       // arrange
-      const { controller } = createController({
+      const { clientResourcesController } = createController({
         added: { status: "refused", refusal },
       });
 
       // act
-      const response = await controller.add(
+      const response = await clientResourcesController.add(
         uploadArgs({ form: uploadForm() }),
         CLIENT_ID,
       );
@@ -141,7 +141,7 @@ describe("ClientResourcesController add", () => {
 
   it("answers details that break the rules as a bad request naming each problem", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       added: {
         status: "invalid-details",
         problems: {
@@ -153,7 +153,7 @@ describe("ClientResourcesController add", () => {
     });
 
     // act
-    const response = await controller.add(
+    const response = await clientResourcesController.add(
       uploadArgs({ form: uploadForm() }),
       CLIENT_ID,
     );
@@ -167,12 +167,12 @@ describe("ClientResourcesController add", () => {
 
   it("answers not found to a client who does not exist", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       added: { status: "not-found" },
     });
 
     // act
-    const response = await controller.add(
+    const response = await clientResourcesController.add(
       uploadArgs({ form: uploadForm() }),
       CLIENT_ID,
     );
@@ -183,10 +183,12 @@ describe("ClientResourcesController add", () => {
 
   it("answers a server error when the files or the record could not be kept", async () => {
     // arrange
-    const { controller } = createController({ added: { status: "failed" } });
+    const { clientResourcesController } = createController({
+      added: { status: "failed" },
+    });
 
     // act
-    const response = await controller.add(
+    const response = await clientResourcesController.add(
       uploadArgs({ form: uploadForm() }),
       CLIENT_ID,
     );
@@ -197,10 +199,10 @@ describe("ClientResourcesController add", () => {
 
   it("answers not found to a client id that is not a uuid without adding anything", async () => {
     // arrange
-    const { controller, addClientResource } = createController();
+    const { clientResourcesController, addClientResource } = createController();
 
     // act
-    const response = await controller.add(
+    const response = await clientResourcesController.add(
       uploadArgs({ form: uploadForm() }),
       "not-a-uuid",
     );
@@ -212,7 +214,7 @@ describe("ClientResourcesController add", () => {
 
   it("refuses a body over the upload cap as too large without reading it or adding anything", async () => {
     // arrange
-    const { controller, addClientResource } = createController();
+    const { clientResourcesController, addClientResource } = createController();
     const request = new Request(UPLOAD_URL, {
       body: "x",
       headers: {
@@ -223,7 +225,10 @@ describe("ClientResourcesController add", () => {
     });
 
     // act
-    const response = await controller.add(uploadArgs({ request }), CLIENT_ID);
+    const response = await clientResourcesController.add(
+      uploadArgs({ request }),
+      CLIENT_ID,
+    );
 
     // assert
     expect(response.status).toBe(413);
@@ -233,7 +238,7 @@ describe("ClientResourcesController add", () => {
 
   it("answers a bad request to a body that is not a form without adding anything", async () => {
     // arrange
-    const { controller, addClientResource } = createController();
+    const { clientResourcesController, addClientResource } = createController();
     const request = new Request(UPLOAD_URL, {
       body: JSON.stringify({ title: "Meal plan" }),
       headers: { "Content-Type": "application/json" },
@@ -241,7 +246,10 @@ describe("ClientResourcesController add", () => {
     });
 
     // act
-    const response = await controller.add(uploadArgs({ request }), CLIENT_ID);
+    const response = await clientResourcesController.add(
+      uploadArgs({ request }),
+      CLIENT_ID,
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -250,12 +258,15 @@ describe("ClientResourcesController add", () => {
 
   it("answers a bad request to a form without a file without adding anything", async () => {
     // arrange
-    const { controller, addClientResource } = createController();
+    const { clientResourcesController, addClientResource } = createController();
     const form = new FormData();
     form.set(RESOURCE_UPLOAD_PARTS.title, "Meal plan");
 
     // act
-    const response = await controller.add(uploadArgs({ form }), CLIENT_ID);
+    const response = await clientResourcesController.add(
+      uploadArgs({ form }),
+      CLIENT_ID,
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -271,11 +282,14 @@ describe("ClientResourcesController add", () => {
     },
   ])("refuses $who without adding anything", async ({ session, status }) => {
     // arrange
-    const { controller, addClientResource } = createController();
+    const { clientResourcesController, addClientResource } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.add(uploadArgs({ form: uploadForm(), session }), CLIENT_ID),
+      clientResourcesController.add(
+        uploadArgs({ form: uploadForm(), session }),
+        CLIENT_ID,
+      ),
     );
 
     // assert
@@ -287,12 +301,18 @@ describe("ClientResourcesController add", () => {
 describe("ClientResourcesController openPage", () => {
   it("answers the page image privately, never cached, sniffed or scripted", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController({
-      opened: { status: "opened", bytes: PAGE_BYTES, mimeType: "image/webp" },
-    });
+    const { clientResourcesController, openResourcePreview } = createController(
+      {
+        opened: { status: "opened", bytes: PAGE_BYTES, mimeType: "image/webp" },
+      },
+    );
 
     // act
-    const response = await controller.openPage(servingArgs(), RESOURCE_ID, "2");
+    const response = await clientResourcesController.openPage(
+      servingArgs(),
+      RESOURCE_ID,
+      "2",
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -314,12 +334,16 @@ describe("ClientResourcesController openPage", () => {
 
   it("answers not found to a page the resource does not show", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       opened: { status: "not-found" },
     });
 
     // act
-    const response = await controller.openPage(servingArgs(), RESOURCE_ID, "4");
+    const response = await clientResourcesController.openPage(
+      servingArgs(),
+      RESOURCE_ID,
+      "4",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -329,10 +353,11 @@ describe("ClientResourcesController openPage", () => {
     "answers not found to a page number that is not a positive whole number (%s) without opening anything",
     async (pageNumber) => {
       // arrange
-      const { controller, openResourcePreview } = createController();
+      const { clientResourcesController, openResourcePreview } =
+        createController();
 
       // act
-      const response = await controller.openPage(
+      const response = await clientResourcesController.openPage(
         servingArgs(),
         RESOURCE_ID,
         pageNumber,
@@ -346,10 +371,11 @@ describe("ClientResourcesController openPage", () => {
 
   it("answers not found to a resource id that is not a uuid without opening anything", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController();
+    const { clientResourcesController, openResourcePreview } =
+      createController();
 
     // act
-    const response = await controller.openPage(
+    const response = await clientResourcesController.openPage(
       servingArgs(),
       "../../etc/passwd",
       "1",
@@ -362,12 +388,17 @@ describe("ClientResourcesController openPage", () => {
 
   it("refuses a visitor who is not signed in without opening anything", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController();
+    const { clientResourcesController, openResourcePreview } =
+      createController();
     const session = ANONYMOUS_SESSION;
 
     // act
     const thrown = await captureThrown(() =>
-      controller.openPage(servingArgs({ session }), RESOURCE_ID, "1"),
+      clientResourcesController.openPage(
+        servingArgs({ session }),
+        RESOURCE_ID,
+        "1",
+      ),
     );
 
     // assert
@@ -377,11 +408,16 @@ describe("ClientResourcesController openPage", () => {
 
   it("asks for it as the signed-in client, leaving the reach to her resources to the rule", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController();
+    const { clientResourcesController, openResourcePreview } =
+      createController();
     const session = CLIENT_SESSION;
 
     // act
-    await controller.openPage(servingArgs({ session }), RESOURCE_ID, "1");
+    await clientResourcesController.openPage(
+      servingArgs({ session }),
+      RESOURCE_ID,
+      "1",
+    );
 
     // assert
     expect(openResourcePreview).toHaveBeenCalledWith(
@@ -396,12 +432,17 @@ describe("ClientResourcesController openPage", () => {
 describe("ClientResourcesController openThumbnail", () => {
   it("answers the thumbnail privately, never cached, sniffed or scripted", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController({
-      opened: { status: "opened", bytes: PAGE_BYTES, mimeType: "image/webp" },
-    });
+    const { clientResourcesController, openResourcePreview } = createController(
+      {
+        opened: { status: "opened", bytes: PAGE_BYTES, mimeType: "image/webp" },
+      },
+    );
 
     // act
-    const response = await controller.openThumbnail(servingArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.openThumbnail(
+      servingArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -417,12 +458,15 @@ describe("ClientResourcesController openThumbnail", () => {
 
   it("answers not found to a resource without a thumbnail", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       opened: { status: "not-found" },
     });
 
     // act
-    const response = await controller.openThumbnail(servingArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.openThumbnail(
+      servingArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -430,10 +474,14 @@ describe("ClientResourcesController openThumbnail", () => {
 
   it("answers not found to a resource id that is not a uuid without opening anything", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController();
+    const { clientResourcesController, openResourcePreview } =
+      createController();
 
     // act
-    const response = await controller.openThumbnail(servingArgs(), undefined);
+    const response = await clientResourcesController.openThumbnail(
+      servingArgs(),
+      undefined,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -442,12 +490,16 @@ describe("ClientResourcesController openThumbnail", () => {
 
   it("refuses a visitor who is not signed in without opening anything", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController();
+    const { clientResourcesController, openResourcePreview } =
+      createController();
     const session = ANONYMOUS_SESSION;
 
     // act
     const thrown = await captureThrown(() =>
-      controller.openThumbnail(servingArgs({ session }), RESOURCE_ID),
+      clientResourcesController.openThumbnail(
+        servingArgs({ session }),
+        RESOURCE_ID,
+      ),
     );
 
     // assert
@@ -457,11 +509,15 @@ describe("ClientResourcesController openThumbnail", () => {
 
   it("asks for it as the signed-in client, leaving the reach to her resources to the rule", async () => {
     // arrange
-    const { controller, openResourcePreview } = createController();
+    const { clientResourcesController, openResourcePreview } =
+      createController();
     const session = CLIENT_SESSION;
 
     // act
-    await controller.openThumbnail(servingArgs({ session }), RESOURCE_ID);
+    await clientResourcesController.openThumbnail(
+      servingArgs({ session }),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(openResourcePreview).toHaveBeenCalledWith(
@@ -476,19 +532,23 @@ describe("ClientResourcesController openThumbnail", () => {
 describe("ClientResourcesController download", () => {
   it("streams the original as a sandboxed attachment under its download name, type and length", async () => {
     // arrange
-    const { controller, downloadClientResource } = createController({
-      downloaded: {
-        status: "opened",
-        bytes: chunksOf(PDF_BYTES),
-        sizeBytes: PDF_BYTES.byteLength,
-        downloadName: "Plan alimentar – săptămâna 1.pdf",
-        kind: "pdf",
-        mimeType: "application/pdf",
-      },
-    });
+    const { clientResourcesController, downloadClientResource } =
+      createController({
+        downloaded: {
+          status: "opened",
+          bytes: chunksOf(PDF_BYTES),
+          sizeBytes: PDF_BYTES.byteLength,
+          downloadName: "Plan alimentar – săptămâna 1.pdf",
+          kind: "pdf",
+          mimeType: "application/pdf",
+        },
+      });
 
     // act
-    const response = await controller.download(servingArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.download(
+      servingArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -512,12 +572,15 @@ describe("ClientResourcesController download", () => {
 
   it("answers not found to a resource the coach cannot open", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       downloaded: { status: "not-found" },
     });
 
     // act
-    const response = await controller.download(servingArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.download(
+      servingArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -525,10 +588,14 @@ describe("ClientResourcesController download", () => {
 
   it("answers not found to a resource id that is not a uuid without opening anything", async () => {
     // arrange
-    const { controller, downloadClientResource } = createController();
+    const { clientResourcesController, downloadClientResource } =
+      createController();
 
     // act
-    const response = await controller.download(servingArgs(), "not-a-uuid");
+    const response = await clientResourcesController.download(
+      servingArgs(),
+      "not-a-uuid",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -537,12 +604,13 @@ describe("ClientResourcesController download", () => {
 
   it("refuses a visitor who is not signed in without opening anything", async () => {
     // arrange
-    const { controller, downloadClientResource } = createController();
+    const { clientResourcesController, downloadClientResource } =
+      createController();
     const session = ANONYMOUS_SESSION;
 
     // act
     const thrown = await captureThrown(() =>
-      controller.download(servingArgs({ session }), RESOURCE_ID),
+      clientResourcesController.download(servingArgs({ session }), RESOURCE_ID),
     );
 
     // assert
@@ -552,11 +620,15 @@ describe("ClientResourcesController download", () => {
 
   it("asks for it as the signed-in client, leaving the reach to her resources to the rule", async () => {
     // arrange
-    const { controller, downloadClientResource } = createController();
+    const { clientResourcesController, downloadClientResource } =
+      createController();
     const session = CLIENT_SESSION;
 
     // act
-    await controller.download(servingArgs({ session }), RESOURCE_ID);
+    await clientResourcesController.download(
+      servingArgs({ session }),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(downloadClientResource).toHaveBeenCalledWith(
@@ -571,12 +643,13 @@ describe("ClientResourcesController download", () => {
 describe("ClientResourcesController changeDetails", () => {
   it("changes the details she sent and answers the resource as the page shows it", async () => {
     // arrange
-    const { controller, changeResourceDetails } = createController({
-      changed: { status: "changed", resource: CHANGED_PDF },
-    });
+    const { clientResourcesController, changeResourceDetails } =
+      createController({
+        changed: { status: "changed", resource: CHANGED_PDF },
+      });
 
     // act
-    const response = await controller.changeDetails(
+    const response = await clientResourcesController.changeDetails(
       detailsArgs({
         body: {
           title: "  Week two plan ",
@@ -619,7 +692,7 @@ describe("ClientResourcesController changeDetails", () => {
 
   it("answers details that break the rules as a bad request naming each problem", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       changed: {
         status: "invalid-details",
         problems: {
@@ -631,7 +704,10 @@ describe("ClientResourcesController changeDetails", () => {
     });
 
     // act
-    const response = await controller.changeDetails(detailsArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.changeDetails(
+      detailsArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(400);
@@ -642,12 +718,15 @@ describe("ClientResourcesController changeDetails", () => {
 
   it("answers not found to a resource the coach cannot change", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       changed: { status: "not-found" },
     });
 
     // act
-    const response = await controller.changeDetails(detailsArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.changeDetails(
+      detailsArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -655,10 +734,15 @@ describe("ClientResourcesController changeDetails", () => {
 
   it("answers a server error when the details could not be kept", async () => {
     // arrange
-    const { controller } = createController({ changed: { status: "failed" } });
+    const { clientResourcesController } = createController({
+      changed: { status: "failed" },
+    });
 
     // act
-    const response = await controller.changeDetails(detailsArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.changeDetails(
+      detailsArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -666,10 +750,11 @@ describe("ClientResourcesController changeDetails", () => {
 
   it("answers not found to a resource id that is not a uuid without changing anything", async () => {
     // arrange
-    const { controller, changeResourceDetails } = createController();
+    const { clientResourcesController, changeResourceDetails } =
+      createController();
 
     // act
-    const response = await controller.changeDetails(
+    const response = await clientResourcesController.changeDetails(
       detailsArgs(),
       "not-a-uuid",
     );
@@ -705,7 +790,8 @@ describe("ClientResourcesController changeDetails", () => {
     "answers a bad request to a body $name without changing anything",
     async ({ body }) => {
       // arrange
-      const { controller, changeResourceDetails } = createController();
+      const { clientResourcesController, changeResourceDetails } =
+        createController();
       const request = new Request(RESOURCE_URL, {
         body,
         headers: { "Content-Type": "application/json" },
@@ -713,7 +799,7 @@ describe("ClientResourcesController changeDetails", () => {
       });
 
       // act
-      const response = await controller.changeDetails(
+      const response = await clientResourcesController.changeDetails(
         detailsArgs({ request }),
         RESOURCE_ID,
       );
@@ -733,11 +819,15 @@ describe("ClientResourcesController changeDetails", () => {
     },
   ])("refuses $who without changing anything", async ({ session, status }) => {
     // arrange
-    const { controller, changeResourceDetails } = createController();
+    const { clientResourcesController, changeResourceDetails } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.changeDetails(detailsArgs({ session }), RESOURCE_ID),
+      clientResourcesController.changeDetails(
+        detailsArgs({ session }),
+        RESOURCE_ID,
+      ),
     );
 
     // assert
@@ -749,12 +839,16 @@ describe("ClientResourcesController changeDetails", () => {
 describe("ClientResourcesController remove", () => {
   it("removes the resource and answers that it is removed", async () => {
     // arrange
-    const { controller, removeClientResource } = createController({
-      removed: { status: "removed" },
-    });
+    const { clientResourcesController, removeClientResource } =
+      createController({
+        removed: { status: "removed" },
+      });
 
     // act
-    const response = await controller.remove(removalArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.remove(
+      removalArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(200);
@@ -767,12 +861,15 @@ describe("ClientResourcesController remove", () => {
 
   it("answers not found to a resource the coach cannot remove", async () => {
     // arrange
-    const { controller } = createController({
+    const { clientResourcesController } = createController({
       removed: { status: "not-found" },
     });
 
     // act
-    const response = await controller.remove(removalArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.remove(
+      removalArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -780,10 +877,15 @@ describe("ClientResourcesController remove", () => {
 
   it("answers a server error when the resource could not be removed", async () => {
     // arrange
-    const { controller } = createController({ removed: { status: "failed" } });
+    const { clientResourcesController } = createController({
+      removed: { status: "failed" },
+    });
 
     // act
-    const response = await controller.remove(removalArgs(), RESOURCE_ID);
+    const response = await clientResourcesController.remove(
+      removalArgs(),
+      RESOURCE_ID,
+    );
 
     // assert
     expect(response.status).toBe(500);
@@ -791,10 +893,14 @@ describe("ClientResourcesController remove", () => {
 
   it("answers not found to a resource id that is not a uuid without removing anything", async () => {
     // arrange
-    const { controller, removeClientResource } = createController();
+    const { clientResourcesController, removeClientResource } =
+      createController();
 
     // act
-    const response = await controller.remove(removalArgs(), "../../etc");
+    const response = await clientResourcesController.remove(
+      removalArgs(),
+      "../../etc",
+    );
 
     // assert
     expect(response.status).toBe(404);
@@ -810,11 +916,12 @@ describe("ClientResourcesController remove", () => {
     },
   ])("refuses $who without removing anything", async ({ session, status }) => {
     // arrange
-    const { controller, removeClientResource } = createController();
+    const { clientResourcesController, removeClientResource } =
+      createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.remove(removalArgs({ session }), RESOURCE_ID),
+      clientResourcesController.remove(removalArgs({ session }), RESOURCE_ID),
     );
 
     // assert
@@ -847,26 +954,26 @@ function createController(
   const removeClientResource = vi
     .fn()
     .mockResolvedValue(options.removed ?? { status: "not-found" });
-  const controller = new ClientResourcesController({
-    addClientResource: {
+  const clientResourcesController = new ClientResourcesController({
+    addClientResourceUseCase: {
       execute: addClientResource,
     } as unknown as AddClientResourceUseCase,
-    openResourcePreview: {
+    openResourcePreviewUseCase: {
       execute: openResourcePreview,
     } as unknown as OpenResourcePreviewUseCase,
-    downloadClientResource: {
+    downloadClientResourceUseCase: {
       execute: downloadClientResource,
     } as unknown as DownloadClientResourceUseCase,
-    changeResourceDetails: {
+    changeResourceDetailsUseCase: {
       execute: changeResourceDetails,
     } as unknown as ChangeResourceDetailsUseCase,
-    removeClientResource: {
+    removeClientResourceUseCase: {
       execute: removeClientResource,
     } as unknown as RemoveClientResourceUseCase,
   });
 
   return {
-    controller,
+    clientResourcesController,
     addClientResource,
     openResourcePreview,
     downloadClientResource,

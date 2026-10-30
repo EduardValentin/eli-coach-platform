@@ -123,14 +123,14 @@ function createPorts(
       : stored.profile;
 
   return {
-    clients: {
+    clientReachPort: {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValue(
           stored.reach === undefined ? reachOf("reachable") : stored.reach,
         ),
     } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
-    identities: {
+    clientIdentitiesPort: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
@@ -138,26 +138,26 @@ function createPorts(
         ),
       findByClientIds: vi.fn(),
     } satisfies ClientIdentitiesPort,
-    profiles: {
+    clientProfilesPort: {
       findByClientId: vi.fn().mockResolvedValue(profile),
       saveSharedFacts: vi.fn().mockResolvedValue(stored.saved ?? "saved"),
       saveCoachFacts: vi.fn().mockResolvedValue(stored.saved ?? "saved"),
       recordPhotoConsent: vi.fn(),
     } satisfies ClientProfilesPort,
-    settings: {
+    clientSettingsSourcePort: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
           stored.settings === undefined ? SETTINGS : stored.settings,
         ),
     } satisfies ClientSettingsSourcePort,
-    avatars: {
+    clientAvatarsPort: {
       findByClientId: vi.fn().mockResolvedValue(stored.avatar ?? null),
     } satisfies Pick<ClientAvatarsPort, "findByClientId">,
-    measurements: {
+    clientMeasurementsSourcePort: {
       listByClientId: vi.fn().mockResolvedValue([LATEST_ENTRY, FIRST_ENTRY]),
     } satisfies ClientMeasurementsSourcePort,
-    clock: { now: () => NOW },
+    clockPort: { now: () => NOW },
   };
 }
 
@@ -174,10 +174,10 @@ describe("ReadClientProfileUseCase", () => {
   it("reads her identity, coaching facts, the coach's notes, her preferences, her avatar and her first and latest weights", async () => {
     // arrange
     const ports = createPorts({ avatar: AVATAR });
-    const useCase = new ReadClientProfileUseCase(ports);
+    const readClientProfileUseCase = new ReadClientProfileUseCase(ports);
 
     // act
-    const reading = await useCase.execute("client-1");
+    const reading = await readClientProfileUseCase.execute("client-1");
 
     // assert
     expect(reading).toEqual({
@@ -192,9 +192,15 @@ describe("ReadClientProfileUseCase", () => {
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
     });
-    expect(ports.profiles.findByClientId).toHaveBeenCalledWith("client-1");
-    expect(ports.settings.findByClientId).toHaveBeenCalledWith("client-1");
-    expect(ports.avatars.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(ports.clientProfilesPort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
+    expect(ports.clientSettingsSourcePort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
+    expect(ports.clientAvatarsPort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
   });
 
   it("reads no coaching facts or preferences before her answers are approved", async () => {
@@ -203,10 +209,10 @@ describe("ReadClientProfileUseCase", () => {
       profile: ClientProfile.opened({ clientId: "client-1", now: OPENED_AT }),
       settings: ClientSettings.opened({ clientId: "client-1", now: OPENED_AT }),
     });
-    const useCase = new ReadClientProfileUseCase(ports);
+    const readClientProfileUseCase = new ReadClientProfileUseCase(ports);
 
     // act
-    const reading = await useCase.execute("client-1");
+    const reading = await readClientProfileUseCase.execute("client-1");
 
     // assert
     expect(reading).toMatchObject({
@@ -220,14 +226,14 @@ describe("ReadClientProfileUseCase", () => {
   it("answers nothing for someone who is not a client, reading nothing more", async () => {
     // arrange
     const ports = createPorts({ identity: null });
-    const useCase = new ReadClientProfileUseCase(ports);
+    const readClientProfileUseCase = new ReadClientProfileUseCase(ports);
 
     // act
-    const reading = await useCase.execute("client-9");
+    const reading = await readClientProfileUseCase.execute("client-9");
 
     // assert
     expect(reading).toBeNull();
-    expect(ports.profiles.findByClientId).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.findByClientId).not.toHaveBeenCalled();
   });
 });
 
@@ -235,10 +241,10 @@ describe("ReadOwnClientProfileUseCase", () => {
   it("reads her own profile without the coach's private notes", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new ReadOwnClientProfileUseCase(ports);
+    const readOwnClientProfileUseCase = new ReadOwnClientProfileUseCase(ports);
 
     // act
-    const reading = await useCase.execute("user_ana");
+    const reading = await readOwnClientProfileUseCase.execute("user_ana");
 
     // assert
     expect(reading).toEqual({
@@ -252,21 +258,25 @@ describe("ReadOwnClientProfileUseCase", () => {
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
     });
-    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.identities.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.clientIdentitiesPort.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
   });
 
   it("reads nothing for a subject bound to no client", async () => {
     // arrange
     const ports = createPorts({ reach: null });
-    const useCase = new ReadOwnClientProfileUseCase(ports);
+    const readOwnClientProfileUseCase = new ReadOwnClientProfileUseCase(ports);
 
     // act
-    const reading = await useCase.execute("user_stranger");
+    const reading = await readOwnClientProfileUseCase.execute("user_stranger");
 
     // assert
     expect(reading).toBeNull();
-    expect(ports.identities.findByClientId).not.toHaveBeenCalled();
+    expect(ports.clientIdentitiesPort.findByClientId).not.toHaveBeenCalled();
   });
 });
 
@@ -274,18 +284,19 @@ describe("UpdateClientProfileAsCoachUseCase", () => {
   it("saves her coaching facts and the coach's notes against the profile it read", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateClientProfileAsCoachUseCase(ports);
+    const updateClientProfileAsCoachUseCase =
+      new UpdateClientProfileAsCoachUseCase(ports);
     const coaching = { ...COACHING, level: "intermediate" as const };
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientProfileAsCoachUseCase.execute({
       clientId: "client-1",
       edit: { coaching, coachNotes: "Moved to four days." },
     });
 
     // assert
     expect(result).toEqual({ status: "saved" });
-    const [save] = ports.profiles.saveCoachFacts.mock.calls[0] ?? [];
+    const [save] = ports.clientProfilesPort.saveCoachFacts.mock.calls[0] ?? [];
     expect(save?.expectedUpdatedAt).toEqual(SEEDED_AT);
     expect(save?.profile.toSnapshot()).toEqual({
       ...SEEDED,
@@ -307,26 +318,28 @@ describe("UpdateClientProfileAsCoachUseCase", () => {
   ] as const)("saves nothing for %s", async (_label, stored, expected) => {
     // arrange
     const ports = createPorts(stored);
-    const useCase = new UpdateClientProfileAsCoachUseCase(ports);
+    const updateClientProfileAsCoachUseCase =
+      new UpdateClientProfileAsCoachUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientProfileAsCoachUseCase.execute({
       clientId: "client-1",
       edit: { coaching: COACHING, coachNotes: null },
     });
 
     // assert
     expect(result).toEqual(expected);
-    expect(ports.profiles.saveCoachFacts).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.saveCoachFacts).not.toHaveBeenCalled();
   });
 
   it("names the problems and saves nothing", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateClientProfileAsCoachUseCase(ports);
+    const updateClientProfileAsCoachUseCase =
+      new UpdateClientProfileAsCoachUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientProfileAsCoachUseCase.execute({
       clientId: "client-1",
       edit: { coaching: { ...COACHING, heightCm: 20 }, coachNotes: null },
     });
@@ -336,16 +349,17 @@ describe("UpdateClientProfileAsCoachUseCase", () => {
       status: "invalid",
       problems: { heightCm: "out-of-range" },
     });
-    expect(ports.profiles.saveCoachFacts).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.saveCoachFacts).not.toHaveBeenCalled();
   });
 
   it("answers changed-meanwhile when her profile moved since it was read", async () => {
     // arrange
     const ports = createPorts({ saved: "changed-meanwhile" });
-    const useCase = new UpdateClientProfileAsCoachUseCase(ports);
+    const updateClientProfileAsCoachUseCase =
+      new UpdateClientProfileAsCoachUseCase(ports);
 
     // act
-    const result = await useCase.execute({
+    const result = await updateClientProfileAsCoachUseCase.execute({
       clientId: "client-1",
       edit: { coaching: COACHING, coachNotes: null },
     });
@@ -359,17 +373,19 @@ describe("UpdateOwnClientProfileUseCase", () => {
   it("saves the facts she shares with her coach against the profile it read", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateOwnClientProfileUseCase(ports);
+    const updateOwnClientProfileUseCase = new UpdateOwnClientProfileUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientProfileUseCase.execute({
       authSubjectId: "user_ana",
       facts: SHARED,
     });
 
     // assert
     expect(result).toEqual({ status: "saved" });
-    const [save] = ports.profiles.saveSharedFacts.mock.calls[0] ?? [];
+    const [save] = ports.clientProfilesPort.saveSharedFacts.mock.calls[0] ?? [];
     expect(save?.expectedUpdatedAt).toEqual(SEEDED_AT);
     expect(save?.profile.toSnapshot()).toEqual({
       ...SEEDED,
@@ -391,26 +407,30 @@ describe("UpdateOwnClientProfileUseCase", () => {
   ] as const)("saves nothing for %s", async (_label, stored, status) => {
     // arrange
     const ports = createPorts(stored);
-    const useCase = new UpdateOwnClientProfileUseCase(ports);
+    const updateOwnClientProfileUseCase = new UpdateOwnClientProfileUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientProfileUseCase.execute({
       authSubjectId: "user_ana",
       facts: SHARED,
     });
 
     // assert
     expect(result).toEqual({ status });
-    expect(ports.profiles.saveSharedFacts).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.saveSharedFacts).not.toHaveBeenCalled();
   });
 
   it("answers changed-meanwhile when her profile moved since it was read", async () => {
     // arrange
     const ports = createPorts({ saved: "changed-meanwhile" });
-    const useCase = new UpdateOwnClientProfileUseCase(ports);
+    const updateOwnClientProfileUseCase = new UpdateOwnClientProfileUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientProfileUseCase.execute({
       authSubjectId: "user_ana",
       facts: SHARED,
     });
@@ -422,10 +442,12 @@ describe("UpdateOwnClientProfileUseCase", () => {
   it("names the problems with her facts and saves nothing", async () => {
     // arrange
     const ports = createPorts();
-    const useCase = new UpdateOwnClientProfileUseCase(ports);
+    const updateOwnClientProfileUseCase = new UpdateOwnClientProfileUseCase(
+      ports,
+    );
 
     // act
-    const result = await useCase.execute({
+    const result = await updateOwnClientProfileUseCase.execute({
       authSubjectId: "user_ana",
       facts: { ...SHARED, equipment: ["Bodyweight only", "Barbell"] },
     });

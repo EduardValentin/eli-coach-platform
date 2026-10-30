@@ -18,10 +18,10 @@ type MarkResourceOpenedResult =
   { status: "opened" } | { status: "not-found" } | { status: "failed" };
 
 type MarkResourceOpenedUseCaseOptions = {
-  resources: ClientResourcesPort;
-  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidentsPort;
-  clock: ClockPort;
+  clientResourcesPort: ClientResourcesPort;
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clientResourceIncidentsPort: ClientResourceIncidentsPort;
+  clockPort: ClockPort;
 };
 
 const OPENED: MarkResourceOpenedResult = { status: "opened" };
@@ -51,13 +51,13 @@ export class MarkResourceOpenedUseCase {
     resource: ClientResource,
   ): Promise<MarkResourceOpenedResult> {
     try {
-      await this.options.resources.recordOpened(
-        resource.opened(this.options.clock.now()),
+      await this.options.clientResourcesPort.recordOpened(
+        resource.opened(this.options.clockPort.now()),
       );
 
       return OPENED;
     } catch (error) {
-      this.options.incidents.resourceOpeningFailed({
+      this.options.clientResourceIncidentsPort.resourceOpeningFailed({
         ...resource.storageOwner(),
         error,
       });

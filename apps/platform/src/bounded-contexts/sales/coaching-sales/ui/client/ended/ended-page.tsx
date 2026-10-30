@@ -17,7 +17,9 @@ import {
 } from "./ended-copy";
 
 export function loader(args: LoaderFunctionArgs): Promise<ClientEnded> {
-  return args.context.get(coachingSalesContext).subscription.loadEnded(args);
+  return args.context
+    .get(coachingSalesContext)
+    .subscriptionController.loadEnded(args);
 }
 
 export const meta: MetaFunction = () => [

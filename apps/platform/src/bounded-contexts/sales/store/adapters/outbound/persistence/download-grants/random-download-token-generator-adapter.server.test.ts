@@ -7,29 +7,38 @@ import { DownloadTokenSha256Adapter } from "./download-token-sha256-adapter.serv
 describe("store download tokens", () => {
   it("creates an independent opaque token for every grant", () => {
     // arrange
-    const tokenHasher = new DownloadTokenSha256Adapter();
-    const tokenGenerator = new RandomDownloadTokenGeneratorAdapter();
+    const downloadTokenSha256Adapter = new DownloadTokenSha256Adapter();
+    const randomDownloadTokenGeneratorAdapter =
+      new RandomDownloadTokenGeneratorAdapter();
 
     // act
-    const token = tokenGenerator.create();
-    const nextToken = tokenGenerator.create();
+    const token = randomDownloadTokenGeneratorAdapter.create();
+    const nextToken = randomDownloadTokenGeneratorAdapter.create();
 
     // assert
     expect(token.rawToken).toMatch(/^[A-Za-z0-9_-]{40,}$/);
     expect(nextToken.rawToken).toMatch(/^[A-Za-z0-9_-]{40,}$/);
     expect(nextToken.rawToken).not.toBe(token.rawToken);
-    expect(token.sha256).toBe(tokenHasher.sha256(token.rawToken));
-    expect(nextToken.sha256).toBe(tokenHasher.sha256(nextToken.rawToken));
+    expect(token.sha256).toBe(
+      downloadTokenSha256Adapter.sha256(token.rawToken),
+    );
+    expect(nextToken.sha256).toBe(
+      downloadTokenSha256Adapter.sha256(nextToken.rawToken),
+    );
     expect(token.sha256).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it("creates stable payload digests without exposing the source payload", () => {
     // arrange
-    const digestGenerator = new PayloadSha256DigestAdapter();
+    const payloadSha256DigestAdapter = new PayloadSha256DigestAdapter();
 
     // act
-    const firstDigest = digestGenerator.digest('{"email":"eli@example.com"}');
-    const secondDigest = digestGenerator.digest('{"email":"eli@example.com"}');
+    const firstDigest = payloadSha256DigestAdapter.digest(
+      '{"email":"eli@example.com"}',
+    );
+    const secondDigest = payloadSha256DigestAdapter.digest(
+      '{"email":"eli@example.com"}',
+    );
 
     // assert
     expect(firstDigest).toBe(secondDigest);

@@ -121,22 +121,26 @@ function createIncidents() {
 
 function createUseCase(
   ports: {
-    clients?: OnboardingClientsPort;
-    identities?: Pick<ClientIdentitiesPort, "findByClientId">;
-    onboardings?: ClientOnboardingSourcePort;
-    changes?: ClientOnboardingChangesPort;
-    incidents?: ClientOnboardingIncidentsPort;
+    onboardingClientsPort?: OnboardingClientsPort;
+    clientIdentitiesPort?: Pick<ClientIdentitiesPort, "findByClientId">;
+    clientOnboardingSourcePort?: ClientOnboardingSourcePort;
+    clientOnboardingChangesPort?: ClientOnboardingChangesPort;
+    clientOnboardingIncidentsPort?: ClientOnboardingIncidentsPort;
   } = {},
 ) {
   return new SaveOnboardingDraftUseCase({
     participants: new OnboardingParticipants({
-      clients: ports.clients ?? createClients(CLIENT),
-      identities: ports.identities ?? createIdentities(),
+      onboardingClientsPort:
+        ports.onboardingClientsPort ?? createClients(CLIENT),
+      clientIdentitiesPort: ports.clientIdentitiesPort ?? createIdentities(),
     }),
-    onboardings: ports.onboardings ?? createOnboardings(),
-    changes: ports.changes ?? createChanges(),
-    clock: { now: () => NOW },
-    incidents: ports.incidents ?? createIncidents(),
+    clientOnboardingSourcePort:
+      ports.clientOnboardingSourcePort ?? createOnboardings(),
+    clientOnboardingChangesPort:
+      ports.clientOnboardingChangesPort ?? createChanges(),
+    clockPort: { now: () => NOW },
+    clientOnboardingIncidentsPort:
+      ports.clientOnboardingIncidentsPort ?? createIncidents(),
   });
 }
 
@@ -163,10 +167,13 @@ describe("SaveOnboardingDraftUseCase", () => {
     // arrange
     const changes = createChanges();
     const incidents = createIncidents();
-    const useCase = createUseCase({ changes, incidents });
+    const saveOnboardingDraftUseCase = createUseCase({
+      clientOnboardingChangesPort: changes,
+      clientOnboardingIncidentsPort: incidents,
+    });
 
     // act
-    const result = await useCase.execute(command());
+    const result = await saveOnboardingDraftUseCase.execute(command());
 
     // assert
     expect(result).toEqual({ status: "saved" });
@@ -191,10 +198,13 @@ describe("SaveOnboardingDraftUseCase", () => {
   it("saves nothing for a subject bound to no client", async () => {
     // arrange
     const changes = createChanges();
-    const useCase = createUseCase({ clients: createClients(null), changes });
+    const saveOnboardingDraftUseCase = createUseCase({
+      onboardingClientsPort: createClients(null),
+      clientOnboardingChangesPort: changes,
+    });
 
     // act
-    const result = await useCase.execute(command());
+    const result = await saveOnboardingDraftUseCase.execute(command());
 
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
@@ -204,13 +214,13 @@ describe("SaveOnboardingDraftUseCase", () => {
   it("saves nothing once she has sent her onboarding", async () => {
     // arrange
     const changes = createChanges();
-    const useCase = createUseCase({
-      onboardings: createOnboardings(SUBMISSION),
-      changes,
+    const saveOnboardingDraftUseCase = createUseCase({
+      clientOnboardingSourcePort: createOnboardings(SUBMISSION),
+      clientOnboardingChangesPort: changes,
     });
 
     // act
-    const result = await useCase.execute(command());
+    const result = await saveOnboardingDraftUseCase.execute(command());
 
     // assert
     expect(result).toEqual({ status: "already-submitted" });
@@ -220,13 +230,13 @@ describe("SaveOnboardingDraftUseCase", () => {
   it("answers already submitted when her submission lands before the draft", async () => {
     // arrange
     const incidents = createIncidents();
-    const useCase = createUseCase({
-      changes: createChanges("already-submitted"),
-      incidents,
+    const saveOnboardingDraftUseCase = createUseCase({
+      clientOnboardingChangesPort: createChanges("already-submitted"),
+      clientOnboardingIncidentsPort: incidents,
     });
 
     // act
-    const result = await useCase.execute(command());
+    const result = await saveOnboardingDraftUseCase.execute(command());
 
     // assert
     expect(result).toEqual({ status: "already-submitted" });
@@ -239,10 +249,13 @@ describe("SaveOnboardingDraftUseCase", () => {
     const changes = createChanges();
     changes.saveDraft.mockRejectedValue(failure);
     const incidents = createIncidents();
-    const useCase = createUseCase({ changes, incidents });
+    const saveOnboardingDraftUseCase = createUseCase({
+      clientOnboardingChangesPort: changes,
+      clientOnboardingIncidentsPort: incidents,
+    });
 
     // act
-    const saving = useCase.execute(command());
+    const saving = saveOnboardingDraftUseCase.execute(command());
 
     // assert
     await expect(saving).rejects.toBe(failure);
@@ -256,13 +269,15 @@ describe("SaveOnboardingDraftUseCase", () => {
   it("saves nothing for a client whose portal access has ended", async () => {
     // arrange
     const changes = createChanges();
-    const useCase = createUseCase({
-      clients: createClients(clientWithAccessEndingAt(ENDED_ACCESS_AT)),
-      changes,
+    const saveOnboardingDraftUseCase = createUseCase({
+      onboardingClientsPort: createClients(
+        clientWithAccessEndingAt(ENDED_ACCESS_AT),
+      ),
+      clientOnboardingChangesPort: changes,
     });
 
     // act
-    const result = await useCase.execute(command());
+    const result = await saveOnboardingDraftUseCase.execute(command());
 
     // assert
     expect(result).toEqual({ status: "ended" });
@@ -272,13 +287,15 @@ describe("SaveOnboardingDraftUseCase", () => {
   it("saves the draft of a client who cancelled while her access runs on", async () => {
     // arrange
     const changes = createChanges();
-    const useCase = createUseCase({
-      clients: createClients(clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT)),
-      changes,
+    const saveOnboardingDraftUseCase = createUseCase({
+      onboardingClientsPort: createClients(
+        clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT),
+      ),
+      clientOnboardingChangesPort: changes,
     });
 
     // act
-    const result = await useCase.execute(command());
+    const result = await saveOnboardingDraftUseCase.execute(command());
 
     // assert
     expect(result).toEqual({ status: "saved" });

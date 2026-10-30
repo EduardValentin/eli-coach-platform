@@ -13,9 +13,9 @@ type MirrorPaymentCardResult = {
 };
 
 type MirrorPaymentCardUseCaseOptions = {
-  cards: PaymentCardsPort;
-  incidents: CoachingSubscriptionIncidentsPort;
-  subscriptions: CoachingSubscriptionsPort;
+  paymentCardsPort: PaymentCardsPort;
+  coachingSubscriptionIncidentsPort: CoachingSubscriptionIncidentsPort;
+  coachingSubscriptionsPort: CoachingSubscriptionsPort;
 };
 
 export class MirrorPaymentCardUseCase {
@@ -43,12 +43,12 @@ export class MirrorPaymentCardUseCase {
     const { paymentCustomerId } = event;
     const incident = { eventId, eventKind: event.kind, paymentCustomerId };
     const subscription =
-      await this.options.subscriptions.findCurrentByPaymentCustomerId(
+      await this.options.coachingSubscriptionsPort.findCurrentByPaymentCustomerId(
         paymentCustomerId,
       );
 
     if (!subscription) {
-      this.options.incidents.paymentCardEventMirrored({
+      this.options.coachingSubscriptionIncidentsPort.paymentCardEventMirrored({
         ...incident,
         outcome: "unknown-customer",
       });
@@ -57,8 +57,10 @@ export class MirrorPaymentCardUseCase {
     }
 
     const previous =
-      await this.options.cards.findByPaymentCustomerId(paymentCustomerId);
-    const saved = await this.options.cards.saveForEvent({
+      await this.options.paymentCardsPort.findByPaymentCustomerId(
+        paymentCustomerId,
+      );
+    const saved = await this.options.paymentCardsPort.saveForEvent({
       eventId,
       paymentCustomerId,
       card: PaymentCard.mirror(previous, event),
@@ -69,7 +71,7 @@ export class MirrorPaymentCardUseCase {
       return "stale";
     }
 
-    this.options.incidents.paymentCardEventMirrored({
+    this.options.coachingSubscriptionIncidentsPort.paymentCardEventMirrored({
       ...incident,
       outcome: saved,
     });

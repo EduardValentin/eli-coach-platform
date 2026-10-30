@@ -2,16 +2,16 @@ import type { AssessmentCallIncidentsPort } from "~/bounded-contexts/scheduling/
 import type { LoggerPort } from "~/shared/logging/logger-port.server";
 
 export class AssessmentCallsIncidentsAdapter implements AssessmentCallIncidentsPort {
-  constructor(private readonly logger: LoggerPort) {}
+  constructor(private readonly loggerPort: LoggerPort) {}
 
   bookingModeReadFailed() {
-    this.logger.error("Assessment call booking mode read failed.", {
+    this.loggerPort.error("Assessment call booking mode read failed.", {
       errorCategory: "assessment_call_booking_mode_read_failure",
     });
   }
 
   callsReadFailed() {
-    this.logger.error("Assessment calls could not be read.", {
+    this.loggerPort.error("Assessment calls could not be read.", {
       errorCategory: "assessment_call_listing_failure",
     });
   }
@@ -19,14 +19,14 @@ export class AssessmentCallsIncidentsAdapter implements AssessmentCallIncidentsP
   notificationFailed({
     recipient,
   }: Parameters<AssessmentCallIncidentsPort["notificationFailed"]>[0]) {
-    this.logger.error("Assessment call notification failed.", {
+    this.loggerPort.error("Assessment call notification failed.", {
       errorCategory: "assessment_call_notification_failure",
       recipient,
     });
   }
 
   slotsReadFailed() {
-    this.logger.error("Assessment call slots could not be read.", {
+    this.loggerPort.error("Assessment call slots could not be read.", {
       errorCategory: "assessment_call_slots_failure",
     });
   }

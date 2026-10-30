@@ -12,7 +12,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return args.context.get(coachingSalesContext).checkouts.startCheckout(args);
+    return args.context
+      .get(coachingSalesContext)
+      .checkoutsController.startCheckout(args);
   });
 }
 

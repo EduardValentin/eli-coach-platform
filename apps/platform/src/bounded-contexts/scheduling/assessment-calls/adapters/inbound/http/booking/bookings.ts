@@ -17,7 +17,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return context.get(assessmentCallsContext).assessmentCalls.book(request);
+    return context
+      .get(assessmentCallsContext)
+      .assessmentCallsController.book(request);
   });
 }
 

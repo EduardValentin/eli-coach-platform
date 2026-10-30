@@ -52,10 +52,14 @@ describe("StartRecipeUseCase", () => {
     const recipes = { list: vi.fn(async () => [OMELETTE]) };
     const foods = { list: vi.fn(async () => [OATS]) };
     const tags = { list: vi.fn(async () => TAGS) };
-    const useCase = new StartRecipeUseCase({ recipes, foods, tags });
+    const startRecipeUseCase = new StartRecipeUseCase({
+      recipeLibraryPort: recipes,
+      foodLibraryPort: foods,
+      nutritionTagsPort: tags,
+    });
 
     // act
-    const result = await useCase.execute(COACH_ACCOUNT_ID);
+    const result = await startRecipeUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
     expect(result).toEqual({

@@ -98,10 +98,13 @@ describe("PostgresClientResources#add", () => {
   it("inserts the resource with its file facts spread into columns and its tags in her order, in one transaction", async () => {
     // arrange
     const database = createDatabase();
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    await resources.add(ClientResource.reconstitute(PDF_SNAPSHOT));
+    await postgresClientResourcesRepository.add(
+      ClientResource.reconstitute(PDF_SNAPSHOT),
+    );
 
     // assert
     expect(database.writes).toEqual([
@@ -121,10 +124,13 @@ describe("PostgresClientResources#add", () => {
   it("inserts no tag rows for a resource without tags", async () => {
     // arrange
     const database = createDatabase();
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    await resources.add(ClientResource.reconstitute(SPREADSHEET_SNAPSHOT));
+    await postgresClientResourcesRepository.add(
+      ClientResource.reconstitute(SPREADSHEET_SNAPSHOT),
+    );
 
     // assert
     expect(database.writes).toEqual([
@@ -147,10 +153,14 @@ describe("PostgresClientResources#browseForClient", () => {
       [{ searched: 2, total: 3 }],
       PDF_TAG_ROWS,
     ]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    const browsed = await resources.browseForClient(CLIENT_ID, EVERY_RESOURCE);
+    const browsed = await postgresClientResourcesRepository.browseForClient(
+      CLIENT_ID,
+      EVERY_RESOURCE,
+    );
 
     // assert
     expect({
@@ -170,10 +180,14 @@ describe("PostgresClientResources#browseForClient", () => {
   it("answers no resources and reads no tags when nothing is listed", async () => {
     // arrange
     const database = createDatabase([[], [], [{ searched: 0, total: 0 }]]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    const browsed = await resources.browseForClient(CLIENT_ID, EVERY_RESOURCE);
+    const browsed = await postgresClientResourcesRepository.browseForClient(
+      CLIENT_ID,
+      EVERY_RESOURCE,
+    );
 
     // assert
     expect(browsed).toEqual({
@@ -224,10 +238,11 @@ describe("PostgresClientResources#browseForClient", () => {
   ] as const)("lists $name", async ({ sort, direction, order }) => {
     // arrange
     const database = createDatabase([[], [], [{ searched: 0, total: 0 }]]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    await resources.browseForClient(CLIENT_ID, {
+    await postgresClientResourcesRepository.browseForClient(CLIENT_ID, {
       ...EVERY_RESOURCE,
       sort,
       direction,
@@ -242,10 +257,11 @@ describe("PostgresClientResources#tagsHeldBy", () => {
   it("answers each tag the client's resources hold once, in the spelling it was read", async () => {
     // arrange
     const database = createDatabase([[MEALS, WEEK_ONE]]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    const held = await resources.tagsHeldBy(CLIENT_ID);
+    const held = await postgresClientResourcesRepository.tagsHeldBy(CLIENT_ID);
 
     // assert
     expect(held).toEqual([MEALS, WEEK_ONE]);
@@ -259,10 +275,11 @@ describe("PostgresClientResources#tagVocabulary", () => {
   it("answers every tag the coach has used once, across her clients", async () => {
     // arrange
     const database = createDatabase([[MEALS, WEEK_ONE]]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    const vocabulary = await resources.tagVocabulary();
+    const vocabulary = await postgresClientResourcesRepository.tagVocabulary();
 
     // assert
     expect(vocabulary).toEqual([MEALS, WEEK_ONE]);
@@ -274,10 +291,11 @@ describe("PostgresClientResources#findById", () => {
   it("rebuilds the resource from its row and its tags", async () => {
     // arrange
     const database = createDatabase([[PDF_ROW], PDF_TAG_ROWS]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    const resource = await resources.findById(PDF_ID);
+    const resource = await postgresClientResourcesRepository.findById(PDF_ID);
 
     // assert
     expect(resource?.toSnapshot()).toEqual(PDF_SNAPSHOT);
@@ -288,12 +306,11 @@ describe("PostgresClientResources#findById", () => {
 
   it("answers no resource for an id it does not hold", async () => {
     // arrange
-    const resources = new PostgresClientResourcesRepository(
-      createDatabase([[]]).client,
-    );
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(createDatabase([[]]).client);
 
     // act
-    const resource = await resources.findById(PDF_ID);
+    const resource = await postgresClientResourcesRepository.findById(PDF_ID);
 
     // assert
     expect(resource).toBeNull();
@@ -304,13 +321,14 @@ describe("PostgresClientResources#recordOpened", () => {
   it("stamps the moment she opened it only on a resource not opened before", async () => {
     // arrange
     const database = createDatabase();
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
     const opened = ClientResource.reconstitute(PDF_SNAPSHOT).opened(
       SPREADSHEET_OPENED_AT,
     );
 
     // act
-    await resources.recordOpened(opened);
+    await postgresClientResourcesRepository.recordOpened(opened);
 
     // assert
     expect(database.writes).toEqual([
@@ -330,7 +348,8 @@ describe("PostgresClientResources#saveDetails", () => {
   it("writes the title and description of that resource and replaces its tags, in one transaction", async () => {
     // arrange
     const database = createDatabase();
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
     const changed = ClientResource.reconstitute({
       ...PDF_SNAPSHOT,
       title: "Week two plan",
@@ -340,7 +359,7 @@ describe("PostgresClientResources#saveDetails", () => {
     });
 
     // act
-    await resources.saveDetails(changed);
+    await postgresClientResourcesRepository.saveDetails(changed);
 
     // assert
     expect(database.writes).toEqual([
@@ -365,10 +384,11 @@ describe("PostgresClientResources#saveDetails", () => {
   it("removes every tag of a resource saved without tags", async () => {
     // arrange
     const database = createDatabase();
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    await resources.saveDetails(
+    await postgresClientResourcesRepository.saveDetails(
       ClientResource.reconstitute({ ...PDF_SNAPSHOT, tags: [] }),
     );
 
@@ -389,10 +409,11 @@ describe("PostgresClientResources#remove", () => {
   it("deletes that resource's row only", async () => {
     // arrange
     const database = createDatabase();
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    await resources.remove(PDF_ID);
+    await postgresClientResourcesRepository.remove(PDF_ID);
 
     // assert
     expect(database.writes).toEqual([
@@ -408,10 +429,12 @@ describe("PostgresClientResources#countUnopenedForClient", () => {
   it("counts that client's resources she has not opened", async () => {
     // arrange
     const database = createDatabase([[{ unopened: 2 }]]);
-    const resources = new PostgresClientResourcesRepository(database.client);
+    const postgresClientResourcesRepository =
+      new PostgresClientResourcesRepository(database.client);
 
     // act
-    const unopened = await resources.countUnopenedForClient(CLIENT_ID);
+    const unopened =
+      await postgresClientResourcesRepository.countUnopenedForClient(CLIENT_ID);
 
     // assert
     expect(unopened).toBe(2);

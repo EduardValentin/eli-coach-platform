@@ -7,11 +7,11 @@ import type { AccountWebhookController } from "~/bounded-contexts/access/account
 import type { InvitationsController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/public-site/invitations-controller.server";
 
 export type AccountsFeature = {
-  account: AccountController;
-  invitations: InvitationsController;
+  accountController: AccountController;
+  invitationsController: InvitationsController;
   portal: PortalLinks;
-  provisioning: ProvisionAccountUseCase;
-  webhooks: AccountWebhookController;
+  provisionAccountUseCase: ProvisionAccountUseCase;
+  accountWebhookController: AccountWebhookController;
 };
 
 export const accountsContext: RouterContext<AccountsFeature> =

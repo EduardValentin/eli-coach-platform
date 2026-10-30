@@ -46,100 +46,116 @@ import { createManagementAuthenticator } from "~/bounded-contexts/sales/store/ad
 import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 
 type ManagementAuth = {
-  authenticator: ManagementAuthenticatorPort;
+  managementAuthenticatorPort: ManagementAuthenticatorPort;
   config: ManagementAuthConfig;
 };
 
 export type StoreFeatureHandles = {
   appBasePath: string;
-  botVerifier: BotVerifierPort;
-  clock: ClockPort;
+  botVerifierPort: BotVerifierPort;
+  clockPort: ClockPort;
   contactEmail: string;
   database: DatabaseClient;
-  emailAcceptance: EmailAcceptancePort;
-  logger: LoggerPort;
+  emailAcceptancePort: EmailAcceptancePort;
+  loggerPort: LoggerPort;
   managementAuth: ManagementAuth;
-  productEmail: ProductEmailPort;
+  productEmailPort: ProductEmailPort;
   publicAppUrl: string;
   storeAssetRoot: string;
-  terms: TermsFacade;
+  termsFacade: TermsFacade;
 };
 
 export function composeStoreFeature(
   handles: StoreFeatureHandles,
 ): StoreFeature {
-  const incidents = new StoreIncidentsAdapter(handles.logger);
-  const catalogRepository = new PostgresStoreCatalogRepository(
+  const storeIncidentsAdapter = new StoreIncidentsAdapter(handles.loggerPort);
+  const postgresStoreCatalogRepository = new PostgresStoreCatalogRepository(
     handles.database,
   );
-  const listPublishedProducts = new ListPublishedProductsUseCase({
-    catalog: catalogRepository,
+  const listPublishedProductsUseCase = new ListPublishedProductsUseCase({
+    storeCatalogPort: postgresStoreCatalogRepository,
   });
-  const findPublishedProduct = new FindPublishedProductUseCase({
-    catalog: catalogRepository,
+  const findPublishedProductUseCase = new FindPublishedProductUseCase({
+    storeCatalogPort: postgresStoreCatalogRepository,
   });
-  const findPublishedCover = new FindPublishedCoverUseCase({
-    catalog: catalogRepository,
+  const findPublishedCoverUseCase = new FindPublishedCoverUseCase({
+    storeCatalogPort: postgresStoreCatalogRepository,
   });
-  const assetStore = new FilesystemProductAssetStoreAdapter(
-    handles.storeAssetRoot,
-  );
-  assetStore.assertReadyAtStartup();
-  const acquireProducts = new AcquireProductsUseCase({
-    acquisitions: new PostgresStoreAcquisitionRepository(handles.database),
-    catalog: catalogRepository,
-    clock: handles.clock,
-    consentVersions: new LegalConsentVersionsAdapter(handles.terms),
-    delivery: createProductDeliveryAdapter(handles.productEmail, {
-      appBasePath: handles.appBasePath,
-      contactEmail: handles.contactEmail,
-      publicAppUrl: handles.publicAppUrl,
-    }),
-    emailAcceptance: handles.emailAcceptance,
-    incidents,
-    payloadDigestGenerator: new PayloadSha256DigestAdapter(),
-    tokenGenerator: new RandomDownloadTokenGeneratorAdapter(),
+  const filesystemProductAssetStoreAdapter =
+    new FilesystemProductAssetStoreAdapter(handles.storeAssetRoot);
+  filesystemProductAssetStoreAdapter.assertReadyAtStartup();
+  const acquireProductsUseCase = new AcquireProductsUseCase({
+    storeAcquisitionsPort: new PostgresStoreAcquisitionRepository(
+      handles.database,
+    ),
+    storeCatalogPort: postgresStoreCatalogRepository,
+    clockPort: handles.clockPort,
+    consentVersionsPort: new LegalConsentVersionsAdapter(handles.termsFacade),
+    productDeliveryPort: createProductDeliveryAdapter(
+      handles.productEmailPort,
+      {
+        appBasePath: handles.appBasePath,
+        contactEmail: handles.contactEmail,
+        publicAppUrl: handles.publicAppUrl,
+      },
+    ),
+    emailAcceptancePort: handles.emailAcceptancePort,
+    acquisitionIncidentsPort: storeIncidentsAdapter,
+    payloadDigestGeneratorPort: new PayloadSha256DigestAdapter(),
+    downloadTokenGeneratorPort: new RandomDownloadTokenGeneratorAdapter(),
   });
   const planOptions = {
-    digest: new ProductAssetSha256DigestAdapter(),
-    publications: new PostgresStoreProductPublicationRepository(
+    productAssetDigestPort: new ProductAssetSha256DigestAdapter(),
+    storeProductPublicationsPort: new PostgresStoreProductPublicationRepository(
       handles.database,
     ),
   };
-  const publishOptions = { assetWriter: assetStore, ...planOptions };
-  const resolveDownloadGrant = new ResolveDownloadGrantUseCase({
-    clock: handles.clock,
-    downloadGrants: new PostgresDownloadGrantRepository(handles.database),
-    tokenHasher: new DownloadTokenSha256Adapter(),
+  const publishOptions = {
+    productAssetWriterPort: filesystemProductAssetStoreAdapter,
+    ...planOptions,
+  };
+  const resolveDownloadGrantUseCase = new ResolveDownloadGrantUseCase({
+    clockPort: handles.clockPort,
+    downloadGrantsPort: new PostgresDownloadGrantRepository(handles.database),
+    downloadTokenHasherPort: new DownloadTokenSha256Adapter(),
   });
 
   return {
-    acquisitions: new StoreAcquisitionController(
-      acquireProducts,
-      handles.botVerifier,
+    storeAcquisitionController: new StoreAcquisitionController(
+      acquireProductsUseCase,
+      handles.botVerifierPort,
     ),
-    catalog: new StoreCatalogController({
+    storeCatalogController: new StoreCatalogController({
       appBasePath: handles.appBasePath,
-      findPublishedProduct,
-      listPublishedProducts,
+      findPublishedProductUseCase,
+      listPublishedProductsUseCase,
     }),
-    covers: new StoreCoverAssetController({
-      assetStore,
-      findPublishedCover,
+    storeCoverAssetController: new StoreCoverAssetController({
+      productAssetsPort: filesystemProductAssetStoreAdapter,
+      findPublishedCoverUseCase,
     }),
-    downloads: new StoreDownloadController(resolveDownloadGrant, assetStore, {
-      appBasePath: handles.appBasePath,
-      zipDeliveryStream: new ZipDeliveryStream(assetStore),
-    }),
-    management: new StoreProductManagementController({
+    storeDownloadController: new StoreDownloadController(
+      resolveDownloadGrantUseCase,
+      filesystemProductAssetStoreAdapter,
+      {
+        appBasePath: handles.appBasePath,
+        zipDeliveryStream: new ZipDeliveryStream(
+          filesystemProductAssetStoreAdapter,
+        ),
+      },
+    ),
+    storeProductManagementController: new StoreProductManagementController({
       authConfig: handles.managementAuth.config,
-      authenticator: handles.managementAuth.authenticator,
-      planNewProduct: new PlanNewProductUseCase(planOptions),
-      planProductRevision: new PlanProductRevisionUseCase(planOptions),
-      publishNewProduct: new PublishNewProductUseCase(publishOptions),
-      publishProductVersion: new PublishProductVersionUseCase(publishOptions),
-      retireProduct: new RetireProductUseCase({
-        publications: planOptions.publications,
+      managementAuthenticatorPort:
+        handles.managementAuth.managementAuthenticatorPort,
+      planNewProductUseCase: new PlanNewProductUseCase(planOptions),
+      planProductRevisionUseCase: new PlanProductRevisionUseCase(planOptions),
+      publishNewProductUseCase: new PublishNewProductUseCase(publishOptions),
+      publishProductVersionUseCase: new PublishProductVersionUseCase(
+        publishOptions,
+      ),
+      retireProductUseCase: new RetireProductUseCase({
+        storeProductPublicationsPort: planOptions.storeProductPublicationsPort,
       }),
     }),
   };
@@ -150,7 +166,9 @@ export function composeManagementAuth(site: {
   publicAppUrl: string;
 }): ManagementAuth {
   return {
-    authenticator: createManagementAuthenticator(site.managementApiConfig),
+    managementAuthenticatorPort: createManagementAuthenticator(
+      site.managementApiConfig,
+    ),
     config: createManagementAuthConfig(site.managementApiConfig, {
       PUBLIC_APP_URL: site.publicAppUrl,
     }),

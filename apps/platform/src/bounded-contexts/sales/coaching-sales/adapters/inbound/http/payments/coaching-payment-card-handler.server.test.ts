@@ -30,13 +30,13 @@ const VISA = PaymentCard.of({
 
 function createHandler(status: MirrorStatus = "recorded") {
   const mirror = vi.fn().mockResolvedValue({ status });
-  const handler = new CoachingPaymentCardHandler({
-    mirrorPaymentCard: {
+  const coachingPaymentCardHandler = new CoachingPaymentCardHandler({
+    mirrorPaymentCardUseCase: {
       execute: mirror,
     } as unknown as MirrorPaymentCardUseCase,
   });
 
-  return { handler, mirror };
+  return { coachingPaymentCardHandler, mirror };
 }
 
 describe("CoachingPaymentCardHandler", () => {
@@ -47,11 +47,11 @@ describe("CoachingPaymentCardHandler", () => {
     "mirrors a card %s to her customer as the card on file",
     async (kind, eventKind) => {
       // arrange
-      const { handler, mirror } = createHandler();
+      const { coachingPaymentCardHandler, mirror } = createHandler();
       const change: PaymentCardChange = { kind, ...VISA_CHANGE };
 
       // act
-      await handler.handle("evt_1", change);
+      await coachingPaymentCardHandler.handle("evt_1", change);
 
       // assert
       expect(mirror).toHaveBeenCalledWith({
@@ -63,10 +63,13 @@ describe("CoachingPaymentCardHandler", () => {
 
   it("mirrors a detached card by its payment method", async () => {
     // arrange
-    const { handler, mirror } = createHandler();
+    const { coachingPaymentCardHandler, mirror } = createHandler();
 
     // act
-    await handler.handle("evt_2", { kind: "detached", ...VISA_CHANGE });
+    await coachingPaymentCardHandler.handle("evt_2", {
+      kind: "detached",
+      ...VISA_CHANGE,
+    });
 
     // assert
     expect(mirror).toHaveBeenCalledWith({
@@ -83,10 +86,10 @@ describe("CoachingPaymentCardHandler", () => {
     "answers what the mirror answered: %s",
     async (status) => {
       // arrange
-      const { handler } = createHandler(status);
+      const { coachingPaymentCardHandler } = createHandler(status);
 
       // act
-      const outcome = await handler.handle("evt_1", {
+      const outcome = await coachingPaymentCardHandler.handle("evt_1", {
         kind: "attached",
         ...VISA_CHANGE,
       });

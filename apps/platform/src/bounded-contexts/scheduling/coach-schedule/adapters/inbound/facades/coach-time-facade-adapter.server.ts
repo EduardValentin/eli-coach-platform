@@ -5,16 +5,18 @@ import type {
 } from "~/bounded-contexts/scheduling/public/coach-time-facade";
 
 export class CoachTimeFacadeAdapter implements CoachTimeFacade {
-  constructor(private readonly reservations: CoachTimeReservationsPort) {}
+  constructor(
+    private readonly coachTimeReservationsPort: CoachTimeReservationsPort,
+  ) {}
 
   reserve({ startsAt, endsAt }: CoachTimeRequest) {
-    return this.reservations.reserve({
+    return this.coachTimeReservationsPort.reserve({
       start: new Date(startsAt),
       end: new Date(endsAt),
     });
   }
 
   release(reservationId: string) {
-    return this.reservations.release(reservationId);
+    return this.coachTimeReservationsPort.release(reservationId);
   }
 }

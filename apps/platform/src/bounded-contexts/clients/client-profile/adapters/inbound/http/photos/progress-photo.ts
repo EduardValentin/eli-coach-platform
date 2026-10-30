@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientProfileContext)
-      .progressPhotos.remove(args, args.params.photoId);
+      .progressPhotoController.remove(args, args.params.photoId);
   });
 }
 
@@ -27,7 +27,7 @@ export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
     args.context
       .get(clientProfileContext)
-      .progressPhotos.open(args, args.params.photoId),
+      .progressPhotoController.open(args, args.params.photoId),
   );
 }
 
