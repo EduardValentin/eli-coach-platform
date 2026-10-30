@@ -232,7 +232,14 @@
     { "id": "B246", "path": "apps/platform/src/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server.ts", "symbol": "clientResourcesContext", "owner": "C21" },
     { "id": "B247", "path": "apps/platform/src/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server.ts", "symbol": "featureFlagsContext", "owner": "C28" },
     { "id": "B248", "path": "apps/platform/src/shared/http/unit-of-work.ts", "symbol": "UnitOfWork", "owner": "C48" },
-    { "id": "B249", "path": "apps/platform/src/bounded-contexts/sales/coaching-sales/domain/coaching-subscription/payment-event-ledger-port.ts", "symbol": "PaymentEventLedgerPort", "owner": "C18" }
+    { "id": "B249", "path": "apps/platform/src/bounded-contexts/sales/coaching-sales/domain/coaching-subscription/payment-event-ledger-port.ts", "symbol": "PaymentEventLedgerPort", "owner": "C18" },
+    { "id": "B251", "path": "apps/platform/src/shared/documents/file-type-reader-port.server.ts", "symbol": "FileTypeReaderPort", "owner": "C46" },
+    { "id": "B252", "path": "apps/platform/src/shared/tokens/token-generator-port.server.ts", "symbol": "TokenGeneratorPort", "owner": "C56" },
+    { "id": "B253", "path": "apps/platform/src/shared/tokens/token-hasher-port.server.ts", "symbol": "TokenHasherPort", "owner": "C56" },
+    { "id": "B254", "path": "apps/platform/src/shared/logging/logger-port.server.ts", "symbol": "LoggerPort", "owner": "C50" },
+    { "id": "B255", "path": "apps/platform/src/bounded-contexts/scheduling/assessment-calls/domain/assessment-call/phone-numbers-port.ts", "symbol": "PhoneNumbersPort", "owner": "C17" },
+    { "id": "B256", "path": "apps/platform/src/bounded-contexts/clients/clients/domain/client/phone-numbers-port.ts", "symbol": "PhoneNumbersPort", "owner": "C24" },
+    { "id": "B257", "path": "apps/platform/src/bounded-contexts/clients/clients/domain/client/calendar-dates-port.ts", "symbol": "CalendarDatesPort", "owner": "C24" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C7", "C8", "C9", "C15", "C17", "C18", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27", "C28" ] },
