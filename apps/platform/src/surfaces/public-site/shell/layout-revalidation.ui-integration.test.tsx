@@ -35,7 +35,7 @@ import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/wai
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
 } from "~/bounded-contexts/sales/store/ui/public/catalog/catalog-page";
-import PricingRoute from "~/surfaces/public-site/pages/pricing";
+import PricingRoute from "~/surfaces/public-site/pages/pricing/pricing";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
 

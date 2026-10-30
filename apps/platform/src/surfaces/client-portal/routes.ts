@@ -11,9 +11,9 @@ export const clientPortalRoutes = [
   ...prefix(CLIENT_PORTAL_ROUTE_SEGMENT, [
     layout("./shell/access-layout.tsx", [
       layout("./shell/layout.tsx", [
-        index("./surfaces/client-portal/pages/home.tsx"),
+        index("./surfaces/client-portal/pages/home/home.tsx"),
         ...clientsRoutes.clientPortalShell,
-        route(CLIENT_SETTINGS_ROUTE_SEGMENT, "./pages/settings.tsx"),
+        route(CLIENT_SETTINGS_ROUTE_SEGMENT, "./pages/settings/settings.tsx"),
       ]),
       ...clientsRoutes.clientPortal,
       ...salesRoutes.clientPortal,

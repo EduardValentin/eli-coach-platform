@@ -40,7 +40,7 @@ import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-de
 import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
-import HomeRoute from "~/surfaces/public-site/pages/home";
+import HomeRoute from "~/surfaces/public-site/pages/home/home";
 import TermsRoute from "~/bounded-contexts/legal/legal/ui/public/terms-page";
 import {
   WAITLIST_API_PATH,

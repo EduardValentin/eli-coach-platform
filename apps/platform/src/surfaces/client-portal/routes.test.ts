@@ -34,7 +34,7 @@ describe("client portal routes", () => {
     expect(collectFiles(guardedEntries[0]?.children ?? [])).toEqual(
       expect.arrayContaining([
         expect.stringMatching(/shell\/layout\.tsx$/),
-        expect.stringMatching(/pages\/home\.tsx$/),
+        expect.stringMatching(/pages\/home\/home\.tsx$/),
       ]),
     );
   });
@@ -54,7 +54,7 @@ describe("client portal routes", () => {
     expect(shell?.children).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          file: expect.stringMatching(/pages\/home\.tsx$/),
+          file: expect.stringMatching(/pages\/home\/home\.tsx$/),
           index: true,
         }),
         expect.objectContaining({
@@ -83,7 +83,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /surfaces\/client-portal\/pages\/settings\.tsx$/,
+            /surfaces\/client-portal\/pages\/settings\/settings\.tsx$/,
           ),
           path: "client/settings",
         }),

@@ -16,21 +16,27 @@ const { layout, route } = relative(import.meta.dirname);
 export const coachPortalRoutes = [
   route(COACH_PORTAL_ROUTE_SEGMENT, "./shell/access-layout.tsx", [
     layout("./shell/layout.tsx", [
-      index("./surfaces/coach-portal/pages/home.tsx"),
+      index("./surfaces/coach-portal/pages/home/home.tsx"),
       ...programsRoutes.coachPortalShell,
       route(
         COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT,
-        "./pages/assessment-calls.tsx",
+        "./pages/assessment-calls/assessment-calls.tsx",
       ),
       ...schedulingRoutes.coachPortalShell,
-      route(COACH_CLIENTS_ROUTE_SEGMENT, "./pages/clients.tsx"),
+      route(COACH_CLIENTS_ROUTE_SEGMENT, "./pages/clients/clients.tsx"),
       ...clientsRoutes.coachPortalShell,
-      route(`${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`, "./pages/client.tsx"),
+      route(
+        `${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`,
+        "./pages/client/client.tsx",
+      ),
       route(
         COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
-        "./pages/client-resources.tsx",
+        "./pages/client-resources/client-resources.tsx",
       ),
-      route(COACH_CLIENT_PROFILE_ROUTE_SEGMENT, "./pages/client-profile.tsx"),
+      route(
+        COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
+        "./pages/client-profile/client-profile.tsx",
+      ),
     ]),
     ...clientsRoutes.coachPortal,
     ...programsRoutes.coachPortal,

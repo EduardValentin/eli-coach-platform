@@ -14,14 +14,17 @@ const { layout, route } = relative(import.meta.dirname);
 
 export const publicSiteRoutes = [
   layout("./shell/layout.tsx", [
-    index("./surfaces/public-site/pages/home.tsx"),
-    route("blog", "./pages/blog.tsx"),
-    route(PRICING_PATH.slice(1), "./pages/pricing.tsx"),
+    index("./surfaces/public-site/pages/home/home.tsx"),
+    route("blog", "./pages/blog/blog.tsx"),
+    route(PRICING_PATH.slice(1), "./pages/pricing/pricing.tsx"),
     ...legalRoutes.publicSiteShell,
     ...schedulingRoutes.publicSiteShell,
     ...salesRoutes.publicSiteShell,
   ]),
-  route(SIGN_IN_FAILED_ROUTE_SEGMENT, "./pages/sign-in-failed.tsx"),
-  route(INVITATION_ROUTE_SEGMENT, "./pages/invitation.tsx"),
+  route(
+    SIGN_IN_FAILED_ROUTE_SEGMENT,
+    "./pages/sign-in-failed/sign-in-failed.tsx",
+  ),
+  route(INVITATION_ROUTE_SEGMENT, "./pages/invitation/invitation.tsx"),
   ...schedulingRoutes.publicSite,
 ];
