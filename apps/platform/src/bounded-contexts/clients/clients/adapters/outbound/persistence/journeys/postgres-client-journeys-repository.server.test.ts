@@ -27,7 +27,7 @@ const REQUESTED_STAMPS = {
   answersApprovedAt: null,
 };
 
-describe("PostgresClientJourneys#findByAuthSubjectId", () => {
+describe("PostgresClientJourneysRepository#findByAuthSubjectId", () => {
   it("reads the journey of the client bound to the subject", async () => {
     // arrange
     const postgresClientJourneysRepository =
@@ -169,7 +169,7 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
   });
 });
 
-describe("PostgresClientJourneys#recordWelcomeSeen", () => {
+describe("PostgresClientJourneysRepository#recordWelcomeSeen", () => {
   it("records when the client saw the welcome screen", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
@@ -187,7 +187,7 @@ describe("PostgresClientJourneys#recordWelcomeSeen", () => {
   });
 });
 
-describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
+describe("PostgresClientJourneysRepository#recordOnboardingSubmitted", () => {
   it("records when the client sent her onboarding", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
@@ -207,7 +207,7 @@ describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
   });
 });
 
-describe("PostgresClientJourneys#recordReviewStamp", () => {
+describe("PostgresClientJourneysRepository#recordReviewStamp", () => {
   it("writes the full set of review stamps on the client's row", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();

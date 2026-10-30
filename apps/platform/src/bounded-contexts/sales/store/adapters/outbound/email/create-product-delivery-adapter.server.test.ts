@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createProductDeliveryAdapter } from "./create-product-delivery-adapter.server";
 import { EmailProductDeliveryAdapter } from "./email-product-delivery-adapter.server";
 
-describe("createProductDelivery", () => {
+describe("createProductDeliveryAdapter", () => {
   it("returns the email product delivery", () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

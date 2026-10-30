@@ -4,7 +4,7 @@ import type { InvitationReferencesPort } from "~/bounded-contexts/access/account
 
 import { InMemoryInvitationReferencesAdapter } from "./in-memory-invitation-references-adapter.server";
 
-describe("InMemoryInvitationReferences", () => {
+describe("InMemoryInvitationReferencesAdapter", () => {
   it("knows no subject that carries an invitation", async () => {
     // arrange
     const invitationReferencesPort: InvitationReferencesPort =

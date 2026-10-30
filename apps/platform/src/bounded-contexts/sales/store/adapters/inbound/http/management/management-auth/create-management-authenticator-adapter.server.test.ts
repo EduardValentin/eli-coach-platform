@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createManagementAuthenticator } from "./create-management-authenticator.server";
+import { createManagementAuthenticatorAdapter } from "./create-management-authenticator-adapter.server";
 
 const SECRET = "a-sufficiently-long-management-secret";
 
-describe("createManagementAuthenticator", () => {
+describe("createManagementAuthenticatorAdapter", () => {
   it("accepts the configured secret and rejects another", async () => {
     // arrange
-    const managementAuthenticatorPort = createManagementAuthenticator({
+    const managementAuthenticatorPort = createManagementAuthenticatorAdapter({
       MANAGEMENT_API_SECRET: SECRET,
     });
 

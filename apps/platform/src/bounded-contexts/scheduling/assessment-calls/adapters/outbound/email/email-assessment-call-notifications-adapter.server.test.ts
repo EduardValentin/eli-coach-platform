@@ -65,7 +65,7 @@ function sentTo(
   return command;
 }
 
-describe("EmailAssessmentCallNotifications", () => {
+describe("EmailAssessmentCallNotificationsAdapter", () => {
   it("writes to the visitor and the coach, each in their own time zone", async () => {
     // arrange
     const productEmail = createProductEmail();

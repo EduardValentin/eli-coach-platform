@@ -11,7 +11,7 @@ const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const OPENED_AT = new Date("2026-09-20T10:00:00.000Z");
 const SAVED_AT = new Date("2026-10-22T09:00:00.000Z");
 
-describe("PostgresClientSettings#findByClientId", () => {
+describe("PostgresClientSettingsRepository#findByClientId", () => {
   it("reads her units and her two preferences", async () => {
     // arrange
     const postgresClientSettingsRepository =
@@ -56,7 +56,7 @@ describe("PostgresClientSettings#findByClientId", () => {
   });
 });
 
-describe("PostgresClientSettings#saveUnits", () => {
+describe("PostgresClientSettingsRepository#saveUnits", () => {
   it("writes her settings, and over stored ones replaces only her units and the update moment", async () => {
     // arrange
     const database = createDatabaseRecordingUpserts();

@@ -18,7 +18,7 @@ function configuredRoom(url: string): CoachMeetingRoom {
   return result.room;
 }
 
-describe("PostgresCoachMeetingRoom#current", () => {
+describe("PostgresCoachMeetingRoomRepository#current", () => {
   it("answers the room the stored row holds", async () => {
     // arrange
     const postgresCoachMeetingRoomRepository =
@@ -73,7 +73,7 @@ describe("PostgresCoachMeetingRoom#current", () => {
   });
 });
 
-describe("PostgresCoachMeetingRoom#save", () => {
+describe("PostgresCoachMeetingRoomRepository#save", () => {
   it("upserts the room's url and stamps updated_at from the clock", async () => {
     // arrange
     const database = createUpsertingDatabase();

@@ -83,7 +83,7 @@ const OPENED_ROW = {
   updatedAt: OPENED_AT,
 };
 
-describe("PostgresClientProfiles#findByClientId", () => {
+describe("PostgresClientProfilesRepository#findByClientId", () => {
   it("rebuilds her seeded coaching facts, the coach's notes and her consent from its row", async () => {
     // arrange
     const postgresClientProfilesRepository =
@@ -136,7 +136,7 @@ describe("PostgresClientProfiles#findByClientId", () => {
   });
 });
 
-describe("PostgresClientProfiles#saveSharedFacts", () => {
+describe("PostgresClientProfilesRepository#saveSharedFacts", () => {
   it("writes only the shared facts and the update moment while the row is as it was read", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([{ clientId: CLIENT_ID }]);
@@ -211,7 +211,7 @@ describe("PostgresClientProfiles#saveSharedFacts", () => {
   });
 });
 
-describe("PostgresClientProfiles#saveCoachFacts", () => {
+describe("PostgresClientProfilesRepository#saveCoachFacts", () => {
   it("writes every coaching fact, the coach's notes and the update moment while the row is as it was read", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([{ clientId: CLIENT_ID }]);
@@ -260,7 +260,7 @@ describe("PostgresClientProfiles#saveCoachFacts", () => {
   });
 });
 
-describe("PostgresClientProfiles#recordPhotoConsent", () => {
+describe("PostgresClientProfilesRepository#recordPhotoConsent", () => {
   it("stamps the moment she agreed to progress photos on her profile row only", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates([]);

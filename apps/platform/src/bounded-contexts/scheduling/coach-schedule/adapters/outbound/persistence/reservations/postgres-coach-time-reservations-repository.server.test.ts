@@ -20,7 +20,7 @@ function reserveCoachTime(transaction: Transaction) {
   );
 }
 
-describe("PostgresCoachTimeReservations#reserve", () => {
+describe("PostgresCoachTimeReservationsRepository#reserve", () => {
   it("queues behind every other reservation of the coach's time before inserting its own", async () => {
     // arrange
     const transaction = createTransactionSettling(

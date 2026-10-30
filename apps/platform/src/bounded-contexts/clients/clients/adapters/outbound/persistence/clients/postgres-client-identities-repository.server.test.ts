@@ -23,7 +23,7 @@ const CLIENT_ROW = {
   submittedAt: new Date("2026-10-23T09:00:00.000Z"),
 };
 
-describe("PostgresClientIdentities#findByClientId", () => {
+describe("PostgresClientIdentitiesRepository#findByClientId", () => {
   it("reads her identity from her client record and nothing else", async () => {
     // arrange
     const postgresClientIdentitiesRepository =
@@ -53,7 +53,7 @@ describe("PostgresClientIdentities#findByClientId", () => {
   });
 });
 
-describe("PostgresClientIdentities#findByClientIds", () => {
+describe("PostgresClientIdentitiesRepository#findByClientIds", () => {
   it("reads every found client's identity in one query", async () => {
     // arrange
     const maria = {

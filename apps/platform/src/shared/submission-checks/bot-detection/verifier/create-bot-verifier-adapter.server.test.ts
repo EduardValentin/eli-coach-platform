@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createBotVerifier } from "./create-bot-verifier.server";
+import { createBotVerifierAdapter } from "./create-bot-verifier-adapter.server";
 import { StaticTokenBotVerifierAdapter } from "./static-token-bot-verifier-adapter.server";
 import { TurnstileBotVerifierAdapter } from "~/shared/submission-checks/bot-detection/turnstile/turnstile-bot-verifier-adapter.server";
 
@@ -13,7 +13,7 @@ const settings = {
   TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
 };
 
-describe("createBotVerifier", () => {
+describe("createBotVerifierAdapter", () => {
   it("returns a static verifier when the provider setting is static", async () => {
     // arrange
     const staticSettings = {
@@ -22,7 +22,7 @@ describe("createBotVerifier", () => {
     };
 
     // act
-    const botVerifierPort = createBotVerifier(staticSettings);
+    const botVerifierPort = createBotVerifierAdapter(staticSettings);
 
     // assert
     expect(botVerifierPort).toBeInstanceOf(StaticTokenBotVerifierAdapter);
@@ -48,7 +48,7 @@ describe("createBotVerifier", () => {
     };
 
     // act
-    const botVerifierPort = createBotVerifier(turnstileSettings);
+    const botVerifierPort = createBotVerifierAdapter(turnstileSettings);
 
     // assert
     expect(botVerifierPort).toBeInstanceOf(TurnstileBotVerifierAdapter);

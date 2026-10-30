@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { canonicalizeLegalDocument } from "~/bounded-contexts/legal/legal/domain/legal-document";
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "~/bounded-contexts/legal/public";
-import { createSha256Hasher } from "~/shared/documents/sha256-hasher.server";
+import { Sha256DocumentHasherAdapter } from "~/shared/documents/sha256-document-hasher-adapter.server";
 
 import { ensureVersionedTermsPdf } from "./ensure-versioned-terms-pdf";
 import { renderLegalDocumentPdf } from "./render-legal-document-pdf";
@@ -18,7 +18,7 @@ const relativePdfPath = websiteAndStoreTermsPdfArtifactPath(document.version);
 const pdfPath = resolve(repositoryRoot, relativePdfPath);
 const pdfBytes = await renderLegalDocumentPdf(document);
 const status = await ensureVersionedTermsPdf({ pdfPath, pdfBytes });
-const contentSha256 = createSha256Hasher().hash(
+const contentSha256 = new Sha256DocumentHasherAdapter().hash(
   canonicalizeLegalDocument(document),
 );
 

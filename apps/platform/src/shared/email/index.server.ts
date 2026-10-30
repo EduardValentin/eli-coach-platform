@@ -3,7 +3,7 @@ export {
   buildCalendarInvite,
   buildGoogleCalendarUrl,
 } from "./calendar-invite.server";
-export { createProductEmail } from "./create-product-email.server";
+export { createProductEmailAdapter } from "./create-product-email-adapter.server";
 export { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.server";
 export type {
   EmailAttachment,

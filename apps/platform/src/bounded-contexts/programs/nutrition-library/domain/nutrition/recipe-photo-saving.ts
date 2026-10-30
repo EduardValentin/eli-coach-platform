@@ -26,11 +26,6 @@ type RecipePhotoSavingOptions = {
   >;
 };
 
-export type RecipePhotoSavingPort = Pick<
-  RecipePhotoSaving,
-  "judged" | "storeAccepted" | "writeOrRemoveStored" | "removeStored"
->;
-
 export function saveProblemsOf(
   draft: RecipeDraftResult,
   photo: JudgedRecipePhoto,

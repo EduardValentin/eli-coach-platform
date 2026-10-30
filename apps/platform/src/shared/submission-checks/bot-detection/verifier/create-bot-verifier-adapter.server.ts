@@ -4,7 +4,7 @@ import type { BotVerifierPort } from "./bot-verifier-port.server";
 import { StaticTokenBotVerifierAdapter } from "./static-token-bot-verifier-adapter.server";
 import { TurnstileBotVerifierAdapter } from "~/shared/submission-checks/bot-detection/turnstile/turnstile-bot-verifier-adapter.server";
 
-export function createBotVerifier(
+export function createBotVerifierAdapter(
   settings: BotDetectionSettings,
 ): BotVerifierPort {
   if (settings.BOT_DETECTION_PROVIDER === "static") {

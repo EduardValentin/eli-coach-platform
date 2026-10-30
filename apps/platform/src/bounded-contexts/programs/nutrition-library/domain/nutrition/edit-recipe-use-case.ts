@@ -10,10 +10,7 @@ import {
 } from "./recipe-draft";
 import type { RecipeLibraryPort, RecipeReference } from "./recipe-library-port";
 import type { RecipePhotoChoice } from "./recipe-photo";
-import {
-  type RecipePhotoSavingPort,
-  saveProblemsOf,
-} from "./recipe-photo-saving";
+import { type RecipePhotoSaving, saveProblemsOf } from "./recipe-photo-saving";
 
 type EditRecipeCommand = RecipeReference & {
   draft: RecipeDraftInput;
@@ -35,7 +32,7 @@ type EditRecipeUseCaseOptions = {
     NutritionLibraryIncidentsPort,
     "recipeEditFailed"
   >;
-  photos: RecipePhotoSavingPort;
+  photos: RecipePhotoSaving;
 };
 
 export class EditRecipeUseCase {

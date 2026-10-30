@@ -4,7 +4,7 @@ import { BearerSecretManagementAuthenticatorAdapter } from "./bearer-secret-mana
 import type { ManagementAuthenticatorPort } from "./management-authenticator-port.server";
 import { MANAGEMENT_AGENT_PRINCIPAL_ID } from "./management-auth-config.server";
 
-export function createManagementAuthenticator(
+export function createManagementAuthenticatorAdapter(
   config: ManagementApiConfig,
 ): ManagementAuthenticatorPort {
   return new BearerSecretManagementAuthenticatorAdapter({

@@ -162,7 +162,7 @@ function createNotifications(productEmailPort: ProductEmailPort) {
   });
 }
 
-describe("EmailCheckInNotifications", () => {
+describe("EmailCheckInNotificationsAdapter", () => {
   it.each([
     {
       notification: "requested",

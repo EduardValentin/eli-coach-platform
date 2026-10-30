@@ -41,7 +41,7 @@ function sign(payload: string, secret: string) {
   return Stripe.webhooks.generateTestHeaderString({ payload, secret });
 }
 
-describe("StripePaymentEvents", () => {
+describe("StripePaymentEventsAdapter", () => {
   it("verifies a signed completed and paid checkout event as paid when the event was created", async () => {
     // arrange
     const stripePaymentEventsAdapter = new StripePaymentEventsAdapter({

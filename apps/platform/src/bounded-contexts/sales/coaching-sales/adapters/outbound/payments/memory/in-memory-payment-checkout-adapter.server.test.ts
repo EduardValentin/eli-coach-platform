@@ -28,7 +28,7 @@ function sessionCommand(customerId: string): CreateCheckoutSessionCommand {
   };
 }
 
-describe("InMemoryPaymentCheckout", () => {
+describe("InMemoryPaymentCheckoutAdapter", () => {
   afterEach(() => {
     vi.useRealTimers();
   });

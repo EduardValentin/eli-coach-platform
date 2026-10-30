@@ -8,7 +8,7 @@ const NOW = new Date("2026-10-21T09:00:00.000Z");
 const INVITATION_ID = "5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const SUBJECT = "user_invited";
 
-describe("PostgresAccountInvitations#findByTokenHash", () => {
+describe("PostgresAccountInvitationsRepository#findByTokenHash", () => {
   it("reconstitutes a stored invitation with the identity invitation it carries", async () => {
     // arrange
     const postgresAccountInvitationsRepository =
@@ -69,7 +69,7 @@ describe("PostgresAccountInvitations#findByTokenHash", () => {
   });
 });
 
-describe("PostgresAccountInvitations#insert", () => {
+describe("PostgresAccountInvitationsRepository#insert", () => {
   it("stores the issued invitation as created at the moment it was sent", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
@@ -95,7 +95,7 @@ describe("PostgresAccountInvitations#insert", () => {
   });
 });
 
-describe("PostgresAccountInvitations#reissue", () => {
+describe("PostgresAccountInvitationsRepository#reissue", () => {
   it("rewrites the token and its validity and clears the email outcome, leaving the identity invitation alone", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
@@ -123,7 +123,7 @@ describe("PostgresAccountInvitations#reissue", () => {
   });
 });
 
-describe("PostgresAccountInvitations#accept", () => {
+describe("PostgresAccountInvitationsRepository#accept", () => {
   it("marks the invitation accepted by the subject", async () => {
     // arrange
     const database = createDatabaseAccepting([{ id: INVITATION_ID }]);

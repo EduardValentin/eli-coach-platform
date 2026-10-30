@@ -64,7 +64,7 @@ const ROSTER_ENTRY = {
 
 const dialect = new PgDialect();
 
-describe("PostgresClientRoster#list", () => {
+describe("PostgresClientRosterRepository#list", () => {
   it("reads every client with her journey, the coaching standing on her row, her booking and when she joined, ended ones included", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
@@ -110,7 +110,7 @@ describe("PostgresClientRoster#list", () => {
   });
 });
 
-describe("PostgresClientRoster#findById", () => {
+describe("PostgresClientRosterRepository#findById", () => {
   it("reads the client with the given id", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);

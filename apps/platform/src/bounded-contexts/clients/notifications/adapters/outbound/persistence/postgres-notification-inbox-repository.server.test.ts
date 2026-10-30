@@ -39,7 +39,7 @@ const CLIENT_ROW = {
   onceKey: null,
 };
 
-describe("PostgresNotificationInbox#latestFor", () => {
+describe("PostgresNotificationInboxRepository#latestFor", () => {
   it("maps the coach's stored rows into her notifications", async () => {
     // arrange
     const { database } = createDatabaseSelecting([COACH_ROW]);
@@ -130,7 +130,7 @@ describe("PostgresNotificationInbox#latestFor", () => {
   });
 });
 
-describe("PostgresNotificationInbox#unreadCountFor", () => {
+describe("PostgresNotificationInboxRepository#unreadCountFor", () => {
   it("answers the count of unread rows the database counted", async () => {
     // arrange
     const { database } = createDatabaseSelecting([{ unread: 3 }]);
@@ -149,7 +149,7 @@ describe("PostgresNotificationInbox#unreadCountFor", () => {
   });
 });
 
-describe("PostgresNotificationInbox#markRead", () => {
+describe("PostgresNotificationInboxRepository#markRead", () => {
   it("answers marked when a notification of the recipient carries the id", async () => {
     // arrange
     const { database } = createDatabaseUpdating([{ id: NOTIFICATION_ID }]);
@@ -185,7 +185,7 @@ describe("PostgresNotificationInbox#markRead", () => {
   });
 });
 
-describe("PostgresNotificationInbox#markAllRead", () => {
+describe("PostgresNotificationInboxRepository#markAllRead", () => {
   it("stamps every unread notification of the recipient with the instant", async () => {
     // arrange
     const { database, chain } = createDatabaseUpdating([]);
@@ -203,7 +203,7 @@ describe("PostgresNotificationInbox#markAllRead", () => {
   });
 });
 
-describe("PostgresNotificationInbox#record", () => {
+describe("PostgresNotificationInboxRepository#record", () => {
   it("inserts every draft in one statement, skipping a once-key already recorded", async () => {
     // arrange
     const { database, chain } = createDatabaseInserting();

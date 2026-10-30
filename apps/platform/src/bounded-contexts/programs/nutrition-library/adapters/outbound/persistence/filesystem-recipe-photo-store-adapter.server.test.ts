@@ -51,7 +51,7 @@ function everyOpenedFileIsClosed(): boolean {
   return openedFiles.every((file) => file.fd === CLOSED_DESCRIPTOR);
 }
 
-describe("FilesystemRecipePhotoStore", () => {
+describe("FilesystemRecipePhotoStoreAdapter", () => {
   let workspace: string;
   let root: string;
   let filesystemRecipePhotoStoreAdapter: FilesystemRecipePhotoStoreAdapter;

@@ -1,7 +1,7 @@
 import type { ProductEmailConfig } from "~/shared/email/product-email-config";
 import { describe, expect, it } from "vitest";
 
-import { createProductEmail } from "./create-product-email.server";
+import { createProductEmailAdapter } from "./create-product-email-adapter.server";
 import { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.server";
 import { ResendProductEmailAdapter } from "./resend-product-email-adapter.server";
 
@@ -17,13 +17,13 @@ function createConfig(
   };
 }
 
-describe("createProductEmail", () => {
+describe("createProductEmailAdapter", () => {
   it("returns an in-memory double for the memory provider", () => {
     // arrange
     const config = createConfig({ PRODUCT_EMAIL_PROVIDER: "memory" });
 
     // act
-    const productEmailPort = createProductEmail(config);
+    const productEmailPort = createProductEmailAdapter(config);
 
     // assert
     expect(productEmailPort).toBeInstanceOf(InMemoryProductEmailAdapter);
@@ -37,7 +37,7 @@ describe("createProductEmail", () => {
     });
 
     // act
-    const productEmailPort = createProductEmail(config);
+    const productEmailPort = createProductEmailAdapter(config);
 
     // assert
     expect(productEmailPort).toBeInstanceOf(ResendProductEmailAdapter);

@@ -8,12 +8,12 @@ import {
 } from "~/bounded-contexts/legal/legal/domain/legal-document";
 
 export class TermsFacadeAdapter implements TermsFacade {
-  private readonly terms;
+  private readonly terms: { version: string; hash: string };
 
-  constructor(private readonly documentHasherPort: DocumentHasherPort) {
+  constructor(documentHasherPort: DocumentHasherPort) {
     this.terms = {
       version: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-      hash: this.documentHasherPort.hash(
+      hash: documentHasherPort.hash(
         canonicalizeLegalDocument(WEBSITE_AND_STORE_TERMS_DOCUMENT),
       ),
     };

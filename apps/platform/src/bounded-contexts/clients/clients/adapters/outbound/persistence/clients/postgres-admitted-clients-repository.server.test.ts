@@ -52,7 +52,7 @@ const STANDING_COLUMNS = {
   coachingPaidThrough: PAID_THROUGH,
 };
 
-describe("PostgresAdmittedClients#admit", () => {
+describe("PostgresAdmittedClientsRepository#admit", () => {
   it("inserts the admitted client's row under the id the domain gave her, then her standing, through the caller's transaction", async () => {
     // arrange
     const transaction = createTransactionRecordingWrites([{ id: CLIENT_ID }]);
@@ -97,7 +97,7 @@ describe("PostgresAdmittedClients#admit", () => {
   });
 });
 
-describe("PostgresAdmittedClients#recordStanding", () => {
+describe("PostgresAdmittedClientsRepository#recordStanding", () => {
   it("copies the standing onto the client's row through the caller's transaction", async () => {
     // arrange
     const transaction = createTransactionRecordingWrites([]);

@@ -9,7 +9,7 @@ import { createClientResourceStoreAdapter } from "./create-client-resource-store
 const OWNER = { clientId: "client-1", resourceId: "resource-1" };
 const RUNS_AS_SUPERUSER = process.getuid?.() === 0;
 
-describe("createClientResourceStore", () => {
+describe("createClientResourceStoreAdapter", () => {
   let workspace: string;
 
   beforeEach(async () => {

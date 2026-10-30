@@ -19,7 +19,7 @@ import type {
 
 import { FilesystemProductAssetStoreAdapter } from "./filesystem-product-asset-store-adapter.server";
 
-describe("FilesystemProductAssetStore", () => {
+describe("FilesystemProductAssetStoreAdapter", () => {
   it("verifies and streams an asset within the configured private root", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
@@ -184,7 +184,7 @@ describe("FilesystemProductAssetStore", () => {
   );
 });
 
-describe("FilesystemProductAssetStore.write", () => {
+describe("FilesystemProductAssetStoreAdapter.write", () => {
   it("creates the key's directories and streams the bytes back verified", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));

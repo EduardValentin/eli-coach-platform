@@ -29,7 +29,7 @@ function createNotifications(productEmailPort: ProductEmailPort) {
   });
 }
 
-describe("EmailAccountInvitationNotifications", () => {
+describe("EmailAccountInvitationNotificationsAdapter", () => {
   it("emails the paid client with the coach's contact address as the reply-to", async () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

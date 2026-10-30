@@ -26,7 +26,7 @@ function paidCheckoutEvent(type = "checkout.session.completed") {
   });
 }
 
-describe("InMemoryPaymentEvents", () => {
+describe("InMemoryPaymentEventsAdapter", () => {
   it("accepts a completed and paid checkout event carrying the memory signature", async () => {
     // arrange
     const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(

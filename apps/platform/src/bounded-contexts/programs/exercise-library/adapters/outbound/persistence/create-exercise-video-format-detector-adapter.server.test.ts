@@ -16,7 +16,7 @@ async function leadingBytesOf(path: string): Promise<Uint8Array> {
   return (await readFile(path)).subarray(0, LEADING_BYTE_COUNT);
 }
 
-describe("createExerciseVideoFormatDetector", () => {
+describe("createExerciseVideoFormatDetectorAdapter", () => {
   it.each([
     {
       file: "an MP4 video",

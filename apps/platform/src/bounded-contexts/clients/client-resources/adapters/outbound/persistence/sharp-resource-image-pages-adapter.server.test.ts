@@ -68,7 +68,7 @@ async function truncated(image: Promise<Buffer>): Promise<Uint8Array> {
   return bytes.subarray(0, Math.floor(bytes.length / 2));
 }
 
-describe("createResourceImagePages", () => {
+describe("createResourceImagePagesAdapter", () => {
   it.each([
     ["JPEG", () => solidImage(4000, 3000).jpeg().toBuffer()],
     ["PNG", () => solidImage(4000, 3000).png().toBuffer()],

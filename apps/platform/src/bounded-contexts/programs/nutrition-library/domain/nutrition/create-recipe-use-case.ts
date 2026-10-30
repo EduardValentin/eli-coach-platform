@@ -11,10 +11,7 @@ import {
 import type { RecipeIdsPort } from "./recipe-ids-port";
 import type { RecipeLibraryPort } from "./recipe-library-port";
 import type { RecipePhotoChoice } from "./recipe-photo";
-import {
-  type RecipePhotoSavingPort,
-  saveProblemsOf,
-} from "./recipe-photo-saving";
+import { type RecipePhotoSaving, saveProblemsOf } from "./recipe-photo-saving";
 
 type CreateRecipeCommand = {
   ownerAccountId: string;
@@ -37,7 +34,7 @@ type CreateRecipeUseCaseOptions = {
     NutritionLibraryIncidentsPort,
     "recipeCreationFailed"
   >;
-  photos: RecipePhotoSavingPort;
+  photos: RecipePhotoSaving;
 };
 
 export class CreateRecipeUseCase {

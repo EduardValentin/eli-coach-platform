@@ -1,9 +1,9 @@
 import type {
   PaymentCardChangeKind,
   PaymentInvoiceReason,
-  PaymentProviderVocabulary,
   PaymentSubscriptionStanding,
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-provider-vocabulary.server";
+import type { PaymentProviderVocabularyPort } from "../payment-provider-vocabulary-port.server";
 
 const ENDED_STATUSES: ReadonlySet<string> = new Set([
   "canceled",
@@ -46,7 +46,7 @@ function isCardPaymentMethod(paymentMethodType: string): boolean {
   return paymentMethodType === CARD_PAYMENT_METHOD_TYPE;
 }
 
-export const STRIPE_VOCABULARY: PaymentProviderVocabulary = {
+export const STRIPE_VOCABULARY: PaymentProviderVocabularyPort = {
   standingOf,
   invoiceReasonOf,
   cardChangeOf,

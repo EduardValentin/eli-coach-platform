@@ -16,7 +16,7 @@ const ENTRY = {
   receivedAt: new Date("2026-09-27T10:00:00.000Z"),
 };
 
-describe("PostgresPaymentEventLedger#record", () => {
+describe("PostgresPaymentEventLedgerRepository#record", () => {
   it("records an event the ledger has not seen", async () => {
     // arrange
     const ledger = createLedgerInserting([{ id: "evt_1" }]);

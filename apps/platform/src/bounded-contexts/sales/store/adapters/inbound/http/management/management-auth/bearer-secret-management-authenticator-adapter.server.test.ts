@@ -18,7 +18,7 @@ function credentials(authorizationHeader: string | null): {
   return { authorizationHeader };
 }
 
-describe("BearerSecretManagementAuthenticator", () => {
+describe("BearerSecretManagementAuthenticatorAdapter", () => {
   it("resolves a correct credential to the configured machine principal", async () => {
     // arrange
     const bearerSecretManagementAuthenticatorAdapter = createAuthenticator();

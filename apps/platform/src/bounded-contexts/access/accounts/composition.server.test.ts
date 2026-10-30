@@ -1,9 +1,7 @@
 import type { DatabaseClient } from "~/shared/database";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
-import {
-  createTokenGenerator,
-  createTokenHasher,
-} from "~/shared/tokens/link-tokens.server";
+import { createTokenGeneratorAdapter } from "~/shared/tokens/create-token-generator-adapter.server";
+import { createTokenHasherAdapter } from "~/shared/tokens/create-token-hasher-adapter.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { composeAccountsFeature } from "./composition.server";
@@ -30,8 +28,8 @@ describe("composeAccountsFeature", () => {
         IDENTITY_PROVIDER: "memory",
       },
       linkTokens: {
-        generator: createTokenGenerator(),
-        hasher: createTokenHasher(),
+        generator: createTokenGeneratorAdapter(),
+        hasher: createTokenHasherAdapter(),
       },
       loggerPort: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
       portal,

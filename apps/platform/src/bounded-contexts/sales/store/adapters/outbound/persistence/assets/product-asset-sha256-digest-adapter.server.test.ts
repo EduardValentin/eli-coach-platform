@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { ProductAssetSha256DigestAdapter } from "./product-asset-sha256-digest-adapter.server";
 
-describe("ProductAssetSha256Digest", () => {
+describe("ProductAssetSha256DigestAdapter", () => {
   it("produces the lowercase hex SHA-256 the catalog constraints expect", () => {
     // arrange
     const productAssetSha256DigestAdapter =

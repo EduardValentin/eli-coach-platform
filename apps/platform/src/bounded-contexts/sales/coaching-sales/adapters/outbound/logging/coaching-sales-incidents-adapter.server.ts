@@ -1,6 +1,6 @@
 import type { CoachingSalesIncidentsPort } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
 import type { CoachingSubscriptionIncidentsPort } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
+import type { PaymentWebhookIncidentsPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents-port.server";
 import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import { errorClassOf } from "~/shared/logging/error-fields.server";
 
@@ -8,7 +8,7 @@ export class CoachingSalesIncidentsAdapter
   implements
     CoachingSalesIncidentsPort,
     CoachingSubscriptionIncidentsPort,
-    PaymentWebhookIncidents
+    PaymentWebhookIncidentsPort
 {
   constructor(private readonly loggerPort: LoggerPort) {}
 

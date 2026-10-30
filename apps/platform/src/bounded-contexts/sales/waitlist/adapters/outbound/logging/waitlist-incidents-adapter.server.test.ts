@@ -4,7 +4,7 @@ import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.se
 
 import { WaitlistIncidentsAdapter } from "./waitlist-incidents-adapter.server";
 
-describe("createWaitlistIncidents", () => {
+describe("WaitlistIncidentsAdapter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });

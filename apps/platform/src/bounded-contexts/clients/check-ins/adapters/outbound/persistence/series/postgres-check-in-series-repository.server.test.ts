@@ -44,7 +44,7 @@ const WEEK_ROW = {
   newTimeNote: null,
 };
 
-describe("PostgresCheckInSeries#find", () => {
+describe("PostgresCheckInSeriesRepository#find", () => {
   it("maps a stored row into the series the domain reads", async () => {
     // arrange
     const postgresCheckInSeriesRepository = seriesOver(
@@ -72,7 +72,7 @@ describe("PostgresCheckInSeries#find", () => {
   });
 });
 
-describe("PostgresCheckInSeries#findActiveForClient", () => {
+describe("PostgresCheckInSeriesRepository#findActiveForClient", () => {
   it("maps the client's series that is not stopped", async () => {
     // arrange
     const postgresCheckInSeriesRepository = seriesOver(
@@ -89,7 +89,7 @@ describe("PostgresCheckInSeries#findActiveForClient", () => {
   });
 });
 
-describe("PostgresCheckInSeries#listOccurrences", () => {
+describe("PostgresCheckInSeriesRepository#listOccurrences", () => {
   it("maps every week of the series into the check-ins the domain reads", async () => {
     // arrange
     const postgresCheckInSeriesRepository = seriesOver(
@@ -113,7 +113,7 @@ describe("PostgresCheckInSeries#listOccurrences", () => {
   });
 });
 
-describe("PostgresCheckInSeries#start", () => {
+describe("PostgresCheckInSeriesRepository#start", () => {
   it("answers that a series exists when the one-active-series index refuses the insert", async () => {
     // arrange
     const postgresCheckInSeriesRepository = seriesOver(

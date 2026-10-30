@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { InMemoryIdentityInvitationsAdapter } from "./in-memory-identity-invitations-adapter.server";
 
-describe("InMemoryIdentityInvitations", () => {
+describe("InMemoryIdentityInvitationsAdapter", () => {
   it("hands out a numbered invitation whose URL is the sign-up page with a stand-in ticket", async () => {
     // arrange
     const identityInvitationsPort: IdentityInvitationsPort =

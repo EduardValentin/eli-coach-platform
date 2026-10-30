@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { InMemoryPaymentCustomerCardsAdapter } from "./in-memory-payment-customer-cards-adapter.server";
 
-describe("InMemoryPaymentCustomerCards", () => {
+describe("InMemoryPaymentCustomerCardsAdapter", () => {
   it("reads the fixed test card for any customer", async () => {
     // arrange
     const paymentCustomerCardsPort: PaymentCustomerCardsPort =

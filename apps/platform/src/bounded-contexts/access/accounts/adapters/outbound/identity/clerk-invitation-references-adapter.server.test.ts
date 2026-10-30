@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ClerkInvitationReferencesAdapter } from "./clerk-invitation-references-adapter.server";
 
-describe("ClerkInvitationReferences#invitationIdOf", () => {
+describe("ClerkInvitationReferencesAdapter#invitationIdOf", () => {
   it.each([
     [
       "the invitation id its public metadata carries",

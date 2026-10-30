@@ -15,7 +15,7 @@ import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/coaching
 import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-subscription-change-handler-port.server";
 import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-card-handler-port.server";
 import type { PaymentEventsPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events-port.server";
-import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
+import type { PaymentWebhookIncidentsPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents-port.server";
 
 type StripeWebhookControllerOptions = {
   paymentCardHandlerPort: PaymentCardHandlerPort;
@@ -23,7 +23,7 @@ type StripeWebhookControllerOptions = {
     string,
     PaymentCompletionHandlerPort
   >;
-  paymentWebhookIncidentsPort: PaymentWebhookIncidents;
+  paymentWebhookIncidentsPort: PaymentWebhookIncidentsPort;
   paymentEventsPort: PaymentEventsPort;
   paymentRefundHandlerPort: PaymentRefundHandlerPort;
   signingSecret: string | undefined;

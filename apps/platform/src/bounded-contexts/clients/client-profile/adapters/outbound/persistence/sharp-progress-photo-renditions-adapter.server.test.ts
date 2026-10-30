@@ -42,7 +42,7 @@ async function pngDeclaringDimensions(
   return png;
 }
 
-describe("createProgressPhotoRenditions", () => {
+describe("createProgressPhotoRenditionsAdapter", () => {
   it("renders a JPEG that carries no metadata and is turned upright from its orientation tag", async () => {
     // arrange
     const sidewaysPhotoWithLocation = await solidImage(40, 20)

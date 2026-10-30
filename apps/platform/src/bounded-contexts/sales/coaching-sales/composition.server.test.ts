@@ -2,10 +2,8 @@ import { createEmailAcceptance } from "~/shared/submission-checks/email-address"
 import type { DatabaseClient } from "~/shared/database";
 import type { PaymentCheckoutPort } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
-import {
-  createTokenGenerator,
-  createTokenHasher,
-} from "~/shared/tokens/link-tokens.server";
+import { createTokenGeneratorAdapter } from "~/shared/tokens/create-token-generator-adapter.server";
+import { createTokenHasherAdapter } from "~/shared/tokens/create-token-hasher-adapter.server";
 import { PaymentsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payments-adapter.server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -261,8 +259,8 @@ function createHandles(
     database: createUnreachableDatabase(),
     featureFlagsFacade: { isOn: async (flag) => featureFlags[flag] === true },
     linkTokens: {
-      generator: createTokenGenerator(),
-      hasher: createTokenHasher(),
+      generator: createTokenGeneratorAdapter(),
+      hasher: createTokenHasherAdapter(),
     },
     loggerPort: createLogger(),
     paymentCheckoutPort: paymentsAdapter.paymentCheckoutPort,

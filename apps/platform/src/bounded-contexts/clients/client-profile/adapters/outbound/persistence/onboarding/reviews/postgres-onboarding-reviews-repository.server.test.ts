@@ -69,7 +69,7 @@ const APPROVED_STAMPS = {
 
 const OUTSIDE_ANY_TRANSACTION = {} as DatabaseClient;
 
-describe("PostgresOnboardingReviews#findByClientId", () => {
+describe("PostgresOnboardingReviewsRepository#findByClientId", () => {
   it("reads the review moments and her requests into one stored review", async () => {
     // arrange
     const postgresOnboardingReviewsRepository = reviewsOver(
@@ -171,7 +171,7 @@ describe("PostgresOnboardingReviews#findByClientId", () => {
   });
 });
 
-describe("PostgresOnboardingReviews#recordOpened", () => {
+describe("PostgresOnboardingReviewsRepository#recordOpened", () => {
   it("keeps the first moment the coach opened her review and projects its stamps in the same transaction", async () => {
     // arrange
     const database = createTransactionalDatabase();
@@ -211,7 +211,7 @@ describe("PostgresOnboardingReviews#recordOpened", () => {
   });
 });
 
-describe("PostgresOnboardingReviews#recordApproval", () => {
+describe("PostgresOnboardingReviewsRepository#recordApproval", () => {
   it("records the approval as her first opening, keeps the first approval moment, seeds her coaching facts and projects its stamps in the same transaction", async () => {
     // arrange
     const database = createTransactionalDatabase();
@@ -263,7 +263,7 @@ describe("PostgresOnboardingReviews#recordApproval", () => {
   });
 });
 
-describe("PostgresOnboardingReviews#recordRequest", () => {
+describe("PostgresOnboardingReviewsRepository#recordRequest", () => {
   it("inserts a snapshot of the raised request and projects its stamps in the same transaction", async () => {
     // arrange
     const database = createTransactionalDatabase();
@@ -317,7 +317,7 @@ describe("PostgresOnboardingReviews#recordRequest", () => {
   });
 });
 
-describe("PostgresOnboardingReviews#recordRequest while another request is open", () => {
+describe("PostgresOnboardingReviewsRepository#recordRequest while another request is open", () => {
   it("answers already open without projecting stamps when the open-request-per-client index refuses the insert", async () => {
     // arrange
     const writer = createStampWriter();
@@ -372,7 +372,7 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
   });
 });
 
-describe("PostgresOnboardingReviews#recordAnswer", () => {
+describe("PostgresOnboardingReviewsRepository#recordAnswer", () => {
   it("stamps the open request, merges her answers and projects her stamps in one transaction", async () => {
     // arrange
     const database = createTransactionalDatabase();
@@ -493,7 +493,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
   });
 });
 
-describe("PostgresOnboardingReviews when the stamp write fails", () => {
+describe("PostgresOnboardingReviewsRepository when the stamp write fails", () => {
   const stampFailure = new Error("clients update failed");
 
   it.each([

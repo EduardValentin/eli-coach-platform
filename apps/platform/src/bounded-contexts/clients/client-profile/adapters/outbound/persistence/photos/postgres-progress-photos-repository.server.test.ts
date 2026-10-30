@@ -39,7 +39,7 @@ const ROW = {
   createdAt: CREATED_AT,
 };
 
-describe("PostgresProgressPhotos#add", () => {
+describe("PostgresProgressPhotosRepository#add", () => {
   it("inserts the photo record with its storage reference spread into columns", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
@@ -58,7 +58,7 @@ describe("PostgresProgressPhotos#add", () => {
   });
 });
 
-describe("PostgresProgressPhotos#findById", () => {
+describe("PostgresProgressPhotosRepository#findById", () => {
   it("rebuilds the photo with its storage reference from its row", async () => {
     // arrange
     const postgresProgressPhotosRepository =
@@ -84,7 +84,7 @@ describe("PostgresProgressPhotos#findById", () => {
   });
 });
 
-describe("PostgresProgressPhotos#delete", () => {
+describe("PostgresProgressPhotosRepository#delete", () => {
   it("deletes only the record of that photo", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();

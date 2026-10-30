@@ -4,7 +4,7 @@ import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.se
 
 import { NutritionLibraryIncidentsAdapter } from "./nutrition-library-incidents-adapter.server";
 
-describe("createNutritionLibraryIncidents", () => {
+describe("NutritionLibraryIncidentsAdapter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });

@@ -13,7 +13,7 @@ const FIRST_RECORDED_AT = new Date("2026-09-29T09:00:00.000Z");
 const SECOND_RECORDED_AT = new Date("2026-10-29T09:00:00.000Z");
 const ENTRY_ID = "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01";
 
-describe("PostgresClientMeasurements#listByClientId", () => {
+describe("PostgresClientMeasurementsRepository#listByClientId", () => {
   it("maps her rows oldest first and leaves out the circumferences she never took", async () => {
     // arrange
     const postgresClientMeasurementsRepository =

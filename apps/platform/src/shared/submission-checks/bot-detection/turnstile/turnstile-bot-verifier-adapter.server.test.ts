@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TurnstileBotVerifierAdapter } from "./turnstile-bot-verifier-adapter.server";
 
-describe("TurnstileBotVerifier", () => {
+describe("TurnstileBotVerifierAdapter", () => {
   it("validates public submission tokens with Cloudflare Siteverify", async () => {
     // arrange
     const fetchSiteverify = vi.fn().mockResolvedValue(

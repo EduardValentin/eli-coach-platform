@@ -4,7 +4,7 @@ import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.se
 
 import { ExerciseLibraryIncidentsAdapter } from "./exercise-library-incidents-adapter.server";
 
-describe("createExerciseLibraryIncidents", () => {
+describe("ExerciseLibraryIncidentsAdapter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });

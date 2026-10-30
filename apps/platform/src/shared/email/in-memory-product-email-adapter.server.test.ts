@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.server";
 
-describe("InMemoryProductEmail", () => {
+describe("InMemoryProductEmailAdapter", () => {
   it("records the sent command and returns a sent result with a message id", async () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

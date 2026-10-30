@@ -46,7 +46,7 @@ function subscriptionOf(
   });
 }
 
-describe("PostgresCoachingSubscriptions#save", () => {
+describe("PostgresCoachingSubscriptionsRepository#save", () => {
   it("writes only while the stored row still holds every value the change was decided on", async () => {
     // arrange
     const database = createDatabaseUpdating();
@@ -195,7 +195,7 @@ describe("PostgresCoachingSubscriptions#save", () => {
   });
 });
 
-describe("PostgresCoachingSubscriptions#saveForEvent", () => {
+describe("PostgresCoachingSubscriptionsRepository#saveForEvent", () => {
   it("copies the reconciled subscription's standing onto her client in the transaction that records the event", async () => {
     // arrange
     const database = createDatabaseUpdating();

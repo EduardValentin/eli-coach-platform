@@ -4,7 +4,7 @@ import type { ProductEmailPort } from "~/shared/email/index.server";
 
 import { EmailProductDeliveryAdapter } from "./email-product-delivery-adapter.server";
 
-describe("EmailProductDelivery", () => {
+describe("EmailProductDeliveryAdapter", () => {
   it("sends a single download action with a provider idempotency key", async () => {
     // arrange
     const productEmail = {

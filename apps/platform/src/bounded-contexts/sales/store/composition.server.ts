@@ -42,7 +42,7 @@ import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import { StoreIncidentsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents-adapter.server";
 import { LegalConsentVersionsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/legal/legal-consent-versions-adapter.server";
 import { createManagementAuthConfig } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-auth-config.server";
-import { createManagementAuthenticator } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/create-management-authenticator.server";
+import { createManagementAuthenticatorAdapter } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/create-management-authenticator-adapter.server";
 import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 
 type ManagementAuth = {
@@ -166,7 +166,7 @@ export function composeManagementAuth(site: {
   publicAppUrl: string;
 }): ManagementAuth {
   return {
-    managementAuthenticatorPort: createManagementAuthenticator(
+    managementAuthenticatorPort: createManagementAuthenticatorAdapter(
       site.managementApiConfig,
     ),
     config: createManagementAuthConfig(site.managementApiConfig, {

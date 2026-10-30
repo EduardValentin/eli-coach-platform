@@ -46,7 +46,7 @@ function createNotifications(productEmailPort: ProductEmailPort) {
   });
 }
 
-describe("EmailRefundNotifications", () => {
+describe("EmailRefundNotificationsAdapter", () => {
   it("tells the coach who cancelled, what to refund and by when, with replies going to the client", async () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

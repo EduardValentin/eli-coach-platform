@@ -103,7 +103,7 @@ function createDatabase(failure?: Error, rows: unknown[] = []) {
   return { client, writes };
 }
 
-describe("PostgresExerciseLibrary#add", () => {
+describe("PostgresExerciseLibraryRepository#add", () => {
   it("inserts the exercise with its form cues in their own column and answers that it was added", async () => {
     // arrange
     const database = createDatabase();
@@ -180,7 +180,7 @@ describe("PostgresExerciseLibrary#add", () => {
   });
 });
 
-describe("PostgresExerciseLibrary#list", () => {
+describe("PostgresExerciseLibraryRepository#list", () => {
   it("reads a row's video columns back as its video, and empty columns as none", async () => {
     // arrange
     const database = createDatabase(undefined, [
@@ -222,7 +222,7 @@ describe("PostgresExerciseLibrary#list", () => {
   });
 });
 
-describe("PostgresExerciseLibrary#replace", () => {
+describe("PostgresExerciseLibraryRepository#replace", () => {
   it("writes every field but the id, the owner and the moment it was created, and answers that it was replaced", async () => {
     // arrange
     const database = createDatabase();

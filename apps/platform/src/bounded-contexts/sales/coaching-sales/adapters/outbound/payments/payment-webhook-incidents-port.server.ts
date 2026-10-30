@@ -1,4 +1,4 @@
-export interface PaymentWebhookIncidents {
+export interface PaymentWebhookIncidentsPort {
   paymentEventHandlingFailed(incident: {
     error: unknown;
     eventId: string;

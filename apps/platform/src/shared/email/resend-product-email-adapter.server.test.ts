@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ResendProductEmailAdapter } from "./resend-product-email-adapter.server";
 
-describe("ResendProductEmail", () => {
+describe("ResendProductEmailAdapter", () => {
   it("sends transactional email through Resend with configured sender and reply routing", async () => {
     // arrange
     const send = vi

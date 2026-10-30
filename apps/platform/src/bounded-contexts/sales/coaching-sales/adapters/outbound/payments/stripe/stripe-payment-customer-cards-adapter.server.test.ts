@@ -43,7 +43,7 @@ function createStubClient(options: {
   };
 }
 
-describe("StripePaymentCustomerCards", () => {
+describe("StripePaymentCustomerCardsAdapter", () => {
   it("reads the customer's default payment method with its subscriptions expanded", async () => {
     // arrange
     const client = createStubClient({

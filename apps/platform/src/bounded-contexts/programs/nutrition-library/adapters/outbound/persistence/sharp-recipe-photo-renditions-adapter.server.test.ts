@@ -45,7 +45,7 @@ async function truncated(image: Promise<Buffer>): Promise<Uint8Array> {
   return bytes.subarray(0, Math.floor(bytes.length / 2));
 }
 
-describe("createRecipePhotoRenditions", () => {
+describe("createRecipePhotoRenditionsAdapter", () => {
   it.each([
     ["JPEG", () => withLocation(solidImage(3000, 2000).jpeg()).toBuffer()],
     ["PNG", () => withLocation(solidImage(3000, 2000).png()).toBuffer()],

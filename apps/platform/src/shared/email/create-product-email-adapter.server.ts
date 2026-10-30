@@ -5,7 +5,7 @@ import { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.s
 import type { ProductEmailPort } from "./product-email-port.server";
 import { ResendProductEmailAdapter } from "./resend-product-email-adapter.server";
 
-export function createProductEmail(
+export function createProductEmailAdapter(
   config: ProductEmailConfig,
 ): ProductEmailPort {
   if (config.PRODUCT_EMAIL_PROVIDER === "memory") {

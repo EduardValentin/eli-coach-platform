@@ -51,7 +51,7 @@ afterEach(async () => {
   );
 });
 
-describe("createResourceDocumentPages", () => {
+describe("createResourceDocumentPagesAdapter", () => {
   it("reports the page count of a readable PDF", async () => {
     // arrange
     const bytes = await pdfOf(3);

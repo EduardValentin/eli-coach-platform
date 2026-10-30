@@ -6,10 +6,8 @@ import type {
   PaymentCardDetails,
   PaymentEventVerdict,
 } from "./payment-event-types.server";
-import {
-  referencedIdSchema,
-  type PaymentProviderVocabulary,
-} from "./payment-provider-vocabulary.server";
+import { referencedIdSchema } from "./payment-provider-vocabulary.server";
+import { type PaymentProviderVocabularyPort } from "./payment-provider-vocabulary-port.server";
 
 type PaymentEvent = z.infer<typeof paymentEventSchema>;
 
@@ -127,7 +125,7 @@ const paymentMethodSchema = z.object({
 });
 
 export class PaymentEventReaderAdapter {
-  constructor(private readonly vocabulary: PaymentProviderVocabulary) {}
+  constructor(private readonly vocabulary: PaymentProviderVocabularyPort) {}
 
   read(event: unknown): PaymentEventVerdict {
     const parsed = paymentEventSchema.safeParse(event);
@@ -311,7 +309,7 @@ export function readPaidCheckoutSession(
 
 export function readCardDetails(
   paymentMethod: unknown,
-  vocabulary: PaymentProviderVocabulary,
+  vocabulary: PaymentProviderVocabularyPort,
 ): PaymentCardDetails | null {
   const parsed = paymentMethodSchema.safeParse(paymentMethod);
 

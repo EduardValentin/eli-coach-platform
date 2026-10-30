@@ -17,7 +17,7 @@ const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 const ADMITTED_CLIENT_ID = "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d";
 const SUBSCRIPTION_ID = "8e9f0a1b-2c3d-4e5f-9a6b-7c8d9e0f1a2b";
 
-describe("PostgresCoachingPurchases#insertSubscription", () => {
+describe("PostgresCoachingPurchasesRepository#insertSubscription", () => {
   it("records the purchase for the admitted client under the id the domain gave it", async () => {
     // arrange
     const database = createRecordingDatabase();
@@ -43,7 +43,7 @@ describe("PostgresCoachingPurchases#insertSubscription", () => {
   });
 });
 
-describe("PostgresCoachingPurchases#spendPaymentLink", () => {
+describe("PostgresCoachingPurchasesRepository#spendPaymentLink", () => {
   it("spends the payment link behind the checkout session", async () => {
     // arrange
     const database = createRecordingDatabase();
@@ -60,7 +60,7 @@ describe("PostgresCoachingPurchases#spendPaymentLink", () => {
   });
 });
 
-describe("PostgresCoachingPurchases#findClientIdForCall", () => {
+describe("PostgresCoachingPurchasesRepository#findClientIdForCall", () => {
   it("answers the client recorded for the call", async () => {
     // arrange
     const { postgresCoachingPurchasesRepository } = createPurchases(
@@ -92,7 +92,7 @@ describe("PostgresCoachingPurchases#findClientIdForCall", () => {
   });
 });
 
-describe("PostgresCoachingPurchases#forCalls", () => {
+describe("PostgresCoachingPurchasesRepository#forCalls", () => {
   it("answers a state for every requested call, held when nothing is recorded, and lets paid outrank a sent link", async () => {
     // arrange
     const { postgresCoachingPurchasesRepository } = createPurchases(

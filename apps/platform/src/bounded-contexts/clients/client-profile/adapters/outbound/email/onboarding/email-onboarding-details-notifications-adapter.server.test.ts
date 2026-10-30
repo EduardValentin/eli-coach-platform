@@ -36,7 +36,7 @@ function createNotifications(
   });
 }
 
-describe("EmailOnboardingDetailsNotifications", () => {
+describe("EmailOnboardingDetailsNotificationsAdapter", () => {
   it("emails the client keyed by the request, with the coach's contact address as the reply-to", async () => {
     // arrange
     const productEmail = createProductEmail({

@@ -81,7 +81,7 @@ function lapsedFor(
   };
 }
 
-describe("CheckInNotificationDrafts#checkInEvent", () => {
+describe("CheckInNotificationDraftsAdapter#checkInEvent", () => {
   it("addresses the coach with the check-in, its time and the client's full name", () => {
     // arrange
     const checkInNotificationDraftsAdapter =
@@ -173,7 +173,7 @@ describe("CheckInNotificationDrafts#checkInEvent", () => {
   });
 });
 
-describe("CheckInNotificationDrafts#seriesEvent", () => {
+describe("CheckInNotificationDraftsAdapter#seriesEvent", () => {
   it.each([
     { event: "seriesSetUp", kind: "check-in.series-set-up" },
     { event: "seriesChanged", kind: "check-in.series-changed" },
@@ -246,7 +246,7 @@ describe("CheckInNotificationDrafts#seriesEvent", () => {
   });
 });
 
-describe("CheckInNotificationDrafts#clashesAdded", () => {
+describe("CheckInNotificationDraftsAdapter#clashesAdded", () => {
   it("tells the coach how many new weeks clash, whose they are and the earliest one", () => {
     // arrange
     const checkInNotificationDraftsAdapter =
@@ -279,7 +279,7 @@ describe("CheckInNotificationDrafts#clashesAdded", () => {
   });
 });
 
-describe("CheckInNotificationDrafts#lapseOf", () => {
+describe("CheckInNotificationDraftsAdapter#lapseOf", () => {
   it("records the coach's expiry once, arriving when the check-in's time passed and naming the client", () => {
     // arrange
     const checkInNotificationDraftsAdapter =

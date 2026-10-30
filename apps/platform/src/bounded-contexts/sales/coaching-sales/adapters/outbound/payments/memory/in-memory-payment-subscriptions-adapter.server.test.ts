@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { InMemoryPaymentSubscriptionsAdapter } from "./in-memory-payment-subscriptions-adapter.server";
 
-describe("InMemoryPaymentSubscriptions", () => {
+describe("InMemoryPaymentSubscriptionsAdapter", () => {
   it("accepts the hold, its lift and both kinds of end without a provider", async () => {
     // arrange
     const paymentSubscriptionsPort: PaymentSubscriptionsPort =

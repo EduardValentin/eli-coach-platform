@@ -31,7 +31,7 @@ const REFERENCES_LEAVING_THE_ROOT = [
   "",
 ];
 
-describe("EncryptedFilesystemClientMediaStore", () => {
+describe("EncryptedFilesystemClientMediaStoreAdapter", () => {
   let workspace: string;
   let root: string;
   let encryptedFilesystemClientMediaStoreAdapter: EncryptedFilesystemClientMediaStoreAdapter<

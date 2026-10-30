@@ -4,15 +4,15 @@ import { WAITLIST_MODE_FEATURE_FLAG } from "~/bounded-contexts/operations/public
 
 import { FeatureFlagsFacadeAdapter } from "./feature-flags-facade-adapter.server";
 
-describe("createFeatureFlagsFacade", () => {
+describe("FeatureFlagsFacadeAdapter", () => {
   it("treats a flag that was never stored as off", async () => {
     // arrange
-    const featureFlags = new FeatureFlagsFacadeAdapter({
+    const featureFlagsFacadeAdapter = new FeatureFlagsFacadeAdapter({
       execute: async () => ({}),
     });
 
     // act
-    const on = await featureFlags.isOn(WAITLIST_MODE_FEATURE_FLAG);
+    const on = await featureFlagsFacadeAdapter.isOn(WAITLIST_MODE_FEATURE_FLAG);
 
     // assert
     expect(on).toBe(false);

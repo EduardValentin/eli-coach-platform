@@ -34,7 +34,7 @@ function configuredAvailabilityOrThrow(
   return result.availability;
 }
 
-describe("PostgresCoachAvailability#current", () => {
+describe("PostgresCoachAvailabilityRepository#current", () => {
   it("rebuilds the availability the stored row holds", async () => {
     // arrange
     const postgresCoachAvailabilityRepository =
@@ -103,7 +103,7 @@ describe("PostgresCoachAvailability#current", () => {
   });
 });
 
-describe("PostgresCoachAvailability#save", () => {
+describe("PostgresCoachAvailabilityRepository#save", () => {
   it("upserts the singleton row and stamps updated_at from the clock", async () => {
     // arrange
     const database = createUpsertingDatabase();

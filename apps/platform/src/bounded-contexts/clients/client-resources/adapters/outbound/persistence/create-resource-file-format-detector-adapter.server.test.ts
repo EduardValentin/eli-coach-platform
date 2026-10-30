@@ -29,7 +29,7 @@ function onePixelImage() {
   });
 }
 
-describe("createResourceFileFormatDetector", () => {
+describe("createResourceFileFormatDetectorAdapter", () => {
   it.each([
     {
       file: "a PDF",

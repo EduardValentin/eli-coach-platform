@@ -1,19 +1,5 @@
-import { detectCfbf } from "@file-type/cfbf";
 import { ZipHandler } from "@tokenizer/inflate";
-import { FileTypeParser } from "file-type";
 import { fromBuffer } from "strtok3";
-import type { FileTypeReaderPort } from "./file-type-reader-port.server";
-import { ParserFileTypeReaderAdapter } from "./parser-file-type-reader-adapter.server";
-
-export function createFileTypeReader(): FileTypeReaderPort {
-  return new ParserFileTypeReaderAdapter(new FileTypeParser());
-}
-
-export function createCompoundFileAwareFileTypeReader(): FileTypeReaderPort {
-  return new ParserFileTypeReaderAdapter(
-    new FileTypeParser({ customDetectors: [detectCfbf] }),
-  );
-}
 
 export async function readZipEntryNames(
   bytes: Uint8Array,

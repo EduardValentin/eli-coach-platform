@@ -37,7 +37,7 @@ function createNotifications(productEmailPort: ProductEmailPort) {
   });
 }
 
-describe("EmailCoachingSalesNotifications", () => {
+describe("EmailCoachingSalesNotificationsAdapter", () => {
   it("emails the visitor with the coach's contact address as the reply-to", async () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

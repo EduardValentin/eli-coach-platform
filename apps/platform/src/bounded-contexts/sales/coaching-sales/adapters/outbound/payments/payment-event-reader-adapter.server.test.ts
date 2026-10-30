@@ -128,7 +128,7 @@ function read(event: unknown) {
   return new PaymentEventReaderAdapter(STRIPE_VOCABULARY).read(event);
 }
 
-describe("PaymentEventReader", () => {
+describe("PaymentEventReaderAdapter", () => {
   describe("checkout events", () => {
     it("reads a completed and paid checkout event as paid when the event was created", () => {
       // arrange

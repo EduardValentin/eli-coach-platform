@@ -1,14 +1,12 @@
-import { systemClock } from "~/shared/clock/system-clock";
+import { SystemClockAdapter } from "~/shared/clock/system-clock-adapter";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import {
   createBotDetectionConfig,
-  createBotVerifier,
+  createBotVerifierAdapter,
 } from "~/shared/submission-checks/bot-detection/index.server";
-import { createProductEmail } from "~/shared/email/index.server";
-import {
-  createTokenGenerator,
-  createTokenHasher,
-} from "~/shared/tokens/link-tokens.server";
+import { createProductEmailAdapter } from "~/shared/email/index.server";
+import { createTokenGeneratorAdapter } from "~/shared/tokens/create-token-generator-adapter.server";
+import { createTokenHasherAdapter } from "~/shared/tokens/create-token-hasher-adapter.server";
 
 import {
   composeAccess,
@@ -50,7 +48,7 @@ import {
   type RuntimeEnvironment,
 } from "~/composition-root/runtime-environment";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "~/shared/brand";
-import { createSha256Hasher } from "~/shared/documents/sha256-hasher.server";
+import { Sha256DocumentHasherAdapter } from "~/shared/documents/sha256-document-hasher-adapter.server";
 
 export type PlatformContainer = {
   access: AccessComposition;
@@ -71,28 +69,30 @@ export function createPlatformContainer(options: {
 }): PlatformContainer {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
-  const clock = systemClock();
+  const systemClockAdapter = new SystemClockAdapter();
   const consoleLoggerAdapter = new ConsoleLoggerAdapter();
   const botDetection = createBotDetectionConfig(environment);
-  const botVerifierPort = createBotVerifier(environment);
-  const productEmailPort = createProductEmail(environment);
+  const botVerifierPort = createBotVerifierAdapter(environment);
+  const productEmailPort = createProductEmailAdapter(environment);
   const emailAcceptance = createEmailAcceptance(
     resolveEmailSubaddressPolicy(environment),
   );
   const linkTokens = {
-    generator: createTokenGenerator(),
-    hasher: createTokenHasher(),
+    generator: createTokenGeneratorAdapter(),
+    hasher: createTokenHasherAdapter(),
   };
   const operations = composeOperations({
     appBasePath: environment.APP_BASE_PATH,
     database: database.client,
     featureFlagsConfig: environment,
   });
-  const legal = composeLegal({ documentHasherPort: createSha256Hasher() });
+  const legal = composeLegal({
+    documentHasherPort: new Sha256DocumentHasherAdapter(),
+  });
   const access = composeAccess({
     bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
     clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
-    clockPort: clock,
+    clockPort: systemClockAdapter,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     identityConfig: environment,
@@ -110,7 +110,7 @@ export function createPlatformContainer(options: {
     assessmentCallsConfig: environment,
     botDetection,
     botVerifierPort,
-    clockPort: clock,
+    clockPort: systemClockAdapter,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     emailAcceptancePort: emailAcceptance,
@@ -124,7 +124,7 @@ export function createPlatformContainer(options: {
     appBasePath: environment.APP_BASE_PATH,
     clientCallsFacade: scheduling.facades.clientCallsFacade,
     clientFilesConfig: environment,
-    clockPort: clock,
+    clockPort: systemClockAdapter,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     coachTimeFacade: scheduling.facades.coachTimeFacade,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
@@ -137,7 +137,7 @@ export function createPlatformContainer(options: {
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const programs = composePrograms({
-    clockPort: clock,
+    clockPort: systemClockAdapter,
     database: database.client,
     exerciseVideosConfig: environment,
     loggerPort: consoleLoggerAdapter,
@@ -149,7 +149,7 @@ export function createPlatformContainer(options: {
     botVerifierPort,
     clientLookupFacade: clients.facades.clientLookupFacade,
     clientProfileFacade: clients.facades.clientProfileFacade,
-    clockPort: clock,
+    clockPort: systemClockAdapter,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     coachingPeriodsFacade: clients.facades.coachingPeriodsFacade,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,

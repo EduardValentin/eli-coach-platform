@@ -47,7 +47,7 @@ const ONBOARDING_CLIENT = {
   standing: CoachingStanding.of(standingOf("not-started")),
 };
 
-describe("PostgresOnboardingStandings#findByAuthSubjectId", () => {
+describe("PostgresOnboardingStandingsRepository#findByAuthSubjectId", () => {
   it("reads the client bound to the subject with her submission, review stamps and coaching standing", async () => {
     // arrange
     const postgresOnboardingStandingsRepository =
@@ -81,7 +81,7 @@ describe("PostgresOnboardingStandings#findByAuthSubjectId", () => {
   });
 });
 
-describe("PostgresOnboardingStandings#findByClientId", () => {
+describe("PostgresOnboardingStandingsRepository#findByClientId", () => {
   it("reads the client with her submission and review stamps", async () => {
     // arrange
     const postgresOnboardingStandingsRepository =

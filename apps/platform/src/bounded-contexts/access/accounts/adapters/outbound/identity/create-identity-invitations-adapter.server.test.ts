@@ -69,7 +69,7 @@ function createConfig(overrides: Partial<IdentityConfig> = {}): IdentityConfig {
   };
 }
 
-describe("createIdentityInvitations", () => {
+describe("createIdentityInvitationsAdapter", () => {
   it("returns the in-memory double for the memory provider", () => {
     // arrange
     const config = createConfig({ IDENTITY_PROVIDER: "memory" });

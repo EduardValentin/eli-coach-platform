@@ -4,7 +4,7 @@ import type { ProductEmailPort } from "~/shared/email/index.server";
 
 import { EmailWaitlistConfirmationAdapter } from "./email-waitlist-confirmation-adapter.server";
 
-describe("EmailWaitlistConfirmation", () => {
+describe("EmailWaitlistConfirmationAdapter", () => {
   it.each(["reduced", "regular"] as const)(
     "sends the %s pricing confirmation to the waitlist entry",
     async (pricing) => {

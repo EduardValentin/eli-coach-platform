@@ -32,7 +32,7 @@ function createAdapter(client = createClerkClient()) {
   };
 }
 
-describe("ClerkIdentityInvitations#create", () => {
+describe("ClerkIdentityInvitationsAdapter#create", () => {
   it("creates a silent thirty-day invitation that carries our invitation id, is created even when one is already pending for the email, and returns through the hosted sign-up to our portal", async () => {
     // arrange
     const { client, clerkIdentityInvitationsAdapter } = createAdapter();
@@ -133,7 +133,7 @@ function clerkRefusal(status: number, code: string) {
   });
 }
 
-describe("ClerkIdentityInvitations#replace", () => {
+describe("ClerkIdentityInvitationsAdapter#replace", () => {
   it("revokes the earlier invitation before it creates the fresh one", async () => {
     // arrange
     const { client, clerkIdentityInvitationsAdapter } = createAdapter();

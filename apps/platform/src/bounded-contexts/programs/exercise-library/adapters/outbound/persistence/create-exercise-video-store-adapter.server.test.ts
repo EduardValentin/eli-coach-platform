@@ -12,7 +12,7 @@ async function* sourceOf(bytes: Uint8Array): AsyncIterable<Uint8Array> {
   yield bytes;
 }
 
-describe("createExerciseVideoStore", () => {
+describe("createExerciseVideoStoreAdapter", () => {
   let workspace: string;
 
   beforeEach(async () => {

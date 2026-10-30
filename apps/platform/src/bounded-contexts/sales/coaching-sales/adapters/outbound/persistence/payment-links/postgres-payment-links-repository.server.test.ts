@@ -8,7 +8,7 @@ import { PostgresPaymentLinksRepository } from "./postgres-payment-links-reposit
 
 const NOW = new Date("2026-10-20T10:00:00.000Z");
 
-describe("PostgresPaymentLinks#findByTokenSha256", () => {
+describe("PostgresPaymentLinksRepository#findByTokenSha256", () => {
   it("reconstitutes the stored link with its paid customer", async () => {
     // arrange
     const postgresPaymentLinksRepository = createPaymentLinks(
@@ -52,7 +52,7 @@ describe("PostgresPaymentLinks#findByTokenSha256", () => {
   });
 });
 
-describe("PostgresPaymentLinks#issue", () => {
+describe("PostgresPaymentLinksRepository#issue", () => {
   it("stores the issued link under the id the domain gave it", async () => {
     // arrange
     const database = createDatabaseRecordingInserts();

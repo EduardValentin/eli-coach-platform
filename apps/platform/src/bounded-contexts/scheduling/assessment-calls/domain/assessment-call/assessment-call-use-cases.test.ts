@@ -4,6 +4,8 @@ import { CoachScheduleAvailabilityAdapter } from "~/bounded-contexts/scheduling/
 import {
   CoachAvailability as CoachWeekAvailability,
   CoachOpenings,
+  type CoachAvailabilitySourcePort,
+  type CoachCalendarPort,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 import {
   createEmailAcceptance,
@@ -33,9 +35,6 @@ const CLOSED_START = new Date("2026-06-01T13:00:00.000Z");
 const COACH_TIME_ZONE = "Europe/Bucharest";
 const RESERVATION_ID = "reservation-1";
 
-type OpeningsSources = ConstructorParameters<typeof CoachOpenings>[0];
-type CoachAvailabilitySource = OpeningsSources["coachAvailabilitySourcePort"];
-type CoachCalendar = OpeningsSources["coachCalendarPort"];
 type CoachAvailabilityProps = Parameters<typeof CoachWeekAvailability.from>[0];
 
 const clock = { now: () => NOW };
@@ -87,7 +86,7 @@ function configuredAvailabilityOrThrow(
 
 function createAvailabilitySource(
   timeZone: string = COACH_TIME_ZONE,
-): CoachAvailabilitySource {
+): CoachAvailabilitySourcePort {
   return {
     current: vi.fn().mockResolvedValue(
       configuredAvailabilityOrThrow({
@@ -167,21 +166,23 @@ function createCoachTime(
   };
 }
 
-function createCalendar(options?: Partial<CoachCalendar>): CoachCalendar {
+function createCalendar(
+  coachCalendarPort?: Partial<CoachCalendarPort>,
+): CoachCalendarPort {
   return {
     busyFrom: vi.fn().mockResolvedValue([]),
-    ...options,
+    ...coachCalendarPort,
   };
 }
 
 function availabilityOver(
-  availability: CoachAvailabilitySource,
-  calendar: CoachCalendar = createCalendar(),
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort,
+  coachCalendarPort: CoachCalendarPort = createCalendar(),
 ): CoachAvailabilityPort {
   return new CoachScheduleAvailabilityAdapter({
     openings: new CoachOpenings({
-      coachAvailabilitySourcePort: availability,
-      coachCalendarPort: calendar,
+      coachAvailabilitySourcePort,
+      coachCalendarPort,
     }),
     rules: ASSESSMENT_CALL_RULES,
   });
@@ -200,14 +201,14 @@ function createNotifications(
 }
 
 function createListOpenSlots(options: {
-  availability: CoachAvailabilitySource;
-  calendar: CoachCalendar;
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort;
+  coachCalendarPort: CoachCalendarPort;
   incidents: ReturnType<typeof createIncidents>;
 }): ListOpenSlotsUseCase {
   return new ListOpenSlotsUseCase({
     coachAvailabilityPort: availabilityOver(
-      options.availability,
-      options.calendar,
+      options.coachAvailabilitySourcePort,
+      options.coachCalendarPort,
     ),
     bookingWindow: openBookingWindow(),
     clockPort: clock,
@@ -216,7 +217,7 @@ function createListOpenSlots(options: {
 }
 
 function createBookAssessmentCall(options: {
-  availability: CoachAvailabilitySource;
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort;
   coachTimePort?: CoachTimePort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createIncidents>;
@@ -224,7 +225,9 @@ function createBookAssessmentCall(options: {
   assessmentCallReservationsPort: AssessmentCallReservationsPort;
 }): BookAssessmentCallUseCase {
   return new BookAssessmentCallUseCase({
-    coachAvailabilityPort: availabilityOver(options.availability),
+    coachAvailabilityPort: availabilityOver(
+      options.coachAvailabilitySourcePort,
+    ),
     bookingWindow: openBookingWindow(),
     clockPort: clock,
     coachTimePort: options.coachTimePort ?? createCoachTime(),
@@ -337,8 +340,8 @@ describe("ListOpenSlotsUseCase", () => {
       ]),
     });
     const listOpenSlotsUseCase = createListOpenSlots({
-      availability: createAvailabilitySource(),
-      calendar: coachCalendarPort,
+      coachAvailabilitySourcePort: createAvailabilitySource(),
+      coachCalendarPort,
       incidents: createIncidents(),
     });
 
@@ -365,8 +368,10 @@ describe("ListOpenSlotsUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const listOpenSlotsUseCase = createListOpenSlots({
-      availability: { current: vi.fn().mockRejectedValue(new Error("down")) },
-      calendar: createCalendar(),
+      coachAvailabilitySourcePort: {
+        current: vi.fn().mockRejectedValue(new Error("down")),
+      },
+      coachCalendarPort: createCalendar(),
       incidents,
     });
 
@@ -387,8 +392,8 @@ describe("ListOpenSlotsUseCase", () => {
       throw new RangeError("Invalid time zone specified: Europe/Bucarest");
     });
     const listOpenSlotsUseCase = createListOpenSlots({
-      availability: coachAvailabilitySourcePort,
-      calendar: createCalendar(),
+      coachAvailabilitySourcePort,
+      coachCalendarPort: createCalendar(),
       incidents,
     });
 
@@ -404,8 +409,8 @@ describe("ListOpenSlotsUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const listOpenSlotsUseCase = createListOpenSlots({
-      availability: createAvailabilitySource(),
-      calendar: createCalendar({
+      coachAvailabilitySourcePort: createAvailabilitySource(),
+      coachCalendarPort: createCalendar({
         busyFrom: vi.fn().mockRejectedValue(new Error("down")),
       }),
       incidents,
@@ -557,7 +562,7 @@ describe("BookAssessmentCallUseCase", () => {
     const assessmentCallReservationsPort = createReservations();
     const coachTimePort = createCoachTime();
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       coachTimePort,
       incidents: createIncidents(),
       assessmentCallNotificationsPort: createNotifications(),
@@ -581,7 +586,7 @@ describe("BookAssessmentCallUseCase", () => {
     const assessmentCallReservationsPort = createReservations();
     const assessmentCallNotificationsPort = createNotifications();
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       incidents: createIncidents(),
       assessmentCallNotificationsPort,
       assessmentCallReservationsPort,
@@ -614,7 +619,7 @@ describe("BookAssessmentCallUseCase", () => {
     // arrange
     const assessmentCallReservationsPort = createReservations();
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource("Europe/Chisinau"),
+      coachAvailabilitySourcePort: createAvailabilitySource("Europe/Chisinau"),
       incidents: createIncidents(),
       assessmentCallNotificationsPort: createNotifications(),
       assessmentCallReservationsPort,
@@ -639,7 +644,7 @@ describe("BookAssessmentCallUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       incidents,
       assessmentCallNotificationsPort: createNotifications(delivery),
       assessmentCallReservationsPort: createReservations(),
@@ -657,7 +662,7 @@ describe("BookAssessmentCallUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       incidents,
       assessmentCallNotificationsPort: {
         notifyBooked: vi.fn().mockRejectedValue(new Error()),
@@ -685,7 +690,7 @@ describe("BookAssessmentCallUseCase", () => {
       findUpcomingCallFor: vi.fn().mockResolvedValue(existingCall()),
     });
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       coachTimePort: createCoachTime({
         reserve: vi.fn().mockResolvedValue({ status: "taken" }),
       }),
@@ -710,7 +715,7 @@ describe("BookAssessmentCallUseCase", () => {
       findUpcomingCallFor: vi.fn().mockResolvedValue(existingCall()),
     });
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       coachTimePort,
       incidents: createIncidents(),
       assessmentCallNotificationsPort: createNotifications(),
@@ -765,7 +770,7 @@ describe("BookAssessmentCallUseCase", () => {
   it("books a main address where subaddresses are refused", async () => {
     // arrange
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       emailSubaddresses: "refused",
       incidents: createIncidents(),
       assessmentCallNotificationsPort: createNotifications(),
@@ -783,7 +788,7 @@ describe("BookAssessmentCallUseCase", () => {
     // arrange
     const assessmentCallReservationsPort = createReservations();
     const bookAssessmentCallUseCase = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
+      coachAvailabilitySourcePort: createAvailabilitySource(),
       emailSubaddresses: "allowed",
       incidents: createIncidents(),
       assessmentCallNotificationsPort: createNotifications(),

@@ -4,7 +4,7 @@ import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.se
 
 import { AssessmentCallsIncidentsAdapter } from "./assessment-calls-incidents-adapter.server";
 
-describe("createAssessmentCallsIncidents", () => {
+describe("AssessmentCallsIncidentsAdapter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });

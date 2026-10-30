@@ -25,7 +25,7 @@ import {
   type LegalLink,
   type LegalText,
 } from "~/bounded-contexts/legal/public";
-import { createSha256Hasher } from "~/shared/documents/sha256-hasher.server";
+import { Sha256DocumentHasherAdapter } from "~/shared/documents/sha256-document-hasher-adapter.server";
 
 import { ensureVersionedTermsPdf } from "./ensure-versioned-terms-pdf";
 import { renderLegalDocumentPdf } from "./render-legal-document-pdf";
@@ -193,12 +193,12 @@ describe("website and Store Terms content", () => {
       .digest("hex");
 
     // assert
-    expect(new TermsFacadeAdapter(createSha256Hasher()).currentTerms()).toEqual(
-      {
-        version: document.version,
-        hash: independentDigest,
-      },
-    );
+    expect(
+      new TermsFacadeAdapter(new Sha256DocumentHasherAdapter()).currentTerms(),
+    ).toEqual({
+      version: document.version,
+      hash: independentDigest,
+    });
   });
 
   test("creates a missing versioned PDF once", async () => {

@@ -15,7 +15,7 @@ import { PostgresClientIdentityChangesRepository } from "./postgres-client-ident
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
-describe("PostgresClientIdentityChanges#save", () => {
+describe("PostgresClientIdentityChangesRepository#save", () => {
   it("rewrites her names, phone, date of birth, country and gender on her client row, never her email", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();

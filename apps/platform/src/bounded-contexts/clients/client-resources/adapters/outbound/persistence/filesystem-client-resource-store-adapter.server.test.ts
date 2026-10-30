@@ -63,7 +63,7 @@ function everyOpenedFileIsClosed(): boolean {
   return openedFiles.every((file) => file.fd === CLOSED_DESCRIPTOR);
 }
 
-describe("FilesystemClientResourceStore", () => {
+describe("FilesystemClientResourceStoreAdapter", () => {
   let workspace: string;
   let root: string;
   let filesystemClientResourceStoreAdapter: FilesystemClientResourceStoreAdapter;

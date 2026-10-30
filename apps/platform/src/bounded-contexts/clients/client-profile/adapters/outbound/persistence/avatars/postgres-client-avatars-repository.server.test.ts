@@ -29,7 +29,7 @@ const SNAPSHOT = {
   updatedAt: UPLOADED_AT,
 };
 
-describe("PostgresClientAvatars#findByClientId", () => {
+describe("PostgresClientAvatarsRepository#findByClientId", () => {
   it("rebuilds her avatar from its row", async () => {
     // arrange
     const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
@@ -59,7 +59,7 @@ describe("PostgresClientAvatars#findByClientId", () => {
   });
 });
 
-describe("PostgresClientAvatars#findByClientIds", () => {
+describe("PostgresClientAvatarsRepository#findByClientIds", () => {
   it("reads nothing for no clients without querying", async () => {
     // arrange
     const postgresClientAvatarsRepository = new PostgresClientAvatarsRepository(
@@ -89,7 +89,7 @@ describe("PostgresClientAvatars#findByClientIds", () => {
   });
 });
 
-describe("PostgresClientAvatars#save", () => {
+describe("PostgresClientAvatarsRepository#save", () => {
   it("records her avatar, replacing the one she had", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();
@@ -109,7 +109,7 @@ describe("PostgresClientAvatars#save", () => {
   });
 });
 
-describe("PostgresClientAvatars#remove", () => {
+describe("PostgresClientAvatarsRepository#remove", () => {
   it("deletes her avatar row", async () => {
     // arrange
     const database = createDatabaseRecordingWrites();

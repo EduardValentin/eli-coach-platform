@@ -66,7 +66,7 @@ function createNotices() {
   return { inbox, inboxCheckInNoticesAdapter };
 }
 
-describe("InboxCheckInNotices", () => {
+describe("InboxCheckInNoticesAdapter", () => {
   it("records a check-in event in the bell of the party it reaches, arriving now", async () => {
     // arrange
     const { inbox, inboxCheckInNoticesAdapter } = createNotices();

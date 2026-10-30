@@ -18,7 +18,7 @@ function renditionBytes(rendition: ClientAvatarRendition): Uint8Array {
   return rendition.bytes;
 }
 
-describe("createClientAvatarRenditions", () => {
+describe("createClientAvatarRenditionsAdapter", () => {
   it("crops a landscape photo to a 512 px square JPEG", async () => {
     // arrange
     const landscape = await solidImage(1600, 900).png().toBuffer();

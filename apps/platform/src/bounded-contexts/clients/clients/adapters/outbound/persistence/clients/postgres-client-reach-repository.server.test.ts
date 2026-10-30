@@ -33,7 +33,7 @@ function reachAnswering(rows: readonly Record<string, unknown>[]) {
   });
 }
 
-describe("PostgresClientReach#findByAuthSubjectId", () => {
+describe("PostgresClientReachRepository#findByAuthSubjectId", () => {
   it("reads the client bound to the subject as reachable in her booking time zone, with her program start and paid-through date", async () => {
     // arrange
     const postgresClientReachRepository = reachAnswering([CLIENT_ROW]);
@@ -66,7 +66,7 @@ describe("PostgresClientReach#findByAuthSubjectId", () => {
   });
 });
 
-describe("PostgresClientReach#findById", () => {
+describe("PostgresClientReachRepository#findById", () => {
   it.each([
     [
       "awaiting her onboarding",

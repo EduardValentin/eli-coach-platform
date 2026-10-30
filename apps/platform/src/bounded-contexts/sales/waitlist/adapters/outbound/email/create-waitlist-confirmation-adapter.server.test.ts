@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createWaitlistConfirmationAdapter } from "./create-waitlist-confirmation-adapter.server";
 import { EmailWaitlistConfirmationAdapter } from "./email-waitlist-confirmation-adapter.server";
 
-describe("createWaitlistConfirmation", () => {
+describe("createWaitlistConfirmationAdapter", () => {
   it("returns the email waitlist confirmation", () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

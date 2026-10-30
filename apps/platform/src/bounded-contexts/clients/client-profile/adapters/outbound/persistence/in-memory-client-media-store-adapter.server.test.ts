@@ -6,7 +6,7 @@ import { InMemoryClientMediaStoreAdapter } from "./in-memory-client-media-store-
 const OWNER = { clientId: "client-1", entryId: "entry-1", photoId: "photo-1" };
 const PHOTO = new Uint8Array([1, 2, 3, 4]);
 
-describe("InMemoryClientMediaStore", () => {
+describe("InMemoryClientMediaStoreAdapter", () => {
   it("opens the bytes it stored under a reference derived from the owner", async () => {
     // arrange
     const inMemoryClientMediaStoreAdapter = new InMemoryClientMediaStoreAdapter(

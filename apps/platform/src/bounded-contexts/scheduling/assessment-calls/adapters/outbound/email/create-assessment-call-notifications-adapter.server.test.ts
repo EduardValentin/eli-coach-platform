@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createAssessmentCallNotificationsAdapter } from "./create-assessment-call-notifications-adapter.server";
 import { EmailAssessmentCallNotificationsAdapter } from "./email-assessment-call-notifications-adapter.server";
 
-describe("createAssessmentCallNotifications", () => {
+describe("createAssessmentCallNotificationsAdapter", () => {
   it("returns the email assessment call notifications", () => {
     // arrange
     const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();

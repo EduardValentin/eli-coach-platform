@@ -8,11 +8,9 @@ import {
   clientSettingsTable,
 } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/schema.server";
 
-import {
-  openClientProfile,
-  recordPhotoConsent,
-  seedCoaching,
-} from "./postgres-client-profile-openings-repository.server";
+import { seedCoaching } from "./client-profile-writers.server";
+import { recordPhotoConsent } from "./client-profile-writers.server";
+import { openClientProfile } from "./client-profile-writers.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const ADMITTED_AT = new Date("2026-09-20T10:00:00.000Z");

@@ -9,7 +9,7 @@ import { createRecipePhotoStoreAdapter } from "./create-recipe-photo-store-adapt
 const RUNS_AS_SUPERUSER = process.getuid?.() === 0;
 const PHOTO_ID = "7a1b0000-0000-4000-8000-000000000001";
 
-describe("createRecipePhotoStore", () => {
+describe("createRecipePhotoStoreAdapter", () => {
   let workspace: string;
 
   beforeEach(async () => {

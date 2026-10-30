@@ -26,7 +26,7 @@ const MASTERCARD = PaymentCard.of({
 
 const dialect = new PgDialect();
 
-describe("PostgresPaymentCards#save", () => {
+describe("PostgresPaymentCardsRepository#save", () => {
   it("replaces the card only while the stored row still holds the card it was decided on", async () => {
     // arrange
     const database = createDatabaseWriting([{ stripeCustomerId: "cus_1" }]);

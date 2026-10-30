@@ -4,7 +4,7 @@ import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.se
 
 import { AccountsIncidentsAdapter } from "./accounts-incidents-adapter.server";
 
-describe("createAccountsIncidents", () => {
+describe("AccountsIncidentsAdapter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });

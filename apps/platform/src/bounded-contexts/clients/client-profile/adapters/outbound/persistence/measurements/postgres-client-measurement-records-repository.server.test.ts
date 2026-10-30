@@ -23,7 +23,7 @@ const SECOND_ENTRY_COLUMNS = {
   armCm: null,
 };
 
-describe("PostgresClientMeasurementRecords#listByClientId", () => {
+describe("PostgresClientMeasurementRecordsRepository#listByClientId", () => {
   it("gathers each entry with its photos and leaves out the circumferences she skipped", async () => {
     // arrange
     const postgresClientMeasurementRecordsRepository =
@@ -98,7 +98,7 @@ describe("PostgresClientMeasurementRecords#listByClientId", () => {
   });
 });
 
-describe("PostgresClientMeasurementRecords#record", () => {
+describe("PostgresClientMeasurementRecordsRepository#record", () => {
   it("inserts her entry under the id the domain gave it, with the circumferences she skipped left empty", async () => {
     // arrange
     const database = createDatabaseRecordingInserts();

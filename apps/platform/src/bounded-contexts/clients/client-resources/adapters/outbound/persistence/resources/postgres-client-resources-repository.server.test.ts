@@ -94,7 +94,7 @@ const EVERY_RESOURCE: ResourceBrowseSnapshot = {
   direction: "desc",
 };
 
-describe("PostgresClientResources#add", () => {
+describe("PostgresClientResourcesRepository#add", () => {
   it("inserts the resource with its file facts spread into columns and its tags in her order, in one transaction", async () => {
     // arrange
     const database = createDatabase();
@@ -141,7 +141,7 @@ describe("PostgresClientResources#add", () => {
   });
 });
 
-describe("PostgresClientResources#browseForClient", () => {
+describe("PostgresClientResourcesRepository#browseForClient", () => {
   it("rebuilds the listed resources with their tags in her order, beside the tag options and the counts", async () => {
     // arrange
     const database = createDatabase([
@@ -253,7 +253,7 @@ describe("PostgresClientResources#browseForClient", () => {
   });
 });
 
-describe("PostgresClientResources#tagsHeldBy", () => {
+describe("PostgresClientResourcesRepository#tagsHeldBy", () => {
   it("answers each tag the client's resources hold once, in the spelling it was read", async () => {
     // arrange
     const database = createDatabase([[MEALS, WEEK_ONE]]);
@@ -271,7 +271,7 @@ describe("PostgresClientResources#tagsHeldBy", () => {
   });
 });
 
-describe("PostgresClientResources#tagVocabulary", () => {
+describe("PostgresClientResourcesRepository#tagVocabulary", () => {
   it("answers every tag the coach has used once, across her clients", async () => {
     // arrange
     const database = createDatabase([[MEALS, WEEK_ONE]]);
@@ -287,7 +287,7 @@ describe("PostgresClientResources#tagVocabulary", () => {
   });
 });
 
-describe("PostgresClientResources#findById", () => {
+describe("PostgresClientResourcesRepository#findById", () => {
   it("rebuilds the resource from its row and its tags", async () => {
     // arrange
     const database = createDatabase([[PDF_ROW], PDF_TAG_ROWS]);
@@ -317,7 +317,7 @@ describe("PostgresClientResources#findById", () => {
   });
 });
 
-describe("PostgresClientResources#recordOpened", () => {
+describe("PostgresClientResourcesRepository#recordOpened", () => {
   it("stamps the moment she opened it only on a resource not opened before", async () => {
     // arrange
     const database = createDatabase();
@@ -344,7 +344,7 @@ describe("PostgresClientResources#recordOpened", () => {
   });
 });
 
-describe("PostgresClientResources#saveDetails", () => {
+describe("PostgresClientResourcesRepository#saveDetails", () => {
   it("writes the title and description of that resource and replaces its tags, in one transaction", async () => {
     // arrange
     const database = createDatabase();
@@ -405,7 +405,7 @@ describe("PostgresClientResources#saveDetails", () => {
   });
 });
 
-describe("PostgresClientResources#remove", () => {
+describe("PostgresClientResourcesRepository#remove", () => {
   it("deletes that resource's row only", async () => {
     // arrange
     const database = createDatabase();
@@ -425,7 +425,7 @@ describe("PostgresClientResources#remove", () => {
   });
 });
 
-describe("PostgresClientResources#countUnopenedForClient", () => {
+describe("PostgresClientResourcesRepository#countUnopenedForClient", () => {
   it("counts that client's resources she has not opened", async () => {
     // arrange
     const database = createDatabase([[{ unopened: 2 }]]);

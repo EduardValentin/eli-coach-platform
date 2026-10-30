@@ -3,6 +3,7 @@ import type { DatabaseClient } from "~/shared/database";
 import {
   CoachAvailability,
   CoachOpenings,
+  type CoachAvailabilitySourcePort,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
@@ -196,18 +197,16 @@ function createDatabaseWithBookedCalls(
   } as unknown as DatabaseClient;
 }
 
-type CoachAvailabilitySource = ConstructorParameters<
-  typeof CoachOpenings
->[0]["coachAvailabilitySourcePort"];
-
-function openingsOver(availability: CoachAvailabilitySource): CoachOpenings {
+function openingsOver(
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort,
+): CoachOpenings {
   return new CoachOpenings({
-    coachAvailabilitySourcePort: availability,
+    coachAvailabilitySourcePort,
     coachCalendarPort: { busyFrom: async () => [] },
   });
 }
 
-function createBucharestEveningAvailability(): CoachAvailabilitySource {
+function createBucharestEveningAvailability(): CoachAvailabilitySourcePort {
   const result = CoachAvailability.from({
     timeZone: "Europe/Bucharest",
     weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
@@ -222,7 +221,7 @@ function createBucharestEveningAvailability(): CoachAvailabilitySource {
   return { current: async () => result.availability };
 }
 
-function createUnreadableAvailability(): CoachAvailabilitySource {
+function createUnreadableAvailability(): CoachAvailabilitySourcePort {
   return {
     current: async () => {
       throw new Error("database down");

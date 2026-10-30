@@ -47,7 +47,7 @@ const APPROVED_ROW = {
   answeredAt: new Date("2026-10-19T09:00:00.000Z"),
 };
 
-describe("PostgresCheckIns#find", () => {
+describe("PostgresCheckInsRepository#find", () => {
   it("maps a stored row into the check-in the domain reads", async () => {
     // arrange
     const postgresCheckInsRepository = new PostgresCheckInsRepository(
@@ -144,7 +144,7 @@ describe("PostgresCheckIns#find", () => {
   });
 });
 
-describe("PostgresCheckIns#listForClient", () => {
+describe("PostgresCheckInsRepository#listForClient", () => {
   it("maps every stored row of the client into the check-ins the domain reads", async () => {
     // arrange
     const postgresCheckInsRepository = new PostgresCheckInsRepository(
@@ -180,7 +180,7 @@ describe("PostgresCheckIns#listForClient", () => {
   });
 });
 
-describe("PostgresCheckIns#listAll", () => {
+describe("PostgresCheckInsRepository#listAll", () => {
   it("lists nothing when no check-in is stored", async () => {
     // arrange
     const postgresCheckInsRepository = new PostgresCheckInsRepository(

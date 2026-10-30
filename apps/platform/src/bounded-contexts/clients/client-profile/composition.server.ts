@@ -59,11 +59,9 @@ import {
 import { RandomMeasurementIdsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/random-measurement-ids-adapter.server";
 import { PostgresProgressPhotosRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/postgres-progress-photos-repository.server";
 import { RandomProgressPhotoIdsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/random-progress-photo-ids-adapter.server";
-import {
-  PostgresClientProfileOpeningsRepository,
-  recordPhotoConsent,
-  seedCoaching,
-} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/postgres-client-profile-openings-repository.server";
+import { PostgresClientProfileOpeningsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/postgres-client-profile-openings-repository.server";
+import { seedCoaching } from "./adapters/outbound/persistence/profiles/client-profile-writers.server";
+import { recordPhotoConsent } from "./adapters/outbound/persistence/profiles/client-profile-writers.server";
 import { ClientProfileFacadeAdapter } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-profile-facade-adapter.server";
 import { ClientsClientIdentitiesAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-identities-adapter.server";
 import { ClientsClientReachAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-reach-adapter.server";

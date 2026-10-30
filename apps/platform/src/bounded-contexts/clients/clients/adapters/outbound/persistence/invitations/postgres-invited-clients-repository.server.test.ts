@@ -19,7 +19,7 @@ function standingOf(status: string) {
   };
 }
 
-describe("PostgresInvitedClients#findById", () => {
+describe("PostgresInvitedClientsRepository#findById", () => {
   it("answers the paid client with the subject she is bound to", async () => {
     // arrange
     const postgresInvitedClientsRepository =
@@ -94,7 +94,7 @@ describe("PostgresInvitedClients#findById", () => {
   });
 });
 
-describe("PostgresInvitedClients#bindAuthSubject", () => {
+describe("PostgresInvitedClientsRepository#bindAuthSubject", () => {
   it("binds the client to the subject", async () => {
     // arrange
     const database = createDatabaseBinding([{ id: CLIENT_ID }]);

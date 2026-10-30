@@ -20,7 +20,7 @@ function createStubClient() {
   };
 }
 
-describe("StripePaymentSubscriptions", () => {
+describe("StripePaymentSubscriptionsAdapter", () => {
   it("holds the renewal until an instant by pausing collection with every cycle invoice voided", async () => {
     // arrange
     const client = createStubClient();

@@ -29,7 +29,7 @@ const ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
 
 const OUTSIDE_ANY_TRANSACTION = {} as DatabaseClient;
 
-describe("PostgresClientOnboardings#findByClientId", () => {
+describe("PostgresClientOnboardingsRepository#findByClientId", () => {
   it("reads her draft with its consents and no submission", async () => {
     // arrange
     const postgresClientOnboardingsRepository = onboardingsOver(
@@ -119,7 +119,7 @@ describe("PostgresClientOnboardings#findByClientId", () => {
   });
 });
 
-describe("PostgresClientOnboardings#saveDraft", () => {
+describe("PostgresClientOnboardingsRepository#saveDraft", () => {
   it("saves her draft when the write goes through", async () => {
     // arrange
     const database = createDatabaseRecordingDraftWrites([
@@ -205,7 +205,7 @@ describe("PostgresClientOnboardings#saveDraft", () => {
   });
 });
 
-describe("PostgresClientOnboardings#recordSubmission", () => {
+describe("PostgresClientOnboardingsRepository#recordSubmission", () => {
   it("records her submission and first measurement and clears her draft in one transaction", async () => {
     // arrange
     const database = createDatabaseRecordingTransaction();

@@ -91,7 +91,7 @@ function createStubClient() {
   };
 }
 
-describe("StripePaymentCheckout", () => {
+describe("StripePaymentCheckoutAdapter", () => {
   it("creates one customer per assessment call with an idempotency key", async () => {
     // arrange
     const client = createStubClient();

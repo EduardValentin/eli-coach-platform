@@ -84,7 +84,7 @@ function everyOpenedFileIsClosed(): boolean {
   return openedFiles.every((file) => file.fd === CLOSED_DESCRIPTOR);
 }
 
-describe("FilesystemExerciseVideoStore", () => {
+describe("FilesystemExerciseVideoStoreAdapter", () => {
   let workspace: string;
   let root: string;
   let filesystemExerciseVideoStoreAdapter: FilesystemExerciseVideoStoreAdapter;

@@ -4,7 +4,7 @@ import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.se
 
 import { CheckInsIncidentsAdapter } from "./check-ins-incidents-adapter.server";
 
-describe("createCheckInsIncidents", () => {
+describe("CheckInsIncidentsAdapter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
