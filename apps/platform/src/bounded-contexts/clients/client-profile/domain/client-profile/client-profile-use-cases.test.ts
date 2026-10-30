@@ -1,17 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
-import type { ClientReach, ClientReachReading } from "../client-reach";
-import { ClientSettings, type ClientSettingsSource } from "../client-settings";
 import type {
-  ClientMeasurementsSource,
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "../client-reach-port";
+import {
+  ClientSettings,
+  type ClientSettingsSourcePort,
+} from "../client-settings";
+import type {
+  ClientMeasurementsSourcePort,
   MeasurementEntry,
 } from "../measurement";
 
 import { ClientAvatar } from "./client-avatar";
-import type { ClientAvatars } from "./client-avatars";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 import { ClientProfile, type ClientProfileSnapshot } from "./client-profile";
-import type { ClientProfiles } from "./client-profiles";
+import type { ClientProfilesPort } from "./client-profiles-port";
 import type {
   CoachingFactsSnapshot,
   SharedCoachingFacts,
@@ -123,7 +129,7 @@ function createPorts(
         .mockResolvedValue(
           stored.reach === undefined ? reachOf("reachable") : stored.reach,
         ),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
     identities: {
       findByClientId: vi
         .fn()
@@ -131,26 +137,26 @@ function createPorts(
           stored.identity === undefined ? IDENTITY : stored.identity,
         ),
       findByClientIds: vi.fn(),
-    } satisfies ClientIdentities,
+    } satisfies ClientIdentitiesPort,
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(profile),
       saveSharedFacts: vi.fn().mockResolvedValue(stored.saved ?? "saved"),
       saveCoachFacts: vi.fn().mockResolvedValue(stored.saved ?? "saved"),
       recordPhotoConsent: vi.fn(),
-    } satisfies ClientProfiles,
+    } satisfies ClientProfilesPort,
     settings: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
           stored.settings === undefined ? SETTINGS : stored.settings,
         ),
-    } satisfies ClientSettingsSource,
+    } satisfies ClientSettingsSourcePort,
     avatars: {
       findByClientId: vi.fn().mockResolvedValue(stored.avatar ?? null),
-    } satisfies Pick<ClientAvatars, "findByClientId">,
+    } satisfies Pick<ClientAvatarsPort, "findByClientId">,
     measurements: {
       listByClientId: vi.fn().mockResolvedValue([LATEST_ENTRY, FIRST_ENTRY]),
-    } satisfies ClientMeasurementsSource,
+    } satisfies ClientMeasurementsSourcePort,
     clock: { now: () => NOW },
   };
 }

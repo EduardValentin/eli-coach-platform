@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckInNotifications } from "./check-in-notifications";
-import type { CheckInMove, CheckIns } from "./check-ins";
-import type { CoachTimeHold } from "./coach-time";
-import type { OpenSlots } from "./open-slots";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
+import type { CheckInMove, CheckInsPort } from "./check-ins-port";
+import type { CoachTimeHold } from "./coach-time-port";
+import type { OpenSlotsPort } from "./open-slots-port";
 import { ProposeCheckInTimeUseCase } from "./propose-check-in-time-use-case";
 
 const NOW = new Date("2026-06-01T08:30:00.000Z");
@@ -73,7 +73,7 @@ function startsBeyondADay() {
       async ({ start, now }: { start: Date; now: Date }) =>
         start.getTime() - now.getTime() >= ONE_DAY_MS,
     ),
-  } satisfies Pick<OpenSlots, "offersStart">;
+  } satisfies Pick<OpenSlotsPort, "offersStart">;
 }
 
 function createProposeCheckInTime(options?: {
@@ -101,7 +101,7 @@ function createProposeCheckInTime(options?: {
         options?.moved ?? { status: "moved", freedReservationId: null },
       ),
     endCoaching: vi.fn(),
-  } satisfies CheckIns;
+  } satisfies CheckInsPort;
   const clients = {
     findByAuthSubjectId: vi
       .fn()
@@ -113,10 +113,10 @@ function createProposeCheckInTime(options?: {
       .mockResolvedValue(
         options?.reference === undefined ? REACHABLE_ANA : options.reference,
       ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const notifications = {
     requested: vi.fn().mockResolvedValue("sent"),
     withdrawn: vi.fn().mockResolvedValue("sent"),
@@ -129,7 +129,7 @@ function createProposeCheckInTime(options?: {
     seriesSetUp: vi.fn().mockResolvedValue("sent"),
     seriesChanged: vi.fn().mockResolvedValue("sent"),
     seriesStopped: vi.fn().mockResolvedValue("sent"),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
   const ports = {
     checkIns,
     clients,

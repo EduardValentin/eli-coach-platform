@@ -1,16 +1,16 @@
 export { AssessmentCall, type AssessmentCallSnapshot } from "./assessment-call";
-export { type AssessmentCallIds } from "./assessment-call-ids";
+export { type AssessmentCallIdsPort } from "./assessment-call-ids-port";
 export { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
-export { type AssessmentCallIncidents } from "./assessment-call-incidents";
+export { type AssessmentCallIncidentsPort } from "./assessment-call-incidents-port";
 export {
   type AssessmentCallNotificationResult,
-  type AssessmentCallNotifications,
-} from "./assessment-call-notifications";
+  type AssessmentCallNotificationsPort,
+} from "./assessment-call-notifications-port";
 export {
   type AssessmentCallReservation,
-  type AssessmentCallReservations,
+  type AssessmentCallReservationsPort,
   type UpcomingCallQuestion,
-} from "./assessment-call-reservations";
+} from "./assessment-call-reservations-port";
 export {
   ASSESSMENT_CALL_RULES,
   type CallSlotRules,
@@ -19,12 +19,12 @@ export {
   BookAssessmentCallUseCase,
   type BookAssessmentCallResult,
 } from "./book-assessment-call-use-case";
-export { type CalendarDates } from "./calendar-dates";
+export { type CalendarDatesPort } from "./calendar-dates-port";
 export {
-  type CoachAvailability,
+  type CoachAvailabilityPort,
   type CoachAvailabilityReading,
-} from "./coach-availability";
-export { type CoachTimeSpan } from "./coach-time";
+} from "./coach-availability-port";
+export { type CoachTimeSpan } from "./coach-time-port";
 export {
   ListAssessmentCallsUseCase,
   type AssessmentCallListingResult,
@@ -49,4 +49,4 @@ export {
   type VisitorGender,
   type VisitorPrimaryGoal,
 } from "./visitor-profile";
-export { type WaitlistMode } from "./waitlist-mode";
+export { type WaitlistModePort } from "./waitlist-mode-port";

@@ -1,20 +1,20 @@
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagReaderPort } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { MiddlewareFunction } from "react-router";
 
-import { createFeatureFlagOverrideReader } from "./feature-flag-override-reader.server";
+import { FeatureFlagOverrideReaderAdapter } from "./feature-flag-override-reader-adapter.server";
 import { createFeatureFlagOverrideMiddleware } from "./feature-flag-overrides-http.server";
 
 export type FeatureFlagOverrides = {
-  featureFlags: FeatureFlagReader;
+  featureFlags: FeatureFlagReaderPort;
   middleware: MiddlewareFunction<Response>;
 };
 
 export function composeBrowserFeatureFlagOverrides(options: {
   appBasePath: string;
-  featureFlags: FeatureFlagReader;
+  featureFlags: FeatureFlagReaderPort;
 }): FeatureFlagOverrides {
   return {
-    featureFlags: createFeatureFlagOverrideReader(options.featureFlags),
+    featureFlags: new FeatureFlagOverrideReaderAdapter(options.featureFlags),
     middleware: createFeatureFlagOverrideMiddleware({
       appBasePath: options.appBasePath,
     }),
@@ -22,7 +22,7 @@ export function composeBrowserFeatureFlagOverrides(options: {
 }
 
 export function composeWithoutFeatureFlagOverrides(
-  featureFlags: FeatureFlagReader,
+  featureFlags: FeatureFlagReaderPort,
 ): FeatureFlagOverrides {
   return {
     featureFlags,

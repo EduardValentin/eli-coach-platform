@@ -1,14 +1,14 @@
 import { ClientJourney } from "../client-journey";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import {
   rosterEntryNeedsRefund,
   rosterEntryStatus,
-  type ClientRoster,
   type ClientRosterEntry,
   type ClientStatus,
 } from "./client-roster";
-import type { ClientRosterIncidents } from "./client-roster-incidents";
+import { type ClientRosterPort } from "./client-roster-port";
+import type { ClientRosterIncidentsPort } from "./client-roster-incidents-port";
 
 type ListedClient = ClientRosterEntry & {
   status: ClientStatus;
@@ -19,9 +19,9 @@ type ListClientsResult =
   { status: "listed"; clients: ListedClient[] } | { status: "unavailable" };
 
 type ListClientsUseCaseOptions = {
-  clock: Clock;
-  incidents: ClientRosterIncidents;
-  roster: ClientRoster;
+  clock: ClockPort;
+  incidents: ClientRosterIncidentsPort;
+  roster: ClientRosterPort;
 };
 
 export class ListClientsUseCase {

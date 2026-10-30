@@ -5,12 +5,12 @@ import type { DownloadGrant } from "~/bounded-contexts/sales/store/domain/downlo
 import type {
   ProductAsset,
   ProductAssetOpenResult,
-  ProductAssets,
+  ProductAssetsPort,
 } from "~/bounded-contexts/sales/store/domain/product";
 import { ZipArchive } from "archiver";
 
 export class ZipDeliveryStream {
-  constructor(private readonly assetStore: ProductAssets) {}
+  constructor(private readonly assetStore: ProductAssetsPort) {}
 
   async create(grant: DownloadGrant): Promise<ProductAssetOpenResult> {
     const grantEntries = planGrantEntries(grant);

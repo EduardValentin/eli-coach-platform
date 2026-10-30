@@ -11,8 +11,8 @@ import {
   type CoachingSubscriptionSnapshot,
   type StartChoice,
 } from "./coaching-subscription";
-import type { ClientLookup } from "./client-lookup";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { ClientLookupPort } from "./client-lookup-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import { ReadProgramStatusUseCase } from "./read-program-status-use-case";
 
 const NOW = new Date("2026-09-27T10:00:00.000Z");
@@ -64,7 +64,7 @@ function createJourneys(found: ClientJourney | null) {
         onboardingSubmittedAt: found.onboardingSubmittedAt,
       },
     ),
-  } satisfies Pick<ClientLookup, "journeyOf">;
+  } satisfies Pick<ClientLookupPort, "journeyOf">;
 }
 
 function subscriptionOf(
@@ -101,7 +101,7 @@ function subscriptionOf(
 function createSubscriptions(found: CoachingSubscription | null) {
   return {
     findCurrentForClient: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<CoachingSubscriptions, "findCurrentForClient">;
+  } satisfies Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
 }
 
 describe("ReadProgramStatusUseCase", () => {

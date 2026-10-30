@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "../client-reach";
+import type { ClientReachPort, ClientReachReading } from "../client-reach-port";
 
 import { ClientSettings } from "./client-settings";
-import type { ClientSettingsChanges } from "./client-settings-changes";
-import type { ClientSettingsSource } from "./client-settings-source";
+import type { ClientSettingsChangesPort } from "./client-settings-changes-port";
+import type { ClientSettingsSourcePort } from "./client-settings-source-port";
 import { SaveUnitPreferenceUseCase } from "./save-unit-preference-use-case";
 import type { UnitPreferenceSnapshot } from "./unit-preference";
 
@@ -41,13 +41,13 @@ function createUseCase(input: {
   const ports = {
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(input.reach),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
     settings: {
       findByClientId: vi.fn().mockResolvedValue(input.stored),
-    } satisfies ClientSettingsSource,
+    } satisfies ClientSettingsSourcePort,
     changes: {
       saveUnits: vi.fn().mockResolvedValue(undefined),
-    } satisfies ClientSettingsChanges,
+    } satisfies ClientSettingsChangesPort,
   };
   const useCase = new SaveUnitPreferenceUseCase({
     ...ports,

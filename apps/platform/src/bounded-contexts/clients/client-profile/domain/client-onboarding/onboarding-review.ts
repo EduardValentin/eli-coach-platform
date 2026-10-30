@@ -1,5 +1,5 @@
 import type { ClientGender } from "./client-gender";
-import type { ClientIdentity } from "../client-identities";
+import type { ClientIdentity } from "../client-identities-port";
 import type { MeasureUnits } from "../client-settings";
 
 import type { OnboardingSubmissionProblem } from "./client-onboarding";
@@ -12,7 +12,7 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingQuestionId,
 } from "./onboarding-answers";
-import type { ReviewStamps } from "./onboarding-review-stamps";
+import type { ReviewStamps } from "./onboarding-review-stamps-port";
 import {
   formsForGender,
   ONBOARDING_FORM_IDS,

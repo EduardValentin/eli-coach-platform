@@ -1,11 +1,11 @@
 import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 
 type StageExerciseVideoUseCaseOptions = {
-  store: Pick<ExerciseVideoStore, "receive" | "discard">;
+  store: Pick<ExerciseVideoStorePort, "receive" | "discard">;
 };
 
 export class StageExerciseVideoUseCase {

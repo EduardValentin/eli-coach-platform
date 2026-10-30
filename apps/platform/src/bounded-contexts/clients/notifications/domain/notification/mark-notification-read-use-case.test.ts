@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { MarkNotificationReadUseCase } from "./mark-notification-read-use-case";
-import type { NotificationInbox } from "./notification-inbox";
+import type { NotificationInboxPort } from "./notification-inbox-port";
 
 const NOW = new Date("2026-10-15T09:00:00.000Z");
 
@@ -21,10 +21,10 @@ function createMarkRead(options?: { client?: ClientReachReading | null }) {
     findByAuthSubjectId: vi
       .fn()
       .mockResolvedValue(options?.client === undefined ? ANA : options.client),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
   const inbox = {
     markRead: vi.fn().mockResolvedValue("marked"),
-  } satisfies Pick<NotificationInbox, "markRead">;
+  } satisfies Pick<NotificationInboxPort, "markRead">;
   const ports = { clients, clock: { now: () => NOW }, inbox };
 
   return { markRead: new MarkNotificationReadUseCase(ports), ports };

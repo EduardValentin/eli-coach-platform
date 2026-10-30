@@ -1,13 +1,13 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientJourneys } from "./client-journeys";
+import type { ClientJourneysPort } from "./client-journeys-port";
 
 type MarkWelcomeSeenResult =
   { status: "welcome-seen" } | { status: "not-on-journey" };
 
 type MarkWelcomeSeenUseCaseOptions = {
-  clock: Clock;
-  journeys: ClientJourneys;
+  clock: ClockPort;
+  journeys: ClientJourneysPort;
 };
 
 export class MarkWelcomeSeenUseCase {

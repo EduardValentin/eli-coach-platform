@@ -1,10 +1,10 @@
 export type {
-  ClientIdentities,
+  ClientIdentitiesPort,
   ClientIdentityProblems,
-  ClientReach,
+  ClientReachPort,
 } from "~/bounded-contexts/clients/clients/domain/client";
 export type {
-  OnboardingStandings,
-  OnboardingSubmissionRecorder,
-  ReviewStampRecorder,
+  OnboardingStandingsPort,
+  OnboardingSubmissionRecorderPort,
+  ReviewStampRecorderPort,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";

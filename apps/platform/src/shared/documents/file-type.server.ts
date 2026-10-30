@@ -2,27 +2,15 @@ import { detectCfbf } from "@file-type/cfbf";
 import { ZipHandler } from "@tokenizer/inflate";
 import { FileTypeParser } from "file-type";
 import { fromBuffer } from "strtok3";
+import type { FileTypeReaderPort } from "./file-type-reader-port.server";
+import { ParserFileTypeReaderAdapter } from "./parser-file-type-reader-adapter.server";
 
-type FileTypeReader = {
-  extensionOf(bytes: Uint8Array): Promise<string | null>;
-};
-
-class ParserFileTypeReader implements FileTypeReader {
-  constructor(private readonly parser: FileTypeParser) {}
-
-  async extensionOf(bytes: Uint8Array): Promise<string | null> {
-    const fileType = await this.parser.fromBuffer(bytes);
-
-    return fileType?.ext ?? null;
-  }
+export function createFileTypeReader(): FileTypeReaderPort {
+  return new ParserFileTypeReaderAdapter(new FileTypeParser());
 }
 
-export function createFileTypeReader(): FileTypeReader {
-  return new ParserFileTypeReader(new FileTypeParser());
-}
-
-export function createCompoundFileAwareFileTypeReader(): FileTypeReader {
-  return new ParserFileTypeReader(
+export function createCompoundFileAwareFileTypeReader(): FileTypeReaderPort {
+  return new ParserFileTypeReaderAdapter(
     new FileTypeParser({ customDetectors: [detectCfbf] }),
   );
 }

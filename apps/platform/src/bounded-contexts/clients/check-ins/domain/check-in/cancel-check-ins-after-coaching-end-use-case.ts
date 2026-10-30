@@ -1,21 +1,21 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { releaseFreedHours } from "./check-in-hour-release";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckIns } from "./check-ins";
-import type { CoachTime } from "./coach-time";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInsPort } from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
 
 type CoachingEndCommand = { clientId: string; endsAt: Date };
 
 type CoachingEndResult = { cancelled: number; seriesStopped: boolean };
 
 type CancelCheckInsAfterCoachingEndUseCaseOptions = {
-  checkIns: Pick<CheckIns, "endCoaching">;
-  clock: Clock;
-  coachTime: Pick<CoachTime, "release">;
-  inbox: Pick<CheckInInbox, "scheduleExpiries">;
-  incidents: Pick<CheckInIncidents, "checkInInboxFailed">;
+  checkIns: Pick<CheckInsPort, "endCoaching">;
+  clock: ClockPort;
+  coachTime: Pick<CoachTimePort, "release">;
+  inbox: Pick<CheckInInboxPort, "scheduleExpiries">;
+  incidents: Pick<CheckInIncidentsPort, "checkInInboxFailed">;
 };
 
 export class CancelCheckInsAfterCoachingEndUseCase {

@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientResource } from "./client-resource";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { BrowsedResources, ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
 import { MarkResourceOpenedUseCase } from "./mark-resource-opened-use-case";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");
@@ -32,7 +35,7 @@ function resource(
   });
 }
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   readonly stored = new Map<string, ClientResource>(
     [
       resource("resource-new", { clientId: "client-ana", openedAt: null }),
@@ -100,7 +103,7 @@ const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
 ]);
 
 function createUseCase() {
-  const resources = new InMemoryClientResources();
+  const resources = new InMemoryClientResourcesAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) =>
       reachReading(clientId, "reachable"),
@@ -109,7 +112,7 @@ function createUseCase() {
       async (authSubjectId: string) =>
         CLIENT_BY_SUBJECT.get(authSubjectId) ?? null,
     ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -120,7 +123,7 @@ function createUseCase() {
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const useCase = new MarkResourceOpenedUseCase({
     resources,
     clients,

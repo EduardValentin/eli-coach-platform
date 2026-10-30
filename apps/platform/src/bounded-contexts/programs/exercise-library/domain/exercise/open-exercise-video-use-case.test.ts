@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Exercise, type ExerciseSnapshot } from "./exercise";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReference,
+} from "./exercise-library-port";
 import type {
   ExerciseVideoOpening,
-  ExerciseVideoStore,
-} from "./exercise-video-store";
+  ExerciseVideoStorePort,
+} from "./exercise-video-store-port";
 import type { ExerciseVideoViewer } from "./exercise-video-viewer";
 import { OpenExerciseVideoUseCase } from "./open-exercise-video-use-case";
 
@@ -52,7 +55,7 @@ function createUseCase(snapshot: ExerciseSnapshot | null = SQUAT) {
         ? Exercise.reconstitute(snapshot)
         : null,
     ),
-  } satisfies Pick<ExerciseLibrary, "find">;
+  } satisfies Pick<ExerciseLibraryPort, "find">;
   const store = {
     open: vi.fn(async (): Promise<ExerciseVideoOpening> => ({
       status: "opened",
@@ -60,7 +63,7 @@ function createUseCase(snapshot: ExerciseSnapshot | null = SQUAT) {
       sizeBytes: 4_096,
       served: { start: 0, end: 2 },
     })),
-  } satisfies Pick<ExerciseVideoStore, "open">;
+  } satisfies Pick<ExerciseVideoStorePort, "open">;
 
   return {
     useCase: new OpenExerciseVideoUseCase({ library, store }),

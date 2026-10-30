@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { OpenRecipePhotoUseCase } from "./open-recipe-photo-use-case";
 import { Recipe, type RecipeSnapshot } from "./recipe";
-import type { RecipeLibrary, RecipeReference } from "./recipe-library";
+import type { RecipeLibraryPort, RecipeReference } from "./recipe-library-port";
 import type {
   RecipePhotoOpening,
-  RecipePhotoStore,
-} from "./recipe-photo-store";
+  RecipePhotoStorePort,
+} from "./recipe-photo-store-port";
 import type { RecipePhotoViewer } from "./recipe-photo-viewer";
 
 const STORED_AT = new Date("2026-10-15T09:00:00.000Z");
@@ -45,14 +45,14 @@ function createUseCase(snapshot: RecipeSnapshot | null = PORRIDGE) {
         ? Recipe.reconstitute(snapshot)
         : null,
     ),
-  } satisfies Pick<RecipeLibrary, "find">;
+  } satisfies Pick<RecipeLibraryPort, "find">;
   const store = {
     open: vi.fn(async (_photoId: string): Promise<RecipePhotoOpening> => ({
       status: "opened",
       bytes: BYTES,
       sizeBytes: 3,
     })),
-  } satisfies Pick<RecipePhotoStore, "open">;
+  } satisfies Pick<RecipePhotoStorePort, "open">;
 
   return {
     useCase: new OpenRecipePhotoUseCase({ recipes, store }),

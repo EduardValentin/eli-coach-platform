@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
-import { SchedulingOpenSlots } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/open-slots.server";
-import { createOpenSlotsFacade } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/open-slots.server";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
+import { SchedulingOpenSlotsAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/scheduling-open-slots-adapter.server";
+import { OpenSlotsFacadeAdapter } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/open-slots-facade-adapter.server";
 import {
   CoachAvailability,
   CoachOpenings,
@@ -10,7 +10,7 @@ import {
 
 import type { CheckInActor } from "./check-in-actor";
 import { CHECK_IN_RULES } from "./check-in-rules";
-import type { CoachTimeSpan } from "./coach-time";
+import type { CoachTimeSpan } from "./coach-time-port";
 import { ListOpenCheckInTimesUseCase } from "./list-open-check-in-times-use-case";
 
 const MONDAY_LATE_MORNING = new Date("2026-06-01T08:30:00.000Z");
@@ -38,9 +38,9 @@ function calendarBusyWith(busy: CoachTimeSpan[]) {
   } satisfies OpeningsSources["calendar"];
 }
 
-function openSlotsOver(sources: OpeningsSources): SchedulingOpenSlots {
-  return new SchedulingOpenSlots({
-    openSlots: createOpenSlotsFacade(new CoachOpenings(sources)),
+function openSlotsOver(sources: OpeningsSources): SchedulingOpenSlotsAdapter {
+  return new SchedulingOpenSlotsAdapter({
+    openSlots: new OpenSlotsFacadeAdapter(new CoachOpenings(sources)),
     rules: CHECK_IN_RULES,
   });
 }
@@ -69,7 +69,7 @@ function createListOpenTimes(options?: {
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(client),
       findById: vi.fn().mockResolvedValue(client),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">,
     clock: { now: () => MONDAY_LATE_MORNING },
   };
 

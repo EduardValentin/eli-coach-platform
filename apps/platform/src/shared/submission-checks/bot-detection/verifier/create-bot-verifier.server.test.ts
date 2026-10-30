@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { createBotVerifier } from "./create-bot-verifier.server";
-import { StaticTokenBotVerifier } from "./bot-verifier.server";
-import { TurnstileBotVerifier } from "~/shared/submission-checks/bot-detection/turnstile/turnstile-bot-verifier.server";
+import { StaticTokenBotVerifierAdapter } from "./static-token-bot-verifier-adapter.server";
+import { TurnstileBotVerifierAdapter } from "~/shared/submission-checks/bot-detection/turnstile/turnstile-bot-verifier-adapter.server";
 
 const settings = {
   BOT_DETECTION_PROVIDER: "static" as const,
@@ -25,7 +25,7 @@ describe("createBotVerifier", () => {
     const verifier = createBotVerifier(staticSettings);
 
     // assert
-    expect(verifier).toBeInstanceOf(StaticTokenBotVerifier);
+    expect(verifier).toBeInstanceOf(StaticTokenBotVerifierAdapter);
     const result = await verifier.verifySubmission({
       action: "test",
       remoteIp: null,
@@ -51,6 +51,6 @@ describe("createBotVerifier", () => {
     const verifier = createBotVerifier(turnstileSettings);
 
     // assert
-    expect(verifier).toBeInstanceOf(TurnstileBotVerifier);
+    expect(verifier).toBeInstanceOf(TurnstileBotVerifierAdapter);
   });
 });

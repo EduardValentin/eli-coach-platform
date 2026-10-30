@@ -1,11 +1,11 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckIns } from "./check-ins";
-import type { MeetingRoom } from "./meeting-room";
+import type { CheckInsPort } from "./check-ins-port";
+import type { MeetingRoomPort } from "./meeting-room-port";
 
 export type ResolveCheckInJoinCommand = {
   actor: CheckInActor;
@@ -18,10 +18,10 @@ export type CheckInJoinResult =
   | { status: "unknown" };
 
 type ResolveCheckInJoinUseCaseOptions = {
-  checkIns: CheckIns;
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  meetingRoom: MeetingRoom;
+  checkIns: CheckInsPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  meetingRoom: MeetingRoomPort;
 };
 
 export class ResolveCheckInJoinUseCase {

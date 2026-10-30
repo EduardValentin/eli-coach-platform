@@ -1,16 +1,19 @@
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
 import type {
   ClientPreferences,
-  ClientSettingsSource,
+  ClientSettingsSourcePort,
 } from "../client-settings";
 import {
   earliestMeasurementOf,
   latestMeasurementOf,
-  type ClientMeasurementsSource,
+  type ClientMeasurementsSourcePort,
 } from "../measurement";
 
-import type { ClientAvatars } from "./client-avatars";
-import type { ClientProfiles } from "./client-profiles";
+import type { ClientAvatarsPort } from "./client-avatars-port";
+import type { ClientProfilesPort } from "./client-profiles-port";
 import type { CoachingFactsSnapshot } from "./coaching-facts";
 
 export type ClientProfileReading = {
@@ -24,11 +27,11 @@ export type ClientProfileReading = {
 };
 
 export type ClientProfileReadingPorts = {
-  identities: Pick<ClientIdentities, "findByClientId">;
-  profiles: Pick<ClientProfiles, "findByClientId">;
-  settings: ClientSettingsSource;
-  avatars: Pick<ClientAvatars, "findByClientId">;
-  measurements: ClientMeasurementsSource;
+  identities: Pick<ClientIdentitiesPort, "findByClientId">;
+  profiles: Pick<ClientProfilesPort, "findByClientId">;
+  settings: ClientSettingsSourcePort;
+  avatars: Pick<ClientAvatarsPort, "findByClientId">;
+  measurements: ClientMeasurementsSourcePort;
 };
 
 export class ClientProfileComposite {

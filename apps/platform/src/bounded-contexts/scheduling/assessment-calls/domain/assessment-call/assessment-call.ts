@@ -1,5 +1,5 @@
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
-import type { CoachTimeSpan } from "./coach-time";
+import type { CoachTimeSpan } from "./coach-time-port";
 import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type AssessmentCallProps = {

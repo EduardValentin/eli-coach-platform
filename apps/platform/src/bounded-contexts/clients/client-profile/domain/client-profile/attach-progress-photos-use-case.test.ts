@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AttachProgressPhotosUseCase } from "./attach-progress-photos-use-case";
 import { ClientProfile } from "./client-profile";
-import type { ClientProfiles } from "./client-profiles";
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import type { ProgressPhoto, ProgressPhotoView } from "./progress-photo";
-import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
-import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotoRenditionsPort } from "./progress-photo-renditions-port";
+import type { ProgressPhotoStorePort } from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
 
 const NOW = new Date("2026-10-01T08:00:00.000Z");
 const CONSENTED_AT = new Date("2026-09-30T08:00:00.000Z");
@@ -37,27 +37,30 @@ function createPorts(consent: ProfileConsent = "consented") {
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(profileWith(consent)),
       recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
-    } satisfies Pick<ClientProfiles, "findByClientId" | "recordPhotoConsent">,
+    } satisfies Pick<
+      ClientProfilesPort,
+      "findByClientId" | "recordPhotoConsent"
+    >,
     photos: {
       add: vi.fn(async (photo: ProgressPhoto) => {
         added.push(photo);
       }),
       findById: vi.fn().mockResolvedValue(null),
       delete: vi.fn().mockResolvedValue(undefined),
-    } satisfies ProgressPhotos,
+    } satisfies ProgressPhotosPort,
     photoIds: { generate: () => `photo-${++photoNumber}` },
     store: {
       store: vi.fn().mockResolvedValue({ storageKey: "key", keyId: "memory" }),
       open: vi.fn().mockResolvedValue(null),
       delete: vi.fn().mockResolvedValue(undefined),
-    } satisfies ProgressPhotoStore,
+    } satisfies ProgressPhotoStorePort,
     renditions: {
       render: vi.fn().mockResolvedValue({
         status: "rendered",
         bytes: new Uint8Array([9, 9, 9]),
         mimeType: "image/jpeg",
       }),
-    } satisfies ProgressPhotoRenditions,
+    } satisfies ProgressPhotoRenditionsPort,
     clock: { now: () => NOW },
     incidents: {
       measurementEntrySaved: vi.fn(),
@@ -65,7 +68,7 @@ function createPorts(consent: ProfileConsent = "consented") {
       progressPhotoRefused: vi.fn(),
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
-    } satisfies MeasurementIncidents,
+    } satisfies MeasurementIncidentsPort,
   };
 }
 

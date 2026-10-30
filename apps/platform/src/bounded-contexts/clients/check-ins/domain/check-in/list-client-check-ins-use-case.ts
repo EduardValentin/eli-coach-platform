@@ -1,17 +1,17 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import type { CheckInView } from "./check-in";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckIns } from "./check-ins";
+import type { CheckInsPort } from "./check-ins-port";
 
 export type ListClientCheckInsResult =
   { status: "listed"; checkIns: CheckInView[] } | { status: "ended" };
 
 type ListClientCheckInsUseCaseOptions = {
-  checkIns: CheckIns;
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
+  checkIns: CheckInsPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
 };
 
 export class ListClientCheckInsUseCase {

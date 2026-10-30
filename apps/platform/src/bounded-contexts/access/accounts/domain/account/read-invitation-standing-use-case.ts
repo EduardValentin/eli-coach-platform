@@ -1,7 +1,7 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { InvitationStanding } from "./account-invitation";
-import type { AccountInvitations } from "./account-invitations";
+import type { AccountInvitationsPort } from "./account-invitations-port";
 
 type InvitationStandingReading = {
   state: InvitationStanding;
@@ -10,8 +10,8 @@ type InvitationStandingReading = {
 };
 
 type ReadInvitationStandingUseCaseOptions = {
-  invitations: Pick<AccountInvitations, "findById">;
-  clock: Clock;
+  invitations: Pick<AccountInvitationsPort, "findById">;
+  clock: ClockPort;
 };
 
 export class ReadInvitationStandingUseCase {

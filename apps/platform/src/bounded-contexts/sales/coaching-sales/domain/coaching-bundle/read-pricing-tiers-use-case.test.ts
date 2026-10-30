@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PriceTier } from "./coaching-bundle";
-import type { PricingEligibility } from "./pricing-eligibility";
+import type { PricingEligibilityPort } from "./pricing-eligibility-port";
 import { ReadPricingTiersUseCase } from "./read-pricing-tiers-use-case";
 
 describe("ReadPricingTiersUseCase", () => {
@@ -14,7 +14,7 @@ describe("ReadPricingTiersUseCase", () => {
     const pricingEligibility = {
       tierForEmail: vi.fn(),
       tiersForEmails: vi.fn().mockResolvedValue(tiers),
-    } satisfies PricingEligibility;
+    } satisfies PricingEligibilityPort;
     const useCase = new ReadPricingTiersUseCase({ pricingEligibility });
     const emails = ["ana@example.com", "bea@example.com"];
 

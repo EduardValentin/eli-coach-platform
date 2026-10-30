@@ -1,5 +1,5 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import {
   ClientResource,
@@ -10,10 +10,10 @@ import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIds } from "./client-resource-ids";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResourceStore } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { ClientResourceIdsPort } from "./client-resource-ids-port";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type { ClientResourcesPort } from "./client-resources-port";
 import {
   ResourceDetails,
   type ResourceDetailsInput,
@@ -21,16 +21,16 @@ import {
 } from "./resource-details";
 import type {
   ReadableResourceDocument,
-  ResourceDocumentPages,
-} from "./resource-document-pages";
-import type { ResourceFileFormatDetector } from "./resource-file-format-detector";
+  ResourceDocumentPagesPort,
+} from "./resource-document-pages-port";
+import type { ResourceFileFormatDetectorPort } from "./resource-file-format-detector-port";
 import {
   ResourceFileIntake,
   type ResourceFileJudgement,
   type ResourceRefusal,
 } from "./resource-file-intake";
 import type { ResourceFileKind } from "./resource-file-kind";
-import type { ResourceImagePages } from "./resource-image-pages";
+import type { ResourceImagePagesPort } from "./resource-image-pages-port";
 
 type ReceivedResourceFile = { originalName: string; bytes: Uint8Array };
 
@@ -49,15 +49,15 @@ export type AddClientResourceResult =
   | { status: "failed" };
 
 type AddClientResourceUseCaseOptions = {
-  resources: ClientResources;
-  resourceIds: ClientResourceIds;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStore;
-  documentPages: ResourceDocumentPages;
-  imagePages: ResourceImagePages;
-  fileFormats: ResourceFileFormatDetector;
-  clock: Clock;
-  incidents: ClientResourceIncidents;
+  resources: ClientResourcesPort;
+  resourceIds: ClientResourceIdsPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  store: ClientResourceStorePort;
+  documentPages: ResourceDocumentPagesPort;
+  imagePages: ResourceImagePagesPort;
+  fileFormats: ResourceFileFormatDetectorPort;
+  clock: ClockPort;
+  incidents: ClientResourceIncidentsPort;
 };
 
 type KeptFile =

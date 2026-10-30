@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Food } from "./food";
-import type { FoodLibrary } from "./food-library";
+import type { FoodLibraryPort } from "./food-library-port";
 import { FindFoodUseCase } from "./find-food-use-case";
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionTag } from "./nutrition-tags-port";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "coach-account-1";
@@ -49,7 +49,7 @@ function createUseCase() {
     );
   const library = {
     list: vi.fn(async (ownerAccountId: string) => ownedBy(ownerAccountId)),
-  } satisfies Pick<FoodLibrary, "list">;
+  } satisfies Pick<FoodLibraryPort, "list">;
   const tags = { list: vi.fn(async () => TAGS) };
 
   return { useCase: new FindFoodUseCase({ library, tags }), library };

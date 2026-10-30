@@ -1,16 +1,16 @@
-import type { ClientIdentities } from "./client-identities";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClockPort } from "../clock-port";
 
-import type { CheckIns } from "./check-ins";
+import type { CheckInsPort } from "./check-ins-port";
 import {
   CoachCheckInViews,
   type CoachCheckInView,
 } from "./coach-check-in-views";
 
 type ListCoachCheckInsUseCaseOptions = {
-  checkIns: Pick<CheckIns, "listAll">;
-  clock: Clock;
-  identities: Pick<ClientIdentities, "findByClientIds">;
+  checkIns: Pick<CheckInsPort, "listAll">;
+  clock: ClockPort;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
 };
 
 export class ListCoachCheckInsUseCase {

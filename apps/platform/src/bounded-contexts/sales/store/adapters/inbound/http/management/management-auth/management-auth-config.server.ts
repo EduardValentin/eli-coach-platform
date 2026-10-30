@@ -1,6 +1,6 @@
 import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 
-import type { ManagementAuthConfig } from "./management-authenticator-contract.server";
+import type { ManagementAuthConfig } from "./management-authenticator-port.server";
 
 /**
  * One shared secret means one identity. When the coach reaches these flows

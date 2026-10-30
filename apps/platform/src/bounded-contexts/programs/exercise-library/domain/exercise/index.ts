@@ -20,15 +20,15 @@ export {
   type ExerciseSnapshot,
 } from "./exercise";
 export { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
-export { type ExerciseIds } from "./exercise-ids";
+export { type ExerciseIdsPort } from "./exercise-ids-port";
 export {
   type ExerciseAddition,
-  type ExerciseLibrary,
+  type ExerciseLibraryPort,
   type ExerciseReference,
   type ExerciseRemoval,
   type ExerciseReplacement,
-} from "./exercise-library";
-export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
+} from "./exercise-library-port";
+export { type ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 export {
   DEFAULT_EXERCISE_SORT_KEY,
   EXERCISE_EQUIPMENT_FILTERS,
@@ -52,17 +52,17 @@ export {
   type ExerciseVideoFormat,
   type ExerciseVideoSnapshot,
 } from "./exercise-video";
-export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-export { type ExerciseVideoIds } from "./exercise-video-ids";
+export { type ExerciseVideoFormatDetectorPort } from "./exercise-video-format-detector-port";
+export { type ExerciseVideoIdsPort } from "./exercise-video-ids-port";
 export { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 export { type ExerciseVideoChoice } from "./exercise-video-saving";
 export {
   type ExerciseVideoOpening,
-  type ExerciseVideoStore,
+  type ExerciseVideoStorePort,
   type RequestedByteRange,
   type ServedByteRange,
   type StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 export { type ExerciseVideoViewer } from "./exercise-video-viewer";
 export {
   FindExerciseUseCase,

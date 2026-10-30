@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientMeasurementRecords } from "./client-measurement-records";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
 import type { MeasurementRecord } from "./measurement-history";
 import { ReadClientMeasurementHistoryUseCase } from "./read-client-measurement-history-use-case";
 
@@ -26,7 +26,7 @@ describe("ReadClientMeasurementHistoryUseCase", () => {
     const records = {
       listByClientId: vi.fn().mockResolvedValue([FIRST, LATEST]),
       record: vi.fn(),
-    } satisfies ClientMeasurementRecords;
+    } satisfies ClientMeasurementRecordsPort;
     const useCase = new ReadClientMeasurementHistoryUseCase({ records });
 
     // act

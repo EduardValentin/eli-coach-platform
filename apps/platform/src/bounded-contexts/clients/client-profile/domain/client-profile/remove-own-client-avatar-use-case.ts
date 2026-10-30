@@ -1,4 +1,4 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import {
   ClientAvatarRemoval,
@@ -9,7 +9,7 @@ type RemoveOwnClientAvatarResult =
   { status: "removed" } | { status: "not-on-journey" } | { status: "ended" };
 
 type RemoveOwnClientAvatarUseCaseOptions = ClientAvatarRemovalOptions & {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class RemoveOwnClientAvatarUseCase {

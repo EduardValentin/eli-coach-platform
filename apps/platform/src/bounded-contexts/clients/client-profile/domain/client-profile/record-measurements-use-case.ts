@@ -1,24 +1,24 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 import {
   hasMeasurementProblem,
   measurementEntryOf,
-  type MeasurementIds,
+  type MeasurementIdsPort,
   type MeasurementValues,
 } from "../measurement";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientMeasurementRecords } from "./client-measurement-records";
-import type { ClientProfiles } from "./client-profiles";
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import {
   ProgressPhotoIntake,
   type ProgressPhotoOutcomes,
   type ReceivedProgressPhoto,
 } from "./progress-photo-intake";
-import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
-import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
-import type { ProgressPhotoIds } from "./progress-photo-ids";
+import type { ProgressPhotoRenditionsPort } from "./progress-photo-renditions-port";
+import type { ProgressPhotoStorePort } from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
+import type { ProgressPhotoIdsPort } from "./progress-photo-ids-port";
 
 type RecordMeasurementsCommand = {
   authSubjectId: string;
@@ -38,16 +38,16 @@ type RecordMeasurementsResult =
   | { status: "invalid" };
 
 type RecordMeasurementsUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  profiles: Pick<ClientProfiles, "findByClientId" | "recordPhotoConsent">;
-  records: ClientMeasurementRecords;
-  measurementIds: MeasurementIds;
-  photos: ProgressPhotos;
-  photoIds: ProgressPhotoIds;
-  store: ProgressPhotoStore;
-  renditions: ProgressPhotoRenditions;
-  clock: Clock;
-  incidents: MeasurementIncidents;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  profiles: Pick<ClientProfilesPort, "findByClientId" | "recordPhotoConsent">;
+  records: ClientMeasurementRecordsPort;
+  measurementIds: MeasurementIdsPort;
+  photos: ProgressPhotosPort;
+  photoIds: ProgressPhotoIdsPort;
+  store: ProgressPhotoStorePort;
+  renditions: ProgressPhotoRenditionsPort;
+  clock: ClockPort;
+  incidents: MeasurementIncidentsPort;
 };
 
 export class RecordMeasurementsUseCase {

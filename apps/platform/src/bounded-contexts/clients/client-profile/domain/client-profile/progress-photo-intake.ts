@@ -1,7 +1,7 @@
 import type {
-  MeasurementIncidents,
+  MeasurementIncidentsPort,
   ProgressPhotoRefusal,
-} from "./measurement-incidents";
+} from "./measurement-incidents-port";
 import {
   ProgressPhoto,
   type ProgressPhotoFileFacts,
@@ -9,11 +9,11 @@ import {
 } from "./progress-photo";
 import type {
   ProgressPhotoRendition,
-  ProgressPhotoRenditions,
-} from "./progress-photo-renditions";
-import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
-import type { ProgressPhotoIds } from "./progress-photo-ids";
+  ProgressPhotoRenditionsPort,
+} from "./progress-photo-renditions-port";
+import type { ProgressPhotoStorePort } from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
+import type { ProgressPhotoIdsPort } from "./progress-photo-ids-port";
 
 export type ReceivedProgressPhoto = ProgressPhotoFileFacts & {
   view: ProgressPhotoView;
@@ -34,11 +34,11 @@ export type EntryReceivingPhotos = {
 };
 
 type ProgressPhotoIntakeOptions = {
-  photos: ProgressPhotos;
-  photoIds: ProgressPhotoIds;
-  store: ProgressPhotoStore;
-  renditions: ProgressPhotoRenditions;
-  incidents: MeasurementIncidents;
+  photos: ProgressPhotosPort;
+  photoIds: ProgressPhotoIdsPort;
+  store: ProgressPhotoStorePort;
+  renditions: ProgressPhotoRenditionsPort;
+  incidents: MeasurementIncidentsPort;
 };
 
 type RenderedProgressPhoto = Extract<

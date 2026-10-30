@@ -1,17 +1,17 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import { Exercise, type ExerciseSaveProblems } from "./exercise";
 import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
-import type { ExerciseIds } from "./exercise-ids";
-import type { ExerciseLibrary } from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type { ExerciseIdsPort } from "./exercise-ids-port";
+import type { ExerciseLibraryPort } from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import { ExerciseNames } from "./exercise-names";
-import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import type { ExerciseVideoIds } from "./exercise-video-ids";
+import type { ExerciseVideoFormatDetectorPort } from "./exercise-video-format-detector-port";
+import type { ExerciseVideoIdsPort } from "./exercise-video-ids-port";
 import {
   ExerciseVideoSaving,
   type ExerciseVideoChoice,
 } from "./exercise-video-saving";
-import type { ExerciseVideoStore } from "./exercise-video-store";
+import type { ExerciseVideoStorePort } from "./exercise-video-store-port";
 
 type CreateExerciseCommand = {
   ownerAccountId: string;
@@ -25,13 +25,13 @@ export type CreateExerciseResult =
   | { status: "failed" };
 
 type CreateExerciseUseCaseOptions = {
-  library: ExerciseLibrary;
-  ids: ExerciseIds;
-  clock: Clock;
-  incidents: ExerciseLibraryIncidents;
-  formats: ExerciseVideoFormatDetector;
-  videoIds: ExerciseVideoIds;
-  store: Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
+  library: ExerciseLibraryPort;
+  ids: ExerciseIdsPort;
+  clock: ClockPort;
+  incidents: ExerciseLibraryIncidentsPort;
+  formats: ExerciseVideoFormatDetectorPort;
+  videoIds: ExerciseVideoIdsPort;
+  store: Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
 };
 
 export class CreateExerciseUseCase {

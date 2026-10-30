@@ -1,9 +1,9 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { ClientOnboarding } from "./client-onboarding";
-import type { ClientOnboardingChanges } from "./client-onboarding-changes";
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingChangesPort } from "./client-onboarding-changes-port";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingConsents } from "./onboarding-consents";
 import type { OnboardingParticipants } from "./onboarding-participants";
@@ -25,10 +25,10 @@ type SaveOnboardingDraftResult =
 
 type SaveOnboardingDraftUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSource;
-  changes: ClientOnboardingChanges;
-  clock: Clock;
-  incidents: ClientOnboardingIncidents;
+  onboardings: ClientOnboardingSourcePort;
+  changes: ClientOnboardingChangesPort;
+  clock: ClockPort;
+  incidents: ClientOnboardingIncidentsPort;
 };
 
 export class SaveOnboardingDraftUseCase {

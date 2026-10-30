@@ -15,7 +15,7 @@ import type { PDFPageProxy } from "pdfjs-dist";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { describe, expect, test } from "vitest";
 
-import { createTermsFacade } from "~/bounded-contexts/legal/legal/adapters/inbound/facades/terms.server";
+import { TermsFacadeAdapter } from "~/bounded-contexts/legal/legal/adapters/inbound/facades/terms-facade-adapter.server";
 import { canonicalizeLegalDocument } from "~/bounded-contexts/legal/legal/domain/legal-document";
 import { formatEffectiveDate } from "~/bounded-contexts/legal/legal/ui/shared/format-effective-date";
 import {
@@ -193,10 +193,12 @@ describe("website and Store Terms content", () => {
       .digest("hex");
 
     // assert
-    expect(createTermsFacade(createSha256Hasher()).currentTerms()).toEqual({
-      version: document.version,
-      hash: independentDigest,
-    });
+    expect(new TermsFacadeAdapter(createSha256Hasher()).currentTerms()).toEqual(
+      {
+        version: document.version,
+        hash: independentDigest,
+      },
+    );
   });
 
   test("creates a missing versioned PDF once", async () => {

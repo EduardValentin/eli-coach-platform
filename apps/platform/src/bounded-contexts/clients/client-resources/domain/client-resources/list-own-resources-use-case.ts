@@ -1,10 +1,13 @@
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { BrowsedResources, ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
 import {
   ResourceBrowse,
   type ResourceBrowseInput,
@@ -27,9 +30,9 @@ type ListOwnResourcesResult =
   | { status: "unavailable" };
 
 type ListOwnResourcesUseCaseOptions = {
-  resources: ClientResources;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidents;
+  resources: ClientResourcesPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  incidents: ClientResourceIncidentsPort;
 };
 
 export class ListOwnResourcesUseCase {

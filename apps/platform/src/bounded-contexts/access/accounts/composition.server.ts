@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "~/shared/database";
 import { buildRedirectPath } from "~/shared/http/base-path";
-import type { ProductEmail } from "~/shared/email/index.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
+import type { ProductEmailPort } from "~/shared/email/index.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import {
   AccountInvitationGate,
   DeleteAccountUseCase,
@@ -12,43 +12,43 @@ import {
   ReadInvitationStandingUseCase,
   ResendInvitationUseCase,
   ResolveInvitationUseCase,
-  type IdentityInvitations,
-  type InvitationTokenGenerator,
-  type InvitationTokenHasher,
+  type IdentityInvitationsPort,
+  type InvitationTokenGeneratorPort,
+  type InvitationTokenHasherPort,
 } from "~/bounded-contexts/access/accounts/domain/account";
-import type { Clock } from "~/bounded-contexts/access/accounts/domain/clock";
-import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations";
+import type { ClockPort } from "~/bounded-contexts/access/accounts/domain/clock-port";
+import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations-facade";
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import type { IdentityConfig } from "~/bounded-contexts/access/accounts/config.server";
 
 import { AccountController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-controller.server";
 import { InvitationsController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/public-site/invitations-controller.server";
-import { AccountWebhookController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/webhook-controller.server";
-import { createAccountInvitationsFacade } from "~/bounded-contexts/access/accounts/adapters/inbound/facades/account-invitations.server";
-import { EmailAccountInvitationNotifications } from "~/bounded-contexts/access/accounts/adapters/outbound/email/email-account-invitation-notifications.server";
-import { createIdentityInvitations } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-identity-invitations.server";
-import { createInvitationReferences } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-invitation-references.server";
-import { createAccountsIncidents } from "~/bounded-contexts/access/accounts/adapters/outbound/logging/accounts-incidents.server";
-import { PostgresAccountInvitations } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/account-invitations-repository.server";
-import { PostgresAccountRepository } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/account-repository.server";
-import { RandomAccountIds } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/random-account-ids.server";
-import { RandomAccountInvitationIds } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/random-account-invitation-ids.server";
+import { AccountWebhookController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-webhook-controller.server";
+import { AccountInvitationsFacadeAdapter } from "~/bounded-contexts/access/accounts/adapters/inbound/facades/account-invitations-facade-adapter.server";
+import { EmailAccountInvitationNotificationsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/email/email-account-invitation-notifications-adapter.server";
+import { createIdentityInvitationsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-identity-invitations-adapter.server";
+import { createInvitationReferencesAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-invitation-references-adapter.server";
+import { AccountsIncidentsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/logging/accounts-incidents-adapter.server";
+import { PostgresAccountInvitationsRepository } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/postgres-account-invitations-repository.server";
+import { PostgresAccountRepository } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/postgres-account-repository.server";
+import { RandomAccountIdsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/random-account-ids-adapter.server";
+import { RandomAccountInvitationIdsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/persistence/random-account-invitation-ids-adapter.server";
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 
 export type AccountsFeatureHandles = {
   bootstrapCoachAuthSubjectId: string | undefined;
   clerkWebhookSigningSecret: string | undefined;
-  clock: Clock;
+  clock: ClockPort;
   contactEmail: string;
   database: DatabaseClient;
   identityConfig: IdentityConfig;
   linkTokens: {
-    generator: InvitationTokenGenerator;
-    hasher: InvitationTokenHasher;
+    generator: InvitationTokenGeneratorPort;
+    hasher: InvitationTokenHasherPort;
   };
-  logger: Logger;
+  logger: LoggerPort;
   portal: AccountsFeature["portal"] & { publicAppUrl: string };
-  productEmail: ProductEmail;
+  productEmail: ProductEmailPort;
 };
 
 type AccountsComposition = {
@@ -61,13 +61,13 @@ export function composeAccountsFeature(
 ): AccountsComposition {
   const { clock, database } = handles;
   const repository = new PostgresAccountRepository(database);
-  const invitations = new PostgresAccountInvitations(database);
+  const invitations = new PostgresAccountInvitationsRepository(database);
   const deliveryPorts = {
     clock,
     identity: composeIdentityInvitations(handles),
-    incidents: createAccountsIncidents(handles.logger),
+    incidents: new AccountsIncidentsAdapter(handles.logger),
     invitations,
-    notifications: new EmailAccountInvitationNotifications(
+    notifications: new EmailAccountInvitationNotificationsAdapter(
       handles.productEmail,
       {
         appBasePath: handles.portal.appBasePath,
@@ -81,7 +81,7 @@ export function composeAccountsFeature(
 
   return {
     facades: {
-      accountInvitations: createAccountInvitationsFacade({
+      accountInvitations: new AccountInvitationsFacadeAdapter({
         ensureInvitationDelivered: new EnsureInvitationDeliveredUseCase(
           deliveryPorts,
         ),
@@ -90,7 +90,7 @@ export function composeAccountsFeature(
         }),
         issueInvitation: new IssueInvitationUseCase({
           clock,
-          ids: new RandomAccountInvitationIds(),
+          ids: new RandomAccountInvitationIdsAdapter(),
           invitations,
           tokenGenerator: handles.linkTokens.generator,
         }),
@@ -113,12 +113,12 @@ export function composeAccountsFeature(
       portal: handles.portal,
       provisioning: new ProvisionAccountUseCase({
         accounts: repository,
-        ids: new RandomAccountIds(),
+        ids: new RandomAccountIdsAdapter(),
         bootstrapCoachAuthSubjectId: handles.bootstrapCoachAuthSubjectId,
         invitationGate: new AccountInvitationGate({
           clock,
           invitations,
-          references: createInvitationReferences(handles.identityConfig),
+          references: createInvitationReferencesAdapter(handles.identityConfig),
         }),
       }),
       webhooks: new AccountWebhookController({
@@ -131,8 +131,8 @@ export function composeAccountsFeature(
 
 function composeIdentityInvitations(
   handles: AccountsFeatureHandles,
-): IdentityInvitations {
-  return createIdentityInvitations(handles.identityConfig, {
+): IdentityInvitationsPort {
+  return createIdentityInvitationsAdapter(handles.identityConfig, {
     signUpUrl: handles.identityConfig.CLERK_SIGN_UP_URL,
     returnUrl: new URL(
       buildRedirectPath(handles.portal.appBasePath, CLIENT_PORTAL_PATH),

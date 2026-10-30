@@ -1,5 +1,8 @@
 import type { Exercise } from "./exercise";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReference,
+} from "./exercise-library-port";
 import { ExerciseNames } from "./exercise-names";
 
 export type FindExerciseResult =
@@ -8,7 +11,7 @@ export type FindExerciseResult =
   | { status: "archived" };
 
 type FindExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibrary, "list">;
+  library: Pick<ExerciseLibraryPort, "list">;
 };
 
 export class FindExerciseUseCase {

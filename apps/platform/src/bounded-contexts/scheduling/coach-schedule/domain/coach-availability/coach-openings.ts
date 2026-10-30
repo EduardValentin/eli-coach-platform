@@ -1,12 +1,12 @@
 import type { CoachAvailability } from "./coach-availability";
-import type { CoachAvailabilitySource } from "./coach-availability-source";
-import type { CoachCalendar } from "./coach-calendar";
+import type { CoachAvailabilitySourcePort } from "./coach-availability-source-port";
+import type { CoachCalendarPort } from "./coach-calendar-port";
 import type { SlotPolicy } from "./slot-policy";
 import type { TimeInterval } from "./time-interval";
 
 type CoachOpeningsOptions = {
-  availability: CoachAvailabilitySource;
-  calendar: CoachCalendar;
+  availability: CoachAvailabilitySourcePort;
+  calendar: CoachCalendarPort;
 };
 
 type OpeningsQuestion = { now: Date; policy: SlotPolicy };

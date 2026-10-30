@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionTag } from "./nutrition-tags-port";
 import { RecipeDraft, type RecipeDraftInput } from "./recipe-draft";
 
 const TAGS: NutritionTag[] = [

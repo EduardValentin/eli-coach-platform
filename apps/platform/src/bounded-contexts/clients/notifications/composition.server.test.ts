@@ -1,10 +1,10 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { NotificationInbox } from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { NotificationInboxPort } from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
-import type { Logger } from "~/shared/logging/console-logger.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
-import { PostgresNotificationInbox } from "~/bounded-contexts/clients/notifications/adapters/outbound/persistence/postgres-notification-inbox.server";
+import { PostgresNotificationInboxRepository } from "~/bounded-contexts/clients/notifications/adapters/outbound/persistence/postgres-notification-inbox-repository.server";
 import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import {
@@ -29,7 +29,7 @@ describe("composeNotificationInbox", () => {
     const { handles } = composeNotificationInbox({ database });
 
     // assert
-    expect(handles.inbox).toBeInstanceOf(PostgresNotificationInbox);
+    expect(handles.inbox).toBeInstanceOf(PostgresNotificationInboxRepository);
   });
 });
 
@@ -78,7 +78,7 @@ function createHandles() {
     unreadCountFor: vi.fn().mockResolvedValue(2),
     markRead: vi.fn().mockResolvedValue("marked"),
     markAllRead: vi.fn().mockResolvedValue(undefined),
-  } satisfies NotificationInbox;
+  } satisfies NotificationInboxPort;
 
   return {
     clientReach: {
@@ -87,7 +87,11 @@ function createHandles() {
     },
     clock: { now: () => NOW },
     inbox,
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } satisfies Logger,
+    logger: {
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+    } satisfies LoggerPort,
   };
 }
 

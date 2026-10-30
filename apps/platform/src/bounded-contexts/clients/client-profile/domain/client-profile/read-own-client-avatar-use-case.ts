@@ -1,11 +1,11 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import type { ClientAvatarSnapshot } from "./client-avatar";
-import type { ClientAvatars } from "./client-avatars";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 
 type ReadOwnClientAvatarUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  avatars: Pick<ClientAvatars, "findByClientId">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  avatars: Pick<ClientAvatarsPort, "findByClientId">;
 };
 
 export class ReadOwnClientAvatarUseCase {

@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import {
   ClientSettings,
   UnitPreference,
-  type ClientSettingsSource,
+  type ClientSettingsSourcePort,
 } from "../client-settings";
 import { ClientProfile } from "./client-profile";
-import type { ClientProfiles } from "./client-profiles";
-import type { ClientMeasurementRecords } from "./client-measurement-records";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
 import {
   MeasurementHistory,
   type MeasurementRecord,
@@ -58,7 +58,7 @@ function createPorts(stored: {
     clock: { now: () => WEIGH_IN_DUE_AT },
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(stored.client),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(
         ClientProfile.reconstitute({
@@ -71,11 +71,11 @@ function createPorts(stored: {
           updatedAt: CONSENTED_AT,
         }),
       ),
-    } satisfies Pick<ClientProfiles, "findByClientId">,
+    } satisfies Pick<ClientProfilesPort, "findByClientId">,
     records: {
       listByClientId: vi.fn().mockResolvedValue([FIRST, LATEST]),
       record: vi.fn(),
-    } satisfies ClientMeasurementRecords,
+    } satisfies ClientMeasurementRecordsPort,
     settings: {
       findByClientId: vi
         .fn()
@@ -86,7 +86,7 @@ function createPorts(stored: {
               : stored.unitPreference,
           ),
         ),
-    } satisfies ClientSettingsSource,
+    } satisfies ClientSettingsSourcePort,
   };
 }
 

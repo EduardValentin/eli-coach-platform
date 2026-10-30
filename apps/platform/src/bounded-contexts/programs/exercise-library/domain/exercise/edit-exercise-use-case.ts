@@ -1,16 +1,19 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import type { Exercise, ExerciseSaveProblems } from "./exercise";
 import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReference,
+} from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import { ExerciseNames } from "./exercise-names";
-import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import type { ExerciseVideoIds } from "./exercise-video-ids";
+import type { ExerciseVideoFormatDetectorPort } from "./exercise-video-format-detector-port";
+import type { ExerciseVideoIdsPort } from "./exercise-video-ids-port";
 import {
   ExerciseVideoSaving,
   type ExerciseVideoChoice,
 } from "./exercise-video-saving";
-import type { ExerciseVideoStore } from "./exercise-video-store";
+import type { ExerciseVideoStorePort } from "./exercise-video-store-port";
 
 type EditExerciseCommand = ExerciseReference & {
   draft: ExerciseDraftInput;
@@ -25,12 +28,12 @@ export type EditExerciseResult =
   | { status: "failed" };
 
 type EditExerciseUseCaseOptions = {
-  library: ExerciseLibrary;
-  clock: Clock;
-  incidents: ExerciseLibraryIncidents;
-  formats: ExerciseVideoFormatDetector;
-  videoIds: ExerciseVideoIds;
-  store: Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
+  library: ExerciseLibraryPort;
+  clock: ClockPort;
+  incidents: ExerciseLibraryIncidentsPort;
+  formats: ExerciseVideoFormatDetectorPort;
+  videoIds: ExerciseVideoIdsPort;
+  store: Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
 };
 
 export class EditExerciseUseCase {

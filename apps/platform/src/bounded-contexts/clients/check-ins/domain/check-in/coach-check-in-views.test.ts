@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities, ClientIdentity } from "./client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "./client-identities-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import { CoachCheckInViews } from "./coach-check-in-views";
@@ -58,7 +61,7 @@ function createViews(options: {
 }) {
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue(options.identities),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const views = new CoachCheckInViews({
     clock: { now: () => NOW },
     identities,

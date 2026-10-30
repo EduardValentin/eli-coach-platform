@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { InvitationResendOutcome } from "./client-invitation";
-import type { InvitedClient } from "./invited-client";
+import type { InvitedClient } from "./invited-clients-port";
 import { ResendInvitationUseCase } from "./resend-invitation-use-case";
 
 const invitedClient: InvitedClient = {

@@ -1,16 +1,16 @@
 import type {
-  ExerciseLibraryIncidents,
+  ExerciseLibraryIncidentsPort,
   UncleanedExerciseVideoFile,
-} from "./exercise-library-incidents";
+} from "./exercise-library-incidents-port";
 import type { ExerciseVideo } from "./exercise-video";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 
 type ExerciseVideoCleanupOptions = {
-  store: Pick<ExerciseVideoStore, "discard" | "remove">;
-  incidents: Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
+  store: Pick<ExerciseVideoStorePort, "discard" | "remove">;
+  incidents: Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
 };
 
 export class ExerciseVideoCleanup {

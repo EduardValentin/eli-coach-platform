@@ -12,18 +12,18 @@ export {
   type ClientResourceSnapshot,
 } from "./client-resource";
 export { type ResourceRequester } from "./client-resource-access";
-export { type ClientResourceIds } from "./client-resource-ids";
-export { type ClientResourceIncidents } from "./client-resource-incidents";
+export { type ClientResourceIdsPort } from "./client-resource-ids-port";
+export { type ClientResourceIncidentsPort } from "./client-resource-incidents-port";
 export {
-  type ClientResourceStore,
+  type ClientResourceStorePort,
   type ResourcePageImage,
   type StoredResourceOriginal,
-} from "./client-resource-store";
+} from "./client-resource-store-port";
 export {
   type BrowsedResources,
-  type ClientResources,
+  type ClientResourcesPort,
   type TagOption,
-} from "./client-resources";
+} from "./client-resources-port";
 export { CountUnopenedResourcesUseCase } from "./count-unopened-resources-use-case";
 export {
   DownloadClientResourceUseCase,
@@ -55,13 +55,13 @@ export {
 } from "./resource-details";
 export {
   type ReadableResourceDocument,
-  type ResourceDocumentPages,
+  type ResourceDocumentPagesPort,
   type ResourceDocumentReading,
-} from "./resource-document-pages";
+} from "./resource-document-pages-port";
 export {
   type DetectedResourceFile,
-  type ResourceFileFormatDetector,
-} from "./resource-file-format-detector";
+  type ResourceFileFormatDetectorPort,
+} from "./resource-file-format-detector-port";
 export {
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_PAGES,
@@ -77,9 +77,9 @@ export {
 } from "./resource-file-kind";
 export { fileNameParts } from "./resource-file-name";
 export {
-  type ResourceImagePages,
+  type ResourceImagePagesPort,
   type ResourceImageRendering,
-} from "./resource-image-pages";
+} from "./resource-image-pages-port";
 export {
   RESOURCE_RENDITIONS,
   type ResourceRenditions,

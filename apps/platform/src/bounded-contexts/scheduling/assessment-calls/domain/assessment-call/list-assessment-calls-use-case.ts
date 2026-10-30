@@ -1,19 +1,19 @@
 import type { AssessmentCall, AssessmentCallSnapshot } from "./assessment-call";
-import type { AssessmentCallIncidents } from "./assessment-call-incidents";
-import type { AssessmentCallReservations } from "./assessment-call-reservations";
+import type { AssessmentCallIncidentsPort } from "./assessment-call-incidents-port";
+import type { AssessmentCallReservationsPort } from "./assessment-call-reservations-port";
 import type {
-  CoachAvailability,
+  CoachAvailabilityPort,
   CoachAvailabilityReading,
-} from "./coach-availability";
+} from "./coach-availability-port";
 
 export type AssessmentCallListingResult =
   | { status: "ok"; coachTimeZone: string; calls: AssessmentCallSnapshot[] }
   | { status: "unavailable" };
 
 type ListAssessmentCallsUseCaseOptions = {
-  availability: CoachAvailability;
-  incidents: AssessmentCallIncidents;
-  reservations: AssessmentCallReservations;
+  availability: CoachAvailabilityPort;
+  incidents: AssessmentCallIncidentsPort;
+  reservations: AssessmentCallReservationsPort;
 };
 
 type ListingSources = {

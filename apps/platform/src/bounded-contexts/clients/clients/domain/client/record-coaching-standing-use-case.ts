@@ -1,4 +1,4 @@
-import type { AdmittedClients } from "./admitted-clients";
+import type { AdmittedClientsPort } from "./admitted-clients-port";
 import {
   CoachingStanding,
   type CoachingStandingSnapshot,
@@ -12,7 +12,7 @@ type RecordCoachingStandingCommand = {
 export class RecordCoachingStandingUseCase {
   constructor(
     private readonly options: {
-      clients: Pick<AdmittedClients, "recordStanding">;
+      clients: Pick<AdmittedClientsPort, "recordStanding">;
     },
   ) {}
 

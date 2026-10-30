@@ -1,14 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckIn } from "./check-in";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckInNotifications } from "./check-in-notifications";
-import type { CheckIns } from "./check-ins";
-import type { CoachTime, CoachTimeHold } from "./coach-time";
-import { CoachWeek, type OpenSlots } from "./open-slots";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
+import type { CheckInsPort } from "./check-ins-port";
+import type { CoachTimePort, CoachTimeHold } from "./coach-time-port";
+import { CoachWeek } from "./open-slots";
+import { type OpenSlotsPort } from "./open-slots-port";
 import { RequestCheckInUseCase } from "./request-check-in-use-case";
 
 const NOW = new Date("2026-06-01T08:30:00.000Z");
@@ -52,7 +53,7 @@ function workingDays() {
       async ({ start }: { start: Date }) =>
         start.getTime() === OPEN_START.getTime(),
     ),
-  } satisfies Pick<OpenSlots, "coachWeek" | "offersStart">;
+  } satisfies Pick<OpenSlotsPort, "coachWeek" | "offersStart">;
 }
 
 function createCoachTime(hold?: CoachTimeHold) {
@@ -63,7 +64,7 @@ function createCoachTime(hold?: CoachTimeHold) {
         hold ?? { status: "reserved", reservationId: "reservation-1" },
       ),
     release: vi.fn().mockResolvedValue(undefined),
-  } satisfies CoachTime;
+  } satisfies CoachTimePort;
 }
 
 function createCheckIns(clientCheckIns: CheckIn[] = []) {
@@ -84,7 +85,7 @@ function createCheckIns(clientCheckIns: CheckIn[] = []) {
       seriesStopped: false,
       freedReservationIds: [],
     }),
-  } satisfies CheckIns;
+  } satisfies CheckInsPort;
 }
 
 function waitingRequest(): CheckIn {
@@ -111,13 +112,13 @@ function waitingRequest(): CheckIn {
 function createClients(client: ClientReachReading | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(client),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
 }
 
 function createIdentities() {
   return {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
 }
 
 function createNotifications() {
@@ -133,7 +134,7 @@ function createNotifications() {
     seriesSetUp: vi.fn().mockResolvedValue("sent"),
     seriesChanged: vi.fn().mockResolvedValue("sent"),
     seriesStopped: vi.fn().mockResolvedValue("sent"),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
 }
 
 function createRequestCheckIn(options?: {
@@ -141,7 +142,7 @@ function createRequestCheckIn(options?: {
   coachTime?: ReturnType<typeof createCoachTime>;
   client?: ClientReachReading | null;
   notifications?: ReturnType<typeof createNotifications>;
-  incidents?: CheckInIncidents;
+  incidents?: CheckInIncidentsPort;
 }) {
   const ports = {
     checkIns: options?.checkIns ?? createCheckIns(),

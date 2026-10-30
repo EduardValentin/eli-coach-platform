@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { EndedCalls, SalesCall } from "../payment-link";
-import type { PriceTier, PricingEligibility } from "../coaching-bundle";
+import type { EndedCallsPort, SalesCall } from "../payment-link";
+import type { PriceTier, PricingEligibilityPort } from "../coaching-bundle";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import {
   CoachingSalesWindow,
   PaymentLink,
-  type CallSalesStates,
-  type CoachingSalesIncidents,
-  type PaymentLinks,
+  type CallSalesStatesPort,
+  type CoachingSalesIncidentsPort,
+  type PaymentLinksPort,
   type PaymentLinkState,
-  type PaymentLinkTokenHasher,
+  type PaymentLinkTokenHasherPort,
 } from "../payment-link";
 
 import {
@@ -18,18 +18,18 @@ import {
   type CheckoutPurchase,
   type RecordedCheckoutPurchase,
 } from "./checkout-purchase";
-import type { CheckoutSessions } from "./checkout-sessions";
-import type { CoachingPurchases } from "./coaching-purchases";
+import type { CheckoutSessionsPort } from "./checkout-sessions-port";
+import type { CoachingPurchasesPort } from "./coaching-purchases-port";
 import type { CheckoutCompletion } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
 import type {
-  PaidClientAdmission,
+  PaidClientAdmissionPort,
   PaidClientAdmissionOutcome,
   PaidClientIntake,
-} from "./paid-client-admission";
-import type { PaymentCheckout } from "./payment-checkout";
-import type { PaymentEventLedger } from "./payment-event-ledger";
-import type { PaymentSubscriptions } from "./payment-subscriptions";
+} from "./paid-client-admission-port";
+import type { PaymentCheckoutPort } from "./payment-checkout-port";
+import type { PaymentEventLedgerPort } from "./payment-event-ledger-port";
+import type { PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 import { PurchasedSubscription } from "./purchased-subscription";
 import { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
 import { FinishCheckoutPurchaseUseCase } from "./finish-checkout-purchase-use-case";
@@ -91,7 +91,7 @@ const completion: CheckoutCompletion = {
   startChoice: "waiting",
 };
 
-function createIncidents(): CoachingSalesIncidents {
+function createIncidents(): CoachingSalesIncidentsPort {
   return {
     salesModeReadFailed: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
@@ -112,20 +112,20 @@ function closedSalesWindow(): CoachingSalesWindow {
   });
 }
 
-function createCalls(found: SalesCall | null): EndedCalls {
+function createCalls(found: SalesCall | null): EndedCallsPort {
   return { findById: vi.fn().mockResolvedValue(found) };
 }
 
 function createCallSalesStates(
-  states: Awaited<ReturnType<CallSalesStates["forCalls"]>>,
-): CallSalesStates {
+  states: Awaited<ReturnType<CallSalesStatesPort["forCalls"]>>,
+): CallSalesStatesPort {
   return { forCalls: vi.fn().mockResolvedValue(states) };
 }
 
 function createPaymentLinks(options: {
   found: PaymentLink | null;
   paymentCustomerId: string | null;
-}): PaymentLinks {
+}): PaymentLinksPort {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(options.found),
     issue: vi.fn(),
@@ -138,20 +138,20 @@ function createPaymentLinks(options: {
   };
 }
 
-function createPricingEligibility(tier: PriceTier): PricingEligibility {
+function createPricingEligibility(tier: PriceTier): PricingEligibilityPort {
   return {
     tierForEmail: vi.fn().mockResolvedValue(tier),
     tiersForEmails: vi.fn(),
   };
 }
 
-function createTokenHasher(): PaymentLinkTokenHasher {
+function createTokenHasher(): PaymentLinkTokenHasherPort {
   return { sha256: vi.fn().mockReturnValue(TOKEN_SHA256) };
 }
 
 function createPaymentCheckout(
   completed: CheckoutCompletion | null,
-): PaymentCheckout {
+): PaymentCheckoutPort {
   return {
     createCustomer: vi.fn().mockResolvedValue({ id: "cus_new" }),
     createSession: vi
@@ -164,7 +164,7 @@ function createPaymentCheckout(
 
 function createCheckoutSessions(
   open: readonly { id: string }[],
-): CheckoutSessions {
+): CheckoutSessionsPort {
   return {
     remember: vi.fn().mockResolvedValue(undefined),
     findOpenForCall: vi.fn().mockResolvedValue(open),
@@ -181,20 +181,20 @@ function createPurchases() {
     insertSubscription: vi.fn().mockResolvedValue(undefined),
     spendPaymentLink: vi.fn().mockResolvedValue(undefined),
     findClientIdForCall: vi.fn().mockResolvedValue(CLIENT_RECORDED_EARLIER_ID),
-  } satisfies CoachingPurchases;
+  } satisfies CoachingPurchasesPort;
 }
 
 function createAdmission(admitted: PaidClientAdmissionOutcome) {
   return {
     admit: vi.fn().mockResolvedValue(admitted),
     invite: vi.fn().mockResolvedValue(undefined),
-  } satisfies PaidClientAdmission;
+  } satisfies PaidClientAdmissionPort;
 }
 
 function createPaymentEventLedger(outcome: "recorded" | "duplicate") {
   return {
     record: vi.fn().mockResolvedValue(outcome),
-  } satisfies PaymentEventLedger;
+  } satisfies PaymentEventLedgerPort;
 }
 
 function startCheckoutDependencies(
@@ -542,7 +542,7 @@ function createSubscriptionIncidents() {
     coachingEndNotPropagated: vi.fn(),
     coachingPeriodNotPropagated: vi.fn(),
     renewalHoldLiftFailed: vi.fn(),
-  } satisfies CoachingSubscriptionIncidents;
+  } satisfies CoachingSubscriptionIncidentsPort;
 }
 
 function createPaymentSubscriptions() {
@@ -552,7 +552,7 @@ function createPaymentSubscriptions() {
     endNow: vi.fn(),
     endAt: vi.fn(),
     openPaymentMethodSession: vi.fn(),
-  } satisfies PaymentSubscriptions;
+  } satisfies PaymentSubscriptionsPort;
 }
 
 function checkoutPurchaseDependencies(

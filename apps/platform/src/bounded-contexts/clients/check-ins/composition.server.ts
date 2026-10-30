@@ -26,51 +26,51 @@ import {
   WithdrawCheckInRequestUseCase,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type {
-  ClientIdentities,
-  ClientReach,
+  ClientIdentitiesPort,
+  ClientReachPort,
 } from "~/bounded-contexts/clients/clients/public";
-import type { NotificationInbox } from "~/bounded-contexts/clients/notifications/public";
-import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods";
-import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time";
-import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room";
-import type { OpenSlotsFacade } from "~/bounded-contexts/scheduling/public/open-slots";
-import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
-import type { ProductEmail } from "~/shared/email/index.server";
+import type { NotificationInboxPort } from "~/bounded-contexts/clients/notifications/public";
+import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods-facade";
+import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time-facade";
+import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room-facade";
+import type { OpenSlotsFacade } from "~/bounded-contexts/scheduling/public/open-slots-facade";
+import type { ClockPort } from "~/bounded-contexts/clients/check-ins/domain/clock-port";
+import type { ProductEmailPort } from "~/shared/email/index.server";
 
 import { ClientCheckInsController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/client/client-check-ins-controller.server";
 import { CoachCheckInSeriesController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/coach-check-in-series-controller.server";
 import { CoachCheckInsController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/coach-check-ins-controller.server";
 import { CheckInJoinController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/join/check-in-join-controller.server";
 import { SharedCheckInsController } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/shared-check-ins-controller.server";
-import { PostgresCheckIns } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/postgres-check-ins.server";
-import { SchedulingCoachTime } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/coach-time.server";
-import { SchedulingMeetingRoom } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/meeting-room.server";
-import { SchedulingOpenSlots } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/open-slots.server";
-import { RandomCheckInIds } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/random-check-in-ids.server";
-import { InboxCheckInNotices } from "~/bounded-contexts/clients/check-ins/adapters/outbound/notifications/inbox-check-in-notices.server";
-import { ClientsClientIdentities } from "~/bounded-contexts/clients/check-ins/adapters/outbound/clients/client-identities.server";
-import { ClientsClientReach } from "~/bounded-contexts/clients/check-ins/adapters/outbound/clients/client-reach.server";
-import { createCoachingPeriodsFacade } from "~/bounded-contexts/clients/check-ins/adapters/inbound/facades/coaching-periods.server";
-import { PostgresCheckInSeries } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/series/postgres-check-in-series.server";
-import { EmailCheckInNotifications } from "~/bounded-contexts/clients/check-ins/adapters/outbound/email/email-check-in-notifications.server";
+import { PostgresCheckInsRepository } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/postgres-check-ins-repository.server";
+import { SchedulingCoachTimeAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/scheduling-coach-time-adapter.server";
+import { SchedulingMeetingRoomAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/scheduling-meeting-room-adapter.server";
+import { SchedulingOpenSlotsAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/scheduling/scheduling-open-slots-adapter.server";
+import { RandomCheckInIdsAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/check-ins/random-check-in-ids-adapter.server";
+import { InboxCheckInNoticesAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/notifications/inbox-check-in-notices-adapter.server";
+import { ClientsClientIdentitiesAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/clients/clients-client-identities-adapter.server";
+import { ClientsClientReachAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/clients/clients-client-reach-adapter.server";
+import { CoachingPeriodsFacadeAdapter } from "~/bounded-contexts/clients/check-ins/adapters/inbound/facades/coaching-periods-facade-adapter.server";
+import { PostgresCheckInSeriesRepository } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/series/postgres-check-in-series-repository.server";
+import { EmailCheckInNotificationsAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/email/email-check-in-notifications-adapter.server";
 import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createCheckInsIncidents } from "~/bounded-contexts/clients/check-ins/adapters/outbound/logging/check-ins-incidents.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { CheckInsIncidentsAdapter } from "~/bounded-contexts/clients/check-ins/adapters/outbound/logging/check-ins-incidents-adapter.server";
 
 type CheckInsFeatureHandles = {
   appBasePath: string;
-  clientIdentities: ClientIdentities;
-  clientReach: ClientReach;
-  clock: Clock;
+  clientIdentities: ClientIdentitiesPort;
+  clientReach: ClientReachPort;
+  clock: ClockPort;
   coachEmail: string;
   coachTime: CoachTimeFacade;
   contactEmail: string;
   database: DatabaseClient;
-  inbox: NotificationInbox;
-  logger: Logger;
+  inbox: NotificationInboxPort;
+  logger: LoggerPort;
   meetingRoom: MeetingRoomFacade;
   openSlots: OpenSlotsFacade;
-  productEmail: ProductEmail;
+  productEmail: ProductEmailPort;
   publicAppUrl: string;
 };
 
@@ -82,17 +82,17 @@ type CheckInsComposition = {
 export function composeCheckInsFeature(
   handles: CheckInsFeatureHandles,
 ): CheckInsComposition {
-  const incidents = createCheckInsIncidents(handles.logger);
+  const incidents = new CheckInsIncidentsAdapter(handles.logger);
   const { clock } = handles;
   const unitOfWork = createUnitOfWork(handles.database);
-  const checkIns = new PostgresCheckIns(handles.database);
-  const coachTime = new SchedulingCoachTime(handles.coachTime);
-  const openSlots = new SchedulingOpenSlots({
+  const checkIns = new PostgresCheckInsRepository(handles.database);
+  const coachTime = new SchedulingCoachTimeAdapter(handles.coachTime);
+  const openSlots = new SchedulingOpenSlotsAdapter({
     openSlots: handles.openSlots,
     rules: CHECK_IN_RULES,
   });
-  const clients = new ClientsClientReach(handles.clientReach);
-  const inbox = new InboxCheckInNotices({ clock, inbox: handles.inbox });
+  const clients = new ClientsClientReachAdapter(handles.clientReach);
+  const inbox = new InboxCheckInNoticesAdapter({ clock, inbox: handles.inbox });
   const cancelCheckInsAfterCoachingEnd =
     new CancelCheckInsAfterCoachingEndUseCase({
       checkIns,
@@ -105,14 +105,14 @@ export function composeCheckInsFeature(
     checkIns,
     clients,
     clock,
-    identities: new ClientsClientIdentities(handles.clientIdentities),
+    identities: new ClientsClientIdentitiesAdapter(handles.clientIdentities),
   };
   const answerPorts = {
     ...readPorts,
     coachTime,
     inbox,
     incidents,
-    notifications: new EmailCheckInNotifications(handles.productEmail, {
+    notifications: new EmailCheckInNotificationsAdapter(handles.productEmail, {
       appBasePath: handles.appBasePath,
       clock,
       coachEmail: handles.coachEmail,
@@ -126,18 +126,18 @@ export function composeCheckInsFeature(
   );
   const requestPorts = {
     ...answerPorts,
-    ids: new RandomCheckInIds(),
+    ids: new RandomCheckInIdsAdapter(),
     openSlots,
   };
   const seriesPorts = {
     ...requestPorts,
-    series: new PostgresCheckInSeries(handles.database),
+    series: new PostgresCheckInSeriesRepository(handles.database),
   };
   const extendCheckInSeries = new ExtendCheckInSeriesUseCase(seriesPorts);
 
   return {
     facades: {
-      coachingPeriods: createCoachingPeriodsFacade({
+      coachingPeriods: new CoachingPeriodsFacadeAdapter({
         cancelCheckInsAfterCoachingEnd,
         extendCheckInSeries,
         incidents,
@@ -148,7 +148,7 @@ export function composeCheckInsFeature(
       checkInJoin: new CheckInJoinController({
         resolveCheckInJoin: new ResolveCheckInJoinUseCase({
           ...readPorts,
-          meetingRoom: new SchedulingMeetingRoom(handles.meetingRoom),
+          meetingRoom: new SchedulingMeetingRoomAdapter(handles.meetingRoom),
         }),
       }),
       clientCheckIns: new ClientCheckInsController({

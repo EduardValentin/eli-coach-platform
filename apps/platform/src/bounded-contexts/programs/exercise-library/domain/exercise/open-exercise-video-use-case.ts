@@ -1,10 +1,10 @@
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibraryPort } from "./exercise-library-port";
 import { ExerciseVideoAccess } from "./exercise-video-access";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   RequestedByteRange,
   ServedByteRange,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 import type { ExerciseVideoViewer } from "./exercise-video-viewer";
 
 type OpenExerciseVideoCommand = {
@@ -26,8 +26,8 @@ export type OpenExerciseVideoResult =
   | { status: "not-found" };
 
 type OpenExerciseVideoUseCaseOptions = {
-  library: Pick<ExerciseLibrary, "find">;
-  store: Pick<ExerciseVideoStore, "open">;
+  library: Pick<ExerciseLibraryPort, "find">;
+  store: Pick<ExerciseVideoStorePort, "open">;
 };
 
 const NOT_FOUND: OpenExerciseVideoResult = { status: "not-found" };

@@ -1,8 +1,8 @@
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 
-import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
 
 export type CoachClientSeries = {
   series: CheckInSeriesSnapshot | null;
@@ -10,9 +10,9 @@ export type CoachClientSeries = {
 };
 
 type ReadCoachClientSeriesUseCaseOptions = {
-  clients: Pick<ClientReach, "findById">;
-  incidents: Pick<CheckInIncidents, "checkInSeriesReadFailed">;
-  series: Pick<CheckInSeriesRecords, "findActiveForClient">;
+  clients: Pick<ClientReachPort, "findById">;
+  incidents: Pick<CheckInIncidentsPort, "checkInSeriesReadFailed">;
+  series: Pick<CheckInSeriesRecordsPort, "findActiveForClient">;
 };
 
 export class ReadCoachClientSeriesUseCase {

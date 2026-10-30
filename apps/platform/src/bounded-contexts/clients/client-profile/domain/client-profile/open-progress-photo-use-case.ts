@@ -1,10 +1,10 @@
 import type { AccountRole } from "../account-role";
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import type { ProgressPhoto } from "./progress-photo";
-import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotoStorePort } from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
 
 type ProgressPhotoRequester = {
   role: AccountRole;
@@ -21,10 +21,10 @@ type OpenProgressPhotoResult =
   | { status: "not-found" };
 
 type OpenProgressPhotoUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  photos: ProgressPhotos;
-  store: ProgressPhotoStore;
-  incidents: MeasurementIncidents;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  photos: ProgressPhotosPort;
+  store: ProgressPhotoStorePort;
+  incidents: MeasurementIncidentsPort;
 };
 
 export class OpenProgressPhotoUseCase {

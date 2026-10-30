@@ -1,8 +1,8 @@
 import type { ClientAvatarSnapshot } from "./client-avatar";
-import type { ClientAvatars } from "./client-avatars";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 
 type ListClientAvatarsUseCaseOptions = {
-  avatars: Pick<ClientAvatars, "findByClientIds">;
+  avatars: Pick<ClientAvatarsPort, "findByClientIds">;
 };
 
 export class ListClientAvatarsUseCase {

@@ -1,7 +1,7 @@
-import type { CoachTime } from "./coach-time";
+import type { CoachTimePort } from "./coach-time-port";
 
 export async function releaseFreedHours(
-  coachTime: Pick<CoachTime, "release">,
+  coachTime: Pick<CoachTimePort, "release">,
   freedReservationIds: readonly (string | null)[],
 ): Promise<void> {
   for (const reservationId of freedReservationIds.filter(isReservationId)) {

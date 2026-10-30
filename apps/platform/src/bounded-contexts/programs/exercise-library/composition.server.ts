@@ -10,45 +10,45 @@ import {
   OpenExerciseVideoUseCase,
   RestoreExerciseUseCase,
   StageExerciseVideoUseCase,
-  type ExerciseVideoFormatDetector,
-  type ExerciseVideoStore,
+  type ExerciseVideoFormatDetectorPort,
+  type ExerciseVideoStorePort,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
-import type { Clock } from "~/bounded-contexts/programs/exercise-library/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/programs/exercise-library/domain/clock-port";
 
 import { ExerciseLibraryController } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/coach/exercise-library-controller.server";
-import { PostgresExerciseLibrary } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/exercise-library-repository.server";
-import { RandomExerciseIds } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/random-exercise-ids.server";
-import { RandomExerciseVideoIds } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/random-exercise-video-ids.server";
+import { PostgresExerciseLibraryRepository } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/postgres-exercise-library-repository.server";
+import { RandomExerciseIdsAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/random-exercise-ids-adapter.server";
+import { RandomExerciseVideoIdsAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/random-exercise-video-ids-adapter.server";
 import type { ExerciseLibraryFeature } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createExerciseLibraryIncidents } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/logging/exercise-library-incidents.server";
-import { createExerciseVideoFormatDetector } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercise-video-format-detector.server";
-import { createExerciseVideoStore } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercise-video-store.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { ExerciseLibraryIncidentsAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/logging/exercise-library-incidents-adapter.server";
+import { createExerciseVideoFormatDetectorAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/create-exercise-video-format-detector-adapter.server";
+import { createExerciseVideoStoreAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/create-exercise-video-store-adapter.server";
 import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
 
 type ExerciseVideoFiles = {
-  videoFormats: ExerciseVideoFormatDetector;
-  videoStore: ExerciseVideoStore;
+  videoFormats: ExerciseVideoFormatDetectorPort;
+  videoStore: ExerciseVideoStorePort;
 };
 
 type ExerciseLibraryFeatureHandles = ExerciseVideoFiles & {
-  clock: Clock;
+  clock: ClockPort;
   database: DatabaseClient;
-  logger: Logger;
+  logger: LoggerPort;
 };
 
 export function composeExerciseLibraryFeature(
   handles: ExerciseLibraryFeatureHandles,
 ): ExerciseLibraryFeature {
-  const incidents = createExerciseLibraryIncidents(handles.logger);
-  const library = new PostgresExerciseLibrary(handles.database);
+  const incidents = new ExerciseLibraryIncidentsAdapter(handles.logger);
+  const library = new PostgresExerciseLibraryRepository(handles.database);
   const { videoStore } = handles;
   const exerciseWriteDependencies = {
     library,
     clock: handles.clock,
     incidents,
     formats: handles.videoFormats,
-    videoIds: new RandomExerciseVideoIds(),
+    videoIds: new RandomExerciseVideoIdsAdapter(),
     store: videoStore,
   };
 
@@ -58,7 +58,7 @@ export function composeExerciseLibraryFeature(
       findExercise: new FindExerciseUseCase({ library }),
       createExercise: new CreateExerciseUseCase({
         ...exerciseWriteDependencies,
-        ids: new RandomExerciseIds(),
+        ids: new RandomExerciseIdsAdapter(),
       }),
       editExercise: new EditExerciseUseCase(exerciseWriteDependencies),
       stageExerciseVideo: new StageExerciseVideoUseCase({ store: videoStore }),
@@ -90,7 +90,7 @@ export function composeExerciseVideoFiles(
   config: ExerciseVideosConfig,
 ): ExerciseVideoFiles {
   return {
-    videoFormats: createExerciseVideoFormatDetector(),
-    videoStore: createExerciseVideoStore(config.EXERCISE_VIDEO_ROOT),
+    videoFormats: createExerciseVideoFormatDetectorAdapter(),
+    videoStore: createExerciseVideoStoreAdapter(config.EXERCISE_VIDEO_ROOT),
   };
 }

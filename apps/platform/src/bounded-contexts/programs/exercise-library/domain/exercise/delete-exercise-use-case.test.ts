@@ -3,13 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import { DeleteExerciseUseCase } from "./delete-exercise-use-case";
 import { Exercise, type ExerciseSnapshot } from "./exercise";
 import type {
-  ExerciseLibrary,
+  ExerciseLibraryPort,
   ExerciseReference,
   ExerciseRemoval,
-} from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+} from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import { ExerciseVideoCleanup } from "./exercise-video-cleanup";
-import type { ExerciseVideoStore } from "./exercise-video-store";
+import type { ExerciseVideoStorePort } from "./exercise-video-store-port";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
@@ -65,14 +65,14 @@ function createUseCase() {
       async (_reference: ExerciseReference): Promise<ExerciseRemoval> =>
         "removed",
     ),
-  } satisfies Pick<ExerciseLibrary, "find" | "remove">;
+  } satisfies Pick<ExerciseLibraryPort, "find" | "remove">;
   const store = {
     discard: vi.fn(async (_stagingId: string) => undefined),
     remove: vi.fn(async (_videoId: string) => undefined),
-  } satisfies Pick<ExerciseVideoStore, "discard" | "remove">;
+  } satisfies Pick<ExerciseVideoStorePort, "discard" | "remove">;
   const incidents = {
     videoCleanupFailed: vi.fn(),
-  } satisfies Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
+  } satisfies Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
   const useCase = new DeleteExerciseUseCase({
     library,
     videos: new ExerciseVideoCleanup({ store, incidents }),

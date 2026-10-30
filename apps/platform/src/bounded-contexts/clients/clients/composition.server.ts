@@ -1,17 +1,17 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
-import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations";
-import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions";
-import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup";
-import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls";
+import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations-facade";
+import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions-facade";
+import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup-facade";
+import type { ClientCallsFacade } from "~/bounded-contexts/scheduling/public/client-calls-facade";
 import {
   AdmitPaidClientUseCase,
   ClientCountries,
   RecordCoachingStandingUseCase,
   UpdateClientIdentityAsCoachUseCase,
   UpdateOwnClientIdentityUseCase,
-  type ClientIdentities,
-  type ClientReach,
+  type ClientIdentitiesPort,
+  type ClientReachPort,
 } from "~/bounded-contexts/clients/clients/domain/client";
 import {
   AcceptInvitationUseCase,
@@ -23,39 +23,39 @@ import {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
   ReadClientPortalStandingUseCase,
-  type OnboardingStandings,
-  type OnboardingSubmissionRecorder,
-  type ReviewStampRecorder,
+  type OnboardingStandingsPort,
+  type OnboardingSubmissionRecorderPort,
+  type ReviewStampRecorderPort,
 } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "~/bounded-contexts/clients/clients/domain/client-roster";
-import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/clients/clients/domain/clock-port";
 
 import { COUNTRIES } from "~/shared/contact/countries";
 import { phoneNumbers } from "~/shared/contact/phone-numbers";
-import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
-import { SchedulingClientCalls } from "~/bounded-contexts/clients/clients/adapters/outbound/scheduling/client-calls.server";
+import { WallClockCalendarDatesAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates-adapter";
+import { SchedulingClientCallsAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/scheduling/scheduling-client-calls-adapter.server";
 import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
 import { OwnClientIdentityController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/own-client-identity-controller.server";
 import { CoachClientIdentityController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/coach/coach-client-identity-controller.server";
 import { CoachClientsController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/coach/coach-clients-controller.server";
-import { PostgresClientIdentities } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-identities-reader.server";
-import { PostgresClientIdentityChanges } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-identity-changes.server";
-import { PostgresClientReach } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-reach-reader.server";
-import { PostgresClientRoster } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/client-roster-reader.server";
-import { PostgresAdmittedClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/admitted-clients-repository.server";
-import { PostgresOnboardingStandings } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/onboarding-standings-reader.server";
-import { RandomClientIds } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/random-client-ids.server";
-import { PostgresInvitedClients } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/invitations/invited-clients-repository.server";
-import { PostgresClientJourneys } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/client-journeys-repository.server";
+import { PostgresClientIdentitiesRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/postgres-client-identities-repository.server";
+import { PostgresClientIdentityChangesRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/postgres-client-identity-changes-repository.server";
+import { PostgresClientReachRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/postgres-client-reach-repository.server";
+import { PostgresClientRosterRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/postgres-client-roster-repository.server";
+import { PostgresAdmittedClientsRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/postgres-admitted-clients-repository.server";
+import { PostgresOnboardingStandingsRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/postgres-onboarding-standings-repository.server";
+import { RandomClientIdsAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/clients/random-client-ids-adapter.server";
+import { PostgresInvitedClientsRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/invitations/postgres-invited-clients-repository.server";
+import { PostgresClientJourneysRepository } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/postgres-client-journeys-repository.server";
 import type { ClientsFeature } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
-import { createAdmissionsFacade } from "~/bounded-contexts/clients/clients/adapters/inbound/facades/admissions.server";
-import { createClientLookupFacade } from "~/bounded-contexts/clients/clients/adapters/inbound/facades/client-lookup.server";
-import { AccessAccountInvitations } from "~/bounded-contexts/clients/clients/adapters/outbound/access/account-invitations.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createClientsIncidents } from "~/bounded-contexts/clients/clients/adapters/outbound/logging/clients-incidents.server";
+import { AdmissionsFacadeAdapter } from "~/bounded-contexts/clients/clients/adapters/inbound/facades/admissions-facade-adapter.server";
+import { ClientLookupFacadeAdapter } from "~/bounded-contexts/clients/clients/adapters/inbound/facades/client-lookup-facade-adapter.server";
+import { AccessAccountInvitationsAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/access/access-account-invitations-adapter.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { ClientsIncidentsAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/logging/clients-incidents-adapter.server";
 
 type ClientsComposition = {
   facades: {
@@ -64,41 +64,41 @@ type ClientsComposition = {
   };
   feature: ClientsFeature;
   handles: {
-    clientIdentities: ClientIdentities;
-    clientReach: ClientReach;
-    onboardingStandings: OnboardingStandings;
-    onboardingSubmissions: OnboardingSubmissionRecorder;
-    reviewStampRecorder: ReviewStampRecorder;
+    clientIdentities: ClientIdentitiesPort;
+    clientReach: ClientReachPort;
+    onboardingStandings: OnboardingStandingsPort;
+    onboardingSubmissions: OnboardingSubmissionRecorderPort;
+    reviewStampRecorder: ReviewStampRecorderPort;
   };
 };
 
 export type ClientsFeatureHandles = {
   accountInvitations: AccountInvitationsFacade;
   clientCalls: ClientCallsFacade;
-  clock: Clock;
+  clock: ClockPort;
   database: DatabaseClient;
-  logger: Logger;
+  logger: LoggerPort;
 };
 
 export function composeClientsFeature(
   handles: ClientsFeatureHandles,
 ): ClientsComposition {
-  const incidents = createClientsIncidents(handles.logger);
+  const incidents = new ClientsIncidentsAdapter(handles.logger);
   const { clock, database } = handles;
-  const clientIdentities = new PostgresClientIdentities(database);
-  const clientReach = new PostgresClientReach({ clock, database });
-  const journeys = new PostgresClientJourneys(database);
-  const accountInvitations = new AccessAccountInvitations(
+  const clientIdentities = new PostgresClientIdentitiesRepository(database);
+  const clientReach = new PostgresClientReachRepository({ clock, database });
+  const journeys = new PostgresClientJourneysRepository(database);
+  const accountInvitations = new AccessAccountInvitationsAdapter(
     handles.accountInvitations,
   );
-  const admittedClients = new PostgresAdmittedClients(database);
-  const roster = new PostgresClientRoster(database);
-  const identityChanges = new PostgresClientIdentityChanges(database);
+  const admittedClients = new PostgresAdmittedClientsRepository(database);
+  const roster = new PostgresClientRosterRepository(database);
+  const identityChanges = new PostgresClientIdentityChangesRepository(database);
   const countries = ClientCountries.of(COUNTRIES, phoneNumbers);
 
   const invitationPorts = {
     accountInvitations,
-    clients: new PostgresInvitedClients(database),
+    clients: new PostgresInvitedClientsRepository(database),
   };
 
   const readClientPortalStanding = new ReadClientPortalStandingUseCase({
@@ -108,10 +108,10 @@ export function composeClientsFeature(
 
   return {
     facades: {
-      admissions: createAdmissionsFacade({
+      admissions: new AdmissionsFacadeAdapter({
         admitPaidClient: new AdmitPaidClientUseCase({
           clients: admittedClients,
-          ids: new RandomClientIds(),
+          ids: new RandomClientIdsAdapter(),
         }),
         invitePaidClient: new InvitePaidClientUseCase(invitationPorts),
         recordCoachingStanding: new RecordCoachingStandingUseCase({
@@ -119,7 +119,7 @@ export function composeClientsFeature(
         }),
         unitOfWork: createUnitOfWork(database),
       }),
-      clientLookup: createClientLookupFacade({
+      clientLookup: new ClientLookupFacadeAdapter({
         identities: clientIdentities,
         reach: clientReach,
         readClientJourney: new ReadClientJourneyUseCase({ journeys }),
@@ -136,7 +136,7 @@ export function composeClientsFeature(
           changes: identityChanges,
           clients: clientReach,
           clock,
-          calendar: wallClockCalendarDates,
+          calendar: new WallClockCalendarDatesAdapter(),
           countries,
         }),
       }),
@@ -148,7 +148,7 @@ export function composeClientsFeature(
         }),
         readClientInvitation: new ReadClientInvitationUseCase(invitationPorts),
         readClientRecord: new ReadClientRecordUseCase({
-          calls: new SchedulingClientCalls(handles.clientCalls),
+          calls: new SchedulingClientCallsAdapter(handles.clientCalls),
           clock,
           roster,
         }),
@@ -159,7 +159,7 @@ export function composeClientsFeature(
           changes: identityChanges,
           clients: clientReach,
           clock,
-          calendar: wallClockCalendarDates,
+          calendar: new WallClockCalendarDatesAdapter(),
           countries,
           identities: clientIdentities,
         }),
@@ -169,7 +169,7 @@ export function composeClientsFeature(
     handles: {
       clientIdentities,
       clientReach,
-      onboardingStandings: new PostgresOnboardingStandings(database),
+      onboardingStandings: new PostgresOnboardingStandingsRepository(database),
       onboardingSubmissions: journeys,
       reviewStampRecorder: journeys,
     },

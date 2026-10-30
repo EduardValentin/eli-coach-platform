@@ -4,7 +4,7 @@ import {
   CoachAvailability,
   CoachOpenings,
 } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
-import { InMemoryProductEmail } from "~/shared/email/index.server";
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -171,7 +171,7 @@ function createHandles(
     logger: { error: () => {}, warn: () => {}, info: () => {} },
     meetingRoom: { current: async () => null },
     openings: openingsOver(createBucharestEveningAvailability()),
-    productEmail: new InMemoryProductEmail(),
+    productEmail: new InMemoryProductEmailAdapter(),
     publicAppUrl: "https://evoa.fit",
   };
 }

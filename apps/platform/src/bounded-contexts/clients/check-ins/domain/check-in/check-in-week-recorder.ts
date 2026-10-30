@@ -1,13 +1,13 @@
 import { CheckIn } from "./check-in";
 import { CHECK_IN_RULES } from "./check-in-rules";
 import type { CheckInSeriesOccurrence } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
-import type { HeldCheckIn } from "./check-ins";
-import type { CoachTime } from "./coach-time";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
+import type { HeldCheckIn } from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
 
 type CheckInWeekRecorderOptions = {
-  coachTime: Pick<CoachTime, "reserve">;
-  series: Pick<CheckInSeriesRecords, "recordWeeks">;
+  coachTime: Pick<CoachTimePort, "reserve">;
+  series: Pick<CheckInSeriesRecordsPort, "recordWeeks">;
 };
 
 export class CheckInWeekRecorder {

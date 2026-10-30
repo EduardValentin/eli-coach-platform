@@ -1,4 +1,4 @@
-import type { EmailAttachment } from "./product-email-contract.server";
+import type { EmailAttachment } from "./product-email-port.server";
 
 export type CalendarEvent = {
   description: string;

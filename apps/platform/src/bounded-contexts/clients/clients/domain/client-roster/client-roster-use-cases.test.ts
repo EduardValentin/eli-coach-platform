@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { CoachingStandingSnapshot } from "../client";
-import type { ClientCalls } from "../client-journey";
+import type { ClientCallsPort } from "../client-journey";
 
-import type { ClientRoster, ClientRosterEntry } from "./client-roster";
-import type { ClientRosterIncidents } from "./client-roster-incidents";
+import type { ClientRosterEntry } from "./client-roster";
+import type { ClientRosterPort } from "./client-roster-port";
+import type { ClientRosterIncidentsPort } from "./client-roster-incidents-port";
 import { ListClientsUseCase } from "./list-clients-use-case";
 import { ReadClientRecordUseCase } from "./read-client-record-use-case";
 
@@ -54,16 +55,16 @@ function entry(
   };
 }
 
-function createRoster(overrides: Partial<ClientRoster> = {}) {
+function createRoster(overrides: Partial<ClientRosterPort> = {}) {
   return {
     list: vi.fn().mockResolvedValue([]),
     findById: vi.fn().mockResolvedValue(null),
     ...overrides,
-  } satisfies ClientRoster;
+  } satisfies ClientRosterPort;
 }
 
 function createIncidents() {
-  return { rosterReadFailed: vi.fn() } satisfies ClientRosterIncidents;
+  return { rosterReadFailed: vi.fn() } satisfies ClientRosterIncidentsPort;
 }
 
 describe("ListClientsUseCase", () => {
@@ -159,7 +160,7 @@ describe("ReadClientRecordUseCase", () => {
         primaryGoal: "lose_weight",
         notes,
       }),
-    } satisfies ClientCalls;
+    } satisfies ClientCallsPort;
   }
 
   it("reads her record with her status and the call she booked: when, who booked it, her goal and her notes", async () => {

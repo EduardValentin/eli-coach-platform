@@ -1,12 +1,9 @@
 import { FeatureFlag, type FeatureFlagSet } from "./feature-flag";
-import type { FeatureFlags } from "./feature-flags";
+import type { FeatureFlagReaderPort } from "./feature-flag-reader-port";
+import type { FeatureFlagsPort } from "./feature-flags-port";
 
-export interface FeatureFlagReader {
-  execute(): Promise<FeatureFlagSet>;
-}
-
-export class GetFeatureFlagsUseCase implements FeatureFlagReader {
-  constructor(private readonly options: { featureFlags: FeatureFlags }) {}
+export class GetFeatureFlagsUseCase implements FeatureFlagReaderPort {
+  constructor(private readonly options: { featureFlags: FeatureFlagsPort }) {}
 
   async execute(): Promise<FeatureFlagSet> {
     return FeatureFlag.toSet(await this.options.featureFlags.listAll());

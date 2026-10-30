@@ -1,11 +1,11 @@
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 import type { ClientResource } from "./client-resource";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourcesPort } from "./client-resources-port";
 import {
   ResourceDetails,
   type ResourceDetailsInput,
@@ -25,9 +25,9 @@ export type ChangeResourceDetailsResult =
   | { status: "failed" };
 
 type ChangeResourceDetailsUseCaseOptions = {
-  resources: ClientResources;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidents;
+  resources: ClientResourcesPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  incidents: ClientResourceIncidentsPort;
 };
 
 export class ChangeResourceDetailsUseCase {

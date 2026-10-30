@@ -1,14 +1,14 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import type { CoachingPeriodHandlerPort } from "./coaching-period-handler-port";
 import { CoachingPeriodPropagation } from "./coaching-period-propagation";
 import type {
   CoachingSubscription,
   StartNowRefusal,
 } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
-import type { PaymentSubscriptions } from "./payment-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
+import type { PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type StartProgramNowResult =
@@ -17,12 +17,12 @@ type StartProgramNowResult =
   | { status: "not_found" };
 
 type StartProgramNowUseCaseOptions = {
-  clock: Clock;
-  coachingPeriods: readonly CoachingPeriodHandler[];
-  incidents: CoachingSubscriptionIncidents;
-  paymentSubscriptions: Pick<PaymentSubscriptions, "liftRenewalHold">;
+  clock: ClockPort;
+  coachingPeriods: readonly CoachingPeriodHandlerPort[];
+  incidents: CoachingSubscriptionIncidentsPort;
+  paymentSubscriptions: Pick<PaymentSubscriptionsPort, "liftRenewalHold">;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
-  subscriptions: Pick<CoachingSubscriptions, "save">;
+  subscriptions: Pick<CoachingSubscriptionsPort, "save">;
 };
 
 export class StartProgramNowUseCase {

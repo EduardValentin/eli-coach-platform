@@ -1,12 +1,12 @@
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 import type { ClientResourceOwner } from "./client-resource";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResourceStore } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type { ClientResourcesPort } from "./client-resources-port";
 
 type RemoveClientResourceCommand = {
   requester: ResourceRequester;
@@ -17,10 +17,10 @@ export type RemoveClientResourceResult =
   { status: "removed" } | { status: "not-found" } | { status: "failed" };
 
 type RemoveClientResourceUseCaseOptions = {
-  resources: ClientResources;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStore;
-  incidents: ClientResourceIncidents;
+  resources: ClientResourcesPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  store: ClientResourceStorePort;
+  incidents: ClientResourceIncidentsPort;
 };
 
 export class RemoveClientResourceUseCase {

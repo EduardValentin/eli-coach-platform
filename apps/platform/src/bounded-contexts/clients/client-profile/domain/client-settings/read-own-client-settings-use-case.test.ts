@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "../client-reach";
+import type { ClientReachPort, ClientReachReading } from "../client-reach-port";
 
 import { ClientSettings } from "./client-settings";
-import type { ClientSettingsSource } from "./client-settings-source";
+import type { ClientSettingsSourcePort } from "./client-settings-source-port";
 import { ReadOwnClientSettingsUseCase } from "./read-own-client-settings-use-case";
 
 const OPENED_AT = new Date("2026-09-20T08:00:00.000Z");
@@ -32,10 +32,10 @@ function createUseCase(input: {
   const ports = {
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(input.reach),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
     settings: {
       findByClientId: vi.fn().mockResolvedValue(input.stored),
-    } satisfies ClientSettingsSource,
+    } satisfies ClientSettingsSourcePort,
   };
 
   return { ports, useCase: new ReadOwnClientSettingsUseCase(ports) };

@@ -1,17 +1,17 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import {
   measureUnitsOf,
   UnitPreference,
-  type ClientSettingsSource,
+  type ClientSettingsSourcePort,
 } from "../client-settings";
 
 import type { OnboardingSubmissionProblem } from "./client-onboarding";
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
-import type { OnboardingReviews } from "./onboarding-reviews";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
 
 type AnswerOnboardingDetailsCommand = {
   authSubjectId: string;
@@ -27,11 +27,11 @@ type AnswerOnboardingDetailsResult =
 
 type AnswerOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSource;
-  reviews: OnboardingReviews;
-  settings: ClientSettingsSource;
-  clock: Clock;
-  incidents: ClientOnboardingIncidents;
+  onboardings: ClientOnboardingSourcePort;
+  reviews: OnboardingReviewsPort;
+  settings: ClientSettingsSourcePort;
+  clock: ClockPort;
+  incidents: ClientOnboardingIncidentsPort;
 };
 
 export class AnswerOnboardingDetailsUseCase {

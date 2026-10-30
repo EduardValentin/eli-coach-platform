@@ -12,7 +12,7 @@ import type {
   OpenBundlePageUseCase,
   ResolvePaymentLinkUseCase,
 } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
-import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/sales/coaching-sales/domain/clock-port";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
@@ -47,7 +47,7 @@ import type { UnitOfWork } from "~/shared/http/unit-of-work";
 
 type CheckoutsControllerOptions = {
   appBasePath: string;
-  clock: Clock;
+  clock: ClockPort;
   openBundlePage: OpenBundlePageUseCase;
   publicAppUrl: string;
   readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;

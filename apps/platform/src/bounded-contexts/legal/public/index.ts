@@ -15,7 +15,7 @@ export {
   STORE_MARKETING_CONSENT,
   STORE_MARKETING_CONSENT_VERSION,
 } from "./store-marketing-consent";
-export type { TermsFacade } from "./terms";
+export type { TermsFacade } from "./terms-facade";
 export {
   PAID_DIGITAL_DELIVERY_CONSENT,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,

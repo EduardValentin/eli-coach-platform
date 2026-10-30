@@ -5,29 +5,29 @@ import {
 } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-schedule";
 import {
   CoachOpenings,
-  type CoachTimeReservations,
+  type CoachTimeReservationsPort,
 } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-availability";
-import type { CoachMeetingRoomSource } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
-import type { Clock } from "~/bounded-contexts/scheduling/coach-schedule/domain/clock";
-import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time";
-import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room";
-import type { OpenSlotsFacade } from "~/bounded-contexts/scheduling/public/open-slots";
+import type { CoachMeetingRoomSourcePort } from "~/bounded-contexts/scheduling/coach-schedule/domain/coach-meeting-room";
+import type { ClockPort } from "~/bounded-contexts/scheduling/coach-schedule/domain/clock-port";
+import type { CoachTimeFacade } from "~/bounded-contexts/scheduling/public/coach-time-facade";
+import type { MeetingRoomFacade } from "~/bounded-contexts/scheduling/public/meeting-room-facade";
+import type { OpenSlotsFacade } from "~/bounded-contexts/scheduling/public/open-slots-facade";
 
 import { CoachScheduleSettingsController } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/coach-schedule-settings-controller.server";
-import { createCoachTimeFacade } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/coach-time.server";
-import { createMeetingRoomFacade } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/meeting-room.server";
-import { createOpenSlotsFacade } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/open-slots.server";
-import { PostgresCoachAvailability } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/availability/postgres-coach-availability.server";
-import { PostgresCoachMeetingRoom } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/meeting-room/postgres-coach-meeting-room.server";
-import { PostgresCoachTimeReservations } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/reservations/coach-time-reservations.server";
-import { PostgresCoachCalendar } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/reservations/postgres-coach-calendar.server";
+import { CoachTimeFacadeAdapter } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/coach-time-facade-adapter.server";
+import { MeetingRoomFacadeAdapter } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/meeting-room-facade-adapter.server";
+import { OpenSlotsFacadeAdapter } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/facades/open-slots-facade-adapter.server";
+import { PostgresCoachAvailabilityRepository } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/availability/postgres-coach-availability-repository.server";
+import { PostgresCoachMeetingRoomRepository } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/meeting-room/postgres-coach-meeting-room-repository.server";
+import { PostgresCoachTimeReservationsRepository } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/reservations/postgres-coach-time-reservations-repository.server";
+import { PostgresCoachCalendarRepository } from "~/bounded-contexts/scheduling/coach-schedule/adapters/outbound/persistence/reservations/postgres-coach-calendar-repository.server";
 import type { CoachScheduleFeature } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
 
 type CoachScheduleComposition = {
   feature: CoachScheduleFeature;
   handles: {
-    coachTime: CoachTimeReservations;
-    meetingRoom: CoachMeetingRoomSource;
+    coachTime: CoachTimeReservationsPort;
+    meetingRoom: CoachMeetingRoomSourcePort;
     openings: CoachOpenings;
   };
   facades: {
@@ -38,19 +38,21 @@ type CoachScheduleComposition = {
 };
 
 type CoachScheduleFeatureHandles = {
-  clock: Clock;
+  clock: ClockPort;
   database: DatabaseClient;
 };
 
 export function composeCoachScheduleFeature(
   handles: CoachScheduleFeatureHandles,
 ): CoachScheduleComposition {
-  const availability = new PostgresCoachAvailability(handles);
-  const meetingRoom = new PostgresCoachMeetingRoom(handles);
-  const coachTime = new PostgresCoachTimeReservations(handles.database);
+  const availability = new PostgresCoachAvailabilityRepository(handles);
+  const meetingRoom = new PostgresCoachMeetingRoomRepository(handles);
+  const coachTime = new PostgresCoachTimeReservationsRepository(
+    handles.database,
+  );
   const openings = new CoachOpenings({
     availability,
-    calendar: new PostgresCoachCalendar(handles.database),
+    calendar: new PostgresCoachCalendarRepository(handles.database),
   });
 
   return {
@@ -68,9 +70,9 @@ export function composeCoachScheduleFeature(
     },
     handles: { coachTime, meetingRoom, openings },
     facades: {
-      coachTime: createCoachTimeFacade(coachTime),
-      meetingRoom: createMeetingRoomFacade(meetingRoom),
-      openSlots: createOpenSlotsFacade(openings),
+      coachTime: new CoachTimeFacadeAdapter(coachTime),
+      meetingRoom: new MeetingRoomFacadeAdapter(meetingRoom),
+      openSlots: new OpenSlotsFacadeAdapter(openings),
     },
   };
 }

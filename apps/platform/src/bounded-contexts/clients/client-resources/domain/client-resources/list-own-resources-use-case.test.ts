@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientResource } from "./client-resource";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { BrowsedResources, ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
 import { ListOwnResourcesUseCase } from "./list-own-resources-use-case";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const MEAL_PREP = { tag: "Meal Prep", folded: "meal prep" };
@@ -38,7 +41,7 @@ const TAGS_HELD_BY_CLIENT = new Map<string, ResourceTagSnapshot[]>([
   ["client-bea", [GLUTES]],
 ]);
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   async add(): Promise<void> {}
 
   async recordOpened(): Promise<void> {}
@@ -100,7 +103,7 @@ const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
 ]);
 
 function createUseCase(
-  resources: ClientResources = new InMemoryClientResources(),
+  resources: ClientResourcesPort = new InMemoryClientResourcesAdapter(),
 ) {
   const clients = {
     findById: vi.fn(async (clientId: string) =>
@@ -110,7 +113,7 @@ function createUseCase(
       async (authSubjectId: string) =>
         CLIENT_BY_SUBJECT.get(authSubjectId) ?? null,
     ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -121,7 +124,7 @@ function createUseCase(
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const useCase = new ListOwnResourcesUseCase({
     resources,
     clients,
@@ -157,7 +160,7 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("browses by a tag she holds in its stored spelling, with the search and sort chosen", async () => {
     // arrange
-    const resources = new InMemoryClientResources();
+    const resources = new InMemoryClientResourcesAdapter();
     const browseForClient = vi.spyOn(resources, "browseForClient");
     const { useCase } = createUseCase(resources);
     const expectedBrowse = {
@@ -185,7 +188,7 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("browses with no tag when she holds none like the one asked for, even if another client does", async () => {
     // arrange
-    const resources = new InMemoryClientResources();
+    const resources = new InMemoryClientResourcesAdapter();
     const browseForClient = vi.spyOn(resources, "browseForClient");
     const { useCase } = createUseCase(resources);
 
@@ -208,7 +211,7 @@ describe("ListOwnResourcesUseCase", () => {
 
   it("never reads the coach's vocabulary for a client", async () => {
     // arrange
-    const resources = new InMemoryClientResources();
+    const resources = new InMemoryClientResourcesAdapter();
     const tagVocabulary = vi.spyOn(resources, "tagVocabulary");
     const { useCase } = createUseCase(resources);
 
@@ -262,7 +265,7 @@ describe("ListOwnResourcesUseCase", () => {
     async (read) => {
       // arrange
       const failure = new Error("connection terminated");
-      const unreadable = new InMemoryClientResources();
+      const unreadable = new InMemoryClientResourcesAdapter();
       vi.spyOn(unreadable, read).mockRejectedValue(failure);
       const { useCase, incidents } = createUseCase(unreadable);
 

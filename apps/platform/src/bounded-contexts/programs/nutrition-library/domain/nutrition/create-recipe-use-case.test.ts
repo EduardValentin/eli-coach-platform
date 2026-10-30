@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CreateRecipeUseCase } from "./create-recipe-use-case";
 import { Food } from "./food";
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+import type { NutritionTag } from "./nutrition-tags-port";
 import { Recipe } from "./recipe";
 import type { RecipeDraftInput } from "./recipe-draft";
-import type { RecipeAddition } from "./recipe-library";
+import type { RecipeAddition } from "./recipe-library-port";
 import { MAX_RECIPE_PHOTO_BYTES, type RecipePhotoChoice } from "./recipe-photo";
-import type { RecipePhotoRendition } from "./recipe-photo-renditions";
+import type { RecipePhotoRendition } from "./recipe-photo-renditions-port";
 import { RecipePhotoSaving } from "./recipe-photo-saving";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
@@ -112,7 +112,7 @@ function createUseCase() {
     recipeCreationFailed: vi.fn(),
     recipeEditFailed: vi.fn(),
     recipePhotoCleanupFailed: vi.fn(),
-  } satisfies NutritionLibraryIncidents;
+  } satisfies NutritionLibraryIncidentsPort;
   const renditions = {
     render: vi.fn(async (): Promise<RecipePhotoRendition> => ({
       status: "rendered",

@@ -1,6 +1,6 @@
 import type { Food } from "./food";
-import type { FoodLibrary } from "./food-library";
-import type { NutritionTag, NutritionTags } from "./nutrition-tags";
+import type { FoodLibraryPort } from "./food-library-port";
+import type { NutritionTag, NutritionTagsPort } from "./nutrition-tags-port";
 
 export type ListFoodsResult = {
   status: "listed";
@@ -9,8 +9,8 @@ export type ListFoodsResult = {
 };
 
 type ListFoodsUseCaseOptions = {
-  library: Pick<FoodLibrary, "list">;
-  tags: Pick<NutritionTags, "list">;
+  library: Pick<FoodLibraryPort, "list">;
+  tags: Pick<NutritionTagsPort, "list">;
 };
 
 export class ListFoodsUseCase {

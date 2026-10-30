@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Food } from "./food";
-import type { FoodsReference } from "./food-library";
+import type { FoodsReference } from "./food-library-port";
 import { FindRecipeUseCase } from "./find-recipe-use-case";
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionTag } from "./nutrition-tags-port";
 import { Recipe } from "./recipe";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");

@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "~/shared/database";
 import { AcquireProductsUseCase } from "~/bounded-contexts/sales/store/domain/acquisition";
 import { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
-import type { EmailAcceptance } from "~/bounded-contexts/sales/store/domain/email-acceptance";
+import type { EmailAcceptancePort } from "~/bounded-contexts/sales/store/domain/email-acceptance-port";
 import {
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
@@ -12,56 +12,54 @@ import {
   PublishProductVersionUseCase,
   RetireProductUseCase,
 } from "~/bounded-contexts/sales/store/domain/product";
-import type { Clock } from "~/bounded-contexts/sales/store/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/sales/store/domain/clock-port";
 import type { TermsFacade } from "~/bounded-contexts/legal/public";
-import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
-import type { ProductEmail } from "~/shared/email/index.server";
+import type { BotVerifierPort } from "~/shared/submission-checks/bot-detection/index.server";
+import type { ProductEmailPort } from "~/shared/email/index.server";
 import type {
-  ManagementAuthenticator,
+  ManagementAuthenticatorPort,
   ManagementAuthConfig,
-} from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-contract.server";
+} from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-port.server";
 
-import { StoreAcquisitionController } from "~/bounded-contexts/sales/store/adapters/inbound/http/acquisitions/acquisitions-controller.server";
-import { StoreCatalogController } from "~/bounded-contexts/sales/store/adapters/inbound/http/catalog/catalog-controller.server";
-import { StoreCoverAssetController } from "~/bounded-contexts/sales/store/adapters/inbound/http/covers/covers-controller.server";
-import { StoreDownloadController } from "~/bounded-contexts/sales/store/adapters/inbound/http/downloads/downloads-controller.server";
-import { StoreProductManagementController } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-controller.server";
+import { StoreAcquisitionController } from "~/bounded-contexts/sales/store/adapters/inbound/http/acquisitions/store-acquisition-controller.server";
+import { StoreCatalogController } from "~/bounded-contexts/sales/store/adapters/inbound/http/catalog/store-catalog-controller.server";
+import { StoreCoverAssetController } from "~/bounded-contexts/sales/store/adapters/inbound/http/covers/store-cover-asset-controller.server";
+import { StoreDownloadController } from "~/bounded-contexts/sales/store/adapters/inbound/http/downloads/store-download-controller.server";
+import { StoreProductManagementController } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/store-product-management-controller.server";
 import { ZipDeliveryStream } from "~/bounded-contexts/sales/store/adapters/inbound/http/downloads/zip-stream.server";
-import { PostgresStoreAcquisitionRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/acquisitions/acquisition-repository.server";
-import { ProductAssetSha256Digest } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/assets/asset-digest.server";
-import { FilesystemProductAssetStore } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/assets/asset-store.server";
-import { PostgresStoreCatalogRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/catalog/catalog-repository.server";
-import { PostgresDownloadGrantRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/download-grants/download-grant-repository.server";
-import {
-  DownloadTokenSha256,
-  PayloadSha256Digest,
-  RandomDownloadTokenGenerator,
-} from "~/bounded-contexts/sales/store/adapters/outbound/persistence/download-grants/download-token.server";
-import { PostgresStoreProductPublicationRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/publications/publication-repository.server";
-import { createProductDelivery } from "~/bounded-contexts/sales/store/adapters/outbound/email/create-product-delivery.server";
+import { PostgresStoreAcquisitionRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/acquisitions/postgres-store-acquisition-repository.server";
+import { ProductAssetSha256DigestAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/assets/product-asset-sha256-digest-adapter.server";
+import { FilesystemProductAssetStoreAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/assets/filesystem-product-asset-store-adapter.server";
+import { PostgresStoreCatalogRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/catalog/postgres-store-catalog-repository.server";
+import { PostgresDownloadGrantRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/download-grants/postgres-download-grant-repository.server";
+import { RandomDownloadTokenGeneratorAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/download-grants/random-download-token-generator-adapter.server";
+import { PayloadSha256DigestAdapter } from "./adapters/outbound/persistence/download-grants/payload-sha256-digest-adapter.server";
+import { DownloadTokenSha256Adapter } from "./adapters/outbound/persistence/download-grants/download-token-sha256-adapter.server";
+import { PostgresStoreProductPublicationRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/publications/postgres-store-product-publication-repository.server";
+import { createProductDeliveryAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/email/create-product-delivery-adapter.server";
 import type { StoreFeature } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createStoreIncidents } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents.server";
-import { LegalConsentVersions } from "~/bounded-contexts/sales/store/adapters/outbound/legal/consent-versions.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { StoreIncidentsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents-adapter.server";
+import { LegalConsentVersionsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/legal/legal-consent-versions-adapter.server";
 import { createManagementAuthConfig } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-auth-config.server";
 import { createManagementAuthenticator } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/create-management-authenticator.server";
 import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 
 type ManagementAuth = {
-  authenticator: ManagementAuthenticator;
+  authenticator: ManagementAuthenticatorPort;
   config: ManagementAuthConfig;
 };
 
 export type StoreFeatureHandles = {
   appBasePath: string;
-  botVerifier: BotVerifier;
-  clock: Clock;
+  botVerifier: BotVerifierPort;
+  clock: ClockPort;
   contactEmail: string;
   database: DatabaseClient;
-  emailAcceptance: EmailAcceptance;
-  logger: Logger;
+  emailAcceptance: EmailAcceptancePort;
+  logger: LoggerPort;
   managementAuth: ManagementAuth;
-  productEmail: ProductEmail;
+  productEmail: ProductEmailPort;
   publicAppUrl: string;
   storeAssetRoot: string;
   terms: TermsFacade;
@@ -70,7 +68,7 @@ export type StoreFeatureHandles = {
 export function composeStoreFeature(
   handles: StoreFeatureHandles,
 ): StoreFeature {
-  const incidents = createStoreIncidents(handles.logger);
+  const incidents = new StoreIncidentsAdapter(handles.logger);
   const catalogRepository = new PostgresStoreCatalogRepository(
     handles.database,
   );
@@ -83,25 +81,27 @@ export function composeStoreFeature(
   const findPublishedCover = new FindPublishedCoverUseCase({
     catalog: catalogRepository,
   });
-  const assetStore = new FilesystemProductAssetStore(handles.storeAssetRoot);
+  const assetStore = new FilesystemProductAssetStoreAdapter(
+    handles.storeAssetRoot,
+  );
   assetStore.assertReadyAtStartup();
   const acquireProducts = new AcquireProductsUseCase({
     acquisitions: new PostgresStoreAcquisitionRepository(handles.database),
     catalog: catalogRepository,
     clock: handles.clock,
-    consentVersions: new LegalConsentVersions(handles.terms),
-    delivery: createProductDelivery(handles.productEmail, {
+    consentVersions: new LegalConsentVersionsAdapter(handles.terms),
+    delivery: createProductDeliveryAdapter(handles.productEmail, {
       appBasePath: handles.appBasePath,
       contactEmail: handles.contactEmail,
       publicAppUrl: handles.publicAppUrl,
     }),
     emailAcceptance: handles.emailAcceptance,
     incidents,
-    payloadDigestGenerator: new PayloadSha256Digest(),
-    tokenGenerator: new RandomDownloadTokenGenerator(),
+    payloadDigestGenerator: new PayloadSha256DigestAdapter(),
+    tokenGenerator: new RandomDownloadTokenGeneratorAdapter(),
   });
   const planOptions = {
-    digest: new ProductAssetSha256Digest(),
+    digest: new ProductAssetSha256DigestAdapter(),
     publications: new PostgresStoreProductPublicationRepository(
       handles.database,
     ),
@@ -110,7 +110,7 @@ export function composeStoreFeature(
   const resolveDownloadGrant = new ResolveDownloadGrantUseCase({
     clock: handles.clock,
     downloadGrants: new PostgresDownloadGrantRepository(handles.database),
-    tokenHasher: new DownloadTokenSha256(),
+    tokenHasher: new DownloadTokenSha256Adapter(),
   });
 
   return {

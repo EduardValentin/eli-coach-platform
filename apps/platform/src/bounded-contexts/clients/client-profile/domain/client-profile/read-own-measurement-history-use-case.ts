@@ -1,8 +1,11 @@
-import type { ClientReach } from "../client-reach";
-import type { Clock } from "../clock";
-import { UnitPreference, type ClientSettingsSource } from "../client-settings";
-import type { ClientMeasurementRecords } from "./client-measurement-records";
-import type { ClientProfiles } from "./client-profiles";
+import type { ClientReachPort } from "../client-reach-port";
+import type { ClockPort } from "../clock-port";
+import {
+  UnitPreference,
+  type ClientSettingsSourcePort,
+} from "../client-settings";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
+import type { ClientProfilesPort } from "./client-profiles-port";
 import {
   MeasurementHistory,
   type MeasurementDueLine,
@@ -18,11 +21,11 @@ export type OwnMeasurementHistoryReading = {
 };
 
 type ReadOwnMeasurementHistoryUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  profiles: Pick<ClientProfiles, "findByClientId">;
-  records: ClientMeasurementRecords;
-  settings: ClientSettingsSource;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  profiles: Pick<ClientProfilesPort, "findByClientId">;
+  records: ClientMeasurementRecordsPort;
+  settings: ClientSettingsSourcePort;
 };
 
 export class ReadOwnMeasurementHistoryUseCase {

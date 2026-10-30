@@ -1,5 +1,5 @@
 import type { PublishedProduct } from "./product";
-import type { StoreCatalog } from "./store-catalog";
+import type { StoreCatalogPort } from "./store-catalog-port";
 
 export type PublishedProductResult =
   | { status: "available"; product: PublishedProduct }
@@ -7,7 +7,7 @@ export type PublishedProductResult =
   | { status: "unavailable" };
 
 export class FindPublishedProductUseCase {
-  constructor(private readonly options: { catalog: StoreCatalog }) {}
+  constructor(private readonly options: { catalog: StoreCatalogPort }) {}
 
   async execute(slug: string): Promise<PublishedProductResult> {
     try {

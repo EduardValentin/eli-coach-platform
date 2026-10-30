@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
 import { ReadCoachClientSeriesUseCase } from "./read-coach-client-series-use-case";
 
 const ANA_REACH: ClientReachReading = {
@@ -38,10 +38,10 @@ function createRead(options: {
       .mockResolvedValue(
         options.client === undefined ? ANA_REACH : options.client,
       ),
-  } satisfies Pick<ClientReach, "findById">;
+  } satisfies Pick<ClientReachPort, "findById">;
   const series = {
     findActiveForClient: vi.fn().mockResolvedValue(options.active),
-  } satisfies Pick<CheckInSeriesRecords, "findActiveForClient">;
+  } satisfies Pick<CheckInSeriesRecordsPort, "findActiveForClient">;
   const ports = {
     clients,
     incidents: { checkInSeriesReadFailed: vi.fn() },

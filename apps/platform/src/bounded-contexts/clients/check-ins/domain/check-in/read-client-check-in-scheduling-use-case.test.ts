@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { ReadClientCheckInSchedulingUseCase } from "./read-client-check-in-scheduling-use-case";
 
 function createReadScheduling(client: ClientReachReading | null) {
   const clients = {
     findById: vi.fn().mockResolvedValue(client),
-  } satisfies Pick<ClientReach, "findById">;
+  } satisfies Pick<ClientReachPort, "findById">;
 
   return {
     clients,

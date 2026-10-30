@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import { ProgressPhoto, type ProgressPhotoView } from "./progress-photo";
 import {
   ProgressPhotoIntake,
@@ -9,14 +9,14 @@ import {
 import type { ProgressPhotoReference } from "./progress-photo-reference";
 import type {
   ProgressPhotoRendition,
-  ProgressPhotoRenditions,
-} from "./progress-photo-renditions";
+  ProgressPhotoRenditionsPort,
+} from "./progress-photo-renditions-port";
 import type {
   ProgressPhotoOwner,
-  ProgressPhotoStore,
-} from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
-import type { ProgressPhotoIds } from "./progress-photo-ids";
+  ProgressPhotoStorePort,
+} from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
+import type { ProgressPhotoIdsPort } from "./progress-photo-ids-port";
 
 const RECEIVED_AT = new Date("2026-10-01T08:00:00.000Z");
 const RENDERED_BYTES = new Uint8Array([9, 9, 9]);
@@ -28,7 +28,7 @@ const CONSENTED_ENTRY: EntryReceivingPhotos = {
   photosConsented: true,
 };
 
-class InMemoryProgressPhotoStore implements ProgressPhotoStore {
+class InMemoryProgressPhotoStoreAdapter implements ProgressPhotoStorePort {
   readonly files = new Map<string, Uint8Array>();
 
   async store(
@@ -50,7 +50,7 @@ class InMemoryProgressPhotoStore implements ProgressPhotoStore {
   }
 }
 
-class InMemoryProgressPhotos implements ProgressPhotos {
+class InMemoryProgressPhotosAdapter implements ProgressPhotosPort {
   readonly rows = new Map<string, ProgressPhoto>();
 
   async add(photo: ProgressPhoto): Promise<void> {
@@ -70,11 +70,11 @@ function createPorts(options: { rendition?: ProgressPhotoRendition } = {}) {
   let photoNumber = 0;
 
   return {
-    photos: new InMemoryProgressPhotos(),
+    photos: new InMemoryProgressPhotosAdapter(),
     photoIds: {
       generate: () => `photo-${++photoNumber}`,
-    } satisfies ProgressPhotoIds,
-    store: new InMemoryProgressPhotoStore(),
+    } satisfies ProgressPhotoIdsPort,
+    store: new InMemoryProgressPhotoStoreAdapter(),
     renditions: {
       render: vi.fn().mockResolvedValue(
         options.rendition ?? {
@@ -83,14 +83,14 @@ function createPorts(options: { rendition?: ProgressPhotoRendition } = {}) {
           mimeType: "image/jpeg",
         },
       ),
-    } satisfies ProgressPhotoRenditions,
+    } satisfies ProgressPhotoRenditionsPort,
     incidents: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
-    } satisfies MeasurementIncidents,
+    } satisfies MeasurementIncidentsPort,
   };
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { InvitedClient } from "./invited-client";
+import type { InvitedClient } from "./invited-clients-port";
 import { ReadClientInvitationUseCase } from "./read-client-invitation-use-case";
 
 const SENT_AT = new Date("2026-09-27T10:00:00.000Z");

@@ -1,8 +1,8 @@
 import type { Food } from "./food";
-import type { FoodLibrary } from "./food-library";
-import type { NutritionTag, NutritionTags } from "./nutrition-tags";
+import type { FoodLibraryPort } from "./food-library-port";
+import type { NutritionTag, NutritionTagsPort } from "./nutrition-tags-port";
 import type { Recipe } from "./recipe";
-import type { RecipeLibrary } from "./recipe-library";
+import type { RecipeLibraryPort } from "./recipe-library-port";
 
 export type ListRecipesResult = {
   status: "listed";
@@ -12,9 +12,9 @@ export type ListRecipesResult = {
 };
 
 type ListRecipesUseCaseOptions = {
-  recipes: Pick<RecipeLibrary, "list">;
-  foods: Pick<FoodLibrary, "list" | "referenced">;
-  tags: Pick<NutritionTags, "list">;
+  recipes: Pick<RecipeLibraryPort, "list">;
+  foods: Pick<FoodLibraryPort, "list" | "referenced">;
+  tags: Pick<NutritionTagsPort, "list">;
 };
 
 export class ListRecipesUseCase {

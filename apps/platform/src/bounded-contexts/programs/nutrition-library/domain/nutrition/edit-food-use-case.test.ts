@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { EditFoodUseCase } from "./edit-food-use-case";
 import { Food } from "./food";
 import type { FoodDraftInput } from "./food-draft";
-import type { FoodReference, FoodReplacement } from "./food-library";
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { NutritionTag } from "./nutrition-tags";
+import type { FoodReference, FoodReplacement } from "./food-library-port";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+import type { NutritionTag } from "./nutrition-tags-port";
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
@@ -77,7 +77,7 @@ function createUseCase() {
     recipeCreationFailed: vi.fn(),
     recipeEditFailed: vi.fn(),
     recipePhotoCleanupFailed: vi.fn(),
-  } satisfies NutritionLibraryIncidents;
+  } satisfies NutritionLibraryIncidentsPort;
   const useCase = new EditFoodUseCase({
     library,
     tags,

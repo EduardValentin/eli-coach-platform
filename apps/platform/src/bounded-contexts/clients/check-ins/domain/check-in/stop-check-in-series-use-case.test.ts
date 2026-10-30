@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import type {
-  CheckInSeriesRecords,
+  CheckInSeriesRecordsPort,
   CheckInSeriesStop,
-} from "./check-in-series-records";
+} from "./check-in-series-records-port";
 import { StopCheckInSeriesUseCase } from "./stop-check-in-series-use-case";
 
 const NOW = new Date("2026-10-13T12:00:00.000Z");
@@ -64,10 +64,10 @@ function createStop(options?: {
         freedReservationIds: ["reservation-1", "reservation-2"],
       },
     ),
-  } satisfies Pick<CheckInSeriesRecords, "find" | "stop">;
+  } satisfies Pick<CheckInSeriesRecordsPort, "find" | "stop">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const notifications = {
     requested: vi.fn(),
     withdrawn: vi.fn(),
@@ -80,10 +80,10 @@ function createStop(options?: {
     seriesSetUp: vi.fn(),
     seriesChanged: vi.fn(),
     seriesStopped: vi.fn().mockResolvedValue("sent"),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
   const clients = {
     findById: vi.fn().mockResolvedValue(ANA_REACH),
-  } satisfies Pick<ClientReach, "findById">;
+  } satisfies Pick<ClientReachPort, "findById">;
   const ports = {
     clients,
     clock: { now: () => NOW },

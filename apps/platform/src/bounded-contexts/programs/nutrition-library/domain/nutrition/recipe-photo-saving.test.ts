@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
 import {
   MAX_RECIPE_PHOTO_BYTES,
   RecipePhoto,
   type RecipePhotoChange,
 } from "./recipe-photo";
-import type { RecipePhotoRendition } from "./recipe-photo-renditions";
+import type { RecipePhotoRendition } from "./recipe-photo-renditions-port";
 import { RecipePhotoSaving } from "./recipe-photo-saving";
-import type { RecipePhotoStore } from "./recipe-photo-store";
+import type { RecipePhotoStorePort } from "./recipe-photo-store-port";
 
 const PHOTO_ID = "7a1b0000-0000-4000-8000-000000000001";
 const RECEIVED = new Uint8Array([0xff, 0xd8, 0xff]);
@@ -27,10 +27,10 @@ function createSaving() {
   const store = {
     store: vi.fn(async (_photoId: string, _bytes: Uint8Array) => undefined),
     remove: vi.fn(async (_photoId: string) => undefined),
-  } satisfies Pick<RecipePhotoStore, "store" | "remove">;
+  } satisfies Pick<RecipePhotoStorePort, "store" | "remove">;
   const incidents = {
     recipePhotoCleanupFailed: vi.fn(),
-  } satisfies Pick<NutritionLibraryIncidents, "recipePhotoCleanupFailed">;
+  } satisfies Pick<NutritionLibraryIncidentsPort, "recipePhotoCleanupFailed">;
   const saving = new RecipePhotoSaving({ renditions, ids, store, incidents });
 
   return { saving, renditions, ids, store, incidents };

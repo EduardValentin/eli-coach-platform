@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import type { CoachingPeriodHandlerPort } from "./coaching-period-handler-port";
 import { CoachingPeriodPropagation } from "./coaching-period-propagation";
 import { CoachingSubscription } from "./coaching-subscription";
 
@@ -34,10 +34,10 @@ function createHandler() {
   return {
     paidThroughExtended: vi.fn().mockResolvedValue(undefined),
     programStarted: vi.fn().mockResolvedValue(undefined),
-  } satisfies CoachingPeriodHandler;
+  } satisfies CoachingPeriodHandlerPort;
 }
 
-function createPropagation(handlers: CoachingPeriodHandler[]) {
+function createPropagation(handlers: CoachingPeriodHandlerPort[]) {
   const incidents = { coachingPeriodNotPropagated: vi.fn() };
 
   return {

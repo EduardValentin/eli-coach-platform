@@ -3,14 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 import { CreateExerciseUseCase } from "./create-exercise-use-case";
 import { Exercise, type ExerciseSnapshot } from "./exercise";
 import type { ExerciseDraftInput } from "./exercise-draft";
-import type { ExerciseAddition, ExerciseLibrary } from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
-import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+import type {
+  ExerciseAddition,
+  ExerciseLibraryPort,
+} from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
+import type { ExerciseVideoFormatDetectorPort } from "./exercise-video-format-detector-port";
 import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
@@ -101,21 +104,21 @@ function createUseCase() {
     add: vi.fn(async (): Promise<ExerciseAddition> => "added"),
     replace: vi.fn(),
     remove: vi.fn(),
-  } satisfies ExerciseLibrary;
+  } satisfies ExerciseLibraryPort;
   const incidents = {
     exerciseCreationFailed: vi.fn(),
     exerciseEditFailed: vi.fn(),
     exerciseRestoreFailed: vi.fn(),
     videoCleanupFailed: vi.fn(),
-  } satisfies ExerciseLibraryIncidents;
+  } satisfies ExerciseLibraryIncidentsPort;
   const formats = {
     detect: vi.fn(async (): Promise<string | null> => "mp4"),
-  } satisfies ExerciseVideoFormatDetector;
+  } satisfies ExerciseVideoFormatDetectorPort;
   const store = {
     keep: vi.fn(async () => undefined),
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
-  } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
+  } satisfies Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
   const useCase = new CreateExerciseUseCase({
     library,
     ids: { generate: () => "e0000000-0000-4000-8000-000000000002" },

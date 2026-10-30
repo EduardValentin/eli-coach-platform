@@ -8,7 +8,8 @@ import {
   buildCoverAssetKey,
   buildDownloadAssetKey,
 } from "./product-asset-keys";
-import type { ProductAssetContent, ProductAssetDigest } from "./product-assets";
+import type { ProductAssetContent } from "./product-asset-writer-port";
+import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import {
   resolveCoverFormat,
   resolveDownloadFormat,
@@ -209,7 +210,7 @@ export class ProductPublicationDraft {
   requestDigest(
     operation: PublicationOperation,
     target: string,
-    digest: ProductAssetDigest,
+    digest: ProductAssetDigestPort,
   ): string {
     const canonical = [
       operation,
@@ -259,7 +260,7 @@ export class ProductPublicationDraft {
       slug: string;
     },
     taxonomy: StoreTaxonomySnapshot,
-    digest: ProductAssetDigest,
+    digest: ProductAssetDigestPort,
   ): PublicationPlanResult {
     const formatIssue = validateSlugFormat(input.slug);
 
@@ -290,7 +291,7 @@ export class ProductPublicationDraft {
   planRevision(
     product: Product | null,
     taxonomy: StoreTaxonomySnapshot,
-    digest: ProductAssetDigest,
+    digest: ProductAssetDigestPort,
   ): PublicationPlanResult {
     if (!product) {
       return { status: "invalid", issues: [{ code: "product_not_found" }] };
@@ -306,7 +307,7 @@ export class ProductPublicationDraft {
   plan(
     placement: PublicationPlacement,
     taxonomy: StoreTaxonomySnapshot,
-    digest: ProductAssetDigest,
+    digest: ProductAssetDigestPort,
   ): PublicationPlanResult {
     const issues: PublicationIssue[] = [];
     const downloads = this.planDownloads(issues, digest);
@@ -402,7 +403,7 @@ export class ProductPublicationDraft {
 
   private planDownloads(
     issues: PublicationIssue[],
-    digest: ProductAssetDigest,
+    digest: ProductAssetDigestPort,
   ): readonly PlannedProductAsset[] {
     if (this.downloads.length === 0) {
       issues.push({ code: "missing_downloads" });
@@ -465,7 +466,7 @@ export class ProductPublicationDraft {
 
   private planCover(
     issues: PublicationIssue[],
-    digest: ProductAssetDigest,
+    digest: ProductAssetDigestPort,
   ): PlannedProductCover | null {
     const resolution = resolveCoverFormat(this.cover.bytes);
 

@@ -1,0 +1,226 @@
+import {
+  isCausedByDatabaseError,
+  type DatabaseClient,
+} from "~/shared/database";
+import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
+import type {
+  ClientOnboardingChangesPort,
+  ClientOnboardingSourcePort,
+  OnboardingConsents,
+  OnboardingDraft,
+  OnboardingSubmission,
+} from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
+import type { MeasurementEntry } from "~/bounded-contexts/clients/client-profile/domain/measurement";
+import { eq, sql, type SQL } from "drizzle-orm";
+
+import type {
+  MeasurementEntryWriter,
+  PhotoConsentWriter,
+} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/client-profile-writer-ports.server";
+import {
+  clientOnboardingConstraints,
+  clientOnboardingDraftsTable,
+  clientOnboardingSubmissionsTable,
+} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/schema.server";
+
+const UNIQUE_VIOLATION_CODE = "23505";
+
+type ConsentColumns = {
+  specialCategoryConsentedAt: Date | null;
+  disclaimerConsentedAt: Date | null;
+  progressPhotosConsentedAt: Date | null;
+};
+
+type RecordedSubmission = Awaited<
+  ReturnType<ClientOnboardingChangesPort["recordSubmission"]>
+>;
+
+type ClientOnboardingsOptions = {
+  database: DatabaseClient;
+  measurementEntryWriter: MeasurementEntryWriter;
+  photoConsentWriter: PhotoConsentWriter;
+};
+
+export class PostgresClientOnboardingsRepository
+  implements ClientOnboardingSourcePort, ClientOnboardingChangesPort
+{
+  private readonly database: DatabaseClient;
+  private readonly measurementEntryWriter: MeasurementEntryWriter;
+  private readonly photoConsentWriter: PhotoConsentWriter;
+
+  constructor(options: ClientOnboardingsOptions) {
+    this.database = options.database;
+    this.measurementEntryWriter = options.measurementEntryWriter;
+    this.photoConsentWriter = options.photoConsentWriter;
+  }
+
+  private get executor() {
+    return executorOf(this.database);
+  }
+
+  async findByClientId(clientId: string): Promise<{
+    draft: OnboardingDraft | null;
+    submission: OnboardingSubmission | null;
+  }> {
+    const [[draftRow], [submissionRow]] = await Promise.all([
+      this.executor
+        .select({
+          answers: clientOnboardingDraftsTable.answers,
+          currentFormIndex: clientOnboardingDraftsTable.currentFormIndex,
+          specialCategoryConsentedAt:
+            clientOnboardingDraftsTable.specialCategoryConsentedAt,
+          disclaimerConsentedAt:
+            clientOnboardingDraftsTable.disclaimerConsentedAt,
+          progressPhotosConsentedAt:
+            clientOnboardingDraftsTable.progressPhotosConsentedAt,
+          updatedAt: clientOnboardingDraftsTable.updatedAt,
+        })
+        .from(clientOnboardingDraftsTable)
+        .where(eq(clientOnboardingDraftsTable.clientId, clientId))
+        .limit(1),
+      this.executor
+        .select({
+          answers: clientOnboardingSubmissionsTable.answers,
+          specialCategoryConsentedAt:
+            clientOnboardingSubmissionsTable.specialCategoryConsentedAt,
+          disclaimerConsentedAt:
+            clientOnboardingSubmissionsTable.disclaimerConsentedAt,
+          progressPhotosConsentedAt:
+            clientOnboardingSubmissionsTable.progressPhotosConsentedAt,
+          submittedAt: clientOnboardingSubmissionsTable.submittedAt,
+        })
+        .from(clientOnboardingSubmissionsTable)
+        .where(eq(clientOnboardingSubmissionsTable.clientId, clientId))
+        .limit(1),
+    ]);
+
+    return {
+      draft: draftRow
+        ? {
+            answers: draftRow.answers,
+            currentFormIndex: draftRow.currentFormIndex,
+            consents: consentsOf(draftRow),
+            updatedAt: draftRow.updatedAt,
+          }
+        : null,
+      submission: submissionRow
+        ? {
+            answers: submissionRow.answers,
+            consents: consentsOf(submissionRow),
+            submittedAt: submissionRow.submittedAt,
+          }
+        : null,
+    };
+  }
+
+  async saveDraft(input: {
+    clientId: string;
+    draft: OnboardingDraft;
+  }): Promise<"saved" | "already-submitted"> {
+    const { draft } = input;
+    const written = await this.executor
+      .insert(clientOnboardingDraftsTable)
+      .select(draftRowWhileUnsubmitted(input))
+      .onConflictDoUpdate({
+        target: clientOnboardingDraftsTable.clientId,
+        set: {
+          answers: draft.answers,
+          currentFormIndex: draft.currentFormIndex,
+          ...consentColumnsOf(draft.consents),
+          updatedAt: draft.updatedAt,
+        },
+      })
+      .returning({ clientId: clientOnboardingDraftsTable.clientId });
+
+    return written.length > 0 ? "saved" : "already-submitted";
+  }
+
+  async recordSubmission(input: {
+    clientId: string;
+    submission: OnboardingSubmission;
+    entryId: string;
+    measurementEntry: MeasurementEntry;
+  }): Promise<RecordedSubmission> {
+    const { clientId, entryId, measurementEntry, submission } = input;
+
+    try {
+      await createUnitOfWork(this.database)(async () => {
+        await this.executor.insert(clientOnboardingSubmissionsTable).values({
+          clientId,
+          answers: submission.answers,
+          ...consentColumnsOf(submission.consents),
+          submittedAt: submission.submittedAt,
+        });
+        await this.measurementEntryWriter({
+          clientId,
+          entryId,
+          entry: measurementEntry,
+        });
+        await this.recordPhotoConsentOf({
+          clientId,
+          consents: submission.consents,
+        });
+        await this.executor
+          .delete(clientOnboardingDraftsTable)
+          .where(eq(clientOnboardingDraftsTable.clientId, clientId));
+      });
+
+      return { status: "recorded" };
+    } catch (error) {
+      if (violatesSubmissionPerClient(error)) {
+        return { status: "already-submitted" };
+      }
+
+      throw error;
+    }
+  }
+
+  private async recordPhotoConsentOf(submitted: {
+    clientId: string;
+    consents: OnboardingConsents;
+  }): Promise<void> {
+    const at = submitted.consents.progressPhotosAt;
+
+    if (at) {
+      await this.photoConsentWriter({
+        clientId: submitted.clientId,
+        at,
+      });
+    }
+  }
+}
+
+function draftRowWhileUnsubmitted(input: {
+  clientId: string;
+  draft: OnboardingDraft;
+}): SQL {
+  const { clientId, draft } = input;
+  const consents = consentColumnsOf(draft.consents);
+
+  return sql`select ${clientId}::uuid, ${JSON.stringify(draft.answers)}::jsonb, ${draft.currentFormIndex}::integer, ${consents.specialCategoryConsentedAt}::timestamptz, ${consents.disclaimerConsentedAt}::timestamptz, ${consents.progressPhotosConsentedAt}::timestamptz, ${draft.updatedAt}::timestamptz where not exists (select 1 from ${clientOnboardingSubmissionsTable} where ${clientOnboardingSubmissionsTable.clientId} = ${clientId})`;
+}
+
+function consentColumnsOf(consents: OnboardingConsents): ConsentColumns {
+  return {
+    specialCategoryConsentedAt: consents.specialCategoryAt,
+    disclaimerConsentedAt: consents.disclaimerAt,
+    progressPhotosConsentedAt: consents.progressPhotosAt,
+  };
+}
+
+function consentsOf(columns: ConsentColumns): OnboardingConsents {
+  return {
+    specialCategoryAt: columns.specialCategoryConsentedAt,
+    disclaimerAt: columns.disclaimerConsentedAt,
+    progressPhotosAt: columns.progressPhotosConsentedAt,
+  };
+}
+
+function violatesSubmissionPerClient(error: unknown): boolean {
+  return isCausedByDatabaseError(
+    error,
+    (fields) =>
+      fields.code === UNIQUE_VIOLATION_CODE &&
+      fields.constraint === clientOnboardingConstraints.submissionPerClient,
+  );
+}

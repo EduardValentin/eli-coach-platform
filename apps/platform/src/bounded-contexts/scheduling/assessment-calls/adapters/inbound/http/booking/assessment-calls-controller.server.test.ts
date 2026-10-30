@@ -7,7 +7,7 @@ import {
   type OpenSlotsResult,
   type ResolveJoinLinkUseCase,
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
+import type { BotVerifierPort } from "~/shared/submission-checks/bot-detection/index.server";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import { describe, expect, it, vi } from "vitest";
@@ -25,7 +25,7 @@ type ControllerOptions = {
 };
 
 type BotVerificationResult = Awaited<
-  ReturnType<BotVerifier["verifySubmission"]>
+  ReturnType<BotVerifierPort["verifySubmission"]>
 >;
 
 const NOW = new Date("2026-10-19T08:00:00.000Z");

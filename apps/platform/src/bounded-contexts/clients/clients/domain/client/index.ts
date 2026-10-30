@@ -1,22 +1,29 @@
+export { type CalendarDate } from "./calendar-date";
 export { AdmitPaidClientUseCase } from "./admit-paid-client-use-case";
-export { type AdmittedClients, type ClientAdmission } from "./admitted-clients";
+export {
+  type AdmittedClientsPort,
+  type ClientAdmission,
+} from "./admitted-clients-port";
 export { Client, type ClientIntake } from "./client";
 export {
   CLIENT_GENDERS,
   CLIENT_PRIMARY_GOALS,
   ClientCountries,
   ClientToday,
-  type CalendarDates,
   type ClientGender,
   type ClientPrimaryGoal,
 } from "./client-details";
-export { type ClientIds } from "./client-ids";
-export { type ClientReach, type ClientReachReading } from "./client-reach";
+export { type CalendarDatesPort } from "./calendar-dates-port";
+export { type ClientIdsPort } from "./client-ids-port";
 export {
-  type ClientIdentities,
+  type ClientReachPort,
+  type ClientReachReading,
+} from "./client-reach-port";
+export {
+  type ClientIdentitiesPort,
   type ClientIdentity,
-} from "./client-identities";
-export { type ClientIdentityChanges } from "./client-identity-changes";
+} from "./client-identities-port";
+export { type ClientIdentityChangesPort } from "./client-identity-changes-port";
 export {
   ClientIdentityEdit,
   type ClientIdentityProblems,

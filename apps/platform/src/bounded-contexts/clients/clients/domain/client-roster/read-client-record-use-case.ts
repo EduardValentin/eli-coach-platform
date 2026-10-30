@@ -1,17 +1,17 @@
 import {
   ClientJourney,
   type ClientCall,
-  type ClientCalls,
+  type ClientCallsPort,
 } from "../client-journey";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import {
   rosterEntryNeedsRefund,
   rosterEntryStatus,
-  type ClientRoster,
   type ClientRosterEntry,
   type ClientStatus,
 } from "./client-roster";
+import { type ClientRosterPort } from "./client-roster-port";
 
 type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
@@ -21,9 +21,9 @@ type ClientRecord = ClientRosterEntry & {
 };
 
 type ReadClientRecordUseCaseOptions = {
-  calls: ClientCalls;
-  clock: Clock;
-  roster: ClientRoster;
+  calls: ClientCallsPort;
+  clock: ClockPort;
+  roster: ClientRosterPort;
 };
 
 export class ReadClientRecordUseCase {

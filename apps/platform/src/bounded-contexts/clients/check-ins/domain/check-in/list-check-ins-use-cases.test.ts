@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities, ClientIdentity } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
-import type { CheckIns } from "./check-ins";
+import type { CheckInsPort } from "./check-ins-port";
 import { ListClientCheckInsUseCase } from "./list-client-check-ins-use-case";
 import { ListCoachCheckInsUseCase } from "./list-coach-check-ins-use-case";
 
@@ -82,7 +85,7 @@ function createPorts(options: {
     settle: vi.fn(),
     move: vi.fn(),
     endCoaching: vi.fn(),
-  } satisfies CheckIns;
+  } satisfies CheckInsPort;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
       options.client === undefined
@@ -96,10 +99,10 @@ function createPorts(options: {
           }
         : options.client,
     ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue(options.identities ?? []),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
 
   return { checkIns, clients, clock: { now: () => NOW }, identities };
 }

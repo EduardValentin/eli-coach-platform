@@ -1,7 +1,7 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaymentSubscriptions } from "./payment-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type OpenPaymentMethodSessionCommand = {
@@ -16,9 +16,9 @@ type OpenPaymentMethodSessionResult =
   | { status: "provider_unavailable" };
 
 type OpenPaymentMethodSessionUseCaseOptions = {
-  clock: Clock;
-  incidents: CoachingSubscriptionIncidents;
-  paymentSubscriptions: PaymentSubscriptions;
+  clock: ClockPort;
+  incidents: CoachingSubscriptionIncidentsPort;
+  paymentSubscriptions: PaymentSubscriptionsPort;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
 };
 

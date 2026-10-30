@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { DownloadGrant } from "./download-grant";
-import type { DownloadGrants } from "./download-grants";
+import type { DownloadGrantsPort } from "./download-grants-port";
 import { ResolveDownloadGrantUseCase } from "./resolve-download-grant-use-case";
 
 const now = new Date("2026-07-30T12:00:00.000Z");
@@ -27,7 +27,7 @@ const activeGrant = DownloadGrant.reconstitute({
   ],
 });
 
-function createDownloadGrants(grant: DownloadGrant | null): DownloadGrants {
+function createDownloadGrants(grant: DownloadGrant | null): DownloadGrantsPort {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(grant),
   };

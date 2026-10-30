@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
+import { WallClockCalendarDatesAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates-adapter";
 import {
   ClientCountries,
   ClientToday,
@@ -15,7 +15,7 @@ import {
 
 const TODAY = ClientToday.on(
   { on: new Date("2026-10-24T22:30:00.000Z"), timeZone: "Europe/Bucharest" },
-  wallClockCalendarDates,
+  new WallClockCalendarDatesAdapter(),
 );
 
 const COUNTRIES = ClientCountries.of(

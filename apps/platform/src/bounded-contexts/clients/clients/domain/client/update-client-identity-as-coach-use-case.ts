@@ -1,18 +1,18 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import {
   ClientToday,
-  type CalendarDates,
   type ClientCountries,
   type ClientGender,
 } from "./client-details";
-import type { ClientIdentityChanges } from "./client-identity-changes";
+import { type CalendarDatesPort } from "./calendar-dates-port";
+import type { ClientIdentityChangesPort } from "./client-identity-changes-port";
 import {
   ClientIdentityEdit,
   type ClientIdentityProblems,
   type EditableClientIdentity,
 } from "./client-identity-edit";
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 
 type UpdateClientIdentityAsCoachCommand = {
   clientId: string;
@@ -25,10 +25,10 @@ type UpdateClientIdentityAsCoachResult =
   | { status: "invalid"; problems: ClientIdentityProblems };
 
 type UpdateClientIdentityAsCoachUseCaseOptions = {
-  clients: Pick<ClientReach, "findById">;
-  changes: ClientIdentityChanges;
-  calendar: CalendarDates;
-  clock: Clock;
+  clients: Pick<ClientReachPort, "findById">;
+  changes: ClientIdentityChangesPort;
+  calendar: CalendarDatesPort;
+  clock: ClockPort;
   countries: ClientCountries;
 };
 

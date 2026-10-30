@@ -6,7 +6,7 @@ import { DownloadGrant } from "~/bounded-contexts/sales/store/domain/download-gr
 import type {
   ProductAsset,
   ProductAssetOpenResult,
-  ProductAssets,
+  ProductAssetsPort,
 } from "~/bounded-contexts/sales/store/domain/product";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
@@ -42,7 +42,7 @@ describe("ZipDeliveryStream", () => {
     const firstContents = Buffer.from("meal plan");
     const firstStream = Readable.from([firstContents]);
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
-    const store: ProductAssets = {
+    const store: ProductAssetsPort = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -92,7 +92,7 @@ describe("ZipDeliveryStream", () => {
     const secondStream = new PassThrough();
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssets = {
+    const store: ProductAssetsPort = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -136,7 +136,7 @@ describe("ZipDeliveryStream", () => {
     });
     const secondStream = new PassThrough();
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssets = {
+    const store: ProductAssetsPort = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -221,7 +221,7 @@ function releasableBytes(source: Readable): AsyncIterable<Uint8Array> {
   };
 }
 
-function createAssetStore(assets: Map<string, Buffer>): ProductAssets & {
+function createAssetStore(assets: Map<string, Buffer>): ProductAssetsPort & {
   openVerified: ReturnType<typeof vi.fn>;
 } {
   return {

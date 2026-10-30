@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 import { StageExerciseVideoUseCase } from "./stage-exercise-video-use-case";
 
 const STAGED: StagedExerciseVideo = {
@@ -17,7 +17,7 @@ function createUseCase() {
   const store = {
     receive: vi.fn(async (): Promise<StagedExerciseVideo> => STAGED),
     discard: vi.fn(async () => undefined),
-  } satisfies Pick<ExerciseVideoStore, "receive" | "discard">;
+  } satisfies Pick<ExerciseVideoStorePort, "receive" | "discard">;
 
   return { useCase: new StageExerciseVideoUseCase({ store }), store };
 }

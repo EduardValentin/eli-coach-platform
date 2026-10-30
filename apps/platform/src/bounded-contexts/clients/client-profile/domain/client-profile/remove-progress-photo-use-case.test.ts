@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import { ProgressPhoto } from "./progress-photo";
 import type { ProgressPhotoReference } from "./progress-photo-reference";
 import type {
   ProgressPhotoOwner,
-  ProgressPhotoStore,
-} from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
+  ProgressPhotoStorePort,
+} from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
 import { RemoveProgressPhotoUseCase } from "./remove-progress-photo-use-case";
 
 const REFERENCE = { storageKey: "client-1/entry-1/photo-1.bin", keyId: "k1" };
@@ -24,7 +24,7 @@ const PHOTO = ProgressPhoto.reconstitute({
   createdAt: new Date("2026-10-01T08:00:00.000Z"),
 });
 
-class InMemoryProgressPhotos implements ProgressPhotos {
+class InMemoryProgressPhotosAdapter implements ProgressPhotosPort {
   readonly rows = new Map([[PHOTO.toSnapshot().id, PHOTO]]);
 
   async add(photo: ProgressPhoto): Promise<void> {
@@ -40,7 +40,7 @@ class InMemoryProgressPhotos implements ProgressPhotos {
   }
 }
 
-class InMemoryProgressPhotoStore implements ProgressPhotoStore {
+class InMemoryProgressPhotoStoreAdapter implements ProgressPhotoStorePort {
   readonly files = new Map<string, Uint8Array>([
     [REFERENCE.storageKey, new Uint8Array([7])],
   ]);
@@ -68,16 +68,16 @@ function createPorts(requesterClient: { clientId: string } | null) {
   return {
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(requesterClient),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
-    photos: new InMemoryProgressPhotos(),
-    store: new InMemoryProgressPhotoStore(),
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
+    photos: new InMemoryProgressPhotosAdapter(),
+    store: new InMemoryProgressPhotoStoreAdapter(),
     incidents: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
-    } satisfies MeasurementIncidents,
+    } satisfies MeasurementIncidentsPort,
   };
 }
 

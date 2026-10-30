@@ -1,14 +1,14 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { AccountRole } from "./account";
 import type { AccountInvitation } from "./account-invitation";
-import type { AccountInvitations } from "./account-invitations";
-import type { InvitationReferences } from "./invitation-references";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { InvitationReferencesPort } from "./invitation-references-port";
 
 type AccountInvitationGateOptions = {
-  clock: Clock;
-  invitations: Pick<AccountInvitations, "findById" | "accept">;
-  references: InvitationReferences;
+  clock: ClockPort;
+  invitations: Pick<AccountInvitationsPort, "findById" | "accept">;
+  references: InvitationReferencesPort;
 };
 
 export class AccountInvitationGate {

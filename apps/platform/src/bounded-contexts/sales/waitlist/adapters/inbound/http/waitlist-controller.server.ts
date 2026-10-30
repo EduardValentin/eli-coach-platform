@@ -7,7 +7,7 @@ import {
   type Waitlist,
 } from "~/bounded-contexts/sales/waitlist/public/waitlist";
 import {
-  type BotVerifier,
+  type BotVerifierPort,
   resolveRequestRemoteIp,
 } from "~/shared/submission-checks/bot-detection/index.server";
 import type {
@@ -29,7 +29,7 @@ type JoinRequestValidationError = {
 const WAITLIST_ERROR_MESSAGE = "Unable to process waitlist signup.";
 
 type WaitlistControllerOptions = {
-  botVerifier: BotVerifier;
+  botVerifier: BotVerifierPort;
   getWaitlist: GetWaitlistUseCase;
   joinWaitlist: JoinWaitlistUseCase;
 };
@@ -74,7 +74,7 @@ export class WaitlistController {
 }
 
 async function verifyWaitlistSignup(options: {
-  botVerifier: BotVerifier;
+  botVerifier: BotVerifierPort;
   formData: FormData;
   request: Request;
 }): Promise<void> {

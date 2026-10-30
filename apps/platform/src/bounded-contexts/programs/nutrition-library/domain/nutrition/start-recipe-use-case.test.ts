@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Food } from "./food";
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionTag } from "./nutrition-tags-port";
 import { Recipe } from "./recipe";
 import { StartRecipeUseCase } from "./start-recipe-use-case";
 

@@ -1,25 +1,25 @@
 import {
   findCoachingBundle,
-  type PricingEligibility,
+  type PricingEligibilityPort,
 } from "../coaching-bundle";
-import type { EmailAcceptance } from "../email-acceptance";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
 import {
   PaymentLink,
-  type CallSalesStates,
+  type CallSalesStatesPort,
   type CoachingSalesWindow,
-  type EndedCalls,
-  type PaymentLinks,
-  type PaymentLinkTokenHasher,
+  type EndedCallsPort,
+  type PaymentLinksPort,
+  type PaymentLinkTokenHasherPort,
   type SalesCall,
 } from "../payment-link";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { CheckoutSessions } from "./checkout-sessions";
+import type { CheckoutSessionsPort } from "./checkout-sessions-port";
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type StartChoice,
 } from "./coaching-subscription";
-import type { PaymentCheckout } from "./payment-checkout";
+import type { PaymentCheckoutPort } from "./payment-checkout-port";
 
 type StartCheckoutCommand = {
   rawToken: string;
@@ -36,16 +36,16 @@ type StartCheckoutResult =
   | { status: "unknown_bundle" };
 
 type StartCheckoutUseCaseOptions = {
-  calls: EndedCalls;
-  callSalesStates: CallSalesStates;
-  checkoutSessions: CheckoutSessions;
-  clock: Clock;
-  emailAcceptance: EmailAcceptance;
-  paymentCheckout: PaymentCheckout;
-  paymentLinks: PaymentLinks;
-  pricingEligibility: PricingEligibility;
+  calls: EndedCallsPort;
+  callSalesStates: CallSalesStatesPort;
+  checkoutSessions: CheckoutSessionsPort;
+  clock: ClockPort;
+  emailAcceptance: EmailAcceptancePort;
+  paymentCheckout: PaymentCheckoutPort;
+  paymentLinks: PaymentLinksPort;
+  pricingEligibility: PricingEligibilityPort;
   salesWindow: CoachingSalesWindow;
-  tokenHasher: PaymentLinkTokenHasher;
+  tokenHasher: PaymentLinkTokenHasherPort;
 };
 
 type SessionsClearingOutcome = "cleared" | "already_paid";

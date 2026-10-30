@@ -1,12 +1,15 @@
 import type { Exercise } from "./exercise";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReference,
+} from "./exercise-library-port";
 import type { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 
 export type DeleteExerciseResult =
   { status: "deleted"; exercise: Exercise } | { status: "not-found" };
 
 type DeleteExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibrary, "find" | "remove">;
+  library: Pick<ExerciseLibraryPort, "find" | "remove">;
   videos: Pick<ExerciseVideoCleanup, "removeStored">;
 };
 

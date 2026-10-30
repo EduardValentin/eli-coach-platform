@@ -13,7 +13,7 @@ import type {
   AttachProgressPhotosUseCase,
   ProgressPhotoOutcomes,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
-import type { Clock } from "~/bounded-contexts/clients/client-profile/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/clients/client-profile/domain/clock-port";
 import type { UnitPreference } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import {
   createBadRequestResponse,
@@ -51,7 +51,7 @@ import { accessContext } from "~/bounded-contexts/access/public/session";
 type ClientOnboardingControllerOptions = {
   answerOnboardingDetails: AnswerOnboardingDetailsUseCase;
   attachProgressPhotos: AttachProgressPhotosUseCase;
-  clock: Clock;
+  clock: ClockPort;
   readClientOnboarding: ReadClientOnboardingUseCase;
   readOpenDetailRequest: ReadOpenDetailRequestUseCase;
   saveOnboardingDraft: SaveOnboardingDraftUseCase;

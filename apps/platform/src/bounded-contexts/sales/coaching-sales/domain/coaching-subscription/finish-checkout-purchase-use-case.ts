@@ -1,13 +1,13 @@
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaidClientAdmission } from "./paid-client-admission";
-import type { PaymentSubscriptions } from "./payment-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { PaidClientAdmissionPort } from "./paid-client-admission-port";
+import type { PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 import type { PurchasedSubscription } from "./purchased-subscription";
 import type { RecordedCheckoutPurchase } from "./checkout-purchase";
 
 type FinishCheckoutPurchaseUseCaseOptions = {
-  admission: Pick<PaidClientAdmission, "invite">;
-  incidents: CoachingSubscriptionIncidents;
-  paymentSubscriptions: PaymentSubscriptions;
+  admission: Pick<PaidClientAdmissionPort, "invite">;
+  incidents: CoachingSubscriptionIncidentsPort;
+  paymentSubscriptions: PaymentSubscriptionsPort;
 };
 
 export class FinishCheckoutPurchaseUseCase {

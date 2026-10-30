@@ -1,7 +1,7 @@
 import type { WaitlistConfig } from "~/bounded-contexts/sales/waitlist/config.server";
 import type { DatabaseClient } from "~/shared/database";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
-import { InMemoryProductEmail } from "~/shared/email/index.server";
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import { handleHttpErrorResponse } from "~/shared/http/index.server";
 import { describe, expect, it } from "vitest";
 
@@ -38,7 +38,7 @@ describe("composeWaitlistFeature", () => {
       },
       logger: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
       waitlist: createWaitlistConfig(),
     });
 
@@ -60,7 +60,7 @@ describe("composeWaitlistFeature", () => {
       featureFlags: { isOn: async () => false },
       logger: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
       waitlist: createWaitlistConfig(),
     });
 
@@ -83,7 +83,7 @@ describe("composeWaitlistFeature", () => {
       featureFlags: { isOn: async () => false },
       logger: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
       waitlist: createWaitlistConfig(),
     });
 

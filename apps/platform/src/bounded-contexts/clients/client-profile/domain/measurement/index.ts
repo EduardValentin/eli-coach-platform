@@ -1,5 +1,5 @@
 export { waistToHeightRatio } from "./body-metrics";
-export { type ClientMeasurementsSource } from "./client-measurements-source";
+export { type ClientMeasurementsSourcePort } from "./client-measurements-source-port";
 export {
   earliestMeasurementOf,
   latestMeasurementOf,
@@ -7,7 +7,7 @@ export {
   type MeasurementEntry,
   type MeasurementValues,
 } from "./measurement";
-export { type MeasurementIds } from "./measurement-ids";
+export { type MeasurementIdsPort } from "./measurement-ids-port";
 export {
   CIRCUMFERENCE_MEASUREMENT_FIELDS,
   MEASUREMENT_FIELDS,

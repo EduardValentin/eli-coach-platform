@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { wallClockCalendarDates } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates";
+import { WallClockCalendarDatesAdapter } from "~/bounded-contexts/clients/clients/adapters/outbound/clock/wall-clock-calendar-dates-adapter";
 import { ClientCountries } from "~/bounded-contexts/clients/clients/domain/client";
 import { phoneNumbers } from "~/shared/contact/phone-numbers";
 
-import type { ClientIdentities, ClientIdentity } from "./client-identities";
-import type { ClientIdentityChanges } from "./client-identity-changes";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "./client-identities-port";
+import type { ClientIdentityChangesPort } from "./client-identity-changes-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 import { UpdateClientIdentityAsCoachUseCase } from "./update-client-identity-as-coach-use-case";
 import { UpdateOwnClientIdentityUseCase } from "./update-own-client-identity-use-case";
 
@@ -57,18 +60,18 @@ function createPorts(
     clients: {
       findById: vi.fn().mockResolvedValue(reach),
       findByAuthSubjectId: vi.fn().mockResolvedValue(reach),
-    } satisfies ClientReach,
+    } satisfies ClientReachPort,
     identities: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
           stored.identity === undefined ? STORED : stored.identity,
         ),
-    } satisfies Pick<ClientIdentities, "findByClientId">,
+    } satisfies Pick<ClientIdentitiesPort, "findByClientId">,
     changes: {
       save: vi.fn().mockResolvedValue(undefined),
-    } satisfies ClientIdentityChanges,
-    calendar: wallClockCalendarDates,
+    } satisfies ClientIdentityChangesPort,
+    calendar: new WallClockCalendarDatesAdapter(),
     clock: { now: () => NOW },
     countries: ClientCountries.of(
       [

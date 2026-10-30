@@ -1,13 +1,13 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import type { Food } from "./food";
 import {
   FoodDraft,
   type FoodDraftInput,
   type FoodDraftProblems,
 } from "./food-draft";
-import type { FoodLibrary, FoodReference } from "./food-library";
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { NutritionTags } from "./nutrition-tags";
+import type { FoodLibraryPort, FoodReference } from "./food-library-port";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+import type { NutritionTagsPort } from "./nutrition-tags-port";
 
 type EditFoodCommand = FoodReference & {
   draft: FoodDraftInput;
@@ -20,10 +20,10 @@ export type EditFoodResult =
   | { status: "failed" };
 
 type EditFoodUseCaseOptions = {
-  library: Pick<FoodLibrary, "find" | "list" | "replace">;
-  tags: Pick<NutritionTags, "list">;
-  clock: Clock;
-  incidents: Pick<NutritionLibraryIncidents, "foodEditFailed">;
+  library: Pick<FoodLibraryPort, "find" | "list" | "replace">;
+  tags: Pick<NutritionTagsPort, "list">;
+  clock: ClockPort;
+  incidents: Pick<NutritionLibraryIncidentsPort, "foodEditFailed">;
 };
 
 export class EditFoodUseCase {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
+import type { FeatureFlagReaderPort } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import {
   composeBrowserFeatureFlagOverrides,
   composeWithoutFeatureFlagOverrides,
@@ -12,7 +12,7 @@ const request = new Request("https://eli.example/?ff.WAITLIST_MODE=false");
 describe("feature flag overrides composition", () => {
   it("lets a browser override the database flags", async () => {
     // arrange
-    const databaseReader: FeatureFlagReader = {
+    const databaseReader: FeatureFlagReaderPort = {
       execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
     };
     const overrides = composeBrowserFeatureFlagOverrides({
@@ -42,7 +42,7 @@ describe("feature flag overrides composition", () => {
 
   it("ignores override input when overrides are off", async () => {
     // arrange
-    const databaseReader: FeatureFlagReader = {
+    const databaseReader: FeatureFlagReaderPort = {
       execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
     };
     const overrides = composeWithoutFeatureFlagOverrides(databaseReader);

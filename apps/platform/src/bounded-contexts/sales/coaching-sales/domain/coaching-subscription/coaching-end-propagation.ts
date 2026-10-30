@@ -1,10 +1,10 @@
-import type { CoachingEndHandler } from "./coaching-end-handler";
+import type { CoachingEndHandlerPort } from "./coaching-end-handler-port";
 import type { CoachingSubscription } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
 
 type CoachingEndPropagationOptions = {
-  coachingEnds: readonly CoachingEndHandler[];
-  incidents: CoachingSubscriptionIncidents;
+  coachingEnds: readonly CoachingEndHandlerPort[];
+  incidents: CoachingSubscriptionIncidentsPort;
 };
 
 type CoachingEndNotice = {
@@ -35,7 +35,7 @@ export class CoachingEndPropagation {
   }
 
   private async tell(
-    handler: CoachingEndHandler,
+    handler: CoachingEndHandlerPort,
     notice: CoachingEndNotice,
   ): Promise<void> {
     const { clientId, endsAt } = notice;

@@ -1,10 +1,10 @@
-import type { ClientMeasurementRecords } from "./client-measurement-records";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
 import { MeasurementHistory } from "./measurement-history";
 
 type ReadClientMeasurementHistoryCommand = { clientId: string };
 
 type ReadClientMeasurementHistoryUseCaseOptions = {
-  records: ClientMeasurementRecords;
+  records: ClientMeasurementRecordsPort;
 };
 
 export class ReadClientMeasurementHistoryUseCase {

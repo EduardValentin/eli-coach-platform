@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { ApproveCheckInUseCase } from "./approve-check-in-use-case";
 import { CancelCheckInUseCase } from "./cancel-check-in-use-case";
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckInNotifications } from "./check-in-notifications";
-import type { CheckIns, CheckInSettlement } from "./check-ins";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
+import type { CheckInsPort, CheckInSettlement } from "./check-ins-port";
 import { DeclineCheckInUseCase } from "./decline-check-in-use-case";
 import { WithdrawCheckInRequestUseCase } from "./withdraw-check-in-request-use-case";
 
@@ -99,7 +99,7 @@ function createPorts(options?: {
       seriesStopped: false,
       freedReservationIds: [],
     }),
-  } satisfies CheckIns;
+  } satisfies CheckInsPort;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
       options?.client === undefined
@@ -113,10 +113,10 @@ function createPorts(options?: {
           }
         : options.client,
     ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const notifications = {
     requested: vi.fn().mockResolvedValue("sent"),
     withdrawn: vi.fn().mockResolvedValue("sent"),
@@ -129,7 +129,7 @@ function createPorts(options?: {
     seriesSetUp: vi.fn().mockResolvedValue("sent"),
     seriesChanged: vi.fn().mockResolvedValue("sent"),
     seriesStopped: vi.fn().mockResolvedValue("sent"),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
   const now = options?.now ?? NOW;
 
   return {

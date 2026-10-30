@@ -1,16 +1,18 @@
 import type { ProductEmailConfig } from "~/shared/email/product-email-config";
 import { Resend } from "resend";
 
-import { InMemoryProductEmail } from "./in-memory-product-email.server";
-import type { ProductEmail } from "./product-email-contract.server";
-import { ResendProductEmail } from "./resend-product-email.server";
+import { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.server";
+import type { ProductEmailPort } from "./product-email-port.server";
+import { ResendProductEmailAdapter } from "./resend-product-email-adapter.server";
 
-export function createProductEmail(config: ProductEmailConfig): ProductEmail {
+export function createProductEmail(
+  config: ProductEmailConfig,
+): ProductEmailPort {
   if (config.PRODUCT_EMAIL_PROVIDER === "memory") {
-    return new InMemoryProductEmail();
+    return new InMemoryProductEmailAdapter();
   }
 
-  return new ResendProductEmail({
+  return new ResendProductEmailAdapter({
     client: new Resend(config.RESEND_API_KEY),
     fromAddress: config.PRODUCT_EMAIL_FROM_ADDRESS,
     fromName: config.PRODUCT_EMAIL_FROM_NAME,

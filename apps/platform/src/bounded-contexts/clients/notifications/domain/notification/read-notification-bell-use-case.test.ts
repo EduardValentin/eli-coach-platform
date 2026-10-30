@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { Notification } from "./notification";
-import type { NotificationInbox } from "./notification-inbox";
-import type { NotificationIncidents } from "./notification-incidents";
+import type { NotificationInboxPort } from "./notification-inbox-port";
+import type { NotificationIncidentsPort } from "./notification-incidents-port";
 import { ReadNotificationBellUseCase } from "./read-notification-bell-use-case";
 
 const NOW = new Date("2026-10-15T09:00:00.000Z");
@@ -43,7 +43,7 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
     findByAuthSubjectId: vi
       .fn()
       .mockResolvedValue(options?.client === undefined ? ANA : options.client),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
   const inbox = {
     latestFor: vi.fn(async () => {
       calls.push("latestFor");
@@ -53,10 +53,10 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
       calls.push("unreadCountFor");
       return 1;
     }),
-  } satisfies Pick<NotificationInbox, "latestFor" | "unreadCountFor">;
+  } satisfies Pick<NotificationInboxPort, "latestFor" | "unreadCountFor">;
   const incidents = {
     notificationBellReadFailed: vi.fn(),
-  } satisfies NotificationIncidents;
+  } satisfies NotificationIncidentsPort;
   const ports = {
     clients,
     clock: { now: () => NOW },

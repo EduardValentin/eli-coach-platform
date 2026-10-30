@@ -7,13 +7,15 @@ export {
   type StoreTaxonomyValue,
 } from "./product";
 export {
-  type ProductAssetContent,
-  type ProductAssetDigest,
   type ProductAssetOpenResult,
-  type ProductAssets,
-  type ProductAssetWriter,
-} from "./product-assets";
-export { type StoreCatalog } from "./store-catalog";
+  type ProductAssetsPort,
+} from "./product-assets-port";
+export {
+  type ProductAssetContent,
+  type ProductAssetWriterPort,
+} from "./product-asset-writer-port";
+export { type ProductAssetDigestPort } from "./product-asset-digest-port";
+export { type StoreCatalogPort } from "./store-catalog-port";
 export {
   MAX_PUBLICATION_BYTES,
   resolvePublicationTarget,
@@ -29,7 +31,7 @@ export {
   type StoredPublicationRecord,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
-export { type StoreProductPublications } from "./store-product-publications";
+export { type StoreProductPublicationsPort } from "./store-product-publications-port";
 export { ListPublishedProductsUseCase } from "./list-published-products-use-case";
 export { FindPublishedProductUseCase } from "./find-published-product-use-case";
 export { FindPublishedCoverUseCase } from "./find-published-cover-use-case";

@@ -1,27 +1,25 @@
 export { Account, type AccountRole } from "./account";
-export { type AccountIds } from "./account-ids";
-export { type Accounts } from "./accounts";
+export { type AccountIdsPort } from "./account-ids-port";
+export { type AccountsPort } from "./accounts-port";
 export {
   AccountInvitation,
   INVITATION_VALIDITY_DAYS,
   type IdentityInvitation,
 } from "./account-invitation";
 export { AccountInvitationGate } from "./account-invitation-gate";
-export { type AccountInvitationIds } from "./account-invitation-ids";
-export { type AccountInvitationIncidents } from "./account-invitation-incidents";
+export { type AccountInvitationIdsPort } from "./account-invitation-ids-port";
+export { type AccountInvitationIncidentsPort } from "./account-invitation-incidents-port";
 export {
   type AccountInvitationMessage,
-  type AccountInvitationNotifications,
-} from "./account-invitation-notifications";
-export { type AccountInvitations } from "./account-invitations";
+  type AccountInvitationNotificationsPort,
+} from "./account-invitation-notifications-port";
+export { type AccountInvitationsPort } from "./account-invitations-port";
 export { EnsureInvitationDeliveredUseCase } from "./ensure-invitation-delivered-use-case";
 export { FindAcceptedInvitationUseCase } from "./find-accepted-invitation-use-case";
-export { type IdentityInvitations } from "./identity-invitations";
-export { type InvitationReferences } from "./invitation-references";
-export {
-  type InvitationTokenGenerator,
-  type InvitationTokenHasher,
-} from "./invitation-token";
+export { type IdentityInvitationsPort } from "./identity-invitations-port";
+export { type InvitationReferencesPort } from "./invitation-references-port";
+export { type InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
+export { type InvitationTokenHasherPort } from "./invitation-token-hasher-port";
 export { IssueInvitationUseCase } from "./issue-invitation-use-case";
 export {
   ProvisionAccountUseCase,

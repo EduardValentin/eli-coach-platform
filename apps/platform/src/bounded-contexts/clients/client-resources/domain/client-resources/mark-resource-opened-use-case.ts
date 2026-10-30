@@ -1,13 +1,13 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import type { ClientResource } from "./client-resource";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourcesPort } from "./client-resources-port";
 
 type MarkResourceOpenedCommand = {
   requester: ResourceRequester;
@@ -18,10 +18,10 @@ type MarkResourceOpenedResult =
   { status: "opened" } | { status: "not-found" } | { status: "failed" };
 
 type MarkResourceOpenedUseCaseOptions = {
-  resources: ClientResources;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidents;
-  clock: Clock;
+  resources: ClientResourcesPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  incidents: ClientResourceIncidentsPort;
+  clock: ClockPort;
 };
 
 const OPENED: MarkResourceOpenedResult = { status: "opened" };

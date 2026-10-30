@@ -1,4 +1,5 @@
-import type { ProductAssetDigest, ProductAssetWriter } from "./product-assets";
+import type { ProductAssetWriterPort } from "./product-asset-writer-port";
+import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import {
   ProductPublicationDraft,
   type ProductCoverInput,
@@ -8,7 +9,7 @@ import {
   type PublishingPrincipal,
   type PublishProductResult,
 } from "./product-publication";
-import type { StoreProductPublications } from "./store-product-publications";
+import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 export type PublishNewProductCommand = {
   cover: ProductCoverInput;
@@ -22,9 +23,9 @@ export type PublishNewProductCommand = {
 export class PublishNewProductUseCase {
   constructor(
     private readonly options: {
-      assetWriter: ProductAssetWriter;
-      digest: ProductAssetDigest;
-      publications: StoreProductPublications;
+      assetWriter: ProductAssetWriterPort;
+      digest: ProductAssetDigestPort;
+      publications: StoreProductPublicationsPort;
     },
   ) {}
 

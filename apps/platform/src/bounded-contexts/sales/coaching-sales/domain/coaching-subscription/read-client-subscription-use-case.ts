@@ -1,5 +1,5 @@
 import type { CoachingStatus } from "./coaching-standing";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import {
   withdrawalDeadline,
@@ -7,7 +7,7 @@ import {
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
 import type { PaymentCardSnapshot } from "./payment-card";
-import type { PaymentCards } from "./payment-cards";
+import type { PaymentCardsPort } from "./payment-cards-port";
 import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type ClientSubscriptionReading = {
@@ -24,8 +24,8 @@ type ClientSubscriptionReading = {
 };
 
 type ReadClientSubscriptionUseCaseOptions = {
-  cards: PaymentCards;
-  clock: Clock;
+  cards: PaymentCardsPort;
+  clock: ClockPort;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
 };
 

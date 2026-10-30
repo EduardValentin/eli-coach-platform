@@ -1,12 +1,12 @@
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
-import type { PaymentCheckout } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import { InMemoryProductEmail } from "~/shared/email/index.server";
+import type { PaymentCheckoutPort } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
   createTokenHasher,
 } from "~/shared/tokens/link-tokens.server";
-import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/create-payments.server";
+import { PaymentsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payments-adapter.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRequestArgs } from "~/composition-root/test-support/request-args";
@@ -198,7 +198,7 @@ function coachArgs(request: Request) {
 }
 
 async function openCheckoutSession(
-  paymentCheckout: PaymentCheckout,
+  paymentCheckout: PaymentCheckoutPort,
 ): Promise<{ id: string }> {
   const customer = await paymentCheckout.createCustomer({
     email: "ana@example.com",
@@ -230,7 +230,7 @@ async function openCheckoutSession(
 function createHandles(
   featureFlags: Record<string, boolean>,
 ): CoachingSalesFeatureHandles {
-  const payments = createPayments({ PAYMENTS_PROVIDER: "memory" });
+  const payments = new PaymentsAdapter({ PAYMENTS_PROVIDER: "memory" });
 
   return {
     admissions: {
@@ -270,7 +270,7 @@ function createHandles(
       tierForEmail: async () => "regular",
       tiersForEmails: async () => new Map(),
     },
-    productEmail: new InMemoryProductEmail(),
+    productEmail: new InMemoryProductEmailAdapter(),
     publicAppUrl: "https://evoa.fit",
     webhookSigningSecret: "whsec_unit",
   };

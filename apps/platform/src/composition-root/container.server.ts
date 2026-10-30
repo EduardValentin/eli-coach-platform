@@ -40,7 +40,7 @@ import {
 } from "~/bounded-contexts/scheduling/composition.server";
 import { createPlatformDatabase } from "~/composition-root/database.server";
 import { resolveEmailSubaddressPolicy } from "~/composition-root/email-subaddress-policy.server";
-import { createConsoleLogger } from "~/shared/logging/console-logger.server";
+import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.server";
 import {
   composePlatformFeature,
   type PlatformFeature,
@@ -72,7 +72,7 @@ export function createPlatformContainer(options: {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock = systemClock();
-  const logger = createConsoleLogger();
+  const logger = new ConsoleLoggerAdapter();
   const botDetection = createBotDetectionConfig(environment);
   const botVerifier = createBotVerifier(environment);
   const productEmail = createProductEmail(environment);

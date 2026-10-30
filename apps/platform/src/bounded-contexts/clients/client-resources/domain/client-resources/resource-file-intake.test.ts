@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { DetectedResourceFile } from "./resource-file-format-detector";
+import type { DetectedResourceFile } from "./resource-file-format-detector-port";
 import {
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_PAGES,

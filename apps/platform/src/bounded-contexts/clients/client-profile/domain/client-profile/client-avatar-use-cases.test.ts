@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "../client-reach";
+import type { ClientReachPort, ClientReachReading } from "../client-reach-port";
 
 import { ClientAvatar } from "./client-avatar";
-import type { ClientAvatarIds } from "./client-avatar-ids";
-import type { ClientAvatarIncidents } from "./client-avatar-incidents";
+import type { ClientAvatarIdsPort } from "./client-avatar-ids-port";
+import type { ClientAvatarIncidentsPort } from "./client-avatar-incidents-port";
 import type {
   ClientAvatarRendition,
-  ClientAvatarRenditions,
-} from "./client-avatar-renditions";
+  ClientAvatarRenditionsPort,
+} from "./client-avatar-renditions-port";
 import type {
   ClientAvatarOwner,
   ClientAvatarReference,
-  ClientAvatarStore,
-} from "./client-avatar-store";
-import type { ClientAvatars } from "./client-avatars";
+  ClientAvatarStorePort,
+} from "./client-avatar-store-port";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 import { ListClientAvatarsUseCase } from "./list-client-avatars-use-case";
 import { OpenClientAvatarUseCase } from "./open-client-avatar-use-case";
 import { ReadOwnClientAvatarUseCase } from "./read-own-client-avatar-use-case";
@@ -59,7 +59,7 @@ function storedAvatar(avatarId: string, clientId = "client-1"): ClientAvatar {
   });
 }
 
-class InMemoryClientAvatarStore implements ClientAvatarStore {
+class InMemoryClientAvatarStoreAdapter implements ClientAvatarStorePort {
   readonly files = new Map<string, Uint8Array>();
   failDeletes = false;
 
@@ -86,7 +86,7 @@ class InMemoryClientAvatarStore implements ClientAvatarStore {
   }
 }
 
-class InMemoryClientAvatars implements ClientAvatars {
+class InMemoryClientAvatarsAdapter implements ClientAvatarsPort {
   readonly rows = new Map<string, ClientAvatar>();
 
   async findByClientId(clientId: string): Promise<ClientAvatar | null> {
@@ -119,10 +119,10 @@ function createPorts(
     clients: {
       findById: vi.fn().mockResolvedValue(reach),
       findByAuthSubjectId: vi.fn().mockResolvedValue(reach),
-    } satisfies ClientReach,
-    avatars: new InMemoryClientAvatars(),
-    avatarIds: { generate: () => "avatar-2" } satisfies ClientAvatarIds,
-    store: new InMemoryClientAvatarStore(),
+    } satisfies ClientReachPort,
+    avatars: new InMemoryClientAvatarsAdapter(),
+    avatarIds: { generate: () => "avatar-2" } satisfies ClientAvatarIdsPort,
+    store: new InMemoryClientAvatarStoreAdapter(),
     renditions: {
       render: vi.fn().mockResolvedValue(
         options.rendition ?? {
@@ -131,10 +131,10 @@ function createPorts(
           mimeType: "image/jpeg",
         },
       ),
-    } satisfies ClientAvatarRenditions,
+    } satisfies ClientAvatarRenditionsPort,
     incidents: {
       clientAvatarFileOrphaned: vi.fn(),
-    } satisfies ClientAvatarIncidents,
+    } satisfies ClientAvatarIncidentsPort,
     clock: { now: () => UPLOADED_AT },
   };
 }

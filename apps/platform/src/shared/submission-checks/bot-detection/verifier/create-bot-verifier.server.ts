@@ -1,17 +1,19 @@
 import type { BotDetectionSettings } from "~/shared/submission-checks/bot-detection-settings";
 
-import type { BotVerifier } from "./bot-verifier-contract.server";
-import { StaticTokenBotVerifier } from "./bot-verifier.server";
-import { TurnstileBotVerifier } from "~/shared/submission-checks/bot-detection/turnstile/turnstile-bot-verifier.server";
+import type { BotVerifierPort } from "./bot-verifier-port.server";
+import { StaticTokenBotVerifierAdapter } from "./static-token-bot-verifier-adapter.server";
+import { TurnstileBotVerifierAdapter } from "~/shared/submission-checks/bot-detection/turnstile/turnstile-bot-verifier-adapter.server";
 
-export function createBotVerifier(settings: BotDetectionSettings): BotVerifier {
+export function createBotVerifier(
+  settings: BotDetectionSettings,
+): BotVerifierPort {
   if (settings.BOT_DETECTION_PROVIDER === "static") {
-    return new StaticTokenBotVerifier({
+    return new StaticTokenBotVerifierAdapter({
       validToken: settings.TURNSTILE_STATIC_TOKEN,
     });
   }
 
-  return new TurnstileBotVerifier({
+  return new TurnstileBotVerifierAdapter({
     secretKey: settings.TURNSTILE_SECRET_KEY,
     siteverifyUrl: settings.TURNSTILE_SITEVERIFY_URL,
   });

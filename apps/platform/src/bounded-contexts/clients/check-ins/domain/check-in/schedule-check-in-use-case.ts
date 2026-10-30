@@ -1,19 +1,19 @@
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import type { CheckInIds } from "./check-in-ids";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInIdsPort } from "./check-in-ids-port";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import { CheckInNote } from "./check-in-note";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CheckInRequestPlacement } from "./check-in-request-placement";
 import { CheckInTimeZone } from "./check-in-time-zone";
-import type { CheckIns } from "./check-ins";
-import type { CoachTime } from "./coach-time";
-import type { OpenSlots } from "./open-slots";
+import type { CheckInsPort } from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
+import type { OpenSlotsPort } from "./open-slots-port";
 
 export type ScheduleCheckInCommand = {
   clientId: string;
@@ -30,16 +30,16 @@ export type ScheduleCheckInResult =
   | { status: "invalid_time_zone" };
 
 type ScheduleCheckInUseCaseOptions = {
-  checkIns: Pick<CheckIns, "listForClientLocked" | "add">;
-  clients: Pick<ClientReach, "findById">;
-  clock: Clock;
-  coachTime: Pick<CoachTime, "reserve">;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  ids: CheckInIds;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
-  openSlots: Pick<OpenSlots, "coachWeek" | "offersStart">;
+  checkIns: Pick<CheckInsPort, "listForClientLocked" | "add">;
+  clients: Pick<ClientReachPort, "findById">;
+  clock: ClockPort;
+  coachTime: Pick<CoachTimePort, "reserve">;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  ids: CheckInIdsPort;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
+  openSlots: Pick<OpenSlotsPort, "coachWeek" | "offersStart">;
 };
 
 export class ScheduleCheckInUseCase {

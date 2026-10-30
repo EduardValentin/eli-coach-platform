@@ -1,18 +1,18 @@
-import type { ClientIdentities } from "./client-identities";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClockPort } from "../clock-port";
 
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckIns } from "./check-ins";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInsPort } from "./check-ins-port";
 import {
   CoachCheckInViews,
   type CoachCheckInView,
 } from "./coach-check-in-views";
 
 type ListCoachCheckInsAwaitingUseCaseOptions = {
-  checkIns: Pick<CheckIns, "listAll">;
-  clock: Clock;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  incidents: CheckInIncidents;
+  checkIns: Pick<CheckInsPort, "listAll">;
+  clock: ClockPort;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  incidents: CheckInIncidentsPort;
 };
 
 export class ListCoachCheckInsAwaitingUseCase {

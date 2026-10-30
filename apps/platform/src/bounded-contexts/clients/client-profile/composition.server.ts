@@ -1,12 +1,12 @@
 import type { DatabaseClient } from "~/shared/database";
 import type {
-  ClientIdentities,
-  ClientReach,
-  OnboardingStandings,
-  OnboardingSubmissionRecorder,
-  ReviewStampRecorder,
+  ClientIdentitiesPort,
+  ClientReachPort,
+  OnboardingStandingsPort,
+  OnboardingSubmissionRecorderPort,
+  ReviewStampRecorderPort,
 } from "~/bounded-contexts/clients/clients/public";
-import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile";
+import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile-facade";
 import {
   AttachProgressPhotosUseCase,
   ListClientAvatarsUseCase,
@@ -26,52 +26,52 @@ import {
   UpdateOwnClientProfileUseCase,
   UploadClientAvatarAsCoachUseCase,
   UploadOwnClientAvatarUseCase,
-  type ClientAvatarRenditions,
-  type ClientAvatarStore,
-  type ProgressPhotoRenditions,
-  type ProgressPhotoStore,
+  type ClientAvatarRenditionsPort,
+  type ClientAvatarStorePort,
+  type ProgressPhotoRenditionsPort,
+  type ProgressPhotoStorePort,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   ReadOwnClientSettingsUseCase,
   SaveUnitPreferenceUseCase,
-  type ClientSettingsSource,
+  type ClientSettingsSourcePort,
 } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import type {
-  ClientMeasurementsSource,
-  MeasurementIds,
+  ClientMeasurementsSourcePort,
+  MeasurementIdsPort,
 } from "~/bounded-contexts/clients/client-profile/domain/measurement";
-import type { Clock } from "~/bounded-contexts/clients/client-profile/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/clients/client-profile/domain/clock-port";
 import { ClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/avatar/client-avatar-controller.server";
 import { ClientSettingsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-settings-controller.server";
-import { ClientMeasurementsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/measurements-controller.server";
+import { ClientMeasurementsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-measurements-controller.server";
 import { OwnClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/own-client-avatar-controller.server";
 import { OwnClientProfileController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/own-client-profile-controller.server";
 import { ClientProfileController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/coach/client-profile-controller.server";
 import { CoachClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/coach/coach-client-avatar-controller.server";
 import { ProgressPhotoController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/photos/progress-photo-controller.server";
-import { PostgresClientAvatars } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/avatars/client-avatars-repository.server";
-import { RandomClientAvatarIds } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/avatars/random-client-avatar-ids.server";
-import { PostgresClientMeasurementRecords } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/client-measurement-records-repository.server";
+import { PostgresClientAvatarsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/avatars/postgres-client-avatars-repository.server";
+import { RandomClientAvatarIdsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/avatars/random-client-avatar-ids-adapter.server";
+import { PostgresClientMeasurementRecordsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/postgres-client-measurement-records-repository.server";
 import {
-  PostgresClientMeasurements,
+  PostgresClientMeasurementsRepository,
   recordMeasurementEntry,
-} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/client-measurements-repository.server";
-import { RandomMeasurementIds } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/random-measurement-ids.server";
-import { PostgresProgressPhotos } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/client-progress-photos-repository.server";
-import { RandomProgressPhotoIds } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/random-progress-photo-ids.server";
+} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/postgres-client-measurements-repository.server";
+import { RandomMeasurementIdsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/measurements/random-measurement-ids-adapter.server";
+import { PostgresProgressPhotosRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/postgres-progress-photos-repository.server";
+import { RandomProgressPhotoIdsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/photos/random-progress-photo-ids-adapter.server";
 import {
-  PostgresClientProfileOpenings,
+  PostgresClientProfileOpeningsRepository,
   recordPhotoConsent,
   seedCoaching,
-} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/client-profile-writers.server";
-import { createClientProfileFacade } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-profile.server";
-import { ClientsClientIdentities } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/client-identities.server";
-import { ClientsClientReach } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/client-reach.server";
-import { ClientsOnboardingClients } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/onboarding-clients.server";
-import { ClientsReviewStamps } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/review-stamps.server";
-import { ClientsSubmissionStamps } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/submission-stamps.server";
-import { PostgresClientProfiles } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/client-profiles-repository.server";
-import { PostgresClientSettings } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/settings/client-settings-repository.server";
+} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/postgres-client-profile-openings-repository.server";
+import { ClientProfileFacadeAdapter } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-profile-facade-adapter.server";
+import { ClientsClientIdentitiesAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-identities-adapter.server";
+import { ClientsClientReachAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-reach-adapter.server";
+import { ClientsOnboardingClientsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-onboarding-clients-adapter.server";
+import { ClientsReviewStampsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-review-stamps-adapter.server";
+import { ClientsSubmissionStampsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-submission-stamps-adapter.server";
+import { PostgresClientProfilesRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/postgres-client-profiles-repository.server";
+import { PostgresClientSettingsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/settings/postgres-client-settings-repository.server";
 import type {
   ClientProfileFeature,
   ClientOnboardingFeature,
@@ -88,7 +88,7 @@ import {
   SaveOnboardingDraftUseCase,
   SubmitOnboardingUseCase,
 } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
-import type { ProductEmail } from "~/shared/email/index.server";
+import type { ProductEmailPort } from "~/shared/email/index.server";
 import { ClientOnboardingController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/client-onboarding-controller.server";
 import { OnboardingReviewController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/onboarding-review-controller.server";
 import type {
@@ -96,18 +96,16 @@ import type {
   MeasurementEntryWriter,
   PhotoConsentWriter,
 } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/client-profile-writer-ports.server";
-import { PostgresClientOnboardings } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/onboardings/client-onboardings-repository.server";
-import { RandomDetailRequestIds } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/random-detail-request-ids.server";
-import { PostgresOnboardingReviews } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/onboarding-reviews-repository.server";
-import { EmailOnboardingDetailsNotifications } from "~/bounded-contexts/clients/client-profile/adapters/outbound/email/onboarding/email-onboarding-details-notifications.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createClientProfileIncidents } from "~/bounded-contexts/clients/client-profile/adapters/outbound/logging/client-profile-incidents.server";
-import {
-  createClientAvatarStore,
-  createProgressPhotoStore,
-} from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/client-media-stores.server";
-import { createClientAvatarRenditions } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/client-avatar-renditions.server";
-import { createProgressPhotoRenditions } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/progress-photo-renditions.server";
+import { PostgresClientOnboardingsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/onboardings/postgres-client-onboardings-repository.server";
+import { RandomDetailRequestIdsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/random-detail-request-ids-adapter.server";
+import { PostgresOnboardingReviewsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/postgres-onboarding-reviews-repository.server";
+import { EmailOnboardingDetailsNotificationsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/email/onboarding/email-onboarding-details-notifications-adapter.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { ClientProfileIncidentsAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/logging/client-profile-incidents-adapter.server";
+import { createClientAvatarStoreAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/create-client-avatar-store-adapter.server";
+import { createProgressPhotoStoreAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/create-progress-photo-store-adapter.server";
+import { createClientAvatarRenditionsAdapter } from "./adapters/outbound/persistence/create-client-avatar-renditions-adapter.server";
+import { createProgressPhotoRenditionsAdapter } from "./adapters/outbound/persistence/create-progress-photo-renditions-adapter.server";
 import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
 
 type ClientProfileComposition = {
@@ -115,9 +113,9 @@ type ClientProfileComposition = {
   feature: ClientProfileFeature;
   handles: {
     attachProgressPhotos: AttachProgressPhotosUseCase;
-    clientSettings: ClientSettingsSource;
-    measurementIds: MeasurementIds;
-    measurements: ClientMeasurementsSource;
+    clientSettings: ClientSettingsSourcePort;
+    measurementIds: MeasurementIdsPort;
+    measurements: ClientMeasurementsSourcePort;
     recordMeasurementEntry: MeasurementEntryWriter;
     recordPhotoConsent: PhotoConsentWriter;
     seedCoaching: CoachingSeedWriter;
@@ -125,33 +123,37 @@ type ClientProfileComposition = {
 };
 
 type ClientMedia = {
-  clientAvatarRenditions: ClientAvatarRenditions;
-  clientAvatarStore: ClientAvatarStore;
-  progressPhotoRenditions: ProgressPhotoRenditions;
-  progressPhotoStore: ProgressPhotoStore;
+  clientAvatarRenditions: ClientAvatarRenditionsPort;
+  clientAvatarStore: ClientAvatarStorePort;
+  progressPhotoRenditions: ProgressPhotoRenditionsPort;
+  progressPhotoStore: ProgressPhotoStorePort;
 };
 
 type ClientProfileFeatureHandles = ClientMedia & {
-  clientIdentities: ClientIdentities;
-  clientReach: ClientReach;
-  clock: Clock;
+  clientIdentities: ClientIdentitiesPort;
+  clientReach: ClientReachPort;
+  clock: ClockPort;
   database: DatabaseClient;
-  logger: Logger;
+  logger: LoggerPort;
 };
 
 export function composeClientProfileFeature(
   handles: ClientProfileFeatureHandles,
 ): ClientProfileComposition {
   const { clock } = handles;
-  const incidents = createClientProfileIncidents(handles.logger);
-  const clientReach = new ClientsClientReach(handles.clientReach);
-  const avatars = new PostgresClientAvatars(handles.database);
-  const measurements = new PostgresClientMeasurements(handles.database);
-  const records = new PostgresClientMeasurementRecords(handles.database);
-  const photos = new PostgresProgressPhotos(handles.database);
-  const profiles = new PostgresClientProfiles(handles.database);
-  const settings = new PostgresClientSettings(handles.database);
-  const measurementIds = new RandomMeasurementIds();
+  const incidents = new ClientProfileIncidentsAdapter(handles.logger);
+  const clientReach = new ClientsClientReachAdapter(handles.clientReach);
+  const avatars = new PostgresClientAvatarsRepository(handles.database);
+  const measurements = new PostgresClientMeasurementsRepository(
+    handles.database,
+  );
+  const records = new PostgresClientMeasurementRecordsRepository(
+    handles.database,
+  );
+  const photos = new PostgresProgressPhotosRepository(handles.database);
+  const profiles = new PostgresClientProfilesRepository(handles.database);
+  const settings = new PostgresClientSettingsRepository(handles.database);
+  const measurementIds = new RandomMeasurementIdsAdapter();
   const progressPhotoPorts = {
     clients: clientReach,
     photos,
@@ -160,21 +162,21 @@ export function composeClientProfileFeature(
   };
   const photoIntakePorts = {
     ...progressPhotoPorts,
-    photoIds: new RandomProgressPhotoIds(),
+    photoIds: new RandomProgressPhotoIdsAdapter(),
     renditions: handles.progressPhotoRenditions,
     clock,
   };
   const avatarPorts = {
     clients: clientReach,
     avatars,
-    avatarIds: new RandomClientAvatarIds(),
+    avatarIds: new RandomClientAvatarIdsAdapter(),
     store: handles.clientAvatarStore,
     renditions: handles.clientAvatarRenditions,
     incidents,
     clock,
   };
   const profileReadingPorts = {
-    identities: new ClientsClientIdentities(handles.clientIdentities),
+    identities: new ClientsClientIdentitiesAdapter(handles.clientIdentities),
     profiles,
     settings,
     avatars,
@@ -183,9 +185,11 @@ export function composeClientProfileFeature(
 
   return {
     facades: {
-      clientProfile: createClientProfileFacade(
+      clientProfile: new ClientProfileFacadeAdapter(
         new OpenClientProfileUseCase({
-          openings: new PostgresClientProfileOpenings(handles.database),
+          openings: new PostgresClientProfileOpeningsRepository(
+            handles.database,
+          ),
         }),
       ),
     },
@@ -280,21 +284,21 @@ export function composeClientProfileFeature(
 type ClientOnboardingFeatureHandles = {
   appBasePath: string;
   attachProgressPhotos: AttachProgressPhotosUseCase;
-  clientIdentities: ClientIdentities;
-  clientSettings: ClientSettingsSource;
-  clock: Clock;
+  clientIdentities: ClientIdentitiesPort;
+  clientSettings: ClientSettingsSourcePort;
+  clock: ClockPort;
   contactEmail: string;
   database: DatabaseClient;
-  logger: Logger;
-  measurementIds: MeasurementIds;
-  measurements: ClientMeasurementsSource;
-  onboardingStandings: OnboardingStandings;
-  onboardingSubmissions: OnboardingSubmissionRecorder;
-  productEmail: ProductEmail;
+  logger: LoggerPort;
+  measurementIds: MeasurementIdsPort;
+  measurements: ClientMeasurementsSourcePort;
+  onboardingStandings: OnboardingStandingsPort;
+  onboardingSubmissions: OnboardingSubmissionRecorderPort;
+  productEmail: ProductEmailPort;
   publicAppUrl: string;
   recordMeasurementEntry: MeasurementEntryWriter;
   recordPhotoConsent: PhotoConsentWriter;
-  reviewStampRecorder: ReviewStampRecorder;
+  reviewStampRecorder: ReviewStampRecorderPort;
   seedCoaching: CoachingSeedWriter;
 };
 
@@ -302,18 +306,20 @@ export function composeClientOnboardingFeature(
   handles: ClientOnboardingFeatureHandles,
 ): ClientOnboardingFeature {
   const { clock } = handles;
-  const incidents = createClientProfileIncidents(handles.logger);
-  const reviewStamps = new ClientsReviewStamps(handles.reviewStampRecorder);
+  const incidents = new ClientProfileIncidentsAdapter(handles.logger);
+  const reviewStamps = new ClientsReviewStampsAdapter(
+    handles.reviewStampRecorder,
+  );
   const participants = new OnboardingParticipants({
-    clients: new ClientsOnboardingClients(handles.onboardingStandings),
-    identities: new ClientsClientIdentities(handles.clientIdentities),
+    clients: new ClientsOnboardingClientsAdapter(handles.onboardingStandings),
+    identities: new ClientsClientIdentitiesAdapter(handles.clientIdentities),
   });
-  const onboardings = new PostgresClientOnboardings({
+  const onboardings = new PostgresClientOnboardingsRepository({
     database: handles.database,
     measurementEntryWriter: handles.recordMeasurementEntry,
     photoConsentWriter: handles.recordPhotoConsent,
   });
-  const reviews = new PostgresOnboardingReviews({
+  const reviews = new PostgresOnboardingReviewsRepository({
     database: handles.database,
     reviewStamps,
     coachingSeedWriter: handles.seedCoaching,
@@ -353,7 +359,9 @@ export function composeClientOnboardingFeature(
         measurementIds: handles.measurementIds,
         onboardings,
         participants,
-        stamps: new ClientsSubmissionStamps(handles.onboardingSubmissions),
+        stamps: new ClientsSubmissionStampsAdapter(
+          handles.onboardingSubmissions,
+        ),
         settings: handles.clientSettings,
       }),
     }),
@@ -373,7 +381,7 @@ export function composeClientOnboardingFeature(
       requestOnboardingDetails: new RequestOnboardingDetailsUseCase({
         ...reviewPorts,
         clock,
-        notifications: new EmailOnboardingDetailsNotifications(
+        notifications: new EmailOnboardingDetailsNotificationsAdapter(
           handles.productEmail,
           {
             appBasePath: handles.appBasePath,
@@ -382,7 +390,7 @@ export function composeClientOnboardingFeature(
             publicAppUrl: handles.publicAppUrl,
           },
         ),
-        ids: new RandomDetailRequestIds(),
+        ids: new RandomDetailRequestIdsAdapter(),
       }),
     }),
   };
@@ -390,9 +398,9 @@ export function composeClientOnboardingFeature(
 
 export function composeClientMedia(config: ClientFilesConfig): ClientMedia {
   return {
-    clientAvatarRenditions: createClientAvatarRenditions(),
-    clientAvatarStore: createClientAvatarStore(config),
-    progressPhotoRenditions: createProgressPhotoRenditions(),
-    progressPhotoStore: createProgressPhotoStore(config),
+    clientAvatarRenditions: createClientAvatarRenditionsAdapter(),
+    clientAvatarStore: createClientAvatarStoreAdapter(config),
+    progressPhotoRenditions: createProgressPhotoRenditionsAdapter(),
+    progressPhotoStore: createProgressPhotoStoreAdapter(config),
   };
 }

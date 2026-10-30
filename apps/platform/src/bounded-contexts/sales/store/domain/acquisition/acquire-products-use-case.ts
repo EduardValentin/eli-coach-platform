@@ -1,6 +1,6 @@
-import type { PublishedProduct, StoreCatalog } from "../product";
-import type { Clock } from "../clock";
-import type { EmailAcceptance } from "../email-acceptance";
+import type { PublishedProduct, StoreCatalogPort } from "../product";
+import type { ClockPort } from "../clock-port";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
 
 import {
   AcquisitionRequest,
@@ -8,18 +8,18 @@ import {
   type AcquireProductsCommand,
   type StoreDeliveryLimitWindow,
 } from "./acquisition";
-import type { AcquisitionIncidents } from "./acquisition-incidents";
-import type { ConsentVersions } from "./consent-versions";
+import type { AcquisitionIncidentsPort } from "./acquisition-incidents-port";
+import type { ConsentVersionsPort } from "./consent-versions-port";
 import type {
-  DownloadTokenGenerator,
-  PayloadDigestGenerator,
-  ProductDelivery,
+  ProductDeliveryPort,
   ProductDeliveryResult,
-} from "./product-delivery";
+} from "./product-delivery-port";
+import type { PayloadDigestGeneratorPort } from "./payload-digest-generator-port";
+import type { DownloadTokenGeneratorPort } from "./download-token-generator-port";
 import type {
   ResolvedPriorAcquisition,
-  StoreAcquisitions,
-} from "./store-acquisitions";
+  StoreAcquisitionsPort,
+} from "./store-acquisitions-port";
 
 export type AcquireProductsResult =
   | { status: "delivered" }
@@ -37,15 +37,15 @@ export type AcquireProductsResult =
     };
 
 type AcquireProductsUseCaseOptions = {
-  acquisitions: StoreAcquisitions;
-  catalog: StoreCatalog;
-  clock: Clock;
-  consentVersions: ConsentVersions;
-  delivery: ProductDelivery;
-  emailAcceptance: EmailAcceptance;
-  incidents: AcquisitionIncidents;
-  payloadDigestGenerator: PayloadDigestGenerator;
-  tokenGenerator: DownloadTokenGenerator;
+  acquisitions: StoreAcquisitionsPort;
+  catalog: StoreCatalogPort;
+  clock: ClockPort;
+  consentVersions: ConsentVersionsPort;
+  delivery: ProductDeliveryPort;
+  emailAcceptance: EmailAcceptancePort;
+  incidents: AcquisitionIncidentsPort;
+  payloadDigestGenerator: PayloadDigestGeneratorPort;
+  tokenGenerator: DownloadTokenGeneratorPort;
 };
 
 export class AcquireProductsUseCase {
@@ -267,7 +267,7 @@ export class AcquireProductsUseCase {
   }
 }
 
-type ProductDeliveryCommand = Parameters<ProductDelivery["deliver"]>[0];
+type ProductDeliveryCommand = Parameters<ProductDeliveryPort["deliver"]>[0];
 
 type AuditedProductDeliveryCommand = ProductDeliveryCommand & {
   deliveryAttemptId: number;

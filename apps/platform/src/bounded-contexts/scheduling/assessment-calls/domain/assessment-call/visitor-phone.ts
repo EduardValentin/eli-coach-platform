@@ -1,4 +1,4 @@
-import type { PhoneNumbers } from "./phone-numbers";
+import type { PhoneNumbersPort } from "./phone-numbers-port";
 
 export type VisitorPhoneParts = { callingCode: string; nationalNumber: string };
 
@@ -14,7 +14,7 @@ export class VisitorPhone {
 
   static read(
     parts: VisitorPhoneParts,
-    phoneNumbers: PhoneNumbers,
+    phoneNumbers: PhoneNumbersPort,
   ): VisitorPhoneReading {
     const reading = phoneNumbers.normalize(parts);
 

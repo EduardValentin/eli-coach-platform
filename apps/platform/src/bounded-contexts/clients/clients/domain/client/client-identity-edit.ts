@@ -3,10 +3,10 @@ import {
   type ClientCountries,
   type ClientGender,
   type ClientPhoneEntry,
-  type ClientPhoneReading,
   type ClientToday,
 } from "./client-details";
-import type { ClientIdentity } from "./client-identities";
+import { type ClientPhoneReading } from "./client-phone-reading";
+import type { ClientIdentity } from "./client-identities-port";
 
 export type ClientIdentityEditSnapshot = Omit<ClientIdentity, "email">;
 

@@ -1,8 +1,8 @@
-import type { FoodLibrary } from "./food-library";
-import type { NutritionTag, NutritionTags } from "./nutrition-tags";
+import type { FoodLibraryPort } from "./food-library-port";
+import type { NutritionTag, NutritionTagsPort } from "./nutrition-tags-port";
 import type { PickableFoods } from "./pickable-foods";
 import type { Recipe } from "./recipe";
-import type { RecipeLibrary, RecipeReference } from "./recipe-library";
+import type { RecipeLibraryPort, RecipeReference } from "./recipe-library-port";
 
 export type FindRecipeResult =
   | {
@@ -15,9 +15,9 @@ export type FindRecipeResult =
   | { status: "not-found" };
 
 type FindRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibrary, "list">;
-  foods: Pick<FoodLibrary, "list" | "referenced">;
-  tags: Pick<NutritionTags, "list">;
+  recipes: Pick<RecipeLibraryPort, "list">;
+  foods: Pick<FoodLibraryPort, "list" | "referenced">;
+  tags: Pick<NutritionTagsPort, "list">;
 };
 
 export class FindRecipeUseCase {

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import { ExerciseVideo } from "./exercise-video";
 import { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 
 const VIDEO_ID = "9c1b0000-0000-4000-8000-000000000001";
 
@@ -20,10 +20,10 @@ function createCleanup() {
   const store = {
     discard: vi.fn(async (_stagingId: string) => undefined),
     remove: vi.fn(async (_videoId: string) => undefined),
-  } satisfies Pick<ExerciseVideoStore, "discard" | "remove">;
+  } satisfies Pick<ExerciseVideoStorePort, "discard" | "remove">;
   const incidents = {
     videoCleanupFailed: vi.fn(),
-  } satisfies Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
+  } satisfies Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
   const cleanup = new ExerciseVideoCleanup({ store, incidents });
 
   return { cleanup, store, incidents };

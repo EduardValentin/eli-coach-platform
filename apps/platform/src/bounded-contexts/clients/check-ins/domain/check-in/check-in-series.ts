@@ -5,7 +5,7 @@ import {
   CheckInSeriesRule,
   type CheckInSeriesRuleSnapshot,
 } from "./check-in-series-rule";
-import type { CoachTimeSpan } from "./coach-time";
+import type { CoachTimeSpan } from "./coach-time-port";
 import type { Weekday } from "./weekdays";
 
 export type CheckInSeriesSnapshot = CheckInSeriesRuleSnapshot & {

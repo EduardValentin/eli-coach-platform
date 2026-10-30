@@ -1,9 +1,9 @@
 import type { AccountRole } from "../account-role";
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import type { ClientAvatar } from "./client-avatar";
-import type { ClientAvatarStore } from "./client-avatar-store";
-import type { ClientAvatars } from "./client-avatars";
+import type { ClientAvatarStorePort } from "./client-avatar-store-port";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 
 type ClientAvatarRequester = {
   role: AccountRole;
@@ -20,9 +20,9 @@ type OpenClientAvatarResult =
   | { status: "not-found" };
 
 type OpenClientAvatarUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  avatars: Pick<ClientAvatars, "findByClientId">;
-  store: Pick<ClientAvatarStore, "open">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  avatars: Pick<ClientAvatarsPort, "findByClientId">;
+  store: Pick<ClientAvatarStorePort, "open">;
 };
 
 export class OpenClientAvatarUseCase {

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { AccountInvitation } from "./account-invitation";
-import type { AccountInvitationIncidents } from "./account-invitation-incidents";
-import type { AccountInvitationNotifications } from "./account-invitation-notifications";
-import type { AccountInvitations } from "./account-invitations";
-import type { IdentityInvitations } from "./identity-invitations";
-import type { InvitationTokenGenerator } from "./invitation-token";
+import type { AccountInvitationIncidentsPort } from "./account-invitation-incidents-port";
+import type { AccountInvitationNotificationsPort } from "./account-invitation-notifications-port";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { IdentityInvitationsPort } from "./identity-invitations-port";
+import type { InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
 import { ResendInvitationUseCase } from "./resend-invitation-use-case";
 
 const NOW = new Date("2026-10-05T10:00:00.000Z");
@@ -50,7 +50,7 @@ function createInvitations(found: AccountInvitation | null) {
     recordEmailSent: vi.fn().mockResolvedValue(undefined),
     recordEmailDeliveryFailed: vi.fn().mockResolvedValue(undefined),
     accept: vi.fn().mockResolvedValue("accepted"),
-  } satisfies AccountInvitations;
+  } satisfies AccountInvitationsPort;
 }
 
 function resendDependencies(
@@ -64,12 +64,12 @@ function resendDependencies(
     identity: {
       create: vi.fn().mockResolvedValue(FRESH_PROVIDER),
       replace: vi.fn().mockResolvedValue(FRESH_PROVIDER),
-    } satisfies IdentityInvitations,
+    } satisfies IdentityInvitationsPort,
     incidents: {
       invitationEmailFailed: vi.fn(),
       invitationResent: vi.fn(),
       invitationResendFailed: vi.fn(),
-    } satisfies AccountInvitationIncidents,
+    } satisfies AccountInvitationIncidentsPort,
     invitations: createInvitations(
       overrides.invitation === undefined
         ? sentInvitation()
@@ -77,12 +77,12 @@ function resendDependencies(
     ),
     notifications: {
       sendInvitation: vi.fn().mockResolvedValue(overrides.delivery ?? "sent"),
-    } satisfies AccountInvitationNotifications,
+    } satisfies AccountInvitationNotificationsPort,
     tokenGenerator: {
       create: vi
         .fn()
         .mockReturnValue({ rawToken: RAW_TOKEN, sha256: FRESH_TOKEN_HASH }),
-    } satisfies InvitationTokenGenerator,
+    } satisfies InvitationTokenGeneratorPort,
   };
 }
 

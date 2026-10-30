@@ -10,49 +10,49 @@ import {
   OpenResourcePreviewUseCase,
   RemoveClientResourceUseCase,
   RESOURCE_RENDITIONS,
-  type ClientResourceStore,
-  type ResourceDocumentPages,
-  type ResourceFileFormatDetector,
-  type ResourceImagePages,
+  type ClientResourceStorePort,
+  type ResourceDocumentPagesPort,
+  type ResourceFileFormatDetectorPort,
+  type ResourceImagePagesPort,
 } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
-import type { ClientReach } from "~/bounded-contexts/clients/clients/public";
-import type { Clock } from "~/bounded-contexts/clients/client-resources/domain/clock";
+import type { ClientReachPort } from "~/bounded-contexts/clients/clients/public";
+import type { ClockPort } from "~/bounded-contexts/clients/client-resources/domain/clock-port";
 
 import { OwnResourcesController } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/client/own-resources-controller.server";
 import { CoachResourcesController } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/coach/coach-resources-controller.server";
 import { ClientResourcesController } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/resources/client-resources-controller.server";
-import { PostgresClientResources } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/client-resources-repository.server";
-import { RandomClientResourceIds } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/random-client-resource-ids.server";
-import { ClientsClientReach } from "~/bounded-contexts/clients/client-resources/adapters/outbound/clients/client-reach.server";
+import { PostgresClientResourcesRepository } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/postgres-client-resources-repository.server";
+import { RandomClientResourceIdsAdapter } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/random-client-resource-ids-adapter.server";
+import { ClientsClientReachAdapter } from "~/bounded-contexts/clients/client-resources/adapters/outbound/clients/clients-client-reach-adapter.server";
 import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createClientResourcesIncidents } from "~/bounded-contexts/clients/client-resources/adapters/outbound/logging/client-resources-incidents.server";
-import { createClientResourceStore } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/client-resource-store.server";
-import { createResourceDocumentPages } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resource-document-pages.server";
-import { createResourceFileFormatDetector } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resource-file-format-detector.server";
-import { createResourceImagePages } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resource-image-pages.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { ClientResourcesIncidentsAdapter } from "~/bounded-contexts/clients/client-resources/adapters/outbound/logging/client-resources-incidents-adapter.server";
+import { createClientResourceStoreAdapter } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/create-client-resource-store-adapter.server";
+import { createResourceDocumentPagesAdapter } from "./adapters/outbound/persistence/create-resource-document-pages-adapter.server";
+import { createResourceFileFormatDetectorAdapter } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/create-resource-file-format-detector-adapter.server";
+import { createResourceImagePagesAdapter } from "./adapters/outbound/persistence/create-resource-image-pages-adapter.server";
 
 type ResourceFiles = {
-  documentPages: ResourceDocumentPages;
-  fileFormats: ResourceFileFormatDetector;
-  imagePages: ResourceImagePages;
-  store: ClientResourceStore;
+  documentPages: ResourceDocumentPagesPort;
+  fileFormats: ResourceFileFormatDetectorPort;
+  imagePages: ResourceImagePagesPort;
+  store: ClientResourceStorePort;
 };
 
 type ClientResourcesFeatureHandles = ResourceFiles & {
-  clientReach: ClientReach;
-  clock: Clock;
+  clientReach: ClientReachPort;
+  clock: ClockPort;
   database: DatabaseClient;
-  logger: Logger;
+  logger: LoggerPort;
 };
 
 export function composeClientResourcesFeature(
   handles: ClientResourcesFeatureHandles,
 ): ClientResourcesFeature {
-  const incidents = createClientResourcesIncidents(handles.logger);
+  const incidents = new ClientResourcesIncidentsAdapter(handles.logger);
   const accessPorts = {
-    resources: new PostgresClientResources(handles.database),
-    clients: new ClientsClientReach(handles.clientReach),
+    resources: new PostgresClientResourcesRepository(handles.database),
+    clients: new ClientsClientReachAdapter(handles.clientReach),
     incidents,
   };
   const servingPorts = { ...accessPorts, store: handles.store };
@@ -61,7 +61,7 @@ export function composeClientResourcesFeature(
     clientResources: new ClientResourcesController({
       addClientResource: new AddClientResourceUseCase({
         ...servingPorts,
-        resourceIds: new RandomClientResourceIds(),
+        resourceIds: new RandomClientResourceIdsAdapter(),
         documentPages: handles.documentPages,
         imagePages: handles.imagePages,
         fileFormats: handles.fileFormats,
@@ -91,12 +91,12 @@ export function composeResourceFiles(locations: {
   resourceRoot: string;
 }): ResourceFiles {
   return {
-    documentPages: createResourceDocumentPages({
+    documentPages: createResourceDocumentPagesAdapter({
       workerUrl: locations.documentPagesWorkerUrl,
       renditions: RESOURCE_RENDITIONS,
     }),
-    fileFormats: createResourceFileFormatDetector(),
-    imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
-    store: createClientResourceStore(locations.resourceRoot),
+    fileFormats: createResourceFileFormatDetectorAdapter(),
+    imagePages: createResourceImagePagesAdapter(RESOURCE_RENDITIONS),
+    store: createClientResourceStoreAdapter(locations.resourceRoot),
   };
 }

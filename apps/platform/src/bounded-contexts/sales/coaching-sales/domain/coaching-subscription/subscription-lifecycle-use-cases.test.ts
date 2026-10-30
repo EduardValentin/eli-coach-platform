@@ -1,23 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
-import type { ClientLookup, SubscribedClient } from "./client-lookup";
-import type { CoachingEndHandler } from "./coaching-end-handler";
-import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import type { ClientLookupPort, SubscribedClient } from "./client-lookup-port";
+import type { CoachingEndHandlerPort } from "./coaching-end-handler-port";
+import type { CoachingPeriodHandlerPort } from "./coaching-period-handler-port";
 import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import { OpenPaymentMethodSessionUseCase } from "./open-payment-method-session-use-case";
 import { PaymentCard } from "./payment-card";
-import type { PaymentCards } from "./payment-cards";
-import type { PaymentSubscriptions } from "./payment-subscriptions";
+import type { PaymentCardsPort } from "./payment-cards-port";
+import type { PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 import { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-case";
 import { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
 import { RefundDue } from "./refund-due";
-import type { RefundNotifications } from "./refund-notifications";
+import type { RefundNotificationsPort } from "./refund-notifications-port";
 import { SignedInSubscriptions } from "./signed-in-subscriptions";
 import { StartProgramNowUseCase } from "./start-program-now-use-case";
 import type { SubscriptionEvent } from "./subscription-event";
@@ -77,7 +77,7 @@ function createSubscriptions(found: CoachingSubscription | null) {
     findByPaymentIntentId: vi.fn().mockResolvedValue(found),
     save: vi.fn().mockResolvedValue("saved"),
     saveForEvent: vi.fn().mockResolvedValue("recorded"),
-  } satisfies CoachingSubscriptions;
+  } satisfies CoachingSubscriptionsPort;
 }
 
 function createCards(stored: PaymentCard | null) {
@@ -85,7 +85,7 @@ function createCards(stored: PaymentCard | null) {
     findByPaymentCustomerId: vi.fn().mockResolvedValue(stored),
     save: vi.fn().mockResolvedValue("saved"),
     saveForEvent: vi.fn().mockResolvedValue("recorded"),
-  } satisfies PaymentCards;
+  } satisfies PaymentCardsPort;
 }
 
 function createPaymentSubscriptions() {
@@ -97,7 +97,7 @@ function createPaymentSubscriptions() {
     openPaymentMethodSession: vi
       .fn()
       .mockResolvedValue({ url: "https://billing.example/session" }),
-  } satisfies PaymentSubscriptions;
+  } satisfies PaymentSubscriptionsPort;
 }
 
 function createIncidents() {
@@ -117,13 +117,13 @@ function createIncidents() {
     coachingEndNotPropagated: vi.fn(),
     coachingPeriodNotPropagated: vi.fn(),
     renewalHoldLiftFailed: vi.fn(),
-  } satisfies CoachingSubscriptionIncidents;
+  } satisfies CoachingSubscriptionIncidentsPort;
 }
 
 function createNotifications() {
   return {
     notifyRefundDue: vi.fn().mockResolvedValue("sent"),
-  } satisfies RefundNotifications;
+  } satisfies RefundNotificationsPort;
 }
 
 const ana: SubscribedClient = {
@@ -136,7 +136,7 @@ const ana: SubscribedClient = {
 function createClients(found: SubscribedClient | null = ana) {
   return {
     identityOf: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<ClientLookup, "identityOf">;
+  } satisfies Pick<ClientLookupPort, "identityOf">;
 }
 
 const anaReach = { clientId: CLIENT_ID };
@@ -144,7 +144,7 @@ const anaReach = { clientId: CLIENT_ID };
 function createClientReach(found: { clientId: string } | null = anaReach) {
   return {
     clientIdOf: vi.fn().mockResolvedValue(found?.clientId ?? null),
-  } satisfies Pick<ClientLookup, "clientIdOf">;
+  } satisfies Pick<ClientLookupPort, "clientIdOf">;
 }
 
 function signedInOf(
@@ -157,14 +157,14 @@ function signedInOf(
 function createCoachingEnd() {
   return {
     coachingEnds: vi.fn().mockResolvedValue(undefined),
-  } satisfies CoachingEndHandler;
+  } satisfies CoachingEndHandlerPort;
 }
 
 function createCoachingPeriod() {
   return {
     paidThroughExtended: vi.fn().mockResolvedValue(undefined),
     programStarted: vi.fn().mockResolvedValue(undefined),
-  } satisfies CoachingPeriodHandler;
+  } satisfies CoachingPeriodHandlerPort;
 }
 
 function cancelUseCase(options: {

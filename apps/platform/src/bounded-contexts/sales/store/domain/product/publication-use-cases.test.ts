@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { PlanNewProductUseCase } from "./plan-new-product-use-case";
 import { PlanProductRevisionUseCase } from "./plan-product-revision-use-case";
 import { Product } from "./product";
-import type { ProductAssetDigest, ProductAssetWriter } from "./product-assets";
+import type { ProductAssetWriterPort } from "./product-asset-writer-port";
+import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import type {
   ProductCoverInput,
   ProductDownloadInput,
@@ -13,7 +14,7 @@ import type {
 import { PublishNewProductUseCase } from "./publish-new-product-use-case";
 import { PublishProductVersionUseCase } from "./publish-product-version-use-case";
 import { RetireProductUseCase } from "./retire-product-use-case";
-import type { StoreProductPublications } from "./store-product-publications";
+import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PNG_BYTES = Uint8Array.from([
@@ -62,17 +63,17 @@ function existingProduct(
   });
 }
 
-function createDigest(): ProductAssetDigest {
+function createDigest(): ProductAssetDigestPort {
   return { sha256: (bytes) => `sha-${bytes.byteLength}` };
 }
 
-function createWriter(): ProductAssetWriter {
+function createWriter(): ProductAssetWriterPort {
   return { write: vi.fn().mockResolvedValue(undefined) };
 }
 
 function createPublications(
-  overrides: Partial<StoreProductPublications> = {},
-): StoreProductPublications {
+  overrides: Partial<StoreProductPublicationsPort> = {},
+): StoreProductPublicationsPort {
   return {
     findProductById: vi.fn().mockResolvedValue(existingProduct()),
     findProductBySlug: vi.fn().mockResolvedValue(null),
@@ -95,8 +96,8 @@ function createPublications(
 }
 
 function createOptions(
-  overrides: Partial<StoreProductPublications> = {},
-  writer: ProductAssetWriter = createWriter(),
+  overrides: Partial<StoreProductPublicationsPort> = {},
+  writer: ProductAssetWriterPort = createWriter(),
 ) {
   const publications = createPublications(overrides);
   const planOptions = { digest: createDigest(), publications };
@@ -359,7 +360,7 @@ describe("PublishNewProductUseCase", () => {
     // arrange
     const writer = {
       write: vi.fn().mockRejectedValue(new Error("disk full")),
-    } satisfies ProductAssetWriter;
+    } satisfies ProductAssetWriterPort;
     const { options, publications } = createOptions({}, writer);
 
     // act

@@ -1,12 +1,12 @@
-import type { AccountInvitations } from "./account-invitations";
-import type { InvitedClient, InvitedClients } from "./invited-client";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { InvitedClient, InvitedClientsPort } from "./invited-clients-port";
 
 type InvitePaidClientResult =
   { status: "invited" } | { status: "already-admitted" };
 
 type InvitePaidClientUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitations, "issue" | "ensureDelivered">;
-  clients: Pick<InvitedClients, "findById" | "recordAccountInvitation">;
+  accountInvitations: Pick<AccountInvitationsPort, "issue" | "ensureDelivered">;
+  clients: Pick<InvitedClientsPort, "findById" | "recordAccountInvitation">;
 };
 
 export class InvitePaidClientUseCase {

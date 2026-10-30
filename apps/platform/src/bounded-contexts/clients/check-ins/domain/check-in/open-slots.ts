@@ -1,4 +1,3 @@
-import type { CoachTimeSpan } from "./coach-time";
 import type { Weekday } from "./weekdays";
 
 export type CoachWeekSnapshot = {
@@ -27,11 +26,4 @@ export class CoachWeek {
       this.weekdays.includes(weekly.weekday) && this.hours.includes(weekly.hour)
     );
   }
-}
-
-export interface OpenSlots {
-  coachWeek(): Promise<CoachWeek>;
-  offersStart(question: { start: Date; now: Date }): Promise<boolean>;
-  openStarts(now: Date): Promise<Date[]>;
-  busyFrom(from: Date): Promise<CoachTimeSpan[]>;
 }

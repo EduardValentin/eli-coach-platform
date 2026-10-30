@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Exercise, type ExerciseSnapshot } from "./exercise";
-import type { ExerciseLibrary, ExerciseReplacement } from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReplacement,
+} from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import { RestoreExerciseUseCase } from "./restore-exercise-use-case";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
@@ -84,10 +87,10 @@ function createUseCase() {
     replace: vi.fn(
       async (_exercise: Exercise): Promise<ExerciseReplacement> => "replaced",
     ),
-  } satisfies Pick<ExerciseLibrary, "list" | "replace">;
+  } satisfies Pick<ExerciseLibraryPort, "list" | "replace">;
   const incidents = {
     exerciseRestoreFailed: vi.fn(),
-  } satisfies Pick<ExerciseLibraryIncidents, "exerciseRestoreFailed">;
+  } satisfies Pick<ExerciseLibraryIncidentsPort, "exerciseRestoreFailed">;
   const useCase = new RestoreExerciseUseCase({
     library,
     clock: { now: () => NOW },

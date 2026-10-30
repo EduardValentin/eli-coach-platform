@@ -2,8 +2,8 @@ import type { ProductEmailConfig } from "~/shared/email/product-email-config";
 import { describe, expect, it } from "vitest";
 
 import { createProductEmail } from "./create-product-email.server";
-import { InMemoryProductEmail } from "./in-memory-product-email.server";
-import { ResendProductEmail } from "./resend-product-email.server";
+import { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.server";
+import { ResendProductEmailAdapter } from "./resend-product-email-adapter.server";
 
 function createConfig(
   overrides: Partial<ProductEmailConfig> = {},
@@ -26,7 +26,7 @@ describe("createProductEmail", () => {
     const productEmail = createProductEmail(config);
 
     // assert
-    expect(productEmail).toBeInstanceOf(InMemoryProductEmail);
+    expect(productEmail).toBeInstanceOf(InMemoryProductEmailAdapter);
   });
 
   it("returns the Resend adapter for the resend provider", () => {
@@ -40,7 +40,7 @@ describe("createProductEmail", () => {
     const productEmail = createProductEmail(config);
 
     // assert
-    expect(productEmail).toBeInstanceOf(ResendProductEmail);
+    expect(productEmail).toBeInstanceOf(ResendProductEmailAdapter);
     expect(productEmail.provider).toBe("resend");
   });
 });

@@ -1,14 +1,14 @@
-import type { Clock } from "../clock";
-import type { EmailAcceptance } from "../email-acceptance";
+import type { ClockPort } from "../clock-port";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
 
 import { AssessmentCall, type ReservationDecision } from "./assessment-call";
 import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
-import type { AssessmentCallIds } from "./assessment-call-ids";
-import type { AssessmentCallIncidents } from "./assessment-call-incidents";
-import type { AssessmentCallNotifications } from "./assessment-call-notifications";
-import type { AssessmentCallReservations } from "./assessment-call-reservations";
-import type { CoachAvailability } from "./coach-availability";
-import type { CoachTime } from "./coach-time";
+import type { AssessmentCallIdsPort } from "./assessment-call-ids-port";
+import type { AssessmentCallIncidentsPort } from "./assessment-call-incidents-port";
+import type { AssessmentCallNotificationsPort } from "./assessment-call-notifications-port";
+import type { AssessmentCallReservationsPort } from "./assessment-call-reservations-port";
+import type { CoachAvailabilityPort } from "./coach-availability-port";
+import type { CoachTimePort } from "./coach-time-port";
 import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type BookAssessmentCallCommand = {
@@ -33,15 +33,15 @@ export type BookAssessmentCallResult =
   | { status: "closed" };
 
 type BookAssessmentCallUseCaseOptions = {
-  availability: CoachAvailability;
+  availability: CoachAvailabilityPort;
   bookingWindow: AssessmentCallBookingWindow;
-  clock: Clock;
-  coachTime: CoachTime;
-  emailAcceptance: EmailAcceptance;
-  ids: AssessmentCallIds;
-  incidents: AssessmentCallIncidents;
-  notifications: AssessmentCallNotifications;
-  reservations: AssessmentCallReservations;
+  clock: ClockPort;
+  coachTime: CoachTimePort;
+  emailAcceptance: EmailAcceptancePort;
+  ids: AssessmentCallIdsPort;
+  incidents: AssessmentCallIncidentsPort;
+  notifications: AssessmentCallNotificationsPort;
+  reservations: AssessmentCallReservationsPort;
 };
 
 const RECIPIENTS = ["visitor", "coach"] as const;

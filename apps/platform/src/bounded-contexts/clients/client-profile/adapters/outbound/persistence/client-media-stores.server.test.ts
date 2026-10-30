@@ -5,12 +5,10 @@ import { join } from "node:path";
 import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import {
-  createClientAvatarStore,
-  createProgressPhotoStore,
-} from "./client-media-stores.server";
-import { EncryptedFilesystemClientMediaStore } from "./encrypted-filesystem-client-media-store.server";
-import { InMemoryClientMediaStore } from "./in-memory-client-media-store.server";
+import { createClientAvatarStoreAdapter } from "./create-client-avatar-store-adapter.server";
+import { createProgressPhotoStoreAdapter } from "./create-progress-photo-store-adapter.server";
+import { EncryptedFilesystemClientMediaStoreAdapter } from "./encrypted-filesystem-client-media-store-adapter.server";
+import { InMemoryClientMediaStoreAdapter } from "./in-memory-client-media-store-adapter.server";
 
 const KEY = "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA=";
 const RESOURCE_ROOT = "/srv/client-resources";
@@ -47,10 +45,10 @@ describe("client media stores", () => {
     };
 
     // act
-    const store = createProgressPhotoStore(config);
+    const store = createProgressPhotoStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(InMemoryClientMediaStore);
+    expect(store).toBeInstanceOf(InMemoryClientMediaStoreAdapter);
   });
 
   it("returns the encrypted filesystem store over a ready root, stamping the configured key id", async () => {
@@ -58,10 +56,10 @@ describe("client media stores", () => {
     const config = filesystemConfig(workspace);
 
     // act
-    const store = createProgressPhotoStore(config);
+    const store = createProgressPhotoStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(EncryptedFilesystemClientMediaStore);
+    expect(store).toBeInstanceOf(EncryptedFilesystemClientMediaStoreAdapter);
     expect(await store.store(OWNER, new Uint8Array([1]))).toEqual({
       storageKey: "client-1/entry-1/photo-1.bin",
       keyId: "unit-1",
@@ -73,7 +71,7 @@ describe("client media stores", () => {
     const config = filesystemConfig(join(workspace, "missing"));
 
     // act
-    const create = () => createProgressPhotoStore(config);
+    const create = () => createProgressPhotoStoreAdapter(config);
 
     // assert
     expect(create).toThrow("Client media root is not ready.");
@@ -85,7 +83,8 @@ describe("client media stores", () => {
     await writeFile(file, "not a directory");
 
     // act
-    const create = () => createProgressPhotoStore(filesystemConfig(file));
+    const create = () =>
+      createProgressPhotoStoreAdapter(filesystemConfig(file));
 
     // assert
     expect(create).toThrow("Client media root is not ready.");
@@ -100,7 +99,7 @@ describe("client media stores", () => {
 
       // act
       const create = () =>
-        createProgressPhotoStore(filesystemConfig(readOnlyRoot));
+        createProgressPhotoStoreAdapter(filesystemConfig(readOnlyRoot));
 
       // assert
       expect(create).toThrow("Client media root is not ready.");
@@ -114,7 +113,7 @@ describe("client media stores", () => {
       const config = { ...filesystemConfig(workspace), [name]: undefined };
 
       // act
-      const create = () => createProgressPhotoStore(config);
+      const create = () => createProgressPhotoStoreAdapter(config);
 
       // assert
       expect(create).toThrow(`Filesystem client media requires ${name}.`);
@@ -126,10 +125,10 @@ describe("client media stores", () => {
     const config = filesystemConfig(workspace);
 
     // act
-    const store = createClientAvatarStore(config);
+    const store = createClientAvatarStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(EncryptedFilesystemClientMediaStore);
+    expect(store).toBeInstanceOf(EncryptedFilesystemClientMediaStoreAdapter);
     expect(
       await store.store(
         { clientId: "client-1", avatarId: "avatar-1" },
@@ -146,9 +145,9 @@ describe("client media stores", () => {
     };
 
     // act
-    const store = createClientAvatarStore(config);
+    const store = createClientAvatarStoreAdapter(config);
 
     // assert
-    expect(store).toBeInstanceOf(InMemoryClientMediaStore);
+    expect(store).toBeInstanceOf(InMemoryClientMediaStoreAdapter);
   });
 });

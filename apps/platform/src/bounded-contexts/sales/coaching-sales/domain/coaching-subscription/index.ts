@@ -5,19 +5,19 @@ export {
   type RecordedCheckoutPurchase,
 } from "./checkout-purchase";
 export {
-  type ClientLookup,
+  type ClientLookupPort,
   type SubscribedClient,
   type SubscribedClientJourney,
-} from "./client-lookup";
+} from "./client-lookup-port";
 export {
   type CheckoutSessionRecord,
-  type CheckoutSessions,
-} from "./checkout-sessions";
+  type CheckoutSessionsPort,
+} from "./checkout-sessions-port";
 export {
   type CoachingPurchase,
-  type CoachingPurchases,
-} from "./coaching-purchases";
-export { type CoachingSubscriptionIds } from "./coaching-subscription-ids";
+  type CoachingPurchasesPort,
+} from "./coaching-purchases-port";
+export { type CoachingSubscriptionIdsPort } from "./coaching-subscription-ids-port";
 export {
   COACHING_SUBSCRIPTION_PURPOSE,
   CoachingSubscription,
@@ -29,40 +29,40 @@ export {
   type CheckoutCompletion,
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
-export { type CoachingEndHandler } from "./coaching-end-handler";
+export { type CoachingEndHandlerPort } from "./coaching-end-handler-port";
 export { COACHING_STATUSES, CoachingStanding } from "./coaching-standing";
-export { type CoachingStandingWriter } from "./coaching-standing-writer";
-export { type CoachingPeriodHandler } from "./coaching-period-handler";
-export { type CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
+export { type CoachingStandingWriterPort } from "./coaching-standing-writer-port";
+export { type CoachingPeriodHandlerPort } from "./coaching-period-handler-port";
+export { type CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
 export {
-  type CoachingSubscriptions,
+  type CoachingSubscriptionsPort,
   type SubscriptionChange,
   type SubscriptionEventChange,
-} from "./coaching-subscriptions";
+} from "./coaching-subscriptions-port";
 export { FinishCheckoutPurchaseUseCase } from "./finish-checkout-purchase-use-case";
 export { MirrorPaymentCardUseCase } from "./mirror-payment-card-use-case";
 export { OpenPaymentMethodSessionUseCase } from "./open-payment-method-session-use-case";
 export {
-  type PaidClientAdmission,
+  type PaidClientAdmissionPort,
   type PaidClientAdmissionOutcome,
   type PaidClientIntake,
-} from "./paid-client-admission";
+} from "./paid-client-admission-port";
 export {
   type CreateCheckoutSessionCommand,
-  type PaymentCheckout,
-} from "./payment-checkout";
+  type PaymentCheckoutPort,
+} from "./payment-checkout-port";
 export { PaymentCard, type PaymentCardEvent } from "./payment-card";
 export {
   type PaymentCardWrite,
   type PaymentCardEventWrite,
-  type PaymentCards,
-} from "./payment-cards";
-export { type PaymentCustomerCards } from "./payment-customer-cards";
+  type PaymentCardsPort,
+} from "./payment-cards-port";
+export { type PaymentCustomerCardsPort } from "./payment-customer-cards-port";
 export {
   type PaymentEventEntry,
-  type PaymentEventLedger,
-} from "./payment-event-ledger";
-export { type PaymentSubscriptions } from "./payment-subscriptions";
+  type PaymentEventLedgerPort,
+} from "./payment-event-ledger-port";
+export { type PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 export { STEPS_AFTER_SUBMISSION } from "./program-steps";
 export { PurchasedSubscription } from "./purchased-subscription";
 export { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
@@ -81,8 +81,8 @@ export {
 } from "./refund-due";
 export {
   type RefundDueNotice,
-  type RefundNotifications,
-} from "./refund-notifications";
+  type RefundNotificationsPort,
+} from "./refund-notifications-port";
 export { SignedInSubscriptions } from "./signed-in-subscriptions";
 export { StartCheckoutUseCase } from "./start-checkout-use-case";
 export { StartProgramNowUseCase } from "./start-program-now-use-case";

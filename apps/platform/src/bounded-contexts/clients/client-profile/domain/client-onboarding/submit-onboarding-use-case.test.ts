@@ -1,24 +1,30 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
 import {
   ClientSettings,
   UnitPreference,
-  type ClientSettingsSource,
+  type ClientSettingsSourcePort,
 } from "../client-settings";
 
-import type { ClientOnboardingChanges } from "./client-onboarding-changes";
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingChangesPort } from "./client-onboarding-changes-port";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import {
   emptyAnswers,
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type {
+  OnboardingClient,
+  OnboardingClientsPort,
+} from "./onboarding-clients-port";
 import type { OnboardingConsents } from "./onboarding-consents";
 import { OnboardingParticipants } from "./onboarding-participants";
-import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
+import type { OnboardingSubmissionStampsPort } from "./onboarding-submission-stamps-port";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { SubmitOnboardingUseCase } from "./submit-onboarding-use-case";
 
@@ -141,19 +147,19 @@ function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies OnboardingClients;
+  } satisfies OnboardingClientsPort;
 }
 
 function createIdentities(found: ClientIdentity | null = IDENTITY) {
   return {
     findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<ClientIdentities, "findByClientId">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientId">;
 }
 
 function createOnboardings(submission: OnboardingSubmission | null = null) {
   return {
     findByClientId: vi.fn().mockResolvedValue({ draft: null, submission }),
-  } satisfies ClientOnboardingSource;
+  } satisfies ClientOnboardingSourcePort;
 }
 
 function settingsWith(
@@ -174,24 +180,26 @@ function settingsWith(
 function createSettings(preference: UnitPreference | null = null) {
   return {
     findByClientId: vi.fn().mockResolvedValue(settingsWith(preference)),
-  } satisfies ClientSettingsSource;
+  } satisfies ClientSettingsSourcePort;
 }
 
 function createChanges(
-  recorded: Awaited<ReturnType<ClientOnboardingChanges["recordSubmission"]>> = {
+  recorded: Awaited<
+    ReturnType<ClientOnboardingChangesPort["recordSubmission"]>
+  > = {
     status: "recorded",
   },
 ) {
   return {
     saveDraft: vi.fn().mockResolvedValue("saved"),
     recordSubmission: vi.fn().mockResolvedValue(recorded),
-  } satisfies ClientOnboardingChanges;
+  } satisfies ClientOnboardingChangesPort;
 }
 
 function createStamps() {
   return {
     recordOnboardingSubmitted: vi.fn().mockResolvedValue(undefined),
-  } satisfies OnboardingSubmissionStamps;
+  } satisfies OnboardingSubmissionStampsPort;
 }
 
 function createIncidents() {
@@ -207,18 +215,18 @@ function createIncidents() {
     onboardingDetailsRefused: vi.fn(),
     onboardingAnswersApproved: vi.fn(),
     onboardingReviewStampsRepaired: vi.fn(),
-  } satisfies ClientOnboardingIncidents;
+  } satisfies ClientOnboardingIncidentsPort;
 }
 
 function createUseCase(
   ports: {
-    clients?: OnboardingClients;
-    identities?: Pick<ClientIdentities, "findByClientId">;
-    onboardings?: ClientOnboardingSource;
-    settings?: ClientSettingsSource;
-    changes?: ClientOnboardingChanges;
-    stamps?: OnboardingSubmissionStamps;
-    incidents?: ClientOnboardingIncidents;
+    clients?: OnboardingClientsPort;
+    identities?: Pick<ClientIdentitiesPort, "findByClientId">;
+    onboardings?: ClientOnboardingSourcePort;
+    settings?: ClientSettingsSourcePort;
+    changes?: ClientOnboardingChangesPort;
+    stamps?: OnboardingSubmissionStampsPort;
+    incidents?: ClientOnboardingIncidentsPort;
   } = {},
 ) {
   return new SubmitOnboardingUseCase({
@@ -438,7 +446,7 @@ describe("SubmitOnboardingUseCase", () => {
     const stamps = createStamps();
     const incidents = createIncidents();
     const concurrentSubmittedAt = new Date("2026-09-28T09:55:00.000Z");
-    const onboardings: ClientOnboardingSource = {
+    const onboardings: ClientOnboardingSourcePort = {
       findByClientId: vi
         .fn()
         .mockResolvedValueOnce({ draft: null, submission: null })

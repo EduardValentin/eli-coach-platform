@@ -1,4 +1,4 @@
-import type { CoachTimeSpan } from "./coach-time";
+import type { CoachTimeSpan } from "./coach-time-port";
 
 type CheckInSlotRulesProps = {
   durationMinutes: number;

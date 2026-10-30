@@ -1,6 +1,6 @@
 export type {
   NotificationDraft,
   NotificationFacts,
-  NotificationInbox,
+  NotificationInboxPort,
   NotificationRecipientSnapshot,
 } from "~/bounded-contexts/clients/notifications/domain/notification";

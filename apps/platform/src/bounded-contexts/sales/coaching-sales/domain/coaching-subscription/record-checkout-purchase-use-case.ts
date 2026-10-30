@@ -3,16 +3,16 @@ import {
   type CheckoutPurchase,
   type RecordedCheckoutPurchase,
 } from "./checkout-purchase";
-import type { CoachingPurchases } from "./coaching-purchases";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaidClientAdmission } from "./paid-client-admission";
-import type { PaymentEventLedger } from "./payment-event-ledger";
+import type { CoachingPurchasesPort } from "./coaching-purchases-port";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { PaidClientAdmissionPort } from "./paid-client-admission-port";
+import type { PaymentEventLedgerPort } from "./payment-event-ledger-port";
 
 type RecordCheckoutPurchaseUseCaseOptions = {
-  admission: Pick<PaidClientAdmission, "admit">;
-  incidents: CoachingSubscriptionIncidents;
-  paymentEventLedger: PaymentEventLedger;
-  purchases: CoachingPurchases;
+  admission: Pick<PaidClientAdmissionPort, "admit">;
+  incidents: CoachingSubscriptionIncidentsPort;
+  paymentEventLedger: PaymentEventLedgerPort;
+  purchases: CoachingPurchasesPort;
 };
 
 export class RecordCheckoutPurchaseUseCase {

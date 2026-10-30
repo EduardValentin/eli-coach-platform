@@ -1,20 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
-import type { ClientSettingsSource } from "../client-settings";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
+import type { ClientSettingsSourcePort } from "../client-settings";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import { DetailRequest } from "./detail-request";
 import { emptyAnswers, type OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type {
+  OnboardingClient,
+  OnboardingClientsPort,
+} from "./onboarding-clients-port";
 import { OnboardingParticipants } from "./onboarding-participants";
 import type {
-  OnboardingReviewStamps,
+  OnboardingReviewStampsPort,
   ReviewStamps,
-} from "./onboarding-review-stamps";
-import type { OnboardingReviews } from "./onboarding-reviews";
+} from "./onboarding-review-stamps-port";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { ReadOpenDetailRequestUseCase } from "./read-open-detail-request-use-case";
 
@@ -108,7 +114,7 @@ function createReviews(requests: DetailRequest[]) {
     recordRequest: vi.fn().mockResolvedValue(undefined),
     recordAnswer: vi.fn().mockResolvedValue(undefined),
     recordApproval: vi.fn().mockResolvedValue(undefined),
-  } satisfies OnboardingReviews;
+  } satisfies OnboardingReviewsPort;
 }
 
 function createIncidents() {
@@ -124,7 +130,7 @@ function createIncidents() {
     onboardingDetailsRefused: vi.fn(),
     onboardingAnswersApproved: vi.fn(),
     onboardingReviewStampsRepaired: vi.fn(),
-  } satisfies ClientOnboardingIncidents;
+  } satisfies ClientOnboardingIncidentsPort;
 }
 
 function answerPorts(
@@ -142,23 +148,23 @@ function answerPorts(
             overrides.client === undefined ? CLIENT : overrides.client,
           ),
         findByClientId: vi.fn().mockResolvedValue(null),
-      } satisfies OnboardingClients,
+      } satisfies OnboardingClientsPort,
       identities: {
         findByClientId: vi.fn().mockResolvedValue(IDENTITY),
-      } satisfies Pick<ClientIdentities, "findByClientId">,
+      } satisfies Pick<ClientIdentitiesPort, "findByClientId">,
     }),
     onboardings: {
       findByClientId: vi
         .fn()
         .mockResolvedValue({ draft: null, submission: SUBMISSION }),
-    } satisfies ClientOnboardingSource,
+    } satisfies ClientOnboardingSourcePort,
     reviews: createReviews(overrides.requests ?? [askedRequest()]),
     settings: {
       findByClientId: vi.fn().mockResolvedValue(null),
-    } satisfies ClientSettingsSource,
+    } satisfies ClientSettingsSourcePort,
     stamps: {
       record: vi.fn().mockResolvedValue(undefined),
-    } satisfies OnboardingReviewStamps,
+    } satisfies OnboardingReviewStampsPort,
     clock: { now: () => NOW },
     incidents: createIncidents(),
   };

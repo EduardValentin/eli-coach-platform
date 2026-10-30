@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { EditRecipeUseCase } from "./edit-recipe-use-case";
 import { Food } from "./food";
-import type { FoodsReference } from "./food-library";
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { NutritionTag } from "./nutrition-tags";
+import type { FoodsReference } from "./food-library-port";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+import type { NutritionTag } from "./nutrition-tags-port";
 import { Recipe, type RecipeSnapshot } from "./recipe";
 import type { RecipeDraftInput } from "./recipe-draft";
-import type { RecipeReference, RecipeReplacement } from "./recipe-library";
+import type { RecipeReference, RecipeReplacement } from "./recipe-library-port";
 import type { RecipePhotoChoice } from "./recipe-photo";
-import type { RecipePhotoRendition } from "./recipe-photo-renditions";
+import type { RecipePhotoRendition } from "./recipe-photo-renditions-port";
 import { RecipePhotoSaving } from "./recipe-photo-saving";
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
@@ -146,7 +146,7 @@ function createUseCase(porridge: RecipeSnapshot = PORRIDGE) {
     recipeCreationFailed: vi.fn(),
     recipeEditFailed: vi.fn(),
     recipePhotoCleanupFailed: vi.fn(),
-  } satisfies NutritionLibraryIncidents;
+  } satisfies NutritionLibraryIncidentsPort;
   const renditions = {
     render: vi.fn(async (): Promise<RecipePhotoRendition> => ({
       status: "rendered",

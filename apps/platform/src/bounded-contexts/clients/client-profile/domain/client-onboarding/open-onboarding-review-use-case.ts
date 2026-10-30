@@ -1,10 +1,10 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
-import type { OnboardingReviews } from "./onboarding-reviews";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
 
 type OpenOnboardingReviewResult =
   | { status: "opened" }
@@ -16,10 +16,10 @@ type OpenOnboardingReviewResult =
 
 type OpenOnboardingReviewUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
-  onboardings: ClientOnboardingSource;
-  reviews: OnboardingReviews;
-  clock: Clock;
-  incidents: ClientOnboardingIncidents;
+  onboardings: ClientOnboardingSourcePort;
+  reviews: OnboardingReviewsPort;
+  clock: ClockPort;
+  incidents: ClientOnboardingIncidentsPort;
 };
 
 export class OpenOnboardingReviewUseCase {

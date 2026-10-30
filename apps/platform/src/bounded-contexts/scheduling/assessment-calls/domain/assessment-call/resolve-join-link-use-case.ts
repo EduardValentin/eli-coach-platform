@@ -1,5 +1,5 @@
-import type { AssessmentCallReservations } from "./assessment-call-reservations";
-import type { MeetingRoom } from "./meeting-room";
+import type { AssessmentCallReservationsPort } from "./assessment-call-reservations-port";
+import type { MeetingRoomPort } from "./meeting-room-port";
 
 export type JoinLinkResult =
   | { status: "found"; url: string }
@@ -7,8 +7,8 @@ export type JoinLinkResult =
   | { status: "unknown" };
 
 type ResolveJoinLinkUseCaseOptions = {
-  meetingRoom: MeetingRoom;
-  reservations: AssessmentCallReservations;
+  meetingRoom: MeetingRoomPort;
+  reservations: AssessmentCallReservationsPort;
 };
 
 export class ResolveJoinLinkUseCase {

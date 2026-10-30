@@ -1,14 +1,14 @@
-import type { EmailAcceptance } from "../email-acceptance";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
 
-import type { ConsentVersions } from "./consent-versions";
+import type { ConsentVersionsPort } from "./consent-versions-port";
 import type {
   Waitlist,
   WaitlistOffer,
   WaitlistSignupPricing,
 } from "./waitlist";
-import type { WaitlistConfirmation } from "./waitlist-confirmation";
-import type { WaitlistEntries } from "./waitlist-entries";
-import type { WaitlistIncidents } from "./waitlist-incidents";
+import type { WaitlistConfirmationPort } from "./waitlist-confirmation-port";
+import type { WaitlistEntriesPort } from "./waitlist-entries-port";
+import type { WaitlistIncidentsPort } from "./waitlist-incidents-port";
 
 export type JoinWaitlistCommand = {
   email: string;
@@ -19,12 +19,12 @@ export type JoinWaitlistResult = {
 };
 
 type JoinWaitlistUseCaseOptions = {
-  confirmation: WaitlistConfirmation;
-  consentVersions: ConsentVersions;
-  emailAcceptance: EmailAcceptance;
-  incidents: WaitlistIncidents;
+  confirmation: WaitlistConfirmationPort;
+  consentVersions: ConsentVersionsPort;
+  emailAcceptance: EmailAcceptancePort;
+  incidents: WaitlistIncidentsPort;
   waitlist: Waitlist;
-  waitlistEntries: WaitlistEntries;
+  waitlistEntries: WaitlistEntriesPort;
 };
 
 export class JoinWaitlistUseCase {

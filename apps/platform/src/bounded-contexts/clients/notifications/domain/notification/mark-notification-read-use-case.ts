@@ -1,16 +1,16 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
-import type { NotificationInbox } from "./notification-inbox";
+import type { NotificationInboxPort } from "./notification-inbox-port";
 import {
   NotificationRecipientReach,
   type NotificationReader,
 } from "./notification-recipient-reach";
 
 type MarkNotificationReadUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  inbox: Pick<NotificationInbox, "markRead">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  inbox: Pick<NotificationInboxPort, "markRead">;
 };
 
 export class MarkNotificationReadUseCase {

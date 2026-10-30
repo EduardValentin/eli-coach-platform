@@ -1,14 +1,14 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import { Food } from "./food";
 import {
   FoodDraft,
   type FoodDraftInput,
   type FoodDraftProblems,
 } from "./food-draft";
-import type { FoodIds } from "./food-ids";
-import type { FoodLibrary } from "./food-library";
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { NutritionTags } from "./nutrition-tags";
+import type { FoodIdsPort } from "./food-ids-port";
+import type { FoodLibraryPort } from "./food-library-port";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+import type { NutritionTagsPort } from "./nutrition-tags-port";
 
 type CreateFoodCommand = {
   ownerAccountId: string;
@@ -21,11 +21,11 @@ export type CreateFoodResult =
   | { status: "failed" };
 
 type CreateFoodUseCaseOptions = {
-  library: Pick<FoodLibrary, "list" | "add">;
-  tags: Pick<NutritionTags, "list">;
-  ids: FoodIds;
-  clock: Clock;
-  incidents: Pick<NutritionLibraryIncidents, "foodCreationFailed">;
+  library: Pick<FoodLibraryPort, "list" | "add">;
+  tags: Pick<NutritionTagsPort, "list">;
+  ids: FoodIdsPort;
+  clock: ClockPort;
+  incidents: Pick<NutritionLibraryIncidentsPort, "foodCreationFailed">;
 };
 
 export class CreateFoodUseCase {

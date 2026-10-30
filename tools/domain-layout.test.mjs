@@ -2,7 +2,11 @@ import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { auditDomainLayout, auditSharedLayout } from "./domain-layout.mjs";
+import {
+  auditDomainLayout,
+  auditSharedLayout,
+  auditUnitNames,
+} from "./domain-layout.mjs";
 
 const boundedContextsRoot = resolve(
   import.meta.dirname,
@@ -31,6 +35,7 @@ describe("domain layout", () => {
 
   it.each([
     ["valid", []],
+    ["singular-entity", []],
     ["missing-entity", [`${fixtureDomain}/thing: missing thing.ts`]],
     ["missing-index", [`${fixtureDomain}/thing: missing index.ts`]],
     [
@@ -86,5 +91,49 @@ describe("shared layout", () => {
       "clock/domain: shared holds no domain/ folder",
       "email/adapters: shared holds no adapters/ folder",
     ]);
+  });
+});
+
+describe("unit names", () => {
+  it("accepts every unit file of the app", () => {
+    // arrange
+    const root = resolve(import.meta.dirname, "..", "apps/platform/src");
+
+    // act
+    const problems = auditUnitNames(root);
+
+    // assert
+    expect(problems).toEqual([]);
+  });
+
+  it("accepts one unit per file named after it", () => {
+    // arrange
+    const root = join(fixturesRoot, "unit-names-valid");
+
+    // act
+    const problems = auditUnitNames(root);
+
+    // assert
+    expect(problems).toEqual([]);
+  });
+
+  it("reports files whose unit is missing, doubled or misnamed, and units in a file named otherwise", () => {
+    // arrange
+    const root = join(fixturesRoot, "unit-names-invalid");
+
+    // act
+    const problems = auditUnitNames(root);
+
+    // assert
+    expect(problems.sort()).toEqual(
+      [
+        "clock-port.ts: expected one exported *Port, found 2",
+        "clock-port.ts: CalendarPort belongs in calendar-port.ts",
+        "create-clock-adapter.server.ts: expected one exported *Adapter, found 0",
+        "stray.ts: StrayFacade belongs in stray-facade.ts",
+        "system-clock-adapter.server.ts: exports WallClockAdapter, which names another file",
+        "system-clock-adapter.server.ts: WallClockAdapter belongs in wall-clock-adapter.ts",
+      ].sort(),
+    );
   });
 });

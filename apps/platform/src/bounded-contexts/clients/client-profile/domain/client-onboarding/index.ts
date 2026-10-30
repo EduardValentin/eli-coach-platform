@@ -2,9 +2,9 @@ export { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-
 export { ApproveOnboardingAnswersUseCase } from "./approve-onboarding-answers-use-case";
 export { CLIENT_GENDERS, type ClientGender } from "./client-gender";
 export { ClientOnboarding, type OnboardingConsent } from "./client-onboarding";
-export { type ClientOnboardingChanges } from "./client-onboarding-changes";
-export { type ClientOnboardingIncidents } from "./client-onboarding-incidents";
-export { type ClientOnboardingSource } from "./client-onboarding-source";
+export { type ClientOnboardingChangesPort } from "./client-onboarding-changes-port";
+export { type ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+export { type ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 export { DetailRequest } from "./detail-request";
 export {
   hasStartedAnswering,
@@ -16,18 +16,18 @@ export {
 } from "./onboarding-answers";
 export {
   type OnboardingClient,
-  type OnboardingClients,
-} from "./onboarding-clients";
+  type OnboardingClientsPort,
+} from "./onboarding-clients-port";
 export { type OnboardingConsents } from "./onboarding-consents";
 export { OnboardingParticipants } from "./onboarding-participants";
-export { type OnboardingDetailsNotifications } from "./onboarding-details-notifications";
+export { type OnboardingDetailsNotificationsPort } from "./onboarding-details-notifications-port";
 export { emptyDraft, type OnboardingDraft } from "./onboarding-draft";
 export {
-  type OnboardingReviewStamps,
+  type OnboardingReviewStampsPort,
   type ReviewStamps,
-} from "./onboarding-review-stamps";
-export { type OnboardingReviews } from "./onboarding-reviews";
-export { type DetailRequestIds } from "./detail-request-ids";
+} from "./onboarding-review-stamps-port";
+export { type OnboardingReviewsPort } from "./onboarding-reviews-port";
+export { type DetailRequestIdsPort } from "./detail-request-ids-port";
 export {
   ONBOARDING_FORM_IDS,
   ONBOARDING_FORMS,
@@ -41,7 +41,7 @@ export {
   type OnboardingSubmission,
 } from "./onboarding-submission";
 export { fieldProblem } from "./onboarding-validation";
-export { type OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
+export { type OnboardingSubmissionStampsPort } from "./onboarding-submission-stamps-port";
 export { OpenOnboardingReviewUseCase } from "./open-onboarding-review-use-case";
 export { ReadClientOnboardingUseCase } from "./read-client-onboarding-use-case";
 export { ReadOnboardingReviewUseCase } from "./read-onboarding-review-use-case";

@@ -1,12 +1,12 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import {
   NOTIFICATION_BELL_RULES,
   type NotificationSnapshot,
 } from "./notification";
-import type { NotificationInbox } from "./notification-inbox";
-import type { NotificationIncidents } from "./notification-incidents";
+import type { NotificationInboxPort } from "./notification-inbox-port";
+import type { NotificationIncidentsPort } from "./notification-incidents-port";
 import type { NotificationRecipientSnapshot } from "./notification-recipient";
 import {
   NotificationRecipientReach,
@@ -22,10 +22,10 @@ export type NotificationBell = {
 };
 
 type ReadNotificationBellUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  inbox: Pick<NotificationInbox, "latestFor" | "unreadCountFor">;
-  incidents: NotificationIncidents;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  inbox: Pick<NotificationInboxPort, "latestFor" | "unreadCountFor">;
+  incidents: NotificationIncidentsPort;
 };
 
 type BellWindow = {

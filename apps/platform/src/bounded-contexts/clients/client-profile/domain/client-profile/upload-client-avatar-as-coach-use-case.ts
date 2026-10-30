@@ -1,4 +1,4 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import {
   ClientAvatarIntake,
@@ -16,7 +16,7 @@ type UploadClientAvatarAsCoachResult =
   ClientAvatarUpload | { status: "not-found" };
 
 type UploadClientAvatarAsCoachUseCaseOptions = ClientAvatarIntakeOptions & {
-  clients: Pick<ClientReach, "findById">;
+  clients: Pick<ClientReachPort, "findById">;
 };
 
 export class UploadClientAvatarAsCoachUseCase {

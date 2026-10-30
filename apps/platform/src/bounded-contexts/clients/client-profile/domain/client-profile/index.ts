@@ -1,14 +1,14 @@
 export { AttachProgressPhotosUseCase } from "./attach-progress-photos-use-case";
 export { CLIENT_AVATAR_RENDITION, ClientAvatar } from "./client-avatar";
-export { type ClientAvatarIds } from "./client-avatar-ids";
-export { type ClientAvatarIncidents } from "./client-avatar-incidents";
+export { type ClientAvatarIdsPort } from "./client-avatar-ids-port";
+export { type ClientAvatarIncidentsPort } from "./client-avatar-incidents-port";
 export { type ReceivedClientAvatar } from "./client-avatar-intake";
 export {
   type ClientAvatarRendition,
-  type ClientAvatarRenditions,
-} from "./client-avatar-renditions";
-export { type ClientAvatarStore } from "./client-avatar-store";
-export { type ClientAvatars } from "./client-avatars";
+  type ClientAvatarRenditionsPort,
+} from "./client-avatar-renditions-port";
+export { type ClientAvatarStorePort } from "./client-avatar-store-port";
+export { type ClientAvatarsPort } from "./client-avatars-port";
 export {
   ClientProfile,
   type ClientProfileProblems,
@@ -18,12 +18,12 @@ export { type ClientProfileReading } from "./client-profile-composite";
 export {
   type ClientProfileSave,
   type ClientProfileSaveOutcome,
-  type ClientProfiles,
-} from "./client-profiles";
+  type ClientProfilesPort,
+} from "./client-profiles-port";
 export {
   type ClientMeasurementEntry,
-  type ClientMeasurementRecords,
-} from "./client-measurement-records";
+  type ClientMeasurementRecordsPort,
+} from "./client-measurement-records-port";
 export {
   ACTIVITY_LEVELS,
   BODYWEIGHT_ONLY,
@@ -51,7 +51,7 @@ export {
   type MeasurementDueLine,
   type MeasurementRecord,
 } from "./measurement-history";
-export { type MeasurementIncidents } from "./measurement-incidents";
+export { type MeasurementIncidentsPort } from "./measurement-incidents-port";
 export { OpenClientAvatarUseCase } from "./open-client-avatar-use-case";
 export { OpenProgressPhotoUseCase } from "./open-progress-photo-use-case";
 export {
@@ -67,11 +67,11 @@ export {
 } from "./progress-photo-intake";
 export {
   type ProgressPhotoRendition,
-  type ProgressPhotoRenditions,
-} from "./progress-photo-renditions";
-export { type ProgressPhotoStore } from "./progress-photo-store";
-export { type ProgressPhotos } from "./progress-photos";
-export { type ProgressPhotoIds } from "./progress-photo-ids";
+  type ProgressPhotoRenditionsPort,
+} from "./progress-photo-renditions-port";
+export { type ProgressPhotoStorePort } from "./progress-photo-store-port";
+export { type ProgressPhotosPort } from "./progress-photos-port";
+export { type ProgressPhotoIdsPort } from "./progress-photo-ids-port";
 export { ReadClientMeasurementHistoryUseCase } from "./read-client-measurement-history-use-case";
 export { ReadClientProfileUseCase } from "./read-client-profile-use-case";
 export {
@@ -88,5 +88,5 @@ export { UpdateClientProfileAsCoachUseCase } from "./update-client-profile-as-co
 export { UpdateOwnClientProfileUseCase } from "./update-own-client-profile-use-case";
 export { UploadClientAvatarAsCoachUseCase } from "./upload-client-avatar-as-coach-use-case";
 export { UploadOwnClientAvatarUseCase } from "./upload-own-client-avatar-use-case";
-export { type ClientProfileOpenings } from "./client-profile-openings";
+export { type ClientProfileOpeningsPort } from "./client-profile-openings-port";
 export { OpenClientProfileUseCase } from "./open-client-profile-use-case";

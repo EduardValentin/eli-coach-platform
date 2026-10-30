@@ -2,11 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ClientResource, type ClientResourceOwner } from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResourceStore } from "./client-resource-store";
-import type { BrowsedResources, ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
 import { RemoveClientResourceUseCase } from "./remove-client-resource-use-case";
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
@@ -33,7 +36,7 @@ const STORED = ClientResource.reconstitute({
   openedAt: null,
 });
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   private readonly stored = new Map<string, ClientResource>([
     ["resource-1", STORED],
   ]);
@@ -76,7 +79,7 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-class InMemoryResourceStore implements ClientResourceStore {
+class InMemoryResourceStoreAdapter implements ClientResourceStorePort {
   private readonly files = new Set(["original", "page-1", "thumbnail"]);
 
   constructor(private readonly removals: string[]) {}
@@ -111,8 +114,8 @@ class InMemoryResourceStore implements ClientResourceStore {
 
 function createUseCase() {
   const removals: string[] = [];
-  const resources = new InMemoryClientResources(removals);
-  const store = new InMemoryResourceStore(removals);
+  const resources = new InMemoryClientResourcesAdapter(removals);
+  const store = new InMemoryResourceStoreAdapter(removals);
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -130,7 +133,7 @@ function createUseCase() {
       paidThrough: null,
       timeZone: "Europe/Bucharest",
     })),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -141,7 +144,7 @@ function createUseCase() {
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const useCase = new RemoveClientResourceUseCase({
     resources,
     clients,

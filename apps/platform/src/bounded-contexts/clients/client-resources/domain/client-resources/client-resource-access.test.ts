@@ -5,9 +5,12 @@ import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 function resourceOf(id: string, clientId: string): ClientResource {
@@ -31,7 +34,7 @@ function resourceOf(id: string, clientId: string): ClientResource {
 const RESOURCE = resourceOf("resource-1", "client-ana");
 const UNREACHABLE_PORTAL_RESOURCE = resourceOf("resource-cleo", "client-cleo");
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   constructor(private readonly stored: readonly ClientResource[]) {}
 
   async add(): Promise<void> {}
@@ -87,7 +90,7 @@ function reachReading(
   };
 }
 
-class InMemoryClientReach implements ClientReach {
+class InMemoryClientReachAdapter implements ClientReachPort {
   async findByAuthSubjectId(
     authSubjectId: string,
   ): Promise<ClientReachReading | null> {
@@ -104,11 +107,11 @@ class InMemoryClientReach implements ClientReach {
 }
 
 function createAccess() {
-  const resources = new InMemoryClientResources([
+  const resources = new InMemoryClientResourcesAdapter([
     RESOURCE,
     UNREACHABLE_PORTAL_RESOURCE,
   ]);
-  const clients = new InMemoryClientReach();
+  const clients = new InMemoryClientReachAdapter();
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -119,7 +122,7 @@ function createAccess() {
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const access = new ClientResourceAccess({ resources, clients, incidents });
 
   return { access, incidents, resources, clients };

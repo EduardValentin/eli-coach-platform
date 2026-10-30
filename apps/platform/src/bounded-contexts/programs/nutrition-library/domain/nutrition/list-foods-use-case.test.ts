@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Food } from "./food";
 import { ListFoodsUseCase } from "./list-foods-use-case";
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionTag } from "./nutrition-tags-port";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "coach-account-1";

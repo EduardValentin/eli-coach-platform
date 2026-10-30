@@ -6,9 +6,9 @@ import PDFDocument from "pdfkit";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createResourceDocumentPages } from "./resource-document-pages.server";
+import { createResourceDocumentPagesAdapter } from "./create-resource-document-pages-adapter.server";
 
-const documentPages = createResourceDocumentPages({
+const documentPages = createResourceDocumentPagesAdapter({
   workerUrl: new URL(
     "../../../../../../shared/documents/pdf-pages-worker.server.ts",
     import.meta.url,
@@ -116,7 +116,7 @@ describe("createResourceDocumentPages", () => {
     // arrange
     const bytes = await pdfOf(1);
     const readAt = async (quality: number) => {
-      const reading = await createResourceDocumentPages({
+      const reading = await createResourceDocumentPagesAdapter({
         workerUrl: new URL(
           "../../../../../../shared/documents/pdf-pages-worker.server.ts",
           import.meta.url,

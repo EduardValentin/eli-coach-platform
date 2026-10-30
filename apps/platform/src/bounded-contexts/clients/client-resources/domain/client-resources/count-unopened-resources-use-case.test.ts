@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientResource } from "./client-resource";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { BrowsedResources, ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
 import { CountUnopenedResourcesUseCase } from "./count-unopened-resources-use-case";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");
@@ -31,7 +34,7 @@ function resource(
   });
 }
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   private readonly stored = [
     resource("resource-new", { clientId: "client-ana", openedAt: null }),
     resource("resource-also-new", { clientId: "client-ana", openedAt: null }),
@@ -95,8 +98,8 @@ const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
 
 function createUseCase(
   options: {
-    resources?: ClientResources;
-    clients?: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+    resources?: ClientResourcesPort;
+    clients?: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   } = {},
 ) {
   const clients = options.clients ?? {
@@ -118,9 +121,9 @@ function createUseCase(
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const useCase = new CountUnopenedResourcesUseCase({
-    resources: options.resources ?? new InMemoryClientResources(),
+    resources: options.resources ?? new InMemoryClientResourcesAdapter(),
     clients,
     incidents,
   });
@@ -172,7 +175,7 @@ describe("CountUnopenedResourcesUseCase", () => {
   it("reports a failed count and counts nothing", async () => {
     // arrange
     const failure = new Error("connection terminated");
-    const unreadable = new InMemoryClientResources();
+    const unreadable = new InMemoryClientResourcesAdapter();
     vi.spyOn(unreadable, "countUnopenedForClient").mockRejectedValue(failure);
     const { useCase, incidents } = createUseCase({ resources: unreadable });
 

@@ -5,8 +5,8 @@ import type {
   PaymentRefund,
   PaymentSubscriptionChange,
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentCompletionHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
-import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
+import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler-port.server";
+import type { PaymentEventsPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events-port.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { StripeWebhookController } from "./stripe-webhook-controller.server";
@@ -15,7 +15,9 @@ const SIGNING_SECRET = "whsec_test_signing_secret";
 const RAW_BODY = '{"id":"evt_1","type":"checkout.session.completed"}';
 const SIGNATURE = "t=1,v1=abc";
 
-type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
+type HandlerOutcome = Awaited<
+  ReturnType<PaymentCompletionHandlerPort["handle"]>
+>;
 
 function paidSession(metadata: Record<string, string>): PaidCheckoutSession {
   return {
@@ -442,7 +444,7 @@ function createController(options: {
     paymentEventHandlingFailed: vi.fn(),
     paymentEventUnrouted: vi.fn(),
   };
-  const paymentEvents: PaymentEvents = { verify };
+  const paymentEvents: PaymentEventsPort = { verify };
   const controller = new StripeWebhookController({
     unitOfWork: (work) => work(),
     cardHandler,

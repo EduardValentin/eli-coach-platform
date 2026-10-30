@@ -1,8 +1,8 @@
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckIns } from "./check-ins";
+import type { CheckInsPort } from "./check-ins-port";
 
 type ReachedCheckIn =
   | { status: "reached"; checkIn: CheckIn }
@@ -10,8 +10,8 @@ type ReachedCheckIn =
   | { status: "ended" };
 
 type CheckInActorReachOptions = {
-  checkIns: Pick<CheckIns, "find">;
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
+  checkIns: Pick<CheckInsPort, "find">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class CheckInActorReach {

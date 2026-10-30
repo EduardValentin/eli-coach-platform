@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CoachingStandingSnapshot } from "../client";
 
 import { ClientJourney, type ClientJourneySnapshot } from "./client-journey";
-import type { ClientJourneys } from "./client-journeys";
+import type { ClientJourneysPort } from "./client-journeys-port";
 import { MarkWelcomeSeenUseCase } from "./mark-welcome-seen-use-case";
 import { ReadClientJourneyUseCase } from "./read-client-journey-use-case";
 import { ReadClientPortalStandingUseCase } from "./read-client-portal-standing-use-case";
@@ -54,7 +54,7 @@ function createJourneys(found: ClientJourney | null) {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     recordWelcomeSeen: vi.fn().mockResolvedValue(undefined),
     recordOnboardingSubmitted: vi.fn().mockResolvedValue(undefined),
-  } satisfies ClientJourneys;
+  } satisfies ClientJourneysPort;
 }
 
 describe("ReadClientJourneyUseCase", () => {

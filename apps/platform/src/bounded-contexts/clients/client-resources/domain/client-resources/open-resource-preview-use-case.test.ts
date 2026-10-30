@@ -5,11 +5,14 @@ import {
   type ClientResourceOwner,
   type ResourceFileSnapshot,
 } from "./client-resource";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResourceStore } from "./client-resource-store";
-import type { BrowsedResources, ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
 import { OpenResourcePreviewUseCase } from "./open-resource-preview-use-case";
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
@@ -42,7 +45,7 @@ const STORED = [
   }),
 ];
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   async add(): Promise<void> {}
 
   async recordOpened(): Promise<void> {}
@@ -74,7 +77,7 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-class InMemoryResourceImages implements ClientResourceStore {
+class InMemoryResourceImagesAdapter implements ClientResourceStorePort {
   private readonly images = new Map<string, Uint8Array>([
     ["resource-pdf/page-1", Uint8Array.of(1)],
     ["resource-pdf/page-2", Uint8Array.of(2)],
@@ -102,7 +105,7 @@ class InMemoryResourceImages implements ClientResourceStore {
 }
 
 function createUseCase() {
-  const store = new InMemoryResourceImages();
+  const store = new InMemoryResourceImagesAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -124,7 +127,7 @@ function createUseCase() {
           }
         : null,
     ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -135,9 +138,9 @@ function createUseCase() {
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const useCase = new OpenResourcePreviewUseCase({
-    resources: new InMemoryClientResources(),
+    resources: new InMemoryClientResourcesAdapter(),
     clients,
     store,
     incidents,

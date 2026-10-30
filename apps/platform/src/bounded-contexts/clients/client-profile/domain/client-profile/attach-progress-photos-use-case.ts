@@ -1,16 +1,16 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientProfiles } from "./client-profiles";
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import {
   ProgressPhotoIntake,
   type ProgressPhotoOutcomes,
   type ReceivedProgressPhoto,
 } from "./progress-photo-intake";
-import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
-import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
-import type { ProgressPhotoIds } from "./progress-photo-ids";
+import type { ProgressPhotoRenditionsPort } from "./progress-photo-renditions-port";
+import type { ProgressPhotoStorePort } from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
+import type { ProgressPhotoIdsPort } from "./progress-photo-ids-port";
 
 type AttachProgressPhotosCommand = {
   clientId: string;
@@ -19,13 +19,13 @@ type AttachProgressPhotosCommand = {
 };
 
 type AttachProgressPhotosUseCaseOptions = {
-  profiles: Pick<ClientProfiles, "findByClientId">;
-  photos: ProgressPhotos;
-  photoIds: ProgressPhotoIds;
-  store: ProgressPhotoStore;
-  renditions: ProgressPhotoRenditions;
-  clock: Clock;
-  incidents: MeasurementIncidents;
+  profiles: Pick<ClientProfilesPort, "findByClientId">;
+  photos: ProgressPhotosPort;
+  photoIds: ProgressPhotoIdsPort;
+  store: ProgressPhotoStorePort;
+  renditions: ProgressPhotoRenditionsPort;
+  clock: ClockPort;
+  incidents: MeasurementIncidentsPort;
 };
 
 const UNREADABLE_CONSENT = null;

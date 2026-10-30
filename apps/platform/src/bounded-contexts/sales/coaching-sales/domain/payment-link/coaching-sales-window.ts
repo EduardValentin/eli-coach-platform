@@ -1,9 +1,9 @@
-import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
-import type { WaitlistMode } from "./waitlist-mode";
+import type { CoachingSalesIncidentsPort } from "./coaching-sales-incidents-port";
+import type { WaitlistModePort } from "./waitlist-mode-port";
 
 type CoachingSalesWindowOptions = {
-  incidents: CoachingSalesIncidents;
-  waitlistMode: WaitlistMode;
+  incidents: CoachingSalesIncidentsPort;
+  waitlistMode: WaitlistModePort;
 };
 
 export class CoachingSalesWindow {

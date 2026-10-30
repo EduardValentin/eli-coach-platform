@@ -1,14 +1,14 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { ClientAvatar } from "./client-avatar";
-import type { ClientAvatarIds } from "./client-avatar-ids";
-import type { ClientAvatarIncidents } from "./client-avatar-incidents";
+import type { ClientAvatarIdsPort } from "./client-avatar-ids-port";
+import type { ClientAvatarIncidentsPort } from "./client-avatar-incidents-port";
 import type {
   ClientAvatarRendition,
-  ClientAvatarRenditions,
-} from "./client-avatar-renditions";
-import type { ClientAvatarStore } from "./client-avatar-store";
-import type { ClientAvatars } from "./client-avatars";
+  ClientAvatarRenditionsPort,
+} from "./client-avatar-renditions-port";
+import type { ClientAvatarStorePort } from "./client-avatar-store-port";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 import { ClientAvatarRemoval } from "./client-avatar-removal";
 import type { ProgressPhotoFileFacts } from "./progress-photo";
 
@@ -21,12 +21,12 @@ export type ClientAvatarUpload =
   | { status: "refused"; reason: "not-accepted" | "rendition-refused" };
 
 export type ClientAvatarIntakeOptions = {
-  avatars: ClientAvatars;
-  avatarIds: ClientAvatarIds;
-  store: ClientAvatarStore;
-  renditions: ClientAvatarRenditions;
-  incidents: ClientAvatarIncidents;
-  clock: Clock;
+  avatars: ClientAvatarsPort;
+  avatarIds: ClientAvatarIdsPort;
+  store: ClientAvatarStorePort;
+  renditions: ClientAvatarRenditionsPort;
+  incidents: ClientAvatarIncidentsPort;
+  clock: ClockPort;
 };
 
 const REFUSED_RENDITION: ClientAvatarRendition = { status: "refused" };

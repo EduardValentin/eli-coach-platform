@@ -1,9 +1,9 @@
-import type { AssessmentCallIncidents } from "./assessment-call-incidents";
-import type { WaitlistMode } from "./waitlist-mode";
+import type { AssessmentCallIncidentsPort } from "./assessment-call-incidents-port";
+import type { WaitlistModePort } from "./waitlist-mode-port";
 
 type AssessmentCallBookingWindowOptions = {
-  incidents: AssessmentCallIncidents;
-  waitlistMode: WaitlistMode;
+  incidents: AssessmentCallIncidentsPort;
+  waitlistMode: WaitlistModePort;
 };
 
 export class AssessmentCallBookingWindow {

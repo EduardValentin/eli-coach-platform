@@ -1,6 +1,6 @@
-import type { AccountInvitations } from "./account-invitations";
+import type { AccountInvitationsPort } from "./account-invitations-port";
 import type { InvitationResendOutcome } from "./client-invitation";
-import type { InvitedClients } from "./invited-client";
+import type { InvitedClientsPort } from "./invited-clients-port";
 
 type ResendInvitationResult =
   | { status: "sent"; email: string }
@@ -10,8 +10,8 @@ type ResendInvitationResult =
   | { status: "not-found" };
 
 type ResendInvitationUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitations, "resend">;
-  clients: Pick<InvitedClients, "findById">;
+  accountInvitations: Pick<AccountInvitationsPort, "resend">;
+  clients: Pick<InvitedClientsPort, "findById">;
 };
 
 export class ResendInvitationUseCase {

@@ -1,6 +1,6 @@
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import type {
   CheckIn,
@@ -12,25 +12,25 @@ import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
 import { releaseFreedHours } from "./check-in-hour-release";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import type {
   CheckInNotification,
-  CheckInNotifications,
-} from "./check-in-notifications";
+  CheckInNotificationsPort,
+} from "./check-in-notifications-port";
 import type { CheckInParty } from "./check-in-party";
-import type { CheckIns } from "./check-ins";
-import type { CoachTime } from "./coach-time";
+import type { CheckInsPort } from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
 
 type CheckInSettlerOptions = {
-  checkIns: Pick<CheckIns, "find" | "settle">;
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  coachTime: Pick<CoachTime, "release">;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
+  checkIns: Pick<CheckInsPort, "find" | "settle">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  coachTime: Pick<CoachTimePort, "release">;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
 };
 
 type CheckInTurn = { party: CheckInParty; at: Date };

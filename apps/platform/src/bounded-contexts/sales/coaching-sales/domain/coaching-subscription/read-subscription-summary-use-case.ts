@@ -1,8 +1,8 @@
 import type { CoachingStatus } from "./coaching-standing";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { CoachingSubscriptionSnapshot } from "./coaching-subscription";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 
 type SubscriptionSummary = {
   subscription: CoachingSubscriptionSnapshot;
@@ -12,8 +12,8 @@ type SubscriptionSummary = {
 };
 
 type ReadSubscriptionSummaryUseCaseOptions = {
-  clock: Clock;
-  subscriptions: Pick<CoachingSubscriptions, "findCurrentForClient">;
+  clock: ClockPort;
+  subscriptions: Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
 };
 
 export class ReadSubscriptionSummaryUseCase {

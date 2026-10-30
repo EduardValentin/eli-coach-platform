@@ -1,15 +1,15 @@
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import type { CheckInAnswerRefusal, CheckInSnapshot } from "./check-in";
 import type { CheckInActorCommand } from "./check-in-actor";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CheckInSettler } from "./check-in-settler";
-import type { CheckIns } from "./check-ins";
-import type { CoachTime } from "./coach-time";
+import type { CheckInsPort } from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
 
 export type DeclineCheckInResult =
   | { status: "declined"; checkIn: CheckInSnapshot }
@@ -19,14 +19,14 @@ export type DeclineCheckInResult =
   | { status: CheckInAnswerRefusal | "changed_meanwhile" };
 
 type DeclineCheckInUseCaseOptions = {
-  checkIns: CheckIns;
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  coachTime: Pick<CoachTime, "release">;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
+  checkIns: CheckInsPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  coachTime: Pick<CoachTimePort, "release">;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
 };
 
 export class DeclineCheckInUseCase {

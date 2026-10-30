@@ -1,4 +1,4 @@
-export { type ConsentVersions } from "./consent-versions";
+export { type ConsentVersionsPort } from "./consent-versions-port";
 export { GetWaitlistUseCase } from "./get-waitlist-use-case";
 export {
   JoinWaitlistUseCase,
@@ -14,13 +14,13 @@ export {
 } from "./waitlist";
 export {
   type SendWaitlistConfirmationCommand,
-  type WaitlistConfirmation,
+  type WaitlistConfirmationPort,
   type WaitlistConfirmationResult,
-} from "./waitlist-confirmation";
+} from "./waitlist-confirmation-port";
 export {
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
-  type WaitlistEntries,
-} from "./waitlist-entries";
-export type { WaitlistIncidents } from "./waitlist-incidents";
-export { type WaitlistMode } from "./waitlist-mode";
+  type WaitlistEntriesPort,
+} from "./waitlist-entries-port";
+export type { WaitlistIncidentsPort } from "./waitlist-incidents-port";
+export { type WaitlistModePort } from "./waitlist-mode-port";

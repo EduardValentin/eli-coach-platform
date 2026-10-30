@@ -1,10 +1,10 @@
-import type { CoachingEndHandler } from "./coaching-end-handler";
+import type { CoachingEndHandlerPort } from "./coaching-end-handler-port";
 import { CoachingEndPropagation } from "./coaching-end-propagation";
-import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import type { CoachingPeriodHandlerPort } from "./coaching-period-handler-port";
 import { CoachingPeriodPropagation } from "./coaching-period-propagation";
 import type { CoachingSubscription } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import type { SubscriptionEvent } from "./subscription-event";
 
 type ReconcileSubscriptionEventCommand = {
@@ -17,10 +17,10 @@ type ReconcileSubscriptionEventResult = {
 };
 
 type ReconcileSubscriptionEventUseCaseOptions = {
-  coachingEnds: readonly CoachingEndHandler[];
-  coachingPeriods: readonly CoachingPeriodHandler[];
-  incidents: CoachingSubscriptionIncidents;
-  subscriptions: CoachingSubscriptions;
+  coachingEnds: readonly CoachingEndHandlerPort[];
+  coachingPeriods: readonly CoachingPeriodHandlerPort[];
+  incidents: CoachingSubscriptionIncidentsPort;
+  subscriptions: CoachingSubscriptionsPort;
 };
 
 export class ReconcileSubscriptionEventUseCase {

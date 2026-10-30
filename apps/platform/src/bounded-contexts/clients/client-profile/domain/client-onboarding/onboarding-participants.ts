@@ -1,6 +1,12 @@
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
 
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type {
+  OnboardingClient,
+  OnboardingClientsPort,
+} from "./onboarding-clients-port";
 
 type OnboardingParticipant = {
   client: OnboardingClient;
@@ -8,8 +14,8 @@ type OnboardingParticipant = {
 };
 
 type OnboardingParticipantsOptions = {
-  clients: OnboardingClients;
-  identities: Pick<ClientIdentities, "findByClientId">;
+  clients: OnboardingClientsPort;
+  identities: Pick<ClientIdentitiesPort, "findByClientId">;
 };
 
 export class OnboardingParticipants {

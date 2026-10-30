@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
+import type { ClientIdentitiesPort } from "./client-identities-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 
 const NOW = new Date("2026-10-15T09:00:00.000Z");
@@ -67,7 +67,7 @@ function weekOf(id: string, startsAt: string): CheckIn {
 function createAnnouncer() {
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const notifications = {
     requested: vi.fn().mockResolvedValue("sent"),
     withdrawn: vi.fn().mockResolvedValue("sent"),
@@ -80,13 +80,13 @@ function createAnnouncer() {
     seriesSetUp: vi.fn().mockResolvedValue("sent"),
     seriesChanged: vi.fn().mockResolvedValue("sent"),
     seriesStopped: vi.fn().mockResolvedValue("sent"),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
   const inbox = {
     checkInEvent: vi.fn().mockResolvedValue(undefined),
     seriesEvent: vi.fn().mockResolvedValue(undefined),
     clashesAdded: vi.fn().mockResolvedValue(undefined),
     scheduleExpiries: vi.fn().mockResolvedValue(undefined),
-  } satisfies CheckInInbox;
+  } satisfies CheckInInboxPort;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     checkInInboxFailed: vi.fn(),
@@ -97,7 +97,7 @@ function createAnnouncer() {
     checkInSeriesInboxFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
     checkInSeriesReadFailed: vi.fn(),
-  } satisfies CheckInIncidents;
+  } satisfies CheckInIncidentsPort;
   const ports = {
     clock: { now: () => NOW },
     identities,

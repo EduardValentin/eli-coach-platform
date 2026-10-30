@@ -1,12 +1,12 @@
-import type { AccountInvitations } from "./account-invitations";
-import type { InvitedClient, InvitedClients } from "./invited-client";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { InvitedClient, InvitedClientsPort } from "./invited-clients-port";
 
 type InvitationAcceptanceOutcome = "accepted" | "refused";
 
 type AcceptInvitationUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitations, "acceptedInvitationOf">;
+  accountInvitations: Pick<AccountInvitationsPort, "acceptedInvitationOf">;
   clients: Pick<
-    InvitedClients,
+    InvitedClientsPort,
     "findById" | "findByAccountInvitationId" | "bindAuthSubject"
   >;
 };

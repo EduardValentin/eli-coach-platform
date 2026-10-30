@@ -1,12 +1,12 @@
 import type { ClientAvatar } from "./client-avatar";
-import type { ClientAvatarIncidents } from "./client-avatar-incidents";
-import type { ClientAvatarStore } from "./client-avatar-store";
-import type { ClientAvatars } from "./client-avatars";
+import type { ClientAvatarIncidentsPort } from "./client-avatar-incidents-port";
+import type { ClientAvatarStorePort } from "./client-avatar-store-port";
+import type { ClientAvatarsPort } from "./client-avatars-port";
 
 export type ClientAvatarRemovalOptions = {
-  avatars: Pick<ClientAvatars, "findByClientId" | "remove">;
-  store: Pick<ClientAvatarStore, "delete">;
-  incidents: ClientAvatarIncidents;
+  avatars: Pick<ClientAvatarsPort, "findByClientId" | "remove">;
+  store: Pick<ClientAvatarStorePort, "delete">;
+  incidents: ClientAvatarIncidentsPort;
 };
 
 export class ClientAvatarRemoval {

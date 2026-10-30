@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CalendarEvent } from "./calendar-invite.server";
-import type { EmailAttachment } from "./product-email-contract.server";
+import type { EmailAttachment } from "./product-email-port.server";
 import {
   buildCalendarInvite,
   buildGoogleCalendarUrl,

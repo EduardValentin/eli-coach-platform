@@ -1,13 +1,16 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import type { Exercise } from "./exercise";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReference,
+} from "./exercise-library-port";
 
 export type ArchiveExerciseResult =
   { status: "archived"; exercise: Exercise } | { status: "not-found" };
 
 type ArchiveExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibrary, "find" | "replace">;
-  clock: Clock;
+  library: Pick<ExerciseLibraryPort, "find" | "replace">;
+  clock: ClockPort;
 };
 
 export class ArchiveExerciseUseCase {

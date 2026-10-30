@@ -1,8 +1,8 @@
-import type { FoodLibrary } from "./food-library";
-import type { NutritionTag, NutritionTags } from "./nutrition-tags";
+import type { FoodLibraryPort } from "./food-library-port";
+import type { NutritionTag, NutritionTagsPort } from "./nutrition-tags-port";
 import type { PickableFoods } from "./pickable-foods";
 import { Recipe } from "./recipe";
-import type { RecipeLibrary } from "./recipe-library";
+import type { RecipeLibraryPort } from "./recipe-library-port";
 
 export type StartRecipeResult = {
   status: "started";
@@ -12,9 +12,9 @@ export type StartRecipeResult = {
 };
 
 type StartRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibrary, "list">;
-  foods: Pick<FoodLibrary, "list">;
-  tags: Pick<NutritionTags, "list">;
+  recipes: Pick<RecipeLibraryPort, "list">;
+  foods: Pick<FoodLibraryPort, "list">;
+  tags: Pick<NutritionTagsPort, "list">;
 };
 
 export class StartRecipeUseCase {

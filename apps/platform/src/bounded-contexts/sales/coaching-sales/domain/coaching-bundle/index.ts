@@ -10,5 +10,5 @@ export {
   type CoachingBundleId,
   type PriceTier,
 } from "./coaching-bundle";
-export { type PricingEligibility } from "./pricing-eligibility";
+export { type PricingEligibilityPort } from "./pricing-eligibility-port";
 export { ReadPricingTiersUseCase } from "./read-pricing-tiers-use-case";

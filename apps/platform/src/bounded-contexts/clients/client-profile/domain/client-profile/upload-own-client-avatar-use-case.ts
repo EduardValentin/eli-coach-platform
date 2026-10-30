@@ -1,4 +1,4 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import {
   ClientAvatarIntake,
@@ -16,7 +16,7 @@ type UploadOwnClientAvatarResult =
   ClientAvatarUpload | { status: "not-on-journey" } | { status: "ended" };
 
 type UploadOwnClientAvatarUseCaseOptions = ClientAvatarIntakeOptions & {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class UploadOwnClientAvatarUseCase {

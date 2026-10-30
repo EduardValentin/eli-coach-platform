@@ -10,7 +10,7 @@ import {
   type RecipeIcon,
   type TagFamily,
 } from "./nutrition";
-import type { NutritionTag } from "./nutrition-tags";
+import type { NutritionTag } from "./nutrition-tags-port";
 import type { RecipePhotoRefusal } from "./recipe-photo";
 
 type RecipeIngredientInput = {

@@ -1,11 +1,11 @@
-import type { EndedCalls, SalesCall } from "../payment-link";
-import type { Clock } from "../clock";
+import type { EndedCallsPort, SalesCall } from "../payment-link";
+import type { ClockPort } from "../clock-port";
 
 import type { CheckoutPurchase } from "./checkout-purchase";
-import type { CoachingSubscriptionIds } from "./coaching-subscription-ids";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaidClientIntake } from "./paid-client-admission";
-import type { PaymentCheckout } from "./payment-checkout";
+import type { CoachingSubscriptionIdsPort } from "./coaching-subscription-ids-port";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { PaidClientIntake } from "./paid-client-admission-port";
+import type { PaymentCheckoutPort } from "./payment-checkout-port";
 import { PurchasedSubscription } from "./purchased-subscription";
 
 type ReadCheckoutPurchaseCommand = {
@@ -19,11 +19,11 @@ type ReadCheckoutPurchaseResult =
   | { status: "unreadable_checkout" };
 
 type ReadCheckoutPurchaseUseCaseOptions = {
-  calls: EndedCalls;
-  clock: Clock;
-  incidents: CoachingSubscriptionIncidents;
-  paymentCheckout: PaymentCheckout;
-  subscriptionIds: CoachingSubscriptionIds;
+  calls: EndedCallsPort;
+  clock: ClockPort;
+  incidents: CoachingSubscriptionIncidentsPort;
+  paymentCheckout: PaymentCheckoutPort;
+  subscriptionIds: CoachingSubscriptionIdsPort;
 };
 
 export class ReadCheckoutPurchaseUseCase {

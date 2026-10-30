@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { ArchiveExerciseUseCase } from "./archive-exercise-use-case";
 import { Exercise, type ExerciseSnapshot } from "./exercise";
 import type {
-  ExerciseLibrary,
+  ExerciseLibraryPort,
   ExerciseReference,
   ExerciseReplacement,
-} from "./exercise-library";
+} from "./exercise-library-port";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const ARCHIVED_AT = new Date("2026-10-14T09:00:00.000Z");
@@ -56,7 +56,7 @@ function createUseCase() {
         ) ?? null,
     ),
     replace: vi.fn(async (): Promise<ExerciseReplacement> => "replaced"),
-  } satisfies Pick<ExerciseLibrary, "find" | "replace">;
+  } satisfies Pick<ExerciseLibraryPort, "find" | "replace">;
   const useCase = new ArchiveExerciseUseCase({
     library,
     clock: { now: () => NOW },

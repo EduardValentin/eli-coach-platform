@@ -1,6 +1,6 @@
 import { Client, type ClientIntake } from "./client";
-import type { AdmittedClients } from "./admitted-clients";
-import type { ClientIds } from "./client-ids";
+import type { AdmittedClientsPort } from "./admitted-clients-port";
+import type { ClientIdsPort } from "./client-ids-port";
 import {
   CoachingStanding,
   type CoachingStandingSnapshot,
@@ -17,8 +17,8 @@ type AdmitPaidClientResult =
   | { status: "call_already_has_client" };
 
 type AdmitPaidClientUseCaseOptions = {
-  clients: Pick<AdmittedClients, "admit">;
-  ids: ClientIds;
+  clients: Pick<AdmittedClientsPort, "admit">;
+  ids: ClientIdsPort;
 };
 
 export class AdmitPaidClientUseCase {

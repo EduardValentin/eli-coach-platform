@@ -1,5 +1,5 @@
 import type { ClientGender } from "./client-gender";
-import type { ClientIdentity } from "../client-identities";
+import type { ClientIdentity } from "../client-identities-port";
 import type { MeasurementEntry } from "../measurement";
 import type { MeasureUnits } from "../client-settings";
 

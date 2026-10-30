@@ -1,7 +1,10 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 import type { Exercise } from "./exercise";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type {
+  ExerciseLibraryPort,
+  ExerciseReference,
+} from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import { ExerciseNames } from "./exercise-names";
 
 const RESTORE_ATTEMPTS = 5;
@@ -12,9 +15,9 @@ export type RestoreExerciseResult =
   | { status: "failed" };
 
 type RestoreExerciseUseCaseOptions = {
-  library: Pick<ExerciseLibrary, "list" | "replace">;
-  clock: Clock;
-  incidents: Pick<ExerciseLibraryIncidents, "exerciseRestoreFailed">;
+  library: Pick<ExerciseLibraryPort, "list" | "replace">;
+  clock: ClockPort;
+  incidents: Pick<ExerciseLibraryIncidentsPort, "exerciseRestoreFailed">;
 };
 
 type RestoreAttempt = {

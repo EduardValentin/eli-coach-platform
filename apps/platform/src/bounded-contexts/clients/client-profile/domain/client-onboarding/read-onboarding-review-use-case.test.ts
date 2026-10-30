@@ -1,26 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
 import type {
-  ClientMeasurementsSource,
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
+import type {
+  ClientMeasurementsSourcePort,
   MeasurementEntry,
 } from "../measurement";
 
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import { DetailRequest } from "./detail-request";
 import {
   emptyAnswers,
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type {
+  OnboardingClient,
+  OnboardingClientsPort,
+} from "./onboarding-clients-port";
 import { OnboardingParticipants } from "./onboarding-participants";
 import type {
-  OnboardingReviewStamps,
+  OnboardingReviewStampsPort,
   ReviewStamps,
-} from "./onboarding-review-stamps";
-import type { OnboardingReviews } from "./onboarding-reviews";
+} from "./onboarding-review-stamps-port";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { ReadOnboardingReviewUseCase } from "./read-onboarding-review-use-case";
 
@@ -128,7 +134,7 @@ function createIncidents() {
     onboardingDetailsRefused: vi.fn(),
     onboardingAnswersApproved: vi.fn(),
     onboardingReviewStampsRepaired: vi.fn(),
-  } satisfies ClientOnboardingIncidents;
+  } satisfies ClientOnboardingIncidentsPort;
 }
 
 function readPorts(
@@ -136,7 +142,9 @@ function readPorts(
     client?: OnboardingClient | null;
     identity?: ClientIdentity;
     submission?: OnboardingSubmission | null;
-    stored?: Partial<Awaited<ReturnType<OnboardingReviews["findByClientId"]>>>;
+    stored?: Partial<
+      Awaited<ReturnType<OnboardingReviewsPort["findByClientId"]>>
+    >;
   } = {},
 ) {
   return {
@@ -148,12 +156,12 @@ function readPorts(
           .mockResolvedValue(
             overrides.client === undefined ? CLIENT : overrides.client,
           ),
-      } satisfies OnboardingClients,
+      } satisfies OnboardingClientsPort,
       identities: {
         findByClientId: vi
           .fn()
           .mockResolvedValue(overrides.identity ?? IDENTITY),
-      } satisfies Pick<ClientIdentities, "findByClientId">,
+      } satisfies Pick<ClientIdentitiesPort, "findByClientId">,
     }),
     onboardings: {
       findByClientId: vi.fn().mockResolvedValue({
@@ -163,7 +171,7 @@ function readPorts(
             ? submission()
             : overrides.submission,
       }),
-    } satisfies ClientOnboardingSource,
+    } satisfies ClientOnboardingSourcePort,
     reviews: {
       findByClientId: vi.fn().mockResolvedValue({
         openedAt: null,
@@ -175,13 +183,13 @@ function readPorts(
       recordRequest: vi.fn(),
       recordAnswer: vi.fn(),
       recordApproval: vi.fn(),
-    } satisfies OnboardingReviews,
+    } satisfies OnboardingReviewsPort,
     measurements: {
       listByClientId: vi.fn().mockResolvedValue(MEASUREMENTS),
-    } satisfies ClientMeasurementsSource,
+    } satisfies ClientMeasurementsSourcePort,
     stamps: {
       record: vi.fn().mockResolvedValue(undefined),
-    } satisfies OnboardingReviewStamps,
+    } satisfies OnboardingReviewStampsPort,
     incidents: createIncidents(),
   };
 }

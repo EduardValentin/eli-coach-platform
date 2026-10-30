@@ -11,9 +11,9 @@ import {
   type WaitlistConsentVersions,
   type WaitlistOffer,
 } from "./waitlist";
-import type { WaitlistConfirmation } from "./waitlist-confirmation";
-import type { WaitlistEntries } from "./waitlist-entries";
-import type { WaitlistMode } from "./waitlist-mode";
+import type { WaitlistConfirmationPort } from "./waitlist-confirmation-port";
+import type { WaitlistEntriesPort } from "./waitlist-entries-port";
+import type { WaitlistModePort } from "./waitlist-mode-port";
 
 const activeOffer = {
   plan: "all-bundles",
@@ -32,11 +32,11 @@ function createWaitlistIncidents() {
   };
 }
 
-function enabledWaitlistMode(): WaitlistMode {
+function enabledWaitlistMode(): WaitlistModePort {
   return { isEnabled: vi.fn().mockResolvedValue(true) };
 }
 
-function disabledWaitlistMode(): WaitlistMode {
+function disabledWaitlistMode(): WaitlistModePort {
   return { isEnabled: vi.fn().mockResolvedValue(false) };
 }
 
@@ -45,8 +45,8 @@ function createWaitlist(): Waitlist {
 }
 
 function createWaitlistEntries(
-  options?: Partial<WaitlistEntries>,
-): WaitlistEntries {
+  options?: Partial<WaitlistEntriesPort>,
+): WaitlistEntriesPort {
   return {
     countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
     registerReducedPricingSignup: vi.fn().mockResolvedValue({
@@ -59,17 +59,17 @@ function createWaitlistEntries(
   };
 }
 
-function createConfirmation(): WaitlistConfirmation {
+function createConfirmation(): WaitlistConfirmationPort {
   return {
     sendConfirmation: vi.fn().mockResolvedValue({ kind: "sent" }),
   };
 }
 
 function createJoinWaitlist(options: {
-  confirmation: WaitlistConfirmation;
+  confirmation: WaitlistConfirmationPort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createWaitlistIncidents>;
-  waitlistEntries: WaitlistEntries;
+  waitlistEntries: WaitlistEntriesPort;
 }): JoinWaitlistUseCase {
   return new JoinWaitlistUseCase({
     confirmation: options.confirmation,
@@ -304,7 +304,7 @@ describe("JoinWaitlistUseCase", () => {
   it("returns before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const confirmation: WaitlistConfirmation = {
+    const confirmation: WaitlistConfirmationPort = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<{ kind: "sent" }>((resolve) => {
@@ -439,7 +439,7 @@ describe("JoinWaitlistUseCase", () => {
   it("returns regular pricing registration before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const confirmation: WaitlistConfirmation = {
+    const confirmation: WaitlistConfirmationPort = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<{ kind: "sent" }>((resolve) => {

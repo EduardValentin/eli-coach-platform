@@ -1,16 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
 import {
   ClientSettings,
   UnitPreference,
-  type ClientSettingsSource,
+  type ClientSettingsSourcePort,
 } from "../client-settings";
 
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import { emptyDraft } from "./onboarding-draft";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type {
+  OnboardingClient,
+  OnboardingClientsPort,
+} from "./onboarding-clients-port";
 import { OnboardingParticipants } from "./onboarding-participants";
 import { ReadClientOnboardingUseCase } from "./read-client-onboarding-use-case";
 
@@ -48,13 +54,13 @@ function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies OnboardingClients;
+  } satisfies OnboardingClientsPort;
 }
 
 function createIdentities(found: ClientIdentity | null = IDENTITY) {
   return {
     findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<ClientIdentities, "findByClientId">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientId">;
 }
 
 function createOnboardings() {
@@ -62,7 +68,7 @@ function createOnboardings() {
     findByClientId: vi
       .fn()
       .mockResolvedValue({ draft: DRAFT, submission: null }),
-  } satisfies ClientOnboardingSource;
+  } satisfies ClientOnboardingSourcePort;
 }
 
 function settingsWith(
@@ -83,7 +89,7 @@ function settingsWith(
 function createSettings(found: UnitPreference | null) {
   return {
     findByClientId: vi.fn().mockResolvedValue(settingsWith(found)),
-  } satisfies ClientSettingsSource;
+  } satisfies ClientSettingsSourcePort;
 }
 
 describe("ReadClientOnboardingUseCase", () => {

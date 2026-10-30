@@ -1,12 +1,12 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
-import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls";
-import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions";
-import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup";
-import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile";
-import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods";
+import type { EndedCallsFacade } from "~/bounded-contexts/scheduling/public/ended-calls-facade";
+import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissions-facade";
+import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup-facade";
+import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile-facade";
+import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods-facade";
 import { ReadPricingTiersUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
-import type { PricingEligibilitySource } from "~/bounded-contexts/sales/waitlist/public/pricing-eligibility";
+import type { PricingEligibilitySourceFacade } from "~/bounded-contexts/sales/waitlist/public/pricing-eligibility-source-facade";
 import {
   CancelSubscriptionUseCase,
   FinishCheckoutPurchaseUseCase,
@@ -23,24 +23,24 @@ import {
   SignedInSubscriptions,
   StartCheckoutUseCase,
   StartProgramNowUseCase,
-  type PaymentCheckout,
-  type PaymentCustomerCards,
-  type PaymentSubscriptions,
+  type PaymentCheckoutPort,
+  type PaymentCustomerCardsPort,
+  type PaymentSubscriptionsPort,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/feature-flags";
+import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/feature-flags-facade";
 import {
   CoachingSalesWindow,
   OpenBundlePageUseCase,
   ReadCallSalesStatesUseCase,
   ResolvePaymentLinkUseCase,
   SendPaymentLinkUseCase,
-  type PaymentLinkTokenGenerator,
-  type PaymentLinkTokenHasher,
+  type PaymentLinkTokenGeneratorPort,
+  type PaymentLinkTokenHasherPort,
 } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
-import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock";
-import type { EmailAcceptance } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance";
-import type { ProductEmail } from "~/shared/email/index.server";
-import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
+import type { ClockPort } from "~/bounded-contexts/sales/coaching-sales/domain/clock-port";
+import type { EmailAcceptancePort } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance-port";
+import type { ProductEmailPort } from "~/shared/email/index.server";
+import type { PaymentEventsPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events-port.server";
 
 import { SubscriptionController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/client/subscription-controller.server";
 import { CoachSalesController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/coach/coach-sales-controller.server";
@@ -50,29 +50,27 @@ import { CoachingPurchaseCompletionHandler } from "~/bounded-contexts/sales/coac
 import { CoachingSubscriptionEventHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/public-site/checkouts-controller.server";
 import { StripeWebhookController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/stripe-webhooks/stripe-webhook-controller.server";
-import { ClientsClientLookup } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/client-lookup.server";
-import { ClientsCoachingEndHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-end-handler.server";
-import { ClientsCoachingPeriodHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-period-handler.server";
-import { ClientsCoachingStandingWriter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/coaching-standing-writer.server";
-import { ClientsPaidClientAdmission } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/paid-client-admission.server";
-import { PostgresPaymentEventLedger } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/payment-event-ledger.server";
-import { PostgresPaymentCards } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-cards/payment-cards-repository.server";
-import { PostgresPaymentLinks } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/payment-links-repository.server";
-import { RandomPaymentLinkIds } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/random-payment-link-ids.server";
-import { PostgresCoachingPurchases } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/purchases/purchases-repository.server";
-import { RandomCoachingSubscriptionIds } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/subscriptions/random-coaching-subscription-ids.server";
-import { PostgresCoachingSubscriptions } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/subscriptions/subscriptions-repository.server";
-import {
-  createCoachingSalesNotifications,
-  createRefundNotifications,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/email/create-coaching-sales-notifications.server";
+import { ClientsClientLookupAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/clients-client-lookup-adapter.server";
+import { ClientsCoachingEndHandlerAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/clients-coaching-end-handler-adapter.server";
+import { ClientsCoachingPeriodHandlerAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/clients-coaching-period-handler-adapter.server";
+import { ClientsCoachingStandingWriterAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/clients-coaching-standing-writer-adapter.server";
+import { ClientsPaidClientAdmissionAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/clients/clients-paid-client-admission-adapter.server";
+import { PostgresPaymentEventLedgerRepository } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-events/postgres-payment-event-ledger-repository.server";
+import { PostgresPaymentCardsRepository } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-cards/postgres-payment-cards-repository.server";
+import { PostgresPaymentLinksRepository } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/postgres-payment-links-repository.server";
+import { RandomPaymentLinkIdsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/payment-links/random-payment-link-ids-adapter.server";
+import { PostgresCoachingPurchasesRepository } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/purchases/postgres-coaching-purchases-repository.server";
+import { RandomCoachingSubscriptionIdsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/subscriptions/random-coaching-subscription-ids-adapter.server";
+import { PostgresCoachingSubscriptionsRepository } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/subscriptions/postgres-coaching-subscriptions-repository.server";
+import { createCoachingSalesNotificationsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/email/create-coaching-sales-notifications-adapter.server";
+import { createRefundNotificationsAdapter } from "./adapters/outbound/email/create-refund-notifications-adapter.server";
 import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
-import type { Logger } from "~/shared/logging/console-logger.server";
-import { createCoachingSalesIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/logging/coaching-sales-incidents.server";
-import { SchedulingEndedCalls } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/scheduling/ended-calls.server";
-import { OperationsWaitlistMode } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/operations/waitlist-mode.server";
-import { WaitlistPricingEligibility } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/waitlist/pricing-eligibility.server";
-import { createPayments } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/create-payments.server";
+import type { LoggerPort } from "~/shared/logging/logger-port.server";
+import { CoachingSalesIncidentsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/logging/coaching-sales-incidents-adapter.server";
+import { SchedulingEndedCallsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/scheduling/scheduling-ended-calls-adapter.server";
+import { OperationsWaitlistModeAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/operations/operations-waitlist-mode-adapter.server";
+import { WaitlistPricingEligibilityAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/waitlist/waitlist-pricing-eligibility-adapter.server";
+import { PaymentsAdapter } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payments-adapter.server";
 import type { PaymentsConfig } from "~/bounded-contexts/sales/coaching-sales/config.server";
 
 type CoachingSalesComposition = {
@@ -85,24 +83,24 @@ export type CoachingSalesFeatureHandles = {
   endedCalls: EndedCallsFacade;
   clientLookup: ClientLookupFacade;
   clientProfile: ClientProfileFacade;
-  clock: Clock;
+  clock: ClockPort;
   coachEmail: string;
   coachingPeriods: CoachingPeriodsFacade;
   contactEmail: string;
   database: DatabaseClient;
-  emailAcceptance: EmailAcceptance;
+  emailAcceptance: EmailAcceptancePort;
   featureFlags: FeatureFlagsFacade;
-  logger: Logger;
+  logger: LoggerPort;
   linkTokens: {
-    generator: PaymentLinkTokenGenerator;
-    hasher: PaymentLinkTokenHasher;
+    generator: PaymentLinkTokenGeneratorPort;
+    hasher: PaymentLinkTokenHasherPort;
   };
-  paymentCheckout: PaymentCheckout;
-  paymentCustomerCards: PaymentCustomerCards;
-  paymentEvents: PaymentEvents;
-  paymentSubscriptions: PaymentSubscriptions;
-  pricingEligibility: PricingEligibilitySource;
-  productEmail: ProductEmail;
+  paymentCheckout: PaymentCheckoutPort;
+  paymentCustomerCards: PaymentCustomerCardsPort;
+  paymentEvents: PaymentEventsPort;
+  paymentSubscriptions: PaymentSubscriptionsPort;
+  pricingEligibility: PricingEligibilitySourceFacade;
+  productEmail: ProductEmailPort;
   publicAppUrl: string;
   webhookSigningSecret: string | undefined;
 };
@@ -119,29 +117,32 @@ export type PaymentHandles = Pick<
 export function composeCoachingSalesFeature(
   handles: CoachingSalesFeatureHandles,
 ): CoachingSalesComposition {
-  const incidents = createCoachingSalesIncidents(handles.logger);
+  const incidents = new CoachingSalesIncidentsAdapter(handles.logger);
   const { clock, database } = handles;
   const unitOfWork = createUnitOfWork(database);
-  const clients = new ClientsClientLookup(handles.clientLookup);
-  const admission = new ClientsPaidClientAdmission(
+  const clients = new ClientsClientLookupAdapter(handles.clientLookup);
+  const admission = new ClientsPaidClientAdmissionAdapter(
     handles.admissions,
     handles.clientProfile,
   );
-  const paymentLinks = new PostgresPaymentLinks({ clock, database });
-  const purchases = new PostgresCoachingPurchases({ clock, database });
-  const subscriptions = new PostgresCoachingSubscriptions({
+  const paymentLinks = new PostgresPaymentLinksRepository({ clock, database });
+  const purchases = new PostgresCoachingPurchasesRepository({
     clock,
     database,
-    standings: new ClientsCoachingStandingWriter(handles.admissions),
   });
-  const paymentCards = new PostgresPaymentCards({ clock, database });
+  const subscriptions = new PostgresCoachingSubscriptionsRepository({
+    clock,
+    database,
+    standings: new ClientsCoachingStandingWriterAdapter(handles.admissions),
+  });
+  const paymentCards = new PostgresPaymentCardsRepository({ clock, database });
   const { generator: tokenGenerator, hasher: tokenHasher } = handles.linkTokens;
   const salesWindow = new CoachingSalesWindow({
     incidents,
-    waitlistMode: new OperationsWaitlistMode(handles.featureFlags),
+    waitlistMode: new OperationsWaitlistModeAdapter(handles.featureFlags),
   });
-  const calls = new SchedulingEndedCalls(handles.endedCalls);
-  const pricingEligibility = new WaitlistPricingEligibility(
+  const calls = new SchedulingEndedCallsAdapter(handles.endedCalls);
+  const pricingEligibility = new WaitlistPricingEligibilityAdapter(
     handles.pricingEligibility,
   );
   const paymentLinkPorts = {
@@ -160,9 +161,11 @@ export function composeCoachingSalesFeature(
   });
   const subscriptionPorts = {
     clock,
-    coachingEnds: [new ClientsCoachingEndHandler(handles.coachingPeriods)],
+    coachingEnds: [
+      new ClientsCoachingEndHandlerAdapter(handles.coachingPeriods),
+    ],
     coachingPeriods: [
-      new ClientsCoachingPeriodHandler(handles.coachingPeriods),
+      new ClientsCoachingPeriodHandlerAdapter(handles.coachingPeriods),
     ],
     incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
@@ -172,7 +175,7 @@ export function composeCoachingSalesFeature(
     cancelSubscription: new CancelSubscriptionUseCase({
       ...subscriptionPorts,
       clients,
-      notifications: createRefundNotifications(handles.productEmail, {
+      notifications: createRefundNotificationsAdapter(handles.productEmail, {
         appBasePath: handles.appBasePath,
         clock,
         coachEmail: handles.coachEmail,
@@ -237,12 +240,12 @@ export function composeCoachingSalesFeature(
       clock,
       incidents,
       paymentCheckout: handles.paymentCheckout,
-      subscriptionIds: new RandomCoachingSubscriptionIds(),
+      subscriptionIds: new RandomCoachingSubscriptionIdsAdapter(),
     }),
     recordCheckoutPurchase: new RecordCheckoutPurchaseUseCase({
       admission,
       incidents,
-      paymentEventLedger: new PostgresPaymentEventLedger(database),
+      paymentEventLedger: new PostgresPaymentEventLedgerRepository(database),
       purchases,
     }),
     resolvePaymentLink: new ResolvePaymentLinkUseCase({
@@ -251,14 +254,17 @@ export function composeCoachingSalesFeature(
     }),
     sendPaymentLink: new SendPaymentLinkUseCase({
       ...paymentLinkPorts,
-      ids: new RandomPaymentLinkIds(),
+      ids: new RandomPaymentLinkIdsAdapter(),
       incidents,
-      notifications: createCoachingSalesNotifications(handles.productEmail, {
-        appBasePath: handles.appBasePath,
-        clock,
-        contactEmail: handles.contactEmail,
-        publicAppUrl: handles.publicAppUrl,
-      }),
+      notifications: createCoachingSalesNotificationsAdapter(
+        handles.productEmail,
+        {
+          appBasePath: handles.appBasePath,
+          clock,
+          contactEmail: handles.contactEmail,
+          publicAppUrl: handles.publicAppUrl,
+        },
+      ),
       tokenGenerator,
     }),
     startCheckout: new StartCheckoutUseCase({
@@ -336,7 +342,7 @@ function byPurpose<Handler extends { readonly purpose: string }>(
 }
 
 export function composePayments(config: PaymentsConfig): PaymentHandles {
-  const payments = createPayments(config);
+  const payments = new PaymentsAdapter(config);
 
   return {
     paymentCheckout: payments.checkout,

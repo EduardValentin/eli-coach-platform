@@ -1,4 +1,4 @@
-import type { EmailAcceptance } from "../email-acceptance";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
 import type { PublishedProduct } from "../product";
 
 export type StoreDeliveryLimitWindow = "cooldown" | "daily";
@@ -84,7 +84,7 @@ export class AcquisitionRequest {
   static from(
     command: AcquireProductsCommand,
     requestedAt: Date,
-    emailAcceptance: EmailAcceptance,
+    emailAcceptance: EmailAcceptancePort,
   ): AcquisitionRequest {
     return new AcquisitionRequest({
       email: emailAcceptance.normalize(command.email),

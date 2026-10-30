@@ -1,5 +1,5 @@
-import type { CoachAvailabilitySource } from "../coach-availability";
-import type { CoachMeetingRoomSource } from "../coach-meeting-room";
+import type { CoachAvailabilitySourcePort } from "../coach-availability";
+import type { CoachMeetingRoomSourcePort } from "../coach-meeting-room";
 
 import {
   coachScheduleSettingsOf,
@@ -7,8 +7,8 @@ import {
 } from "./coach-schedule";
 
 type GetCoachScheduleSettingsUseCaseOptions = {
-  availability: CoachAvailabilitySource;
-  meetingRoom: CoachMeetingRoomSource;
+  availability: CoachAvailabilitySourcePort;
+  meetingRoom: CoachMeetingRoomSourcePort;
 };
 
 export class GetCoachScheduleSettingsUseCase {

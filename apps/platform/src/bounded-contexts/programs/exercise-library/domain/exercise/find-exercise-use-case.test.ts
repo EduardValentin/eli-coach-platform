@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Exercise } from "./exercise";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibraryPort } from "./exercise-library-port";
 import { FindExerciseUseCase } from "./find-exercise-use-case";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
@@ -64,7 +64,7 @@ function createUseCase() {
     );
   const library = {
     list: vi.fn(async (ownerAccountId: string) => ownedBy(ownerAccountId)),
-  } satisfies Pick<ExerciseLibrary, "list">;
+  } satisfies Pick<ExerciseLibraryPort, "list">;
 
   return { useCase: new FindExerciseUseCase({ library }), library };
 }

@@ -2,7 +2,7 @@ import type {
   AssessmentCallSnapshot,
   ListAssessmentCallsUseCase,
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock-port";
 
 import {
   coachAssessmentCallsSchema,
@@ -14,7 +14,7 @@ import {
 import { assessmentCallJoinPath } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 
 type CoachAssessmentCallsControllerOptions = {
-  clock: Clock;
+  clock: ClockPort;
   listAssessmentCalls: ListAssessmentCallsUseCase;
 };
 

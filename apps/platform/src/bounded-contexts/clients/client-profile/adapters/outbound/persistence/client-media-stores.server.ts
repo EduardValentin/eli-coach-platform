@@ -1,42 +1,22 @@
 import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
-import type {
-  ClientAvatarStore,
-  ProgressPhotoStore,
-} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
-
 import {
-  clientAvatarStorageKey,
-  progressPhotoStorageKey,
-} from "./client-media-layout.server";
-import {
-  EncryptedFilesystemClientMediaStore,
+  EncryptedFilesystemClientMediaStoreAdapter,
   type EncryptedFilesystemSettings,
-} from "./encrypted-filesystem-client-media-store.server";
+} from "./encrypted-filesystem-client-media-store-adapter.server";
 import { isReadyMediaRoot } from "~/shared/private-files/filesystem/media-root.server";
-import { InMemoryClientMediaStore } from "./in-memory-client-media-store.server";
+import { InMemoryClientMediaStoreAdapter } from "./in-memory-client-media-store-adapter.server";
 
 type FilesystemSettingName =
   "CLIENT_MEDIA_ROOT" | "CLIENT_MEDIA_KEY" | "CLIENT_MEDIA_KEY_ID";
 
-export function createProgressPhotoStore(
-  config: ClientFilesConfig,
-): ProgressPhotoStore {
-  return createClientMediaStore(config, progressPhotoStorageKey);
-}
-
-export function createClientAvatarStore(
-  config: ClientFilesConfig,
-): ClientAvatarStore {
-  return createClientMediaStore(config, clientAvatarStorageKey);
-}
-
-function createClientMediaStore<Owner>(
+export function createClientMediaStore<Owner>(
   config: ClientFilesConfig,
   storageKeyOf: (owner: Owner) => string,
 ):
-  EncryptedFilesystemClientMediaStore<Owner> | InMemoryClientMediaStore<Owner> {
+  | EncryptedFilesystemClientMediaStoreAdapter<Owner>
+  | InMemoryClientMediaStoreAdapter<Owner> {
   if (config.CLIENT_MEDIA_PROVIDER === "memory") {
-    return new InMemoryClientMediaStore(storageKeyOf);
+    return new InMemoryClientMediaStoreAdapter(storageKeyOf);
   }
 
   const settings = filesystemSettings(config);
@@ -45,7 +25,7 @@ function createClientMediaStore<Owner>(
     throw new Error("Client media root is not ready.");
   }
 
-  return new EncryptedFilesystemClientMediaStore(settings, storageKeyOf);
+  return new EncryptedFilesystemClientMediaStoreAdapter(settings, storageKeyOf);
 }
 
 function filesystemSettings(

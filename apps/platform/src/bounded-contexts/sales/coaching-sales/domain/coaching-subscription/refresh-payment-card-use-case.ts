@@ -1,15 +1,15 @@
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { PaymentCards } from "./payment-cards";
-import type { PaymentCustomerCards } from "./payment-customer-cards";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { PaymentCardsPort } from "./payment-cards-port";
+import type { PaymentCustomerCardsPort } from "./payment-customer-cards-port";
 
 type RefreshPaymentCardCommand = {
   paymentCustomerId: string;
 };
 
 type RefreshPaymentCardUseCaseOptions = {
-  cards: PaymentCards;
-  customerCards: PaymentCustomerCards;
-  incidents: CoachingSubscriptionIncidents;
+  cards: PaymentCardsPort;
+  customerCards: PaymentCustomerCardsPort;
+  incidents: CoachingSubscriptionIncidentsPort;
 };
 
 export class RefreshPaymentCardUseCase {

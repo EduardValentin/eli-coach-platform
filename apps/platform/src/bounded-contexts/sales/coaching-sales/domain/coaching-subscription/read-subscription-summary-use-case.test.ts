@@ -5,7 +5,7 @@ import {
   withdrawalDeadline,
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import { ReadSubscriptionSummaryUseCase } from "./read-subscription-summary-use-case";
 import { RefundDue } from "./refund-due";
 
@@ -46,7 +46,7 @@ function subscriptionOf(
 function createSubscriptions(found: CoachingSubscription | null) {
   return {
     findCurrentForClient: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<CoachingSubscriptions, "findCurrentForClient">;
+  } satisfies Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
 }
 
 describe("ReadSubscriptionSummaryUseCase", () => {

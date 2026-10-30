@@ -3,9 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { ChangeResourceDetailsUseCase } from "./change-resource-details-use-case";
 import { ClientResource } from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ClientReach } from "./client-reach";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
+import type { ClientReachPort } from "./client-reach-port";
 import {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,
@@ -42,7 +45,7 @@ const STORED = ClientResource.reconstitute({
   openedAt: OPENED_AT,
 });
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   private readonly stored = new Map<string, ClientResource>([
     ["resource-1", STORED],
   ]);
@@ -84,7 +87,7 @@ class InMemoryClientResources implements ClientResources {
 }
 
 function createUseCase() {
-  const resources = new InMemoryClientResources();
+  const resources = new InMemoryClientResourcesAdapter();
   const clients = {
     findById: vi.fn(async (clientId: string) => ({
       clientId: clientId,
@@ -102,7 +105,7 @@ function createUseCase() {
       paidThrough: null,
       timeZone: "Europe/Bucharest",
     })),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -113,7 +116,7 @@ function createUseCase() {
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
+  } satisfies ClientResourceIncidentsPort;
   const useCase = new ChangeResourceDetailsUseCase({
     resources,
     clients,

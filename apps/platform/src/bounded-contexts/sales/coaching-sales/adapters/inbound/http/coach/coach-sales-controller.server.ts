@@ -4,7 +4,7 @@ import type {
   RefundDueSnapshot,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { ReadCallSalesStatesUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
-import type { EmailAcceptance } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance";
+import type { EmailAcceptancePort } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance-port";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
@@ -21,7 +21,7 @@ import {
 import { accessContext } from "~/bounded-contexts/access/public/session";
 
 type CoachSalesControllerOptions = {
-  emailAcceptance: EmailAcceptance;
+  emailAcceptance: EmailAcceptancePort;
   readCallSalesStates: ReadCallSalesStatesUseCase;
   readPricingTiers: ReadPricingTiersUseCase;
   readSubscriptionSummary: ReadSubscriptionSummaryUseCase;

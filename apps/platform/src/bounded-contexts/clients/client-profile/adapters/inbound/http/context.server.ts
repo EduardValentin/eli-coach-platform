@@ -2,7 +2,7 @@ import { createContext, type RouterContext } from "react-router";
 
 import type { ClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/avatar/client-avatar-controller.server";
 import type { ClientSettingsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-settings-controller.server";
-import type { ClientMeasurementsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/measurements-controller.server";
+import type { ClientMeasurementsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-measurements-controller.server";
 import type { OwnClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/own-client-avatar-controller.server";
 import type { OwnClientProfileController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/own-client-profile-controller.server";
 import type { ClientProfileController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/coach/client-profile-controller.server";

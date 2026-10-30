@@ -1,4 +1,4 @@
-import type { ProductAssetDigest } from "./product-assets";
+import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import {
   ProductPublicationDraft,
   type ProductCoverInput,
@@ -6,7 +6,7 @@ import {
   type ProductVersionMetadata,
   type PublicationPlanResult,
 } from "./product-publication";
-import type { StoreProductPublications } from "./store-product-publications";
+import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 export type PlanProductRevisionCommand = {
   cover: ProductCoverInput;
@@ -18,8 +18,8 @@ export type PlanProductRevisionCommand = {
 export class PlanProductRevisionUseCase {
   constructor(
     private readonly options: {
-      digest: ProductAssetDigest;
-      publications: StoreProductPublications;
+      digest: ProductAssetDigestPort;
+      publications: StoreProductPublicationsPort;
     },
   ) {}
 

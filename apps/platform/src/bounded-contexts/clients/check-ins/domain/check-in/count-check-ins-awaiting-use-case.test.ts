@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckIns } from "./check-ins";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInsPort } from "./check-ins-port";
 import { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
 
 const NOW = new Date("2026-06-03T09:30:00.000Z");
@@ -89,14 +89,14 @@ function createUseCase(options: {
     find: vi.fn(),
     listAll: listed,
     listForClient: listed,
-  } satisfies Pick<CheckIns, "find" | "listAll" | "listForClient">;
+  } satisfies Pick<CheckInsPort, "find" | "listAll" | "listForClient">;
   const clients = {
     findByAuthSubjectId: vi
       .fn()
       .mockResolvedValue(
         options.client === undefined ? REACHABLE : options.client,
       ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     awaitingCheckInsCountFailed: vi.fn(),
@@ -107,7 +107,7 @@ function createUseCase(options: {
     checkInSeriesReadFailed: vi.fn(),
     checkInInboxFailed: vi.fn(),
     checkInSeriesInboxFailed: vi.fn(),
-  } satisfies CheckInIncidents;
+  } satisfies CheckInIncidentsPort;
   const useCase = new CountCheckInsAwaitingUseCase({
     checkIns,
     clients,

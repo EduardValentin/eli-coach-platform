@@ -1,7 +1,8 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { DownloadGrant, GrantDelivery } from "./download-grant";
-import type { DownloadGrants, DownloadTokenHasher } from "./download-grants";
+import type { DownloadGrantsPort } from "./download-grants-port";
+import type { DownloadTokenHasherPort } from "./download-token-hasher-port";
 
 export type DownloadGrantResolution =
   | { status: "available"; delivery: GrantDelivery; grant: DownloadGrant }
@@ -10,9 +11,9 @@ export type DownloadGrantResolution =
 export class ResolveDownloadGrantUseCase {
   constructor(
     private readonly options: {
-      clock: Clock;
-      downloadGrants: DownloadGrants;
-      tokenHasher: DownloadTokenHasher;
+      clock: ClockPort;
+      downloadGrants: DownloadGrantsPort;
+      tokenHasher: DownloadTokenHasherPort;
     },
   ) {}
 

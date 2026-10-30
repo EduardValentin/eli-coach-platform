@@ -1,6 +1,6 @@
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import {
   CheckIn,
@@ -12,14 +12,18 @@ import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
 import { releaseFreedHours } from "./check-in-hour-release";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import { CheckInNote } from "./check-in-note";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CHECK_IN_RULES } from "./check-in-rules";
-import type { CheckInMove, CheckInMoveCommand, CheckIns } from "./check-ins";
-import type { CoachTime } from "./coach-time";
-import type { OpenSlots } from "./open-slots";
+import type {
+  CheckInMove,
+  CheckInMoveCommand,
+  CheckInsPort,
+} from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
+import type { OpenSlotsPort } from "./open-slots-port";
 
 export type ProposeCheckInTimeCommand = CheckInActorCommand & {
   startsAt: Date;
@@ -44,15 +48,15 @@ type OpenStartCheck = {
 };
 
 type ProposeCheckInTimeUseCaseOptions = {
-  checkIns: Pick<CheckIns, "find" | "listForClient" | "move">;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  clock: Clock;
-  coachTime: CoachTime;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
-  openSlots: Pick<OpenSlots, "offersStart">;
+  checkIns: Pick<CheckInsPort, "find" | "listForClient" | "move">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clock: ClockPort;
+  coachTime: CoachTimePort;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
+  openSlots: Pick<OpenSlotsPort, "offersStart">;
 };
 
 export class ProposeCheckInTimeUseCase {

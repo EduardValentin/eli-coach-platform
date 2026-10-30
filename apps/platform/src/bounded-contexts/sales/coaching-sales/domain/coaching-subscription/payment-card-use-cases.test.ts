@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingSubscription } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import { MirrorPaymentCardUseCase } from "./mirror-payment-card-use-case";
 import { PaymentCard } from "./payment-card";
-import type { PaymentCards } from "./payment-cards";
-import type { PaymentCustomerCards } from "./payment-customer-cards";
+import type { PaymentCardsPort } from "./payment-cards-port";
+import type { PaymentCustomerCardsPort } from "./payment-customer-cards-port";
 import { RefreshPaymentCardUseCase } from "./refresh-payment-card-use-case";
 
 const CUSTOMER_ID = "cus_1";
@@ -54,13 +54,13 @@ function createCards(stored: PaymentCard | null) {
     findByPaymentCustomerId: vi.fn().mockResolvedValue(stored),
     save: vi.fn().mockResolvedValue("saved"),
     saveForEvent: vi.fn().mockResolvedValue("recorded"),
-  } satisfies PaymentCards;
+  } satisfies PaymentCardsPort;
 }
 
 function createCustomerCards(card: PaymentCard | null) {
   return {
     readDefaultCard: vi.fn().mockResolvedValue(card),
-  } satisfies PaymentCustomerCards;
+  } satisfies PaymentCustomerCardsPort;
 }
 
 function createSubscriptions(found: CoachingSubscription | null) {
@@ -71,7 +71,7 @@ function createSubscriptions(found: CoachingSubscription | null) {
     findByPaymentIntentId: vi.fn(),
     save: vi.fn().mockResolvedValue("saved"),
     saveForEvent: vi.fn().mockResolvedValue("recorded"),
-  } satisfies CoachingSubscriptions;
+  } satisfies CoachingSubscriptionsPort;
 }
 
 function createIncidents() {
@@ -91,7 +91,7 @@ function createIncidents() {
     coachingEndNotPropagated: vi.fn(),
     coachingPeriodNotPropagated: vi.fn(),
     renewalHoldLiftFailed: vi.fn(),
-  } satisfies CoachingSubscriptionIncidents;
+  } satisfies CoachingSubscriptionIncidentsPort;
 }
 
 function mirrorUseCase(options: {

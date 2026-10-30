@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { AcceptInvitationUseCase } from "./accept-invitation-use-case";
-import type { AccountInvitations } from "./account-invitations";
-import type { InvitedClient, InvitedClients } from "./invited-client";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { InvitedClient, InvitedClientsPort } from "./invited-clients-port";
 import { InvitePaidClientUseCase } from "./invite-paid-client-use-case";
 
 const invitedClient: InvitedClient = {
@@ -21,7 +21,7 @@ function createAccountInvitations(acceptedInvitationId: string | null = null) {
     resend: vi.fn().mockResolvedValue({ status: "not-found" }),
     standingOf: vi.fn().mockResolvedValue(null),
     acceptedInvitationOf: vi.fn().mockResolvedValue(acceptedInvitationId),
-  } satisfies AccountInvitations;
+  } satisfies AccountInvitationsPort;
 }
 
 function createInvitedClients(found: InvitedClient | null) {
@@ -30,7 +30,7 @@ function createInvitedClients(found: InvitedClient | null) {
     findByAccountInvitationId: vi.fn().mockResolvedValue(found),
     recordAccountInvitation: vi.fn().mockResolvedValue(undefined),
     bindAuthSubject: vi.fn().mockResolvedValue("bound"),
-  } satisfies InvitedClients;
+  } satisfies InvitedClientsPort;
 }
 
 describe("InvitePaidClientUseCase", () => {

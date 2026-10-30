@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CheckInSeries } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
-import type { CoachTime, CoachTimeHold } from "./coach-time";
-import { CoachWeek, type OpenSlots } from "./open-slots";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
+import type { CoachTimePort, CoachTimeHold } from "./coach-time-port";
+import { CoachWeek } from "./open-slots";
+import { type OpenSlotsPort } from "./open-slots-port";
 import { SetUpCheckInSeriesUseCase } from "./set-up-check-in-series-use-case";
 
 const NOW = new Date("2026-10-05T09:00:00.000Z");
@@ -53,7 +54,7 @@ function openSlotsOf() {
         hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
       }),
     ),
-  } satisfies Pick<OpenSlots, "coachWeek">;
+  } satisfies Pick<OpenSlotsPort, "coachWeek">;
 }
 
 function createSetUp(options?: {
@@ -66,9 +67,9 @@ function createSetUp(options?: {
   const series = {
     start: vi.fn().mockResolvedValue(options?.started ?? "started"),
     recordWeeks: vi
-      .fn<CheckInSeriesRecords["recordWeeks"]>()
+      .fn<CheckInSeriesRecordsPort["recordWeeks"]>()
       .mockResolvedValue(undefined),
-  } satisfies Pick<CheckInSeriesRecords, "start" | "recordWeeks">;
+  } satisfies Pick<CheckInSeriesRecordsPort, "start" | "recordWeeks">;
   const coachTime = {
     reserve: vi.fn(
       async (): Promise<CoachTimeHold> =>
@@ -78,17 +79,17 @@ function createSetUp(options?: {
         },
     ),
     release: vi.fn().mockResolvedValue(undefined),
-  } satisfies CoachTime;
+  } satisfies CoachTimePort;
   const clients = {
     findById: vi
       .fn()
       .mockResolvedValue(
         options?.client === undefined ? ANA_REACH : options.client,
       ),
-  } satisfies Pick<ClientReach, "findById">;
+  } satisfies Pick<ClientReachPort, "findById">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const notifications = {
     requested: vi.fn(),
     withdrawn: vi.fn(),
@@ -101,7 +102,7 @@ function createSetUp(options?: {
     seriesSetUp: vi.fn().mockResolvedValue("sent"),
     seriesChanged: vi.fn(),
     seriesStopped: vi.fn(),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     awaitingCheckInsCountFailed: vi.fn(),

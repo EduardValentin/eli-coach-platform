@@ -1,4 +1,4 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import {
   ClientAvatarRemoval,
@@ -9,7 +9,7 @@ type RemoveClientAvatarAsCoachResult =
   { status: "removed" } | { status: "not-found" };
 
 type RemoveClientAvatarAsCoachUseCaseOptions = ClientAvatarRemovalOptions & {
-  clients: Pick<ClientReach, "findById">;
+  clients: Pick<ClientReachPort, "findById">;
 };
 
 export class RemoveClientAvatarAsCoachUseCase {

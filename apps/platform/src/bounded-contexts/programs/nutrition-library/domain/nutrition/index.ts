@@ -22,14 +22,14 @@ export {
   type FoodDraftInput,
   type FoodDraftProblems,
 } from "./food-draft";
-export { type FoodIds } from "./food-ids";
+export { type FoodIdsPort } from "./food-ids-port";
 export {
   type FoodAddition,
-  type FoodLibrary,
+  type FoodLibraryPort,
   type FoodReference,
   type FoodReplacement,
   type FoodsReference,
-} from "./food-library";
+} from "./food-library-port";
 export { ListFoodsUseCase } from "./list-foods-use-case";
 export {
   ListRecipesUseCase,
@@ -56,8 +56,11 @@ export {
   type RecipeIcon,
   type TagFamily,
 } from "./nutrition";
-export { type NutritionLibraryIncidents } from "./nutrition-library-incidents";
-export { type NutritionTag, type NutritionTags } from "./nutrition-tags";
+export { type NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+export {
+  type NutritionTag,
+  type NutritionTagsPort,
+} from "./nutrition-tags-port";
 export {
   OpenRecipePhotoUseCase,
   type OpenRecipePhotoResult,
@@ -71,13 +74,13 @@ export {
   type RecipeIngredientSnapshot,
   type RecipeSaveProblems,
 } from "./recipe-draft";
-export { type RecipeIds } from "./recipe-ids";
+export { type RecipeIdsPort } from "./recipe-ids-port";
 export {
   type RecipeAddition,
-  type RecipeLibrary,
+  type RecipeLibraryPort,
   type RecipeReference,
   type RecipeReplacement,
-} from "./recipe-library";
+} from "./recipe-library-port";
 export { RecipeMacros, type RecipeMacrosSnapshot } from "./recipe-macros";
 export {
   MAX_RECIPE_PHOTO_BYTES,
@@ -85,16 +88,16 @@ export {
   type RecipePhotoChoice,
   type RecipePhotoRenditionSpec,
 } from "./recipe-photo";
-export { type RecipePhotoIds } from "./recipe-photo-ids";
+export { type RecipePhotoIdsPort } from "./recipe-photo-ids-port";
 export {
   type RecipePhotoRendition,
-  type RecipePhotoRenditions,
-} from "./recipe-photo-renditions";
+  type RecipePhotoRenditionsPort,
+} from "./recipe-photo-renditions-port";
 export { RecipePhotoSaving } from "./recipe-photo-saving";
 export {
   type RecipePhotoOpening,
-  type RecipePhotoStore,
-} from "./recipe-photo-store";
+  type RecipePhotoStorePort,
+} from "./recipe-photo-store-port";
 export { type RecipePhotoViewer } from "./recipe-photo-viewer";
 export {
   StartRecipeUseCase,

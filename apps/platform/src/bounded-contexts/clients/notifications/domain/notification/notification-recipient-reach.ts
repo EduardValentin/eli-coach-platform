@@ -1,4 +1,4 @@
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 
 import { NotificationRecipient } from "./notification-recipient";
 
@@ -6,7 +6,7 @@ export type NotificationReader =
   { party: "coach" } | { party: "client"; authSubjectId: string };
 
 type NotificationRecipientReachOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class NotificationRecipientReach {

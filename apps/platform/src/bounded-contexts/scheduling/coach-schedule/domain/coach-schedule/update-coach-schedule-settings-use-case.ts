@@ -1,10 +1,10 @@
 import {
   CoachAvailability,
-  type CoachAvailabilityChanges,
+  type CoachAvailabilityChangesPort,
 } from "../coach-availability";
 import {
   CoachMeetingRoom,
-  type CoachMeetingRoomChanges,
+  type CoachMeetingRoomChangesPort,
 } from "../coach-meeting-room";
 
 import {
@@ -18,8 +18,8 @@ type UpdateCoachScheduleSettingsResult =
   | { status: "invalid"; problems: CoachScheduleSettingsProblem[] };
 
 type UpdateCoachScheduleSettingsUseCaseOptions = {
-  availabilityChanges: CoachAvailabilityChanges;
-  meetingRoomChanges: CoachMeetingRoomChanges;
+  availabilityChanges: CoachAvailabilityChangesPort;
+  meetingRoomChanges: CoachMeetingRoomChangesPort;
 };
 
 export class UpdateCoachScheduleSettingsUseCase {

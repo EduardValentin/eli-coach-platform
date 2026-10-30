@@ -1,7 +1,9 @@
-import type { CallSale, CallSalesStates } from "./call-sales-states";
+import type { CallSale, CallSalesStatesPort } from "./call-sales-states-port";
 
 export class ReadCallSalesStatesUseCase {
-  constructor(private readonly options: { callSalesStates: CallSalesStates }) {}
+  constructor(
+    private readonly options: { callSalesStates: CallSalesStatesPort },
+  ) {}
 
   async execute(
     callIds: readonly string[],

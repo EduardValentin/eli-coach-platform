@@ -1,7 +1,10 @@
-import { UnitPreference, type ClientSettingsSource } from "../client-settings";
+import {
+  UnitPreference,
+  type ClientSettingsSourcePort,
+} from "../client-settings";
 
 import { ClientOnboarding } from "./client-onboarding";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { OnboardingParticipants } from "./onboarding-participants";
 
 type ClientOnboardingReading = {
@@ -11,8 +14,8 @@ type ClientOnboardingReading = {
 
 type ReadClientOnboardingUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSource;
-  settings: ClientSettingsSource;
+  onboardings: ClientOnboardingSourcePort;
+  settings: ClientSettingsSourcePort;
 };
 
 export class ReadClientOnboardingUseCase {

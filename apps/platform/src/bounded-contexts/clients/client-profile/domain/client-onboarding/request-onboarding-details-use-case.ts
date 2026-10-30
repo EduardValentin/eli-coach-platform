@@ -1,18 +1,18 @@
-import type { ClientIdentity } from "../client-identities";
-import type { Clock } from "../clock";
+import type { ClientIdentity } from "../client-identities-port";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { DetailRequest } from "./detail-request";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
+import type { OnboardingDetailsNotificationsPort } from "./onboarding-details-notifications-port";
 import type { OnboardingParticipants } from "./onboarding-participants";
 import {
   OnboardingReview,
   type DetailRequestRefusal,
 } from "./onboarding-review";
-import type { OnboardingReviews } from "./onboarding-reviews";
-import type { DetailRequestIds } from "./detail-request-ids";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
+import type { DetailRequestIdsPort } from "./detail-request-ids-port";
 
 type RequestOnboardingDetailsCommand = {
   clientId: string;
@@ -29,12 +29,12 @@ type RequestOnboardingDetailsResult =
 
 type RequestOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
-  onboardings: ClientOnboardingSource;
-  reviews: OnboardingReviews;
-  ids: DetailRequestIds;
-  notifications: OnboardingDetailsNotifications;
-  clock: Clock;
-  incidents: ClientOnboardingIncidents;
+  onboardings: ClientOnboardingSourcePort;
+  reviews: OnboardingReviewsPort;
+  ids: DetailRequestIdsPort;
+  notifications: OnboardingDetailsNotificationsPort;
+  clock: ClockPort;
+  incidents: ClientOnboardingIncidentsPort;
 };
 
 export class RequestOnboardingDetailsUseCase {

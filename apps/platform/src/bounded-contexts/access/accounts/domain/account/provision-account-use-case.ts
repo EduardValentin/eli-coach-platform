@@ -1,6 +1,6 @@
 import { Account, type AccountRole, type AccountSnapshot } from "./account";
-import type { AccountIds } from "./account-ids";
-import type { Accounts } from "./accounts";
+import type { AccountIdsPort } from "./account-ids-port";
+import type { AccountsPort } from "./accounts-port";
 import type { AccountInvitationGate } from "./account-invitation-gate";
 
 export type ProvisionAccountResult =
@@ -9,8 +9,8 @@ export type ProvisionAccountResult =
   | { outcome: "rejected-unprovisioned" };
 
 type ProvisionAccountUseCaseOptions = {
-  accounts: Accounts;
-  ids: AccountIds;
+  accounts: AccountsPort;
+  ids: AccountIdsPort;
   bootstrapCoachAuthSubjectId?: string;
   invitationGate: Pick<AccountInvitationGate, "admit">;
 };

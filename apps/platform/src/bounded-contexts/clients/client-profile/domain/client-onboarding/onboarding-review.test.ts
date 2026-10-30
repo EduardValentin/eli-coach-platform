@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ClientIdentity } from "../client-identities";
+import type { ClientIdentity } from "../client-identities-port";
 import type { MeasureUnits } from "../client-settings";
 
 import { DetailRequest } from "./detail-request";
@@ -9,7 +9,7 @@ import {
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
 import { OnboardingReview, reviewStageOf } from "./onboarding-review";
-import type { ReviewStamps } from "./onboarding-review-stamps";
+import type { ReviewStamps } from "./onboarding-review-stamps-port";
 import type { OnboardingSubmission } from "./onboarding-submission";
 
 const SUBMITTED_AT = new Date("2026-09-27T10:00:00.000Z");

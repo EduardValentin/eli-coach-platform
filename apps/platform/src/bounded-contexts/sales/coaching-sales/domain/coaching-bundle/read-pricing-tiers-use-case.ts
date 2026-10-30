@@ -1,9 +1,9 @@
 import type { PriceTier } from "./coaching-bundle";
-import type { PricingEligibility } from "./pricing-eligibility";
+import type { PricingEligibilityPort } from "./pricing-eligibility-port";
 
 export class ReadPricingTiersUseCase {
   constructor(
-    private readonly options: { pricingEligibility: PricingEligibility },
+    private readonly options: { pricingEligibility: PricingEligibilityPort },
   ) {}
 
   async execute(

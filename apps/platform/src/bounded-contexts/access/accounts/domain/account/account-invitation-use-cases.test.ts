@@ -1,16 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { AccountInvitation } from "./account-invitation";
-import type { AccountInvitationIds } from "./account-invitation-ids";
-import type { AccountInvitationIncidents } from "./account-invitation-incidents";
-import type { AccountInvitationNotifications } from "./account-invitation-notifications";
-import type { AccountInvitations } from "./account-invitations";
+import type { AccountInvitationIdsPort } from "./account-invitation-ids-port";
+import type { AccountInvitationIncidentsPort } from "./account-invitation-incidents-port";
+import type { AccountInvitationNotificationsPort } from "./account-invitation-notifications-port";
+import type { AccountInvitationsPort } from "./account-invitations-port";
 import { EnsureInvitationDeliveredUseCase } from "./ensure-invitation-delivered-use-case";
-import type { IdentityInvitations } from "./identity-invitations";
-import type {
-  InvitationTokenGenerator,
-  InvitationTokenHasher,
-} from "./invitation-token";
+import type { IdentityInvitationsPort } from "./identity-invitations-port";
+import type { InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
+import type { InvitationTokenHasherPort } from "./invitation-token-hasher-port";
 import { IssueInvitationUseCase } from "./issue-invitation-use-case";
 import { ResolveInvitationUseCase } from "./resolve-invitation-use-case";
 
@@ -47,8 +45,8 @@ function invitation(
 
 function createInvitations(
   found: AccountInvitation | null,
-): AccountInvitations & {
-  [K in keyof AccountInvitations]: ReturnType<typeof vi.fn>;
+): AccountInvitationsPort & {
+  [K in keyof AccountInvitationsPort]: ReturnType<typeof vi.fn>;
 } {
   return {
     findById: vi.fn().mockResolvedValue(found),
@@ -67,13 +65,13 @@ function createIdentity() {
   return {
     create: vi.fn().mockResolvedValue(PROVIDER),
     replace: vi.fn().mockResolvedValue(PROVIDER),
-  } satisfies IdentityInvitations;
+  } satisfies IdentityInvitationsPort;
 }
 
 function createNotifications(delivery: "sent" | "failed") {
   return {
     sendInvitation: vi.fn().mockResolvedValue(delivery),
-  } satisfies AccountInvitationNotifications;
+  } satisfies AccountInvitationNotificationsPort;
 }
 
 function createIncidents() {
@@ -81,25 +79,25 @@ function createIncidents() {
     invitationEmailFailed: vi.fn(),
     invitationResent: vi.fn(),
     invitationResendFailed: vi.fn(),
-  } satisfies AccountInvitationIncidents;
+  } satisfies AccountInvitationIncidentsPort;
 }
 
 function createTokenGenerator(sha256: string) {
   return {
     create: vi.fn().mockReturnValue({ rawToken: RAW_TOKEN, sha256 }),
-  } satisfies InvitationTokenGenerator;
+  } satisfies InvitationTokenGeneratorPort;
 }
 
 function createTokenHasher() {
   return {
     sha256: vi.fn().mockReturnValue(TOKEN_HASH),
-  } satisfies InvitationTokenHasher;
+  } satisfies InvitationTokenHasherPort;
 }
 
 function createIds() {
   return {
     generate: vi.fn().mockReturnValue("invitation-1"),
-  } satisfies AccountInvitationIds;
+  } satisfies AccountInvitationIdsPort;
 }
 
 describe("IssueInvitationUseCase", () => {

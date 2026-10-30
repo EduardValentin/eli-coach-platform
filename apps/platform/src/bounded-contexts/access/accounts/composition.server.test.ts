@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import { InMemoryProductEmail } from "~/shared/email/index.server";
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import {
   createTokenGenerator,
   createTokenHasher,
@@ -35,7 +35,7 @@ describe("composeAccountsFeature", () => {
       },
       logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
       portal,
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
     });
 
     const response = await feature.webhooks.handleClerkEvent(

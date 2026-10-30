@@ -1,10 +1,10 @@
-import type { ClientLookup } from "./client-lookup";
+import type { ClientLookupPort } from "./client-lookup-port";
 import type { CoachingSubscription } from "./coaching-subscription";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 
 type SignedInSubscriptionsOptions = {
-  clients: Pick<ClientLookup, "clientIdOf">;
-  subscriptions: Pick<CoachingSubscriptions, "findCurrentForClient">;
+  clients: Pick<ClientLookupPort, "clientIdOf">;
+  subscriptions: Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
 };
 
 export class SignedInSubscriptions {

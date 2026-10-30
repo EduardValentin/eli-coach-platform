@@ -1,21 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { EndedCalls, SalesCall } from "./ended-calls";
-import type { PricingEligibility } from "../coaching-bundle";
+import type { EndedCallsPort, SalesCall } from "./ended-calls-port";
+import type { PricingEligibilityPort } from "../coaching-bundle";
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 
-import type { CallSalesState, CallSalesStates } from "./call-sales-states";
-import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
-import type { CoachingSalesNotifications } from "./coaching-sales-notifications";
-import type { WaitlistMode } from "./waitlist-mode";
+import type {
+  CallSalesState,
+  CallSalesStatesPort,
+} from "./call-sales-states-port";
+import type { CoachingSalesIncidentsPort } from "./coaching-sales-incidents-port";
+import type { CoachingSalesNotificationsPort } from "./coaching-sales-notifications-port";
+import type { WaitlistModePort } from "./waitlist-mode-port";
 import { CoachingSalesWindow } from "./coaching-sales-window";
 import { OpenBundlePageUseCase } from "./open-bundle-page-use-case";
 import { PaymentLink, type PaymentLinkState } from "./payment-link";
-import type {
-  PaymentLinks,
-  PaymentLinkTokenGenerator,
-  PaymentLinkTokenHasher,
-} from "./payment-links";
+import type { PaymentLinksPort } from "./payment-links-port";
+import type { PaymentLinkTokenHasherPort } from "./payment-link-token-hasher-port";
+import type { PaymentLinkTokenGeneratorPort } from "./payment-link-token-generator-port";
 import { ReadCallSalesStatesUseCase } from "./read-call-sales-states-use-case";
 import { ResolvePaymentLinkUseCase } from "./resolve-payment-link-use-case";
 import { SendPaymentLinkUseCase } from "./send-payment-link-use-case";
@@ -65,14 +66,14 @@ const usableLink = linkFor({
   expiresAt: new Date("2026-10-25T16:00:00.000Z"),
 });
 
-function createIncidents(): CoachingSalesIncidents {
+function createIncidents(): CoachingSalesIncidentsPort {
   return {
     salesModeReadFailed: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
   };
 }
 
-function salesWindowReading(waitlistMode: WaitlistMode) {
+function salesWindowReading(waitlistMode: WaitlistModePort) {
   return new CoachingSalesWindow({
     incidents: createIncidents(),
     waitlistMode,
@@ -87,17 +88,17 @@ function closedSalesWindow(): CoachingSalesWindow {
   return salesWindowReading({ isEnabled: vi.fn().mockResolvedValue(true) });
 }
 
-function createCalls(found: SalesCall | null): EndedCalls {
+function createCalls(found: SalesCall | null): EndedCallsPort {
   return { findById: vi.fn().mockResolvedValue(found) };
 }
 
 function createCallSalesStates(
-  states: Awaited<ReturnType<CallSalesStates["forCalls"]>>,
-): CallSalesStates {
+  states: Awaited<ReturnType<CallSalesStatesPort["forCalls"]>>,
+): CallSalesStatesPort {
   return { forCalls: vi.fn().mockResolvedValue(states) };
 }
 
-function createPaymentLinks(found: PaymentLink | null): PaymentLinks {
+function createPaymentLinks(found: PaymentLink | null): PaymentLinksPort {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(found),
     issue: vi.fn().mockResolvedValue(undefined),
@@ -109,8 +110,8 @@ function createPaymentLinks(found: PaymentLink | null): PaymentLinks {
 }
 
 function createPricingEligibility(
-  tier: Awaited<ReturnType<PricingEligibility["tierForEmail"]>>,
-): PricingEligibility {
+  tier: Awaited<ReturnType<PricingEligibilityPort["tierForEmail"]>>,
+): PricingEligibilityPort {
   return {
     tierForEmail: vi.fn().mockResolvedValue(tier),
     tiersForEmails: vi.fn(),
@@ -119,11 +120,11 @@ function createPricingEligibility(
 
 function createNotifications(
   delivery: "sent" | "failed",
-): CoachingSalesNotifications {
+): CoachingSalesNotificationsPort {
   return { sendPaymentLink: vi.fn().mockResolvedValue(delivery) };
 }
 
-function createTokenGenerator(): PaymentLinkTokenGenerator {
+function createTokenGenerator(): PaymentLinkTokenGeneratorPort {
   return {
     create: vi
       .fn()
@@ -131,7 +132,7 @@ function createTokenGenerator(): PaymentLinkTokenGenerator {
   };
 }
 
-function createTokenHasher(): PaymentLinkTokenHasher {
+function createTokenHasher(): PaymentLinkTokenHasherPort {
   return { sha256: vi.fn().mockReturnValue(TOKEN_SHA256) };
 }
 
@@ -353,7 +354,7 @@ describe("SendPaymentLinkUseCase", () => {
     expect(sent).toBeLessThan(voided!);
   });
 
-  it.each<[string, CoachingSalesNotifications]>([
+  it.each<[string, CoachingSalesNotificationsPort]>([
     ["reports a failed delivery", createNotifications("failed")],
     [
       "throws",

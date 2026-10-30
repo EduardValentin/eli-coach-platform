@@ -30,11 +30,6 @@ export type ClientRosterEntry = {
   joinedAt: Date;
 };
 
-export interface ClientRoster {
-  list(): Promise<ClientRosterEntry[]>;
-  findById(clientId: string): Promise<ClientRosterEntry | null>;
-}
-
 const JOURNEY_STATUSES: Record<ClientJourneyStep, ClientStatus> = {
   welcome: "onboarding",
   onboarding: "onboarding",

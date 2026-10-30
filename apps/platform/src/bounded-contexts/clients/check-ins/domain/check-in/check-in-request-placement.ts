@@ -1,11 +1,11 @@
 import { CheckIn } from "./check-in";
 import { CHECK_IN_RULES } from "./check-in-rules";
-import type { CheckInRequestResult, CheckIns } from "./check-ins";
-import type { CoachTime } from "./coach-time";
+import type { CheckInRequestResult, CheckInsPort } from "./check-ins-port";
+import type { CoachTimePort } from "./coach-time-port";
 
 type CheckInRequestPlacementOptions = {
-  checkIns: Pick<CheckIns, "listForClientLocked" | "add">;
-  coachTime: Pick<CoachTime, "reserve">;
+  checkIns: Pick<CheckInsPort, "listForClientLocked" | "add">;
+  coachTime: Pick<CoachTimePort, "reserve">;
 };
 
 type CheckInRequestCommand = { checkIn: CheckIn; at: Date };

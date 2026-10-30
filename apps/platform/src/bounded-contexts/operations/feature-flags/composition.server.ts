@@ -2,16 +2,16 @@ import type { DatabaseClient } from "~/shared/database";
 import type { MiddlewareFunction } from "react-router";
 import type { RuntimeStage } from "~/shared/runtime/production-runtime";
 import { GetFeatureFlagsUseCase } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
-import type { FeatureFlagsFacade } from "~/bounded-contexts/operations/public/feature-flags";
+import type { FeatureFlagsFacade } from "../public/feature-flags-facade";
 
-import { FeatureFlagController } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/feature-flags-controller.server";
+import { FeatureFlagController } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/feature-flag-controller.server";
 import type { FeatureFlagsFeature } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
-import { createFeatureFlagsFacade } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/facades/feature-flags.server";
+import { FeatureFlagsFacadeAdapter } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/facades/feature-flags-facade-adapter.server";
 import {
   composeBrowserFeatureFlagOverrides,
   composeWithoutFeatureFlagOverrides,
 } from "~/bounded-contexts/operations/feature-flags/adapters/outbound/overrides/feature-flag-overrides.server";
-import { PostgresFeatureFlagRepository } from "~/bounded-contexts/operations/feature-flags/adapters/outbound/persistence/feature-flags-repository.server";
+import { PostgresFeatureFlagRepository } from "~/bounded-contexts/operations/feature-flags/adapters/outbound/persistence/postgres-feature-flag-repository.server";
 import {
   resolveFeatureFlagOverridesMode,
   type FeatureFlagsConfig,
@@ -44,7 +44,9 @@ export function composeFeatureFlagsFeature(
       : composeWithoutFeatureFlagOverrides(storedFlags);
 
   return {
-    facades: { featureFlags: createFeatureFlagsFacade(overrides.featureFlags) },
+    facades: {
+      featureFlags: new FeatureFlagsFacadeAdapter(overrides.featureFlags),
+    },
     feature: {
       featureFlags: new FeatureFlagController(overrides.featureFlags),
     },

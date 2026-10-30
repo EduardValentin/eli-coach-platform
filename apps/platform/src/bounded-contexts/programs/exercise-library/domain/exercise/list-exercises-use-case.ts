@@ -1,10 +1,10 @@
 import type { Exercise } from "./exercise";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibraryPort } from "./exercise-library-port";
 
 export type ListExercisesResult = { status: "listed"; exercises: Exercise[] };
 
 type ListExercisesUseCaseOptions = {
-  library: ExerciseLibrary;
+  library: ExerciseLibraryPort;
 };
 
 export class ListExercisesUseCase {

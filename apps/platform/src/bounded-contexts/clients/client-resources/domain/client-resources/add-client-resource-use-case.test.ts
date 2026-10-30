@@ -1,29 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { AddClientResourceUseCase } from "./add-client-resource-use-case";
 import type { ClientResource, ClientResourceOwner } from "./client-resource";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
 import type {
-  ClientResourceStore,
+  ClientResourceStorePort,
   ResourcePageImage,
-} from "./client-resource-store";
-import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ClientReach } from "./client-reach";
+} from "./client-resource-store-port";
 import type {
-  ResourceDocumentPages,
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type {
+  ResourceDocumentPagesPort,
   ResourceDocumentReading,
-} from "./resource-document-pages";
+} from "./resource-document-pages-port";
 import type {
   DetectedResourceFile,
-  ResourceFileFormatDetector,
-} from "./resource-file-format-detector";
+  ResourceFileFormatDetectorPort,
+} from "./resource-file-format-detector-port";
 import { MAX_RESOURCE_FILE_BYTES } from "./resource-file-intake";
 import type {
-  ResourceImagePages,
+  ResourceImagePagesPort,
   ResourceImageRendering,
-} from "./resource-image-pages";
+} from "./resource-image-pages-port";
 import {
   MAX_RESOURCE_TAG_LENGTH,
   type ResourceTagSnapshot,
@@ -65,13 +68,13 @@ const DETECTED_FILES = new Map<Uint8Array, DetectedResourceFile>([
 
 const UNIDENTIFIED: DetectedResourceFile = { type: null, archiveEntries: [] };
 
-class InTestFileFormats implements ResourceFileFormatDetector {
+class InTestFileFormatsAdapter implements ResourceFileFormatDetectorPort {
   readonly detect = vi.fn(
     async (bytes: Uint8Array) => DETECTED_FILES.get(bytes) ?? UNIDENTIFIED,
   );
 }
 
-class InMemoryClientResources implements ClientResources {
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
   readonly added: ClientResource[] = [];
 
   readonly add = vi.fn(async (resource: ClientResource) => {
@@ -105,7 +108,7 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-class InMemoryResourceStore implements ClientResourceStore {
+class InMemoryResourceStoreAdapter implements ClientResourceStorePort {
   readonly files = new Map<string, Uint8Array>();
 
   readonly storePage = vi.fn(
@@ -149,7 +152,7 @@ class InMemoryResourceStore implements ClientResourceStore {
   }
 }
 
-class FakeDocumentPages implements ResourceDocumentPages {
+class FakeDocumentPagesAdapter implements ResourceDocumentPagesPort {
   readonly received: Uint8Array[] = [];
   renderedPages = 0;
   closed = false;
@@ -181,20 +184,20 @@ class FakeDocumentPages implements ResourceDocumentPages {
   }
 }
 
-function imagePages(rendering: ResourceImageRendering): ResourceImagePages {
+function imagePages(rendering: ResourceImageRendering): ResourceImagePagesPort {
   return { render: vi.fn(async () => rendering) };
 }
 
 type Setup = {
-  documentPages?: FakeDocumentPages;
-  imagePages?: ResourceImagePages;
+  documentPages?: FakeDocumentPagesAdapter;
+  imagePages?: ResourceImagePagesPort;
   clientExists?: boolean;
 };
 
 function createUseCase(setup: Setup = {}) {
-  const resources = new InMemoryClientResources();
-  const store = new InMemoryResourceStore();
-  const documentPages = setup.documentPages ?? new FakeDocumentPages(3);
+  const resources = new InMemoryClientResourcesAdapter();
+  const store = new InMemoryResourceStoreAdapter();
+  const documentPages = setup.documentPages ?? new FakeDocumentPagesAdapter(3);
   const clients = {
     findById: vi.fn(async (clientId: string) =>
       (setup.clientExists ?? true)
@@ -209,7 +212,7 @@ function createUseCase(setup: Setup = {}) {
         : null,
     ),
     findByAuthSubjectId: vi.fn(async () => null),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -220,9 +223,9 @@ function createUseCase(setup: Setup = {}) {
     resourceChangeFailed: vi.fn(),
     resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
-  } satisfies ClientResourceIncidents;
-  const clock: Clock = { now: () => NOW };
-  const fileFormats = new InTestFileFormats();
+  } satisfies ClientResourceIncidentsPort;
+  const clock: ClockPort = { now: () => NOW };
+  const fileFormats = new InTestFileFormatsAdapter();
   const useCase = new AddClientResourceUseCase({
     resources,
     resourceIds: { generate: () => "resource-1" },
@@ -317,7 +320,7 @@ describe("AddClientResourceUseCase", () => {
   it("accepts a PDF of exactly 50 pages", async () => {
     // arrange
     const { useCase, resources } = createUseCase({
-      documentPages: new FakeDocumentPages(50),
+      documentPages: new FakeDocumentPagesAdapter(50),
     });
 
     // act
@@ -332,7 +335,7 @@ describe("AddClientResourceUseCase", () => {
 
   it("refuses a PDF of 51 pages before any page is rendered or stored", async () => {
     // arrange
-    const documentPages = new FakeDocumentPages(51);
+    const documentPages = new FakeDocumentPagesAdapter(51);
     const { useCase, store, resources, incidents } = createUseCase({
       documentPages,
     });
@@ -358,7 +361,7 @@ describe("AddClientResourceUseCase", () => {
   it("refuses a PDF that cannot be read", async () => {
     // arrange
     const { useCase, store, resources } = createUseCase({
-      documentPages: new FakeDocumentPages("unreadable"),
+      documentPages: new FakeDocumentPagesAdapter("unreadable"),
     });
 
     // act

@@ -4,7 +4,7 @@ import { FindPublishedCoverUseCase } from "./find-published-cover-use-case";
 import { FindPublishedProductUseCase } from "./find-published-product-use-case";
 import { ListPublishedProductsUseCase } from "./list-published-products-use-case";
 import { PublishedProduct } from "./product";
-import type { StoreCatalog } from "./store-catalog";
+import type { StoreCatalogPort } from "./store-catalog-port";
 
 const product = PublishedProduct.reconstitute({
   id: 7,
@@ -40,7 +40,9 @@ const product = PublishedProduct.reconstitute({
   },
 });
 
-function createCatalog(overrides: Partial<StoreCatalog> = {}): StoreCatalog {
+function createCatalog(
+  overrides: Partial<StoreCatalogPort> = {},
+): StoreCatalogPort {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue([product]),
     getPublishedProductBySlug: vi.fn().mockResolvedValue(product),

@@ -1,26 +1,26 @@
-import type { ClientIdentities } from "./client-identities";
+import type { ClientIdentitiesPort } from "./client-identities-port";
 
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { CheckIn } from "./check-in";
-import type { CheckInExpiry, CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInExpiry, CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
 import type { CheckInParty } from "./check-in-party";
 import type { CheckInSeries } from "./check-in-series";
 import type {
   CheckInDelivery,
   CheckInNotice,
   CheckInNotification,
-  CheckInNotifications,
+  CheckInNotificationsPort,
   CheckInSeriesNotification,
-} from "./check-in-notifications";
+} from "./check-in-notifications-port";
 
 type CheckInAnnouncerOptions = {
-  clock: Clock;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
+  clock: ClockPort;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
 };
 
 type AnnouncedClient = CheckInNotice["client"];

@@ -1,4 +1,4 @@
-import type { PortalReach } from "./client-reach";
+import type { PortalReach } from "./client-reach-port";
 
 import type { CheckInSlotRules } from "./check-in-rules";
 

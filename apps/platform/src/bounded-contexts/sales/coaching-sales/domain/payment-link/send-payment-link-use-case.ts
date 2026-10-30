@@ -1,18 +1,19 @@
-import type { PricingEligibility } from "../coaching-bundle";
-import type { EmailAcceptance } from "../email-acceptance";
-import type { Clock } from "../clock";
+import type { PricingEligibilityPort } from "../coaching-bundle";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
+import type { ClockPort } from "../clock-port";
 
-import type { CallSalesStates } from "./call-sales-states";
-import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
+import type { CallSalesStatesPort } from "./call-sales-states-port";
+import type { CoachingSalesIncidentsPort } from "./coaching-sales-incidents-port";
 import type {
-  CoachingSalesNotifications,
+  CoachingSalesNotificationsPort,
   PaymentLinkMessage,
-} from "./coaching-sales-notifications";
+} from "./coaching-sales-notifications-port";
 import type { CoachingSalesWindow } from "./coaching-sales-window";
-import type { EndedCalls, SalesCall } from "./ended-calls";
+import type { EndedCallsPort, SalesCall } from "./ended-calls-port";
 import { PaymentLink } from "./payment-link";
-import type { PaymentLinkIds } from "./payment-link-ids";
-import type { PaymentLinks, PaymentLinkTokenGenerator } from "./payment-links";
+import type { PaymentLinkIdsPort } from "./payment-link-ids-port";
+import type { PaymentLinksPort } from "./payment-links-port";
+import type { PaymentLinkTokenGeneratorPort } from "./payment-link-token-generator-port";
 
 type SendPaymentLinkResult =
   | { status: "sent"; email: string }
@@ -23,17 +24,17 @@ type SendPaymentLinkResult =
   | { status: "delivery_failed" };
 
 type SendPaymentLinkUseCaseOptions = {
-  calls: EndedCalls;
-  callSalesStates: CallSalesStates;
-  clock: Clock;
-  emailAcceptance: EmailAcceptance;
-  ids: PaymentLinkIds;
-  incidents: CoachingSalesIncidents;
-  notifications: CoachingSalesNotifications;
-  paymentLinks: PaymentLinks;
-  pricingEligibility: PricingEligibility;
+  calls: EndedCallsPort;
+  callSalesStates: CallSalesStatesPort;
+  clock: ClockPort;
+  emailAcceptance: EmailAcceptancePort;
+  ids: PaymentLinkIdsPort;
+  incidents: CoachingSalesIncidentsPort;
+  notifications: CoachingSalesNotificationsPort;
+  paymentLinks: PaymentLinksPort;
+  pricingEligibility: PricingEligibilityPort;
   salesWindow: CoachingSalesWindow;
-  tokenGenerator: PaymentLinkTokenGenerator;
+  tokenGenerator: PaymentLinkTokenGeneratorPort;
 };
 
 export class SendPaymentLinkUseCase {

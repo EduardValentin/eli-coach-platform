@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   CoachAvailability,
-  type CoachAvailabilityChanges,
+  type CoachAvailabilityChangesPort,
   type CoachAvailabilityProps,
-  type CoachAvailabilitySource,
+  type CoachAvailabilitySourcePort,
 } from "../coach-availability";
 import {
   CoachMeetingRoom,
-  type CoachMeetingRoomChanges,
-  type CoachMeetingRoomSource,
+  type CoachMeetingRoomChangesPort,
+  type CoachMeetingRoomSourcePort,
 } from "../coach-meeting-room";
 
 import type { CoachScheduleSettingsSnapshot } from "./coach-schedule";
@@ -48,8 +48,8 @@ function configuredRoom(url: string): CoachMeetingRoom {
 }
 
 function createAvailabilitySource(
-  options?: Partial<CoachAvailabilitySource>,
-): CoachAvailabilitySource {
+  options?: Partial<CoachAvailabilitySourcePort>,
+): CoachAvailabilitySourcePort {
   return {
     current: vi
       .fn()
@@ -61,8 +61,8 @@ function createAvailabilitySource(
 }
 
 function createAvailabilityChanges(
-  options?: Partial<CoachAvailabilityChanges>,
-): CoachAvailabilityChanges {
+  options?: Partial<CoachAvailabilityChangesPort>,
+): CoachAvailabilityChangesPort {
   return {
     save: vi.fn().mockResolvedValue(undefined),
     ...options,
@@ -70,8 +70,8 @@ function createAvailabilityChanges(
 }
 
 function createMeetingRoomSource(
-  options?: Partial<CoachMeetingRoomSource>,
-): CoachMeetingRoomSource {
+  options?: Partial<CoachMeetingRoomSourcePort>,
+): CoachMeetingRoomSourcePort {
   return {
     current: vi.fn().mockResolvedValue(null),
     ...options,
@@ -79,8 +79,8 @@ function createMeetingRoomSource(
 }
 
 function createMeetingRoomChanges(
-  options?: Partial<CoachMeetingRoomChanges>,
-): CoachMeetingRoomChanges {
+  options?: Partial<CoachMeetingRoomChangesPort>,
+): CoachMeetingRoomChangesPort {
   return {
     save: vi.fn().mockResolvedValue(undefined),
     ...options,

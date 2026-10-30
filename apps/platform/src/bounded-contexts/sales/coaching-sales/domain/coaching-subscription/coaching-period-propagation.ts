@@ -1,13 +1,18 @@
-import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import type { CoachingPeriodHandlerPort } from "./coaching-period-handler-port";
 import type { CoachingSubscription } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
 
 type CoachingPeriodPropagationOptions = {
-  coachingPeriods: readonly CoachingPeriodHandler[];
-  incidents: Pick<CoachingSubscriptionIncidents, "coachingPeriodNotPropagated">;
+  coachingPeriods: readonly CoachingPeriodHandlerPort[];
+  incidents: Pick<
+    CoachingSubscriptionIncidentsPort,
+    "coachingPeriodNotPropagated"
+  >;
 };
 
-type CoachingPeriodNotice = (handler: CoachingPeriodHandler) => Promise<void>;
+type CoachingPeriodNotice = (
+  handler: CoachingPeriodHandlerPort,
+) => Promise<void>;
 
 export class CoachingPeriodPropagation {
   constructor(private readonly options: CoachingPeriodPropagationOptions) {}

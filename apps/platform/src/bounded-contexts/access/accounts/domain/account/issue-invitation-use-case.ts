@@ -1,15 +1,15 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { AccountInvitation } from "./account-invitation";
-import type { AccountInvitationIds } from "./account-invitation-ids";
-import type { AccountInvitations } from "./account-invitations";
-import type { InvitationTokenGenerator } from "./invitation-token";
+import type { AccountInvitationIdsPort } from "./account-invitation-ids-port";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
 
 type IssueInvitationUseCaseOptions = {
-  clock: Clock;
-  ids: AccountInvitationIds;
-  invitations: Pick<AccountInvitations, "insert">;
-  tokenGenerator: InvitationTokenGenerator;
+  clock: ClockPort;
+  ids: AccountInvitationIdsPort;
+  invitations: Pick<AccountInvitationsPort, "insert">;
+  tokenGenerator: InvitationTokenGeneratorPort;
 };
 
 export class IssueInvitationUseCase {

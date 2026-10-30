@@ -1,7 +1,7 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { ClientProfileProblems, CoachProfileEdit } from "./client-profile";
-import type { ClientProfiles } from "./client-profiles";
+import type { ClientProfilesPort } from "./client-profiles-port";
 
 type UpdateClientProfileAsCoachCommand = {
   clientId: string;
@@ -16,8 +16,8 @@ type UpdateClientProfileAsCoachResult =
   | { status: "changed-meanwhile" };
 
 type UpdateClientProfileAsCoachUseCaseOptions = {
-  profiles: Pick<ClientProfiles, "findByClientId" | "saveCoachFacts">;
-  clock: Clock;
+  profiles: Pick<ClientProfilesPort, "findByClientId" | "saveCoachFacts">;
+  clock: ClockPort;
 };
 
 export class UpdateClientProfileAsCoachUseCase {

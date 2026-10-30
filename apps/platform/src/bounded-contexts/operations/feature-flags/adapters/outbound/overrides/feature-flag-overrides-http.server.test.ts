@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createFeatureFlagOverrideReader } from "~/bounded-contexts/operations/feature-flags/adapters/outbound/overrides/feature-flag-override-reader.server";
+import { FeatureFlagOverrideReaderAdapter } from "~/bounded-contexts/operations/feature-flags/adapters/outbound/overrides/feature-flag-override-reader-adapter.server";
 import { createFeatureFlagOverrideMiddleware } from "~/bounded-contexts/operations/feature-flags/adapters/outbound/overrides/feature-flag-overrides-http.server";
 import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
@@ -202,7 +202,7 @@ describe("feature flag override middleware", () => {
 });
 
 function recordFlagsSeenByApplication() {
-  const featureFlags = createFeatureFlagOverrideReader({
+  const featureFlags = new FeatureFlagOverrideReaderAdapter({
     execute: async () => ({ WAITLIST_MODE: true }),
   });
   const flagsSeenByApplication = vi.fn();

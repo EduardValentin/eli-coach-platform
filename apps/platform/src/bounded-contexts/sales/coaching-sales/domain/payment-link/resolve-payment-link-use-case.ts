@@ -1,12 +1,13 @@
-import type { PriceTier, PricingEligibility } from "../coaching-bundle";
-import type { EmailAcceptance } from "../email-acceptance";
-import type { Clock } from "../clock";
+import type { PriceTier, PricingEligibilityPort } from "../coaching-bundle";
+import type { EmailAcceptancePort } from "../email-acceptance-port";
+import type { ClockPort } from "../clock-port";
 
-import type { CallSalesStates } from "./call-sales-states";
+import type { CallSalesStatesPort } from "./call-sales-states-port";
 import type { CoachingSalesWindow } from "./coaching-sales-window";
-import type { EndedCalls, SalesCall } from "./ended-calls";
+import type { EndedCallsPort, SalesCall } from "./ended-calls-port";
 import { PaymentLink } from "./payment-link";
-import type { PaymentLinks, PaymentLinkTokenHasher } from "./payment-links";
+import type { PaymentLinksPort } from "./payment-links-port";
+import type { PaymentLinkTokenHasherPort } from "./payment-link-token-hasher-port";
 
 type PaymentLinkResolution =
   | {
@@ -19,14 +20,14 @@ type PaymentLinkResolution =
   | { status: "invalid" };
 
 type ResolvePaymentLinkUseCaseOptions = {
-  calls: EndedCalls;
-  callSalesStates: CallSalesStates;
-  clock: Clock;
-  emailAcceptance: EmailAcceptance;
-  paymentLinks: PaymentLinks;
-  pricingEligibility: PricingEligibility;
+  calls: EndedCallsPort;
+  callSalesStates: CallSalesStatesPort;
+  clock: ClockPort;
+  emailAcceptance: EmailAcceptancePort;
+  paymentLinks: PaymentLinksPort;
+  pricingEligibility: PricingEligibilityPort;
   salesWindow: CoachingSalesWindow;
-  tokenHasher: PaymentLinkTokenHasher;
+  tokenHasher: PaymentLinkTokenHasherPort;
 };
 
 export class ResolvePaymentLinkUseCase {

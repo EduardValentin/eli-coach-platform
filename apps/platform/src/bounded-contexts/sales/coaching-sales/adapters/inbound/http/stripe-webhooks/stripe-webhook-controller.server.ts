@@ -3,34 +3,33 @@ import {
   readTextRequestBody,
 } from "~/shared/http/index.server";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
-import {
-  PAYMENT_PURPOSE_METADATA_KEY,
-  type PaymentCompletionHandler,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
+import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
+import { type PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler-port.server";
 import type {
   PaidCheckoutSession,
   PaymentCardChange,
   PaymentRefund,
   PaymentSubscriptionChange,
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
-import type {
-  PaymentCardHandler,
-  PaymentRefundHandler,
-  PaymentSubscriptionChangeHandler,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-handlers.server";
-import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
+import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-refund-handler-port.server";
+import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-subscription-change-handler-port.server";
+import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-card-handler-port.server";
+import type { PaymentEventsPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events-port.server";
 import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
 
 type StripeWebhookControllerOptions = {
-  cardHandler: PaymentCardHandler;
-  completionHandlersByPurpose: ReadonlyMap<string, PaymentCompletionHandler>;
+  cardHandler: PaymentCardHandlerPort;
+  completionHandlersByPurpose: ReadonlyMap<
+    string,
+    PaymentCompletionHandlerPort
+  >;
   incidents: PaymentWebhookIncidents;
-  paymentEvents: PaymentEvents;
-  refundHandler: PaymentRefundHandler;
+  paymentEvents: PaymentEventsPort;
+  refundHandler: PaymentRefundHandlerPort;
   signingSecret: string | undefined;
   subscriptionChangeHandlersByPurpose: ReadonlyMap<
     string,
-    PaymentSubscriptionChangeHandler
+    PaymentSubscriptionChangeHandlerPort
   >;
   unitOfWork: UnitOfWork;
 };

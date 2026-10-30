@@ -1,4 +1,4 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import {
   ClientProfileComposite,
@@ -9,7 +9,7 @@ import {
 export type OwnClientProfileReading = Omit<ClientProfileReading, "coachNotes">;
 
 type ReadOwnClientProfileUseCaseOptions = ClientProfileReadingPorts & {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
 };
 
 export class ReadOwnClientProfileUseCase {

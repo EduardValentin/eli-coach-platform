@@ -24,45 +24,45 @@ export {
 export { CHECK_IN_KINDS } from "./check-in-kind";
 export { CHECK_IN_PARTIES } from "./check-in-party";
 export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
-export { type CheckInIds } from "./check-in-ids";
+export { type CheckInIdsPort } from "./check-in-ids-port";
 export {
   type CheckInClashesNotice,
   type CheckInExpiry,
   type CheckInExpiryChange,
-  type CheckInInbox,
+  type CheckInInboxPort,
   type CheckInSeriesInboxNotice,
-} from "./check-in-inbox";
-export { type CheckInIncidents } from "./check-in-incidents";
+} from "./check-in-inbox-port";
+export { type CheckInIncidentsPort } from "./check-in-incidents-port";
 export { MAX_CHECK_IN_NOTE_LENGTH } from "./check-in-note";
 export {
   type CheckInDelivery,
   type CheckInNotice,
   type CheckInNotification,
-  type CheckInNotifications,
+  type CheckInNotificationsPort,
   type CheckInSeriesNotice,
   type CheckInSeriesNotification,
-} from "./check-in-notifications";
+} from "./check-in-notifications-port";
 export { CHECK_IN_RULES, type CheckInSlotRules } from "./check-in-rules";
 export { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 export {
   type CheckInSeriesChange,
-  type CheckInSeriesRecords,
+  type CheckInSeriesRecordsPort,
   type CheckInSeriesStop,
-} from "./check-in-series-records";
+} from "./check-in-series-records-port";
 export {
   type CheckInMove,
   type CheckInMoveCommand,
-  type CheckIns,
+  type CheckInsPort,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
   type HeldCheckIn,
-} from "./check-ins";
+} from "./check-ins-port";
 export { type CoachCheckInView } from "./coach-check-in-views";
 export {
-  type CoachTime,
+  type CoachTimePort,
   type CoachTimeHold,
   type CoachTimeSpan,
-} from "./coach-time";
+} from "./coach-time-port";
 export { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
 export {
   DeclineCheckInUseCase,
@@ -78,8 +78,9 @@ export {
   type ListOpenCheckInTimesCommand,
   type ListOpenCheckInTimesResult,
 } from "./list-open-check-in-times-use-case";
-export { type MeetingRoom } from "./meeting-room";
-export { CoachWeek, type OpenSlots } from "./open-slots";
+export { type MeetingRoomPort } from "./meeting-room-port";
+export { CoachWeek } from "./open-slots";
+export { type OpenSlotsPort } from "./open-slots-port";
 export {
   PreviewCheckInSeriesUseCase,
   type PreviewCheckInSeriesResult,
@@ -122,7 +123,10 @@ export {
 } from "./withdraw-check-in-request-use-case";
 export { WEEKDAYS, type Weekday, weekdayNamed } from "./weekdays";
 export {
-  type ClientIdentities,
+  type ClientIdentitiesPort,
   type ClientIdentity,
-} from "./client-identities";
-export { type ClientReach, type ClientReachReading } from "./client-reach";
+} from "./client-identities-port";
+export {
+  type ClientReachPort,
+  type ClientReachReading,
+} from "./client-reach-port";

@@ -1,4 +1,4 @@
-import type { PaidClientIntake } from "./paid-client-admission";
+import type { PaidClientIntake } from "./paid-client-admission-port";
 import type { PurchasedSubscription } from "./purchased-subscription";
 
 export type CheckoutPurchase = {

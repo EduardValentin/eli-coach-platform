@@ -1,8 +1,8 @@
 import { portalReachOf, type PortalReach } from "../client";
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { ClientJourney } from "./client-journey";
-import type { ClientJourneys } from "./client-journeys";
+import type { ClientJourneysPort } from "./client-journeys-port";
 
 type ClientPortalStandingReading = {
   journey: ClientJourney;
@@ -10,8 +10,8 @@ type ClientPortalStandingReading = {
 };
 
 type ReadClientPortalStandingUseCaseOptions = {
-  clock: Clock;
-  journeys: ClientJourneys;
+  clock: ClockPort;
+  journeys: ClientJourneysPort;
 };
 
 export class ReadClientPortalStandingUseCase {

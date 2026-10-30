@@ -1,13 +1,13 @@
 import type { ExerciseVideoChange } from "./exercise";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 import type { ExerciseVideo } from "./exercise-video";
 import { ExerciseVideoCleanup } from "./exercise-video-cleanup";
-import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import type { ExerciseVideoIds } from "./exercise-video-ids";
+import type { ExerciseVideoFormatDetectorPort } from "./exercise-video-format-detector-port";
+import type { ExerciseVideoIdsPort } from "./exercise-video-ids-port";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 import {
   ExerciseVideoUpload,
   type ExerciseVideoRefusal,
@@ -35,10 +35,10 @@ type JudgedVideoChoice =
 type AcceptedVideoChoice = Exclude<JudgedVideoChoice, { kind: "refused" }>;
 
 type ExerciseVideoSavingOptions = {
-  formats: ExerciseVideoFormatDetector;
-  videoIds: ExerciseVideoIds;
-  store: Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
-  incidents: Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
+  formats: ExerciseVideoFormatDetectorPort;
+  videoIds: ExerciseVideoIdsPort;
+  store: Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
+  incidents: Pick<ExerciseLibraryIncidentsPort, "videoCleanupFailed">;
 };
 
 export class ExerciseVideoSaving {

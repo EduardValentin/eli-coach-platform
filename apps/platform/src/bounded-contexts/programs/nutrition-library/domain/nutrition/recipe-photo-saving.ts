@@ -1,4 +1,4 @@
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
 import type { RecipeDraftResult, RecipeSaveProblems } from "./recipe-draft";
 import {
   MAX_RECIPE_PHOTO_BYTES,
@@ -7,9 +7,9 @@ import {
   type RecipePhotoChoice,
   type RecipePhotoRefusal,
 } from "./recipe-photo";
-import type { RecipePhotoIds } from "./recipe-photo-ids";
-import type { RecipePhotoRenditions } from "./recipe-photo-renditions";
-import type { RecipePhotoStore } from "./recipe-photo-store";
+import type { RecipePhotoIdsPort } from "./recipe-photo-ids-port";
+import type { RecipePhotoRenditionsPort } from "./recipe-photo-renditions-port";
+import type { RecipePhotoStorePort } from "./recipe-photo-store-port";
 
 export type JudgedRecipePhoto =
   RecipePhotoChoice | { kind: "refused"; refusal: RecipePhotoRefusal };
@@ -17,10 +17,10 @@ export type JudgedRecipePhoto =
 type AcceptedRecipePhoto = Exclude<JudgedRecipePhoto, { kind: "refused" }>;
 
 type RecipePhotoSavingOptions = {
-  renditions: RecipePhotoRenditions;
-  ids: RecipePhotoIds;
-  store: Pick<RecipePhotoStore, "store" | "remove">;
-  incidents: Pick<NutritionLibraryIncidents, "recipePhotoCleanupFailed">;
+  renditions: RecipePhotoRenditionsPort;
+  ids: RecipePhotoIdsPort;
+  store: Pick<RecipePhotoStorePort, "store" | "remove">;
+  incidents: Pick<NutritionLibraryIncidentsPort, "recipePhotoCleanupFailed">;
 };
 
 export type RecipePhotoSavingPort = Pick<

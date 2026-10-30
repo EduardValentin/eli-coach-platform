@@ -1,16 +1,16 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import { CheckIn, type CheckInView } from "./check-in";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckIns } from "./check-ins";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInsPort } from "./check-ins-port";
 
 type FindNextClientCheckInUseCaseOptions = {
-  checkIns: Pick<CheckIns, "find" | "listForClient">;
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  clock: Clock;
-  incidents: CheckInIncidents;
+  checkIns: Pick<CheckInsPort, "find" | "listForClient">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clock: ClockPort;
+  incidents: CheckInIncidentsPort;
 };
 
 export class FindNextClientCheckInUseCase {

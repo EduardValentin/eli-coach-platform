@@ -1,22 +1,28 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingStanding } from "~/bounded-contexts/clients/clients/domain/client";
-import type { ClientIdentities, ClientIdentity } from "../client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "../client-identities-port";
 
 import { ApproveOnboardingAnswersUseCase } from "./approve-onboarding-answers-use-case";
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import { DetailRequest } from "./detail-request";
 import { emptyAnswers } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
-import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
+import type {
+  OnboardingClient,
+  OnboardingClientsPort,
+} from "./onboarding-clients-port";
+import type { OnboardingDetailsNotificationsPort } from "./onboarding-details-notifications-port";
 import { OnboardingParticipants } from "./onboarding-participants";
 import type {
-  OnboardingReviewStamps,
+  OnboardingReviewStampsPort,
   ReviewStamps,
-} from "./onboarding-review-stamps";
-import type { OnboardingReviews } from "./onboarding-reviews";
-import type { DetailRequestIds } from "./detail-request-ids";
+} from "./onboarding-review-stamps-port";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
+import type { DetailRequestIdsPort } from "./detail-request-ids-port";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { OpenOnboardingReviewUseCase } from "./open-onboarding-review-use-case";
 import { ReadOpenDetailRequestUseCase } from "./read-open-detail-request-use-case";
@@ -96,19 +102,21 @@ function openRequest(): DetailRequest {
   });
 }
 
-type StoredReview = Awaited<ReturnType<OnboardingReviews["findByClientId"]>>;
+type StoredReview = Awaited<
+  ReturnType<OnboardingReviewsPort["findByClientId"]>
+>;
 
 function createClients(found: OnboardingClient | null = CLIENT) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies OnboardingClients;
+  } satisfies OnboardingClientsPort;
 }
 
 function createIdentities(found: ClientIdentity | null = IDENTITY) {
   return {
     findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies Pick<ClientIdentities, "findByClientId">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientId">;
 }
 
 function createOnboardings(
@@ -116,7 +124,7 @@ function createOnboardings(
 ) {
   return {
     findByClientId: vi.fn().mockResolvedValue({ draft: null, submission }),
-  } satisfies ClientOnboardingSource;
+  } satisfies ClientOnboardingSourcePort;
 }
 
 function createReviews(stored: Partial<StoredReview> = {}) {
@@ -131,25 +139,25 @@ function createReviews(stored: Partial<StoredReview> = {}) {
     recordRequest: vi.fn().mockResolvedValue("recorded"),
     recordAnswer: vi.fn().mockResolvedValue(undefined),
     recordApproval: vi.fn().mockResolvedValue(undefined),
-  } satisfies OnboardingReviews;
+  } satisfies OnboardingReviewsPort;
 }
 
 function createStamps() {
   return {
     record: vi.fn().mockResolvedValue(undefined),
-  } satisfies OnboardingReviewStamps;
+  } satisfies OnboardingReviewStampsPort;
 }
 
 function createNotifications(delivery: "sent" | "failed" = "sent") {
   return {
     sendDetailsRequest: vi.fn().mockResolvedValue(delivery),
-  } satisfies OnboardingDetailsNotifications;
+  } satisfies OnboardingDetailsNotificationsPort;
 }
 
 function createRequestIds() {
   return {
     generate: vi.fn().mockReturnValue("request-1"),
-  } satisfies DetailRequestIds;
+  } satisfies DetailRequestIdsPort;
 }
 
 function createIncidents() {
@@ -165,7 +173,7 @@ function createIncidents() {
     onboardingDetailsRefused: vi.fn(),
     onboardingAnswersApproved: vi.fn(),
     onboardingReviewStampsRepaired: vi.fn(),
-  } satisfies ClientOnboardingIncidents;
+  } satisfies ClientOnboardingIncidentsPort;
 }
 
 function reviewPorts(
@@ -342,7 +350,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const notifications = {
       sendDetailsRequest: vi.fn().mockRejectedValue(new Error("down")),
-    } satisfies OnboardingDetailsNotifications;
+    } satisfies OnboardingDetailsNotificationsPort;
     const useCase = requestUseCase(ports, notifications);
 
     // act

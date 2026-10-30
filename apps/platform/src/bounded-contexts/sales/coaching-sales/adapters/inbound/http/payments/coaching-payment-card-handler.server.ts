@@ -4,16 +4,14 @@ import {
   type PaymentCardEvent,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { PaymentCardChange } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
-import type {
-  PaymentCardHandler,
-  PaymentEventHandling,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-handlers.server";
+import type { PaymentEventHandling } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-handlers.server";
+import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-card-handler-port.server";
 
 type CoachingPaymentCardHandlerOptions = {
   mirrorPaymentCard: MirrorPaymentCardUseCase;
 };
 
-export class CoachingPaymentCardHandler implements PaymentCardHandler {
+export class CoachingPaymentCardHandler implements PaymentCardHandlerPort {
   constructor(private readonly options: CoachingPaymentCardHandlerOptions) {}
 
   async handle(

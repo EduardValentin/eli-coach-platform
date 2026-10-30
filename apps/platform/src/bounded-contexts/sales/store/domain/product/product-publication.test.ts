@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { Product, type PublicationPlacement } from "./product";
-import type { ProductAssetDigest } from "./product-assets";
+import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import {
   MAX_PUBLICATION_BYTES,
   ProductPublicationDraft,
@@ -67,7 +67,7 @@ function existingProduct(
   });
 }
 
-const digest: ProductAssetDigest = {
+const digest: ProductAssetDigestPort = {
   sha256: (bytes) => `sha-${bytes.byteLength}`,
 };
 

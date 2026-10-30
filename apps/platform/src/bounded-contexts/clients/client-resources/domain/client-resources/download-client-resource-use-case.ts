@@ -1,11 +1,11 @@
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResourceStore } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type { ClientResourcesPort } from "./client-resources-port";
 import type { ResourceFileKind } from "./resource-file-kind";
 
 type DownloadClientResourceCommand = {
@@ -25,10 +25,10 @@ export type DownloadClientResourceResult =
   | { status: "not-found" };
 
 type DownloadClientResourceUseCaseOptions = {
-  resources: ClientResources;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  store: ClientResourceStore;
-  incidents: ClientResourceIncidents;
+  resources: ClientResourcesPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  store: ClientResourceStorePort;
+  incidents: ClientResourceIncidentsPort;
 };
 
 export class DownloadClientResourceUseCase {

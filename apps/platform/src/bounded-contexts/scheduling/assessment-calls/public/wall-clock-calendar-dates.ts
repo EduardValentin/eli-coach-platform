@@ -1,11 +1,11 @@
-import type { CalendarDates } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
+import type { CalendarDatesPort } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import {
   completedYearsBetween,
   parseCalendarDate,
 } from "~/shared/clock/calendar-date";
 import { instantToWallClock } from "~/shared/clock/wall-clock";
 
-export const wallClockCalendarDates: CalendarDates = {
+export const wallClockCalendarDates: CalendarDatesPort = {
   dateOn: ({ on, timeZone }) => {
     const { year, month, day } = instantToWallClock(on, timeZone);
 

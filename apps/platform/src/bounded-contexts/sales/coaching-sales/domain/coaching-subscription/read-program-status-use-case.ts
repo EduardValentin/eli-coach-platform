@@ -1,8 +1,8 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientLookup } from "./client-lookup";
+import type { ClientLookupPort } from "./client-lookup-port";
 
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import { isAfterSubmission, type StepAfterSubmission } from "./program-steps";
 
 type ProgramStatus = {
@@ -13,9 +13,9 @@ type ProgramStatus = {
 };
 
 type ReadProgramStatusUseCaseOptions = {
-  clock: Clock;
-  journeys: Pick<ClientLookup, "journeyOf">;
-  subscriptions: Pick<CoachingSubscriptions, "findCurrentForClient">;
+  clock: ClockPort;
+  journeys: Pick<ClientLookupPort, "journeyOf">;
+  subscriptions: Pick<CoachingSubscriptionsPort, "findCurrentForClient">;
 };
 
 export class ReadProgramStatusUseCase {

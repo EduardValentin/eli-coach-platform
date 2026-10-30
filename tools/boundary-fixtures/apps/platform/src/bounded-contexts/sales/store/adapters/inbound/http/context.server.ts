@@ -1,4 +1,4 @@
-import type { CatalogController } from "./catalog/catalog-controller.server";
+import type { CatalogController } from "./catalog/store-catalog-controller.server";
 
 export type StoreFeature = { catalog: CatalogController };
 

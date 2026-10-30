@@ -1,9 +1,9 @@
 import type { AccountRole } from "./account-role";
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 
 import type { ClientResource } from "./client-resource";
-import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourcesPort } from "./client-resources-port";
 
 export type ResourceRequester = { role: AccountRole; authSubjectId: string };
 
@@ -21,9 +21,9 @@ function reachOf(requester: ResourceRequester): ResourceReach {
 }
 
 type ClientResourceAccessOptions = {
-  resources: ClientResources;
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  incidents: ClientResourceIncidents;
+  resources: ClientResourcesPort;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  incidents: ClientResourceIncidentsPort;
 };
 
 export class ClientResourceAccess {

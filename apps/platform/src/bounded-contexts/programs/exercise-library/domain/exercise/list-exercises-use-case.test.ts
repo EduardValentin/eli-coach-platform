@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Exercise } from "./exercise";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibraryPort } from "./exercise-library-port";
 import { ListExercisesUseCase } from "./list-exercises-use-case";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
@@ -35,7 +35,7 @@ describe("ListExercisesUseCase", () => {
       add: vi.fn(),
       replace: vi.fn(),
       remove: vi.fn(),
-    } satisfies ExerciseLibrary;
+    } satisfies ExerciseLibraryPort;
     const useCase = new ListExercisesUseCase({ library });
 
     // act

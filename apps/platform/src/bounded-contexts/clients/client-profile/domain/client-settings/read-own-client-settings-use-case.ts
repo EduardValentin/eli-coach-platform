@@ -1,11 +1,11 @@
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
 import type { ClientSettingsSnapshot } from "./client-settings";
-import type { ClientSettingsSource } from "./client-settings-source";
+import type { ClientSettingsSourcePort } from "./client-settings-source-port";
 
 type ReadOwnClientSettingsUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  settings: ClientSettingsSource;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  settings: ClientSettingsSourcePort;
 };
 
 export class ReadOwnClientSettingsUseCase {

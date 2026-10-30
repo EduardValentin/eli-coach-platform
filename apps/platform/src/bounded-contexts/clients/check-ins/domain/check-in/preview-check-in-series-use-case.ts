@@ -1,15 +1,15 @@
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import { CHECK_IN_RULES } from "./check-in-rules";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
 import {
   CheckInSeriesRule,
   type CheckInSeriesPreviewHour,
 } from "./check-in-series-rule";
-import type { CoachTimeSpan } from "./coach-time";
-import type { OpenSlots } from "./open-slots";
+import type { CoachTimeSpan } from "./coach-time-port";
+import type { OpenSlotsPort } from "./open-slots-port";
 import type { Weekday } from "./weekdays";
 
 export type PreviewCheckInSeriesCommand = {
@@ -26,10 +26,13 @@ export type PreviewCheckInSeriesResult =
   | { status: "unknown_client" | "client_cannot_answer" };
 
 type PreviewCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReach, "findById">;
-  clock: Clock;
-  openSlots: Pick<OpenSlots, "coachWeek" | "busyFrom">;
-  series: Pick<CheckInSeriesRecords, "findActiveForClient" | "listOccurrences">;
+  clients: Pick<ClientReachPort, "findById">;
+  clock: ClockPort;
+  openSlots: Pick<OpenSlotsPort, "coachWeek" | "busyFrom">;
+  series: Pick<
+    CheckInSeriesRecordsPort,
+    "findActiveForClient" | "listOccurrences"
+  >;
 };
 
 type BusyOfClient = { clientId: string; now: Date };

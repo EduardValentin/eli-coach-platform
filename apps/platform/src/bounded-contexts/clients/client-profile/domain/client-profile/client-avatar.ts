@@ -3,7 +3,7 @@ import {
   MAX_PROGRESS_PHOTO_BYTES,
   type ProgressPhotoFileFacts,
 } from "./progress-photo";
-import type { ClientAvatarReference } from "./client-avatar-store";
+import type { ClientAvatarReference } from "./client-avatar-store-port";
 
 export const CLIENT_AVATAR_RENDITION = {
   edgePixels: 512,

@@ -1,7 +1,7 @@
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
 import { PaymentCard, type PaymentCardEvent } from "./payment-card";
-import type { PaymentCards } from "./payment-cards";
+import type { PaymentCardsPort } from "./payment-cards-port";
 
 type MirrorPaymentCardCommand = {
   eventId: string;
@@ -13,9 +13,9 @@ type MirrorPaymentCardResult = {
 };
 
 type MirrorPaymentCardUseCaseOptions = {
-  cards: PaymentCards;
-  incidents: CoachingSubscriptionIncidents;
-  subscriptions: CoachingSubscriptions;
+  cards: PaymentCardsPort;
+  incidents: CoachingSubscriptionIncidentsPort;
+  subscriptions: CoachingSubscriptionsPort;
 };
 
 export class MirrorPaymentCardUseCase {

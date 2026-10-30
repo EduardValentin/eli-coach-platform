@@ -69,13 +69,19 @@ function auditFilesIn(directory, labelPrefix) {
   );
 }
 
+function entityFilesOf(concept) {
+  return concept.endsWith("s")
+    ? [`${concept}.ts`, `${concept.slice(0, -1)}.ts`]
+    : [`${concept}.ts`];
+}
+
 function auditConcept(domainRoot, concept) {
   const directory = join(domainRoot, concept);
   const files = filesOf(directory);
   const problems = [];
   if (!files.includes("index.ts"))
     problems.push(`${concept}: missing index.ts`);
-  if (!files.includes(`${concept}.ts`))
+  if (!entityFilesOf(concept).some((entity) => files.includes(entity)))
     problems.push(`${concept}: missing ${concept}.ts`);
   return [...problems, ...auditFilesIn(directory, `${concept}/`)];
 }
@@ -87,6 +93,105 @@ function auditDomain(domainRoot) {
     ),
     ...auditFilesIn(domainRoot, ""),
   ];
+}
+
+const UNIT_FILES = [
+  { suffix: "-facade-adapter", unit: "FacadeAdapter", kinds: ["class"] },
+  {
+    prefix: "create-",
+    suffix: "-adapter",
+    unit: "Adapter",
+    kinds: ["function"],
+  },
+  { suffix: "-adapter", unit: "Adapter", kinds: ["class"] },
+  { suffix: "-repository", unit: "Repository", kinds: ["class"] },
+  { suffix: "-facade", unit: "Facade", kinds: ["interface"] },
+  { suffix: "-port", unit: "Port", kinds: ["interface", "type"] },
+];
+
+const NAMED_UNIT = /(Port|Repository|Adapter|Facade)$/;
+
+function kebabOf(name) {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
+    .toLowerCase();
+}
+
+function exportedDeclarationsOf(source) {
+  const patterns = [
+    ["class", /export\s+(?:abstract\s+)?class\s+(\w+)/g],
+    ["interface", /export\s+interface\s+(\w+)/g],
+    ["type", /export\s+type\s+(\w+)\s*(?:<[^=]*>)?\s*=/g],
+    ["function", /export\s+(?:async\s+)?function\s+(\w+)/g],
+  ];
+  return patterns.flatMap(([kind, pattern]) =>
+    [...source.matchAll(pattern)].map((match) => ({ kind, name: match[1] })),
+  );
+}
+
+function sourceFilesOf(directory) {
+  return readdirSync(directory).flatMap((name) => {
+    const path = join(directory, name);
+    if (statSync(path).isDirectory()) return sourceFilesOf(path);
+    if (
+      !/\.tsx?$/.test(name) ||
+      /\.test\.tsx?$/.test(name) ||
+      name.endsWith(".d.ts")
+    )
+      return [];
+    return [path];
+  });
+}
+
+function unitFileProblems(stem, declarations, label) {
+  const rule = UNIT_FILES.find(
+    (candidate) =>
+      stem.endsWith(candidate.suffix) &&
+      (!candidate.prefix || stem.startsWith(candidate.prefix)),
+  );
+  if (!rule) return [];
+  const units = declarations.filter(
+    (declaration) =>
+      rule.kinds.includes(declaration.kind) &&
+      declaration.name.endsWith(rule.unit),
+  );
+  if (units.length !== 1)
+    return [
+      `${label}: expected one exported *${rule.unit}, found ${units.length}`,
+    ];
+  return kebabOf(units[0].name) === stem
+    ? []
+    : [`${label}: exports ${units[0].name}, which names another file`];
+}
+
+function misplacedUnitProblems(stem, declarations, label) {
+  return declarations
+    .filter(
+      (declaration) =>
+        ["class", "interface"].includes(declaration.kind) &&
+        NAMED_UNIT.test(declaration.name) &&
+        kebabOf(declaration.name) !== stem,
+    )
+    .map(
+      (declaration) =>
+        `${label}: ${declaration.name} belongs in ${kebabOf(declaration.name)}.ts`,
+    );
+}
+
+export function auditUnitNames(sourceRoot) {
+  return sourceFilesOf(sourceRoot).flatMap((path) => {
+    const label = relative(sourceRoot, path);
+    const stem = label
+      .split("/")
+      .pop()
+      .replace(/(\.server)?\.tsx?$/, "");
+    const declarations = exportedDeclarationsOf(readFileSync(path, "utf8"));
+    return [
+      ...unitFileProblems(stem, declarations, label),
+      ...misplacedUnitProblems(stem, declarations, label),
+    ];
+  });
 }
 
 const SHARED_FORBIDDEN_FOLDERS = ["domain", "adapters"];
@@ -117,6 +222,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     ...auditSharedLayout(join(sourceRoot, "shared")).map(
       (problem) => `shared/${problem}`,
     ),
+    ...auditUnitNames(sourceRoot),
   ];
   for (const problem of problems) {
     console.error(problem);

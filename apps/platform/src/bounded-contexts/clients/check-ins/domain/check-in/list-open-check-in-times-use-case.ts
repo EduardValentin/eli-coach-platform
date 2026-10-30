@@ -1,9 +1,9 @@
-import type { ClientReach, ClientReachReading } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { OpenSlots } from "./open-slots";
+import type { OpenSlotsPort } from "./open-slots-port";
 
 export type ListOpenCheckInTimesCommand = {
   actor: CheckInActor;
@@ -21,9 +21,9 @@ type OpenTimesClient =
   | Exclude<ListOpenCheckInTimesResult, { status: "listed" }>;
 
 type ListOpenCheckInTimesUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
-  clock: Clock;
-  openSlots: Pick<OpenSlots, "openStarts">;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  clock: ClockPort;
+  openSlots: Pick<OpenSlotsPort, "openStarts">;
 };
 
 export class ListOpenCheckInTimesUseCase {

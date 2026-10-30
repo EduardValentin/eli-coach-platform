@@ -1,11 +1,11 @@
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClient } from "./onboarding-clients";
+import type { OnboardingClient } from "./onboarding-clients-port";
 import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
-import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
-import type { OnboardingReviews } from "./onboarding-reviews";
+import type { OnboardingReviewStampsPort } from "./onboarding-review-stamps-port";
+import type { OnboardingReviewsPort } from "./onboarding-reviews-port";
 
 type OpenDetailRequestReading = {
   requestId: string;
@@ -15,10 +15,10 @@ type OpenDetailRequestReading = {
 
 type ReadOpenDetailRequestUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSource;
-  reviews: OnboardingReviews;
-  stamps: OnboardingReviewStamps;
-  incidents: ClientOnboardingIncidents;
+  onboardings: ClientOnboardingSourcePort;
+  reviews: OnboardingReviewsPort;
+  stamps: OnboardingReviewStampsPort;
+  incidents: ClientOnboardingIncidentsPort;
 };
 
 export class ReadOpenDetailRequestUseCase {

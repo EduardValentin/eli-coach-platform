@@ -4,12 +4,12 @@ export {
   buildGoogleCalendarUrl,
 } from "./calendar-invite.server";
 export { createProductEmail } from "./create-product-email.server";
-export { InMemoryProductEmail } from "./in-memory-product-email.server";
+export { InMemoryProductEmailAdapter } from "./in-memory-product-email-adapter.server";
 export type {
   EmailAttachment,
-  ProductEmail,
+  ProductEmailPort,
   ProductEmailCommand,
-} from "./product-email-contract.server";
+} from "./product-email-port.server";
 export {
   EmailBody,
   EmailContainer,

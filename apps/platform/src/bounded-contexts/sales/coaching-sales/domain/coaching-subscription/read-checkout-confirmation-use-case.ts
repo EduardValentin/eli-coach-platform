@@ -2,7 +2,7 @@ import type { CoachingBundleId, PriceTier } from "../coaching-bundle";
 import type { CoachingSalesWindow } from "../payment-link";
 
 import { withdrawalDeadline, type StartChoice } from "./coaching-subscription";
-import type { PaymentCheckout } from "./payment-checkout";
+import type { PaymentCheckoutPort } from "./payment-checkout-port";
 
 type CheckoutConfirmation =
   | {
@@ -19,7 +19,7 @@ type CheckoutConfirmation =
   | { status: "not_paid" };
 
 type ReadCheckoutConfirmationUseCaseOptions = {
-  paymentCheckout: PaymentCheckout;
+  paymentCheckout: PaymentCheckoutPort;
   salesWindow: CoachingSalesWindow;
 };
 

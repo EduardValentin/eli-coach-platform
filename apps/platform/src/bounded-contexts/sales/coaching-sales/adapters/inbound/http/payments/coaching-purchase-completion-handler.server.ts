@@ -10,9 +10,11 @@ import {
   type RefreshPaymentCardUseCase,
 } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { PaidCheckoutSession } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentCompletionHandler } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler.server";
+import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-completion-handler-port.server";
 
-type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
+type HandlerOutcome = Awaited<
+  ReturnType<PaymentCompletionHandlerPort["handle"]>
+>;
 
 type PurchaseRecording = RecordedCheckoutPurchase | { status: "already_paid" };
 
@@ -39,7 +41,7 @@ const OUTCOME_BY_PURCHASE_STATUS: Record<PurchaseStatus, HandlerOutcome> = {
   unreadable_checkout: "ignored",
 };
 
-export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandler {
+export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandlerPort {
   readonly purpose = COACHING_SUBSCRIPTION_PURPOSE;
 
   constructor(

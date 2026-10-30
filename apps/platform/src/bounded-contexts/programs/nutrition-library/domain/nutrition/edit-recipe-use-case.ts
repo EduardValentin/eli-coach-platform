@@ -1,14 +1,14 @@
-import type { Clock } from "../clock";
-import type { FoodLibrary } from "./food-library";
-import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { NutritionTags } from "./nutrition-tags";
+import type { ClockPort } from "../clock-port";
+import type { FoodLibraryPort } from "./food-library-port";
+import type { NutritionLibraryIncidentsPort } from "./nutrition-library-incidents-port";
+import type { NutritionTagsPort } from "./nutrition-tags-port";
 import type { Recipe } from "./recipe";
 import {
   RecipeDraft,
   type RecipeDraftInput,
   type RecipeSaveProblems,
 } from "./recipe-draft";
-import type { RecipeLibrary, RecipeReference } from "./recipe-library";
+import type { RecipeLibraryPort, RecipeReference } from "./recipe-library-port";
 import type { RecipePhotoChoice } from "./recipe-photo";
 import {
   type RecipePhotoSavingPort,
@@ -27,11 +27,11 @@ export type EditRecipeResult =
   | { status: "failed" };
 
 type EditRecipeUseCaseOptions = {
-  recipes: Pick<RecipeLibrary, "find" | "list" | "replace">;
-  foods: Pick<FoodLibrary, "list" | "referenced">;
-  tags: Pick<NutritionTags, "list">;
-  clock: Clock;
-  incidents: Pick<NutritionLibraryIncidents, "recipeEditFailed">;
+  recipes: Pick<RecipeLibraryPort, "find" | "list" | "replace">;
+  foods: Pick<FoodLibraryPort, "list" | "referenced">;
+  tags: Pick<NutritionTagsPort, "list">;
+  clock: ClockPort;
+  incidents: Pick<NutritionLibraryIncidentsPort, "recipeEditFailed">;
   photos: RecipePhotoSavingPort;
 };
 

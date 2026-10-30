@@ -1,3 +1,3 @@
 export { CoachMeetingRoom } from "./coach-meeting-room";
-export { type CoachMeetingRoomChanges } from "./coach-meeting-room-changes";
-export { type CoachMeetingRoomSource } from "./coach-meeting-room-source";
+export { type CoachMeetingRoomChangesPort } from "./coach-meeting-room-changes-port";
+export { type CoachMeetingRoomSourcePort } from "./coach-meeting-room-source-port";

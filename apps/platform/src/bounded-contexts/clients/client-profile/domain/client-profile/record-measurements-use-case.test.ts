@@ -1,23 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "../client-reach";
-import type { MeasurementEntry, MeasurementIds } from "../measurement";
+import type { ClientReachPort, ClientReachReading } from "../client-reach-port";
+import type { MeasurementEntry, MeasurementIdsPort } from "../measurement";
 import { ClientProfile } from "./client-profile";
-import type { ClientProfiles } from "./client-profiles";
-import type { ClientMeasurementRecords } from "./client-measurement-records";
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import { ProgressPhoto, type ProgressPhotoView } from "./progress-photo";
 import type {
   ProgressPhotoRendition,
-  ProgressPhotoRenditions,
-} from "./progress-photo-renditions";
+  ProgressPhotoRenditionsPort,
+} from "./progress-photo-renditions-port";
 import type { ProgressPhotoReference } from "./progress-photo-reference";
 import type {
   ProgressPhotoOwner,
-  ProgressPhotoStore,
-} from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
-import type { ProgressPhotoIds } from "./progress-photo-ids";
+  ProgressPhotoStorePort,
+} from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
+import type { ProgressPhotoIdsPort } from "./progress-photo-ids-port";
 import { RecordMeasurementsUseCase } from "./record-measurements-use-case";
 
 const NOW = new Date("2026-10-01T08:00:00.000Z");
@@ -41,7 +41,7 @@ function profileWith(consent: ProfileConsent): ClientProfile | null {
   });
 }
 
-class InMemoryProgressPhotoStore implements ProgressPhotoStore {
+class InMemoryProgressPhotoStoreAdapter implements ProgressPhotoStorePort {
   readonly files = new Map<string, Uint8Array>();
 
   async store(
@@ -63,7 +63,7 @@ class InMemoryProgressPhotoStore implements ProgressPhotoStore {
   }
 }
 
-class InMemoryProgressPhotos implements ProgressPhotos {
+class InMemoryProgressPhotosAdapter implements ProgressPhotosPort {
   readonly rows = new Map<string, ProgressPhoto>();
 
   async add(photo: ProgressPhoto): Promise<void> {
@@ -96,26 +96,29 @@ function createPorts(
         .mockResolvedValue(
           options.client === undefined ? reachOf("reachable") : options.client,
         ),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
     profiles: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(profileWith(options.consent ?? "consented")),
       recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
-    } satisfies Pick<ClientProfiles, "findByClientId" | "recordPhotoConsent">,
+    } satisfies Pick<
+      ClientProfilesPort,
+      "findByClientId" | "recordPhotoConsent"
+    >,
     records: {
       entries,
       listByClientId: vi.fn().mockResolvedValue([]),
       record: vi.fn(async ({ entry }: { entry: MeasurementEntry }) => {
         entries.push(entry);
       }),
-    } satisfies ClientMeasurementRecords & { entries: MeasurementEntry[] },
-    measurementIds: { generate: () => "entry-1" } satisfies MeasurementIds,
-    photos: new InMemoryProgressPhotos(),
+    } satisfies ClientMeasurementRecordsPort & { entries: MeasurementEntry[] },
+    measurementIds: { generate: () => "entry-1" } satisfies MeasurementIdsPort,
+    photos: new InMemoryProgressPhotosAdapter(),
     photoIds: {
       generate: () => `photo-${++photoNumber}`,
-    } satisfies ProgressPhotoIds,
-    store: new InMemoryProgressPhotoStore(),
+    } satisfies ProgressPhotoIdsPort,
+    store: new InMemoryProgressPhotoStoreAdapter(),
     renditions: {
       render: vi.fn().mockResolvedValue(
         options.rendition ?? {
@@ -124,7 +127,7 @@ function createPorts(
           mimeType: "image/jpeg",
         },
       ),
-    } satisfies ProgressPhotoRenditions,
+    } satisfies ProgressPhotoRenditionsPort,
     clock: { now: () => NOW },
     incidents: {
       measurementEntrySaved: vi.fn(),
@@ -132,7 +135,7 @@ function createPorts(
       progressPhotoRefused: vi.fn(),
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
-    } satisfies MeasurementIncidents,
+    } satisfies MeasurementIncidentsPort,
   };
 }
 

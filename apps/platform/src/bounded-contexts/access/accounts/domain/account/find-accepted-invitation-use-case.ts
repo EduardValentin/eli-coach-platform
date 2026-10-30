@@ -1,9 +1,9 @@
-import type { AccountInvitations } from "./account-invitations";
+import type { AccountInvitationsPort } from "./account-invitations-port";
 
 export class FindAcceptedInvitationUseCase {
   constructor(
     private readonly options: {
-      invitations: Pick<AccountInvitations, "findAcceptedBy">;
+      invitations: Pick<AccountInvitationsPort, "findAcceptedBy">;
     },
   ) {}
 

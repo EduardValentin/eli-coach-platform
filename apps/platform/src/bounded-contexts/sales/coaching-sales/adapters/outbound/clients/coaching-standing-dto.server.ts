@@ -1,5 +1,5 @@
 import type { CoachingStanding } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
-import type { CoachingStandingDto } from "~/bounded-contexts/clients/public/admissions";
+import type { CoachingStandingDto } from "~/bounded-contexts/clients/public/admissions-facade";
 
 export function coachingStandingDtoOf(
   standing: CoachingStanding,

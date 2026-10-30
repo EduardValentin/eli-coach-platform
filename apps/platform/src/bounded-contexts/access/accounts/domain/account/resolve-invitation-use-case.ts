@@ -1,15 +1,15 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import type { AccountInvitations } from "./account-invitations";
-import type { InvitationTokenHasher } from "./invitation-token";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { InvitationTokenHasherPort } from "./invitation-token-hasher-port";
 
 type InvitationLandingResolution =
   { state: "valid"; signUpUrl: string } | { state: "unavailable" };
 
 type ResolveInvitationUseCaseOptions = {
-  clock: Clock;
-  invitations: Pick<AccountInvitations, "findByTokenHash">;
-  tokenHasher: InvitationTokenHasher;
+  clock: ClockPort;
+  invitations: Pick<AccountInvitationsPort, "findByTokenHash">;
+  tokenHasher: InvitationTokenHasherPort;
 };
 
 export class ResolveInvitationUseCase {

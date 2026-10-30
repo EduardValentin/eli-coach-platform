@@ -7,10 +7,10 @@ import {
   type OpenSlotsResult,
   type ResolveJoinLinkUseCase,
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import type { Clock } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock";
+import type { ClockPort } from "~/bounded-contexts/scheduling/assessment-calls/domain/clock-port";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import {
-  type BotVerifier,
+  type BotVerifierPort,
   resolveRequestRemoteIp,
 } from "~/shared/submission-checks/bot-detection/index.server";
 import {
@@ -37,9 +37,9 @@ export type BookingPageData =
 
 type AssessmentCallsControllerOptions = {
   botDetection: BotDetectionConfig;
-  botVerifier: BotVerifier;
+  botVerifier: BotVerifierPort;
   bookAssessmentCall: BookAssessmentCallUseCase;
-  clock: Clock;
+  clock: ClockPort;
   listOpenSlots: ListOpenSlotsUseCase;
   resolveJoinLink: ResolveJoinLinkUseCase;
   unitOfWork: UnitOfWork;

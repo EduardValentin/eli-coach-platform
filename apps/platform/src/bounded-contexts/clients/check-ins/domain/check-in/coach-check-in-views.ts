@@ -1,5 +1,8 @@
-import type { ClientIdentities, ClientIdentity } from "./client-identities";
-import type { Clock } from "../clock";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "./client-identities-port";
+import type { ClockPort } from "../clock-port";
 
 import { CheckIn, type CheckInView } from "./check-in";
 
@@ -8,8 +11,8 @@ export type CoachCheckInView = CheckInView & {
 };
 
 type CoachCheckInViewsOptions = {
-  clock: Clock;
-  identities: Pick<ClientIdentities, "findByClientIds">;
+  clock: ClockPort;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
 };
 
 export class CoachCheckInViews {

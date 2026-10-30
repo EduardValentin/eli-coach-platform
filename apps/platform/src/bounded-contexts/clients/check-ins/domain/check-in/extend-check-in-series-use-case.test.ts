@@ -1,16 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
-import type { HeldCheckIn } from "./check-ins";
-import type { CoachTime, CoachTimeHold } from "./coach-time";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
+import type { HeldCheckIn } from "./check-ins-port";
+import type { CoachTimePort, CoachTimeHold } from "./coach-time-port";
 import { ExtendCheckInSeriesUseCase } from "./extend-check-in-series-use-case";
-import { CoachWeek, type OpenSlots } from "./open-slots";
+import { CoachWeek } from "./open-slots";
+import { type OpenSlotsPort } from "./open-slots-port";
 import type { Weekday } from "./weekdays";
 
 const SET_UP_AT = new Date("2026-10-05T09:00:00.000Z");
@@ -64,7 +65,7 @@ function openSlotsOn(weekdays: Weekday[]) {
         hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
       }),
     ),
-  } satisfies Pick<OpenSlots, "coachWeek">;
+  } satisfies Pick<OpenSlotsPort, "coachWeek">;
 }
 
 function createExtend(options?: {
@@ -84,12 +85,14 @@ function createExtend(options?: {
           ? CheckInSeries.reconstitute(SERIES)
           : options.active,
       ),
-    widen: vi.fn<CheckInSeriesRecords["widen"]>().mockResolvedValue("widened"),
+    widen: vi
+      .fn<CheckInSeriesRecordsPort["widen"]>()
+      .mockResolvedValue("widened"),
     recordWeeks: vi
-      .fn<CheckInSeriesRecords["recordWeeks"]>()
+      .fn<CheckInSeriesRecordsPort["recordWeeks"]>()
       .mockResolvedValue(undefined),
   } satisfies Pick<
-    CheckInSeriesRecords,
+    CheckInSeriesRecordsPort,
     "findActiveForClient" | "widen" | "recordWeeks"
   >;
   const coachTime = {
@@ -102,14 +105,14 @@ function createExtend(options?: {
         : { status: "reserved", reservationId: `reservation-${week + 1}` };
     }),
     release: vi.fn().mockResolvedValue(undefined),
-  } satisfies CoachTime;
+  } satisfies CoachTimePort;
   const clients = {
     findById: vi
       .fn()
       .mockResolvedValue(
         options?.client === undefined ? RENEWED_REACH : options.client,
       ),
-  } satisfies Pick<ClientReach, "findById">;
+  } satisfies Pick<ClientReachPort, "findById">;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     awaitingCheckInsCountFailed: vi.fn(),
@@ -123,13 +126,13 @@ function createExtend(options?: {
   };
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const inbox = {
     checkInEvent: vi.fn().mockResolvedValue(undefined),
     seriesEvent: vi.fn().mockResolvedValue(undefined),
     clashesAdded: vi.fn().mockResolvedValue(undefined),
     scheduleExpiries: vi.fn().mockResolvedValue(undefined),
-  } satisfies CheckInInbox;
+  } satisfies CheckInInboxPort;
   const notifications = {
     requested: vi.fn(),
     withdrawn: vi.fn(),
@@ -142,7 +145,7 @@ function createExtend(options?: {
     seriesSetUp: vi.fn(),
     seriesChanged: vi.fn(),
     seriesStopped: vi.fn(),
-  } satisfies CheckInNotifications;
+  } satisfies CheckInNotificationsPort;
   const now = options?.now ?? RENEWAL_DAY;
   const ports = {
     clients,

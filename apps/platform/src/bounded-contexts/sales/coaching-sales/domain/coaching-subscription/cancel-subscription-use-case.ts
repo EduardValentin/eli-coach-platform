@@ -1,7 +1,7 @@
-import type { ClientLookup } from "./client-lookup";
-import type { Clock } from "../clock";
+import type { ClientLookupPort } from "./client-lookup-port";
+import type { ClockPort } from "../clock-port";
 
-import type { CoachingEndHandler } from "./coaching-end-handler";
+import type { CoachingEndHandlerPort } from "./coaching-end-handler-port";
 import { CoachingEndPropagation } from "./coaching-end-propagation";
 import type {
   CancellationRule,
@@ -10,13 +10,13 @@ import type {
   ProviderInstruction,
   SubscriptionCancellation,
 } from "./coaching-subscription";
-import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
-import type { PaymentSubscriptions } from "./payment-subscriptions";
+import type { CoachingSubscriptionIncidentsPort } from "./coaching-subscription-incidents-port";
+import type { CoachingSubscriptionsPort } from "./coaching-subscriptions-port";
+import type { PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 import type {
   RefundDueNotice,
-  RefundNotifications,
-} from "./refund-notifications";
+  RefundNotificationsPort,
+} from "./refund-notifications-port";
 import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type CancelSubscriptionResult =
@@ -36,14 +36,14 @@ type RecordedCancellation = Extract<
 >;
 
 type CancelSubscriptionUseCaseOptions = {
-  clients: Pick<ClientLookup, "identityOf">;
-  clock: Clock;
-  coachingEnds: readonly CoachingEndHandler[];
-  incidents: CoachingSubscriptionIncidents;
-  notifications: RefundNotifications;
-  paymentSubscriptions: PaymentSubscriptions;
+  clients: Pick<ClientLookupPort, "identityOf">;
+  clock: ClockPort;
+  coachingEnds: readonly CoachingEndHandlerPort[];
+  incidents: CoachingSubscriptionIncidentsPort;
+  notifications: RefundNotificationsPort;
+  paymentSubscriptions: PaymentSubscriptionsPort;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
-  subscriptions: CoachingSubscriptions;
+  subscriptions: CoachingSubscriptionsPort;
 };
 
 type CancellationRecording = {

@@ -1,18 +1,15 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
-import {
-  ClientToday,
-  type CalendarDates,
-  type ClientCountries,
-} from "./client-details";
-import type { ClientIdentities } from "./client-identities";
-import type { ClientIdentityChanges } from "./client-identity-changes";
+import { ClientToday, type ClientCountries } from "./client-details";
+import { type CalendarDatesPort } from "./calendar-dates-port";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientIdentityChangesPort } from "./client-identity-changes-port";
 import {
   ClientIdentityEdit,
   type ClientIdentityProblems,
   type EditableClientIdentity,
 } from "./client-identity-edit";
-import type { ClientReach } from "./client-reach";
+import type { ClientReachPort } from "./client-reach-port";
 
 type UpdateOwnClientIdentityCommand = {
   authSubjectId: string;
@@ -26,11 +23,11 @@ type UpdateOwnClientIdentityResult =
   | { status: "invalid"; problems: ClientIdentityProblems };
 
 type UpdateOwnClientIdentityUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  identities: Pick<ClientIdentities, "findByClientId">;
-  changes: ClientIdentityChanges;
-  calendar: CalendarDates;
-  clock: Clock;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  identities: Pick<ClientIdentitiesPort, "findByClientId">;
+  changes: ClientIdentityChangesPort;
+  calendar: CalendarDatesPort;
+  clock: ClockPort;
   countries: ClientCountries;
 };
 

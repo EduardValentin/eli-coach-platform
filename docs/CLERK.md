@@ -107,7 +107,7 @@ this repository does not own either value; see
 
 A paid client gets her account through a Clerk application invitation that
 the app creates itself, in the same webhook delivery that records her
-payment (`ClerkIdentityInvitations` in
+payment (`ClerkIdentityInvitationsAdapter` in
 `apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/identity/`, selected
 by `IDENTITY_PROVIDER`):
 

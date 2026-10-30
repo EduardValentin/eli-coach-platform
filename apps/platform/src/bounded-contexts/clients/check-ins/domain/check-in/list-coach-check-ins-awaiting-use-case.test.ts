@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities, ClientIdentity } from "./client-identities";
+import type {
+  ClientIdentitiesPort,
+  ClientIdentity,
+} from "./client-identities-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckIns } from "./check-ins";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInsPort } from "./check-ins-port";
 import { ListCoachCheckInsAwaitingUseCase } from "./list-coach-check-ins-awaiting-use-case";
 
 const NOW = new Date("2026-06-03T09:30:00.000Z");
@@ -103,12 +106,12 @@ function createUseCase(options: {
     listAll: options.listFailure
       ? vi.fn().mockRejectedValue(options.listFailure)
       : vi.fn().mockResolvedValue(options.checkIns),
-  } satisfies Pick<CheckIns, "listAll">;
+  } satisfies Pick<CheckInsPort, "listAll">;
   const identities = {
     findByClientIds: options.identityFailure
       ? vi.fn().mockRejectedValue(options.identityFailure)
       : vi.fn().mockResolvedValue([ANA, MARIA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<ClientIdentitiesPort, "findByClientIds">;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     awaitingCheckInsCountFailed: vi.fn(),
@@ -119,7 +122,7 @@ function createUseCase(options: {
     checkInSeriesReadFailed: vi.fn(),
     checkInInboxFailed: vi.fn(),
     checkInSeriesInboxFailed: vi.fn(),
-  } satisfies CheckInIncidents;
+  } satisfies CheckInIncidentsPort;
   const useCase = new ListCoachCheckInsAwaitingUseCase({
     checkIns,
     clock: { now: () => NOW },

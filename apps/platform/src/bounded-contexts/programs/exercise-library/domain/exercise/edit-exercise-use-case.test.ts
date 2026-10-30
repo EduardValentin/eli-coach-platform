@@ -4,16 +4,16 @@ import { EditExerciseUseCase } from "./edit-exercise-use-case";
 import { Exercise, type ExerciseSnapshot } from "./exercise";
 import type { ExerciseDraftInput } from "./exercise-draft";
 import type {
-  ExerciseLibrary,
+  ExerciseLibraryPort,
   ExerciseReference,
   ExerciseReplacement,
-} from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
-import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+} from "./exercise-library-port";
+import type { ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
+import type { ExerciseVideoFormatDetectorPort } from "./exercise-video-format-detector-port";
 import type {
-  ExerciseVideoStore,
+  ExerciseVideoStorePort,
   StagedExerciseVideo,
-} from "./exercise-video-store";
+} from "./exercise-video-store-port";
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
@@ -135,21 +135,21 @@ function createUseCase() {
     add: vi.fn(),
     replace: vi.fn(async (): Promise<ExerciseReplacement> => "replaced"),
     remove: vi.fn(),
-  } satisfies ExerciseLibrary;
+  } satisfies ExerciseLibraryPort;
   const incidents = {
     exerciseCreationFailed: vi.fn(),
     exerciseEditFailed: vi.fn(),
     exerciseRestoreFailed: vi.fn(),
     videoCleanupFailed: vi.fn(),
-  } satisfies ExerciseLibraryIncidents;
+  } satisfies ExerciseLibraryIncidentsPort;
   const formats = {
     detect: vi.fn(async (): Promise<string | null> => "mov"),
-  } satisfies ExerciseVideoFormatDetector;
+  } satisfies ExerciseVideoFormatDetectorPort;
   const store = {
     keep: vi.fn(async () => undefined),
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
-  } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
+  } satisfies Pick<ExerciseVideoStorePort, "keep" | "discard" | "remove">;
   const useCase = new EditExerciseUseCase({
     library,
     videoIds: { generate: () => "9c1b0000-0000-4000-8000-000000000002" },

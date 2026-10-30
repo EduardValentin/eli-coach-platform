@@ -5,8 +5,8 @@ export {
   type NotificationDraft,
   type NotificationFacts,
 } from "./notification";
-export { type NotificationInbox } from "./notification-inbox";
-export { type NotificationIncidents } from "./notification-incidents";
+export { type NotificationInboxPort } from "./notification-inbox-port";
+export { type NotificationIncidentsPort } from "./notification-incidents-port";
 export {
   NOTIFICATION_PARTIES,
   type NotificationParty,

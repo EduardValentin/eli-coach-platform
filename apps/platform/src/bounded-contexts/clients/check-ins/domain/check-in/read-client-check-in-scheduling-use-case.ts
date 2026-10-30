@@ -1,10 +1,10 @@
-import type { ClientReach, PortalReach } from "./client-reach";
+import type { ClientReachPort, PortalReach } from "./client-reach-port";
 
 export type ClientCheckInScheduling =
   "allowed" | "awaiting_onboarding" | "ended" | "unknown";
 
 type ReadClientCheckInSchedulingUseCaseOptions = {
-  clients: Pick<ClientReach, "findById">;
+  clients: Pick<ClientReachPort, "findById">;
 };
 
 const SCHEDULING_BY_REACH: Record<PortalReach, ClientCheckInScheduling> = {

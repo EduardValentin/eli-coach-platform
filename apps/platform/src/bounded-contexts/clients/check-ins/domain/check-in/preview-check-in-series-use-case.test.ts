@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckIn } from "./check-in";
 import { CheckInSeries } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
-import type { CoachTimeSpan } from "./coach-time";
-import { CoachWeek, type OpenSlots } from "./open-slots";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
+import type { CoachTimeSpan } from "./coach-time-port";
+import { CoachWeek } from "./open-slots";
+import { type OpenSlotsPort } from "./open-slots-port";
 import { PreviewCheckInSeriesUseCase } from "./preview-check-in-series-use-case";
 
 const NOW = new Date("2026-10-05T09:00:00.000Z");
@@ -70,17 +71,17 @@ function createPreview(
     busyFrom: vi
       .fn()
       .mockResolvedValue([HELD_WEDNESDAY_SIX_PM, HELD_WEDNESDAY_SEVEN_PM]),
-  } satisfies Pick<OpenSlots, "coachWeek" | "busyFrom">;
+  } satisfies Pick<OpenSlotsPort, "coachWeek" | "busyFrom">;
   const clients = {
     findById: vi.fn().mockResolvedValue(client),
-  } satisfies Pick<ClientReach, "findById">;
+  } satisfies Pick<ClientReachPort, "findById">;
   const series = {
     findActiveForClient: vi
       .fn()
       .mockResolvedValue(activeSeries?.series ?? null),
     listOccurrences: vi.fn().mockResolvedValue(activeSeries?.weeks ?? []),
   } satisfies Pick<
-    CheckInSeriesRecords,
+    CheckInSeriesRecordsPort,
     "findActiveForClient" | "listOccurrences"
   >;
   const ports = {

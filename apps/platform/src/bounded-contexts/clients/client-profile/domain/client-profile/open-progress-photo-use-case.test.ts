@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach } from "../client-reach";
+import type { ClientReachPort } from "../client-reach-port";
 
-import type { MeasurementIncidents } from "./measurement-incidents";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
 import { ProgressPhoto } from "./progress-photo";
-import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotoStorePort } from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
 import { OpenProgressPhotoUseCase } from "./open-progress-photo-use-case";
 
 const PHOTO_BYTES = new Uint8Array([7, 7, 7]);
@@ -37,14 +37,14 @@ function createPorts(
             ? { clientId: "client-1" }
             : stored.requesterClient,
         ),
-    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
     photos: {
       add: vi.fn(),
       findById: vi
         .fn()
         .mockResolvedValue(stored.photo === undefined ? PHOTO : stored.photo),
       delete: vi.fn(),
-    } satisfies ProgressPhotos,
+    } satisfies ProgressPhotosPort,
     store: {
       store: vi.fn(),
       open: vi
@@ -53,14 +53,14 @@ function createPorts(
           stored.bytes === undefined ? PHOTO_BYTES : stored.bytes,
         ),
       delete: vi.fn(),
-    } satisfies ProgressPhotoStore,
+    } satisfies ProgressPhotoStorePort,
     incidents: {
       measurementEntrySaved: vi.fn(),
       progressPhotoStored: vi.fn(),
       progressPhotoRefused: vi.fn(),
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
-    } satisfies MeasurementIncidents,
+    } satisfies MeasurementIncidentsPort,
   };
 }
 

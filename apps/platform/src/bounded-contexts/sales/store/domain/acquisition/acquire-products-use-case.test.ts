@@ -4,14 +4,14 @@ import {
   createEmailAcceptance,
   type EmailSubaddressPolicy,
 } from "~/shared/submission-checks/email-address";
-import { PublishedProduct, type StoreCatalog } from "../product";
+import { PublishedProduct, type StoreCatalogPort } from "../product";
 
 import { AcquireProductsUseCase } from "./acquire-products-use-case";
-import type { ProductDelivery } from "./product-delivery";
+import type { ProductDeliveryPort } from "./product-delivery-port";
 import type {
   AcquisitionPreparation,
-  StoreAcquisitions,
-} from "./store-acquisitions";
+  StoreAcquisitionsPort,
+} from "./store-acquisitions-port";
 
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 
@@ -59,7 +59,7 @@ const product = PublishedProduct.reconstitute({
 
 function createCatalog(
   availableProducts: readonly PublishedProduct[] = [product],
-): StoreCatalog {
+): StoreCatalogPort {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue(availableProducts),
     getPublishedProductBySlug: vi.fn().mockResolvedValue(product),
@@ -77,7 +77,7 @@ function createAcquisitions(
     status: "created",
     requestId: 31,
   },
-): StoreAcquisitions {
+): StoreAcquisitionsPort {
   return {
     prepareAcquisition: vi.fn().mockResolvedValue(preparation),
     recordDeliveryAccepted: vi.fn().mockResolvedValue(undefined),
@@ -87,7 +87,7 @@ function createAcquisitions(
   };
 }
 
-function createDelivery(): ProductDelivery {
+function createDelivery(): ProductDeliveryPort {
   return {
     createProviderIdempotencyKey,
     provider: "resend",
@@ -100,9 +100,9 @@ function createDelivery(): ProductDelivery {
 }
 
 function createUseCase(options: {
-  acquisitions?: StoreAcquisitions;
-  catalog?: StoreCatalog;
-  delivery?: ProductDelivery;
+  acquisitions?: StoreAcquisitionsPort;
+  catalog?: StoreCatalogPort;
+  delivery?: ProductDeliveryPort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents?: ReturnType<typeof createAcquisitionIncidents>;
 }) {

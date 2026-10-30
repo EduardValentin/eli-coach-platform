@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CancelCheckInsAfterCoachingEndUseCase } from "./cancel-check-ins-after-coaching-end-use-case";
-import type { CheckIns, CheckInsAtCoachingEnd } from "./check-ins";
+import type { CheckInsPort, CheckInsAtCoachingEnd } from "./check-ins-port";
 
 const NOW = new Date("2026-06-01T08:30:00.000Z");
 const COACHING_ENDS_AT = new Date("2026-07-01T10:00:00.000Z");
@@ -9,7 +9,7 @@ const COACHING_ENDS_AT = new Date("2026-07-01T10:00:00.000Z");
 function createCancelAfterEnd(ended: CheckInsAtCoachingEnd) {
   const checkIns = {
     endCoaching: vi.fn().mockResolvedValue(ended),
-  } satisfies Pick<CheckIns, "endCoaching">;
+  } satisfies Pick<CheckInsPort, "endCoaching">;
   const coachTime = { release: vi.fn().mockResolvedValue(undefined) };
   const inbox = { scheduleExpiries: vi.fn().mockResolvedValue(undefined) };
 

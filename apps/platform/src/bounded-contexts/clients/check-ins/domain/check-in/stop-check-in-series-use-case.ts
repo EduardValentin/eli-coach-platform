@@ -1,29 +1,29 @@
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import { CheckInAnnouncer } from "./check-in-announcer";
 import { releaseFreedHours } from "./check-in-hour-release";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
-import type { CoachTime } from "./coach-time";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
+import type { CoachTimePort } from "./coach-time-port";
 
 export type StopCheckInSeriesResult =
   | { status: "stopped"; series: CheckInSeriesSnapshot }
   | { status: "unknown_series" | "changed_meanwhile" };
 
 type StopCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReach, "findById">;
-  clock: Clock;
-  coachTime: Pick<CoachTime, "release">;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
-  series: Pick<CheckInSeriesRecords, "find" | "stop">;
+  clients: Pick<ClientReachPort, "findById">;
+  clock: ClockPort;
+  coachTime: Pick<CoachTimePort, "release">;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
+  series: Pick<CheckInSeriesRecordsPort, "find" | "stop">;
 };
 
 export class StopCheckInSeriesUseCase {

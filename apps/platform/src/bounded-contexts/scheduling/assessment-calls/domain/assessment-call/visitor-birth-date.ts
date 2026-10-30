@@ -1,4 +1,4 @@
-import type { CalendarDate, CalendarDates } from "./calendar-dates";
+import type { CalendarDate, CalendarDatesPort } from "./calendar-dates-port";
 import { MAX_BOOKING_AGE, MIN_BOOKING_AGE } from "./visitor-profile";
 
 type BirthDateProblem = "impossible" | "too-young";
@@ -10,20 +10,20 @@ export class VisitorBirthDate {
 
   static parse(
     isoDate: string,
-    calendar: CalendarDates,
+    calendar: CalendarDatesPort,
   ): VisitorBirthDate | null {
     const date = calendar.dateOf(isoDate);
 
     return date ? new VisitorBirthDate(date) : null;
   }
 
-  ageOn(moment: AgeMoment, calendar: CalendarDates): number {
+  ageOn(moment: AgeMoment, calendar: CalendarDatesPort): number {
     return calendar.yearsBetween(this.date, calendar.dateOn(moment));
   }
 
   bookingProblemOn(
     moment: AgeMoment,
-    calendar: CalendarDates,
+    calendar: CalendarDatesPort,
   ): BirthDateProblem | null {
     const age = this.ageOn(moment, calendar);
 

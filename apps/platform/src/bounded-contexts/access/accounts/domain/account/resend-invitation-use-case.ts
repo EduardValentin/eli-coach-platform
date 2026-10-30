@@ -1,17 +1,17 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type {
   AccountInvitation,
   IdentityInvitation,
 } from "./account-invitation";
-import type { AccountInvitationIncidents } from "./account-invitation-incidents";
+import type { AccountInvitationIncidentsPort } from "./account-invitation-incidents-port";
 import type {
   AccountInvitationMessage,
-  AccountInvitationNotifications,
-} from "./account-invitation-notifications";
-import type { AccountInvitations } from "./account-invitations";
-import type { IdentityInvitations } from "./identity-invitations";
-import type { InvitationTokenGenerator } from "./invitation-token";
+  AccountInvitationNotificationsPort,
+} from "./account-invitation-notifications-port";
+import type { AccountInvitationsPort } from "./account-invitations-port";
+import type { IdentityInvitationsPort } from "./identity-invitations-port";
+import type { InvitationTokenGeneratorPort } from "./invitation-token-generator-port";
 
 export type ResendInvitationResult =
   | { status: "sent"; email: string }
@@ -20,12 +20,12 @@ export type ResendInvitationResult =
   | { status: "not-found" };
 
 type ResendInvitationUseCaseOptions = {
-  clock: Clock;
-  identity: IdentityInvitations;
-  incidents: AccountInvitationIncidents;
-  invitations: AccountInvitations;
-  notifications: AccountInvitationNotifications;
-  tokenGenerator: InvitationTokenGenerator;
+  clock: ClockPort;
+  identity: IdentityInvitationsPort;
+  incidents: AccountInvitationIncidentsPort;
+  invitations: AccountInvitationsPort;
+  notifications: AccountInvitationNotificationsPort;
+  tokenGenerator: InvitationTokenGeneratorPort;
 };
 
 export class ResendInvitationUseCase {

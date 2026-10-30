@@ -1,9 +1,9 @@
-import type { MeasurementIds } from "../measurement";
-import type { Clock } from "../clock";
+import type { MeasurementIdsPort } from "../measurement";
+import type { ClockPort } from "../clock-port";
 import {
   measureUnitsOf,
   UnitPreference,
-  type ClientSettingsSource,
+  type ClientSettingsSourcePort,
 } from "../client-settings";
 
 import {
@@ -11,13 +11,13 @@ import {
   type OnboardingConsent,
   type OnboardingSubmissionProblem,
 } from "./client-onboarding";
-import type { ClientOnboardingChanges } from "./client-onboarding-changes";
-import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
-import type { ClientOnboardingSource } from "./client-onboarding-source";
+import type { ClientOnboardingChangesPort } from "./client-onboarding-changes-port";
+import type { ClientOnboardingIncidentsPort } from "./client-onboarding-incidents-port";
+import type { ClientOnboardingSourcePort } from "./client-onboarding-source-port";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingConsents } from "./onboarding-consents";
 import type { OnboardingParticipants } from "./onboarding-participants";
-import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
+import type { OnboardingSubmissionStampsPort } from "./onboarding-submission-stamps-port";
 import { screeningOutcome } from "./onboarding-submission";
 
 type SubmitOnboardingCommand = {
@@ -41,13 +41,13 @@ type SubmitOnboardingResult =
 
 type SubmitOnboardingUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
-  onboardings: ClientOnboardingSource;
-  settings: ClientSettingsSource;
-  changes: ClientOnboardingChanges;
-  measurementIds: MeasurementIds;
-  stamps: OnboardingSubmissionStamps;
-  clock: Clock;
-  incidents: ClientOnboardingIncidents;
+  onboardings: ClientOnboardingSourcePort;
+  settings: ClientSettingsSourcePort;
+  changes: ClientOnboardingChangesPort;
+  measurementIds: MeasurementIdsPort;
+  stamps: OnboardingSubmissionStampsPort;
+  clock: ClockPort;
+  incidents: ClientOnboardingIncidentsPort;
 };
 
 export class SubmitOnboardingUseCase {

@@ -1,6 +1,6 @@
 import { CHECK_IN_RULES } from "./check-in-rules";
 import type { CheckInSeriesBounds } from "./check-in-series-bounds";
-import type { CoachTimeSpan } from "./coach-time";
+import type { CoachTimeSpan } from "./coach-time-port";
 import type { CoachWeek } from "./open-slots";
 import { WEEKDAYS, type Weekday } from "./weekdays";
 import {

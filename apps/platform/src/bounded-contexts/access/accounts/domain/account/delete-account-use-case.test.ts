@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { Accounts } from "./accounts";
+import type { AccountsPort } from "./accounts-port";
 import { DeleteAccountUseCase } from "./delete-account-use-case";
 
 describe("DeleteAccountUseCase", () => {
   it("marks the account behind the auth subject id as deleted", async () => {
     // arrange
-    const accounts: Accounts = {
+    const accounts: AccountsPort = {
       findByAuthSubjectId: vi.fn(),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),

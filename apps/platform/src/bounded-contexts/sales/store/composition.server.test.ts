@@ -1,10 +1,10 @@
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 import type { DatabaseClient } from "~/shared/database";
 import type {
-  ManagementAuthenticator,
+  ManagementAuthenticatorPort,
   ManagementAuthConfig,
-} from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-contract.server";
-import { InMemoryProductEmail } from "~/shared/email/index.server";
+} from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-port.server";
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -26,7 +26,7 @@ function createDatabaseStub(): DatabaseClient {
 }
 
 function createManagementAuth(): {
-  authenticator: ManagementAuthenticator;
+  authenticator: ManagementAuthenticatorPort;
   config: ManagementAuthConfig;
 } {
   return {
@@ -61,7 +61,7 @@ describe("composeStoreFeature", () => {
       emailAcceptance: createEmailAcceptance("allowed"),
       logger: createLogger(),
       managementAuth: createManagementAuth(),
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
       terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
@@ -87,7 +87,7 @@ describe("composeStoreFeature", () => {
       emailAcceptance: createEmailAcceptance("allowed"),
       logger: createLogger(),
       managementAuth: createManagementAuth(),
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
       terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },
@@ -120,7 +120,7 @@ describe("composeStoreFeature", () => {
       emailAcceptance: createEmailAcceptance("refused"),
       logger: createLogger(),
       managementAuth: createManagementAuth(),
-      productEmail: new InMemoryProductEmail(),
+      productEmail: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
       terms: { currentTerms: () => ({ version: "1.0", hash: "terms-hash" }) },

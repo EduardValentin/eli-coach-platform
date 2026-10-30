@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CoachScheduleAvailability } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/coach-schedule/coach-availability.server";
+import { CoachScheduleAvailabilityAdapter } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/coach-schedule/coach-schedule-availability-adapter.server";
 import {
   CoachAvailability as CoachWeekAvailability,
   CoachOpenings,
@@ -12,13 +12,13 @@ import {
 
 import { AssessmentCall } from "./assessment-call";
 import { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
-import type { AssessmentCallNotifications } from "./assessment-call-notifications";
-import type { AssessmentCallReservations } from "./assessment-call-reservations";
+import type { AssessmentCallNotificationsPort } from "./assessment-call-notifications-port";
+import type { AssessmentCallReservationsPort } from "./assessment-call-reservations-port";
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
-import type { CoachAvailability } from "./coach-availability";
-import type { CoachTime } from "./coach-time";
-import type { MeetingRoom } from "./meeting-room";
-import type { WaitlistMode } from "./waitlist-mode";
+import type { CoachAvailabilityPort } from "./coach-availability-port";
+import type { CoachTimePort } from "./coach-time-port";
+import type { MeetingRoomPort } from "./meeting-room-port";
+import type { WaitlistModePort } from "./waitlist-mode-port";
 import { BookAssessmentCallUseCase } from "./book-assessment-call-use-case";
 import {
   ListAssessmentCallsUseCase,
@@ -50,7 +50,7 @@ function createIncidents() {
 }
 
 function createBookingWindow(options: {
-  waitlistMode: WaitlistMode;
+  waitlistMode: WaitlistModePort;
   incidents?: ReturnType<typeof createIncidents>;
 }): AssessmentCallBookingWindow {
   return new AssessmentCallBookingWindow({
@@ -143,8 +143,8 @@ const bookedCall = AssessmentCall.booked({
 const callIds = { generate: () => "call-new" };
 
 function createReservations(
-  options?: Partial<AssessmentCallReservations>,
-): AssessmentCallReservations {
+  options?: Partial<AssessmentCallReservationsPort>,
+): AssessmentCallReservationsPort {
   return {
     lockVisitorEmail: vi.fn().mockResolvedValue(undefined),
     findUpcomingCallFor: vi.fn().mockResolvedValue(null),
@@ -155,7 +155,7 @@ function createReservations(
   };
 }
 
-function createCoachTime(options?: Partial<CoachTime>): CoachTime {
+function createCoachTime(options?: Partial<CoachTimePort>): CoachTimePort {
   return {
     reserve: vi
       .fn()
@@ -175,16 +175,18 @@ function createCalendar(options?: Partial<CoachCalendar>): CoachCalendar {
 function availabilityOver(
   availability: CoachAvailabilitySource,
   calendar: CoachCalendar = createCalendar(),
-): CoachAvailability {
-  return new CoachScheduleAvailability({
+): CoachAvailabilityPort {
+  return new CoachScheduleAvailabilityAdapter({
     openings: new CoachOpenings({ availability, calendar }),
     rules: ASSESSMENT_CALL_RULES,
   });
 }
 
 function createNotifications(
-  delivery?: Awaited<ReturnType<AssessmentCallNotifications["notifyBooked"]>>,
-): AssessmentCallNotifications {
+  delivery?: Awaited<
+    ReturnType<AssessmentCallNotificationsPort["notifyBooked"]>
+  >,
+): AssessmentCallNotificationsPort {
   return {
     notifyBooked: vi
       .fn()
@@ -207,11 +209,11 @@ function createListOpenSlots(options: {
 
 function createBookAssessmentCall(options: {
   availability: CoachAvailabilitySource;
-  coachTime?: CoachTime;
+  coachTime?: CoachTimePort;
   emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createIncidents>;
-  notifications: AssessmentCallNotifications;
-  reservations: AssessmentCallReservations;
+  notifications: AssessmentCallNotificationsPort;
+  reservations: AssessmentCallReservationsPort;
 }): BookAssessmentCallUseCase {
   return new BookAssessmentCallUseCase({
     availability: availabilityOver(options.availability),
@@ -793,7 +795,9 @@ describe("BookAssessmentCallUseCase", () => {
   });
 });
 
-function createMeetingRoomSource(options?: Partial<MeetingRoom>): MeetingRoom {
+function createMeetingRoomSource(
+  options?: Partial<MeetingRoomPort>,
+): MeetingRoomPort {
   return {
     current: vi.fn().mockResolvedValue(null),
     ...options,

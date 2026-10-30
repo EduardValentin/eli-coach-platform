@@ -1,12 +1,12 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
-import type { AssessmentCallIncidents } from "./assessment-call-incidents";
+import type { AssessmentCallIncidentsPort } from "./assessment-call-incidents-port";
 import type {
-  CoachAvailability,
+  CoachAvailabilityPort,
   CoachAvailabilityReading,
-} from "./coach-availability";
-import type { CoachTimeSpan } from "./coach-time";
+} from "./coach-availability-port";
+import type { CoachTimeSpan } from "./coach-time-port";
 
 export type OpenSlotsResult =
   | { status: "closed" }
@@ -14,10 +14,10 @@ export type OpenSlotsResult =
   | { status: "unavailable" };
 
 type ListOpenSlotsUseCaseOptions = {
-  availability: CoachAvailability;
+  availability: CoachAvailabilityPort;
   bookingWindow: AssessmentCallBookingWindow;
-  clock: Clock;
-  incidents: AssessmentCallIncidents;
+  clock: ClockPort;
+  incidents: AssessmentCallIncidentsPort;
 };
 
 type SlotSources = {

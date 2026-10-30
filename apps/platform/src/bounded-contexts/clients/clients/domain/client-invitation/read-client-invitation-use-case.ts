@@ -1,10 +1,10 @@
-import type { AccountInvitations } from "./account-invitations";
+import type { AccountInvitationsPort } from "./account-invitations-port";
 import type { ClientInvitationStanding } from "./client-invitation";
-import type { InvitedClients } from "./invited-client";
+import type { InvitedClientsPort } from "./invited-clients-port";
 
 type ReadClientInvitationUseCaseOptions = {
-  accountInvitations: Pick<AccountInvitations, "standingOf">;
-  clients: Pick<InvitedClients, "findById">;
+  accountInvitations: Pick<AccountInvitationsPort, "standingOf">;
+  clients: Pick<InvitedClientsPort, "findById">;
 };
 
 export class ReadClientInvitationUseCase {

@@ -1,5 +1,5 @@
-import type { RecipeLibrary } from "./recipe-library";
-import type { RecipePhotoStore } from "./recipe-photo-store";
+import type { RecipeLibraryPort } from "./recipe-library-port";
+import type { RecipePhotoStorePort } from "./recipe-photo-store-port";
 import type { RecipePhotoViewer } from "./recipe-photo-viewer";
 
 type OpenRecipePhotoCommand = {
@@ -18,8 +18,8 @@ export type OpenRecipePhotoResult =
   | { status: "not-found" };
 
 type OpenRecipePhotoUseCaseOptions = {
-  recipes: Pick<RecipeLibrary, "find">;
-  store: Pick<RecipePhotoStore, "open">;
+  recipes: Pick<RecipeLibraryPort, "find">;
+  store: Pick<RecipePhotoStorePort, "open">;
 };
 
 const NOT_FOUND: OpenRecipePhotoResult = { status: "not-found" };

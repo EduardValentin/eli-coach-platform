@@ -1,8 +1,8 @@
-import type { ClientReach } from "../client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "../client-reach-port";
+import type { ClockPort } from "../clock-port";
 
-import type { ClientSettingsChanges } from "./client-settings-changes";
-import type { ClientSettingsSource } from "./client-settings-source";
+import type { ClientSettingsChangesPort } from "./client-settings-changes-port";
+import type { ClientSettingsSourcePort } from "./client-settings-source-port";
 import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
 
 type SaveUnitPreferenceCommand = {
@@ -14,10 +14,10 @@ type SaveUnitPreferenceResult =
   { status: "saved" } | { status: "not-on-journey" } | { status: "ended" };
 
 type SaveUnitPreferenceUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  settings: ClientSettingsSource;
-  changes: ClientSettingsChanges;
-  clock: Clock;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  settings: ClientSettingsSourcePort;
+  changes: ClientSettingsChangesPort;
+  clock: ClockPort;
 };
 
 export class SaveUnitPreferenceUseCase {

@@ -1,4 +1,4 @@
-import type { DetectedResourceFile } from "./resource-file-format-detector";
+import type { DetectedResourceFile } from "./resource-file-format-detector-port";
 import {
   resourceFileKindOf,
   type ResourceFileFormat,

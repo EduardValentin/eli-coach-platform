@@ -1,21 +1,21 @@
-import type { ClientIdentities } from "./client-identities";
-import type { ClientReach } from "./client-reach";
-import type { Clock } from "../clock";
+import type { ClientIdentitiesPort } from "./client-identities-port";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import type { CheckInIds } from "./check-in-ids";
-import type { CheckInInbox } from "./check-in-inbox";
-import type { CheckInIncidents } from "./check-in-incidents";
-import type { CheckInNotifications } from "./check-in-notifications";
+import type { CheckInIdsPort } from "./check-in-ids-port";
+import type { CheckInInboxPort } from "./check-in-inbox-port";
+import type { CheckInIncidentsPort } from "./check-in-incidents-port";
+import type { CheckInNotificationsPort } from "./check-in-notifications-port";
 import { CHECK_IN_RULES } from "./check-in-rules";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
-import type { CheckInSeriesRecords } from "./check-in-series-records";
+import type { CheckInSeriesRecordsPort } from "./check-in-series-records-port";
 import { CheckInSeriesRule } from "./check-in-series-rule";
 import { CheckInWeekRecorder } from "./check-in-week-recorder";
-import type { CoachTime } from "./coach-time";
-import type { OpenSlots } from "./open-slots";
+import type { CoachTimePort } from "./coach-time-port";
+import type { OpenSlotsPort } from "./open-slots-port";
 import type { Weekday } from "./weekdays";
 
 export type SetUpCheckInSeriesCommand = {
@@ -40,16 +40,16 @@ export type SetUpCheckInSeriesResult =
     };
 
 type SetUpCheckInSeriesUseCaseOptions = {
-  clients: Pick<ClientReach, "findById">;
-  clock: Clock;
-  coachTime: Pick<CoachTime, "reserve">;
-  identities: Pick<ClientIdentities, "findByClientIds">;
-  ids: CheckInIds;
-  inbox: CheckInInbox;
-  incidents: CheckInIncidents;
-  notifications: CheckInNotifications;
-  openSlots: Pick<OpenSlots, "coachWeek">;
-  series: Pick<CheckInSeriesRecords, "start" | "recordWeeks">;
+  clients: Pick<ClientReachPort, "findById">;
+  clock: ClockPort;
+  coachTime: Pick<CoachTimePort, "reserve">;
+  identities: Pick<ClientIdentitiesPort, "findByClientIds">;
+  ids: CheckInIdsPort;
+  inbox: CheckInInboxPort;
+  incidents: CheckInIncidentsPort;
+  notifications: CheckInNotificationsPort;
+  openSlots: Pick<OpenSlotsPort, "coachWeek">;
+  series: Pick<CheckInSeriesRecordsPort, "start" | "recordWeeks">;
 };
 
 export class SetUpCheckInSeriesUseCase {

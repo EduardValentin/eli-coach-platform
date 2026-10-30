@@ -1,8 +1,8 @@
-import type { ClientReach } from "../client-reach";
-import type { Clock } from "../clock";
+import type { ClientReachPort } from "../client-reach-port";
+import type { ClockPort } from "../clock-port";
 
 import type { ClientProfileProblems } from "./client-profile";
-import type { ClientProfiles } from "./client-profiles";
+import type { ClientProfilesPort } from "./client-profiles-port";
 import type { SharedCoachingFacts } from "./coaching-facts";
 
 type UpdateOwnClientProfileCommand = {
@@ -19,9 +19,9 @@ type UpdateOwnClientProfileResult =
   | { status: "changed-meanwhile" };
 
 type UpdateOwnClientProfileUseCaseOptions = {
-  clients: Pick<ClientReach, "findByAuthSubjectId">;
-  profiles: Pick<ClientProfiles, "findByClientId" | "saveSharedFacts">;
-  clock: Clock;
+  clients: Pick<ClientReachPort, "findByAuthSubjectId">;
+  profiles: Pick<ClientProfilesPort, "findByClientId" | "saveSharedFacts">;
+  clock: ClockPort;
 };
 
 export class UpdateOwnClientProfileUseCase {

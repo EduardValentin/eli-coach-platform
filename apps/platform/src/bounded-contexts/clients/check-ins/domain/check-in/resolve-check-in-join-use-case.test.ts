@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "./client-reach";
+import type { ClientReachPort, ClientReachReading } from "./client-reach-port";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckIns } from "./check-ins";
-import type { MeetingRoom } from "./meeting-room";
+import type { CheckInsPort } from "./check-ins-port";
+import type { MeetingRoomPort } from "./meeting-room-port";
 import { ResolveCheckInJoinUseCase } from "./resolve-check-in-join-use-case";
 
 const NOW = new Date("2026-06-03T08:55:00.000Z");
@@ -56,7 +56,7 @@ function createResolveJoin(options?: {
     settle: vi.fn(),
     move: vi.fn(),
     endCoaching: vi.fn(),
-  } satisfies CheckIns;
+  } satisfies CheckInsPort;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
       options?.client === undefined
@@ -70,8 +70,8 @@ function createResolveJoin(options?: {
           }
         : options.client,
     ),
-  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
-  const meetingRoom: MeetingRoom = {
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId">;
+  const meetingRoom: MeetingRoomPort = {
     currentJoinUrl: vi
       .fn()
       .mockResolvedValue(

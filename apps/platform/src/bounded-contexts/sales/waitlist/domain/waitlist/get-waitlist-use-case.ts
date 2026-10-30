@@ -1,16 +1,16 @@
-import type { Clock } from "../clock";
+import type { ClockPort } from "../clock-port";
 
 import { Waitlist, type WaitlistSnapshot } from "./waitlist";
-import type { WaitlistEntries } from "./waitlist-entries";
-import type { WaitlistIncidents } from "./waitlist-incidents";
-import type { WaitlistMode } from "./waitlist-mode";
+import type { WaitlistEntriesPort } from "./waitlist-entries-port";
+import type { WaitlistIncidentsPort } from "./waitlist-incidents-port";
+import type { WaitlistModePort } from "./waitlist-mode-port";
 
 type GetWaitlistUseCaseOptions = {
-  clock: Clock;
-  incidents: WaitlistIncidents;
+  clock: ClockPort;
+  incidents: WaitlistIncidentsPort;
   waitlist: Waitlist;
-  waitlistEntries: WaitlistEntries;
-  waitlistMode: WaitlistMode;
+  waitlistEntries: WaitlistEntriesPort;
+  waitlistMode: WaitlistModePort;
 };
 
 export class GetWaitlistUseCase {
