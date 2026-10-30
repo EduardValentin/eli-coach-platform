@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createWriteStream, rmSync, type WriteStream } from "node:fs";
 import { mkdtemp } from "node:fs/promises";

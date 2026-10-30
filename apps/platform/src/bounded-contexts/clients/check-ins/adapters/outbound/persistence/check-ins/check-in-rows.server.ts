@@ -1,0 +1,88 @@
+import type { DatabaseExecutor } from "~/shared/database";
+import { CheckIn } from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import { sql, type SQL } from "drizzle-orm";
+
+import { checkInsTable } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/schema.server";
+
+export type CheckInRow = typeof checkInsTable.$inferSelect;
+
+const CLIENT_CHECK_INS_LOCK_PREFIX = "check-in-request:";
+
+export async function lockCheckInsOfClient(
+  executor: DatabaseExecutor,
+  clientId: string,
+): Promise<void> {
+  await executor.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${CLIENT_CHECK_INS_LOCK_PREFIX + clientId}))`,
+  );
+}
+
+type HeldReservationRow = { id: string; reservationId: string | null };
+
+export function reservationsHeldBy(
+  executor: DatabaseExecutor,
+  condition: SQL | undefined,
+): Promise<HeldReservationRow[]> {
+  return executor
+    .select({
+      id: checkInsTable.id,
+      reservationId: checkInsTable.reservationId,
+    })
+    .from(checkInsTable)
+    .where(condition)
+    .for("update");
+}
+
+export function heldReservationIdsOf(
+  rows: readonly HeldReservationRow[],
+): string[] {
+  return rows.flatMap(({ reservationId }) =>
+    reservationId === null ? [] : [reservationId],
+  );
+}
+
+export function checkInRowOf(
+  checkIn: CheckIn,
+): typeof checkInsTable.$inferInsert {
+  const snapshot = checkIn.toSnapshot();
+
+  return {
+    id: snapshot.id,
+    seriesId: snapshot.seriesId,
+    clientId: snapshot.clientId,
+    startsAt: snapshot.startsAt,
+    clientTimeZone: snapshot.clientTimeZone,
+    coachTimeZone: snapshot.coachTimeZone,
+    kind: snapshot.kind,
+    status: snapshot.recordedStatus,
+    initiatedBy: snapshot.initiatedBy,
+    proposedBy: snapshot.proposedBy,
+    note: snapshot.note,
+    requestedAt: snapshot.requestedAt,
+    answeredAt: snapshot.answeredAt,
+    earlierStartsAt: snapshot.earlierStartsAt,
+    moves: snapshot.moves,
+    newTimeNote: snapshot.newTimeNote,
+  };
+}
+
+export function checkInOf(row: CheckInRow): CheckIn {
+  return CheckIn.reconstitute({
+    id: row.id,
+    seriesId: row.seriesId,
+    clientId: row.clientId,
+    startsAt: row.startsAt,
+    clientTimeZone: row.clientTimeZone,
+    coachTimeZone: row.coachTimeZone,
+    kind: row.kind,
+    recordedStatus: row.status,
+    initiatedBy: row.initiatedBy,
+    proposedBy: row.proposedBy,
+    note: row.note,
+    requestedAt: row.requestedAt,
+    answeredAt: row.answeredAt,
+    earlierStartsAt: row.earlierStartsAt,
+    moves: row.moves,
+    newTimeNote: row.newTimeNote,
+  });
+}

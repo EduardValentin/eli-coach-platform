@@ -1,0 +1,143 @@
+import { describe, expect, it } from "vitest";
+
+import { STRIPE_VOCABULARY } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/stripe/stripe-vocabulary.server";
+
+import { InMemoryPaymentEventsAdapter } from "./in-memory-payment-events-adapter.server";
+
+function paidCheckoutEvent(type = "checkout.session.completed") {
+  return JSON.stringify({
+    id: "evt_memory",
+    type,
+    created: 1790003600,
+    data: {
+      object: {
+        id: "cs_memory",
+        status: "complete",
+        payment_status: "paid",
+        customer: "cus_memory",
+        subscription: "sub_memory",
+        amount_total: 15900,
+        currency: "eur",
+        created: 1790000000,
+        customer_details: { email: "sofia@example.com" },
+        metadata: { purpose: "coaching-subscription" },
+      },
+    },
+  });
+}
+
+describe("InMemoryPaymentEventsAdapter", () => {
+  it("accepts a completed and paid checkout event carrying the memory signature", async () => {
+    // arrange
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
+
+    // act
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      paidCheckoutEvent(),
+      "memory",
+    );
+
+    // assert
+    expect(verdict).toEqual({
+      kind: "checkout_completed",
+      eventId: "evt_memory",
+      session: {
+        id: "cs_memory",
+        customerId: "cus_memory",
+        subscriptionId: "sub_memory",
+        paymentIntentId: null,
+        amountCents: 15900,
+        currency: "eur",
+        customerEmail: "sofia@example.com",
+        paidAt: new Date(1790003600 * 1000),
+        metadata: { purpose: "coaching-subscription" },
+      },
+    });
+  });
+
+  it("accepts a subscription deletion carrying the memory signature", async () => {
+    // arrange
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
+    const body = JSON.stringify({
+      id: "evt_memory_deleted",
+      type: "customer.subscription.deleted",
+      created: 1790003600,
+      data: {
+        object: {
+          id: "sub_memory",
+          customer: "cus_memory",
+          status: "canceled",
+          cancel_at: null,
+          ended_at: 1790003600,
+          metadata: { purpose: "coaching-subscription" },
+        },
+      },
+    });
+
+    // act
+    const verdict = await inMemoryPaymentEventsAdapter.verify(body, "memory");
+
+    // assert
+    expect(verdict).toMatchObject({
+      kind: "subscription_changed",
+      eventId: "evt_memory_deleted",
+      purpose: "coaching-subscription",
+      change: { subscriptionId: "sub_memory", standing: "ended" },
+    });
+  });
+
+  it("ignores another event type", async () => {
+    // arrange
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
+
+    // act
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      paidCheckoutEvent("customer.created"),
+      "memory",
+    );
+
+    // assert
+    expect(verdict).toEqual({ kind: "ignored" });
+  });
+
+  it.each([
+    ["no signature", null],
+    ["another signature", "t=1,v1=abc"],
+  ])("refuses an event with %s", async (_description, signature) => {
+    // arrange
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
+
+    // act
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      paidCheckoutEvent(),
+      signature,
+    );
+
+    // assert
+    expect(verdict).toEqual({ kind: "invalid" });
+  });
+
+  it("refuses a body that is not JSON", async () => {
+    // arrange
+    const inMemoryPaymentEventsAdapter = new InMemoryPaymentEventsAdapter(
+      STRIPE_VOCABULARY,
+    );
+
+    // act
+    const verdict = await inMemoryPaymentEventsAdapter.verify(
+      "not json",
+      "memory",
+    );
+
+    // assert
+    expect(verdict).toEqual({ kind: "invalid" });
+  });
+});

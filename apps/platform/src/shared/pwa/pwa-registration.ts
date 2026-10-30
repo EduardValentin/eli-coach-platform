@@ -1,0 +1,24 @@
+import { joinBasePath } from "~/shared/http/base-path";
+
+import { pwaSurfaceDefinitions } from "./pwa-surfaces";
+
+type PwaSurface = keyof typeof pwaSurfaceDefinitions;
+
+export function createPwaRegistration(options: {
+  assetBasePath: string;
+  surface: PwaSurface;
+}) {
+  const scope = joinBasePath(options.assetBasePath, `${options.surface}/`);
+  const serviceWorkerPath = joinBasePath(
+    options.assetBasePath,
+    `${options.surface}/sw.js`,
+  );
+
+  return {
+    manifestPath: joinBasePath(
+      options.assetBasePath,
+      `${options.surface}/manifest.webmanifest`,
+    ),
+    registrationScript: `if ("serviceWorker" in navigator) { window.addEventListener("load", function () { navigator.serviceWorker.register("${serviceWorkerPath}", { scope: "${scope}" }); }); }`,
+  };
+}

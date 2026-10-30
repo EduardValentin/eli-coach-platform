@@ -8,7 +8,7 @@ const appAliasMessage =
 
 const xmlHttpRequestRestriction = {
   message:
-    "An upload with progress goes through uploadOutcomeOf from @eli-coach-platform/infrastructure/http in the resource route's clientAction; nothing else sends XMLHttpRequest (see conventions.md, Client state).",
+    "An upload with progress goes through uploadOutcomeOf from ~/shared/http in the resource route's clientAction; nothing else sends XMLHttpRequest (see conventions.md, Client state).",
   name: "XMLHttpRequest",
 };
 
@@ -25,7 +25,7 @@ export default [
     ],
   },
   {
-    files: ["apps/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
+    files: ["apps/**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       globals: { ...globals.browser, ...globals.node },
@@ -49,7 +49,7 @@ export default [
           patterns: [
             {
               message: appAliasMessage,
-              regex: "^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+",
+              regex: "^\\.\\.\\/\\.\\.\\/.+",
             },
           ],
         },
@@ -58,8 +58,7 @@ export default [
         "error",
         {
           message: appAliasMessage,
-          selector:
-            "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+/]",
+          selector: "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/.+/]",
         },
       ],
     },
@@ -71,8 +70,8 @@ export default [
   {
     files: [
       "apps/platform/src/surfaces/*/routes.ts",
-      "apps/platform/src/features/*/routes.ts",
-      "apps/platform/src/features/*/public/paths.ts",
+      "apps/platform/src/bounded-contexts/*/*/routes.ts",
+      "apps/platform/src/bounded-contexts/*/*/public/paths.ts",
     ],
     rules: {
       "no-restricted-imports": "off",
@@ -80,11 +79,12 @@ export default [
     },
   },
   // The shared upload transport is the one XMLHttpRequest sender, so the
-  // global is refused in every feature's ui/ and api/ and every surface.
+  // global is refused in every component's ui/ and adapters/inbound/http/
+  // and every surface.
   {
     files: [
-      "apps/platform/src/features/*/ui/**/*.{ts,tsx}",
-      "apps/platform/src/features/*/api/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/ui/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/adapters/inbound/http/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.{ts,tsx}",
     ],
     ignores: ["**/*.test.{ts,tsx}"],
@@ -99,12 +99,12 @@ export default [
   // XMLHttpRequest is refused here again.
   {
     files: [
-      "apps/platform/src/features/*/ui/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/ui/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.{ts,tsx}",
     ],
     ignores: [
       "**/*.test.{ts,tsx}",
-      "apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-autosave-requests.ts",
+      "apps/platform/src/bounded-contexts/clients/client-profile/ui/client/onboarding/draft-autosave-requests.ts",
     ],
     rules: {
       "no-restricted-globals": [
@@ -120,7 +120,7 @@ export default [
   },
   {
     files: [
-      "apps/platform/src/features/exercise-library/ui/coach/exercises/exercise-video-field.tsx",
+      "apps/platform/src/bounded-contexts/programs/exercise-library/ui/coach/exercises/exercise-video-field.tsx",
     ],
     rules: {
       "jsx-a11y/media-has-caption": "off",

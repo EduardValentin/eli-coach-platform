@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { MAX_RECIPE_PHOTO_BYTES } from "@eli-coach-platform/domain/nutrition";
+import { MAX_RECIPE_PHOTO_BYTES } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import sharp from "sharp";
 
 import { platformDirectory } from "./repo-paths";

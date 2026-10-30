@@ -1,15 +1,17 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
-import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
-import type { NotificationsFeature } from "~/features/notifications/server/notifications-composition.server";
+import {
+  checkInsContext,
+  type CheckInsFeature,
+  notificationsContext,
+  type NotificationsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./layout";
 
@@ -39,10 +41,10 @@ describe("coach shell loader", () => {
     const args = createRequestArgs({
       contexts: [
         contextEntry(checkInsContext, {
-          coachCheckIns: { loadAwaitingCount },
+          coachCheckInsController: { loadAwaitingCount },
         } as unknown as CheckInsFeature),
         contextEntry(notificationsContext, {
-          notificationBell: { loadBell },
+          notificationBellController: { loadBell },
         } as unknown as NotificationsFeature),
       ],
       request: new Request("https://evoa.fit/coach"),

@@ -62,7 +62,7 @@ jobs:
 
       - name: Run Lighthouse CI
         # No database on purpose: the container opens its pool on first use
-        # (apps/platform/src/server/database.server.ts), so the public pages
+        # (apps/platform/src/composition-root/database.server.ts), so the public pages
         # still render, with availability reported as unavailable.
         run: pnpm test:lighthouse
 

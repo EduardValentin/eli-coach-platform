@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 
 import type { PublicHeaderAppearance } from "./header-appearance";
 

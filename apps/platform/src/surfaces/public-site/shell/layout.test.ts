@@ -1,22 +1,22 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
+import { ClientJourney } from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
+import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/request-context";
 import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/features/accounts/server/guards/session-context.server";
-import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
-import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
-import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
+  waitlistContext,
+  type WaitlistFeature,
+} from "~/bounded-contexts/sales/public/request-context";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
+import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./layout";
 
@@ -217,40 +217,36 @@ function createLoaderArgs(options: {
   journey?: ClientJourney;
   session: ResolvedSession;
 }): LoaderFunctionArgs {
-  const coachingSales = {
-    readClientPortalStanding: {
-      execute: vi.fn().mockResolvedValue(
-        options.journey
-          ? {
-              journey: options.journey,
-              portal: options.journey.onboardingSubmittedAt
-                ? "reachable"
-                : "awaiting_onboarding",
-            }
-          : null,
-      ),
-    },
-  } as unknown as ClientsFeature;
+  const standing = options.journey
+    ? {
+        step: options.journey.step(),
+        portal: options.journey.onboardingSubmittedAt
+          ? ("reachable" as const)
+          : ("awaiting_onboarding" as const),
+      }
+    : null;
 
   const waitlist = {
-    waitlist: { getWaitlist: vi.fn().mockResolvedValue(liveWaitlist) },
+    waitlistController: {
+      getWaitlist: vi.fn().mockResolvedValue(liveWaitlist),
+    },
   } as unknown as WaitlistFeature;
 
   return createRequestArgs({
+    session: options.session,
     contexts: [
       contextEntry(runtimeConfigContext, {
         appBasePath: options.appBasePath ?? "/",
         botDetection: botDetectionConfig,
       }),
-      contextEntry(clientsContext, coachingSales),
-      contextEntry(sessionContext, options.session),
+      contextEntry(clientPortalStandingContext, standing),
       contextEntry(waitlistContext, waitlist),
     ],
     request: new Request("https://eli.example/"),
   });
 }
 
-function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
+function buildAccount(overrides: Partial<SessionAccount>): SessionAccount {
   return {
     authSubjectId: "user_1",
     id: "acct_1",

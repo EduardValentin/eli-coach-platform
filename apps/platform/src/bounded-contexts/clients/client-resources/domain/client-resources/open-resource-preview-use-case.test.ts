@@ -1,0 +1,268 @@
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  ClientResource,
+  type ClientResourceOwner,
+  type ResourceFileSnapshot,
+} from "./client-resource";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
+import { OpenResourcePreviewUseCase } from "./open-resource-preview-use-case";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ResourceTagSnapshot } from "./resource-tags";
+
+const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
+
+function resource(id: string, file: ResourceFileSnapshot): ClientResource {
+  return ClientResource.reconstitute({
+    id,
+    clientId: "client-ana",
+    title: id,
+    description: "",
+    tags: [],
+    file,
+    addedAt: new Date("2026-10-05T09:00:00.000Z"),
+    openedAt: null,
+  });
+}
+
+const STORED = [
+  resource("resource-pdf", {
+    originalName: "plan.pdf",
+    format: "pdf",
+    sizeBytes: 10,
+    pageCount: 3,
+  }),
+  resource("resource-docx", {
+    originalName: "plan.docx",
+    format: "docx",
+    sizeBytes: 10,
+    pageCount: null,
+  }),
+];
+
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
+  async add(): Promise<void> {}
+
+  async recordOpened(): Promise<void> {}
+
+  async saveDetails(): Promise<void> {}
+
+  async remove(): Promise<void> {}
+
+  async countUnopenedForClient(): Promise<number> {
+    return 0;
+  }
+
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async findById(resourceId: string): Promise<ClientResource | null> {
+    return (
+      STORED.find((stored) => stored.toSnapshot().id === resourceId) ?? null
+    );
+  }
+}
+
+class InMemoryResourceImagesAdapter implements ClientResourceStorePort {
+  private readonly images = new Map<string, Uint8Array>([
+    ["resource-pdf/page-1", Uint8Array.of(1)],
+    ["resource-pdf/page-2", Uint8Array.of(2)],
+    ["resource-pdf/page-3", Uint8Array.of(3)],
+    ["resource-pdf/thumbnail", Uint8Array.of(0)],
+  ]);
+
+  readonly openPage = vi.fn(
+    async (owner: ClientResourceOwner, pageNumber: number) =>
+      this.images.get(`${owner.resourceId}/page-${pageNumber}`) ?? null,
+  );
+
+  readonly openThumbnail = vi.fn(
+    async (owner: ClientResourceOwner) =>
+      this.images.get(`${owner.resourceId}/thumbnail`) ?? null,
+  );
+
+  async storeOriginal(): Promise<void> {}
+  async storePage(): Promise<void> {}
+  async storeThumbnail(): Promise<void> {}
+  async openOriginal(): Promise<null> {
+    return null;
+  }
+  async remove(): Promise<void> {}
+}
+
+function createUseCase() {
+  const inMemoryResourceImagesAdapter = new InMemoryResourceImagesAdapter();
+  const clients = {
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      programStartsAt: null,
+      paidThrough: null,
+      timeZone: "Europe/Bucharest",
+    })),
+    findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
+      authSubjectId === "user_ana"
+        ? {
+            clientId: "client-ana",
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
+            timeZone: "Europe/Bucharest",
+          }
+        : null,
+    ),
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  const incidents = {
+    resourceStored: vi.fn(),
+    resourceRefused: vi.fn(),
+    resourceAccessRefused: vi.fn(),
+    resourceStorageFailed: vi.fn(),
+    resourceListingFailed: vi.fn(),
+    resourceOpeningFailed: vi.fn(),
+    resourceChangeFailed: vi.fn(),
+    resourceFilesOrphaned: vi.fn(),
+    unopenedCountFailed: vi.fn(),
+  } satisfies ClientResourceIncidentsPort;
+  const openResourcePreviewUseCase = new OpenResourcePreviewUseCase({
+    clientResourcesPort: new InMemoryClientResourcesAdapter(),
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryResourceImagesAdapter,
+    clientResourceIncidentsPort: incidents,
+  });
+
+  return {
+    openResourcePreviewUseCase,
+    inMemoryResourceImagesAdapter,
+    incidents,
+  };
+}
+
+describe("OpenResourcePreviewUseCase", () => {
+  it.each([
+    ["the coach", COACH],
+    ["the client it is for", { role: "CLIENT", authSubjectId: "user_ana" }],
+  ] as const)("opens a page image for %s", async (_case, requester) => {
+    // arrange
+    const { openResourcePreviewUseCase } = createUseCase();
+
+    // act
+    const result = await openResourcePreviewUseCase.execute({
+      requester,
+      resourceId: "resource-pdf",
+      preview: { kind: "page", pageNumber: 2 },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "opened",
+      bytes: Uint8Array.of(2),
+      mimeType: "image/webp",
+    });
+  });
+
+  it("opens the thumbnail", async () => {
+    // arrange
+    const { openResourcePreviewUseCase } = createUseCase();
+
+    // act
+    const result = await openResourcePreviewUseCase.execute({
+      requester: COACH,
+      resourceId: "resource-pdf",
+      preview: { kind: "thumbnail" },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "opened",
+      bytes: Uint8Array.of(0),
+      mimeType: "image/webp",
+    });
+  });
+
+  it("finds nothing for another client and reports the refusal", async () => {
+    // arrange
+    const {
+      openResourcePreviewUseCase,
+      inMemoryResourceImagesAdapter,
+      incidents,
+    } = createUseCase();
+
+    // act
+    const result = await openResourcePreviewUseCase.execute({
+      requester: { role: "CLIENT", authSubjectId: "user_bea" },
+      resourceId: "resource-pdf",
+      preview: { kind: "page", pageNumber: 1 },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(inMemoryResourceImagesAdapter.openPage).not.toHaveBeenCalled();
+    expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
+      requesterRole: "CLIENT",
+      clientId: "client-ana",
+      resourceId: "resource-pdf",
+    });
+  });
+
+  it.each([
+    ["an unknown resource", "resource-404", { kind: "page", pageNumber: 1 }],
+    ["page zero", "resource-pdf", { kind: "page", pageNumber: 0 }],
+    ["a page past the last", "resource-pdf", { kind: "page", pageNumber: 4 }],
+    ["a page of a Word file", "resource-docx", { kind: "page", pageNumber: 1 }],
+    ["a Word file's thumbnail", "resource-docx", { kind: "thumbnail" }],
+  ] as const)(
+    "finds nothing for %s without reading the store",
+    async (_case, resourceId, preview) => {
+      // arrange
+      const { openResourcePreviewUseCase, inMemoryResourceImagesAdapter } =
+        createUseCase();
+
+      // act
+      const result = await openResourcePreviewUseCase.execute({
+        requester: COACH,
+        resourceId,
+        preview,
+      });
+
+      // assert
+      expect(result).toEqual({ status: "not-found" });
+      expect(inMemoryResourceImagesAdapter.openPage).not.toHaveBeenCalled();
+      expect(
+        inMemoryResourceImagesAdapter.openThumbnail,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it("finds nothing when the stored page image is gone", async () => {
+    // arrange
+    const { openResourcePreviewUseCase, inMemoryResourceImagesAdapter } =
+      createUseCase();
+    inMemoryResourceImagesAdapter.openPage.mockResolvedValueOnce(null);
+
+    // act
+    const result = await openResourcePreviewUseCase.execute({
+      requester: COACH,
+      resourceId: "resource-pdf",
+      preview: { kind: "page", pageNumber: 1 },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+  });
+});

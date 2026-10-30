@@ -1,0 +1,35 @@
+import { pwaSurfaceDefinitions } from "~/shared/pwa";
+import {
+  useLoaderData,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
+
+import type { ClientResourceListing } from "~/bounded-contexts/clients/client-resources/public/client-resources";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
+
+import { ClientResourceLibrary } from "./client-resource-library";
+
+export function loader(
+  args: LoaderFunctionArgs,
+): Promise<ClientResourceListing> {
+  return args.context
+    .get(clientResourcesContext)
+    .ownResourcesController.load(args);
+}
+
+export const meta: MetaFunction = () => [
+  { title: "Resources | Evoa" },
+  { name: "description", content: pwaSurfaceDefinitions.client.description },
+  { name: "theme-color", content: pwaSurfaceDefinitions.client.themeColor },
+];
+
+export default function ClientResourcesRoute() {
+  const listing = useLoaderData<typeof loader>();
+
+  return (
+    <div className="w-full" data-parity-root="ClientResources">
+      <ClientResourceLibrary listing={listing} />
+    </div>
+  );
+}

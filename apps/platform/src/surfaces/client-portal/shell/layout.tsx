@@ -1,10 +1,7 @@
-import {
-  createPwaRegistration,
-  pwaSurfaceDefinitions,
-} from "@eli-coach-platform/infrastructure/pwa";
-import { NotificationBell, PortalShell } from "@eli-coach-platform/ui/layout";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { createPwaRegistration, pwaSurfaceDefinitions } from "~/shared/pwa";
+import { NotificationBell, PortalShell } from "~/shared/design-system/layout";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { Button } from "~/shared/design-system/primitives";
 import { LogOut } from "lucide-react";
 import {
   Outlet,
@@ -18,19 +15,21 @@ import {
 import {
   CLIENT_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "~/features/accounts/public/paths";
-import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
-import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { NextCheckInWidget } from "~/features/check-ins/ui/client/shell/next-check-in-widget";
-import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
-import type { ClientAvatarUrl } from "~/features/client-profile/public/client-avatar";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
-import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
-import { useNotificationBell } from "~/features/notifications/ui/shared/notification-bell";
+} from "~/bounded-contexts/access/public/paths";
+import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
+import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import {
+  checkInsContext,
+  clientProfileContext,
+  clientResourcesContext,
+  clientsContext,
+  notificationsContext,
+} from "~/bounded-contexts/clients/public/request-context";
+import { NextCheckInWidget } from "~/bounded-contexts/clients/check-ins/ui/client/shell/next-check-in-widget";
+import { describeCheckInNotification } from "~/bounded-contexts/clients/check-ins/ui/shared/bell/check-in-bell-copy";
+import type { ClientAvatarUrl } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
+import { useNotificationBell } from "~/bounded-contexts/clients/notifications/ui/shared/notification-bell";
 
 import {
   presentClientIdentity,
@@ -59,17 +58,23 @@ type ClientShell = ClientNavigationCounts & {
 
 export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
   const presentation = presentClientIdentity(
-    args.context.get(clientsContext).clientJourney.loadIdentity(args),
+    args.context.get(clientsContext).clientJourneyController.loadIdentity(args),
   );
 
-  const { clientCheckIns } = args.context.get(checkInsContext);
+  const { clientCheckInsController } = args.context.get(checkInsContext);
   const [avatarUrl, nextCheckIn, unopenedResources, checkInsAwaiting, bell] =
     await Promise.all([
-      args.context.get(clientProfileContext).ownAvatar.url(args),
-      clientCheckIns.loadNextCheckIn(args),
-      args.context.get(clientResourcesContext).ownResources.countUnopened(args),
-      clientCheckIns.loadAwaitingCount(args),
-      args.context.get(notificationsContext).notificationBell.loadBell(args),
+      args.context
+        .get(clientProfileContext)
+        .ownClientAvatarController.url(args),
+      clientCheckInsController.loadNextCheckIn(args),
+      args.context
+        .get(clientResourcesContext)
+        .ownResourcesController.countUnopened(args),
+      clientCheckInsController.loadAwaitingCount(args),
+      args.context
+        .get(notificationsContext)
+        .notificationBellController.loadBell(args),
     ]);
 
   return {

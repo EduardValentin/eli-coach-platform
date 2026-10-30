@@ -34,7 +34,7 @@ describe("client portal routes", () => {
     expect(collectFiles(guardedEntries[0]?.children ?? [])).toEqual(
       expect.arrayContaining([
         expect.stringMatching(/shell\/layout\.tsx$/),
-        expect.stringMatching(/pages\/home\.tsx$/),
+        expect.stringMatching(/pages\/home\/home\.tsx$/),
       ]),
     );
   });
@@ -54,12 +54,12 @@ describe("client portal routes", () => {
     expect(shell?.children).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          file: expect.stringMatching(/pages\/home\.tsx$/),
+          file: expect.stringMatching(/pages\/home\/home\.tsx$/),
           index: true,
         }),
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/client-profile\/ui\/client\/profile\/profile-page\.tsx$/,
+            /bounded-contexts\/clients\/client-profile\/ui\/client\/profile\/profile-page\.tsx$/,
           ),
           path: "client/profile",
         }),
@@ -83,7 +83,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /surfaces\/client-portal\/pages\/settings\.tsx$/,
+            /surfaces\/client-portal\/pages\/settings\/settings\.tsx$/,
           ),
           path: "client/settings",
         }),
@@ -107,7 +107,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/client-resources\/ui\/client\/resources\/resources-page\.tsx$/,
+            /bounded-contexts\/clients\/client-resources\/ui\/client\/resources\/resources-page\.tsx$/,
           ),
           path: "client/resources",
         }),
@@ -129,7 +129,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/coaching-sales\/ui\/client\/ended\/ended-page\.tsx$/,
+            /bounded-contexts\/sales\/coaching-sales\/ui\/client\/ended\/ended-page\.tsx$/,
           ),
           path: "client/ended",
         }),

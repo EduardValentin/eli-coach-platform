@@ -16,13 +16,13 @@
         "src/root.tsx",
         "src/routes.ts",
         "src/**/routes.ts",
-        "src/server/api/*.ts",
-        "src/server/api/*/*.ts",
-        "src/features/*/api/*.ts",
-        "src/features/*/api/*/*.ts",
-        "src/features/*/data/schema.server.ts",
-        "src/features/*/ui/*/*-page.tsx",
-        "src/features/*/ui/*/*/*-page.tsx",
+        "src/composition-root/api/*.ts",
+        "src/composition-root/api/*/*.ts",
+        "src/bounded-contexts/*/*/adapters/inbound/http/*.ts",
+        "src/bounded-contexts/*/*/adapters/inbound/http/*/*.ts",
+        "src/bounded-contexts/*/*/adapters/outbound/persistence/schema.server.ts",
+        "src/bounded-contexts/*/*/ui/*/*-page.tsx",
+        "src/bounded-contexts/*/*/ui/*/*/*-page.tsx",
         "src/surfaces/*/pages/**/*.tsx",
         "src/surfaces/*/shell/layout.tsx",
         "src/surfaces/*/api/*.ts",
@@ -32,7 +32,8 @@
         "vite.config.ts",
         "e2e/**/*.ts",
         "integration-test-config/**/*.ts",
-        "tooling/**/*.ts"
+        "tooling/**/*.ts",
+        "src/shared/documents/pdf-pages-worker.server.ts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",
@@ -40,26 +41,9 @@
         "db/**/*.ts",
         "e2e/**/*.ts",
         "integration-test-config/**/*.ts",
+        "test-support/**/*.ts",
         "tooling/**/*.ts"
-      ],
-      "ignoreDependencies": [
-        "sharp",
-        "@napi-rs/canvas",
-        "pdfjs-dist",
-        "@fastify/busboy"
       ]
-    },
-    "packages/*": {
-      "entry": [
-        "src/index.ts",
-        "src/*/index.ts",
-        "src/*/index.server.ts",
-        "src/runtime.ts",
-        "scripts/**/*.ts",
-        "src/documents/pdf-pages-worker.server.ts"
-      ],
-      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "tooling/**/*.ts"],
-      "includeEntryExports": true
     }
   },
   "ignore": [

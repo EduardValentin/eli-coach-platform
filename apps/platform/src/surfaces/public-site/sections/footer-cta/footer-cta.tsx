@@ -1,9 +1,9 @@
-import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import {
   publicEaseOut,
   useClientReducedMotionPreference,
-} from "@eli-coach-platform/ui/motion";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/motion";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import {
   MotionConfig,
   motion,
@@ -15,12 +15,12 @@ import {
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
-import { STORE_PATH } from "~/features/store/public/paths";
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";
-import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
-import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
+import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 type PublicFooterCtaProps = {

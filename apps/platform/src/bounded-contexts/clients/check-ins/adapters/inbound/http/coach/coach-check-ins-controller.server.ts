@@ -1,0 +1,148 @@
+import type {
+  CoachCheckInView,
+  CountCheckInsAwaitingUseCase,
+  ListCoachCheckInsAwaitingUseCase,
+  ListCoachCheckInsUseCase,
+  ReadClientCheckInSchedulingUseCase,
+  ScheduleCheckInResult,
+  ScheduleCheckInUseCase,
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
+
+import {
+  checkInOutcomeResponse,
+  readCheckInBody,
+  refusedCheckIn,
+  unknownClient,
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/check-in-transport.server";
+import {
+  checkInScheduleSchema,
+  coachCheckInsSchema,
+  presentCheckIn,
+  type CheckInScheduling,
+  type CoachCheckIn,
+  type CoachCheckIns,
+} from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
+
+type CoachCheckInsControllerOptions = {
+  countCheckInsAwaitingUseCase: CountCheckInsAwaitingUseCase;
+  listCoachCheckInsUseCase: ListCoachCheckInsUseCase;
+  listCoachCheckInsAwaitingUseCase: ListCoachCheckInsAwaitingUseCase;
+  readClientCheckInSchedulingUseCase: ReadClientCheckInSchedulingUseCase;
+  scheduleCheckInUseCase: ScheduleCheckInUseCase;
+  unitOfWork: UnitOfWork;
+};
+
+const CREATED = 201;
+const UNPROCESSABLE = 422;
+
+const clientIdSchema = z.uuid();
+
+export class CoachCheckInsController {
+  constructor(private readonly options: CoachCheckInsControllerOptions) {}
+
+  async loadCheckIns(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
+    args.context.get(accessContext).requirePortalAccess("COACH");
+
+    const checkIns = await this.options.listCoachCheckInsUseCase.execute();
+
+    return coachCheckInsSchema.parse({
+      checkIns: checkIns.map((view) => this.present(view)),
+    });
+  }
+
+  async loadAwaiting(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
+    args.context.get(accessContext).requirePortalAccess("COACH");
+
+    const checkIns =
+      await this.options.listCoachCheckInsAwaitingUseCase.execute();
+
+    return coachCheckInsSchema.parse({
+      checkIns: checkIns.map((view) => this.present(view)),
+    });
+  }
+
+  async loadAwaitingCount(args: LoaderFunctionArgs): Promise<number> {
+    args.context.get(accessContext).requirePortalAccess("COACH");
+
+    return this.options.countCheckInsAwaitingUseCase.execute({
+      party: "coach",
+    });
+  }
+
+  async loadClientScheduling(
+    args: LoaderFunctionArgs,
+    clientId: string | undefined,
+  ): Promise<CheckInScheduling> {
+    args.context.get(accessContext).requirePortalAccess("COACH");
+
+    const id = clientIdSchema.safeParse(clientId);
+
+    if (!id.success) {
+      throw unknownClient();
+    }
+
+    const scheduling =
+      await this.options.readClientCheckInSchedulingUseCase.execute(id.data);
+
+    if (scheduling === "unknown") {
+      throw unknownClient();
+    }
+
+    return scheduling;
+  }
+
+  async schedule(args: ActionFunctionArgs): Promise<Response> {
+    args.context.get(accessContext).requirePortalAccess("COACH");
+
+    const submission = checkInScheduleSchema.safeParse(
+      await readCheckInBody(args.request),
+    );
+
+    if (!submission.success) {
+      return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
+    }
+
+    const result = await this.options.unitOfWork(() =>
+      this.options.scheduleCheckInUseCase.execute({
+        clientId: submission.data.clientId,
+        startsAt: new Date(submission.data.startsAt),
+        note: submission.data.note ?? null,
+      }),
+    );
+
+    return this.respondToSchedule(result);
+  }
+
+  private respondToSchedule(result: ScheduleCheckInResult): Response {
+    switch (result.status) {
+      case "scheduled":
+        return checkInOutcomeResponse(
+          { status: "scheduled", checkInId: result.checkIn.id },
+          { status: CREATED },
+        );
+      case "unknown_client":
+        return unknownClient();
+      case "note_too_long":
+      case "invalid_time_zone":
+        return refusedCheckIn(result.status, { status: UNPROCESSABLE });
+      case "client_cannot_answer":
+      case "time_taken":
+        return refusedCheckIn(result.status);
+    }
+  }
+
+  private present(view: CoachCheckInView): CoachCheckIn {
+    return {
+      ...presentCheckIn(view),
+      clientId: view.clientId,
+      client: {
+        firstName: view.client.firstName,
+        lastName: view.client.lastName,
+      },
+    };
+  }
+}

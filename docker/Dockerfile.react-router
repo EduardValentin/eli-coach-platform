@@ -11,7 +11,6 @@ WORKDIR /workspace
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json .npmrc ./
 COPY apps ./apps
-COPY packages ./packages
 COPY scripts ./scripts
 COPY tools ./tools
 COPY knip.json eslint.config.mjs vitest.config.mts vitest.global-setup.mts vitest.setup.mts lighthouserc.cjs ./
@@ -32,8 +31,8 @@ RUN node /workspace/tools/check-deploy-resolves.mjs /deploy
 RUN test -f /deploy/build/server/index.js \
   && test ! -e /deploy/e2e \
   && test ! -e /deploy/src \
-  && test ! -e /deploy/node_modules/@eli-coach-platform/test-support \
-  && test -z "$(find -L /deploy/node_modules/@eli-coach-platform -type f \( -name '*.test.*' -o -name '*.spec.*' \) -print -quit)"
+  && test ! -e /deploy/test-support \
+  && test -z "$(find /deploy -path /deploy/node_modules -prune -o \( -name '*.test.*' -o -name '*.spec.*' \) -print -quit)"
 
 FROM ${NODE_IMAGE} AS runtime
 

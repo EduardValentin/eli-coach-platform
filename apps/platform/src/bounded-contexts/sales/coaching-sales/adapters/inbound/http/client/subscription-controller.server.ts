@@ -1,0 +1,266 @@
+import { joinBasePath } from "~/shared/http/base-path";
+import type {
+  CancelSubscriptionUseCase,
+  OpenPaymentMethodSessionUseCase,
+  ReadClientSubscriptionUseCase,
+  ReadProgramStatusUseCase,
+  StartProgramNowUseCase,
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import {
+  redirect,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
+
+import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/public/paths";
+import {
+  clientEndedSchema,
+  clientSettingsSchema,
+  NOTHING_TO_CANCEL_MESSAGE,
+  PAYMENT_METHOD_UNAVAILABLE_PARAM,
+  programStartedSchema,
+  subscriptionCancelledSchema,
+  subscriptionRefusalSchema,
+  type ClientEnded,
+  type ClientSettings,
+  type SubscriptionRefusalAnswer,
+} from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
+import { CLIENT_SETTINGS_PATH } from "~/bounded-contexts/sales/coaching-sales/public/paths";
+import {
+  programStatusSchema,
+  type ProgramStatus,
+} from "~/bounded-contexts/sales/coaching-sales/public/program-status";
+import { accessContext } from "~/bounded-contexts/access/public/session";
+
+type SubscriptionControllerOptions = {
+  appBasePath: string;
+  cancelSubscriptionUseCase: CancelSubscriptionUseCase;
+  openPaymentMethodSessionUseCase: OpenPaymentMethodSessionUseCase;
+  publicAppUrl: string;
+  readClientSubscriptionUseCase: ReadClientSubscriptionUseCase;
+  readProgramStatusUseCase: ReadProgramStatusUseCase;
+  startProgramNowUseCase: StartProgramNowUseCase;
+};
+
+type SubscriptionReading = NonNullable<
+  Awaited<ReturnType<ReadClientSubscriptionUseCase["execute"]>>
+>;
+
+type CancelRefusal = Exclude<
+  Awaited<ReturnType<CancelSubscriptionUseCase["execute"]>>["status"],
+  "cancelled"
+>;
+
+type Refusal = { answer: SubscriptionRefusalAnswer; status: number };
+
+const CANCEL_REFUSALS: Record<CancelRefusal, Refusal> = {
+  nothing_to_cancel: {
+    answer: { error: "nothing-to-cancel", message: NOTHING_TO_CANCEL_MESSAGE },
+    status: 409,
+  },
+  provider_unavailable: {
+    answer: { error: "provider-unavailable" },
+    status: 503,
+  },
+  not_found: { answer: { error: "not-found" }, status: 404 },
+};
+
+const NOT_FOUND: Refusal = { answer: { error: "not-found" }, status: 404 };
+const CONFLICT = 409;
+const SEE_OTHER = 303;
+
+export class SubscriptionController {
+  constructor(private readonly options: SubscriptionControllerOptions) {}
+
+  async loadSettings(args: LoaderFunctionArgs): Promise<ClientSettings> {
+    const account = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
+    const reading = await this.options.readClientSubscriptionUseCase.execute(
+      account.authSubjectId,
+    );
+
+    if (!reading) {
+      throw createNotFoundResponse();
+    }
+
+    return clientSettingsSchema.parse(settingsOf(reading));
+  }
+
+  async loadEnded(args: LoaderFunctionArgs): Promise<ClientEnded> {
+    const account = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
+    const reading = await this.options.readClientSubscriptionUseCase.execute(
+      account.authSubjectId,
+    );
+
+    return clientEndedSchema.parse({
+      refundDue: reading?.refundDue ?? false,
+    });
+  }
+
+  async loadProgramStatus(
+    args: LoaderFunctionArgs,
+  ): Promise<ProgramStatus | null> {
+    const account = args.context
+      .get(accessContext)
+      .requirePortalAccess("CLIENT");
+    const status = await this.options.readProgramStatusUseCase.execute(
+      account.authSubjectId,
+    );
+
+    if (!status) {
+      return null;
+    }
+
+    return programStatusSchema.parse({
+      kind: status.kind,
+      submittedAt: status.submittedAt.toISOString(),
+      workStartsOn: status.workStartsOn?.toISOString() ?? null,
+      startNowUntil: status.startNowUntil?.toISOString() ?? null,
+    });
+  }
+
+  async cancel(args: ActionFunctionArgs): Promise<Response> {
+    const account = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
+    const result = await this.options.cancelSubscriptionUseCase.execute(
+      account.authSubjectId,
+    );
+
+    if (result.status !== "cancelled") {
+      return refusalResponse(CANCEL_REFUSALS[result.status]);
+    }
+
+    return Response.json(
+      subscriptionCancelledSchema.parse({
+        status: "cancelled",
+        rule: result.rule,
+        accessEndsAt: result.subscription.accessEndsAt?.toISOString(),
+        refundDue: result.refundDue,
+      }),
+    );
+  }
+
+  async startNow(args: ActionFunctionArgs): Promise<Response> {
+    const account = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
+    const result = await this.options.startProgramNowUseCase.execute(
+      account.authSubjectId,
+    );
+
+    if (result.status === "started") {
+      return Response.json(programStartedSchema.parse(result));
+    }
+
+    if (result.status === "refused") {
+      return refusalResponse({
+        answer: { error: result.reason },
+        status: CONFLICT,
+      });
+    }
+
+    return refusalResponse(NOT_FOUND);
+  }
+
+  async openPaymentMethod(args: ActionFunctionArgs): Promise<Response> {
+    const account = args.context
+      .get(accessContext)
+      .requireAccount({ role: "CLIENT" });
+    const result = await this.options.openPaymentMethodSessionUseCase.execute({
+      authSubjectId: account.authSubjectId,
+      returnUrl: this.publicUrl(CLIENT_SETTINGS_PATH),
+    });
+
+    switch (result.status) {
+      case "opened":
+        return redirect(result.url, SEE_OTHER);
+      case "ended":
+        return redirect(CLIENT_ENDED_PATH, SEE_OTHER);
+      case "provider_unavailable":
+        return redirect(paymentMethodUnavailablePath(), SEE_OTHER);
+      case "not_found":
+        throw createNotFoundResponse();
+    }
+  }
+
+  private publicUrl(path: string): string {
+    return new URL(
+      joinBasePath(this.options.appBasePath, path),
+      this.options.publicAppUrl,
+    ).toString();
+  }
+}
+
+function settingsOf(reading: SubscriptionReading) {
+  const { subscription } = reading;
+
+  return {
+    subscription: {
+      bundleId: subscription.bundleId,
+      months: subscription.months,
+      amountCents: subscription.amountCents,
+      currency: subscription.currency,
+      paidAt: subscription.paidAt.toISOString(),
+      status: reading.status,
+      cancelledAt: subscription.cancelledAt?.toISOString() ?? null,
+      accessEndsAt: subscription.accessEndsAt?.toISOString() ?? null,
+      paymentProblem: reading.paymentProblem,
+    },
+    cancellation: cancellationOf(reading),
+    startNowUntil: reading.startNowUntil?.toISOString() ?? null,
+    card: cardOf(reading),
+  };
+}
+
+function cardOf(reading: SubscriptionReading) {
+  if (!reading.card) {
+    return null;
+  }
+
+  const { brand, expiryMonth, expiryYear, lastFour } = reading.card;
+
+  return { brand, lastFour, expiryMonth, expiryYear };
+}
+
+function cancellationOf(reading: SubscriptionReading) {
+  const dates = {
+    withdrawalDeadline: reading.withdrawalDeadline.toISOString(),
+    paidThrough: reading.paidThrough.toISOString(),
+  };
+
+  switch (reading.cancellationRule) {
+    case "full-refund":
+      return {
+        rule: reading.cancellationRule,
+        ...dates,
+        refundCents: reading.refundOnCancellationCents,
+      };
+    case "no-refund":
+      return { rule: reading.cancellationRule, ...dates };
+    case "none":
+      return null;
+  }
+}
+
+function paymentMethodUnavailablePath(): string {
+  const query = new URLSearchParams({
+    [PAYMENT_METHOD_UNAVAILABLE_PARAM.name]:
+      PAYMENT_METHOD_UNAVAILABLE_PARAM.value,
+  });
+
+  return `${CLIENT_SETTINGS_PATH}?${query}`;
+}
+
+function refusalResponse(refusal: Refusal): Response {
+  return Response.json(subscriptionRefusalSchema.parse(refusal.answer), {
+    status: refusal.status,
+  });
+}
+
+function createNotFoundResponse(): Response {
+  return new Response("Not Found", { status: 404 });
+}

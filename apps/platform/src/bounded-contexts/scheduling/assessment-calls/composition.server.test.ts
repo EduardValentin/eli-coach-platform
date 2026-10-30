@@ -1,0 +1,245 @@
+import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
+import type { DatabaseClient } from "~/shared/database";
+import {
+  CoachAvailability,
+  CoachOpenings,
+} from "~/bounded-contexts/scheduling/coach-schedule/public/coach-time";
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
+import { describe, expect, it } from "vitest";
+
+import {
+  composeAssessmentCallsFeature,
+  type AssessmentCallsFeatureHandles,
+} from "./composition.server";
+
+const BOOKED_ROW = {
+  id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+  firstName: "Ana",
+  lastName: "Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training three times a week.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
+  startsAt: new Date("2026-10-20T14:00:00.000Z"),
+  visitorTimeZone: "Europe/Chisinau",
+  coachTimeZone: "Europe/Chisinau",
+  bookedAt: new Date("2026-10-18T09:30:00.000Z"),
+};
+
+describe("composeAssessmentCallsFeature", () => {
+  it("hides the booking page while the site is in waitlist mode", async () => {
+    // arrange
+    const { feature } = composeAssessmentCallsFeature(
+      createHandles({ WAITLIST_MODE: true }),
+    );
+
+    // act
+    const loading = feature.assessmentCallsController.loadBookingPage();
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("reports unreadable availability when the coach's availability cannot be read", async () => {
+    // arrange
+    const { feature } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      openings: openingsOver(createUnreadableAvailability()),
+    });
+
+    // act
+    const page = await feature.assessmentCallsController.loadBookingPage();
+
+    // assert
+    expect(page).toEqual({
+      botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
+      status: "unavailable",
+    });
+  });
+
+  it("serves the coach every booked call in her own time zone", async () => {
+    // arrange
+    const { feature } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseWithBookedCalls([BOOKED_ROW]),
+    });
+
+    // act
+    const listing = await feature.coachAssessmentCallsController.loadCalls();
+
+    // assert
+    expect(listing.calls.map((call) => call.id)).toEqual([
+      "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+    ]);
+    expect(listing.coachTimeZone).toBe("Europe/Bucharest");
+    expect(listing.now).toBe("2026-10-19T08:00:00.000Z");
+  });
+});
+
+describe("composeAssessmentCallsFeature subaddress policy", () => {
+  it("hands the subaddress policy to the booking", async () => {
+    // arrange
+    const { feature } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      emailAcceptancePort: createEmailAcceptance("refused"),
+    });
+    const formData = new FormData();
+    formData.set("country", "RO");
+    formData.set("dateOfBirth", "1994-03-14");
+    formData.set("email", "ana+coaching@example.com");
+    formData.set("firstName", "Ana");
+    formData.set("gender", "female");
+    formData.set("lastName", "Popescu");
+    formData.set("primaryGoal", "build_strength");
+    formData.set("startsAt", "2026-10-20T14:00:00.000Z");
+    formData.set("visitorTimeZone", "Europe/Bucharest");
+
+    // act
+    const response = await feature.assessmentCallsController.book(
+      new Request("http://localhost/api/bookings", {
+        method: "POST",
+        body: formData,
+      }),
+    );
+    const body = await response.json();
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "email_subaddress_refused" },
+    });
+  });
+});
+
+describe("composeAssessmentCallsFeature ended calls facade", () => {
+  it("reads a booked call with its end and visitor for coaching sales", async () => {
+    // arrange
+    const { facades } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseWithBookedCalls([BOOKED_ROW]),
+    });
+
+    // act
+    const call = await facades.endedCallsFacade.callOf(BOOKED_ROW.id);
+
+    // assert
+    expect(call).toMatchObject({
+      endsAt: "2026-10-20T14:30:00.000Z",
+      id: BOOKED_ROW.id,
+      visitor: { fullName: "Ana Popescu", email: "ana@example.com" },
+    });
+  });
+
+  it("answers null for a call that was never booked", async () => {
+    // arrange
+    const { facades } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseWithBookedCalls([]),
+    });
+
+    // act
+    const call = await facades.endedCallsFacade.callOf(BOOKED_ROW.id);
+
+    // assert
+    expect(call).toBeNull();
+  });
+});
+
+function createHandles(
+  featureFlags: Record<string, boolean>,
+): AssessmentCallsFeatureHandles {
+  return {
+    emailAcceptancePort: createEmailAcceptance("allowed"),
+    appBasePath: "/eli-coach-platform",
+    assessmentCallsConfig: {
+      ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
+    },
+    botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
+    botVerifierPort: { verifySubmission: async () => ({ status: "verified" }) },
+    clockPort: { now: () => new Date("2026-10-19T08:00:00.000Z") },
+    coachTimeReservationsPort: {
+      reserve: async () => ({ status: "reserved", reservationId: "held" }),
+      release: async () => {},
+    },
+    contactEmail: "contact@evoa.fit",
+    database: createDatabaseStub(),
+    featureFlagsFacade: { isOn: async (flag) => featureFlags[flag] === true },
+    loggerPort: { error: () => {}, warn: () => {}, info: () => {} },
+    coachMeetingRoomSourcePort: { current: async () => null },
+    openings: openingsOver(createBucharestEveningAvailability()),
+    productEmailPort: new InMemoryProductEmailAdapter(),
+    publicAppUrl: "https://evoa.fit",
+  };
+}
+
+function createDatabaseWithBookedCalls(
+  bookedCallRows: readonly unknown[],
+): DatabaseClient {
+  function chainResolving(resolvedRows: readonly unknown[]) {
+    return {
+      orderBy: () => chainResolving(resolvedRows),
+      where: () => chainResolving(resolvedRows),
+      limit: () => chainResolving(resolvedRows),
+      then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
+        Promise.resolve(resolvedRows).then(onFulfilled),
+    };
+  }
+
+  return {
+    select: () => ({
+      from: () => chainResolving(bookedCallRows),
+    }),
+  } as unknown as DatabaseClient;
+}
+
+type CoachAvailabilitySourcePort = ConstructorParameters<
+  typeof CoachOpenings
+>[0]["coachAvailabilitySourcePort"];
+
+function openingsOver(
+  coachAvailabilitySourcePort: CoachAvailabilitySourcePort,
+): CoachOpenings {
+  return new CoachOpenings({
+    coachAvailabilitySourcePort,
+    coachCalendarPort: { busyFrom: async () => [] },
+  });
+}
+
+function createBucharestEveningAvailability(): CoachAvailabilitySourcePort {
+  const result = CoachAvailability.from({
+    timeZone: "Europe/Bucharest",
+    weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    startHour: 17,
+    endHour: 20,
+  });
+
+  if (result.status !== "configured") {
+    throw new Error("Expected a configured availability.");
+  }
+
+  return { current: async () => result.availability };
+}
+
+function createUnreadableAvailability(): CoachAvailabilitySourcePort {
+  return {
+    current: async () => {
+      throw new Error("database down");
+    },
+  };
+}
+
+function createDatabaseStub(): DatabaseClient {
+  const database = {
+    select: () => {
+      throw new Error("database down");
+    },
+    transaction: (work: (transaction: unknown) => Promise<unknown>) =>
+      work(database),
+  } as unknown as DatabaseClient;
+
+  return database;
+}

@@ -1,0 +1,72 @@
+import type { ClientReachPort } from "../client-reach-port";
+import type { ClockPort } from "../clock-port";
+
+import type { ClientProfileProblems } from "./client-profile";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { SharedCoachingFacts } from "./coaching-facts";
+
+type UpdateOwnClientProfileCommand = {
+  authSubjectId: string;
+  facts: SharedCoachingFacts;
+};
+
+type UpdateOwnClientProfileResult =
+  | { status: "saved" }
+  | { status: "not-on-journey" }
+  | { status: "ended" }
+  | { status: "not-seeded" }
+  | { status: "invalid"; problems: ClientProfileProblems }
+  | { status: "changed-meanwhile" };
+
+type UpdateOwnClientProfileUseCaseOptions = {
+  clientReachPort: Pick<ClientReachPort, "findByAuthSubjectId">;
+  clientProfilesPort: Pick<
+    ClientProfilesPort,
+    "findByClientId" | "saveSharedFacts"
+  >;
+  clockPort: ClockPort;
+};
+
+export class UpdateOwnClientProfileUseCase {
+  constructor(private readonly options: UpdateOwnClientProfileUseCaseOptions) {}
+
+  async execute(
+    command: UpdateOwnClientProfileCommand,
+  ): Promise<UpdateOwnClientProfileResult> {
+    const client = await this.options.clientReachPort.findByAuthSubjectId(
+      command.authSubjectId,
+    );
+
+    if (!client) {
+      return { status: "not-on-journey" };
+    }
+
+    if (client.portal === "ended") {
+      return { status: "ended" };
+    }
+
+    const profile = await this.options.clientProfilesPort.findByClientId(
+      client.clientId,
+    );
+
+    if (!profile) {
+      return { status: "not-on-journey" };
+    }
+
+    const outcome = profile.editSharedFacts(
+      command.facts,
+      this.options.clockPort.now(),
+    );
+
+    if (outcome.status !== "edited") {
+      return outcome;
+    }
+
+    const saved = await this.options.clientProfilesPort.saveSharedFacts({
+      profile: outcome.profile,
+      expectedUpdatedAt: profile.toSnapshot().updatedAt,
+    });
+
+    return { status: saved };
+  }
+}

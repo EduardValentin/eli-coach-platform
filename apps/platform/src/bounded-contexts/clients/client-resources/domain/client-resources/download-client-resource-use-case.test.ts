@@ -1,0 +1,231 @@
+import { describe, expect, it, vi } from "vitest";
+
+import { ClientResource, type ClientResourceOwner } from "./client-resource";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type {
+  ClientResourceStorePort,
+  StoredResourceOriginal,
+} from "./client-resource-store-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
+import { DownloadClientResourceUseCase } from "./download-client-resource-use-case";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ResourceTagSnapshot } from "./resource-tags";
+
+const ORIGINAL_BYTES = Uint8Array.of(0xd0, 0xcf, 0x11, 0xe0);
+const RESOURCE = ClientResource.reconstitute({
+  id: "resource-1",
+  clientId: "client-ana",
+  title: "Shopping list",
+  description: "",
+  tags: [],
+  file: {
+    originalName: "Shopping list.txt",
+    format: "xls",
+    sizeBytes: ORIGINAL_BYTES.byteLength,
+    pageCount: null,
+  },
+  addedAt: new Date("2026-10-05T09:00:00.000Z"),
+  openedAt: null,
+});
+
+async function* chunksOf(bytes: Uint8Array): AsyncIterable<Uint8Array> {
+  yield bytes.subarray(0, 2);
+  yield bytes.subarray(2);
+}
+
+async function collect(chunks: AsyncIterable<Uint8Array>): Promise<number[]> {
+  const collected: number[] = [];
+
+  for await (const chunk of chunks) collected.push(...chunk);
+
+  return collected;
+}
+
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
+  async add(): Promise<void> {}
+
+  async recordOpened(): Promise<void> {}
+
+  async saveDetails(): Promise<void> {}
+
+  async remove(): Promise<void> {}
+
+  async countUnopenedForClient(): Promise<number> {
+    return 0;
+  }
+
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async findById(resourceId: string): Promise<ClientResource | null> {
+    return resourceId === "resource-1" ? RESOURCE : null;
+  }
+}
+
+class InMemoryOriginalsAdapter implements ClientResourceStorePort {
+  readonly openOriginal = vi.fn(
+    async (
+      owner: ClientResourceOwner,
+    ): Promise<StoredResourceOriginal | null> =>
+      owner.resourceId === "resource-1"
+        ? {
+            bytes: chunksOf(ORIGINAL_BYTES),
+            sizeBytes: ORIGINAL_BYTES.byteLength,
+          }
+        : null,
+  );
+
+  async storeOriginal(): Promise<void> {}
+  async storePage(): Promise<void> {}
+  async storeThumbnail(): Promise<void> {}
+  async openPage(): Promise<null> {
+    return null;
+  }
+  async openThumbnail(): Promise<null> {
+    return null;
+  }
+  async remove(): Promise<void> {}
+}
+
+function createUseCase() {
+  const inMemoryOriginalsAdapter = new InMemoryOriginalsAdapter();
+  const clients = {
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      programStartsAt: null,
+      paidThrough: null,
+      timeZone: "Europe/Bucharest",
+    })),
+    findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
+      authSubjectId === "user_ana"
+        ? {
+            clientId: "client-ana",
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
+            timeZone: "Europe/Bucharest",
+          }
+        : null,
+    ),
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  const incidents = {
+    resourceStored: vi.fn(),
+    resourceRefused: vi.fn(),
+    resourceAccessRefused: vi.fn(),
+    resourceStorageFailed: vi.fn(),
+    resourceListingFailed: vi.fn(),
+    resourceOpeningFailed: vi.fn(),
+    resourceChangeFailed: vi.fn(),
+    resourceFilesOrphaned: vi.fn(),
+    unopenedCountFailed: vi.fn(),
+  } satisfies ClientResourceIncidentsPort;
+  const downloadClientResourceUseCase = new DownloadClientResourceUseCase({
+    clientResourcesPort: new InMemoryClientResourcesAdapter(),
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryOriginalsAdapter,
+    clientResourceIncidentsPort: incidents,
+  });
+
+  return { downloadClientResourceUseCase, inMemoryOriginalsAdapter, incidents };
+}
+
+describe("DownloadClientResourceUseCase", () => {
+  it.each([
+    ["the coach", { role: "COACH", authSubjectId: "user_eli" }],
+    ["the client it is for", { role: "CLIENT", authSubjectId: "user_ana" }],
+  ] as const)(
+    "streams the unchanged original, named for its real format, to %s",
+    async (_case, requester) => {
+      // arrange
+      const { downloadClientResourceUseCase } = createUseCase();
+
+      // act
+      const result = await downloadClientResourceUseCase.execute({
+        requester,
+        resourceId: "resource-1",
+      });
+
+      // assert
+      expect(result).toMatchObject({
+        status: "opened",
+        sizeBytes: 4,
+        downloadName: "Shopping list.xls",
+        kind: "excel",
+        mimeType: "application/vnd.ms-excel",
+      });
+      expect(
+        result.status === "opened" ? await collect(result.bytes) : null,
+      ).toEqual([...ORIGINAL_BYTES]);
+    },
+  );
+
+  it("finds nothing for another client and reports the refusal", async () => {
+    // arrange
+    const {
+      downloadClientResourceUseCase,
+      inMemoryOriginalsAdapter,
+      incidents,
+    } = createUseCase();
+
+    // act
+    const result = await downloadClientResourceUseCase.execute({
+      requester: { role: "CLIENT", authSubjectId: "user_bea" },
+      resourceId: "resource-1",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(inMemoryOriginalsAdapter.openOriginal).not.toHaveBeenCalled();
+    expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
+      requesterRole: "CLIENT",
+      clientId: "client-ana",
+      resourceId: "resource-1",
+    });
+  });
+
+  it("finds nothing for an unknown id", async () => {
+    // arrange
+    const { downloadClientResourceUseCase, incidents } = createUseCase();
+
+    // act
+    const result = await downloadClientResourceUseCase.execute({
+      requester: { role: "COACH", authSubjectId: "user_eli" },
+      resourceId: "resource-404",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(incidents.resourceAccessRefused).not.toHaveBeenCalled();
+  });
+
+  it("finds nothing when the stored original is gone", async () => {
+    // arrange
+    const { downloadClientResourceUseCase, inMemoryOriginalsAdapter } =
+      createUseCase();
+    inMemoryOriginalsAdapter.openOriginal.mockResolvedValueOnce(null);
+
+    // act
+    const result = await downloadClientResourceUseCase.execute({
+      requester: { role: "COACH", authSubjectId: "user_eli" },
+      resourceId: "resource-1",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+  });
+});

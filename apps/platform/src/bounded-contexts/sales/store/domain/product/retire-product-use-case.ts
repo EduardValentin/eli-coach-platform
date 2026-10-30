@@ -1,0 +1,25 @@
+import type { RetireProductResult } from "./product-publication";
+import type { StoreProductPublicationsPort } from "./store-product-publications-port";
+
+export class RetireProductUseCase {
+  constructor(
+    private readonly options: {
+      storeProductPublicationsPort: StoreProductPublicationsPort;
+    },
+  ) {}
+
+  async execute(productId: number): Promise<RetireProductResult> {
+    try {
+      const retired =
+        await this.options.storeProductPublicationsPort.retireProduct(
+          productId,
+        );
+
+      return retired
+        ? { status: "retired", productId }
+        : { status: "not_found" };
+    } catch {
+      return { status: "unavailable" };
+    }
+  }
+}

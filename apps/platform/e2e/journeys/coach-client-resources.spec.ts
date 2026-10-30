@@ -2,7 +2,7 @@ import {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_TITLE_LENGTH,
-} from "@eli-coach-platform/domain/client-resources";
+} from "~/bounded-contexts/clients/client-resources/domain/client-resources";
 
 import { storedResourceIdsOf } from "../support/client-resource-files";
 import { expect, test } from "../support/fixtures";

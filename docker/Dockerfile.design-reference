@@ -2,8 +2,8 @@ ARG NODE_IMAGE=node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b
 
 FROM ${NODE_IMAGE} AS build
 
-# The app resolves its @content alias to ../../packages/content/src, so the
-# build stage mirrors the repository layout.
+# The app resolves its ~ alias to ../../apps/platform/src for the production-owned
+# legal documents and brand copy, so the build stage mirrors the repository layout.
 WORKDIR /repo/designs/react-reference-app
 
 COPY designs/react-reference-app/package.json designs/react-reference-app/package-lock.json ./
@@ -11,7 +11,8 @@ COPY designs/react-reference-app/package.json designs/react-reference-app/packag
 RUN npm ci
 
 COPY designs/react-reference-app ./
-COPY packages/content/src /repo/packages/content/src
+COPY apps/platform/src/bounded-contexts/legal/public /repo/apps/platform/src/bounded-contexts/legal/public
+COPY apps/platform/src/shared/brand /repo/apps/platform/src/shared/brand
 
 ARG VITE_BASE_PATH=/design-reference/
 

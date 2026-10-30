@@ -1,0 +1,209 @@
+import type {
+  CheckInJoinResult,
+  ResolveCheckInJoinUseCase,
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import { describe, expect, it, vi } from "vitest";
+import type { ResolvedSession } from "~/bounded-contexts/access/public/session";
+
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
+
+import { CheckInJoinController } from "./check-in-join-controller.server";
+
+const CHECK_IN_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
+const ROOM_URL = "https://meet.google.com/abc-defg-hij";
+
+const CLIENT_SESSION: ResolvedSession = {
+  account: { authSubjectId: "user_ana", id: "acct_ana", role: "CLIENT" },
+  kind: "authenticated",
+};
+
+const COACH_SESSION: ResolvedSession = {
+  account: { authSubjectId: "user_eli", id: "acct_eli", role: "COACH" },
+  kind: "authenticated",
+};
+
+const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
+
+describe("CheckInJoinController resolveForClient", () => {
+  it("sends the client to the coach's meeting room", async () => {
+    // arrange
+    const { checkInJoinController, resolveCheckInJoin } = createController({
+      status: "found",
+      url: ROOM_URL,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      checkInJoinController.resolveForClient(
+        argsFor(CLIENT_SESSION),
+        CHECK_IN_ID,
+      ),
+    );
+
+    // assert
+    expect(resolveCheckInJoin).toHaveBeenCalledWith({
+      actor: { party: "client", authSubjectId: "user_ana" },
+      checkInId: CHECK_IN_ID,
+    });
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("location")).toBe(ROOM_URL);
+  });
+
+  it("tells the client the room is not ready while none is set", async () => {
+    // arrange
+    const { checkInJoinController } = createController({
+      status: "link_not_set",
+    });
+
+    // act
+    const resolution = await checkInJoinController.resolveForClient(
+      argsFor(CLIENT_SESSION),
+      CHECK_IN_ID,
+    );
+
+    // assert
+    expect(resolution).toEqual({ status: "link_not_set" });
+  });
+
+  it("answers not found to a check-in the client cannot join", async () => {
+    // arrange
+    const { checkInJoinController } = createController({ status: "unknown" });
+
+    // act
+    const thrown = await captureThrown(() =>
+      checkInJoinController.resolveForClient(
+        argsFor(CLIENT_SESSION),
+        CHECK_IN_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
+  });
+
+  it("answers not found to an id that is not a uuid without resolving anything", async () => {
+    // arrange
+    const { checkInJoinController, resolveCheckInJoin } = createController({
+      status: "found",
+      url: ROOM_URL,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      checkInJoinController.resolveForClient(
+        argsFor(CLIENT_SESSION),
+        "not-an-id",
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
+    expect(resolveCheckInJoin).not.toHaveBeenCalled();
+  });
+
+  it("sends a visitor who is not signed in to sign in, coming back to the link", async () => {
+    // arrange
+    const { checkInJoinController, resolveCheckInJoin } = createController({
+      status: "found",
+      url: ROOM_URL,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      checkInJoinController.resolveForClient(
+        argsFor(ANONYMOUS_SESSION),
+        CHECK_IN_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("location")).toBe(
+      `https://accounts.evoa.fit/sign-in?redirect_url=${encodeURIComponent(
+        `https://evoa.fit/client/checkins/${CHECK_IN_ID}/join`,
+      )}`,
+    );
+    expect(resolveCheckInJoin).not.toHaveBeenCalled();
+  });
+});
+
+describe("CheckInJoinController resolveForCoach", () => {
+  it("sends the coach to her meeting room", async () => {
+    // arrange
+    const { checkInJoinController, resolveCheckInJoin } = createController({
+      status: "found",
+      url: ROOM_URL,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      checkInJoinController.resolveForCoach(
+        argsFor(COACH_SESSION),
+        CHECK_IN_ID,
+      ),
+    );
+
+    // assert
+    expect(resolveCheckInJoin).toHaveBeenCalledWith({
+      actor: { party: "coach" },
+      checkInId: CHECK_IN_ID,
+    });
+    expect((thrown as Response).headers.get("location")).toBe(ROOM_URL);
+  });
+
+  it("refuses a client on the coach's link without resolving anything", async () => {
+    // arrange
+    const { checkInJoinController, resolveCheckInJoin } = createController({
+      status: "found",
+      url: ROOM_URL,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      checkInJoinController.resolveForCoach(
+        argsFor(CLIENT_SESSION),
+        CHECK_IN_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(resolveCheckInJoin).not.toHaveBeenCalled();
+  });
+});
+
+function createController(resolution: CheckInJoinResult) {
+  const resolveCheckInJoin = vi.fn().mockResolvedValue(resolution);
+  const checkInJoinController = new CheckInJoinController({
+    resolveCheckInJoinUseCase: {
+      execute: resolveCheckInJoin,
+    } as unknown as ResolveCheckInJoinUseCase,
+  });
+
+  return { checkInJoinController, resolveCheckInJoin };
+}
+
+function argsFor(session: ResolvedSession) {
+  const portal = {
+    appBasePath: "/",
+    publicAppUrl: "https://evoa.fit",
+    signInUrl: "https://accounts.evoa.fit/sign-in",
+  };
+
+  return createRequestArgs({
+    portal,
+    session,
+    request: new Request(
+      `https://evoa.fit/client/checkins/${CHECK_IN_ID}/join`,
+    ),
+  });
+}
+
+async function captureThrown(thunk: () => unknown): Promise<unknown> {
+  try {
+    await thunk();
+    return undefined;
+  } catch (thrown) {
+    return thrown;
+  }
+}

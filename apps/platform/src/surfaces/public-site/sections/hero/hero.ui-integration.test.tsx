@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-settings";
 import {
   cleanup,
   render,
@@ -24,17 +24,17 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
-import { launchWaitlistConfetti } from "~/features/waitlist/ui/public/confetti";
+import { launchWaitlistConfetti } from "~/bounded-contexts/sales/waitlist/ui/public/confetti";
 import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
-} from "~/features/waitlist/ui/public/api-client";
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+} from "~/bounded-contexts/sales/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { PublicHero } from "./hero";
 
-vi.mock("~/features/waitlist/ui/public/confetti", () => ({
+vi.mock("~/bounded-contexts/sales/waitlist/ui/public/confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
 }));
 

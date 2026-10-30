@@ -8,25 +8,33 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 
 ```text
 /apps/platform
-  /db            Drizzle config, the migrations CI checks for drift, and the
-                 seed folder applied after them
+  /db            Drizzle config, the migrations CI checks for drift, the seed
+                 folder applied after them, bootstrap SQL and local database scripts
+  /e2e           Playwright journeys
   /integration-test-config
                  the containers integration suites run against, the contracts
                  they serve, and how a suite spawns the built server it drives
                  — reached through ~integration-test-config
   /public        served as-is: icon, hero media
-  /scripts       build-time checks, run after react-router build
+  /test-support  dev-only fixtures, never imported by production code
+  /tooling       build-time tools: product covers, legal documents
   /src
-    /features    coaching-bundles, store, waitlist
-    /surfaces    public-site, client-portal, coach-portal
-    /server      composition root, runtime wiring, resource routes no surface owns
-    /types       ambient type declarations
-/packages        config, content, db, domain, infrastructure, ui
+    /bounded-contexts
+      /<bounded-context>   operations, legal, access, scheduling, clients,
+                           programs, sales: public facades, composition, routes
+        /<component>       domain, adapters, public, ui, composition,
+                           config and routes of one slice of work
+    /shared        technical concerns with no business rule: database,
+                   design-system, email, http, and the other concerns
+    /surfaces      public-site, client-portal, coach-portal
+    /composition-root  container, runtime environment, root middleware,
+                   resource routes no surface owns
+    /types         ambient type declarations
 /deploy          per-environment Compose stacks
 /docker          image definitions
 /docs            database, secret, store-publishing, and web-session guides
 /scripts         local development and secret helpers, plus the deploy scripts CI ships to the TEST host
-/tools           boundary-rule self-tests
+/tools           boundary rules, their fixture self-tests, and the layout and deploy checks
 /designs/react-reference-app
 ```
 
@@ -133,7 +141,7 @@ Every e2e test carries exactly one tag in its options: `test("…", { tag: "@cri
 ## Checks
 
 ```bash
-pnpm lint            # eslint over apps and packages, then the Prettier check
+pnpm lint            # eslint over apps, then the Prettier check
 pnpm format          # rewrite every file Prettier owns (see .prettierignore)
 pnpm typecheck       # TypeScript checks across every workspace package
 pnpm test            # typecheck, then run the unit and integration Vitest projects

@@ -1,11 +1,11 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 import {
   getCoachingBundle,
   type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
-import { PurchasedSubscription } from "@eli-coach-platform/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import { PurchasedSubscription } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type pg from "pg";
 
 export type ClientIdentity = {
@@ -99,12 +99,23 @@ const EXPIRED_INVITATION_SENT_DAYS_AGO = 40;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const INSERT_ENDED_CALL = `
+  with free_hour as (
+    select least($9::timestamptz, min(starts_at) - interval '1 hour') as starts_at
+    from app.coach_time_reservations
+    where starts_at < $9::timestamptz + interval '1 hour'
+  ),
+  reservation as (
+    insert into app.coach_time_reservations (starts_at, ends_at)
+    select starts_at, starts_at + interval '1 hour' from free_hour
+    returning id
+  )
   insert into app.assessment_calls (
     id, first_name, last_name, visitor_email, date_of_birth, gender,
     primary_goal, country, starts_at, visitor_time_zone, coach_time_zone,
-    booked_at
+    booked_at, reservation_id
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $9)
+  select $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $9, id
+  from reservation
 `;
 const INSERT_CLIENT = `
   insert into app.clients (
@@ -143,12 +154,18 @@ const OPEN_CLIENT_SETTINGS = `
   values ($1, 'kg', 'cm', $2)
 `;
 const INSERT_INVITATION = `
-  insert into app.client_invitations (
-    id, client_id, email, token_hash, sent_at, expires_at,
-    provider_invitation_id, provider_invitation_url, email_sent_at,
-    email_delivery_failed_at, created_at
+  with invitation as (
+    insert into app.account_invitations (
+      id, email, role, token_hash, sent_at, expires_at,
+      provider_invitation_id, provider_invitation_url, email_sent_at,
+      email_delivery_failed_at, created_at
+    )
+    values ($1, $3, 'CLIENT', $4, $5, $6, $7, $8, $9, $10, $5)
+    returning id
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $5)
+  update app.clients
+  set account_invitation_id = (select id from invitation)
+  where id = $2
 `;
 
 export async function insertPaidClientRecords(

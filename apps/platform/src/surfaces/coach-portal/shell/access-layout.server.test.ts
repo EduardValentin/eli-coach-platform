@@ -1,17 +1,10 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import { describe, expect, it, vi } from "vitest";
+import type {
+  ResolvedSession,
+  SessionAccount,
+} from "~/bounded-contexts/access/public/session";
 
-import {
-  contextEntry,
-  createRequestArgs,
-} from "~/server/test-support/request-args";
-
-import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
-import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/features/accounts/server/guards/session-context.server";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 const { middleware } = await import("./access-layout.server");
 
@@ -91,7 +84,7 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
   }
 }
 
-function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
+function buildAccount(overrides: Partial<SessionAccount>): SessionAccount {
   return {
     authSubjectId: "user_1",
     id: "acct_1",
@@ -105,16 +98,12 @@ function createMiddlewareArgs(options: {
   url: string;
 }): Parameters<typeof guardCoachPortal>[0] {
   return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, {
-        portal: {
-          appBasePath: "/",
-          publicAppUrl: "https://evoa.fit",
-          signInUrl: "https://accounts.evoa.fit/sign-in",
-        },
-      } as AccountsFeature),
-      contextEntry(sessionContext, options.session),
-    ],
+    portal: {
+      appBasePath: "/",
+      publicAppUrl: "https://evoa.fit",
+      signInUrl: "https://accounts.evoa.fit/sign-in",
+    },
+    session: options.session,
     request: new Request(options.url),
   }) as unknown as Parameters<typeof guardCoachPortal>[0];
 }

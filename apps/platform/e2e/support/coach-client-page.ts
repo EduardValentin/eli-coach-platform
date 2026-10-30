@@ -1,4 +1,4 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor";
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { initialsOf } from "./avatar-initials";

@@ -1,0 +1,48 @@
+import { CLIENT_PORTAL_PATH } from "../../../access/public/paths";
+
+export const SELECT_BUNDLE_ROUTE_SEGMENT = "select-bundle";
+
+const SELECT_BUNDLE_PATH = `/${SELECT_BUNDLE_ROUTE_SEGMENT}`;
+
+export const CHECKOUT_COMPLETE_ROUTE_SEGMENT = "checkout/complete";
+
+export const CHECKOUT_COMPLETE_PATH = `/${CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
+
+export const CLIENT_SETTINGS_ROUTE_SEGMENT = "settings";
+
+export const CLIENT_SETTINGS_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_SETTINGS_ROUTE_SEGMENT}`;
+
+export const COACHING_SALES_API_PATHS = {
+  paymentLinks: "/api/coaching-sales/payment-links",
+  bundlePage: "/api/coaching-sales/bundle-page",
+  checkouts: "/api/coaching-sales/checkouts",
+  subscriptionCancellation: "/api/coaching-sales/subscription-cancellation",
+  programStart: "/api/coaching-sales/program-start",
+  paymentMethodSession: "/api/coaching-sales/payment-method-session",
+  stripeWebhooks: "/api/stripe/webhooks",
+} as const;
+
+type SelectBundleLink = {
+  token?: string;
+  payment?: "cancelled";
+  bundle?: string;
+  start?: string;
+};
+
+export function selectBundlePath(link: SelectBundleLink): string {
+  const params = new URLSearchParams();
+
+  for (const name of ["payment", "bundle", "start"] as const) {
+    const value = link[name];
+
+    if (value) {
+      params.set(name, value);
+    }
+  }
+
+  const search = params.toString();
+  const query = search ? `?${search}` : "";
+  const fragment = link.token ? `#${link.token}` : "";
+
+  return `${SELECT_BUNDLE_PATH}${query}${fragment}`;
+}

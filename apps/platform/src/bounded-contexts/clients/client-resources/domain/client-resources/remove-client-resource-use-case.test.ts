@@ -1,0 +1,301 @@
+import { describe, expect, it, vi } from "vitest";
+
+import { ClientResource, type ClientResourceOwner } from "./client-resource";
+import type { ResourceRequester } from "./client-resource-access";
+import type { ClientResourceIncidentsPort } from "./client-resource-incidents-port";
+import type { ClientResourceStorePort } from "./client-resource-store-port";
+import type {
+  BrowsedResources,
+  ClientResourcesPort,
+} from "./client-resources-port";
+import { RemoveClientResourceUseCase } from "./remove-client-resource-use-case";
+import type { ClientReachPort } from "./client-reach-port";
+import type { ResourceTagSnapshot } from "./resource-tags";
+
+const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
+const ANA = { role: "CLIENT", authSubjectId: "user_ana" } as const;
+const ACCOUNT_WITHOUT_RESOURCE_ROLE = {
+  role: "USER",
+  authSubjectId: "user_ana",
+} as unknown as ResourceRequester;
+const OWNER = { clientId: "client-ana", resourceId: "resource-1" };
+
+const STORED = ClientResource.reconstitute({
+  id: "resource-1",
+  clientId: "client-ana",
+  title: "Meal plan",
+  description: "",
+  tags: [],
+  file: {
+    originalName: "plan.pdf",
+    format: "pdf",
+    sizeBytes: 2_048,
+    pageCount: 1,
+  },
+  addedAt: new Date("2026-10-05T09:00:00.000Z"),
+  openedAt: null,
+});
+
+class InMemoryClientResourcesAdapter implements ClientResourcesPort {
+  private readonly stored = new Map<string, ClientResource>([
+    ["resource-1", STORED],
+  ]);
+
+  constructor(private readonly removals: string[]) {}
+
+  readonly remove = vi.fn(async (resourceId: string) => {
+    this.removals.push(`row ${resourceId}`);
+    this.stored.delete(resourceId);
+  });
+
+  async add(): Promise<void> {}
+
+  async recordOpened(): Promise<void> {}
+
+  async saveDetails(): Promise<void> {}
+
+  async countUnopenedForClient(): Promise<number> {
+    return 0;
+  }
+
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async findById(resourceId: string): Promise<ClientResource | null> {
+    return this.stored.get(resourceId) ?? null;
+  }
+
+  has(resourceId: string): boolean {
+    return this.stored.has(resourceId);
+  }
+}
+
+class InMemoryResourceStoreAdapter implements ClientResourceStorePort {
+  private readonly files = new Set(["original", "page-1", "thumbnail"]);
+
+  constructor(private readonly removals: string[]) {}
+
+  readonly remove = vi.fn(async (owner: ClientResourceOwner) => {
+    this.removals.push(`files ${owner.resourceId}`);
+    this.files.clear();
+  });
+
+  async storeOriginal(): Promise<void> {}
+
+  async storePage(): Promise<void> {}
+
+  async storeThumbnail(): Promise<void> {}
+
+  async openOriginal(): Promise<null> {
+    return null;
+  }
+
+  async openPage(): Promise<null> {
+    return null;
+  }
+
+  async openThumbnail(): Promise<null> {
+    return null;
+  }
+
+  storedNames(): string[] {
+    return [...this.files];
+  }
+}
+
+function createUseCase() {
+  const removals: string[] = [];
+  const inMemoryClientResourcesAdapter = new InMemoryClientResourcesAdapter(
+    removals,
+  );
+  const inMemoryResourceStoreAdapter = new InMemoryResourceStoreAdapter(
+    removals,
+  );
+  const clients = {
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      programStartsAt: null,
+      paidThrough: null,
+      timeZone: "Europe/Bucharest",
+    })),
+    findByAuthSubjectId: vi.fn(async () => ({
+      clientId: "client-ana",
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      programStartsAt: null,
+      paidThrough: null,
+      timeZone: "Europe/Bucharest",
+    })),
+  } satisfies Pick<ClientReachPort, "findByAuthSubjectId" | "findById">;
+  const incidents = {
+    resourceStored: vi.fn(),
+    resourceRefused: vi.fn(),
+    resourceAccessRefused: vi.fn(),
+    resourceStorageFailed: vi.fn(),
+    resourceListingFailed: vi.fn(),
+    resourceOpeningFailed: vi.fn(),
+    resourceChangeFailed: vi.fn(),
+    resourceFilesOrphaned: vi.fn(),
+    unopenedCountFailed: vi.fn(),
+  } satisfies ClientResourceIncidentsPort;
+  const removeClientResourceUseCase = new RemoveClientResourceUseCase({
+    clientResourcesPort: inMemoryClientResourcesAdapter,
+    clientReachPort: clients,
+    clientResourceStorePort: inMemoryResourceStoreAdapter,
+    clientResourceIncidentsPort: incidents,
+  });
+
+  return {
+    removeClientResourceUseCase,
+    inMemoryClientResourcesAdapter,
+    inMemoryResourceStoreAdapter,
+    incidents,
+    removals,
+  };
+}
+
+describe("RemoveClientResourceUseCase", () => {
+  it("removes the row before the files", async () => {
+    // arrange
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+      removals,
+    } = createUseCase();
+
+    // act
+    const result = await removeClientResourceUseCase.execute({
+      requester: COACH,
+      resourceId: "resource-1",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "removed" });
+    expect(removals).toEqual(["row resource-1", "files resource-1"]);
+    expect(inMemoryResourceStoreAdapter.remove).toHaveBeenCalledWith(OWNER);
+    expect(inMemoryClientResourcesAdapter.has("resource-1")).toBe(false);
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([]);
+    expect(incidents.resourceFilesOrphaned).not.toHaveBeenCalled();
+  });
+
+  it("answers removed and reports the orphaned files when they cannot be removed after the row", async () => {
+    // arrange
+    const failure = new Error("EACCES: permission denied");
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryResourceStoreAdapter.remove.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await removeClientResourceUseCase.execute({
+      requester: COACH,
+      resourceId: "resource-1",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "removed" });
+    expect(inMemoryClientResourcesAdapter.has("resource-1")).toBe(false);
+    expect(incidents.resourceFilesOrphaned).toHaveBeenCalledWith({
+      ...OWNER,
+      error: failure,
+    });
+  });
+
+  it("answers failed, leaves the files and reports the failed change when the row cannot be removed", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+      incidents,
+    } = createUseCase();
+    inMemoryClientResourcesAdapter.remove.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await removeClientResourceUseCase.execute({
+      requester: COACH,
+      resourceId: "resource-1",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "failed" });
+    expect(inMemoryResourceStoreAdapter.remove).not.toHaveBeenCalled();
+    expect(inMemoryResourceStoreAdapter.storedNames()).toEqual([
+      "original",
+      "page-1",
+      "thumbnail",
+    ]);
+    expect(incidents.resourceChangeFailed).toHaveBeenCalledWith({
+      ...OWNER,
+      error: failure,
+    });
+  });
+
+  it.each([
+    ["the client it is for", ANA],
+    [
+      "an account in neither the coach nor the client role",
+      ACCOUNT_WITHOUT_RESOURCE_ROLE,
+    ],
+  ])(
+    "finds nothing for %s and reports the refusal",
+    async (_case, requester) => {
+      // arrange
+      const {
+        removeClientResourceUseCase,
+        inMemoryClientResourcesAdapter,
+        inMemoryResourceStoreAdapter,
+        incidents,
+      } = createUseCase();
+
+      // act
+      const result = await removeClientResourceUseCase.execute({
+        requester,
+        resourceId: "resource-1",
+      });
+
+      // assert
+      expect(result).toEqual({ status: "not-found" });
+      expect(inMemoryClientResourcesAdapter.has("resource-1")).toBe(true);
+      expect(inMemoryResourceStoreAdapter.remove).not.toHaveBeenCalled();
+      expect(incidents.resourceAccessRefused).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("finds nothing to remove for an unknown resource", async () => {
+    // arrange
+    const {
+      removeClientResourceUseCase,
+      inMemoryClientResourcesAdapter,
+      inMemoryResourceStoreAdapter,
+    } = createUseCase();
+
+    // act
+    const result = await removeClientResourceUseCase.execute({
+      requester: COACH,
+      resourceId: "resource-404",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(inMemoryClientResourcesAdapter.remove).not.toHaveBeenCalled();
+    expect(inMemoryResourceStoreAdapter.remove).not.toHaveBeenCalled();
+  });
+});

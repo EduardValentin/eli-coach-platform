@@ -1,0 +1,27 @@
+import type {
+  ActionFunctionArgs,
+  ClientActionFunctionArgs,
+} from "react-router";
+
+import { fetcherOutcomeOf } from "~/shared/http";
+import {
+  handleHttpErrorResponse,
+  throwMethodNotAllowedResponse,
+} from "~/shared/http/index.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
+
+export async function action({ context, request }: ActionFunctionArgs) {
+  return handleHttpErrorResponse(() => {
+    if (request.method !== "POST") {
+      throwMethodNotAllowedResponse({
+        allowedMethods: ["POST"],
+      });
+    }
+
+    return context.get(waitlistContext).waitlistController.join(request);
+  });
+}
+
+export function clientAction({ serverAction }: ClientActionFunctionArgs) {
+  return fetcherOutcomeOf(serverAction);
+}

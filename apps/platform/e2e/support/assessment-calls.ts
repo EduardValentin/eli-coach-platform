@@ -1,4 +1,4 @@
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
+import { ASSESSMENT_CALL_RULES } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type pg from "pg";
 
 import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";
@@ -34,11 +34,12 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
     `,
   },
   {
-    rows: "client invitations",
+    rows: "account invitations",
     statement: `
-      delete from app.client_invitations
-      where client_id in (
-        select id from app.clients where assessment_call_id = any($1::uuid[])
+      delete from app.account_invitations
+      where id in (
+        select account_invitation_id from app.clients
+        where assessment_call_id = any($1::uuid[])
       )
     `,
   },
@@ -52,7 +53,20 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   clientOwnedRows("detail requests", "client_onboarding_detail_requests"),
   clientOwnedRows("onboarding reviews", "client_onboarding_reviews"),
   clientOwnedRows("client profiles", "client_profiles"),
-  clientOwnedRows("check-ins", "check_ins"),
+  {
+    rows: "check-ins",
+    statement: `
+      with removed as (
+        delete from app.check_ins
+        where client_id in (
+          select id from app.clients where assessment_call_id = any($1::uuid[])
+        )
+        returning reservation_id
+      )
+      delete from app.coach_time_reservations
+      where id in (select reservation_id from removed)
+    `,
+  },
   clientOwnedRows("weekly check-in series", "check_in_series"),
   {
     rows: "client notifications",
@@ -90,8 +104,13 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   {
     rows: "assessment calls",
     statement: `
-      delete from app.assessment_calls
-      where id = any($1::uuid[])
+      with removed as (
+        delete from app.assessment_calls
+        where id = any($1::uuid[])
+        returning reservation_id
+      )
+      delete from app.coach_time_reservations
+      where id in (select reservation_id from removed)
     `,
   },
 ];
@@ -112,10 +131,12 @@ const MOVE_CALL_TWO_HOURS_INTO_THE_PAST = `
   where id = $1
 `;
 const MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST = `
-  update app.coach_time_reservations
+  update app.coach_time_reservations reservation
   set starts_at = now() - interval '2 hours',
-      ends_at = now() - interval '2 hours' + (ends_at - starts_at)
-  where assessment_call_id = $1
+      ends_at = now() - interval '2 hours'
+        + (reservation.ends_at - reservation.starts_at)
+  from app.assessment_calls call
+  where call.reservation_id = reservation.id and call.id = $1
 `;
 
 type RowRemoval = { rows: string; statement: string };

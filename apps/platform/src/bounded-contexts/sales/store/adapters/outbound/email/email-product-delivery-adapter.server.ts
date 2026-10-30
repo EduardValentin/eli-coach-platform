@@ -1,0 +1,68 @@
+import { joinBasePath } from "~/shared/http/base-path";
+import type {
+  ProductDeliveryPort,
+  ProductDeliveryResult,
+} from "~/bounded-contexts/sales/store/domain/acquisition";
+import type { ProductEmailPort } from "~/shared/email/index.server";
+
+import { STORE_DOWNLOAD_PATH } from "~/bounded-contexts/sales/store/public/paths";
+
+import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
+
+type EmailProductDeliveryOptions = {
+  appBasePath: string;
+  contactEmail: string;
+  publicAppUrl: string;
+};
+
+export class EmailProductDeliveryAdapter implements ProductDeliveryPort {
+  readonly provider: string;
+
+  constructor(
+    private readonly productEmailPort: ProductEmailPort,
+    private readonly options: EmailProductDeliveryOptions,
+  ) {
+    this.provider = productEmailPort.provider;
+  }
+
+  createProviderIdempotencyKey(applicationIdempotencyKey: string): string {
+    return `store-acquisition-${applicationIdempotencyKey}`;
+  }
+
+  async deliver(
+    command: Parameters<ProductDeliveryPort["deliver"]>[0],
+  ): Promise<ProductDeliveryResult> {
+    const downloadUrl = new URL(
+      joinBasePath(this.options.appBasePath, STORE_DOWNLOAD_PATH),
+      this.options.publicAppUrl,
+    );
+    downloadUrl.hash = command.rawToken;
+    const content = createStoreDeliveryEmailContent({
+      contactEmail: this.options.contactEmail,
+      currentYear: command.requestedAt.getUTCFullYear(),
+      downloadUrl: downloadUrl.toString(),
+      resources: command.resources,
+    });
+    const delivery = await this.productEmailPort.send({
+      html: content.html,
+      idempotencyKey: command.idempotencyKey,
+      subject: content.subject,
+      text: content.text,
+      to: command.email,
+    });
+
+    if (delivery.kind === "sent") {
+      return {
+        kind: "delivered",
+        provider: this.provider,
+        providerMessageId: delivery.providerMessageId,
+      };
+    }
+
+    if (delivery.kind === "rejected") {
+      return { kind: "rejected", reason: delivery.reason };
+    }
+
+    return { kind: "unconfirmed" };
+  }
+}

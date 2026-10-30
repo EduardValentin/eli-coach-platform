@@ -2,11 +2,11 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { toast } from "@eli-coach-platform/ui/toast";
+import { toast } from "~/shared/design-system/toast";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import type { ComponentType } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -18,7 +18,7 @@ import {
 } from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import { COACH_PORTAL_ROUTE_SEGMENT } from "~/features/accounts/public/paths";
+import { COACH_PORTAL_ROUTE_SEGMENT } from "~/bounded-contexts/access/public/paths";
 
 import { ErrorBoundary, Layout, meta } from "./root";
 
@@ -165,10 +165,10 @@ function viewportContent() {
 }
 
 function readUiStylesheet() {
-  const stylesheetPath = createRequire(import.meta.url).resolve(
-    "@eli-coach-platform/ui/styles.css",
+  return readFileSync(
+    resolve(import.meta.dirname, "shared/design-system/styles.css"),
+    "utf8",
   );
-  return readFileSync(stylesheetPath, "utf8");
 }
 
 afterEach(() => {

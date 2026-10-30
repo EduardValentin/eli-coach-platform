@@ -1,0 +1,17 @@
+import type { ClientAvatarSnapshot } from "./client-avatar";
+import type { ClientAvatarsPort } from "./client-avatars-port";
+
+type ListClientAvatarsUseCaseOptions = {
+  clientAvatarsPort: Pick<ClientAvatarsPort, "findByClientIds">;
+};
+
+export class ListClientAvatarsUseCase {
+  constructor(private readonly options: ListClientAvatarsUseCaseOptions) {}
+
+  async execute(clientIds: readonly string[]): Promise<ClientAvatarSnapshot[]> {
+    const avatars =
+      await this.options.clientAvatarsPort.findByClientIds(clientIds);
+
+    return avatars.map((avatar) => avatar.toSnapshot());
+  }
+}

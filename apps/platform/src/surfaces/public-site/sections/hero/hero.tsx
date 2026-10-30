@@ -1,19 +1,19 @@
-import { joinBasePath } from "@eli-coach-platform/config";
-import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { joinBasePath } from "~/shared/http/base-path";
+import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
+import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { MotionConfig, motion, type Transition } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { buttonVariants } from "~/shared/design-system/primitives";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
-import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
-import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
+import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
-import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(

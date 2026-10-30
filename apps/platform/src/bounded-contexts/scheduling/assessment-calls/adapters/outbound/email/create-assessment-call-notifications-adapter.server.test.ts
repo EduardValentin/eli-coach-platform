@@ -1,0 +1,64 @@
+import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
+import { describe, expect, it } from "vitest";
+
+import { createAssessmentCallNotificationsAdapter } from "./create-assessment-call-notifications-adapter.server";
+import { EmailAssessmentCallNotificationsAdapter } from "./email-assessment-call-notifications-adapter.server";
+
+describe("createAssessmentCallNotificationsAdapter", () => {
+  it("returns the email assessment call notifications", () => {
+    // arrange
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+
+    // act
+    const assessmentCallNotificationsPort =
+      createAssessmentCallNotificationsAdapter(inMemoryProductEmailAdapter, {
+        appBasePath: "/",
+        coachEmail: "eli@evoa.fit",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://evoa.fit",
+      });
+
+    // assert
+    expect(assessmentCallNotificationsPort).toBeInstanceOf(
+      EmailAssessmentCallNotificationsAdapter,
+    );
+  });
+
+  it("sends both emails through the product email it was given", async () => {
+    // arrange
+    const inMemoryProductEmailAdapter = new InMemoryProductEmailAdapter();
+    const assessmentCallNotificationsPort =
+      createAssessmentCallNotificationsAdapter(inMemoryProductEmailAdapter, {
+        appBasePath: "/",
+        coachEmail: "eli@evoa.fit",
+        contactEmail: "contact@evoa.fit",
+        publicAppUrl: "https://evoa.fit",
+      });
+
+    // act
+    const result = await assessmentCallNotificationsPort.notifyBooked({
+      id: "ac-demo",
+      firstName: "Sofia",
+      lastName: "Marin",
+      fullName: "Sofia Marin",
+      visitorEmail: "sofia@example.com",
+      visitorNotes: null,
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: null,
+      startsAt: new Date("2026-03-02T15:00:00.000Z"),
+      endsAt: new Date("2026-03-02T15:30:00.000Z"),
+      visitorTimeZone: "Europe/Bucharest",
+      coachTimeZone: "Europe/Bucharest",
+      bookedAt: new Date("2026-02-20T09:41:07.000Z"),
+    });
+
+    // assert
+    expect(result).toEqual({ coach: "sent", visitor: "sent" });
+    expect(
+      inMemoryProductEmailAdapter.sent.map((command) => command.to),
+    ).toEqual(["sofia@example.com", "eli@evoa.fit"]);
+  });
+});

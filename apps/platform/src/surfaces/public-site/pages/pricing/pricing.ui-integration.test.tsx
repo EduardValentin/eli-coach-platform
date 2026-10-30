@@ -1,0 +1,333 @@
+// @vitest-environment happy-dom
+
+import "@testing-library/jest-dom/vitest";
+
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-settings";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
+
+import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+
+import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
+import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
+
+import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
+import PricingRoute from "./pricing";
+import {
+  WAITLIST_API_PATH,
+  WAITLIST_API_URL,
+} from "~/bounded-contexts/sales/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
+
+const STATIC_BOT_DETECTION = {
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
+
+const activeOffer = {
+  campaignSlug: "all-bundles-launch-1",
+  plan: "all-bundles",
+} as const;
+
+const STATIC_CONTEXT = {
+  botDetection: STATIC_BOT_DETECTION,
+  waitlist: presentWaitlist({
+    availability: "available",
+    enabled: true,
+    offer: activeOffer,
+  }),
+} satisfies PublicOutletContext;
+
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
+afterEach(() => {
+  cleanup();
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+
+function pricingPageFor(context: PublicOutletContext) {
+  const tier = context.waitlist.showsBundleOffer ? "reduced" : "regular";
+
+  return {
+    cards: presentBundleCards(COACHING_BUNDLES, tier),
+    pricing: context.waitlist.showsBundleOffer ? "waitlist" : "regular",
+  } as const;
+}
+
+function renderPricingRoute(context: PublicOutletContext) {
+  const pricingPage = pricingPageFor(context);
+  const router = createMemoryRouter(
+    [
+      {
+        children: [
+          {
+            element: <PricingRoute />,
+            id: "pricing",
+            loader: () => pricingPage,
+            path: "pricing",
+          },
+          {
+            element: <div data-testid="route-transition" />,
+            path: "route-transition",
+          },
+        ],
+        element: <Outlet context={context} />,
+        path: "/",
+      },
+      {
+        action: async ({ request }) => fetch(request),
+        path: WAITLIST_API_PATH,
+      },
+    ],
+    {
+      hydrationData: { loaderData: { pricing: pricingPage } },
+      initialEntries: ["/pricing"],
+    },
+  );
+
+  return {
+    router,
+    ...render(<RouterProvider router={router} />),
+  };
+}
+
+function getPricingEmailInput() {
+  return screen.getByRole("textbox", { name: /\S/ });
+}
+
+function getPricingSubmitButton() {
+  const form = getPricingEmailInput().closest("form");
+
+  if (!form) {
+    throw new Error("Expected the pricing email input to belong to a form.");
+  }
+
+  return within(form).getByRole("button", { name: /\S/ });
+}
+
+function getBundlePriceAnnouncements() {
+  return screen
+    .getAllByRole("article")
+    .map((bundleCard) =>
+      Array.from(bundleCard.querySelectorAll<HTMLElement>("[aria-label]")),
+    );
+}
+
+describe("PricingRoute", () => {
+  it("renders named bundle choices with waitlist signup controls", () => {
+    // arrange
+    // act
+    renderPricingRoute(STATIC_CONTEXT);
+
+    // assert
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(2);
+    const bundleCards = screen.getAllByRole("article");
+
+    expect(bundleCards).toHaveLength(3);
+    for (const bundleCard of bundleCards) {
+      expect(
+        within(bundleCard).getByRole("heading", { level: 3, name: /\S/ }),
+      ).toBeInTheDocument();
+    }
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getPricingEmailInput()).toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeDisabled();
+    expect(
+      screen
+        .queryAllByRole("link", { name: /\S/ })
+        .find((link) => link.getAttribute("href") === BOOK_PATH),
+    ).toBeUndefined();
+  });
+
+  it.each(["available", "limited"] as const)(
+    "selects reduced pricing when availability is %s",
+    (availability) => {
+      // arrange
+      const context = {
+        ...STATIC_CONTEXT,
+        waitlist: presentWaitlist({
+          availability,
+          enabled: true,
+          offer: activeOffer,
+        }),
+      } satisfies PublicOutletContext;
+
+      // act
+      renderPricingRoute(context);
+
+      // assert
+      for (const announcements of getBundlePriceAnnouncements()) {
+        expect(announcements.length).toBeGreaterThan(1);
+        for (const announcement of announcements) {
+          expect(announcement).toHaveAccessibleName(/\S/);
+        }
+      }
+    },
+  );
+
+  it("keeps normal price presentation and a usable form when availability is unavailable", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const context = {
+      ...STATIC_CONTEXT,
+      waitlist: presentWaitlist({
+        availability: null,
+        enabled: true,
+        offer: activeOffer,
+      }),
+    } satisfies PublicOutletContext;
+
+    renderPricingRoute(context);
+
+    // act
+    await user.type(getPricingEmailInput(), "eli@example.com");
+
+    // assert
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeEnabled();
+    for (const announcements of getBundlePriceAnnouncements()) {
+      expect(announcements).toHaveLength(1);
+      expect(announcements[0]).toHaveAccessibleName(/\S/);
+    }
+  });
+
+  it("renders normal pricing with the assessment booking link", () => {
+    // arrange
+    const context = {
+      ...STATIC_CONTEXT,
+      waitlist: presentWaitlist({
+        availability: "available",
+        enabled: false,
+        offer: activeOffer,
+      }),
+    } satisfies PublicOutletContext;
+
+    // act
+    renderPricingRoute(context);
+
+    // assert
+    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute(
+      "href",
+      BOOK_PATH,
+    );
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("renders exactly one h1", () => {
+    // arrange
+    const context = STATIC_CONTEXT;
+
+    // act
+    renderPricingRoute(context);
+
+    // assert
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
+  });
+
+  it("keeps the closed form usable", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const context = {
+      ...STATIC_CONTEXT,
+      waitlist: presentWaitlist({
+        availability: "closed",
+        enabled: true,
+        offer: activeOffer,
+      }),
+    } satisfies PublicOutletContext;
+
+    // act
+    renderPricingRoute(context);
+    await user.type(getPricingEmailInput(), "eli@example.com");
+
+    // assert
+    expect(getPricingSubmitButton()).toBeEnabled();
+    for (const announcements of getBundlePriceAnnouncements()) {
+      expect(announcements).toHaveLength(1);
+      expect(announcements[0]).toHaveAccessibleName(/\S/);
+    }
+  });
+
+  it("submits through the waitlist API without an availability request and keeps availability across navigation", async () => {
+    // arrange
+    const user = userEvent.setup();
+    let submittedEmail: FormDataEntryValue | null = null;
+    let submittedToken: FormDataEntryValue | null = null;
+    server.use(
+      http.post(WAITLIST_API_URL, async ({ request }) => {
+        const formData = await request.formData();
+
+        submittedEmail = formData.get("email");
+        submittedToken = formData.get("cf-turnstile-response");
+
+        return HttpResponse.json(
+          {
+            success: true,
+          },
+          { status: 201 },
+        );
+      }),
+    );
+
+    const { router } = renderPricingRoute(STATIC_CONTEXT);
+
+    // act
+    await user.type(getPricingEmailInput(), "eli@example.com");
+    await waitFor(() => {
+      const botDetectionResponse = screen.getByTestId(
+        "bot-detection-response",
+      ) as HTMLInputElement;
+
+      if (botDetectionResponse.value !== TURNSTILE_TEST_RESPONSE_TOKEN) {
+        throw new Error("Expected bot detection token to be ready.");
+      }
+    });
+    await user.click(getPricingSubmitButton());
+
+    await waitFor(() => {
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    });
+    await router.navigate("/route-transition");
+    await screen.findByTestId("route-transition");
+    expect(router.state.location.pathname).toBe("/route-transition");
+    await router.navigate("/pricing");
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    });
+
+    // assert
+    expect(submittedEmail).toBe("eli@example.com");
+    expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeDisabled();
+  });
+});

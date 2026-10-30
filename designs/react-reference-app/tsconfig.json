@@ -16,7 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "paths": {
-      "@content/*": ["../../packages/content/src/*"]
+      "~/*": ["../../apps/platform/src/*"]
     }
   },
   "include": ["src", "vite.config.ts", "vitest.config.ts"]

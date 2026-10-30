@@ -1,4 +1,4 @@
-import { requiredName } from "@eli-coach-platform/test-support";
+import { requiredName } from "~test-support/index";
 
 import type { ClientOnboarding } from "../support/client-onboarding";
 import { expect, test } from "../support/fixtures";

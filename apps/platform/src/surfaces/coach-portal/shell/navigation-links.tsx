@@ -1,4 +1,4 @@
-import type { PortalNavigationLink } from "@eli-coach-platform/ui/layout";
+import type { PortalNavigationLink } from "~/shared/design-system/layout";
 import {
   Activity,
   CalendarDays,
@@ -9,13 +9,15 @@ import {
   Video,
 } from "lucide-react";
 
-import { COACH_PORTAL_PATH } from "~/features/accounts/public/paths";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
-import { COACH_CHECK_INS_PATH } from "~/features/check-ins/public/paths";
-import { COACH_CLIENTS_PATH } from "~/features/clients/public/paths";
-import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
-import { COACH_TRAINING_PATH } from "~/features/exercise-library/public/paths";
-import { COACH_NUTRITION_PATH } from "~/features/nutrition-library/public/paths";
+import { COACH_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
+import {
+  COACH_ASSESSMENT_CALLS_PATH,
+  COACH_SETTINGS_PATH,
+} from "~/bounded-contexts/scheduling/public/paths";
+import { COACH_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
+import { COACH_CLIENTS_PATH } from "~/bounded-contexts/clients/clients/public/paths";
+import { COACH_TRAINING_PATH } from "~/bounded-contexts/programs/exercise-library/public/paths";
+import { COACH_NUTRITION_PATH } from "~/bounded-contexts/programs/nutrition-library/public/paths";
 
 export type CoachNavigationCounts = {
   checkInsAwaiting: number;

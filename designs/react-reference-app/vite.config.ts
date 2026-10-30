@@ -15,7 +15,7 @@ export default defineConfig({
     alias: {
       // Production-owned legal content; the prototype renders the same
       // documents so legal copy never drifts between the two apps.
-      '@content': path.resolve(__dirname, '../../packages/content/src'),
+      '~': path.resolve(__dirname, '../../apps/platform/src'),
     },
   },
 

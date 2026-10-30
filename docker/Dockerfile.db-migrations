@@ -32,7 +32,7 @@ EOF
 RUN pnpm install --prod --frozen-lockfile=false
 
 COPY apps/platform/db/drizzle ./db/drizzle
-COPY packages/db/sql ./sql
+COPY apps/platform/db/sql ./sql
 COPY apps/platform/db/drizzle.config.ts ./drizzle.config.ts
 COPY apps/platform/db/seeds ./db/seeds
 COPY apps/platform/db/apply-seeds.ts ./db/apply-seeds.ts

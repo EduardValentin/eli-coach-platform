@@ -2,29 +2,31 @@ import type {
   ClientJourneySnapshot,
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
-} from "@eli-coach-platform/domain/client-journey";
+} from "~/bounded-contexts/clients/clients/domain/client-journey";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
-import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
-import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
-import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import { ClientJourneyController } from "~/features/clients/api/client/client-journey-controller.server";
-import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
-import { clientJourneyContext } from "~/features/clients/server/guards/client-journey-context.server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
-import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
-import type { NotificationsFeature } from "~/features/notifications/server/notifications-composition.server";
+import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
+import {
+  checkInsContext,
+  type CheckInsFeature,
+  clientJourneyContext,
+  clientProfileContext,
+  type ClientProfileFeature,
+  clientResourcesContext,
+  type ClientResourcesFeature,
+  clientsContext,
+  type ClientsFeature,
+  notificationsContext,
+  type NotificationsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
+import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
 import {
   contextEntry,
   createRequestArgs,
   type ContextEntry,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./layout";
 
@@ -256,27 +258,27 @@ function shellArguments(
     loadBell = vi.fn().mockResolvedValue(EMPTY_BELL),
     loadNextCheckIn = vi.fn().mockResolvedValue(null),
   } = reads;
-  const clientJourney = new ClientJourneyController({
-    markWelcomeSeen: {} as MarkWelcomeSeenUseCase,
-    readClientJourney: {} as ReadClientJourneyUseCase,
+  const clientJourneyController = new ClientJourneyController({
+    markWelcomeSeenUseCase: {} as MarkWelcomeSeenUseCase,
+    readClientJourneyUseCase: {} as ReadClientJourneyUseCase,
   });
 
   return createRequestArgs({
     contexts: [
       contextEntry(clientsContext, {
-        clientJourney,
+        clientJourneyController,
       } as unknown as ClientsFeature),
       contextEntry(clientProfileContext, {
-        ownAvatar: { url: avatarUrl },
+        ownClientAvatarController: { url: avatarUrl },
       } as unknown as ClientProfileFeature),
       contextEntry(clientResourcesContext, {
-        ownResources: { countUnopened },
+        ownResourcesController: { countUnopened },
       } as unknown as ClientResourcesFeature),
       contextEntry(checkInsContext, {
-        clientCheckIns: { loadAwaitingCount, loadNextCheckIn },
+        clientCheckInsController: { loadAwaitingCount, loadNextCheckIn },
       } as unknown as CheckInsFeature),
       contextEntry(notificationsContext, {
-        notificationBell: { loadBell },
+        notificationBellController: { loadBell },
       } as unknown as NotificationsFeature),
       ...journeyEntries,
     ],

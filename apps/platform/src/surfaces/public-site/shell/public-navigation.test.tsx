@@ -28,7 +28,7 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
+import { AuthNavActions } from "~/bounded-contexts/access/accounts/ui/public/auth-nav-actions";
 
 import { PublicNavigation } from "./public-navigation";
 

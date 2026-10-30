@@ -1,0 +1,590 @@
+import { describe, expect, it, vi } from "vitest";
+
+import type { ClientReachPort, ClientReachReading } from "../client-reach-port";
+import type { MeasurementEntry, MeasurementIdsPort } from "../measurement";
+import { ClientProfile } from "./client-profile";
+import type { ClientProfilesPort } from "./client-profiles-port";
+import type { ClientMeasurementRecordsPort } from "./client-measurement-records-port";
+import type { MeasurementIncidentsPort } from "./measurement-incidents-port";
+import { ProgressPhoto, type ProgressPhotoView } from "./progress-photo";
+import type {
+  ProgressPhotoRendition,
+  ProgressPhotoRenditionsPort,
+} from "./progress-photo-renditions-port";
+import type { ProgressPhotoReference } from "./progress-photo-reference";
+import type {
+  ProgressPhotoOwner,
+  ProgressPhotoStorePort,
+} from "./progress-photo-store-port";
+import type { ProgressPhotosPort } from "./progress-photos-port";
+import type { ProgressPhotoIdsPort } from "./progress-photo-ids-port";
+import { RecordMeasurementsUseCase } from "./record-measurements-use-case";
+
+const NOW = new Date("2026-10-01T08:00:00.000Z");
+const CONSENTED_AT = new Date("2026-09-20T08:00:00.000Z");
+const VALUES = { weightKg: 67.5, waistCm: 71, hipsCm: 97 };
+const RENDERED_BYTES = new Uint8Array([9, 9, 9]);
+
+type ProfileConsent = "consented" | "not-consented" | "no-profile";
+
+function profileWith(consent: ProfileConsent): ClientProfile | null {
+  if (consent === "no-profile") return null;
+
+  return ClientProfile.reconstitute({
+    clientId: "client-1",
+    coaching: null,
+    coachNotes: null,
+    coachingSeededAt: null,
+    progressPhotosConsentedAt: consent === "consented" ? CONSENTED_AT : null,
+    createdAt: CONSENTED_AT,
+    updatedAt: CONSENTED_AT,
+  });
+}
+
+class InMemoryProgressPhotoStoreAdapter implements ProgressPhotoStorePort {
+  readonly files = new Map<string, Uint8Array>();
+
+  async store(
+    owner: ProgressPhotoOwner,
+    bytes: Uint8Array,
+  ): Promise<ProgressPhotoReference> {
+    const storageKey = `${owner.clientId}/${owner.entryId}/${owner.photoId}.bin`;
+    this.files.set(storageKey, bytes);
+
+    return { storageKey, keyId: "memory" };
+  }
+
+  async open(reference: ProgressPhotoReference): Promise<Uint8Array | null> {
+    return this.files.get(reference.storageKey) ?? null;
+  }
+
+  async delete(reference: ProgressPhotoReference): Promise<void> {
+    this.files.delete(reference.storageKey);
+  }
+}
+
+class InMemoryProgressPhotosAdapter implements ProgressPhotosPort {
+  readonly rows = new Map<string, ProgressPhoto>();
+
+  async add(photo: ProgressPhoto): Promise<void> {
+    this.rows.set(photo.toSnapshot().id, photo);
+  }
+
+  async findById(photoId: string): Promise<ProgressPhoto | null> {
+    return this.rows.get(photoId) ?? null;
+  }
+
+  async delete(photoId: string): Promise<void> {
+    this.rows.delete(photoId);
+  }
+}
+
+function createPorts(
+  options: {
+    consent?: ProfileConsent;
+    client?: ClientReachReading | null;
+    rendition?: ProgressPhotoRendition;
+  } = {},
+) {
+  let photoNumber = 0;
+  const entries: MeasurementEntry[] = [];
+
+  return {
+    clientReachPort: {
+      findByAuthSubjectId: vi
+        .fn()
+        .mockResolvedValue(
+          options.client === undefined ? reachOf("reachable") : options.client,
+        ),
+    } satisfies Pick<ClientReachPort, "findByAuthSubjectId">,
+    clientProfilesPort: {
+      findByClientId: vi
+        .fn()
+        .mockResolvedValue(profileWith(options.consent ?? "consented")),
+      recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
+    } satisfies Pick<
+      ClientProfilesPort,
+      "findByClientId" | "recordPhotoConsent"
+    >,
+    clientMeasurementRecordsPort: {
+      entries,
+      listByClientId: vi.fn().mockResolvedValue([]),
+      record: vi.fn(async ({ entry }: { entry: MeasurementEntry }) => {
+        entries.push(entry);
+      }),
+    } satisfies ClientMeasurementRecordsPort & { entries: MeasurementEntry[] },
+    measurementIdsPort: {
+      generate: () => "entry-1",
+    } satisfies MeasurementIdsPort,
+    progressPhotosPort: new InMemoryProgressPhotosAdapter(),
+    progressPhotoIdsPort: {
+      generate: () => `photo-${++photoNumber}`,
+    } satisfies ProgressPhotoIdsPort,
+    progressPhotoStorePort: new InMemoryProgressPhotoStoreAdapter(),
+    progressPhotoRenditionsPort: {
+      render: vi.fn().mockResolvedValue(
+        options.rendition ?? {
+          status: "rendered",
+          bytes: RENDERED_BYTES,
+          mimeType: "image/jpeg",
+        },
+      ),
+    } satisfies ProgressPhotoRenditionsPort,
+    clockPort: { now: () => NOW },
+    measurementIncidentsPort: {
+      measurementEntrySaved: vi.fn(),
+      progressPhotoStored: vi.fn(),
+      progressPhotoRefused: vi.fn(),
+      progressPhotoDeleted: vi.fn(),
+      progressPhotoAccessRefused: vi.fn(),
+    } satisfies MeasurementIncidentsPort,
+  };
+}
+
+function reachOf(portal: ClientReachReading["portal"]): ClientReachReading {
+  return {
+    clientId: "client-1",
+    portal,
+    coachingEndsAt: null,
+    programStartsAt: null,
+    paidThrough: null,
+    timeZone: "Europe/Bucharest",
+  };
+}
+
+function receivedPhoto(
+  view: ProgressPhotoView,
+  overrides: { mimeType?: string; sizeBytes?: number } = {},
+) {
+  return {
+    view,
+    mimeType: overrides.mimeType ?? "image/jpeg",
+    sizeBytes: overrides.sizeBytes ?? 2_000,
+    bytes: new Uint8Array([1, 2, 3]),
+  };
+}
+
+describe("RecordMeasurementsUseCase", () => {
+  it("records a new entry under a fresh id, dated now with the readings she gave", async () => {
+    // arrange
+    const ports = createPorts();
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: {},
+    });
+    expect(ports.clientReachPort.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_ana",
+    );
+    expect(ports.clientMeasurementRecordsPort.record).toHaveBeenCalledWith({
+      clientId: "client-1",
+      entryId: "entry-1",
+      entry: {
+        recordedAt: NOW,
+        weightKg: 67.5,
+        waistCm: 71,
+        hipsCm: 97,
+      },
+    });
+    expect(
+      ports.measurementIncidentsPort.measurementEntrySaved,
+    ).toHaveBeenCalledWith({
+      clientId: "client-1",
+      entryId: "entry-1",
+    });
+  });
+
+  it("records nothing for a subject bound to no client", async () => {
+    // arrange
+    const ports = createPorts({ client: null });
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_stranger",
+      values: VALUES,
+      consentGiven: true,
+      photos: [receivedPhoto("front")],
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-on-journey" });
+    expect(ports.clientMeasurementRecordsPort.record).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client whose portal access has ended, before reading her entry", async () => {
+    // arrange
+    const ports = createPorts({ client: reachOf("ended") });
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: { weightKg: 500 },
+      consentGiven: true,
+      photos: [receivedPhoto("front")],
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(ports.clientMeasurementRecordsPort.record).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
+  });
+
+  it("records the entry of a client still awaiting her onboarding", async () => {
+    // arrange
+    const ports = createPorts({ client: reachOf("awaiting_onboarding") });
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: {},
+    });
+  });
+
+  it.each([
+    ["without a waist", { weightKg: 67.5 }],
+    ["with a weight out of range", { weightKg: 500, waistCm: 71 }],
+  ])("records nothing %s", async (_case, values) => {
+    // arrange
+    const ports = createPorts();
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values,
+      consentGiven: true,
+      photos: [receivedPhoto("front")],
+    });
+
+    // assert
+    expect(result).toEqual({ status: "invalid" });
+    expect(ports.clientMeasurementRecordsPort.record).not.toHaveBeenCalled();
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
+  });
+
+  it("stores each accepted photo's rendition against her entry", async () => {
+    // arrange
+    const ports = createPorts();
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [receivedPhoto("front"), receivedPhoto("back")],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { front: "stored", back: "stored" },
+    });
+    expect(
+      [...ports.progressPhotosPort.rows.values()].map((photo) =>
+        photo.toSnapshot(),
+      ),
+    ).toEqual([
+      {
+        id: "photo-1",
+        entryId: "entry-1",
+        clientId: "client-1",
+        view: "front",
+        reference: {
+          storageKey: "client-1/entry-1/photo-1.bin",
+          keyId: "memory",
+        },
+        mimeType: "image/jpeg",
+        sizeBytes: 3,
+        createdAt: NOW,
+      },
+      {
+        id: "photo-2",
+        entryId: "entry-1",
+        clientId: "client-1",
+        view: "back",
+        reference: {
+          storageKey: "client-1/entry-1/photo-2.bin",
+          keyId: "memory",
+        },
+        mimeType: "image/jpeg",
+        sizeBytes: 3,
+        createdAt: NOW,
+      },
+    ]);
+    expect(
+      ports.progressPhotoStorePort.files.get("client-1/entry-1/photo-1.bin"),
+    ).toBe(RENDERED_BYTES);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoStored,
+    ).toHaveBeenCalledWith({
+      clientId: "client-1",
+      entryId: "entry-1",
+      view: "front",
+      receivedBytes: 2_000,
+      storedBytes: 3,
+    });
+    expect(
+      ports.clientMeasurementRecordsPort.record.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      ports.progressPhotoRenditionsPort.render.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("records her consent from the sheet before it stores her first photos", async () => {
+    // arrange
+    const ports = createPorts({ consent: "not-consented" });
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: true,
+      photos: [receivedPhoto("side")],
+    });
+
+    // assert
+    expect(ports.clientProfilesPort.recordPhotoConsent).toHaveBeenCalledWith(
+      "client-1",
+      NOW,
+    );
+    expect(
+      ports.clientProfilesPort.recordPhotoConsent.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      ports.progressPhotoRenditionsPort.render.mock.invocationCallOrder[0],
+    );
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { side: "stored" },
+    });
+  });
+
+  it("keeps the date she first agreed when she has already consented", async () => {
+    // arrange
+    const ports = createPorts({ consent: "consented" });
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: true,
+      photos: [],
+    });
+
+    // assert
+    expect(ports.clientProfilesPort.recordPhotoConsent).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["she has not consented", "not-consented"],
+    ["she has no profile yet", "no-profile"],
+  ] as const)(
+    "refuses photos while %s, and keeps the entry",
+    async (_case, consent) => {
+      // arrange
+      const ports = createPorts({ consent });
+      const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+      // act
+      const result = await recordMeasurementsUseCase.execute({
+        authSubjectId: "user_ana",
+        values: VALUES,
+        consentGiven: false,
+        photos: [receivedPhoto("front")],
+      });
+
+      // assert
+      expect(result).toEqual({
+        status: "recorded",
+        entryId: "entry-1",
+        photos: { front: "refused" },
+      });
+      expect(ports.progressPhotoRenditionsPort.render).not.toHaveBeenCalled();
+      expect(ports.progressPhotoStorePort.files.size).toBe(0);
+      expect(
+        ports.measurementIncidentsPort.progressPhotoRefused,
+      ).toHaveBeenCalledWith({
+        clientId: "client-1",
+        entryId: "entry-1",
+        view: "front",
+        receivedBytes: 2_000,
+        reason: "consent-missing",
+      });
+    },
+  );
+
+  it.each([
+    ["a HEIC photo", { mimeType: "image/heic" }],
+    ["a photo over 10 MiB", { sizeBytes: 10 * 1024 * 1024 + 1 }],
+  ])("refuses %s without rendering it", async (_case, overrides) => {
+    // arrange
+    const ports = createPorts();
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [receivedPhoto("front", overrides), receivedPhoto("side")],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { front: "refused", side: "stored" },
+    });
+    expect(ports.progressPhotoRenditionsPort.render).toHaveBeenCalledTimes(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "front", reason: "not-accepted" }),
+    );
+  });
+
+  it("refuses a photo the renditions cannot process, and keeps the entry", async () => {
+    // arrange
+    const ports = createPorts({ rendition: { status: "refused" } });
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [receivedPhoto("back")],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { back: "refused" },
+    });
+    expect(ports.progressPhotoStorePort.files.size).toBe(0);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "back", reason: "rendition-refused" }),
+    );
+  });
+
+  it("answers refused rather than throwing when rendering throws", async () => {
+    // arrange
+    const ports = createPorts();
+    ports.progressPhotoRenditionsPort.render.mockRejectedValueOnce(
+      new Error("decoder crashed"),
+    );
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [receivedPhoto("front")],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { front: "refused" },
+    });
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "front", reason: "rendition-refused" }),
+    );
+  });
+
+  it("answers refused and goes on with the next photo when the store throws", async () => {
+    // arrange
+    const ports = createPorts();
+    vi.spyOn(ports.progressPhotoStorePort, "store").mockRejectedValueOnce(
+      new Error("disk full"),
+    );
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [receivedPhoto("front"), receivedPhoto("side")],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { front: "refused", side: "stored" },
+    });
+    expect(ports.progressPhotosPort.rows.size).toBe(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "front", reason: "storage-failed" }),
+    );
+  });
+
+  it("answers refused when the photo record fails after its file is stored, leaving no record without a file", async () => {
+    // arrange
+    const ports = createPorts();
+    vi.spyOn(ports.progressPhotosPort, "add").mockRejectedValueOnce(
+      new Error("connection lost"),
+    );
+    const recordMeasurementsUseCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await recordMeasurementsUseCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [receivedPhoto("front")],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: { front: "refused" },
+    });
+    expect(ports.progressPhotosPort.rows.size).toBe(0);
+    expect(ports.clientMeasurementRecordsPort.entries).toHaveLength(1);
+    expect(
+      ports.measurementIncidentsPort.progressPhotoRefused,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "front", reason: "storage-failed" }),
+    );
+  });
+});

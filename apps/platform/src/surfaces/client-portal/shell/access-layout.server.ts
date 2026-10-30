@@ -1,14 +1,24 @@
-import type { MiddlewareFunction } from "react-router";
+import { redirect, type MiddlewareFunction } from "react-router";
 
-import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
-import { requireClientPortalStanding } from "~/features/clients/server/guards/require-client-portal-standing.server";
+import { clientPortalRedirect } from "~/bounded-contexts/clients/clients/public/client-journey";
+import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/request-context";
+import { accessContext } from "~/bounded-contexts/access/public/session";
 
 // Middleware, not a loader: React Router runs matched loaders in parallel, so
 // only middleware stops every page below it from loading for a refused visitor.
 export const middleware: MiddlewareFunction<Response>[] = [
   async (args, next) => {
-    requirePortalAccess(args, { role: "CLIENT" });
-    await requireClientPortalStanding(args);
+    const access = args.context.get(accessContext);
+    access.requirePortalAccess("CLIENT");
+    const redirectTo = clientPortalRedirect({
+      standing: args.context.get(clientPortalStandingContext),
+      url: args.url,
+      appBasePath: access.portal.appBasePath,
+    });
+
+    if (redirectTo) {
+      throw redirect(redirectTo);
+    }
 
     return next();
   },

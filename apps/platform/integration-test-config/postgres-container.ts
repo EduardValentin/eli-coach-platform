@@ -16,11 +16,11 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const rootDirectory = resolve(currentDirectory, "../../..");
 const bootstrapInitScriptPath = resolve(
   rootDirectory,
-  "packages/db/scripts/docker-init-bootstrap.sh",
+  "apps/platform/db/scripts/docker-init-bootstrap.sh",
 );
 const bootstrapSqlPath = resolve(
   rootDirectory,
-  "packages/db/sql/bootstrap.sql",
+  "apps/platform/db/sql/bootstrap.sql",
 );
 
 export class PostgresContainer extends BaseTestContainer {

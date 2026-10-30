@@ -9,7 +9,7 @@ export default defineConfig({
     // Must mirror vite.config.ts: this config replaces it for test runs, and
     // tsconfig's paths would otherwise bless an import vitest cannot resolve.
     alias: {
-      '@content': path.resolve(__dirname, '../../packages/content/src'),
+      '~': path.resolve(__dirname, '../../apps/platform/src'),
     },
   },
   test: {

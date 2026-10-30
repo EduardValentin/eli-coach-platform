@@ -1,8 +1,8 @@
 import { ClerkProvider } from "@clerk/react-router";
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import dmSansLatinFontUrl from "@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2?url";
 import playfairDisplayLatinFontUrl from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
-import { Toaster } from "@eli-coach-platform/ui/toast";
+import { Toaster } from "~/shared/design-system/toast";
 import { MotionConfig } from "motion/react";
 import "~/app.css";
 import type { PropsWithChildren } from "react";
@@ -26,11 +26,12 @@ import {
   isPortalRouteHandle,
   portalForPathname,
   type PortalRouteSegment,
-} from "~/features/accounts/public/paths";
+} from "~/bounded-contexts/access/public/paths";
 import {
   AccessDeniedPage,
   resolveAccessDeniedRecovery,
-} from "~/features/accounts/ui/shared/access-denied-page";
+} from "~/bounded-contexts/access/accounts/ui/shared/access-denied-page";
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 
 import { RootErrorPage } from "./root-error-page";
 import type { loader } from "./root.server";
@@ -160,7 +161,10 @@ export function ErrorBoundary() {
   // guard wrote.
   if (isRouteErrorResponse(error) && error.status === 403) {
     return (
-      <AccessDeniedPage recovery={resolveAccessDeniedRecovery(error.data)} />
+      <AccessDeniedPage
+        continuePath={STORE_PATH}
+        recovery={resolveAccessDeniedRecovery(error.data)}
+      />
     );
   }
 

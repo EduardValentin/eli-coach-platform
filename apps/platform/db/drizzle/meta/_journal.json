@@ -393,6 +393,41 @@
       "when": 1792835711931,
       "tag": "0059_client_profile_and_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793136743789,
+      "tag": "0060_appointments_reference_their_reservation",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1793140789064,
+      "tag": "0061_access_owns_account_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1793172267217,
+      "tag": "0062_one_accepted_invitation_per_subject",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793185272063,
+      "tag": "0063_invitations_admit_clients_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1793268953341,
+      "tag": "0064_access_owns_the_invitation",
+      "breakpoints": true
     }
   ]
 }

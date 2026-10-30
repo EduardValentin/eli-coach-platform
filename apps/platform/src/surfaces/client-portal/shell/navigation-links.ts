@@ -1,4 +1,4 @@
-import type { PortalNavigationLink } from "@eli-coach-platform/ui/layout";
+import type { PortalNavigationLink } from "~/shared/design-system/layout";
 import {
   Activity,
   CalendarCheck,
@@ -7,11 +7,11 @@ import {
   UserCircle,
 } from "lucide-react";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
-import { CLIENT_CHECK_INS_PATH } from "~/features/check-ins/public/paths";
-import { CLIENT_PROFILE_PATH } from "~/features/client-profile/public/paths";
-import { CLIENT_RESOURCES_PATH } from "~/features/client-resources/public/paths";
-import { CLIENT_SETTINGS_PATH } from "~/features/coaching-sales/public/paths";
+import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
+import { CLIENT_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
+import { CLIENT_PROFILE_PATH } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { CLIENT_RESOURCES_PATH } from "~/bounded-contexts/clients/client-resources/public/paths";
+import { CLIENT_SETTINGS_PATH } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 
 const DASHBOARD_LINK: PortalNavigationLink = {
   href: CLIENT_PORTAL_PATH,

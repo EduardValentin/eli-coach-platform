@@ -1,0 +1,194 @@
+import { describe, expect, it, vi } from "vitest";
+
+import type {
+  ClientResourceView,
+  CoachResourceListing,
+} from "~/bounded-contexts/clients/client-resources/public/client-resources";
+import {
+  clientResourcesContext,
+  type ClientResourcesFeature,
+  clientsContext,
+  type ClientsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
+import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/composition-root/test-support/request-args";
+
+import { loader, meta } from "./client-resources";
+
+const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
+
+const CLIENT: CoachClient = {
+  clientId: CLIENT_ID,
+  email: "andreea@example.com",
+  firstName: "Andreea",
+  invitation: null,
+  lastName: "Popescu",
+  needsRefund: false,
+  coachingCancelledOrEnded: false,
+  assessmentCall: {
+    startsAt: "2026-09-18T12:00:00.000Z",
+    firstName: "Andreea",
+    lastName: "Popescu",
+    email: "andreea@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: null,
+    primaryGoal: "build_strength",
+    notes: null,
+  },
+  gender: "female",
+  status: "awaiting-review",
+};
+
+const RESOURCES: ClientResourceView[] = [
+  {
+    id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    title: "Glute activation warm-up",
+    description: "Run through this before every lower-body session.",
+    tags: [],
+    file: {
+      originalName: "glute-activation-warm-up.pdf",
+      downloadName: "glute-activation-warm-up.pdf",
+      kind: "pdf",
+      sizeBytes: 1_840_000,
+      pageCount: 6,
+    },
+    addedAt: "2026-10-03T09:00:00.000Z",
+    openedAt: null,
+  },
+];
+
+const LISTING: CoachResourceListing = {
+  status: "ready",
+  resources: RESOURCES,
+  tagOptions: [{ tag: "Warm-ups", count: 1 }],
+  browse: { tag: "Warm-ups", search: "glute", sort: "title", direction: "asc" },
+  searched: 1,
+  total: 4,
+  vocabulary: ["Meals", "Warm-ups"],
+};
+
+const NARROWED_URL = `http://localhost/coach/clients/${CLIENT_ID}/resources?tag=Warm-ups&q=glute&sort=title`;
+
+describe("coach client resources page loader", () => {
+  it("reads her record and her resources as the address narrows them, side by side", async () => {
+    // arrange
+    const { args, loadClient, loadResources } = routeArguments({
+      url: NARROWED_URL,
+    });
+
+    // act
+    const loaded = await loader(args);
+
+    // assert
+    expect(loaded).toEqual({ client: CLIENT, listing: LISTING });
+    expect(args.request.url).toBe(NARROWED_URL);
+    expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
+    expect(loadResources).toHaveBeenCalledWith(args, CLIENT_ID);
+  });
+
+  it("leaves the 404 an unknown client raises alone", async () => {
+    // arrange
+    const { args, loadResources } = routeArguments();
+    loadResources.mockRejectedValue(new Response("Not Found", { status: 404 }));
+
+    // act
+    const loading = loader(args);
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("hands on an unavailable listing of her resources beside her record", async () => {
+    // arrange
+    const { args, loadResources } = routeArguments();
+    loadResources.mockResolvedValue({ status: "unavailable" });
+
+    // act
+    const loaded = await loader(args);
+
+    // assert
+    expect(loaded).toEqual({
+      client: CLIENT,
+      listing: { status: "unavailable" },
+    });
+  });
+
+  it("leaves the denial the portal guard raises alone", async () => {
+    // arrange
+    const { args, loadResources } = routeArguments();
+    loadResources.mockRejectedValue(new Response("Forbidden", { status: 403 }));
+
+    // act
+    const loading = loader(args);
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 403 });
+  });
+
+  it("leaves a failed read of her record alone for the error boundary", async () => {
+    // arrange
+    const { args, loadClient } = routeArguments();
+    const failure = new Error("The client could not be read.");
+    loadClient.mockRejectedValue(failure);
+
+    // act
+    const loading = loader(args);
+
+    // assert
+    await expect(loading).rejects.toBe(failure);
+  });
+
+  it("answers not found when the route carries no client id", async () => {
+    // arrange
+    const { args } = routeArguments({ params: {} });
+
+    // act
+    const loading = loader(args);
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("coach client resources page meta", () => {
+  it("titles the page with her first name's resources", () => {
+    // arrange
+    const data = { client: CLIENT, listing: LISTING };
+
+    // act
+    const descriptors = meta({ loaderData: data } as Parameters<
+      typeof meta
+    >[0]);
+
+    // assert
+    expect(descriptors).toEqual([{ title: "Andreea’s resources | Evoa" }]);
+  });
+});
+
+function routeArguments(
+  options: { params?: Record<string, string>; url?: string } = {},
+) {
+  const loadClient = vi.fn().mockResolvedValue(CLIENT);
+  const loadResources = vi.fn().mockResolvedValue(LISTING);
+  const args = createRequestArgs({
+    contexts: [
+      contextEntry(clientsContext, {
+        coachClientsController: { loadClient },
+      } as unknown as ClientsFeature),
+      contextEntry(clientResourcesContext, {
+        coachResourcesController: { load: loadResources },
+      } as unknown as ClientResourcesFeature),
+    ],
+    params: options.params ?? { clientId: CLIENT_ID },
+    request: new Request(
+      options.url ?? `http://localhost/coach/clients/${CLIENT_ID}/resources`,
+    ),
+  });
+
+  return { args, loadClient, loadResources };
+}

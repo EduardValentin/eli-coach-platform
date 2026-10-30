@@ -28,14 +28,14 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
-import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
-import { presentBundleCards } from "~/features/coaching-sales/public/bundle-cards";
-import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
+import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
+import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
-} from "~/features/store/ui/public/catalog/catalog-page";
-import PricingRoute from "~/surfaces/public-site/pages/pricing";
+} from "~/bounded-contexts/sales/store/ui/public/catalog/catalog-page";
+import PricingRoute from "~/surfaces/public-site/pages/pricing/pricing";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
 

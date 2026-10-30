@@ -1,0 +1,77 @@
+import { EMAIL_COLORS, EMAIL_FONTS } from "~/shared/email/index.server";
+import type { CSSProperties } from "react";
+
+export const heroSectionStyle: CSSProperties = {
+  backgroundColor: EMAIL_COLORS.ink,
+  padding: "48px 36px 28px",
+  textAlign: "center",
+};
+
+export const heroHeadingStyle: CSSProperties = {
+  color: EMAIL_COLORS.white,
+  fontFamily: EMAIL_FONTS.serif,
+  fontSize: "40px",
+  fontWeight: 500,
+  letterSpacing: "-0.01em",
+  lineHeight: 1.05,
+  margin: 0,
+};
+
+export const heroAccentRuleStyle: CSSProperties = {
+  backgroundColor: EMAIL_COLORS.pinkOnDark,
+  borderRadius: "2px",
+  height: "2px",
+  margin: "20px auto 0",
+  width: "40px",
+};
+
+export const letterSectionStyle: CSSProperties = {
+  padding: "40px 36px 4px",
+};
+
+export const letterParagraphStyle: CSSProperties = {
+  color: EMAIL_COLORS.body,
+  fontFamily: EMAIL_FONTS.sans,
+  fontSize: "16px",
+  fontWeight: 400,
+  lineHeight: 1.65,
+  margin: "0 0 18px",
+};
+
+export const buttonSectionStyle: CSSProperties = {
+  padding: "16px 36px 8px",
+  textAlign: "center",
+};
+
+export const answerButtonStyle: CSSProperties = {
+  backgroundColor: EMAIL_COLORS.pink,
+  borderRadius: "14px",
+  color: EMAIL_COLORS.white,
+  display: "inline-block",
+  fontFamily: EMAIL_FONTS.sans,
+  fontSize: "16px",
+  fontWeight: 600,
+  lineHeight: 1,
+  padding: "18px 40px",
+  textDecoration: "none",
+};
+
+export const signoffSectionStyle: CSSProperties = {
+  padding: "24px 36px 40px",
+};
+
+export const signoffStyle: CSSProperties = {
+  color: EMAIL_COLORS.ink,
+  fontFamily: EMAIL_FONTS.serif,
+  fontSize: "20px",
+  fontStyle: "italic",
+  fontWeight: 500,
+  lineHeight: 1.4,
+  margin: 0,
+};
+
+export const footerLinkStyle: CSSProperties = {
+  color: EMAIL_COLORS.muted,
+  textDecoration: "underline",
+  textUnderlineOffset: "2px",
+};

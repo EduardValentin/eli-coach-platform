@@ -1,4 +1,4 @@
-import { LANDSCAPE_SAMPLE_VIDEO_PATH } from "@eli-coach-platform/test-support/sample-videos";
+import { LANDSCAPE_SAMPLE_VIDEO_PATH } from "~test-support/sample-videos";
 
 import { expect, test } from "../support/fixtures";
 import type { SavedExercise } from "../support/exercise-editor-page";

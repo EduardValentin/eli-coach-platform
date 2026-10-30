@@ -1,0 +1,63 @@
+import type { SendPaymentLinkUseCase } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
+import type { ActionFunctionArgs } from "react-router";
+
+import {
+  sendPaymentLinkErrorSchema,
+  sendPaymentLinkRequestSchema,
+  sendPaymentLinkSuccessSchema,
+} from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
+import { accessContext } from "~/bounded-contexts/access/public/session";
+
+type PaymentLinksControllerOptions = {
+  sendPaymentLinkUseCase: SendPaymentLinkUseCase;
+  unitOfWork: UnitOfWork;
+};
+
+type SendPaymentLinkRefusal = Exclude<
+  Awaited<ReturnType<SendPaymentLinkUseCase["execute"]>>["status"],
+  "sent"
+>;
+
+const REFUSAL_STATUS = {
+  already_paid: 409,
+  call_not_ended: 409,
+  call_not_found: 404,
+  closed: 404,
+  delivery_failed: 502,
+} as const satisfies Record<SendPaymentLinkRefusal, number>;
+
+export class PaymentLinksController {
+  constructor(private readonly options: PaymentLinksControllerOptions) {}
+
+  async sendPaymentLink(args: ActionFunctionArgs): Promise<Response> {
+    args.context.get(accessContext).requireAccount({ role: "COACH" });
+
+    const body: unknown = await args.request.json().catch(() => null);
+    const submission = sendPaymentLinkRequestSchema.safeParse(body);
+
+    if (!submission.success) {
+      return errorResponse({ error: "invalid_request", status: 400 });
+    }
+
+    const result = await this.options.unitOfWork(() =>
+      this.options.sendPaymentLinkUseCase.execute(submission.data),
+    );
+
+    if (result.status === "sent") {
+      return Response.json(sendPaymentLinkSuccessSchema.parse(result));
+    }
+
+    return errorResponse({
+      error: result.status,
+      status: REFUSAL_STATUS[result.status],
+    });
+  }
+}
+
+function errorResponse(refusal: { error: string; status: number }): Response {
+  return Response.json(
+    sendPaymentLinkErrorSchema.parse({ error: refusal.error }),
+    { status: refusal.status },
+  );
+}

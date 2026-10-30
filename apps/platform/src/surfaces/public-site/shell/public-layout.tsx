@@ -1,10 +1,10 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import type { PublicSessionState } from "~/features/accounts/public/account";
-import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
-import { STORE_PATH } from "~/features/store/public/paths";
-import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn, MAIN_CONTENT_ID } from "@eli-coach-platform/ui/lib";
+import type { PublicSessionState } from "~/bounded-contexts/access/accounts/public/account";
+import { AuthNavActions } from "~/bounded-contexts/access/accounts/ui/public/auth-nav-actions";
+import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
+import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
+import { cn, MAIN_CONTENT_ID } from "~/shared/design-system/lib";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import {

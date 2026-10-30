@@ -1,3 +1,3 @@
-import { target } from "./server/guards/platform-context.server";
+import { target as t0 } from "./composition-root/container.server";
 
-export const probe = target;
+export const probe = [t0];

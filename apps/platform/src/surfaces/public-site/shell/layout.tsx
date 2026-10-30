@@ -1,4 +1,4 @@
-import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import {
   Outlet,
   type ShouldRevalidateFunctionArgs,
@@ -7,14 +7,14 @@ import {
   useMatches,
 } from "react-router";
 
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "~/features/store/ui/public/cart/cart-drawer";
-import { StoreCartProvider } from "~/features/store/ui/public/cart/cart-provider";
+} from "~/bounded-contexts/sales/store/ui/public/cart/cart-drawer";
+import { StoreCartProvider } from "~/bounded-contexts/sales/store/ui/public/cart/cart-provider";
 
 import { PublicLayout, type PublicContentFrame } from "./public-layout";
 import { loader } from "./layout.server";

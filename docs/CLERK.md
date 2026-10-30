@@ -67,7 +67,7 @@ live via the Clerk CLI against the Dashboard/FAPI:
   which `redirect_url` targets the Account Portal will honour, so it is the
   instance-side complement to this app's own PUBLIC_APP_URL origin rewrite
   (see `buildSignInRedirectTarget` in
-  `apps/platform/src/features/accounts/server/require-account.server.ts`):
+  `apps/platform/src/bounded-contexts/access/accounts/adapters/inbound/http/portal-access.server.ts`):
   the app decides the origin it asks Clerk to return to, and the allowlist is
   what stops any other origin being asked for.
 
@@ -84,7 +84,7 @@ live via the Clerk CLI against the Dashboard/FAPI:
 | `CLERK_WEBHOOK_SIGNING_SECRET` | optional; only needed to receive real webhook deliveries (see below) | required once the TEST relay is in use | required (`ENVIRONMENT=production` enforces this) |
 | `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | optional | optional | set once, to the operator's Clerk subject id |
 
-All eight are read by `packages/config`'s runtime environment schema; the
+All eight are read by the composition root's runtime environment schema; the
 publishable key, secret key, sign-in URL and sign-up URL are required
 unconditionally, `IDENTITY_PROVIDER` defaults to `clerk`, and the rest are
 optional and validated only where present (a malformed value fails at boot
@@ -107,8 +107,9 @@ this repository does not own either value; see
 
 A paid client gets her account through a Clerk application invitation that
 the app creates itself, in the same webhook delivery that records her
-payment (`ClerkIdentityInvitations` in
-`packages/infrastructure/src/identity/`, selected by `IDENTITY_PROVIDER`):
+payment (`ClerkIdentityInvitationsAdapter` in
+`apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/identity/`, selected
+by `IDENTITY_PROVIDER`):
 
 - `notify: false` — Clerk sends nothing; the app sends its own branded
   invitation email with a link to its `/invitation` landing page.
@@ -177,7 +178,7 @@ delivery.
 
 Set `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` to a Clerk user id (`user_...`) before
 that person's first sign-in. Account provisioning (`ProvisionAccountUseCase`
-in `packages/domain/src/account/provision-account-use-case.ts`) first looks
+in `apps/platform/src/bounded-contexts/access/accounts/domain/account/provision-account-use-case.ts`) first looks
 up the signing-in Clerk subject by `auth_subject_id`. If no row exists and the
 subject matches this configured value, it inserts a `COACH` row — a plain
 `INSERT`, not an upsert; `auth_subject_id` is unique, and the table carries

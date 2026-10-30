@@ -1,0 +1,84 @@
+import { DashboardAppointmentRow } from "~/shared/design-system/appointments";
+import { cn } from "~/shared/design-system/lib";
+import { PortalWidget, WidgetLink } from "~/shared/design-system/portal";
+import { Badge } from "~/shared/design-system/primitives";
+import { Video } from "lucide-react";
+import { useId } from "react";
+
+import {
+  formatClockTime,
+  formatShortDay,
+} from "~/shared/time-format/call-moment";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
+import {
+  upcomingCalls,
+  type ClassifiedCall,
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-call-listing";
+import { JoinCallLink } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/join-call-link";
+
+const CALLS_ON_THE_DASHBOARD = 3;
+
+type UpcomingCallsWidgetProps = {
+  calls: readonly ClassifiedCall[];
+  timeZone: string;
+};
+
+export function UpcomingCallsWidget({
+  calls,
+  timeZone,
+}: UpcomingCallsWidgetProps) {
+  const headingId = useId();
+  const soonest = upcomingCalls(calls, CALLS_ON_THE_DASHBOARD);
+  const isEmpty = soonest.length === 0;
+
+  return (
+    <div data-parity-root="UpcomingCallsWidget">
+      <PortalWidget
+        className="flex h-full flex-col"
+        footer={
+          <WidgetLink to={COACH_ASSESSMENT_CALLS_PATH} trailing="arrow">
+            View all calls
+          </WidgetLink>
+        }
+        headingId={headingId}
+        icon={Video}
+        title="Upcoming assessment calls"
+      >
+        <div
+          className={cn("flex-1", {
+            "flex items-center justify-center": isEmpty,
+          })}
+        >
+          {isEmpty ? (
+            <p className="text-sm text-text-muted">No upcoming calls.</p>
+          ) : (
+            <ul className="space-y-4">
+              {soonest.map((call) => (
+                <li key={call.id}>
+                  <DashboardAppointmentRow
+                    action={
+                      <JoinCallLink
+                        joinPath={call.joinPath}
+                        tone={call.isToday ? "live" : "default"}
+                      />
+                    }
+                    attendeeName={call.fullName}
+                    badges={
+                      call.isToday && (
+                        <Badge tone="brand-secondary">Today</Badge>
+                      )
+                    }
+                    when={{
+                      date: formatShortDay(new Date(call.startsAt), timeZone),
+                      time: formatClockTime(new Date(call.startsAt), timeZone),
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </PortalWidget>
+    </div>
+  );
+}

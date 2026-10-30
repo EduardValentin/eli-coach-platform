@@ -1,0 +1,344 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  ageOn,
+  formatAgeForCard,
+  formatAgeForEmail,
+  labelForGender,
+  labelForPrimaryGoal,
+  MAX_BOOKING_AGE,
+  MIN_BOOKING_AGE,
+  VISITOR_GENDER_OPTIONS,
+  VISITOR_PRIMARY_GOAL_OPTIONS,
+} from "./visitor-profile";
+import {
+  objectPronoun,
+  possessivePronoun,
+  subjectPronoun,
+} from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
+import { MIN_BOOKING_AGE as PUBLISHED_MIN_BOOKING_AGE } from "~/bounded-contexts/scheduling/public/visitor";
+
+const BUCHAREST = "Europe/Bucharest";
+const AUTUMN_EVENING = new Date("2026-09-21T18:00:00.000Z");
+
+describe("visitor profile options", () => {
+  it("labels the three genders in the order the visitor sees them", () => {
+    // arrange
+    const options = VISITOR_GENDER_OPTIONS;
+
+    // act
+    const labels = options.map((option) => option.label);
+
+    // assert
+    expect(options.map((option) => option.value)).toEqual([
+      "female",
+      "male",
+      "prefer_not_to_say",
+    ]);
+    expect(labels).toEqual(["Female", "Male", "Prefer not to say"]);
+  });
+
+  it("labels the four primary goals in the order the visitor sees them", () => {
+    // arrange
+    const options = VISITOR_PRIMARY_GOAL_OPTIONS;
+
+    // act
+    const labels = options.map((option) => option.label);
+
+    // assert
+    expect(options.map((option) => option.value)).toEqual([
+      "lose_weight",
+      "build_muscle",
+      "build_strength",
+      "maintain_improve_lifestyle",
+    ]);
+    expect(labels).toEqual([
+      "Lose weight",
+      "Build muscle",
+      "Build strength",
+      "Maintain but improve lifestyle",
+    ]);
+  });
+
+  it("names a stored gender and goal the way the visitor chose them", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+    const goal = "maintain_improve_lifestyle";
+
+    // act
+    const genderLabel = labelForGender(gender);
+    const goalLabel = labelForPrimaryGoal(goal);
+
+    // assert
+    expect(genderLabel).toBe("Prefer not to say");
+    expect(goalLabel).toBe("Maintain but improve lifestyle");
+  });
+
+  it("books visitors between eighteen and one hundred and twenty, the published minimum included", () => {
+    // arrange, act
+    const bounds = [
+      MIN_BOOKING_AGE,
+      PUBLISHED_MIN_BOOKING_AGE,
+      MAX_BOOKING_AGE,
+    ];
+
+    // assert
+    expect(bounds).toEqual([18, 18, 120]);
+  });
+});
+
+describe("ageOn", () => {
+  it("counts whole years on the calendar date in the visitor's zone", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "1994-03-14",
+      on: AUTUMN_EVENING,
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const age = ageOn(input);
+
+    // assert
+    expect(age).toBe(32);
+  });
+
+  it("is a year short on the day before the birthday", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "1994-03-14",
+      on: new Date("2026-03-13T12:00:00.000Z"),
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const age = ageOn(input);
+
+    // assert
+    expect(age).toBe(31);
+  });
+
+  it("turns a year older on the birthday itself", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "1994-03-14",
+      on: new Date("2026-03-14T00:30:00.000Z"),
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const age = ageOn(input);
+
+    // assert
+    expect(age).toBe(32);
+  });
+
+  it("reads the birthday from the visitor's zone, not from UTC", () => {
+    // arrange
+    const lateEvening = new Date("2026-09-21T22:30:00.000Z");
+    const eighteenthBirthday = "2008-09-22";
+
+    // act
+    const ageEastOfTheDateLine = ageOn({
+      dateOfBirth: eighteenthBirthday,
+      on: lateEvening,
+      timeZone: "Pacific/Kiritimati",
+    });
+    const ageOnTheWestCoast = ageOn({
+      dateOfBirth: eighteenthBirthday,
+      on: lateEvening,
+      timeZone: "America/Los_Angeles",
+    });
+
+    // assert
+    expect(ageEastOfTheDateLine).toBe(18);
+    expect(ageOnTheWestCoast).toBe(17);
+  });
+
+  it("is negative for a birth date still to come", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "2027-01-01",
+      on: AUTUMN_EVENING,
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const age = ageOn(input);
+
+    // assert
+    expect(age).toBeLessThan(0);
+  });
+});
+
+describe("formatAgeForCard", () => {
+  it("shows the age with the short birth date", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "1994-03-14",
+      on: AUTUMN_EVENING,
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const line = formatAgeForCard(input);
+
+    // assert
+    expect(line).toBe("32 (14 Mar 1994)");
+  });
+
+  it("abbreviates September to three letters", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "1990-09-05",
+      on: AUTUMN_EVENING,
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const line = formatAgeForCard(input);
+
+    // assert
+    expect(line).toBe("36 (5 Sep 1990)");
+  });
+});
+
+describe("formatAgeForEmail", () => {
+  it("shows the age with the long birth date", () => {
+    // arrange
+    const input = {
+      dateOfBirth: "1994-03-14",
+      on: AUTUMN_EVENING,
+      timeZone: BUCHAREST,
+    };
+
+    // act
+    const line = formatAgeForEmail(input);
+
+    // assert
+    expect(line).toBe("32 (born 14 March 1994)");
+  });
+});
+
+describe("possessivePronoun", () => {
+  it("uses her for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = possessivePronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "Her", lower: "her" });
+  });
+
+  it("uses his for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = possessivePronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "His", lower: "his" });
+  });
+
+  it("uses their when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = possessivePronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "Their", lower: "their" });
+  });
+});
+
+describe("subjectPronoun", () => {
+  it("uses she has, she is and she gets for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({
+      capitalised: "She",
+      hasVerb: "has",
+      isVerb: "is",
+      lower: "she",
+      regularVerbSuffix: "s",
+    });
+  });
+
+  it("uses he has, he is and he gets for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({
+      capitalised: "He",
+      hasVerb: "has",
+      isVerb: "is",
+      lower: "he",
+      regularVerbSuffix: "s",
+    });
+  });
+
+  it("uses they have, they are and they get when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({
+      capitalised: "They",
+      hasVerb: "have",
+      isVerb: "are",
+      lower: "they",
+      regularVerbSuffix: "",
+    });
+  });
+});
+
+describe("objectPronoun", () => {
+  it("uses her for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("her");
+  });
+
+  it("uses him for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("him");
+  });
+
+  it("uses them when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("them");
+  });
+});

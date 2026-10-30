@@ -234,9 +234,6 @@ importers:
 
   .:
     devDependencies:
-      '@eli-coach-platform/ui':
-        specifier: workspace:*
-        version: link:packages/ui
       '@eslint/js':
         specifier: 'catalog:'
         version: 9.39.5
@@ -312,27 +309,12 @@ importers:
       '@date-fns/tz':
         specifier: 'catalog:'
         version: 1.5.0
-      '@eli-coach-platform/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@eli-coach-platform/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@eli-coach-platform/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@eli-coach-platform/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
-      '@eli-coach-platform/infrastructure':
-        specifier: workspace:*
-        version: link:../../packages/infrastructure
-      '@eli-coach-platform/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@fastify/busboy':
         specifier: 'catalog:'
         version: 3.2.3
+      '@file-type/cfbf':
+        specifier: 'catalog:'
+        version: 0.2.2
       '@fontsource-variable/dm-sans':
         specifier: 'catalog:'
         version: 5.3.0
@@ -351,15 +333,27 @@ importers:
       '@react-router/serve':
         specifier: 'catalog:'
         version: 8.5.0(react-router@8.5.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(typescript@6.0.3)
+      '@tokenizer/inflate':
+        specifier: 'catalog:'
+        version: 0.5.1
       archiver:
         specifier: 'catalog:'
         version: 8.0.0
       canvas-confetti:
         specifier: 1.9.4
         version: 1.9.4
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      file-type:
+        specifier: 'catalog:'
+        version: 22.2.0
       isbot:
         specifier: 'catalog:'
         version: 5.2.2
@@ -375,9 +369,15 @@ importers:
       pg:
         specifier: 'catalog:'
         version: 8.23.1
+      radix-ui:
+        specifier: 'catalog:'
+        version: 1.8.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react:
         specifier: 'catalog:'
         version: 19.3.1
+      react-day-picker:
+        specifier: 'catalog:'
+        version: 10.0.2(@types/react@19.3.0)(react@19.3.1)
       react-dnd:
         specifier: 'catalog:'
         version: 16.0.1(@types/node@24.19.2)(@types/react@19.3.0)(react@19.3.1)
@@ -393,12 +393,24 @@ importers:
       react-router:
         specifier: 'catalog:'
         version: 8.5.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      resend:
+        specifier: 'catalog:'
+        version: 6.34.1
       sharp:
         specifier: 'catalog:'
         version: 0.35.5(@types/node@24.19.2)
+      sonner:
+        specifier: 'catalog:'
+        version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       stripe:
         specifier: 'catalog:'
         version: 22.6.2(@types/node@24.19.2)
+      strtok3:
+        specifier: 'catalog:'
+        version: 10.6.2
+      tailwind-merge:
+        specifier: 'catalog:'
+        version: 3.7.0
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -409,9 +421,6 @@ importers:
       '@clerk/testing':
         specifier: 'catalog:'
         version: 2.2.47(@playwright/test@1.64.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@eli-coach-platform/test-support':
-        specifier: workspace:*
-        version: link:../../packages/test-support
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.64.1
@@ -424,6 +433,9 @@ importers:
       '@types/archiver':
         specifier: 'catalog:'
         version: 8.0.0
+      '@types/pdfkit':
+        specifier: 'catalog:'
+        version: 0.17.6
       '@types/pg':
         specifier: 'catalog:'
         version: 8.23.1
@@ -436,6 +448,9 @@ importers:
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.31.11
+      pdfkit:
+        specifier: 'catalog:'
+        version: 0.20.2
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3
@@ -445,175 +460,6 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.3.4(@types/node@24.19.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
-
-  packages/config:
-    dependencies:
-      zod:
-        specifier: 'catalog:'
-        version: 4.6.7
-    devDependencies:
-      '@eli-coach-platform/test-support':
-        specifier: workspace:*
-        version: link:../test-support
-
-  packages/content:
-    devDependencies:
-      '@types/pdfkit':
-        specifier: 'catalog:'
-        version: 0.17.6
-      pdfjs-dist:
-        specifier: 'catalog:'
-        version: 6.4.299
-      pdfkit:
-        specifier: 'catalog:'
-        version: 0.20.2
-      tsx:
-        specifier: 'catalog:'
-        version: 4.23.15
-
-  packages/db:
-    dependencies:
-      drizzle-orm:
-        specifier: 'catalog:'
-        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
-      pg:
-        specifier: 'catalog:'
-        version: 8.23.1
-    devDependencies:
-      '@types/pg':
-        specifier: 'catalog:'
-        version: 8.23.1
-
-  packages/domain: {}
-
-  packages/infrastructure:
-    dependencies:
-      '@clerk/backend':
-        specifier: 'catalog:'
-        version: 3.25.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@eli-coach-platform/config':
-        specifier: workspace:*
-        version: link:../config
-      '@eli-coach-platform/db':
-        specifier: workspace:*
-        version: link:../db
-      '@eli-coach-platform/domain':
-        specifier: workspace:*
-        version: link:../domain
-      '@fastify/busboy':
-        specifier: 'catalog:'
-        version: 3.2.3
-      '@file-type/cfbf':
-        specifier: 'catalog:'
-        version: 0.2.2
-      '@napi-rs/canvas':
-        specifier: 1.0.11
-        version: 1.0.11
-      '@tokenizer/inflate':
-        specifier: 'catalog:'
-        version: 0.5.1
-      drizzle-orm:
-        specifier: 'catalog:'
-        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
-      file-type:
-        specifier: 'catalog:'
-        version: 22.2.0
-      pdfjs-dist:
-        specifier: 'catalog:'
-        version: 6.4.299
-      resend:
-        specifier: 'catalog:'
-        version: 6.34.1
-      sharp:
-        specifier: 'catalog:'
-        version: 0.35.5(@types/node@24.19.2)
-      stripe:
-        specifier: 'catalog:'
-        version: 22.6.2(@types/node@24.19.2)
-      strtok3:
-        specifier: 'catalog:'
-        version: 10.6.2
-      zod:
-        specifier: 'catalog:'
-        version: 4.6.7
-    devDependencies:
-      '@eli-coach-platform/test-support':
-        specifier: workspace:*
-        version: link:../test-support
-      '@types/pdfkit':
-        specifier: 'catalog:'
-        version: 0.17.6
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.3.0
-      pdfkit:
-        specifier: 'catalog:'
-        version: 0.20.2
-      react:
-        specifier: 'catalog:'
-        version: 19.3.1
-      vite:
-        specifier: 'catalog:'
-        version: 8.3.4(@types/node@24.19.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
-
-  packages/test-support:
-    dependencies:
-      archiver:
-        specifier: 'catalog:'
-        version: 8.0.0
-      pdfkit:
-        specifier: 'catalog:'
-        version: 0.20.2
-    devDependencies:
-      '@types/archiver':
-        specifier: 'catalog:'
-        version: 8.0.0
-      '@types/pdfkit':
-        specifier: 'catalog:'
-        version: 0.17.6
-
-  packages/ui:
-    dependencies:
-      class-variance-authority:
-        specifier: 'catalog:'
-        version: 0.7.1
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
-      lucide-react:
-        specifier: 'catalog:'
-        version: 1.59.0(@types/react@19.3.0)(react@19.3.1)
-      radix-ui:
-        specifier: 'catalog:'
-        version: 1.8.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      react-day-picker:
-        specifier: 'catalog:'
-        version: 10.0.2(@types/react@19.3.0)(react@19.3.1)
-      sonner:
-        specifier: 'catalog:'
-        version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.7.0
-    devDependencies:
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.3.0(@types/react@19.3.0)
-      motion:
-        specifier: 'catalog:'
-        version: 13.1.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      react:
-        specifier: 'catalog:'
-        version: 19.3.1
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.1(react@19.3.1)
-      react-router:
-        specifier: 'catalog:'
-        version: 8.5.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
 
 packages:
 

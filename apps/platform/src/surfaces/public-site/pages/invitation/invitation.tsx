@@ -1,0 +1,52 @@
+import { buildRedirectPath } from "~/shared/http/base-path";
+import { Button } from "~/shared/design-system/primitives";
+import {
+  useLoaderData,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
+
+import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
+import { INVITATION_PATH } from "~/bounded-contexts/access/public/paths";
+import {
+  AnonymousInvitation,
+  SignedInInvitation,
+} from "~/bounded-contexts/access/accounts/ui/public/invitation/invitation-states";
+import { accessContext } from "~/bounded-contexts/access/public/session";
+
+export type InvitationLoaderData = {
+  invitationPath: string;
+  signedIn: boolean;
+};
+
+export function loader({ context }: LoaderFunctionArgs): InvitationLoaderData {
+  const { appBasePath } = context.get(accessContext).portal;
+
+  return {
+    invitationPath: buildRedirectPath(appBasePath, INVITATION_PATH),
+    signedIn: context.get(accessContext).session.kind === "authenticated",
+  };
+}
+
+export const meta: MetaFunction = () => [
+  { title: "Your invitation | Evoa" },
+  { name: "robots", content: "noindex" },
+];
+
+export default function InvitationRoute() {
+  const { invitationPath, signedIn } = useLoaderData<typeof loader>();
+
+  if (signedIn) {
+    return (
+      <SignedInInvitation>
+        <SignOutControl redirectUrl={invitationPath}>
+          <Button size="lg" variant="inverted">
+            Sign out
+          </Button>
+        </SignOutControl>
+      </SignedInInvitation>
+    );
+  }
+
+  return <AnonymousInvitation />;
+}

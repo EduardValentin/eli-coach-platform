@@ -1,10 +1,10 @@
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import { User } from "lucide-react";
 import { Link } from "react-router";
 
-import type { ClientAvatarUrl } from "~/features/client-profile/public/client-avatar";
-import { CLIENT_PROFILE_PATH } from "~/features/client-profile/public/paths";
-import { clientAvatarSrc } from "~/features/client-profile/ui/shared/avatar/client-avatar-src";
+import type { ClientAvatarUrl } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
+import { CLIENT_PROFILE_PATH } from "~/bounded-contexts/clients/client-profile/public/paths";
+import { clientAvatarSrc } from "~/bounded-contexts/clients/client-profile/ui/shared/avatar/client-avatar-src";
 
 type ClientNameBlockSize = "md" | "sm";
 

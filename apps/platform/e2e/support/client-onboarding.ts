@@ -1,7 +1,7 @@
 import {
   PROGRESS_PHOTO_VIEWS,
   type ProgressPhotoView,
-} from "@eli-coach-platform/domain/client-profile";
+} from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import {
   expect,
   type Locator,

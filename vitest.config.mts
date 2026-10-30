@@ -5,12 +5,9 @@ import { fileURLToPath } from "node:url";
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = dirname(currentFilePath);
 
-const integrationTestGlobs = [
-  "apps/**/*.integration.test.{ts,tsx}",
-  "packages/**/*.integration.test.{ts,tsx}",
-];
+const integrationTestGlobs = ["apps/**/*.integration.test.{ts,tsx}"];
 const toolsTestGlobs = ["tools/**/*.test.mjs"];
-const testGlobs = ["apps/**/*.test.{ts,tsx}", "packages/**/*.test.{ts,tsx}"];
+const testGlobs = ["apps/**/*.test.{ts,tsx}"];
 
 export default defineConfig({
   resolve: {
@@ -20,6 +17,7 @@ export default defineConfig({
         currentDirectory,
         "apps/platform/integration-test-config",
       ),
+      "~test-support": resolve(currentDirectory, "apps/platform/test-support"),
     },
   },
   test: {

@@ -17,7 +17,7 @@ import { cleanUpRun } from "./run-cleanup";
 import { resolveRunId } from "./run-id";
 
 // requirePortalAccess redirects an anonymous visitor here when they hit a
-// guarded portal route directly (apps/platform/src/features/accounts/
+// guarded portal route directly (apps/platform/src/bounded-contexts/access/accounts/
 // server/require-account.server.ts) — the protected-portal journey depends
 // on that redirect actually landing on Clerk's hosted Account Portal rather
 // than 404ing on an app route that doesn't exist. A placeholder value 404s

@@ -1,4 +1,4 @@
-import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
+import type { ProgressPhotoView } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { expect, type Page } from "@playwright/test";
 
 import { ConfirmationDialog } from "./confirmation-dialog";

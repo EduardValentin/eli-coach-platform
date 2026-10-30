@@ -1,7 +1,6 @@
 @import "tailwindcss" source(none);
-@import "@eli-coach-platform/ui/styles.css";
+@import "~/shared/design-system/styles.css";
 @source "./**/*.{ts,tsx}";
-@source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 @font-face {
   font-family: "DM Sans";

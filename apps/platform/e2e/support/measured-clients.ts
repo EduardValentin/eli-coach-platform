@@ -1,7 +1,7 @@
 import {
   UnitPreference,
   type MeasurementSystem,
-} from "@eli-coach-platform/domain/client-settings";
+} from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 import type pg from "pg";
 
 import type { PaidClientIdentity } from "./paid-clients";

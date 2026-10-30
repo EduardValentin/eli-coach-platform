@@ -1,47 +1,45 @@
 import { index, relative } from "@react-router/dev/routes";
 
-import { COACH_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/public/paths";
-import { COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT } from "../../features/assessment-calls/public/paths";
-import {
-  checkInsCoachJoinRoutes,
-  checkInsCoachRoutes,
-} from "../../features/check-ins/routes";
-import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../features/client-resources/public/paths";
+import { COACH_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/public/paths";
+import { COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT } from "../../bounded-contexts/scheduling/assessment-calls/public/paths";
+import { clientsRoutes } from "../../bounded-contexts/clients/routes";
+import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../bounded-contexts/clients/client-resources/public/paths";
 import {
   COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
   COACH_CLIENTS_ROUTE_SEGMENT,
-} from "../../features/clients/public/paths";
-import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
-import { exerciseLibraryCoachRoutes } from "../../features/exercise-library/routes";
-import {
-  nutritionLibraryCoachBuilderRoutes,
-  nutritionLibraryCoachRoutes,
-} from "../../features/nutrition-library/routes";
+} from "../../bounded-contexts/clients/clients/public/paths";
+import { programsRoutes } from "../../bounded-contexts/programs/routes";
+import { schedulingRoutes } from "../../bounded-contexts/scheduling/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 
 export const coachPortalRoutes = [
   route(COACH_PORTAL_ROUTE_SEGMENT, "./shell/access-layout.tsx", [
     layout("./shell/layout.tsx", [
-      index("./surfaces/coach-portal/pages/home.tsx"),
-      ...exerciseLibraryCoachRoutes,
-      ...nutritionLibraryCoachRoutes,
+      index("./surfaces/coach-portal/pages/home/home.tsx"),
+      ...programsRoutes.coachPortalShell,
       route(
         COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT,
-        "./pages/assessment-calls.tsx",
+        "./pages/assessment-calls/assessment-calls.tsx",
       ),
-      ...coachScheduleCoachRoutes,
-      route(COACH_CLIENTS_ROUTE_SEGMENT, "./pages/clients.tsx"),
-      ...checkInsCoachRoutes,
-      route(`${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`, "./pages/client.tsx"),
+      ...schedulingRoutes.coachPortalShell,
+      route(COACH_CLIENTS_ROUTE_SEGMENT, "./pages/clients/clients.tsx"),
+      ...clientsRoutes.coachPortalShell,
+      route(
+        `${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`,
+        "./pages/client/client.tsx",
+      ),
       route(
         COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
-        "./pages/client-resources.tsx",
+        "./pages/client-resources/client-resources.tsx",
       ),
-      route(COACH_CLIENT_PROFILE_ROUTE_SEGMENT, "./pages/client-profile.tsx"),
+      route(
+        COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
+        "./pages/client-profile/client-profile.tsx",
+      ),
     ]),
-    ...checkInsCoachJoinRoutes,
-    ...nutritionLibraryCoachBuilderRoutes,
+    ...clientsRoutes.coachPortal,
+    ...programsRoutes.coachPortal,
   ]),
   route(`${COACH_PORTAL_ROUTE_SEGMENT}/readyz`, "./api/readyz.ts"),
 ];

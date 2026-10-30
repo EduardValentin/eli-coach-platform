@@ -1,4 +1,4 @@
-import { COACH_DISPLAY_NAME } from '@content/index';
+import { COACH_DISPLAY_NAME } from '~/shared/brand';
 import {
   CLIENT_CHECKINS_PATH,
   clientCheckinPath,

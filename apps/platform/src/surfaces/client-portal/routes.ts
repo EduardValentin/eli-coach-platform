@@ -1,16 +1,9 @@
 import { index, prefix, relative } from "@react-router/dev/routes";
 
-import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/public/paths";
-import {
-  checkInsClientJoinRoutes,
-  checkInsClientRoutes,
-} from "../../features/check-ins/routes";
-import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
-import { clientProfileClientRoutes } from "../../features/client-profile/routes";
-import { clientResourcesClientRoutes } from "../../features/client-resources/routes";
-import { clientsClientRoutes } from "../../features/clients/routes";
-import { CLIENT_SETTINGS_ROUTE_SEGMENT } from "../../features/coaching-sales/public/paths";
-import { coachingSalesClientRoutes } from "../../features/coaching-sales/routes";
+import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../bounded-contexts/access/public/paths";
+import { clientsRoutes } from "../../bounded-contexts/clients/routes";
+import { CLIENT_SETTINGS_ROUTE_SEGMENT } from "../../bounded-contexts/sales/coaching-sales/public/paths";
+import { salesRoutes } from "../../bounded-contexts/sales/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 
@@ -18,16 +11,12 @@ export const clientPortalRoutes = [
   ...prefix(CLIENT_PORTAL_ROUTE_SEGMENT, [
     layout("./shell/access-layout.tsx", [
       layout("./shell/layout.tsx", [
-        index("./surfaces/client-portal/pages/home.tsx"),
-        ...checkInsClientRoutes,
-        ...clientProfileClientRoutes,
-        ...clientResourcesClientRoutes,
-        route(CLIENT_SETTINGS_ROUTE_SEGMENT, "./pages/settings.tsx"),
+        index("./surfaces/client-portal/pages/home/home.tsx"),
+        ...clientsRoutes.clientPortalShell,
+        route(CLIENT_SETTINGS_ROUTE_SEGMENT, "./pages/settings/settings.tsx"),
       ]),
-      ...clientsClientRoutes,
-      ...coachingSalesClientRoutes,
-      ...clientOnboardingClientRoutes,
-      ...checkInsClientJoinRoutes,
+      ...clientsRoutes.clientPortal,
+      ...salesRoutes.clientPortal,
     ]),
   ]),
   // Deploy healthchecks and PWA installs read these without a session, so

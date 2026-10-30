@@ -1,0 +1,201 @@
+import { describe, expect, it } from "vitest";
+
+import { AccountInvitation } from "./account-invitation";
+
+const SENT_AT = new Date("2026-09-27T10:00:00.000Z");
+const EXPIRES_AT = new Date("2026-10-27T10:00:00.000Z");
+
+function pendingInvitation(): AccountInvitation {
+  return AccountInvitation.issue({
+    id: "invitation-1",
+    email: "ana@example.com",
+    role: "CLIENT",
+    tokenHash: "a".repeat(64),
+    sentAt: SENT_AT,
+  });
+}
+
+function acceptedInvitation(): AccountInvitation {
+  return AccountInvitation.reconstitute({
+    ...pendingInvitation().toSnapshot(),
+    acceptedAt: new Date("2026-09-28T10:00:00.000Z"),
+    acceptedByAuthSubjectId: "user_ana",
+  });
+}
+
+describe("AccountInvitation.issue", () => {
+  it("is valid for thirty days from the moment it is sent and awaits its email", () => {
+    // arrange
+    // act
+    const invitation = pendingInvitation();
+
+    // assert
+    expect(invitation).toMatchObject({
+      id: "invitation-1",
+      email: "ana@example.com",
+      role: "CLIENT",
+      sentAt: SENT_AT,
+      expiresAt: EXPIRES_AT,
+      acceptedAt: null,
+      acceptedByAuthSubjectId: null,
+      provider: null,
+    });
+    expect(invitation.awaitsEmail()).toBe(true);
+  });
+});
+
+describe("AccountInvitation#reissue", () => {
+  it("rewrites the token and the validity from the new send time and keeps the identity invitation", () => {
+    // arrange
+    const provider = { id: "inv_1", url: "https://accounts.example/sign-up" };
+    const invitation = AccountInvitation.reconstitute({
+      ...pendingInvitation().toSnapshot(),
+      provider,
+    });
+    const resentAt = new Date("2026-09-28T10:00:00.000Z");
+
+    // act
+    const reissued = invitation.reissue({
+      tokenHash: "b".repeat(64),
+      sentAt: resentAt,
+    });
+
+    // assert
+    expect(reissued).toMatchObject({
+      id: "invitation-1",
+      tokenHash: "b".repeat(64),
+      sentAt: resentAt,
+      expiresAt: new Date("2026-10-28T10:00:00.000Z"),
+      provider,
+    });
+    expect(reissued.awaitsEmail()).toBe(true);
+  });
+});
+
+describe("AccountInvitation#isPending and #isAccepted", () => {
+  it.each([
+    [
+      "pending right after it is sent",
+      pendingInvitation(),
+      SENT_AT,
+      { pending: true, accepted: false },
+    ],
+    [
+      "pending one millisecond before it expires",
+      pendingInvitation(),
+      new Date(EXPIRES_AT.getTime() - 1),
+      { pending: true, accepted: false },
+    ],
+    [
+      "expired once its validity ends",
+      pendingInvitation(),
+      EXPIRES_AT,
+      { pending: false, accepted: false },
+    ],
+    [
+      "accepted once accepted",
+      acceptedInvitation(),
+      SENT_AT,
+      { pending: false, accepted: true },
+    ],
+    [
+      "accepted even after it would have expired",
+      acceptedInvitation(),
+      EXPIRES_AT,
+      { pending: false, accepted: true },
+    ],
+  ] as const)("is %s", (_label, invitation, now, expected) => {
+    // arrange
+    // act
+    const standing = {
+      pending: invitation.isPending(now),
+      accepted: invitation.isAccepted(),
+    };
+
+    // assert
+    expect(standing).toEqual(expected);
+  });
+});
+
+describe("AccountInvitation#wasAcceptedBy", () => {
+  it.each([
+    ["the subject that accepted it", acceptedInvitation(), "user_ana", true],
+    ["another subject", acceptedInvitation(), "user_other", false],
+    ["anyone while it is unused", pendingInvitation(), "user_ana", false],
+  ] as const)("answers for %s", (_label, invitation, subject, expected) => {
+    // arrange
+    // act
+    const accepted = invitation.wasAcceptedBy(subject);
+
+    // assert
+    expect(accepted).toBe(expected);
+  });
+});
+
+describe("AccountInvitation#awaitsEmail", () => {
+  it.each([
+    ["sent", { emailSentAt: SENT_AT }],
+    ["whose delivery failed", { emailDeliveryFailedAt: SENT_AT }],
+  ])("is false once its email was %s", (_label, emailOutcome) => {
+    // arrange
+    const invitation = AccountInvitation.reconstitute({
+      ...pendingInvitation().toSnapshot(),
+      ...emailOutcome,
+    });
+
+    // act
+    const awaitsEmail = invitation.awaitsEmail();
+
+    // assert
+    expect(awaitsEmail).toBe(false);
+  });
+});
+
+describe("AccountInvitation#standing", () => {
+  const BEFORE_EXPIRY = new Date("2026-10-01T10:00:00.000Z");
+
+  it.each([
+    [
+      "pending while it is valid and its email went out",
+      { emailSentAt: SENT_AT },
+      BEFORE_EXPIRY,
+      "pending",
+    ],
+    [
+      "expired once its thirty days are over",
+      { emailSentAt: SENT_AT },
+      EXPIRES_AT,
+      "expired",
+    ],
+    [
+      "email-failed when its email could not be sent",
+      { emailDeliveryFailedAt: SENT_AT },
+      BEFORE_EXPIRY,
+      "email-failed",
+    ],
+    [
+      "email-failed while its email never went out",
+      {},
+      BEFORE_EXPIRY,
+      "email-failed",
+    ],
+    [
+      "email-failed over expired",
+      { emailDeliveryFailedAt: SENT_AT },
+      EXPIRES_AT,
+      "email-failed",
+    ],
+  ] as const)("is %s", (_label, overrides, now, expected) => {
+    // arrange
+    const invitation = AccountInvitation.reconstitute({
+      ...pendingInvitation().toSnapshot(),
+      ...overrides,
+    });
+
+    // act
+    const standing = invitation.standing(now);
+
+    // assert
+    expect(standing).toBe(expected);
+  });
+});

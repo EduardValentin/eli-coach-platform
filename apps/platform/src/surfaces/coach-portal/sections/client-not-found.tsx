@@ -1,4 +1,4 @@
-import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
+import { DeadEndPanel } from "~/shared/design-system/layout";
 import { UserX } from "lucide-react";
 
 export function ClientNotFound() {

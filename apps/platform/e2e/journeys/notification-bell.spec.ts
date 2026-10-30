@@ -1,4 +1,4 @@
-import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
+import { COACH_DISPLAY_NAME } from "~/shared/brand";
 
 import {
   clockTimeOf,

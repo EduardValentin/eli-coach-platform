@@ -1,4 +1,4 @@
-import { NotificationBell, PortalShell } from "@eli-coach-platform/ui/layout";
+import { NotificationBell, PortalShell } from "~/shared/design-system/layout";
 import { Dumbbell } from "lucide-react";
 import { useState } from "react";
 import {
@@ -12,12 +12,14 @@ import {
 import {
   COACH_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
-} from "~/features/accounts/public/paths";
-import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
-import type { NotificationBellReply } from "~/features/notifications/public/notifications";
-import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
-import { useNotificationBell } from "~/features/notifications/ui/shared/notification-bell";
+} from "~/bounded-contexts/access/public/paths";
+import {
+  checkInsContext,
+  notificationsContext,
+} from "~/bounded-contexts/clients/public/request-context";
+import { describeCheckInNotification } from "~/bounded-contexts/clients/check-ins/ui/shared/bell/check-in-bell-copy";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
+import { useNotificationBell } from "~/bounded-contexts/clients/notifications/ui/shared/notification-bell";
 
 import {
   coachSurfaceLinksOf,
@@ -37,8 +39,12 @@ type CoachShell = CoachNavigationCounts & {
 
 export async function loader(args: LoaderFunctionArgs): Promise<CoachShell> {
   const [checkInsAwaiting, bell] = await Promise.all([
-    args.context.get(checkInsContext).coachCheckIns.loadAwaitingCount(args),
-    args.context.get(notificationsContext).notificationBell.loadBell(args),
+    args.context
+      .get(checkInsContext)
+      .coachCheckInsController.loadAwaitingCount(args),
+    args.context
+      .get(notificationsContext)
+      .notificationBellController.loadBell(args),
   ]);
 
   return { checkInsAwaiting, bell };
