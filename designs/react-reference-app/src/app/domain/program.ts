@@ -1,5 +1,7 @@
 import type { CycleMode } from './cycleMode';
-import type { ExerciseRole } from './exercises';
+import type { ExerciseRole, MovementPattern } from './exercises';
+import type { GuideTexts } from './programTemplates';
+import { counted } from '../utils/counted';
 
 export type { CycleMode };
 
@@ -61,10 +63,12 @@ export type Row = {
 export type WarmUpItem = { id: string; exerciseId: string; sets: number; reps?: Range; seconds?: number };
 export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
 export type CoolDown = { enabled: boolean; note: string; items: CoolDownItem[] };
+export type SlotPatterns = Partial<Record<Slot, MovementPattern[]>>;
 export type Session = {
   id: string;
   originId: string;
   name: string;
+  slotPatterns?: SlotPatterns;
   warmUp: { items: WarmUpItem[] };
   coolDown: CoolDown;
   rows: Row[];
@@ -113,6 +117,7 @@ export type ProgramContent = {
   cycleRules: CycleRule[];
   nutritionNotes: string;
   lifestyleNotes: string;
+  guideTexts?: GuideTexts;
 };
 export type VersionState = 'draft' | 'published' | 'superseded';
 export type ProgramVersion = {
@@ -183,8 +188,9 @@ export function hasUniformSets(sets: readonly SetSpec[]): boolean {
 
 function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
   const [first] = sets;
-  if (!hasUniformSets(sets)) return `${sets.length} sets`;
-  return `${sets.length} × ${setText(first, repsSuffix)}`;
+  const count = counted(sets.length, 'working set');
+  if (!hasUniformSets(sets)) return count;
+  return `${count} × ${setText(first, repsSuffix)}`;
 }
 
 export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
@@ -192,7 +198,7 @@ export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
   const working = workingSets(sets);
   const warmUpCount = sets.length - working.length;
   const parts = [
-    ...(warmUpCount > 0 ? [`${warmUpCount} warm-up`] : []),
+    ...(warmUpCount > 0 ? [counted(warmUpCount, 'warm-up set')] : []),
     ...(working.length > 0 ? [workingSummary(working, repsSuffix)] : []),
   ];
   return parts.join(' · ');

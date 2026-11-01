@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Block, Session } from './program';
-import { SPLIT_TEMPLATES, slotPlanFor, type SessionTemplate } from './splitTemplates';
+import { patternChoicesFor, SPLIT_TEMPLATES, slotPlanFor, withMainPattern, withSecondaryPatterns, type SessionTemplate } from './splitTemplates';
 
 function patternsOf(template: SessionTemplate) {
   return template.slots.map(plan => [plan.slot, plan.patterns]);
@@ -174,5 +174,57 @@ describe('slotPlanFor', () => {
 
     // assert
     expect(plan).toBeUndefined();
+  });
+});
+
+describe('slot pattern choices', () => {
+  const lowerA = session('lower-a');
+  const upperA = session('upper-a');
+  const block = blockWith('upper-lower', [lowerA, upperA, session('lower-b'), session('upper-b')]);
+
+  it('offers the lower-body patterns for a lower session and the upper-body patterns for an upper one', () => {
+    // act
+    const lower = patternChoicesFor(block, lowerA, 'A');
+    const upper = patternChoicesFor(block, upperA, 'B');
+
+    // assert
+    expect(lower).toEqual(['squat', 'hinge', 'lunge']);
+    expect(upper).toEqual(['horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull']);
+  });
+
+  it('offers no choice for the accessory and core slots', () => {
+    // act
+    const choices = [patternChoicesFor(block, lowerA, 'C'), patternChoicesFor(block, lowerA, 'D')];
+
+    // assert
+    expect(choices).toEqual([[], []]);
+  });
+
+  it('swaps the new main lift pattern out of the secondary slot', () => {
+    // act
+    const changed = withMainPattern(block, lowerA, 'hinge');
+    const withChange = { ...block, sessions: [changed, ...block.sessions.slice(1)] };
+
+    // assert
+    expect(slotPlanFor(withChange, changed, 'A')?.patterns).toEqual(['hinge']);
+    expect(slotPlanFor(withChange, changed, 'B')?.patterns).toEqual(['squat', 'lunge']);
+  });
+
+  it('keeps the secondary slot when it does not hold the new main lift pattern', () => {
+    // act
+    const changed = withMainPattern(block, upperA, 'vertical-push');
+    const withChange = { ...block, sessions: [lowerA, changed, ...block.sessions.slice(2)] };
+
+    // assert
+    expect(slotPlanFor(withChange, changed, 'B')?.patterns).toEqual(['vertical-pull', 'horizontal-pull']);
+  });
+
+  it('stores the chosen secondary patterns in the order they are offered', () => {
+    // act
+    const changed = withSecondaryPatterns(block, lowerA, ['lunge', 'squat']);
+    const withChange = { ...block, sessions: [changed, ...block.sessions.slice(1)] };
+
+    // assert
+    expect(slotPlanFor(withChange, changed, 'B')?.patterns).toEqual(['squat', 'lunge']);
   });
 });

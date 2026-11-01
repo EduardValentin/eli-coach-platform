@@ -145,17 +145,28 @@ describe('the window that must hold filled sessions', () => {
     expect(found).toContainEqual({ code: 'missing-sessions', blockId: 'b2', detail: 'Hypertrophy block 2' });
   });
 
-  it('runs two weeks when the next check-in form is sooner', () => {
+  it('stops at the next check-in form even when it is sooner than two weeks', () => {
     // arrange
     const dayOne = addDays(publishDay, -13);
 
     // act
-    const inside = blockingProblems(content(filledThenEmpty(3)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
-    const outside = blockingProblems(content(filledThenEmpty(4)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
+    const inside = blockingProblems(content(filledThenEmpty(2)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
+    const outside = blockingProblems(content(filledThenEmpty(3)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
 
     // assert
     expect(codes(inside)).toContain('missing-sessions');
     expect(codes(outside)).not.toContain('missing-sessions');
+  });
+
+  it('looks past a check-in form that falls on the publish day', () => {
+    // arrange
+    const dayOne = addDays(publishDay, -14);
+
+    // act
+    const found = blockingProblems(content(filledThenEmpty(3)), 'x', context({ dayOne, preferredWeekday: 'tue' }));
+
+    // assert
+    expect(codes(found)).toContain('missing-sessions');
   });
 });
 
@@ -346,6 +357,28 @@ describe('slot pattern warnings', () => {
       { code: 'role-slot-mismatch', blockId: 'b1', sessionId: 's1', detail: 'Exercise burpee' },
     ]);
     expect(warningMessage(found.find(finding => finding.code === 'role-slot-mismatch')!)).toBe('Exercise burpee does not match its slot');
+  });
+
+  it('follows the main lift pattern the coach chose', () => {
+    // arrange
+    const planned = { ...session('s1', [row('frontSquat', 'A')]), slotPatterns: { A: ['hinge' as const] } };
+
+    // act
+    const found = warnings(content([fullBody([planned])]), context());
+
+    // assert
+    expect(found).toContainEqual({ code: 'role-slot-mismatch', blockId: 'b1', sessionId: 's1', detail: 'Exercise frontSquat' });
+  });
+
+  it('never warns about a slot the coach left open to any pattern', () => {
+    // arrange
+    const planned = { ...session('s1', [row('pushUp', 'B')]), slotPatterns: { B: [] } };
+
+    // act
+    const found = warnings(content([fullBody([planned])]), context());
+
+    // assert
+    expect(codes(found)).not.toContain('role-slot-mismatch');
   });
 
   it('accepts any role in a slot whose patterns match', () => {

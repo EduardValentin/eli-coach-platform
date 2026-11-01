@@ -6,7 +6,8 @@ export type EditorSection =
   | { kind: 'block'; blockId: string }
   | { kind: 'cycle' }
   | { kind: 'nutrition' }
-  | { kind: 'lifestyle' };
+  | { kind: 'lifestyle' }
+  | { kind: 'guide' };
 
 const BLOCK_HASH_PREFIX = '#block-';
 const NAMED_SECTIONS: Record<string, EditorSection> = {
@@ -15,6 +16,7 @@ const NAMED_SECTIONS: Record<string, EditorSection> = {
   '#cycle': { kind: 'cycle' },
   '#nutrition': { kind: 'nutrition' },
   '#lifestyle': { kind: 'lifestyle' },
+  '#guide': { kind: 'guide' },
 };
 
 export function sectionHash(section: EditorSection): string {
@@ -32,11 +34,12 @@ export function isSameSection(a: EditorSection, b: EditorSection): boolean {
 }
 
 const NAMED_TITLES: Record<Exclude<EditorSection['kind'], 'block'>, string> = {
-  header: 'Header & focus',
+  header: 'Intro & setup',
   plan: 'Overview',
   cycle: 'Cycle rules',
   nutrition: 'Nutrition',
   lifestyle: 'Lifestyle',
+  guide: 'Client guide',
 };
 
 export function sectionTitle(section: EditorSection, blocks: readonly Block[]): string {

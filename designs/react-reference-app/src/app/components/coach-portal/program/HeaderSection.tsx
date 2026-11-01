@@ -62,58 +62,68 @@ export function HeaderSection({ journey, program, version, content, onContentCha
   const change = (patch: Partial<ProgramContent['header']>) => onContentChange({ ...content, header: { ...header, ...patch } });
 
   return (
-    <SettingsSection headingId="header-heading" title="Header & focus">
-      <SettingsRows>
-        <SettingsRow htmlFor={ids.title} title="Title" layout="stacked">
-          <Input id={ids.title} value={header.title} onChange={event => change({ title: event.target.value })} />
-        </SettingsRow>
-        <SettingsRow htmlFor={ids.focus} title="Focus until the next check-in form" layout="stacked">
-          <Textarea
-            id={ids.focus}
-            placeholder="e.g. consolidate technique on the main lifts"
-            value={header.focus}
-            onChange={event => change({ focus: event.target.value })}
-          />
-        </SettingsRow>
-        <SettingsRow htmlFor={ids.changed} title="What changed and why" required={version.number >= 2} layout="stacked">
-          <Textarea
-            id={ids.changed}
-            required={version.number >= 2}
-            value={version.whatChanged}
-            onChange={event => setWhatChanged(program.callId, event.target.value)}
-          />
-        </SettingsRow>
-        <SettingsRow htmlFor={ids.note} title="Personal note" layout="stacked">
-          <Textarea id={ids.note} value={header.personalNote} onChange={event => change({ personalNote: event.target.value })} />
-        </SettingsRow>
-        <SettingsRow title={`From ${clientPronouns(journey.profile.identity.gender).possessive.lower} profile`} layout="stacked">
-          <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
-            {profileFacts(journey.profile.coaching).map(([term, detail]) => (
-              <div key={term} className="contents">
-                <dt className="text-text-secondary">{term}</dt>
-                <dd className="text-text-primary">{detail}</dd>
-              </div>
-            ))}
-          </dl>
-        </SettingsRow>
-        <SettingsRow htmlFor={ids.level} title="Level" layout="stacked">
-          <OptionSelect id={ids.level} options={LEVELS} value={program.level} onChange={level => onSetupChange({ level })} />
-        </SettingsRow>
-        {journey.profile.identity.gender !== 'male' && (
-          <SettingsRow htmlFor={ids.cycle} title="Cycle mode" layout="stacked">
-            <OptionSelect id={ids.cycle} options={CYCLE_MODES} value={program.cycleMode} onChange={cycleMode => onSetupChange({ cycleMode })} />
+    <div className="grid gap-6">
+      <SettingsSection
+        headingId="header-heading"
+        title="Intro"
+        description="What the client reads first: the top of her program page and the cover of her PDF."
+      >
+        <SettingsRows>
+          <SettingsRow htmlFor={ids.title} title="Title" description="Shown on the PDF cover." layout="stacked">
+            <Input id={ids.title} value={header.title} onChange={event => change({ title: event.target.value })} />
           </SettingsRow>
-        )}
-        <SettingsRow htmlFor={ids.language} title="Language" layout="stacked">
-          <OptionSelect
-            id={ids.language}
-            options={LANGUAGES}
-            value={program.language}
-            disabled={languageFixed}
-            onChange={language => onSetupChange({ language })}
-          />
-        </SettingsRow>
-      </SettingsRows>
-    </SettingsSection>
+          <SettingsRow htmlFor={ids.focus} title="Focus until the next check-in form" description="Shown at the top of her program page and on the PDF cover." layout="stacked">
+            <Textarea
+              id={ids.focus}
+              placeholder="e.g. consolidate technique on the main lifts"
+              value={header.focus}
+              onChange={event => change({ focus: event.target.value })}
+            />
+          </SettingsRow>
+          <SettingsRow htmlFor={ids.changed} title="What changed and why" required={version.number >= 2} layout="stacked">
+            <Textarea
+              id={ids.changed}
+              required={version.number >= 2}
+              value={version.whatChanged}
+              onChange={event => setWhatChanged(program.callId, event.target.value)}
+            />
+          </SettingsRow>
+          <SettingsRow htmlFor={ids.note} title="Personal note" description="Shown as a note from you under her focus." layout="stacked">
+            <Textarea id={ids.note} value={header.personalNote} onChange={event => change({ personalNote: event.target.value })} />
+          </SettingsRow>
+        </SettingsRows>
+      </SettingsSection>
+      <SettingsSection headingId="setup-heading" title="Setup" description="Only you see these. They shape suggestions and which sections the client gets.">
+        <SettingsRows>
+          <SettingsRow title={`From ${clientPronouns(journey.profile.identity.gender).possessive.lower} profile`} layout="stacked">
+            <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
+              {profileFacts(journey.profile.coaching).map(([term, detail]) => (
+                <div key={term} className="contents">
+                  <dt className="text-text-secondary">{term}</dt>
+                  <dd className="text-text-primary">{detail}</dd>
+                </div>
+              ))}
+            </dl>
+          </SettingsRow>
+          <SettingsRow htmlFor={ids.level} title="Level" layout="stacked">
+            <OptionSelect id={ids.level} options={LEVELS} value={program.level} onChange={level => onSetupChange({ level })} />
+          </SettingsRow>
+          {journey.profile.identity.gender !== 'male' && (
+            <SettingsRow htmlFor={ids.cycle} title="Cycle mode" layout="stacked">
+              <OptionSelect id={ids.cycle} options={CYCLE_MODES} value={program.cycleMode} onChange={cycleMode => onSetupChange({ cycleMode })} />
+            </SettingsRow>
+          )}
+          <SettingsRow htmlFor={ids.language} title="Language" layout="stacked">
+            <OptionSelect
+              id={ids.language}
+              options={LANGUAGES}
+              value={program.language}
+              disabled={languageFixed}
+              onChange={language => onSetupChange({ language })}
+            />
+          </SettingsRow>
+        </SettingsRows>
+      </SettingsSection>
+    </div>
   );
 }

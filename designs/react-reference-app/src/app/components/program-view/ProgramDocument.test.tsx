@@ -50,7 +50,7 @@ describe('TrackingTable', () => {
     expect(within(table).getAllByRole('columnheader', { name: 'kg × reps' })).toHaveLength(6);
     expect(within(table).getAllByRole('row')).toHaveLength(2 + 4);
     expect(within(table).getAllByRole('rowheader')).toHaveLength(1);
-    expect(within(table).getByRole('rowheader')).toHaveTextContent('4 × 8–10 · RIR 1–2');
+    expect(within(table).getByRole('rowheader')).toHaveTextContent('4 working sets × 8–10 · RIR 1–2');
     expect(within(table).getByRole('cell', { name: '1 · 8–10' })).toBeInTheDocument();
     expect(within(table).getByRole('cell', { name: '4 · 8–10' })).toBeInTheDocument();
   });
@@ -69,7 +69,7 @@ describe('TrackingTable', () => {
     // assert
     expect(screen.getByRole('cell', { name: '1 · 5 · RIR 2' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: '2 · 8–10 · RIR 1–2' })).toBeInTheDocument();
-    expect(screen.getByRole('rowheader')).not.toHaveTextContent('2 sets');
+    expect(screen.getByRole('rowheader')).not.toHaveTextContent('2 working sets');
   });
 
   it('skips rows without an exercise', () => {
@@ -102,6 +102,28 @@ describe('ProgramDocument', () => {
     expect(within(cover).getByText(/^Program · Version 1 · \d{1,2} \w+ 2026$/)).toBeInTheDocument();
     expect(within(cover).getByText('Coach: Eli')).toBeInTheDocument();
     expect(within(cover).getByText(`${BLOCK_TYPE_LABELS[block.type]} block`)).toBeInTheDocument();
+  });
+
+  it("carries the coach's title, personal note, missed-day note and cycle adjustments", () => {
+    // arrange
+    const view = viewFor('adapted');
+    const { content } = view.version;
+    content.header = { title: 'Your first program', focus: '', personalNote: 'So glad to start with you' };
+    content.cycleRules = [
+      { id: 'r1', symptomPeriod: 'Cramps, days 1–2', adjustment: 'one-set-less' },
+      { id: 'r2', symptomPeriod: 'Bloating', adjustment: 'none' },
+    ];
+    currentBlockOf(view).missedDayNote = 'Missed one? Pick up with the next session.';
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(screen.getByText('Your first program')).toBeInTheDocument();
+    expect(screen.getByText('So glad to start with you')).toBeInTheDocument();
+    expect(screen.getByText('Missed one? Pick up with the next session.')).toBeInTheDocument();
+    const adjustments = screen.getByRole('list', { name: 'Your adjustments' });
+    expect(within(adjustments).getAllByRole('listitem').map(item => item.textContent)).toEqual(['Cramps, days 1–2: do one set less per exercise']);
   });
 
   it('gives the current block and week, next check-in, daily steps and sessions per week at a glance', () => {

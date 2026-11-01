@@ -10,6 +10,7 @@ import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { BLOCK_SWATCH } from './blockColours';
+import { CycleAdjustments } from './CycleAdjustments';
 import { Emphasised, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, programTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
 import { TrackingTable } from './TrackingTable';
@@ -17,7 +18,6 @@ import { cardioSegmentText, coolDownLines, currentBlock, dayEntryLabel, exercise
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_TEXT = "Your coach's full disclaimer accompanies this program.";
-const NO_WEIGHT_NOTE = 'No weight listed? Pick one that lets you finish the set at the RIR shown.';
 const LIST_DASH = /^—\s*/;
 
 const SECTION_TITLE_CLASS = 'font-serif text-document-section font-semibold text-balance text-text-primary';
@@ -86,7 +86,7 @@ function Cover({ view, block }: { view: ProgramView; block: Block | null }) {
   return (
     <header data-print-keep className="relative -mx-4 overflow-hidden bg-surface-subtle px-4 pt-7 pb-6 sm:-mx-[16mm] sm:px-[16mm]">
       {block && <span aria-hidden="true" className={cn('absolute inset-x-0 top-0 h-1.5', BLOCK_SWATCH[block.type])} />}
-      <p className={DOCUMENT_LABEL_CLASS}>Training program</p>
+      <p className={DOCUMENT_LABEL_CLASS}>{version.content.header.title.trim() || 'Training program'}</p>
       <h1 className="mt-document-tight font-serif text-document-title font-semibold text-text-primary">{view.clientName}</h1>
       <div className="mt-document-gap flex flex-wrap items-center gap-x-6 gap-y-2 text-document-body text-text-secondary">
         <p>{`Program · Version ${version.number} · ${date}`}</p>
@@ -99,6 +99,12 @@ function Cover({ view, block }: { view: ProgramView; block: Block | null }) {
         )}
       </div>
       {version.content.header.focus && <p className="mt-document-gap max-w-measure font-serif text-document-card italic text-text-primary">{version.content.header.focus}</p>}
+      {version.content.header.personalNote.trim() && (
+        <figure className="mt-document-gap max-w-measure space-y-document-tight border-l-2 border-text-primary pl-4">
+          <figcaption className={DOCUMENT_LABEL_CLASS}>{`A note from ${COACH_NAME}`}</figcaption>
+          <Prose paragraphs={parseTemplate(version.content.header.personalNote).paragraphs} />
+        </figure>
+      )}
     </header>
   );
 }
@@ -246,7 +252,8 @@ function EverySession({ view, block }: { view: ProgramView; block: Block }) {
       </div>
       <Prose paragraphs={parseTemplate(programTemplate(view, 'progression')).paragraphs} />
       {hasCoolDown && <Prose paragraphs={parseTemplate(programTemplate(view, 'coolDown')).paragraphs} />}
-      <p className={DOCUMENT_NOTE_CLASS}>{NO_WEIGHT_NOTE}</p>
+      {block.missedDayNote.trim() && <Prose paragraphs={parseTemplate(block.missedDayNote).paragraphs} />}
+      <p className={DOCUMENT_NOTE_CLASS}>{programTemplate(view, 'noWeight')}</p>
     </div>
   );
 }
@@ -354,6 +361,16 @@ function CardioSection({ view, block }: { view: ProgramView; block: Block }) {
   );
 }
 
+function CycleSection({ view }: { view: ProgramView }) {
+  const { title, paragraphs } = parseTemplate(programTemplate(view, 'cycle'));
+  return (
+    <Section label="Cycle" title={title || 'Listening to your cycle'} print="keep">
+      <Prose paragraphs={paragraphs} />
+      <CycleAdjustments rules={view.version.content.cycleRules} labelClassName={DOCUMENT_LABEL_CLASS} className="max-w-measure text-document-body" />
+    </Section>
+  );
+}
+
 function StepsSection({ view, block }: { view: ProgramView; block: Block }) {
   const text = fillTemplate(programTemplate(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
   return <TemplateSection label="Cardio and steps" text={text} fallbackTitle="Daily steps" />;
@@ -393,7 +410,7 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
           <StepsSection view={view} block={block} />
         </>
       )}
-      {program.cycleMode === 'adapted' && <TemplateSection label="Cycle" text={programTemplate(view, 'cycle')} fallbackTitle="Listening to your cycle" />}
+      {program.cycleMode === 'adapted' && <CycleSection view={view} />}
       <TemplateSection label="Low-energy days" text={programTemplate(view, 'lowEnergy')} fallbackTitle="Low-energy session" />
       <TemplateSection label="Beyond training" text={content.nutritionNotes || NUTRITION_FALLBACK} fallbackTitle="Nutrition" />
       <TemplateSection label="Beyond training" text={content.lifestyleNotes || LIFESTYLE_FALLBACK} fallbackTitle="Lifestyle" />

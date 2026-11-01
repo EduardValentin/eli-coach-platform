@@ -1,17 +1,14 @@
-import { useId } from 'react';
-import type { Block, Program } from '../../../domain/program';
+import type { Block, BlockType, Program } from '../../../domain/program';
 import { fillTemplate, templateText, type TemplateKey } from '../../../domain/programTemplates';
 import { CollapsiblePortalWidget } from '../../CollapsiblePortalWidget';
 import { parseTemplate, TextCardStack, type TextCard } from '../../program-view/ProgramText';
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { Textarea } from '../../ui/textarea';
+import { ClientTextEditor } from './ClientTextEditor';
 
 type BlockTextsProps = { block: Block; language: Program['language']; onChange: (block: Block) => void };
 
 type TextField = {
   label: string;
+  hint?: (block: Block) => string | undefined;
   templateKey: (block: Block) => TemplateKey | null;
   read: (block: Block) => string;
   write: (block: Block, text: string) => Block;
@@ -21,9 +18,17 @@ function sessionDays(block: Block): number {
   return Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
 }
 
+const INTRO_HINTS: Partial<Record<BlockType, string>> = {
+  foundation: 'Suggested for beginners, weeks 1–2.',
+};
+
 const FIELDS: TextField[] = [
   {
     label: 'Intro',
+    hint: block => {
+      const suggestion = INTRO_HINTS[block.type];
+      return suggestion && `${suggestion} Only you see this.`;
+    },
     templateKey: block => `block.${block.type}`,
     read: block => block.introText,
     write: (block, introText) => ({ ...block, introText }),
@@ -55,23 +60,16 @@ function fieldTemplate(field: TextField, block: Block, language: Program['langua
 }
 
 function TextFieldEditor({ field, block, language, onChange }: BlockTextsProps & { field: TextField }) {
-  const id = useId();
-  const labelId = useId();
   const template = fieldTemplate(field, block, language);
-
   return (
-    <fieldset aria-labelledby={labelId} className="grid gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <Label id={labelId} htmlFor={id}>
-          {field.label}
-        </Label>
-        {template.pending && <Badge tone="pending">Romanian text pending</Badge>}
-        <Button variant="ghost" size="xs" className="ml-auto" onClick={() => onChange(field.write(block, template.text))}>
-          Reset to template
-        </Button>
-      </div>
-      <Textarea id={id} value={field.read(block)} onChange={event => onChange(field.write(block, event.target.value))} />
-    </fieldset>
+    <ClientTextEditor
+      label={field.label}
+      value={field.read(block)}
+      template={template}
+      caption={field.hint?.(block)}
+      onChange={text => onChange(field.write(block, text))}
+      onReset={() => onChange(field.write(block, template.text))}
+    />
   );
 }
 

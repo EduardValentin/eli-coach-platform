@@ -6,6 +6,7 @@ import type { Block, Program, ProgramVersion } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import { recurringSymptoms } from '../../../domain/programOnboarding';
 import { BlockWorkspace } from './BlockWorkspace';
+import { ClientGuideSection } from './ClientGuideSection';
 import { CycleRulesEditor } from './CycleRulesEditor';
 import type { EditorSection } from './editorSection';
 import { HeaderSection } from './HeaderSection';
@@ -88,7 +89,10 @@ export function EditorSectionContent({ section, journey, program, draft, editor,
     );
   }
   if (section.kind === 'cycle') {
-    return <CycleRulesEditor rules={content.cycleRules} symptoms={recurringSymptoms(journey)} onChange={cycleRules => editor.replaceContent({ ...content, cycleRules })} />;
+    return <CycleRulesEditor content={content} language={program.language} symptoms={recurringSymptoms(journey)} onChange={editor.replaceContent} />;
+  }
+  if (section.kind === 'guide') {
+    return <ClientGuideSection content={content} language={program.language} onChange={editor.replaceContent} />;
   }
   if (section.kind === 'nutrition') {
     return <NutritionSection notes={content.nutritionNotes} onChange={nutritionNotes => editor.replaceContent({ ...content, nutritionNotes })} />;

@@ -1,7 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type Block } from '../../domain/program';
-import { templateText, type TemplateKey } from '../../domain/programTemplates';
+import { guideText, isGuideTextKey, templateText, type TemplateKey } from '../../domain/programTemplates';
 import { LABEL_CLASS, WIDGET_SUBHEADING_CLASS } from '../typography';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '../ui/utils';
@@ -11,7 +11,8 @@ export const NUTRITION_FALLBACK = 'Your coach will add nutrition guidance here.'
 export const LIFESTYLE_FALLBACK = 'Nothing extra this time.';
 
 export function programTemplate(view: ProgramView, key: TemplateKey): string {
-  return templateText(key, view.program.language).text;
+  const { language } = view.program;
+  return isGuideTextKey(key) ? guideText(view.version.content.guideTexts, key, language) : templateText(key, language).text;
 }
 
 const HEADING_LINE = /^\*\*([^*]+)\*\*$/;
@@ -118,6 +119,7 @@ export function blockIntroCards(view: ProgramView, block: Block, noteTitle: stri
     templateCard('intro', block.introText || programTemplate(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
     ...(block.clientNote ? [templateCard('note', block.clientNote, noteTitle)] : []),
     ...(calibration ? [templateCard('calibration', programTemplate(view, 'calibration'), 'Calibration week')] : []),
+    ...(block.missedDayNote.trim() ? [templateCard('missed-day', block.missedDayNote, 'If you miss a session')] : []),
   ];
 }
 

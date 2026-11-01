@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { addDays } from 'date-fns';
-import { CalendarRange, ClipboardCheck, Flag, type LucideIcon } from 'lucide-react';
+import { CalendarRange, ClipboardCheck, Flag, Info, type LucideIcon } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
 import { blockStatus, checkpointDate, nextCheckpoint, planWeeks } from '../../../domain/programCalendar';
-import { blockingMessage, sequenceProblems } from '../../../domain/programRules';
+import { blockingMessage, publishWindow, sequenceProblems } from '../../../domain/programRules';
 import { suggestedBlocks } from '../../../domain/programSuggestions';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { InlineProblem } from '../../InlineProblem';
@@ -59,6 +59,16 @@ function PlanSummary(overview: PlanOverviewProps) {
   );
 }
 
+function PublishNote({ dayOne, preferredWeekday, today }: PlanOverviewProps) {
+  const { to } = publishWindow({ publishDay: today, dayOne, preferredWeekday });
+  return (
+    <p className="flex items-start gap-2 text-sm leading-snug text-text-secondary">
+      <Info aria-hidden="true" size={16} className="mt-0.5 shrink-0" />
+      {`Publishing needs every session up to the next check-in form, ${formatJourneyDate(to)}. Blocks that start after it can be filled later.`}
+    </p>
+  );
+}
+
 function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => void }) {
   const plan = suggestedBlocks(level)
     .map(block => `${BLOCK_TYPE_LABELS[block.type]} ${block.weeks} wk`)
@@ -88,6 +98,7 @@ export function PlanOverview(overview: PlanOverviewProps) {
           <div className="grid grid-cols-1 gap-4">
             <PlanSummary {...overview} />
             <PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday={preferredWeekday} today={today} />
+            <PublishNote {...overview} />
           </div>
           <PlanBlockList
             blocks={blocks}

@@ -1,4 +1,4 @@
-import { addDays, format, isAfter, max, startOfDay } from 'date-fns';
+import { addDays, format, isAfter, startOfDay } from 'date-fns';
 import type { Exercise } from '../context/TrainingContext';
 import { canStartWork, workStartDate } from './coachingSubscription';
 import type { Muscle } from './exercises';
@@ -73,8 +73,8 @@ export type RuleInput = {
 type Exercises = ReadonlyMap<string, Exercise>;
 type ElapsedInput = { draftBlocks: readonly Block[]; publishedBlocks: readonly Block[] | null; dayOne: Date | null; today: Date };
 type SessionPlace = { block: Block; session: Session };
-
-const MINIMUM_CONTENT_DAYS = 14;
+export type PublishSchedule = { publishDay: Date; dayOne: Date | null; preferredWeekday: Weekday };
+export type PublishWindow = { from: Date; to: Date };
 const MAX_WEEKS_WITHOUT_DELOAD = 8;
 const MAX_HIIT_SESSIONS = 2;
 
@@ -140,12 +140,14 @@ export function ruleContextFor({ journey, program, draft, today, exercises }: Ru
   };
 }
 
-function minimumContentWindow(ctx: RuleContext): { from: Date; to: Date } {
-  const checkpoint = nextCheckpoint(ctx.dayOne ?? ctx.publishDay, ctx.preferredWeekday, ctx.publishDay);
-  return {
-    from: ctx.publishDay,
-    to: max([checkpoint, addDays(ctx.publishDay, MINIMUM_CONTENT_DAYS)]),
-  };
+export function publishWindow({ publishDay, dayOne, preferredWeekday }: PublishSchedule): PublishWindow {
+  return { from: publishDay, to: nextCheckpoint(dayOne ?? publishDay, preferredWeekday, addDays(publishDay, 1)) };
+}
+
+export function isNeededToPublish(blocks: readonly Block[], index: number, schedule: PublishSchedule): boolean {
+  const window = publishWindow(schedule);
+  const { start, end } = blockDates(blocks, index, schedule.dayOne ?? schedule.publishDay);
+  return start <= window.to && end >= startOfDay(window.from);
 }
 
 export function sequenceProblems(blocks: readonly Block[]): RuleFinding<BlockingCode>[] {
@@ -172,12 +174,8 @@ function missingSessionProblems(
   blocks: readonly Block[],
   ctx: RuleContext,
 ): RuleFinding<BlockingCode>[] {
-  const window = minimumContentWindow(ctx);
-  const dayOne = ctx.dayOne ?? ctx.publishDay;
   return blocks.flatMap((block, index) => {
-    const { start, end } = blockDates(blocks, index, dayOne);
-    const overlaps = start <= window.to && end >= startOfDay(window.from);
-    if (!overlaps || !(hasUnfilledSessions(block) || hasEmptyCardioDay(block))) return [];
+    if (!isNeededToPublish(blocks, index, ctx) || !(hasUnfilledSessions(block) || hasEmptyCardioDay(block))) return [];
     return [
       {
         code: 'missing-sessions' as const,
@@ -295,7 +293,7 @@ function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<Warni
 function roleSlotWarning({ block, session }: SessionPlace, row: Row, exercises: Exercises): RuleFinding<WarningCode>[] {
   const exercise = exercises.get(row.exerciseId);
   const planned = slotPlanFor(block, session, row.slot)?.patterns;
-  if (!exercise?.pattern || !planned || planned.includes(exercise.pattern)) return [];
+  if (!exercise?.pattern || !planned || planned.length === 0 || planned.includes(exercise.pattern)) return [];
   return [{ code: 'role-slot-mismatch', blockId: block.id, sessionId: session.id, detail: exercise.name }];
 }
 

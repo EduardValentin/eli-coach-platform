@@ -1,10 +1,9 @@
 import { useId, type ReactNode } from 'react';
 import { ChevronDown, Timer } from 'lucide-react';
 import type { Exercise } from '../../context/TrainingContext';
-import { formatRange, isWorkingSet, positionLabel, type ProgramLanguage, type Row, type Session, type SetSpec } from '../../domain/program';
+import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
 import { estimatedMinutes } from '../../domain/sessionTiming';
-import { templateText } from '../../domain/programTemplates';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -12,7 +11,7 @@ import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
 import { PositionBadge } from './PositionBadge';
-import { coolDownLines, exerciseNameOf, plainText, restLabel, warmUpLines } from './programView';
+import { coolDownLines, exerciseNameOf, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
@@ -75,11 +74,11 @@ function SetLine({ set, index, exercise }: { set: SetSpec; index: number; exerci
   );
 }
 
-type ExerciseCardProps = { session: Session; row: Row; exercisesById: Library; language: ProgramLanguage };
+type ExerciseCardProps = { session: Session; row: Row; exercisesById: Library; progressionText: string };
 
-function ExerciseDetails({ row, exercise, exercisesById, language }: { row: Row; exercise: Exercise | undefined; exercisesById: Library; language: ProgramLanguage }) {
+function ExerciseDetails({ row, exercise, exercisesById, progressionText }: { row: Row; exercise: Exercise | undefined; exercisesById: Library; progressionText: string }) {
   const swaps = namesOf(row.substitutions, exercisesById);
-  const progression = row.progression.kind === 'custom' ? row.progression.text : plainText(templateText('progression', language).text);
+  const progression = row.progression.kind === 'custom' ? row.progression.text : progressionText;
   return (
     <Collapsible className="-mb-1 border-t border-border-subtle">
       <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-2 text-sm font-medium text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
@@ -96,7 +95,7 @@ function ExerciseDetails({ row, exercise, exercisesById, language }: { row: Row;
   );
 }
 
-function ExerciseCard({ session, row, exercisesById, language }: ExerciseCardProps) {
+function ExerciseCard({ session, row, exercisesById, progressionText }: ExerciseCardProps) {
   const headingId = useId();
   const exercise = exercisesById.get(row.exerciseId);
 
@@ -129,7 +128,7 @@ function ExerciseCard({ session, row, exercisesById, language }: ExerciseCardPro
         </span>
         {row.tempo && <span>{`Tempo ${row.tempo}`}</span>}
       </p>
-      <ExerciseDetails row={row} exercise={exercise} exercisesById={exercisesById} language={language} />
+      <ExerciseDetails row={row} exercise={exercise} exercisesById={exercisesById} progressionText={progressionText} />
     </article>
   );
 }
@@ -148,14 +147,14 @@ function Superset({ children }: { children: ReactNode }) {
   );
 }
 
-type SessionDayProps = { session: Session; exercisesById: Library; language: ProgramLanguage };
+type SessionDayProps = { session: Session; exercisesById: Library; progressionText: string };
 
-export function SessionDay({ session, exercisesById, language }: SessionDayProps) {
+export function SessionDay({ session, exercisesById, progressionText }: SessionDayProps) {
   const headingId = useId();
   const warmUp = warmUpLines(session, exercisesById);
   const item = (row: Row) => (
     <li key={row.id}>
-      <ExerciseCard session={session} row={row} exercisesById={exercisesById} language={language} />
+      <ExerciseCard session={session} row={row} exercisesById={exercisesById} progressionText={progressionText} />
     </li>
   );
 

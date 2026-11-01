@@ -84,12 +84,12 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Burpee')).toBeInTheDocument();
+    expect(screen.getByText('Barbell Row')).toBeInTheDocument();
     expect(screen.queryByText('Dumbbell Rows')).not.toBeInTheDocument();
-    expect(screen.queryByText('Hip Thrust')).not.toBeInTheDocument();
+    expect(screen.queryByText('Romanian Deadlift')).not.toBeInTheDocument();
     expect(screen.queryByText('Plank')).not.toBeInTheDocument();
     expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1–10 of 30')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 91')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
@@ -115,7 +115,7 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.getByText('45° Back Extension')).toBeInTheDocument();
   });
 
   it('counts the exercises behind each tag', async () => {
@@ -126,7 +126,7 @@ describe('the exercise library filters', () => {
     await user.click(screen.getByRole('button', { name: 'Tags' }));
 
     // assert
-    expect(screen.getByRole('checkbox', { name: 'Recovery 9' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Recovery 12' })).toBeInTheDocument();
   });
 
   it('narrows to equipment-free exercises', async () => {
@@ -214,7 +214,7 @@ describe('the exercise library filters', () => {
       .getAllByRole('row')
       .slice(1)
       .map((row) => within(row).getAllByRole('cell')[0].textContent);
-    expect(names[0]).toMatch(/^90\/90 Hip Switches/);
+    expect(names[0]).toMatch(/^45° Back Extension/);
   });
 
   it('shows each exercise its tags so the coach can see why a row matched', () => {
@@ -223,7 +223,7 @@ describe('the exercise library filters', () => {
     renderLibrary();
 
     // assert
-    expect(within(exerciseRow('Bike Intervals')).getByText('Recovery')).toBeInTheDocument();
+    expect(within(exerciseRow('45° Back Extension')).getByText('Recovery')).toBeInTheDocument();
   });
 
   it("opens the exercise editor from a row's Edit action", async () => {
@@ -231,10 +231,10 @@ describe('the exercise library filters', () => {
     const user = renderLibrary();
 
     // act
-    await chooseAction(user, 'Bike Intervals', 'Edit');
+    await chooseAction(user, 'Barbell Back Squat', 'Edit');
 
     // assert
-    expect(screen.getByText('Exercise editor e14')).toBeInTheDocument();
+    expect(screen.getByText('Exercise editor e1')).toBeInTheDocument();
   });
 
   it('hands the editor the filters it was opened from, so it can return to them', async () => {
@@ -381,14 +381,14 @@ describe('archiving an exercise', () => {
     await chooseOption(user, 'Status', 'Archived');
 
     // act
-    await chooseAction(user, 'Hip Thrust', 'Restore');
+    await chooseAction(user, 'Barbell Hip Thrust', 'Restore');
     await chooseOption(user, 'Status', 'Active');
-    await user.type(screen.getByRole('searchbox', { name: 'Search exercises' }), 'hip thrust');
+    await user.type(screen.getByRole('searchbox', { name: 'Search exercises' }), 'barbell hip thrust');
 
     // assert
-    expect(await screen.findByText('"Hip Thrust" restored as "Hip Thrust (2)"')).toBeInTheDocument();
-    expect(exerciseRow('Hip Thrust (2)')).toBeInTheDocument();
-    expect(exerciseRow('Hip Thrust')).toBeInTheDocument();
+    expect(await screen.findByText('"Barbell Hip Thrust" restored as "Barbell Hip Thrust (2)"')).toBeInTheDocument();
+    expect(exerciseRow('Barbell Hip Thrust (2)')).toBeInTheDocument();
+    expect(exerciseRow('Barbell Hip Thrust')).toBeInTheDocument();
   });
 
   it('counts the exercises in each status', async () => {
@@ -399,7 +399,7 @@ describe('archiving an exercise', () => {
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
 
     // assert
-    expect(screen.getByRole('option', { name: 'Active 30' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Active 91' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
   });
 

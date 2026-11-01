@@ -10,6 +10,7 @@ import { weekdayOf } from '../../domain/programCalendar';
 import { fillTemplate } from '../../domain/programTemplates';
 import { splitLabel } from '../../domain/splitTemplates';
 import { formatJourneyDate } from '../../utils/journeyLabels';
+import { CycleAdjustments } from './CycleAdjustments';
 import { DayContent } from './DayContent';
 import { PlanTimeline } from './PlanTimeline';
 import { FocusCard } from './FocusCard';
@@ -123,7 +124,10 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
           </Section>
           {program.cycleMode === 'adapted' && (
             <Section title="Listening to your cycle" id="cycle" icon={HeartPulse}>
-              <TextCardStack cards={[templateCard('cycle', programTemplate(view, 'cycle'), 'Listening to your cycle')]} />
+              <div className="grid gap-4">
+                <TemplateBody paragraphs={parseTemplate(programTemplate(view, 'cycle')).paragraphs} />
+                <CycleAdjustments rules={content.cycleRules} labelClassName={LABEL_CLASS} className="text-sm leading-relaxed text-text-primary" />
+              </div>
             </Section>
           )}
           <Section title="How to read your session" id="legend" icon={ListChecks}>

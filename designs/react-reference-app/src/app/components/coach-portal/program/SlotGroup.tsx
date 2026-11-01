@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { MOVEMENT_PATTERN_LABELS } from '../../../domain/exercises';
+import { MOVEMENT_PATTERN_LABELS, type MovementPattern } from '../../../domain/exercises';
 import type { Session, Slot } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
 import type { SlotPlan } from '../../../domain/splitTemplates';
+import { ChoiceGroup, ChoiceOption, MultiChoiceGroup, MultiChoiceOption } from '../../ChoiceGroup';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { ExerciseCard } from './ExerciseCard';
@@ -13,6 +14,8 @@ import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, t
 type SlotGroupProps = {
   session: Session;
   plan: SlotPlan;
+  choices: readonly MovementPattern[];
+  onPatternsChange: (patterns: MovementPattern[]) => void;
   library: readonly Exercise[];
   edits: RowEdits;
   onChange: (session: Session) => void;
@@ -39,8 +42,63 @@ function SupersetUnit({ children, onUngroup }: { children: ReactNode; onUngroup:
   );
 }
 
-export function SlotGroup({ session, plan, library, edits, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
-  const { slot, label, patterns } = plan;
+const SINGLE_PATTERN_SLOTS: readonly Slot[] = ['A'];
+
+type PatternPickerProps = { plan: SlotPlan; choices: readonly MovementPattern[]; onChange: (patterns: MovementPattern[]) => void };
+
+function MainPatternPicker({ plan, choices, onChange }: PatternPickerProps) {
+  return (
+    <ChoiceGroup
+      size="xs"
+      aria-label={`${plan.label} pattern`}
+      value={plan.patterns[0] ?? ''}
+      onValueChange={value => onChange([value as MovementPattern])}
+      className="w-auto"
+    >
+      {choices.map(pattern => (
+        <ChoiceOption key={pattern} value={pattern}>
+          {MOVEMENT_PATTERN_LABELS[pattern]}
+        </ChoiceOption>
+      ))}
+    </ChoiceGroup>
+  );
+}
+
+function PatternChips({ plan, choices, onChange }: PatternPickerProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <MultiChoiceGroup
+        size="xs"
+        aria-label={`${plan.label} patterns`}
+        value={plan.patterns}
+        onValueChange={values => onChange(values as MovementPattern[])}
+        className="w-auto"
+      >
+        {choices.map(pattern => (
+          <MultiChoiceOption key={pattern} value={pattern}>
+            {MOVEMENT_PATTERN_LABELS[pattern]}
+          </MultiChoiceOption>
+        ))}
+      </MultiChoiceGroup>
+      {plan.patterns.length === 0 && <span className="text-xs text-text-secondary">Any pattern</span>}
+    </div>
+  );
+}
+
+function PatternTags({ plan, choices, onChange }: PatternPickerProps) {
+  if (choices.length === 0) {
+    return plan.patterns.map(pattern => (
+      <Badge key={pattern} tone="muted">
+        {MOVEMENT_PATTERN_LABELS[pattern]}
+      </Badge>
+    ));
+  }
+  if (SINGLE_PATTERN_SLOTS.includes(plan.slot)) return <MainPatternPicker plan={plan} choices={choices} onChange={onChange} />;
+  return <PatternChips plan={plan} choices={choices} onChange={onChange} />;
+}
+
+export function SlotGroup({ session, plan, choices, onPatternsChange, library, edits, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
+  const { slot, label } = plan;
   const units = slotUnits(session, slot);
   const addLabel = `Add exercise to ${label}`;
   const several = !SINGLE_CARD_SLOTS.includes(slot);
@@ -66,13 +124,9 @@ export function SlotGroup({ session, plan, library, edits, onChange, onAdd, onAd
 
   return (
     <section className="grid gap-2">
-      <header className="flex flex-wrap items-center gap-2">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h4 className="text-sm font-semibold text-text-primary">{`${slot} · ${label}`}</h4>
-        {patterns.map(pattern => (
-          <Badge key={pattern} tone="muted">
-            {MOVEMENT_PATTERN_LABELS[pattern]}
-          </Badge>
-        ))}
+        <PatternTags plan={plan} choices={choices} onChange={onPatternsChange} />
         {several && units.length > 0 && (
           <Button variant="ghost" size="xs" className="ml-auto" aria-label={addLabel} onClick={() => onAdd(slot)}>
             <Plus aria-hidden="true" />

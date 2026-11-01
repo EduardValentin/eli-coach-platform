@@ -164,7 +164,7 @@ describe('LibraryPanel', () => {
 
     // assert
     const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
-    expect(within(card).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(card).getByText('2 warm-up sets · 3 working sets × 12–15 · RIR 3')).toBeInTheDocument();
     expect(within(card).getByText('Rest 1:15')).toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
     expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe('LibraryPanel', () => {
 
     // assert
     expect(within(firstSession()).getByText('archived')).toBeInTheDocument();
-    expect(within(library()).getAllByRole('button', { name: 'Add Hip Thrust' })).toHaveLength(1);
+    expect(within(library()).getAllByRole('button', { name: 'Add Barbell Hip Thrust' })).toHaveLength(1);
   });
 
   it('filters on the equipment in her profile, following a later profile edit', async () => {

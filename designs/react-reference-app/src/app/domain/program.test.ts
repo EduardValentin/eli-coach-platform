@@ -209,7 +209,7 @@ describe('setsSummary', () => {
     const summary = setsSummary(sets);
 
     // assert
-    expect(summary).toBe('4 × 6–10 · RIR 1–2');
+    expect(summary).toBe('4 working sets × 6–10 · RIR 1–2');
   });
 
   it('shows a single RIR when its range is one value', () => {
@@ -220,7 +220,7 @@ describe('setsSummary', () => {
     const summary = setsSummary(sets);
 
     // assert
-    expect(summary).toBe('3 × 8 · RIR 2');
+    expect(summary).toBe('3 working sets × 8 · RIR 2');
   });
 
   it('counts sets when they differ', () => {
@@ -231,7 +231,7 @@ describe('setsSummary', () => {
     const summary = setsSummary(sets);
 
     // assert
-    expect(summary).toBe('4 sets');
+    expect(summary).toBe('4 working sets');
   });
 
   it('leads with the warm-up count and summarises the working sets', () => {
@@ -243,7 +243,7 @@ describe('setsSummary', () => {
     const summary = setsSummary(sets);
 
     // assert
-    expect(summary).toBe('2 warm-up · 4 × 6–10 · RIR 1–2');
+    expect(summary).toBe('2 warm-up sets · 4 working sets × 6–10 · RIR 1–2');
   });
 
   it('says there are no sets for an empty list', () => {

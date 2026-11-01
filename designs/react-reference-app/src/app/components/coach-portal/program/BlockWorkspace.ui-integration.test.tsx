@@ -187,6 +187,35 @@ describe('BlockWorkspace', () => {
     expect(positions()).toEqual(['C', 'C']);
   });
 
+  it('lets the coach choose the main lift pattern and swaps it out of the secondary slot', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const mainLift = within(slotGroup('A · Main lift')).getByRole('radiogroup', { name: 'Main lift pattern' });
+    const secondary = within(slotGroup('B · Secondary')).getByRole('group', { name: 'Secondary patterns' });
+
+    // act
+    await user.click(within(mainLift).getByRole('radio', { name: 'Hinge' }));
+
+    // assert
+    expect(within(mainLift).getByRole('radio', { name: 'Hinge' })).toBeChecked();
+    expect(within(secondary).getByRole('button', { name: 'Squat' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(secondary).getByRole('button', { name: 'Hinge' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(secondary).getByRole('button', { name: 'Lunge' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('leaves the secondary slot open to any pattern when the coach clears every pattern', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const secondary = within(slotGroup('B · Secondary')).getByRole('group', { name: 'Secondary patterns' });
+
+    // act
+    await user.click(within(secondary).getByRole('button', { name: 'Hinge' }));
+    await user.click(within(secondary).getByRole('button', { name: 'Lunge' }));
+
+    // assert
+    expect(within(slotGroup('B · Secondary')).getByText('Any pattern')).toBeInTheDocument();
+  });
+
   it('edits one set on its own and applies the first working set to all working sets', async () => {
     // arrange
     const user = await openFirstBlock();
@@ -198,7 +227,7 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(within(main).getByRole('textbox', { name: 'Set 3 reps' })).toHaveValue('12–15');
-    expect(within(main).getByText('2 warm-up · 3 sets')).toBeInTheDocument();
+    expect(within(main).getByText('2 warm-up sets · 3 working sets')).toBeInTheDocument();
 
     // act
     await user.type(within(main).getByRole('spinbutton', { name: 'Set 3 weight' }), '20');
@@ -208,7 +237,7 @@ describe('BlockWorkspace', () => {
     expect(within(main).getByRole('textbox', { name: 'Set 4 reps' })).toHaveValue('12–15');
     expect(within(main).getByRole('spinbutton', { name: 'Set 5 weight' })).toHaveValue(20);
     expect(within(main).getByRole('textbox', { name: 'Set 1 reps' })).toHaveValue('8');
-    expect(within(main).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(main).getByText('2 warm-up sets · 3 working sets × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
   it('turns a working set into a warm-up set and blanks its RIR', async () => {
@@ -224,7 +253,7 @@ describe('BlockWorkspace', () => {
     // assert
     expect(within(main).getByRole('textbox', { name: 'Set 3 RIR' })).toBeDisabled();
     expect(within(main).getByRole('textbox', { name: 'Set 3 RIR' })).toHaveValue('');
-    expect(within(main).getByText('3 warm-up · 2 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(main).getByText('3 warm-up sets · 2 working sets × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
   it('leaves the weight empty to pick it by RIR', async () => {
@@ -253,7 +282,7 @@ describe('BlockWorkspace', () => {
     await user.click(within(main).getByRole('button', { name: 'Remove set 4' }));
 
     // assert
-    expect(within(main).getByText('3 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(main).getByText('3 warm-up sets · 3 working sets × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
   it('plays the exercise video in a dialog from the details', async () => {
@@ -463,7 +492,7 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('option', { name: 'Hypertrophy' }));
 
     // assert
-    expect(within(card(/^A /)).getByText('2 warm-up · 4 × 6–10 · RIR 1–2')).toBeInTheDocument();
+    expect(within(card(/^A /)).getByText('2 warm-up sets · 4 working sets × 6–10 · RIR 1–2')).toBeInTheDocument();
     expect(within(card(/^A /)).getByText('Rest 2:30')).toBeInTheDocument();
   });
 

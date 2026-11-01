@@ -176,6 +176,7 @@ export function EditorRail({ content, cycleMode, dayOne, today, selected, onSele
         {cycleMode !== 'general' && entry({ kind: 'cycle' })}
         {entry({ kind: 'nutrition' })}
         {entry({ kind: 'lifestyle' })}
+        {entry({ kind: 'guide' })}
       </RailGroup>
     </nav>
   );

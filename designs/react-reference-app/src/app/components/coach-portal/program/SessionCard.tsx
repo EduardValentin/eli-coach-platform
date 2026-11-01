@@ -7,7 +7,7 @@ import type { LibraryTarget } from '../../../domain/programEditing';
 import type { RowContext } from '../../../domain/programSuggestions';
 import { rowEdits } from '../../../domain/sessionEditing';
 import { estimatedMinutes, isOverTarget } from '../../../domain/sessionTiming';
-import { slotPlanOrFallback } from '../../../domain/splitTemplates';
+import { patternChoicesFor, slotPlanOrFallback, withMainPattern, withSecondaryPatterns } from '../../../domain/splitTemplates';
 import { warmUpEdits } from '../../../domain/warmUpEditing';
 import { describeLoss } from '../../../domain/weekEditing';
 import { RowActionsMenu } from '../../RowActionsMenu';
@@ -88,6 +88,10 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
             key={slot}
             session={session}
             plan={slotPlanOrFallback(block, session, slot)}
+            choices={patternChoicesFor(block, session, slot)}
+            onPatternsChange={patterns =>
+              onChange(slot === 'A' ? withMainPattern(block, session, patterns[0]) : withSecondaryPatterns(block, session, patterns))
+            }
             library={library}
             edits={edits}
             onChange={onChange}

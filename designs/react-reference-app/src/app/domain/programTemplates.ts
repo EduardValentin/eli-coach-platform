@@ -1,4 +1,4 @@
-import type { ProgramLanguage } from './program';
+import type { CycleAdjustment, ProgramLanguage } from './program';
 
 export type TemplateKey =
   | 'legend'
@@ -16,13 +16,19 @@ export type TemplateKey =
   | 'block.deload'
   | 'split.full-body'
   | 'split.upper-lower'
-  | 'lowEnergy';
+  | 'lowEnergy'
+  | 'noWeight'
+  | 'restDay';
+
+export const GUIDE_TEXT_KEYS = ['legend', 'warmUp', 'progression', 'coolDown', 'noWeight', 'lowEnergy', 'hiitAside', 'restDay', 'calibration', 'steps', 'cycle'] as const;
+export type GuideTextKey = (typeof GUIDE_TEXT_KEYS)[number];
+export type GuideTexts = Partial<Record<GuideTextKey, string>>;
 
 export type TemplateText = { text: string; pending: boolean };
 
 const TEMPLATES: Record<ProgramLanguage, Partial<Record<TemplateKey, string>>> = {
   en: {
-    'block.foundation': `**Foundation block — building your base (suggested for beginners, week 1-2)**
+    'block.foundation': `**Foundation block — building your base**
 These first weeks are about learning to move well, not about lifting heavy. We'll focus on technique in the key movements (squat, hinge, push, pull), getting your body used to regular training, and giving your joints and tendons time to adapt.
 **How it should feel:** challenging but controlled. You should finish every set feeling you could do 3–4 more reps with good form. Some muscle soreness in the first week is normal and will fade.
 **Your focus:** quality over weight. Film a set now and then and send it to me, or check the video cues, and move slowly and deliberately.`,
@@ -58,7 +64,7 @@ We alternate between lower body days (legs and glutes) and upper body days (back
 **Pause** — hold the position for 1–2 seconds at the hardest point of the rep.
 **Rest** — time between sets (or between rounds in a superset).`,
     'progression': `**How to progress:** when you hit the top of the rep range on all sets with the target RIR, increase the weight next session (lower body +2.5–5 kg, upper body +1–2.5 kg, or the next dumbbell). If you can't reach the bottom of the range, keep the weight and build up again.`,
-    'steps': `**Daily steps: [8,000]**
+    'steps': `**Daily steps: [daily steps]**
 Walking is one of the most underrated tools for health and fat loss. Spread your steps through the day: a short walk after meals counts.`,
     'cycle': `**Listening to your cycle**
 Your program is built around how *you* feel, not a textbook calendar. On days when symptoms like cramps, fatigue or headaches hit, you have options:
@@ -69,14 +75,43 @@ None of these are "skipping". Log how you felt in your check-in so we can learn 
     'hiitAside': `Low energy or cramps today? Swap this for a 30-minute easy walk. It still counts.`,
     'missedDay': `If you miss a session, just continue with the next one in the order. Don't try to double up.`,
     'lowEnergy': `Low-energy session (20–30 min): mobility, an easy walk or light exercises. It still counts.`,
+    'noWeight': `No weight listed? Pick one that lets you finish the set at the RIR shown.`,
+    'restDay': `Rest day. A short walk still counts.`,
   },
   ro: {},
 };
 
 const PLACEHOLDER_VALUE_KEYS: Record<string, string> = {
-  '8,000': 'steps',
+  'daily steps': 'steps',
   '2–3': 'days',
 };
+
+const CYCLE_ADJUSTMENT_TEXT: Record<Exclude<CycleAdjustment, 'none'>, string> = {
+  'rir-plus-one': 'stop each set 1 rep earlier than usual',
+  'one-set-less': 'do one set less per exercise',
+  'hiit-to-liss': 'swap hard cardio for an easy walk or bike ride',
+  'low-energy-session': 'swap the session for your low-energy session',
+};
+
+export function cycleAdjustmentText(adjustment: Exclude<CycleAdjustment, 'none'>): string {
+  return CYCLE_ADJUSTMENT_TEXT[adjustment];
+}
+
+export function isGuideTextKey(key: TemplateKey): key is GuideTextKey {
+  return (GUIDE_TEXT_KEYS as readonly string[]).includes(key);
+}
+
+export function guideText(guideTexts: GuideTexts | undefined, key: GuideTextKey, language: ProgramLanguage): string {
+  return guideTexts?.[key] ?? templateText(key, language).text;
+}
+
+export function withGuideText(guideTexts: GuideTexts | undefined, key: GuideTextKey, text: string): GuideTexts {
+  return { ...guideTexts, [key]: text };
+}
+
+export function withoutGuideText(guideTexts: GuideTexts | undefined, key: GuideTextKey): GuideTexts {
+  return Object.fromEntries(Object.entries(guideTexts ?? {}).filter(([other]) => other !== key));
+}
 
 export function templateText(key: TemplateKey, language: ProgramLanguage): TemplateText {
   const own = TEMPLATES[language][key];
