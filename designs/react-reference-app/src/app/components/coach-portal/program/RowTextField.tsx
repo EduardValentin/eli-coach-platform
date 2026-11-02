@@ -58,7 +58,7 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
           onBlur={() => setInvalid(parse(text) === null)}
         />
         {suffix && (
-          <span id={suffixId} className="text-xs whitespace-nowrap text-text-secondary">
+          <span id={suffixId} className="min-w-7 text-xs whitespace-nowrap text-text-secondary">
             {suffix.trim()}
           </span>
         )}

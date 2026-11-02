@@ -13,6 +13,13 @@ import { ProgramProvider, usePrograms } from '../../../context/ProgramContext';
 import { TrainingProvider } from '../../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
 
+
+function setStats(container: HTMLElement): string[] {
+  const terms = within(container).getAllByRole('term');
+  const values = within(container).getAllByRole('definition');
+  return terms.map((term, index) => `${term.textContent} ${values[index].textContent}`);
+}
+
 beforeEach(stubEditorBrowserApis);
 
 afterEach(() => {
@@ -164,8 +171,7 @@ describe('LibraryPanel', () => {
 
     // assert
     const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
-    expect(within(card).getByText('2 warm-up sets · 3 working sets × 12–15 · RIR 3')).toBeInTheDocument();
-    expect(within(card).getByText('Rest 1:15')).toBeInTheDocument();
+    expect(setStats(card)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3', 'Rest 1:15']);
     await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
     expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByText('Barbell Back Squat')).toBeInTheDocument();
   });

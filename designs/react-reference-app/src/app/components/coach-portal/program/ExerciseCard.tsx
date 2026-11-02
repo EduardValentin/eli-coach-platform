@@ -2,7 +2,8 @@ import { useId, useState, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { positionLabel, setsSummary, type Row, type Session } from '../../../domain/program';
+import { positionLabel, setsBreakdown, type Row, type Session } from '../../../domain/program';
+import { counted } from '../../../utils/counted';
 import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { Badge } from '../../ui/badge';
@@ -43,6 +44,32 @@ function menuActions({ row, edits, onChange }: Pick<ExerciseCardProps, 'row' | '
     { name: 'reset', label: 'Reset to block defaults', icon: RotateCcw, onSelect: () => onChange(edits.reset(row.id)) },
     { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(row.id)) },
   ];
+}
+
+type Stat = { term: string; value: string };
+
+function rowStats(row: Row, repsSuffix: string): Stat[] {
+  const { warmUp, working, reps, rir } = setsBreakdown(row.sets, repsSuffix);
+  if (warmUp + working === 0) return [{ term: 'Sets', value: 'None yet' }];
+  return [
+    ...(warmUp > 0 ? [{ term: 'Warm-up', value: counted(warmUp, 'set') }] : []),
+    ...(working > 0 ? [{ term: 'Working', value: reps ? `${counted(working, 'set')} × ${reps}` : `${counted(working, 'set')}, varied` }] : []),
+    ...(rir ? [{ term: 'RIR', value: rir }] : []),
+    { term: 'Rest', value: formatRest(row.restSeconds) },
+  ];
+}
+
+function RowStats({ stats }: { stats: readonly Stat[] }) {
+  return (
+    <dl className="flex flex-wrap items-baseline gap-y-1 pl-9.5 text-sm tabular-nums">
+      {stats.map(stat => (
+        <div key={stat.term} className="flex items-baseline gap-1.5 border-border-subtle pr-3 not-first:border-l not-first:pl-3">
+          <dt className="text-text-secondary">{stat.term}</dt>
+          <dd className="font-semibold text-text-primary">{stat.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function dropHint(row: Row, itemType: string | symbol | null): string {
@@ -105,10 +132,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
               {exercise.equipment.length > 0 && <span className="text-xs text-text-secondary">{exercise.equipment.join(', ')}</span>}
             </p>
           )}
-          <p className="flex flex-wrap gap-x-3 pl-9.5 text-sm text-text-secondary tabular-nums">
-            <span>{setsSummary(row.sets, repsSuffix(exercise))}</span>
-            <span>{`Rest ${formatRest(row.restSeconds)}`}</span>
-          </p>
+          <RowStats stats={rowStats(row, repsSuffix(exercise))} />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="xs" aria-expanded={setsOpen} aria-controls={setsId} onClick={() => setSetsOpen(open => !open)}>

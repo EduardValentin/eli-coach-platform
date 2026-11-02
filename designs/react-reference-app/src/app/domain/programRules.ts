@@ -73,8 +73,8 @@ export type RuleInput = {
 type Exercises = ReadonlyMap<string, Exercise>;
 type ElapsedInput = { draftBlocks: readonly Block[]; publishedBlocks: readonly Block[] | null; dayOne: Date | null; today: Date };
 type SessionPlace = { block: Block; session: Session };
-export type PublishSchedule = { publishDay: Date; dayOne: Date | null; preferredWeekday: Weekday };
-export type PublishWindow = { from: Date; to: Date };
+type PublishSchedule = { publishDay: Date; dayOne: Date | null; preferredWeekday: Weekday };
+type PublishWindow = { from: Date; to: Date };
 const MAX_WEEKS_WITHOUT_DELOAD = 8;
 const MAX_HIIT_SESSIONS = 2;
 
@@ -140,11 +140,11 @@ export function ruleContextFor({ journey, program, draft, today, exercises }: Ru
   };
 }
 
-export function publishWindow({ publishDay, dayOne, preferredWeekday }: PublishSchedule): PublishWindow {
+function publishWindow({ publishDay, dayOne, preferredWeekday }: PublishSchedule): PublishWindow {
   return { from: publishDay, to: nextCheckpoint(dayOne ?? publishDay, preferredWeekday, addDays(publishDay, 1)) };
 }
 
-export function isNeededToPublish(blocks: readonly Block[], index: number, schedule: PublishSchedule): boolean {
+function isNeededToPublish(blocks: readonly Block[], index: number, schedule: PublishSchedule): boolean {
   const window = publishWindow(schedule);
   const { start, end } = blockDates(blocks, index, schedule.dayOne ?? schedule.publishDay);
   return start <= window.to && end >= startOfDay(window.from);

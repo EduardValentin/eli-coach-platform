@@ -5,6 +5,13 @@ import { renderProgramEditor, stubEditorBrowserApis } from '../../../../test/ren
 
 type User = ReturnType<typeof userEvent.setup>;
 
+
+function setStats(container: HTMLElement): string[] {
+  const terms = within(container).getAllByRole('term');
+  const values = within(container).getAllByRole('definition');
+  return terms.map((term, index) => `${term.textContent} ${values[index].textContent}`);
+}
+
 beforeEach(stubEditorBrowserApis);
 
 afterEach(() => {
@@ -227,7 +234,7 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(within(main).getByRole('textbox', { name: 'Set 3 reps' })).toHaveValue('12–15');
-    expect(within(main).getByText('2 warm-up sets · 3 working sets')).toBeInTheDocument();
+    expect(setStats(main)).toEqual(expect.arrayContaining(['Warm-up 2 sets', 'Working 3 sets, varied']));
 
     // act
     await user.type(within(main).getByRole('spinbutton', { name: 'Set 3 weight' }), '20');
@@ -237,7 +244,7 @@ describe('BlockWorkspace', () => {
     expect(within(main).getByRole('textbox', { name: 'Set 4 reps' })).toHaveValue('12–15');
     expect(within(main).getByRole('spinbutton', { name: 'Set 5 weight' })).toHaveValue(20);
     expect(within(main).getByRole('textbox', { name: 'Set 1 reps' })).toHaveValue('8');
-    expect(within(main).getByText('2 warm-up sets · 3 working sets × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(setStats(main)).toEqual(expect.arrayContaining(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3']));
   });
 
   it('turns a working set into a warm-up set and blanks its RIR', async () => {
@@ -253,7 +260,7 @@ describe('BlockWorkspace', () => {
     // assert
     expect(within(main).getByRole('textbox', { name: 'Set 3 RIR' })).toBeDisabled();
     expect(within(main).getByRole('textbox', { name: 'Set 3 RIR' })).toHaveValue('');
-    expect(within(main).getByText('3 warm-up sets · 2 working sets × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(setStats(main)).toEqual(expect.arrayContaining(['Warm-up 3 sets', 'Working 2 sets × 12–15', 'RIR 3']));
   });
 
   it('leaves the weight empty to pick it by RIR', async () => {
@@ -282,7 +289,7 @@ describe('BlockWorkspace', () => {
     await user.click(within(main).getByRole('button', { name: 'Remove set 4' }));
 
     // assert
-    expect(within(main).getByText('3 warm-up sets · 3 working sets × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(setStats(main)).toEqual(expect.arrayContaining(['Warm-up 3 sets', 'Working 3 sets × 12–15', 'RIR 3']));
   });
 
   it('plays the exercise video in a dialog from the details', async () => {
@@ -492,8 +499,7 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('option', { name: 'Hypertrophy' }));
 
     // assert
-    expect(within(card(/^A /)).getByText('2 warm-up sets · 4 working sets × 6–10 · RIR 1–2')).toBeInTheDocument();
-    expect(within(card(/^A /)).getByText('Rest 2:30')).toBeInTheDocument();
+    expect(setStats(card(/^A /))).toEqual(['Warm-up 2 sets', 'Working 4 sets × 6–10', 'RIR 1–2', 'Rest 2:30']);
   });
 
   it('shows the estimated minutes against the target', async () => {

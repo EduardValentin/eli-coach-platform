@@ -193,6 +193,20 @@ function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
   return `${count} × ${setText(first, repsSuffix)}`;
 }
 
+export type SetsBreakdown = { warmUp: number; working: number; reps: string | null; rir: string | null };
+
+export function setsBreakdown(sets: readonly SetSpec[], repsSuffix = ''): SetsBreakdown {
+  const working = workingSets(sets);
+  const [first] = working;
+  const uniform = first !== undefined && hasUniformSets(sets);
+  return {
+    warmUp: sets.length - working.length,
+    working: working.length,
+    reps: uniform ? `${formatRange(first.reps)}${repsSuffix}` : null,
+    rir: uniform ? formatRange(first.rir) : null,
+  };
+}
+
 export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
   if (sets.length === 0) return 'No sets';
   const working = workingSets(sets);
