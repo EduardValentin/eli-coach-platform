@@ -1,4 +1,4 @@
-import type { Block, BlockType, Program } from '../../../domain/program';
+import type { Block, Program } from '../../../domain/program';
 import { fillTemplate, templateText, type TemplateKey } from '../../../domain/programTemplates';
 import { CollapsiblePortalWidget } from '../../CollapsiblePortalWidget';
 import { parseTemplate, TextCardStack, type TextCard } from '../../program-view/ProgramText';
@@ -8,7 +8,6 @@ type BlockTextsProps = { block: Block; language: Program['language']; onChange: 
 
 type TextField = {
   label: string;
-  hint?: (block: Block) => string | undefined;
   templateKey: (block: Block) => TemplateKey | null;
   read: (block: Block) => string;
   write: (block: Block, text: string) => Block;
@@ -18,17 +17,9 @@ function sessionDays(block: Block): number {
   return Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
 }
 
-const INTRO_HINTS: Partial<Record<BlockType, string>> = {
-  foundation: 'Suggested for beginners, weeks 1–2.',
-};
-
 const FIELDS: TextField[] = [
   {
     label: 'Intro',
-    hint: block => {
-      const suggestion = INTRO_HINTS[block.type];
-      return suggestion && `${suggestion} Only you see this.`;
-    },
     templateKey: block => `block.${block.type}`,
     read: block => block.introText,
     write: (block, introText) => ({ ...block, introText }),
@@ -66,7 +57,6 @@ function TextFieldEditor({ field, block, language, onChange }: BlockTextsProps &
       label={field.label}
       value={field.read(block)}
       template={template}
-      caption={field.hint?.(block)}
       onChange={text => onChange(field.write(block, text))}
       onReset={() => onChange(field.write(block, template.text))}
     />
