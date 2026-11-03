@@ -75,7 +75,7 @@ const CHECK_VIOLATION = "23514";
 const UNKNOWN_BOOKING_ID = "00000000-0000-4000-8000-000000000000";
 const MALFORMED_BOOKING_ID = "not-a-booking";
 
-describe.sequential("assessment call booking integration", () => {
+describe("assessment call booking integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

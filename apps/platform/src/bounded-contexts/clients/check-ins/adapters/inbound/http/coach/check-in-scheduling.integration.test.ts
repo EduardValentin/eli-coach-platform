@@ -62,7 +62,7 @@ const MONDAY_FIRST_HOUR = "2026-10-26T15:00:00.000Z";
 const UNKNOWN_CLIENT_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOTE = "Let's review your first month.";
 
-describe.sequential("check-in scheduling integration", () => {
+describe("check-in scheduling integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

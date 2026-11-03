@@ -6,7 +6,7 @@ import { featureFlagSnapshotSchema } from "~/bounded-contexts/operations/feature
 
 const suite = new ApiIntegrationTestSuite();
 
-describe.sequential("feature flag API integration", () => {
+describe("feature flag API integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

@@ -41,7 +41,7 @@ const insertPhotoSql = `
     (gen_random_uuid(), $1, $2, $3, $4, 'local-1', 'image/jpeg', 182431, '2026-09-29T09:00:00Z')
 `;
 
-describe.sequential("client progress photos schema", () => {
+describe("client progress photos schema", () => {
   beforeAll(async () => {
     await suite.start();
   });

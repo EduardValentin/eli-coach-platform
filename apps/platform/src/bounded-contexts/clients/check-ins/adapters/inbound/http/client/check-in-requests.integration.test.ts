@@ -80,7 +80,7 @@ const SATURDAY_EVENING = "2026-10-24T14:00:00.000Z";
 const LAST_HOUR_IN_THE_HORIZON = "2026-11-20T17:00:00.000Z";
 const NOTE = "Can we talk about my knees?";
 
-describe.sequential("check-in requests integration", () => {
+describe("check-in requests integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

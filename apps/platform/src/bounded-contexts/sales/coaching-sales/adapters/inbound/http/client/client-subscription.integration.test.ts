@@ -115,7 +115,7 @@ const WAITING_PURCHASE: Purchase = {
   startChoice: "waiting",
 };
 
-describe.sequential("client subscription integration", () => {
+describe("client subscription integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

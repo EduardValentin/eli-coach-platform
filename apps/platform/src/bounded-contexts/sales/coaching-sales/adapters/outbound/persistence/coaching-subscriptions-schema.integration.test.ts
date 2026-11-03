@@ -34,7 +34,7 @@ const insertSubscriptionSql = `
     (gen_random_uuid(), $1, $2, '3-months', 3, 'regular', 44700, 'eur', 'cus_schema', $3, $4, '2026-09-01T09:00:00Z', '2026-12-01T09:00:00Z', '2026-09-01T09:00:00Z', 'immediate', 'not-started', '2026-09-01T09:00:00Z')
 `;
 
-describe.sequential("coaching subscriptions schema", () => {
+describe("coaching subscriptions schema", () => {
   beforeAll(async () => {
     await suite.start();
   });

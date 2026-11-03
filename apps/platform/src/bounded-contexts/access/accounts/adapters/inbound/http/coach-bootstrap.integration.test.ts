@@ -25,7 +25,7 @@ const everyoneElse = {
   subjectId: "user_5ordinarymembersubject",
 };
 
-describe.sequential("coach bootstrap integration", () => {
+describe("coach bootstrap integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = bootstrapCoach.subjectId;
     await suite.start();

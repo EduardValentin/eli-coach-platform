@@ -144,7 +144,7 @@ const NOTHING_PURCHASED: PurchaseCounts = {
   subscriptions: 0,
 };
 
-describe.sequential("stripe webhooks integration", () => {
+describe("stripe webhooks integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

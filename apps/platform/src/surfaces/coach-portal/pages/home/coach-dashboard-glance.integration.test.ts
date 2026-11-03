@@ -46,7 +46,7 @@ const REQUESTED_AT = CALL_ENDED_INSTANT;
 const THURSDAY_FIRST_HOUR = "2026-10-22T14:00:00.000Z";
 const FRIDAY_FIRST_HOUR = "2026-10-23T14:00:00.000Z";
 
-describe.sequential("coach dashboard at a glance integration", () => {
+describe("coach dashboard at a glance integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

@@ -59,7 +59,7 @@ const UPDATABLE_COLUMNS = {
   videoSizeBytes: "video_size_bytes",
 } as const;
 
-describe.sequential("exercises schema", () => {
+describe("exercises schema", () => {
   beforeAll(async () => {
     await suite.start();
   });

@@ -65,7 +65,7 @@ const WEEKS_IN_HER_PERIOD = 13;
 const UNKNOWN_SERIES_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const SCHEDULED_END = new Date("2026-12-01T10:00:00.000Z");
 
-describe.sequential("check-in series integration", () => {
+describe("check-in series integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

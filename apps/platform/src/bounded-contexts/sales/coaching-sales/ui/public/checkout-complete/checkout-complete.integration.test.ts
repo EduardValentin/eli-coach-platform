@@ -45,7 +45,7 @@ const threeMonthsBought: CheckoutSessionContent = {
   },
 };
 
-describe.sequential("checkout complete page integration", () => {
+describe("checkout complete page integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

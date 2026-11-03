@@ -23,7 +23,7 @@ const SAVED_MEETING_LINK = "https://meet.example/eli-assessment-room";
 const BOOKED_START = "2026-10-19T14:00:00.000Z";
 const MONDAY_MORNING = new Date("2026-10-19T08:00:00.000Z");
 
-describe.sequential("assessment calls during the waitlist", () => {
+describe("assessment calls during the waitlist", () => {
   beforeAll(async () => {
     await suite.start();
   });

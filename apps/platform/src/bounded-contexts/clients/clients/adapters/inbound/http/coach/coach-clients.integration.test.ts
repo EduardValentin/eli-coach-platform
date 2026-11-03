@@ -78,7 +78,7 @@ type InvitationRow = {
   usedAt: Date | null;
 };
 
-describe.sequential("coach clients integration", () => {
+describe("coach clients integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

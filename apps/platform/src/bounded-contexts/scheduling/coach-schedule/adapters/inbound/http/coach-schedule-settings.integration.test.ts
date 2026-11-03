@@ -78,7 +78,7 @@ const MONDAY_MORNING = new Date("2026-10-19T08:00:00.000Z");
 const MONDAY_EVENING_START = "2026-10-19T14:00:00.000Z";
 const TUESDAY_EVENING_START = "2026-10-20T14:00:00.000Z";
 
-describe.sequential("coach schedule settings integration", () => {
+describe("coach schedule settings integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

@@ -42,7 +42,7 @@ const signedInAgain: Session = {
   subjectId: "user_3zYxWvUtSrQpOnMlKjIhGfEdCbA",
 };
 
-describe.sequential("account API integration", () => {
+describe("account API integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

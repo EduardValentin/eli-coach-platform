@@ -76,7 +76,7 @@ const HER_ZONE_NOW = "America/New_York";
 const COACH_NOTE = "Something came up on Thursday, does Friday work?";
 const CLIENT_NOTE = "Friday works, but an hour later suits me better.";
 
-describe.sequential("check-in new times integration", () => {
+describe("check-in new times integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

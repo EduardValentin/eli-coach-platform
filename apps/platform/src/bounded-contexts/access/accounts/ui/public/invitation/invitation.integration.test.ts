@@ -46,7 +46,7 @@ const INVITED_CLIENT: AccountSession = {
   subjectId: "user_invited_1",
 };
 
-describe.sequential("invitation landing integration", () => {
+describe("invitation landing integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

@@ -131,7 +131,7 @@ const MALFORMED_BODIES: [string, unknown][] = [
   ["a value given as text", { ...CHICKEN, kcal: "165" }],
 ];
 
-describe.sequential("nutrition library integration", () => {
+describe("nutrition library integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

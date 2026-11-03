@@ -47,7 +47,7 @@ type ResourceRow = {
   pageCount: number | null;
 };
 
-describe.sequential("client resources schema", () => {
+describe("client resources schema", () => {
   beforeAll(async () => {
     await suite.start();
   });
