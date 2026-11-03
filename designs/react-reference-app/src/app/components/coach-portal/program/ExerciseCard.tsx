@@ -1,4 +1,4 @@
-import { useId, useState, type Ref } from 'react';
+import { useId, useState, type ReactNode, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
@@ -11,6 +11,7 @@ import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
 import { PositionBadge } from '../../program-view/PositionBadge';
+import { RirValue } from '../../program-view/RirValue';
 import { exerciseNameOf, repsSuffix } from '../../program-view/programView';
 import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
 import { formatRest } from './rowFields';
@@ -46,7 +47,7 @@ function menuActions({ row, edits, onChange }: Pick<ExerciseCardProps, 'row' | '
   ];
 }
 
-type Stat = { term: string; value: string };
+type Stat = { term: string; value: ReactNode };
 
 function rowStats(row: Row, repsSuffix: string): Stat[] {
   const { warmUp, working, reps, rir } = setsBreakdown(row.sets, repsSuffix);
@@ -54,7 +55,7 @@ function rowStats(row: Row, repsSuffix: string): Stat[] {
   return [
     ...(warmUp > 0 ? [{ term: 'Warm-up', value: counted(warmUp, 'set') }] : []),
     ...(working > 0 ? [{ term: 'Working', value: reps ? `${counted(working, 'set')} × ${reps}` : `${counted(working, 'set')}, varied` }] : []),
-    ...(rir ? [{ term: 'RIR', value: rir }] : []),
+    ...(rir ? [{ term: 'RIR', value: <RirValue rir={rir} /> }] : []),
     { term: 'Rest', value: formatRest(row.restSeconds) },
   ];
 }

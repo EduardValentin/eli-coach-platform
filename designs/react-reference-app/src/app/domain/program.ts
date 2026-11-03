@@ -193,7 +193,7 @@ function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
   return `${count} × ${setText(first, repsSuffix)}`;
 }
 
-export type SetsBreakdown = { warmUp: number; working: number; reps: string | null; rir: string | null };
+export type SetsBreakdown = { warmUp: number; working: number; reps: string | null; rir: Range | null };
 
 export function setsBreakdown(sets: readonly SetSpec[], repsSuffix = ''): SetsBreakdown {
   const working = workingSets(sets);
@@ -203,7 +203,7 @@ export function setsBreakdown(sets: readonly SetSpec[], repsSuffix = ''): SetsBr
     warmUp: sets.length - working.length,
     working: working.length,
     reps: uniform ? `${formatRange(first.reps)}${repsSuffix}` : null,
-    rir: uniform ? formatRange(first.rir) : null,
+    rir: uniform ? first.rir : null,
   };
 }
 

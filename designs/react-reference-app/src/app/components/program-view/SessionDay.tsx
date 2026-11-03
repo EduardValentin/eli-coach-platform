@@ -11,6 +11,7 @@ import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
 import { PositionBadge } from './PositionBadge';
+import { RirValue } from './RirValue';
 import { coolDownLines, exerciseNameOf, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
@@ -53,7 +54,9 @@ function SetLine({ set, index, exercise }: { set: SetSpec; index: number; exerci
         {working && (
           <>
             <Dot />
-            <span className="whitespace-nowrap">{`RIR ${formatRange(set.rir)}`}</span>
+            <span className="whitespace-nowrap">
+              RIR <RirValue rir={set.rir} />
+            </span>
           </>
         )}
       </span>
