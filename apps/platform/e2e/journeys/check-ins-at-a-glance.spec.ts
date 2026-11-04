@@ -1,4 +1,3 @@
-import { countCallsLeftToday } from "../support/assessment-calls";
 import { shownTimePatternOf } from "../support/check-in-moments";
 import { expect, test } from "../support/fixtures";
 import { collectPageProblems } from "../support/page-problems";
@@ -16,6 +15,11 @@ const CHECK_INS_ON_THE_DASHBOARD = 3;
 const WAITING_REQUESTS = 4;
 
 test.use({ timezoneId: CLIENT_TIME_ZONE });
+
+test.beforeEach(async ({ checkInRecords }) => {
+  await checkInRecords.cancelWaitingRequests();
+  await checkInRecords.cancelUpcomingClashes();
+});
 
 test(
   "a client asks for a check-in, her coach sees it waiting at a glance and reviews it, and the client sees her next check-in",
@@ -51,13 +55,12 @@ test(
     await page.goto("/store");
     await signInAsCoach();
     const coachProblems = collectPageProblems(page);
-    const callsLeftToday = await countCallsLeftToday(CLIENT_TIME_ZONE);
 
     // act
     await coachDashboard.open();
 
     // assert
-    await coachDashboard.expectGreeting({ calls: callsLeftToday, checkIns: 1 });
+    await coachDashboard.expectCheckInsToReview(1);
     await coachDashboard.expectPendingCheckIns([client.fullName]);
 
     // act
@@ -279,13 +282,12 @@ test(
     await publicNav.signOut();
     await page.goto("/store");
     await signInAsCoach();
-    const callsLeftToday = await countCallsLeftToday(CLIENT_TIME_ZONE);
 
     // act
     await coachDashboard.open();
 
     // assert
-    await coachDashboard.expectGreeting({ calls: callsLeftToday, checkIns: 0 });
+    await coachDashboard.expectCheckInsToReview(0);
     await coachDashboard.expectNoPendingCheckIns();
 
     // act
@@ -388,13 +390,12 @@ test(
     await page.goto("/coach");
     const [soonest] = await checkInRequests.openTimesFor(client.clientId);
     await checkInRequests.schedule(client.clientId, soonest!, SCHEDULED_NOTE);
-    const callsLeftToday = await countCallsLeftToday(CLIENT_TIME_ZONE);
 
     // act
     await coachDashboard.open();
 
     // assert
-    await coachDashboard.expectGreeting({ calls: callsLeftToday, checkIns: 0 });
+    await coachDashboard.expectCheckInsToReview(0);
     await coachDashboard.expectNoPendingCheckIns();
     await coachCheckIns.expectNavigationCount(0);
   },
@@ -485,16 +486,12 @@ test.describe("while requests wait for the coach", () => {
           CLIENT_TIME_ZONE,
         );
       }
-      const callsLeftToday = await countCallsLeftToday(CLIENT_TIME_ZONE);
 
       // act
       await coachDashboard.open();
 
       // assert
-      await coachDashboard.expectGreeting({
-        calls: callsLeftToday,
-        checkIns: WAITING_REQUESTS,
-      });
+      await coachDashboard.expectCheckInsToReview(WAITING_REQUESTS);
       await coachDashboard.expectPendingCheckInsAt(
         requested
           .slice(0, CHECK_INS_ON_THE_DASHBOARD)

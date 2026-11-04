@@ -2,8 +2,6 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { tabTo } from "./keyboard";
 
-export type DashboardGreeting = { calls: number; checkIns: number };
-
 const DASHBOARD_PATH = "/coach";
 
 export class CoachDashboardPage {
@@ -48,12 +46,11 @@ export class CoachDashboardPage {
     ).toBeVisible();
   }
 
-  async expectGreeting({ calls, checkIns }: DashboardGreeting): Promise<void> {
+  async expectCheckInsToReview(checkIns: number): Promise<void> {
     await expect(
-      this.page.getByText(
-        `You have ${this.counted(calls, "assessment call")} today. ${this.counted(checkIns, "check-in")} to review.`,
-        { exact: true },
-      ),
+      this.page.getByText(`${this.counted(checkIns, "check-in")} to review.`, {
+        exact: true,
+      }),
     ).toBeVisible();
   }
 
