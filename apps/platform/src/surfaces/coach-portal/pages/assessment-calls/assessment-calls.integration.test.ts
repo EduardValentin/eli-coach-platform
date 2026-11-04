@@ -38,7 +38,7 @@ const BEA: Visitor = {
   lastName: "Ionescu",
 };
 
-describe.sequential("coach assessment calls page sales integration", () => {
+describe("coach assessment calls page sales integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

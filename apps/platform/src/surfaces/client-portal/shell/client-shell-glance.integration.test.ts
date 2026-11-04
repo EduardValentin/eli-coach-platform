@@ -60,7 +60,7 @@ const THURSDAY_IN_THE_SHELL = "Thu, Oct 22";
 const DURING_THE_CHECK_IN = new Date("2026-10-22T14:20:00.000Z");
 const AFTER_THE_CHECK_IN = new Date("2026-10-22T15:00:00.000Z");
 
-describe.sequential("client shell at a glance integration", () => {
+describe("client shell at a glance integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

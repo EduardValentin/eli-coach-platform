@@ -235,7 +235,7 @@ async function storeFoods(): Promise<StoredFoods> {
   return { oats: oats!.id, milk: milk!.id, honey: honey!.id };
 }
 
-describe.sequential("recipe library integration", () => {
+describe("recipe library integration", () => {
   let stored: StoredFoods;
 
   beforeAll(async () => {

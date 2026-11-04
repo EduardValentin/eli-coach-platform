@@ -131,7 +131,7 @@ const RADU: Visitor = {
   lastName: "Ionescu",
 };
 
-describe.sequential("client onboarding integration", () => {
+describe("client onboarding integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

@@ -36,7 +36,7 @@ type PublicationBody = {
   };
 };
 
-describe.sequential("Store management integration", () => {
+describe("Store management integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

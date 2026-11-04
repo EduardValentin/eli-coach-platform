@@ -79,7 +79,7 @@ const INVITED_CLIENT: AccountSession = {
   subjectId: "user_review_client",
 };
 
-describe.sequential("onboarding review integration", () => {
+describe("onboarding review integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

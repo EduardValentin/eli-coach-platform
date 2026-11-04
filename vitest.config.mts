@@ -30,7 +30,6 @@ export default defineConfig({
       happyDOM: { url: "http://localhost" },
       jsdom: { url: "http://localhost" },
     },
-    globalSetup: ["./vitest.global-setup.mts"],
     // Split only so the slow suites can carry timeouts the unit suite must not
     // pay for. Every project inherits everything else from this file.
     projects: [
@@ -61,6 +60,7 @@ export default defineConfig({
         test: {
           name: "integration",
           include: integrationTestGlobs,
+          globalSetup: ["./vitest.global-setup.mts"],
           // Every file here drives a real PostgreSQL container through
           // testcontainers. Hooks pull and start that container; bodies measure
           // sub-second idle but have been seen climbing past 4s under

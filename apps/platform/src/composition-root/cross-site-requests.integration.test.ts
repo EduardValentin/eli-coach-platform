@@ -9,7 +9,7 @@ const EMAIL = "ana@example.com";
 
 type SenderHeaders = { sender: string; headers: Record<string, string> };
 
-describe.sequential("cross-site requests", () => {
+describe("cross-site requests", () => {
   beforeAll(async () => {
     await suite.start();
   });

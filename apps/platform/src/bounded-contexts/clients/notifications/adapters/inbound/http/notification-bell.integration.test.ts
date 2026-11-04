@@ -55,7 +55,7 @@ const FRIDAY_FIRST_HOUR = "2026-10-23T14:00:00.000Z";
 const NINETY_ONE_DAYS_LATER = new Date("2027-01-20T08:00:00.000Z");
 const LATEST_IN_THE_BELL = 30;
 
-describe.sequential("notification bell integration", () => {
+describe("notification bell integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

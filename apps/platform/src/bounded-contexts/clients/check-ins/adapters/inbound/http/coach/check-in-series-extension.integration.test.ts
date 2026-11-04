@@ -77,7 +77,7 @@ const RENEWED_THROUGH = new Date("2027-04-21T08:00:00.000Z");
 const BEFORE_RENEWAL = new Date("2027-01-04T08:00:00.000Z");
 const WEEKS_IN_A_PERIOD = 13;
 
-describe.sequential("check-in series extension integration", () => {
+describe("check-in series extension integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

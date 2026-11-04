@@ -59,7 +59,7 @@ const THURSDAY_FIRST_HOUR = "2026-10-22T14:00:00.000Z";
 const DURING_THE_CHECK_IN = new Date("2026-10-22T14:20:00.000Z");
 const AFTER_THE_CHECK_IN = new Date("2026-10-22T15:00:00.000Z");
 
-describe.sequential("check-in join integration", () => {
+describe("check-in join integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

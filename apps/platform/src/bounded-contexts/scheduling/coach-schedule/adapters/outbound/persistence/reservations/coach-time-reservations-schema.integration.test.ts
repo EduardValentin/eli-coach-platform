@@ -43,7 +43,7 @@ const insertCheckInSql = `
     ($1, $2, '2026-10-20T15:00:00Z', 'Europe/Bucharest', 'Europe/Bucharest', 'ad_hoc', 'pending', 'client', 'client', '2026-10-15T08:00:00Z', $3)
 `;
 
-describe.sequential("coach time reservations schema", () => {
+describe("coach time reservations schema", () => {
   beforeAll(async () => {
     await suite.start();
   });

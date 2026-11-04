@@ -37,7 +37,7 @@ type FoodRow = {
   archivedAt?: string | null;
 };
 
-describe.sequential("foods schema", () => {
+describe("foods schema", () => {
   beforeAll(async () => {
     await suite.start();
   });

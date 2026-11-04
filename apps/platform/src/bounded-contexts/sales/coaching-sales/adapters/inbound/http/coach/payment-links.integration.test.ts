@@ -39,7 +39,7 @@ type PaymentLinkRow = {
   state: string;
 };
 
-describe.sequential("payment links integration", () => {
+describe("payment links integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

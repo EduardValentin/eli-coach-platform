@@ -43,6 +43,7 @@ build/
 coverage/
 .lighthouseci/
 .vite/
+.vitest/
 .cache/
 .pnpm-store/
 .turbo/

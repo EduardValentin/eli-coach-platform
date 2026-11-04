@@ -209,7 +209,7 @@ const OFFICE_AND_IMAGE_CASES: OfficeOrImageCase[] = [
   },
 ];
 
-describe.sequential("client resources integration", () => {
+describe("client resources integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

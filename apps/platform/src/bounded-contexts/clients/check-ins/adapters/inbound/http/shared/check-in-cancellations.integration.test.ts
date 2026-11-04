@@ -57,7 +57,7 @@ const CANCELLED_AT = new Date("2026-10-21T09:30:00.000Z");
 const THURSDAY_FIRST_HOUR = "2026-10-22T14:00:00.000Z";
 const HER_ZONE_NOW = "America/New_York";
 
-describe.sequential("check-in cancellations integration", () => {
+describe("check-in cancellations integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

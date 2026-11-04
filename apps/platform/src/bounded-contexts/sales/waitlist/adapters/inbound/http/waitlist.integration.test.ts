@@ -47,7 +47,7 @@ type WaitlistEntryRow = {
   updatedAt: Date;
 };
 
-describe.sequential("waitlist API integration", () => {
+describe("waitlist API integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

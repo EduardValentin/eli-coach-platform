@@ -147,7 +147,7 @@ function paddedTo(video: UploadedVideo, sizeBytes: number): UploadedVideo {
   return { ...video, bytes };
 }
 
-describe.sequential("exercise library integration", () => {
+describe("exercise library integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

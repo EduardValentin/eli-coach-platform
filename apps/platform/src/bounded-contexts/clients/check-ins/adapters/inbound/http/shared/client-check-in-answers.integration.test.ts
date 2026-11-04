@@ -79,7 +79,7 @@ const ANSWERS: Record<
     checkIns.decline(checkInId, session, answer),
 };
 
-describe.sequential("client check-in answers integration", () => {
+describe("client check-in answers integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

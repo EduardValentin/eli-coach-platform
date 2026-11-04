@@ -73,7 +73,7 @@ const SERIES_KINDS = [
   "check-in.series-clashes",
 ];
 
-describe.sequential("check-in bell integration", () => {
+describe("check-in bell integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

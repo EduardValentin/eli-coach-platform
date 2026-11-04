@@ -42,7 +42,7 @@ const MONDAY_NIGHT = new Date("2026-10-19T20:00:00.000Z");
 const TWO_DAYS_LATER = new Date("2026-10-21T08:00:00.000Z");
 const VISITOR_TIME_ZONE = "Europe/London";
 
-describe.sequential("coach assessment calls integration", () => {
+describe("coach assessment calls integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = bootstrapCoach.subjectId;
     await suite.start();

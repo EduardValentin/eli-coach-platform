@@ -105,7 +105,7 @@ const EDITED_IDENTITY = {
   phoneNumber: "068 123 456",
 };
 
-describe.sequential("client profile integration", () => {
+describe("client profile integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

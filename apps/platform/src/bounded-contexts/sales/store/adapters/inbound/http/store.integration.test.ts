@@ -39,7 +39,7 @@ const deliveryAllowance = 10;
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
 
-describe.sequential("Store integration", () => {
+describe("Store integration", () => {
   beforeAll(async () => {
     await suite.start();
   });

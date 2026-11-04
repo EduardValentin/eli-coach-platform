@@ -51,7 +51,7 @@ const ANSWERS: Record<Answer, (checkInId: string) => Promise<Response>> = {
   decline: (checkInId) => checkIns.decline(checkInId),
 };
 
-describe.sequential("check-in answers integration", () => {
+describe("check-in answers integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();

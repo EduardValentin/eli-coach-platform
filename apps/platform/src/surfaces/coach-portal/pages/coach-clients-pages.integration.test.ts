@@ -52,7 +52,7 @@ const ADMITTED_CLIENT: AccountSession = {
   subjectId: "user_clients_page_client",
 };
 
-describe.sequential("coach clients pages integration", () => {
+describe("coach clients pages integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
     await suite.start();
