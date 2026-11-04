@@ -125,6 +125,10 @@ export class CheckInToolbar {
         url.searchParams.get(PAGE_PARAM) ===
         (pageNumber === 1 ? null : `${pageNumber}`),
     );
+    await expect(this.pageLink(pageNumber)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   }
 
   private async expectDirectionChangedFrom(

@@ -3,6 +3,7 @@ import type { ConsoleMessage, Page } from "@playwright/test";
 const CLERK_DEVELOPMENT_KEYS_NOTICE = "loaded with development keys";
 const PROBLEM_CONSOLE_TYPES = ["error", "warning"];
 const FIRST_FAILING_STATUS = 400;
+const CANCELLED_BY_THE_PAGE = "net::ERR_ABORTED";
 const SHOWN_TEXT_LENGTH = 160;
 
 function isConsoleProblem(message: ConsoleMessage): boolean {
@@ -22,9 +23,11 @@ export function collectPageProblems(page: Page): readonly string[] {
       `${message.type()} at ${page.url()} from ${message.location().url}: ${message.text().slice(0, SHOWN_TEXT_LENGTH)}`,
     );
   });
-  page.on("requestfailed", (request) =>
-    problems.push(`request failed ${request.method()} ${request.url()}`),
-  );
+  page.on("requestfailed", (request) => {
+    if (request.failure()?.errorText === CANCELLED_BY_THE_PAGE) return;
+
+    problems.push(`request failed ${request.method()} ${request.url()}`);
+  });
   page.on("response", (response) => {
     if (response.status() < FIRST_FAILING_STATUS) return;
 

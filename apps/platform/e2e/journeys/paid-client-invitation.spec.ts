@@ -107,10 +107,7 @@ test(
 
     // assert
     expect(delivery.status).toBe(200);
-    expect(subscription.pause_collection).toEqual({
-      behavior: "void",
-      resumes_at: null,
-    });
+    expect(subscription.pause_collection).toBeNull();
     expect(await paymentCardRecords.mirroredCardOf(visitorEmail)).toEqual(
       CHECKOUT_CARD,
     );

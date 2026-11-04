@@ -1,4 +1,3 @@
-import { ASSESSMENT_CALL_RULES } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type pg from "pg";
 
 import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";
@@ -119,11 +118,6 @@ const FIND_LATEST_CALL_BY_EMAIL = `
   where visitor_email = $1
   order by booked_at desc
   limit 1
-`;
-const COUNT_CALLS_LEFT_TODAY = `
-  select count(*)::int as left_today from app.assessment_calls
-  where starts_at + make_interval(mins => $2) > now()
-    and (starts_at at time zone $1)::date = (now() at time zone $1)::date
 `;
 const MOVE_CALL_TWO_HOURS_INTO_THE_PAST = `
   update app.assessment_calls
@@ -268,21 +262,6 @@ export async function endCall(callId: string): Promise<void> {
   try {
     await pool.query(MOVE_CALL_TWO_HOURS_INTO_THE_PAST, [callId]);
     await pool.query(MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST, [callId]);
-  } finally {
-    await pool.end();
-  }
-}
-
-export async function countCallsLeftToday(timeZone: string): Promise<number> {
-  const pool = createE2eDatabasePool();
-
-  try {
-    const { rows } = await pool.query<{ left_today: number }>(
-      COUNT_CALLS_LEFT_TODAY,
-      [timeZone, ASSESSMENT_CALL_RULES.durationMinutes],
-    );
-
-    return rows[0]?.left_today ?? 0;
   } finally {
     await pool.end();
   }

@@ -301,6 +301,7 @@ export class ExerciseLibraryPage {
       (url) =>
         url.searchParams.get(PAGE_PARAM) === (page === 1 ? null : `${page}`),
     );
+    await expect(this.pageLink(page)).toHaveAttribute("aria-current", "page");
   }
 
   private async expectSortChangedFrom(
