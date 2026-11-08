@@ -15,7 +15,7 @@ describe("store catalog server rendering", () => {
     const handler = createStaticHandler([
       {
         Component: () => (
-          <StoreCartProvider>
+          <StoreCartProvider initialCurrency="EUR">
             <CatalogRoute />
           </StoreCartProvider>
         ),
@@ -49,7 +49,7 @@ describe("store catalog server rendering", () => {
     const handler = createStaticHandler([
       {
         Component: () => (
-          <StoreCartProvider>
+          <StoreCartProvider initialCurrency="EUR">
             <CatalogRoute />
           </StoreCartProvider>
         ),

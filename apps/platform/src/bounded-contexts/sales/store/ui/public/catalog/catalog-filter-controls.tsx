@@ -37,10 +37,10 @@ export function StoreCatalogFilters(props: {
 }) {
   return (
     <div className="mb-16" ref={props.chipsRef}>
-      <p className="mb-4 flex items-center gap-2 text-label uppercase text-text-muted">
+      <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-copy-muted">
         <Filter aria-hidden="true" size={16} />
         Filters
-      </p>
+      </div>
       <div className="flex flex-col gap-3">
         {props.dimensions.map((dimension) => (
           <CatalogFilterRow
@@ -68,7 +68,7 @@ function CatalogFilterRow(props: {
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-      <span className="w-12 shrink-0 text-label uppercase text-text-muted">
+      <span className="w-12 shrink-0 text-xs font-semibold uppercase tracking-wider text-copy-muted">
         {descriptor.label}
       </span>
       <FilterChipGroup

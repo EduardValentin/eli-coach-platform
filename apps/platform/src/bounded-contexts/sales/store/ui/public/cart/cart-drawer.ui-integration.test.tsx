@@ -26,6 +26,9 @@ import { requiredName } from "~test-support/index";
 import { clientAction as acquireResources } from "~/bounded-contexts/sales/store/adapters/inbound/http/acquisitions/acquisitions";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
+import type { StoreProduct } from "~/bounded-contexts/sales/store/public/store";
+import type { StoreCurrency } from "~/bounded-contexts/sales/store/public/store-currency";
+
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider, useStoreCart } from "./cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "./cart-drawer";
@@ -332,8 +335,8 @@ describe("StoreCartDrawer", () => {
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     expect(within(dialog).queryByText("Total")).not.toBeInTheDocument();
     expect(
-      within(dialog).queryByText("Free", { exact: true }),
-    ).not.toBeInTheDocument();
+      within(dialog).getByText("Free", { exact: true }),
+    ).toBeInTheDocument();
     await continueToAcquisitionDetails(dialog, user);
     await user.type(emailField(dialog), "woman@example.com");
     expect(
@@ -970,11 +973,147 @@ describe("StoreCartDrawer", () => {
   });
 });
 
-function renderCart(options?: { botDetection?: BotDetectionConfig }) {
+describe("StoreCartDrawer with plans", () => {
+  it("prices each plan, tags the free resource and totals the cart in euros", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["fat-loss-plan", "hormone-harmony", "bigger-glutes-plan"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [...createPlans(), createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 3 items" }),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    const lines = await within(dialog).findAllByRole("listitem");
+    expect(within(lines[0]!).getByText("€39.00")).toBeInTheDocument();
+    expect(within(lines[1]!).getByText("Free")).toBeInTheDocument();
+    expect(within(lines[2]!).getByText("€49.00")).toBeInTheDocument();
+    expect(within(dialog).getByRole("term")).toHaveTextContent("Total");
+    expect(within(dialog).getByRole("definition")).toHaveTextContent("€88.00");
+  });
+
+  it("prices the lines and the total in dollars when she shops in dollars", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["fat-loss-plan", "bigger-glutes-plan"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({ products: createPlans(), success: true }),
+      ),
+    );
+    renderCart({ initialCurrency: "USD" });
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 2 items" }),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    expect(await within(dialog).findByText("$45.00")).toBeInTheDocument();
+    expect(within(dialog).getByText("$55.00")).toBeInTheDocument();
+    expect(within(dialog).getByRole("definition")).toHaveTextContent("$100.00");
+    expect(within(dialog).queryByText(/€/)).not.toBeInTheDocument();
+  });
+
+  it("asks to complete the order and shows the generic failure when the plan is refused", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["fat-loss-plan", "hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [...createPlans(), createProduct()],
+          success: true,
+        }),
+      ),
+      http.post(STORE_ACQUISITIONS_API_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "paid_products",
+              message: "Paid products cannot be acquired for free.",
+              paidProductSlugs: ["fat-loss-plan"],
+            },
+            success: false,
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 2 items" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Complete order" }),
+    );
+
+    // assert
+    expect(
+      await within(dialog).findByText(
+        "We couldn't send your resources right now. Your cart is saved, so please try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(readStoredProductSlugs()).toEqual([
+      "fat-loss-plan",
+      "hormone-harmony",
+    ]);
+  });
+
+  it("invites a plan or a free resource while the cart is empty", async () => {
+    // arrange
+    const user = userEvent.setup();
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({ products: [createProduct()], success: true }),
+      ),
+    );
+    renderCart();
+    await user.click(screen.getByRole("button", { name: "Add test resource" }));
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+
+    // act
+    await user.click(
+      await within(dialog).findByRole("button", {
+        name: "Remove Hormone Harmony from cart",
+      }),
+    );
+
+    // assert
+    expect(
+      within(dialog).getByText(
+        "Add a plan or a free resource from the store to get started.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
+function renderCart(options?: {
+  botDetection?: BotDetectionConfig;
+  initialCurrency?: StoreCurrency;
+}) {
   const router = createMemoryRouter([
     {
       Component: () => (
-        <StoreCartProvider>
+        <StoreCartProvider initialCurrency={options?.initialCurrency ?? "EUR"}>
           <StoreCartButton />
           <StoreCartTestControls />
           <DisappearingStoreCartTestControl />
@@ -1078,7 +1217,24 @@ function readStoredProductSlugs(): readonly string[] {
   return JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!).productSlugs;
 }
 
-function createProduct() {
+function createPlans(): readonly StoreProduct[] {
+  return [
+    {
+      ...createProduct(),
+      price: { eurCents: 3900, usdCents: 4500 },
+      slug: "fat-loss-plan",
+      title: "30-Day Fat Loss Plan",
+    },
+    {
+      ...createProduct(),
+      price: { eurCents: 4900, usdCents: 5500 },
+      slug: "bigger-glutes-plan",
+      title: "30-Day Bigger Glutes Plan",
+    },
+  ];
+}
+
+function createProduct(): StoreProduct {
   return {
     cardSummary: "A practical cycle-aware guide.",
     cover: {

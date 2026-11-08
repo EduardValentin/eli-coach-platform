@@ -1,4 +1,5 @@
 import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
+import { LABEL_CLASS } from "~/shared/design-system/lib";
 import { STORE_MARKETING_CONSENT } from "~/bounded-contexts/legal/public";
 import {
   Sheet,
@@ -40,10 +41,16 @@ import {
   type StoreAcquisitionForm,
   type StoreProduct,
 } from "~/bounded-contexts/sales/store/public/store";
+import {
+  formatStorePrice,
+  type StoreCurrency,
+} from "~/bounded-contexts/sales/store/public/store-currency";
 
 import { selectStoreCartProducts, useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
 import { useStoreAcquisition } from "../acquisition/acquisition-form";
+import { FreeTag } from "../pricing/free-tag";
+import { Price } from "../pricing/price";
 import {
   STORE_ACQUISITIONS_API_URL,
   useStoreCatalogFetcher,
@@ -83,6 +90,7 @@ export function StoreCartButton() {
 export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   const clearCart = useStoreCart((cart) => cart.clearCart);
   const closeCart = useStoreCart((cart) => cart.closeCart);
+  const currency = useStoreCart((cart) => cart.currency);
   const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
   const isOpen = useStoreCart((cart) => cart.isOpen);
   const productSlugs = useStoreCart((cart) => cart.productSlugs);
@@ -101,6 +109,9 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   const responseErrorId = useId();
   const catalog = catalogQuery.data ?? [];
   const selectedProducts = selectStoreCartProducts(productSlugs, catalog);
+  const hasPaidProduct = selectedProducts.some(
+    (product) => product.price !== null,
+  );
 
   useReconcileStoreCartCatalog(
     catalogQuery.data,
@@ -142,7 +153,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
             Your cart
           </SheetTitle>
           <SheetDescription className="sr-only">
-            Review your free resources and tell us where to send them.
+            Review your cart and tell us which email to use.
           </SheetDescription>
         </div>
         <div
@@ -153,6 +164,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
             <CartReview
               catalogFailed={catalogQuery.isError}
               catalogPending={catalogQuery.isPending}
+              currency={currency}
               onContinue={acquisition.showDetails}
               products={selectedProducts}
               responseError={acquisition.responseError}
@@ -164,6 +176,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
               canSubmit={acquisition.canSubmit}
               emailErrorId={emailErrorId}
               form={acquisition.form}
+              hasPaidProduct={hasPaidProduct}
               isSubmitting={acquisition.isSubmitting}
               onBack={acquisition.showCart}
               onSubmit={acquisition.submit}
@@ -181,6 +194,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
 function CartReview(props: {
   catalogFailed: boolean;
   catalogPending: boolean;
+  currency: StoreCurrency;
   onContinue: () => void;
   products: readonly StoreProduct[];
   responseError: string | null;
@@ -222,7 +236,7 @@ function CartReview(props: {
           Your cart is empty
         </p>
         <p className="mt-2 text-sm text-text-secondary">
-          Add a free resource from the store to get started.
+          Add a plan or a free resource from the store to get started.
         </p>
       </div>
     );
@@ -235,13 +249,18 @@ function CartReview(props: {
       ) : null}
       <ul className="divide-y divide-border-subtle">
         {props.products.map((product) => (
-          <CartProduct key={product.slug} product={product} />
+          <CartProduct
+            currency={props.currency}
+            key={product.slug}
+            product={product}
+          />
         ))}
       </ul>
       <div
         className="mt-auto border-t border-border-subtle pt-6"
         data-parity="cart-summary"
       >
+        <CartTotal currency={props.currency} products={props.products} />
         <Button
           onClick={props.onContinue}
           size="lg"
@@ -255,7 +274,41 @@ function CartReview(props: {
   );
 }
 
-function CartProduct({ product }: { product: StoreProduct }) {
+function CartTotal(props: {
+  currency: StoreCurrency;
+  products: readonly StoreProduct[];
+}) {
+  const prices = props.products.flatMap((product) =>
+    product.price ? [product.price] : [],
+  );
+
+  if (prices.length === 0) {
+    return null;
+  }
+
+  const total = {
+    eurCents: prices.reduce((sum, price) => sum + price.eurCents, 0),
+    usdCents: prices.reduce((sum, price) => sum + price.usdCents, 0),
+  };
+
+  return (
+    <dl className="mb-6 flex items-baseline justify-between gap-4">
+      <dt className={LABEL_CLASS}>Total</dt>
+      <dd
+        className="text-lg font-semibold text-text-primary"
+        data-parity="cart-total"
+      >
+        {formatStorePrice(total, props.currency)}
+      </dd>
+    </dl>
+  );
+}
+
+function CartProduct(props: {
+  currency: StoreCurrency;
+  product: StoreProduct;
+}) {
+  const { product } = props;
   const removeProduct = useStoreCart((cart) => cart.removeProduct);
 
   return (
@@ -272,12 +325,17 @@ function CartProduct({ product }: { product: StoreProduct }) {
         >
           {product.title}
         </p>
-        <p
-          className="mt-1 text-label uppercase text-brand-secondary"
-          data-parity="cart-item-type"
-        >
-          Free resource
-        </p>
+        {product.price ? (
+          <Price className="mt-1" data-parity="cart-line-price" size="sm">
+            {formatStorePrice(product.price, props.currency)}
+          </Price>
+        ) : (
+          <FreeTag
+            className="mt-1 self-start"
+            data-parity="cart-item-type"
+            size="sm"
+          />
+        )}
         <button
           aria-label={`Remove ${product.title} from cart`}
           className="ml-auto mt-auto inline-flex items-center justify-center p-1 text-text-secondary transition-colors hover:text-feedback-danger"
@@ -296,6 +354,7 @@ function AcquisitionDetails(props: {
   canSubmit: boolean;
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
+  hasPaidProduct: boolean;
   isSubmitting: boolean;
   onBack: () => void;
   onSubmit: SubmitHandler<StoreAcquisitionForm>;
@@ -435,22 +494,34 @@ function AcquisitionDetails(props: {
           type="submit"
           width="full"
         >
-          {props.isSubmitting ? (
-            <>
-              <Loader2
-                aria-hidden="true"
-                className="animate-spin motion-reduce:hidden"
-                size={18}
-              />
-              Sending…
-            </>
-          ) : (
-            "Send my resources"
-          )}
+          <SubmitLabel
+            hasPaidProduct={props.hasPaidProduct}
+            isSubmitting={props.isSubmitting}
+          />
         </Button>
       </div>
     </form>
   );
+}
+
+function SubmitLabel(props: {
+  hasPaidProduct: boolean;
+  isSubmitting: boolean;
+}) {
+  if (props.isSubmitting) {
+    return (
+      <>
+        <Loader2
+          aria-hidden="true"
+          className="animate-spin motion-reduce:hidden"
+          size={18}
+        />
+        Sending…
+      </>
+    );
+  }
+
+  return props.hasPaidProduct ? "Complete order" : "Send my resources";
 }
 
 function StoreAcquisitionError(props: { id?: string; message: string }) {

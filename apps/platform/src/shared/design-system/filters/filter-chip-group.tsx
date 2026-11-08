@@ -27,7 +27,10 @@ export const FilterChipGroup = React.forwardRef<
   <FilterChipToneContext.Provider value={tone}>
     <RadixToggleGroup.Root
       ref={ref}
-      className={cn("flex flex-wrap gap-2", className)}
+      className={cn(
+        "flex w-fit flex-wrap items-center gap-2 rounded-field",
+        className,
+      )}
       onValueChange={(nextValue) => onValueChange(nextValue || null)}
       type="single"
       value={value ?? ""}
@@ -49,7 +52,11 @@ export const FilterChip = React.forwardRef<HTMLButtonElement, FilterChipProps>(
     return (
       <RadixToggleGroup.Item
         ref={ref}
-        className={cn(chipVariants({ tone }), "h-auto min-h-0", className)}
+        className={cn(
+          chipVariants({ tone }),
+          "h-auto min-h-0 min-w-0 flex-none justify-center gap-2 whitespace-nowrap",
+          className,
+        )}
         {...props}
       />
     );
