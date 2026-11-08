@@ -7,6 +7,7 @@ import { cn } from '../components/ui/utils';
 import { Card, CardContent } from '../components/ui/card';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { buttonVariants } from '../components/ThemeButton';
+import { Price } from '../components/Price';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -86,9 +87,9 @@ export function ProductDetails() {
             {/* A free resource has no price to state — its CTA already reads
                 "Get it for Free", so a "Free" line only repeats it. */}
             {isPaid(product) && (
-              <p className="text-text-secondary font-semibold text-2xl tabular-nums tracking-tight mb-8" data-parity="product-price">
+              <Price className="mb-8" data-parity="product-price" size="lg">
                 {formatPrice(product)}
-              </p>
+              </Price>
             )}
 
             <div className="w-16 h-1 bg-control-border-soft mb-8" />

@@ -5,6 +5,7 @@ import { isPaid, useStore, type CartItem, type PaidProduct } from '../context/St
 import { useAppState } from '../context/AppContext';
 import { CheckboxField } from './CheckboxField';
 import { FreeTag } from './FreeTag';
+import { Price } from './Price';
 import { InlineProblem } from './InlineProblem';
 import { Button } from './ThemeButton';
 import { Alert } from './ui/alert';
@@ -295,9 +296,9 @@ function CartReview(props: {
                 {item.product.title}
               </p>
               {isPaid(item.product) ? (
-                <p className="mt-1 text-sm font-semibold text-text-primary" data-parity="cart-line-price">
+                <Price className="mt-1" data-parity="cart-line-price" size="sm">
                   {props.formatPrice(item.product)}
-                </p>
+                </Price>
               ) : (
                 <FreeTag className="mt-1 self-start" data-parity="cart-item-type" size="sm" />
               )}
