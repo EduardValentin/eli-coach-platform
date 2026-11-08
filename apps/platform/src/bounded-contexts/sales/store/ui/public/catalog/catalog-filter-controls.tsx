@@ -94,7 +94,12 @@ function CatalogFilterRow(props: {
         tone={descriptor.tone}
         value={props.selectedSlug ?? UNFILTERED_VALUE}
       >
-        <FilterChip value={UNFILTERED_VALUE}>All</FilterChip>
+        <FilterChip
+          data-parity={`filter-${descriptor.param}-all`}
+          value={UNFILTERED_VALUE}
+        >
+          All
+        </FilterChip>
         {values.map((value) => (
           <FilterChip key={value.slug} value={value.slug}>
             {value.label}

@@ -103,7 +103,10 @@ export default function ProductDetailsRoute() {
           Back to Store
         </Link>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-20">
-          <div className="aspect-[4/5] overflow-hidden rounded-card bg-surface-subtle shadow-raised sm:aspect-square lg:aspect-[4/5]">
+          <div
+            className="aspect-[4/5] overflow-hidden rounded-card bg-surface-subtle shadow-raised sm:aspect-square lg:aspect-[4/5]"
+            data-parity="product-cover"
+          >
             <img
               alt={product.cover.alt}
               className="size-full object-cover"
@@ -138,6 +141,7 @@ export default function ProductDetailsRoute() {
             <div
               aria-hidden="true"
               className="mb-8 h-1 w-16 bg-control-border-soft"
+              data-parity="product-divider"
             />
             <p className="mb-10 text-lg leading-relaxed text-copy-muted">
               {product.detailDescription}

@@ -416,6 +416,7 @@ function AcquisitionDetails(props: {
               <CheckboxField
                 checkboxRef={field.ref}
                 checked={field.value}
+                checkboxParity="terms-checkbox"
                 data-parity="terms-consent"
                 disabled={props.isSubmitting}
                 error={fieldState.error?.message}
@@ -443,6 +444,7 @@ function AcquisitionDetails(props: {
               <CheckboxField
                 checkboxRef={field.ref}
                 checked={field.value}
+                checkboxParity="marketing-checkbox"
                 data-parity="marketing-consent"
                 disabled={props.isSubmitting}
                 label={STORE_MARKETING_CONSENT}
@@ -532,7 +534,10 @@ function StoreAcquisitionError(props: { id?: string; message: string }) {
 function AcquisitionSuccess() {
   return (
     <div className="m-auto text-center">
-      <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-feedback-success-soft text-feedback-success">
+      <span
+        className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-feedback-success-soft text-feedback-success"
+        data-parity="sent-icon"
+      >
         <CheckCircle2 aria-hidden="true" size={32} />
       </span>
       <h2 className="font-heading text-display-md text-text-primary">
