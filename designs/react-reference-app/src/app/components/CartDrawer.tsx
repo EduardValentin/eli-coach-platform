@@ -4,6 +4,7 @@ import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
 import { isPaid, useStore, type CartItem, type PaidProduct } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
 import { CheckboxField } from './CheckboxField';
+import { FreeTag } from './FreeTag';
 import { InlineProblem } from './InlineProblem';
 import { Button } from './ThemeButton';
 import { Alert } from './ui/alert';
@@ -298,9 +299,7 @@ function CartReview(props: {
                   {props.formatPrice(item.product)}
                 </p>
               ) : (
-                <p className="mt-1 text-label uppercase text-brand-secondary" data-parity="cart-item-type">
-                  Free resource
-                </p>
+                <FreeTag className="mt-1 self-start" data-parity="cart-item-type" />
               )}
               <button
                 aria-label={`Remove ${item.product.title} from cart`}

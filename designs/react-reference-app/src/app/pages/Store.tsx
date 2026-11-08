@@ -9,6 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { buttonVariants, cn } from '../components/ThemeButton';
 import { cardVariants } from '../components/ui/card';
+import { FreeTag } from '../components/FreeTag';
 
 const CHIP_BASE_CLASS =
   'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full border bg-card px-4 py-2 text-sm font-normal text-foreground transition-colors';
@@ -218,9 +219,7 @@ export function Store() {
                           alt={product.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute top-4 right-4 bg-brand-secondary text-brand-secondary-foreground px-3 py-1.5 rounded-full text-label uppercase">
-                          Free
-                        </div>
+                        <FreeTag className="absolute top-4 right-4" />
                       </Link>
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">

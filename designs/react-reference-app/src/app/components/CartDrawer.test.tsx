@@ -417,7 +417,7 @@ describe('CartDrawer', () => {
     // assert
     expect(screen.getByText('$45.00')).toBeInTheDocument();
     expect(screen.getByText('$55.00')).toBeInTheDocument();
-    expect(screen.getByText('Free resource')).toBeInTheDocument();
+    expect(screen.getByText('Free')).toBeInTheDocument();
     expect(screen.getByRole('definition')).toHaveTextContent('$100.00');
   });
 
@@ -430,7 +430,7 @@ describe('CartDrawer', () => {
     await openCartWith(user, [freeEbook, freePdf]);
 
     // assert
-    expect(screen.getAllByText('Free resource')).toHaveLength(2);
+    expect(screen.getAllByText('Free')).toHaveLength(2);
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
   });
 });

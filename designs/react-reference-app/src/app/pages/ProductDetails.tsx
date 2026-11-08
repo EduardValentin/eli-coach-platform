@@ -86,7 +86,7 @@ export function ProductDetails() {
             {/* A free resource has no price to state — its CTA already reads
                 "Get it for Free", so a "Free" line only repeats it. */}
             {isPaid(product) && (
-              <p className="text-foreground font-semibold text-3xl tracking-tight mb-8" data-parity="product-price">
+              <p className="text-brand font-semibold text-2xl tabular-nums tracking-tight mb-8" data-parity="product-price">
                 {formatPrice(product)}
               </p>
             )}
