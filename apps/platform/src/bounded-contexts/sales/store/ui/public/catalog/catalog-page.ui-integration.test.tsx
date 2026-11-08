@@ -54,7 +54,18 @@ beforeAll(() => {
     unobserve() {}
   }
 
+  class IntersectionObserverStub {
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return [];
+    }
+    unobserve() {}
+  }
+
   globalThis.ResizeObserver = ResizeObserverStub;
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver;
   server.listen({ onUnhandledRequest: "error" });
 });
 
@@ -185,7 +196,9 @@ describe("store catalog", () => {
 
     // assert
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    expect(within(dialog).getByRole("definition")).toHaveTextContent("$45.00");
+    expect(await within(dialog).findByRole("definition")).toHaveTextContent(
+      "$45.00",
+    );
     expect(within(dialog).queryByText(/€/)).not.toBeInTheDocument();
   });
 

@@ -55,7 +55,18 @@ beforeAll(() => {
     unobserve() {}
   }
 
+  class IntersectionObserverStub {
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return [];
+    }
+    unobserve() {}
+  }
+
   globalThis.ResizeObserver = ResizeObserverStub;
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver;
   server.listen({ onUnhandledRequest: "error" });
 });
 

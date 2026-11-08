@@ -1,4 +1,5 @@
 import { cn, useSearchParamsWriter } from "~/shared/design-system/lib";
+import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import {
   buttonVariants,
   Card,
@@ -13,6 +14,7 @@ import {
   Plus,
   ShoppingBag,
 } from "lucide-react";
+import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { storeProductPath } from "~/bounded-contexts/sales/store/public/paths";
@@ -311,13 +313,18 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
   const presentation = product.price
     ? PAID_CARD_PRESENTATION
     : FREE_CARD_PRESENTATION;
+  const prefersReducedMotion = useClientReducedMotionPreference();
 
   return (
-    <article
+    <motion.article
+      animate={prefersReducedMotion ? { opacity: 1, y: 0 } : undefined}
       className={cn(
         cardVariants(),
-        "group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-raised",
+        "group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-raised motion-reduce:transform-none",
       )}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+      viewport={{ once: true }}
+      whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <Link
         className="relative block aspect-[4/3] overflow-hidden"
@@ -378,7 +385,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
           {isInCart ? "In your cart" : presentation.addLabel}
         </button>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
