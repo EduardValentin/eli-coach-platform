@@ -62,6 +62,8 @@ export function shouldRevalidate({
     : defaultShouldRevalidate;
 }
 
+export const handle = { publicContentFrame: "full-bleed" } as const;
+
 export const meta: MetaFunction = () => [
   { title: "Store | Evoa" },
   {

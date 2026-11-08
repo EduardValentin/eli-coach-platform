@@ -90,21 +90,23 @@ function CatalogShell(props: {
 }) {
   return (
     <div
-      className="relative left-1/2 w-dvw max-w-7xl -translate-x-1/2 px-6 pb-12 pt-4"
+      className="min-h-screen w-full bg-surface-page pb-24"
       data-parity-root="Store"
     >
-      <header className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-        <div className="max-w-2xl">
-          <h1 className="mb-4 font-heading text-4xl tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-            Find the right plan
-          </h1>
-          <p className="text-lg text-copy-muted">
-            Workout and nutrition plans, plus free guides to get you started.
-          </p>
-        </div>
-        {props.headerAction}
-      </header>
-      {props.children}
+      <div className="mx-auto max-w-7xl px-6 pt-32">
+        <header className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+          <div className="max-w-2xl">
+            <h1 className="mb-4 font-heading text-4xl tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+              Find the right plan
+            </h1>
+            <p className="text-lg text-copy-muted">
+              Workout and nutrition plans, plus free guides to get you started.
+            </p>
+          </div>
+          {props.headerAction}
+        </header>
+        {props.children}
+      </div>
     </div>
   );
 }
