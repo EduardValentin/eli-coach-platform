@@ -4564,18 +4564,11 @@
       "waitFor": "[data-radix-popper-content-wrapper] > [role=\"listbox\"][data-state=\"open\"] [role=\"option\"][aria-selected=\"true\"]:focus"
     }
   ],
-  "cart-one-item": {
-    "prototype": [
-      {
-        "click": "role=button[name=\"Get for Free\"] >> nth=0"
-      }
-    ],
-    "real": [
-      {
-        "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
-      }
-    ]
-  },
+  "cart-one-item": [
+    {
+      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+    }
+  ],
   "cart-details": [
     {
       "use": "cart-one-item"
@@ -6262,6 +6255,52 @@
     },
     {
       "press": "Shift+Tab"
+    }
+  ],
+  "store-usd": [
+    {
+      "click": "[data-parity-root=\"Store\"] >> role=radio[name=\"USD\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"Store\"] [role=\"radio\"][aria-checked=\"true\"]:has-text(\"USD\")"
+    }
+  ],
+  "product-paid": [
+    {
+      "click": "section:has(> h2:text-is(\"Plans\")) h3 >> nth=0"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ProductDetails\"] [data-parity=\"product-price\"]"
+    }
+  ],
+  "product-paid-usd": [
+    {
+      "use": "store-usd"
+    },
+    {
+      "use": "product-paid"
+    }
+  ],
+  "product-free": [
+    {
+      "click": "section:has(> h2:text-is(\"Free resources\")) h3 >> nth=0"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ProductDetails\"] h1"
+    }
+  ],
+  "cart-mixed": [
+    {
+      "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-total\"]"
     }
   ]
 }
