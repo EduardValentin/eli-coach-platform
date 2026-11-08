@@ -51,7 +51,7 @@ describe('Store currency', () => {
     renderStore();
 
     // act
-    const currencies = within(screen.getByRole('group', { name: 'Currency' })).getAllByRole('radio');
+    const currencies = within(screen.getByRole('radiogroup', { name: 'Currency' })).getAllByRole('radio');
 
     // assert
     expect(currencies.map((currency) => currency.textContent?.trim())).toEqual(['EUR', 'USD']);

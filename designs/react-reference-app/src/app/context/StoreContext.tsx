@@ -22,7 +22,22 @@ export function isPaid(product: Product): product is PaidProduct {
   return product.priceEUR !== null;
 }
 
-export const STORE_PRODUCTS: Product[] = [
+export const PRODUCT_CATEGORIES: readonly ProductCategory[] = ['Workouts', 'Nutrition Plans', 'E-Books'];
+export const PRODUCT_GOALS: readonly ProductGoal[] = ['Muscle Building', 'Fat Loss', 'Wellness', 'Hormonal Balance'];
+
+function inDisplayOrder<Value>(values: Value[], displayOrder: readonly Value[]): Value[] {
+  return [...values].sort((first, second) => displayOrder.indexOf(first) - displayOrder.indexOf(second));
+}
+
+function withDisplayOrder(product: Product): Product {
+  return {
+    ...product,
+    categories: inDisplayOrder(product.categories, PRODUCT_CATEGORIES),
+    goals: inDisplayOrder(product.goals, PRODUCT_GOALS),
+  };
+}
+
+const STORE_PRODUCT_CONTENT: Product[] = [
   // Paid Products
   {
     id: 'fat-loss-30',
@@ -123,6 +138,8 @@ export const STORE_PRODUCTS: Product[] = [
     includes: ['10-Day Follow-Along Videos', 'Core Engagement Tutorial']
   }
 ];
+
+export const STORE_PRODUCTS: Product[] = STORE_PRODUCT_CONTENT.map(withDisplayOrder);
 
 export type Currency = 'EUR' | 'USD';
 

@@ -183,6 +183,7 @@ export function CartDrawer() {
                 )}
                 <div className="mt-6 flex flex-col gap-4">
                   <CheckboxField
+                    checkboxParity="terms-checkbox"
                     checked={termsAccepted}
                     data-parity="terms-consent"
                     disabled={isSubmitting}
@@ -202,6 +203,7 @@ export function CartDrawer() {
                     required
                   />
                   <CheckboxField
+                    checkboxParity="marketing-checkbox"
                     checked={marketingConsent}
                     data-parity="marketing-consent"
                     disabled={isSubmitting}
@@ -334,7 +336,10 @@ function CartReview(props: {
 function AcquisitionSuccess({ variant }: { variant: 'free' | 'paid' }) {
   return (
     <div className="m-auto text-center">
-      <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-success-soft text-success">
+      <span
+        className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-success-soft text-success"
+        data-parity="sent-icon"
+      >
         <CheckCircle2 aria-hidden="true" size={32} />
       </span>
       <h2 className="font-serif text-display-md text-text-primary">
