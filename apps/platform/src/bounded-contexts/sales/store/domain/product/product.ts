@@ -131,7 +131,7 @@ export type PriceChangePlan = {
   productSlug: string;
 };
 
-export type PriceChangeRefusal =
+type PriceChangeRefusal =
   { code: "price_unchanged" } | { code: "product_retired" };
 
 export type PriceChangeDecision =
