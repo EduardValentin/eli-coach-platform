@@ -6302,5 +6302,51 @@
     {
       "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-total\"]"
     }
+  ],
+  "store-filter-no-match": [
+    {
+      "click": "[aria-label=\"Filter by Type\"] >> role=radio[name=\"E-Books\"]"
+    },
+    {
+      "click": "[aria-label=\"Filter by Goal\"] >> role=radio[name=\"Fat Loss\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"Store\"] p:text-is(\"No products found matching your filters.\")"
+    }
+  ],
+  "cart-empty": {
+    "prototype": [
+      {
+        "click": "role=button[name=\"Open cart\"] >> visible=true >> nth=0"
+      },
+      {
+        "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Cart, 0 items\"] >> visible=true >> nth=0"
+      },
+      {
+        "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
+      }
+    ]
+  },
+  "cart-paid-details": [
+    {
+      "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
+    },
+    {
+      "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] button:has-text(\"Complete order\")"
+    }
   ]
 }
