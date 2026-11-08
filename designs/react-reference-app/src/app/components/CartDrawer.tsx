@@ -136,7 +136,7 @@ export function CartDrawer() {
             Your cart
           </SheetTitle>
           <SheetDescription className="sr-only">
-            Review your free resources and tell us where to send them.
+            Review your cart and tell us which email to use.
           </SheetDescription>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6" data-parity="cart-body">
@@ -266,7 +266,7 @@ function CartReview(props: {
       <div className="m-auto text-center">
         <ShoppingBag aria-hidden="true" className="mx-auto mb-4 text-icon-muted" size={44} />
         <p className="font-serif text-display-sm text-text-primary">Your cart is empty</p>
-        <p className="mt-2 text-sm text-text-secondary">Add a free resource from the store to get started.</p>
+        <p className="mt-2 text-sm text-text-secondary">Add a plan or a free resource from the store to get started.</p>
       </div>
     );
   }
