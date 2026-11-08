@@ -186,6 +186,7 @@ export function Store() {
                           {product.description}
                         </p>
                         <button
+                          aria-label={`Add ${product.title} to cart`}
                           onClick={() => addToCart(product)}
                           className={buttonVariants({ size: 'lg', variant: 'inverted', width: 'full' })}
                         >
@@ -202,7 +203,7 @@ export function Store() {
             {freeProducts.length > 0 && (
               <section>
                 <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 px-3 border-b border-control-border-soft">
-                  Free Resources
+                  Free resources
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {freeProducts.map(product => (
@@ -238,10 +239,11 @@ export function Store() {
                           {product.description}
                         </p>
                         <button
+                          aria-label={`Get ${product.title} for free`}
                           onClick={() => addToCart(product)}
                           className={buttonVariants({ size: 'lg', variant: 'outline', width: 'full' })}
                         >
-                          <Plus size={18} aria-hidden="true" /> Get for Free
+                          <Plus size={18} aria-hidden="true" /> Get for free
                         </button>
                       </div>
                     </motion.div>
