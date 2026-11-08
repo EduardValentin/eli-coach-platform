@@ -2,7 +2,7 @@ import { EVOA_FITNESS_PRIVACY_EMAIL } from "~/shared/brand";
 
 import type { LegalDocument, LegalLink } from "./legal-document";
 
-export const PRIVACY_POLICY_VERSION = "2.2";
+export const PRIVACY_POLICY_VERSION = "2.3";
 export const WAITLIST_MARKETING_CONSENT_VERSION = "1.1";
 
 export const WAITLIST_MARKETING_CONSENT = {
@@ -114,7 +114,7 @@ const privacyPageLink = {
 export const PRIVACY_POLICY = {
   id: "privacy-policy",
   version: PRIVACY_POLICY_VERSION,
-  effectiveDate: "2026-10-11",
+  effectiveDate: "2026-11-08",
   title: "Privacy Policy",
   description:
     "How Evoa Fitness handles personal data for its public website, coaching waitlist, digital Store, and 1-on-1 coaching platform.",
@@ -126,7 +126,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.2, effective 11 October 2026.",
+            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.3, effective 8 November 2026.",
           ],
         },
         {
@@ -490,18 +490,30 @@ export const PRIVACY_POLICY = {
     },
     {
       id: "anonymous-cart",
-      heading: "Anonymous browser-local cart",
+      heading: "Anonymous cart and currency preference",
       blocks: [
         {
           kind: "paragraph",
           content: [
-            "The Store cart stores only resource identifiers in the visitor's browser so the cart works between page views. No cart information reaches Evoa Fitness, Resend, or another server until the visitor submits a resource request or starts checkout.",
+            "The Store cart stores only resource identifiers in the visitor's browser so the cart works between page views. The cart's contents do not reach Evoa Fitness, Resend, or another server until the visitor submits a resource request or starts checkout.",
           ],
         },
         {
           kind: "paragraph",
           content: [
             "Cart data remains until the visitor removes an item, clears browser storage, or the application removes a resource that is no longer available. This storage is strictly necessary to provide the cart functionality the visitor requested and is used for nothing else. Evoa Fitness does not place an email address, consent evidence, raw download token, or private-file information in browser-local cart storage.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "When a visitor switches the Store's currency between euros (EUR) and US dollars (USD), Evoa Fitness sets a currency preference cookie that holds only that choice. The browser sends it with each request so that prices are shown in the chosen currency, and it is used for nothing else.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "No currency cookie is set until the visitor switches currency, and prices are shown in euros without it. The cookie is strictly necessary to provide the currency choice the visitor requested, so no consent is asked. It expires after one year, or earlier when the visitor clears browser cookies.",
           ],
         },
       ],

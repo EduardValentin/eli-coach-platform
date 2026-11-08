@@ -98,8 +98,8 @@ describe("privacy policy content", () => {
     // arrange
     const expectedIdentity = {
       id: "privacy-policy",
-      version: "2.2",
-      effectiveDate: "2026-10-11",
+      version: "2.3",
+      effectiveDate: "2026-11-08",
     };
 
     // act
@@ -112,7 +112,7 @@ describe("privacy policy content", () => {
 
     // assert
     expect(identity).toEqual(expectedIdentity);
-    expect(PRIVACY_POLICY_VERSION).toBe("2.2");
+    expect(PRIVACY_POLICY_VERSION).toBe("2.3");
     expect(PRIVACY_POLICY.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(sectionIds).toEqual(EXPECTED_SECTION_IDS);
     expect(new Set(sectionIds).size).toBe(sectionIds.length);
@@ -153,8 +153,26 @@ describe("privacy policy content", () => {
 
     // assert
     expect(text).toContain(
-      "It is Privacy Policy version 2.2, effective 11 October 2026.",
+      "It is Privacy Policy version 2.3, effective 8 November 2026.",
     );
+  });
+
+  test("describes the currency preference cookie beside the cart and limits the cart's server promise to the cart", () => {
+    // arrange
+    const expectedStatements = [
+      "The cart's contents do not reach Evoa Fitness, Resend, or another server until the visitor submits a resource request or starts checkout.",
+      "When a visitor switches the Store's currency between euros (EUR) and US dollars (USD), Evoa Fitness sets a currency preference cookie that holds only that choice. The browser sends it with each request so that prices are shown in the chosen currency, and it is used for nothing else.",
+      "No currency cookie is set until the visitor switches currency, and prices are shown in euros without it. The cookie is strictly necessary to provide the currency choice the visitor requested, so no consent is asked. It expires after one year, or earlier when the visitor clears browser cookies.",
+    ];
+
+    // act
+    const section = sectionText("anonymous-cart");
+
+    // assert
+    for (const statement of expectedStatements) {
+      expect(section).toContain(statement);
+    }
+    expect(section).not.toContain("No cart information reaches");
   });
 
   test("names body measurements, progress photos and coach-shared files among the data it stores", () => {
