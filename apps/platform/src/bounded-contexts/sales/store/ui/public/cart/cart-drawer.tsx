@@ -109,9 +109,9 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   const responseErrorId = useId();
   const catalog = catalogQuery.data ?? [];
   const selectedProducts = selectStoreCartProducts(productSlugs, catalog);
-  const hasPaidProduct = selectedProducts.some(
-    (product) => product.price !== null,
-  );
+  const submitLabel = selectedProducts.some((product) => product.price !== null)
+    ? "Complete order"
+    : "Send my resources";
 
   useReconcileStoreCartCatalog(
     catalogQuery.data,
@@ -176,7 +176,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
               canSubmit={acquisition.canSubmit}
               emailErrorId={emailErrorId}
               form={acquisition.form}
-              hasPaidProduct={hasPaidProduct}
+              submitLabel={submitLabel}
               isSubmitting={acquisition.isSubmitting}
               onBack={acquisition.showCart}
               onSubmit={acquisition.submit}
@@ -354,12 +354,12 @@ function AcquisitionDetails(props: {
   canSubmit: boolean;
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
-  hasPaidProduct: boolean;
   isSubmitting: boolean;
   onBack: () => void;
   onSubmit: SubmitHandler<StoreAcquisitionForm>;
   responseError: string | null;
   responseErrorId: string;
+  submitLabel: string;
 }) {
   const {
     control,
@@ -495,7 +495,7 @@ function AcquisitionDetails(props: {
           width="full"
         >
           <SubmitLabel
-            hasPaidProduct={props.hasPaidProduct}
+            idleLabel={props.submitLabel}
             isSubmitting={props.isSubmitting}
           />
         </Button>
@@ -504,10 +504,7 @@ function AcquisitionDetails(props: {
   );
 }
 
-function SubmitLabel(props: {
-  hasPaidProduct: boolean;
-  isSubmitting: boolean;
-}) {
+function SubmitLabel(props: { idleLabel: string; isSubmitting: boolean }) {
   if (props.isSubmitting) {
     return (
       <>
@@ -521,7 +518,7 @@ function SubmitLabel(props: {
     );
   }
 
-  return props.hasPaidProduct ? "Complete order" : "Send my resources";
+  return props.idleLabel;
 }
 
 function StoreAcquisitionError(props: { id?: string; message: string }) {

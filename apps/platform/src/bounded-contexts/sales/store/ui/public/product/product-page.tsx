@@ -14,6 +14,8 @@ import { storeProductSchema } from "~/bounded-contexts/sales/store/public/store"
 import { formatStorePrice } from "~/bounded-contexts/sales/store/public/store-currency";
 
 import { useStoreCart } from "../cart/cart-provider";
+import { ProductTag } from "../presentation/product-tag";
+import { STORE_CAPTION_CLASS } from "../presentation/store-caption";
 import { Price } from "../pricing/price";
 
 export async function loader({ context, params }: LoaderFunctionArgs) {
@@ -53,18 +55,22 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
   ];
 };
 
-const PAID_PRODUCT = {
+const PAID_PRODUCT_PRESENTATION = {
   AddIcon: ShoppingBag,
   addLabel: "Add to Cart",
   addVariant: "primary",
+  checkIconClass: "text-brand-primary",
   describeAddAction: (title: string) => `Add ${title} to cart`,
+  tagTone: "paid",
 } as const;
 
-const FREE_PRODUCT = {
+const FREE_PRODUCT_PRESENTATION = {
   AddIcon: Download,
   addLabel: "Get it for Free",
   addVariant: "secondary",
+  checkIconClass: "text-brand-secondary",
   describeAddAction: (title: string) => `Get ${title} for free`,
+  tagTone: "free",
 } as const;
 
 export default function ProductDetailsRoute() {
@@ -75,8 +81,9 @@ export default function ProductDetailsRoute() {
     cart.productSlugs.includes(product.slug),
   );
   const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
-  const isPaid = product.price !== null;
-  const kind = isPaid ? PAID_PRODUCT : FREE_PRODUCT;
+  const presentation = product.price
+    ? PAID_PRODUCT_PRESENTATION
+    : FREE_PRODUCT_PRESENTATION;
 
   return (
     <div
@@ -106,26 +113,18 @@ export default function ProductDetailsRoute() {
           <div className="flex flex-col justify-center">
             <div className="mb-6 flex flex-wrap gap-2">
               {product.types.map((type) => (
-                <span
-                  className={cn(
-                    "rounded-tile px-3 py-1.5 text-label uppercase",
-                    {
-                      "bg-brand-primary-soft text-brand-primary": isPaid,
-                      "bg-brand-secondary-soft text-brand-secondary": !isPaid,
-                    },
-                  )}
+                <ProductTag
                   key={type.slug}
+                  size="md"
+                  tone={presentation.tagTone}
                 >
                   {type.label}
-                </span>
+                </ProductTag>
               ))}
               {product.goals.map((goal) => (
-                <span
-                  className="rounded-tile bg-surface-subtle px-3 py-1.5 text-label uppercase text-copy-muted"
-                  key={goal.slug}
-                >
+                <ProductTag key={goal.slug} size="md" tone="goal">
                   {goal.label}
-                </span>
+                </ProductTag>
               ))}
             </div>
             <h1 className="mb-6 font-heading text-4xl leading-tight tracking-tight text-text-primary lg:text-5xl">
@@ -145,7 +144,12 @@ export default function ProductDetailsRoute() {
             </p>
             <Card className="mb-10">
               <div className="p-6">
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-primary">
+                <h2
+                  className={cn(
+                    STORE_CAPTION_CLASS,
+                    "mb-4 text-sm text-text-primary",
+                  )}
+                >
                   What&apos;s included:
                 </h2>
                 <ul className="space-y-4">
@@ -156,10 +160,10 @@ export default function ProductDetailsRoute() {
                     >
                       <CheckCircle2
                         aria-hidden="true"
-                        className={cn("mt-0.5 shrink-0", {
-                          "text-brand-primary": isPaid,
-                          "text-brand-secondary": !isPaid,
-                        })}
+                        className={cn(
+                          "mt-0.5 shrink-0",
+                          presentation.checkIconClass,
+                        )}
                         size={20}
                       />
                       <span>{item}</span>
@@ -172,7 +176,7 @@ export default function ProductDetailsRoute() {
               aria-label={
                 isInCart
                   ? "Added to your cart"
-                  : kind.describeAddAction(product.title)
+                  : presentation.describeAddAction(product.title)
               }
               onClick={(event) => {
                 addProduct(product.slug);
@@ -181,11 +185,11 @@ export default function ProductDetailsRoute() {
               elevation="raised"
               size="lg"
               textSize="lg"
-              variant={kind.addVariant}
+              variant={presentation.addVariant}
               width="full"
             >
-              <kind.AddIcon aria-hidden="true" size={22} />
-              {isInCart ? "Added to your cart" : kind.addLabel}
+              <presentation.AddIcon aria-hidden="true" size={22} />
+              {isInCart ? "Added to your cart" : presentation.addLabel}
             </Button>
             <p className="mt-6 text-center text-sm text-copy-muted">
               We&apos;ll send a private seven-day download link to your email.
