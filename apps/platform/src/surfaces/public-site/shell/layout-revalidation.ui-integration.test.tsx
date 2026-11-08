@@ -178,6 +178,7 @@ function renderPublicSite() {
               token: "XXXX.DUMMY.TOKEN.XXXX",
             },
             session: { kind: "anonymous" as const },
+            storeCurrency: "EUR",
             storePath: "/store",
             waitlist: presentWaitlist(createWaitlist()),
           };

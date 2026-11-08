@@ -1,8 +1,13 @@
 import { Cart } from "~/bounded-contexts/sales/store/domain/cart";
+import { normalizeBasePath } from "~/shared/http/base-path";
 import { useEffect } from "react";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import type { StoreProduct } from "~/bounded-contexts/sales/store/public/store";
+import {
+  STORE_CURRENCY_COOKIE_NAME,
+  type StoreCurrency,
+} from "~/bounded-contexts/sales/store/public/store-currency";
 
 import { createFocusRestoreTracker } from "./cart-focus";
 import type { PersistedStoreCart } from "./cart-storage";
@@ -10,10 +15,13 @@ import { STORE_CART_PERSIST_OPTIONS } from "./cart-storage";
 
 export { STORE_CART_STORAGE_KEY } from "./cart-storage";
 
+const STORE_CURRENCY_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
 export type StoreCartState = {
   addProduct: (productSlug: string) => void;
   clearCart: () => void;
   closeCart: () => void;
+  currency: StoreCurrency;
   isHydrated: boolean;
   isOpen: boolean;
   markHydrated: () => void;
@@ -21,13 +29,14 @@ export type StoreCartState = {
   productSlugs: readonly string[];
   reconcileProducts: (availableProductSlugs: readonly string[]) => void;
   removeProduct: (productSlug: string) => void;
+  setCurrency: (currency: StoreCurrency) => void;
   takeFocusRestoreTarget: () => HTMLElement | null;
   setPersistentCartControl: (control: HTMLButtonElement | null) => void;
 };
 
 export type StoreCartStore = ReturnType<typeof createStoreCartStore>;
 
-export function createStoreCartStore() {
+export function createStoreCartStore(initialCurrency: StoreCurrency) {
   const focusRestoreTracker = createFocusRestoreTracker();
 
   return createStore<StoreCartState>()(
@@ -46,6 +55,7 @@ export function createStoreCartStore() {
         closeCart: () => {
           set({ isOpen: false });
         },
+        currency: initialCurrency,
         isHydrated: false,
         isOpen: false,
         markHydrated: () => {
@@ -73,6 +83,10 @@ export function createStoreCartStore() {
             ),
           }));
         },
+        setCurrency: (currency) => {
+          rememberStoreCurrency(currency);
+          set({ currency });
+        },
         takeFocusRestoreTarget: () => focusRestoreTracker.take(),
         setPersistentCartControl: (control) => {
           focusRestoreTracker.setPersistentControl(control);
@@ -81,6 +95,21 @@ export function createStoreCartStore() {
       STORE_CART_PERSIST_OPTIONS,
     ),
   );
+}
+
+function rememberStoreCurrency(currency: StoreCurrency): void {
+  const attributes = [
+    `${STORE_CURRENCY_COOKIE_NAME}=${currency}`,
+    `Path=${normalizeBasePath(import.meta.env.BASE_URL)}`,
+    `Max-Age=${STORE_CURRENCY_COOKIE_MAX_AGE_SECONDS}`,
+    "SameSite=Lax",
+  ];
+
+  if (window.location.protocol === "https:") {
+    attributes.push("Secure");
+  }
+
+  document.cookie = attributes.join("; ");
 }
 
 export function useHydrateStoreCart(store: StoreCartStore): void {

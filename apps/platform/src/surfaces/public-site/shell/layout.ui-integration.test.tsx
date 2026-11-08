@@ -106,6 +106,7 @@ function renderPublicShell(
           return {
             botDetection: STATIC_BOT_DETECTION,
             session: { kind: "anonymous" },
+            storeCurrency: "EUR",
             storePath: "/store",
             waitlist: presentWaitlist(waitlist),
           };

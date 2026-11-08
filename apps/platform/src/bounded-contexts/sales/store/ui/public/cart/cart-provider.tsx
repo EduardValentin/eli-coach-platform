@@ -5,6 +5,7 @@ import {
   useRef,
 } from "react";
 import { useStore } from "zustand";
+import type { StoreCurrency } from "~/bounded-contexts/sales/store/public/store-currency";
 
 import {
   createStoreCartStore,
@@ -15,11 +16,13 @@ import {
 
 const StoreCartContext = createContext<StoreCartStore | null>(null);
 
-export function StoreCartProvider(props: PropsWithChildren) {
+export function StoreCartProvider(
+  props: PropsWithChildren<{ initialCurrency: StoreCurrency }>,
+) {
   const storeRef = useRef<StoreCartStore | null>(null);
 
   if (!storeRef.current) {
-    storeRef.current = createStoreCartStore();
+    storeRef.current = createStoreCartStore(props.initialCurrency);
   }
 
   useHydrateStoreCart(storeRef.current);

@@ -11,6 +11,7 @@ import {
   waitlistContext,
   type WaitlistFeature,
 } from "~/bounded-contexts/sales/public/request-context";
+import { STORE_CURRENCY_COOKIE_NAME } from "~/bounded-contexts/sales/store/public/store-currency";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 import {
@@ -46,9 +47,24 @@ describe("public layout loader", () => {
     expect(loaderData).toEqual({
       botDetection: botDetectionConfig,
       session: { kind: "anonymous" },
+      storeCurrency: "EUR",
       storePath: "/store",
       waitlist: presentWaitlist(liveWaitlist),
     });
+  });
+
+  it("hands the shell the currency the visitor's cookie chose", async () => {
+    // arrange
+    const args = createLoaderArgs({
+      cookie: `${STORE_CURRENCY_COOKIE_NAME}=USD`,
+      session: { kind: "anonymous" },
+    });
+
+    // act
+    const loaderData = await loader(args);
+
+    // assert
+    expect(loaderData.storeCurrency).toBe("USD");
   });
 
   it("points the coach's nav at her portal and never carries the account id", async () => {
@@ -214,6 +230,7 @@ function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
 
 function createLoaderArgs(options: {
   appBasePath?: string;
+  cookie?: string;
   journey?: ClientJourney;
   session: ResolvedSession;
 }): LoaderFunctionArgs {
@@ -242,7 +259,9 @@ function createLoaderArgs(options: {
       contextEntry(clientPortalStandingContext, standing),
       contextEntry(waitlistContext, waitlist),
     ],
-    request: new Request("https://eli.example/"),
+    request: new Request("https://eli.example/", {
+      headers: options.cookie ? { Cookie: options.cookie } : undefined,
+    }),
   });
 }
 
