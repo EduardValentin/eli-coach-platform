@@ -375,13 +375,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
 
     return row
       ? Product.reconstitute({
-          currentPrice:
-            row.eurCents !== null && row.usdCents !== null
-              ? ProductPrice.reconstitute({
-                  eurCents: row.eurCents,
-                  usdCents: row.usdCents,
-                })
-              : null,
+          currentPrice: ProductPrice.fromStoredAmounts(row),
           displayOrder: row.displayOrder,
           id: row.id,
           latestVersionSequence: Number(row.latestVersionSequence),

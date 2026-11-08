@@ -226,13 +226,7 @@ function mapPublishedProduct(
     id: row.productId,
     slug: row.slug,
     displayOrder: row.displayOrder,
-    price:
-      row.eurCents !== null && row.usdCents !== null
-        ? ProductPrice.reconstitute({
-            eurCents: row.eurCents,
-            usdCents: row.usdCents,
-          })
-        : null,
+    price: ProductPrice.fromStoredAmounts(row),
     version: {
       id: row.versionId,
       sequence: row.versionSequence,

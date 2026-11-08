@@ -1,12 +1,15 @@
-import type { StoreCurrency } from "~/bounded-contexts/sales/store/domain/product";
+import {
+  STORE_CURRENCIES,
+  STORE_CURRENCY_AMOUNT_FIELDS,
+  type StoreCurrency,
+} from "~/bounded-contexts/sales/store/domain/product";
 
 import type { StoreProduct } from "./store";
 
-export type { StoreCurrency };
+export { STORE_CURRENCIES, type StoreCurrency };
 
 export type StorePrice = NonNullable<StoreProduct["price"]>;
 
-export const STORE_CURRENCIES: readonly StoreCurrency[] = ["EUR", "USD"];
 export const DEFAULT_STORE_CURRENCY: StoreCurrency = "EUR";
 export const STORE_CURRENCY_COOKIE_NAME = "eli_store_currency";
 
@@ -40,7 +43,7 @@ export function formatStorePrice(
   price: StorePrice,
   currency: StoreCurrency,
 ): string {
-  const minorUnits = currency === "EUR" ? price.eurCents : price.usdCents;
-
-  return PRICE_FORMATS[currency].format(minorUnits / 100);
+  return PRICE_FORMATS[currency].format(
+    price[STORE_CURRENCY_AMOUNT_FIELDS[currency]] / 100,
+  );
 }

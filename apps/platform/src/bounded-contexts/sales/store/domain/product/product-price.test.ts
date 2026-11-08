@@ -140,3 +140,28 @@ describe("ProductPrice.amountIn", () => {
     expect(amounts).toEqual([3900, 4500]);
   });
 });
+
+describe("ProductPrice.fromStoredAmounts", () => {
+  it("restores a paid product's amounts", () => {
+    // arrange
+    const amounts = { eurCents: 3900, usdCents: 4500 };
+
+    // act
+    const price = ProductPrice.fromStoredAmounts(amounts);
+
+    // assert
+    expect(price).toEqual(ProductPrice.reconstitute(amounts));
+  });
+
+  it.each([
+    ["no amounts", { eurCents: null, usdCents: null }],
+    ["one amount", { eurCents: 3900, usdCents: null }],
+  ])("reads %s as free", (_label, amounts) => {
+    // arrange
+    // act
+    const price = ProductPrice.fromStoredAmounts(amounts);
+
+    // assert
+    expect(price).toBeNull();
+  });
+});

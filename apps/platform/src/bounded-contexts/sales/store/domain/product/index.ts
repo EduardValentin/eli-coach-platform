@@ -47,6 +47,8 @@ export { RetireProductUseCase } from "./retire-product-use-case";
 export { ChangeProductPriceUseCase } from "./change-product-price-use-case";
 export {
   ProductPrice,
+  STORE_CURRENCIES,
+  STORE_CURRENCY_AMOUNT_FIELDS,
   type ProductPriceSnapshot,
   type StoreCurrency,
 } from "./product-price";
