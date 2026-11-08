@@ -287,12 +287,15 @@ describe("PostgresStoreProductPublicationRepository", () => {
 
     // assert
     expect(publication).toEqual({
-      id: 52,
-      operation: "reprice_product",
-      productId: 7,
-      productSlug: "glute-growth-guide",
-      productVersionId: null,
-      publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+      status: "recorded",
+      publication: {
+        id: 52,
+        operation: "reprice_product",
+        productId: 7,
+        productSlug: "glute-growth-guide",
+        productVersionId: null,
+        publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+      },
     });
     expect(execute).toHaveBeenCalledTimes(4);
   });
@@ -328,24 +331,65 @@ describe("PostgresStoreProductPublicationRepository", () => {
       );
 
     // assert
-    expect(publication).toMatchObject({ id: 52, productVersionId: null });
+    expect(publication).toMatchObject({
+      status: "replayed",
+      publication: { id: 52, productVersionId: null },
+    });
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it("refuses a racing request reusing the key with a different payload", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: 7 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            createdAt: "2026-11-08T12:00:00.000Z",
+            id: 52,
+            operation: "reprice_product",
+            payloadDigest: "d".repeat(64),
+            productId: 7,
+            productSlug: "glute-growth-guide",
+            productVersionId: null,
+          },
+        ],
+      });
+    const transaction = vi.fn((work) => work({ execute }));
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
+
+    // act
+    const outcome =
+      await postgresStoreProductPublicationRepository.persistPriceChange(
+        priceChangeCommand(),
+      );
+
+    // assert
+    expect(outcome).toEqual({ status: "idempotency_conflict" });
     expect(execute).toHaveBeenCalledTimes(2);
   });
 
   it("retries a serialization failure while recording a price change", async () => {
     // arrange
-    const publication = {
-      id: 52,
-      operation: "reprice_product" as const,
-      productId: 7,
-      productSlug: "glute-growth-guide",
-      productVersionId: null,
-      publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+    const recorded = {
+      status: "recorded" as const,
+      publication: {
+        id: 52,
+        operation: "reprice_product" as const,
+        productId: 7,
+        productSlug: "glute-growth-guide",
+        productVersionId: null,
+        publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+      },
     };
     const transaction = vi
       .fn()
       .mockRejectedValueOnce({ code: "40001" })
-      .mockResolvedValueOnce(publication);
+      .mockResolvedValueOnce(recorded);
     const postgresStoreProductPublicationRepository =
       new PostgresStoreProductPublicationRepository({
         transaction,
@@ -358,7 +402,7 @@ describe("PostgresStoreProductPublicationRepository", () => {
       );
 
     // assert
-    expect(result).toBe(publication);
+    expect(result).toBe(recorded);
     expect(transaction).toHaveBeenCalledTimes(2);
   });
 

@@ -49,7 +49,10 @@ function createUseCase(overrides: Partial<StoreProductPublicationsPort> = {}) {
     findPublicationByIdempotencyKey: vi.fn().mockResolvedValue(null),
     getNextDisplayOrder: vi.fn(),
     getTaxonomy: vi.fn(),
-    persistPriceChange: vi.fn().mockResolvedValue(repricedPublication),
+    persistPriceChange: vi.fn().mockResolvedValue({
+      status: "recorded",
+      publication: repricedPublication,
+    }),
     persistPublication: vi.fn(),
     retireProduct: vi.fn(),
     ...overrides,
@@ -229,6 +232,40 @@ describe("ChangeProductPriceUseCase", () => {
         },
       ],
     });
+  });
+
+  it("replays a racing retry the store settled under its lock", async () => {
+    // arrange
+    const { changeProductPriceUseCase } = createUseCase({
+      persistPriceChange: vi.fn().mockResolvedValue({
+        status: "replayed",
+        publication: repricedPublication,
+      }),
+    });
+
+    // act
+    const result = await changeProductPriceUseCase.execute(changePriceCommand);
+
+    // assert
+    expect(result).toEqual({
+      status: "replayed",
+      publication: repricedPublication,
+    });
+  });
+
+  it("reports a racing reuse of the key with a different payload as a conflict", async () => {
+    // arrange
+    const { changeProductPriceUseCase } = createUseCase({
+      persistPriceChange: vi
+        .fn()
+        .mockResolvedValue({ status: "idempotency_conflict" }),
+    });
+
+    // act
+    const result = await changeProductPriceUseCase.execute(changePriceCommand);
+
+    // assert
+    expect(result).toEqual({ status: "idempotency_conflict" });
   });
 
   it("reports unavailable when recording fails", async () => {

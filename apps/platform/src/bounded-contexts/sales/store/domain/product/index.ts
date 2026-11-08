@@ -32,7 +32,10 @@ export {
   type StoredPublicationRecord,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
-export { type StoreProductPublicationsPort } from "./store-product-publications-port";
+export {
+  type PriceChangePersistence,
+  type StoreProductPublicationsPort,
+} from "./store-product-publications-port";
 export { ListPublishedProductsUseCase } from "./list-published-products-use-case";
 export { FindPublishedProductUseCase } from "./find-published-product-use-case";
 export { FindPublishedCoverUseCase } from "./find-published-cover-use-case";

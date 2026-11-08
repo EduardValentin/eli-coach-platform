@@ -51,17 +51,18 @@ export class ChangeProductPriceUseCase {
         return planResult;
       }
 
-      return {
-        status: "published",
-        publication:
-          await this.options.storeProductPublicationsPort.persistPriceChange(
-            change.persistCommand(planResult.plan, {
-              idempotencyKey: command.idempotencyKey,
-              payloadDigest,
-              publishedBy: command.publishedBy,
-            }),
-          ),
-      };
+      const persisted =
+        await this.options.storeProductPublicationsPort.persistPriceChange(
+          change.persistCommand(planResult.plan, {
+            idempotencyKey: command.idempotencyKey,
+            payloadDigest,
+            publishedBy: command.publishedBy,
+          }),
+        );
+
+      return persisted.status === "recorded"
+        ? { status: "published", publication: persisted.publication }
+        : persisted;
     } catch {
       return { status: "unavailable" };
     }

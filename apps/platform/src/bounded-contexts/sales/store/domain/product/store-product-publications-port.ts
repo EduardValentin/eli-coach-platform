@@ -7,6 +7,11 @@ import type {
   StoreTaxonomySnapshot,
 } from "./product-publication";
 
+export type PriceChangePersistence =
+  | { status: "recorded"; publication: ProductPublication }
+  | { status: "replayed"; publication: ProductPublication }
+  | { status: "idempotency_conflict" };
+
 export interface StoreProductPublicationsPort {
   findProductById(productId: number): Promise<Product | null>;
   findProductBySlug(slug: string): Promise<Product | null>;
@@ -17,7 +22,7 @@ export interface StoreProductPublicationsPort {
   getTaxonomy(): Promise<StoreTaxonomySnapshot>;
   persistPriceChange(
     command: PersistPriceChangeCommand,
-  ): Promise<ProductPublication>;
+  ): Promise<PriceChangePersistence>;
   persistPublication(
     command: PersistPublicationCommand,
   ): Promise<ProductPublication>;

@@ -3,6 +3,7 @@ import {
   ProductPrice,
   type PersistPriceChangeCommand,
   type PersistPublicationCommand,
+  type PriceChangePersistence,
   type ProductPriceSnapshot,
   type ProductPublication,
   type PublicationOperation,
@@ -144,7 +145,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
 
   async persistPriceChange(
     command: PersistPriceChangeCommand,
-  ): Promise<ProductPublication> {
+  ): Promise<PriceChangePersistence> {
     return this.runWithRetry(() =>
       this.executor.transaction(
         async (transaction) =>
@@ -157,7 +158,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
   private async persistPriceChangeInTransaction(
     transaction: DatabaseExecutor,
     command: PersistPriceChangeCommand,
-  ): Promise<ProductPublication> {
+  ): Promise<PriceChangePersistence> {
     await transaction.execute(sql`
       select id
       from app.products
@@ -171,8 +172,15 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       )}
     `);
 
-    if (replayed.rows[0]) {
-      return mapStoredPublication(replayed.rows[0]).publication;
+    const [existing] = replayed.rows;
+
+    if (existing) {
+      return existing.payloadDigest === command.payloadDigest
+        ? {
+            status: "replayed",
+            publication: mapStoredPublication(existing).publication,
+          }
+        : { status: "idempotency_conflict" };
     }
 
     const publicationRow = await this.insertPublication(transaction, {
@@ -191,12 +199,15 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     });
 
     return {
-      id: publicationRow.id,
-      operation: "reprice_product",
-      productId: command.productId,
-      productSlug: command.productSlug,
-      productVersionId: null,
-      publishedAt: new Date(publicationRow.createdAt),
+      status: "recorded",
+      publication: {
+        id: publicationRow.id,
+        operation: "reprice_product",
+        productId: command.productId,
+        productSlug: command.productSlug,
+        productVersionId: null,
+        publishedAt: new Date(publicationRow.createdAt),
+      },
     };
   }
 
