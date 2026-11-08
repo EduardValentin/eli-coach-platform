@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
-import { useStore, STORE_PRODUCTS } from '../context/StoreContext';
+import { useStore, isPaid, STORE_PRODUCTS } from '../context/StoreContext';
 import { ArrowLeft, CheckCircle2, ShoppingBag, Download } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
@@ -30,11 +30,11 @@ export function ProductDetails() {
     );
   }
 
-  const isFree = product.priceUSD === 0;
+  const isFree = !isPaid(product);
 
   return (
     <>
-    <main className="w-full min-h-screen pb-24 bg-surface-page">
+    <main className="w-full min-h-screen pb-24 bg-surface-page" data-parity-root="ProductDetails">
       <Navbar theme="dark" />
 
       <div className="max-w-6xl mx-auto px-6 pt-32">
@@ -85,9 +85,9 @@ export function ProductDetails() {
 
             {/* A free resource has no price to state — its CTA already reads
                 "Get it for Free", so a "Free" line only repeats it. */}
-            {!isFree && (
-              <p className="text-foreground font-semibold text-3xl tracking-tight mb-8">
-                {formatPrice(product.priceUSD)}
+            {isPaid(product) && (
+              <p className="text-foreground font-semibold text-3xl tracking-tight mb-8" data-parity="product-price">
+                {formatPrice(product)}
               </p>
             )}
 

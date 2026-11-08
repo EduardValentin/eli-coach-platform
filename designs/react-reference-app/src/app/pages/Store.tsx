@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
-import { useStore, STORE_PRODUCTS, ProductCategory, ProductGoal } from '../context/StoreContext';
+import { useStore, isPaid, STORE_PRODUCTS, ProductCategory, ProductGoal, type Currency } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
 import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -40,12 +40,12 @@ export function Store() {
     });
   }, [catalogProducts, selectedCategory, selectedGoal]);
 
-  const paidProducts = filteredProducts.filter(p => p.type === 'paid');
-  const freeProducts = filteredProducts.filter(p => p.type === 'free');
+  const paidProducts = filteredProducts.filter(isPaid);
+  const freeProducts = filteredProducts.filter(p => !isPaid(p));
 
   return (
     <>
-    <main className="w-full min-h-screen pb-24 bg-surface-page">
+    <main className="w-full min-h-screen pb-24 bg-surface-page" data-parity-root="Store">
       <Navbar theme="dark" />
 
       <div className="max-w-7xl mx-auto px-6 pt-32">
@@ -65,16 +65,16 @@ export function Store() {
               type="single"
               value={currency}
               onValueChange={(value) => {
-                if (value) setCurrency(value as typeof currency);
+                if (value) setCurrency(value as Currency);
               }}
               aria-label="Currency"
               className="gap-2 bg-card rounded-full p-1 shadow-card border border-control-border-soft"
             >
-              <ToggleGroupItem value="USD" className={CURRENCY_ITEM_CLASS}>
-                <DollarSign size={16} aria-hidden="true" /> USD
-              </ToggleGroupItem>
               <ToggleGroupItem value="EUR" className={CURRENCY_ITEM_CLASS}>
                 <Euro size={16} aria-hidden="true" /> EUR
+              </ToggleGroupItem>
+              <ToggleGroupItem value="USD" className={CURRENCY_ITEM_CLASS}>
+                <DollarSign size={16} aria-hidden="true" /> USD
               </ToggleGroupItem>
             </ToggleGroup>
           )}
@@ -161,8 +161,11 @@ export function Store() {
                           alt={product.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold text-foreground">
-                          {formatPrice(product.priceUSD)}
+                        <div
+                          className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold text-foreground"
+                          data-parity="product-price"
+                        >
+                          {formatPrice(product)}
                         </div>
                       </Link>
                       <div className="p-6 flex flex-col flex-grow">

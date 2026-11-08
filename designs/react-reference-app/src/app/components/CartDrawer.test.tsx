@@ -40,6 +40,7 @@ vi.mock('../services/storeAcquisitionService', async (importOriginal) => {
 const freeEbook = STORE_PRODUCTS.find((p) => p.id === 'hormone-harmony-ebook')!;
 const freePdf = STORE_PRODUCTS.find((p) => p.id === 'nutrition-tips-pdf')!;
 const paidPlan = STORE_PRODUCTS.find((p) => p.id === 'fat-loss-30')!;
+const secondPaidPlan = STORE_PRODUCTS.find((p) => p.id === 'bigger-glutes-30')!;
 
 function AddButtons({ products }: { products: Product[] }) {
   const { addToCart } = useStore();
@@ -123,6 +124,7 @@ describe('CartDrawer', () => {
 
   afterEach(() => {
     window.history.replaceState(null, '', '/');
+    localStorage.clear();
   });
 
   afterAll(() => {
@@ -386,5 +388,49 @@ describe('CartDrawer', () => {
     expect(screen.getByText(freeEbook.title)).toBeInTheDocument();
     expect(screen.queryByText(freePdf.title)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
+  });
+
+  it('totals a paid-only cart in euros by default', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCart([paidPlan, secondPaidPlan]);
+
+    // act
+    await openCartWith(user, [paidPlan, secondPaidPlan]);
+
+    // assert
+    expect(screen.getByText('€39.00')).toBeInTheDocument();
+    expect(screen.getByText('€49.00')).toBeInTheDocument();
+    expect(screen.getByRole('term')).toHaveTextContent('Total');
+    expect(screen.getByRole('definition')).toHaveTextContent('€88.00');
+  });
+
+  it('totals only the paid items of a mixed cart in the chosen currency', async () => {
+    // arrange
+    const user = userEvent.setup();
+    localStorage.setItem('evoa.storeCurrency', 'USD');
+    renderCart([paidPlan, freeEbook, secondPaidPlan]);
+
+    // act
+    await openCartWith(user, [paidPlan, freeEbook, secondPaidPlan]);
+
+    // assert
+    expect(screen.getByText('$45.00')).toBeInTheDocument();
+    expect(screen.getByText('$55.00')).toBeInTheDocument();
+    expect(screen.getByText('Free resource')).toBeInTheDocument();
+    expect(screen.getByRole('definition')).toHaveTextContent('$100.00');
+  });
+
+  it('shows no total for a cart of free resources', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCart([freeEbook, freePdf]);
+
+    // act
+    await openCartWith(user, [freeEbook, freePdf]);
+
+    // assert
+    expect(screen.getAllByText('Free resource')).toHaveLength(2);
+    expect(screen.queryByText('Total')).not.toBeInTheDocument();
   });
 });

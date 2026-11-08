@@ -1,7 +1,7 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
 
-import { useStore, type CartItem } from '../context/StoreContext';
+import { isPaid, useStore, type CartItem, type PaidProduct } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
 import { CheckboxField } from './CheckboxField';
 import { InlineProblem } from './InlineProblem';
@@ -11,6 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Link, linkVariants } from './ui/link';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from './ui/sheet';
+import { LABEL_CLASS } from './typography';
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -25,7 +26,7 @@ const TERMS_PROBLEM = 'Accept the Terms & Conditions to continue.';
 type CheckoutStep = 'cart' | 'details' | 'success';
 
 export function CartDrawer() {
-  const { cart, removeFromCart, clearCart, isCartOpen, setIsCartOpen, formatPrice } = useStore();
+  const { cart, removeFromCart, clearCart, isCartOpen, setIsCartOpen, formatPrice, cartTotal } = useStore();
   const { appState } = useAppState();
 
   const [step, setStep] = useState<CheckoutStep>('cart');
@@ -42,7 +43,7 @@ export function CartDrawer() {
   const responseErrorId = useId();
   const openerRef = useRef<HTMLElement | null>(null);
 
-  const hasPaidProduct = cart.some((item) => item.product.priceUSD > 0);
+  const hasPaidProduct = cart.some((item) => isPaid(item.product));
   const canSubmit = !isSubmitting && email.trim().length > 0 && termsAccepted;
   const termsProblem = submitAttempted && !termsAccepted ? TERMS_PROBLEM : undefined;
 
@@ -143,6 +144,7 @@ export function CartDrawer() {
             <CartReview
               items={cart}
               formatPrice={formatPrice}
+              total={cartTotal}
               onContinue={showDetails}
               onRemove={removeFromCart}
               responseError={serviceError?.message ?? null}
@@ -253,7 +255,8 @@ function SubmitLabel(props: { hasPaidProduct: boolean; isSubmitting: boolean }) 
 
 function CartReview(props: {
   items: CartItem[];
-  formatPrice: (priceUSD: number) => string;
+  formatPrice: (product: PaidProduct) => string;
+  total: string | null;
   onContinue: () => void;
   onRemove: (productId: string) => void;
   responseError: string | null;
@@ -290,9 +293,15 @@ function CartReview(props: {
               >
                 {item.product.title}
               </p>
-              <p className="mt-1 text-label uppercase text-brand-secondary" data-parity="cart-item-type">
-                {item.product.priceUSD === 0 ? 'Free resource' : props.formatPrice(item.product.priceUSD)}
-              </p>
+              {isPaid(item.product) ? (
+                <p className="mt-1 text-sm font-semibold text-text-primary" data-parity="cart-line-price">
+                  {props.formatPrice(item.product)}
+                </p>
+              ) : (
+                <p className="mt-1 text-label uppercase text-brand-secondary" data-parity="cart-item-type">
+                  Free resource
+                </p>
+              )}
               <button
                 aria-label={`Remove ${item.product.title} from cart`}
                 className="ml-auto mt-auto inline-flex items-center justify-center p-1 text-text-secondary transition-colors hover:text-destructive"
@@ -306,6 +315,14 @@ function CartReview(props: {
         ))}
       </ul>
       <div className="mt-auto border-t border-border-subtle pt-6" data-parity="cart-summary">
+        {props.total && (
+          <dl className="mb-6 flex items-baseline justify-between gap-4">
+            <dt className={LABEL_CLASS}>Total</dt>
+            <dd className="text-lg font-semibold text-text-primary" data-parity="cart-total">
+              {props.total}
+            </dd>
+          </dl>
+        )}
         <Button onClick={props.onContinue} size="lg" variant="inverted" width="full">
           Continue
         </Button>
