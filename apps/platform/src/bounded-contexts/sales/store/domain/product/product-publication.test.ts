@@ -159,7 +159,7 @@ describe("ProductPublicationDraft.plan", () => {
         goals: [taxonomy.goals[0]],
         metadata,
         operation: "create_product",
-        prices: null,
+        price: null,
         productId: null,
         productSlug: "glute-growth-guide",
         totalUploadBytes: 14,
@@ -179,7 +179,7 @@ describe("ProductPublicationDraft.plan", () => {
     // assert
     expect(result).toMatchObject({
       status: "valid",
-      plan: { prices: { eurCents: 3900, usdCents: 4500 } },
+      plan: { price: { eurCents: 3900, usdCents: 4500 } },
     });
   });
 

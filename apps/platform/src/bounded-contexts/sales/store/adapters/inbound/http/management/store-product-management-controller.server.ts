@@ -126,7 +126,12 @@ export class StoreProductManagementController {
       return validationFailureResponse(result.issues);
     }
 
-    return Response.json({ success: true, plan: result.plan }, { status: 200 });
+    const { price, ...plan } = result.plan;
+
+    return Response.json(
+      { success: true, plan: { ...plan, prices: price } },
+      { status: 200 },
+    );
   }
 
   async publishProduct(request: Request): Promise<Response> {
@@ -218,14 +223,14 @@ export class StoreProductManagementController {
       return parsed.response;
     }
 
-    return publicationResponse(
+    return this.priceChangeResponse(
       await this.options.changeProductPriceUseCase.execute({
         idempotencyKey: parsed.body.idempotencyKey,
         prices: parsed.body.prices,
         productId,
         publishedBy: authorized.principal,
       }),
-      { prices: parsed.body.prices },
+      parsed.body.prices,
     );
   }
 
@@ -325,6 +330,20 @@ export class StoreProductManagementController {
         401,
       ),
     };
+  }
+
+  private priceChangeResponse(
+    result: PublishProductResult,
+    prices: PriceChangeBody["prices"],
+  ): Response {
+    if (result.status !== "published" && result.status !== "replayed") {
+      return publicationResponse(result);
+    }
+
+    return Response.json(
+      { success: true, publication: { ...publicationBody(result), prices } },
+      { status: result.status === "replayed" ? 200 : 201 },
+    );
   }
 
   private async parsePriceChange(request: Request): Promise<PriceChangeParse> {
@@ -522,10 +541,24 @@ function toDomainMetadata(metadata: MetadataShape): ProductVersionMetadata {
   };
 }
 
-function publicationResponse(
-  result: PublishProductResult,
-  details: Record<string, unknown> = {},
-): Response {
+type SettledPublication = Extract<
+  PublishProductResult,
+  { status: "published" | "replayed" }
+>;
+
+function publicationBody(result: SettledPublication) {
+  return {
+    id: result.publication.id,
+    operation: result.publication.operation,
+    productId: result.publication.productId,
+    productSlug: result.publication.productSlug,
+    productVersionId: result.publication.productVersionId,
+    publishedAt: result.publication.publishedAt.toISOString(),
+    replayed: result.status === "replayed",
+  };
+}
+
+function publicationResponse(result: PublishProductResult): Response {
   if (result.status === "unavailable") {
     return errorResponse(
       "server_error",
@@ -547,19 +580,7 @@ function publicationResponse(
   }
 
   return Response.json(
-    {
-      success: true,
-      publication: {
-        id: result.publication.id,
-        operation: result.publication.operation,
-        productId: result.publication.productId,
-        productSlug: result.publication.productSlug,
-        productVersionId: result.publication.productVersionId,
-        publishedAt: result.publication.publishedAt.toISOString(),
-        replayed: result.status === "replayed",
-        ...details,
-      },
-    },
+    { success: true, publication: publicationBody(result) },
     { status: result.status === "replayed" ? 200 : 201 },
   );
 }

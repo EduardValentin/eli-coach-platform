@@ -716,6 +716,38 @@ describe("StoreProductManagementController strict publication schemas", () => {
   });
 });
 
+describe("StoreProductManagementController dry-run response", () => {
+  it("reports the planned price under the documented prices field", async () => {
+    // arrange
+    const storeProductManagementController = createController({
+      useCases: createUseCases({
+        planNewProductUseCase: useCaseReturning({
+          status: "valid",
+          plan: {
+            operation: "create_product",
+            price: { eurCents: 3900, usdCents: 4500 },
+            productSlug: "glute-growth-guide",
+          },
+        }),
+      }),
+    });
+
+    // act
+    const response =
+      await storeProductManagementController.validate(publicationRequest());
+
+    // assert
+    expect(await response.json()).toEqual({
+      success: true,
+      plan: {
+        operation: "create_product",
+        prices: { eurCents: 3900, usdCents: 4500 },
+        productSlug: "glute-growth-guide",
+      },
+    });
+  });
+});
+
 describe("StoreProductManagementController price changes", () => {
   it("authorizes before reading the body", async () => {
     // arrange

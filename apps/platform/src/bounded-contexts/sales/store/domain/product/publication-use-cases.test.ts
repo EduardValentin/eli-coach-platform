@@ -160,7 +160,7 @@ describe("PlanNewProductUseCase", () => {
     });
 
     // assert
-    expect(result.status === "valid" && result.plan.prices).toEqual({
+    expect(result.status === "valid" && result.plan.price).toEqual({
       eurCents: 3900,
       usdCents: 4500,
     });

@@ -74,7 +74,7 @@ export type PublicationPlan = {
   goals: readonly StoreTaxonomyValue[];
   metadata: ProductVersionMetadata;
   operation: ContentPublicationOperation;
-  prices: ProductPriceSnapshot | null;
+  price: ProductPriceSnapshot | null;
   productId: number | null;
   productSlug: string;
   totalUploadBytes: number;
@@ -368,7 +368,7 @@ export class ProductPublicationDraft {
         goals: goals.values,
         metadata: this.metadata,
         operation: placement.operation,
-        prices: price?.toSnapshot() ?? null,
+        price: price?.toSnapshot() ?? null,
         productId: placement.productId,
         productSlug: placement.productSlug,
         totalUploadBytes,
@@ -395,7 +395,7 @@ export class ProductPublicationDraft {
       metadata: plan.metadata,
       operation: plan.operation,
       payloadDigest: input.payloadDigest,
-      price: plan.prices,
+      price: plan.price,
       productId: plan.productId,
       productSlug: plan.productSlug,
       publishedBy: input.publishedBy,
