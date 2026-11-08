@@ -72,6 +72,10 @@ import { ResourceDetailsDialog } from "./resource-details-dialog";
 import { ResourceRequests } from "./resource-requests";
 import { ResourceToolbar } from "./resource-toolbar";
 import { ResourceViewer } from "./resource-viewer";
+import { StoreCartDrawer } from "./store-cart-drawer";
+import { StoreCatalogPage } from "./store-catalog-page";
+import { StoreProductPage } from "./store-product-page";
+import { StoreProductRequests } from "./store-product-requests";
 import { WeeklyCheckInDialog } from "./weekly-check-in-dialog";
 import {
   insertInvitedClientRecords,
@@ -177,6 +181,10 @@ type PlatformFixtures = {
   resourceViewer: ResourceViewer;
   resourceToolbar: ResourceToolbar;
   clientResourcesOutage: ClientResourcesOutage;
+  storeCatalog: StoreCatalogPage;
+  storeProduct: StoreProductPage;
+  storeCartDrawer: StoreCartDrawer;
+  storeProductRequests: StoreProductRequests;
   coachEmail: string;
   scenarioTag: string;
   createClerkUser: () => Promise<string>;
@@ -666,6 +674,30 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
     await use(outage);
     await outage.dispose();
+  },
+
+  storeCatalog: async ({ page, storeCartDrawer }, use) => {
+    await use(new StoreCatalogPage(page, storeCartDrawer));
+  },
+
+  storeProduct: async ({ page, storeCartDrawer }, use) => {
+    await use(new StoreProductPage(page, storeCartDrawer));
+  },
+
+  storeCartDrawer: async ({ page }, use) => {
+    await use(new StoreCartDrawer(page));
+  },
+
+  storeProductRequests: async ({ baseURL, playwright }, use) => {
+    const management = await playwright.request.newContext({
+      baseURL,
+      extraHTTPHeaders: {
+        Authorization: `Bearer ${requireEnv("MANAGEMENT_API_SECRET")}`,
+      },
+    });
+
+    await use(new StoreProductRequests(management, RUN_ID));
+    await management.dispose();
   },
 
   coachEmail: async ({ mintTestEmail }, use) => {

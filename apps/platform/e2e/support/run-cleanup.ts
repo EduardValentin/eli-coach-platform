@@ -9,6 +9,7 @@ import {
   summarizeDeletionResults,
 } from "./clerk-users";
 import { cleanUpRunLibraries } from "./coach-libraries";
+import { cleanUpRunStoreProducts } from "./store-products";
 import { cleanUpRecordedStripeObjects } from "./stripe-cleanup";
 
 export async function cleanUpRun(
@@ -30,12 +31,14 @@ export async function cleanUpRun(
   const stripe = await cleanUpRecordedStripeObjects(runId, logPrefix);
   const database = await cleanUpRunAssessmentCalls(runId, logPrefix);
   const libraries = await cleanUpRunLibraries(runId, logPrefix);
+  const storeProducts = await cleanUpRunStoreProducts(runId, logPrefix);
 
   if (
     release.released &&
     stripe.allCleaned &&
     database.allCleaned &&
-    libraries.allCleaned
+    libraries.allCleaned &&
+    storeProducts.allCleaned
   ) {
     deleteRegistryFile(runId);
   }
