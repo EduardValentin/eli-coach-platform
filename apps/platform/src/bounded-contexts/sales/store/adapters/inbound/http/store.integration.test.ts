@@ -24,6 +24,7 @@ import {
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
+const MANAGEMENT_SECRET = "integration-management-api-secret-value";
 const publishedAt = new Date("2026-07-30T10:00:00.000Z");
 const republishedAt = new Date("2026-07-30T11:00:00.000Z");
 const storeSubmissionToken = turnstileTokenForAction(
@@ -439,6 +440,62 @@ describe("Store integration", () => {
     expect(counts).toEqual([
       { acquisitions: 0, grants: 0, recipients: 0, requests: 0 },
     ]);
+  });
+
+  it("refuses a free request for a paid product without recording, delivering or counting it", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const madePaid = await changeSeededProductPrice({
+      idempotencyKey: "reprice-paid",
+      prices: { eurCents: 3900, usdCents: 4500 },
+    });
+
+    // act
+    const response = await requestAcquisition({
+      idempotencyKey: "5b1e0c3a-8d4f-4e2a-9b6c-7d8e9f0a1b2c",
+    });
+    const counts = await suite.postgres.queryRows<{
+      acquisitions: number;
+      attempts: number;
+      grants: number;
+      recipients: number;
+      requests: number;
+    }>({
+      sql: `
+        select
+          (select count(*) from app.store_recipients)::int as recipients,
+          (select count(*) from app.acquisition_requests)::int as requests,
+          (select count(*) from app.acquisitions)::int as acquisitions,
+          (select count(*) from app.download_grants)::int as grants,
+          (select count(*) from app.delivery_attempts)::int as attempts
+      `,
+      values: [],
+    });
+    const sentEmails = await suite.sentEmails();
+    await changeSeededProductPrice({
+      idempotencyKey: "reprice-free",
+      prices: null,
+    });
+    const laterFreeRequest = await requestAcquisition({
+      idempotencyKey: "6c2f1d4b-9e5a-4f3b-8c7d-8e9f0a1b2c3d",
+    });
+
+    // assert
+    expect(madePaid.status).toBe(201);
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "paid_products",
+        message: "Unable to deliver store resources.",
+        paidProductSlugs: ["hormone-harmony"],
+      },
+      success: false,
+    });
+    expect(counts).toEqual([
+      { acquisitions: 0, attempts: 0, grants: 0, recipients: 0, requests: 0 },
+    ]);
+    expect(sentEmails).toEqual([]);
+    expect(laterFreeRequest.status).toBe(201);
   });
 
   it("does not retry delivery after a pending grant has expired", async () => {
@@ -916,6 +973,31 @@ function downloadTokenFrom(email: SentEmail): string {
   }
 
   return new URL(downloadUrl).hash.slice(1);
+}
+
+async function changeSeededProductPrice(body: {
+  idempotencyKey: string;
+  prices: { eurCents: number; usdCents: number } | null;
+}): Promise<Response> {
+  const [product] = await suite.postgres.queryRows<{ id: number }>({
+    sql: `select id from app.products where slug = 'hormone-harmony'`,
+    values: [],
+  });
+
+  return suite.request(
+    new Request(
+      suite.url(`/api/management/store/products/${product!.id}/prices`),
+      {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${MANAGEMENT_SECRET}`,
+          "content-type": "application/json",
+          "x-forwarded-proto": "https",
+        },
+        method: "POST",
+      },
+    ),
+  );
 }
 
 function unavailableDownloadLocation(): string {

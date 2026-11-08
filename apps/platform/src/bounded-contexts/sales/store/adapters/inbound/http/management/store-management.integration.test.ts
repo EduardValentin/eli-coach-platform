@@ -29,12 +29,16 @@ const REVISED_PDF_BYTES = Uint8Array.from(
 type PublicationBody = {
   publication: {
     id: number;
+    operation: string;
+    prices?: { eurCents: number; usdCents: number } | null;
     productId: number;
     productSlug: string;
-    productVersionId: number;
+    productVersionId: number | null;
     replayed: boolean;
   };
 };
+
+const PAID_PRICES = { eurCents: 3900, usdCents: 4500 };
 
 describe("Store management integration", () => {
   beforeAll(async () => {
@@ -340,6 +344,433 @@ describe("Store management integration", () => {
     expect(download.status).toBe(200);
   });
 
+  it("publishes a paid product and shows its fixed prices in the public catalog", async () => {
+    // arrange
+    // act
+    const response = await suite.request(
+      publicationRequest({ metadata: { prices: PAID_PRICES } }),
+    );
+    const body = (await response.json()) as PublicationBody;
+    const catalog = await readCatalog();
+    const priceRevisions = await readPriceRevisions();
+
+    // assert
+    expect(response.status).toBe(201);
+    expect(catalog.products).toEqual([
+      expect.objectContaining({
+        slug: "glute-growth-guide",
+        price: PAID_PRICES,
+      }),
+    ]);
+    expect(priceRevisions).toEqual([
+      {
+        eurCents: 3900,
+        publicationId: body.publication.id,
+        sequence: 1,
+        usdCents: 4500,
+      },
+    ]);
+  });
+
+  it("publishes a product without prices as free", async () => {
+    // arrange
+    // act
+    const response = await suite.request(publicationRequest());
+    const catalog = await readCatalog();
+
+    // assert
+    expect(response.status).toBe(201);
+    expect(catalog.products).toEqual([
+      expect.objectContaining({ slug: "glute-growth-guide", price: null }),
+    ]);
+    await expect(readPriceRevisions()).resolves.toEqual([]);
+  });
+
+  it("reports the resolved prices in a dry run and writes nothing", async () => {
+    // arrange
+    // act
+    const response = await suite.request(
+      publicationRequest({
+        metadata: { prices: PAID_PRICES },
+        path: "/api/management/store/product-validations",
+      }),
+    );
+    const body = (await response.json()) as { plan: Record<string, unknown> };
+    const catalog = await readCatalog();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(body.plan).toMatchObject({
+      operation: "create_product",
+      prices: PAID_PRICES,
+    });
+    expect(catalog.products).toEqual([]);
+    await expect(readPriceRevisions()).resolves.toEqual([]);
+  });
+
+  it.each([
+    [
+      "one amount without the other",
+      { eurCents: 3900 },
+      { code: "missing_price", currency: "USD" },
+    ],
+    [
+      "zero",
+      { eurCents: 0, usdCents: 4500 },
+      {
+        code: "price_out_of_range",
+        currency: "EUR",
+        minimum: 1,
+        maximum: 99_999_999,
+      },
+    ],
+    [
+      "a fractional amount",
+      { eurCents: 3900, usdCents: 45.5 },
+      { code: "price_not_whole_minor_units", currency: "USD" },
+    ],
+    [
+      "an amount above the ceiling",
+      { eurCents: 100_000_000, usdCents: 4500 },
+      {
+        code: "price_out_of_range",
+        currency: "EUR",
+        minimum: 1,
+        maximum: 99_999_999,
+      },
+    ],
+  ])(
+    "rejects %s with the price rule it breaks and writes nothing",
+    async (_label, prices, issue) => {
+      // arrange
+      // act
+      const response = await suite.request(
+        publicationRequest({ metadata: { prices } }),
+      );
+      const catalog = await readCatalog();
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: { code: "validation_failed", issues: [issue] },
+      });
+      expect(catalog.products).toEqual([]);
+      await expect(readPriceRevisions()).resolves.toEqual([]);
+    },
+  );
+
+  it("rejects prices sent on a content revision and keeps the product as it was", async () => {
+    // arrange
+    const published = await suite.request(publicationRequest());
+    const { publication } = (await published.json()) as PublicationBody;
+
+    // act
+    const revision = await suite.request(
+      publicationRequest({
+        idempotencyKey: "revise-1",
+        metadata: { prices: PAID_PRICES, title: "Repriced by mistake" },
+        path: `/api/management/store/products/${publication.productId}/versions`,
+      }),
+    );
+    const catalog = await readCatalog();
+
+    // assert
+    expect(revision.status).toBe(400);
+    expect(await revision.json()).toMatchObject({
+      error: { code: "invalid_request" },
+    });
+    expect(catalog.products).toEqual([
+      expect.objectContaining({ title: "Glute Growth Guide", price: null }),
+    ]);
+  });
+
+  it("rejects an unknown top-level field instead of ignoring it", async () => {
+    // arrange
+    // act
+    const response = await suite.request(
+      publicationRequest({ metadata: { priceEUR: 39 } }),
+    );
+    const catalog = await readCatalog();
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: { code: "invalid_request" },
+    });
+    expect(catalog.products).toEqual([]);
+  });
+
+  it("turns a product paid and free again while its version, position and grants stay", async () => {
+    // arrange
+    const published = await suite.request(publicationRequest());
+    const { publication } = (await published.json()) as PublicationBody;
+    const acquisition = await requestAcquisition(
+      "early@example.com",
+      "44444444-4444-4444-8444-444444444444",
+    );
+
+    expect(acquisition.status).toBe(201);
+
+    const [deliveredEmail] = await suite.sentEmails();
+    const grantToken = downloadTokenFrom(deliveredEmail!);
+
+    // act
+    const madePaid = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+        prices: PAID_PRICES,
+      }),
+    );
+    const madePaidBody = (await madePaid.json()) as PublicationBody;
+    const paidCatalog = await readCatalog();
+    const madeFree = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-2",
+        prices: null,
+      }),
+    );
+    const madeFreeBody = (await madeFree.json()) as PublicationBody;
+    const freeCatalog = await readCatalog();
+    const download = await requestDownload(grantToken);
+    const [product] = await suite.postgres.queryRows<{
+      displayOrder: number;
+      versions: number;
+    }>({
+      sql: `
+        select
+          product.display_order as "displayOrder",
+          (select count(*) from app.product_versions)::int as versions
+        from app.products product
+        where product.id = $1
+      `,
+      values: [publication.productId],
+    });
+
+    // assert
+    expect(madePaid.status).toBe(201);
+    expect(madePaidBody.publication).toMatchObject({
+      operation: "reprice_product",
+      prices: PAID_PRICES,
+      productId: publication.productId,
+      productVersionId: null,
+      replayed: false,
+    });
+    expect(paidCatalog.products).toEqual([
+      expect.objectContaining({ price: PAID_PRICES }),
+    ]);
+    expect(madeFree.status).toBe(201);
+    expect(madeFreeBody.publication).toMatchObject({
+      operation: "reprice_product",
+      prices: null,
+      productVersionId: null,
+    });
+    expect(freeCatalog.products).toEqual([
+      expect.objectContaining({ price: null }),
+    ]);
+    expect(product).toEqual({ displayOrder: 1, versions: 1 });
+    await expect(readPriceRevisions()).resolves.toEqual([
+      {
+        eurCents: 3900,
+        publicationId: madePaidBody.publication.id,
+        sequence: 1,
+        usdCents: 4500,
+      },
+      {
+        eurCents: null,
+        publicationId: madeFreeBody.publication.id,
+        sequence: 2,
+        usdCents: null,
+      },
+    ]);
+    expect(download.status).toBe(200);
+    expect(await download.text()).toBe(new TextDecoder().decode(PDF_BYTES));
+  });
+
+  it("returns the same price change when its idempotency key is replayed", async () => {
+    // arrange
+    const published = await suite.request(publicationRequest());
+    const { publication } = (await published.json()) as PublicationBody;
+    const first = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+        prices: PAID_PRICES,
+      }),
+    );
+    const firstBody = (await first.json()) as PublicationBody;
+
+    // act
+    const replay = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+        prices: PAID_PRICES,
+      }),
+    );
+    const replayBody = (await replay.json()) as PublicationBody;
+
+    // assert
+    expect(replay.status).toBe(200);
+    expect(replayBody.publication).toMatchObject({
+      id: firstBody.publication.id,
+      prices: PAID_PRICES,
+      replayed: true,
+    });
+    await expect(readPriceRevisions()).resolves.toHaveLength(1);
+  });
+
+  it("rejects a price change key reused with a different payload", async () => {
+    // arrange
+    const published = await suite.request(publicationRequest());
+    const { publication } = (await published.json()) as PublicationBody;
+
+    await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+        prices: PAID_PRICES,
+      }),
+    );
+
+    // act
+    const response = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+        prices: { eurCents: 4900, usdCents: 5500 },
+      }),
+    );
+    const catalog = await readCatalog();
+
+    // assert
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { code: "idempotency_conflict" },
+    });
+    expect(catalog.products).toEqual([
+      expect.objectContaining({ price: PAID_PRICES }),
+    ]);
+  });
+
+  it("refuses to reprice a retired product", async () => {
+    // arrange
+    const published = await suite.request(publicationRequest());
+    const { publication } = (await published.json()) as PublicationBody;
+
+    await suite.request(
+      new Request(
+        suite.url(`/api/management/store/products/${publication.productId}`),
+        {
+          headers: {
+            authorization: `Bearer ${MANAGEMENT_SECRET}`,
+            "x-forwarded-proto": "https",
+          },
+          method: "PATCH",
+        },
+      ),
+    );
+
+    // act
+    const response = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+        prices: PAID_PRICES,
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "validation_failed",
+        issues: [{ code: "product_retired" }],
+      },
+    });
+    await expect(readPriceRevisions()).resolves.toEqual([]);
+  });
+
+  it.each([
+    ["the same amounts", PAID_PRICES, PAID_PRICES],
+    ["free to free", null, null],
+  ])(
+    "refuses %s as an unchanged price",
+    async (_label, initialPrices, nextPrices) => {
+      // arrange
+      const published = await suite.request(
+        publicationRequest({ metadata: { prices: initialPrices } }),
+      );
+      const { publication } = (await published.json()) as PublicationBody;
+
+      // act
+      const response = await suite.request(
+        priceChangeRequest(publication.productId, {
+          idempotencyKey: "reprice-1",
+          prices: nextPrices,
+        }),
+      );
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: {
+          code: "validation_failed",
+          issues: [{ code: "price_unchanged" }],
+        },
+      });
+    },
+  );
+
+  it("refuses a price change without prices rather than assuming free", async () => {
+    // arrange
+    const published = await suite.request(
+      publicationRequest({ metadata: { prices: PAID_PRICES } }),
+    );
+    const { publication } = (await published.json()) as PublicationBody;
+
+    // act
+    const response = await suite.request(
+      priceChangeRequest(publication.productId, {
+        idempotencyKey: "reprice-1",
+      }),
+    );
+    const catalog = await readCatalog();
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(catalog.products).toEqual([
+      expect.objectContaining({ price: PAID_PRICES }),
+    ]);
+  });
+
+  it("refuses an unauthenticated price change", async () => {
+    // arrange
+    const published = await suite.request(publicationRequest());
+    const { publication } = (await published.json()) as PublicationBody;
+
+    // act
+    const response = await suite.request(
+      priceChangeRequest(
+        publication.productId,
+        { idempotencyKey: "reprice-1", prices: PAID_PRICES },
+        "Bearer wrong-secret",
+      ),
+    );
+
+    // assert
+    expect(response.status).toBe(401);
+    await expect(readPriceRevisions()).resolves.toEqual([]);
+  });
+
+  it("reports a price change for an unknown product as not found", async () => {
+    // arrange
+    // act
+    const response = await suite.request(
+      priceChangeRequest(4040, {
+        idempotencyKey: "reprice-1",
+        prices: PAID_PRICES,
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
   it("reports an unknown product as not found", async () => {
     // arrange
     // act
@@ -408,16 +839,61 @@ function publicationRequest(
   });
 }
 
-async function readCatalog(): Promise<{
-  products: { slug: string; title: string }[];
-}> {
+type CatalogBody = {
+  products: {
+    price: { eurCents: number; usdCents: number } | null;
+    slug: string;
+    title: string;
+  }[];
+};
+
+async function readCatalog(): Promise<CatalogBody> {
   const response = await suite.request(
     new Request(suite.url("/api/store/catalog")),
   );
 
-  return (await response.json()) as {
-    products: { slug: string; title: string }[];
-  };
+  return (await response.json()) as CatalogBody;
+}
+
+function priceChangeRequest(
+  productId: number,
+  body: Record<string, unknown>,
+  credential = `Bearer ${MANAGEMENT_SECRET}`,
+): Request {
+  return new Request(
+    suite.url(`/api/management/store/products/${productId}/prices`),
+    {
+      body: JSON.stringify(body),
+      headers: {
+        authorization: credential,
+        "content-type": "application/json",
+        "x-forwarded-proto": "https",
+      },
+      method: "POST",
+    },
+  );
+}
+
+async function readPriceRevisions(): Promise<
+  {
+    eurCents: number | null;
+    publicationId: number;
+    sequence: number;
+    usdCents: number | null;
+  }[]
+> {
+  return suite.postgres.queryRows({
+    sql: `
+      select
+        sequence,
+        eur_cents as "eurCents",
+        usd_cents as "usdCents",
+        publication_id as "publicationId"
+      from app.product_price_revisions
+      order by sequence
+    `,
+    values: [],
+  });
 }
 
 async function assetRootEntries(): Promise<string[]> {
