@@ -299,7 +299,7 @@ function CartReview(props: {
                   {props.formatPrice(item.product)}
                 </p>
               ) : (
-                <FreeTag className="mt-1 self-start" data-parity="cart-item-type" />
+                <FreeTag className="mt-1 self-start" data-parity="cart-item-type" size="sm" />
               )}
               <button
                 aria-label={`Remove ${item.product.title} from cart`}
