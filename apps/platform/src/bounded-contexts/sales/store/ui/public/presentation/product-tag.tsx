@@ -7,8 +7,8 @@ const PRODUCT_TAG_SIZES = {
 } as const;
 
 const PRODUCT_TAG_TONES = {
-  paid: "bg-surface-base bg-linear-to-r from-brand-primary-soft to-brand-primary-soft text-brand-primary",
-  free: "bg-surface-base bg-linear-to-r from-brand-secondary-soft to-brand-secondary-soft text-brand-secondary",
+  paid: "bg-brand-primary-surface text-brand-primary",
+  free: "bg-brand-secondary-surface text-brand-secondary",
   goal: "bg-surface-subtle text-copy-muted",
 } as const;
 
