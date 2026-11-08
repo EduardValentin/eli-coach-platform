@@ -93,12 +93,12 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 
 ## Digital Store
 
-21. **The store is public.** Products are free or paid, and each shows which it is. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
-22. **Acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery.
-23. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Successful free requests confirm the resources were sent to the email, without order or price framing.
-24. **One delivery email per accepted request** offers a single primary download action for all granted resources. Download access is reached from that email, lasts seven days from each request, and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again.
-25. **Delivery is rate-limited per email address**: at most one delivery per minute and ten in any rolling 24 hours. Addresses differing only by a sub-address tag share one allowance. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections. A delivery that fails or whose outcome is unknown does not consume the allowance.
-26. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
+21. **The store is public.** Products are free or paid, and each shows which it is. A paid product has a fixed price in euros and a fixed price in US dollars; the store shows prices in the currency the visitor chooses, euros until she chooses, and the shown price includes any applicable tax. A product's prices can change, and a product can become paid or free again; nothing already acquired or bought is affected. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
+22. **Acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery. **Buying a paid product additionally requires the visitor's express request that delivery begin at once and her acknowledgement that she loses the statutory withdrawal right by it.** Payment is taken by the payment provider on its own page, where the entered email is shown and cannot be changed; the platform never holds card details. The whole cart is paid in one payment in the chosen currency, free items included at no charge, and nothing is delivered before the payment provider confirms the payment.
+23. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Successful free requests confirm the resources were sent to the email, without order or price framing. A payment the visitor abandons on the provider's page returns her to the store with her cart intact and a clear message. A successful purchase confirms the order and that the download link is in the email, and offers to send the order email again.
+24. **One delivery email per accepted request** offers a single primary download action for all granted resources. Download access is reached from that email, lasts seven days from each request, and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again. A completed purchase sends one order email that names each product, its amount and currency, the total, and the Terms version accepted, with the same single download action for everything in the order; it is an order confirmation, not a fiscal invoice. A refund is issued only by the coach through the payment provider and revokes the order's download access; the platform sends no refund message of its own, and the provider's refund receipt is the buyer's notice.
+25. **Delivery is rate-limited per email address**: at most one delivery per minute and ten in any rolling 24 hours. Addresses differing only by a sub-address tag share one allowance. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections. A delivery that fails or whose outcome is unknown does not consume the allowance. Purchases are not rate-limited.
+26. **Acquisitions belong to the entered email.** An acquisition or a purchase is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
 27. **Lost access is recovered by acquiring again.** A visitor who no longer has a delivery email requests a free product again from the store, or buys a paid product again. The platform never restores access from an account.
 
 ## Programs
@@ -222,9 +222,10 @@ Per Business Rule 53.
 
 ## 2. Digital Store (`/store`)
 
-1. The catalog lists published products with type and goal filters. It distinguishes an empty catalog ("nothing is available yet") from "no results match the selected filters".
+1. The catalog lists published products with type and goal filters and a currency switch between euros and US dollars. It distinguishes an empty catalog ("nothing is available yet") from "no results match the selected filters".
 2. Each product has a detail page (`/store/:slug`) for inspection before acquisition.
-3. Acquisition, delivery, download access (`/store/download`), and rate limits follow Business Rules 21–27.
+3. Acquisition, purchase, delivery, download access (`/store/download`), and rate limits follow Business Rules 21–27.
+4. A purchase ends on an order-complete page (`/store/checkout/complete`); an abandoned payment returns to `/store`.
 
 ## 3. Accounts and Onboarding
 
@@ -432,7 +433,6 @@ The Tag, the Food and the Recipe are in the MVP; the meal plan inside a program 
 # Deferred
 
 - Full blog CMS, authoring workflow, categories, and search
-- Real payment processing for paid store products
 - Per-call meeting room generation through a video provider. Every assessment call and check-in shares the coach's single meeting room (Business Rules 14 and 49)
 - Rich analytics and reporting; advanced search across clients
 - Check-in frequencies other than weekly, and per-client configurable check-in frequency (the MVP series is weekly)
