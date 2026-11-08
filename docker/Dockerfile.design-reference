@@ -27,6 +27,8 @@ WORKDIR /app
 RUN set -eux; \
   apt-get update; \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --only-upgrade \
+    apt \
+    libapt-pkg6.0 \
     libc-bin \
     libc6 \
     libcap2 \
