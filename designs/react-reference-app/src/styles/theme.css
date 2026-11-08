@@ -33,6 +33,7 @@
   --brand: #C81D6B;
   --brand-foreground: #ffffff;
   --brand-soft: rgba(200, 29, 107, 0.1);
+  --brand-surface: #FAE8F0;
   --brand-hover: #a31556;
   /* Lifted off the brand pink so it still clears 3:1 on a near-black surface,
      where --brand itself only reaches 2.7:1. */
@@ -306,6 +307,7 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-surface: var(--brand-surface);
   --color-brand-hover: var(--brand-hover);
   --color-brand-secondary: var(--brand-secondary);
   --color-brand-secondary-hover: var(--brand-secondary-hover);
