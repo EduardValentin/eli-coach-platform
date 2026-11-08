@@ -93,9 +93,9 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 
 ## Digital Store
 
-21. **The store is public.** Products are free or paid, and each shows which it is. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
+21. **The store is public.** Products are free or paid, and each shows which it is. A paid product carries two fixed prices set by the coach, one in euros and one in US dollars; the visitor sees every price in the currency she chooses, euros until she switches, and her choice is remembered across pages and visits. The coach can change a paid product's prices, make a paid product free, or make a free product paid at any time; a change applies from then on and never affects past acquisitions or download access. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
 22. **Acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery.
-23. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Successful free requests confirm the resources were sent to the email, without order or price framing.
+23. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Until paid products can be bought, a request that includes a product that is paid at that moment is refused and records nothing. Successful free requests confirm the resources were sent to the email, without order or price framing.
 24. **One delivery email per accepted request** offers a single primary download action for all granted resources. Download access is reached from that email, lasts seven days from each request, and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again.
 25. **Delivery is rate-limited per email address**: at most one delivery per minute and ten in any rolling 24 hours. Addresses differing only by a sub-address tag share one allowance. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections. A delivery that fails or whose outcome is unknown does not consume the allowance.
 26. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
@@ -222,7 +222,7 @@ Per Business Rule 53.
 
 ## 2. Digital Store (`/store`)
 
-1. The catalog lists published products with type and goal filters. It distinguishes an empty catalog ("nothing is available yet") from "no results match the selected filters".
+1. The catalog lists published products with type and goal filters, paid products as plans priced in the visitor's chosen currency, and free products as free resources. It distinguishes an empty catalog ("nothing is available yet") from "no results match the selected filters".
 2. Each product has a detail page (`/store/:slug`) for inspection before acquisition.
 3. Acquisition, delivery, download access (`/store/download`), and rate limits follow Business Rules 21–27.
 
