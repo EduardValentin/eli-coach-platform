@@ -1,7 +1,4 @@
-import { statSync } from "node:fs";
-
-import { runRegistry, type RunRegistry } from "./run-registry";
-import { storeProductRegistry } from "./store-products";
+import { runRegistry } from "./run-registry";
 
 // Every Clerk Development-instance user this suite creates has to be deleted
 // again — the instance carries a hard 100-user cap, and letting
@@ -24,7 +21,7 @@ import { storeProductRegistry } from "./store-products";
 // registry per run turns that into a recoverable problem: global-setup.ts
 // sweeps (through cleanUpRun) every leftover file it finds from prior runs before this run
 // starts recording its own.
-const createdEmails = runRegistry("created-emails-");
+export const createdEmailRegistry = runRegistry("created-emails-");
 
 // The addresses whose users and invitations a journey already removed as it
 // ended, so teardown looks up only what a crashed journey left behind.
@@ -33,11 +30,11 @@ const releasedEmails = runRegistry("released-emails-");
 // Single worker, sequential tests (see playwright.config.ts) — a plain
 // synchronous append needs no cross-process locking.
 export function recordCreatedEmail(email: string, runId: string): void {
-  createdEmails.record(email, runId);
+  createdEmailRegistry.record(email, runId);
 }
 
 export function readCreatedEmails(runId: string): string[] {
-  return createdEmails.read(runId);
+  return createdEmailRegistry.read(runId);
 }
 
 export function recordReleasedEmails(
@@ -52,7 +49,9 @@ export function recordReleasedEmails(
 export function readUnreleasedEmails(runId: string): string[] {
   const released = new Set(releasedEmails.read(runId));
 
-  return createdEmails.read(runId).filter((email) => !released.has(email));
+  return createdEmailRegistry
+    .read(runId)
+    .filter((email) => !released.has(email));
 }
 
 // Deletes this run's own registry file — called once a run's users have all
@@ -60,88 +59,8 @@ export function readUnreleasedEmails(runId: string): string[] {
 // never unconditionally, so a run that leaves genuine deletion failures
 // behind keeps its file around for the next sweep to retry.
 export function deleteRegistryFile(runId: string): void {
-  createdEmails.remove(runId);
+  createdEmailRegistry.remove(runId);
   releasedEmails.remove(runId);
-}
-
-// A suite that's still running keeps appending to its own registry file
-// (recordCreatedEmail, above) for as long as it runs, and this suite's own
-// runs finish in minutes (see playwright.config.ts) — so a foreign file
-// whose most recent write is under two hours old is presumed to belong to a
-// still-running suite, not an aborted one. Sweeping it anyway (deleting the
-// Clerk users it lists, then the file itself) would delete a concurrently
-// running suite's users out from under it. Two hours is generous headroom
-// above "minutes" without risking a slow CI run getting swept mid-flight.
-const MIN_LEFTOVER_AGE_MS = 2 * 60 * 60 * 1000;
-
-type ForeignRegistryFile = { runId: string; mtimeMs: number };
-
-const SWEPT_REGISTRIES: readonly RunRegistry[] = [
-  createdEmails,
-  storeProductRegistry,
-];
-
-// Every other run's registry file still on disk when this run starts,
-// regardless of age. Excludes the current run (which hasn't recorded
-// anything of its own yet, but shares the runtime directory). Shared by
-// findLeftoverRunIds and findPossiblyActiveRunIds so the two stay a strict
-// partition of the same listing rather than two independent directory scans
-// that could drift apart.
-function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
-  const latestWrites = new Map<string, number>();
-
-  for (const registry of SWEPT_REGISTRIES) {
-    for (const runId of registry.recordedRunIds()) {
-      const mtimeMs = lastWriteOf(registry, runId);
-
-      if (runId !== currentRunId && mtimeMs !== undefined) {
-        latestWrites.set(
-          runId,
-          Math.max(latestWrites.get(runId) ?? mtimeMs, mtimeMs),
-        );
-      }
-    }
-  }
-
-  return [...latestWrites].map(([runId, mtimeMs]) => ({ runId, mtimeMs }));
-}
-
-function lastWriteOf(registry: RunRegistry, runId: string): number | undefined {
-  // A concurrent run's own deleteRegistryFile (called once its users are
-  // all accounted for) can remove a file between this readdir and the stat
-  // below. That race is exactly what this sweep exists to survive, so a
-  // file gone by the time it's stat'd is skipped rather than treated as a
-  // failure — it means the other run already finished cleaning up.
-  try {
-    return statSync(registry.filePath(runId)).mtimeMs;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return undefined;
-    }
-
-    throw error;
-  }
-}
-
-// Foreign registry files old enough to be safely swept — candidates for
-// global-setup.ts's leftover sweep.
-export function findLeftoverRunIds(currentRunId: string): string[] {
-  const cutoffMs = Date.now() - MIN_LEFTOVER_AGE_MS;
-
-  return listForeignRegistryFiles(currentRunId)
-    .filter((file) => file.mtimeMs <= cutoffMs)
-    .map((file) => file.runId);
-}
-
-// Foreign registry files too young to sweep — left in place because they
-// may belong to a suite that's still running. Reported by global-setup.ts's
-// sweep so a skip is visible rather than silent.
-export function findPossiblyActiveRunIds(currentRunId: string): string[] {
-  const cutoffMs = Date.now() - MIN_LEFTOVER_AGE_MS;
-
-  return listForeignRegistryFiles(currentRunId)
-    .filter((file) => file.mtimeMs > cutoffMs)
-    .map((file) => file.runId);
 }
 
 // The suite's own test-email convention (fixtures.ts's mintRecordedTestEmail) is the
