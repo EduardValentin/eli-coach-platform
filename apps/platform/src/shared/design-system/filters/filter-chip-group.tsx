@@ -27,10 +27,7 @@ export const FilterChipGroup = React.forwardRef<
   <FilterChipToneContext.Provider value={tone}>
     <RadixToggleGroup.Root
       ref={ref}
-      className={cn(
-        "flex w-fit flex-wrap items-center gap-2 rounded-field",
-        className,
-      )}
+      className={cn("flex w-fit flex-wrap items-center gap-2", className)}
       onValueChange={(nextValue) => onValueChange(nextValue || null)}
       type="single"
       value={value ?? ""}

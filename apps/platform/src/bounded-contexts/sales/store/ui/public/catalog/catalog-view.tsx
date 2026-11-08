@@ -3,8 +3,8 @@ import {
   buttonVariants,
   Card,
   cardVariants,
-  ToggleGroup,
-  ToggleGroupItem,
+  ChoiceGroup,
+  ChoiceOption,
 } from "~/shared/design-system/primitives";
 import {
   DollarSign,
@@ -26,6 +26,7 @@ import {
 
 import { useReconcileStoreCartCatalog } from "../cart/cart";
 import { useStoreCart } from "../cart/cart-provider";
+import { ProductTag } from "../presentation/product-tag";
 import { FreeTag } from "../pricing/free-tag";
 import {
   StoreCatalogFilters,
@@ -121,8 +122,9 @@ function StoreCurrencySwitch() {
   const setCurrency = useStoreCart((cart) => cart.setCurrency);
 
   return (
-    <ToggleGroup
+    <ChoiceGroup
       aria-label="Currency"
+      look="pill"
       onValueChange={(value) => {
         if (isStoreCurrency(value)) {
           setCurrency(value);
@@ -134,12 +136,12 @@ function StoreCurrencySwitch() {
         const CurrencyIcon = CURRENCY_ICONS[option];
 
         return (
-          <ToggleGroupItem key={option} value={option}>
+          <ChoiceOption key={option} value={option}>
             <CurrencyIcon aria-hidden="true" size={16} /> {option}
-          </ToggleGroupItem>
+          </ChoiceOption>
         );
       })}
-    </ToggleGroup>
+    </ChoiceGroup>
   );
 }
 
@@ -281,18 +283,22 @@ function EmptyCatalogView() {
   );
 }
 
-const PAID_CARD = {
+const PAID_CARD_PRESENTATION = {
   AddIcon: ShoppingBag,
   addLabel: "Add to Cart",
   addVariant: "inverted",
   describeAddAction: (title: string) => `Add ${title} to cart`,
+  tagTone: "paid",
+  titleHoverClass: "group-hover:text-brand-primary",
 } as const;
 
-const FREE_CARD = {
+const FREE_CARD_PRESENTATION = {
   AddIcon: Plus,
   addLabel: "Get for free",
   addVariant: "outline",
   describeAddAction: (title: string) => `Get ${title} for free`,
+  tagTone: "free",
+  titleHoverClass: "group-hover:text-brand-secondary",
 } as const;
 
 function CatalogProductCard({ product }: { product: StoreProduct }) {
@@ -302,8 +308,9 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
     cart.productSlugs.includes(product.slug),
   );
   const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
-  const isPaid = product.price !== null;
-  const kind = isPaid ? PAID_CARD : FREE_CARD;
+  const presentation = product.price
+    ? PAID_CARD_PRESENTATION
+    : FREE_CARD_PRESENTATION;
 
   return (
     <article
@@ -322,12 +329,9 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
           src={product.cover.url}
         />
         {product.price ? (
-          <span
-            className="absolute right-4 top-4 rounded-full bg-surface-base/90 px-3 py-1.5 text-sm font-bold text-text-primary backdrop-blur-sm"
-            data-parity="product-price"
-          >
+          <CoverPriceTag className="absolute right-4 top-4">
             {formatStorePrice(product.price, currency)}
-          </span>
+          </CoverPriceTag>
         ) : (
           <FreeTag className="absolute right-4 top-4" />
         )}
@@ -335,25 +339,16 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
       <div className="flex grow flex-col p-6">
         <div className="mb-3 flex flex-wrap gap-2">
           {product.types.map((type) => (
-            <span
-              className={cn("rounded-tile px-2 py-1 text-label uppercase", {
-                "bg-brand-primary-soft text-brand-primary": isPaid,
-                "bg-brand-secondary-soft text-brand-secondary": !isPaid,
-              })}
-              key={type.slug}
-            >
+            <ProductTag key={type.slug} size="sm" tone={presentation.tagTone}>
               {type.label}
-            </span>
+            </ProductTag>
           ))}
         </div>
         <Link to={storeProductPath(product.slug)}>
           <h3
             className={cn(
               "mb-2 line-clamp-2 font-heading text-xl font-medium text-text-primary transition-colors",
-              {
-                "group-hover:text-brand-primary": isPaid,
-                "group-hover:text-brand-secondary": !isPaid,
-              },
+              presentation.titleHoverClass,
             )}
           >
             {product.title}
@@ -366,11 +361,11 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
           aria-label={
             isInCart
               ? `${product.title} is in your cart`
-              : kind.describeAddAction(product.title)
+              : presentation.describeAddAction(product.title)
           }
           className={buttonVariants({
             size: "lg",
-            variant: isInCart ? "secondary" : kind.addVariant,
+            variant: isInCart ? "secondary" : presentation.addVariant,
             width: "full",
           })}
           onClick={(event) => {
@@ -379,10 +374,24 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
           }}
           type="button"
         >
-          <kind.AddIcon aria-hidden="true" size={18} />
-          {isInCart ? "In your cart" : kind.addLabel}
+          <presentation.AddIcon aria-hidden="true" size={18} />
+          {isInCart ? "In your cart" : presentation.addLabel}
         </button>
       </div>
     </article>
+  );
+}
+
+function CoverPriceTag(props: { children: ReactNode; className: string }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full bg-surface-base/90 px-3 py-1.5 text-sm font-bold text-text-primary backdrop-blur-sm",
+        props.className,
+      )}
+      data-parity="product-price"
+    >
+      {props.children}
+    </span>
   );
 }
