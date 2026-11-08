@@ -51,7 +51,7 @@ export const FilterChip = React.forwardRef<HTMLButtonElement, FilterChipProps>(
         ref={ref}
         className={cn(
           chipVariants({ tone }),
-          "h-auto min-h-0 min-w-0 flex-none justify-center gap-2 whitespace-nowrap",
+          "h-auto min-h-0 min-w-0 flex-none justify-center gap-2 whitespace-nowrap font-normal shadow-none focus:z-10",
           className,
         )}
         {...props}
