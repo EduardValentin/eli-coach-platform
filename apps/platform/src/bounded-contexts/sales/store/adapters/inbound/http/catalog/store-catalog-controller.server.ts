@@ -77,6 +77,7 @@ export class StoreCatalogController {
       detailDescription: product.version.detailDescription,
       goals: product.version.goals,
       includedItems: product.version.includedItems,
+      price: product.price?.toSnapshot() ?? null,
       slug: product.slug,
       title: product.version.title,
       types: product.version.types,

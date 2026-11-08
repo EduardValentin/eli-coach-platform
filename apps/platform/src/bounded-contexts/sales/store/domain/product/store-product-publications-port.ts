@@ -1,4 +1,5 @@
 import type { Product } from "./product";
+import type { PersistPriceChangeCommand } from "./product-price-change";
 import type {
   PersistPublicationCommand,
   ProductPublication,
@@ -14,6 +15,9 @@ export interface StoreProductPublicationsPort {
   ): Promise<StoredPublicationRecord | null>;
   getNextDisplayOrder(): Promise<number>;
   getTaxonomy(): Promise<StoreTaxonomySnapshot>;
+  persistPriceChange(
+    command: PersistPriceChangeCommand,
+  ): Promise<ProductPublication>;
   persistPublication(
     command: PersistPublicationCommand,
   ): Promise<ProductPublication>;

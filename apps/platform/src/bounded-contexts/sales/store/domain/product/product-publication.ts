@@ -1,4 +1,5 @@
 import type {
+  ContentPublicationOperation,
   Product,
   PublicationOperation,
   PublicationPlacement,
@@ -10,6 +11,12 @@ import {
 } from "./product-asset-keys";
 import type { ProductAssetContent } from "./product-asset-writer-port";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
+import {
+  ProductPrice,
+  type ProductPriceInput,
+  type ProductPriceIssue,
+  type ProductPriceSnapshot,
+} from "./product-price";
 import {
   resolveCoverFormat,
   resolveDownloadFormat,
@@ -66,7 +73,8 @@ export type PublicationPlan = {
   downloads: readonly PlannedProductAsset[];
   goals: readonly StoreTaxonomyValue[];
   metadata: ProductVersionMetadata;
-  operation: PublicationOperation;
+  operation: ContentPublicationOperation;
+  prices: ProductPriceSnapshot | null;
   productId: number | null;
   productSlug: string;
   totalUploadBytes: number;
@@ -79,7 +87,7 @@ export type ProductPublication = {
   operation: PublicationOperation;
   productId: number;
   productSlug: string;
-  productVersionId: number;
+  productVersionId: number | null;
   publishedAt: Date;
 };
 
@@ -100,8 +108,9 @@ export type PersistPublicationCommand = {
   goalSlugs: readonly string[];
   idempotencyKey: string;
   metadata: ProductVersionMetadata;
-  operation: PublicationOperation;
+  operation: ContentPublicationOperation;
   payloadDigest: string;
+  price: ProductPriceSnapshot | null;
   productId: number | null;
   productSlug: string;
   publishedBy: PublishingPrincipal;
@@ -128,7 +137,9 @@ export type PublicationIssue =
     }
   | { code: "unknown_type"; acceptedSlugs: readonly string[]; slug: string }
   | { code: "unknown_goal"; acceptedSlugs: readonly string[]; slug: string }
-  | { code: "payload_too_large"; maxBytes: number; totalBytes: number };
+  | { code: "payload_too_large"; maxBytes: number; totalBytes: number }
+  | { code: "price_unchanged" }
+  | ProductPriceIssue;
 
 export type PublicationPlanResult =
   | { status: "valid"; plan: PublicationPlan }
@@ -186,17 +197,20 @@ type ProductPublicationDraftProps = {
   cover: ProductCoverInput;
   downloads: readonly ProductDownloadInput[];
   metadata: ProductVersionMetadata;
+  prices: ProductPriceInput | null;
 };
 
 export class ProductPublicationDraft {
   readonly cover: ProductCoverInput;
   readonly downloads: readonly ProductDownloadInput[];
   readonly metadata: ProductVersionMetadata;
+  readonly prices: ProductPriceInput | null;
 
   private constructor(props: ProductPublicationDraftProps) {
     this.cover = props.cover;
     this.downloads = props.downloads;
     this.metadata = props.metadata;
+    this.prices = props.prices;
   }
 
   static from(props: ProductPublicationDraftProps): ProductPublicationDraft {
@@ -230,6 +244,7 @@ export class ProductPublicationDraft {
             `${download.customerFilename}=${productAssetDigestPort.sha256(download.bytes)}`,
         )
         .join(CANONICAL_LIST_SEPARATOR),
+      this.canonicalPrices(),
     ].join(CANONICAL_FIELD_SEPARATOR);
 
     return productAssetDigestPort.sha256(new TextEncoder().encode(canonical));
@@ -316,6 +331,7 @@ export class ProductPublicationDraft {
     const issues: PublicationIssue[] = [];
     const downloads = this.planDownloads(issues, productAssetDigestPort);
     const cover = this.planCover(issues, productAssetDigestPort);
+    const price = this.planPrice(issues);
     const types = resolveTaxonomy(
       this.metadata.typeSlugs,
       taxonomy.types,
@@ -352,6 +368,7 @@ export class ProductPublicationDraft {
         goals: goals.values,
         metadata: this.metadata,
         operation: placement.operation,
+        prices: price?.toSnapshot() ?? null,
         productId: placement.productId,
         productSlug: placement.productSlug,
         totalUploadBytes,
@@ -378,6 +395,7 @@ export class ProductPublicationDraft {
       metadata: plan.metadata,
       operation: plan.operation,
       payloadDigest: input.payloadDigest,
+      price: plan.prices,
       productId: plan.productId,
       productSlug: plan.productSlug,
       publishedBy: input.publishedBy,
@@ -403,6 +421,32 @@ export class ProductPublicationDraft {
         )!.bytes,
       })),
     ];
+  }
+
+  private canonicalPrices(): string {
+    if (!this.prices) {
+      return "";
+    }
+
+    return [this.prices.eurCents ?? "", this.prices.usdCents ?? ""].join(
+      CANONICAL_LIST_SEPARATOR,
+    );
+  }
+
+  private planPrice(issues: PublicationIssue[]): ProductPrice | null {
+    if (!this.prices) {
+      return null;
+    }
+
+    const parsed = ProductPrice.parse(this.prices);
+
+    if (parsed.status === "invalid") {
+      issues.push(...parsed.issues);
+
+      return null;
+    }
+
+    return parsed.price;
   }
 
   private planDownloads(

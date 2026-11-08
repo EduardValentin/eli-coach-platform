@@ -83,6 +83,7 @@ function createProduct(
     creatorName: "Eli",
     detailDescription: "Phase-by-phase guidance.",
     includedItems: ["A weekly plan"],
+    price: null,
     title: product.slug,
     ...product,
   };

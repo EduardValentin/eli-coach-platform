@@ -3,6 +3,7 @@ import { AcquireProductsUseCase } from "~/bounded-contexts/sales/store/domain/ac
 import { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
 import type { EmailAcceptancePort } from "~/bounded-contexts/sales/store/domain/email-acceptance-port";
 import {
+  ChangeProductPriceUseCase,
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
   ListPublishedProductsUseCase,
@@ -146,6 +147,7 @@ export function composeStoreFeature(
     ),
     storeProductManagementController: new StoreProductManagementController({
       authConfig: handles.managementAuth.config,
+      changeProductPriceUseCase: new ChangeProductPriceUseCase(planOptions),
       managementAuthenticatorPort:
         handles.managementAuth.managementAuthenticatorPort,
       planNewProductUseCase: new PlanNewProductUseCase(planOptions),

@@ -7,12 +7,14 @@ import {
   type ProductVersionMetadata,
   type PublicationPlanResult,
 } from "./product-publication";
+import type { ProductPriceInput } from "./product-price";
 import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 export type PlanNewProductCommand = {
   cover: ProductCoverInput;
   downloads: readonly ProductDownloadInput[];
   metadata: ProductVersionMetadata;
+  prices: ProductPriceInput | null;
   slug: string;
 };
 

@@ -3,6 +3,7 @@ export {
   Product,
   PublishedProduct,
   type ProductAsset,
+  type PublicationOperation,
   type PublishedProductCover,
   type StoreTaxonomyValue,
 } from "./product";
@@ -40,3 +41,11 @@ export { PlanProductRevisionUseCase } from "./plan-product-revision-use-case";
 export { PublishNewProductUseCase } from "./publish-new-product-use-case";
 export { PublishProductVersionUseCase } from "./publish-product-version-use-case";
 export { RetireProductUseCase } from "./retire-product-use-case";
+export { ChangeProductPriceUseCase } from "./change-product-price-use-case";
+export {
+  ProductPrice,
+  type ProductPriceInput,
+  type ProductPriceSnapshot,
+  type StoreCurrency,
+} from "./product-price";
+export { type PersistPriceChangeCommand } from "./product-price-change";

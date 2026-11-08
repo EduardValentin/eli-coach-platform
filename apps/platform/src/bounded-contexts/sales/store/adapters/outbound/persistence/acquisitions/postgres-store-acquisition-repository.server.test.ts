@@ -11,6 +11,7 @@ const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
+  price: null,
   version: {
     id: 11,
     sequence: 2,

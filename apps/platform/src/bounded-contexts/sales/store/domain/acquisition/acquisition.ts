@@ -51,7 +51,8 @@ export type ProductSelection =
   | {
       status: "unavailable_products";
       availableProductSlugs: readonly string[];
-    };
+    }
+  | { status: "paid_products"; paidProductSlugs: readonly string[] };
 
 const SUBADDRESS_SEPARATOR = "+";
 
@@ -131,10 +132,18 @@ export class AcquisitionRequest {
       return { status: "unavailable_products", availableProductSlugs };
     }
 
-    return {
-      status: "selected",
-      products: availableProductSlugs.map((slug) => productsBySlug.get(slug)!),
-    };
+    const products = availableProductSlugs.map((slug) =>
+      productsBySlug.get(slug)!,
+    );
+    const paidProductSlugs = products
+      .filter((product) => product.isPaid())
+      .map((product) => product.slug);
+
+    if (paidProductSlugs.length > 0) {
+      return { status: "paid_products", paidProductSlugs };
+    }
+
+    return { status: "selected", products };
   }
 }
 

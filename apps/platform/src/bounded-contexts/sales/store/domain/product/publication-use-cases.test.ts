@@ -55,6 +55,7 @@ function existingProduct(
   lifecycleStatus: "archived" | "draft" | "published" = "published",
 ): Product {
   return Product.reconstitute({
+    currentPrice: null,
     displayOrder: 2,
     id: 7,
     latestVersionSequence: 3,
@@ -80,6 +81,7 @@ function createPublications(
     findPublicationByIdempotencyKey: vi.fn().mockResolvedValue(null),
     getNextDisplayOrder: vi.fn().mockResolvedValue(5),
     getTaxonomy: vi.fn().mockResolvedValue(taxonomy),
+    persistPriceChange: vi.fn(),
     persistPublication: vi.fn().mockImplementation((command) =>
       Promise.resolve({
         id: 41,
@@ -117,6 +119,7 @@ const newProductCommand = {
   cover,
   downloads,
   metadata,
+  prices: null,
   slug: "glute-growth-guide",
 };
 
@@ -143,6 +146,40 @@ describe("PlanNewProductUseCase", () => {
       productId: null,
       productSlug: "glute-growth-guide",
       versionSequence: 1,
+    });
+  });
+
+  it("reports the resolved prices of a paid product", async () => {
+    // arrange
+    const { planOptions } = createOptions();
+
+    // act
+    const result = await new PlanNewProductUseCase(planOptions).execute({
+      ...newProductCommand,
+      prices: { eurCents: 3900, usdCents: 4500 },
+    });
+
+    // assert
+    expect(result.status === "valid" && result.plan.prices).toEqual({
+      eurCents: 3900,
+      usdCents: 4500,
+    });
+  });
+
+  it("names the price rule a paid product breaks", async () => {
+    // arrange
+    const { planOptions } = createOptions();
+
+    // act
+    const result = await new PlanNewProductUseCase(planOptions).execute({
+      ...newProductCommand,
+      prices: { eurCents: 3900 },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [{ code: "missing_price", currency: "USD" }],
     });
   });
 
@@ -294,6 +331,53 @@ describe("PublishNewProductUseCase", () => {
         versionSequence: 1,
       }),
     );
+  });
+
+  it("records the first price of a paid product with its publication", async () => {
+    // arrange
+    const { options, storeProductPublicationsPort } = createOptions();
+
+    // act
+    await new PublishNewProductUseCase(options).execute({
+      ...publishNewProductCommand,
+      prices: { eurCents: 3900, usdCents: 4500 },
+    });
+
+    // assert
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ price: { eurCents: 3900, usdCents: 4500 } }),
+    );
+  });
+
+  it("publishes nothing when a price breaks the rule", async () => {
+    // arrange
+    const { options, storeProductPublicationsPort, productAssetWriterPort } =
+      createOptions();
+
+    // act
+    const result = await new PublishNewProductUseCase(options).execute({
+      ...publishNewProductCommand,
+      prices: { eurCents: 3900, usdCents: 100_000_000 },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [
+        {
+          code: "price_out_of_range",
+          currency: "USD",
+          minimum: 1,
+          maximum: 99_999_999,
+        },
+      ],
+    });
+    expect(productAssetWriterPort.write).not.toHaveBeenCalled();
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).not.toHaveBeenCalled();
   });
 
   it("replays an existing publication without writing or persisting again", async () => {

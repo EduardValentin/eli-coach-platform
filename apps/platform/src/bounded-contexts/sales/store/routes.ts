@@ -46,4 +46,8 @@ export const storeApiRoutes = [
     "api/management/store/products/:productId/versions",
     "./adapters/inbound/http/management/management-product-versions.ts",
   ),
+  route(
+    "api/management/store/products/:productId/prices",
+    "./adapters/inbound/http/management/management-product-prices.ts",
+  ),
 ];

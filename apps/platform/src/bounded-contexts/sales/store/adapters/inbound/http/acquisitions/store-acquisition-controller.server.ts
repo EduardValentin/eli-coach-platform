@@ -113,6 +113,12 @@ function createAcquisitionResponse(result: AcquireProductsResult): Response {
     });
   }
 
+  if (result.status === "paid_products") {
+    return createErrorResponse("paid_products", 409, {
+      paidProductSlugs: result.paidProductSlugs,
+    });
+  }
+
   if (result.status === "subaddress_refused") {
     return createErrorResponse("email_subaddress_refused", 400);
   }
@@ -135,7 +141,10 @@ function createAcquisitionResponse(result: AcquireProductsResult): Response {
 function createErrorResponse(
   code: StoreAcquisitionErrorCode,
   status: number,
-  details: { availableProductSlugs?: readonly string[] } = {},
+  details: {
+    availableProductSlugs?: readonly string[];
+    paidProductSlugs?: readonly string[];
+  } = {},
 ): Response {
   return Response.json(
     storeAcquisitionResponseSchema.parse({

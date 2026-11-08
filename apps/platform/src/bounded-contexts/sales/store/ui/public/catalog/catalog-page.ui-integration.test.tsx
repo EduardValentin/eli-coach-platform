@@ -736,6 +736,7 @@ function createProduct() {
     detailDescription: "Phase-by-phase nutrition guidance.",
     goals: [GOAL_WELLNESS],
     includedItems: ["Phase-by-phase guidance"],
+    price: null,
     slug: "hormone-harmony",
     title: "Hormone Harmony",
     types: [TYPE_E_BOOKS],

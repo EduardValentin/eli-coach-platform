@@ -4,7 +4,11 @@ import {
   createEmailAcceptance,
   type EmailSubaddressPolicy,
 } from "~/shared/submission-checks/email-address";
-import { PublishedProduct, type StoreCatalogPort } from "../product";
+import {
+  ProductPrice,
+  PublishedProduct,
+  type StoreCatalogPort,
+} from "../product";
 
 import { AcquireProductsUseCase } from "./acquire-products-use-case";
 import type { ProductDeliveryPort } from "./product-delivery-port";
@@ -27,6 +31,7 @@ const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
+  price: null,
   version: {
     id: 11,
     sequence: 2,
@@ -254,6 +259,36 @@ describe("AcquireProductsUseCase", () => {
     expect(result).toEqual({
       status: "unavailable_products",
       availableProductSlugs: ["hormone-harmony"],
+    });
+    expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
+    expect(productDeliveryPort.deliver).not.toHaveBeenCalled();
+  });
+
+  it("refuses a free request holding a paid product before recording, delivering or counting anything", async () => {
+    // arrange
+    const storeAcquisitionsPort = createAcquisitions();
+    const productDeliveryPort = createDelivery();
+    const paidProduct = PublishedProduct.reconstitute({
+      ...product,
+      price: ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+      slug: "glute-plan",
+    });
+    const { acquireProductsUseCase } = createUseCase({
+      storeAcquisitionsPort,
+      storeCatalogPort: createCatalog([product, paidProduct]),
+      productDeliveryPort,
+    });
+
+    // act
+    const result = await acquireProductsUseCase.execute({
+      ...command,
+      productSlugs: ["hormone-harmony", "glute-plan"],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "paid_products",
+      paidProductSlugs: ["glute-plan"],
     });
     expect(storeAcquisitionsPort.prepareAcquisition).not.toHaveBeenCalled();
     expect(productDeliveryPort.deliver).not.toHaveBeenCalled();

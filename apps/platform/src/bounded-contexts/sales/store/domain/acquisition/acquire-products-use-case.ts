@@ -31,6 +31,7 @@ export type AcquireProductsResult =
       status: "unavailable_products";
       availableProductSlugs: readonly string[];
     }
+  | { status: "paid_products"; paidProductSlugs: readonly string[] }
   | {
       status: "rate_limited";
       window: StoreDeliveryLimitWindow;
@@ -85,7 +86,7 @@ export class AcquireProductsUseCase {
 
     const selection = request.selectProducts(catalog);
 
-    if (selection.status === "unavailable_products") {
+    if (selection.status !== "selected") {
       return selection;
     }
 

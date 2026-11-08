@@ -25,12 +25,19 @@ const customerFilenameSchema = z
     message: "A customer filename may not be a directory reference.",
   });
 
-const downloadDescriptorSchema = z.object({
+const downloadDescriptorSchema = z.strictObject({
   field: z.string().trim().min(1).max(128),
   customerFilename: customerFilenameSchema,
 });
 
-const versionMetadataSchema = z.object({
+const idempotencyKeySchema = z.string().trim().min(1).max(128);
+
+const pricesSchema = z.strictObject({
+  eurCents: z.number().optional(),
+  usdCents: z.number().optional(),
+});
+
+const versionMetadataSchema = z.strictObject({
   title: z.string().trim().min(1).max(240),
   creatorName: z.string().trim().min(1).max(160),
   cardSummary: z.string().trim().min(1).max(500),
@@ -42,29 +49,29 @@ const versionMetadataSchema = z.object({
   downloads: z.array(downloadDescriptorSchema).min(1).max(32),
 });
 
-/**
- * Exactly one of the two, so an ambiguous request is rejected rather than
- * silently validated as whichever operation the reader happens to check first.
- */
-export const productValidationMetadataSchema = versionMetadataSchema
-  .extend({
-    slug: productSlugSchema.optional(),
-    targetProductSlug: productSlugSchema.optional(),
-  })
-  .refine(
-    (metadata) =>
-      Boolean(metadata.slug) !== Boolean(metadata.targetProductSlug),
-    {
-      message:
-        "Provide either slug for a new product or targetProductSlug for a revision, not both.",
-    },
-  );
+export const productValidationMetadataSchema = z.union([
+  versionMetadataSchema.extend({
+    slug: productSlugSchema,
+    idempotencyKey: idempotencyKeySchema.optional(),
+    prices: pricesSchema.nullable().optional(),
+  }),
+  versionMetadataSchema.extend({
+    targetProductSlug: productSlugSchema,
+    idempotencyKey: idempotencyKeySchema.optional(),
+  }),
+]);
 
 export const newProductMetadataSchema = versionMetadataSchema.extend({
   slug: productSlugSchema,
-  idempotencyKey: z.string().trim().min(1).max(128),
+  idempotencyKey: idempotencyKeySchema,
+  prices: pricesSchema.nullable().optional(),
 });
 
 export const productVersionMetadataSchema = versionMetadataSchema.extend({
-  idempotencyKey: z.string().trim().min(1).max(128),
+  idempotencyKey: idempotencyKeySchema,
+});
+
+export const productPriceChangeSchema = z.strictObject({
+  idempotencyKey: idempotencyKeySchema,
+  prices: pricesSchema.nullable(),
 });

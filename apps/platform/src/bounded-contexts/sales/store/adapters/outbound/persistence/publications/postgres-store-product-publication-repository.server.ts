@@ -1,7 +1,12 @@
 import {
   Product,
+  ProductPrice,
+  type PersistPriceChangeCommand,
   type PersistPublicationCommand,
+  type ProductPriceSnapshot,
   type ProductPublication,
+  type PublicationOperation,
+  type PublishingPrincipal,
   type StoreProductPublicationsPort,
   type StoreTaxonomySnapshot,
   type StoredPublicationRecord,
@@ -19,21 +24,34 @@ type TaxonomyRow = {
 
 type ProductRow = {
   displayOrder: number;
+  eurCents: number | null;
   id: number;
   latestVersionSequence: number | string;
   lifecycleStatus: "archived" | "draft" | "published";
   slug: string;
+  usdCents: number | null;
 };
 
 type StoredPublicationRow = {
   createdAt: Date | string;
   id: number;
-  operation: "create_product" | "revise_product";
+  operation: PublicationOperation;
   payloadDigest: string;
   productId: number;
   productSlug: string;
-  productVersionId: number;
+  productVersionId: number | null;
 };
+
+type PublicationRecordInput = {
+  idempotencyKey: string;
+  operation: PublicationOperation;
+  payloadDigest: string;
+  productId: number;
+  productVersionId: number | null;
+  publishedBy: PublishingPrincipal;
+};
+
+type InsertedPublicationRow = { createdAt: Date | string; id: number };
 
 type IdRow = { id: number };
 
@@ -124,6 +142,64 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     );
   }
 
+  async persistPriceChange(
+    command: PersistPriceChangeCommand,
+  ): Promise<ProductPublication> {
+    return this.runWithRetry(() =>
+      this.executor.transaction(
+        async (transaction) =>
+          this.persistPriceChangeInTransaction(transaction, command),
+        { isolationLevel: "serializable" },
+      ),
+    );
+  }
+
+  private async persistPriceChangeInTransaction(
+    transaction: DatabaseExecutor,
+    command: PersistPriceChangeCommand,
+  ): Promise<ProductPublication> {
+    await transaction.execute(sql`
+      select id
+      from app.products
+      where id = ${command.productId}
+      for update
+    `);
+
+    const replayed = await transaction.execute<StoredPublicationRow>(sql`
+      ${selectPublication(
+        sql`publication.idempotency_key = ${command.idempotencyKey}`,
+      )}
+    `);
+
+    if (replayed.rows[0]) {
+      return mapStoredPublication(replayed.rows[0]).publication;
+    }
+
+    const publicationRow = await this.insertPublication(transaction, {
+      idempotencyKey: command.idempotencyKey,
+      operation: "reprice_product",
+      payloadDigest: command.payloadDigest,
+      productId: command.productId,
+      productVersionId: null,
+      publishedBy: command.publishedBy,
+    });
+
+    await this.insertPriceRevision(transaction, {
+      price: command.price,
+      productId: command.productId,
+      publicationId: publicationRow.id,
+    });
+
+    return {
+      id: publicationRow.id,
+      operation: "reprice_product",
+      productId: command.productId,
+      productSlug: command.productSlug,
+      productVersionId: null,
+      publishedAt: new Date(publicationRow.createdAt),
+    };
+  }
+
   private async persistInTransaction(
     transaction: DatabaseExecutor,
     command: PersistPublicationCommand,
@@ -171,10 +247,38 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       where id = ${productId}
     `);
 
-    const publicationResult = await transaction.execute<{
-      createdAt: Date | string;
-      id: number;
-    }>(sql`
+    const publicationRow = await this.insertPublication(transaction, {
+      idempotencyKey: command.idempotencyKey,
+      operation: command.operation,
+      payloadDigest: command.payloadDigest,
+      productId,
+      productVersionId: versionId,
+      publishedBy: command.publishedBy,
+    });
+
+    if (command.price) {
+      await this.insertPriceRevision(transaction, {
+        price: command.price,
+        productId,
+        publicationId: publicationRow.id,
+      });
+    }
+
+    return {
+      id: publicationRow.id,
+      operation: command.operation,
+      productId,
+      productSlug: command.productSlug,
+      productVersionId: versionId,
+      publishedAt: new Date(publicationRow.createdAt),
+    };
+  }
+
+  private async insertPublication(
+    transaction: DatabaseExecutor,
+    input: PublicationRecordInput,
+  ): Promise<InsertedPublicationRow> {
+    const result = await transaction.execute<InsertedPublicationRow>(sql`
       insert into app.product_publications (
         product_id,
         product_version_id,
@@ -185,26 +289,45 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
         published_by_id
       )
       values (
-        ${productId},
-        ${versionId},
-        ${command.operation},
-        ${command.idempotencyKey},
-        ${command.payloadDigest},
-        ${command.publishedBy.kind},
-        ${command.publishedBy.id}
+        ${input.productId},
+        ${input.productVersionId},
+        ${input.operation},
+        ${input.idempotencyKey},
+        ${input.payloadDigest},
+        ${input.publishedBy.kind},
+        ${input.publishedBy.id}
       )
       returning id, created_at as "createdAt"
     `);
-    const publicationRow = publicationResult.rows[0]!;
 
-    return {
-      id: publicationRow.id,
-      operation: command.operation,
-      productId,
-      productSlug: command.productSlug,
-      productVersionId: versionId,
-      publishedAt: new Date(publicationRow.createdAt),
-    };
+    return result.rows[0]!;
+  }
+
+  private async insertPriceRevision(
+    transaction: DatabaseExecutor,
+    input: {
+      price: ProductPriceSnapshot | null;
+      productId: number;
+      publicationId: number;
+    },
+  ): Promise<void> {
+    await transaction.execute(sql`
+      insert into app.product_price_revisions (
+        product_id,
+        sequence,
+        eur_cents,
+        usd_cents,
+        publication_id
+      )
+      select
+        ${input.productId},
+        coalesce(max(price_revision.sequence), 0) + 1,
+        ${input.price?.eurCents ?? null}::integer,
+        ${input.price?.usdCents ?? null}::integer,
+        ${input.publicationId}
+      from app.product_price_revisions price_revision
+      where price_revision.product_id = ${input.productId}
+    `);
   }
 
   private async loadProduct(
@@ -223,8 +346,17 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
             where product_version.product_id = product.id
           ),
           0
-        ) as "latestVersionSequence"
+        ) as "latestVersionSequence",
+        current_price.eur_cents as "eurCents",
+        current_price.usd_cents as "usdCents"
       from app.products product
+      left join lateral (
+        select price_revision.eur_cents, price_revision.usd_cents
+        from app.product_price_revisions price_revision
+        where price_revision.product_id = product.id
+        order by price_revision.sequence desc
+        limit 1
+      ) current_price on true
       where ${predicate}
       limit 1
     `);
@@ -232,6 +364,13 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
 
     return row
       ? Product.reconstitute({
+          currentPrice:
+            row.eurCents !== null && row.usdCents !== null
+              ? ProductPrice.reconstitute({
+                  eurCents: row.eurCents,
+                  usdCents: row.usdCents,
+                })
+              : null,
           displayOrder: row.displayOrder,
           id: row.id,
           latestVersionSequence: Number(row.latestVersionSequence),

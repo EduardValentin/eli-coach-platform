@@ -1,5 +1,6 @@
 import {
   MAX_PUBLICATION_BYTES,
+  type ChangeProductPriceUseCase,
   type PlanNewProductUseCase,
   type PlanProductRevisionUseCase,
   type PublishNewProductUseCase,
@@ -53,7 +54,17 @@ function createAuthenticator(
   return { authenticate: vi.fn().mockResolvedValue(result) };
 }
 
+const repricedPublication = {
+  id: 52,
+  operation: "reprice_product" as const,
+  productId: 7,
+  productSlug: "glute-growth-guide",
+  productVersionId: null,
+  publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+};
+
 type PublicationUseCases = {
+  changeProductPriceUseCase: ChangeProductPriceUseCase;
   planNewProductUseCase: PlanNewProductUseCase;
   planProductRevisionUseCase: PlanProductRevisionUseCase;
   publishNewProductUseCase: PublishNewProductUseCase;
@@ -71,6 +82,10 @@ function createUseCases(
   overrides: Partial<PublicationUseCases> = {},
 ): PublicationUseCases {
   return {
+    changeProductPriceUseCase: useCaseReturning({
+      status: "published",
+      publication: repricedPublication,
+    }),
     planNewProductUseCase: useCaseReturning({ status: "valid", plan: {} }),
     planProductRevisionUseCase: useCaseReturning({ status: "valid", plan: {} }),
     publishNewProductUseCase: useCaseReturning({
@@ -395,10 +410,12 @@ describe("StoreProductManagementController outcomes", () => {
       }),
     });
 
+    const { slug: _slug, ...revisionMetadata } = metadata;
+
     // act
     const response =
       await storeProductManagementController.publishProductVersion(
-        publicationRequest(),
+        publicationRequest({ metadata: revisionMetadata }),
         "404",
       );
 
@@ -519,5 +536,372 @@ describe("StoreProductManagementController outcomes", () => {
       expect.objectContaining({ productSlug: "glute-growth-guide" }),
     );
     expect(useCases.planNewProductUseCase.execute).not.toHaveBeenCalled();
+  });
+});
+
+function priceChangeRequest(
+  body: unknown,
+  overrides: { headers?: HeadersInit } = {},
+): Request {
+  return new Request(
+    "https://example.test/api/management/store/products/7/prices",
+    {
+      body: typeof body === "string" ? body : JSON.stringify(body),
+      headers: { "content-type": "application/json", ...overrides.headers },
+      method: "POST",
+    },
+  );
+}
+
+describe("StoreProductManagementController strict publication schemas", () => {
+  it("rejects an unknown top-level field on a new product", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+
+    // act
+    const response = await storeProductManagementController.publishProduct(
+      publicationRequest({ metadata: { ...metadata, price: 3900 } }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: { code: "invalid_request" },
+    });
+    expect(useCases.publishNewProductUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unknown field inside a download descriptor", async () => {
+    // arrange
+    const storeProductManagementController = createController({});
+
+    // act
+    const response = await storeProductManagementController.publishProduct(
+      publicationRequest({
+        metadata: {
+          ...metadata,
+          downloads: [
+            {
+              field: "file0",
+              customerFilename: "GluteGrowthGuide.pdf",
+              mimeType: "application/pdf",
+            },
+          ],
+        },
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects an unknown field inside the prices", async () => {
+    // arrange
+    const storeProductManagementController = createController({});
+
+    // act
+    const response = await storeProductManagementController.publishProduct(
+      publicationRequest({
+        metadata: {
+          ...metadata,
+          prices: { eurCents: 3900, usdCents: 4500, gbpCents: 3300 },
+        },
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects prices sent on a content revision", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+    const { slug: _slug, ...revisionMetadata } = metadata;
+
+    // act
+    const response =
+      await storeProductManagementController.publishProductVersion(
+        publicationRequest({
+          metadata: {
+            ...revisionMetadata,
+            prices: { eurCents: 3900, usdCents: 4500 },
+          },
+        }),
+        "7",
+      );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(
+      useCases.publishProductVersionUseCase.execute,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rejects prices on a dry run of a revision", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+    const { slug: _slug, idempotencyKey: _key, ...base } = metadata;
+
+    // act
+    const response = await storeProductManagementController.validate(
+      publicationRequest({
+        metadata: {
+          ...base,
+          prices: { eurCents: 3900, usdCents: 4500 },
+          targetProductSlug: "glute-growth-guide",
+        },
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(useCases.planProductRevisionUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it("passes a new product's prices to the publication as submitted", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+
+    // act
+    await storeProductManagementController.publishProduct(
+      publicationRequest({
+        metadata: { ...metadata, prices: { eurCents: 39.5 } },
+      }),
+    );
+
+    // assert
+    expect(useCases.publishNewProductUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ prices: { eurCents: 39.5 } }),
+    );
+  });
+
+  it("publishes a product without prices as free", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+
+    // act
+    await storeProductManagementController.publishProduct(publicationRequest());
+
+    // assert
+    expect(useCases.publishNewProductUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ prices: null }),
+    );
+  });
+
+  it("dry-runs a new paid product with its prices and the key it ignores", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+
+    // act
+    const response = await storeProductManagementController.validate(
+      publicationRequest({
+        metadata: { ...metadata, prices: { eurCents: 3900, usdCents: 4500 } },
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(useCases.planNewProductUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prices: { eurCents: 3900, usdCents: 4500 },
+        slug: "glute-growth-guide",
+      }),
+    );
+  });
+});
+
+describe("StoreProductManagementController price changes", () => {
+  it("authorizes before reading the body", async () => {
+    // arrange
+    const storeProductManagementController = createController({
+      managementAuthenticatorPort: createAuthenticator({
+        status: "unauthenticated",
+      }),
+    });
+    const request = priceChangeRequest({
+      idempotencyKey: "reprice-1",
+      prices: null,
+    });
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      request,
+      "7",
+    );
+
+    // assert
+    expect(response.status).toBe(401);
+    expect(request.bodyUsed).toBe(false);
+  });
+
+  it("records a new price and answers with the reprice publication", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      priceChangeRequest({
+        idempotencyKey: "reprice-1",
+        prices: { eurCents: 3900, usdCents: 4500 },
+      }),
+      "7",
+    );
+
+    // assert
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({
+      success: true,
+      publication: {
+        id: 52,
+        operation: "reprice_product",
+        prices: { eurCents: 3900, usdCents: 4500 },
+        productId: 7,
+        productSlug: "glute-growth-guide",
+        productVersionId: null,
+        publishedAt: "2026-11-08T12:00:00.000Z",
+        replayed: false,
+      },
+    });
+    expect(useCases.changeProductPriceUseCase.execute).toHaveBeenCalledWith({
+      idempotencyKey: "reprice-1",
+      prices: { eurCents: 3900, usdCents: 4500 },
+      productId: 7,
+      publishedBy: PRINCIPAL,
+    });
+  });
+
+  it("answers a replayed free change with 200 and no prices", async () => {
+    // arrange
+    const storeProductManagementController = createController({
+      useCases: createUseCases({
+        changeProductPriceUseCase: useCaseReturning({
+          status: "replayed",
+          publication: repricedPublication,
+        }),
+      }),
+    });
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      priceChangeRequest({ idempotencyKey: "reprice-1", prices: null }),
+      "7",
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      publication: { prices: null, replayed: true },
+    });
+  });
+
+  it.each([
+    ["omits prices", { idempotencyKey: "reprice-1" }],
+    ["omits the idempotency key", { prices: null }],
+    [
+      "carries an unknown field",
+      { idempotencyKey: "reprice-1", prices: null, productVersionId: 3 },
+    ],
+    [
+      "carries an unknown price field",
+      {
+        idempotencyKey: "reprice-1",
+        prices: { eurCents: 1, usdCents: 1, x: 1 },
+      },
+    ],
+    ["is not JSON", "{not json"],
+  ])("rejects a body that %s", async (_label, body) => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      priceChangeRequest(body),
+      "7",
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: { code: "invalid_request" },
+    });
+    expect(useCases.changeProductPriceUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it("rejects an oversized body", async () => {
+    // arrange
+    const storeProductManagementController = createController({});
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      priceChangeRequest({
+        idempotencyKey: "x".repeat(20_000),
+        prices: null,
+      }),
+      "7",
+    );
+
+    // assert
+    expect(response.status).toBe(413);
+  });
+
+  it("reports a malformed product id as unknown", async () => {
+    // arrange
+    const storeProductManagementController = createController({});
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      priceChangeRequest({ idempotencyKey: "reprice-1", prices: null }),
+      "abc",
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it.each([
+    [
+      "an unknown product",
+      { status: "invalid", issues: [{ code: "product_not_found" }] },
+      404,
+      "not_found",
+    ],
+    [
+      "a reused key",
+      { status: "idempotency_conflict" },
+      409,
+      "idempotency_conflict",
+    ],
+    [
+      "an unchanged price",
+      { status: "invalid", issues: [{ code: "price_unchanged" }] },
+      400,
+      "validation_failed",
+    ],
+    ["unavailable storage", { status: "unavailable" }, 503, "server_error"],
+  ])("maps %s", async (_label, result, status, code) => {
+    // arrange
+    const storeProductManagementController = createController({
+      useCases: createUseCases({
+        changeProductPriceUseCase: useCaseReturning(result),
+      }),
+    });
+
+    // act
+    const response = await storeProductManagementController.changeProductPrice(
+      priceChangeRequest({ idempotencyKey: "reprice-1", prices: null }),
+      "7",
+    );
+
+    // assert
+    expect(response.status).toBe(status);
+    expect(await response.json()).toMatchObject({ error: { code } });
   });
 });

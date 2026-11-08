@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ProductPrice } from "~/bounded-contexts/sales/store/domain/product";
 import type { DatabaseClient } from "~/shared/database";
 
 import { PostgresStoreCatalogRepository } from "./postgres-store-catalog-repository.server";
@@ -29,6 +30,8 @@ describe("PostgresStoreCatalogRepository", () => {
             coverSizeBytes: 96,
             coverSha256: "c".repeat(64),
             publishedAt: "2026-07-30T10:00:00.000Z",
+            eurCents: null,
+            usdCents: null,
           },
         ],
       })
@@ -77,6 +80,7 @@ describe("PostgresStoreCatalogRepository", () => {
         id: 7,
         slug: "hormone-harmony",
         displayOrder: 1,
+        price: null,
         version: {
           id: 11,
           sequence: 2,
@@ -108,5 +112,50 @@ describe("PostgresStoreCatalogRepository", () => {
         },
       },
     ]);
+  });
+
+  it("maps the current price of a paid product", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            productId: 8,
+            slug: "glute-plan",
+            displayOrder: 2,
+            versionId: 12,
+            versionSequence: 1,
+            title: "Glute Plan",
+            creatorName: "Eli Lungu",
+            cardSummary: "A twelve-week plan.",
+            detailDescription: "Progressive glute training.",
+            includedItems: ["Weekly sessions"],
+            coverAssetKey: "covers/glute-plan.webp",
+            coverAlt: "Glute Plan cover",
+            coverMimeType: "image/webp",
+            coverSizeBytes: 96,
+            coverSha256: "c".repeat(64),
+            publishedAt: "2026-11-08T10:00:00.000Z",
+            eurCents: 3900,
+            usdCents: 4500,
+          },
+        ],
+      })
+      .mockResolvedValue({ rows: [] });
+    const postgresStoreCatalogRepository = new PostgresStoreCatalogRepository({
+      execute,
+    } as unknown as DatabaseClient);
+
+    // act
+    const product =
+      await postgresStoreCatalogRepository.getPublishedProductBySlug(
+        "glute-plan",
+      );
+
+    // assert
+    expect(product?.price).toEqual(
+      ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+    );
   });
 });

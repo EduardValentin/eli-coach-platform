@@ -71,6 +71,8 @@ export function resolveAcquisitionError(
       "This request changed while it was being sent. Please try again.",
     invalid_request:
       "Please review your email and consent choices, then try again.",
+    paid_products:
+      "We couldn't send your resources right now. Your cart is saved, so please try again.",
     rate_limited_cooldown:
       "Requests are limited to one per minute. Your selections are saved — please wait a moment and try again.",
     rate_limited_daily:
