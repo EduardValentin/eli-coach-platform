@@ -17,6 +17,7 @@ import {
   summarizeDeletionResults,
   type ClerkUsersApi,
 } from "./clerk-users";
+import { recordStoreProduct } from "./store-products";
 
 const runtimeDirectory = resolve(e2eDirectory, ".runtime");
 // Mirrors clerk-users.ts's own MIN_LEFTOVER_AGE_MS. Not imported, because
@@ -38,10 +39,17 @@ function releasedPathFor(runId: string): string {
   return resolve(runtimeDirectory, `released-emails-${runId}.log`);
 }
 
+function storeProductsPathFor(runId: string): string {
+  return resolve(runtimeDirectory, `store-products-${runId}.log`);
+}
+
 // recordCreatedEmail always writes with the real current mtime, so a
 // scenario proving the age guard has to backdate a file after writing it.
 function backdateRegistryFile(runId: string, ageMs: number): void {
-  const path = registryPathFor(runId);
+  backdateFile(registryPathFor(runId), ageMs);
+}
+
+function backdateFile(path: string, ageMs: number): void {
   const timestamp = new Date(Date.now() - ageMs);
   utimesSync(path, timestamp, timestamp);
 }
@@ -51,7 +59,11 @@ describe("clerk-users registry", () => {
 
   afterEach(() => {
     for (const runId of createdRunIds.splice(0)) {
-      for (const path of [registryPathFor(runId), releasedPathFor(runId)]) {
+      for (const path of [
+        registryPathFor(runId),
+        releasedPathFor(runId),
+        storeProductsPathFor(runId),
+      ]) {
         if (existsSync(path)) {
           rmSync(path);
         }
@@ -152,6 +164,44 @@ describe("clerk-users registry", () => {
     expect(possiblyActive).toContain(activeRunId);
     expect(possiblyActive).not.toContain(oldRunId);
     expect(possiblyActive).not.toContain(currentRunId);
+  });
+
+  it("finds a leftover run that recorded only store products once its registry is old enough to sweep", () => {
+    // arrange
+    const currentRunId = uniqueRunId("current");
+    const storeOnlyRunId = uniqueRunId("store-only");
+    createdRunIds.push(currentRunId, storeOnlyRunId);
+    recordStoreProduct("glute-plan-store-only", storeOnlyRunId);
+    backdateFile(
+      storeProductsPathFor(storeOnlyRunId),
+      MIN_LEFTOVER_AGE_MS + 60_000,
+    );
+
+    // act
+    const leftovers = findLeftoverRunIds(currentRunId);
+
+    // assert
+    expect(leftovers).toContain(storeOnlyRunId);
+  });
+
+  it("keeps a run off the sweep while any of its registries was written within the age guard", () => {
+    // arrange
+    const currentRunId = uniqueRunId("current");
+    const activeRunId = uniqueRunId("active");
+    createdRunIds.push(currentRunId, activeRunId);
+    recordCreatedEmail("active+clerk_test@evoa.fit", activeRunId);
+    backdateRegistryFile(activeRunId, MIN_LEFTOVER_AGE_MS + 60_000);
+    recordStoreProduct("glute-plan-active", activeRunId);
+
+    // act
+    const leftovers = findLeftoverRunIds(currentRunId);
+    const possiblyActive = findPossiblyActiveRunIds(currentRunId);
+
+    // assert
+    expect(leftovers).not.toContain(activeRunId);
+    expect(possiblyActive.filter((runId) => runId === activeRunId)).toEqual([
+      activeRunId,
+    ]);
   });
 
   it("deletes a run's registry file with its record of released addresses", () => {

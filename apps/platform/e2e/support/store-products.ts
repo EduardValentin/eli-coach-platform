@@ -1,7 +1,7 @@
 import { createE2eDatabasePool } from "./database";
 import { runRegistry } from "./run-registry";
 
-const storeProducts = runRegistry("store-products-");
+export const storeProductRegistry = runRegistry("store-products-");
 
 const RETIRE_RUN_PRODUCTS = `
   update app.products
@@ -10,14 +10,14 @@ const RETIRE_RUN_PRODUCTS = `
 `;
 
 export function recordStoreProduct(slug: string, runId: string): void {
-  storeProducts.record(slug, runId);
+  storeProductRegistry.record(slug, runId);
 }
 
 export async function cleanUpRunStoreProducts(
   runId: string,
   logPrefix: string,
 ): Promise<{ allCleaned: boolean }> {
-  const slugs = storeProducts.read(runId);
+  const slugs = storeProductRegistry.read(runId);
 
   if (slugs.length === 0) {
     return { allCleaned: true };
@@ -28,7 +28,7 @@ export async function cleanUpRunStoreProducts(
   try {
     const { rowCount } = await pool.query(RETIRE_RUN_PRODUCTS, [slugs]);
     console.log(`${logPrefix} Store products: retired ${rowCount ?? 0}`);
-    storeProducts.remove(runId);
+    storeProductRegistry.remove(runId);
 
     return { allCleaned: true };
   } catch (error) {

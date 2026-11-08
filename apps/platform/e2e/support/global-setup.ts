@@ -1,11 +1,7 @@
 import { createClerkClient } from "@clerk/backend";
 import { clerkSetup } from "@clerk/testing/playwright";
 
-import {
-  findLeftoverRunIds,
-  findPossiblyActiveRunIds,
-  registryFileName,
-} from "./clerk-users";
+import { findLeftoverRunIds, findPossiblyActiveRunIds } from "./clerk-users";
 import { startEmailCapture } from "./email-capture";
 import {
   isPlaceholderValue,
@@ -50,9 +46,7 @@ function requireRealSignInUrl(): void {
 // run. A younger foreign file is left in place and logged instead of swept.
 async function sweepLeftoverRegistries(currentRunId: string): Promise<void> {
   for (const runId of findPossiblyActiveRunIds(currentRunId)) {
-    console.log(
-      `[e2e cleanup sweep] skipping possibly-active registry ${registryFileName(runId)}`,
-    );
+    console.log(`[e2e cleanup sweep] skipping possibly-active run ${runId}`);
   }
 
   const leftoverRunIds = findLeftoverRunIds(currentRunId);

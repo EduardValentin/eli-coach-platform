@@ -76,6 +76,7 @@ import { StoreCartDrawer } from "./store-cart-drawer";
 import { StoreCatalogPage } from "./store-catalog-page";
 import { StoreProductPage } from "./store-product-page";
 import { StoreProductRequests } from "./store-product-requests";
+import { recordStoreProduct } from "./store-products";
 import { WeeklyCheckInDialog } from "./weekly-check-in-dialog";
 import {
   insertInvitedClientRecords,
@@ -696,7 +697,11 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
       },
     });
 
-    await use(new StoreProductRequests(management, RUN_ID));
+    await use(
+      new StoreProductRequests(management, (slug) =>
+        recordStoreProduct(slug, RUN_ID),
+      ),
+    );
     await management.dispose();
   },
 

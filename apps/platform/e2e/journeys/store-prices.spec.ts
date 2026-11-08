@@ -3,7 +3,7 @@ import type { StorePrice } from "~/bounded-contexts/sales/store/public/store-cur
 import { subjectsTo } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
 import { resolveRunId } from "../support/run-id";
-import type { StoreProductListing } from "../support/store-product-requests";
+import type { StoreProductFields } from "../support/store-product-requests";
 
 const RUN_ID = resolveRunId();
 const PLAN_PRICES: StorePrice = { eurCents: 3900, usdCents: 4500 };
@@ -11,11 +11,11 @@ const RAISED_PLAN_PRICES: StorePrice = { eurCents: 4900, usdCents: 5500 };
 const NOT_SENT =
   "We couldn't send your resources right now. Your cart is saved, so please try again.";
 
-function listingOf(
+function storeProductFieldsOf(
   name: string,
   scenarioTag: string,
   prices: StorePrice | null,
-): StoreProductListing {
+): StoreProductFields {
   return {
     slug: `${name.toLowerCase().replaceAll(" ", "-")}-${RUN_ID}-${scenarioTag}`,
     title: `${name} ${scenarioTag}`,
@@ -35,8 +35,8 @@ test(
     storeProductRequests,
   }) => {
     // arrange
-    const plan = listingOf("Glute Plan", scenarioTag, PLAN_PRICES);
-    const guide = listingOf("Mobility Guide", scenarioTag, null);
+    const plan = storeProductFieldsOf("Glute Plan", scenarioTag, PLAN_PRICES);
+    const guide = storeProductFieldsOf("Mobility Guide", scenarioTag, null);
     await storeProductRequests.publishAccepted(plan);
     await storeProductRequests.publishAccepted(guide);
 
@@ -82,7 +82,7 @@ test(
   { tag: "@completeness" },
   async ({ page, scenarioTag, storeCatalog, storeProductRequests }) => {
     // arrange
-    const plan = listingOf("Hormone Plan", scenarioTag, PLAN_PRICES);
+    const plan = storeProductFieldsOf("Hormone Plan", scenarioTag, PLAN_PRICES);
     const productId = await storeProductRequests.publishAccepted(plan);
 
     // act
@@ -121,8 +121,12 @@ test(
     visitorEmail,
   }) => {
     // arrange
-    const plan = listingOf("Strength Plan", scenarioTag, PLAN_PRICES);
-    const guide = listingOf("Recovery Guide", scenarioTag, null);
+    const plan = storeProductFieldsOf(
+      "Strength Plan",
+      scenarioTag,
+      PLAN_PRICES,
+    );
+    const guide = storeProductFieldsOf("Recovery Guide", scenarioTag, null);
     await storeProductRequests.publishAccepted(plan);
     await storeProductRequests.publishAccepted(guide);
     await storeCatalog.open();

@@ -1,6 +1,7 @@
 import { statSync } from "node:fs";
 
-import { runRegistry } from "./run-registry";
+import { runRegistry, type RunRegistry } from "./run-registry";
+import { storeProductRegistry } from "./store-products";
 
 // Every Clerk Development-instance user this suite creates has to be deleted
 // again — the instance carries a hard 100-user cap, and letting
@@ -28,10 +29,6 @@ const createdEmails = runRegistry("created-emails-");
 // The addresses whose users and invitations a journey already removed as it
 // ended, so teardown looks up only what a crashed journey left behind.
 const releasedEmails = runRegistry("released-emails-");
-
-export function registryFileName(runId: string): string {
-  return createdEmails.fileName(runId);
-}
 
 // Single worker, sequential tests (see playwright.config.ts) — a plain
 // synchronous append needs no cross-process locking.
@@ -79,6 +76,11 @@ const MIN_LEFTOVER_AGE_MS = 2 * 60 * 60 * 1000;
 
 type ForeignRegistryFile = { runId: string; mtimeMs: number };
 
+const SWEPT_REGISTRIES: readonly RunRegistry[] = [
+  createdEmails,
+  storeProductRegistry,
+];
+
 // Every other run's registry file still on disk when this run starts,
 // regardless of age. Excludes the current run (which hasn't recorded
 // anything of its own yet, but shares the runtime directory). Shared by
@@ -86,29 +88,39 @@ type ForeignRegistryFile = { runId: string; mtimeMs: number };
 // partition of the same listing rather than two independent directory scans
 // that could drift apart.
 function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
-  return (
-    createdEmails
-      .recordedRunIds()
-      .filter((runId) => runId !== currentRunId)
-      // A concurrent run's own deleteRegistryFile (called once its users are
-      // all accounted for) can remove a file between this readdir and the stat
-      // below. That race is exactly what this sweep exists to survive, so a
-      // file gone by the time it's stat'd is skipped rather than treated as a
-      // failure — it means the other run already finished cleaning up.
-      .flatMap((runId) => {
-        try {
-          return [
-            { runId, mtimeMs: statSync(createdEmails.filePath(runId)).mtimeMs },
-          ];
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-            return [];
-          }
+  const latestWrites = new Map<string, number>();
 
-          throw error;
-        }
-      })
-  );
+  for (const registry of SWEPT_REGISTRIES) {
+    for (const runId of registry.recordedRunIds()) {
+      const mtimeMs = lastWriteOf(registry, runId);
+
+      if (runId !== currentRunId && mtimeMs !== undefined) {
+        latestWrites.set(
+          runId,
+          Math.max(latestWrites.get(runId) ?? mtimeMs, mtimeMs),
+        );
+      }
+    }
+  }
+
+  return [...latestWrites].map(([runId, mtimeMs]) => ({ runId, mtimeMs }));
+}
+
+function lastWriteOf(registry: RunRegistry, runId: string): number | undefined {
+  // A concurrent run's own deleteRegistryFile (called once its users are
+  // all accounted for) can remove a file between this readdir and the stat
+  // below. That race is exactly what this sweep exists to survive, so a
+  // file gone by the time it's stat'd is skipped rather than treated as a
+  // failure — it means the other run already finished cleaning up.
+  try {
+    return statSync(registry.filePath(runId)).mtimeMs;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 // Foreign registry files old enough to be safely swept — candidates for

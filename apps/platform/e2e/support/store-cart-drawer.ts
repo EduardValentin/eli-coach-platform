@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
-const FREE_TAG = "Free";
+export const FREE_TAG = "Free";
 
 export class StoreCartDrawer {
   constructor(private readonly page: Page) {}

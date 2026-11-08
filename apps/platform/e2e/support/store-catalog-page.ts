@@ -3,13 +3,11 @@ import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import type { StoreCurrency } from "~/bounded-contexts/sales/store/public/store-currency";
 
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
-import type { StoreCartDrawer } from "./store-cart-drawer";
+import { FREE_TAG, type StoreCartDrawer } from "./store-cart-drawer";
 
 const PLANS = "Plans";
 
 const FREE_RESOURCES = "Free resources";
-
-const FREE_TAG = "Free";
 
 export class StoreCatalogPage {
   constructor(

@@ -5,13 +5,12 @@ import type { StorePrice } from "~/bounded-contexts/sales/store/public/store-cur
 
 import { answerOf, type ApiAnswer } from "./api-answers";
 import {
+  fileOf,
   japaneseMenuPdf,
   stretchingPhotoWebp,
-  type SampleResource,
 } from "./sample-resources";
-import { recordStoreProduct } from "./store-products";
 
-export type StoreProductListing = {
+export type StoreProductFields = {
   slug: string;
   title: string;
   prices: StorePrice | null;
@@ -28,10 +27,10 @@ const PUBLISHED = 201;
 export class StoreProductRequests {
   constructor(
     private readonly request: APIRequestContext,
-    private readonly runId: string,
+    private readonly recordPublishing: (slug: string) => void,
   ) {}
 
-  private metadataOf({ slug, title, prices }: StoreProductListing) {
+  private metadataOf({ slug, title, prices }: StoreProductFields) {
     return {
       slug,
       idempotencyKey: randomUUID(),
@@ -49,21 +48,15 @@ export class StoreProductRequests {
   }
 
   private async publicationPartsOf(
-    listing: StoreProductListing,
+    fields: StoreProductFields,
   ): Promise<FormData> {
     const parts = new FormData();
 
-    parts.append("metadata", JSON.stringify(this.metadataOf(listing)));
-    parts.append("cover", this.fileOf(await stretchingPhotoWebp()));
-    parts.append(DOWNLOAD_FIELD, this.fileOf(japaneseMenuPdf()));
+    parts.append("metadata", JSON.stringify(this.metadataOf(fields)));
+    parts.append("cover", fileOf(await stretchingPhotoWebp()));
+    parts.append(DOWNLOAD_FIELD, fileOf(japaneseMenuPdf()));
 
     return parts;
-  }
-
-  private fileOf(sample: SampleResource): File {
-    return new File([new Uint8Array(sample.buffer)], sample.name, {
-      type: sample.mimeType,
-    });
   }
 
   private requirePublished(answer: ApiAnswer, attempt: string): void {
@@ -74,15 +67,15 @@ export class StoreProductRequests {
     }
   }
 
-  async publishAccepted(listing: StoreProductListing): Promise<number> {
-    recordStoreProduct(listing.slug, this.runId);
+  async publishAccepted(fields: StoreProductFields): Promise<number> {
+    this.recordPublishing(fields.slug);
     const answer = await answerOf(
       await this.request.post(PRODUCTS_PATH, {
-        multipart: await this.publicationPartsOf(listing),
+        multipart: await this.publicationPartsOf(fields),
       }),
     );
 
-    this.requirePublished(answer, `Publishing ${listing.title}`);
+    this.requirePublished(answer, `Publishing ${fields.title}`);
 
     return (answer.body as PublishedProductAnswer).publication.productId;
   }
