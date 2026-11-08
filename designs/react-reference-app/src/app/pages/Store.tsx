@@ -51,7 +51,7 @@ export function Store() {
 
       <div className="max-w-7xl mx-auto px-6 pt-32">
         {/* Header & Currency Switcher */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div className="max-w-2xl">
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-4 tracking-tight">
               Find the right plan
@@ -79,7 +79,7 @@ export function Store() {
               </ToggleGroupItem>
             </ToggleGroup>
           )}
-        </div>
+        </header>
 
         {isCatalogEmpty ? (
           <div className="flex flex-col items-center gap-4 text-center py-24">
@@ -149,7 +149,7 @@ export function Store() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {paidProducts.map(product => (
-                    <motion.div
+                    <motion.article
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -193,7 +193,7 @@ export function Store() {
                           <ShoppingBag size={18} aria-hidden="true" /> Add to Cart
                         </button>
                       </div>
-                    </motion.div>
+                    </motion.article>
                   ))}
                 </div>
               </section>
@@ -207,7 +207,7 @@ export function Store() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {freeProducts.map(product => (
-                    <motion.div
+                    <motion.article
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -246,7 +246,7 @@ export function Store() {
                           <Plus size={18} aria-hidden="true" /> Get for free
                         </button>
                       </div>
-                    </motion.div>
+                    </motion.article>
                   ))}
                 </div>
               </section>

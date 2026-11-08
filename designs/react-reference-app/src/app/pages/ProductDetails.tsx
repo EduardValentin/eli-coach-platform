@@ -38,7 +38,7 @@ export function ProductDetails() {
     <main className="w-full min-h-screen pb-24 bg-surface-page" data-parity-root="ProductDetails">
       <Navbar theme="dark" />
 
-      <div className="max-w-6xl mx-auto px-6 pt-32">
+      <article className="max-w-6xl mx-auto px-6 pt-32">
         <Link to="/store" className="inline-flex items-center gap-2 text-sm font-medium text-copy-muted hover:text-brand transition-colors mb-12 group">
           <ArrowLeft size={16} aria-hidden="true" className="group-hover:-translate-x-1 transition-transform" /> Back to Store
         </Link>
@@ -141,7 +141,7 @@ export function ProductDetails() {
             </p>
           </motion.div>
         </div>
-      </div>
+      </article>
     </main>
     <LegalFooter />
     </>
