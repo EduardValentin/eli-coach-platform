@@ -67,4 +67,5 @@ export {
 } from "./table";
 export { TagInput } from "./tag-input";
 export { Textarea } from "./textarea";
+export { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 export { ValueTile } from "./value-tile";
