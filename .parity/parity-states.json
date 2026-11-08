@@ -6314,24 +6314,17 @@
       "waitFor": "[data-parity-root=\"Store\"] p:text-is(\"No products found matching your filters.\")"
     }
   ],
-  "cart-empty": {
-    "prototype": [
-      {
-        "click": "role=button[name=\"Open cart\"] >> visible=true >> nth=0"
-      },
-      {
-        "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
-      }
-    ],
-    "real": [
-      {
-        "click": "role=button[name=\"Cart, 0 items\"] >> visible=true >> nth=0"
-      },
-      {
-        "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
-      }
-    ]
-  },
+  "cart-empty": [
+    {
+      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+    },
+    {
+      "click": "role=button[name=/^Remove .+ from cart$/]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
+    }
+  ],
   "cart-paid-details": [
     {
       "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
