@@ -61,7 +61,7 @@ The dry run drops `idempotencyKey`. It needs either `slug`, to validate a new
 product, or `targetProductSlug`, to validate a revision of an existing one; only
 the new-product form accepts `prices`. It returns the publication plan — storage
 keys, per-file MIME/size/SHA-256, resolved taxonomy, assigned order or sequence,
-and the resolved `prices` (`null` for a free product) — and writes nothing.
+and the resolved `prices` (`null` for a free product, and always `null` for a revision, whose prices it does not change) — and writes nothing.
 
 **Accepted values**
 
