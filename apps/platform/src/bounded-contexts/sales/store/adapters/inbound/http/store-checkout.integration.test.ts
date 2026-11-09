@@ -8,6 +8,7 @@ import {
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "~/bounded-contexts/legal/public";
+import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 import { STORE_ACQUISITION_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -626,7 +627,7 @@ describe("Store checkout integration", () => {
     // act
     const repriced = await changePrice(FAT_LOSS.slug, {
       idempotencyKey: "2c3d4e5f-6071-4c8d-8e9f-1a2b3c4d5e6f",
-      prices: { eurCents: 9900, usdCents: 9900 },
+      pricing: { kind: "paid", eurCents: 9900, usdCents: 9900 },
     });
     const retired = await retireProduct(NUTRITIONAL_RESET.slug);
     const download = await requestDownload(downloadTokenFrom(orderEmail!));
@@ -915,7 +916,7 @@ async function changePrice(
   slug: string,
   body: {
     idempotencyKey: string;
-    prices: { eurCents: number; usdCents: number } | null;
+    pricing: ProductPricingRequest;
   },
 ): Promise<Response> {
   return suite.request(
@@ -965,16 +966,20 @@ async function seedCatalog(): Promise<void> {
     await seedPublishedProduct(product);
   }
 
-  const prices = [
+  const prices: readonly {
+    slug: string;
+    idempotencyKey: string;
+    pricing: ProductPricingRequest;
+  }[] = [
     {
       slug: FAT_LOSS.slug,
       idempotencyKey: "4e5f6071-8293-4eaf-8b01-3c4d5e6f7081",
-      prices: { eurCents: 3900, usdCents: 4500 },
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
     },
     {
       slug: NUTRITIONAL_RESET.slug,
       idempotencyKey: "5f607182-93a4-4fb0-9c12-4d5e6f708192",
-      prices: { eurCents: 2900, usdCents: 3300 },
+      pricing: { kind: "paid", eurCents: 2900, usdCents: 3300 },
     },
   ];
 
