@@ -1,9 +1,9 @@
-import type { APIRequestContext } from "@playwright/test";
-import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";
+import { readFile } from "node:fs/promises";
 
-type StoreDownload = {
-  status: number;
-  contentType: string;
+import { expect, type Page } from "@playwright/test";
+
+type StoreDownloadedFile = {
+  suggestedFilename: string;
   archiveEntryNames: string[];
 };
 
@@ -15,19 +15,28 @@ const NAME_LENGTH_OFFSET = 28;
 const EXTRA_LENGTH_OFFSET = 30;
 const COMMENT_LENGTH_OFFSET = 32;
 
-export class StoreDownloads {
-  constructor(private readonly request: APIRequestContext) {}
+export class StoreDownloadPage {
+  constructor(private readonly page: Page) {}
 
-  async downloadThrough(link: string): Promise<StoreDownload> {
-    const response = await this.request.post(STORE_API_PATHS.downloads, {
-      multipart: { token: new URL(link).hash.slice(1) },
-      maxRedirects: 0,
-    });
+  async open(link: string): Promise<void> {
+    await this.page.goto(link);
+    await expect(
+      this.page.getByRole("heading", { level: 1, name: "Your resources" }),
+    ).toBeVisible();
+  }
+
+  async download(): Promise<StoreDownloadedFile> {
+    const downloadEvent = this.page.waitForEvent("download");
+    await this.page
+      .getByRole("button", { name: "Download your resources" })
+      .click();
+    const download = await downloadEvent;
 
     return {
-      status: response.status(),
-      contentType: response.headers()["content-type"] ?? "",
-      archiveEntryNames: this.archiveEntryNamesOf(await response.body()),
+      suggestedFilename: download.suggestedFilename(),
+      archiveEntryNames: this.archiveEntryNamesOf(
+        await readFile(await download.path()),
+      ),
     };
   }
 
