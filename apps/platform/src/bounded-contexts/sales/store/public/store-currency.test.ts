@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_STORE_CURRENCY,
+  formatStoreAmount,
   formatStorePrice,
   readStoreCurrency,
   STORE_CURRENCY_COOKIE_NAME,
@@ -88,5 +89,23 @@ describe("formatting a store price", () => {
     // assert
     expect(euros).toBe("€12,345.67");
     expect(dollars).toBe("$0.99");
+  });
+});
+
+describe("formatting a store amount", () => {
+  it("writes an order amount in minor units in the order's currency", () => {
+    // arrange
+    const amounts = [
+      { amountMinorUnits: 6800, currency: "EUR" as const },
+      { amountMinorUnits: 7800, currency: "USD" as const },
+    ];
+
+    // act
+    const formatted = amounts.map(({ amountMinorUnits, currency }) =>
+      formatStoreAmount(amountMinorUnits, currency),
+    );
+
+    // assert
+    expect(formatted).toEqual(["€68.00", "$78.00"]);
   });
 });

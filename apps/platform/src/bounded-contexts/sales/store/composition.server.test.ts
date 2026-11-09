@@ -52,7 +52,7 @@ describe("composeStoreFeature", () => {
 
   it("maps a catalog repository failure to an unavailable response", async () => {
     // arrange
-    const feature = composeStoreFeature({
+    const { feature } = composeStoreFeature({
       appBasePath: "/",
       botVerifierPort: {
         verifySubmission: async () => ({ status: "verified" }),
@@ -66,8 +66,10 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      paymentProvider: { name: "memory" },
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+        termsDocument: () => null,
       },
     });
 
@@ -82,7 +84,7 @@ describe("composeStoreFeature", () => {
 
   it("maps a grant repository failure to a temporary-unavailable response", async () => {
     // arrange
-    const feature = composeStoreFeature({
+    const { feature } = composeStoreFeature({
       appBasePath: "/",
       botVerifierPort: {
         verifySubmission: async () => ({ status: "verified" }),
@@ -96,8 +98,10 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      paymentProvider: { name: "memory" },
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+        termsDocument: () => null,
       },
     });
     const formData = new FormData();
@@ -119,7 +123,7 @@ describe("composeStoreFeature", () => {
 
   it("hands the subaddress policy to the store request", async () => {
     // arrange
-    const feature = composeStoreFeature({
+    const { feature } = composeStoreFeature({
       appBasePath: "/",
       botVerifierPort: {
         verifySubmission: async () => ({ status: "verified" }),
@@ -133,8 +137,10 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      paymentProvider: { name: "memory" },
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+        termsDocument: () => null,
       },
     });
     const formData = new FormData();

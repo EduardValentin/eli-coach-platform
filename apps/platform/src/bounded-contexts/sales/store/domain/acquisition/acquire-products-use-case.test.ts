@@ -162,6 +162,7 @@ function createUseCase(options: {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -320,6 +321,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -521,6 +523,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "2.0",
+          paidDeliveryConsentTermsVersion: "2.0",
           privacyPolicyVersion: "3.0",
           termsVersion: "2.0",
         }),
@@ -579,6 +582,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -617,6 +621,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),

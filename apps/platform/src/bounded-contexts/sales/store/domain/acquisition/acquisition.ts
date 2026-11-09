@@ -97,19 +97,23 @@ export class AcquisitionRequest {
     });
   }
 
-  get deliveryLimitKey(): string {
-    const domainIndex = this.email.lastIndexOf("@");
+  static deliveryLimitKeyOf(email: string): string {
+    const domainIndex = email.lastIndexOf("@");
 
     if (domainIndex < 0) {
-      return this.email;
+      return email;
     }
 
-    const localPart = this.email.slice(0, domainIndex);
+    const localPart = email.slice(0, domainIndex);
     const tagIndex = localPart.indexOf(SUBADDRESS_SEPARATOR);
 
     return tagIndex < 0
-      ? this.email
-      : `${localPart.slice(0, tagIndex)}${this.email.slice(domainIndex)}`;
+      ? email
+      : `${localPart.slice(0, tagIndex)}${email.slice(domainIndex)}`;
+  }
+
+  get deliveryLimitKey(): string {
+    return AcquisitionRequest.deliveryLimitKeyOf(this.email);
   }
 
   canonicalPayload(): string {
