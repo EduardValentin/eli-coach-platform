@@ -42,7 +42,7 @@ export function HintPopover({
       <PopoverContent
         align={align}
         aria-labelledby={hintId}
-        className="z-[72] w-fit max-w-sm rounded-field border-0 bg-surface-inverted px-3 py-1.5 text-xs text-pretty text-text-inverted shadow-none"
+        className="z-floating-over-sheet w-fit max-w-sm rounded-field border-0 bg-surface-inverted px-3 py-1.5 text-xs text-pretty text-text-inverted shadow-none"
         collisionPadding={16}
         data-parity={contentParity}
         data-parity-root={contentParityRoot}

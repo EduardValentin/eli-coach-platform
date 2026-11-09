@@ -21,7 +21,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -52,7 +52,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -78,7 +78,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -101,7 +101,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -192,6 +192,22 @@ describe("reduceAcquisitionFlow for a paid checkout", () => {
     expect(result.effects).toEqual([{ type: "reset-challenge" }]);
     expect(resolveCheckoutError(response, [])).toBe(
       "The items in your cart are no longer available. Remove them to continue.",
+    );
+  });
+
+  it("asks her to review her details when the order holds no paid item", () => {
+    // arrange
+    const response: StoreCheckoutResponse = {
+      success: false,
+      error: { code: "no_paid_items", message: "No paid items." },
+    };
+
+    // act
+    const message = resolveCheckoutError(response, []);
+
+    // assert
+    expect(message).toBe(
+      "Please review your email and consent choices, then try again.",
     );
   });
 });

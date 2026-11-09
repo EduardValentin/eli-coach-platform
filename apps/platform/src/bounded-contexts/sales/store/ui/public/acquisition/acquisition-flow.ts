@@ -17,7 +17,7 @@ export type AcquisitionFlowState = {
 };
 
 export type AcquisitionFlowEvent =
-  | { type: "response"; response: StoreAcquisitionResponse }
+  | { type: "acquisition-response"; response: StoreAcquisitionResponse }
   | { type: "checkout-response"; response: StoreCheckoutResponse }
   | { type: "reset-after-close" }
   | { type: "show-cart" }
@@ -55,8 +55,12 @@ export function reduceAcquisitionFlow(
   createIdempotencyKey: () => string,
 ): { effects: readonly AcquisitionFlowEffect[]; state: AcquisitionFlowState } {
   switch (event.type) {
-    case "response":
-      return reduceResponse(state, event.response, createIdempotencyKey);
+    case "acquisition-response":
+      return reduceAcquisitionResponse(
+        state,
+        event.response,
+        createIdempotencyKey,
+      );
 
     case "checkout-response":
       return reduceCheckoutResponse(
@@ -133,7 +137,7 @@ export function resolveCheckoutError(
     checkout_unavailable: CHECKOUT_UNAVAILABLE_MESSAGE,
     idempotency_conflict: IDEMPOTENCY_CONFLICT_MESSAGE,
     invalid_request: INVALID_REQUEST_MESSAGE,
-    no_paid_items: IDEMPOTENCY_CONFLICT_MESSAGE,
+    no_paid_items: INVALID_REQUEST_MESSAGE,
   } satisfies Record<
     Exclude<
       StoreCheckoutErrorCode,
@@ -199,7 +203,7 @@ function reduceCheckoutResponse(
   };
 }
 
-function reduceResponse(
+function reduceAcquisitionResponse(
   state: AcquisitionFlowState,
   response: StoreAcquisitionResponse,
   createIdempotencyKey: () => string,

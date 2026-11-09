@@ -1,6 +1,8 @@
 export { AppShell } from "./app-shell";
 export {
+  ConfirmationActions,
   ConfirmationHeading,
+  ConfirmationLead,
   ConfirmationPage,
   ConfirmationReading,
   ConfirmationReadings,
