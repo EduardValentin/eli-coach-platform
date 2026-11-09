@@ -156,7 +156,7 @@ export function formatStorePrice(amount: number, currency: Currency): string {
   return PRICE_FORMATS[currency].format(amount);
 }
 
-function priceIn(product: PaidProduct, currency: Currency): number {
+export function priceInCurrency(product: PaidProduct, currency: Currency): number {
   return currency === 'EUR' ? product.priceEUR : product.priceUSD;
 }
 
@@ -183,6 +183,8 @@ export interface CartItem {
   product: Product;
 }
 
+export type CartNotice = 'payment-not-completed';
+
 interface StoreContextType {
   cart: CartItem[];
   addToCart: (product: Product) => void;
@@ -194,6 +196,9 @@ interface StoreContextType {
   setCurrency: (c: Currency) => void;
   formatPrice: (product: PaidProduct) => string;
   cartTotal: string | null;
+  cartNotice: CartNotice | null;
+  openCartAfterCancelledPayment: () => void;
+  dismissCartNotice: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -201,6 +206,7 @@ const StoreContext = createContext<StoreContextType | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartNotice, setCartNotice] = useState<CartNotice | null>(null);
   const [currency, setCurrencyState] = useState<Currency>(loadCurrency);
 
   const setCurrency = (next: Currency) => {
@@ -222,12 +228,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => setCart([]);
 
-  const formatPrice = (product: PaidProduct) => formatStorePrice(priceIn(product, currency), currency);
+  const openCartAfterCancelledPayment = () => {
+    setCartNotice('payment-not-completed');
+    setIsCartOpen(true);
+  };
+
+  const dismissCartNotice = () => setCartNotice(null);
+
+  const formatPrice = (product: PaidProduct) => formatStorePrice(priceInCurrency(product, currency), currency);
 
   const cartTotal = useMemo(() => {
     const paidProducts = cart.map((item) => item.product).filter(isPaid);
     if (paidProducts.length === 0) return null;
-    const total = paidProducts.reduce((sum, product) => sum + priceIn(product, currency), 0);
+    const total = paidProducts.reduce((sum, product) => sum + priceInCurrency(product, currency), 0);
     return formatStorePrice(total, currency);
   }, [cart, currency]);
 
@@ -235,7 +248,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     <StoreContext.Provider value={{
       cart, addToCart, removeFromCart, clearCart,
       isCartOpen, setIsCartOpen,
-      currency, setCurrency, formatPrice, cartTotal
+      currency, setCurrency, formatPrice, cartTotal,
+      cartNotice, openCartAfterCancelledPayment, dismissCartNotice
     }}>
       {children}
     </StoreContext.Provider>

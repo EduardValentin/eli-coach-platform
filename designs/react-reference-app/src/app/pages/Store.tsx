@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { Navbar } from '../components/Navbar';
 import { useStore, isPaid, STORE_PRODUCTS, PRODUCT_CATEGORIES, PRODUCT_GOALS, ProductCategory, ProductGoal, type Currency } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
@@ -20,8 +20,28 @@ const TYPE_CHIP_CLASS = `${CHIP_BASE_CLASS} border-control-border-soft hover:bg-
 
 const GOAL_CHIP_CLASS = `${CHIP_BASE_CLASS} border-control-border-soft hover:bg-card data-[state=off]:hover:border-brand-secondary data-[state=off]:hover:text-brand-secondary data-[state=on]:border-brand-secondary data-[state=on]:bg-brand-secondary data-[state=on]:text-brand-secondary-foreground data-[state=on]:hover:bg-brand-secondary data-[state=on]:hover:text-brand-secondary-foreground`;
 
+function useCancelledPaymentReturn() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { openCartAfterCancelledPayment } = useStore();
+  const returnedFromCancelledPayment = searchParams.get('payment') === 'cancelled';
+
+  useEffect(() => {
+    if (!returnedFromCancelledPayment) return;
+
+    openCartAfterCancelledPayment();
+    setSearchParams(
+      (params) => {
+        params.delete('payment');
+        return params;
+      },
+      { replace: true },
+    );
+  }, [returnedFromCancelledPayment]);
+}
+
 export function Store() {
   const { addToCart, currency, setCurrency, formatPrice } = useStore();
+  useCancelledPaymentReturn();
   const { appState } = useAppState();
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'All'>('All');
   const [selectedGoal, setSelectedGoal] = useState<ProductGoal | 'All'>('All');

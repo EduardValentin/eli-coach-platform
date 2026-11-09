@@ -2,7 +2,9 @@ import { useState, type ReactNode } from 'react';
 import {
   ProviderStandInShell,
   STAND_IN_BACK_LINK_CLASS,
+  STAND_IN_READINGS_CLASS,
   StandInCardFields,
+  StandInReading,
 } from '../components/ProviderStandIn';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Button } from '../components/ThemeButton';
@@ -83,11 +85,11 @@ export function CheckoutStandIn() {
         Pay for your coaching bundle
       </h1>
 
-      <dl className="mt-6 grid gap-3 rounded-panel border border-border-subtle bg-surface-quiet px-5 py-4 text-sm">
-        <Reading term="Bundle" value={bundle.title} />
-        <Reading term="Price per renewal" value={`€${total}`} />
-        <Reading term="Renews" value={renewalLabel(bundle.months)} />
-        <Reading term="Start" value={START_PATH_SUMMARY[session.startPath]} />
+      <dl className={STAND_IN_READINGS_CLASS}>
+        <StandInReading term="Bundle" value={bundle.title} />
+        <StandInReading term="Price per renewal" value={`€${total}`} />
+        <StandInReading term="Renews" value={renewalLabel(bundle.months)} />
+        <StandInReading term="Start" value={START_PATH_SUMMARY[session.startPath]} />
       </dl>
 
       <StandInCardFields />
@@ -122,14 +124,5 @@ function StandInShell({ children }: { children: ReactNode }) {
     >
       {children}
     </ProviderStandInShell>
-  );
-}
-
-function Reading({ term, value }: { term: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-muted-foreground">{term}</dt>
-      <dd className="text-right font-medium text-text-primary">{value}</dd>
-    </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   StoreDelivery,
   type StoreDeliveryVariant,
 } from '../../email-templates/StoreDelivery';
+import { StoreOrder, type StoreOrderVariant } from '../../email-templates/StoreOrder';
 import { ClientInvitation } from '../../email-templates/ClientInvitation';
 import { DetailsRequest } from '../../email-templates/DetailsRequest';
 import {
@@ -41,6 +42,7 @@ import { WEEKDAY_NAMES, weekStartsBetween } from '../domain/checkinSeries';
 type TemplateKey =
   | 'waitlist-confirmation'
   | 'store-delivery'
+  | 'store-order'
   | 'client-invitation'
   | 'details-request'
   | 'payment-link'
@@ -189,6 +191,14 @@ const TEMPLATES: TemplateOption[] = [
     ],
   },
   {
+    key: 'store-order',
+    label: 'Store order',
+    variants: [
+      { value: 'paid-and-free', label: 'Plans and a free resource (EUR)' },
+      { value: 'paid-only', label: 'One plan (USD)' },
+    ],
+  },
+  {
     key: 'client-invitation',
     label: 'Client invitation',
     variants: [{ value: 'invitation', label: 'Invitation' }],
@@ -313,11 +323,19 @@ const TEMPLATES: TemplateOption[] = [
   },
 ];
 
+function initialTemplate(): TemplateOption {
+  const requested = new URLSearchParams(window.location.search).get('template');
+
+  return TEMPLATES.find((option) => option.key === requested) ?? TEMPLATES[0];
+}
+
 export function EmailPreview() {
   const [template, setTemplate] = useState<TemplateKey>(
-    'waitlist-confirmation',
+    () => initialTemplate().key,
   );
-  const [variant, setVariant] = useState<string>('reduced');
+  const [variant, setVariant] = useState<string>(
+    () => initialTemplate().variants[0].value,
+  );
   const [html, setHtml] = useState<string>('');
   const [iframeHeight, setIframeHeight] = useState<number>(800);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -335,6 +353,15 @@ export function EmailPreview() {
         <StoreDelivery
           variant={variant as StoreDeliveryVariant}
           downloadUrl={`${window.location.origin}/downloads`}
+        />
+      );
+    }
+    if (template === 'store-order') {
+      return (
+        <StoreOrder
+          variant={variant as StoreOrderVariant}
+          downloadUrl={`${window.location.origin}/downloads`}
+          termsUrl={`${window.location.origin}/terms`}
         />
       );
     }

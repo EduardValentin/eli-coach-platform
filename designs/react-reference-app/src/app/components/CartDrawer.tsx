@@ -1,12 +1,18 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useNavigate } from 'react-router';
 import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
+import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
 
 import { isPaid, useStore, type CartItem, type PaidProduct } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
+import { storeOrderLines } from '../domain/storeOrder';
 import { CheckboxField } from './CheckboxField';
+import { DisabledActionHint } from './DisabledActionHint';
+import { DismissibleNotice } from './DismissibleNotice';
 import { FreeTag } from './FreeTag';
 import { Price } from './Price';
 import { InlineProblem } from './InlineProblem';
+import { StoreOrderSummary } from './StoreOrderSummary';
 import { Button } from './ThemeButton';
 import { Alert } from './ui/alert';
 import { Input } from './ui/input';
@@ -20,33 +26,51 @@ import {
   STORE_ACQUISITION_ERROR_MESSAGES,
   submitStoreAcquisition,
 } from '../services/storeAcquisitionService';
+import { placeStoreOrder, SUBADDRESS_REFUSED_MESSAGE } from '../services/storeOrderService';
 
 const CONTACT_EMAIL = 'contact@evoa.fit';
 const EMAIL_PROBLEM = 'Enter a valid email address.';
 const TERMS_PROBLEM = 'Accept the Terms & Conditions to continue.';
+const PAID_SUBMIT_HINT = 'Enter your email and tick both required boxes to continue.';
+const CHECKOUT_UNAVAILABLE_PROBLEM =
+  'Checkout is temporarily unavailable. Your cart and details are saved, so please try again shortly.';
+const PAYMENT_NOT_COMPLETED_NOTICE = 'Payment not completed. Your cart is saved.';
 
 type CheckoutStep = 'cart' | 'details' | 'success';
 
 export function CartDrawer() {
-  const { cart, removeFromCart, clearCart, isCartOpen, setIsCartOpen, formatPrice, cartTotal } = useStore();
+  const {
+    cart,
+    removeFromCart,
+    clearCart,
+    isCartOpen,
+    setIsCartOpen,
+    currency,
+    formatPrice,
+    cartTotal,
+    cartNotice,
+    dismissCartNotice,
+  } = useStore();
   const { appState } = useAppState();
+  const navigate = useNavigate();
 
   const [step, setStep] = useState<CheckoutStep>('cart');
   const [email, setEmail] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [deliveryConsent, setDeliveryConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [emailProblem, setEmailProblem] = useState<string | null>(null);
-  const [serviceError, setServiceError] = useState<StoreAcquisitionError | null>(null);
-  const [orderVariant, setOrderVariant] = useState<'free' | 'paid'>('free');
+  const [responseProblem, setResponseProblem] = useState<string | null>(null);
 
   const emailErrorId = useId();
   const responseErrorId = useId();
   const openerRef = useRef<HTMLElement | null>(null);
 
-  const hasPaidProduct = cart.some((item) => isPaid(item.product));
+  const isPaidCheckout = cart.some((item) => isPaid(item.product));
   const canSubmit = !isSubmitting && email.trim().length > 0 && termsAccepted;
+  const canContinueToPayment = email.trim().length > 0 && termsAccepted && deliveryConsent;
   const termsProblem = submitAttempted && !termsAccepted ? TERMS_PROBLEM : undefined;
 
   const closeDrawer = () => {
@@ -54,7 +78,8 @@ export function CartDrawer() {
     setStep('cart');
     setSubmitAttempted(false);
     setEmailProblem(null);
-    setServiceError(null);
+    setResponseProblem(null);
+    dismissCartNotice();
   };
 
   const changeEmail = (next: string) => {
@@ -65,14 +90,14 @@ export function CartDrawer() {
   };
 
   const showDetails = () => {
-    setServiceError(null);
+    setResponseProblem(null);
+    dismissCartNotice();
     setStep('details');
   };
 
   const deliver = async (submittedEmail: string) => {
-    setServiceError(null);
+    setResponseProblem(null);
     setIsSubmitting(true);
-    const variant = hasPaidProduct ? 'paid' : 'free';
     try {
       await submitStoreAcquisition({
         email: submittedEmail,
@@ -80,7 +105,6 @@ export function CartDrawer() {
         marketingConsent,
         outcome: appState.storeCheckoutOutcome,
       });
-      setOrderVariant(variant);
       setStep('success');
       setTermsAccepted(false);
       setMarketingConsent(false);
@@ -88,12 +112,10 @@ export function CartDrawer() {
       clearCart();
     } catch (error) {
       if (!(error instanceof StoreAcquisitionError)) {
-        setServiceError(
-          new StoreAcquisitionError('SERVER_ERROR', STORE_ACQUISITION_ERROR_MESSAGES.SERVER_ERROR),
-        );
+        setResponseProblem(STORE_ACQUISITION_ERROR_MESSAGES.SERVER_ERROR);
         return;
       }
-      setServiceError(error);
+      setResponseProblem(error.message);
       if (error.code === 'UNAVAILABLE_PRODUCT' && cart.length > 0) {
         removeFromCart(cart[cart.length - 1].product.id);
         setStep('cart');
@@ -101,6 +123,37 @@ export function CartDrawer() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const continueToPayment = async (submittedEmail: string) => {
+    setResponseProblem(null);
+    setIsSubmitting(true);
+    const placed = await placeStoreOrder({
+      email: submittedEmail,
+      items: cart.map((item) => item.product),
+      currency,
+      termsAccepted: true,
+      deliveryConsent: true,
+      marketing: marketingConsent,
+      outcome: appState.storePaidCheckoutOutcome,
+    });
+    setIsSubmitting(false);
+
+    if (placed.status === 'opened') {
+      closeDrawer();
+      navigate(placed.checkoutUrl);
+      return;
+    }
+    if (placed.status === 'subaddress_refused') {
+      setEmailProblem(SUBADDRESS_REFUSED_MESSAGE);
+      return;
+    }
+    if (placed.status === 'unavailable_products') {
+      setResponseProblem(unavailableProductsProblem(cart, placed.availableProductIds));
+      setStep('cart');
+      return;
+    }
+    setResponseProblem(CHECKOUT_UNAVAILABLE_PROBLEM);
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -114,8 +167,20 @@ export function CartDrawer() {
       return;
     }
     setEmailProblem(null);
-    deliver(email.trim());
+    if (!isPaidCheckout) {
+      deliver(email.trim());
+      return;
+    }
+    if (deliveryConsent) {
+      continueToPayment(email.trim());
+    }
   };
+
+  const paidSubmit = (
+    <Button aria-busy={isSubmitting || undefined} disabled={isSubmitting} size="lg-tight" type="submit" width="full">
+      <PaidSubmitLabel isSubmitting={isSubmitting} />
+    </Button>
+  );
 
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeDrawer()}>
@@ -149,7 +214,18 @@ export function CartDrawer() {
               total={cartTotal}
               onContinue={showDetails}
               onRemove={removeFromCart}
-              responseError={serviceError?.message ?? null}
+              responseError={responseProblem}
+              notice={
+                cartNotice === 'payment-not-completed' && (
+                  <DismissibleNotice
+                    className="mb-2"
+                    data-parity="payment-not-completed-notice"
+                    onDismiss={dismissCartNotice}
+                  >
+                    {PAYMENT_NOT_COMPLETED_NOTICE}
+                  </DismissibleNotice>
+                )
+              }
             />
           )}
           {step === 'details' && (
@@ -157,8 +233,23 @@ export function CartDrawer() {
               <div>
                 <h2 className="font-serif text-display-sm leading-8 text-text-primary">Almost there</h2>
                 <p className="mt-2 text-sm text-text-secondary" data-parity="details-intro">
-                  Enter your email and we&apos;ll send one private download link for everything in your cart.
+                  {isPaidCheckout
+                    ? 'Check your order, enter your email, then continue to payment.'
+                    : "Enter your email and we'll send one private download link for everything in your cart."}
                 </p>
+                {isPaidCheckout && (
+                  <div className="mt-6" data-parity="order-summary-block">
+                    <h3 className={LABEL_CLASS}>Your order</h3>
+                    <StoreOrderSummary
+                      className="mt-2"
+                      currency={currency}
+                      lines={storeOrderLines(
+                        cart.map((item) => item.product),
+                        currency,
+                      )}
+                    />
+                  </div>
+                )}
                 <div className="mt-7" data-parity="email-field">
                   <Label className="mb-2" htmlFor="store-acquisition-email" required>
                     Email address
@@ -202,6 +293,18 @@ export function CartDrawer() {
                     onCheckedChange={setTermsAccepted}
                     required
                   />
+                  {isPaidCheckout && (
+                    <CheckboxField
+                      checkboxParity="delivery-consent-checkbox"
+                      checked={deliveryConsent}
+                      data-parity="delivery-consent"
+                      disabled={isSubmitting}
+                      label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
+                      layout="statement"
+                      onCheckedChange={setDeliveryConsent}
+                      required
+                    />
+                  )}
                   <CheckboxField
                     checkboxParity="marketing-checkbox"
                     checked={marketingConsent}
@@ -212,17 +315,20 @@ export function CartDrawer() {
                     onCheckedChange={setMarketingConsent}
                   />
                   <p className="text-sm leading-relaxed text-text-secondary" data-parity="privacy-note">
-                    We use your email to deliver these resources and keep evidence of this request. Read our{' '}
+                    {isPaidCheckout
+                      ? 'We use your email to process your order and keep evidence of your purchase and choices.'
+                      : 'We use your email to deliver these resources and keep evidence of this request.'}{' '}
+                    Read our{' '}
                     <Link to="/privacy" variant="in-text">
                       Privacy Policy
                     </Link>
                     .
                   </p>
                 </div>
-                {serviceError && (
+                {responseProblem && (
                   <div className="mt-5">
                     <Alert id={responseErrorId}>
-                      <p>{serviceError.message}</p>
+                      <p>{responseProblem}</p>
                     </Alert>
                   </div>
                 )}
@@ -231,20 +337,38 @@ export function CartDrawer() {
                 <Button disabled={isSubmitting} onClick={() => setStep('cart')} size="lg" variant="outline">
                   Back
                 </Button>
-                <Button disabled={!canSubmit} size="lg-tight" type="submit" width="full">
-                  <SubmitLabel hasPaidProduct={hasPaidProduct} isSubmitting={isSubmitting} />
-                </Button>
+                {isPaidCheckout && canContinueToPayment && paidSubmit}
+                {isPaidCheckout && !canContinueToPayment && (
+                  <DisabledActionHint reason={PAID_SUBMIT_HINT}>{paidSubmit}</DisabledActionHint>
+                )}
+                {!isPaidCheckout && (
+                  <Button disabled={!canSubmit} size="lg-tight" type="submit" width="full">
+                    <SubmitLabel isSubmitting={isSubmitting} />
+                  </Button>
+                )}
               </div>
             </form>
           )}
-          {step === 'success' && <AcquisitionSuccess variant={orderVariant} />}
+          {step === 'success' && <AcquisitionSuccess />}
         </div>
       </SheetContent>
     </Sheet>
   );
 }
 
-function SubmitLabel(props: { hasPaidProduct: boolean; isSubmitting: boolean }) {
+function unavailableProductsProblem(cart: CartItem[], availableProductIds: string[]): string {
+  const availableTitles = cart
+    .filter((item) => availableProductIds.includes(item.product.id))
+    .map((item) => item.product.title);
+
+  if (availableTitles.length === 0) {
+    return 'The items in your cart are no longer available. Remove them to continue.';
+  }
+
+  return `Some items in your cart are no longer available. Still available: ${availableTitles.join(', ')}. Remove the rest to continue.`;
+}
+
+function SubmitLabel(props: { isSubmitting: boolean }) {
   if (props.isSubmitting) {
     return (
       <>
@@ -254,7 +378,20 @@ function SubmitLabel(props: { hasPaidProduct: boolean; isSubmitting: boolean }) 
     );
   }
 
-  return props.hasPaidProduct ? 'Complete order' : 'Send my resources';
+  return 'Send my resources';
+}
+
+function PaidSubmitLabel(props: { isSubmitting: boolean }) {
+  if (props.isSubmitting) {
+    return (
+      <>
+        <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />
+        Opening checkout…
+      </>
+    );
+  }
+
+  return 'Continue to payment';
 }
 
 function CartReview(props: {
@@ -264,6 +401,7 @@ function CartReview(props: {
   onContinue: () => void;
   onRemove: (productId: string) => void;
   responseError: string | null;
+  notice: ReactNode;
 }) {
   if (props.items.length === 0) {
     return (
@@ -277,6 +415,7 @@ function CartReview(props: {
 
   return (
     <div className="flex flex-1 flex-col">
+      {props.notice}
       {props.responseError && (
         <Alert>
           <p>{props.responseError}</p>
@@ -333,7 +472,7 @@ function CartReview(props: {
   );
 }
 
-function AcquisitionSuccess({ variant }: { variant: 'free' | 'paid' }) {
+function AcquisitionSuccess() {
   return (
     <div className="m-auto text-center">
       <span
@@ -342,9 +481,7 @@ function AcquisitionSuccess({ variant }: { variant: 'free' | 'paid' }) {
       >
         <CheckCircle2 aria-hidden="true" size={32} />
       </span>
-      <h2 className="font-serif text-display-md text-text-primary">
-        {variant === 'free' ? 'Check your inbox' : 'Order complete'}
-      </h2>
+      <h2 className="font-serif text-display-md text-text-primary">Check your inbox</h2>
       <p className="mx-auto mt-3 max-w-sm text-text-secondary">
         Your resources are on their way. The private download link will stay active for seven days.
       </p>
