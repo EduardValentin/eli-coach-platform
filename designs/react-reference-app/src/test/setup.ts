@@ -27,4 +27,6 @@ Element.prototype.releasePointerCapture = vi.fn();
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
+  sessionStorage.clear();
 });

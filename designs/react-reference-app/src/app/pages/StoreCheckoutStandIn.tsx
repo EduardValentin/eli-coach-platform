@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import {
   ProviderStandInShell,
   STAND_IN_BACK_LINK_CLASS,
@@ -15,6 +15,7 @@ import { isPaidLine, storeOrderTotal } from '../domain/storeOrder';
 import {
   findStoreCheckoutSession,
   payStoreCheckout,
+  STORE_PAYMENT_CANCELLED_URL,
   storeOrderCompleteUrl,
 } from '../services/storeOrderService';
 
@@ -22,8 +23,6 @@ const EYEBROW = 'Stripe Checkout · prototype stand-in';
 
 const HOSTED_PAGE_NOTE =
   "In production this is Stripe's hosted payment page. Nothing here takes a real card.";
-
-const CANCEL_URL = '/store?payment=cancelled';
 
 export function StoreCheckoutStandIn() {
   const { sessionId = '' } = useParams();
@@ -84,9 +83,9 @@ export function StoreCheckoutStandIn() {
         {paying ? 'Taking payment…' : `Pay ${total}`}
       </Button>
 
-      <Link className={STAND_IN_BACK_LINK_CLASS} to={CANCEL_URL}>
+      <a className={STAND_IN_BACK_LINK_CLASS} href={STORE_PAYMENT_CANCELLED_URL}>
         Back
-      </Link>
+      </a>
     </StandInShell>
   );
 }

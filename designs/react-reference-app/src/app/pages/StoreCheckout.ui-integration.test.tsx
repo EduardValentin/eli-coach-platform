@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -75,6 +75,33 @@ async function continueToHostedPage(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('heading', { name: 'Pay for your order' }, WAIT);
 }
 
+async function leaveHostedPageThroughBack(user: ReturnType<typeof userEvent.setup>): Promise<string | null> {
+  let documentUrl: string | null = null;
+  const recordDocumentNavigation = (event: MouseEvent) => {
+    const link = (event.target as Element).closest('a');
+    if (event.defaultPrevented || !link) return;
+    event.preventDefault();
+    documentUrl = link.getAttribute('href');
+  };
+  document.addEventListener('click', recordDocumentNavigation);
+  await user.click(screen.getByRole('link', { name: 'Back' }));
+  document.removeEventListener('click', recordDocumentNavigation);
+  return documentUrl;
+}
+
+function loadDocument(url: string) {
+  cleanup();
+  renderStoreCheckout(url);
+}
+
+async function returnFromHostedPageWithFullLoad(user: ReturnType<typeof userEvent.setup>) {
+  renderStoreCheckout('/store');
+  await addPaidAndFreeToCart(user);
+  await continueToHostedPage(user);
+  loadDocument((await leaveHostedPageThroughBack(user))!);
+  return screen.findByRole('dialog', { name: /your cart/i });
+}
+
 async function paidOrderSessionId(): Promise<string> {
   const placed: PlacedStoreOrder = await placeStoreOrder({
     email: 'woman@example.com',
@@ -115,7 +142,6 @@ afterAll(() => {
 describe('paying for a store cart through the Stripe stand-in', () => {
   afterEach(() => {
     window.history.replaceState({}, '', '/');
-    localStorage.clear();
   });
 
   it(
@@ -143,7 +169,7 @@ describe('paying for a store cart through the Stripe stand-in', () => {
   );
 
   it(
-    'brings her back to her unchanged cart with a notice when she leaves the hosted page',
+    'leaves the hosted page through a full page load of the cancelled return',
     async () => {
       // arrange
       const user = userEvent.setup();
@@ -152,17 +178,59 @@ describe('paying for a store cart through the Stripe stand-in', () => {
       await continueToHostedPage(user);
 
       // act
-      await user.click(screen.getByRole('link', { name: 'Back' }));
+      const documentUrl = await leaveHostedPageThroughBack(user);
+
+      // assert
+      expect(documentUrl).toBe('/store?payment=cancelled');
+    },
+    TEST_TIMEOUT_MS,
+  );
+
+  it(
+    'brings her back to her unchanged cart with a notice on the full load of the cancelled return',
+    async () => {
+      // arrange
+      const user = userEvent.setup();
+      renderStoreCheckout('/store');
+      await addPaidAndFreeToCart(user);
+      await continueToHostedPage(user);
+      const documentUrl = (await leaveHostedPageThroughBack(user))!;
+
+      // act
+      loadDocument(documentUrl);
 
       // assert
       const drawer = await screen.findByRole('dialog', { name: /your cart/i });
       expect(within(drawer).getByRole('status')).toHaveTextContent(
         'Payment not completed. Your cart is saved.',
       );
-      expect(within(drawer).getByText(paidPlan.title)).toBeInTheDocument();
-      expect(within(drawer).getByText(freeEbook.title)).toBeInTheDocument();
+      expect(within(drawer).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+        expect.stringContaining(paidPlan.title),
+        expect.stringContaining(freeEbook.title),
+      ]);
+      expect(within(drawer).getByRole('button', { name: /^continue$/i })).toBeInTheDocument();
       await waitFor(() => expect(within(drawer).getByRole('button', { name: 'Close' })).toHaveFocus());
       await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent(/^\/store$/));
+    },
+    TEST_TIMEOUT_MS,
+  );
+
+  it(
+    'restores her email and ticked boxes once she continues from the cancelled return',
+    async () => {
+      // arrange
+      const user = userEvent.setup();
+      const drawer = await returnFromHostedPageWithFullLoad(user);
+
+      // act
+      await user.click(within(drawer).getByRole('button', { name: /^continue$/i }));
+
+      // assert
+      expect(within(drawer).getByRole('textbox', { name: /email address/i })).toHaveValue('woman@example.com');
+      expect(within(drawer).getByRole('checkbox', { name: /^I agree to the Terms/ })).toBeChecked();
+      expect(within(drawer).getByRole('checkbox', { name: /^I expressly request/ })).toBeChecked();
+      expect(within(drawer).getByRole('checkbox', { name: /^Keep me posted/ })).not.toBeChecked();
+      expect(within(drawer).getByRole('button', { name: 'Continue to payment' })).toBeEnabled();
     },
     TEST_TIMEOUT_MS,
   );
@@ -172,11 +240,7 @@ describe('paying for a store cart through the Stripe stand-in', () => {
     async () => {
       // arrange
       const user = userEvent.setup();
-      renderStoreCheckout('/store');
-      await addPaidAndFreeToCart(user);
-      await continueToHostedPage(user);
-      await user.click(screen.getByRole('link', { name: 'Back' }));
-      const drawer = await screen.findByRole('dialog', { name: /your cart/i });
+      const drawer = await returnFromHostedPageWithFullLoad(user);
 
       // act
       await user.click(within(drawer).getByRole('button', { name: 'Dismiss' }));

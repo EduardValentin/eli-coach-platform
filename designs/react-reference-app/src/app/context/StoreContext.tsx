@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 
 export type ProductCategory = 'Workouts' | 'Nutrition Plans' | 'E-Books';
 export type ProductGoal = 'Muscle Building' | 'Fat Loss' | 'Wellness' | 'Hormonal Balance';
@@ -185,6 +185,88 @@ export interface CartItem {
 
 export type CartNotice = 'payment-not-completed';
 
+export type StoreCheckoutDetails = {
+  email: string;
+  termsAccepted: boolean;
+  deliveryConsent: boolean;
+  marketingConsent: boolean;
+};
+
+const CART_STORAGE_KEY = 'evoa.storeCart';
+const CART_STORAGE_VERSION = 1;
+const CHECKOUT_DETAILS_STORAGE_KEY = 'evoa.storeCheckoutDetails';
+
+function loadCart(): CartItem[] {
+  try {
+    const stored: unknown = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) ?? 'null');
+    if (!isStoredCart(stored)) return [];
+    return [...new Set(stored.productIds)].flatMap((productId) => {
+      const product = STORE_PRODUCTS.find((candidate) => candidate.id === productId);
+      return product ? [{ product }] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function isStoredCart(stored: unknown): stored is { productIds: string[]; version: number } {
+  return (
+    typeof stored === 'object' &&
+    stored !== null &&
+    'version' in stored &&
+    stored.version === CART_STORAGE_VERSION &&
+    'productIds' in stored &&
+    Array.isArray(stored.productIds) &&
+    stored.productIds.every((id) => typeof id === 'string')
+  );
+}
+
+function rememberCart(cart: CartItem[]) {
+  try {
+    localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify({ productIds: cart.map((item) => item.product.id), version: CART_STORAGE_VERSION }),
+    );
+  } catch {}
+}
+
+function rememberCheckoutDetails(details: StoreCheckoutDetails) {
+  try {
+    sessionStorage.setItem(CHECKOUT_DETAILS_STORAGE_KEY, JSON.stringify(details));
+  } catch {}
+}
+
+function forgetCheckoutDetails() {
+  try {
+    sessionStorage.removeItem(CHECKOUT_DETAILS_STORAGE_KEY);
+  } catch {}
+}
+
+function takeCheckoutDetails(): StoreCheckoutDetails | null {
+  try {
+    const stored: unknown = JSON.parse(sessionStorage.getItem(CHECKOUT_DETAILS_STORAGE_KEY) ?? 'null');
+    forgetCheckoutDetails();
+    return isStoredCheckoutDetails(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function isStoredCheckoutDetails(stored: unknown): stored is StoreCheckoutDetails {
+  return (
+    typeof stored === 'object' &&
+    stored !== null &&
+    'email' in stored &&
+    typeof stored.email === 'string' &&
+    'termsAccepted' in stored &&
+    typeof stored.termsAccepted === 'boolean' &&
+    'deliveryConsent' in stored &&
+    typeof stored.deliveryConsent === 'boolean' &&
+    'marketingConsent' in stored &&
+    typeof stored.marketingConsent === 'boolean'
+  );
+}
+
 interface StoreContextType {
   cart: CartItem[];
   addToCart: (product: Product) => void;
@@ -199,15 +281,19 @@ interface StoreContextType {
   cartNotice: CartNotice | null;
   openCartAfterCancelledPayment: () => void;
   dismissCartNotice: () => void;
+  rememberCheckoutDetails: (details: StoreCheckoutDetails) => void;
+  takeCheckoutDetails: () => StoreCheckoutDetails | null;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(loadCart);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartNotice, setCartNotice] = useState<CartNotice | null>(null);
   const [currency, setCurrencyState] = useState<Currency>(loadCurrency);
+
+  useEffect(() => rememberCart(cart), [cart]);
 
   const setCurrency = (next: Currency) => {
     setCurrencyState(next);
@@ -226,7 +312,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCart((prev) => prev.filter(item => item.product.id !== productId));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    forgetCheckoutDetails();
+  };
 
   const openCartAfterCancelledPayment = () => {
     setCartNotice('payment-not-completed');
@@ -249,7 +338,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cart, addToCart, removeFromCart, clearCart,
       isCartOpen, setIsCartOpen,
       currency, setCurrency, formatPrice, cartTotal,
-      cartNotice, openCartAfterCancelledPayment, dismissCartNotice
+      cartNotice, openCartAfterCancelledPayment, dismissCartNotice,
+      rememberCheckoutDetails, takeCheckoutDetails
     }}>
       {children}
     </StoreContext.Provider>

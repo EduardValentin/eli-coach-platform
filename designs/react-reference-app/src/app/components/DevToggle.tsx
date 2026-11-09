@@ -16,6 +16,7 @@ import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisition
 import {
   PROTOTYPE_STORE_ORDER_RESEND_OUTCOMES,
   PROTOTYPE_STORE_PAID_CHECKOUT_OUTCOMES,
+  STORE_PAYMENT_CANCELLED_URL,
   type PrototypeStoreOrderResendOutcome,
   type PrototypeStorePaidCheckoutOutcome,
 } from '../services/storeOrderService';
@@ -769,14 +770,13 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Link
-                  to="/store?payment=cancelled"
-                  onClick={() => setIsOpen(false)}
+                <a
+                  href={STORE_PAYMENT_CANCELLED_URL}
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Return from a cancelled payment{' '}
                   <ArrowRight size={14} aria-hidden="true" />
-                </Link>
+                </a>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-store-order-resend-outcome"

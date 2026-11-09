@@ -50,6 +50,8 @@ export function CartDrawer() {
     cartTotal,
     cartNotice,
     dismissCartNotice,
+    rememberCheckoutDetails,
+    takeCheckoutDetails,
   } = useStore();
   const { appState } = useAppState();
   const navigate = useNavigate();
@@ -77,6 +79,18 @@ export function CartDrawer() {
       emailInputRef.current?.focus();
     }
   }, [emailFocusRequest]);
+
+  useEffect(() => {
+    if (cartNotice !== 'payment-not-completed') return;
+
+    const rememberedDetails = takeCheckoutDetails();
+    if (rememberedDetails) {
+      setEmail(rememberedDetails.email);
+      setTermsAccepted(rememberedDetails.termsAccepted);
+      setDeliveryConsent(rememberedDetails.deliveryConsent);
+      setMarketingConsent(rememberedDetails.marketingConsent);
+    }
+  }, [cartNotice]);
 
   const isPaidCheckout = cart.some((item) => isPaid(item.product));
   const canSubmit = !isSubmitting && email.trim().length > 0 && termsAccepted;
@@ -155,6 +169,7 @@ export function CartDrawer() {
     setIsSubmitting(false);
 
     if (placed.status === 'opened') {
+      rememberCheckoutDetails({ email, termsAccepted, deliveryConsent, marketingConsent });
       closeDrawer();
       navigate(placed.checkoutUrl);
       return;
