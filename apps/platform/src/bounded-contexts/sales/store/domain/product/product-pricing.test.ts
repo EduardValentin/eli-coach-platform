@@ -127,27 +127,3 @@ describe("ProductPricing.reconstitute", () => {
     expect(pricing.toSnapshot()).toEqual(snapshot);
   });
 });
-
-describe("ProductPricing.fromStoredAmounts", () => {
-  it("reads two stored amounts as a paid pricing", () => {
-    // arrange
-    const amounts = { eurCents: 3900, usdCents: 4500 };
-
-    // act
-    const pricing = ProductPricing.fromStoredAmounts(amounts);
-
-    // assert
-    expect(pricing.toSnapshot()).toEqual({ kind: "paid", ...amounts });
-  });
-
-  it("reads empty stored amounts as free", () => {
-    // arrange
-    const amounts = { eurCents: null, usdCents: null };
-
-    // act
-    const pricing = ProductPricing.fromStoredAmounts(amounts);
-
-    // assert
-    expect(pricing.toSnapshot()).toEqual({ kind: "free" });
-  });
-});

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { Product, type PublicationPlacement } from "./product";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
@@ -8,6 +8,7 @@ import {
   validateSlugFormat,
   type ProductCoverInput,
   type ProductDownloadInput,
+  type PersistPublicationCommand,
   type ProductVersionMetadata,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
@@ -49,7 +50,6 @@ const taxonomy = {
 
 const placement = {
   displayOrder: 5,
-  operation: "create_product",
   productId: null,
   productSlug: "glute-growth-guide",
   versionSequence: 1,
@@ -80,13 +80,17 @@ function draftOf(
     pricing: ProductPricingInput;
   }> = {},
 ): ProductPublicationDraft {
-  return ProductPublicationDraft.from({
+  return ProductPublicationDraft.forNewProduct({
     cover,
     downloads,
     metadata,
     pricing: { kind: "free" },
     ...overrides,
   });
+}
+
+function revisionDraft(): ProductPublicationDraft {
+  return ProductPublicationDraft.forRevision({ cover, downloads, metadata });
 }
 
 describe("validateSlugFormat", () => {
@@ -167,7 +171,7 @@ describe("ProductPublicationDraft.plan", () => {
 
   it("plans a revision draft without touching the pricing", () => {
     // arrange
-    const draft = ProductPublicationDraft.from({ cover, downloads, metadata });
+    const draft = revisionDraft();
 
     // act
     const result = draft.plan(
@@ -177,8 +181,12 @@ describe("ProductPublicationDraft.plan", () => {
     );
 
     // assert
-    expect(result.status).toBe("valid");
-    expect(result.status === "valid" && result.plan.pricing).toBeUndefined();
+    expect(result.status === "valid" ? result.plan : null).toMatchObject({
+      operation: "revise_product",
+    });
+    expect(result.status === "valid" ? result.plan : null).not.toHaveProperty(
+      "pricing",
+    );
   });
 
   it("folds price issues into the other publication issues", () => {
@@ -410,12 +418,10 @@ describe("ProductPublicationDraft.requestDigest", () => {
 
     // act
     const first = draft.requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
     const second = draftOf().requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
@@ -432,12 +438,10 @@ describe("ProductPublicationDraft.requestDigest", () => {
 
     // act
     const original = draftOf().requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
     const changed = renamed.requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
@@ -477,12 +481,10 @@ describe("ProductPublicationDraft.requestDigest", () => {
 
     // act
     const originalDigest = original.requestDigest(
-      "create_product",
       "glute-growth-guide",
       contentDigestPort,
     );
     const repricedDigest = repriced.requestDigest(
-      "create_product",
       "glute-growth-guide",
       contentDigestPort,
     );
@@ -496,19 +498,34 @@ describe("ProductPublicationDraft.requestDigest", () => {
     const draft = draftOf();
 
     // act
-    const original = draft.requestDigest(
-      "create_product",
-      "guide",
-      productAssetDigestPort,
-    );
+    const original = draft.requestDigest("guide", productAssetDigestPort);
     const retargeted = draft.requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
 
     // assert
     expect(retargeted).not.toBe(original);
+  });
+});
+
+describe("ProductPublicationDraft.requestDigest per operation", () => {
+  it("tells a new product from a revision of the same content and target", () => {
+    // arrange
+    const revision = revisionDraft();
+
+    // act
+    const newProductDigest = draftOf().requestDigest(
+      "glute-growth-guide",
+      productAssetDigestPort,
+    );
+    const revisionDigest = revision.requestDigest(
+      "glute-growth-guide",
+      productAssetDigestPort,
+    );
+
+    // assert
+    expect(revisionDigest).not.toBe(newProductDigest);
   });
 });
 
@@ -632,7 +649,7 @@ describe("ProductPublicationDraft.planCreation", () => {
 describe("ProductPublicationDraft.planRevision", () => {
   it("plans the next version where the product already sits", () => {
     // arrange
-    const draft = draftOf();
+    const draft = revisionDraft();
 
     // act
     const result = draft.planRevision(
@@ -653,7 +670,7 @@ describe("ProductPublicationDraft.planRevision", () => {
 
   it("rejects a revision of an unknown product", () => {
     // arrange
-    const draft = draftOf();
+    const draft = revisionDraft();
 
     // act
     const result = draft.planRevision(null, taxonomy, productAssetDigestPort);
@@ -667,7 +684,7 @@ describe("ProductPublicationDraft.planRevision", () => {
 
   it("rejects a revision of a retired product", () => {
     // arrange
-    const draft = draftOf();
+    const draft = revisionDraft();
 
     // act
     const result = draft.planRevision(
@@ -744,5 +761,34 @@ describe("ProductPublicationDraft.plannedAssetContents", () => {
       { assetKey: "products/sha-6.pdf", bytes: PDF_BYTES },
       { assetKey: "products/sha-7.pdf", bytes: secondDownloadBytes },
     ]);
+  });
+});
+
+describe("ProductPublicationDraft factories", () => {
+  it("requires a pricing for a new product and accepts none for a revision", () => {
+    // arrange
+    const forNewProduct = ProductPublicationDraft.forNewProduct;
+    const forRevision = ProductPublicationDraft.forRevision;
+
+    // act
+    // assert
+    expectTypeOf(forNewProduct).parameter(0).toHaveProperty("pricing");
+    expectTypeOf(forRevision).parameter(0).not.toHaveProperty("pricing");
+  });
+});
+
+describe("PersistPublicationCommand", () => {
+  it("cannot describe a new product without pricing", () => {
+    // arrange
+    type NewProductWithoutPricing = Omit<
+      PersistPublicationCommand,
+      "pricing"
+    > & {
+      operation: "create_product";
+    };
+
+    // act
+    // assert
+    expectTypeOf<NewProductWithoutPricing>().not.toExtend<PersistPublicationCommand>();
   });
 });

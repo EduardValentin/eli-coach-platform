@@ -1,5 +1,4 @@
 import type {
-  ContentPublicationOperation,
   Product,
   PublicationOperation,
   PublicationPlacement,
@@ -67,14 +66,16 @@ export type PlannedProductCover = {
   sizeBytes: number;
 };
 
-export type PublicationPlan = {
+type PublicationOperationPricing =
+  | { operation: "create_product"; pricing: ProductPricingSnapshot }
+  | { operation: "revise_product" };
+
+export type PublicationPlan = PublicationOperationPricing & {
   cover: PlannedProductCover;
   displayOrder: number;
   downloads: readonly PlannedProductAsset[];
   goals: readonly StoreTaxonomyValue[];
   metadata: ProductVersionMetadata;
-  operation: ContentPublicationOperation;
-  pricing?: ProductPricingSnapshot;
   productId: number | null;
   productSlug: string;
   totalUploadBytes: number;
@@ -101,16 +102,14 @@ export type StoreTaxonomySnapshot = {
   types: readonly StoreTaxonomyValue[];
 };
 
-export type PersistPublicationCommand = {
+export type PersistPublicationCommand = PublicationOperationPricing & {
   cover: PlannedProductCover;
   displayOrder: number;
   downloads: readonly PlannedProductAsset[];
   goalSlugs: readonly string[];
   idempotencyKey: string;
   metadata: ProductVersionMetadata;
-  operation: ContentPublicationOperation;
   payloadDigest: string;
-  pricing?: ProductPricingSnapshot;
   productId: number | null;
   productSlug: string;
   publishedBy: PublishingPrincipal;
@@ -174,28 +173,43 @@ export function validateSlugFormat(slug: string): PublicationIssue | null {
     : { code: "invalid_slug", slug };
 }
 
-type ProductPublicationDraftProps = {
+type ProductContentDraftProps = {
   cover: ProductCoverInput;
   downloads: readonly ProductDownloadInput[];
   metadata: ProductVersionMetadata;
-  pricing?: ProductPricingInput;
 };
+
+type NewProductDraftProps = ProductContentDraftProps & {
+  pricing: ProductPricingInput;
+};
+
+type PublicationIntent =
+  | { operation: "create_product"; pricing: ProductPricingInput }
+  | { operation: "revise_product" };
 
 export class ProductPublicationDraft {
   readonly cover: ProductCoverInput;
   readonly downloads: readonly ProductDownloadInput[];
   readonly metadata: ProductVersionMetadata;
-  readonly pricing?: ProductPricingInput;
 
-  private constructor(props: ProductPublicationDraftProps) {
+  private constructor(
+    props: ProductContentDraftProps,
+    private readonly intent: PublicationIntent,
+  ) {
     this.cover = props.cover;
     this.downloads = props.downloads;
     this.metadata = props.metadata;
-    this.pricing = props.pricing;
   }
 
-  static from(props: ProductPublicationDraftProps): ProductPublicationDraft {
-    return new ProductPublicationDraft(props);
+  static forNewProduct(props: NewProductDraftProps): ProductPublicationDraft {
+    return new ProductPublicationDraft(props, {
+      operation: "create_product",
+      pricing: props.pricing,
+    });
+  }
+
+  static forRevision(props: ProductContentDraftProps): ProductPublicationDraft {
+    return new ProductPublicationDraft(props, { operation: "revise_product" });
   }
 
   /**
@@ -203,12 +217,11 @@ export class ProductPublicationDraft {
    * so an idempotent retry can be recognised before any validation runs.
    */
   requestDigest(
-    operation: PublicationOperation,
     target: string,
     productAssetDigestPort: ProductAssetDigestPort,
   ): string {
     const canonical = [
-      operation,
+      this.intent.operation,
       target,
       this.metadata.title,
       this.metadata.creatorName,
@@ -274,7 +287,6 @@ export class ProductPublicationDraft {
     return this.plan(
       {
         displayOrder: input.displayOrder,
-        operation: "create_product",
         productId: null,
         productSlug: input.slug,
         versionSequence: 1,
@@ -312,7 +324,7 @@ export class ProductPublicationDraft {
     const issues: PublicationIssue[] = [];
     const downloads = this.planDownloads(issues, productAssetDigestPort);
     const cover = this.planCover(issues, productAssetDigestPort);
-    const pricing = this.planPricing(issues);
+    const operation = this.planOperation(issues);
     const types = resolveTaxonomy(
       this.metadata.typeSlugs,
       taxonomy.types,
@@ -336,7 +348,7 @@ export class ProductPublicationDraft {
       issues.push(sizeIssue);
     }
 
-    if (issues.length > 0 || !cover) {
+    if (issues.length > 0 || !cover || !operation) {
       return { status: "invalid", issues };
     }
 
@@ -348,8 +360,7 @@ export class ProductPublicationDraft {
         downloads,
         goals: goals.values,
         metadata: this.metadata,
-        operation: placement.operation,
-        pricing: pricing?.toSnapshot(),
+        ...operation,
         productId: placement.productId,
         productSlug: placement.productSlug,
         totalUploadBytes,
@@ -374,9 +385,8 @@ export class ProductPublicationDraft {
       goalSlugs: plan.metadata.goalSlugs,
       idempotencyKey: input.idempotencyKey,
       metadata: plan.metadata,
-      operation: plan.operation,
+      ...this.operationOf(plan),
       payloadDigest: input.payloadDigest,
-      pricing: plan.pricing,
       productId: plan.productId,
       productSlug: plan.productSlug,
       publishedBy: input.publishedBy,
@@ -405,32 +415,44 @@ export class ProductPublicationDraft {
   }
 
   private canonicalPricing(): string {
-    if (!this.pricing) {
+    if (this.intent.operation === "revise_product") {
       return "";
     }
 
+    const { pricing } = this.intent;
     const amounts =
-      this.pricing.kind === "paid"
-        ? [this.pricing.eurCents ?? "", this.pricing.usdCents ?? ""]
+      pricing.kind === "paid"
+        ? [pricing.eurCents ?? "", pricing.usdCents ?? ""]
         : [];
 
-    return [this.pricing.kind, ...amounts].join(CANONICAL_LIST_SEPARATOR);
+    return [pricing.kind, ...amounts].join(CANONICAL_LIST_SEPARATOR);
   }
 
-  private planPricing(issues: PublicationIssue[]): ProductPricing | undefined {
-    if (!this.pricing) {
-      return undefined;
+  private planOperation(
+    issues: PublicationIssue[],
+  ): PublicationOperationPricing | null {
+    if (this.intent.operation === "revise_product") {
+      return { operation: "revise_product" };
     }
 
-    const parsed = ProductPricing.parse(this.pricing);
+    const parsed = ProductPricing.parse(this.intent.pricing);
 
     if (parsed.status === "invalid") {
       issues.push(...parsed.issues);
 
-      return undefined;
+      return null;
     }
 
-    return parsed.pricing;
+    return {
+      operation: "create_product",
+      pricing: parsed.pricing.toSnapshot(),
+    };
+  }
+
+  private operationOf(plan: PublicationPlan): PublicationOperationPricing {
+    return plan.operation === "create_product"
+      ? { operation: plan.operation, pricing: plan.pricing }
+      : { operation: plan.operation };
   }
 
   private planDownloads(

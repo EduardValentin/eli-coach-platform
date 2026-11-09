@@ -45,7 +45,7 @@ export class PlanNewProductUseCase {
       const taxonomy =
         await this.options.storeProductPublicationsPort.getTaxonomy();
 
-      return ProductPublicationDraft.from(command).planCreation(
+      return ProductPublicationDraft.forNewProduct(command).planCreation(
         { displayOrder, existingProduct, slug: command.slug },
         taxonomy,
         this.options.productAssetDigestPort,

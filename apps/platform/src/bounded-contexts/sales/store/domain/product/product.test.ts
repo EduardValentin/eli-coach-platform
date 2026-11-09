@@ -40,7 +40,6 @@ describe("Product.revisionPlacement", () => {
     // assert
     expect(placement).toEqual({
       displayOrder: 2,
-      operation: "revise_product",
       productId: 7,
       productSlug: "glute-growth-guide",
       versionSequence: 4,

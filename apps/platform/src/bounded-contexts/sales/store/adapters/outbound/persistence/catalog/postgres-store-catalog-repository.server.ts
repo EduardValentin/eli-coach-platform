@@ -3,13 +3,14 @@ import {
   type PublishedProductCover,
   type StoreCatalogPort,
   type StoreTaxonomyValue,
-  ProductPricing,
   PublishedProduct,
 } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
+
+import { StoredProductPricing } from "../stored-product-pricing.server";
 
 type PublishedProductRow = {
   productId: number;
@@ -226,7 +227,7 @@ function mapPublishedProduct(
     id: row.productId,
     slug: row.slug,
     displayOrder: row.displayOrder,
-    pricing: ProductPricing.fromStoredAmounts(row),
+    pricing: StoredProductPricing.fromColumns(row).toPricing(),
     version: {
       id: row.versionId,
       sequence: row.versionSequence,

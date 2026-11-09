@@ -35,9 +35,8 @@ export class PublishNewProductUseCase {
     command: PublishNewProductCommand,
   ): Promise<PublishProductResult> {
     try {
-      const draft = ProductPublicationDraft.from(command);
+      const draft = ProductPublicationDraft.forNewProduct(command);
       const payloadDigest = draft.requestDigest(
-        "create_product",
         command.slug,
         this.options.productAssetDigestPort,
       );

@@ -169,7 +169,10 @@ describe("PlanNewProductUseCase", () => {
       });
 
       // assert
-      expect(result.status === "valid" && result.plan.pricing).toEqual(pricing);
+      expect(result.status === "valid" && result.plan).toMatchObject({
+        operation: "create_product",
+        pricing,
+      });
     },
   );
 
@@ -514,11 +517,14 @@ describe("PublishProductVersionUseCase", () => {
       expect.objectContaining({
         displayOrder: 2,
         operation: "revise_product",
-        pricing: undefined,
         productId: 7,
         versionSequence: 4,
       }),
     );
+    expect(
+      vi.mocked(storeProductPublicationsPort.persistPublication).mock
+        .calls[0]![0],
+    ).not.toHaveProperty("pricing");
   });
 
   it("rejects a revision of an unknown product", async () => {

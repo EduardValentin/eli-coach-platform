@@ -1,6 +1,5 @@
 import {
   Product,
-  ProductPricing,
   type PersistPriceChangeCommand,
   type PersistPublicationCommand,
   type PriceChangePersistence,
@@ -16,6 +15,8 @@ import { sql } from "drizzle-orm";
 
 import type { DatabaseClient, DatabaseExecutor } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
+
+import { StoredProductPricing } from "../stored-product-pricing.server";
 
 type TaxonomyRow = {
   displayOrder: number;
@@ -267,7 +268,10 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       publishedBy: command.publishedBy,
     });
 
-    if (command.pricing?.kind === "paid") {
+    if (
+      command.operation === "create_product" &&
+      command.pricing.kind === "paid"
+    ) {
       await this.insertPriceRevision(transaction, {
         pricing: command.pricing,
         productId,
@@ -322,7 +326,9 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       publicationId: number;
     },
   ): Promise<void> {
-    const amounts = this.storedAmounts(input.pricing);
+    const amounts = StoredProductPricing.fromPricing(
+      input.pricing,
+    ).toSnapshot();
 
     await transaction.execute(sql`
       insert into app.product_price_revisions (
@@ -341,15 +347,6 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       from app.product_price_revisions price_revision
       where price_revision.product_id = ${input.productId}
     `);
-  }
-
-  private storedAmounts(pricing: ProductPricingSnapshot): {
-    eurCents: number | null;
-    usdCents: number | null;
-  } {
-    return pricing.kind === "paid"
-      ? { eurCents: pricing.eurCents, usdCents: pricing.usdCents }
-      : { eurCents: null, usdCents: null };
   }
 
   private async loadProduct(
@@ -386,7 +383,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
 
     return row
       ? Product.reconstitute({
-          currentPricing: ProductPricing.fromStoredAmounts(row),
+          currentPricing: StoredProductPricing.fromColumns(row).toPricing(),
           displayOrder: row.displayOrder,
           id: row.id,
           latestVersionSequence: Number(row.latestVersionSequence),

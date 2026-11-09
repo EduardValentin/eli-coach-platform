@@ -95,14 +95,8 @@ export class PublishedProduct {
 export type PublicationOperation =
   "create_product" | "reprice_product" | "revise_product";
 
-export type ContentPublicationOperation = Exclude<
-  PublicationOperation,
-  "reprice_product"
->;
-
 export type PublicationPlacement = {
   displayOrder: number;
-  operation: ContentPublicationOperation;
   productId: number | null;
   productSlug: string;
   versionSequence: number;
@@ -226,7 +220,6 @@ export class Product {
   revisionPlacement(): PublicationPlacement {
     return {
       displayOrder: this.displayOrder,
-      operation: "revise_product",
       productId: this.id,
       productSlug: this.slug,
       versionSequence: this.nextVersionSequence(),

@@ -54,21 +54,6 @@ export class ProductPricing {
     );
   }
 
-  static fromStoredAmounts(amounts: {
-    eurCents: number | null;
-    usdCents: number | null;
-  }): ProductPricing {
-    if (amounts.eurCents === null || amounts.usdCents === null) {
-      return ProductPricing.free();
-    }
-
-    return ProductPricing.reconstitute({
-      kind: "paid",
-      eurCents: amounts.eurCents,
-      usdCents: amounts.usdCents,
-    });
-  }
-
   isPaid(): boolean {
     return this.state.kind === "paid";
   }
