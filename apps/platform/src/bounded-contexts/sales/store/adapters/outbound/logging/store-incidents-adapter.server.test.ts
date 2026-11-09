@@ -78,4 +78,110 @@ describe("StoreIncidentsAdapter", () => {
       },
     );
   });
+
+  it("logs a paid order whose charge differs from its total without recipient data", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
+
+    // act
+    storeIncidentsAdapter.paymentAmountMismatch({
+      orderId: "order-1",
+      expectedMinorUnits: 3900,
+      expectedCurrency: "EUR",
+      chargedMinorUnits: 100,
+      chargedCurrency: "EUR",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Store order was charged an amount other than its total.",
+      {
+        chargedCurrency: "EUR",
+        chargedMinorUnits: 100,
+        errorCategory: "store_order_amount_mismatch",
+        expectedCurrency: "EUR",
+        expectedMinorUnits: 3900,
+        orderId: "order-1",
+      },
+    );
+  });
+
+  it("logs a payment for an order the store does not hold", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
+
+    // act
+    storeIncidentsAdapter.paidOrderUnknown({
+      eventId: "evt_1",
+      orderId: "order-1",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Store payment names an order the store does not hold.",
+      {
+        errorCategory: "store_order_unknown",
+        eventId: "evt_1",
+        orderId: "order-1",
+      },
+    );
+  });
+
+  it("logs order email failures by order only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
+
+    // act
+    storeIncidentsAdapter.orderEmailRejected({
+      orderId: "order-1",
+      reason: "invalid_to",
+    });
+    storeIncidentsAdapter.orderEmailAuditPending({ orderId: "order-1" });
+    storeIncidentsAdapter.termsDocumentMissing({
+      orderId: "order-1",
+      termsVersion: "1.0",
+    });
+
+    // assert
+    expect(consoleError.mock.calls).toEqual([
+      [
+        "Store order email was rejected by the provider.",
+        {
+          errorCategory: "store_order_email_rejected",
+          orderId: "order-1",
+          providerRejectionReason: "invalid_to",
+        },
+      ],
+      [
+        "Store order email acceptance audit requires reconciliation.",
+        {
+          errorCategory: "store_order_email_audit_pending",
+          orderId: "order-1",
+        },
+      ],
+      [
+        "Store order email cannot attach the Terms she accepted.",
+        {
+          errorCategory: "store_order_terms_document_missing",
+          orderId: "order-1",
+          termsVersion: "1.0",
+        },
+      ],
+    ]);
+  });
 });

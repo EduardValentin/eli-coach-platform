@@ -3,6 +3,7 @@ import type {
   StoreConsentVersions,
 } from "~/bounded-contexts/sales/store/domain/acquisition";
 import {
+  PAID_DIGITAL_DELIVERY_CONSENT,
   PRIVACY_POLICY_VERSION,
   STORE_MARKETING_CONSENT_VERSION,
   type TermsFacade,
@@ -14,6 +15,8 @@ export class LegalConsentVersionsAdapter implements ConsentVersionsPort {
   current(): StoreConsentVersions {
     return {
       marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
+      paidDeliveryConsentTermsVersion:
+        PAID_DIGITAL_DELIVERY_CONSENT.termsVersion,
       privacyPolicyVersion: PRIVACY_POLICY_VERSION,
       termsVersion: this.termsFacade.currentTerms().version,
     };

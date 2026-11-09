@@ -10,6 +10,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -446,13 +447,122 @@ export const acquisitionsTable = appSchema.table(
   ],
 );
 
+export const storeOrdersTable = appSchema.table(
+  "store_orders",
+  {
+    id: uuid("id").primaryKey(),
+    recipientId: integer("recipient_id")
+      .notNull()
+      .references(() => storeRecipientsTable.id),
+    idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+    payloadDigest: varchar("payload_digest", { length: 64 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    status: varchar("status", { length: 16 }).notNull().default("pending"),
+    checkoutSessionId: varchar("checkout_session_id", { length: 255 }),
+    checkoutUrl: text("checkout_url"),
+    paymentIntentId: varchar("payment_intent_id", { length: 255 }),
+    chargedMinorUnits: integer("charged_minor_units"),
+    chargedCurrency: varchar("charged_currency", { length: 3 }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    termsVersion: varchar("terms_version", { length: 64 }).notNull(),
+    privacyPolicyVersion: varchar("privacy_policy_version", {
+      length: 64,
+    }).notNull(),
+    marketingConsentVersion: varchar("marketing_consent_version", {
+      length: 64,
+    }).notNull(),
+    marketingConsent: boolean("marketing_consent").notNull(),
+    marketingConsentedAt: timestamp("marketing_consented_at", {
+      withTimezone: true,
+    }),
+    deliveryConsentTermsVersion: varchar("delivery_consent_terms_version", {
+      length: 64,
+    }).notNull(),
+    deliveryConsentedAt: timestamp("delivery_consented_at", {
+      withTimezone: true,
+    }).notNull(),
+    placedAt: timestamp("placed_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("store_orders_idempotency_key_unique").on(table.idempotencyKey),
+    uniqueIndex("store_orders_checkout_session_unique").on(
+      table.checkoutSessionId,
+    ),
+    index("store_orders_recipient_placed_idx").on(
+      table.recipientId,
+      table.placedAt,
+    ),
+    check(
+      "store_orders_payload_digest_check",
+      sql`${table.payloadDigest} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "store_orders_currency_check",
+      sql`${table.currency} in ('EUR', 'USD')`,
+    ),
+    check(
+      "store_orders_status_check",
+      sql`${table.status} in ('pending', 'paid')`,
+    ),
+    check(
+      "store_orders_checkout_check",
+      sql`(${table.checkoutSessionId} is null) = (${table.checkoutUrl} is null)`,
+    ),
+    check(
+      "store_orders_payment_check",
+      sql`(${table.status} = 'paid' and ${table.checkoutSessionId} is not null and ${table.chargedMinorUnits} is not null and ${table.chargedMinorUnits} >= 0 and ${table.chargedCurrency} is not null and ${table.paidAt} is not null) or (${table.status} = 'pending' and ${table.paymentIntentId} is null and ${table.chargedMinorUnits} is null and ${table.chargedCurrency} is null and ${table.paidAt} is null)`,
+    ),
+    check(
+      "store_orders_marketing_consent_check",
+      sql`(${table.marketingConsent} and ${table.marketingConsentedAt} is not null) or (not ${table.marketingConsent} and ${table.marketingConsentedAt} is null)`,
+    ),
+  ],
+);
+
+export const storeOrderItemsTable = appSchema.table(
+  "store_order_items",
+  {
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => storeOrdersTable.id),
+    position: integer("position").notNull(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => productsTable.id),
+    productVersionId: integer("product_version_id")
+      .notNull()
+      .references(() => productVersionsTable.id),
+    title: varchar("title", { length: 240 }).notNull(),
+    amountMinorUnits: integer("amount_minor_units").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "store_order_items_pkey",
+      columns: [table.orderId, table.position],
+    }),
+    uniqueIndex("store_order_items_order_version_unique").on(
+      table.orderId,
+      table.productVersionId,
+    ),
+    check("store_order_items_position_check", sql`${table.position} >= 0`),
+    check(
+      "store_order_items_amount_check",
+      sql`${table.amountMinorUnits} >= 0`,
+    ),
+  ],
+);
+
 export const deliveryAttemptsTable = appSchema.table(
   "delivery_attempts",
   {
     id: serial("id").primaryKey(),
-    requestId: integer("request_id")
-      .notNull()
-      .references(() => acquisitionRequestsTable.id),
+    requestId: integer("request_id").references(
+      () => acquisitionRequestsTable.id,
+    ),
+    orderId: uuid("order_id").references(() => storeOrdersTable.id),
     provider: varchar("provider", { length: 64 }).notNull(),
     providerIdempotencyKey: varchar("provider_idempotency_key", {
       length: 128,
@@ -471,6 +581,14 @@ export const deliveryAttemptsTable = appSchema.table(
       table.requestId,
       table.createdAt,
     ),
+    index("delivery_attempts_order_created_idx").on(
+      table.orderId,
+      table.createdAt,
+    ),
+    check(
+      "delivery_attempts_owner_check",
+      sql`num_nonnulls(${table.requestId}, ${table.orderId}) = 1`,
+    ),
     check(
       "delivery_attempts_status_check",
       sql`${table.status} in ('pending', 'accepted', 'rejected', 'retryable')`,
@@ -486,9 +604,10 @@ export const downloadGrantsTable = appSchema.table(
   "download_grants",
   {
     id: serial("id").primaryKey(),
-    requestId: integer("request_id")
-      .notNull()
-      .references(() => acquisitionRequestsTable.id),
+    requestId: integer("request_id").references(
+      () => acquisitionRequestsTable.id,
+    ),
+    orderId: uuid("order_id").references(() => storeOrdersTable.id),
     tokenSha256: varchar("token_sha256", { length: 64 }).notNull(),
     status: varchar("status", { length: 32 }).notNull().default("active"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -498,6 +617,11 @@ export const downloadGrantsTable = appSchema.table(
   },
   (table) => [
     uniqueIndex("download_grants_request_unique").on(table.requestId),
+    uniqueIndex("download_grants_order_unique").on(table.orderId),
+    check(
+      "download_grants_owner_check",
+      sql`num_nonnulls(${table.requestId}, ${table.orderId}) = 1`,
+    ),
     uniqueIndex("download_grants_token_sha256_unique").on(table.tokenSha256),
     index("download_grants_expiry_idx").on(table.expiresAt),
     check(

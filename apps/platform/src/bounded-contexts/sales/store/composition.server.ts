@@ -1,6 +1,17 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
+import { PostgresPaymentEventLedgerRepository } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/persistence/postgres-payment-event-ledger-repository.server";
 import { AcquireProductsUseCase } from "~/bounded-contexts/sales/store/domain/acquisition";
 import { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
+import {
+  CompleteOrderUseCase,
+  DeliverOrderEmailUseCase,
+  PlaceOrderUseCase,
+  PrepareOrderEmailResendUseCase,
+  ReadOrderConfirmationUseCase,
+} from "~/bounded-contexts/sales/store/domain/order";
 import type { EmailAcceptancePort } from "~/bounded-contexts/sales/store/domain/email-acceptance-port";
 import {
   ChangeProductPriceUseCase,
@@ -23,6 +34,14 @@ import type {
 } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-port.server";
 
 import { StoreAcquisitionController } from "~/bounded-contexts/sales/store/adapters/inbound/http/acquisitions/store-acquisition-controller.server";
+import { StoreCheckoutController } from "~/bounded-contexts/sales/store/adapters/inbound/http/checkouts/store-checkout-controller.server";
+import { StoreOrderController } from "~/bounded-contexts/sales/store/adapters/inbound/http/orders/store-order-controller.server";
+import { StoreOrderCompletionHandler } from "~/bounded-contexts/sales/store/adapters/inbound/http/payments/store-order-completion-handler.server";
+import { PostgresStoreOrderRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/orders/postgres-store-order-repository.server";
+import { RandomOrderIdsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/orders/random-order-ids-adapter.server";
+import { createStoreCheckoutAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/payments/create-store-checkout-adapter.server";
+import { EmailOrderDeliveryAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/email/email-order-delivery-adapter.server";
+import { LegalOrderTermsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/legal/legal-order-terms-adapter.server";
 import { StoreCatalogController } from "~/bounded-contexts/sales/store/adapters/inbound/http/catalog/store-catalog-controller.server";
 import { StoreCoverAssetController } from "~/bounded-contexts/sales/store/adapters/inbound/http/covers/store-cover-asset-controller.server";
 import { StoreDownloadController } from "~/bounded-contexts/sales/store/adapters/inbound/http/downloads/store-download-controller.server";
@@ -60,15 +79,23 @@ export type StoreFeatureHandles = {
   emailAcceptancePort: EmailAcceptancePort;
   loggerPort: LoggerPort;
   managementAuth: ManagementAuth;
+  paymentProvider: PaymentProvider;
   productEmailPort: ProductEmailPort;
   publicAppUrl: string;
   storeAssetRoot: string;
   termsFacade: TermsFacade;
 };
 
+type StoreComposition = {
+  feature: StoreFeature;
+  paymentHandlers: {
+    paymentCompletionHandlerPort: PaymentCompletionHandlerPort;
+  };
+};
+
 export function composeStoreFeature(
   handles: StoreFeatureHandles,
-): StoreFeature {
+): StoreComposition {
   const storeIncidentsAdapter = new StoreIncidentsAdapter(handles.loggerPort);
   const postgresStoreCatalogRepository = new PostgresStoreCatalogRepository(
     handles.database,
@@ -105,6 +132,30 @@ export function composeStoreFeature(
     payloadDigestGeneratorPort: new PayloadSha256DigestAdapter(),
     downloadTokenGeneratorPort: new RandomDownloadTokenGeneratorAdapter(),
   });
+  const postgresStoreOrderRepository = new PostgresStoreOrderRepository(
+    handles.database,
+  );
+  const storeCheckoutPort = createStoreCheckoutAdapter(handles.paymentProvider);
+  const emailOrderDeliveryAdapter = new EmailOrderDeliveryAdapter(
+    handles.productEmailPort,
+    {
+      appBasePath: handles.appBasePath,
+      contactEmail: handles.contactEmail,
+      publicAppUrl: handles.publicAppUrl,
+    },
+  );
+  const orderTokens = {
+    clockPort: handles.clockPort,
+    downloadTokenGeneratorPort: new RandomDownloadTokenGeneratorAdapter(),
+    orderDeliveryPort: emailOrderDeliveryAdapter,
+    storeOrdersPort: postgresStoreOrderRepository,
+  };
+  const deliverOrderEmailUseCase = new DeliverOrderEmailUseCase({
+    storeOrdersPort: postgresStoreOrderRepository,
+    orderDeliveryPort: emailOrderDeliveryAdapter,
+    orderTermsPort: new LegalOrderTermsAdapter(handles.termsFacade),
+    orderIncidentsPort: storeIncidentsAdapter,
+  });
   const planOptions = {
     productAssetDigestPort: new ProductAssetSha256DigestAdapter(),
     storeProductPublicationsPort: new PostgresStoreProductPublicationRepository(
@@ -121,7 +172,7 @@ export function composeStoreFeature(
     downloadTokenHasherPort: new DownloadTokenSha256Adapter(),
   });
 
-  return {
+  const feature: StoreFeature = {
     storeAcquisitionController: new StoreAcquisitionController(
       acquireProductsUseCase,
       handles.botVerifierPort,
@@ -130,6 +181,33 @@ export function composeStoreFeature(
       appBasePath: handles.appBasePath,
       findPublishedProductUseCase,
       listPublishedProductsUseCase,
+    }),
+    storeCheckoutController: new StoreCheckoutController({
+      appBasePath: handles.appBasePath,
+      botVerifierPort: handles.botVerifierPort,
+      placeOrderUseCase: new PlaceOrderUseCase({
+        storeOrdersPort: postgresStoreOrderRepository,
+        storeCatalogPort: postgresStoreCatalogRepository,
+        storeCheckoutPort,
+        clockPort: handles.clockPort,
+        consentVersionsPort: new LegalConsentVersionsAdapter(
+          handles.termsFacade,
+        ),
+        emailAcceptancePort: handles.emailAcceptancePort,
+        payloadDigestGeneratorPort: new PayloadSha256DigestAdapter(),
+        orderIdsPort: new RandomOrderIdsAdapter(),
+      }),
+      publicAppUrl: handles.publicAppUrl,
+    }),
+    storeOrderController: new StoreOrderController({
+      readOrderConfirmationUseCase: new ReadOrderConfirmationUseCase({
+        storeOrdersPort: postgresStoreOrderRepository,
+        storeCheckoutPort,
+      }),
+      prepareOrderEmailResendUseCase: new PrepareOrderEmailResendUseCase(
+        orderTokens,
+      ),
+      deliverOrderEmailUseCase,
     }),
     storeCoverAssetController: new StoreCoverAssetController({
       productAssetsPort: filesystemProductAssetStoreAdapter,
@@ -160,6 +238,23 @@ export function composeStoreFeature(
         storeProductPublicationsPort: planOptions.storeProductPublicationsPort,
       }),
     }),
+  };
+
+  return {
+    feature,
+    paymentHandlers: {
+      paymentCompletionHandlerPort: new StoreOrderCompletionHandler({
+        completeOrderUseCase: new CompleteOrderUseCase({
+          ...orderTokens,
+          paymentEventLedgerPort: new PostgresPaymentEventLedgerRepository(
+            handles.database,
+          ),
+          orderIncidentsPort: storeIncidentsAdapter,
+        }),
+        deliverOrderEmailUseCase,
+        unitOfWork: createUnitOfWork(handles.database),
+      }),
+    },
   };
 }
 

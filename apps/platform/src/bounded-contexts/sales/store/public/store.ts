@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const productSlugSchema = z
+export const productSlugSchema = z
   .string()
   .trim()
   .min(1)
@@ -84,14 +84,19 @@ const uniqueProductSlugsSchema = z
     message: "Product identifiers must be unique.",
   });
 
-const storeAcquisitionEmailSchema = z
+export const storeProductSlugsFieldSchema = z.preprocess(
+  parseProductSlugs,
+  uniqueProductSlugsSchema,
+);
+
+export const storeEmailSchema = z
   .string()
   .trim()
   .max(320)
   .pipe(z.email({ error: "Enter a valid email address." }));
 
 export const storeAcquisitionFormSchema = z.object({
-  email: storeAcquisitionEmailSchema,
+  email: storeEmailSchema,
   marketingConsent: z.boolean(),
   termsAccepted: z.boolean().refine((accepted) => accepted, {
     message: "Accept the Terms & Conditions to continue.",
@@ -108,7 +113,7 @@ export const storeAcquisitionRequestSchema = z
   .and(
     z.object({
       idempotencyKey: z.uuid(),
-      productSlugs: z.preprocess(parseProductSlugs, uniqueProductSlugsSchema),
+      productSlugs: storeProductSlugsFieldSchema,
     }),
   );
 

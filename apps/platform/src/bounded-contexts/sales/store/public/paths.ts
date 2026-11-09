@@ -12,4 +12,12 @@ export const STORE_API_PATHS = {
   acquisitions: `/api/${STORE_ROUTE_SEGMENT}/acquisitions`,
   downloads: `/api/${STORE_ROUTE_SEGMENT}/downloads`,
   covers: `/api/${STORE_ROUTE_SEGMENT}/covers`,
+  checkouts: `/api/${STORE_ROUTE_SEGMENT}/checkouts`,
+  orderEmails: `/api/${STORE_ROUTE_SEGMENT}/orders/email`,
 };
+
+export const STORE_CHECKOUT_COMPLETE_ROUTE_SEGMENT = `${STORE_ROUTE_SEGMENT}/checkout/complete`;
+export const STORE_CHECKOUT_COMPLETE_PATH = `/${STORE_CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
+export const STORE_CHECKOUT_SESSION_PARAM = "session_id";
+export const STORE_PAYMENT_PARAM = "payment";
+export const STORE_PAYMENT_CANCELLED = "cancelled";

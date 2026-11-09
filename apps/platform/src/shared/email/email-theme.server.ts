@@ -11,6 +11,7 @@ export const EMAIL_COLORS = {
   pinkBorder: "#F4D8E4",
   pinkOnDark: "#E03A7E",
   pinkSoft: "#FFF5F8",
+  teal: "#00796B",
   white: "#FFFFFF",
 } as const;
 

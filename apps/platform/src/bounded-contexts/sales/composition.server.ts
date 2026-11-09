@@ -28,6 +28,7 @@ type SalesHandles = Omit<
     Parameters<typeof composeWaitlistFeature>[0] &
     SubscriptionsFeatureHandles,
   | "managementAuth"
+  | "paymentProvider"
   | "pricingEligibilitySourceFacade"
   | keyof SubscriptionPaymentHandles
 > & {
@@ -44,6 +45,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
   const store = composeStoreFeature({
     ...handles,
     managementAuth: composeManagementAuth(handles),
+    paymentProvider: payments.paymentProvider,
   });
   const waitlist = composeWaitlistFeature(handles);
   const subscriptions = composeSubscriptionsFeature({
@@ -60,6 +62,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
     ...payments,
     paymentCompletionHandlers: [
       subscriptions.paymentHandlers.paymentCompletionHandlerPort,
+      store.paymentHandlers.paymentCompletionHandlerPort,
     ],
     paymentSubscriptionChangeHandlers: [
       subscriptions.paymentHandlers.paymentSubscriptionChangeHandlerPort,
@@ -72,7 +75,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
 
   return {
     middleware: ({ context }, next) => {
-      context.set(storeContext, store);
+      context.set(storeContext, store.feature);
       context.set(waitlistContext, waitlist.feature);
       context.set(subscriptionsContext, subscriptions.feature);
       context.set(paymentsContext, paymentsFeature);
