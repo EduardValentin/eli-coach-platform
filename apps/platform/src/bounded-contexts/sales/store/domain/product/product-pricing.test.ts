@@ -69,6 +69,34 @@ describe("ProductPricing.isPaid", () => {
   });
 });
 
+describe("ProductPricing.amountIn", () => {
+  it("charges a paid product its amount in the chosen currency", () => {
+    // arrange
+    const pricing = ProductPricing.reconstitute({
+      kind: "paid",
+      eurCents: 3900,
+      usdCents: 4500,
+    });
+
+    // act
+    const amounts = [pricing.amountIn("EUR"), pricing.amountIn("USD")];
+
+    // assert
+    expect(amounts).toEqual([3900, 4500]);
+  });
+
+  it("charges nothing for a free product", () => {
+    // arrange
+    const pricing = ProductPricing.free();
+
+    // act
+    const amount = pricing.amountIn("EUR");
+
+    // assert
+    expect(amount).toBe(0);
+  });
+});
+
 describe("ProductPricing.equals", () => {
   it.each([
     ["free and free", ProductPricing.free(), ProductPricing.free(), true],

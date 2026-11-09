@@ -34,7 +34,7 @@ export class OrderItem {
       productSlug: product.slug,
       productVersionId: product.version.id,
       title: product.version.title,
-      amountMinorUnits: product.price?.amountIn(currency) ?? 0,
+      amountMinorUnits: product.pricing.amountIn(currency),
     });
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ProductPrice, PublishedProduct } from "../product";
+import { ProductPricing, PublishedProduct } from "../product";
 
 import { DeliveryConsent } from "./delivery-consent";
 import { Order } from "./order";
@@ -17,13 +17,13 @@ function publishedProduct(options: {
   id: number;
   slug: string;
   title: string;
-  price: ProductPrice | null;
+  pricing: ProductPricing;
 }): PublishedProduct {
   return PublishedProduct.reconstitute({
     id: options.id,
     slug: options.slug,
     displayOrder: options.id,
-    price: options.price,
+    pricing: options.pricing,
     version: {
       id: options.id * 10,
       sequence: 1,
@@ -51,19 +51,27 @@ const fatLoss = publishedProduct({
   id: 1,
   slug: "fat-loss-30",
   title: "30-Day Fat Loss Plan",
-  price: ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+  pricing: ProductPricing.reconstitute({
+    kind: "paid",
+    eurCents: 3900,
+    usdCents: 4500,
+  }),
 });
 const reset = publishedProduct({
   id: 2,
   slug: "nutritional-reset",
   title: "Nutritional Reset Plan",
-  price: ProductPrice.reconstitute({ eurCents: 2900, usdCents: 3300 }),
+  pricing: ProductPricing.reconstitute({
+    kind: "paid",
+    eurCents: 2900,
+    usdCents: 3300,
+  }),
 });
 const ebook = publishedProduct({
   id: 3,
   slug: "hormone-harmony",
   title: "Hormone Harmony E-Book",
-  price: null,
+  pricing: ProductPricing.free(),
 });
 const catalog = [fatLoss, reset, ebook];
 

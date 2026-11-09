@@ -1,5 +1,5 @@
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
-import type { StorePrice } from "~/bounded-contexts/sales/store/public/store-currency";
+import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 
 import { E2E_APP_URL } from "../support/e2e-app";
 import {
@@ -13,7 +13,12 @@ import type { StoreProductFields } from "../support/store-product-requests";
 import { deliverCheckoutCompleted } from "../support/stripe-events";
 
 const RUN_ID = resolveRunId();
-const PLAN_PRICES: StorePrice = { eurCents: 3900, usdCents: 4500 };
+const PLAN_PRICING: ProductPricingRequest = {
+  kind: "paid",
+  eurCents: 3900,
+  usdCents: 4500,
+};
+const FREE_PRICING: ProductPricingRequest = { kind: "free" };
 const CARDHOLDER_NAME = "Ana Buyer";
 const ORDER_SUBJECT = "Your order is confirmed";
 const TERMS_ATTACHMENT = "terms-and-conditions-1.0.pdf";
@@ -25,12 +30,12 @@ const JOURNEY_TIMEOUT_MS = 180_000;
 function storeProductFieldsOf(
   name: string,
   scenarioTag: string,
-  prices: StorePrice | null,
+  pricing: ProductPricingRequest,
 ): StoreProductFields {
   return {
     slug: `${name.toLowerCase().replaceAll(" ", "-")}-${RUN_ID}-${scenarioTag}`,
     title: `${name} ${scenarioTag}`,
-    prices,
+    pricing,
   };
 }
 
@@ -61,8 +66,12 @@ test(
     test.setTimeout(JOURNEY_TIMEOUT_MS);
 
     // arrange
-    const plan = storeProductFieldsOf("Sculpt Plan", scenarioTag, PLAN_PRICES);
-    const guide = storeProductFieldsOf("Stretch Guide", scenarioTag, null);
+    const plan = storeProductFieldsOf("Sculpt Plan", scenarioTag, PLAN_PRICING);
+    const guide = storeProductFieldsOf(
+      "Stretch Guide",
+      scenarioTag,
+      FREE_PRICING,
+    );
     await storeProductRequests.publishAccepted(plan);
     await storeProductRequests.publishAccepted(guide);
     await storeCatalog.open();
@@ -136,8 +145,12 @@ test(
     visitorEmail,
   }) => {
     // arrange
-    const plan = storeProductFieldsOf("Core Plan", scenarioTag, PLAN_PRICES);
-    const guide = storeProductFieldsOf("Sleep Guide", scenarioTag, null);
+    const plan = storeProductFieldsOf("Core Plan", scenarioTag, PLAN_PRICING);
+    const guide = storeProductFieldsOf(
+      "Sleep Guide",
+      scenarioTag,
+      FREE_PRICING,
+    );
     await storeProductRequests.publishAccepted(plan);
     await storeProductRequests.publishAccepted(guide);
     await storeCatalog.open();
