@@ -1,19 +1,19 @@
 import { z } from "zod";
 import type { PersistStorage } from "zustand/middleware";
 
+import type { StoreCheckoutDetails } from "../acquisition/store-checkout-details";
+
 export const STORE_CART_STORAGE_KEY = "eli-store-cart-v1";
 export const STORE_CHECKOUT_DETAILS_STORAGE_KEY =
   "eli-store-checkout-details-v1";
 const STORE_CART_STORAGE_VERSION = 1;
 
-const storeCheckoutDetailsSchema = z.object({
+const storedCheckoutDetailsSchema = z.object({
   deliveryConsent: z.boolean(),
   email: z.string(),
   marketingConsent: z.boolean(),
   termsAccepted: z.boolean(),
-});
-
-export type StoreCheckoutDetails = z.infer<typeof storeCheckoutDetailsSchema>;
+}) satisfies z.ZodType<StoreCheckoutDetails>;
 
 export type PersistedStoreCart = {
   checkoutDetails: StoreCheckoutDetails | null;
@@ -98,7 +98,7 @@ function readCheckoutDetails(): StoreCheckoutDetails | null {
       sessionStorage.getItem(STORE_CHECKOUT_DETAILS_STORAGE_KEY) ?? "null",
     ) as unknown;
 
-    return storeCheckoutDetailsSchema.safeParse(storedDetails).data ?? null;
+    return storedCheckoutDetailsSchema.safeParse(storedDetails).data ?? null;
   } catch {
     return null;
   }

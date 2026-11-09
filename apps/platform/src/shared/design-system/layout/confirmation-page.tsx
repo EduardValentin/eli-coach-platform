@@ -68,6 +68,30 @@ export function ConfirmationHeading(props: {
   );
 }
 
+export function ConfirmationLead({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"p">) {
+  return (
+    <p
+      className={cn(
+        "mt-4 text-center text-base leading-relaxed text-text-secondary",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ConfirmationActions({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"div">) {
+  return (
+    <div className={cn("mt-8 flex justify-center", className)} {...props} />
+  );
+}
+
 export function ConfirmationReadings({
   className,
   ...props

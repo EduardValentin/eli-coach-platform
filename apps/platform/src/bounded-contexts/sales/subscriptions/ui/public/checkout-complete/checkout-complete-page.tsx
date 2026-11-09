@@ -1,5 +1,7 @@
 import {
+  ConfirmationActions,
   ConfirmationHeading,
+  ConfirmationLead,
   ConfirmationPage,
   ConfirmationReading,
   ConfirmationReadings,
@@ -82,13 +84,13 @@ function PaymentConfirmation(props: { confirmation: PaidConfirmation }) {
         {PAYMENT_CONFIRMED_HEADING}
       </ConfirmationHeading>
 
-      <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
+      <ConfirmationLead>
         {INVITATION_LEAD}{" "}
         <span className="font-medium text-text-primary">
           {confirmation.email}
         </span>
         {INVITATION_TAIL}
-      </p>
+      </ConfirmationLead>
 
       <ConfirmationReadings className="mt-8">
         <ConfirmationReading term="Bundle" value={confirmation.bundleTitle} />
@@ -97,11 +99,11 @@ function PaymentConfirmation(props: { confirmation: PaidConfirmation }) {
         <ConfirmationReading term="Your start" value={startSummary} />
       </ConfirmationReadings>
 
-      <div className="mt-8 flex justify-center">
+      <ConfirmationActions>
         <Link className={buttonVariants({ variant: "outline" })} to="/">
           Back to the home page
         </Link>
-      </div>
+      </ConfirmationActions>
     </ConfirmationPage>
   );
 }

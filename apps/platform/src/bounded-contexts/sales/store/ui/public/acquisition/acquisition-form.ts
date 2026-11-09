@@ -1,23 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-} from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
+  type SubmitHandler,
+  type UseFormReset,
+  useForm,
+} from "react-hook-form";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   useBotDetectionSubmission,
   type BotDetectionConfig,
 } from "~/shared/submission-checks/bot-detection";
-import {
-  storeAcquisitionFormSchema,
-  type StoreProduct,
-} from "~/bounded-contexts/sales/store/public/store";
+import type { StoreProduct } from "~/bounded-contexts/sales/store/public/store";
 
 import {
   reduceAcquisitionFlow,
@@ -27,72 +21,66 @@ import {
   type AcquisitionFlowEvent,
   type AcquisitionFlowState,
 } from "./acquisition-flow";
-import type { StoreCheckoutDetails } from "../cart/cart-storage";
+import {
+  storeCheckoutDetailsFormSchema,
+  type StoreCheckoutDetails,
+} from "./store-checkout-details";
 import { useStoreCart } from "../cart/cart-provider";
 import {
   useStoreAcquisitionFetcher,
   useStoreCheckoutFetcher,
 } from "../api-client";
 
-const storeCartDetailsFormSchema = storeAcquisitionFormSchema.extend({
-  deliveryConsent: z.boolean(),
-});
-
-type UseStoreAcquisitionOptions = {
+type UseStoreCartCheckoutOptions = {
   botDetection: BotDetectionConfig;
   products: readonly StoreProduct[];
 };
 
-export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
+const EMPTY_CHECKOUT_DETAILS: StoreCheckoutDetails = {
+  deliveryConsent: false,
+  email: "",
+  marketingConsent: false,
+  termsAccepted: false,
+};
+
+export function useStoreCartCheckout(options: UseStoreCartCheckoutOptions) {
   const clearCart = useStoreCart((cart) => cart.clearCart);
   const currency = useStoreCart((cart) => cart.currency);
-  const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
-  const notice = useStoreCart((cart) => cart.notice);
   const productSlugs = useStoreCart((cart) => cart.productSlugs);
   const reconcileProducts = useStoreCart((cart) => cart.reconcileProducts);
   const rememberCheckoutDetails = useStoreCart(
     (cart) => cart.rememberCheckoutDetails,
   );
-  const takeCheckoutDetails = useStoreCart((cart) => cart.takeCheckoutDetails);
   const [flow, setFlow] = useState<AcquisitionFlowState>(() => ({
     idempotencyKey: createIdempotencyKey(),
     step: "cart",
   }));
-  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
   const flowRef = useRef(flow);
   flowRef.current = flow;
   const form = useForm<StoreCheckoutDetails>({
-    defaultValues: {
-      deliveryConsent: false,
-      email: "",
-      marketingConsent: false,
-      termsAccepted: false,
-    },
-    resolver: zodResolver(storeCartDetailsFormSchema),
+    defaultValues: EMPTY_CHECKOUT_DETAILS,
+    resolver: zodResolver(storeCheckoutDetailsFormSchema),
   });
   const { clearErrors, getValues, reset, setError, watch } = form;
+  const openingCheckout = useOpeningCheckoutState();
+  useRememberedCheckoutDetails(reset);
   const acquisition = useStoreAcquisitionFetcher();
   const checkout = useStoreCheckoutFetcher();
   const isPaidCheckout = options.products.some(
     (product) => product.price !== null,
   );
-  const submitFormDataRef = useRef(acquisition.submit);
-  const submitFormData = useCallback(
-    (formData: FormData) => submitFormDataRef.current(formData),
-    [],
-  );
   const botDetectionSubmission = useBotDetectionSubmission({
     action: STORE_ACQUISITION_TURNSTILE_ACTION,
     config: options.botDetection,
-    onSubmitFormData: submitFormData,
+    onSubmitFormData: isPaidCheckout ? checkout.submit : acquisition.submit,
   });
   const { resetChallenge } = botDetectionSubmission;
   const isSubmitting =
     acquisition.isSubmitting ||
     checkout.isSubmitting ||
-    isOpeningCheckout ||
+    openingCheckout.isOpeningCheckout ||
     botDetectionSubmission.isAwaitingChallenge;
-  const email = watch("email");
+  const hasEmail = watch("email").trim().length > 0;
   const termsAccepted = watch("termsAccepted");
   const deliveryConsent = watch("deliveryConsent");
 
@@ -118,19 +106,13 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
         break;
       case "open-checkout":
         rememberCheckoutDetails(getValues());
-        setIsOpeningCheckout(true);
-        window.location.assign(effect.checkoutUrl);
+        openingCheckout.openCheckout(effect.checkoutUrl);
         break;
       case "reconcile-products":
         reconcileProducts(effect.availableProductSlugs);
         break;
       case "reset-form":
-        reset({
-          deliveryConsent: false,
-          email: getValues("email"),
-          marketingConsent: false,
-          termsAccepted: false,
-        });
+        reset({ ...EMPTY_CHECKOUT_DETAILS, email: getValues("email") });
         break;
       case "reset-challenge":
         resetChallenge();
@@ -143,7 +125,10 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
 
   useEffect(() => {
     if (acquisition.response) {
-      applyFlowEvent({ type: "response", response: acquisition.response });
+      applyFlowEvent({
+        type: "acquisition-response",
+        response: acquisition.response,
+      });
     }
   }, [acquisition.response]);
 
@@ -156,31 +141,7 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
     }
   }, [checkout.response]);
 
-  useEffect(() => {
-    if (notice !== "payment-not-completed" || !isCartHydrated) {
-      return;
-    }
-
-    const rememberedDetails = takeCheckoutDetails();
-
-    if (rememberedDetails) {
-      reset(rememberedDetails);
-    }
-  }, [isCartHydrated, notice, reset, takeCheckoutDetails]);
-
-  useEffect(() => {
-    const leaveOpeningState = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        setIsOpeningCheckout(false);
-      }
-    };
-
-    window.addEventListener("pageshow", leaveOpeningState);
-
-    return () => window.removeEventListener("pageshow", leaveOpeningState);
-  }, []);
-
-  const submit: SubmitHandler<StoreCheckoutDetails> = (values) => {
+  function cartFormData(values: StoreCheckoutDetails): FormData {
     const formData = new FormData();
     formData.set("email", values.email);
     formData.set("idempotencyKey", flow.idempotencyKey);
@@ -188,27 +149,28 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
     formData.set("productSlugs", JSON.stringify(productSlugs));
     formData.set("termsAccepted", String(values.termsAccepted));
 
-    if (!isPaidCheckout) {
-      submitFormDataRef.current = acquisition.submit;
-      botDetectionSubmission.submitFormData(formData);
-      return;
-    }
+    return formData;
+  }
 
+  const submitFreeClaim: SubmitHandler<StoreCheckoutDetails> = (values) => {
+    botDetectionSubmission.submitFormData(cartFormData(values));
+  };
+
+  const submitPaidCheckout: SubmitHandler<StoreCheckoutDetails> = (values) => {
     if (!values.deliveryConsent) {
       return;
     }
 
+    const formData = cartFormData(values);
     formData.set("currency", currency);
     formData.set("deliveryConsent", String(values.deliveryConsent));
-    submitFormDataRef.current = checkout.submit;
     botDetectionSubmission.submitFormData(formData);
   };
 
   return {
     botDetectionWidgetProps: botDetectionSubmission.botDetectionWidgetProps,
-    canContinueToPayment:
-      email.trim().length > 0 && termsAccepted && deliveryConsent,
-    canSubmit: !isSubmitting && email.trim().length > 0 && termsAccepted,
+    canContinueToPayment: hasEmail && termsAccepted && deliveryConsent,
+    canSubmitFreeClaim: !isSubmitting && hasEmail && termsAccepted,
     form,
     isPaidCheckout,
     isSubmitting,
@@ -246,7 +208,52 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
       );
     },
     step: flow.step,
-    submit,
+    submitFreeClaim,
+    submitPaidCheckout,
+  };
+}
+
+function useRememberedCheckoutDetails(
+  reset: UseFormReset<StoreCheckoutDetails>,
+) {
+  const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
+  const notice = useStoreCart((cart) => cart.notice);
+  const takeCheckoutDetails = useStoreCart((cart) => cart.takeCheckoutDetails);
+
+  useEffect(() => {
+    if (notice !== "payment-not-completed" || !isCartHydrated) {
+      return;
+    }
+
+    const rememberedDetails = takeCheckoutDetails();
+
+    if (rememberedDetails) {
+      reset(rememberedDetails);
+    }
+  }, [isCartHydrated, notice, reset, takeCheckoutDetails]);
+}
+
+function useOpeningCheckoutState() {
+  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
+
+  useEffect(() => {
+    const leaveOpeningState = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setIsOpeningCheckout(false);
+      }
+    };
+
+    window.addEventListener("pageshow", leaveOpeningState);
+
+    return () => window.removeEventListener("pageshow", leaveOpeningState);
+  }, []);
+
+  return {
+    isOpeningCheckout,
+    openCheckout: (checkoutUrl: string) => {
+      setIsOpeningCheckout(true);
+      window.location.assign(checkoutUrl);
+    },
   };
 }
 

@@ -443,6 +443,10 @@
   --color-overlay-medium: var(--color-overlay-medium);
   --color-overlay-soft: var(--color-overlay-soft);
   --color-overlay-modal: var(--color-overlay-modal);
+
+  --z-index-sheet-overlay: 70;
+  --z-index-sheet: 71;
+  --z-index-floating-over-sheet: 72;
 }
 
 @layer base {

@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef } from "react";
 
 const PRICE_SIZES = {
   lg: "text-2xl",
+  md: "text-lg",
   sm: "text-sm",
 } as const;
 

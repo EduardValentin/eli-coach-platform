@@ -1,6 +1,8 @@
 import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
 import {
+  ConfirmationActions,
   ConfirmationHeading,
+  ConfirmationLead,
   ConfirmationPage,
 } from "~/shared/design-system/layout";
 import { cn, LABEL_CLASS } from "~/shared/design-system/lib";
@@ -70,13 +72,10 @@ export default function StoreCheckoutCompleteRoute() {
       <ConfirmationHeading outcome="not-completed">
         {PAYMENT_NOT_COMPLETED_HEADING}
       </ConfirmationHeading>
-      <p
-        className="mt-4 text-center text-base leading-relaxed text-text-secondary"
-        data-parity="order-lead"
-      >
+      <ConfirmationLead data-parity="order-lead">
         We couldn&apos;t confirm a payment for this checkout. Head back to the
         store to try again.
-      </p>
+      </ConfirmationLead>
       <BackToStore />
     </ConfirmationPage>
   );
@@ -100,10 +99,7 @@ function ConfirmedOrderView(props: { order: ConfirmedOrder }) {
         {ORDER_CONFIRMED_HEADING}
       </ConfirmationHeading>
 
-      <p
-        className="mt-4 text-center text-base leading-relaxed text-text-secondary"
-        data-parity="order-lead"
-      >
+      <ConfirmationLead data-parity="order-lead">
         Your order email is on its way to{" "}
         <span
           className="font-medium text-text-primary"
@@ -112,7 +108,7 @@ function ConfirmedOrderView(props: { order: ConfirmedOrder }) {
           {order.email}
         </span>
         . Your download link is in that email and works for seven days.
-      </p>
+      </ConfirmationLead>
 
       <h2 className={cn("mt-8", LABEL_CLASS)}>Your order</h2>
       <StoreOrderSummary
@@ -241,10 +237,10 @@ function FeedbackLine(props: { children: ReactNode; icon: ReactNode }) {
 
 function BackToStore() {
   return (
-    <div className="mt-8 flex justify-center">
+    <ConfirmationActions>
       <Link className={buttonVariants({ variant: "outline" })} to={STORE_PATH}>
         Back to the store
       </Link>
-    </div>
+    </ConfirmationActions>
   );
 }

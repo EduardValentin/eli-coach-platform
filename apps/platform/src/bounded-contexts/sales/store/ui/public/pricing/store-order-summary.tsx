@@ -56,11 +56,10 @@ export function StoreOrderSummary(props: {
         data-parity="order-total-row"
       >
         <dt className={LABEL_CLASS}>Total</dt>
-        <dd
-          className="text-lg font-semibold text-text-primary"
-          data-parity="order-total"
-        >
-          {formatStoreAmount(totalMinorUnits, props.currency)}
+        <dd>
+          <Price data-parity="order-total" size="md">
+            {formatStoreAmount(totalMinorUnits, props.currency)}
+          </Price>
         </dd>
       </div>
     </ConfirmationReadings>

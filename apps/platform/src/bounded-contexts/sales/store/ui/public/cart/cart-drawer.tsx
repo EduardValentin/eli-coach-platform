@@ -51,8 +51,8 @@ import {
 
 import { selectStoreCartProducts, useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
-import type { StoreCheckoutDetails } from "./cart-storage";
-import { useStoreAcquisition } from "../acquisition/acquisition-form";
+import { useStoreCartCheckout } from "../acquisition/acquisition-form";
+import type { StoreCheckoutDetails } from "../acquisition/store-checkout-details";
 import { FreeTag } from "../pricing/free-tag";
 import { Price } from "../pricing/price";
 import { StoreOrderSummary } from "../pricing/store-order-summary";
@@ -113,12 +113,21 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   const catalogQuery = useStoreCatalogFetcher({ enabled: isOpen });
   const catalog = catalogQuery.data ?? [];
   const selectedProducts = selectStoreCartProducts(productSlugs, catalog);
-  const acquisition = useStoreAcquisition({
+  const checkout = useStoreCartCheckout({
     botDetection: props.botDetection,
     products: selectedProducts,
   });
   const emailErrorId = useId();
   const responseErrorId = useId();
+  const detailsStep: CartDetailsStepProps = {
+    botDetectionWidgetProps: checkout.botDetectionWidgetProps,
+    emailErrorId,
+    form: checkout.form,
+    isSubmitting: checkout.isSubmitting,
+    onBack: checkout.showCart,
+    responseError: checkout.responseError,
+    responseErrorId,
+  };
 
   useReconcileStoreCartCatalog(
     catalogQuery.data,
@@ -132,12 +141,12 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
     }
 
     closeCart();
-    acquisition.resetAfterDrawerClose();
+    checkout.resetAfterDrawerClose();
   }
 
   function showDetails() {
     dismissNotice();
-    acquisition.showDetails();
+    checkout.showDetails();
   }
 
   return (
@@ -172,7 +181,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
           className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6"
           data-parity="cart-body"
         >
-          {acquisition.step === "cart" ? (
+          {checkout.step === "cart" ? (
             <CartReview
               catalogFailed={catalogQuery.isError}
               catalogPending={catalogQuery.isPending}
@@ -190,29 +199,26 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
               }
               onContinue={showDetails}
               products={selectedProducts}
-              responseError={acquisition.responseError}
+              responseError={checkout.responseError}
             />
           ) : null}
-          {acquisition.step === "details" ? (
-            <AcquisitionDetails
-              botDetectionWidgetProps={acquisition.botDetectionWidgetProps}
-              canContinueToPayment={acquisition.canContinueToPayment}
-              canSubmit={acquisition.canSubmit}
-              emailErrorId={emailErrorId}
-              form={acquisition.form}
-              isSubmitting={acquisition.isSubmitting}
-              onBack={acquisition.showCart}
-              onSubmit={acquisition.submit}
-              order={
-                acquisition.isPaidCheckout
-                  ? { currency, products: selectedProducts }
-                  : null
-              }
-              responseError={acquisition.responseError}
-              responseErrorId={responseErrorId}
+          {checkout.step === "details" && checkout.isPaidCheckout ? (
+            <PaidCheckoutDetails
+              {...detailsStep}
+              canContinueToPayment={checkout.canContinueToPayment}
+              currency={currency}
+              onSubmit={checkout.submitPaidCheckout}
+              products={selectedProducts}
             />
           ) : null}
-          {acquisition.step === "success" ? <AcquisitionSuccess /> : null}
+          {checkout.step === "details" && !checkout.isPaidCheckout ? (
+            <FreeClaimDetails
+              {...detailsStep}
+              canSubmit={checkout.canSubmitFreeClaim}
+              onSubmit={checkout.submitFreeClaim}
+            />
+          ) : null}
+          {checkout.step === "success" ? <AcquisitionSuccess /> : null}
         </div>
       </SheetContent>
     </Sheet>
@@ -324,11 +330,10 @@ function CartTotal(props: {
   return (
     <dl className="mb-6 flex items-baseline justify-between gap-4">
       <dt className={LABEL_CLASS}>Total</dt>
-      <dd
-        className="text-lg font-semibold text-text-primary"
-        data-parity="cart-total"
-      >
-        {formatStorePrice(total, props.currency)}
+      <dd>
+        <Price data-parity="cart-total" size="md">
+          {formatStorePrice(total, props.currency)}
+        </Price>
       </dd>
     </dl>
   );
@@ -379,40 +384,119 @@ function CartProduct(props: {
   );
 }
 
-type PaidOrder = {
-  currency: StoreCurrency;
-  products: readonly StoreProduct[];
-};
-
-function AcquisitionDetails(props: {
+type CartDetailsStepProps = {
   botDetectionWidgetProps: BotDetectionWidgetProps;
-  canContinueToPayment: boolean;
-  canSubmit: boolean;
   emailErrorId: string;
   form: UseFormReturn<StoreCheckoutDetails>;
   isSubmitting: boolean;
   onBack: () => void;
-  onSubmit: SubmitHandler<StoreCheckoutDetails>;
-  order: PaidOrder | null;
   responseError: string | null;
   responseErrorId: string;
-}) {
-  const {
-    control,
-    formState: { errors },
-    handleSubmit,
-    register,
-  } = props.form;
+};
 
+type CartDetailsSubmission = {
+  onSubmit: SubmitHandler<StoreCheckoutDetails>;
+};
+
+function FreeClaimDetails(
+  props: CartDetailsStepProps &
+    CartDetailsSubmission & {
+      canSubmit: boolean;
+    },
+) {
+  return (
+    <CartDetailsForm
+      {...props}
+      action={STORE_ACQUISITIONS_API_URL}
+      intro="Enter your email and we'll send one private download link for everything in your cart."
+      submitAction={
+        <Button
+          disabled={!props.canSubmit}
+          size="lg-tight"
+          type="submit"
+          width="full"
+        >
+          <SubmitLabel isSubmitting={props.isSubmitting} />
+        </Button>
+      }
+    >
+      <CartDetailsFields
+        emailErrorId={props.emailErrorId}
+        form={props.form}
+        isSubmitting={props.isSubmitting}
+        privacyPurpose="We use your email to deliver these resources and keep evidence of this request."
+      />
+    </CartDetailsForm>
+  );
+}
+
+function PaidCheckoutDetails(
+  props: CartDetailsStepProps &
+    CartDetailsSubmission & {
+      canContinueToPayment: boolean;
+      currency: StoreCurrency;
+      products: readonly StoreProduct[];
+    },
+) {
+  return (
+    <CartDetailsForm
+      {...props}
+      action={STORE_CHECKOUTS_API_URL}
+      intro="Check your order, enter your email, then continue to payment."
+      submitAction={
+        <ContinueToPayment
+          canContinue={props.canContinueToPayment}
+          isSubmitting={props.isSubmitting}
+        />
+      }
+    >
+      <PaidOrderSummary currency={props.currency} products={props.products} />
+      <CartDetailsFields
+        emailErrorId={props.emailErrorId}
+        form={props.form}
+        isSubmitting={props.isSubmitting}
+        privacyPurpose="We use your email to process your order and keep evidence of your purchase and choices."
+        requiredConsent={
+          <Controller
+            control={props.form.control}
+            name="deliveryConsent"
+            render={({ field }) => (
+              <CheckboxField
+                checkboxRef={field.ref}
+                checked={field.value}
+                checkboxParity="delivery-consent-checkbox"
+                data-parity="delivery-consent"
+                disabled={props.isSubmitting}
+                label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
+                layout="statement"
+                onBlur={field.onBlur}
+                onCheckedChange={field.onChange}
+                required
+              />
+            )}
+          />
+        }
+      />
+    </CartDetailsForm>
+  );
+}
+
+function CartDetailsForm(
+  props: CartDetailsStepProps &
+    CartDetailsSubmission & {
+      action: string;
+      children: ReactNode;
+      intro: string;
+      submitAction: ReactNode;
+    },
+) {
   return (
     <form
-      action={
-        props.order ? STORE_CHECKOUTS_API_URL : STORE_ACQUISITIONS_API_URL
-      }
+      action={props.action}
       className="flex flex-1 flex-col"
       method="post"
       noValidate
-      onSubmit={handleSubmit(props.onSubmit)}
+      onSubmit={props.form.handleSubmit(props.onSubmit)}
     >
       <div>
         <h2 className="font-heading text-display-sm leading-8 text-text-primary">
@@ -422,112 +506,9 @@ function AcquisitionDetails(props: {
           className="mt-2 text-sm text-text-secondary"
           data-parity="details-intro"
         >
-          {props.order
-            ? "Check your order, enter your email, then continue to payment."
-            : "Enter your email and we'll send one private download link for everything in your cart."}
+          {props.intro}
         </p>
-        {props.order ? <PaidOrderSummary order={props.order} /> : null}
-        <div className="mt-7" data-parity="email-field">
-          <Label className="mb-2" htmlFor="store-acquisition-email" required>
-            Email address
-          </Label>
-          <Input
-            aria-describedby={errors.email ? props.emailErrorId : undefined}
-            aria-invalid={errors.email ? true : undefined}
-            autoComplete="email"
-            disabled={props.isSubmitting}
-            id="store-acquisition-email"
-            placeholder="you@example.com"
-            required
-            type="email"
-            {...register("email")}
-          />
-        </div>
-        {errors.email ? (
-          <InlineProblem className="mt-2" id={props.emailErrorId} role="alert">
-            {errors.email.message}
-          </InlineProblem>
-        ) : null}
-        <div className="mt-6 flex flex-col gap-4">
-          <Controller
-            control={control}
-            name="termsAccepted"
-            render={({ field, fieldState }) => (
-              <CheckboxField
-                checkboxRef={field.ref}
-                checked={field.value}
-                checkboxParity="terms-checkbox"
-                data-parity="terms-consent"
-                disabled={props.isSubmitting}
-                error={fieldState.error?.message}
-                errorRole="alert"
-                label={
-                  <>
-                    I agree to the{" "}
-                    <Link reloadDocument to="/terms" variant="in-text">
-                      Terms &amp; Conditions
-                    </Link>
-                    .
-                  </>
-                }
-                layout="statement"
-                onBlur={field.onBlur}
-                onCheckedChange={field.onChange}
-                required
-              />
-            )}
-          />
-          {props.order ? (
-            <Controller
-              control={control}
-              name="deliveryConsent"
-              render={({ field }) => (
-                <CheckboxField
-                  checkboxRef={field.ref}
-                  checked={field.value}
-                  checkboxParity="delivery-consent-checkbox"
-                  data-parity="delivery-consent"
-                  disabled={props.isSubmitting}
-                  label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
-                  layout="statement"
-                  onBlur={field.onBlur}
-                  onCheckedChange={field.onChange}
-                  required
-                />
-              )}
-            />
-          ) : null}
-          <Controller
-            control={control}
-            name="marketingConsent"
-            render={({ field }) => (
-              <CheckboxField
-                checkboxRef={field.ref}
-                checked={field.value}
-                checkboxParity="marketing-checkbox"
-                data-parity="marketing-consent"
-                disabled={props.isSubmitting}
-                label={STORE_MARKETING_CONSENT}
-                layout="statement"
-                onBlur={field.onBlur}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-          <p
-            className="text-sm leading-relaxed text-text-secondary"
-            data-parity="privacy-note"
-          >
-            {props.order
-              ? "We use your email to process your order and keep evidence of your purchase and choices."
-              : "We use your email to deliver these resources and keep evidence of this request."}{" "}
-            Read our{" "}
-            <Link reloadDocument to="/privacy" variant="in-text">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        </div>
+        {props.children}
         <div className="absolute size-0 overflow-hidden">
           <BotDetectionWidget {...props.botDetectionWidgetProps} />
         </div>
@@ -552,38 +533,123 @@ function AcquisitionDetails(props: {
         >
           Back
         </Button>
-        {props.order ? (
-          <ContinueToPayment
-            canContinue={props.canContinueToPayment}
-            isSubmitting={props.isSubmitting}
-          />
-        ) : (
-          <Button
-            disabled={!props.canSubmit}
-            size="lg-tight"
-            type="submit"
-            width="full"
-          >
-            <SubmitLabel isSubmitting={props.isSubmitting} />
-          </Button>
-        )}
+        {props.submitAction}
       </div>
     </form>
   );
 }
 
-function PaidOrderSummary(props: { order: PaidOrder }) {
-  const { currency, products } = props.order;
+function CartDetailsFields(props: {
+  emailErrorId: string;
+  form: UseFormReturn<StoreCheckoutDetails>;
+  isSubmitting: boolean;
+  privacyPurpose: string;
+  requiredConsent?: ReactNode;
+}) {
+  const {
+    control,
+    formState: { errors },
+    register,
+  } = props.form;
 
+  return (
+    <>
+      <div className="mt-7" data-parity="email-field">
+        <Label className="mb-2" htmlFor="store-acquisition-email" required>
+          Email address
+        </Label>
+        <Input
+          aria-describedby={errors.email ? props.emailErrorId : undefined}
+          aria-invalid={errors.email ? true : undefined}
+          autoComplete="email"
+          disabled={props.isSubmitting}
+          id="store-acquisition-email"
+          placeholder="you@example.com"
+          required
+          type="email"
+          {...register("email")}
+        />
+      </div>
+      {errors.email ? (
+        <InlineProblem className="mt-2" id={props.emailErrorId} role="alert">
+          {errors.email.message}
+        </InlineProblem>
+      ) : null}
+      <div className="mt-6 flex flex-col gap-4">
+        <Controller
+          control={control}
+          name="termsAccepted"
+          render={({ field, fieldState }) => (
+            <CheckboxField
+              checkboxRef={field.ref}
+              checked={field.value}
+              checkboxParity="terms-checkbox"
+              data-parity="terms-consent"
+              disabled={props.isSubmitting}
+              error={fieldState.error?.message}
+              errorRole="alert"
+              label={
+                <>
+                  I agree to the{" "}
+                  <Link reloadDocument to="/terms" variant="in-text">
+                    Terms &amp; Conditions
+                  </Link>
+                  .
+                </>
+              }
+              layout="statement"
+              onBlur={field.onBlur}
+              onCheckedChange={field.onChange}
+              required
+            />
+          )}
+        />
+        {props.requiredConsent}
+        <Controller
+          control={control}
+          name="marketingConsent"
+          render={({ field }) => (
+            <CheckboxField
+              checkboxRef={field.ref}
+              checked={field.value}
+              checkboxParity="marketing-checkbox"
+              data-parity="marketing-consent"
+              disabled={props.isSubmitting}
+              label={STORE_MARKETING_CONSENT}
+              layout="statement"
+              onBlur={field.onBlur}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
+        <p
+          className="text-sm leading-relaxed text-text-secondary"
+          data-parity="privacy-note"
+        >
+          {props.privacyPurpose} Read our{" "}
+          <Link reloadDocument to="/privacy" variant="in-text">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </div>
+    </>
+  );
+}
+
+function PaidOrderSummary(props: {
+  currency: StoreCurrency;
+  products: readonly StoreProduct[];
+}) {
   return (
     <div className="mt-6" data-parity="order-summary-block">
       <h3 className={LABEL_CLASS}>Your order</h3>
       <StoreOrderSummary
         className="mt-2"
-        currency={currency}
-        lines={products.map((product) => ({
+        currency={props.currency}
+        lines={props.products.map((product) => ({
           amountMinorUnits: product.price
-            ? storePriceAmount(product.price, currency)
+            ? storePriceAmount(product.price, props.currency)
             : null,
           title: product.title,
         }))}

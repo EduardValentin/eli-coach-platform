@@ -10,7 +10,8 @@ import {
 } from "~/bounded-contexts/sales/store/public/store-currency";
 
 import { createFocusRestoreTracker } from "./cart-focus";
-import type { PersistedStoreCart, StoreCheckoutDetails } from "./cart-storage";
+import type { StoreCheckoutDetails } from "../acquisition/store-checkout-details";
+import type { PersistedStoreCart } from "./cart-storage";
 import { STORE_CART_PERSIST_OPTIONS } from "./cart-storage";
 
 export { STORE_CART_STORAGE_KEY } from "./cart-storage";
