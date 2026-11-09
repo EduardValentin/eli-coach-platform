@@ -52,12 +52,14 @@ SheetDescription.displayName = "SheetDescription";
 
 type SheetContentProps = React.ComponentPropsWithoutRef<
   typeof RadixDialog.Content
->;
+> & {
+  closeButtonRef?: React.Ref<HTMLButtonElement>;
+};
 
 export const SheetContent = React.forwardRef<
   React.ElementRef<typeof RadixDialog.Content>,
   SheetContentProps
->(({ children, className, ...props }, ref) => (
+>(({ children, className, closeButtonRef, ...props }, ref) => (
   <RadixDialog.Portal>
     <SheetOverlay />
     <RadixDialog.Content
@@ -69,7 +71,10 @@ export const SheetContent = React.forwardRef<
       {...props}
     >
       {children}
-      <RadixDialog.Close className="absolute right-5 top-5 inline-flex size-control-md items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary">
+      <RadixDialog.Close
+        ref={closeButtonRef}
+        className="absolute right-5 top-5 inline-flex size-control-md items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary"
+      >
         <span aria-hidden="true" className="text-2xl leading-none">
           ×
         </span>

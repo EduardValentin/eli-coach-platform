@@ -30,7 +30,7 @@ import {
   ShoppingBag,
   Trash2,
 } from "lucide-react";
-import { useId, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import {
   Controller,
   type SubmitHandler,
@@ -119,6 +119,7 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   });
   const emailErrorId = useId();
   const responseErrorId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const detailsStep: CartDetailsStepProps = {
     botDetectionWidgetProps: checkout.botDetectionWidgetProps,
     emailErrorId,
@@ -153,7 +154,16 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
     <Sheet onOpenChange={handleOpenChange} open={isOpen}>
       <SheetContent
         className="p-0 sm:max-w-md"
+        closeButtonRef={closeButtonRef}
         data-parity-root="CartDrawer"
+        onOpenAutoFocus={(event) => {
+          if (notice !== "payment-not-completed") {
+            return;
+          }
+
+          event.preventDefault();
+          closeButtonRef.current?.focus();
+        }}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           // Emptying the cart unmounts the cart control, so by the time the
