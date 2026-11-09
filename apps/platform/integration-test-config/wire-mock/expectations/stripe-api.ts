@@ -20,6 +20,9 @@ export const STRIPE_CARD = {
   exp_year: 2034,
 } as const;
 
+export const STRIPE_STORE_CHECKOUT_SESSION_ID = "cs_test_storeorder";
+const STORE_ORDER_PURPOSE = "store-order";
+
 const HOSTED_CHECKOUT_BASE_URL = "https://checkout.stripe.com/c/pay/";
 const jsonHeaders = { "Content-Type": "application/json" };
 const coachingSubscriptionMetadata = { purpose: "coaching-subscription" };
@@ -410,6 +413,108 @@ function openSessionResponse(sessionId: string): WireMockStub["response"] {
       status: "open",
       url: hostedCheckoutUrl(sessionId),
     },
+  };
+}
+
+export function stripeCreatesStoreCheckoutSession(
+  sessionId: string = STRIPE_STORE_CHECKOUT_SESSION_ID,
+): WireMockStub {
+  return {
+    priority: 1,
+    request: theStoreCheckoutSessionRequest(),
+    response: {
+      headers: jsonHeaders,
+      status: 200,
+      jsonBody: {
+        id: sessionId,
+        metadata: { purpose: STORE_ORDER_PURPOSE },
+        mode: "payment",
+        object: "checkout.session",
+        payment_status: "unpaid",
+        status: "open",
+        url: hostedCheckoutUrl(sessionId),
+      },
+    },
+  };
+}
+
+export function stripeRefusesStoreCheckoutSessions(): WireMockStub {
+  return {
+    priority: 1,
+    request: theStoreCheckoutSessionRequest(),
+    response: {
+      headers: jsonHeaders,
+      status: 500,
+      jsonBody: {
+        error: {
+          message: "An unexpected error occurred.",
+          type: "api_error",
+        },
+      },
+    },
+  };
+}
+
+export type PaidStoreCheckoutSession = {
+  amount_total: number;
+  created: number;
+  currency: "eur" | "usd";
+  customer: null;
+  customer_details: { email: string };
+  id: string;
+  metadata: Record<string, string>;
+  mode: "payment";
+  object: "checkout.session";
+  payment_intent: string;
+  payment_status: "paid";
+  status: "complete";
+  subscription: null;
+};
+
+export function paidStoreCheckoutSession(content: {
+  amountTotal: number;
+  createdAt: Date;
+  currency: "eur" | "usd";
+  customerEmail: string;
+  id: string;
+  metadata: Record<string, string>;
+}): PaidStoreCheckoutSession {
+  return {
+    amount_total: content.amountTotal,
+    created: toUnixSeconds(content.createdAt),
+    currency: content.currency,
+    customer: null,
+    customer_details: { email: content.customerEmail },
+    id: content.id,
+    metadata: content.metadata,
+    mode: "payment",
+    object: "checkout.session",
+    payment_intent: paymentIntentOf(content.id),
+    payment_status: "paid",
+    status: "complete",
+    subscription: null,
+  };
+}
+
+export function stripeRetrievesStoreSession(
+  session: PaidStoreCheckoutSession,
+): WireMockStub {
+  return {
+    request: {
+      method: "GET",
+      urlPath: `${STRIPE_CHECKOUT_SESSIONS_PATH}/${session.id}`,
+    },
+    response: { headers: jsonHeaders, status: 200, jsonBody: session },
+  };
+}
+
+function theStoreCheckoutSessionRequest(): WireMockStub["request"] {
+  return {
+    formParameters: {
+      "metadata[purpose]": { equalTo: STORE_ORDER_PURPOSE },
+    },
+    method: "POST",
+    urlPath: STRIPE_CHECKOUT_SESSIONS_PATH,
   };
 }
 

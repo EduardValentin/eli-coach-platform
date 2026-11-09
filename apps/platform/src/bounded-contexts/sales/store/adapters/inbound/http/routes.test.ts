@@ -11,6 +11,7 @@ import {
 
 import * as acquisitionsRoute from "./acquisitions/acquisitions";
 import * as catalogRoute from "./catalog/catalog";
+import * as checkoutsRoute from "./checkouts/checkouts";
 import * as coverRoute from "./covers/covers";
 import * as downloadsRoute from "./downloads/downloads";
 import * as managementProductRoute from "./management/management-product";
@@ -18,6 +19,7 @@ import * as managementProductPricesRoute from "./management/management-product-p
 import * as managementProductValidationsRoute from "./management/management-product-validations";
 import * as managementProductVersionsRoute from "./management/management-product-versions";
 import * as managementProductsRoute from "./management/management-products";
+import * as orderEmailsRoute from "./orders/order-emails";
 
 function storeArgs(
   request: Request,
@@ -86,6 +88,57 @@ describe("Store API routes", () => {
     expect(downloaded).toBe(downloadResponse);
     expect(acquire).toHaveBeenCalledWith(acquisitionRequest);
     expect(download).toHaveBeenCalledWith(downloadRequest);
+  });
+
+  it("routes checkout and order email POST requests and refuses reads", async () => {
+    // arrange
+    const checkoutRequest = new Request(
+      "https://eli.example/api/store/checkouts",
+      { method: "POST" },
+    );
+    const resendRequest = new Request(
+      "https://eli.example/api/store/orders/email",
+      { method: "POST" },
+    );
+    const checkoutResponse = Response.json(
+      { success: true, checkoutUrl: "https://checkout.stripe.com/c/pay/cs" },
+      { status: 201 },
+    );
+    const resendResponse = Response.json({ success: true, outcome: "sent" });
+    const placeOrder = vi.fn().mockResolvedValue(checkoutResponse);
+    const resendEmail = vi.fn().mockResolvedValue(resendResponse);
+    const feature = {
+      storeCheckoutController: { placeOrder } as never,
+      storeOrderController: { resendEmail } as never,
+    };
+
+    // act
+    const placed = await checkoutsRoute.action(
+      storeArgs(checkoutRequest, feature),
+    );
+    const resent = await orderEmailsRoute.action(
+      storeArgs(resendRequest, feature),
+    );
+    const checkoutRead = await checkoutsRoute.loader(
+      storeArgs(
+        new Request("https://eli.example/api/store/checkouts"),
+        feature,
+      ),
+    );
+    const resendRead = await orderEmailsRoute.loader(
+      storeArgs(
+        new Request("https://eli.example/api/store/orders/email"),
+        feature,
+      ),
+    );
+
+    // assert
+    expect(placed).toBe(checkoutResponse);
+    expect(resent).toBe(resendResponse);
+    expect(placeOrder).toHaveBeenCalledWith(checkoutRequest);
+    expect(resendEmail).toHaveBeenCalledWith(resendRequest);
+    expect(checkoutRead.status).toBe(405);
+    expect(resendRead.status).toBe(405);
   });
 
   it("routes only published cover keys and keeps a missing key at 404", async () => {
