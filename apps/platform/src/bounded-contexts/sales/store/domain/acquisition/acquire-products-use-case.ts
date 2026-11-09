@@ -98,9 +98,7 @@ export class AcquireProductsUseCase {
       );
     const preparation =
       await this.options.storeAcquisitionsPort.prepareAcquisition({
-        cooldownSince: request.windows.cooldownSince,
-        dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
-        dailyWindowSince: request.windows.dailyWindowSince,
+        policy: STORE_DELIVERY_LIMIT_POLICY,
         deliveryLimitKey: request.deliveryLimitKey,
         deliveryProvider: this.options.productDeliveryPort.provider,
         expiresAt: request.windows.expiresAt,

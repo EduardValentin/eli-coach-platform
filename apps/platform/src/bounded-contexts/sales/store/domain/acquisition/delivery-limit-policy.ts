@@ -18,7 +18,7 @@ export type DeliveryUsage = {
   dailyCount: number;
 };
 
-class DeliveryLimitPolicy {
+export class DeliveryLimitPolicy {
   readonly cooldownMs: number;
   readonly dailyLimit: number;
   readonly dailyWindowMs: number;
@@ -45,6 +45,14 @@ class DeliveryLimitPolicy {
     };
   }
 
+  limitedWindow(usage: DeliveryUsage): StoreDeliveryLimitWindow | null {
+    if (usage.cooldownCount > 0) {
+      return "cooldown";
+    }
+
+    return usage.dailyCount >= this.dailyLimit ? "daily" : null;
+  }
+
   toSnapshot(): DeliveryLimitPolicySnapshot {
     return {
       cooldownMs: this.cooldownMs,
@@ -61,14 +69,3 @@ export const STORE_DELIVERY_LIMIT_POLICY = DeliveryLimitPolicy.of({
   dailyWindowMs: 24 * 60 * 60 * 1000,
   grantDurationMs: 7 * 24 * 60 * 60 * 1000,
 });
-
-export function evaluateDeliveryLimit(
-  usage: DeliveryUsage,
-  dailyLimit: number,
-): StoreDeliveryLimitWindow | null {
-  if (usage.cooldownCount > 0) {
-    return "cooldown";
-  }
-
-  return usage.dailyCount >= dailyLimit ? "daily" : null;
-}

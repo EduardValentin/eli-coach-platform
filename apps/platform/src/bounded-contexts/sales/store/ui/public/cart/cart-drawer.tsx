@@ -51,7 +51,7 @@ import {
 
 import { selectStoreCartProducts, useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
-import { useStoreCartCheckout } from "../acquisition/acquisition-form";
+import { useStoreCartCheckout } from "../acquisition/store-cart-checkout";
 import type { StoreCheckoutDetails } from "../acquisition/store-checkout-details";
 import { FreeTag } from "../pricing/free-tag";
 import { Price } from "../pricing/price";

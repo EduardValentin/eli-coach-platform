@@ -11,6 +11,7 @@ import {
 } from "../product";
 
 import { AcquireProductsUseCase } from "./acquire-products-use-case";
+import { STORE_DELIVERY_LIMIT_POLICY } from "./delivery-limit-policy";
 import type { ProductDeliveryPort } from "./product-delivery-port";
 import type {
   AcquisitionPreparation,
@@ -676,10 +677,9 @@ describe("AcquireProductsUseCase", () => {
     // assert
     expect(storeAcquisitionsPort.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
-        cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
-        dailyLimit: 10,
-        dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
         deliveryLimitKey: "woman@example.com",
+        policy: STORE_DELIVERY_LIMIT_POLICY,
+        requestedAt: new Date("2026-07-30T12:00:00.000Z"),
       }),
     );
   });

@@ -4,7 +4,7 @@ import type { Order } from "./order";
 import type { OrderDeliveryPort } from "./order-delivery-port";
 import type {
   OrderEmailDelivery,
-  OrderGrantToken,
+  OrderLinkIssue,
 } from "./order-email-delivery";
 
 export type OrderEmailAttemptSnapshot = {
@@ -28,11 +28,11 @@ export class OrderEmailAttempt {
   readonly provider: string;
   readonly providerIdempotencyKey: string;
   private readonly token: CreateDownloadTokenResult;
-  private readonly grantToken: OrderGrantToken;
+  private readonly linkIssue: OrderLinkIssue;
 
   private constructor(
     source: OrderEmailAttemptSource,
-    grantToken: OrderGrantToken,
+    linkIssue: OrderLinkIssue,
   ) {
     this.order = source.order;
     this.token = source.token;
@@ -41,11 +41,11 @@ export class OrderEmailAttempt {
       source.orderDeliveryPort.createProviderIdempotencyKey(
         source.order.emailAttemptKey(source.token.sha256),
       );
-    this.grantToken = grantToken;
+    this.linkIssue = linkIssue;
   }
 
   static issue(source: OrderEmailAttemptSource): OrderEmailAttempt {
-    return new OrderEmailAttempt(source, "stored");
+    return new OrderEmailAttempt(source, "original");
   }
 
   static reissue(source: OrderEmailAttemptSource): OrderEmailAttempt {
@@ -63,7 +63,7 @@ export class OrderEmailAttempt {
       providerIdempotencyKey: this.providerIdempotencyKey,
       rawToken: this.token.rawToken,
       tokenSha256: this.token.sha256,
-      grantToken: this.grantToken,
+      linkIssue: this.linkIssue,
       at: recorded.at,
     };
   }

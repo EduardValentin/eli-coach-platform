@@ -5,7 +5,6 @@ import { createEmailAcceptance } from "~/shared/submission-checks/email-address"
 import { ProductPrice, PublishedProduct } from "../product";
 
 import { AcquisitionRequest } from "./acquisition";
-import { evaluateDeliveryLimit } from "./delivery-limit-policy";
 
 const requestedAt = new Date("2026-07-30T12:00:00.000Z");
 const emailAcceptance = createEmailAcceptance("allowed");
@@ -223,22 +222,5 @@ describe("AcquisitionRequest.selectProducts with paid products", () => {
       status: "unavailable_products",
       availableProductSlugs: ["glute-plan"],
     });
-  });
-});
-
-describe("evaluateDeliveryLimit", () => {
-  it.each([
-    [{ cooldownCount: 1, dailyCount: 1 }, "cooldown"],
-    [{ cooldownCount: 0, dailyCount: 10 }, "daily"],
-    [{ cooldownCount: 0, dailyCount: 9 }, null],
-  ])("decides %o as %s", (usage, expected) => {
-    // arrange
-    const dailyLimit = 10;
-
-    // act
-    const window = evaluateDeliveryLimit(usage, dailyLimit);
-
-    // assert
-    expect(window).toBe(expected);
   });
 });

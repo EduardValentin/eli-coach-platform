@@ -579,7 +579,7 @@ describe("CompleteOrderUseCase", () => {
         deliveryAttemptId: 51,
         rawToken: "raw-token",
         provider: "resend",
-        grantToken: "stored",
+        linkIssue: "original",
       },
     });
   });
@@ -685,7 +685,7 @@ describe("CompleteOrderUseCase", () => {
 });
 
 function emailDelivery(
-  grantToken: OrderEmailDelivery["grantToken"] = "stored",
+  linkIssue: OrderEmailDelivery["linkIssue"] = "original",
 ): OrderEmailDelivery {
   return {
     order: paidOrder(),
@@ -694,7 +694,7 @@ function emailDelivery(
     providerIdempotencyKey: "store-order-order-1-ffff",
     rawToken: "raw-token",
     tokenSha256: token.sha256,
-    grantToken,
+    linkIssue,
     at: paidAt,
   };
 }
@@ -985,18 +985,20 @@ describe("PrepareOrderEmailResendUseCase", () => {
       tokenSha256: token.sha256,
     });
     expect(prepared.at).toEqual(paidAt);
-    expect(prepared.windows).toMatchObject({
+    expect(prepared.policy.windowsAt(prepared.at)).toMatchObject({
       cooldownSince: new Date(paidAt.getTime() - 60 * 1000),
       dailyWindowSince: new Date(paidAt.getTime() - 24 * 60 * 60 * 1000),
     });
-    expect(prepared.dailyLimit).toBe(10);
+    expect(
+      prepared.policy.limitedWindow({ cooldownCount: 0, dailyCount: 10 }),
+    ).toBe("daily");
     expect(storeOrdersPort.rotateGrantToken).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       status: "prepared",
       delivery: {
         deliveryAttemptId: 52,
         rawToken: "raw-token",
-        grantToken: "replacement",
+        linkIssue: "replacement",
       },
     });
   });
