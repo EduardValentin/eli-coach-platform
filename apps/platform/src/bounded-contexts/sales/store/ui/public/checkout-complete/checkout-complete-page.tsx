@@ -86,6 +86,13 @@ function ConfirmedOrderView(props: { order: ConfirmedOrder }) {
   const clearCart = useStoreCart((cart) => cart.clearCart);
   const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
   const orderEmail = useStoreOrderEmailFetcher();
+  const sendAgain = () => {
+    if (orderEmail.isSubmitting) {
+      return;
+    }
+
+    orderEmail.submit(order.sessionId);
+  };
 
   useEffect(() => {
     if (isCartHydrated) {
@@ -132,9 +139,9 @@ function ConfirmedOrderView(props: { order: ConfirmedOrder }) {
         </p>
         <Button
           aria-busy={orderEmail.isSubmitting || undefined}
+          aria-disabled={orderEmail.isSubmitting || undefined}
           className="mt-4"
-          disabled={orderEmail.isSubmitting}
-          onClick={() => orderEmail.submit(order.sessionId)}
+          onClick={sendAgain}
           variant="outline"
         >
           {orderEmail.isSubmitting ? (

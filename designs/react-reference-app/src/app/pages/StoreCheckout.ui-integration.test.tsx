@@ -278,4 +278,26 @@ describe('the store order-complete page', () => {
     },
     TEST_TIMEOUT_MS,
   );
+
+  it(
+    'keeps keyboard focus on "Send my order email again" while it sends',
+    async () => {
+      // arrange
+      const user = userEvent.setup();
+      const sessionId = await paidOrderSessionId();
+      renderStoreCheckout(`${storeOrderCompleteUrl(sessionId)}&orderresend=sent`);
+      const resend = await screen.findByRole('button', { name: 'Send my order email again' }, WAIT);
+      resend.focus();
+
+      // act
+      await user.keyboard('{Enter}');
+
+      // assert
+      expect(resend).toHaveAttribute('aria-disabled', 'true');
+      expect(resend).toHaveFocus();
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Sent again to'), WAIT);
+      expect(resend).toHaveFocus();
+    },
+    TEST_TIMEOUT_MS,
+  );
 });
