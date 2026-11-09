@@ -14,10 +14,10 @@ import { ClientOnboardingJourney } from "~integration-test-config/client-onboard
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   SECOND_PURCHASE,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import { NotificationsJourney } from "~integration-test-config/notifications-journey";
 import {
   COACH_SESSION,
@@ -27,7 +27,7 @@ import {
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 const notifications = new NotificationsJourney(rig);

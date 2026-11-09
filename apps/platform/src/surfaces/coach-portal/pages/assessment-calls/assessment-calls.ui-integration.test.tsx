@@ -40,8 +40,8 @@ import {
 import type {
   PricingTiers,
   CallSales,
-} from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
+} from "~/bounded-contexts/sales/subscriptions/public/subscriptions";
+import { SUBSCRIPTIONS_API_PATHS } from "~/bounded-contexts/sales/subscriptions/public/paths";
 
 import CoachAssessmentCallsRoute, {
   ErrorBoundary as CoachAssessmentCallsErrorBoundary,
@@ -976,7 +976,7 @@ describe("where each ended call stands in the sale", () => {
   it("sends a payment link and shows the call as sent once it is out", async () => {
     // arrange
     server.use(
-      http.post(COACHING_SALES_API_PATHS.paymentLinks, () =>
+      http.post(SUBSCRIPTIONS_API_PATHS.paymentLinks, () =>
         HttpResponse.json({ email: "bea@example.com", status: "sent" }),
       ),
     );
@@ -1114,7 +1114,7 @@ async function renderCallsRouter(options?: CallsPageOptions) {
       },
       {
         action: ({ request }: { request: Request }) => fetch(request),
-        path: COACHING_SALES_API_PATHS.paymentLinks,
+        path: SUBSCRIPTIONS_API_PATHS.paymentLinks,
       },
     ],
     { initialEntries: [options?.url ?? COACH_ASSESSMENT_CALLS_PATH] },

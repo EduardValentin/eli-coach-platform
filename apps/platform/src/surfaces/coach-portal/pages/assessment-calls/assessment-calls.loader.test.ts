@@ -7,8 +7,8 @@ import {
   type AssessmentCallsFeature,
 } from "~/bounded-contexts/scheduling/public/request-context";
 import {
-  coachingSalesContext,
-  type CoachingSalesFeature,
+  subscriptionsContext,
+  type SubscriptionsFeature,
 } from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
@@ -187,17 +187,17 @@ function createLoaderArguments(readers: {
   const assessmentCalls = {
     coachAssessmentCallsController: { loadCalls: readers.loadCalls },
   } as unknown as AssessmentCallsFeature;
-  const coachingSales = {
+  const subscriptions = {
     coachSalesController: {
       loadPricingTiers: readers.loadPricingTiers ?? vi.fn(),
       loadCallSales: readers.loadCallSales ?? vi.fn(),
     },
-  } as unknown as CoachingSalesFeature;
+  } as unknown as SubscriptionsFeature;
 
   return createRequestArgs({
     contexts: [
       contextEntry(assessmentCallsContext, assessmentCalls),
-      contextEntry(coachingSalesContext, coachingSales),
+      contextEntry(subscriptionsContext, subscriptions),
     ],
     request: new Request(CALLS_URL),
   });

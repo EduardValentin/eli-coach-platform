@@ -61,7 +61,7 @@ const COMPONENT_ORDER = {
     "check-ins",
   ],
   programs: ["exercise-library", "nutrition-library"],
-  sales: ["store", "waitlist", "coaching-sales"],
+  sales: ["store", "waitlist", "subscriptions"],
 };
 
 const COMBINED_ORDER = BOUNDED_CONTEXT_ORDER.flatMap((boundedContext) =>
@@ -494,11 +494,11 @@ module.exports = {
     {
       name: "stripe-confined",
       comment:
-        "Stripe stays behind the coaching-sales payments adapter: nothing else names stripe.",
+        "Stripe stays behind the subscriptions payments adapter: nothing else names stripe.",
       severity: "error",
       from: {
         pathNot: [
-          `${BOUNDED_CONTEXT}coaching-sales/adapters/outbound/payments/stripe/`,
+          `${BOUNDED_CONTEXT}subscriptions/adapters/outbound/payments/stripe/`,
         ],
       },
       to: { path: "(^|node_modules/)stripe(/|$)" },

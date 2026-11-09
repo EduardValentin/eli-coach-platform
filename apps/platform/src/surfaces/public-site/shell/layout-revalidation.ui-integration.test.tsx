@@ -28,9 +28,9 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import { COACHING_BUNDLES } from "~/bounded-contexts/sales/subscriptions/domain/coaching-bundle";
 import type { WaitlistSnapshot } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
-import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
+import { presentBundleCards } from "~/bounded-contexts/sales/subscriptions/public/bundle-cards";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,

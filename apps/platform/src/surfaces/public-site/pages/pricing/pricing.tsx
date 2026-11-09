@@ -15,10 +15,10 @@ import {
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 import {
-  coachingSalesContext,
+  subscriptionsContext,
   waitlistContext,
 } from "~/bounded-contexts/sales/public/request-context";
-import { BundleSelector } from "~/bounded-contexts/sales/coaching-sales/ui/public/bundle-selector/bundle-selector";
+import { BundleSelector } from "~/bounded-contexts/sales/subscriptions/ui/public/bundle-selector/bundle-selector";
 import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
@@ -31,7 +31,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
 
   return {
     cards: context
-      .get(coachingSalesContext)
+      .get(subscriptionsContext)
       .checkoutsController.loadPricingCards({
         tier: showsBundleOffer ? "reduced" : "regular",
       }),

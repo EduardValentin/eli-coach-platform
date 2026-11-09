@@ -12,9 +12,9 @@ import { ApiIntegrationTestSuite } from "~integration-test-config/api-integratio
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import {
   CLIENT_SESSION,
   COACH_SESSION,
@@ -26,7 +26,7 @@ import { clerkServesUser } from "~integration-test-config/wire-mock/expectations
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const journey = new CoachingSalesJourney(rig);
+const journey = new SubscriptionsJourney(rig);
 
 const CLIENT_PORTAL = "/client";
 const WELCOME = "/client/welcome";

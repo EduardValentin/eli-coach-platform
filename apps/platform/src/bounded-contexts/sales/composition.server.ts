@@ -9,19 +9,19 @@ import {
 import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import { composeWaitlistFeature } from "~/bounded-contexts/sales/waitlist/composition.server";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import { subscriptionsContext } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/context.server";
 import {
-  composeCoachingSalesFeature,
+  composeSubscriptionsFeature,
   composePayments,
-  type CoachingSalesFeatureHandles,
+  type SubscriptionsFeatureHandles,
   type PaymentHandles,
-} from "~/bounded-contexts/sales/coaching-sales/composition.server";
-import type { PaymentsConfig } from "~/bounded-contexts/sales/coaching-sales/config.server";
+} from "~/bounded-contexts/sales/subscriptions/composition.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/subscriptions/config.server";
 
 type SalesHandles = Omit<
   StoreFeatureHandles &
     Parameters<typeof composeWaitlistFeature>[0] &
-    CoachingSalesFeatureHandles,
+    SubscriptionsFeatureHandles,
   "managementAuth" | "pricingEligibilitySourceFacade" | keyof PaymentHandles
 > & {
   managementApiConfig: ManagementApiConfig;
@@ -38,7 +38,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
     managementAuth: composeManagementAuth(handles),
   });
   const waitlist = composeWaitlistFeature(handles);
-  const coachingSales = composeCoachingSalesFeature({
+  const subscriptions = composeSubscriptionsFeature({
     ...handles,
     ...composePayments(handles.paymentsConfig),
     pricingEligibilitySourceFacade:
@@ -49,7 +49,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
     middleware: ({ context }, next) => {
       context.set(storeContext, store);
       context.set(waitlistContext, waitlist.feature);
-      context.set(coachingSalesContext, coachingSales.feature);
+      context.set(subscriptionsContext, subscriptions.feature);
       return next();
     },
   };

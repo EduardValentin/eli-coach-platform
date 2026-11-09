@@ -4,8 +4,8 @@ import type { VisitorGender } from "~/bounded-contexts/scheduling/public/visitor
 import {
   getCoachingBundle,
   type PriceTier,
-} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
-import { PurchasedSubscription } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+} from "~/bounded-contexts/sales/subscriptions/domain/coaching-bundle";
+import { PurchasedSubscription } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
 import type pg from "pg";
 
 export type ClientIdentity = {

@@ -22,7 +22,7 @@ import {
   nutritionLibraryContext,
 } from "~/bounded-contexts/programs/public/request-context";
 import {
-  coachingSalesContext,
+  subscriptionsContext,
   storeContext,
   waitlistContext,
 } from "~/bounded-contexts/sales/public/request-context";
@@ -106,7 +106,7 @@ describe("createBoundedContextMiddleware", () => {
     expect(context.get(nutritionLibraryContext)).toBeDefined();
     expect(context.get(storeContext)).toBeDefined();
     expect(context.get(waitlistContext)).toBeDefined();
-    expect(context.get(coachingSalesContext)).toBeDefined();
+    expect(context.get(subscriptionsContext)).toBeDefined();
     expect(context.get(platformContext)).toEqual({
       appMetadataController: container.platform.appMetadataController,
       readyzController: container.platform.readyzController,

@@ -18,8 +18,8 @@ import {
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
-} from "~integration-test-config/coaching-sales-journey";
+  SubscriptionsJourney,
+} from "~integration-test-config/subscriptions-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -43,7 +43,7 @@ type Question = { formId: string; fieldId: string };
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 

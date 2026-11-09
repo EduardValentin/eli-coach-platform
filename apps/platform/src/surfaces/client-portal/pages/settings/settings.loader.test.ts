@@ -6,10 +6,10 @@ import {
 } from "~/bounded-contexts/clients/public/request-context";
 import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profile/public/client-settings";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
-import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
+import type { ClientSettings } from "~/bounded-contexts/sales/subscriptions/public/client-subscription";
 import {
-  coachingSalesContext,
-  type CoachingSalesFeature,
+  subscriptionsContext,
+  type SubscriptionsFeature,
 } from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
@@ -59,7 +59,7 @@ const OWN_PROFILE: OwnClientProfileView = {
 };
 
 describe("settings page route", () => {
-  it("loads her subscription from coaching sales and her settings and profile from her client profile", async () => {
+  it("loads her subscription from subscriptions and her settings and profile from her client profile", async () => {
     // arrange
     const subscription = {
       loadSettings: vi.fn().mockResolvedValue(SUBSCRIPTION),
@@ -68,9 +68,9 @@ describe("settings page route", () => {
     const ownProfile = { load: vi.fn().mockResolvedValue(OWN_PROFILE) };
     const args = createRequestArgs({
       contexts: [
-        contextEntry(coachingSalesContext, {
+        contextEntry(subscriptionsContext, {
           subscriptionController: subscription,
-        } as unknown as CoachingSalesFeature),
+        } as unknown as SubscriptionsFeature),
         contextEntry(clientProfileContext, {
           clientSettingsController: clientSettings,
           ownClientProfileController: ownProfile,

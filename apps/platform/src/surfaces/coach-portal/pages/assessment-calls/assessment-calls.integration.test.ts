@@ -11,9 +11,9 @@ import {
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import {
   ANA,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import { ClientsJourney } from "~integration-test-config/clients-journey";
 import {
   COACH_SESSION,
@@ -26,7 +26,7 @@ import {
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const journey = new CoachingSalesJourney(rig);
+const journey = new SubscriptionsJourney(rig);
 const clients = new ClientsJourney(rig);
 
 const PAST_CALLS = "/coach/assessment-calls/?when=past";

@@ -14,9 +14,9 @@ import { ClientOnboardingJourney } from "~integration-test-config/client-onboard
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -34,7 +34,7 @@ const suite = new ApiIntegrationTestSuite({
   environment: { ASSESSMENT_CALL_COACH_EMAIL: COACH_EMAIL },
 });
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);

@@ -15,10 +15,10 @@ import {
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   FIRST_CHECKOUT_REQUEST,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import {
   ClientOnboardingJourney,
   completeAnswers,
@@ -82,7 +82,7 @@ const OPENED_PROFILE_ROW = {
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const journey = new CoachingSalesJourney(rig);
+const journey = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, journey);
 const measurements = new MeasurementsJourney(rig);
 

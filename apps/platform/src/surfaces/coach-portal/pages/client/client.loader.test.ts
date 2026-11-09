@@ -15,10 +15,10 @@ import type { OnboardingReviewView } from "~/bounded-contexts/clients/client-pro
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import type { MeasurementRow } from "~/bounded-contexts/clients/client-profile/public/measurements";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
-import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
+import type { ClientSubscription } from "~/bounded-contexts/sales/subscriptions/public/client-subscription";
 import {
-  coachingSalesContext,
-  type CoachingSalesFeature,
+  subscriptionsContext,
+  type SubscriptionsFeature,
 } from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
@@ -242,9 +242,9 @@ function routeArguments() {
       contextEntry(clientsContext, {
         coachClientsController: { loadClient },
       } as unknown as ClientsFeature),
-      contextEntry(coachingSalesContext, {
+      contextEntry(subscriptionsContext, {
         coachSalesController: { loadClientSubscription },
-      } as unknown as CoachingSalesFeature),
+      } as unknown as SubscriptionsFeature),
       contextEntry(clientOnboardingContext, {
         onboardingReviewController: { loadReview },
       } as unknown as ClientOnboardingFeature),

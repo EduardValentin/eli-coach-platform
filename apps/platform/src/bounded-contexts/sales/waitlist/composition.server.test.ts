@@ -51,7 +51,7 @@ describe("composeWaitlistFeature", () => {
     expect(waitlist).toMatchObject({ availability: null, enabled: true });
   });
 
-  it("hands coaching sales the pricing eligibility the waitlist entries earn", async () => {
+  it("hands subscriptions the pricing eligibility the waitlist entries earn", async () => {
     // arrange
     const { handles } = composeWaitlistFeature({
       botVerifierPort: {

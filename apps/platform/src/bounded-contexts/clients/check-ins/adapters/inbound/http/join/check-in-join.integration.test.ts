@@ -17,10 +17,10 @@ import { ClientOnboardingJourney } from "~integration-test-config/client-onboard
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   SECOND_PURCHASE,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -30,7 +30,7 @@ import { visibleDocument } from "~integration-test-config/rendered-page";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 
