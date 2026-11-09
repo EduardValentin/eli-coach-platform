@@ -11,7 +11,7 @@ import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import { CLIENT_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { CLIENT_PROFILE_PATH } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { CLIENT_RESOURCES_PATH } from "~/bounded-contexts/clients/client-resources/public/paths";
-import { CLIENT_SETTINGS_PATH } from "~/bounded-contexts/sales/coaching-sales/public/paths";
+import { CLIENT_SETTINGS_PATH } from "~/bounded-contexts/sales/subscriptions/public/paths";
 
 const DASHBOARD_LINK: PortalNavigationLink = {
   href: CLIENT_PORTAL_PATH,

@@ -26,10 +26,10 @@ import {
 } from "~integration-test-config/client-profile-journey";
 import {
   ANA,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   SECOND_PURCHASE,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -46,7 +46,7 @@ import {
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const profiles = new ClientProfileJourney(rig);
 

@@ -33,8 +33,8 @@ import { AssessmentCallBlock } from "~/bounded-contexts/clients/clients/ui/coach
 import { ClientStatusBadge } from "~/bounded-contexts/clients/clients/ui/coach/clients/client-status-badge";
 import { InvitationBlock } from "~/bounded-contexts/clients/clients/ui/coach/clients/invitation-block";
 import { NeedsRefundBadge } from "~/bounded-contexts/clients/clients/ui/shared/needs-refund-badge";
-import { coachingSalesContext } from "~/bounded-contexts/sales/public/request-context";
-import { SubscriptionSummary } from "~/bounded-contexts/sales/coaching-sales/ui/coach/clients/subscription-summary";
+import { subscriptionsContext } from "~/bounded-contexts/sales/public/request-context";
+import { SubscriptionSummary } from "~/bounded-contexts/sales/subscriptions/ui/coach/clients/subscription-summary";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;
@@ -62,7 +62,7 @@ export async function loader(args: LoaderFunctionArgs) {
       .get(clientsContext)
       .coachClientsController.loadClient(args, clientId),
     args.context
-      .get(coachingSalesContext)
+      .get(subscriptionsContext)
       .coachSalesController.loadClientSubscription(args, clientId),
     args.context
       .get(clientOnboardingContext)

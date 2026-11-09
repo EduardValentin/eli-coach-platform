@@ -10,7 +10,7 @@ import {
   stripeSubscriptionPath,
   toUnixSeconds,
 } from "./wire-mock/expectations/stripe-api";
-import { STRIPE_WEBHOOKS_API } from "./coaching-sales-journey";
+import { STRIPE_WEBHOOKS_API } from "./subscriptions-journey";
 
 export type SubscriptionLifecycleRow = {
   accessEndsAt: Date | null;

@@ -520,7 +520,7 @@ function journeyArgs(options: {
   const readStanding = options.linkedOnFirstRequest
     ? vi.fn().mockResolvedValueOnce(null).mockResolvedValue(reading)
     : vi.fn().mockResolvedValue(reading);
-  const coachingSales = {
+  const subscriptions = {
     acceptInvitationUseCase: {
       execute: vi
         .fn()
@@ -539,7 +539,7 @@ function journeyArgs(options: {
   return createRequestArgs({
     portal,
     session: options.session ?? { account: CLIENT, kind: "authenticated" },
-    contexts: [contextEntry(clientsContext, coachingSales)],
+    contexts: [contextEntry(clientsContext, subscriptions)],
     request: new Request(`https://evoa.fit${options.pathname}`),
   });
 }

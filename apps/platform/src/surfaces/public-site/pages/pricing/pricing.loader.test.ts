@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  coachingSalesContext,
-  type CoachingSalesFeature,
+  subscriptionsContext,
+  type SubscriptionsFeature,
   waitlistContext,
   type WaitlistFeature,
 } from "~/bounded-contexts/sales/public/request-context";
@@ -65,9 +65,9 @@ function createLoaderArguments(waitlist: unknown) {
   const loadPricingCards = vi.fn(({ tier }: { tier: string }) => [
     `${tier} cards`,
   ]);
-  const coachingSales = {
+  const subscriptions = {
     checkoutsController: { loadPricingCards },
-  } as unknown as CoachingSalesFeature;
+  } as unknown as SubscriptionsFeature;
   const waitlistFeature = {
     waitlistController: { getWaitlist: vi.fn().mockResolvedValue(waitlist) },
   } as unknown as WaitlistFeature;
@@ -75,7 +75,7 @@ function createLoaderArguments(waitlist: unknown) {
   return {
     args: createRequestArgs({
       contexts: [
-        contextEntry(coachingSalesContext, coachingSales),
+        contextEntry(subscriptionsContext, subscriptions),
         contextEntry(waitlistContext, waitlistFeature),
       ],
       request: new Request("http://localhost/pricing"),

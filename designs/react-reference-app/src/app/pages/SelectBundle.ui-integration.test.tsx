@@ -12,7 +12,7 @@ import { StoreProvider } from '../context/StoreContext';
 import { findCheckoutSession } from '../services/checkoutService';
 
 const DEMO_TOKEN = 'pl-seed-ac-demo-client-1';
-const PAYMENT_LINK_STORAGE_KEY = 'coaching-sales:payment-link';
+const PAYMENT_LINK_STORAGE_KEY = 'subscriptions:payment-link';
 const WAIT = { timeout: 4000 };
 const TEST_TIMEOUT_MS = 20000;
 const START_QUESTION = 'When would you like your program to start?';

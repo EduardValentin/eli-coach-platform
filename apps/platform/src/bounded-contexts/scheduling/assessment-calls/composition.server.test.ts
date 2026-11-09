@@ -116,7 +116,7 @@ describe("composeAssessmentCallsFeature subaddress policy", () => {
 });
 
 describe("composeAssessmentCallsFeature ended calls facade", () => {
-  it("reads a booked call with its end and visitor for coaching sales", async () => {
+  it("reads a booked call with its end and visitor for subscriptions", async () => {
     // arrange
     const { facades } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),

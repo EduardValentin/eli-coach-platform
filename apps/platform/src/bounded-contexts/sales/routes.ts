@@ -1,13 +1,13 @@
 import {
-  coachingSalesApiRoutes,
-  coachingSalesClientRoutes,
-  coachingSalesPublicRoutes,
-} from "./coaching-sales/routes";
+  subscriptionsApiRoutes,
+  subscriptionsClientRoutes,
+  subscriptionsPublicRoutes,
+} from "./subscriptions/routes";
 import { storeApiRoutes, storePublicRoutes } from "./store/routes";
 import { waitlistApiRoutes } from "./waitlist/routes";
 
 export const salesRoutes = {
-  api: [...coachingSalesApiRoutes, ...waitlistApiRoutes, ...storeApiRoutes],
-  clientPortal: coachingSalesClientRoutes,
-  publicSiteShell: [...coachingSalesPublicRoutes, ...storePublicRoutes],
+  api: [...subscriptionsApiRoutes, ...waitlistApiRoutes, ...storeApiRoutes],
+  clientPortal: subscriptionsClientRoutes,
+  publicSiteShell: [...subscriptionsPublicRoutes, ...storePublicRoutes],
 };

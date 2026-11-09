@@ -48,7 +48,7 @@ apps/platform/
 tools/                           the boundary rules, their fixtures and the layout and deploy checks
 ```
 
-The seven bounded contexts, in order, each followed by its components in order: operations (feature-flags); legal (legal); access (accounts); scheduling (coach-schedule, assessment-calls); clients (clients, client-profile, client-resources, notifications, check-ins); programs (exercise-library, nutrition-library); sales (store, waitlist, coaching-sales). A bounded context imports only those before it, and a component only the siblings before it (rules: bounded-context-order, one per bounded context, and component-order, one per component); `shared/` sits below everything. A bounded context or component missing from the order fails the rule config's load. There is no `server/` folder at any level: the `.server` suffix on a file is what keeps it out of the browser build.
+The seven bounded contexts, in order, each followed by its components in order: operations (feature-flags); legal (legal); access (accounts); scheduling (coach-schedule, assessment-calls); clients (clients, client-profile, client-resources, notifications, check-ins); programs (exercise-library, nutrition-library); sales (store, waitlist, subscriptions). A bounded context imports only those before it, and a component only the siblings before it (rules: bounded-context-order, one per bounded context, and component-order, one per component); `shared/` sits below everything. A bounded context or component missing from the order fails the rule config's load. There is no `server/` folder at any level: the `.server` suffix on a file is what keeps it out of the browser build.
 
 ## Folder by folder
 
@@ -130,7 +130,7 @@ Every server-only module carries the `.server` suffix (repositories, senders, co
 
 ## Vendors
 
-Each vendor stays behind one folder: Clerk behind the accounts component and the app root modules; Stripe behind coaching sales' `adapters/outbound/payments/stripe/`; Resend behind `shared/email`; sharp behind `shared/images`; the PDF renderer and file-type detection behind `shared/documents`; the multipart reader behind one `shared/http` module; drag and drop behind the recipe builder (rules: clerk-confined, stripe-confined, resend-confined, sharp-confined, pdf-rendering-confined, file-type-confined, busboy-confined, react-dnd-confined).
+Each vendor stays behind one folder: Clerk behind the accounts component and the app root modules; Stripe behind the subscriptions component's `adapters/outbound/payments/stripe/`; Resend behind `shared/email`; sharp behind `shared/images`; the PDF renderer and file-type detection behind `shared/documents`; the multipart reader behind one `shared/http` module; drag and drop behind the recipe builder (rules: clerk-confined, stripe-confined, resend-confined, sharp-confined, pdf-rendering-confined, file-type-confined, busboy-confined, react-dnd-confined).
 
 ## The design system
 

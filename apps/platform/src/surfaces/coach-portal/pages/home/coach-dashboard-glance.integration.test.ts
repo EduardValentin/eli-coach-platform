@@ -15,8 +15,8 @@ import { ClientOnboardingJourney } from "~integration-test-config/client-onboard
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
-} from "~integration-test-config/coaching-sales-journey";
+  SubscriptionsJourney,
+} from "~integration-test-config/subscriptions-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -31,7 +31,7 @@ const suite = new ApiIntegrationTestSuite({
   environment: { ASSESSMENT_CALL_COACH_EMAIL: "eli@evoa.fit" },
 });
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 

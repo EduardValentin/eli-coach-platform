@@ -18,10 +18,10 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
-import { COACHING_BUNDLES } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-bundle";
+import { COACHING_BUNDLES } from "~/bounded-contexts/sales/subscriptions/domain/coaching-bundle";
 
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
-import { presentBundleCards } from "~/bounded-contexts/sales/coaching-sales/public/bundle-cards";
+import { presentBundleCards } from "~/bounded-contexts/sales/subscriptions/public/bundle-cards";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";

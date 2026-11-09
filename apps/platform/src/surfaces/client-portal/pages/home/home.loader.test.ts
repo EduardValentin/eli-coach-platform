@@ -7,8 +7,8 @@ import {
   type ClientProfileFeature,
 } from "~/bounded-contexts/clients/public/request-context";
 import {
-  coachingSalesContext,
-  type CoachingSalesFeature,
+  subscriptionsContext,
+  type SubscriptionsFeature,
 } from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
@@ -80,9 +80,9 @@ function routeArguments() {
   };
   const args = createRequestArgs({
     contexts: [
-      contextEntry(coachingSalesContext, {
+      contextEntry(subscriptionsContext, {
         subscriptionController: subscription,
-      } as unknown as CoachingSalesFeature),
+      } as unknown as SubscriptionsFeature),
       contextEntry(clientOnboardingContext, {
         clientOnboardingController: controller,
       } as unknown as ClientOnboardingFeature),
