@@ -9,6 +9,7 @@ import {
 import { CompleteOrderUseCase } from "./complete-order-use-case";
 import { DeliverOrderEmailUseCase } from "./deliver-order-email-use-case";
 import { Order } from "./order";
+import { OrderCheckout } from "./order-checkout";
 import type { OrderDeliveryPort } from "./order-delivery-port";
 import type { OrderEmailDelivery } from "./order-email-delivery";
 import { OrderPayment } from "./order-payment";
@@ -117,10 +118,10 @@ function pendingOrder(payloadDigest = "digest-of-submission"): Order {
 function withCheckout(order: Order): Order {
   return Order.reconstitute({
     ...propsOf(order),
-    checkout: {
+    checkout: OrderCheckout.opened({
       sessionId: "cs_test_order",
       url: "https://checkout.stripe.com/c/pay/cs_test_order",
-    },
+    }),
   });
 }
 
@@ -145,7 +146,7 @@ function paidOrder(): Order {
 function propsOf(order: Order): Parameters<typeof Order.reconstitute>[0] {
   return {
     id: order.id,
-    email: order.email,
+    recipientEmail: order.recipientEmail,
     currency: order.currency,
     items: order.items,
     status: order.status,
@@ -165,13 +166,16 @@ function createStoreOrders(
   return {
     findByIdempotencyKey: vi.fn().mockResolvedValue(null),
     findByCheckoutSession: vi.fn().mockResolvedValue(null),
-    findForPayment: vi.fn().mockResolvedValue(null),
+    lockForPayment: vi.fn().mockResolvedValue(null),
     place: vi.fn().mockResolvedValue({ status: "placed" }),
     attachCheckout: vi.fn().mockResolvedValue(undefined),
-    recordPayment: vi.fn().mockResolvedValue({ deliveryAttemptId: 51 }),
+    recordPaymentWithGrant: vi
+      .fn()
+      .mockResolvedValue({ deliveryAttemptId: 51 }),
     prepareResend: vi
       .fn()
       .mockResolvedValue({ status: "prepared", deliveryAttemptId: 52 }),
+    rotateGrantToken: vi.fn().mockResolvedValue(undefined),
     recordEmailAccepted: vi.fn().mockResolvedValue(undefined),
     recordEmailRejected: vi.fn().mockResolvedValue(undefined),
     recordEmailRetryable: vi.fn().mockResolvedValue(undefined),
@@ -221,8 +225,10 @@ function createIncidents() {
   return {
     paymentAmountMismatch: vi.fn(),
     paidOrderUnknown: vi.fn(),
+    paidSessionMismatch: vi.fn(),
     orderEmailRejected: vi.fn(),
     orderEmailAuditPending: vi.fn(),
+    orderLinkRotationPending: vi.fn(),
     termsDocumentMissing: vi.fn(),
   };
 }
@@ -292,8 +298,10 @@ describe("PlaceOrderUseCase", () => {
     });
     expect(storeOrdersPort.attachCheckout).toHaveBeenCalledWith({
       orderId: "order-1",
-      sessionId: "cs_test_order",
-      url: "https://checkout.stripe.com/c/pay/cs_test_order",
+      checkout: OrderCheckout.opened({
+        sessionId: "cs_test_order",
+        url: "https://checkout.stripe.com/c/pay/cs_test_order",
+      }),
     });
   });
 
@@ -541,7 +549,7 @@ describe("CompleteOrderUseCase", () => {
   it("marks the order paid, issues one seven-day grant over every item and records a pending email", async () => {
     // arrange
     const storeOrdersPort = createStoreOrders({
-      findForPayment: vi.fn().mockResolvedValue(withCheckout(pendingOrder())),
+      lockForPayment: vi.fn().mockResolvedValue(withCheckout(pendingOrder())),
     });
     const useCase = createCompleteOrderUseCase({ storeOrdersPort });
 
@@ -550,25 +558,28 @@ describe("CompleteOrderUseCase", () => {
 
     // assert
     expect(result.status).toBe("completed");
-    const recorded = vi.mocked(storeOrdersPort.recordPayment).mock.calls[0]![0];
-    expect(recorded.order.status).toBe("paid");
-    expect(recorded.order.payment?.toSnapshot()).toEqual({
+    const recorded = vi.mocked(storeOrdersPort.recordPaymentWithGrant).mock
+      .calls[0]![0];
+    expect(recorded.attempt.order.status).toBe("paid");
+    expect(recorded.attempt.order.payment?.toSnapshot()).toEqual({
       ...paymentEvent.payment,
       currency: "EUR",
     });
-    expect(recorded.tokenSha256).toBe(token.sha256);
+    expect(recorded.attempt.toSnapshot()).toEqual({
+      orderId: "order-1",
+      provider: "resend",
+      providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
+      tokenSha256: token.sha256,
+    });
     expect(recorded.grantExpiresAt).toEqual(
       new Date(paidAt.getTime() + SEVEN_DAYS_MS),
     );
-    expect(recorded.attempt).toEqual({
-      provider: "resend",
-      providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
-    });
     expect(result).toMatchObject({
       delivery: {
         deliveryAttemptId: 51,
         rawToken: "raw-token",
         provider: "resend",
+        grantToken: "stored",
       },
     });
   });
@@ -586,14 +597,14 @@ describe("CompleteOrderUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "duplicate" });
-    expect(storeOrdersPort.findForPayment).not.toHaveBeenCalled();
-    expect(storeOrdersPort.recordPayment).not.toHaveBeenCalled();
+    expect(storeOrdersPort.lockForPayment).not.toHaveBeenCalled();
+    expect(storeOrdersPort.recordPaymentWithGrant).not.toHaveBeenCalled();
   });
 
   it("leaves a paid order unchanged when another payment event arrives for it", async () => {
     // arrange
     const storeOrdersPort = createStoreOrders({
-      findForPayment: vi.fn().mockResolvedValue(paidOrder()),
+      lockForPayment: vi.fn().mockResolvedValue(paidOrder()),
     });
     const useCase = createCompleteOrderUseCase({ storeOrdersPort });
 
@@ -605,7 +616,7 @@ describe("CompleteOrderUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "already_paid" });
-    expect(storeOrdersPort.recordPayment).not.toHaveBeenCalled();
+    expect(storeOrdersPort.recordPaymentWithGrant).not.toHaveBeenCalled();
   });
 
   it("raises an incident for a payment of an unknown order", async () => {
@@ -624,11 +635,34 @@ describe("CompleteOrderUseCase", () => {
     });
   });
 
+  it("grants nothing for a payment through a session other than the order's and raises an incident", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const storeOrdersPort = createStoreOrders({
+      lockForPayment: vi.fn().mockResolvedValue(withCheckout(pendingOrder())),
+    });
+    const useCase = createCompleteOrderUseCase({ storeOrdersPort, incidents });
+
+    // act
+    const result = await useCase.execute({
+      ...paymentEvent,
+      payment: { ...paymentEvent.payment, checkoutSessionId: "cs_test_other" },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "session_mismatch" });
+    expect(storeOrdersPort.recordPaymentWithGrant).not.toHaveBeenCalled();
+    expect(incidents.paidSessionMismatch).toHaveBeenCalledWith({
+      eventId: "evt_order_paid",
+      orderId: "order-1",
+    });
+  });
+
   it("still completes an order charged a different amount and raises an incident", async () => {
     // arrange
     const incidents = createIncidents();
     const storeOrdersPort = createStoreOrders({
-      findForPayment: vi.fn().mockResolvedValue(withCheckout(pendingOrder())),
+      lockForPayment: vi.fn().mockResolvedValue(withCheckout(pendingOrder())),
     });
     const useCase = createCompleteOrderUseCase({ storeOrdersPort, incidents });
 
@@ -650,13 +684,17 @@ describe("CompleteOrderUseCase", () => {
   });
 });
 
-function emailDelivery(): OrderEmailDelivery {
+function emailDelivery(
+  grantToken: OrderEmailDelivery["grantToken"] = "stored",
+): OrderEmailDelivery {
   return {
     order: paidOrder(),
     deliveryAttemptId: 51,
     provider: "resend",
     providerIdempotencyKey: "store-order-order-1-ffff",
     rawToken: "raw-token",
+    tokenSha256: token.sha256,
+    grantToken,
     at: paidAt,
   };
 }
@@ -708,6 +746,77 @@ describe("DeliverOrderEmailUseCase", () => {
       provider: "resend",
       providerMessageId: "email-1",
     });
+    expect(storeOrdersPort.rotateGrantToken).not.toHaveBeenCalled();
+  });
+
+  it("replaces the grant's token with the resent one once the provider accepted the email", async () => {
+    // arrange
+    const storeOrdersPort = createStoreOrders();
+    const useCase = createDeliverUseCase({ storeOrdersPort });
+
+    // act
+    const result = await useCase.execute(emailDelivery("replacement"));
+
+    // assert
+    expect(result).toBe("sent");
+    expect(storeOrdersPort.rotateGrantToken).toHaveBeenCalledWith({
+      orderId: "order-1",
+      tokenSha256: token.sha256,
+    });
+  });
+
+  it.each<[string, OrderDeliveryPort["deliver"]]>([
+    ["cannot be reached", () => Promise.reject(new Error("down"))],
+    ["gives no verdict", () => Promise.resolve({ kind: "unconfirmed" })],
+    [
+      "rejects the email",
+      () => Promise.resolve({ kind: "rejected", reason: "invalid_to" }),
+    ],
+    [
+      "answers as another provider",
+      () =>
+        Promise.resolve({
+          kind: "delivered",
+          provider: "postmark",
+          providerMessageId: "email-1",
+        }),
+    ],
+  ])(
+    "keeps the stored token working when the provider %s on a resend",
+    async (_case, deliver) => {
+      // arrange
+      const storeOrdersPort = createStoreOrders();
+      const useCase = createDeliverUseCase({
+        storeOrdersPort,
+        orderDeliveryPort: createOrderDelivery({ deliver }),
+      });
+
+      // act
+      const result = await useCase.execute(emailDelivery("replacement"));
+
+      // assert
+      expect(result).toBe("not_sent");
+      expect(storeOrdersPort.rotateGrantToken).not.toHaveBeenCalled();
+    },
+  );
+
+  it("answers sent and raises an incident when the resent token cannot be stored", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const storeOrdersPort = createStoreOrders({
+      rotateGrantToken: vi.fn().mockRejectedValue(new Error("db down")),
+    });
+    const useCase = createDeliverUseCase({ storeOrdersPort, incidents });
+
+    // act
+    const result = await useCase.execute(emailDelivery("replacement"));
+
+    // assert
+    expect(result).toBe("sent");
+    expect(incidents.orderLinkRotationPending).toHaveBeenCalledWith({
+      orderId: "order-1",
+    });
+    expect(storeOrdersPort.recordEmailAccepted).toHaveBeenCalledTimes(1);
   });
 
   it("records a retryable attempt when the provider cannot be reached", async () => {
@@ -857,7 +966,7 @@ function createResendUseCase(storeOrdersPort: StoreOrdersPort) {
 }
 
 describe("PrepareOrderEmailResendUseCase", () => {
-  it("rotates the grant's token and prepares a new email for a paid order", async () => {
+  it("prepares a new email with a replacement token, leaving the stored one in place", async () => {
     // arrange
     const storeOrdersPort = createStoreOrders({
       findByCheckoutSession: vi.fn().mockResolvedValue(paidOrder()),
@@ -868,21 +977,27 @@ describe("PrepareOrderEmailResendUseCase", () => {
     const result = await useCase.execute("cs_test_order");
 
     // assert
-    expect(storeOrdersPort.prepareResend).toHaveBeenCalledWith({
+    const prepared = vi.mocked(storeOrdersPort.prepareResend).mock.calls[0]![0];
+    expect(prepared.attempt.toSnapshot()).toEqual({
       orderId: "order-1",
+      provider: "resend",
+      providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
       tokenSha256: token.sha256,
-      attempt: {
-        provider: "resend",
-        providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
-      },
-      at: paidAt,
+    });
+    expect(prepared.at).toEqual(paidAt);
+    expect(prepared.windows).toMatchObject({
       cooldownSince: new Date(paidAt.getTime() - 60 * 1000),
       dailyWindowSince: new Date(paidAt.getTime() - 24 * 60 * 60 * 1000),
-      dailyLimit: 10,
     });
+    expect(prepared.dailyLimit).toBe(10);
+    expect(storeOrdersPort.rotateGrantToken).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       status: "prepared",
-      delivery: { deliveryAttemptId: 52, rawToken: "raw-token" },
+      delivery: {
+        deliveryAttemptId: 52,
+        rawToken: "raw-token",
+        grantToken: "replacement",
+      },
     });
   });
 

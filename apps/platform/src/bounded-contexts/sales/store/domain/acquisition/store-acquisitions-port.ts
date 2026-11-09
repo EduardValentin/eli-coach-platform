@@ -1,6 +1,6 @@
 import type { PublishedProduct } from "../product";
 
-import type { StoreDeliveryLimitWindow } from "./acquisition";
+import type { StoreDeliveryLimitWindow } from "./delivery-limit-policy";
 
 export type PrepareAcquisitionCommand = {
   normalizedEmail: string;

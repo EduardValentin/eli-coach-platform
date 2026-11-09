@@ -66,6 +66,10 @@ export class DeliverOrderEmailUseCase {
     delivery: OrderEmailDelivery,
     providerMessageId: string,
   ): Promise<DeliverOrderEmailResult> {
+    if (delivery.grantToken === "replacement") {
+      await this.rotateGrantToken(delivery);
+    }
+
     try {
       await this.options.storeOrdersPort.recordEmailAccepted({
         deliveryAttemptId: delivery.deliveryAttemptId,
@@ -79,6 +83,19 @@ export class DeliverOrderEmailUseCase {
     }
 
     return "sent";
+  }
+
+  private async rotateGrantToken(delivery: OrderEmailDelivery): Promise<void> {
+    try {
+      await this.options.storeOrdersPort.rotateGrantToken({
+        orderId: delivery.order.id,
+        tokenSha256: delivery.tokenSha256,
+      });
+    } catch {
+      this.options.orderIncidentsPort.orderLinkRotationPending({
+        orderId: delivery.order.id,
+      });
+    }
   }
 
   private async recordRejected(

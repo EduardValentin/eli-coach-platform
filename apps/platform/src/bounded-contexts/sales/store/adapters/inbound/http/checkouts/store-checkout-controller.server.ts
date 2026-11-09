@@ -91,8 +91,8 @@ export class StoreCheckoutController {
           productSlugs: submission.data.productSlugs,
           currency: submission.data.currency,
           marketingConsent: submission.data.marketingConsent,
-          successUrl: `${this.publicUrl(STORE_CHECKOUT_COMPLETE_PATH)}?${STORE_CHECKOUT_SESSION_PARAM}=${CHECKOUT_SESSION_ID_PLACEHOLDER}`,
-          cancelUrl: `${this.publicUrl(STORE_PATH)}?${new URLSearchParams({ [STORE_PAYMENT_PARAM]: STORE_PAYMENT_CANCELLED })}`,
+          successUrl: this.successUrl(),
+          cancelUrl: this.cancelUrl(),
         }),
       );
     } catch (error) {
@@ -111,9 +111,7 @@ export class StoreCheckoutController {
     }
 
     if (result.status === "paid") {
-      return this.openedResponse(
-        `${this.publicUrl(STORE_CHECKOUT_COMPLETE_PATH)}?${new URLSearchParams({ [STORE_CHECKOUT_SESSION_PARAM]: result.checkoutSessionId })}`,
-      );
+      return this.openedResponse(this.completeUrlFor(result.checkoutSessionId));
     }
 
     if (result.status === "unavailable_products") {
@@ -146,6 +144,18 @@ export class StoreCheckoutController {
       }),
       { status },
     );
+  }
+
+  private successUrl(): string {
+    return `${this.publicUrl(STORE_CHECKOUT_COMPLETE_PATH)}?${STORE_CHECKOUT_SESSION_PARAM}=${CHECKOUT_SESSION_ID_PLACEHOLDER}`;
+  }
+
+  private cancelUrl(): string {
+    return `${this.publicUrl(STORE_PATH)}?${new URLSearchParams({ [STORE_PAYMENT_PARAM]: STORE_PAYMENT_CANCELLED })}`;
+  }
+
+  private completeUrlFor(checkoutSessionId: string): string {
+    return `${this.publicUrl(STORE_CHECKOUT_COMPLETE_PATH)}?${new URLSearchParams({ [STORE_CHECKOUT_SESSION_PARAM]: checkoutSessionId })}`;
   }
 
   private publicUrl(path: string): string {

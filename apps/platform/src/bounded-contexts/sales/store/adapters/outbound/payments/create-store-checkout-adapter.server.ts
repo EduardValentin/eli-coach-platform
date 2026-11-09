@@ -1,4 +1,4 @@
-import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider.server";
 import type { StoreCheckoutPort } from "~/bounded-contexts/sales/store/domain/order";
 
 import { InMemoryStoreCheckoutAdapter } from "./memory/in-memory-store-checkout-adapter.server";

@@ -6,6 +6,7 @@ import type { ClockPort } from "../clock-port";
 
 import type { Order } from "./order";
 import type { OrderDeliveryPort } from "./order-delivery-port";
+import { OrderEmailAttempt } from "./order-email-attempt";
 import type { OrderEmailDelivery } from "./order-email-delivery";
 import type { OrderIncidentsPort } from "./order-incidents-port";
 import { OrderPayment, type OrderPaymentSnapshot } from "./order-payment";
@@ -22,7 +23,8 @@ export type CompleteOrderResult =
   | { status: "completed"; delivery: OrderEmailDelivery }
   | { status: "duplicate" }
   | { status: "already_paid" }
-  | { status: "unknown_order" };
+  | { status: "unknown_order" }
+  | { status: "session_mismatch" };
 
 type CompleteOrderUseCaseOptions = {
   storeOrdersPort: StoreOrdersPort;
@@ -50,7 +52,7 @@ export class CompleteOrderUseCase {
       return { status: "duplicate" };
     }
 
-    const order = await this.options.storeOrdersPort.findForPayment(
+    const order = await this.options.storeOrdersPort.lockForPayment(
       event.orderId,
     );
 
@@ -66,6 +68,15 @@ export class CompleteOrderUseCase {
     const payment = OrderPayment.received(event.payment);
     const outcome = order.markPaid(payment);
 
+    if (outcome.status === "session_mismatch") {
+      this.options.orderIncidentsPort.paidSessionMismatch({
+        eventId: event.eventId,
+        orderId: order.id,
+      });
+
+      return outcome;
+    }
+
     if (outcome.status === "already_paid") {
       return outcome;
     }
@@ -76,40 +87,27 @@ export class CompleteOrderUseCase {
 
     return {
       status: "completed",
-      delivery: await this.issueGrant(outcome.order, at),
+      delivery: await this.recordPaidOrder(outcome.order, at),
     };
   }
 
-  private async issueGrant(
+  private async recordPaidOrder(
     order: Order,
     at: Date,
   ): Promise<OrderEmailDelivery> {
-    const token = this.options.downloadTokenGeneratorPort.create();
-    const attempt = {
-      provider: this.options.orderDeliveryPort.provider,
-      providerIdempotencyKey:
-        this.options.orderDeliveryPort.createProviderIdempotencyKey(
-          order.emailAttemptKey(token.sha256),
-        ),
-    };
+    const attempt = OrderEmailAttempt.issue({
+      order,
+      token: this.options.downloadTokenGeneratorPort.create(),
+      orderDeliveryPort: this.options.orderDeliveryPort,
+    });
     const { deliveryAttemptId } =
-      await this.options.storeOrdersPort.recordPayment({
-        order,
-        tokenSha256: token.sha256,
-        grantExpiresAt: new Date(
-          at.getTime() + STORE_DELIVERY_LIMIT_POLICY.grantDurationMs,
-        ),
+      await this.options.storeOrdersPort.recordPaymentWithGrant({
         attempt,
+        grantExpiresAt: STORE_DELIVERY_LIMIT_POLICY.windowsAt(at).expiresAt,
         at,
       });
 
-    return {
-      order,
-      deliveryAttemptId,
-      ...attempt,
-      rawToken: token.rawToken,
-      at,
-    };
+    return attempt.toDelivery({ deliveryAttemptId, at });
   }
 
   private reportAmountMismatch(order: Order, payment: OrderPayment): void {

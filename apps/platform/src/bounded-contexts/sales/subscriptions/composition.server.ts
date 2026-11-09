@@ -70,7 +70,7 @@ import { OperationsWaitlistModeAdapter } from "~/bounded-contexts/sales/subscrip
 import { WaitlistPricingEligibilityAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/waitlist/waitlist-pricing-eligibility-adapter.server";
 import { PaymentsAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payments-adapter.server";
 import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
-import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider.server";
 import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-card-handler-port.server";
 import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
 import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";

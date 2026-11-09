@@ -5,11 +5,14 @@ export {
 export { DeliverOrderEmailUseCase } from "./deliver-order-email-use-case";
 export { DeliveryConsent } from "./delivery-consent";
 export { Order, STORE_ORDER_PURPOSE } from "./order";
+export { OrderCheckout } from "./order-checkout";
+export { OrderConsents } from "./order-consents";
 export {
   type OrderDeliveryPort,
   type OrderDeliveryResult,
   type OrderEmail,
 } from "./order-delivery-port";
+export { OrderEmailAttempt } from "./order-email-attempt";
 export { type OrderEmailDelivery } from "./order-email-delivery";
 export { type OrderIdsPort } from "./order-ids-port";
 export { type OrderIncidentsPort } from "./order-incidents-port";
@@ -33,10 +36,12 @@ export {
   type StoreCheckoutPort,
 } from "./store-checkout-port";
 export {
+  type AttachOrderCheckoutCommand,
   type OrderRecording,
   type OrderResendPreparation,
   type PrepareOrderResendCommand,
-  type RecordOrderPaymentCommand,
+  type RecordPaymentWithGrantCommand,
+  type RotateGrantTokenCommand,
   type StoreOrdersPort,
 } from "./store-orders-port";
 export { type OrderTerms, type OrderTermsPort } from "./order-terms-port";

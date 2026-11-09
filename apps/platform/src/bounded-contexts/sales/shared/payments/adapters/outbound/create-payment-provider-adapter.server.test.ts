@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
 
 import { InMemoryPaymentEventsAdapter } from "./memory/in-memory-payment-events-adapter.server";
-import { PaymentProviderAdapter } from "./payment-provider-adapter.server";
+import { createPaymentProviderAdapter } from "./create-payment-provider-adapter.server";
 import { StripePaymentEventsAdapter } from "./stripe/stripe-payment-events-adapter.server";
 
 const STRIPE_CONFIG: PaymentsConfig = {
@@ -13,19 +13,19 @@ const STRIPE_CONFIG: PaymentsConfig = {
   STRIPE_WEBHOOK_SIGNING_SECRET: "whsec_unit",
 };
 
-describe("PaymentProviderAdapter", () => {
+describe("createPaymentProviderAdapter", () => {
   it("returns the in-memory events double for the memory provider", () => {
     // arrange
     const config: PaymentsConfig = { PAYMENTS_PROVIDER: "memory" };
 
     // act
-    const paymentProviderAdapter = new PaymentProviderAdapter(config);
+    const paymentProvider = createPaymentProviderAdapter(config);
 
     // assert
-    expect(paymentProviderAdapter.paymentProvider).toEqual({ name: "memory" });
-    expect(paymentProviderAdapter.paymentEventsPort).toBeInstanceOf(
-      InMemoryPaymentEventsAdapter,
-    );
+    expect(paymentProvider).toEqual({
+      name: "memory",
+      paymentEventsPort: expect.any(InMemoryPaymentEventsAdapter),
+    });
   });
 
   it("returns the Stripe client and events adapter for the stripe provider", () => {
@@ -33,16 +33,14 @@ describe("PaymentProviderAdapter", () => {
     const config = STRIPE_CONFIG;
 
     // act
-    const paymentProviderAdapter = new PaymentProviderAdapter(config);
+    const paymentProvider = createPaymentProviderAdapter(config);
 
     // assert
-    expect(paymentProviderAdapter.paymentProvider).toMatchObject({
+    expect(paymentProvider).toEqual({
       name: "stripe",
       stripeClient: expect.any(Stripe),
+      paymentEventsPort: expect.any(StripePaymentEventsAdapter),
     });
-    expect(paymentProviderAdapter.paymentEventsPort).toBeInstanceOf(
-      StripePaymentEventsAdapter,
-    );
   });
 
   it("refuses the stripe provider without a secret key", () => {
@@ -53,7 +51,7 @@ describe("PaymentProviderAdapter", () => {
     };
 
     // act
-    const create = () => new PaymentProviderAdapter(config);
+    const create = () => createPaymentProviderAdapter(config);
 
     // assert
     expect(create).toThrow("STRIPE_SECRET_KEY");
@@ -67,7 +65,7 @@ describe("PaymentProviderAdapter", () => {
     };
 
     // act
-    const create = () => new PaymentProviderAdapter(config);
+    const create = () => createPaymentProviderAdapter(config);
 
     // assert
     expect(create).toThrow("STRIPE_WEBHOOK_SIGNING_SECRET");
@@ -75,7 +73,7 @@ describe("PaymentProviderAdapter", () => {
 
   it("verifies Stripe signatures with the configured signing secret", async () => {
     // arrange
-    const { paymentEventsPort } = new PaymentProviderAdapter(STRIPE_CONFIG);
+    const { paymentEventsPort } = createPaymentProviderAdapter(STRIPE_CONFIG);
     const rawBody = JSON.stringify({
       id: "evt_unit",
       type: "customer.created",
@@ -96,7 +94,7 @@ describe("PaymentProviderAdapter", () => {
 
   it("refuses an event signed with another secret", async () => {
     // arrange
-    const { paymentEventsPort } = new PaymentProviderAdapter(STRIPE_CONFIG);
+    const { paymentEventsPort } = createPaymentProviderAdapter(STRIPE_CONFIG);
     const rawBody = JSON.stringify({
       id: "evt_unit",
       type: "customer.created",

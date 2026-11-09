@@ -53,7 +53,7 @@ export class StoreOrderController {
     );
 
     if (!submission.success) {
-      return this.failure("invalid_request", 400);
+      return this.resendFailureResponse("invalid_request", 400);
     }
 
     const prepared = await this.options.prepareOrderEmailResendUseCase.execute(
@@ -61,7 +61,7 @@ export class StoreOrderController {
     );
 
     if (prepared.status !== "prepared") {
-      return this.outcome(prepared.status);
+      return this.resendOutcomeResponse(prepared.status);
     }
 
     const delivered = await this.options.deliverOrderEmailUseCase.execute(
@@ -69,20 +69,24 @@ export class StoreOrderController {
     );
 
     return delivered === "sent"
-      ? this.outcome("sent")
-      : this.failure("resend_unavailable", 503);
+      ? this.resendOutcomeResponse("sent")
+      : this.resendFailureResponse("resend_unavailable", 503);
   }
 
   private async readConfirmation(sessionId: string) {
-    const read =
+    const confirmationRead =
       await this.options.readOrderConfirmationUseCase.execute(sessionId);
 
-    return read.status === "confirmed"
-      ? { status: read.status, sessionId, ...read.confirmation }
-      : read;
+    return confirmationRead.status === "confirmed"
+      ? {
+          status: confirmationRead.status,
+          sessionId,
+          ...confirmationRead.confirmation,
+        }
+      : confirmationRead;
   }
 
-  private outcome(
+  private resendOutcomeResponse(
     outcome: "sent" | "processing" | "rate_limited" | "not_found",
   ): Response {
     return Response.json(
@@ -90,7 +94,7 @@ export class StoreOrderController {
     );
   }
 
-  private failure(
+  private resendFailureResponse(
     code: "invalid_request" | "resend_unavailable",
     status: number,
   ): Response {

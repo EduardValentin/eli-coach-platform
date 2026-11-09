@@ -1,6 +1,6 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
-import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider.server";
 import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
 import { PostgresPaymentEventLedgerRepository } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/persistence/postgres-payment-event-ledger-repository.server";
 import { AcquireProductsUseCase } from "~/bounded-contexts/sales/store/domain/acquisition";
@@ -144,7 +144,7 @@ export function composeStoreFeature(
       publicAppUrl: handles.publicAppUrl,
     },
   );
-  const orderTokens = {
+  const orderEmailAttemptDependencies = {
     clockPort: handles.clockPort,
     downloadTokenGeneratorPort: new RandomDownloadTokenGeneratorAdapter(),
     orderDeliveryPort: emailOrderDeliveryAdapter,
@@ -205,7 +205,7 @@ export function composeStoreFeature(
         storeCheckoutPort,
       }),
       prepareOrderEmailResendUseCase: new PrepareOrderEmailResendUseCase(
-        orderTokens,
+        orderEmailAttemptDependencies,
       ),
       deliverOrderEmailUseCase,
     }),
@@ -245,7 +245,7 @@ export function composeStoreFeature(
     paymentHandlers: {
       paymentCompletionHandlerPort: new StoreOrderCompletionHandler({
         completeOrderUseCase: new CompleteOrderUseCase({
-          ...orderTokens,
+          ...orderEmailAttemptDependencies,
           paymentEventLedgerPort: new PostgresPaymentEventLedgerRepository(
             handles.database,
           ),

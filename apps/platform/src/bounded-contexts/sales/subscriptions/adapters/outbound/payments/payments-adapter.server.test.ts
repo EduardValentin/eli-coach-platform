@@ -1,7 +1,7 @@
 import { createServer, type IncomingHttpHeaders } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { PaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import { createPaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/create-payment-provider-adapter.server";
 import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
 import { describe, expect, it } from "vitest";
 
@@ -56,7 +56,7 @@ async function startStripeApiStub() {
 
 function paymentsAdapterFor(config: PaymentsConfig): PaymentsAdapter {
   return new PaymentsAdapter({
-    paymentProvider: new PaymentProviderAdapter(config).paymentProvider,
+    paymentProvider: createPaymentProviderAdapter(config),
   });
 }
 
