@@ -74,6 +74,8 @@ function storeCheckoutSessionId(): string {
   return `cs_store_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export const STORE_PAYMENT_CANCELLED_URL = `${import.meta.env.BASE_URL}store?payment=cancelled`;
+
 export function storeCheckoutUrl(sessionId: string): string {
   return `/checkout/store/${sessionId}`;
 }

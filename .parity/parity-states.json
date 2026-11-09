@@ -622,7 +622,17 @@
     }
   ],
   "checkout-immediate": {
-    "prototype": [],
+    "prototype": [
+      {
+        "click": "[data-parity=\"option-immediate\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay €/]"
+      }
+    ],
     "real": [
       {
         "click": "[data-parity=\"option-immediate\"]"
@@ -6454,36 +6464,20 @@
       "waitFor": "[data-parity-root=\"CartDrawer\"] input[type=\"email\"][aria-invalid=\"true\"]"
     }
   ],
-  "cart-payment-not-completed": {
-    "prototype": [
-      {
-        "use": "cart-paid-details-filled"
-      },
-      {
-        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-      },
-      {
-        "click": "role=link[name=\"Back\"]"
-      },
-      {
-        "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
-      }
-    ],
-    "real": [
-      {
-        "use": "cart-paid-details-filled"
-      },
-      {
-        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-      },
-      {
-        "click": "a[href*=\"payment=cancelled\"]"
-      },
-      {
-        "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
-      }
-    ]
-  },
+  "cart-payment-not-completed": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "click": "a[href*=\"payment=cancelled\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
+    }
+  ],
   "order-confirmed": {
     "prototype": [
       {
