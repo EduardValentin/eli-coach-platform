@@ -69,7 +69,7 @@ export function CartDrawer() {
   const emailErrorId = useId();
   const responseErrorId = useId();
   const openerRef = useRef<HTMLElement | null>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -221,14 +221,14 @@ export function CartDrawer() {
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeDrawer()}>
       <SheetContent
-        ref={sheetRef}
+        closeButtonRef={closeButtonRef}
         className="p-0 sm:max-w-md"
         data-parity-root="CartDrawer"
         onOpenAutoFocus={(event) => {
           openerRef.current = document.activeElement as HTMLElement | null;
           if (cartNotice === 'payment-not-completed') {
             event.preventDefault();
-            sheetRef.current?.querySelector<HTMLButtonElement>(':scope > button:last-child')?.focus();
+            closeButtonRef.current?.focus();
           }
         }}
         onCloseAutoFocus={(event) => {

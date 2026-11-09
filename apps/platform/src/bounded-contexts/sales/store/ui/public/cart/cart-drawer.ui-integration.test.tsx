@@ -251,6 +251,42 @@ describe("StoreCartDrawer", () => {
     });
   });
 
+  it("puts focus on Close when the cart reopens after a cancelled payment", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const loadedDialog = await screen.findByRole("dialog", {
+      name: "Your cart",
+    });
+    await within(loadedDialog).findByText("Hormone Harmony");
+    await user.keyboard("{Escape}");
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Return from a cancelled payment" }),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    expect(within(dialog).getByRole("status")).toHaveTextContent(
+      "Payment not completed. Your cart is saved.",
+    );
+    expect(within(dialog).getByText("Hormone Harmony")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Close" })).toHaveFocus();
+  });
+
   it("marks the email and the terms as required and the marketing consent as optional", async () => {
     // arrange
     const user = userEvent.setup();
@@ -1065,6 +1101,7 @@ function renderCart(options?: {
         <StoreCartProvider initialCurrency={options?.initialCurrency ?? "EUR"}>
           <StoreCartButton />
           <StoreCartTestControls />
+          <CancelledPaymentReturnTestControl />
           <DisappearingStoreCartTestControl />
           {/* The drawer falls back to the page's main landmark when the cart
               empties and every opener is gone, so the harness has to have one. */}
@@ -1134,6 +1171,18 @@ function DisappearingStoreCartTestControl() {
       type="button"
     >
       Open cart from disappearing control
+    </button>
+  );
+}
+
+function CancelledPaymentReturnTestControl() {
+  const openCartAfterCancelledPayment = useStoreCart(
+    (cart) => cart.openCartAfterCancelledPayment,
+  );
+
+  return (
+    <button onClick={openCartAfterCancelledPayment} type="button">
+      Return from a cancelled payment
     </button>
   );
 }
