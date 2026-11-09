@@ -13,13 +13,13 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 ## Current shape (generated)
 
 <!-- arch:summary -->
-Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules: 0.
+Components: 51, units: 1640, edges: 5535, component cycles: 0, uncovered modules: 0.
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
-| C2 apps/platform/src/shared/database | 9 | 78 | 1 | 0.01 | 0.22 | 0.77 | none |
-| C5 apps/platform/src/shared/design-system | 130 | 192 | 0 | 0 | 0.09 | 0.91 | pain |
-| C7 apps/platform/src/bounded-contexts/sales/store | 96 | 5 | 35 | 0.88 | 0.38 | 0.25 | none |
+| C2 apps/platform/src/shared/database | 9 | 80 | 1 | 0.01 | 0.22 | 0.77 | none |
+| C5 apps/platform/src/shared/design-system | 132 | 198 | 0 | 0 | 0.09 | 0.91 | pain |
+| C7 apps/platform/src/bounded-contexts/sales/store | 148 | 6 | 55 | 0.9 | 0.39 | 0.29 | none |
 | C8 apps/platform/src/bounded-contexts/sales/waitlist | 38 | 13 | 16 | 0.55 | 0.41 | 0.04 | none |
 | C9 apps/platform/src/bounded-contexts/access/accounts | 60 | 14 | 25 | 0.64 | 0.37 | 0.01 | none |
 | C11 apps/platform/src/surfaces/public-site | 29 | 1 | 21 | 0.95 | 0.19 | 0.14 | none |
@@ -29,7 +29,7 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C15 apps/platform | 5 | 0 | 4 | 1 | 0 | 0 | none |
 | C16 apps/platform/test-support | 0 | 0 | 0 | undefined | undefined | undefined | none |
 | C17 apps/platform/src/bounded-contexts/scheduling/assessment-calls | 76 | 22 | 44 | 0.67 | 0.3 | 0.03 | none |
-| C18 apps/platform/src/bounded-contexts/sales/subscriptions | 179 | 11 | 66 | 0.86 | 0.3 | 0.16 | none |
+| C18 apps/platform/src/bounded-contexts/sales/subscriptions | 158 | 10 | 67 | 0.87 | 0.28 | 0.15 | none |
 | C20 apps/platform/src/bounded-contexts/clients/client-profile | 237 | 12 | 100 | 0.89 | 0.29 | 0.18 | none |
 | C21 apps/platform/src/bounded-contexts/clients/client-resources | 83 | 7 | 38 | 0.84 | 0.31 | 0.15 | none |
 | C22 apps/platform/src/bounded-contexts/clients/check-ins | 134 | 9 | 61 | 0.87 | 0.33 | 0.2 | none |
@@ -41,11 +41,11 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C28 apps/platform/src/bounded-contexts/operations/feature-flags | 19 | 4 | 7 | 0.64 | 0.27 | 0.1 | none |
 | C29 apps/platform/src/bounded-contexts/legal/legal | 11 | 2 | 5 | 0.71 | 0.38 | 0.09 | none |
 | C30 apps/platform/src/bounded-contexts/operations/public (facades, DTOs, path literals) | 2 | 9 | 0 | 0 | 0.5 | 0.5 | none |
-| C31 apps/platform/src/bounded-contexts/legal/public (facades, DTOs, path literals) | 6 | 10 | 1 | 0.09 | 0.21 | 0.69 | none |
+| C31 apps/platform/src/bounded-contexts/legal/public (facades, DTOs, path literals) | 6 | 11 | 1 | 0.08 | 0.23 | 0.68 | none |
 | C32 apps/platform/src/bounded-contexts/access/public (facades, DTOs, path literals) | 3 | 72 | 0 | 0 | 0.39 | 0.61 | none |
 | C33 apps/platform/src/bounded-contexts/scheduling/public (facades, DTOs, path literals) | 7 | 27 | 0 | 0 | 0.92 | 0.08 | none |
 | C34 apps/platform/src/bounded-contexts/clients/public (facades, DTOs, path literals) | 6 | 16 | 0 | 0 | 0.92 | 0.08 | none |
-| C35 apps/platform/src/bounded-contexts/sales/public (facades, DTOs, path literals) | 1 | 9 | 0 | 0 | 0 | 1 | pain |
+| C35 apps/platform/src/bounded-contexts/sales/public (facades, DTOs, path literals) | 1 | 12 | 0 | 0 | 0 | 1 | pain |
 | C36 apps/platform/src/bounded-contexts/operations (composition, routes, request-context) | 3 | 2 | 3 | 0.6 | 0.25 | 0.15 | none |
 | C37 apps/platform/src/bounded-contexts/legal (composition, routes) | 2 | 2 | 2 | 0.5 | 0.33 | 0.17 | none |
 | C38 apps/platform/src/bounded-contexts/access (composition, routes, request-context) | 3 | 2 | 3 | 0.6 | 0.25 | 0.15 | none |
@@ -53,34 +53,36 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C40 apps/platform/src/bounded-contexts/clients (composition, routes, request-context) | 4 | 19 | 4 | 0.17 | 0.05 | 0.78 | pain |
 | C41 apps/platform/src/bounded-contexts/programs (composition, routes, request-context) | 3 | 3 | 3 | 0.5 | 0.2 | 0.3 | none |
 | C42 apps/platform/src/bounded-contexts/sales (composition, routes, request-context) | 3 | 10 | 3 | 0.23 | 0.13 | 0.64 | none |
-| C43 apps/platform/src/shared/brand | 1 | 16 | 0 | 0 | 0 | 1 | pain |
+| C57 apps/platform/src/bounded-contexts/sales/shared/payments | 26 | 16 | 7 | 0.3 | 0.51 | 0.18 | none |
+| C43 apps/platform/src/shared/brand | 1 | 17 | 0 | 0 | 0 | 1 | pain |
 | C44 apps/platform/src/shared/clock | 3 | 3 | 0 | 0 | 0 | 1 | pain |
 | C45 apps/platform/src/shared/contact | 2 | 10 | 0 | 0 | 0.25 | 0.75 | none |
 | C46 apps/platform/src/shared/documents | 12 | 6 | 0 | 0 | 0.45 | 0.55 | none |
-| C47 apps/platform/src/shared/email | 11 | 36 | 1 | 0.03 | 0.07 | 0.9 | pain |
-| C48 apps/platform/src/shared/http | 16 | 149 | 0 | 0 | 0.11 | 0.89 | pain |
+| C47 apps/platform/src/shared/email | 11 | 38 | 1 | 0.03 | 0.07 | 0.9 | pain |
+| C48 apps/platform/src/shared/http | 16 | 157 | 0 | 0 | 0.11 | 0.89 | pain |
 | C49 apps/platform/src/shared/images | 1 | 4 | 0 | 0 | 0.33 | 0.67 | none |
-| C50 apps/platform/src/shared/logging | 3 | 25 | 0 | 0 | 0.25 | 0.75 | none |
+| C50 apps/platform/src/shared/logging | 3 | 27 | 0 | 0 | 0.25 | 0.75 | none |
 | C51 apps/platform/src/shared/private-files | 5 | 10 | 0 | 0 | 0 | 1 | pain |
 | C52 apps/platform/src/shared/pwa | 3 | 7 | 1 | 0.13 | 0 | 0.88 | pain |
 | C53 apps/platform/src/shared/runtime | 1 | 10 | 0 | 0 | 0.5 | 0.5 | none |
-| C54 apps/platform/src/shared/submission-checks | 20 | 22 | 1 | 0.04 | 0.23 | 0.72 | none |
+| C54 apps/platform/src/shared/submission-checks | 20 | 24 | 1 | 0.04 | 0.23 | 0.73 | none |
 | C55 apps/platform/src/shared/time-format | 2 | 18 | 0 | 0 | 0 | 1 | pain |
 | C56 apps/platform/src/shared/tokens | 6 | 1 | 2 | 0.67 | 0.33 | 0 | none |
 
 | From | To | Importing modules |
 |---|---|---|
 | C2 | C48 | 1 |
-| C7 | C2 | 6 |
-| C7 | C5 | 6 |
-| C7 | C31 | 3 |
-| C7 | C35 | 4 |
-| C7 | C43 | 1 |
-| C7 | C47 | 4 |
-| C7 | C48 | 15 |
+| C7 | C2 | 7 |
+| C7 | C5 | 12 |
+| C7 | C31 | 4 |
+| C7 | C35 | 6 |
+| C7 | C43 | 2 |
+| C7 | C47 | 6 |
+| C7 | C48 | 23 |
 | C7 | C50 | 2 |
 | C7 | C53 | 1 |
-| C7 | C54 | 5 |
+| C7 | C54 | 7 |
+| C7 | C57 | 4 |
 | C8 | C2 | 3 |
 | C8 | C5 | 2 |
 | C8 | C30 | 2 |
@@ -99,7 +101,7 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C9 | C50 | 2 |
 | C9 | C53 | 1 |
 | C11 | C5 | 15 |
-| C11 | C7 | 1 |
+| C11 | C7 | 2 |
 | C11 | C8 | 7 |
 | C11 | C9 | 5 |
 | C11 | C14 | 1 |
@@ -147,7 +149,6 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C14 | C8 | 1 |
 | C14 | C9 | 2 |
 | C14 | C17 | 1 |
-| C14 | C18 | 1 |
 | C14 | C20 | 1 |
 | C14 | C25 | 1 |
 | C14 | C26 | 1 |
@@ -168,6 +169,7 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C14 | C50 | 1 |
 | C14 | C54 | 4 |
 | C14 | C56 | 1 |
+| C14 | C57 | 1 |
 | C15 | C5 | 2 |
 | C15 | C9 | 1 |
 | C15 | C11 | 1 |
@@ -197,7 +199,7 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C17 | C50 | 2 |
 | C17 | C54 | 4 |
 | C17 | C55 | 9 |
-| C18 | C2 | 8 |
+| C18 | C2 | 6 |
 | C18 | C5 | 24 |
 | C18 | C8 | 2 |
 | C18 | C17 | 3 |
@@ -209,9 +211,9 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C18 | C39 | 2 |
 | C18 | C40 | 4 |
 | C18 | C47 | 8 |
-| C18 | C48 | 16 |
+| C18 | C48 | 14 |
 | C18 | C50 | 2 |
-| C18 | C53 | 1 |
+| C18 | C57 | 10 |
 | C20 | C2 | 12 |
 | C20 | C5 | 41 |
 | C20 | C17 | 4 |
@@ -318,10 +320,16 @@ Components: 50, units: 1581, edges: 5280, component cycles: 0, uncovered modules
 | C42 | C7 | 3 |
 | C42 | C8 | 3 |
 | C42 | C18 | 3 |
+| C42 | C35 | 1 |
+| C42 | C57 | 1 |
 | C47 | C53 | 1 |
 | C52 | C48 | 1 |
 | C54 | C53 | 1 |
 | C56 | C46 | 2 |
+| C57 | C2 | 3 |
+| C57 | C48 | 2 |
+| C57 | C50 | 2 |
+| C57 | C53 | 1 |
 <!-- /arch:summary -->
 
 ## Reading this folder

@@ -291,10 +291,10 @@
     { "id": "S46", "name": "The account invitation id: `app.clients.account_invitation_id` (C24, unique, no foreign key) names C9's `app.account_invitations` row; migration 0064", "owner": "C9", "components": [ "C9", "C24", "C32" ] }
   ],
   "groups": [
-    { "name": "vertical-feature-slice", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27", "C28", "C29", "C30", "C31", "C32", "C33", "C34", "C35", "C36", "C37", "C38", "C39", "C40", "C41", "C42", "C47", "C48" ], "absorbs": "one user-visible capability delivered end to end, from the domain rule to the surface that registers it" },
+    { "name": "vertical-feature-slice", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27", "C28", "C29", "C30", "C31", "C32", "C33", "C34", "C35", "C36", "C37", "C38", "C39", "C40", "C41", "C42", "C47", "C48", "C57" ], "absorbs": "one user-visible capability delivered end to end, from the domain rule to the surface that registers it" },
     { "name": "waiting-list-mode", "components": [ "C8", "C14", "C15", "C17", "C18", "C28", "C30" ], "absorbs": "how waiting-list mode is stored, read and switched" },
     { "name": "coach-scheduling", "components": [ "C14", "C17", "C22", "C23", "C33", "C39" ], "absorbs": "the coach's own time and room: slot policy, reservations, overlap rules, window and meeting room" },
-    { "name": "adapter-facing-contracts", "components": [ "C7", "C8", "C14", "C17", "C18", "C20", "C22", "C24", "C47", "C54" ], "absorbs": "a change to the email, bot-detection, management-auth or payments contract and every sender, verifier or handler of it" },
+    { "name": "adapter-facing-contracts", "components": [ "C7", "C8", "C14", "C17", "C18", "C20", "C22", "C24", "C47", "C54", "C57" ], "absorbs": "a change to the email, bot-detection, management-auth or payments contract and every sender, verifier or handler of it" },
     { "name": "design-system", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C15", "C17", "C18", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27", "C29" ], "absorbs": "a token, primitive or shared look changed once in the design system and taken up by every consumer" },
     { "name": "coach-portal", "components": [ "C5", "C13", "C17", "C18", "C20", "C21", "C22", "C23", "C24", "C25", "C26" ], "absorbs": "a coach-facing block: the use case and port, the portal primitive, the component's coach UI and the page that composes it" },
     { "name": "operations-bounded-context", "components": [ "C28", "C30", "C36" ], "absorbs": "a change to the operator switches and their persisted flags, inside the operations bounded context and its facade" },
@@ -303,6 +303,6 @@
     { "name": "scheduling-bounded-context", "components": [ "C17", "C23", "C33", "C39" ], "absorbs": "a change to the coach's time and the assessment call, inside the scheduling bounded context and its facades" },
     { "name": "clients-bounded-context", "components": [ "C20", "C21", "C22", "C24", "C27", "C34", "C40" ], "absorbs": "a change to who a client is and what she receives (profile, onboarding, resources, bell, check-ins), inside the clients bounded context and its facades" },
     { "name": "programs-bounded-context", "components": [ "C25", "C26", "C41" ], "absorbs": "a change to the coach's exercise and nutrition libraries, inside the programs bounded context" },
-    { "name": "sales-bounded-context", "components": [ "C7", "C8", "C18", "C35", "C42" ], "absorbs": "a change to what is sold and how (store, waitlist, subscriptions), inside the sales bounded context" }
+    { "name": "sales-bounded-context", "components": [ "C7", "C8", "C18", "C35", "C42", "C57" ], "absorbs": "a change to what is sold and how (store, waitlist, subscriptions), inside the sales bounded context and its shared payments plumbing" }
   ]
 }
