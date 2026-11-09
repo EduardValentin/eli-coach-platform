@@ -2,6 +2,7 @@ import { createEmailAcceptance } from "~/shared/submission-checks/email-address"
 import type { DatabaseClient } from "~/shared/database";
 import type { PaymentCheckoutPort } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
+import { createPaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/create-payment-provider-adapter.server";
 import { createTokenGeneratorAdapter } from "~/shared/tokens/create-token-generator-adapter.server";
 import { createTokenHasherAdapter } from "~/shared/tokens/create-token-hasher-adapter.server";
 import { PaymentsAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payments-adapter.server";
@@ -220,7 +221,9 @@ function createHandles(
   featureFlags: Record<string, boolean>,
 ): SubscriptionsFeatureHandles {
   const paymentsAdapter = new PaymentsAdapter({
-    paymentProvider: { name: "memory" },
+    paymentProvider: createPaymentProviderAdapter({
+      PAYMENTS_PROVIDER: "memory",
+    }),
   });
 
   return {

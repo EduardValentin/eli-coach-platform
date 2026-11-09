@@ -5,6 +5,7 @@ import {
 import type { ClockPort } from "../clock-port";
 
 import type { OrderDeliveryPort } from "./order-delivery-port";
+import { OrderEmailAttempt } from "./order-email-attempt";
 import type { OrderEmailDelivery } from "./order-email-delivery";
 import type { StoreOrdersPort } from "./store-orders-port";
 
@@ -42,25 +43,15 @@ export class PrepareOrderEmailResendUseCase {
     }
 
     const at = this.options.clockPort.now();
-    const token = this.options.downloadTokenGeneratorPort.create();
-    const attempt = {
-      provider: this.options.orderDeliveryPort.provider,
-      providerIdempotencyKey:
-        this.options.orderDeliveryPort.createProviderIdempotencyKey(
-          order.emailAttemptKey(token.sha256),
-        ),
-    };
+    const attempt = OrderEmailAttempt.reissue({
+      order,
+      token: this.options.downloadTokenGeneratorPort.create(),
+      orderDeliveryPort: this.options.orderDeliveryPort,
+    });
     const preparation = await this.options.storeOrdersPort.prepareResend({
-      orderId: order.id,
-      tokenSha256: token.sha256,
       attempt,
       at,
-      cooldownSince: new Date(
-        at.getTime() - STORE_DELIVERY_LIMIT_POLICY.cooldownMs,
-      ),
-      dailyWindowSince: new Date(
-        at.getTime() - STORE_DELIVERY_LIMIT_POLICY.dailyWindowMs,
-      ),
+      windows: STORE_DELIVERY_LIMIT_POLICY.windowsAt(at),
       dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
     });
 
@@ -74,13 +65,10 @@ export class PrepareOrderEmailResendUseCase {
 
     return {
       status: "prepared",
-      delivery: {
-        order,
+      delivery: attempt.toDelivery({
         deliveryAttemptId: preparation.deliveryAttemptId,
-        ...attempt,
-        rawToken: token.rawToken,
         at,
-      },
+      }),
     };
   }
 }

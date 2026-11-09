@@ -2,12 +2,11 @@ import type { PublishedProduct, StoreCatalogPort } from "../product";
 import type { ClockPort } from "../clock-port";
 import type { EmailAcceptancePort } from "../email-acceptance-port";
 
+import { AcquisitionRequest, type AcquireProductsCommand } from "./acquisition";
 import {
-  AcquisitionRequest,
   STORE_DELIVERY_LIMIT_POLICY,
-  type AcquireProductsCommand,
   type StoreDeliveryLimitWindow,
-} from "./acquisition";
+} from "./delivery-limit-policy";
 import type { AcquisitionIncidentsPort } from "./acquisition-incidents-port";
 import type { ConsentVersionsPort } from "./consent-versions-port";
 import type {

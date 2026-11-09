@@ -387,6 +387,30 @@ describe("Store checkout integration", () => {
     expect(await suite.sentEmails()).toHaveLength(1);
   });
 
+  it("grants nothing for a paid session that is not the one opened for the order", async () => {
+    // arrange
+    await seedCatalog();
+    await suite.wireMock.stub(stripeCreatesStoreCheckoutSession());
+    await placeOrder({});
+
+    // act
+    const webhook = await deliverPaidWebhook({
+      sessionId: "cs_test_anotherordersession",
+    });
+
+    // assert
+    expect(webhook.status).toBe(200);
+    expect(await readOrders()).toEqual([
+      expect.objectContaining({
+        status: "pending",
+        checkoutSessionId: STRIPE_STORE_CHECKOUT_SESSION_ID,
+        paidAt: null,
+      }),
+    ]);
+    expect(await readGrants()).toEqual([]);
+    expect(await suite.sentEmails()).toEqual([]);
+  });
+
   it("leaves store orders untouched by a completed checkout for another purpose", async () => {
     // arrange
     await seedCatalog();
@@ -443,6 +467,25 @@ describe("Store checkout integration", () => {
       suite.path("/store/download?unavailable=1"),
     );
     expect(newLink.status).toBe(200);
+  });
+
+  it("keeps the emailed link working when a resend cannot reach the email provider", async () => {
+    // arrange
+    await rig.holdClock(placedAt);
+    await seedCatalog();
+    await placeAndPay();
+    const [orderEmail] = await suite.sentEmails();
+    await rig.holdClock(new Date(placedAt.getTime() + PAST_COOLDOWN_MS));
+    await suite.wireMock.stub(resendFailsWithoutVerdict("store-order-"));
+
+    // act
+    const resend = await requestResend(STRIPE_STORE_CHECKOUT_SESSION_ID);
+    const emailedLink = await requestDownload(downloadTokenFrom(orderEmail!));
+
+    // assert
+    expect(resend.status).toBe(503);
+    expect(await readAttemptStatuses()).toEqual(["accepted", "retryable"]);
+    expect(emailedLink.status).toBe(200);
   });
 
   it("limits resends to the free flow's cooldown, counted per order", async () => {
@@ -671,6 +714,7 @@ async function deliverPaidWebhook(options: {
   eventId?: string;
   amountTotal?: number;
   metadata?: Record<string, string>;
+  sessionId?: string;
 }): Promise<Response> {
   const [sessionRequest] = await requestedStoreSessions();
 
@@ -693,7 +737,7 @@ async function deliverPaidWebhook(options: {
                 ? "usd"
                 : "eur",
             customerEmail: BUYER,
-            id: STRIPE_STORE_CHECKOUT_SESSION_ID,
+            id: options.sessionId ?? STRIPE_STORE_CHECKOUT_SESSION_ID,
             metadata: options.metadata ?? {
               purpose: "store-order",
               orderId: sessionRequest.form.get("metadata[orderId]")!,

@@ -1,7 +1,10 @@
-import { AcquisitionRequest, type StoreConsentVersions } from "../acquisition";
+import type { StoreConsentVersions } from "../acquisition";
 import type { PublishedProduct, StoreCurrency } from "../product";
+import type { StoreRecipientEmail } from "../store-recipient-email";
 
 import { DeliveryConsent } from "./delivery-consent";
+import type { OrderCheckout } from "./order-checkout";
+import { OrderConsents } from "./order-consents";
 import { OrderItem, type OrderLine } from "./order-item";
 import type { OrderPayment } from "./order-payment";
 import type { OrderRequest } from "./order-request";
@@ -11,19 +14,6 @@ const EMAIL_ATTEMPT_TOKEN_PREFIX_LENGTH = 24;
 export const STORE_ORDER_PURPOSE = "store-order";
 
 export type OrderStatus = "pending" | "paid";
-
-export type OrderCheckout = {
-  sessionId: string;
-  url: string;
-};
-
-export type OrderConsents = {
-  termsVersion: string;
-  privacyPolicyVersion: string;
-  marketingConsentVersion: string;
-  marketingConsent: boolean;
-  marketingConsentedAt: Date | null;
-};
 
 export type OrderConfirmation = {
   email: string;
@@ -42,7 +32,9 @@ export type OrderPlacement =
   | { status: "no_paid_items" };
 
 export type OrderPaymentOutcome =
-  { status: "paid"; order: Order } | { status: "already_paid" };
+  | { status: "paid"; order: Order }
+  | { status: "already_paid" }
+  | { status: "session_mismatch" };
 
 type PlaceOrderInput = {
   id: string;
@@ -55,7 +47,7 @@ type PlaceOrderInput = {
 
 type OrderProps = {
   id: string;
-  email: string;
+  recipientEmail: StoreRecipientEmail;
   currency: StoreCurrency;
   items: readonly OrderItem[];
   status: OrderStatus;
@@ -70,7 +62,7 @@ type OrderProps = {
 
 export class Order {
   readonly id: string;
-  readonly email: string;
+  readonly recipientEmail: StoreRecipientEmail;
   readonly currency: StoreCurrency;
   readonly items: readonly OrderItem[];
   readonly status: OrderStatus;
@@ -84,7 +76,7 @@ export class Order {
 
   private constructor(props: OrderProps) {
     this.id = props.id;
-    this.email = props.email;
+    this.recipientEmail = props.recipientEmail;
     this.currency = props.currency;
     this.items = props.items;
     this.status = props.status;
@@ -122,22 +114,17 @@ export class Order {
       status: "placed",
       order: new Order({
         id: input.id,
-        email: request.email,
+        recipientEmail: request.recipientEmail,
         currency: request.currency,
         items,
         status: "pending",
         checkout: null,
         payment: null,
-        consents: {
-          termsVersion: input.consentVersions.termsVersion,
-          privacyPolicyVersion: input.consentVersions.privacyPolicyVersion,
-          marketingConsentVersion:
-            input.consentVersions.marketingConsentVersion,
+        consents: OrderConsents.given({
+          versions: input.consentVersions,
           marketingConsent: request.marketingConsent,
-          marketingConsentedAt: request.marketingConsent
-            ? input.placedAt
-            : null,
-        },
+          at: input.placedAt,
+        }),
         deliveryConsent: DeliveryConsent.given({
           termsVersion: input.consentVersions.paidDeliveryConsentTermsVersion,
           consentedAt: input.placedAt,
@@ -153,8 +140,12 @@ export class Order {
     return new Order(props);
   }
 
+  get email(): string {
+    return this.recipientEmail.address;
+  }
+
   get deliveryLimitKey(): string {
-    return AcquisitionRequest.deliveryLimitKeyOf(this.email);
+    return this.recipientEmail.deliveryLimitKey();
   }
 
   total(): number {
@@ -174,6 +165,10 @@ export class Order {
   }
 
   markPaid(payment: OrderPayment): OrderPaymentOutcome {
+    if (!this.checkout?.holdsSession(payment.checkoutSessionId)) {
+      return { status: "session_mismatch" };
+    }
+
     if (this.status === "paid") {
       return { status: "already_paid" };
     }
@@ -201,7 +196,7 @@ export class Order {
   private props(): OrderProps {
     return {
       id: this.id,
-      email: this.email,
+      recipientEmail: this.recipientEmail,
       currency: this.currency,
       items: this.items,
       status: this.status,

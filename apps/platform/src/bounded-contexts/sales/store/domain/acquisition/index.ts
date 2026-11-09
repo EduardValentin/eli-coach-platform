@@ -8,11 +8,11 @@ export {
   type StoreConsentVersions,
 } from "./consent-versions-port";
 export {
-  AcquisitionRequest,
   evaluateDeliveryLimit,
   STORE_DELIVERY_LIMIT_POLICY,
+  type DeliveryWindows,
   type StoreDeliveryLimitWindow,
-} from "./acquisition";
+} from "./delivery-limit-policy";
 export {
   type ProductDeliveryPort,
   type ProductDeliveryResult,

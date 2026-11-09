@@ -4,6 +4,9 @@ import { ProductPrice, PublishedProduct } from "../product";
 
 import { DeliveryConsent } from "./delivery-consent";
 import { Order } from "./order";
+import { OrderCheckout } from "./order-checkout";
+import { OrderConsents } from "./order-consents";
+import { OrderEmailAttempt } from "./order-email-attempt";
 import { OrderPayment } from "./order-payment";
 import { OrderRequest } from "./order-request";
 
@@ -117,6 +120,26 @@ function placedOrder(orderRequest?: OrderRequest): Order {
   return placement.order;
 }
 
+function opened(order: Order): Order {
+  return Order.reconstitute({
+    id: order.id,
+    recipientEmail: order.recipientEmail,
+    currency: order.currency,
+    items: order.items,
+    status: order.status,
+    checkout: OrderCheckout.opened({
+      sessionId: "cs_test_1",
+      url: "https://checkout.stripe.com/c/pay/cs_test_1",
+    }),
+    payment: order.payment,
+    consents: order.consents,
+    deliveryConsent: order.deliveryConsent,
+    idempotencyKey: order.idempotencyKey,
+    payloadDigest: order.payloadDigest,
+    placedAt: order.placedAt,
+  });
+}
+
 describe("Order.place", () => {
   it("prices every item from the catalog in the chosen currency and records free items at zero", () => {
     // arrange
@@ -162,7 +185,7 @@ describe("Order.place", () => {
     const order = placedOrder(marketingRequest);
 
     // assert
-    expect(order.consents).toEqual({
+    expect(order.consents.toSnapshot()).toEqual({
       termsVersion: "1.0",
       privacyPolicyVersion: "2.3",
       marketingConsentVersion: "store-1",
@@ -266,7 +289,7 @@ describe("Order", () => {
 
   it("is paid once with the charged amount and stays unchanged when paid again", () => {
     // arrange
-    const order = placedOrder();
+    const order = opened(placedOrder());
     const payment = OrderPayment.received({
       checkoutSessionId: "cs_test_1",
       paymentIntentId: "pi_1",
@@ -291,6 +314,42 @@ describe("Order", () => {
       paidAt,
     });
     expect(second).toEqual({ status: "already_paid" });
+  });
+
+  it("refuses a payment made through a session other than the one opened for it", () => {
+    // arrange
+    const order = opened(placedOrder());
+    const payment = OrderPayment.received({
+      checkoutSessionId: "cs_test_another",
+      paymentIntentId: "pi_1",
+      amountMinorUnits: 6800,
+      currency: "eur",
+      paidAt,
+    });
+
+    // act
+    const outcome = order.markPaid(payment);
+
+    // assert
+    expect(outcome).toEqual({ status: "session_mismatch" });
+  });
+
+  it("refuses a payment before any session was opened for it", () => {
+    // arrange
+    const order = placedOrder();
+    const payment = OrderPayment.received({
+      checkoutSessionId: "cs_test_1",
+      paymentIntentId: "pi_1",
+      amountMinorUnits: 6800,
+      currency: "eur",
+      paidAt,
+    });
+
+    // act
+    const outcome = order.markPaid(payment);
+
+    // assert
+    expect(outcome).toEqual({ status: "session_mismatch" });
   });
 
   it("tells when the charged amount or currency differs from the order total", () => {
@@ -353,6 +412,112 @@ describe("DeliveryConsent", () => {
 
     // assert
     expect(consent.toSnapshot()).toEqual({ termsVersion: "1.0", consentedAt });
+  });
+});
+
+describe("OrderConsents", () => {
+  it("records the marketing moment only when she consented to marketing", () => {
+    // arrange
+    const at = new Date("2026-11-09T10:00:00.000Z");
+
+    // act
+    const consented = OrderConsents.given({
+      versions: consentVersions,
+      marketingConsent: true,
+      at,
+    });
+    const declined = OrderConsents.given({
+      versions: consentVersions,
+      marketingConsent: false,
+      at,
+    });
+
+    // assert
+    expect(consented.toSnapshot()).toEqual({
+      termsVersion: "1.0",
+      privacyPolicyVersion: "2.3",
+      marketingConsentVersion: "store-1",
+      marketingConsent: true,
+      marketingConsentedAt: at,
+    });
+    expect(declined.marketingConsentedAt).toBeNull();
+  });
+});
+
+describe("OrderCheckout", () => {
+  it("holds only the session it was opened with", () => {
+    // arrange
+    const checkout = OrderCheckout.opened({
+      sessionId: "cs_test_1",
+      url: "https://checkout.stripe.com/c/pay/cs_test_1",
+    });
+
+    // act
+    const holdsOwn = checkout.holdsSession("cs_test_1");
+    const holdsOther = checkout.holdsSession("cs_test_2");
+
+    // assert
+    expect(holdsOwn).toBe(true);
+    expect(holdsOther).toBe(false);
+  });
+});
+
+describe("OrderEmailAttempt", () => {
+  const token = { rawToken: "raw-token", sha256: "f".repeat(64) };
+  const orderDeliveryPort = {
+    provider: "resend",
+    createProviderIdempotencyKey: (key: string) => `store-order-${key}`,
+  };
+
+  it("keys the attempt by the order and the token it sends", () => {
+    // arrange
+    const order = placedOrder();
+
+    // act
+    const attempt = OrderEmailAttempt.issue({
+      order,
+      token,
+      orderDeliveryPort,
+    });
+
+    // assert
+    expect(attempt.toSnapshot()).toEqual({
+      orderId: "order-1",
+      provider: "resend",
+      providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
+      tokenSha256: token.sha256,
+    });
+  });
+
+  it("sends the stored token for a new grant and a replacement token on a resend", () => {
+    // arrange
+    const order = placedOrder();
+    const recorded = { deliveryAttemptId: 7, at: paidAt };
+
+    // act
+    const issued = OrderEmailAttempt.issue({
+      order,
+      token,
+      orderDeliveryPort,
+    }).toDelivery(recorded);
+    const reissued = OrderEmailAttempt.reissue({
+      order,
+      token,
+      orderDeliveryPort,
+    }).toDelivery(recorded);
+
+    // assert
+    expect(issued).toEqual({
+      order,
+      deliveryAttemptId: 7,
+      provider: "resend",
+      providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
+      rawToken: "raw-token",
+      tokenSha256: token.sha256,
+      grantToken: "stored",
+      at: paidAt,
+    });
+    expect(reissued.grantToken).toBe("replacement");
   });
 });
 

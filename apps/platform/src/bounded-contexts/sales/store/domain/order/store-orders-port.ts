@@ -1,6 +1,8 @@
-import type { StoreDeliveryLimitWindow } from "../acquisition";
+import type { DeliveryWindows, StoreDeliveryLimitWindow } from "../acquisition";
 
 import type { Order } from "./order";
+import type { OrderCheckout } from "./order-checkout";
+import type { OrderEmailAttempt } from "./order-email-attempt";
 
 export type OrderRecording =
   | { status: "placed" }
@@ -10,26 +12,21 @@ export type OrderRecording =
       availableProductSlugs: readonly string[];
     };
 
-type OrderEmailAttempt = {
-  provider: string;
-  providerIdempotencyKey: string;
+export type AttachOrderCheckoutCommand = {
+  orderId: string;
+  checkout: OrderCheckout;
 };
 
-export type RecordOrderPaymentCommand = {
-  order: Order;
-  tokenSha256: string;
-  grantExpiresAt: Date;
+export type RecordPaymentWithGrantCommand = {
   attempt: OrderEmailAttempt;
+  grantExpiresAt: Date;
   at: Date;
 };
 
 export type PrepareOrderResendCommand = {
-  orderId: string;
-  tokenSha256: string;
   attempt: OrderEmailAttempt;
   at: Date;
-  cooldownSince: Date;
-  dailyWindowSince: Date;
+  windows: DeliveryWindows;
   dailyLimit: number;
 };
 
@@ -38,22 +35,24 @@ export type OrderResendPreparation =
   | { status: "rate_limited"; window: StoreDeliveryLimitWindow }
   | { status: "grant_unavailable" };
 
+export type RotateGrantTokenCommand = {
+  orderId: string;
+  tokenSha256: string;
+};
+
 export interface StoreOrdersPort {
   findByIdempotencyKey(idempotencyKey: string): Promise<Order | null>;
   findByCheckoutSession(sessionId: string): Promise<Order | null>;
-  findForPayment(orderId: string): Promise<Order | null>;
+  lockForPayment(orderId: string): Promise<Order | null>;
   place(order: Order): Promise<OrderRecording>;
-  attachCheckout(command: {
-    orderId: string;
-    sessionId: string;
-    url: string;
-  }): Promise<void>;
-  recordPayment(
-    command: RecordOrderPaymentCommand,
+  attachCheckout(command: AttachOrderCheckoutCommand): Promise<void>;
+  recordPaymentWithGrant(
+    command: RecordPaymentWithGrantCommand,
   ): Promise<{ deliveryAttemptId: number }>;
   prepareResend(
     command: PrepareOrderResendCommand,
   ): Promise<OrderResendPreparation>;
+  rotateGrantToken(command: RotateGrantTokenCommand): Promise<void>;
   recordEmailAccepted(command: {
     deliveryAttemptId: number;
     provider: string;

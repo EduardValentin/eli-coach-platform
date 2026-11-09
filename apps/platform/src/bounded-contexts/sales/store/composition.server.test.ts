@@ -5,6 +5,7 @@ import type {
   ManagementAuthConfig,
 } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-port.server";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
+import { createPaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/create-payment-provider-adapter.server";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -66,7 +67,9 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
-      paymentProvider: { name: "memory" },
+      paymentProvider: createPaymentProviderAdapter({
+        PAYMENTS_PROVIDER: "memory",
+      }),
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
         termsDocument: () => null,
@@ -98,7 +101,9 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
-      paymentProvider: { name: "memory" },
+      paymentProvider: createPaymentProviderAdapter({
+        PAYMENTS_PROVIDER: "memory",
+      }),
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
         termsDocument: () => null,
@@ -137,7 +142,9 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
-      paymentProvider: { name: "memory" },
+      paymentProvider: createPaymentProviderAdapter({
+        PAYMENTS_PROVIDER: "memory",
+      }),
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
         termsDocument: () => null,

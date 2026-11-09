@@ -12,8 +12,10 @@ export interface OrderIncidentsPort {
     },
   ): void;
   paidOrderUnknown(incident: OrderIncident & { eventId: string }): void;
+  paidSessionMismatch(incident: OrderIncident & { eventId: string }): void;
   orderEmailRejected(incident: OrderIncident & { reason: string }): void;
   orderEmailAuditPending(incident: OrderIncident): void;
+  orderLinkRotationPending(incident: OrderIncident): void;
   termsDocumentMissing(
     incident: OrderIncident & { termsVersion: string },
   ): void;

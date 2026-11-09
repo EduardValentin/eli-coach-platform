@@ -90,13 +90,14 @@ describe("StoreOrderCompletionHandler", () => {
     expect(deliverExecute).toHaveBeenCalledWith(delivery);
   });
 
-  it("sends nothing for a duplicate, an already paid or an unknown order", async () => {
+  it("sends nothing for a duplicate, an already paid or an unknown order, or another session", async () => {
     // arrange
     const handlers = (
       [
         { status: "duplicate" },
         { status: "already_paid" },
         { status: "unknown_order" },
+        { status: "session_mismatch" },
       ] as const
     ).map((result) => createHandler(result));
 
@@ -106,7 +107,7 @@ describe("StoreOrderCompletionHandler", () => {
     );
 
     // assert
-    expect(outcomes).toEqual(["duplicate", "ignored", "ignored"]);
+    expect(outcomes).toEqual(["duplicate", "ignored", "ignored", "ignored"]);
     expect(
       handlers.every(({ deliverExecute }) => !deliverExecute.mock.calls.length),
     ).toBe(true);

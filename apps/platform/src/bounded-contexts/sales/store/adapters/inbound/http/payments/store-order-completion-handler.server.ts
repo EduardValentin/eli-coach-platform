@@ -28,6 +28,7 @@ const OUTCOME_BY_COMPLETION: Record<
   duplicate: "duplicate",
   already_paid: "ignored",
   unknown_order: "ignored",
+  session_mismatch: "ignored",
 };
 
 const storeOrderMetadataSchema = z.object({ orderId: z.uuid() });

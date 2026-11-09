@@ -2,18 +2,24 @@ import { evaluateDeliveryLimit } from "~/bounded-contexts/sales/store/domain/acq
 import {
   DeliveryConsent,
   Order,
+  OrderCheckout,
+  OrderConsents,
   OrderItem,
   OrderPayment,
+  type AttachOrderCheckoutCommand,
+  type OrderEmailAttempt,
   type OrderRecording,
   type OrderResendPreparation,
   type PrepareOrderResendCommand,
-  type RecordOrderPaymentCommand,
+  type RecordPaymentWithGrantCommand,
+  type RotateGrantTokenCommand,
   type StoreOrdersPort,
 } from "~/bounded-contexts/sales/store/domain/order";
 import {
   Product,
   type StoreCurrency,
 } from "~/bounded-contexts/sales/store/domain/product";
+import { StoreRecipientEmail } from "~/bounded-contexts/sales/store/domain/store-recipient-email";
 import { sql, type SQL } from "drizzle-orm";
 
 import {
@@ -94,7 +100,7 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
     );
   }
 
-  findForPayment(orderId: string): Promise<Order | null> {
+  lockForPayment(orderId: string): Promise<Order | null> {
     return this.loadOrder(
       this.executor,
       sql`store_order.id = ${orderId} for update of store_order`,
@@ -121,78 +127,26 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
     }
   }
 
-  async attachCheckout(command: {
-    orderId: string;
-    sessionId: string;
-    url: string;
-  }): Promise<void> {
+  async attachCheckout(command: AttachOrderCheckoutCommand): Promise<void> {
     await this.executor.execute(sql`
       update app.store_orders
-      set checkout_session_id = ${command.sessionId},
-        checkout_url = ${command.url},
+      set checkout_session_id = ${command.checkout.sessionId},
+        checkout_url = ${command.checkout.url},
         updated_at = now()
       where id = ${command.orderId}
         and checkout_session_id is null
     `);
   }
 
-  async recordPayment(
-    command: RecordOrderPaymentCommand,
+  recordPaymentWithGrant(
+    command: RecordPaymentWithGrantCommand,
   ): Promise<{ deliveryAttemptId: number }> {
-    const payment = command.order.payment;
-
-    if (!payment) {
-      throw new Error("Only a paid order records its payment.");
-    }
-
     return this.executor.transaction(async (transaction) => {
-      const paid = await transaction.execute<{ id: string }>(sql`
-        update app.store_orders
-        set status = 'paid',
-          payment_intent_id = ${payment.paymentIntentId},
-          charged_minor_units = ${payment.amountMinorUnits},
-          charged_currency = ${payment.currency},
-          paid_at = ${payment.paidAt},
-          updated_at = ${command.at}
-        where id = ${command.order.id}
-          and status = 'pending'
-        returning id
-      `);
-
-      if (paid.rows.length === 0) {
-        throw new Error("The order was paid meanwhile.");
-      }
-
-      const grantId = this.requiredId(
-        await transaction.execute<IdRow>(sql`
-          insert into app.download_grants (
-            order_id,
-            token_sha256,
-            status,
-            expires_at,
-            created_at
-          )
-          values (
-            ${command.order.id},
-            ${command.tokenSha256},
-            'active',
-            ${command.grantExpiresAt},
-            ${command.at}
-          )
-          returning id
-        `),
-      );
-
-      for (const item of command.order.items) {
-        await transaction.execute(sql`
-          insert into app.download_grant_items (grant_id, product_version_id)
-          values (${grantId}, ${item.productVersionId})
-        `);
-      }
+      await this.markPaid(transaction, command);
+      await this.insertGrant(transaction, command);
 
       return {
         deliveryAttemptId: await this.insertAttempt(transaction, {
-          orderId: command.order.id,
           attempt: command.attempt,
           at: command.at,
         }),
@@ -203,30 +157,31 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
   prepareResend(
     command: PrepareOrderResendCommand,
   ): Promise<OrderResendPreparation> {
+    const orderId = command.attempt.order.id;
+
     return this.executor.transaction(async (transaction) => {
       const grant = await transaction.execute<IdRow>(sql`
         select id
         from app.download_grants
-        where order_id = ${command.orderId}
+        where order_id = ${orderId}
           and status = 'active'
           and expires_at > ${command.at}
         for update
       `);
-      const [activeGrant] = grant.rows;
 
-      if (!activeGrant) {
+      if (grant.rows.length === 0) {
         return { status: "grant_unavailable" };
       }
 
       const usage = await transaction.execute<AttemptUsageRow>(sql`
         select
           count(*) filter (
-            where created_at > ${command.cooldownSince}
+            where created_at > ${command.windows.cooldownSince}
           ) as "cooldownCount",
           count(*) as "dailyCount"
         from app.delivery_attempts
-        where order_id = ${command.orderId}
-          and created_at > ${command.dailyWindowSince}
+        where order_id = ${orderId}
+          and created_at > ${command.windows.dailyWindowSince}
           and status in ('pending', 'accepted')
       `);
       const [counts] = usage.rows;
@@ -242,17 +197,25 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
         return { status: "rate_limited", window: limitedWindow };
       }
 
-      await transaction.execute(sql`
-        update app.download_grants
-        set token_sha256 = ${command.tokenSha256}
-        where id = ${activeGrant.id}
-      `);
-
       return {
         status: "prepared",
         deliveryAttemptId: await this.insertAttempt(transaction, command),
       };
     });
+  }
+
+  async rotateGrantToken(command: RotateGrantTokenCommand): Promise<void> {
+    const rotated = await this.executor.execute<IdRow>(sql`
+      update app.download_grants
+      set token_sha256 = ${command.tokenSha256}
+      where order_id = ${command.orderId}
+        and status = 'active'
+      returning id
+    `);
+
+    if (rotated.rows.length === 0) {
+      throw new Error("The order holds no active grant to rotate.");
+    }
   }
 
   async recordEmailAccepted(command: {
@@ -320,7 +283,18 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
       };
     }
 
-    const recipientId = this.requiredId(
+    const recipientId = await this.upsertRecipient(transaction, order);
+    await this.insertOrder(transaction, { order, recipientId });
+    await this.insertItems(transaction, order);
+
+    return { status: "placed" };
+  }
+
+  private async upsertRecipient(
+    transaction: DatabaseExecutor,
+    order: Order,
+  ): Promise<number> {
+    return this.requiredId(
       await transaction.execute<IdRow>(sql`
         insert into app.store_recipients (
           normalized_email,
@@ -333,6 +307,14 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
         returning id
       `),
     );
+  }
+
+  private async insertOrder(
+    transaction: DatabaseExecutor,
+    placement: { order: Order; recipientId: number },
+  ): Promise<void> {
+    const { order, recipientId } = placement;
+    const consents = order.consents.toSnapshot();
 
     await transaction.execute(sql`
       insert into app.store_orders (
@@ -359,18 +341,23 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
         ${order.payloadDigest},
         ${order.currency},
         'pending',
-        ${order.consents.termsVersion},
-        ${order.consents.privacyPolicyVersion},
-        ${order.consents.marketingConsentVersion},
-        ${order.consents.marketingConsent},
-        ${order.consents.marketingConsentedAt},
+        ${consents.termsVersion},
+        ${consents.privacyPolicyVersion},
+        ${consents.marketingConsentVersion},
+        ${consents.marketingConsent},
+        ${consents.marketingConsentedAt},
         ${order.deliveryConsent.termsVersion},
         ${order.deliveryConsent.consentedAt},
         ${order.placedAt},
         ${order.placedAt}
       )
     `);
+  }
 
+  private async insertItems(
+    transaction: DatabaseExecutor,
+    order: Order,
+  ): Promise<void> {
     for (const [position, item] of order.items.entries()) {
       await transaction.execute(sql`
         insert into app.store_order_items (
@@ -391,8 +378,69 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
         )
       `);
     }
+  }
 
-    return { status: "placed" };
+  private async markPaid(
+    transaction: DatabaseExecutor,
+    command: RecordPaymentWithGrantCommand,
+  ): Promise<void> {
+    const { order } = command.attempt;
+    const payment = order.payment;
+
+    if (!payment) {
+      throw new Error("Only a paid order records its payment.");
+    }
+
+    const paid = await transaction.execute<{ id: string }>(sql`
+      update app.store_orders
+      set status = 'paid',
+        payment_intent_id = ${payment.paymentIntentId},
+        charged_minor_units = ${payment.amountMinorUnits},
+        charged_currency = ${payment.currency},
+        paid_at = ${payment.paidAt},
+        updated_at = ${command.at}
+      where id = ${order.id}
+        and status = 'pending'
+        and checkout_session_id = ${payment.checkoutSessionId}
+      returning id
+    `);
+
+    if (paid.rows.length === 0) {
+      throw new Error("The order was paid meanwhile or under another session.");
+    }
+  }
+
+  private async insertGrant(
+    transaction: DatabaseExecutor,
+    command: RecordPaymentWithGrantCommand,
+  ): Promise<void> {
+    const { order } = command.attempt;
+    const grantId = this.requiredId(
+      await transaction.execute<IdRow>(sql`
+        insert into app.download_grants (
+          order_id,
+          token_sha256,
+          status,
+          expires_at,
+          created_at
+        )
+        values (
+          ${order.id},
+          ${command.attempt.toSnapshot().tokenSha256},
+          'active',
+          ${command.grantExpiresAt},
+          ${command.at}
+        )
+        returning id
+      `),
+    );
+
+    for (const item of order.items) {
+      await transaction.execute(sql`
+        insert into app.download_grant_items (grant_id, product_version_id)
+        values (${grantId}, ${item.productVersionId})
+      `);
+    }
   }
 
   private async lockPurchasability(
@@ -439,8 +487,10 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
 
   private async insertAttempt(
     transaction: DatabaseExecutor,
-    command: Pick<PrepareOrderResendCommand, "orderId" | "attempt" | "at">,
+    recording: { attempt: OrderEmailAttempt; at: Date },
   ): Promise<number> {
+    const attempt = recording.attempt.toSnapshot();
+
     return this.requiredId(
       await transaction.execute<IdRow>(sql`
         insert into app.delivery_attempts (
@@ -452,12 +502,12 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
           updated_at
         )
         values (
-          ${command.orderId},
-          ${command.attempt.provider},
-          ${command.attempt.providerIdempotencyKey},
+          ${attempt.orderId},
+          ${attempt.provider},
+          ${attempt.providerIdempotencyKey},
           'pending',
-          ${command.at},
-          ${command.at}
+          ${recording.at},
+          ${recording.at}
         )
         returning id
       `),
@@ -520,16 +570,19 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
   private toOrder(row: OrderRow, items: readonly OrderItemRow[]): Order {
     return Order.reconstitute({
       id: row.id,
-      email: row.email,
+      recipientEmail: StoreRecipientEmail.reconstitute({ address: row.email }),
       currency: row.currency,
       items: items.map((item) => OrderItem.reconstitute(item)),
       status: row.status,
       checkout:
         row.checkoutSessionId !== null && row.checkoutUrl !== null
-          ? { sessionId: row.checkoutSessionId, url: row.checkoutUrl }
+          ? OrderCheckout.reconstitute({
+              sessionId: row.checkoutSessionId,
+              url: row.checkoutUrl,
+            })
           : null,
       payment: this.toPayment(row),
-      consents: {
+      consents: OrderConsents.reconstitute({
         termsVersion: row.termsVersion,
         privacyPolicyVersion: row.privacyPolicyVersion,
         marketingConsentVersion: row.marketingConsentVersion,
@@ -538,7 +591,7 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
           row.marketingConsentedAt === null
             ? null
             : new Date(row.marketingConsentedAt),
-      },
+      }),
       deliveryConsent: DeliveryConsent.reconstitute({
         termsVersion: row.deliveryConsentTermsVersion,
         consentedAt: new Date(row.deliveryConsentedAt),

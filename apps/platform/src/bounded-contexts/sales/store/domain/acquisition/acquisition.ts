@@ -1,43 +1,11 @@
 import type { EmailAcceptancePort } from "../email-acceptance-port";
 import type { PublishedProduct } from "../product";
+import { StoreRecipientEmail } from "../store-recipient-email";
 
-export type StoreDeliveryLimitWindow = "cooldown" | "daily";
-
-export type DeliveryLimitPolicy = {
-  cooldownMs: number;
-  dailyLimit: number;
-  dailyWindowMs: number;
-  grantDurationMs: number;
-};
-
-export const STORE_DELIVERY_LIMIT_POLICY: DeliveryLimitPolicy = {
-  cooldownMs: 60 * 1000,
-  dailyLimit: 10,
-  dailyWindowMs: 24 * 60 * 60 * 1000,
-  grantDurationMs: 7 * 24 * 60 * 60 * 1000,
-};
-
-export type DeliveryWindows = {
-  cooldownSince: Date;
-  dailyWindowSince: Date;
-  expiresAt: Date;
-};
-
-export type DeliveryUsage = {
-  cooldownCount: number;
-  dailyCount: number;
-};
-
-export function evaluateDeliveryLimit(
-  usage: DeliveryUsage,
-  dailyLimit: number,
-): StoreDeliveryLimitWindow | null {
-  if (usage.cooldownCount > 0) {
-    return "cooldown";
-  }
-
-  return usage.dailyCount >= dailyLimit ? "daily" : null;
-}
+import {
+  STORE_DELIVERY_LIMIT_POLICY,
+  type DeliveryWindows,
+} from "./delivery-limit-policy";
 
 export type AcquireProductsCommand = {
   email: string;
@@ -54,10 +22,8 @@ export type ProductSelection =
     }
   | { status: "paid_products"; paidProductSlugs: readonly string[] };
 
-const SUBADDRESS_SEPARATOR = "+";
-
 type AcquisitionRequestProps = {
-  email: string;
+  recipientEmail: StoreRecipientEmail;
   idempotencyKey: string;
   marketingConsent: boolean;
   productSlugs: readonly string[];
@@ -66,7 +32,7 @@ type AcquisitionRequestProps = {
 };
 
 export class AcquisitionRequest {
-  readonly email: string;
+  readonly recipientEmail: StoreRecipientEmail;
   readonly idempotencyKey: string;
   readonly marketingConsent: boolean;
   readonly productSlugs: readonly string[];
@@ -74,7 +40,7 @@ export class AcquisitionRequest {
   readonly windows: DeliveryWindows;
 
   private constructor(props: AcquisitionRequestProps) {
-    this.email = props.email;
+    this.recipientEmail = props.recipientEmail;
     this.idempotencyKey = props.idempotencyKey;
     this.marketingConsent = props.marketingConsent;
     this.productSlugs = props.productSlugs;
@@ -88,32 +54,24 @@ export class AcquisitionRequest {
     emailAcceptancePort: EmailAcceptancePort,
   ): AcquisitionRequest {
     return new AcquisitionRequest({
-      email: emailAcceptancePort.normalize(command.email),
+      recipientEmail: StoreRecipientEmail.normalized(
+        command.email,
+        emailAcceptancePort,
+      ),
       idempotencyKey: command.idempotencyKey,
       marketingConsent: command.marketingConsent,
       productSlugs: [...new Set(command.productSlugs)].sort(),
       requestedAt,
-      windows: resolveDeliveryWindows(requestedAt, STORE_DELIVERY_LIMIT_POLICY),
+      windows: STORE_DELIVERY_LIMIT_POLICY.windowsAt(requestedAt),
     });
   }
 
-  static deliveryLimitKeyOf(email: string): string {
-    const domainIndex = email.lastIndexOf("@");
-
-    if (domainIndex < 0) {
-      return email;
-    }
-
-    const localPart = email.slice(0, domainIndex);
-    const tagIndex = localPart.indexOf(SUBADDRESS_SEPARATOR);
-
-    return tagIndex < 0
-      ? email
-      : `${localPart.slice(0, tagIndex)}${email.slice(domainIndex)}`;
+  get email(): string {
+    return this.recipientEmail.address;
   }
 
   get deliveryLimitKey(): string {
-    return AcquisitionRequest.deliveryLimitKeyOf(this.email);
+    return this.recipientEmail.deliveryLimitKey();
   }
 
   canonicalPayload(): string {
@@ -149,17 +107,4 @@ export class AcquisitionRequest {
 
     return { status: "selected", products };
   }
-}
-
-function resolveDeliveryWindows(
-  requestedAt: Date,
-  policy: DeliveryLimitPolicy,
-): DeliveryWindows {
-  const time = requestedAt.getTime();
-
-  return {
-    cooldownSince: new Date(time - policy.cooldownMs),
-    dailyWindowSince: new Date(time - policy.dailyWindowMs),
-    expiresAt: new Date(time + policy.grantDurationMs),
-  };
 }

@@ -62,6 +62,15 @@ export class StoreIncidentsAdapter
     );
   }
 
+  paidSessionMismatch(
+    incident: Parameters<OrderIncidentsPort["paidSessionMismatch"]>[0],
+  ) {
+    this.loggerPort.error(
+      "Store payment names a checkout session other than its order's.",
+      { errorCategory: "store_order_session_mismatch", ...incident },
+    );
+  }
+
   orderEmailRejected({
     orderId,
     reason,
@@ -79,6 +88,15 @@ export class StoreIncidentsAdapter
     this.loggerPort.error(
       "Store order email acceptance audit requires reconciliation.",
       { errorCategory: "store_order_email_audit_pending", orderId },
+    );
+  }
+
+  orderLinkRotationPending({
+    orderId,
+  }: Parameters<OrderIncidentsPort["orderLinkRotationPending"]>[0]) {
+    this.loggerPort.error(
+      "Store order resent a download link its grant does not hold yet.",
+      { errorCategory: "store_order_link_rotation_pending", orderId },
     );
   }
 

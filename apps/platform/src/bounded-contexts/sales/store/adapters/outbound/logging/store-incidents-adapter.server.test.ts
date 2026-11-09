@@ -137,6 +137,54 @@ describe("StoreIncidentsAdapter", () => {
     );
   });
 
+  it("logs a payment for a checkout session other than its order's without recipient data", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
+
+    // act
+    storeIncidentsAdapter.paidSessionMismatch({
+      eventId: "evt_1",
+      orderId: "order-1",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Store payment names a checkout session other than its order's.",
+      {
+        errorCategory: "store_order_session_mismatch",
+        eventId: "evt_1",
+        orderId: "order-1",
+      },
+    );
+  });
+
+  it("logs a resent link its grant does not hold yet by order only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
+
+    // act
+    storeIncidentsAdapter.orderLinkRotationPending({ orderId: "order-1" });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Store order resent a download link its grant does not hold yet.",
+      {
+        errorCategory: "store_order_link_rotation_pending",
+        orderId: "order-1",
+      },
+    );
+  });
+
   it("logs order email failures by order only", () => {
     // arrange
     const consoleError = vi

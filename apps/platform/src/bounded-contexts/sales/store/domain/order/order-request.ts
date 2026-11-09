@@ -1,5 +1,6 @@
 import type { EmailAcceptancePort } from "../email-acceptance-port";
 import type { StoreCurrency } from "../product";
+import { StoreRecipientEmail } from "../store-recipient-email";
 
 export type PlaceOrderCommand = {
   email: string;
@@ -9,19 +10,23 @@ export type PlaceOrderCommand = {
   marketingConsent: boolean;
 };
 
+type OrderRequestProps = Omit<PlaceOrderCommand, "email"> & {
+  recipientEmail: StoreRecipientEmail;
+};
+
 export class OrderRequest {
-  readonly email: string;
+  readonly recipientEmail: StoreRecipientEmail;
   readonly idempotencyKey: string;
   readonly productSlugs: readonly string[];
   readonly currency: StoreCurrency;
   readonly marketingConsent: boolean;
 
-  private constructor(command: PlaceOrderCommand) {
-    this.email = command.email;
-    this.idempotencyKey = command.idempotencyKey;
-    this.productSlugs = command.productSlugs;
-    this.currency = command.currency;
-    this.marketingConsent = command.marketingConsent;
+  private constructor(props: OrderRequestProps) {
+    this.recipientEmail = props.recipientEmail;
+    this.idempotencyKey = props.idempotencyKey;
+    this.productSlugs = props.productSlugs;
+    this.currency = props.currency;
+    this.marketingConsent = props.marketingConsent;
   }
 
   static from(
@@ -29,10 +34,19 @@ export class OrderRequest {
     emailAcceptancePort: Pick<EmailAcceptancePort, "normalize">,
   ): OrderRequest {
     return new OrderRequest({
-      ...command,
-      email: emailAcceptancePort.normalize(command.email),
+      recipientEmail: StoreRecipientEmail.normalized(
+        command.email,
+        emailAcceptancePort,
+      ),
+      idempotencyKey: command.idempotencyKey,
+      currency: command.currency,
+      marketingConsent: command.marketingConsent,
       productSlugs: [...new Set(command.productSlugs)].sort(),
     });
+  }
+
+  get email(): string {
+    return this.recipientEmail.address;
   }
 
   canonicalPayload(): string {

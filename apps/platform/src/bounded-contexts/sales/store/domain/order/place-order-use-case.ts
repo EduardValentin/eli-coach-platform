@@ -7,6 +7,7 @@ import type { EmailAcceptancePort } from "../email-acceptance-port";
 import type { PublishedProduct, StoreCatalogPort } from "../product";
 
 import { Order } from "./order";
+import { OrderCheckout } from "./order-checkout";
 import type { OrderIdsPort } from "./order-ids-port";
 import { OrderRequest, type PlaceOrderCommand } from "./order-request";
 import type { StoreCheckoutPort } from "./store-checkout-port";
@@ -144,8 +145,7 @@ export class PlaceOrderUseCase {
 
     await this.options.storeOrdersPort.attachCheckout({
       orderId: order.id,
-      sessionId: checkout.sessionId,
-      url: checkout.url,
+      checkout: OrderCheckout.opened(checkout),
     });
 
     return { status: "opened", checkoutUrl: checkout.url };

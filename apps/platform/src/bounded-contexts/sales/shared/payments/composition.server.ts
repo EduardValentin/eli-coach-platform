@@ -9,10 +9,8 @@ import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sa
 import { StripeWebhookController } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/stripe-webhook-controller.server";
 import { PaymentWebhookIncidentsAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/logging/payment-webhook-incidents-adapter.server";
 import type { PaymentEventsPort } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-events-port.server";
-import {
-  PaymentProviderAdapter,
-  type PaymentProvider,
-} from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import { createPaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/create-payment-provider-adapter.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider.server";
 import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
 
 type PaymentsHandles = {
@@ -35,11 +33,11 @@ type PaymentsFeatureHandles = PaymentsHandles &
   };
 
 export function composePayments(config: PaymentsConfig): PaymentsHandles {
-  const paymentProviderAdapter = new PaymentProviderAdapter(config);
+  const paymentProvider = createPaymentProviderAdapter(config);
 
   return {
-    paymentEventsPort: paymentProviderAdapter.paymentEventsPort,
-    paymentProvider: paymentProviderAdapter.paymentProvider,
+    paymentEventsPort: paymentProvider.paymentEventsPort,
+    paymentProvider,
     webhookSigningSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
   };
 }
