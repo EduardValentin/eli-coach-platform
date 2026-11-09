@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 
@@ -45,6 +46,34 @@ describe("store download page", () => {
     expect(form).toHaveAttribute("method", "post");
     expect(form).toHaveAttribute("action", "/api/store/downloads");
     expect(tokenInput).toHaveValue("opaque-download-token");
+  });
+
+  it("keeps the fragment token when strict mode runs its effects twice", async () => {
+    // arrange
+    window.history.replaceState(
+      {},
+      "",
+      "/store/download#opaque-download-token",
+    );
+
+    // act
+    const { container } = render(
+      <StrictMode>
+        <MemoryRouter>
+          <DownloadRoute />
+        </MemoryRouter>
+      </StrictMode>,
+    );
+
+    // assert
+    expect(
+      await screen.findByRole("button", {
+        name: "Download your resources",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector<HTMLInputElement>('input[name="token"]'),
+    ).toHaveValue("opaque-download-token");
   });
 
   it("shows the same unavailable state when no private token is present", async () => {

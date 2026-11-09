@@ -221,6 +221,49 @@ describe("StoreCheckoutCompleteRoute", () => {
       expect(resend).toBeEnabled();
     },
   );
+
+  it("keeps keyboard focus on Send my order email again while it sends, and sends once", async () => {
+    // arrange
+    const user = userEvent.setup();
+    let releaseAnswer = () => {};
+    const answerReleased = new Promise<void>((resolve) => {
+      releaseAnswer = resolve;
+    });
+    const requestedSessions: string[] = [];
+    server.use(
+      http.post(STORE_API_PATHS.orderEmails, async ({ request }) => {
+        requestedSessions.push(
+          String((await request.formData()).get("sessionId")),
+        );
+        await answerReleased;
+
+        return HttpResponse.json({ outcome: "sent", success: true });
+      }),
+    );
+    renderOrderPage(confirmedOrder);
+    const resend = await screen.findByRole("button", {
+      name: "Send my order email again",
+    });
+    resend.focus();
+
+    // act
+    await user.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(resend).toHaveAttribute("aria-disabled", "true");
+    });
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(resend).toHaveFocus();
+    releaseAnswer();
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Sent again to woman@example.com.",
+      );
+    });
+    expect(resend).toHaveFocus();
+    expect(requestedSessions).toEqual([SESSION_ID]);
+  });
 });
 
 function renderOrderPage(order: StoreOrderConfirmation) {

@@ -84,6 +84,10 @@ function ConfirmedOrderView({ order, sessionId }: { order: ConfirmedOrder; sessi
   const [resend, setResend] = useState<ResendState>('idle');
 
   const sendAgain = async () => {
+    if (resend === 'sending') {
+      return;
+    }
+
     setResend('sending');
     setResend(await resendStoreOrderEmail(sessionId, appState.storeOrderResendOutcome));
   };
@@ -110,8 +114,8 @@ function ConfirmedOrderView({ order, sessionId }: { order: ConfirmedOrder; sessi
         <p className="text-sm text-text-secondary">Nothing in your inbox? Check your spam folder or send it again.</p>
         <Button
           aria-busy={resend === 'sending' || undefined}
+          aria-disabled={resend === 'sending' || undefined}
           className="mt-4"
-          disabled={resend === 'sending'}
           onClick={sendAgain}
           variant="outline"
         >
