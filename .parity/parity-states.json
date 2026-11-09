@@ -6325,12 +6325,20 @@
       "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
     }
   ],
-  "cart-paid-details": [
+  "cart-paid-details-empty": [
     {
-      "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
+      "use": "cart-mixed"
     },
     {
       "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"order-summary-block\"]"
+    }
+  ],
+  "cart-paid-details-filled": [
+    {
+      "use": "cart-paid-details-empty"
     },
     {
       "fill": [
@@ -6339,7 +6347,293 @@
       ]
     },
     {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] button:has-text(\"Complete order\")"
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"delivery-consent-checkbox\"]"
     }
-  ]
+  ],
+  "cart-paid-hint": [
+    {
+      "use": "cart-paid-details-empty"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "paid-checkout-unavailable-outcome": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Store\"]"
+      },
+      {
+        "click": "#dev-store-paid-checkout-outcome"
+      },
+      {
+        "click": "role=option[name=\"Checkout cannot be opened\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "paid-unavailable-products-outcome": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Store\"]"
+      },
+      {
+        "click": "#dev-store-paid-checkout-outcome"
+      },
+      {
+        "click": "role=option[name=\"Unavailable product in cart\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "paid-subaddress-refused-outcome": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Store\"]"
+      },
+      {
+        "click": "#dev-store-paid-checkout-outcome"
+      },
+      {
+        "click": "role=option[name=\"Email with a “+” part refused\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "cart-checkout-unavailable": [
+    {
+      "use": "paid-checkout-unavailable-outcome"
+    },
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [role=\"alert\"]"
+    }
+  ],
+  "cart-unavailable-products": [
+    {
+      "use": "paid-unavailable-products-outcome"
+    },
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-summary\"]"
+    }
+  ],
+  "cart-subaddress-refused": [
+    {
+      "use": "paid-subaddress-refused-outcome"
+    },
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor+store@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] input[type=\"email\"][aria-invalid=\"true\"]"
+    }
+  ],
+  "cart-payment-not-completed": {
+    "prototype": [
+      {
+        "use": "cart-paid-details-filled"
+      },
+      {
+        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+      },
+      {
+        "click": "role=link[name=\"Back\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
+      }
+    ],
+    "real": [
+      {
+        "use": "cart-paid-details-filled"
+      },
+      {
+        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+      },
+      {
+        "click": "a[href*=\"payment=cancelled\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
+      }
+    ]
+  },
+  "order-confirmed": {
+    "prototype": [
+      {
+        "use": "cart-paid-details-filled"
+      },
+      {
+        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay /]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"StoreOrderComplete\"] [data-parity=\"order-email\"]"
+      }
+    ],
+    "real": []
+  },
+  "order-resend-sent": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Store\"]"
+      },
+      {
+        "click": "#dev-store-order-resend-outcome"
+      },
+      {
+        "click": "role=option[name=\"Sent\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "order-resend-processing": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Store\"]"
+      },
+      {
+        "click": "#dev-store-order-resend-outcome"
+      },
+      {
+        "click": "role=option[name=\"Order still processing\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "order-resend-try-later": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Store\"]"
+      },
+      {
+        "click": "#dev-store-order-resend-outcome"
+      },
+      {
+        "click": "role=option[name=\"Try again later\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  }
 }

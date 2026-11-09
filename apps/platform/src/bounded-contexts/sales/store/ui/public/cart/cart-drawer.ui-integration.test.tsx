@@ -1027,57 +1027,6 @@ describe("StoreCartDrawer with plans", () => {
     expect(within(dialog).queryByText(/€/)).not.toBeInTheDocument();
   });
 
-  it("asks to complete the order and shows the generic failure when the plan is refused", async () => {
-    // arrange
-    const user = userEvent.setup();
-    seedCart(["fat-loss-plan", "hormone-harmony"]);
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json({
-          products: [...createPlans(), createProduct()],
-          success: true,
-        }),
-      ),
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
-        HttpResponse.json(
-          {
-            error: {
-              code: "paid_products",
-              message: "Paid products cannot be acquired for free.",
-              paidProductSlugs: ["fat-loss-plan"],
-            },
-            success: false,
-          },
-          { status: 409 },
-        ),
-      ),
-    );
-    renderCart();
-    await user.click(
-      await screen.findByRole("button", { name: "Cart, 2 items" }),
-    );
-    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await continueToAcquisitionDetails(dialog, user);
-    await user.type(emailField(dialog), "woman@example.com");
-    await user.click(termsCheckbox(dialog));
-
-    // act
-    await user.click(
-      within(dialog).getByRole("button", { name: "Complete order" }),
-    );
-
-    // assert
-    expect(
-      await within(dialog).findByText(
-        "We couldn't send your resources right now. Your cart is saved, so please try again.",
-      ),
-    ).toBeInTheDocument();
-    expect(readStoredProductSlugs()).toEqual([
-      "fat-loss-plan",
-      "hormone-harmony",
-    ]);
-  });
-
   it("invites a plan or a free resource while the cart is empty", async () => {
     // arrange
     const user = userEvent.setup();

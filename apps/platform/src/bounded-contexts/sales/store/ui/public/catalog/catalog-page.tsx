@@ -1,3 +1,5 @@
+import { useSearchParamsWriter } from "~/shared/design-system/lib";
+import { useEffect } from "react";
 import {
   isRouteErrorResponse,
   type MetaFunction,
@@ -10,10 +12,15 @@ import {
 
 import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import {
+  STORE_PAYMENT_CANCELLED,
+  STORE_PAYMENT_PARAM,
+} from "~/bounded-contexts/sales/store/public/paths";
+import {
   storeCatalogResponseSchema,
   type StoreProduct,
 } from "~/bounded-contexts/sales/store/public/store";
 
+import { useStoreCart } from "../cart/cart-provider";
 import { CatalogUnavailableView, CatalogView } from "./catalog-view";
 import {
   haveOnlyFilterParamsChanged,
@@ -75,8 +82,33 @@ export const meta: MetaFunction = () => [
 
 export default function CatalogRoute() {
   const { products } = useLoaderData<typeof loader>();
+  useCancelledPaymentReturn();
 
   return <CatalogView products={products} />;
+}
+
+function useCancelledPaymentReturn() {
+  const { replaceSearchParams, searchParams } = useSearchParamsWriter();
+  const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
+  const openCartAfterCancelledPayment = useStoreCart(
+    (cart) => cart.openCartAfterCancelledPayment,
+  );
+  const returnedFromCancelledPayment =
+    searchParams.get(STORE_PAYMENT_PARAM) === STORE_PAYMENT_CANCELLED;
+
+  useEffect(() => {
+    if (!returnedFromCancelledPayment || !isCartHydrated) {
+      return;
+    }
+
+    openCartAfterCancelledPayment();
+    replaceSearchParams((params) => params.delete(STORE_PAYMENT_PARAM));
+  }, [
+    isCartHydrated,
+    openCartAfterCancelledPayment,
+    replaceSearchParams,
+    returnedFromCancelledPayment,
+  ]);
 }
 
 export function ErrorBoundary() {
