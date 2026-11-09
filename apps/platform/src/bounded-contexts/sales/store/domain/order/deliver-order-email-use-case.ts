@@ -52,7 +52,7 @@ export class DeliverOrderEmailUseCase {
     }
 
     if (result.kind === "delivered" && result.provider === delivery.provider) {
-      return this.recordAccepted(delivery, result.providerMessageId);
+      return this.acceptDelivery(delivery, result.providerMessageId);
     }
 
     if (result.kind === "rejected") {
@@ -62,14 +62,27 @@ export class DeliverOrderEmailUseCase {
     return this.recordRetryable(delivery);
   }
 
+  private async acceptDelivery(
+    delivery: OrderEmailDelivery,
+    providerMessageId: string,
+  ): Promise<DeliverOrderEmailResult> {
+    await this.replaceLinkIfReissued(delivery);
+
+    return this.recordAccepted(delivery, providerMessageId);
+  }
+
+  private async replaceLinkIfReissued(
+    delivery: OrderEmailDelivery,
+  ): Promise<void> {
+    if (delivery.linkIssue === "replacement") {
+      await this.rotateGrantToken(delivery);
+    }
+  }
+
   private async recordAccepted(
     delivery: OrderEmailDelivery,
     providerMessageId: string,
   ): Promise<DeliverOrderEmailResult> {
-    if (delivery.grantToken === "replacement") {
-      await this.rotateGrantToken(delivery);
-    }
-
     try {
       await this.options.storeOrdersPort.recordEmailAccepted({
         deliveryAttemptId: delivery.deliveryAttemptId,

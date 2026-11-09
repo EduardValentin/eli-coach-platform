@@ -1,4 +1,7 @@
-import type { DeliveryWindows, StoreDeliveryLimitWindow } from "../acquisition";
+import type {
+  DeliveryLimitPolicy,
+  StoreDeliveryLimitWindow,
+} from "../acquisition";
 
 import type { Order } from "./order";
 import type { OrderCheckout } from "./order-checkout";
@@ -26,8 +29,7 @@ export type RecordPaymentWithGrantCommand = {
 export type PrepareOrderResendCommand = {
   attempt: OrderEmailAttempt;
   at: Date;
-  windows: DeliveryWindows;
-  dailyLimit: number;
+  policy: DeliveryLimitPolicy;
 };
 
 export type OrderResendPreparation =

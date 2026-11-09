@@ -514,10 +514,10 @@ describe("OrderEmailAttempt", () => {
       providerIdempotencyKey: `store-order-order-1-${"f".repeat(24)}`,
       rawToken: "raw-token",
       tokenSha256: token.sha256,
-      grantToken: "stored",
+      linkIssue: "original",
       at: paidAt,
     });
-    expect(reissued.grantToken).toBe("replacement");
+    expect(reissued.linkIssue).toBe("replacement");
   });
 });
 

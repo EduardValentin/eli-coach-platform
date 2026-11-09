@@ -1,6 +1,6 @@
 import type { Order } from "./order";
 
-export type OrderGrantToken = "stored" | "replacement";
+export type OrderLinkIssue = "original" | "replacement";
 
 export type OrderEmailDelivery = {
   order: Order;
@@ -9,6 +9,6 @@ export type OrderEmailDelivery = {
   providerIdempotencyKey: string;
   rawToken: string;
   tokenSha256: string;
-  grantToken: OrderGrantToken;
+  linkIssue: OrderLinkIssue;
   at: Date;
 };

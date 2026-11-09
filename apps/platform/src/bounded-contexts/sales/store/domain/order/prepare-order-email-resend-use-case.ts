@@ -51,8 +51,7 @@ export class PrepareOrderEmailResendUseCase {
     const preparation = await this.options.storeOrdersPort.prepareResend({
       attempt,
       at,
-      windows: STORE_DELIVERY_LIMIT_POLICY.windowsAt(at),
-      dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
+      policy: STORE_DELIVERY_LIMIT_POLICY,
     });
 
     if (preparation.status === "rate_limited") {

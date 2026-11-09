@@ -1,4 +1,3 @@
-import { evaluateDeliveryLimit } from "~/bounded-contexts/sales/store/domain/acquisition";
 import {
   DeliveryConsent,
   Order,
@@ -158,6 +157,7 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
     command: PrepareOrderResendCommand,
   ): Promise<OrderResendPreparation> {
     const orderId = command.attempt.order.id;
+    const windows = command.policy.windowsAt(command.at);
 
     return this.executor.transaction(async (transaction) => {
       const grant = await transaction.execute<IdRow>(sql`
@@ -176,22 +176,19 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
       const usage = await transaction.execute<AttemptUsageRow>(sql`
         select
           count(*) filter (
-            where created_at > ${command.windows.cooldownSince}
+            where created_at > ${windows.cooldownSince}
           ) as "cooldownCount",
           count(*) as "dailyCount"
         from app.delivery_attempts
         where order_id = ${orderId}
-          and created_at > ${command.windows.dailyWindowSince}
+          and created_at > ${windows.dailyWindowSince}
           and status in ('pending', 'accepted')
       `);
       const [counts] = usage.rows;
-      const limitedWindow = evaluateDeliveryLimit(
-        {
-          cooldownCount: Number(counts?.cooldownCount ?? 0),
-          dailyCount: Number(counts?.dailyCount ?? 0),
-        },
-        command.dailyLimit,
-      );
+      const limitedWindow = command.policy.limitedWindow({
+        cooldownCount: Number(counts?.cooldownCount ?? 0),
+        dailyCount: Number(counts?.dailyCount ?? 0),
+      });
 
       if (limitedWindow) {
         return { status: "rate_limited", window: limitedWindow };
