@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router';
-import { AlertCircle, Calendar, X } from 'lucide-react';
+import { AlertCircle, Calendar } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
+import { DismissibleNotice } from '../components/DismissibleNotice';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { StartChoice } from '../components/StartChoice';
 import { buttonVariants } from '../components/ThemeButton';
-import { Button } from '../components/ui/button';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { usePaymentLinkToken } from '../hooks/usePaymentLinkToken';
@@ -175,22 +175,13 @@ export function SelectBundle() {
           )}
 
           {cancelledNoticeShown && (
-            <div
-              className="mx-auto flex max-w-xl items-start gap-3 rounded-control border border-border-subtle bg-surface-base px-4 py-3 text-left"
+            <DismissibleNotice
+              className="mx-auto max-w-xl"
               data-parity="cancelled-notice"
-              role="status"
+              onDismiss={dismissNotice}
             >
-              <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>
-              <Button
-                aria-label="Dismiss"
-                className="-mr-2 -mt-1 text-text-secondary"
-                onClick={dismissNotice}
-                size="icon-xs"
-                variant="outline"
-              >
-                <X aria-hidden="true" size={16} />
-              </Button>
-            </div>
+              {CANCELLED_NOTICE}
+            </DismissibleNotice>
           )}
         </div>
 

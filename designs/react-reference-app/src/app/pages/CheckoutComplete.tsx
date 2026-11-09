@@ -1,8 +1,12 @@
 import { Link, useSearchParams } from 'react-router';
-import { Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { buttonVariants, cn } from '../components/ThemeButton';
-import { cardVariants } from '../components/ui/card';
+import {
+  CONFIRMATION_READINGS_CLASS,
+  ConfirmationHeading,
+  ConfirmationPage,
+  ConfirmationReading,
+} from '../components/CheckoutConfirmation';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { bundleForMonths, bundleTotal, renewalLabel } from '../domain/bundles';
@@ -36,55 +40,27 @@ export function CheckoutComplete() {
       : `After your 14-day withdrawal period — Eli starts working on your program on ${format(withdrawalDeadline(purchasedAt), 'd MMMM yyyy')}. You can let her start sooner from your account`;
 
   return (
-    <main
-      aria-label="Payment confirmation"
-      className="min-h-screen bg-surface-page px-4 py-16 sm:px-6"
-      data-parity-root="CheckoutComplete"
-    >
-      <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto w-full max-w-xl px-6 py-10 sm:px-10')}>
-        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-surface text-success">
-          <Check aria-hidden="true" size={28} />
-        </span>
+    <ConfirmationPage landmarkLabel="Payment confirmation" parityRoot="CheckoutComplete">
+      <ConfirmationHeading outcome="confirmed">{HEADING}</ConfirmationHeading>
 
-        <h1 className="mt-6 text-center font-serif text-display-sm text-text-primary">
-          {HEADING}
-        </h1>
+      <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
+        Your invitation is on its way to{' '}
+        <span className="font-medium text-text-primary">{journey.profile.identity.email}</span>. It works
+        for 30 days once it arrives — you'll create your account from it.
+      </p>
 
-        <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
-          Your invitation is on its way to{' '}
-          <span className="font-medium text-text-primary">{journey.profile.identity.email}</span>. It works
-          for 30 days once it arrives — you'll create your account from it.
-        </p>
+      <dl className={cn('mt-8', CONFIRMATION_READINGS_CLASS)}>
+        <ConfirmationReading term="Bundle" value={bundle.title} />
+        <ConfirmationReading term="Amount" value={`€${bundleTotal(bundle, journey.pricing)}`} />
+        <ConfirmationReading term="Renews" value={renewalLabel(bundle.months)} />
+        <ConfirmationReading term="Your start" value={startSummary} />
+      </dl>
 
-        <dl className="mt-8 grid gap-3 rounded-card border border-border-subtle bg-surface-quiet px-5 py-4 text-sm">
-          <Reading term="Bundle" value={bundle.title} />
-          <Reading term="Amount" value={`€${bundleTotal(bundle, journey.pricing)}`} />
-          <Reading term="Renews" value={renewalLabel(bundle.months)} />
-          <Reading term="Your start" value={startSummary} />
-        </dl>
-
-        <div className="mt-8 flex justify-center">
-          <Link className={cn(buttonVariants({ variant: 'outline' }))} to="/">
-            Back to the home page
-          </Link>
-        </div>
+      <div className="mt-8 flex justify-center">
+        <Link className={cn(buttonVariants({ variant: 'outline' }))} to="/">
+          Back to the home page
+        </Link>
       </div>
-    </main>
-  );
-}
-
-function readingParityHook(term: string): string {
-  return `reading-${term.toLowerCase().replace(/\s+/g, '-')}`;
-}
-
-function Reading({ term, value }: { term: string; value: string }) {
-  return (
-    <div
-      className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
-      data-parity={readingParityHook(term)}
-    >
-      <dt className="text-text-secondary">{term}</dt>
-      <dd className="font-medium text-text-primary sm:text-right">{value}</dd>
-    </div>
+    </ConfirmationPage>
   );
 }

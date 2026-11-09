@@ -7,6 +7,7 @@ export const EMAIL_BRAND = {
   pinkOnDark: '#E03A7E',
   pinkSoft: '#FFF5F8',
   pinkBorder: '#F4D8E4',
+  teal: '#00796B',
   ink: '#121212',
   inkSoft: '#3A3A3A',
   body: '#4A4A4A',

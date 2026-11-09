@@ -6,8 +6,11 @@ const CARD_FIELDS = [
   { id: 'card-cvc', label: 'CVC', placeholder: '123' },
 ];
 
-const FIELD_CLASS =
+export const STAND_IN_FIELD_CLASS =
   'mt-1 h-11 w-full rounded-field border border-border-subtle bg-surface-quiet px-3 text-sm text-text-secondary';
+
+export const STAND_IN_READINGS_CLASS =
+  'mt-6 grid gap-3 rounded-panel border border-border-subtle bg-surface-quiet px-5 py-4 text-sm';
 
 export const STAND_IN_BACK_LINK_CLASS =
   'mt-5 block text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-text-primary';
@@ -51,7 +54,7 @@ export function StandInCardFields() {
             {field.label}
           </label>
           <input
-            className={FIELD_CLASS}
+            className={STAND_IN_FIELD_CLASS}
             id={field.id}
             placeholder={field.placeholder}
             type="text"
@@ -59,5 +62,14 @@ export function StandInCardFields() {
         </div>
       ))}
     </fieldset>
+  );
+}
+
+export function StandInReading({ term, value }: { term: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-muted-foreground">{term}</dt>
+      <dd className="text-right font-medium text-text-primary">{value}</dd>
+    </div>
   );
 }

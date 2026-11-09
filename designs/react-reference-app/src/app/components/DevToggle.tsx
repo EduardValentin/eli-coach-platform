@@ -13,6 +13,12 @@ import {
   type PrototypeWaitlistAvailability,
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
+import {
+  PROTOTYPE_STORE_ORDER_RESEND_OUTCOMES,
+  PROTOTYPE_STORE_PAID_CHECKOUT_OUTCOMES,
+  type PrototypeStoreOrderResendOutcome,
+  type PrototypeStorePaidCheckoutOutcome,
+} from '../services/storeOrderService';
 import type { PrototypeSignInOutcome } from '../services/authService';
 import {
   PROTOTYPE_INVITATION_STANDINGS,
@@ -343,6 +349,26 @@ const PAYMENT_PORTAL_OUTCOME_LABELS: Record<
   fails: 'Fails',
 };
 
+const STORE_PAID_CHECKOUT_OUTCOME_LABELS: Record<
+  PrototypeStorePaidCheckoutOutcome,
+  string
+> = {
+  'paid-success': 'Payment succeeds',
+  'paid-not-completed': 'Payment not completed',
+  'checkout-unavailable': 'Checkout cannot be opened',
+  'unavailable-products': 'Unavailable product in cart',
+  'subaddress-refused': 'Email with a “+” part refused',
+};
+
+const STORE_ORDER_RESEND_OUTCOME_LABELS: Record<
+  PrototypeStoreOrderResendOutcome,
+  string
+> = {
+  sent: 'Sent',
+  processing: 'Order still processing',
+  'rate-limited': 'Try again later',
+};
+
 const SELECT_CONTENT_CLASS = 'z-[10000]';
 
 const TAB_TRIGGER_CLASS = 'h-auto flex-auto';
@@ -669,7 +695,7 @@ export function DevToggle() {
                     htmlFor="dev-store-checkout-outcome"
                     className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
                   >
-                    Checkout outcome
+                    Free checkout outcome
                   </Label>
                   <Select
                     value={appState.storeCheckoutOutcome}
@@ -709,6 +735,90 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-store-paid-checkout-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Paid checkout outcome
+                  </Label>
+                  <Select
+                    value={appState.storePaidCheckoutOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        storePaidCheckoutOutcome: optionOrDefault(
+                          PROTOTYPE_STORE_PAID_CHECKOUT_OUTCOMES,
+                          value,
+                          'paid-success',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-store-paid-checkout-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_STORE_PAID_CHECKOUT_OUTCOMES.map((outcome) => (
+                        <SelectItem key={outcome} value={outcome}>
+                          {STORE_PAID_CHECKOUT_OUTCOME_LABELS[outcome]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link
+                  to="/store?payment=cancelled"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Return from a cancelled payment{' '}
+                  <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-store-order-resend-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Order email re-send outcome
+                  </Label>
+                  <Select
+                    value={appState.storeOrderResendOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        storeOrderResendOutcome: optionOrDefault(
+                          PROTOTYPE_STORE_ORDER_RESEND_OUTCOMES,
+                          value,
+                          'sent',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-store-order-resend-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_STORE_ORDER_RESEND_OUTCOMES.map((outcome) => (
+                        <SelectItem key={outcome} value={outcome}>
+                          {STORE_ORDER_RESEND_OUTCOME_LABELS[outcome]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link
+                  to="/email-preview?template=store-order"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open the order email{' '}
+                  <ArrowRight size={14} aria-hidden="true" />
+                </Link>
                 <DevCheckboxRow
                   id="dev-store-download-unavailable"
                   label="Download link unavailable"

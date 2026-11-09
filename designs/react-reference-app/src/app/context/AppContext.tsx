@@ -2,6 +2,12 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import {
+  PROTOTYPE_STORE_ORDER_RESEND_OUTCOMES,
+  PROTOTYPE_STORE_PAID_CHECKOUT_OUTCOMES,
+  type PrototypeStoreOrderResendOutcome,
+  type PrototypeStorePaidCheckoutOutcome,
+} from '../services/storeOrderService';
+import {
   PROTOTYPE_MEETING_LINK_STATES,
   type PrototypeBookingOutcome,
   type PrototypeCallSettingsSaveOutcome,
@@ -137,6 +143,8 @@ type AppState = {
   waitlistAvailability: PrototypeWaitlistAvailability;
   isStoreCatalogEmpty: boolean;
   storeCheckoutOutcome: PrototypeStoreCheckoutOutcome;
+  storePaidCheckoutOutcome: PrototypeStorePaidCheckoutOutcome;
+  storeOrderResendOutcome: PrototypeStoreOrderResendOutcome;
   isDownloadUnavailable: boolean;
   bookingOutcome: PrototypeBookingOutcome;
   bookingSlotsUnavailable: boolean;
@@ -202,6 +210,8 @@ const defaultState: AppState = {
   waitlistAvailability: 'available',
   isStoreCatalogEmpty: false,
   storeCheckoutOutcome: 'success',
+  storePaidCheckoutOutcome: 'paid-success',
+  storeOrderResendOutcome: 'sent',
   isDownloadUnavailable: false,
   bookingOutcome: 'success',
   bookingSlotsUnavailable: false,
@@ -358,6 +368,16 @@ function parseDevParamsFromURL(): AppState {
   ) {
     state.storeCheckoutOutcome = checkout as PrototypeStoreCheckoutOutcome;
   }
+  state.storePaidCheckoutOutcome = optionOrDefault(
+    PROTOTYPE_STORE_PAID_CHECKOUT_OUTCOMES,
+    params.get('paidcheckout'),
+    defaultState.storePaidCheckoutOutcome,
+  );
+  state.storeOrderResendOutcome = optionOrDefault(
+    PROTOTYPE_STORE_ORDER_RESEND_OUTCOMES,
+    params.get('orderresend'),
+    defaultState.storeOrderResendOutcome,
+  );
   if (params.has('download')) {
     state.isDownloadUnavailable = params.get('download') === 'unavailable';
   }
@@ -657,6 +677,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('availability');
     url.searchParams.delete('storeempty');
     url.searchParams.delete('checkout');
+    url.searchParams.delete('paidcheckout');
+    url.searchParams.delete('orderresend');
     url.searchParams.delete('download');
     url.searchParams.delete('booking');
     url.searchParams.delete('bookingslots');
@@ -730,6 +752,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (appState.isStoreCatalogEmpty) url.searchParams.set('storeempty', '1');
     if (appState.storeCheckoutOutcome !== 'success') {
       url.searchParams.set('checkout', appState.storeCheckoutOutcome);
+    }
+    if (appState.storePaidCheckoutOutcome !== defaultState.storePaidCheckoutOutcome) {
+      url.searchParams.set('paidcheckout', appState.storePaidCheckoutOutcome);
+    }
+    if (appState.storeOrderResendOutcome !== defaultState.storeOrderResendOutcome) {
+      url.searchParams.set('orderresend', appState.storeOrderResendOutcome);
     }
     if (appState.isDownloadUnavailable) {
       url.searchParams.set('download', 'unavailable');
