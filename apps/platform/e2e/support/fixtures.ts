@@ -74,7 +74,7 @@ import { ResourceToolbar } from "./resource-toolbar";
 import { ResourceViewer } from "./resource-viewer";
 import { StoreCartDrawer } from "./store-cart-drawer";
 import { StoreCatalogPage } from "./store-catalog-page";
-import { StoreDownloads } from "./store-downloads";
+import { StoreDownloadPage } from "./store-download-page";
 import { StoreOrderCompletePage } from "./store-order-complete-page";
 import { StoreProductPage } from "./store-product-page";
 import { StoreProductRequests } from "./store-product-requests";
@@ -188,7 +188,7 @@ type PlatformFixtures = {
   storeProduct: StoreProductPage;
   storeCartDrawer: StoreCartDrawer;
   storeOrderComplete: StoreOrderCompletePage;
-  storeDownloads: StoreDownloads;
+  storeDownload: StoreDownloadPage;
   storeProductRequests: StoreProductRequests;
   coachEmail: string;
   scenarioTag: string;
@@ -697,8 +697,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new StoreOrderCompletePage(page));
   },
 
-  storeDownloads: async ({ request }, use) => {
-    await use(new StoreDownloads(request));
+  storeDownload: async ({ page }, use) => {
+    await use(new StoreDownloadPage(page));
   },
 
   storeProductRequests: async ({ baseURL, playwright }, use) => {

@@ -17,6 +17,7 @@ const PLAN_PRICES: StorePrice = { eurCents: 3900, usdCents: 4500 };
 const CARDHOLDER_NAME = "Ana Buyer";
 const ORDER_SUBJECT = "Your order is confirmed";
 const TERMS_ATTACHMENT = "terms-and-conditions-1.0.pdf";
+const BUNDLE_FILENAME = "eli-resources.zip";
 const DOWNLOAD_LINK = /\/store\/download#[\w-]+$/;
 const PAYMENT_NOT_COMPLETED = "Payment not completed. Your cart is saved.";
 const JOURNEY_TIMEOUT_MS = 180_000;
@@ -51,7 +52,7 @@ test(
     scenarioTag,
     storeCartDrawer,
     storeCatalog,
-    storeDownloads,
+    storeDownload,
     storeOrderComplete,
     storeProductRequests,
     stripeCheckout,
@@ -95,17 +96,15 @@ test(
       sessionId,
     });
     const orderEmail = await emailTo(visitorEmail, ORDER_SUBJECT);
-    const download = await storeDownloads.downloadThrough(
-      downloadLinkIn(orderEmail),
-    );
+    await storeDownload.open(downloadLinkIn(orderEmail));
+    const download = await storeDownload.download();
 
     // assert
     expect(delivery.status).toBe(200);
     expect(orderEmail.text).toContain(`${plan.title} — €39.00`);
     expect(orderEmail.text).toContain(guide.title);
     expect(orderEmail.attachmentNames).toEqual([TERMS_ATTACHMENT]);
-    expect(download.status).toBe(200);
-    expect(download.contentType).toBe("application/zip");
+    expect(download.suggestedFilename).toBe(BUNDLE_FILENAME);
     expect(download.archiveEntryNames).toEqual([
       `${plan.slug}/${plan.slug}.pdf`,
       `${guide.slug}/${guide.slug}.pdf`,
