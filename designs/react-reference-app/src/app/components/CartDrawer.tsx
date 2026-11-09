@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { useNavigate } from 'react-router';
 import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
 import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
@@ -64,9 +64,19 @@ export function CartDrawer() {
   const [emailProblem, setEmailProblem] = useState<string | null>(null);
   const [responseProblem, setResponseProblem] = useState<string | null>(null);
 
+  const [emailFocusRequest, setEmailFocusRequest] = useState(0);
+
   const emailErrorId = useId();
   const responseErrorId = useId();
   const openerRef = useRef<HTMLElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (emailFocusRequest > 0) {
+      emailInputRef.current?.focus();
+    }
+  }, [emailFocusRequest]);
 
   const isPaidCheckout = cart.some((item) => isPaid(item.product));
   const canSubmit = !isSubmitting && email.trim().length > 0 && termsAccepted;
@@ -80,6 +90,11 @@ export function CartDrawer() {
     setEmailProblem(null);
     setResponseProblem(null);
     dismissCartNotice();
+  };
+
+  const showEmailProblem = (problem: string) => {
+    setEmailProblem(problem);
+    setEmailFocusRequest((request) => request + 1);
   };
 
   const changeEmail = (next: string) => {
@@ -145,7 +160,7 @@ export function CartDrawer() {
       return;
     }
     if (placed.status === 'subaddress_refused') {
-      setEmailProblem(SUBADDRESS_REFUSED_MESSAGE);
+      showEmailProblem(SUBADDRESS_REFUSED_MESSAGE);
       return;
     }
     if (placed.status === 'unavailable_products') {
@@ -160,7 +175,7 @@ export function CartDrawer() {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!isValidAcquisitionEmail(email)) {
-      setEmailProblem(EMAIL_PROBLEM);
+      showEmailProblem(EMAIL_PROBLEM);
       return false;
     }
     if (!termsAccepted || cart.length === 0) {
@@ -185,6 +200,7 @@ export function CartDrawer() {
   const fields: CartDetailsFieldValues = {
     email,
     emailErrorId,
+    emailInputRef,
     emailProblem,
     isSubmitting,
     marketingConsent,
@@ -205,10 +221,15 @@ export function CartDrawer() {
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeDrawer()}>
       <SheetContent
+        ref={sheetRef}
         className="p-0 sm:max-w-md"
         data-parity-root="CartDrawer"
-        onOpenAutoFocus={() => {
+        onOpenAutoFocus={(event) => {
           openerRef.current = document.activeElement as HTMLElement | null;
+          if (cartNotice === 'payment-not-completed') {
+            event.preventDefault();
+            sheetRef.current?.querySelector<HTMLButtonElement>(':scope > button:last-child')?.focus();
+          }
         }}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
@@ -275,6 +296,7 @@ export function CartDrawer() {
 type CartDetailsFieldValues = {
   email: string;
   emailErrorId: string;
+  emailInputRef: RefObject<HTMLInputElement>;
   emailProblem: string | null;
   isSubmitting: boolean;
   marketingConsent: boolean;
@@ -421,6 +443,7 @@ function CartDetailsFields({
           id="store-acquisition-email"
           onChange={(event) => fields.onEmailChange(event.target.value)}
           placeholder="you@example.com"
+          ref={fields.emailInputRef}
           required
           type="email"
           value={fields.email}

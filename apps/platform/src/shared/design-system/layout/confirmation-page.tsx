@@ -57,6 +57,7 @@ export function ConfirmationHeading(props: {
           "mx-auto flex size-14 items-center justify-center rounded-full",
           badge.className,
         )}
+        data-parity="confirmation-badge"
       >
         {badge.icon}
       </span>

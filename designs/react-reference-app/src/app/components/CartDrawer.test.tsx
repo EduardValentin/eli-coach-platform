@@ -351,6 +351,7 @@ describe('CartDrawer', () => {
     // assert
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Enter a valid email address.');
+    expect(screen.getByRole('textbox', { name: /email address/i })).toHaveFocus();
     expect(submitStoreAcquisition).not.toHaveBeenCalled();
   });
 
@@ -545,10 +546,9 @@ describe('CartDrawer', () => {
 
       // assert
       expect(await screen.findByRole('alert')).toHaveTextContent(SUBADDRESS_REFUSED_MESSAGE);
-      expect(screen.getByRole('textbox', { name: /email address/i })).toHaveAttribute(
-        'aria-invalid',
-        'true',
-      );
+      const emailInput = screen.getByRole('textbox', { name: /email address/i });
+      expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+      await waitFor(() => expect(emailInput).toHaveFocus());
     });
 
     it('names the products still available and keeps her whole cart', async () => {
