@@ -6,6 +6,7 @@ const priceVariants = cva('font-semibold tabular-nums tracking-tight text-copy-m
   variants: {
     size: {
       lg: 'text-2xl',
+      md: 'text-lg',
       sm: 'text-sm',
     },
   },

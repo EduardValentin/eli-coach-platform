@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router';
 import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
 import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
 
-import { isPaid, useStore, type CartItem, type PaidProduct } from '../context/StoreContext';
+import { isPaid, useStore, type CartItem, type Currency, type PaidProduct } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
-import { storeOrderLines } from '../domain/storeOrder';
+import { storeOrderLines, type StoreOrderLine } from '../domain/storeOrder';
 import { CheckboxField } from './CheckboxField';
 import { DisabledActionHint } from './DisabledActionHint';
 import { DismissibleNotice } from './DismissibleNotice';
@@ -156,31 +156,51 @@ export function CartDrawer() {
     setResponseProblem(CHECKOUT_UNAVAILABLE_PROBLEM);
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const acceptDetails = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
     if (!isValidAcquisitionEmail(email)) {
       setEmailProblem(EMAIL_PROBLEM);
-      return;
+      return false;
     }
     if (!termsAccepted || cart.length === 0) {
-      return;
+      return false;
     }
     setEmailProblem(null);
-    if (!isPaidCheckout) {
+    return true;
+  };
+
+  const submitFreeClaim = (event: FormEvent<HTMLFormElement>) => {
+    if (acceptDetails(event)) {
       deliver(email.trim());
-      return;
     }
-    if (deliveryConsent) {
+  };
+
+  const submitPaidCheckout = (event: FormEvent<HTMLFormElement>) => {
+    if (acceptDetails(event) && deliveryConsent) {
       continueToPayment(email.trim());
     }
   };
 
-  const paidSubmit = (
-    <Button aria-busy={isSubmitting || undefined} disabled={isSubmitting} size="lg-tight" type="submit" width="full">
-      <PaidSubmitLabel isSubmitting={isSubmitting} />
-    </Button>
-  );
+  const fields: CartDetailsFieldValues = {
+    email,
+    emailErrorId,
+    emailProblem,
+    isSubmitting,
+    marketingConsent,
+    onEmailChange: changeEmail,
+    onMarketingConsentChange: setMarketingConsent,
+    onTermsAcceptedChange: setTermsAccepted,
+    termsAccepted,
+    termsProblem,
+  };
+
+  const detailsStep: CartDetailsStepProps = {
+    fields,
+    onBack: () => setStep('cart'),
+    responseError: responseProblem,
+    responseErrorId,
+  };
 
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeDrawer()}>
@@ -228,131 +248,229 @@ export function CartDrawer() {
               }
             />
           )}
-          {step === 'details' && (
-            <form className="flex flex-1 flex-col" noValidate onSubmit={submit}>
-              <div>
-                <h2 className="font-serif text-display-sm leading-8 text-text-primary">Almost there</h2>
-                <p className="mt-2 text-sm text-text-secondary" data-parity="details-intro">
-                  {isPaidCheckout
-                    ? 'Check your order, enter your email, then continue to payment.'
-                    : "Enter your email and we'll send one private download link for everything in your cart."}
-                </p>
-                {isPaidCheckout && (
-                  <div className="mt-6" data-parity="order-summary-block">
-                    <h3 className={LABEL_CLASS}>Your order</h3>
-                    <StoreOrderSummary
-                      className="mt-2"
-                      currency={currency}
-                      lines={storeOrderLines(
-                        cart.map((item) => item.product),
-                        currency,
-                      )}
-                    />
-                  </div>
-                )}
-                <div className="mt-7" data-parity="email-field">
-                  <Label className="mb-2" htmlFor="store-acquisition-email" required>
-                    Email address
-                  </Label>
-                  <Input
-                    aria-describedby={emailProblem ? emailErrorId : undefined}
-                    aria-invalid={emailProblem ? true : undefined}
-                    autoComplete="email"
-                    disabled={isSubmitting}
-                    id="store-acquisition-email"
-                    onChange={(event) => changeEmail(event.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    type="email"
-                    value={email}
-                  />
-                </div>
-                {emailProblem && (
-                  <InlineProblem className="mt-2" id={emailErrorId} role="alert">
-                    {emailProblem}
-                  </InlineProblem>
-                )}
-                <div className="mt-6 flex flex-col gap-4">
-                  <CheckboxField
-                    checkboxParity="terms-checkbox"
-                    checked={termsAccepted}
-                    data-parity="terms-consent"
-                    disabled={isSubmitting}
-                    error={termsProblem}
-                    errorRole="alert"
-                    label={
-                      <>
-                        I agree to the{' '}
-                        <Link to="/terms" variant="in-text">
-                          Terms &amp; Conditions
-                        </Link>
-                        .
-                      </>
-                    }
-                    layout="statement"
-                    onCheckedChange={setTermsAccepted}
-                    required
-                  />
-                  {isPaidCheckout && (
-                    <CheckboxField
-                      checkboxParity="delivery-consent-checkbox"
-                      checked={deliveryConsent}
-                      data-parity="delivery-consent"
-                      disabled={isSubmitting}
-                      label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
-                      layout="statement"
-                      onCheckedChange={setDeliveryConsent}
-                      required
-                    />
-                  )}
-                  <CheckboxField
-                    checkboxParity="marketing-checkbox"
-                    checked={marketingConsent}
-                    data-parity="marketing-consent"
-                    disabled={isSubmitting}
-                    label="Keep me posted about new plans, guides, and offers."
-                    layout="statement"
-                    onCheckedChange={setMarketingConsent}
-                  />
-                  <p className="text-sm leading-relaxed text-text-secondary" data-parity="privacy-note">
-                    {isPaidCheckout
-                      ? 'We use your email to process your order and keep evidence of your purchase and choices.'
-                      : 'We use your email to deliver these resources and keep evidence of this request.'}{' '}
-                    Read our{' '}
-                    <Link to="/privacy" variant="in-text">
-                      Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                </div>
-                {responseProblem && (
-                  <div className="mt-5">
-                    <Alert id={responseErrorId}>
-                      <p>{responseProblem}</p>
-                    </Alert>
-                  </div>
-                )}
-              </div>
-              <div className="mt-auto flex gap-4 border-t border-border-subtle pt-6" data-parity="details-actions">
-                <Button disabled={isSubmitting} onClick={() => setStep('cart')} size="lg" variant="outline">
-                  Back
-                </Button>
-                {isPaidCheckout && canContinueToPayment && paidSubmit}
-                {isPaidCheckout && !canContinueToPayment && (
-                  <DisabledActionHint reason={PAID_SUBMIT_HINT}>{paidSubmit}</DisabledActionHint>
-                )}
-                {!isPaidCheckout && (
-                  <Button disabled={!canSubmit} size="lg-tight" type="submit" width="full">
-                    <SubmitLabel isSubmitting={isSubmitting} />
-                  </Button>
-                )}
-              </div>
-            </form>
+          {step === 'details' && isPaidCheckout && (
+            <PaidCheckoutDetails
+              {...detailsStep}
+              canContinueToPayment={canContinueToPayment}
+              deliveryConsent={deliveryConsent}
+              lines={storeOrderLines(
+                cart.map((item) => item.product),
+                currency,
+              )}
+              currency={currency}
+              onDeliveryConsentChange={setDeliveryConsent}
+              onSubmit={submitPaidCheckout}
+            />
+          )}
+          {step === 'details' && !isPaidCheckout && (
+            <FreeClaimDetails {...detailsStep} canSubmit={canSubmit} onSubmit={submitFreeClaim} />
           )}
           {step === 'success' && <AcquisitionSuccess />}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+type CartDetailsFieldValues = {
+  email: string;
+  emailErrorId: string;
+  emailProblem: string | null;
+  isSubmitting: boolean;
+  marketingConsent: boolean;
+  onEmailChange: (email: string) => void;
+  onMarketingConsentChange: (checked: boolean) => void;
+  onTermsAcceptedChange: (checked: boolean) => void;
+  termsAccepted: boolean;
+  termsProblem: string | undefined;
+};
+
+type CartDetailsStepProps = {
+  fields: CartDetailsFieldValues;
+  onBack: () => void;
+  responseError: string | null;
+  responseErrorId: string;
+};
+
+type CartDetailsSubmission = {
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+};
+
+function FreeClaimDetails(props: CartDetailsStepProps & CartDetailsSubmission & { canSubmit: boolean }) {
+  return (
+    <CartDetailsForm
+      {...props}
+      intro="Enter your email and we'll send one private download link for everything in your cart."
+      submitAction={
+        <Button disabled={!props.canSubmit} size="lg-tight" type="submit" width="full">
+          <SubmitLabel isSubmitting={props.fields.isSubmitting} />
+        </Button>
+      }
+    >
+      <CartDetailsFields
+        fields={props.fields}
+        privacyPurpose="We use your email to deliver these resources and keep evidence of this request."
+      />
+    </CartDetailsForm>
+  );
+}
+
+function PaidCheckoutDetails(
+  props: CartDetailsStepProps &
+    CartDetailsSubmission & {
+      canContinueToPayment: boolean;
+      currency: Currency;
+      deliveryConsent: boolean;
+      lines: readonly StoreOrderLine[];
+      onDeliveryConsentChange: (checked: boolean) => void;
+    },
+) {
+  const isSubmitting = props.fields.isSubmitting;
+  const paidSubmit = (
+    <Button aria-busy={isSubmitting || undefined} disabled={isSubmitting} size="lg-tight" type="submit" width="full">
+      <PaidSubmitLabel isSubmitting={isSubmitting} />
+    </Button>
+  );
+
+  return (
+    <CartDetailsForm
+      {...props}
+      intro="Check your order, enter your email, then continue to payment."
+      submitAction={
+        props.canContinueToPayment ? (
+          paidSubmit
+        ) : (
+          <DisabledActionHint reason={PAID_SUBMIT_HINT}>{paidSubmit}</DisabledActionHint>
+        )
+      }
+    >
+      <div className="mt-6" data-parity="order-summary-block">
+        <h3 className={LABEL_CLASS}>Your order</h3>
+        <StoreOrderSummary className="mt-2" currency={props.currency} lines={props.lines} />
+      </div>
+      <CartDetailsFields
+        fields={props.fields}
+        privacyPurpose="We use your email to process your order and keep evidence of your purchase and choices."
+        requiredConsent={
+          <CheckboxField
+            checkboxParity="delivery-consent-checkbox"
+            checked={props.deliveryConsent}
+            data-parity="delivery-consent"
+            disabled={isSubmitting}
+            label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
+            layout="statement"
+            onCheckedChange={props.onDeliveryConsentChange}
+            required
+          />
+        }
+      />
+    </CartDetailsForm>
+  );
+}
+
+function CartDetailsForm(
+  props: CartDetailsStepProps &
+    CartDetailsSubmission & { children: ReactNode; intro: string; submitAction: ReactNode },
+) {
+  return (
+    <form className="flex flex-1 flex-col" noValidate onSubmit={props.onSubmit}>
+      <div>
+        <h2 className="font-serif text-display-sm leading-8 text-text-primary">Almost there</h2>
+        <p className="mt-2 text-sm text-text-secondary" data-parity="details-intro">
+          {props.intro}
+        </p>
+        {props.children}
+        {props.responseError && (
+          <div className="mt-5">
+            <Alert id={props.responseErrorId}>
+              <p>{props.responseError}</p>
+            </Alert>
+          </div>
+        )}
+      </div>
+      <div className="mt-auto flex gap-4 border-t border-border-subtle pt-6" data-parity="details-actions">
+        <Button disabled={props.fields.isSubmitting} onClick={props.onBack} size="lg" variant="outline">
+          Back
+        </Button>
+        {props.submitAction}
+      </div>
+    </form>
+  );
+}
+
+function CartDetailsFields({
+  fields,
+  privacyPurpose,
+  requiredConsent,
+}: {
+  fields: CartDetailsFieldValues;
+  privacyPurpose: string;
+  requiredConsent?: ReactNode;
+}) {
+  return (
+    <>
+      <div className="mt-7" data-parity="email-field">
+        <Label className="mb-2" htmlFor="store-acquisition-email" required>
+          Email address
+        </Label>
+        <Input
+          aria-describedby={fields.emailProblem ? fields.emailErrorId : undefined}
+          aria-invalid={fields.emailProblem ? true : undefined}
+          autoComplete="email"
+          disabled={fields.isSubmitting}
+          id="store-acquisition-email"
+          onChange={(event) => fields.onEmailChange(event.target.value)}
+          placeholder="you@example.com"
+          required
+          type="email"
+          value={fields.email}
+        />
+      </div>
+      {fields.emailProblem && (
+        <InlineProblem className="mt-2" id={fields.emailErrorId} role="alert">
+          {fields.emailProblem}
+        </InlineProblem>
+      )}
+      <div className="mt-6 flex flex-col gap-4">
+        <CheckboxField
+          checkboxParity="terms-checkbox"
+          checked={fields.termsAccepted}
+          data-parity="terms-consent"
+          disabled={fields.isSubmitting}
+          error={fields.termsProblem}
+          errorRole="alert"
+          label={
+            <>
+              I agree to the{' '}
+              <Link to="/terms" variant="in-text">
+                Terms &amp; Conditions
+              </Link>
+              .
+            </>
+          }
+          layout="statement"
+          onCheckedChange={fields.onTermsAcceptedChange}
+          required
+        />
+        {requiredConsent}
+        <CheckboxField
+          checkboxParity="marketing-checkbox"
+          checked={fields.marketingConsent}
+          data-parity="marketing-consent"
+          disabled={fields.isSubmitting}
+          label="Keep me posted about new plans, guides, and offers."
+          layout="statement"
+          onCheckedChange={fields.onMarketingConsentChange}
+        />
+        <p className="text-sm leading-relaxed text-text-secondary" data-parity="privacy-note">
+          {privacyPurpose} Read our{' '}
+          <Link to="/privacy" variant="in-text">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </div>
+    </>
   );
 }
 
@@ -459,8 +577,10 @@ function CartReview(props: {
         {props.total && (
           <dl className="mb-6 flex items-baseline justify-between gap-4">
             <dt className={LABEL_CLASS}>Total</dt>
-            <dd className="text-lg font-semibold text-text-primary" data-parity="cart-total">
-              {props.total}
+            <dd>
+              <Price data-parity="cart-total" size="md">
+                {props.total}
+              </Price>
             </dd>
           </dl>
         )}

@@ -4,6 +4,7 @@ import {
   STAND_IN_BACK_LINK_CLASS,
   STAND_IN_READINGS_CLASS,
   StandInCardFields,
+  StandInClosed,
   StandInReading,
 } from '../components/ProviderStandIn';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -42,15 +43,11 @@ export function CheckoutStandIn() {
   if (!session) {
     return (
       <StandInShell>
-        <h1 className="text-xl font-medium text-text-primary">
-          This checkout session has closed
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Open your payment link again to pick a bundle.
-        </p>
-        <Link className="mt-6 inline-block text-sm text-text-primary underline underline-offset-4" to="/select-bundle">
-          Back to the bundles
-        </Link>
+        <StandInClosed
+          body="Open your payment link again to pick a bundle."
+          linkLabel="Back to the bundles"
+          linkTo="/select-bundle"
+        />
       </StandInShell>
     );
   }
