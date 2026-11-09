@@ -30,7 +30,7 @@ type PublicationBody = {
   publication: {
     id: number;
     operation: string;
-    prices?: { eurCents: number; usdCents: number } | null;
+    pricing?: Record<string, unknown>;
     productId: number;
     productSlug: string;
     productVersionId: number | null;
@@ -38,7 +38,9 @@ type PublicationBody = {
   };
 };
 
-const PAID_PRICES = { eurCents: 3900, usdCents: 4500 };
+const PAID_PRICE = { eurCents: 3900, usdCents: 4500 };
+const PAID_PRICING = { kind: "paid", ...PAID_PRICE };
+const FREE_PRICING = { kind: "free" };
 
 describe("Store management integration", () => {
   beforeAll(async () => {
@@ -348,7 +350,7 @@ describe("Store management integration", () => {
     // arrange
     // act
     const response = await suite.request(
-      publicationRequest({ metadata: { prices: PAID_PRICES } }),
+      publicationRequest({ metadata: { pricing: PAID_PRICING } }),
     );
     const body = (await response.json()) as PublicationBody;
     const catalog = await readCatalog();
@@ -359,7 +361,7 @@ describe("Store management integration", () => {
     expect(catalog.products).toEqual([
       expect.objectContaining({
         slug: "glute-growth-guide",
-        price: PAID_PRICES,
+        price: PAID_PRICE,
       }),
     ]);
     expect(priceRevisions).toEqual([
@@ -372,10 +374,12 @@ describe("Store management integration", () => {
     ]);
   });
 
-  it("publishes a product without prices as free", async () => {
+  it("publishes a product with a free pricing as free", async () => {
     // arrange
     // act
-    const response = await suite.request(publicationRequest());
+    const response = await suite.request(
+      publicationRequest({ metadata: { pricing: FREE_PRICING } }),
+    );
     const catalog = await readCatalog();
 
     // assert
@@ -386,27 +390,78 @@ describe("Store management integration", () => {
     await expect(readPriceRevisions()).resolves.toEqual([]);
   });
 
-  it("reports the resolved prices in a dry run and writes nothing", async () => {
-    // arrange
-    // act
-    const response = await suite.request(
-      publicationRequest({
-        metadata: { prices: PAID_PRICES },
-        path: "/api/management/store/product-validations",
-      }),
-    );
-    const body = (await response.json()) as { plan: Record<string, unknown> };
-    const catalog = await readCatalog();
+  it.each([
+    ["omitted", { pricing: undefined }],
+    ["null", { pricing: null }],
+    ["of an unknown kind", { pricing: { kind: "discounted" } }],
+    ["free with amounts", { pricing: { ...FREE_PRICING, ...PAID_PRICE } }],
+    ["replaced by the retired prices field", { prices: PAID_PRICE }],
+  ])(
+    "rejects a new product whose pricing is %s and writes nothing",
+    async (_label, pricingFields) => {
+      // arrange
+      const paths = [
+        "/api/management/store/products",
+        "/api/management/store/product-validations",
+      ];
 
-    // assert
-    expect(response.status).toBe(200);
-    expect(body.plan).toMatchObject({
-      operation: "create_product",
-      prices: PAID_PRICES,
-    });
-    expect(catalog.products).toEqual([]);
-    await expect(readPriceRevisions()).resolves.toEqual([]);
-  });
+      // act
+      const responses = await Promise.all(
+        paths.map((path) =>
+          suite.request(
+            publicationRequest({ metadata: { ...pricingFields }, path }),
+          ),
+        ),
+      );
+      const bodies = await Promise.all(
+        responses.map((response) => response.json()),
+      );
+      const catalog = await readCatalog();
+
+      // assert
+      expect(responses.map((response) => response.status)).toEqual([400, 400]);
+      expect(bodies).toEqual([
+        expect.objectContaining({
+          error: expect.objectContaining({ code: "invalid_request" }),
+        }),
+        expect.objectContaining({
+          error: expect.objectContaining({ code: "invalid_request" }),
+        }),
+      ]);
+      expect(catalog.products).toEqual([]);
+      await expect(readPriceRevisions()).resolves.toEqual([]);
+    },
+  );
+
+  it.each([
+    ["free", FREE_PRICING],
+    ["paid", PAID_PRICING],
+  ])(
+    "reports the resolved %s pricing in a dry run and writes nothing",
+    async (_label, pricing) => {
+      // arrange
+      // act
+      const response = await suite.request(
+        publicationRequest({
+          metadata: { pricing },
+          path: "/api/management/store/product-validations",
+        }),
+      );
+      const body = (await response.json()) as {
+        plan: Record<string, unknown>;
+      };
+      const catalog = await readCatalog();
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(body.plan).toMatchObject({
+        operation: "create_product",
+        pricing,
+      });
+      expect(catalog.products).toEqual([]);
+      await expect(readPriceRevisions()).resolves.toEqual([]);
+    },
+  );
 
   it.each([
     [
@@ -441,11 +496,13 @@ describe("Store management integration", () => {
     ],
   ])(
     "rejects %s with the price rule it breaks and writes nothing",
-    async (_label, prices, issue) => {
+    async (_label, amounts, issue) => {
       // arrange
       // act
       const response = await suite.request(
-        publicationRequest({ metadata: { prices } }),
+        publicationRequest({
+          metadata: { pricing: { kind: "paid", ...amounts } },
+        }),
       );
       const catalog = await readCatalog();
 
@@ -459,7 +516,7 @@ describe("Store management integration", () => {
     },
   );
 
-  it("rejects prices sent on a content revision and keeps the product as it was", async () => {
+  it("rejects a pricing sent on a content revision and keeps the product as it was", async () => {
     // arrange
     const published = await suite.request(publicationRequest());
     const { publication } = (await published.json()) as PublicationBody;
@@ -468,7 +525,7 @@ describe("Store management integration", () => {
     const revision = await suite.request(
       publicationRequest({
         idempotencyKey: "revise-1",
-        metadata: { prices: PAID_PRICES, title: "Repriced by mistake" },
+        metadata: { pricing: PAID_PRICING, title: "Repriced by mistake" },
         path: `/api/management/store/products/${publication.productId}/versions`,
       }),
     );
@@ -518,7 +575,7 @@ describe("Store management integration", () => {
     const madePaid = await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-1",
-        prices: PAID_PRICES,
+        pricing: PAID_PRICING,
       }),
     );
     const madePaidBody = (await madePaid.json()) as PublicationBody;
@@ -526,7 +583,7 @@ describe("Store management integration", () => {
     const madeFree = await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-2",
-        prices: null,
+        pricing: FREE_PRICING,
       }),
     );
     const madeFreeBody = (await madeFree.json()) as PublicationBody;
@@ -550,18 +607,18 @@ describe("Store management integration", () => {
     expect(madePaid.status).toBe(201);
     expect(madePaidBody.publication).toMatchObject({
       operation: "reprice_product",
-      prices: PAID_PRICES,
+      pricing: PAID_PRICING,
       productId: publication.productId,
       productVersionId: null,
       replayed: false,
     });
     expect(paidCatalog.products).toEqual([
-      expect.objectContaining({ price: PAID_PRICES }),
+      expect.objectContaining({ price: PAID_PRICE }),
     ]);
     expect(madeFree.status).toBe(201);
     expect(madeFreeBody.publication).toMatchObject({
       operation: "reprice_product",
-      prices: null,
+      pricing: FREE_PRICING,
       productVersionId: null,
     });
     expect(freeCatalog.products).toEqual([
@@ -593,7 +650,7 @@ describe("Store management integration", () => {
     const first = await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-1",
-        prices: PAID_PRICES,
+        pricing: PAID_PRICING,
       }),
     );
     const firstBody = (await first.json()) as PublicationBody;
@@ -602,7 +659,7 @@ describe("Store management integration", () => {
     const replay = await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-1",
-        prices: PAID_PRICES,
+        pricing: PAID_PRICING,
       }),
     );
     const replayBody = (await replay.json()) as PublicationBody;
@@ -611,7 +668,7 @@ describe("Store management integration", () => {
     expect(replay.status).toBe(200);
     expect(replayBody.publication).toMatchObject({
       id: firstBody.publication.id,
-      prices: PAID_PRICES,
+      pricing: PAID_PRICING,
       replayed: true,
     });
     await expect(readPriceRevisions()).resolves.toHaveLength(1);
@@ -625,7 +682,7 @@ describe("Store management integration", () => {
     await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-1",
-        prices: PAID_PRICES,
+        pricing: PAID_PRICING,
       }),
     );
 
@@ -633,7 +690,7 @@ describe("Store management integration", () => {
     const response = await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-1",
-        prices: { eurCents: 4900, usdCents: 5500 },
+        pricing: { kind: "paid", eurCents: 4900, usdCents: 5500 },
       }),
     );
     const catalog = await readCatalog();
@@ -644,7 +701,7 @@ describe("Store management integration", () => {
       error: { code: "idempotency_conflict" },
     });
     expect(catalog.products).toEqual([
-      expect.objectContaining({ price: PAID_PRICES }),
+      expect.objectContaining({ price: PAID_PRICE }),
     ]);
   });
 
@@ -670,7 +727,7 @@ describe("Store management integration", () => {
     const response = await suite.request(
       priceChangeRequest(publication.productId, {
         idempotencyKey: "reprice-1",
-        prices: PAID_PRICES,
+        pricing: PAID_PRICING,
       }),
     );
 
@@ -686,14 +743,14 @@ describe("Store management integration", () => {
   });
 
   it.each([
-    ["the same amounts", PAID_PRICES, PAID_PRICES],
-    ["free to free", null, null],
+    ["the same amounts", PAID_PRICING, PAID_PRICING],
+    ["free to free", FREE_PRICING, FREE_PRICING],
   ])(
     "refuses %s as an unchanged price",
-    async (_label, initialPrices, nextPrices) => {
+    async (_label, initialPricing, nextPricing) => {
       // arrange
       const published = await suite.request(
-        publicationRequest({ metadata: { prices: initialPrices } }),
+        publicationRequest({ metadata: { pricing: initialPricing } }),
       );
       const { publication } = (await published.json()) as PublicationBody;
 
@@ -701,7 +758,7 @@ describe("Store management integration", () => {
       const response = await suite.request(
         priceChangeRequest(publication.productId, {
           idempotencyKey: "reprice-1",
-          prices: nextPrices,
+          pricing: nextPricing,
         }),
       );
 
@@ -716,27 +773,44 @@ describe("Store management integration", () => {
     },
   );
 
-  it("refuses a price change without prices rather than assuming free", async () => {
-    // arrange
-    const published = await suite.request(
-      publicationRequest({ metadata: { prices: PAID_PRICES } }),
-    );
-    const { publication } = (await published.json()) as PublicationBody;
+  it.each([
+    ["omits the pricing", {}],
+    ["sends a null pricing", { pricing: null }],
+    ["sends an unknown kind", { pricing: { kind: "discounted" } }],
+    [
+      "sends amounts on a free pricing",
+      { pricing: { ...FREE_PRICING, ...PAID_PRICE } },
+    ],
+    ["sends the retired prices field", { prices: null }],
+  ])(
+    "refuses a price change that %s rather than assuming free",
+    async (_label, pricingFields) => {
+      // arrange
+      const published = await suite.request(
+        publicationRequest({ metadata: { pricing: PAID_PRICING } }),
+      );
+      const { publication } = (await published.json()) as PublicationBody;
 
-    // act
-    const response = await suite.request(
-      priceChangeRequest(publication.productId, {
-        idempotencyKey: "reprice-1",
-      }),
-    );
-    const catalog = await readCatalog();
+      // act
+      const response = await suite.request(
+        priceChangeRequest(publication.productId, {
+          idempotencyKey: "reprice-1",
+          ...pricingFields,
+        }),
+      );
+      const catalog = await readCatalog();
 
-    // assert
-    expect(response.status).toBe(400);
-    expect(catalog.products).toEqual([
-      expect.objectContaining({ price: PAID_PRICES }),
-    ]);
-  });
+      // assert
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: { code: "invalid_request" },
+      });
+      expect(catalog.products).toEqual([
+        expect.objectContaining({ price: PAID_PRICE }),
+      ]);
+      await expect(readPriceRevisions()).resolves.toHaveLength(1);
+    },
+  );
 
   it("refuses an unauthenticated price change", async () => {
     // arrange
@@ -747,7 +821,7 @@ describe("Store management integration", () => {
     const response = await suite.request(
       priceChangeRequest(
         publication.productId,
-        { idempotencyKey: "reprice-1", prices: PAID_PRICES },
+        { idempotencyKey: "reprice-1", pricing: PAID_PRICING },
         "Bearer wrong-secret",
       ),
     );
@@ -763,7 +837,7 @@ describe("Store management integration", () => {
     const response = await suite.request(
       priceChangeRequest(4040, {
         idempotencyKey: "reprice-1",
-        prices: PAID_PRICES,
+        pricing: PAID_PRICING,
       }),
     );
 
@@ -815,7 +889,9 @@ function publicationRequest(
     includedItems: ["The three glute muscles and what each one does"],
     title: "Glute Growth Guide",
     typeSlugs: ["e-books"],
-    ...(isRevision ? {} : { slug: "glute-growth-guide" }),
+    ...(isRevision
+      ? {}
+      : { pricing: FREE_PRICING, slug: "glute-growth-guide" }),
     ...options.metadata,
   };
 

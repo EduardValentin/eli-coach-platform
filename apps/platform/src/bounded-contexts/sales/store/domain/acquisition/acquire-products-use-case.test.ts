@@ -5,7 +5,7 @@ import {
   type EmailSubaddressPolicy,
 } from "~/shared/submission-checks/email-address";
 import {
-  ProductPrice,
+  ProductPricing,
   PublishedProduct,
   type StoreCatalogPort,
 } from "../product";
@@ -31,7 +31,7 @@ const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
-  price: null,
+  pricing: ProductPricing.free(),
   version: {
     id: 11,
     sequence: 2,
@@ -270,7 +270,11 @@ describe("AcquireProductsUseCase", () => {
     const productDeliveryPort = createDelivery();
     const paidProduct = PublishedProduct.reconstitute({
       ...product,
-      price: ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+      pricing: ProductPricing.reconstitute({
+        kind: "paid",
+        eurCents: 3900,
+        usdCents: 4500,
+      }),
       slug: "glute-plan",
     });
     const { acquireProductsUseCase } = createUseCase({

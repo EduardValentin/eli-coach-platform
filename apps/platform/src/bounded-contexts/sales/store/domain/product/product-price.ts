@@ -90,20 +90,6 @@ export class ProductPrice {
     return new ProductPrice(snapshot);
   }
 
-  static fromStoredAmounts(amounts: {
-    eurCents: number | null;
-    usdCents: number | null;
-  }): ProductPrice | null {
-    if (amounts.eurCents === null || amounts.usdCents === null) {
-      return null;
-    }
-
-    return new ProductPrice({
-      eurCents: amounts.eurCents,
-      usdCents: amounts.usdCents,
-    });
-  }
-
   amountIn(currency: StoreCurrency): number {
     return this[STORE_CURRENCY_AMOUNT_FIELDS[currency]];
   }

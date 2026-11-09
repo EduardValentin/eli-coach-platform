@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { Product } from "./product";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
-import { ProductPrice, type ProductPriceInput } from "./product-price";
+import { ProductPricing, type ProductPricingInput } from "./product-pricing";
 import { ProductPriceChange } from "./product-price-change";
 
 const contentDigestPort: ProductAssetDigestPort = {
@@ -20,12 +20,12 @@ const publication = {
 
 function product(
   options: {
-    currentPrice?: ProductPrice | null;
+    currentPricing?: ProductPricing;
     lifecycleStatus?: "archived" | "published";
   } = {},
 ): Product {
   return Product.reconstitute({
-    currentPrice: options.currentPrice ?? null,
+    currentPricing: options.currentPricing ?? ProductPricing.free(),
     displayOrder: 2,
     id: 7,
     latestVersionSequence: 3,
@@ -34,21 +34,24 @@ function product(
   });
 }
 
+const FREE: ProductPricingInput = { kind: "free" };
+
 function changeOf(
-  prices: ProductPriceInput | null,
+  pricing: ProductPricingInput,
   productId = 7,
 ): ProductPriceChange {
-  return ProductPriceChange.from({ prices, productId });
+  return ProductPriceChange.from({ pricing, productId });
 }
 
 describe("ProductPriceChange.requestDigest", () => {
   it("is stable for equal input", () => {
     // arrange
-    const change = changeOf({ eurCents: 3900, usdCents: 4500 });
+    const change = changeOf({ kind: "paid", eurCents: 3900, usdCents: 4500 });
 
     // act
     const first = change.requestDigest(contentDigestPort);
     const second = changeOf({
+      kind: "paid",
       eurCents: 3900,
       usdCents: 4500,
     }).requestDigest(contentDigestPort);
@@ -57,34 +60,35 @@ describe("ProductPriceChange.requestDigest", () => {
     expect(first).toBe(second);
   });
 
-  it.each([
-    ["the product turns free", { eurCents: 3900, usdCents: 4500 }, null],
-    ["an empty price replaces free", null, {}],
-    ["the amounts swap currencies", { eurCents: 3900 }, { usdCents: 3900 }],
-  ])(
-    "changes when %s",
-    (
-      _label,
-      before: ProductPriceInput | null,
-      after: ProductPriceInput | null,
-    ) => {
-      // arrange
-      const original = changeOf(before);
-      const changed = changeOf(after);
+  it.each<[string, ProductPricingInput, ProductPricingInput]>([
+    [
+      "the product turns free",
+      { kind: "paid", eurCents: 3900, usdCents: 4500 },
+      FREE,
+    ],
+    ["a paid pricing without amounts replaces free", FREE, { kind: "paid" }],
+    [
+      "the amounts swap currencies",
+      { kind: "paid", eurCents: 3900 },
+      { kind: "paid", usdCents: 3900 },
+    ],
+  ])("changes when %s", (_label, before, after) => {
+    // arrange
+    const original = changeOf(before);
+    const changed = changeOf(after);
 
-      // act
-      const originalDigest = original.requestDigest(contentDigestPort);
-      const changedDigest = changed.requestDigest(contentDigestPort);
+    // act
+    const originalDigest = original.requestDigest(contentDigestPort);
+    const changedDigest = changed.requestDigest(contentDigestPort);
 
-      // assert
-      expect(changedDigest).not.toBe(originalDigest);
-    },
-  );
+    // assert
+    expect(changedDigest).not.toBe(originalDigest);
+  });
 
   it("changes when the change targets another product", () => {
     // arrange
-    const original = changeOf(null, 7);
-    const retargeted = changeOf(null, 8);
+    const original = changeOf(FREE, 7);
+    const retargeted = changeOf(FREE, 8);
 
     // act
     const originalDigest = original.requestDigest(contentDigestPort);
@@ -98,7 +102,7 @@ describe("ProductPriceChange.requestDigest", () => {
 describe("ProductPriceChange.settle", () => {
   it("replays a stored publication recorded for the same payload", () => {
     // arrange
-    const change = changeOf(null);
+    const change = changeOf(FREE);
 
     // act
     const settled = change.settle(
@@ -112,7 +116,7 @@ describe("ProductPriceChange.settle", () => {
 
   it("reports a key reused with a different payload as a conflict", () => {
     // arrange
-    const change = changeOf(null);
+    const change = changeOf(FREE);
 
     // act
     const settled = change.settle(
@@ -126,7 +130,7 @@ describe("ProductPriceChange.settle", () => {
 
   it("leaves an unseen key unsettled", () => {
     // arrange
-    const change = changeOf(null);
+    const change = changeOf(FREE);
 
     // act
     const settled = change.settle(null, "digest-1");
@@ -139,7 +143,7 @@ describe("ProductPriceChange.settle", () => {
 describe("ProductPriceChange.plan", () => {
   it("plans a free product turning paid", () => {
     // arrange
-    const change = changeOf({ eurCents: 3900, usdCents: 4500 });
+    const change = changeOf({ kind: "paid", eurCents: 3900, usdCents: 4500 });
 
     // act
     const result = change.plan(product());
@@ -148,7 +152,11 @@ describe("ProductPriceChange.plan", () => {
     expect(result).toEqual({
       status: "valid",
       plan: {
-        price: ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+        pricing: ProductPricing.reconstitute({
+          kind: "paid",
+          eurCents: 3900,
+          usdCents: 4500,
+        }),
         productId: 7,
         productSlug: "glute-growth-guide",
       },
@@ -157,12 +165,13 @@ describe("ProductPriceChange.plan", () => {
 
   it("plans a paid product turning free", () => {
     // arrange
-    const change = changeOf(null);
+    const change = changeOf(FREE);
 
     // act
     const result = change.plan(
       product({
-        currentPrice: ProductPrice.reconstitute({
+        currentPricing: ProductPricing.reconstitute({
+          kind: "paid",
           eurCents: 3900,
           usdCents: 4500,
         }),
@@ -172,13 +181,17 @@ describe("ProductPriceChange.plan", () => {
     // assert
     expect(result).toEqual({
       status: "valid",
-      plan: { price: null, productId: 7, productSlug: "glute-growth-guide" },
+      plan: {
+        pricing: ProductPricing.free(),
+        productId: 7,
+        productSlug: "glute-growth-guide",
+      },
     });
   });
 
   it("reports an unknown product", () => {
     // arrange
-    const change = changeOf({ eurCents: 3900, usdCents: 4500 });
+    const change = changeOf({ kind: "paid", eurCents: 3900, usdCents: 4500 });
 
     // act
     const result = change.plan(null);
@@ -192,7 +205,7 @@ describe("ProductPriceChange.plan", () => {
 
   it("names the price rule an amount breaks", () => {
     // arrange
-    const change = changeOf({ eurCents: 39.5, usdCents: 4500 });
+    const change = changeOf({ kind: "paid", eurCents: 39.5, usdCents: 4500 });
 
     // act
     const result = change.plan(product());
@@ -213,7 +226,7 @@ describe("ProductPriceChange.plan", () => {
     ["free to free", product(), "price_unchanged"],
   ])("refuses %s", (_label, target, code) => {
     // arrange
-    const change = changeOf(null);
+    const change = changeOf(FREE);
 
     // act
     const result = change.plan(target);
@@ -226,7 +239,7 @@ describe("ProductPriceChange.plan", () => {
 describe("ProductPriceChange.persistCommand", () => {
   it("carries the planned price and the request identity into the port command", () => {
     // arrange
-    const change = changeOf({ eurCents: 3900, usdCents: 4500 });
+    const change = changeOf({ kind: "paid", eurCents: 3900, usdCents: 4500 });
     const result = change.plan(product());
     const plan = result.status === "valid" ? result.plan : null;
 
@@ -241,7 +254,7 @@ describe("ProductPriceChange.persistCommand", () => {
     expect(command).toEqual({
       idempotencyKey: "reprice-1",
       payloadDigest: "digest-1",
-      price: { eurCents: 3900, usdCents: 4500 },
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
       productId: 7,
       productSlug: "glute-growth-guide",
       publishedBy: { kind: "machine", id: "management-agent" },

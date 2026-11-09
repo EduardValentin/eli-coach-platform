@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   type FindPublishedProductUseCase,
   type ListPublishedProductsUseCase,
-  ProductPrice,
+  ProductPricing,
   PublishedProduct,
 } from "~/bounded-contexts/sales/store/domain/product";
 
@@ -54,7 +54,11 @@ describe("StoreCatalogController", () => {
       execute: vi.fn().mockResolvedValue({
         status: "available",
         product: createProduct(
-          ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+          ProductPricing.reconstitute({
+            kind: "paid",
+            eurCents: 3900,
+            usdCents: 4500,
+          }),
         ),
       }),
     } as unknown as FindPublishedProductUseCase;
@@ -105,11 +109,13 @@ describe("StoreCatalogController", () => {
   });
 });
 
-function createProduct(price: ProductPrice | null = null): PublishedProduct {
+function createProduct(
+  pricing: ProductPricing = ProductPricing.free(),
+): PublishedProduct {
   return PublishedProduct.reconstitute({
     displayOrder: 1,
     id: 7,
-    price,
+    pricing,
     slug: "hormone-harmony",
     version: {
       assets: [

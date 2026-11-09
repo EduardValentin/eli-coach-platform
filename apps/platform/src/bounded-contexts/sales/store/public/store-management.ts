@@ -32,10 +32,16 @@ const downloadDescriptorSchema = z.strictObject({
 
 const idempotencyKeySchema = z.string().trim().min(1).max(128);
 
-const pricesSchema = z.strictObject({
-  eurCents: z.number().optional(),
-  usdCents: z.number().optional(),
-});
+const productPricingSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("free") }),
+  z.strictObject({
+    kind: z.literal("paid"),
+    eurCents: z.number().optional(),
+    usdCents: z.number().optional(),
+  }),
+]);
+
+export type ProductPricingRequest = z.infer<typeof productPricingSchema>;
 
 const versionMetadataSchema = z.strictObject({
   title: z.string().trim().min(1).max(240),
@@ -53,7 +59,7 @@ export const productValidationMetadataSchema = z.union([
   versionMetadataSchema.extend({
     slug: productSlugSchema,
     idempotencyKey: idempotencyKeySchema.optional(),
-    prices: pricesSchema.nullable().optional(),
+    pricing: productPricingSchema,
   }),
   versionMetadataSchema.extend({
     targetProductSlug: productSlugSchema,
@@ -64,7 +70,7 @@ export const productValidationMetadataSchema = z.union([
 export const newProductMetadataSchema = versionMetadataSchema.extend({
   slug: productSlugSchema,
   idempotencyKey: idempotencyKeySchema,
-  prices: pricesSchema.nullable().optional(),
+  pricing: productPricingSchema,
 });
 
 export const productVersionMetadataSchema = versionMetadataSchema.extend({
@@ -73,5 +79,5 @@ export const productVersionMetadataSchema = versionMetadataSchema.extend({
 
 export const productPriceChangeSchema = z.strictObject({
   idempotencyKey: idempotencyKeySchema,
-  prices: pricesSchema.nullable(),
+  pricing: productPricingSchema,
 });

@@ -3,7 +3,7 @@ import {
   type PublishedProductCover,
   type StoreCatalogPort,
   type StoreTaxonomyValue,
-  ProductPrice,
+  ProductPricing,
   PublishedProduct,
 } from "~/bounded-contexts/sales/store/domain/product";
 import { sql } from "drizzle-orm";
@@ -226,7 +226,7 @@ function mapPublishedProduct(
     id: row.productId,
     slug: row.slug,
     displayOrder: row.displayOrder,
-    price: ProductPrice.fromStoredAmounts(row),
+    pricing: ProductPricing.fromStoredAmounts(row),
     version: {
       id: row.versionId,
       sequence: row.versionSequence,

@@ -34,10 +34,11 @@ export class PlanProductRevisionUseCase {
       const taxonomy =
         await this.options.storeProductPublicationsPort.getTaxonomy();
 
-      return ProductPublicationDraft.from({
-        ...command,
-        prices: null,
-      }).planRevision(product, taxonomy, this.options.productAssetDigestPort);
+      return ProductPublicationDraft.from(command).planRevision(
+        product,
+        taxonomy,
+        this.options.productAssetDigestPort,
+      );
     } catch {
       return { status: "unavailable" };
     }

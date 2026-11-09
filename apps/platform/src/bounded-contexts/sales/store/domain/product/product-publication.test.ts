@@ -5,14 +5,13 @@ import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import {
   MAX_PUBLICATION_BYTES,
   ProductPublicationDraft,
-  resolvePublicationTarget,
   validateSlugFormat,
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
-import type { ProductPriceInput } from "./product-price";
+import { ProductPricing, type ProductPricingInput } from "./product-pricing";
 
 const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PNG_BYTES = Uint8Array.from([
@@ -62,7 +61,7 @@ function existingProduct(
   return Product.reconstitute({
     displayOrder: 2,
     id: 7,
-    currentPrice: null,
+    currentPricing: ProductPricing.free(),
     latestVersionSequence: 3,
     lifecycleStatus,
     slug: "glute-growth-guide",
@@ -78,14 +77,14 @@ function draftOf(
     cover: ProductCoverInput;
     downloads: readonly ProductDownloadInput[];
     metadata: ProductVersionMetadata;
-    prices: ProductPriceInput | null;
+    pricing: ProductPricingInput;
   }> = {},
 ): ProductPublicationDraft {
   return ProductPublicationDraft.from({
     cover,
     downloads,
     metadata,
-    prices: null,
+    pricing: { kind: "free" },
     ...overrides,
   });
 }
@@ -105,25 +104,6 @@ describe("validateSlugFormat", () => {
 
     // assert
     expect(issue).toEqual(expected);
-  });
-});
-
-describe("resolvePublicationTarget", () => {
-  it.each([
-    [
-      { targetProductSlug: "guide", slug: "unused" },
-      { kind: "revision", targetProductSlug: "guide" },
-    ],
-    [{ slug: "guide" }, { kind: "new", slug: "guide" }],
-    [{}, null],
-  ])("resolves %o", (metadataFields, expected) => {
-    // arrange
-
-    // act
-    const target = resolvePublicationTarget(metadataFields);
-
-    // assert
-    expect(target).toEqual(expected);
   });
 });
 
@@ -159,7 +139,7 @@ describe("ProductPublicationDraft.plan", () => {
         goals: [taxonomy.goals[0]],
         metadata,
         operation: "create_product",
-        price: null,
+        pricing: { kind: "free" },
         productId: null,
         productSlug: "glute-growth-guide",
         totalUploadBytes: 14,
@@ -169,9 +149,11 @@ describe("ProductPublicationDraft.plan", () => {
     });
   });
 
-  it("resolves the prices of a paid product into the plan", () => {
+  it("resolves the pricing of a paid product into the plan", () => {
     // arrange
-    const draft = draftOf({ prices: { eurCents: 3900, usdCents: 4500 } });
+    const draft = draftOf({
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    });
 
     // act
     const result = draft.plan(placement, taxonomy, productAssetDigestPort);
@@ -179,15 +161,31 @@ describe("ProductPublicationDraft.plan", () => {
     // assert
     expect(result).toMatchObject({
       status: "valid",
-      plan: { price: { eurCents: 3900, usdCents: 4500 } },
+      plan: { pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 } },
     });
+  });
+
+  it("plans a revision draft without touching the pricing", () => {
+    // arrange
+    const draft = ProductPublicationDraft.from({ cover, downloads, metadata });
+
+    // act
+    const result = draft.plan(
+      existingProduct().revisionPlacement(),
+      taxonomy,
+      productAssetDigestPort,
+    );
+
+    // assert
+    expect(result.status).toBe("valid");
+    expect(result.status === "valid" && result.plan.pricing).toBeUndefined();
   });
 
   it("folds price issues into the other publication issues", () => {
     // arrange
     const draft = draftOf({
       metadata: { ...metadata, typeSlugs: ["meal-prep"] },
-      prices: { eurCents: 0 },
+      pricing: { kind: "paid", eurCents: 0 },
     });
 
     // act
@@ -448,41 +446,50 @@ describe("ProductPublicationDraft.requestDigest", () => {
     expect(changed).not.toBe(original);
   });
 
-  it.each([
-    ["a free product turns paid", null, { eurCents: 3900, usdCents: 4500 }],
+  it.each<[string, ProductPricingInput, ProductPricingInput]>([
+    [
+      "a free product turns paid",
+      { kind: "free" },
+      { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    ],
     [
       "one amount changes",
-      { eurCents: 3900, usdCents: 4500 },
-      { eurCents: 3900, usdCents: 4600 },
+      { kind: "paid", eurCents: 3900, usdCents: 4500 },
+      { kind: "paid", eurCents: 3900, usdCents: 4600 },
     ],
-    ["the amounts swap currencies", { eurCents: 3900 }, { usdCents: 3900 }],
-    ["an empty price replaces none", null, {}],
-  ])(
-    "changes when %s",
-    (_label, before: ProductPriceInput | null, after: ProductPriceInput) => {
-      // arrange
-      const contentDigestPort: ProductAssetDigestPort = {
-        sha256: (bytes) => new TextDecoder().decode(bytes),
-      };
-      const original = draftOf({ prices: before });
-      const repriced = draftOf({ prices: after });
+    [
+      "the amounts swap currencies",
+      { kind: "paid", eurCents: 3900 },
+      { kind: "paid", usdCents: 3900 },
+    ],
+    [
+      "a paid pricing without amounts replaces free",
+      { kind: "free" },
+      { kind: "paid" },
+    ],
+  ])("changes when %s", (_label, before, after) => {
+    // arrange
+    const contentDigestPort: ProductAssetDigestPort = {
+      sha256: (bytes) => new TextDecoder().decode(bytes),
+    };
+    const original = draftOf({ pricing: before });
+    const repriced = draftOf({ pricing: after });
 
-      // act
-      const originalDigest = original.requestDigest(
-        "create_product",
-        "glute-growth-guide",
-        contentDigestPort,
-      );
-      const repricedDigest = repriced.requestDigest(
-        "create_product",
-        "glute-growth-guide",
-        contentDigestPort,
-      );
+    // act
+    const originalDigest = original.requestDigest(
+      "create_product",
+      "glute-growth-guide",
+      contentDigestPort,
+    );
+    const repricedDigest = repriced.requestDigest(
+      "create_product",
+      "glute-growth-guide",
+      contentDigestPort,
+    );
 
-      // assert
-      expect(repricedDigest).not.toBe(originalDigest);
-    },
-  );
+    // assert
+    expect(repricedDigest).not.toBe(originalDigest);
+  });
 
   it("changes when the publication targets another product", () => {
     // arrange
@@ -680,7 +687,9 @@ describe("ProductPublicationDraft.planRevision", () => {
 describe("ProductPublicationDraft.persistCommand", () => {
   it("carries the plan and the request identity into the port command", () => {
     // arrange
-    const draft = draftOf({ prices: { eurCents: 3900, usdCents: 4500 } });
+    const draft = draftOf({
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    });
     const result = draft.plan(placement, taxonomy, productAssetDigestPort);
     const plan = result.status === "valid" ? result.plan : null;
 
@@ -701,7 +710,7 @@ describe("ProductPublicationDraft.persistCommand", () => {
       metadata,
       operation: "create_product",
       payloadDigest: "digest-1",
-      price: { eurCents: 3900, usdCents: 4500 },
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
       productId: null,
       productSlug: "glute-growth-guide",
       publishedBy: { kind: "machine", id: "management-agent" },

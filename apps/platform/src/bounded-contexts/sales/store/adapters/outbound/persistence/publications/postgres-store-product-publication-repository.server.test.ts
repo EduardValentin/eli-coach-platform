@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   Product,
-  ProductPrice,
+  ProductPricing,
   type PersistPriceChangeCommand,
   type PersistPublicationCommand,
 } from "~/bounded-contexts/sales/store/domain/product";
@@ -75,7 +75,7 @@ describe("PostgresStoreProductPublicationRepository", () => {
     // assert
     expect(product).toEqual(
       Product.reconstitute({
-        currentPrice: null,
+        currentPricing: ProductPricing.free(),
         displayOrder: 2,
         id: 7,
         latestVersionSequence: 3,
@@ -85,7 +85,7 @@ describe("PostgresStoreProductPublicationRepository", () => {
     );
   });
 
-  it("maps the product's current price", async () => {
+  it("maps the product's current paid pricing", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({
       rows: [
@@ -108,8 +108,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
       await postgresStoreProductPublicationRepository.findProductById(7);
 
     // assert
-    expect(product?.currentPrice).toEqual(
-      ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+    expect(product?.currentPricing).toEqual(
+      ProductPricing.reconstitute({
+        kind: "paid",
+        eurCents: 3900,
+        usdCents: 4500,
+      }),
     );
   });
 
@@ -453,7 +457,7 @@ function persistCommand(): PersistPublicationCommand {
     },
     operation: "create_product",
     payloadDigest: "c".repeat(64),
-    price: null,
+    pricing: { kind: "free" },
     productId: null,
     productSlug: "glute-growth-guide",
     publishedBy: { kind: "machine", id: "management-api-agent" },
@@ -466,7 +470,7 @@ function priceChangeCommand(): PersistPriceChangeCommand {
   return {
     idempotencyKey: "reprice-1",
     payloadDigest: "c".repeat(64),
-    price: { eurCents: 3900, usdCents: 4500 },
+    pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
     productId: 7,
     productSlug: "glute-growth-guide",
     publishedBy: { kind: "machine", id: "management-api-agent" },

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { APIRequestContext } from "@playwright/test";
-import type { StorePrice } from "~/bounded-contexts/sales/store/public/store-currency";
+import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 
 import { answerOf, type ApiAnswer } from "./api-answers";
 import {
@@ -13,7 +13,7 @@ import {
 export type StoreProductFields = {
   slug: string;
   title: string;
-  prices: StorePrice | null;
+  pricing: ProductPricingRequest;
 };
 
 type PublishedProductAnswer = { publication: { productId: number } };
@@ -30,7 +30,7 @@ export class StoreProductRequests {
     private readonly recordPublishing: (slug: string) => void,
   ) {}
 
-  private metadataOf({ slug, title, prices }: StoreProductFields) {
+  private metadataOf({ slug, title, pricing }: StoreProductFields) {
     return {
       slug,
       idempotencyKey: randomUUID(),
@@ -43,7 +43,7 @@ export class StoreProductRequests {
       typeSlugs: ["e-books"],
       goalSlugs: ["wellness"],
       downloads: [{ field: DOWNLOAD_FIELD, customerFilename: `${slug}.pdf` }],
-      ...(prices ? { prices } : {}),
+      pricing,
     };
   }
 
@@ -80,13 +80,13 @@ export class StoreProductRequests {
     return (answer.body as PublishedProductAnswer).publication.productId;
   }
 
-  async changePricesAccepted(
+  async changePricingAccepted(
     productId: number,
-    prices: StorePrice | null,
+    pricing: ProductPricingRequest,
   ): Promise<void> {
     const answer = await answerOf(
       await this.request.post(`${PRODUCTS_PATH}/${productId}/prices`, {
-        data: { idempotencyKey: randomUUID(), prices },
+        data: { idempotencyKey: randomUUID(), pricing },
       }),
     );
 

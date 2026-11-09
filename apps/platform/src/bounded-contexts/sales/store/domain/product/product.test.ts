@@ -7,6 +7,7 @@ import {
   type PinnedProductSelection,
 } from "./product";
 import { ProductPrice } from "./product-price";
+import { ProductPricing } from "./product-pricing";
 
 const selection: PinnedProductSelection = {
   productId: 1,
@@ -27,7 +28,7 @@ describe("Product.revisionPlacement", () => {
     const product = Product.reconstitute({
       displayOrder: 2,
       id: 7,
-      currentPrice: null,
+      currentPricing: ProductPricing.free(),
       latestVersionSequence: 3,
       lifecycleStatus: "published",
       slug: "glute-growth-guide",
@@ -186,7 +187,7 @@ describe("Product#canBeRevised", () => {
         displayOrder: 1,
         lifecycleStatus,
         latestVersionSequence: 3,
-        currentPrice: null,
+        currentPricing: ProductPricing.free(),
       });
 
       // act
@@ -207,7 +208,7 @@ describe("Product#nextVersionSequence", () => {
       displayOrder: 1,
       lifecycleStatus: "published",
       latestVersionSequence: 3,
-      currentPrice: null,
+      currentPricing: ProductPricing.free(),
     });
 
     // act
@@ -254,7 +255,7 @@ describe("PublishedProduct#deliveryResource", () => {
         goals: [{ slug: "wellness", label: "Wellness", displayOrder: 3 }],
         publishedAt: new Date("2026-07-30T10:00:00.000Z"),
       },
-      price: null,
+      pricing: ProductPricing.free(),
     });
 
     // act
@@ -268,14 +269,16 @@ describe("PublishedProduct#deliveryResource", () => {
   });
 });
 
-const paidPrice = ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 });
+const paidPricing = ProductPricing.paid(
+  ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+);
 
 function productPriced(
-  currentPrice: ProductPrice | null,
+  currentPricing: ProductPricing,
   lifecycleStatus: "archived" | "published" = "published",
 ): Product {
   return Product.reconstitute({
-    currentPrice,
+    currentPricing,
     displayOrder: 2,
     id: 7,
     latestVersionSequence: 3,
@@ -287,16 +290,16 @@ function productPriced(
 describe("Product.planPriceChange", () => {
   it("plans a free product turning paid", () => {
     // arrange
-    const product = productPriced(null);
+    const product = productPriced(ProductPricing.free());
 
     // act
-    const decision = product.planPriceChange(paidPrice);
+    const decision = product.planPriceChange(paidPricing);
 
     // assert
     expect(decision).toEqual({
       status: "planned",
       plan: {
-        price: paidPrice,
+        pricing: paidPricing,
         productId: 7,
         productSlug: "glute-growth-guide",
       },
@@ -305,22 +308,30 @@ describe("Product.planPriceChange", () => {
 
   it("plans a paid product turning free", () => {
     // arrange
-    const product = productPriced(paidPrice);
+    const product = productPriced(paidPricing);
 
     // act
-    const decision = product.planPriceChange(null);
+    const decision = product.planPriceChange(ProductPricing.free());
 
     // assert
     expect(decision).toEqual({
       status: "planned",
-      plan: { price: null, productId: 7, productSlug: "glute-growth-guide" },
+      plan: {
+        pricing: ProductPricing.free(),
+        productId: 7,
+        productSlug: "glute-growth-guide",
+      },
     });
   });
 
   it("plans new amounts for a paid product", () => {
     // arrange
-    const product = productPriced(paidPrice);
-    const next = ProductPrice.reconstitute({ eurCents: 4900, usdCents: 5500 });
+    const product = productPriced(paidPricing);
+    const next = ProductPricing.reconstitute({
+      kind: "paid",
+      eurCents: 4900,
+      usdCents: 5500,
+    });
 
     // act
     const decision = product.planPriceChange(next);
@@ -328,20 +339,24 @@ describe("Product.planPriceChange", () => {
     // assert
     expect(decision).toMatchObject({
       status: "planned",
-      plan: { price: next },
+      plan: { pricing: next },
     });
   });
 
   it.each([
     [
       "the same amounts",
-      paidPrice,
-      ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+      paidPricing,
+      ProductPricing.reconstitute({
+        kind: "paid",
+        eurCents: 3900,
+        usdCents: 4500,
+      }),
     ],
-    ["free to free", null, null],
-  ])("refuses %s as unchanged", (_label, currentPrice, next) => {
+    ["free to free", ProductPricing.free(), ProductPricing.free()],
+  ])("refuses %s as unchanged", (_label, currentPricing, next) => {
     // arrange
-    const product = productPriced(currentPrice);
+    const product = productPriced(currentPricing);
 
     // act
     const decision = product.planPriceChange(next);
@@ -355,10 +370,10 @@ describe("Product.planPriceChange", () => {
 
   it("refuses a retired product", () => {
     // arrange
-    const product = productPriced(null, "archived");
+    const product = productPriced(ProductPricing.free(), "archived");
 
     // act
-    const decision = product.planPriceChange(paidPrice);
+    const decision = product.planPriceChange(paidPricing);
 
     // assert
     expect(decision).toEqual({
@@ -370,14 +385,14 @@ describe("Product.planPriceChange", () => {
 
 describe("PublishedProduct.isPaid", () => {
   it.each([
-    ["paid", paidPrice, true],
-    ["free", null, false],
-  ])("reports a %s published product", (_label, price, paid) => {
+    ["paid", paidPricing, true],
+    ["free", ProductPricing.free(), false],
+  ])("reports a %s published product", (_label, pricing, paid) => {
     // arrange
     const publishedProduct = PublishedProduct.reconstitute({
       displayOrder: 1,
       id: 7,
-      price,
+      pricing,
       slug: "hormone-harmony",
       version: {} as PublishedProduct["version"],
     });

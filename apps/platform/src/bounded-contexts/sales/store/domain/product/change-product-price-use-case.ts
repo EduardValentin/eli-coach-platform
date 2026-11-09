@@ -1,5 +1,5 @@
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
-import type { ProductPriceInput } from "./product-price";
+import type { ProductPricingInput } from "./product-pricing";
 import { ProductPriceChange } from "./product-price-change";
 import type {
   PublishingPrincipal,
@@ -9,7 +9,7 @@ import type { StoreProductPublicationsPort } from "./store-product-publications-
 
 export type ChangeProductPriceCommand = {
   idempotencyKey: string;
-  prices: ProductPriceInput | null;
+  pricing: ProductPricingInput;
   productId: number;
   publishedBy: PublishingPrincipal;
 };

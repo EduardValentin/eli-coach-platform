@@ -7,6 +7,7 @@ import {
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "~/bounded-contexts/legal/public";
+import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
@@ -447,7 +448,7 @@ describe("Store integration", () => {
     await seedPublishedProductVersion();
     const madePaid = await changeSeededProductPrice({
       idempotencyKey: "reprice-paid",
-      prices: { eurCents: 3900, usdCents: 4500 },
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
     });
 
     // act
@@ -474,7 +475,7 @@ describe("Store integration", () => {
     const sentEmails = await suite.sentEmails();
     await changeSeededProductPrice({
       idempotencyKey: "reprice-free",
-      prices: null,
+      pricing: { kind: "free" },
     });
     const laterFreeRequest = await requestAcquisition({
       idempotencyKey: "6c2f1d4b-9e5a-4f3b-8c7d-8e9f0a1b2c3d",
@@ -977,7 +978,7 @@ function downloadTokenFrom(email: SentEmail): string {
 
 async function changeSeededProductPrice(body: {
   idempotencyKey: string;
-  prices: { eurCents: number; usdCents: number } | null;
+  pricing: ProductPricingRequest;
 }): Promise<Response> {
   const [product] = await suite.postgres.queryRows<{ id: number }>({
     sql: `select id from app.products where slug = 'hormone-harmony'`,

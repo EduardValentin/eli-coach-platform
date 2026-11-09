@@ -1,6 +1,5 @@
 import {
   MAX_PUBLICATION_BYTES,
-  resolvePublicationTarget,
   type ChangeProductPriceUseCase,
   type PlanNewProductUseCase,
   type PlanProductRevisionUseCase,
@@ -88,30 +87,20 @@ export class StoreProductManagementController {
 
     const { cover, downloads, metadata } = parsed.payload;
     const domainMetadata = toDomainMetadata(metadata);
-    const target = resolvePublicationTarget(metadata);
-
-    if (!target) {
-      return errorResponse(
-        "invalid_request",
-        "Provide either slug for a new product or targetProductSlug for a revision.",
-        400,
-      );
-    }
-
     const result: PublicationPlanResult =
-      target.kind === "revision"
+      "targetProductSlug" in metadata
         ? await this.options.planProductRevisionUseCase.execute({
             cover,
             downloads,
             metadata: domainMetadata,
-            productSlug: target.targetProductSlug,
+            productSlug: metadata.targetProductSlug,
           })
         : await this.options.planNewProductUseCase.execute({
             cover,
             downloads,
             metadata: domainMetadata,
-            prices: "prices" in metadata ? (metadata.prices ?? null) : null,
-            slug: target.slug,
+            pricing: metadata.pricing,
+            slug: metadata.slug,
           });
 
     if (result.status === "unavailable") {
@@ -126,12 +115,7 @@ export class StoreProductManagementController {
       return validationFailureResponse(result.issues);
     }
 
-    const { price, ...plan } = result.plan;
-
-    return Response.json(
-      { success: true, plan: { ...plan, prices: price } },
-      { status: 200 },
-    );
+    return Response.json({ success: true, plan: result.plan }, { status: 200 });
   }
 
   async publishProduct(request: Request): Promise<Response> {
@@ -155,7 +139,7 @@ export class StoreProductManagementController {
         downloads,
         idempotencyKey: metadata.idempotencyKey,
         metadata: toDomainMetadata(metadata),
-        prices: metadata.prices ?? null,
+        pricing: metadata.pricing,
         publishedBy: authorized.principal,
         slug: metadata.slug,
       }),
@@ -226,11 +210,11 @@ export class StoreProductManagementController {
     return this.priceChangeResponse(
       await this.options.changeProductPriceUseCase.execute({
         idempotencyKey: parsed.body.idempotencyKey,
-        prices: parsed.body.prices,
+        pricing: parsed.body.pricing,
         productId,
         publishedBy: authorized.principal,
       }),
-      parsed.body.prices,
+      parsed.body.pricing,
     );
   }
 
@@ -334,14 +318,14 @@ export class StoreProductManagementController {
 
   private priceChangeResponse(
     result: PublishProductResult,
-    prices: PriceChangeBody["prices"],
+    pricing: PriceChangeBody["pricing"],
   ): Response {
     if (result.status !== "published" && result.status !== "replayed") {
       return publicationResponse(result);
     }
 
     return Response.json(
-      { success: true, publication: { ...publicationBody(result), prices } },
+      { success: true, publication: { ...publicationBody(result), pricing } },
       { status: result.status === "replayed" ? 200 : 201 },
     );
   }

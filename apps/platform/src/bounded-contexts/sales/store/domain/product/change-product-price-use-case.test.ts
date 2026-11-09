@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ChangeProductPriceUseCase } from "./change-product-price-use-case";
+import {
+  ChangeProductPriceUseCase,
+  type ChangeProductPriceCommand,
+} from "./change-product-price-use-case";
 import { Product } from "./product";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
-import { ProductPrice } from "./product-price";
+import { ProductPricing, type ProductPricingInput } from "./product-pricing";
 import type { PublishingPrincipal } from "./product-publication";
 import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
@@ -21,19 +24,21 @@ const repricedPublication = {
   publishedAt: new Date("2026-11-08T12:00:00.000Z"),
 };
 
-const changePriceCommand = {
+const FREE: ProductPricingInput = { kind: "free" };
+
+const changePriceCommand: ChangeProductPriceCommand = {
   idempotencyKey: "reprice-1",
-  prices: { eurCents: 3900, usdCents: 4500 },
+  pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
   productId: 7,
   publishedBy: AGENT,
 };
 
 function productPriced(
-  currentPrice: ProductPrice | null,
+  currentPricing: ProductPricing,
   lifecycleStatus: "archived" | "published" = "published",
 ): Product {
   return Product.reconstitute({
-    currentPrice,
+    currentPricing,
     displayOrder: 2,
     id: 7,
     latestVersionSequence: 3,
@@ -44,7 +49,9 @@ function productPriced(
 
 function createUseCase(overrides: Partial<StoreProductPublicationsPort> = {}) {
   const storeProductPublicationsPort: StoreProductPublicationsPort = {
-    findProductById: vi.fn().mockResolvedValue(productPriced(null)),
+    findProductById: vi
+      .fn()
+      .mockResolvedValue(productPriced(ProductPricing.free())),
     findProductBySlug: vi.fn(),
     findPublicationByIdempotencyKey: vi.fn().mockResolvedValue(null),
     getNextDisplayOrder: vi.fn(),
@@ -89,7 +96,7 @@ describe("ChangeProductPriceUseCase", () => {
     ).toHaveBeenCalledWith(
       expect.objectContaining({
         idempotencyKey: "reprice-1",
-        price: { eurCents: 3900, usdCents: 4500 },
+        pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
         productId: 7,
         productSlug: "glute-growth-guide",
         publishedBy: AGENT,
@@ -101,26 +108,30 @@ describe("ChangeProductPriceUseCase", () => {
     // arrange
     const { changeProductPriceUseCase, storeProductPublicationsPort } =
       createUseCase({
-        findProductById: vi
-          .fn()
-          .mockResolvedValue(
-            productPriced(
-              ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
-            ),
+        findProductById: vi.fn().mockResolvedValue(
+          productPriced(
+            ProductPricing.reconstitute({
+              kind: "paid",
+              eurCents: 3900,
+              usdCents: 4500,
+            }),
           ),
+        ),
       });
 
     // act
     const result = await changeProductPriceUseCase.execute({
       ...changePriceCommand,
-      prices: null,
+      pricing: FREE,
     });
 
     // assert
     expect(result.status).toBe("published");
     expect(
       storeProductPublicationsPort.persistPriceChange,
-    ).toHaveBeenCalledWith(expect.objectContaining({ price: null }));
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ pricing: { kind: "free" } }),
+    );
   });
 
   it("replays a stored change for the same payload without recording again", async () => {
@@ -177,22 +188,22 @@ describe("ChangeProductPriceUseCase", () => {
     [
       "an unknown product",
       null,
-      changePriceCommand.prices,
+      changePriceCommand.pricing,
       "product_not_found",
     ],
     [
       "a retired product",
-      productPriced(null, "archived"),
-      changePriceCommand.prices,
+      productPriced(ProductPricing.free(), "archived"),
+      changePriceCommand.pricing,
       "product_retired",
     ],
     [
       "a free product made free again",
-      productPriced(null),
-      null,
+      productPriced(ProductPricing.free()),
+      FREE,
       "price_unchanged",
     ],
-  ])("refuses %s without recording", async (_label, product, prices, code) => {
+  ])("refuses %s without recording", async (_label, product, pricing, code) => {
     // arrange
     const { changeProductPriceUseCase, storeProductPublicationsPort } =
       createUseCase({ findProductById: vi.fn().mockResolvedValue(product) });
@@ -200,7 +211,7 @@ describe("ChangeProductPriceUseCase", () => {
     // act
     const result = await changeProductPriceUseCase.execute({
       ...changePriceCommand,
-      prices,
+      pricing,
     });
 
     // assert
@@ -217,7 +228,7 @@ describe("ChangeProductPriceUseCase", () => {
     // act
     const result = await changeProductPriceUseCase.execute({
       ...changePriceCommand,
-      prices: { eurCents: 0, usdCents: 4500 },
+      pricing: { kind: "paid", eurCents: 0, usdCents: 4500 },
     });
 
     // assert

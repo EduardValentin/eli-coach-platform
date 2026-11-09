@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ProductPrice } from "~/bounded-contexts/sales/store/domain/product";
+import { ProductPricing } from "~/bounded-contexts/sales/store/domain/product";
 import type { DatabaseClient } from "~/shared/database";
 
 import { PostgresStoreCatalogRepository } from "./postgres-store-catalog-repository.server";
@@ -80,7 +80,7 @@ describe("PostgresStoreCatalogRepository", () => {
         id: 7,
         slug: "hormone-harmony",
         displayOrder: 1,
-        price: null,
+        pricing: ProductPricing.free(),
         version: {
           id: 11,
           sequence: 2,
@@ -114,7 +114,7 @@ describe("PostgresStoreCatalogRepository", () => {
     ]);
   });
 
-  it("maps the current price of a paid product", async () => {
+  it("maps the current pricing of a paid product", async () => {
     // arrange
     const execute = vi
       .fn()
@@ -154,8 +154,12 @@ describe("PostgresStoreCatalogRepository", () => {
       );
 
     // assert
-    expect(product?.price).toEqual(
-      ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+    expect(product?.pricing).toEqual(
+      ProductPricing.reconstitute({
+        kind: "paid",
+        eurCents: 3900,
+        usdCents: 4500,
+      }),
     );
   });
 });

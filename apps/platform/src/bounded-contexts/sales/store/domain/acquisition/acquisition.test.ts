@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 
-import { ProductPrice, PublishedProduct } from "../product";
+import { ProductPricing, PublishedProduct } from "../product";
 
 import { AcquisitionRequest, evaluateDeliveryLimit } from "./acquisition";
 
@@ -18,13 +18,13 @@ const command = {
 
 function createProduct(
   slug: string,
-  price: ProductPrice | null = null,
+  pricing: ProductPricing = ProductPricing.free(),
 ): PublishedProduct {
   return PublishedProduct.reconstitute({
     id: 7,
     slug,
     displayOrder: 1,
-    price,
+    pricing,
     version: {
       id: 11,
       sequence: 2,
@@ -212,13 +212,17 @@ describe("AcquisitionRequest.selectProducts with paid products", () => {
       requestedAt,
       emailAcceptance,
     );
-    const price = ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 });
+    const pricing = ProductPricing.reconstitute({
+      kind: "paid",
+      eurCents: 3900,
+      usdCents: 4500,
+    });
 
     // act
     const selection = request.selectProducts([
       createProduct("hormone-harmony"),
-      createProduct("glute-plan", price),
-      createProduct("strength-plan", price),
+      createProduct("glute-plan", pricing),
+      createProduct("strength-plan", pricing),
     ]);
 
     // assert
@@ -240,7 +244,11 @@ describe("AcquisitionRequest.selectProducts with paid products", () => {
     const selection = request.selectProducts([
       createProduct(
         "glute-plan",
-        ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+        ProductPricing.reconstitute({
+          kind: "paid",
+          eurCents: 3900,
+          usdCents: 4500,
+        }),
       ),
     ]);
 

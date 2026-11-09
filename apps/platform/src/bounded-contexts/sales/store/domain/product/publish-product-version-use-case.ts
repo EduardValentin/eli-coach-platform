@@ -33,10 +33,7 @@ export class PublishProductVersionUseCase {
     command: PublishProductVersionCommand,
   ): Promise<PublishProductResult> {
     try {
-      const draft = ProductPublicationDraft.from({
-        ...command,
-        prices: null,
-      });
+      const draft = ProductPublicationDraft.from(command);
       const payloadDigest = draft.requestDigest(
         "revise_product",
         String(command.productId),

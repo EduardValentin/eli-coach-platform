@@ -31,10 +31,13 @@ const metadata = {
   goalSlugs: ["muscle-building"],
   idempotencyKey: "publish-1",
   includedItems: ["The three glute muscles"],
+  pricing: { kind: "free" },
   slug: "glute-growth-guide",
   title: "Glute Growth Guide",
   typeSlugs: ["e-books"],
 };
+
+const PAID_PRICING = { kind: "paid", eurCents: 3900, usdCents: 4500 };
 
 const publication = {
   id: 41,
@@ -410,7 +413,7 @@ describe("StoreProductManagementController outcomes", () => {
       }),
     });
 
-    const { slug: _slug, ...revisionMetadata } = metadata;
+    const { slug: _slug, pricing: _pricing, ...revisionMetadata } = metadata;
 
     // act
     const response =
@@ -522,7 +525,12 @@ describe("StoreProductManagementController outcomes", () => {
     // arrange
     const useCases = createUseCases();
     const storeProductManagementController = createController({ useCases });
-    const { slug: _slug, idempotencyKey: _key, ...base } = metadata;
+    const {
+      slug: _slug,
+      idempotencyKey: _key,
+      pricing: _pricing,
+      ...base
+    } = metadata;
 
     // act
     await storeProductManagementController.validate(
@@ -596,25 +604,54 @@ describe("StoreProductManagementController strict publication schemas", () => {
     expect(response.status).toBe(400);
   });
 
-  it("rejects an unknown field inside the prices", async () => {
+  it.each([
+    ["omits the pricing", { pricing: undefined }],
+    ["sends a null pricing", { pricing: null }],
+    ["sends an unknown kind", { pricing: { kind: "discounted" } }],
+    [
+      "sends amounts on a free pricing",
+      { pricing: { kind: "free", eurCents: 3900, usdCents: 4500 } },
+    ],
+    [
+      "sends an unknown field inside a paid pricing",
+      { pricing: { ...PAID_PRICING, gbpCents: 3300 } },
+    ],
+    ["sends the retired prices field", { prices: PAID_PRICING }],
+  ])("rejects a new product that %s", async (_label, pricingFields) => {
     // arrange
-    const storeProductManagementController = createController({});
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
 
     // act
     const response = await storeProductManagementController.publishProduct(
-      publicationRequest({
-        metadata: {
-          ...metadata,
-          prices: { eurCents: 3900, usdCents: 4500, gbpCents: 3300 },
-        },
-      }),
+      publicationRequest({ metadata: { ...metadata, ...pricingFields } }),
     );
 
     // assert
     expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: { code: "invalid_request" },
+    });
+    expect(useCases.publishNewProductUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it("rejects prices sent on a content revision", async () => {
+  it("rejects a new-product dry run without a pricing", async () => {
+    // arrange
+    const useCases = createUseCases();
+    const storeProductManagementController = createController({ useCases });
+    const { pricing: _pricing, ...withoutPricing } = metadata;
+
+    // act
+    const response = await storeProductManagementController.validate(
+      publicationRequest({ metadata: withoutPricing }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(useCases.planNewProductUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it("rejects a pricing sent on a content revision", async () => {
     // arrange
     const useCases = createUseCases();
     const storeProductManagementController = createController({ useCases });
@@ -623,12 +660,7 @@ describe("StoreProductManagementController strict publication schemas", () => {
     // act
     const response =
       await storeProductManagementController.publishProductVersion(
-        publicationRequest({
-          metadata: {
-            ...revisionMetadata,
-            prices: { eurCents: 3900, usdCents: 4500 },
-          },
-        }),
+        publicationRequest({ metadata: revisionMetadata }),
         "7",
       );
 
@@ -639,7 +671,7 @@ describe("StoreProductManagementController strict publication schemas", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("rejects prices on a dry run of a revision", async () => {
+  it("rejects a pricing on a dry run of a revision", async () => {
     // arrange
     const useCases = createUseCases();
     const storeProductManagementController = createController({ useCases });
@@ -648,11 +680,7 @@ describe("StoreProductManagementController strict publication schemas", () => {
     // act
     const response = await storeProductManagementController.validate(
       publicationRequest({
-        metadata: {
-          ...base,
-          prices: { eurCents: 3900, usdCents: 4500 },
-          targetProductSlug: "glute-growth-guide",
-        },
+        metadata: { ...base, targetProductSlug: "glute-growth-guide" },
       }),
     );
 
@@ -661,55 +689,44 @@ describe("StoreProductManagementController strict publication schemas", () => {
     expect(useCases.planProductRevisionUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it("passes a new product's prices to the publication as submitted", async () => {
-    // arrange
-    const useCases = createUseCases();
-    const storeProductManagementController = createController({ useCases });
+  it.each([
+    ["free", { kind: "free" }],
+    ["paid", PAID_PRICING],
+    ["unvalidated paid", { kind: "paid", eurCents: 39.5 }],
+  ])(
+    "passes a new product's %s pricing to the publication as submitted",
+    async (_label, pricing) => {
+      // arrange
+      const useCases = createUseCases();
+      const storeProductManagementController = createController({ useCases });
 
-    // act
-    await storeProductManagementController.publishProduct(
-      publicationRequest({
-        metadata: { ...metadata, prices: { eurCents: 39.5 } },
-      }),
-    );
+      // act
+      await storeProductManagementController.publishProduct(
+        publicationRequest({ metadata: { ...metadata, pricing } }),
+      );
 
-    // assert
-    expect(useCases.publishNewProductUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ prices: { eurCents: 39.5 } }),
-    );
-  });
+      // assert
+      expect(useCases.publishNewProductUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ pricing }),
+      );
+    },
+  );
 
-  it("publishes a product without prices as free", async () => {
-    // arrange
-    const useCases = createUseCases();
-    const storeProductManagementController = createController({ useCases });
-
-    // act
-    await storeProductManagementController.publishProduct(publicationRequest());
-
-    // assert
-    expect(useCases.publishNewProductUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ prices: null }),
-    );
-  });
-
-  it("dry-runs a new paid product with its prices and the key it ignores", async () => {
+  it("dry-runs a new paid product with its pricing and the key it ignores", async () => {
     // arrange
     const useCases = createUseCases();
     const storeProductManagementController = createController({ useCases });
 
     // act
     const response = await storeProductManagementController.validate(
-      publicationRequest({
-        metadata: { ...metadata, prices: { eurCents: 3900, usdCents: 4500 } },
-      }),
+      publicationRequest({ metadata: { ...metadata, pricing: PAID_PRICING } }),
     );
 
     // assert
     expect(response.status).toBe(200);
     expect(useCases.planNewProductUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
-        prices: { eurCents: 3900, usdCents: 4500 },
+        pricing: PAID_PRICING,
         slug: "glute-growth-guide",
       }),
     );
@@ -717,7 +734,7 @@ describe("StoreProductManagementController strict publication schemas", () => {
 });
 
 describe("StoreProductManagementController dry-run response", () => {
-  it("reports the planned price under the documented prices field", async () => {
+  it("reports the planned pricing as planned", async () => {
     // arrange
     const storeProductManagementController = createController({
       useCases: createUseCases({
@@ -725,7 +742,7 @@ describe("StoreProductManagementController dry-run response", () => {
           status: "valid",
           plan: {
             operation: "create_product",
-            price: { eurCents: 3900, usdCents: 4500 },
+            pricing: PAID_PRICING,
             productSlug: "glute-growth-guide",
           },
         }),
@@ -741,7 +758,7 @@ describe("StoreProductManagementController dry-run response", () => {
       success: true,
       plan: {
         operation: "create_product",
-        prices: { eurCents: 3900, usdCents: 4500 },
+        pricing: PAID_PRICING,
         productSlug: "glute-growth-guide",
       },
     });
@@ -758,7 +775,7 @@ describe("StoreProductManagementController price changes", () => {
     });
     const request = priceChangeRequest({
       idempotencyKey: "reprice-1",
-      prices: null,
+      pricing: { kind: "free" },
     });
 
     // act
@@ -781,7 +798,7 @@ describe("StoreProductManagementController price changes", () => {
     const response = await storeProductManagementController.changeProductPrice(
       priceChangeRequest({
         idempotencyKey: "reprice-1",
-        prices: { eurCents: 3900, usdCents: 4500 },
+        pricing: PAID_PRICING,
       }),
       "7",
     );
@@ -793,7 +810,7 @@ describe("StoreProductManagementController price changes", () => {
       publication: {
         id: 52,
         operation: "reprice_product",
-        prices: { eurCents: 3900, usdCents: 4500 },
+        pricing: PAID_PRICING,
         productId: 7,
         productSlug: "glute-growth-guide",
         productVersionId: null,
@@ -803,13 +820,13 @@ describe("StoreProductManagementController price changes", () => {
     });
     expect(useCases.changeProductPriceUseCase.execute).toHaveBeenCalledWith({
       idempotencyKey: "reprice-1",
-      prices: { eurCents: 3900, usdCents: 4500 },
+      pricing: PAID_PRICING,
       productId: 7,
       publishedBy: PRINCIPAL,
     });
   });
 
-  it("answers a replayed free change with 200 and no prices", async () => {
+  it("answers a replayed free change with 200 and its free pricing", async () => {
     // arrange
     const storeProductManagementController = createController({
       useCases: createUseCases({
@@ -822,29 +839,52 @@ describe("StoreProductManagementController price changes", () => {
 
     // act
     const response = await storeProductManagementController.changeProductPrice(
-      priceChangeRequest({ idempotencyKey: "reprice-1", prices: null }),
+      priceChangeRequest({
+        idempotencyKey: "reprice-1",
+        pricing: { kind: "free" },
+      }),
       "7",
     );
 
     // assert
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
-      publication: { prices: null, replayed: true },
+      publication: { pricing: { kind: "free" }, replayed: true },
     });
   });
 
   it.each([
-    ["omits prices", { idempotencyKey: "reprice-1" }],
-    ["omits the idempotency key", { prices: null }],
+    ["omits the pricing", { idempotencyKey: "reprice-1" }],
+    ["sends a null pricing", { idempotencyKey: "reprice-1", pricing: null }],
     [
-      "carries an unknown field",
-      { idempotencyKey: "reprice-1", prices: null, productVersionId: 3 },
+      "sends an unknown kind",
+      { idempotencyKey: "reprice-1", pricing: { kind: "discounted" } },
     ],
     [
-      "carries an unknown price field",
+      "sends amounts on a free pricing",
       {
         idempotencyKey: "reprice-1",
-        prices: { eurCents: 1, usdCents: 1, x: 1 },
+        pricing: { kind: "free", eurCents: 3900, usdCents: 4500 },
+      },
+    ],
+    [
+      "sends the retired prices field",
+      { idempotencyKey: "reprice-1", prices: { eurCents: 1, usdCents: 1 } },
+    ],
+    ["omits the idempotency key", { pricing: { kind: "free" } }],
+    [
+      "carries an unknown field",
+      {
+        idempotencyKey: "reprice-1",
+        pricing: { kind: "free" },
+        productVersionId: 3,
+      },
+    ],
+    [
+      "carries an unknown field inside a paid pricing",
+      {
+        idempotencyKey: "reprice-1",
+        pricing: { kind: "paid", eurCents: 1, usdCents: 1, x: 1 },
       },
     ],
     ["is not JSON", "{not json"],
@@ -875,7 +915,7 @@ describe("StoreProductManagementController price changes", () => {
     const response = await storeProductManagementController.changeProductPrice(
       priceChangeRequest({
         idempotencyKey: "x".repeat(20_000),
-        prices: null,
+        pricing: { kind: "free" },
       }),
       "7",
     );
@@ -890,7 +930,10 @@ describe("StoreProductManagementController price changes", () => {
 
     // act
     const response = await storeProductManagementController.changeProductPrice(
-      priceChangeRequest({ idempotencyKey: "reprice-1", prices: null }),
+      priceChangeRequest({
+        idempotencyKey: "reprice-1",
+        pricing: { kind: "free" },
+      }),
       "abc",
     );
 
@@ -928,7 +971,10 @@ describe("StoreProductManagementController price changes", () => {
 
     // act
     const response = await storeProductManagementController.changeProductPrice(
-      priceChangeRequest({ idempotencyKey: "reprice-1", prices: null }),
+      priceChangeRequest({
+        idempotencyKey: "reprice-1",
+        pricing: { kind: "free" },
+      }),
       "7",
     );
 

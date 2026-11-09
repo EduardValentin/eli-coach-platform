@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { PlanNewProductUseCase } from "./plan-new-product-use-case";
+import {
+  PlanNewProductUseCase,
+  type PlanNewProductCommand,
+} from "./plan-new-product-use-case";
 import { PlanProductRevisionUseCase } from "./plan-product-revision-use-case";
 import { Product } from "./product";
 import type { ProductAssetWriterPort } from "./product-asset-writer-port";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
+import { ProductPricing, type ProductPricingInput } from "./product-pricing";
 import type {
   ProductCoverInput,
   ProductDownloadInput,
@@ -55,7 +59,7 @@ function existingProduct(
   lifecycleStatus: "archived" | "draft" | "published" = "published",
 ): Product {
   return Product.reconstitute({
-    currentPrice: null,
+    currentPricing: ProductPricing.free(),
     displayOrder: 2,
     id: 7,
     latestVersionSequence: 3,
@@ -119,9 +123,9 @@ const newProductCommand = {
   cover,
   downloads,
   metadata,
-  prices: null,
+  pricing: { kind: "free" },
   slug: "glute-growth-guide",
-};
+} satisfies PlanNewProductCommand;
 
 const publishNewProductCommand = {
   ...newProductCommand,
@@ -149,22 +153,25 @@ describe("PlanNewProductUseCase", () => {
     });
   });
 
-  it("reports the resolved prices of a paid product", async () => {
-    // arrange
-    const { planOptions } = createOptions();
+  it.each<[string, ProductPricingInput]>([
+    ["free", { kind: "free" }],
+    ["paid", { kind: "paid", eurCents: 3900, usdCents: 4500 }],
+  ])(
+    "reports the resolved pricing of a %s product",
+    async (_label, pricing) => {
+      // arrange
+      const { planOptions } = createOptions();
 
-    // act
-    const result = await new PlanNewProductUseCase(planOptions).execute({
-      ...newProductCommand,
-      prices: { eurCents: 3900, usdCents: 4500 },
-    });
+      // act
+      const result = await new PlanNewProductUseCase(planOptions).execute({
+        ...newProductCommand,
+        pricing,
+      });
 
-    // assert
-    expect(result.status === "valid" && result.plan.price).toEqual({
-      eurCents: 3900,
-      usdCents: 4500,
-    });
-  });
+      // assert
+      expect(result.status === "valid" && result.plan.pricing).toEqual(pricing);
+    },
+  );
 
   it("names the price rule a paid product breaks", async () => {
     // arrange
@@ -173,7 +180,7 @@ describe("PlanNewProductUseCase", () => {
     // act
     const result = await new PlanNewProductUseCase(planOptions).execute({
       ...newProductCommand,
-      prices: { eurCents: 3900 },
+      pricing: { kind: "paid", eurCents: 3900 },
     });
 
     // assert
@@ -333,23 +340,27 @@ describe("PublishNewProductUseCase", () => {
     );
   });
 
-  it("records the first price of a paid product with its publication", async () => {
-    // arrange
-    const { options, storeProductPublicationsPort } = createOptions();
+  it.each<[string, ProductPricingInput]>([
+    ["free", { kind: "free" }],
+    ["paid", { kind: "paid", eurCents: 3900, usdCents: 4500 }],
+  ])(
+    "records the pricing of a %s product with its publication",
+    async (_label, pricing) => {
+      // arrange
+      const { options, storeProductPublicationsPort } = createOptions();
 
-    // act
-    await new PublishNewProductUseCase(options).execute({
-      ...publishNewProductCommand,
-      prices: { eurCents: 3900, usdCents: 4500 },
-    });
+      // act
+      await new PublishNewProductUseCase(options).execute({
+        ...publishNewProductCommand,
+        pricing,
+      });
 
-    // assert
-    expect(
-      storeProductPublicationsPort.persistPublication,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({ price: { eurCents: 3900, usdCents: 4500 } }),
-    );
-  });
+      // assert
+      expect(
+        storeProductPublicationsPort.persistPublication,
+      ).toHaveBeenCalledWith(expect.objectContaining({ pricing }));
+    },
+  );
 
   it("publishes nothing when a price breaks the rule", async () => {
     // arrange
@@ -359,7 +370,7 @@ describe("PublishNewProductUseCase", () => {
     // act
     const result = await new PublishNewProductUseCase(options).execute({
       ...publishNewProductCommand,
-      prices: { eurCents: 3900, usdCents: 100_000_000 },
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 100_000_000 },
     });
 
     // assert
@@ -503,6 +514,7 @@ describe("PublishProductVersionUseCase", () => {
       expect.objectContaining({
         displayOrder: 2,
         operation: "revise_product",
+        pricing: undefined,
         productId: 7,
         versionSequence: 4,
       }),

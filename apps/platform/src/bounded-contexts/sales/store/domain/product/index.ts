@@ -19,7 +19,6 @@ export { type ProductAssetDigestPort } from "./product-asset-digest-port";
 export { type StoreCatalogPort } from "./store-catalog-port";
 export {
   MAX_PUBLICATION_BYTES,
-  resolvePublicationTarget,
   type PersistPublicationCommand,
   type ProductCoverInput,
   type ProductDownloadInput,
@@ -46,10 +45,9 @@ export { PublishProductVersionUseCase } from "./publish-product-version-use-case
 export { RetireProductUseCase } from "./retire-product-use-case";
 export { ChangeProductPriceUseCase } from "./change-product-price-use-case";
 export {
-  ProductPrice,
   STORE_CURRENCIES,
   STORE_CURRENCY_AMOUNT_FIELDS,
-  type ProductPriceSnapshot,
   type StoreCurrency,
 } from "./product-price";
+export { ProductPricing, type ProductPricingSnapshot } from "./product-pricing";
 export { type PersistPriceChangeCommand } from "./product-price-change";

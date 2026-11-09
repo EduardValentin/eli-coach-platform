@@ -1,4 +1,4 @@
-import type { StorePrice } from "~/bounded-contexts/sales/store/public/store-currency";
+import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 
 import { subjectsTo } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
@@ -6,20 +6,29 @@ import { resolveRunId } from "../support/run-id";
 import type { StoreProductFields } from "../support/store-product-requests";
 
 const RUN_ID = resolveRunId();
-const PLAN_PRICES: StorePrice = { eurCents: 3900, usdCents: 4500 };
-const RAISED_PLAN_PRICES: StorePrice = { eurCents: 4900, usdCents: 5500 };
+const PLAN_PRICING: ProductPricingRequest = {
+  kind: "paid",
+  eurCents: 3900,
+  usdCents: 4500,
+};
+const RAISED_PLAN_PRICING: ProductPricingRequest = {
+  kind: "paid",
+  eurCents: 4900,
+  usdCents: 5500,
+};
+const FREE_PRICING: ProductPricingRequest = { kind: "free" };
 const NOT_SENT =
   "We couldn't send your resources right now. Your cart is saved, so please try again.";
 
 function storeProductFieldsOf(
   name: string,
   scenarioTag: string,
-  prices: StorePrice | null,
+  pricing: ProductPricingRequest,
 ): StoreProductFields {
   return {
     slug: `${name.toLowerCase().replaceAll(" ", "-")}-${RUN_ID}-${scenarioTag}`,
     title: `${name} ${scenarioTag}`,
-    prices,
+    pricing,
   };
 }
 
@@ -35,8 +44,12 @@ test(
     storeProductRequests,
   }) => {
     // arrange
-    const plan = storeProductFieldsOf("Glute Plan", scenarioTag, PLAN_PRICES);
-    const guide = storeProductFieldsOf("Mobility Guide", scenarioTag, null);
+    const plan = storeProductFieldsOf("Glute Plan", scenarioTag, PLAN_PRICING);
+    const guide = storeProductFieldsOf(
+      "Mobility Guide",
+      scenarioTag,
+      FREE_PRICING,
+    );
     await storeProductRequests.publishAccepted(plan);
     await storeProductRequests.publishAccepted(guide);
 
@@ -82,7 +95,11 @@ test(
   { tag: "@completeness" },
   async ({ page, scenarioTag, storeCatalog, storeProductRequests }) => {
     // arrange
-    const plan = storeProductFieldsOf("Hormone Plan", scenarioTag, PLAN_PRICES);
+    const plan = storeProductFieldsOf(
+      "Hormone Plan",
+      scenarioTag,
+      PLAN_PRICING,
+    );
     const productId = await storeProductRequests.publishAccepted(plan);
 
     // act
@@ -92,16 +109,16 @@ test(
     await storeCatalog.expectPlanAt(plan.title, "€39.00");
 
     // act
-    await storeProductRequests.changePricesAccepted(productId, null);
+    await storeProductRequests.changePricingAccepted(productId, FREE_PRICING);
     await page.reload();
 
     // assert
     await storeCatalog.expectFreeResource(plan.title);
 
     // act
-    await storeProductRequests.changePricesAccepted(
+    await storeProductRequests.changePricingAccepted(
       productId,
-      RAISED_PLAN_PRICES,
+      RAISED_PLAN_PRICING,
     );
     await page.reload();
 
@@ -124,9 +141,13 @@ test(
     const plan = storeProductFieldsOf(
       "Strength Plan",
       scenarioTag,
-      PLAN_PRICES,
+      PLAN_PRICING,
     );
-    const guide = storeProductFieldsOf("Recovery Guide", scenarioTag, null);
+    const guide = storeProductFieldsOf(
+      "Recovery Guide",
+      scenarioTag,
+      FREE_PRICING,
+    );
     await storeProductRequests.publishAccepted(plan);
     await storeProductRequests.publishAccepted(guide);
     await storeCatalog.open();

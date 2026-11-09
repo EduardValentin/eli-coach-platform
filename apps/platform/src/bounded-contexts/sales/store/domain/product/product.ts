@@ -1,4 +1,4 @@
-import type { ProductPrice } from "./product-price";
+import type { ProductPricing } from "./product-pricing";
 
 const STORE_COVER_MIME_TYPES = [
   "image/avif",
@@ -57,7 +57,7 @@ type PublishedProductProps = {
   id: number;
   slug: string;
   displayOrder: number;
-  price: ProductPrice | null;
+  pricing: ProductPricing;
   version: PublishedProductVersion;
 };
 
@@ -65,14 +65,14 @@ export class PublishedProduct {
   readonly id: number;
   readonly slug: string;
   readonly displayOrder: number;
-  readonly price: ProductPrice | null;
+  readonly pricing: ProductPricing;
   readonly version: PublishedProductVersion;
 
   private constructor(props: PublishedProductProps) {
     this.id = props.id;
     this.slug = props.slug;
     this.displayOrder = props.displayOrder;
-    this.price = props.price;
+    this.pricing = props.pricing;
     this.version = props.version;
   }
 
@@ -81,7 +81,7 @@ export class PublishedProduct {
   }
 
   isPaid(): boolean {
-    return this.price !== null;
+    return this.pricing.isPaid();
   }
 
   deliveryResource(): { title: string; typeLabels: readonly string[] } {
@@ -126,7 +126,7 @@ export type PurchasabilityDecision =
   | { status: "unavailable"; purchasableSlugs: readonly string[] };
 
 export type PriceChangePlan = {
-  price: ProductPrice | null;
+  pricing: ProductPricing;
   productId: number;
   productSlug: string;
 };
@@ -139,7 +139,7 @@ export type PriceChangeDecision =
   | { status: "refused"; issue: PriceChangeRefusal };
 
 type ProductProps = {
-  currentPrice: ProductPrice | null;
+  currentPricing: ProductPricing;
   id: number;
   slug: string;
   displayOrder: number;
@@ -148,7 +148,7 @@ type ProductProps = {
 };
 
 export class Product {
-  readonly currentPrice: ProductPrice | null;
+  readonly currentPricing: ProductPricing;
   readonly id: number;
   readonly slug: string;
   readonly displayOrder: number;
@@ -156,7 +156,7 @@ export class Product {
   readonly latestVersionSequence: number;
 
   private constructor(props: ProductProps) {
-    this.currentPrice = props.currentPrice;
+    this.currentPricing = props.currentPricing;
     this.id = props.id;
     this.slug = props.slug;
     this.displayOrder = props.displayOrder;
@@ -200,18 +200,18 @@ export class Product {
       : { status: "unavailable", purchasableSlugs };
   }
 
-  planPriceChange(next: ProductPrice | null): PriceChangeDecision {
+  planPriceChange(next: ProductPricing): PriceChangeDecision {
     if (this.lifecycleStatus === "archived") {
       return { status: "refused", issue: { code: "product_retired" } };
     }
 
-    if (this.isUnchangedPrice(next)) {
+    if (this.currentPricing.equals(next)) {
       return { status: "refused", issue: { code: "price_unchanged" } };
     }
 
     return {
       status: "planned",
-      plan: { price: next, productId: this.id, productSlug: this.slug },
+      plan: { pricing: next, productId: this.id, productSlug: this.slug },
     };
   }
 
@@ -231,13 +231,5 @@ export class Product {
       productSlug: this.slug,
       versionSequence: this.nextVersionSequence(),
     };
-  }
-
-  private isUnchangedPrice(next: ProductPrice | null): boolean {
-    if (this.currentPrice === null || next === null) {
-      return this.currentPrice === next;
-    }
-
-    return this.currentPrice.equals(next);
   }
 }

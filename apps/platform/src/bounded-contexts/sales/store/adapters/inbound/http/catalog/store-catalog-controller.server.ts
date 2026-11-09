@@ -77,10 +77,18 @@ export class StoreCatalogController {
       detailDescription: product.version.detailDescription,
       goals: product.version.goals,
       includedItems: product.version.includedItems,
-      price: product.price?.toSnapshot() ?? null,
+      price: this.catalogPrice(product),
       slug: product.slug,
       title: product.version.title,
       types: product.version.types,
     });
+  }
+
+  private catalogPrice(product: PublishedProduct): StoreProduct["price"] {
+    const pricing = product.pricing.toSnapshot();
+
+    return pricing.kind === "paid"
+      ? { eurCents: pricing.eurCents, usdCents: pricing.usdCents }
+      : null;
   }
 }

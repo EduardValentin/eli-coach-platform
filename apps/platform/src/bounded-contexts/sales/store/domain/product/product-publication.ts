@@ -11,12 +11,12 @@ import {
 } from "./product-asset-keys";
 import type { ProductAssetContent } from "./product-asset-writer-port";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
+import type { ProductPriceIssue } from "./product-price";
 import {
-  ProductPrice,
-  type ProductPriceInput,
-  type ProductPriceIssue,
-  type ProductPriceSnapshot,
-} from "./product-price";
+  ProductPricing,
+  type ProductPricingInput,
+  type ProductPricingSnapshot,
+} from "./product-pricing";
 import {
   resolveCoverFormat,
   resolveDownloadFormat,
@@ -74,7 +74,7 @@ export type PublicationPlan = {
   goals: readonly StoreTaxonomyValue[];
   metadata: ProductVersionMetadata;
   operation: ContentPublicationOperation;
-  price: ProductPriceSnapshot | null;
+  pricing?: ProductPricingSnapshot;
   productId: number | null;
   productSlug: string;
   totalUploadBytes: number;
@@ -110,7 +110,7 @@ export type PersistPublicationCommand = {
   metadata: ProductVersionMetadata;
   operation: ContentPublicationOperation;
   payloadDigest: string;
-  price: ProductPriceSnapshot | null;
+  pricing?: ProductPricingSnapshot;
   productId: number | null;
   productSlug: string;
   publishedBy: PublishingPrincipal;
@@ -158,10 +158,6 @@ export type RetireProductResult =
   | { status: "not_found" }
   | { status: "unavailable" };
 
-export type PublicationTarget =
-  | { kind: "new"; slug: string }
-  | { kind: "revision"; targetProductSlug: string };
-
 const PRODUCT_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 /**
  * ASCII record and unit separators, spelled as escapes so they survive
@@ -178,39 +174,24 @@ export function validateSlugFormat(slug: string): PublicationIssue | null {
     : { code: "invalid_slug", slug };
 }
 
-export function resolvePublicationTarget(metadata: {
-  slug?: string;
-  targetProductSlug?: string;
-}): PublicationTarget | null {
-  if (metadata.targetProductSlug) {
-    return { kind: "revision", targetProductSlug: metadata.targetProductSlug };
-  }
-
-  if (metadata.slug) {
-    return { kind: "new", slug: metadata.slug };
-  }
-
-  return null;
-}
-
 type ProductPublicationDraftProps = {
   cover: ProductCoverInput;
   downloads: readonly ProductDownloadInput[];
   metadata: ProductVersionMetadata;
-  prices: ProductPriceInput | null;
+  pricing?: ProductPricingInput;
 };
 
 export class ProductPublicationDraft {
   readonly cover: ProductCoverInput;
   readonly downloads: readonly ProductDownloadInput[];
   readonly metadata: ProductVersionMetadata;
-  readonly prices: ProductPriceInput | null;
+  readonly pricing?: ProductPricingInput;
 
   private constructor(props: ProductPublicationDraftProps) {
     this.cover = props.cover;
     this.downloads = props.downloads;
     this.metadata = props.metadata;
-    this.prices = props.prices;
+    this.pricing = props.pricing;
   }
 
   static from(props: ProductPublicationDraftProps): ProductPublicationDraft {
@@ -244,7 +225,7 @@ export class ProductPublicationDraft {
             `${download.customerFilename}=${productAssetDigestPort.sha256(download.bytes)}`,
         )
         .join(CANONICAL_LIST_SEPARATOR),
-      this.canonicalPrices(),
+      this.canonicalPricing(),
     ].join(CANONICAL_FIELD_SEPARATOR);
 
     return productAssetDigestPort.sha256(new TextEncoder().encode(canonical));
@@ -331,7 +312,7 @@ export class ProductPublicationDraft {
     const issues: PublicationIssue[] = [];
     const downloads = this.planDownloads(issues, productAssetDigestPort);
     const cover = this.planCover(issues, productAssetDigestPort);
-    const price = this.planPrice(issues);
+    const pricing = this.planPricing(issues);
     const types = resolveTaxonomy(
       this.metadata.typeSlugs,
       taxonomy.types,
@@ -368,7 +349,7 @@ export class ProductPublicationDraft {
         goals: goals.values,
         metadata: this.metadata,
         operation: placement.operation,
-        price: price?.toSnapshot() ?? null,
+        pricing: pricing?.toSnapshot(),
         productId: placement.productId,
         productSlug: placement.productSlug,
         totalUploadBytes,
@@ -395,7 +376,7 @@ export class ProductPublicationDraft {
       metadata: plan.metadata,
       operation: plan.operation,
       payloadDigest: input.payloadDigest,
-      price: plan.price,
+      pricing: plan.pricing,
       productId: plan.productId,
       productSlug: plan.productSlug,
       publishedBy: input.publishedBy,
@@ -423,30 +404,33 @@ export class ProductPublicationDraft {
     ];
   }
 
-  private canonicalPrices(): string {
-    if (!this.prices) {
+  private canonicalPricing(): string {
+    if (!this.pricing) {
       return "";
     }
 
-    return [this.prices.eurCents ?? "", this.prices.usdCents ?? ""].join(
-      CANONICAL_LIST_SEPARATOR,
-    );
+    const amounts =
+      this.pricing.kind === "paid"
+        ? [this.pricing.eurCents ?? "", this.pricing.usdCents ?? ""]
+        : [];
+
+    return [this.pricing.kind, ...amounts].join(CANONICAL_LIST_SEPARATOR);
   }
 
-  private planPrice(issues: PublicationIssue[]): ProductPrice | null {
-    if (!this.prices) {
-      return null;
+  private planPricing(issues: PublicationIssue[]): ProductPricing | undefined {
+    if (!this.pricing) {
+      return undefined;
     }
 
-    const parsed = ProductPrice.parse(this.prices);
+    const parsed = ProductPricing.parse(this.pricing);
 
     if (parsed.status === "invalid") {
       issues.push(...parsed.issues);
 
-      return null;
+      return undefined;
     }
 
-    return parsed.price;
+    return parsed.pricing;
   }
 
   private planDownloads(

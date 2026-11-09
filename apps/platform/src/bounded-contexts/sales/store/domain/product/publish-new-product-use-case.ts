@@ -9,7 +9,7 @@ import {
   type PublishingPrincipal,
   type PublishProductResult,
 } from "./product-publication";
-import type { ProductPriceInput } from "./product-price";
+import type { ProductPricingInput } from "./product-pricing";
 import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 export type PublishNewProductCommand = {
@@ -17,7 +17,7 @@ export type PublishNewProductCommand = {
   downloads: readonly ProductDownloadInput[];
   idempotencyKey: string;
   metadata: ProductVersionMetadata;
-  prices: ProductPriceInput | null;
+  pricing: ProductPricingInput;
   publishedBy: PublishingPrincipal;
   slug: string;
 };

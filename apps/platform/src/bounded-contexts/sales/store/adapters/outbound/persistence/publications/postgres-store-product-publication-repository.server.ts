@@ -1,10 +1,10 @@
 import {
   Product,
-  ProductPrice,
+  ProductPricing,
   type PersistPriceChangeCommand,
   type PersistPublicationCommand,
   type PriceChangePersistence,
-  type ProductPriceSnapshot,
+  type ProductPricingSnapshot,
   type ProductPublication,
   type PublicationOperation,
   type PublishingPrincipal,
@@ -193,7 +193,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     });
 
     await this.insertPriceRevision(transaction, {
-      price: command.price,
+      pricing: command.pricing,
       productId: command.productId,
       publicationId: publicationRow.id,
     });
@@ -267,9 +267,9 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       publishedBy: command.publishedBy,
     });
 
-    if (command.price) {
+    if (command.pricing?.kind === "paid") {
       await this.insertPriceRevision(transaction, {
-        price: command.price,
+        pricing: command.pricing,
         productId,
         publicationId: publicationRow.id,
       });
@@ -317,11 +317,13 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
   private async insertPriceRevision(
     transaction: DatabaseExecutor,
     input: {
-      price: ProductPriceSnapshot | null;
+      pricing: ProductPricingSnapshot;
       productId: number;
       publicationId: number;
     },
   ): Promise<void> {
+    const amounts = this.storedAmounts(input.pricing);
+
     await transaction.execute(sql`
       insert into app.product_price_revisions (
         product_id,
@@ -333,12 +335,21 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
       select
         ${input.productId},
         coalesce(max(price_revision.sequence), 0) + 1,
-        ${input.price?.eurCents ?? null}::integer,
-        ${input.price?.usdCents ?? null}::integer,
+        ${amounts.eurCents}::integer,
+        ${amounts.usdCents}::integer,
         ${input.publicationId}
       from app.product_price_revisions price_revision
       where price_revision.product_id = ${input.productId}
     `);
+  }
+
+  private storedAmounts(pricing: ProductPricingSnapshot): {
+    eurCents: number | null;
+    usdCents: number | null;
+  } {
+    return pricing.kind === "paid"
+      ? { eurCents: pricing.eurCents, usdCents: pricing.usdCents }
+      : { eurCents: null, usdCents: null };
   }
 
   private async loadProduct(
@@ -375,7 +386,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
 
     return row
       ? Product.reconstitute({
-          currentPrice: ProductPrice.fromStoredAmounts(row),
+          currentPricing: ProductPricing.fromStoredAmounts(row),
           displayOrder: row.displayOrder,
           id: row.id,
           latestVersionSequence: Number(row.latestVersionSequence),
