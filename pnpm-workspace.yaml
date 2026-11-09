@@ -50,7 +50,7 @@ catalog:
   knip: 6.44.0
   lucide-react: 1.64.0
   motion: 14.8.0
-  msw: 2.15.0
+  msw: 3.0.4
   pdfjs-dist: 6.4.299
   pdfkit: 0.20.2
   pg: 8.23.1
