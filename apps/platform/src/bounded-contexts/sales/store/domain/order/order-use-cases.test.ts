@@ -803,6 +803,29 @@ describe("DeliverOrderEmailUseCase", () => {
     });
   });
 
+  it("raises an incident when an unsent attempt cannot be recorded", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const useCase = createDeliverUseCase({
+      incidents,
+      orderDeliveryPort: createOrderDelivery({
+        deliver: vi.fn().mockResolvedValue({ kind: "unconfirmed" }),
+      }),
+      storeOrdersPort: createStoreOrders({
+        recordEmailRetryable: vi.fn().mockRejectedValue(new Error("db down")),
+      }),
+    });
+
+    // act
+    const result = await useCase.execute(emailDelivery());
+
+    // assert
+    expect(result).toBe("not_sent");
+    expect(incidents.orderEmailAuditPending).toHaveBeenCalledWith({
+      orderId: "order-1",
+    });
+  });
+
   it("answers sent and raises an incident when the accepted send cannot be recorded", async () => {
     // arrange
     const incidents = createIncidents();
