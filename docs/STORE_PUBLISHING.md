@@ -18,7 +18,7 @@ LOCAL. The credential is checked before the body is read.
 | POST | `/api/management/store/product-validations` | Dry run; persists nothing |
 | POST | `/api/management/store/products` | Publish a new product |
 | POST | `/api/management/store/products/{id}/versions` | Publish a content revision |
-| POST | `/api/management/store/products/{id}/prices` | Change the prices, or turn paid↔free |
+| POST | `/api/management/store/products/{id}/prices` | Change the pricing: new amounts, or paid↔free |
 | PATCH | `/api/management/store/products/{id}` | Retire |
 
 ## Request
@@ -39,29 +39,36 @@ one file per `metadata.downloads` entry, named by its `field`.
   "typeSlugs": ["e-books"],
   "goalSlugs": ["muscle-building"],
   "downloads": [{ "field": "file0", "customerFilename": "GluteGrowthGuide.pdf" }],
-  "prices": { "eurCents": 3900, "usdCents": 4500 } // new products only; omit for a free product
+  "pricing": { "kind": "paid", "eurCents": 3900, "usdCents": 4500 } // new products only; required
 }
 ```
 
 Every object is strict: a field the route does not accept is rejected with
-`400`, never ignored. `prices` on a content revision is such a field, because
-prices change only through the price-change route.
+`400`, never ignored. `pricing` on a content revision is such a field, because
+pricing changes only through the price-change route.
 
-**Prices**
+**Pricing**
 
+- Pricing is always explicit. Every request that sets it carries `pricing`,
+  either `{ "kind": "free" }` or
+  `{ "kind": "paid", "eurCents": 3900, "usdCents": 4500 }`. Nothing is free by
+  omission: a missing or `null` `pricing`, an unknown `kind`, amounts on
+  `free`, or any extra field is rejected with `400`.
 - Amounts are whole minor units: `3900` is €39.00, `4500` is $45.00.
 - A paid product carries both currencies; each amount is 1 … 99 999 999.
 - One currency without the other (`missing_price`), a fraction
   (`price_not_whole_minor_units`), zero, a negative amount or one above the
   ceiling (`price_out_of_range`) is rejected, naming the currency.
-- Without `prices` the product is free. The Store shows every price in the
-  visitor's chosen currency, euros by default.
+- The Store shows every price in the visitor's chosen currency, euros by
+  default.
 
 The dry run drops `idempotencyKey`. It needs either `slug`, to validate a new
-product, or `targetProductSlug`, to validate a revision of an existing one; only
-the new-product form accepts `prices`. It returns the publication plan — storage
-keys, per-file MIME/size/SHA-256, resolved taxonomy, assigned order or sequence,
-and the resolved `prices` (`null` for a free product, and always `null` for a revision, whose prices it does not change) — and writes nothing.
+product, or `targetProductSlug`, to validate a revision of an existing one; the
+new-product form requires `pricing` and the revision form refuses it. It
+returns the publication plan — storage keys, per-file MIME/size/SHA-256,
+resolved taxonomy, assigned order or sequence, and for a new product the
+resolved `pricing` in the same shape (a revision's plan has none, because it
+does not change the pricing) — and writes nothing.
 
 **Accepted values**
 
@@ -88,44 +95,45 @@ pnpm --filter @eli-coach-platform/platform store:cover ./guide.pdf ./cover.webp
 ```bash
 curl -sS -X POST "$APP_URL/api/management/store/products" \
   -H "Authorization: Bearer $MANAGEMENT_API_SECRET" \
-  -F 'metadata={"slug":"glute-growth-guide","idempotencyKey":"b2d1c0f6-6f1a-4a2e-9c37-2f5f9a4c1d88","title":"Glute Growth Guide","creatorName":"Eli Lungu","cardSummary":"A practical guide to training the glutes with intent.","detailDescription":"Anatomy, exercise selection, and an example workout.","includedItems":["The three glute muscles and what each one does"],"coverAlt":"Cover of Glute Growth Guide.","typeSlugs":["e-books","workouts"],"goalSlugs":["muscle-building"],"downloads":[{"field":"file0","customerFilename":"GluteGrowthGuide.pdf"}]};type=application/json' \
+  -F 'metadata={"slug":"glute-growth-guide","idempotencyKey":"b2d1c0f6-6f1a-4a2e-9c37-2f5f9a4c1d88","title":"Glute Growth Guide","creatorName":"Eli Lungu","cardSummary":"A practical guide to training the glutes with intent.","detailDescription":"Anatomy, exercise selection, and an example workout.","includedItems":["The three glute muscles and what each one does"],"coverAlt":"Cover of Glute Growth Guide.","typeSlugs":["e-books","workouts"],"goalSlugs":["muscle-building"],"downloads":[{"field":"file0","customerFilename":"GluteGrowthGuide.pdf"}],"pricing":{"kind":"free"}};type=application/json' \
   -F 'cover=@./cover.webp' \
   -F 'file0=@./GluteGrowthGuide.pdf'
 ```
 
 Same body shape for the other routes: `product-validations` to dry-run,
-`/{id}/versions` to revise (no `slug`, fresh key), `PATCH /{id}` to retire (no
-body).
+`/{id}/versions` to revise (no `slug`, no `pricing`, fresh key), `PATCH /{id}`
+to retire (no body).
 
 A revision becomes the latest version, keeps the product's catalog position, and
 leaves already-issued grants pinned to their original version. Retirement stops
 new acquisition while preserving history and existing owners' access; it is
 idempotent.
 
-## Changing prices
+## Changing the pricing
 
-A price change is a JSON request, not multipart, and has no dry run. `prices`
-is required, so making a product free is always explicit:
+A price change is a JSON request, not multipart, and has no dry run. Its body
+is `{ "idempotencyKey": "…", "pricing": … }`; `pricing` is required and follows
+the rules above, so making a product free is always explicit:
 
 ```bash
 curl -sS -X POST "$APP_URL/api/management/store/products/42/prices" \
   -H "Authorization: Bearer $MANAGEMENT_API_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"idempotencyKey":"5c0e6a3e-1f0b-4d8e-a3f4-0a7b2c9d6e11","prices":{"eurCents":3900,"usdCents":4500}}'
+  -d '{"idempotencyKey":"5c0e6a3e-1f0b-4d8e-a3f4-0a7b2c9d6e11","pricing":{"kind":"paid","eurCents":3900,"usdCents":4500}}'
 
 curl -sS -X POST "$APP_URL/api/management/store/products/42/prices" \
   -H "Authorization: Bearer $MANAGEMENT_API_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"idempotencyKey":"9a4f2d71-3c6e-4b0a-8e15-6d2f7c1b0a93","prices":null}'
+  -d '{"idempotencyKey":"9a4f2d71-3c6e-4b0a-8e15-6d2f7c1b0a93","pricing":{"kind":"free"}}'
 ```
 
 The first call makes product 42 paid (or reprices it); the second makes it
 free. The product keeps its content version, its catalog position and every
 download already granted, and moves between the Store's Plans and Free
-resources sections. The publication record has the operation `reprice_product`
-and `productVersionId: null`. A retired product (`product_retired`) and a
-change to the same amounts or from free to free (`price_unchanged`) are
-rejected.
+resources sections. The response echoes the `pricing` it applied; the
+publication record has the operation `reprice_product` and
+`productVersionId: null`. A retired product (`product_retired`) and a change
+to the same amounts or from free to free (`price_unchanged`) are rejected.
 
 Until paid products can be bought, the Store refuses a free-resource request
 that includes a product that is paid at that moment; nothing is recorded or
