@@ -161,6 +161,7 @@ describe('paying for a store cart through the Stripe stand-in', () => {
       );
       expect(within(drawer).getByText(paidPlan.title)).toBeInTheDocument();
       expect(within(drawer).getByText(freeEbook.title)).toBeInTheDocument();
+      await waitFor(() => expect(within(drawer).getByRole('button', { name: 'Close' })).toHaveFocus());
       await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent(/^\/store$/));
     },
     TEST_TIMEOUT_MS,

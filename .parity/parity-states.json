@@ -636,7 +636,17 @@
     ]
   },
   "checkout-waiting": {
-    "prototype": [],
+    "prototype": [
+      {
+        "click": "[data-parity=\"option-waiting\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay €/]"
+      }
+    ],
     "real": [
       {
         "click": "[data-parity=\"option-waiting\"]"
@@ -6373,70 +6383,39 @@
       "waitFor": "[data-parity=\"disabled-action-hint\"]"
     }
   ],
-  "paid-checkout-unavailable-outcome": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Store\"]"
-      },
-      {
-        "click": "#dev-store-paid-checkout-outcome"
-      },
-      {
-        "click": "role=option[name=\"Checkout cannot be opened\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      }
-    ],
-    "real": []
-  },
-  "paid-unavailable-products-outcome": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Store\"]"
-      },
-      {
-        "click": "#dev-store-paid-checkout-outcome"
-      },
-      {
-        "click": "role=option[name=\"Unavailable product in cart\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      }
-    ],
-    "real": []
-  },
-  "paid-subaddress-refused-outcome": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Store\"]"
-      },
-      {
-        "click": "#dev-store-paid-checkout-outcome"
-      },
-      {
-        "click": "role=option[name=\"Email with a “+” part refused\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      }
-    ],
-    "real": []
-  },
-  "cart-checkout-unavailable": [
+  "cart-paid-hint-focus": [
     {
-      "use": "paid-checkout-unavailable-outcome"
+      "use": "cart-paid-details-empty"
     },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "cart-checkout-unavailable": [
     {
       "use": "cart-paid-details-filled"
     },
@@ -6449,9 +6428,6 @@
   ],
   "cart-unavailable-products": [
     {
-      "use": "paid-unavailable-products-outcome"
-    },
-    {
       "use": "cart-paid-details-filled"
     },
     {
@@ -6462,9 +6438,6 @@
     }
   ],
   "cart-subaddress-refused": [
-    {
-      "use": "paid-subaddress-refused-outcome"
-    },
     {
       "use": "cart-paid-details-filled"
     },
@@ -6534,21 +6507,6 @@
         "use": "order-confirmed"
       },
       {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Store\"]"
-      },
-      {
-        "click": "#dev-store-order-resend-outcome"
-      },
-      {
-        "click": "role=option[name=\"Sent\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
         "click": "role=button[name=\"Send my order email again\"]"
       },
       {
@@ -6570,21 +6528,6 @@
         "use": "order-confirmed"
       },
       {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Store\"]"
-      },
-      {
-        "click": "#dev-store-order-resend-outcome"
-      },
-      {
-        "click": "role=option[name=\"Order still processing\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
         "click": "role=button[name=\"Send my order email again\"]"
       },
       {
@@ -6604,21 +6547,6 @@
     "prototype": [
       {
         "use": "order-confirmed"
-      },
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Store\"]"
-      },
-      {
-        "click": "#dev-store-order-resend-outcome"
-      },
-      {
-        "click": "role=option[name=\"Try again later\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
       },
       {
         "click": "role=button[name=\"Send my order email again\"]"

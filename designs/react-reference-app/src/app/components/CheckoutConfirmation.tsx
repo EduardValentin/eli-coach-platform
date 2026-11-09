@@ -1,5 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { Check, ShoppingBag } from 'lucide-react';
+import { LegalFooter } from './legal/LegalNav';
+import { Navbar } from './Navbar';
 import { cardVariants } from './ui/card';
 import { cn } from './ui/utils';
 
@@ -18,15 +20,17 @@ const OUTCOME_BADGES: Record<ConfirmationOutcome, { icon: ReactNode; className: 
 
 export function ConfirmationPage(props: { landmarkLabel: string; parityRoot: string; children: ReactNode }) {
   return (
-    <main
-      aria-label={props.landmarkLabel}
-      className="min-h-screen bg-surface-page px-4 py-16 sm:px-6"
-      data-parity-root={props.parityRoot}
-    >
-      <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto w-full max-w-xl px-6 py-10 sm:px-10')}>
-        {props.children}
-      </div>
-    </main>
+    <>
+      <main aria-label={props.landmarkLabel} className="min-h-screen bg-surface-page">
+        <Navbar theme="dark" />
+        <div className="min-h-screen bg-surface-page px-4 pt-32 pb-16 sm:px-6" data-parity-root={props.parityRoot}>
+          <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto w-full max-w-xl px-6 py-10 sm:px-10')}>
+            {props.children}
+          </div>
+        </div>
+      </main>
+      <LegalFooter />
+    </>
   );
 }
 
@@ -35,7 +39,10 @@ export function ConfirmationHeading(props: { outcome: ConfirmationOutcome; child
 
   return (
     <>
-      <span className={cn('mx-auto flex size-14 items-center justify-center rounded-full', badge.className)}>
+      <span
+        className={cn('mx-auto flex size-14 items-center justify-center rounded-full', badge.className)}
+        data-parity="confirmation-badge"
+      >
         {badge.icon}
       </span>
 
