@@ -1,4 +1,4 @@
-import type { PaidCheckoutSession } from "./payment-event-types.server";
+import type { PaidCheckoutSession } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 
 export interface PaymentCompletionHandlerPort {
   readonly purpose: string;

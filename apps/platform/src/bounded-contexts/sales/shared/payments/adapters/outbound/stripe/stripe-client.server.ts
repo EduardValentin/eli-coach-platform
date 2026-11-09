@@ -1,5 +1,7 @@
-import type { PaymentsConfig } from "~/bounded-contexts/sales/subscriptions/config.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
 import Stripe from "stripe";
+
+export type StripeClient = Stripe;
 
 type StripeConnection = {
   host: string;
@@ -9,7 +11,7 @@ type StripeConnection = {
 
 const DEFAULT_PORTS = { http: 80, https: 443 } as const;
 
-export function createStripeClient(config: PaymentsConfig): Stripe {
+export function createStripeClient(config: PaymentsConfig): StripeClient {
   if (!config.STRIPE_SECRET_KEY) {
     throw new Error("Stripe payments require STRIPE_SECRET_KEY.");
   }

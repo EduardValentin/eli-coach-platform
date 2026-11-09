@@ -1,11 +1,12 @@
 import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork, executorOf } from "~/shared/database/index.server";
-import type {
-  PaymentEventEntry,
-  PaymentEventLedgerPort,
-} from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
 
-import { paymentEventsTable } from "./payment-events-schema.server";
+import { paymentEventsTable } from "./schema.server";
+
+type PaymentEventEntry = {
+  eventId: string;
+  receivedAt: Date;
+};
 
 type PaymentEventWrite = PaymentEventEntry & {
   write: () => Promise<boolean>;
@@ -13,7 +14,7 @@ type PaymentEventWrite = PaymentEventEntry & {
 
 class StaleEventWrite extends Error {}
 
-export class PostgresPaymentEventLedgerRepository implements PaymentEventLedgerPort {
+export class PostgresPaymentEventLedgerRepository {
   constructor(private readonly database: DatabaseClient) {}
 
   record(entry: PaymentEventEntry): Promise<"recorded" | "duplicate"> {

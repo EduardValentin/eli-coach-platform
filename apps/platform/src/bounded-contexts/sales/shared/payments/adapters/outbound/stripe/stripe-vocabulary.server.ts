@@ -2,7 +2,7 @@ import type {
   PaymentCardChangeKind,
   PaymentInvoiceReason,
   PaymentSubscriptionStanding,
-} from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-provider-vocabulary.server";
+} from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-vocabulary.server";
 import type { PaymentProviderVocabularyPort } from "../payment-provider-vocabulary-port.server";
 
 const ENDED_STATUSES: ReadonlySet<string> = new Set([

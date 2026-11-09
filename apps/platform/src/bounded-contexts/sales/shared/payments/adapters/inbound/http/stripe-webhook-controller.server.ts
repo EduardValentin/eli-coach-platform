@@ -3,19 +3,19 @@ import {
   readTextRequestBody,
 } from "~/shared/http/index.server";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
-import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-completion-handler.server";
-import { type PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-completion-handler-port.server";
+import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-purpose.server";
+import { type PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
 import type {
   PaidCheckoutSession,
   PaymentCardChange,
   PaymentRefund,
   PaymentSubscriptionChange,
-} from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-refund-handler-port.server";
-import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-subscription-change-handler-port.server";
-import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-card-handler-port.server";
-import type { PaymentEventsPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-events-port.server";
-import type { PaymentWebhookIncidentsPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-webhook-incidents-port.server";
+} from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
+import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";
+import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-subscription-change-handler-port.server";
+import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-card-handler-port.server";
+import type { PaymentEventsPort } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-events-port.server";
+import type { PaymentWebhookIncidentsPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-webhook-incidents-port.server";
 
 type StripeWebhookControllerOptions = {
   paymentCardHandlerPort: PaymentCardHandlerPort;

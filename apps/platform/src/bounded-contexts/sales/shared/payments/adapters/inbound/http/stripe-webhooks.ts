@@ -4,7 +4,7 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "~/shared/http/index.server";
-import { subscriptionsContext } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/context.server";
+import { paymentsContext } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/context.server";
 
 export async function action({ context, request }: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
@@ -13,7 +13,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
     }
 
     return context
-      .get(subscriptionsContext)
+      .get(paymentsContext)
       .stripeWebhookController.handleEvent(request);
   });
 }

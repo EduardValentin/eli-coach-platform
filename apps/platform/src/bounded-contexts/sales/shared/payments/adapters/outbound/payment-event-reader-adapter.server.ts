@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PAYMENT_PURPOSE_METADATA_KEY } from "./payment-completion-handler.server";
+import { PAYMENT_PURPOSE_METADATA_KEY } from "./payment-purpose.server";
 import type {
   PaidCheckoutSession,
   PaymentCardDetails,

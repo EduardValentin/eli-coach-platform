@@ -1,4 +1,4 @@
-import type { PaymentsConfig } from "~/bounded-contexts/sales/subscriptions/config.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
 import type {
   PaymentCheckoutPort,
   PaymentCustomerCardsPort,
@@ -7,52 +7,41 @@ import type {
 
 import { InMemoryPaymentCheckoutAdapter } from "./memory/in-memory-payment-checkout-adapter.server";
 import { InMemoryPaymentCustomerCardsAdapter } from "./memory/in-memory-payment-customer-cards-adapter.server";
-import { InMemoryPaymentEventsAdapter } from "./memory/in-memory-payment-events-adapter.server";
 import { InMemoryPaymentSubscriptionsAdapter } from "./memory/in-memory-payment-subscriptions-adapter.server";
-import type { PaymentEventsPort } from "./payment-events-port.server";
-import { createStripeClient } from "./stripe/stripe-client.server";
 import { StripePaymentCheckoutAdapter } from "./stripe/stripe-payment-checkout-adapter.server";
 import { StripePaymentCustomerCardsAdapter } from "./stripe/stripe-payment-customer-cards-adapter.server";
-import { StripePaymentEventsAdapter } from "./stripe/stripe-payment-events-adapter.server";
 import { StripePaymentSubscriptionsAdapter } from "./stripe/stripe-payment-subscriptions-adapter.server";
-import { STRIPE_VOCABULARY } from "./stripe/stripe-vocabulary.server";
+
+type PaymentsAdapterOptions = {
+  paymentProvider: PaymentProvider;
+  portalConfigurationId?: string;
+};
 
 export class PaymentsAdapter {
   readonly paymentCheckoutPort: PaymentCheckoutPort;
-  readonly paymentEventsPort: PaymentEventsPort;
   readonly paymentSubscriptionsPort: PaymentSubscriptionsPort;
   readonly paymentCustomerCardsPort: PaymentCustomerCardsPort;
 
-  constructor(config: PaymentsConfig) {
-    if (config.PAYMENTS_PROVIDER === "memory") {
+  constructor({
+    paymentProvider,
+    portalConfigurationId,
+  }: PaymentsAdapterOptions) {
+    if (paymentProvider.name === "memory") {
       this.paymentCheckoutPort = new InMemoryPaymentCheckoutAdapter();
-      this.paymentEventsPort = new InMemoryPaymentEventsAdapter(
-        STRIPE_VOCABULARY,
-      );
       this.paymentSubscriptionsPort = new InMemoryPaymentSubscriptionsAdapter();
       this.paymentCustomerCardsPort = new InMemoryPaymentCustomerCardsAdapter();
       return;
     }
 
-    const client = createStripeClient(config);
+    const { stripeClient } = paymentProvider;
 
-    if (!config.STRIPE_WEBHOOK_SIGNING_SECRET) {
-      throw new Error("Stripe payments require STRIPE_WEBHOOK_SIGNING_SECRET.");
-    }
-
-    this.paymentCheckoutPort = new StripePaymentCheckoutAdapter(client);
-    this.paymentEventsPort = new StripePaymentEventsAdapter({
-      webhooks: client.webhooks,
-      signingSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
-    });
+    this.paymentCheckoutPort = new StripePaymentCheckoutAdapter(stripeClient);
     this.paymentSubscriptionsPort = new StripePaymentSubscriptionsAdapter(
-      client,
-      {
-        portalConfigurationId: config.STRIPE_PORTAL_CONFIGURATION_ID,
-      },
+      stripeClient,
+      { portalConfigurationId },
     );
     this.paymentCustomerCardsPort = new StripePaymentCustomerCardsAdapter(
-      client,
+      stripeClient,
     );
   }
 }

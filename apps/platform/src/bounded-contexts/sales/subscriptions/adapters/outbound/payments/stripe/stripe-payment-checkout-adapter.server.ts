@@ -12,9 +12,9 @@ import {
 import Stripe from "stripe";
 import { z } from "zod";
 
-import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-completion-handler.server";
-import { readPaidCheckoutSession } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-reader-adapter.server";
-import type { PaidCheckoutSession } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
+import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-purpose.server";
+import { readPaidCheckoutSession } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-reader-adapter.server";
+import type { PaidCheckoutSession } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 
 const CHECKOUT_SESSION_ID_SHAPE = /^cs_(test|live)_[A-Za-z0-9]+$/;
 

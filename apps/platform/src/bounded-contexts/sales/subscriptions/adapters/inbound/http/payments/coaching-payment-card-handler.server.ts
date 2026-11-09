@@ -3,9 +3,9 @@ import {
   type MirrorPaymentCardUseCase,
   type PaymentCardEvent,
 } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
-import type { PaymentCardChange } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentEventHandling } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-handlers.server";
-import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-card-handler-port.server";
+import type { PaymentCardChange } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
+import type { PaymentEventHandling } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-event-handlers.server";
+import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-card-handler-port.server";
 
 type CoachingPaymentCardHandlerOptions = {
   mirrorPaymentCardUseCase: MirrorPaymentCardUseCase;

@@ -1,5 +1,5 @@
 import { COACHING_SUBSCRIPTION_PURPOSE } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
-import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-completion-handler.server";
+import { PAYMENT_PURPOSE_METADATA_KEY } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-purpose.server";
 import type Stripe from "stripe";
 
 import { SEEDED_BUNDLE, SEEDED_TIER, type StartChoice } from "./paid-clients";

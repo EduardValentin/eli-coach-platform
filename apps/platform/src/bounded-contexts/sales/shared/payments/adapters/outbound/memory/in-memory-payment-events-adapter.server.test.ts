@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { STRIPE_VOCABULARY } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/stripe/stripe-vocabulary.server";
+import { STRIPE_VOCABULARY } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/stripe/stripe-vocabulary.server";
 
 import { InMemoryPaymentEventsAdapter } from "./in-memory-payment-events-adapter.server";
 

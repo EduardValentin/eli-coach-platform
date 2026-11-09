@@ -2,7 +2,7 @@ import {
   PaymentCard,
   type MirrorPaymentCardUseCase,
 } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
-import type { PaymentCardChange } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
+import type { PaymentCardChange } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingPaymentCardHandler } from "./coaching-payment-card-handler.server";

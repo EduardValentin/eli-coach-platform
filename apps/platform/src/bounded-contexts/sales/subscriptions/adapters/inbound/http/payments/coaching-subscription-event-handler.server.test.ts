@@ -2,7 +2,7 @@ import type { ReconcileSubscriptionEventUseCase } from "~/bounded-contexts/sales
 import type {
   PaymentRefund,
   PaymentSubscriptionChange,
-} from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
+} from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { CoachingSubscriptionEventHandler } from "./coaching-subscription-event-handler.server";

@@ -58,10 +58,6 @@ export {
   type PaymentCardsPort,
 } from "./payment-cards-port";
 export { type PaymentCustomerCardsPort } from "./payment-customer-cards-port";
-export {
-  type PaymentEventEntry,
-  type PaymentEventLedgerPort,
-} from "./payment-event-ledger-port";
 export { type PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 export { STEPS_AFTER_SUBMISSION } from "./program-steps";
 export { PurchasedSubscription } from "./purchased-subscription";

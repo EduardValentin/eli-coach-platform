@@ -5,10 +5,10 @@ import {
 import type Stripe from "stripe";
 import { z } from "zod";
 
-import { readCardDetails } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-reader-adapter.server";
-import { referencedIdSchema } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-provider-vocabulary.server";
+import { readCardDetails } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-reader-adapter.server";
+import { referencedIdSchema } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-vocabulary.server";
 
-import { STRIPE_VOCABULARY } from "./stripe-vocabulary.server";
+import { STRIPE_VOCABULARY } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/stripe/stripe-vocabulary.server";
 
 type StripeCustomerCardsClient = {
   customers: {

@@ -1,5 +1,5 @@
 import type { PaymentEventHandling } from "./payment-event-handlers.server";
-import type { PaymentCardChange } from "./payment-event-types.server";
+import type { PaymentCardChange } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 
 export interface PaymentCardHandlerPort {
   handle(

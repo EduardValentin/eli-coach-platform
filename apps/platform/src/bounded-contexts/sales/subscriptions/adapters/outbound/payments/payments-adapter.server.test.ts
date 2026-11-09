@@ -1,18 +1,16 @@
 import { createServer, type IncomingHttpHeaders } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import type { PaymentsConfig } from "~/bounded-contexts/sales/subscriptions/config.server";
-import Stripe from "stripe";
+import { PaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
 import { describe, expect, it } from "vitest";
 
 import { PaymentsAdapter } from "./payments-adapter.server";
 import { InMemoryPaymentCheckoutAdapter } from "./memory/in-memory-payment-checkout-adapter.server";
 import { InMemoryPaymentCustomerCardsAdapter } from "./memory/in-memory-payment-customer-cards-adapter.server";
-import { InMemoryPaymentEventsAdapter } from "./memory/in-memory-payment-events-adapter.server";
 import { InMemoryPaymentSubscriptionsAdapter } from "./memory/in-memory-payment-subscriptions-adapter.server";
 import { StripePaymentCheckoutAdapter } from "./stripe/stripe-payment-checkout-adapter.server";
 import { StripePaymentCustomerCardsAdapter } from "./stripe/stripe-payment-customer-cards-adapter.server";
-import { StripePaymentEventsAdapter } from "./stripe/stripe-payment-events-adapter.server";
 import { StripePaymentSubscriptionsAdapter } from "./stripe/stripe-payment-subscriptions-adapter.server";
 
 type RecordedRequest = {
@@ -56,20 +54,23 @@ async function startStripeApiStub() {
   };
 }
 
+function paymentsAdapterFor(config: PaymentsConfig): PaymentsAdapter {
+  return new PaymentsAdapter({
+    paymentProvider: new PaymentProviderAdapter(config).paymentProvider,
+  });
+}
+
 describe("PaymentsAdapter", () => {
   it("returns the in-memory doubles for the memory provider", () => {
     // arrange
     const config: PaymentsConfig = { PAYMENTS_PROVIDER: "memory" };
 
     // act
-    const paymentsAdapter = new PaymentsAdapter(config);
+    const paymentsAdapter = paymentsAdapterFor(config);
 
     // assert
     expect(paymentsAdapter.paymentCheckoutPort).toBeInstanceOf(
       InMemoryPaymentCheckoutAdapter,
-    );
-    expect(paymentsAdapter.paymentEventsPort).toBeInstanceOf(
-      InMemoryPaymentEventsAdapter,
     );
     expect(paymentsAdapter.paymentSubscriptionsPort).toBeInstanceOf(
       InMemoryPaymentSubscriptionsAdapter,
@@ -84,14 +85,11 @@ describe("PaymentsAdapter", () => {
     const config = STRIPE_CONFIG;
 
     // act
-    const paymentsAdapter = new PaymentsAdapter(config);
+    const paymentsAdapter = paymentsAdapterFor(config);
 
     // assert
     expect(paymentsAdapter.paymentCheckoutPort).toBeInstanceOf(
       StripePaymentCheckoutAdapter,
-    );
-    expect(paymentsAdapter.paymentEventsPort).toBeInstanceOf(
-      StripePaymentEventsAdapter,
     );
     expect(paymentsAdapter.paymentSubscriptionsPort).toBeInstanceOf(
       StripePaymentSubscriptionsAdapter,
@@ -101,80 +99,10 @@ describe("PaymentsAdapter", () => {
     );
   });
 
-  it("refuses the stripe provider without a secret key", () => {
-    // arrange
-    const config: PaymentsConfig = {
-      PAYMENTS_PROVIDER: "stripe",
-      STRIPE_WEBHOOK_SIGNING_SECRET: "whsec_unit",
-    };
-
-    // act
-    const create = () => new PaymentsAdapter(config);
-
-    // assert
-    expect(create).toThrow("STRIPE_SECRET_KEY");
-  });
-
-  it("refuses the stripe provider without a webhook signing secret", () => {
-    // arrange
-    const config: PaymentsConfig = {
-      PAYMENTS_PROVIDER: "stripe",
-      STRIPE_SECRET_KEY: "sk_test_unit",
-    };
-
-    // act
-    const create = () => new PaymentsAdapter(config);
-
-    // assert
-    expect(create).toThrow("STRIPE_WEBHOOK_SIGNING_SECRET");
-  });
-
-  it("verifies Stripe signatures with the configured signing secret", async () => {
-    // arrange
-    const { paymentEventsPort } = new PaymentsAdapter(STRIPE_CONFIG);
-    const rawBody = JSON.stringify({
-      id: "evt_unit",
-      type: "customer.created",
-      created: 1790003600,
-      data: { object: {} },
-    });
-    const signature = Stripe.webhooks.generateTestHeaderString({
-      payload: rawBody,
-      secret: "whsec_unit",
-    });
-
-    // act
-    const verdict = await paymentEventsPort.verify(rawBody, signature);
-
-    // assert
-    expect(verdict).toEqual({ kind: "ignored" });
-  });
-
-  it("refuses an event signed with another secret", async () => {
-    // arrange
-    const { paymentEventsPort } = new PaymentsAdapter(STRIPE_CONFIG);
-    const rawBody = JSON.stringify({
-      id: "evt_unit",
-      type: "customer.created",
-      created: 1790003600,
-      data: { object: {} },
-    });
-    const signature = Stripe.webhooks.generateTestHeaderString({
-      payload: rawBody,
-      secret: "whsec_another_account",
-    });
-
-    // act
-    const verdict = await paymentEventsPort.verify(rawBody, signature);
-
-    // assert
-    expect(verdict).toEqual({ kind: "invalid" });
-  });
-
   it("sends Stripe API calls to the configured base URL", async () => {
     // arrange
     const stripeApi = await startStripeApiStub();
-    const { paymentCheckoutPort } = new PaymentsAdapter({
+    const { paymentCheckoutPort } = paymentsAdapterFor({
       ...STRIPE_CONFIG,
       STRIPE_API_BASE_URL: stripeApi.baseUrl,
     });

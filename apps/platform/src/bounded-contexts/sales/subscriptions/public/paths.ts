@@ -19,7 +19,6 @@ export const SUBSCRIPTIONS_API_PATHS = {
   subscriptionCancellation: "/api/subscriptions/subscription-cancellation",
   programStart: "/api/subscriptions/program-start",
   paymentMethodSession: "/api/subscriptions/payment-method-session",
-  stripeWebhooks: "/api/stripe/webhooks",
 } as const;
 
 type SelectBundleLink = {

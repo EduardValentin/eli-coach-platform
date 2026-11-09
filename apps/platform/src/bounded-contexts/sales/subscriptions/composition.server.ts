@@ -40,7 +40,6 @@ import {
 import type { ClockPort } from "~/bounded-contexts/sales/subscriptions/domain/clock-port";
 import type { EmailAcceptancePort } from "~/bounded-contexts/sales/subscriptions/domain/email-acceptance-port";
 import type { ProductEmailPort } from "~/shared/email/index.server";
-import type { PaymentEventsPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-events-port.server";
 
 import { SubscriptionController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/client/subscription-controller.server";
 import { CoachSalesController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/coach/coach-sales-controller.server";
@@ -49,13 +48,12 @@ import { CoachingPaymentCardHandler } from "~/bounded-contexts/sales/subscriptio
 import { CoachingPurchaseCompletionHandler } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/payments/coaching-purchase-completion-handler.server";
 import { CoachingSubscriptionEventHandler } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/public-site/checkouts-controller.server";
-import { StripeWebhookController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/stripe-webhooks/stripe-webhook-controller.server";
 import { ClientsClientLookupAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-client-lookup-adapter.server";
 import { ClientsCoachingEndHandlerAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-coaching-end-handler-adapter.server";
 import { ClientsCoachingPeriodHandlerAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-coaching-period-handler-adapter.server";
 import { ClientsCoachingStandingWriterAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-coaching-standing-writer-adapter.server";
 import { ClientsPaidClientAdmissionAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-paid-client-admission-adapter.server";
-import { PostgresPaymentEventLedgerRepository } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/payment-events/postgres-payment-event-ledger-repository.server";
+import { PostgresPaymentEventLedgerRepository } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/persistence/postgres-payment-event-ledger-repository.server";
 import { PostgresPaymentCardsRepository } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/payment-cards/postgres-payment-cards-repository.server";
 import { PostgresPaymentLinksRepository } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/payment-links/postgres-payment-links-repository.server";
 import { RandomPaymentLinkIdsAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/payment-links/random-payment-link-ids-adapter.server";
@@ -71,10 +69,21 @@ import { SchedulingEndedCallsAdapter } from "~/bounded-contexts/sales/subscripti
 import { OperationsWaitlistModeAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/operations/operations-waitlist-mode-adapter.server";
 import { WaitlistPricingEligibilityAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/waitlist/waitlist-pricing-eligibility-adapter.server";
 import { PaymentsAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payments-adapter.server";
-import type { PaymentsConfig } from "~/bounded-contexts/sales/subscriptions/config.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
+import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider-adapter.server";
+import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-card-handler-port.server";
+import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
+import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";
+import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-subscription-change-handler-port.server";
 
 type SubscriptionsComposition = {
   feature: SubscriptionsFeature;
+  paymentHandlers: {
+    paymentCompletionHandlerPort: PaymentCompletionHandlerPort;
+    paymentSubscriptionChangeHandlerPort: PaymentSubscriptionChangeHandlerPort;
+    paymentRefundHandlerPort: PaymentRefundHandlerPort;
+    paymentCardHandlerPort: PaymentCardHandlerPort;
+  };
 };
 
 export type SubscriptionsFeatureHandles = {
@@ -97,21 +106,17 @@ export type SubscriptionsFeatureHandles = {
   };
   paymentCheckoutPort: PaymentCheckoutPort;
   paymentCustomerCardsPort: PaymentCustomerCardsPort;
-  paymentEventsPort: PaymentEventsPort;
   paymentSubscriptionsPort: PaymentSubscriptionsPort;
   pricingEligibilitySourceFacade: PricingEligibilitySourceFacade;
   productEmailPort: ProductEmailPort;
   publicAppUrl: string;
-  webhookSigningSecret: string | undefined;
 };
 
-export type PaymentHandles = Pick<
+export type SubscriptionPaymentHandles = Pick<
   SubscriptionsFeatureHandles,
   | "paymentCheckoutPort"
   | "paymentCustomerCardsPort"
-  | "paymentEventsPort"
   | "paymentSubscriptionsPort"
-  | "webhookSigningSecret"
 >;
 
 export function composeSubscriptionsFeature(
@@ -343,23 +348,6 @@ export function composeSubscriptionsFeature(
         sendPaymentLinkUseCase: useCases.sendPaymentLinkUseCase,
         unitOfWork,
       }),
-      stripeWebhookController: new StripeWebhookController({
-        paymentCardHandlerPort: new CoachingPaymentCardHandler({
-          mirrorPaymentCardUseCase:
-            subscriptionUseCases.mirrorPaymentCardUseCase,
-        }),
-        completionHandlersByPurpose: byPurpose(
-          coachingPurchaseCompletionHandler,
-        ),
-        paymentWebhookIncidentsPort: subscriptionsIncidentsAdapter,
-        paymentEventsPort: handles.paymentEventsPort,
-        paymentRefundHandlerPort: coachingSubscriptionEventHandler,
-        signingSecret: handles.webhookSigningSecret,
-        subscriptionChangeHandlersByPurpose: byPurpose(
-          coachingSubscriptionEventHandler,
-        ),
-        unitOfWork,
-      }),
       subscriptionController: new SubscriptionController({
         appBasePath: handles.appBasePath,
         cancelSubscriptionUseCase:
@@ -373,23 +361,30 @@ export function composeSubscriptionsFeature(
         startProgramNowUseCase: subscriptionUseCases.startProgramNowUseCase,
       }),
     },
+    paymentHandlers: {
+      paymentCompletionHandlerPort: coachingPurchaseCompletionHandler,
+      paymentSubscriptionChangeHandlerPort: coachingSubscriptionEventHandler,
+      paymentRefundHandlerPort: coachingSubscriptionEventHandler,
+      paymentCardHandlerPort: new CoachingPaymentCardHandler({
+        mirrorPaymentCardUseCase: subscriptionUseCases.mirrorPaymentCardUseCase,
+      }),
+    },
   };
 }
 
-function byPurpose<Handler extends { readonly purpose: string }>(
-  handler: Handler,
-): ReadonlyMap<string, Handler> {
-  return new Map([[handler.purpose, handler]]);
-}
-
-export function composePayments(config: PaymentsConfig): PaymentHandles {
-  const paymentsAdapter = new PaymentsAdapter(config);
+export function composeSubscriptionPayments(handles: {
+  paymentProvider: PaymentProvider;
+  paymentsConfig: PaymentsConfig;
+}): SubscriptionPaymentHandles {
+  const paymentsAdapter = new PaymentsAdapter({
+    paymentProvider: handles.paymentProvider,
+    portalConfigurationId:
+      handles.paymentsConfig.STRIPE_PORTAL_CONFIGURATION_ID,
+  });
 
   return {
     paymentCheckoutPort: paymentsAdapter.paymentCheckoutPort,
     paymentCustomerCardsPort: paymentsAdapter.paymentCustomerCardsPort,
-    paymentEventsPort: paymentsAdapter.paymentEventsPort,
     paymentSubscriptionsPort: paymentsAdapter.paymentSubscriptionsPort,
-    webhookSigningSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
   };
 }

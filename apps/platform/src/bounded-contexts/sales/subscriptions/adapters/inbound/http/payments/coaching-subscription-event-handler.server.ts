@@ -3,13 +3,13 @@ import {
   type ReconcileSubscriptionEventUseCase,
 } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
 import { toSubscriptionEvent } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/coaching-subscription-change.server";
-import type { PaymentEventHandling } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-handlers.server";
-import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-refund-handler-port.server";
-import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-subscription-change-handler-port.server";
+import type { PaymentEventHandling } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-event-handlers.server";
+import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";
+import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-subscription-change-handler-port.server";
 import type {
   PaymentRefund,
   PaymentSubscriptionChange,
-} from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
+} from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 
 type CoachingSubscriptionEventHandlerOptions = {
   reconcileSubscriptionEventUseCase: ReconcileSubscriptionEventUseCase;
