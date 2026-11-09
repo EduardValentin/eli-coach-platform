@@ -1,9 +1,24 @@
+import { z } from "zod";
 import type { PersistStorage } from "zustand/middleware";
 
 export const STORE_CART_STORAGE_KEY = "eli-store-cart-v1";
+export const STORE_CHECKOUT_DETAILS_STORAGE_KEY =
+  "eli-store-checkout-details-v1";
 const STORE_CART_STORAGE_VERSION = 1;
 
-export type PersistedStoreCart = { productSlugs: readonly string[] };
+const storeCheckoutDetailsSchema = z.object({
+  deliveryConsent: z.boolean(),
+  email: z.string(),
+  marketingConsent: z.boolean(),
+  termsAccepted: z.boolean(),
+});
+
+export type StoreCheckoutDetails = z.infer<typeof storeCheckoutDetailsSchema>;
+
+export type PersistedStoreCart = {
+  checkoutDetails: StoreCheckoutDetails | null;
+  productSlugs: readonly string[];
+};
 
 const storeCartStorage: PersistStorage<PersistedStoreCart> = {
   getItem: () => {
@@ -18,6 +33,7 @@ const storeCartStorage: PersistStorage<PersistedStoreCart> = {
 
       return {
         state: {
+          checkoutDetails: readCheckoutDetails(),
           productSlugs: [...new Set(storedCart.productSlugs)],
         },
         version: STORE_CART_STORAGE_VERSION,
@@ -29,6 +45,7 @@ const storeCartStorage: PersistStorage<PersistedStoreCart> = {
   removeItem: () => {
     try {
       localStorage.removeItem(STORE_CART_STORAGE_KEY);
+      sessionStorage.removeItem(STORE_CHECKOUT_DETAILS_STORAGE_KEY);
     } catch {
       return;
     }
@@ -42,6 +59,7 @@ const storeCartStorage: PersistStorage<PersistedStoreCart> = {
           version: storedCart.version,
         }),
       );
+      writeCheckoutDetails(storedCart.state.checkoutDetails);
     } catch {
       return;
     }
@@ -51,6 +69,7 @@ const storeCartStorage: PersistStorage<PersistedStoreCart> = {
 export const STORE_CART_PERSIST_OPTIONS = {
   name: STORE_CART_STORAGE_KEY,
   partialize: (state: PersistedStoreCart) => ({
+    checkoutDetails: state.checkoutDetails,
     productSlugs: state.productSlugs,
   }),
   skipHydration: true,
@@ -70,5 +89,29 @@ function isPersistedStoreCart(storedCart: unknown): storedCart is {
     "productSlugs" in storedCart &&
     Array.isArray(storedCart.productSlugs) &&
     storedCart.productSlugs.every((slug) => typeof slug === "string")
+  );
+}
+
+function readCheckoutDetails(): StoreCheckoutDetails | null {
+  try {
+    const storedDetails = JSON.parse(
+      sessionStorage.getItem(STORE_CHECKOUT_DETAILS_STORAGE_KEY) ?? "null",
+    ) as unknown;
+
+    return storeCheckoutDetailsSchema.safeParse(storedDetails).data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCheckoutDetails(details: StoreCheckoutDetails | null): void {
+  if (details === null) {
+    sessionStorage.removeItem(STORE_CHECKOUT_DETAILS_STORAGE_KEY);
+    return;
+  }
+
+  sessionStorage.setItem(
+    STORE_CHECKOUT_DETAILS_STORAGE_KEY,
+    JSON.stringify(details),
   );
 }

@@ -44,10 +44,14 @@ export function formatStorePrice(
   price: StorePrice,
   currency: StoreCurrency,
 ): string {
-  return formatStoreAmount(
-    price[STORE_CURRENCY_AMOUNT_FIELDS[currency]],
-    currency,
-  );
+  return formatStoreAmount(storePriceAmount(price, currency), currency);
+}
+
+export function storePriceAmount(
+  price: StorePrice,
+  currency: StoreCurrency,
+): number {
+  return price[STORE_CURRENCY_AMOUNT_FIELDS[currency]];
 }
 
 export function formatStoreAmount(

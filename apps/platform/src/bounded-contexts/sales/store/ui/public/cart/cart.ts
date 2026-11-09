@@ -10,26 +10,34 @@ import {
 } from "~/bounded-contexts/sales/store/public/store-currency";
 
 import { createFocusRestoreTracker } from "./cart-focus";
-import type { PersistedStoreCart } from "./cart-storage";
+import type { PersistedStoreCart, StoreCheckoutDetails } from "./cart-storage";
 import { STORE_CART_PERSIST_OPTIONS } from "./cart-storage";
 
 export { STORE_CART_STORAGE_KEY } from "./cart-storage";
 
 const STORE_CURRENCY_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
+type StoreCartNotice = "payment-not-completed";
+
 export type StoreCartState = {
   addProduct: (productSlug: string) => void;
+  checkoutDetails: StoreCheckoutDetails | null;
   clearCart: () => void;
   closeCart: () => void;
   currency: StoreCurrency;
+  dismissNotice: () => void;
   isHydrated: boolean;
   isOpen: boolean;
   markHydrated: () => void;
+  notice: StoreCartNotice | null;
+  openCartAfterCancelledPayment: () => void;
   openCartFrom: (opener: HTMLElement) => void;
   productSlugs: readonly string[];
   reconcileProducts: (availableProductSlugs: readonly string[]) => void;
+  rememberCheckoutDetails: (details: StoreCheckoutDetails) => void;
   removeProduct: (productSlug: string) => void;
   setCurrency: (currency: StoreCurrency) => void;
+  takeCheckoutDetails: () => StoreCheckoutDetails | null;
   takeFocusRestoreTarget: () => HTMLElement | null;
   setPersistentCartControl: (control: HTMLButtonElement | null) => void;
 };
@@ -41,7 +49,7 @@ export function createStoreCartStore(initialCurrency: StoreCurrency) {
 
   return createStore<StoreCartState>()(
     persist<StoreCartState, [], [], PersistedStoreCart>(
-      (set) => ({
+      (set, get) => ({
         addProduct: (productSlug) => {
           set((state) => ({
             productSlugs: state.productSlugs.includes(productSlug)
@@ -49,17 +57,25 @@ export function createStoreCartStore(initialCurrency: StoreCurrency) {
               : [...state.productSlugs, productSlug],
           }));
         },
+        checkoutDetails: null,
         clearCart: () => {
-          set({ productSlugs: [] });
+          set({ checkoutDetails: null, productSlugs: [] });
         },
         closeCart: () => {
-          set({ isOpen: false });
+          set({ isOpen: false, notice: null });
         },
         currency: initialCurrency,
+        dismissNotice: () => {
+          set({ notice: null });
+        },
         isHydrated: false,
         isOpen: false,
         markHydrated: () => {
           set({ isHydrated: true });
+        },
+        notice: null,
+        openCartAfterCancelledPayment: () => {
+          set({ isOpen: true, notice: "payment-not-completed" });
         },
         openCartFrom: (opener) => {
           focusRestoreTracker.rememberOpener(opener);
@@ -76,6 +92,9 @@ export function createStoreCartStore(initialCurrency: StoreCurrency) {
               : { productSlugs: reconciled.slugs };
           });
         },
+        rememberCheckoutDetails: (details) => {
+          set({ checkoutDetails: details });
+        },
         removeProduct: (productSlug) => {
           set((state) => ({
             productSlugs: state.productSlugs.filter(
@@ -86,6 +105,12 @@ export function createStoreCartStore(initialCurrency: StoreCurrency) {
         setCurrency: (currency) => {
           rememberStoreCurrency(currency);
           set({ currency });
+        },
+        takeCheckoutDetails: () => {
+          const { checkoutDetails } = get();
+          set({ checkoutDetails: null });
+
+          return checkoutDetails;
         },
         takeFocusRestoreTarget: () => focusRestoreTracker.take(),
         setPersistentCartControl: (control) => {

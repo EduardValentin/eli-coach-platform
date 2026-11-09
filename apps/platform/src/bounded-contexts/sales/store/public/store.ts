@@ -155,7 +155,6 @@ export const storeDownloadRequestSchema = z.object({
 });
 
 export type StoreProduct = z.infer<typeof storeProductSchema>;
-export type StoreAcquisitionForm = z.infer<typeof storeAcquisitionFormSchema>;
 export type StoreCatalogResponse = z.infer<typeof storeCatalogResponseSchema>;
 export type StoreAcquisitionResponse = z.infer<
   typeof storeAcquisitionResponseSchema

@@ -95,6 +95,11 @@ export const storeOrderEmailResendResponseSchema = z.discriminatedUnion(
 export type StoreCheckoutErrorCode = z.infer<
   typeof storeCheckoutErrorCodeSchema
 >;
+export type StoreCheckoutResponse = z.infer<typeof storeCheckoutResponseSchema>;
+export type StoreOrderEmailResendOutcome = Extract<
+  z.infer<typeof storeOrderEmailResendResponseSchema>,
+  { success: true }
+>["outcome"];
 export type StoreOrderConfirmation = z.infer<
   typeof storeOrderConfirmationSchema
 >;
