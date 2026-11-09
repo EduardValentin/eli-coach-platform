@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { PlanNewProductUseCase } from "./plan-new-product-use-case";
+import {
+  PlanNewProductUseCase,
+  type PlanNewProductCommand,
+} from "./plan-new-product-use-case";
 import { PlanProductRevisionUseCase } from "./plan-product-revision-use-case";
 import { Product } from "./product";
 import type { ProductAssetWriterPort } from "./product-asset-writer-port";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
+import { ProductPricing, type ProductPricingInput } from "./product-pricing";
 import type {
   ProductCoverInput,
   ProductDownloadInput,
@@ -55,6 +59,7 @@ function existingProduct(
   lifecycleStatus: "archived" | "draft" | "published" = "published",
 ): Product {
   return Product.reconstitute({
+    currentPricing: ProductPricing.free(),
     displayOrder: 2,
     id: 7,
     latestVersionSequence: 3,
@@ -80,6 +85,7 @@ function createPublications(
     findPublicationByIdempotencyKey: vi.fn().mockResolvedValue(null),
     getNextDisplayOrder: vi.fn().mockResolvedValue(5),
     getTaxonomy: vi.fn().mockResolvedValue(taxonomy),
+    persistPriceChange: vi.fn(),
     persistPublication: vi.fn().mockImplementation((command) =>
       Promise.resolve({
         id: 41,
@@ -117,8 +123,9 @@ const newProductCommand = {
   cover,
   downloads,
   metadata,
+  pricing: { kind: "free" },
   slug: "glute-growth-guide",
-};
+} satisfies PlanNewProductCommand;
 
 const publishNewProductCommand = {
   ...newProductCommand,
@@ -143,6 +150,46 @@ describe("PlanNewProductUseCase", () => {
       productId: null,
       productSlug: "glute-growth-guide",
       versionSequence: 1,
+    });
+  });
+
+  it.each<[string, ProductPricingInput]>([
+    ["free", { kind: "free" }],
+    ["paid", { kind: "paid", eurCents: 3900, usdCents: 4500 }],
+  ])(
+    "reports the resolved pricing of a %s product",
+    async (_label, pricing) => {
+      // arrange
+      const { planOptions } = createOptions();
+
+      // act
+      const result = await new PlanNewProductUseCase(planOptions).execute({
+        ...newProductCommand,
+        pricing,
+      });
+
+      // assert
+      expect(result.status === "valid" && result.plan).toMatchObject({
+        operation: "create_product",
+        pricing,
+      });
+    },
+  );
+
+  it("names the price rule a paid product breaks", async () => {
+    // arrange
+    const { planOptions } = createOptions();
+
+    // act
+    const result = await new PlanNewProductUseCase(planOptions).execute({
+      ...newProductCommand,
+      pricing: { kind: "paid", eurCents: 3900 },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [{ code: "missing_price", currency: "USD" }],
     });
   });
 
@@ -296,6 +343,57 @@ describe("PublishNewProductUseCase", () => {
     );
   });
 
+  it.each<[string, ProductPricingInput]>([
+    ["free", { kind: "free" }],
+    ["paid", { kind: "paid", eurCents: 3900, usdCents: 4500 }],
+  ])(
+    "records the pricing of a %s product with its publication",
+    async (_label, pricing) => {
+      // arrange
+      const { options, storeProductPublicationsPort } = createOptions();
+
+      // act
+      await new PublishNewProductUseCase(options).execute({
+        ...publishNewProductCommand,
+        pricing,
+      });
+
+      // assert
+      expect(
+        storeProductPublicationsPort.persistPublication,
+      ).toHaveBeenCalledWith(expect.objectContaining({ pricing }));
+    },
+  );
+
+  it("publishes nothing when a price breaks the rule", async () => {
+    // arrange
+    const { options, storeProductPublicationsPort, productAssetWriterPort } =
+      createOptions();
+
+    // act
+    const result = await new PublishNewProductUseCase(options).execute({
+      ...publishNewProductCommand,
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 100_000_000 },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [
+        {
+          code: "price_out_of_range",
+          currency: "USD",
+          minimum: 1,
+          maximum: 99_999_999,
+        },
+      ],
+    });
+    expect(productAssetWriterPort.write).not.toHaveBeenCalled();
+    expect(
+      storeProductPublicationsPort.persistPublication,
+    ).not.toHaveBeenCalled();
+  });
+
   it("replays an existing publication without writing or persisting again", async () => {
     // arrange
     const { options, storeProductPublicationsPort, productAssetWriterPort } =
@@ -423,6 +521,10 @@ describe("PublishProductVersionUseCase", () => {
         versionSequence: 4,
       }),
     );
+    expect(
+      vi.mocked(storeProductPublicationsPort.persistPublication).mock
+        .calls[0]![0],
+    ).not.toHaveProperty("pricing");
   });
 
   it("rejects a revision of an unknown product", async () => {

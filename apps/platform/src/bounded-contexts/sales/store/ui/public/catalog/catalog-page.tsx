@@ -62,11 +62,14 @@ export function shouldRevalidate({
     : defaultShouldRevalidate;
 }
 
+export const handle = { publicContentFrame: "full-bleed" } as const;
+
 export const meta: MetaFunction = () => [
-  { title: "Free Resources | Evoa" },
+  { title: "Store | Evoa" },
   {
     name: "description",
-    content: "Free workout, nutrition, and wellbeing guides from Evoa.",
+    content:
+      "Workout and nutrition plans, plus free guides to get you started.",
   },
 ];
 

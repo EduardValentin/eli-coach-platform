@@ -1,14 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
-import { useStore, STORE_PRODUCTS, ProductCategory, ProductGoal } from '../context/StoreContext';
+import { useStore, isPaid, STORE_PRODUCTS, PRODUCT_CATEGORIES, PRODUCT_GOALS, ProductCategory, ProductGoal, type Currency } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
 import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
+import { ChoiceGroup, ChoiceOption } from '../components/ChoiceGroup';
+import { ProductTag } from '../components/ProductTag';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { buttonVariants, cn } from '../components/ThemeButton';
 import { cardVariants } from '../components/ui/card';
+import { FreeTag } from '../components/FreeTag';
 
 const CHIP_BASE_CLASS =
   'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full border bg-card px-4 py-2 text-sm font-normal text-foreground transition-colors';
@@ -17,17 +20,14 @@ const TYPE_CHIP_CLASS = `${CHIP_BASE_CLASS} border-control-border-soft hover:bg-
 
 const GOAL_CHIP_CLASS = `${CHIP_BASE_CLASS} border-control-border-soft hover:bg-card data-[state=off]:hover:border-brand-secondary data-[state=off]:hover:text-brand-secondary data-[state=on]:border-brand-secondary data-[state=on]:bg-brand-secondary data-[state=on]:text-brand-secondary-foreground data-[state=on]:hover:bg-brand-secondary data-[state=on]:hover:text-brand-secondary-foreground`;
 
-const CURRENCY_ITEM_CLASS =
-  'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full px-4 py-2 text-sm font-medium text-copy-muted transition-colors hover:bg-card data-[state=off]:hover:text-foreground data-[state=on]:bg-surface-inverted data-[state=on]:text-surface-inverted-foreground data-[state=on]:hover:bg-surface-inverted data-[state=on]:hover:text-surface-inverted-foreground';
-
 export function Store() {
   const { addToCart, currency, setCurrency, formatPrice } = useStore();
   const { appState } = useAppState();
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'All'>('All');
   const [selectedGoal, setSelectedGoal] = useState<ProductGoal | 'All'>('All');
 
-  const categories: (ProductCategory | 'All')[] = ['All', 'Workouts', 'Nutrition Plans', 'E-Books'];
-  const goals: (ProductGoal | 'All')[] = ['All', 'Muscle Building', 'Fat Loss', 'Wellness', 'Hormonal Balance'];
+  const categories: (ProductCategory | 'All')[] = ['All', ...PRODUCT_CATEGORIES];
+  const goals: (ProductGoal | 'All')[] = ['All', ...PRODUCT_GOALS];
 
   const catalogProducts = appState.isStoreCatalogEmpty ? [] : STORE_PRODUCTS;
   const isCatalogEmpty = catalogProducts.length === 0;
@@ -40,17 +40,17 @@ export function Store() {
     });
   }, [catalogProducts, selectedCategory, selectedGoal]);
 
-  const paidProducts = filteredProducts.filter(p => p.type === 'paid');
-  const freeProducts = filteredProducts.filter(p => p.type === 'free');
+  const paidProducts = filteredProducts.filter(isPaid);
+  const freeProducts = filteredProducts.filter(p => !isPaid(p));
 
   return (
     <>
-    <main className="w-full min-h-screen pb-24 bg-surface-page">
+    <main className="w-full min-h-screen pb-24 bg-surface-page" data-parity-root="Store">
       <Navbar theme="dark" />
 
       <div className="max-w-7xl mx-auto px-6 pt-32">
         {/* Header & Currency Switcher */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div className="max-w-2xl">
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-4 tracking-tight">
               Find the right plan
@@ -61,24 +61,21 @@ export function Store() {
           </div>
 
           {!isCatalogEmpty && (
-            <ToggleGroup
-              type="single"
-              value={currency}
-              onValueChange={(value) => {
-                if (value) setCurrency(value as typeof currency);
-              }}
+            <ChoiceGroup
               aria-label="Currency"
-              className="gap-2 bg-card rounded-full p-1 shadow-card border border-control-border-soft"
+              look="pill"
+              onValueChange={(value) => setCurrency(value as Currency)}
+              value={currency}
             >
-              <ToggleGroupItem value="USD" className={CURRENCY_ITEM_CLASS}>
-                <DollarSign size={16} aria-hidden="true" /> USD
-              </ToggleGroupItem>
-              <ToggleGroupItem value="EUR" className={CURRENCY_ITEM_CLASS}>
+              <ChoiceOption value="EUR">
                 <Euro size={16} aria-hidden="true" /> EUR
-              </ToggleGroupItem>
-            </ToggleGroup>
+              </ChoiceOption>
+              <ChoiceOption value="USD">
+                <DollarSign size={16} aria-hidden="true" /> USD
+              </ChoiceOption>
+            </ChoiceGroup>
           )}
-        </div>
+        </header>
 
         {isCatalogEmpty ? (
           <div className="flex flex-col items-center gap-4 text-center py-24">
@@ -110,7 +107,12 @@ export function Store() {
                     className="flex-wrap gap-2"
                   >
                     {categories.map(cat => (
-                      <ToggleGroupItem key={cat} value={cat} className={TYPE_CHIP_CLASS}>
+                      <ToggleGroupItem
+                        key={cat}
+                        value={cat}
+                        className={TYPE_CHIP_CLASS}
+                        data-parity={cat === 'All' ? 'filter-type-all' : undefined}
+                      >
                         {cat}
                       </ToggleGroupItem>
                     ))}
@@ -131,7 +133,12 @@ export function Store() {
                     className="flex-wrap gap-2"
                   >
                     {goals.map(goal => (
-                      <ToggleGroupItem key={goal} value={goal} className={GOAL_CHIP_CLASS}>
+                      <ToggleGroupItem
+                        key={goal}
+                        value={goal}
+                        className={GOAL_CHIP_CLASS}
+                        data-parity={goal === 'All' ? 'filter-goal-all' : undefined}
+                      >
                         {goal}
                       </ToggleGroupItem>
                     ))}
@@ -148,7 +155,7 @@ export function Store() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {paidProducts.map(product => (
-                    <motion.div
+                    <motion.article
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -161,16 +168,19 @@ export function Store() {
                           alt={product.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold text-foreground">
-                          {formatPrice(product.priceUSD)}
+                        <div
+                          className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold text-foreground"
+                          data-parity="product-price"
+                        >
+                          {formatPrice(product)}
                         </div>
                       </Link>
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {product.categories.map(c => (
-                            <span key={c} className="text-label uppercase text-brand bg-brand-soft px-2 py-1 rounded-tile">
+                            <ProductTag key={c} size="sm" tone="paid">
                               {c}
-                            </span>
+                            </ProductTag>
                           ))}
                         </div>
                         <Link to={`/store/${product.id}`}>
@@ -182,13 +192,14 @@ export function Store() {
                           {product.description}
                         </p>
                         <button
+                          aria-label={`Add ${product.title} to cart`}
                           onClick={() => addToCart(product)}
                           className={buttonVariants({ size: 'lg', variant: 'inverted', width: 'full' })}
                         >
                           <ShoppingBag size={18} aria-hidden="true" /> Add to Cart
                         </button>
                       </div>
-                    </motion.div>
+                    </motion.article>
                   ))}
                 </div>
               </section>
@@ -198,11 +209,11 @@ export function Store() {
             {freeProducts.length > 0 && (
               <section>
                 <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 px-3 border-b border-control-border-soft">
-                  Free Resources
+                  Free resources
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {freeProducts.map(product => (
-                    <motion.div
+                    <motion.article
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -215,16 +226,14 @@ export function Store() {
                           alt={product.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute top-4 right-4 bg-brand-secondary text-brand-secondary-foreground px-3 py-1.5 rounded-full text-label uppercase">
-                          Free
-                        </div>
+                        <FreeTag className="absolute top-4 right-4" />
                       </Link>
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {product.categories.map(c => (
-                            <span key={c} className="text-label uppercase text-brand-secondary bg-brand-secondary-soft px-2 py-1 rounded-tile">
+                            <ProductTag key={c} size="sm" tone="free">
                               {c}
-                            </span>
+                            </ProductTag>
                           ))}
                         </div>
                         <Link to={`/store/${product.id}`}>
@@ -236,13 +245,14 @@ export function Store() {
                           {product.description}
                         </p>
                         <button
+                          aria-label={`Get ${product.title} for free`}
                           onClick={() => addToCart(product)}
                           className={buttonVariants({ size: 'lg', variant: 'outline', width: 'full' })}
                         >
-                          <Plus size={18} aria-hidden="true" /> Get for Free
+                          <Plus size={18} aria-hidden="true" /> Get for free
                         </button>
                       </div>
-                    </motion.div>
+                    </motion.article>
                   ))}
                 </div>
               </section>

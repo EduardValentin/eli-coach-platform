@@ -130,6 +130,7 @@
   --color-brand-primary-hover: #a31556;
   --color-brand-primary-foreground: #ffffff;
   --color-brand-primary-soft: rgba(200, 29, 107, 0.1);
+  --color-brand-primary-surface: #fae8f0;
   --color-brand-primary-on-inverted: #f06ba6;
   --color-focus-ring: var(--color-brand-primary);
 
@@ -377,6 +378,7 @@
   --color-brand-primary-hover: var(--color-brand-primary-hover);
   --color-brand-primary-foreground: var(--color-brand-primary-foreground);
   --color-brand-primary-soft: var(--color-brand-primary-soft);
+  --color-brand-primary-surface: var(--color-brand-primary-surface);
   --color-brand-primary-on-inverted: var(--color-brand-primary-on-inverted);
   --color-focus-ring: var(--color-focus-ring);
 

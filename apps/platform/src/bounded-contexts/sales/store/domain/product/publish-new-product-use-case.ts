@@ -9,6 +9,7 @@ import {
   type PublishingPrincipal,
   type PublishProductResult,
 } from "./product-publication";
+import type { ProductPricingInput } from "./product-pricing";
 import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 export type PublishNewProductCommand = {
@@ -16,6 +17,7 @@ export type PublishNewProductCommand = {
   downloads: readonly ProductDownloadInput[];
   idempotencyKey: string;
   metadata: ProductVersionMetadata;
+  pricing: ProductPricingInput;
   publishedBy: PublishingPrincipal;
   slug: string;
 };
@@ -33,9 +35,8 @@ export class PublishNewProductUseCase {
     command: PublishNewProductCommand,
   ): Promise<PublishProductResult> {
     try {
-      const draft = ProductPublicationDraft.from(command);
+      const draft = ProductPublicationDraft.forNewProduct(command);
       const payloadDigest = draft.requestDigest(
-        "create_product",
         command.slug,
         this.options.productAssetDigestPort,
       );

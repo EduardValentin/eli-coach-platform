@@ -48,7 +48,7 @@ export type PublicOutletContext = {
 };
 
 export default function PublicLayoutRoute() {
-  const { botDetection, session, storePath, waitlist } =
+  const { botDetection, session, storeCurrency, storePath, waitlist } =
     useLoaderData<typeof loader>();
   const location = useLocation();
   const contentFrame = useContentFrame();
@@ -59,7 +59,7 @@ export default function PublicLayoutRoute() {
   ) : undefined;
 
   return (
-    <StoreCartProvider>
+    <StoreCartProvider initialCurrency={storeCurrency}>
       <PublicLayout
         contentFrame={contentFrame}
         homepageFooterCta={homepageFooterCta}

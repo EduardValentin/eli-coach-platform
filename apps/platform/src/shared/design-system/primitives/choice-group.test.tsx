@@ -131,4 +131,44 @@ describe("ChoiceGroup", () => {
       "data-[state=checked]:text-primary-foreground",
     );
   });
+
+  it("sets the pill look's options in a raised pill track", () => {
+    // arrange
+    const onValueChange = () => {};
+
+    // act
+    render(
+      <ChoiceGroup
+        aria-label="Currency"
+        look="pill"
+        onValueChange={onValueChange}
+        value="EUR"
+      >
+        <ChoiceOption value="EUR">EUR</ChoiceOption>
+        <ChoiceOption value="USD">USD</ChoiceOption>
+      </ChoiceGroup>,
+    );
+
+    // assert
+    expect(screen.getByRole("radiogroup", { name: "Currency" })).toHaveClass(
+      "rounded-full",
+      "border-control-border-soft",
+      "bg-surface-base",
+      "p-1",
+      "shadow-card",
+    );
+    expect(screen.getByRole("radio", { name: "EUR" })).toHaveClass(
+      "rounded-full",
+      "px-4",
+      "py-2",
+      "text-copy-muted",
+      "data-[state=unchecked]:hover:text-text-primary",
+      "data-[state=checked]:bg-surface-inverted",
+      "data-[state=checked]:text-text-inverted",
+    );
+    expect(screen.getByRole("radio", { name: "EUR" })).not.toHaveClass(
+      "data-[state=checked]:bg-primary",
+      "h-[calc(var(--size-control-sm)-6px)]",
+    );
+  });
 });

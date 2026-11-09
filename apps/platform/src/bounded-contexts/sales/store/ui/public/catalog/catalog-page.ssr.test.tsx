@@ -15,7 +15,7 @@ describe("store catalog server rendering", () => {
     const handler = createStaticHandler([
       {
         Component: () => (
-          <StoreCartProvider>
+          <StoreCartProvider initialCurrency="EUR">
             <CatalogRoute />
           </StoreCartProvider>
         ),
@@ -49,7 +49,7 @@ describe("store catalog server rendering", () => {
     const handler = createStaticHandler([
       {
         Component: () => (
-          <StoreCartProvider>
+          <StoreCartProvider initialCurrency="EUR">
             <CatalogRoute />
           </StoreCartProvider>
         ),
@@ -105,6 +105,7 @@ function createProduct() {
     detailDescription: "Phase-by-phase nutrition guidance.",
     goals: [{ displayOrder: 3, label: "Wellness", slug: "wellness" }],
     includedItems: ["Phase-by-phase guidance"],
+    price: null,
     slug: "hormone-harmony",
     title: "Hormone Harmony",
     types: [{ displayOrder: 3, label: "E-Books", slug: "e-books" }],

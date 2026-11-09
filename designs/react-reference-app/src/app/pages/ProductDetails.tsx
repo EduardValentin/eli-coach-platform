@@ -1,12 +1,14 @@
 import { useParams, Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
-import { useStore, STORE_PRODUCTS } from '../context/StoreContext';
+import { useStore, isPaid, STORE_PRODUCTS } from '../context/StoreContext';
 import { ArrowLeft, CheckCircle2, ShoppingBag, Download } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
 import { Card, CardContent } from '../components/ui/card';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { buttonVariants } from '../components/ThemeButton';
+import { Price } from '../components/Price';
+import { ProductTag } from '../components/ProductTag';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -30,14 +32,14 @@ export function ProductDetails() {
     );
   }
 
-  const isFree = product.priceUSD === 0;
+  const isFree = !isPaid(product);
 
   return (
     <>
-    <main className="w-full min-h-screen pb-24 bg-surface-page">
+    <main className="w-full min-h-screen pb-24 bg-surface-page" data-parity-root="ProductDetails">
       <Navbar theme="dark" />
 
-      <div className="max-w-6xl mx-auto px-6 pt-32">
+      <article className="max-w-6xl mx-auto px-6 pt-32">
         <Link to="/store" className="inline-flex items-center gap-2 text-sm font-medium text-copy-muted hover:text-brand transition-colors mb-12 group">
           <ArrowLeft size={16} aria-hidden="true" className="group-hover:-translate-x-1 transition-transform" /> Back to Store
         </Link>
@@ -47,6 +49,7 @@ export function ProductDetails() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="rounded-card overflow-hidden aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-surface-subtle shadow-raised"
+            data-parity="product-cover"
           >
             <img
               src={product.imageUrl}
@@ -62,20 +65,14 @@ export function ProductDetails() {
           >
             <div className="flex gap-2 mb-6 flex-wrap">
               {product.categories.map(c => (
-                <span
-                  key={c}
-                  className={cn('text-label uppercase px-3 py-1.5 rounded-tile', {
-                    'text-brand-secondary bg-brand-secondary-soft': isFree,
-                    'text-brand bg-brand-soft': !isFree,
-                  })}
-                >
+                <ProductTag key={c} size="md" tone={isFree ? 'free' : 'paid'}>
                   {c}
-                </span>
+                </ProductTag>
               ))}
               {product.goals.map(g => (
-                <span key={g} className="text-label uppercase px-3 py-1.5 rounded-tile text-copy-muted bg-surface-subtle">
+                <ProductTag key={g} size="md" tone="goal">
                   {g}
-                </span>
+                </ProductTag>
               ))}
             </div>
 
@@ -85,13 +82,13 @@ export function ProductDetails() {
 
             {/* A free resource has no price to state — its CTA already reads
                 "Get it for Free", so a "Free" line only repeats it. */}
-            {!isFree && (
-              <p className="text-foreground font-semibold text-3xl tracking-tight mb-8">
-                {formatPrice(product.priceUSD)}
-              </p>
+            {isPaid(product) && (
+              <Price className="mb-8" data-parity="product-price" size="lg">
+                {formatPrice(product)}
+              </Price>
             )}
 
-            <div className="w-16 h-1 bg-control-border-soft mb-8" />
+            <div aria-hidden="true" className="w-16 h-1 bg-control-border-soft mb-8" data-parity="product-divider" />
 
             <p className="text-lg text-copy-muted leading-relaxed mb-10">
               {product.longDescription}
@@ -119,6 +116,7 @@ export function ProductDetails() {
             </Card>
 
             <button
+              aria-label={isFree ? `Get ${product.title} for free` : `Add ${product.title} to cart`}
               onClick={() => addToCart(product)}
               className={buttonVariants({
                 elevation: 'raised',
@@ -140,7 +138,7 @@ export function ProductDetails() {
             </p>
           </motion.div>
         </div>
-      </div>
+      </article>
     </main>
     <LegalFooter />
     </>

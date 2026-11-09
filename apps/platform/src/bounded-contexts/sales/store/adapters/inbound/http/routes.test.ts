@@ -14,6 +14,7 @@ import * as catalogRoute from "./catalog/catalog";
 import * as coverRoute from "./covers/covers";
 import * as downloadsRoute from "./downloads/downloads";
 import * as managementProductRoute from "./management/management-product";
+import * as managementProductPricesRoute from "./management/management-product-prices";
 import * as managementProductValidationsRoute from "./management/management-product-validations";
 import * as managementProductVersionsRoute from "./management/management-product-versions";
 import * as managementProductsRoute from "./management/management-products";
@@ -204,5 +205,50 @@ describe("Store API routes", () => {
     ]);
     expect(management.publishProduct).not.toHaveBeenCalled();
     expect(management.retireProduct).not.toHaveBeenCalled();
+  });
+
+  it("routes a price change POST to its controller method and rejects other methods", async () => {
+    // arrange
+    const repriced = Response.json({ success: true }, { status: 201 });
+    const management = {
+      changeProductPrice: vi.fn().mockResolvedValue(repriced),
+    };
+    const feature = { storeProductManagementController: management as never };
+    const priceChangeRequest = new Request(
+      "https://eli.example/api/management/store/products/7/prices",
+      { method: "POST" },
+    );
+    const readRequest = new Request(
+      "https://eli.example/api/management/store/products/7/prices",
+      { method: "GET" },
+    );
+
+    // act
+    const changed = await managementProductPricesRoute.action(
+      storeArgs(priceChangeRequest, feature, { productId: "7" }),
+    );
+    const rejectedRead = await managementProductPricesRoute.loader(
+      storeArgs(readRequest, feature, { productId: "7" }),
+    );
+    const rejectedPatch = await managementProductPricesRoute.action(
+      storeArgs(
+        new Request(
+          "https://eli.example/api/management/store/products/7/prices",
+          { method: "PATCH" },
+        ),
+        feature,
+        { productId: "7" },
+      ),
+    );
+
+    // assert
+    expect(changed).toBe(repriced);
+    expect(management.changeProductPrice).toHaveBeenCalledWith(
+      priceChangeRequest,
+      "7",
+    );
+    expect(rejectedRead.status).toBe(405);
+    expect(rejectedPatch.status).toBe(405);
+    expect(management.changeProductPrice).toHaveBeenCalledTimes(1);
   });
 });

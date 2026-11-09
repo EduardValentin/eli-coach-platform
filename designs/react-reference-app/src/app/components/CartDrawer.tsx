@@ -1,9 +1,11 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
 
-import { useStore, type CartItem } from '../context/StoreContext';
+import { isPaid, useStore, type CartItem, type PaidProduct } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
 import { CheckboxField } from './CheckboxField';
+import { FreeTag } from './FreeTag';
+import { Price } from './Price';
 import { InlineProblem } from './InlineProblem';
 import { Button } from './ThemeButton';
 import { Alert } from './ui/alert';
@@ -11,6 +13,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Link, linkVariants } from './ui/link';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from './ui/sheet';
+import { LABEL_CLASS } from './typography';
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -25,7 +28,7 @@ const TERMS_PROBLEM = 'Accept the Terms & Conditions to continue.';
 type CheckoutStep = 'cart' | 'details' | 'success';
 
 export function CartDrawer() {
-  const { cart, removeFromCart, clearCart, isCartOpen, setIsCartOpen, formatPrice } = useStore();
+  const { cart, removeFromCart, clearCart, isCartOpen, setIsCartOpen, formatPrice, cartTotal } = useStore();
   const { appState } = useAppState();
 
   const [step, setStep] = useState<CheckoutStep>('cart');
@@ -42,7 +45,7 @@ export function CartDrawer() {
   const responseErrorId = useId();
   const openerRef = useRef<HTMLElement | null>(null);
 
-  const hasPaidProduct = cart.some((item) => item.product.priceUSD > 0);
+  const hasPaidProduct = cart.some((item) => isPaid(item.product));
   const canSubmit = !isSubmitting && email.trim().length > 0 && termsAccepted;
   const termsProblem = submitAttempted && !termsAccepted ? TERMS_PROBLEM : undefined;
 
@@ -135,7 +138,7 @@ export function CartDrawer() {
             Your cart
           </SheetTitle>
           <SheetDescription className="sr-only">
-            Review your free resources and tell us where to send them.
+            Review your cart and tell us which email to use.
           </SheetDescription>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6" data-parity="cart-body">
@@ -143,6 +146,7 @@ export function CartDrawer() {
             <CartReview
               items={cart}
               formatPrice={formatPrice}
+              total={cartTotal}
               onContinue={showDetails}
               onRemove={removeFromCart}
               responseError={serviceError?.message ?? null}
@@ -179,6 +183,7 @@ export function CartDrawer() {
                 )}
                 <div className="mt-6 flex flex-col gap-4">
                   <CheckboxField
+                    checkboxParity="terms-checkbox"
                     checked={termsAccepted}
                     data-parity="terms-consent"
                     disabled={isSubmitting}
@@ -198,6 +203,7 @@ export function CartDrawer() {
                     required
                   />
                   <CheckboxField
+                    checkboxParity="marketing-checkbox"
                     checked={marketingConsent}
                     data-parity="marketing-consent"
                     disabled={isSubmitting}
@@ -253,7 +259,8 @@ function SubmitLabel(props: { hasPaidProduct: boolean; isSubmitting: boolean }) 
 
 function CartReview(props: {
   items: CartItem[];
-  formatPrice: (priceUSD: number) => string;
+  formatPrice: (product: PaidProduct) => string;
+  total: string | null;
   onContinue: () => void;
   onRemove: (productId: string) => void;
   responseError: string | null;
@@ -263,7 +270,7 @@ function CartReview(props: {
       <div className="m-auto text-center">
         <ShoppingBag aria-hidden="true" className="mx-auto mb-4 text-icon-muted" size={44} />
         <p className="font-serif text-display-sm text-text-primary">Your cart is empty</p>
-        <p className="mt-2 text-sm text-text-secondary">Add a free resource from the store to get started.</p>
+        <p className="mt-2 text-sm text-text-secondary">Add a plan or a free resource from the store to get started.</p>
       </div>
     );
   }
@@ -290,9 +297,13 @@ function CartReview(props: {
               >
                 {item.product.title}
               </p>
-              <p className="mt-1 text-label uppercase text-brand-secondary" data-parity="cart-item-type">
-                {item.product.priceUSD === 0 ? 'Free resource' : props.formatPrice(item.product.priceUSD)}
-              </p>
+              {isPaid(item.product) ? (
+                <Price className="mt-1" data-parity="cart-line-price" size="sm">
+                  {props.formatPrice(item.product)}
+                </Price>
+              ) : (
+                <FreeTag className="mt-1 self-start" data-parity="cart-item-type" size="sm" />
+              )}
               <button
                 aria-label={`Remove ${item.product.title} from cart`}
                 className="ml-auto mt-auto inline-flex items-center justify-center p-1 text-text-secondary transition-colors hover:text-destructive"
@@ -306,6 +317,14 @@ function CartReview(props: {
         ))}
       </ul>
       <div className="mt-auto border-t border-border-subtle pt-6" data-parity="cart-summary">
+        {props.total && (
+          <dl className="mb-6 flex items-baseline justify-between gap-4">
+            <dt className={LABEL_CLASS}>Total</dt>
+            <dd className="text-lg font-semibold text-text-primary" data-parity="cart-total">
+              {props.total}
+            </dd>
+          </dl>
+        )}
         <Button onClick={props.onContinue} size="lg" variant="inverted" width="full">
           Continue
         </Button>
@@ -317,7 +336,10 @@ function CartReview(props: {
 function AcquisitionSuccess({ variant }: { variant: 'free' | 'paid' }) {
   return (
     <div className="m-auto text-center">
-      <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-success-soft text-success">
+      <span
+        className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-success-soft text-success"
+        data-parity="sent-icon"
+      >
         <CheckCircle2 aria-hidden="true" size={32} />
       </span>
       <h2 className="font-serif text-display-md text-text-primary">

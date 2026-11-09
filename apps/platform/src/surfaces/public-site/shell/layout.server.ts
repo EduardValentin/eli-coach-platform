@@ -6,6 +6,10 @@ import type { PublicSessionState } from "~/bounded-contexts/access/accounts/publ
 import { clientPortalStandingContext } from "~/bounded-contexts/clients/public/request-context";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import {
+  readStoreCurrency,
+  type StoreCurrency,
+} from "~/bounded-contexts/sales/store/public/store-currency";
+import {
   presentWaitlist,
   type WaitlistPresentation,
 } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
@@ -19,6 +23,7 @@ import { accessContext } from "~/bounded-contexts/access/public/session";
 export type PublicLayoutLoaderData = {
   botDetection: BotDetectionConfig;
   session: PublicSessionState;
+  storeCurrency: StoreCurrency;
   storePath: string;
   waitlist: WaitlistPresentation;
 };
@@ -32,6 +37,7 @@ export async function loader(
   return {
     botDetection: runtimeConfig.botDetection,
     session: await readPublicSessionState(args),
+    storeCurrency: readStoreCurrency(args.request.headers.get("Cookie")),
     storePath: buildRedirectPath(runtimeConfig.appBasePath, STORE_PATH),
     waitlist: presentWaitlist(await waitlistController.getWaitlist()),
   };

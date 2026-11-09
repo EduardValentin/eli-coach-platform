@@ -29,10 +29,16 @@ import CatalogRoute, {
   ErrorBoundary as CatalogErrorBoundary,
   shouldRevalidate,
 } from "./catalog-page";
+import type { StoreProduct } from "~/bounded-contexts/sales/store/public/store";
+
 import { STORE_CART_STORAGE_KEY } from "../cart/cart";
 import { StoreCartProvider } from "../cart/cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "../cart/cart-drawer";
 import { STORE_CATALOG_API_URL } from "../api-client";
+import {
+  STORE_CURRENCY_COOKIE_NAME,
+  type StoreCurrency,
+} from "~/bounded-contexts/sales/store/public/store-currency";
 
 const server = setupServer();
 const axe = configureAxe({
@@ -48,13 +54,25 @@ beforeAll(() => {
     unobserve() {}
   }
 
+  class IntersectionObserverStub {
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return [];
+    }
+    unobserve() {}
+  }
+
   globalThis.ResizeObserver = ResizeObserverStub;
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver;
   server.listen({ onUnhandledRequest: "error" });
 });
 
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  document.cookie = `${STORE_CURRENCY_COOKIE_NAME}=; Path=/; Max-Age=0`;
   server.resetHandlers();
 });
 
@@ -63,7 +81,7 @@ afterAll(() => {
 });
 
 describe("store catalog", () => {
-  it("shows live free resources without paid-store controls", async () => {
+  it("shows a free-only catalog without a plans section", async () => {
     // arrange
     const products = [createProduct()];
 
@@ -71,30 +89,202 @@ describe("store catalog", () => {
     renderStore({ products });
 
     // assert
+    const freeResources = await screen.findByRole("region", {
+      name: "Free resources",
+    });
     expect(
-      await screen.findByRole("heading", {
-        level: 2,
-        name: "Free resources",
+      within(freeResources).getByRole("heading", {
+        level: 3,
+        name: "Hormone Harmony",
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { level: 3, name: "Hormone Harmony" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", {
+      within(freeResources).getByRole("button", {
         name: "Get Hormone Harmony for free",
       }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("group", { name: /currency/i }),
-    ).not.toBeInTheDocument();
+    expect(within(freeResources).getByText("Free")).toBeInTheDocument();
+    expect(screen.queryByText(/[€$]/)).not.toBeInTheDocument();
     expect(
       screen.queryByRole("radiogroup", { name: /filter by/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "Plans" }),
+      screen.queryByRole("region", { name: "Plans" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("lists priced plans in euros above the free resources", async () => {
+    // arrange
+    const products = [createProduct(), createPlan()];
+
+    // act
+    renderStore({ products });
+
+    // assert
+    const plans = await screen.findByRole("region", { name: "Plans" });
+    const freeResources = screen.getByRole("region", {
+      name: "Free resources",
+    });
+    expect(
+      plans.compareDocumentPosition(freeResources) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      within(plans).getByRole("heading", {
+        level: 3,
+        name: "30-Day Fat Loss Plan",
+      }),
+    ).toBeInTheDocument();
+    expect(within(plans).getByText("€39.00")).toBeInTheDocument();
+    expect(
+      within(plans).getByRole("button", {
+        name: "Add 30-Day Fat Loss Plan to cart",
+      }),
+    ).toBeInTheDocument();
+    expect(within(freeResources).queryByText(/[€$]/)).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("radiogroup", { name: "Currency" })).getByRole(
+        "radio",
+        { name: "EUR" },
+      ),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("switches every plan to dollars and remembers the choice in a cookie", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const products = [
+      createPlan(),
+      {
+        ...createPlan(),
+        price: { eurCents: 4900, usdCents: 5500 },
+        slug: "bigger-glutes-plan",
+        title: "30-Day Bigger Glutes Plan",
+      },
+    ];
+    renderStore({ products });
+
+    // act
+    await user.click(await screen.findByRole("radio", { name: "USD" }));
+
+    // assert
+    expect(screen.getByText("$45.00")).toBeInTheDocument();
+    expect(screen.getByText("$55.00")).toBeInTheDocument();
+    expect(screen.queryByText(/€/)).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "USD" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(document.cookie).toContain(`${STORE_CURRENCY_COOKIE_NAME}=USD`);
+  });
+
+  it("reprices the open cart when the visitor switches currency", async () => {
+    // arrange
+    const user = userEvent.setup();
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({ products: [createPlan()], success: true }),
+      ),
+    );
+    renderStore({ products: [createPlan()] });
+    await user.click(await screen.findByRole("radio", { name: "USD" }));
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Add 30-Day Fat Loss Plan to cart" }),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    expect(await within(dialog).findByRole("definition")).toHaveTextContent(
+      "$45.00",
+    );
+    expect(within(dialog).queryByText(/€/)).not.toBeInTheDocument();
+  });
+
+  it("starts in the currency the visitor chose before", async () => {
+    // arrange
+    const products = [createPlan()];
+
+    // act
+    renderStore({ initialCurrency: "USD", products });
+
+    // assert
+    expect(await screen.findByText("$45.00")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "USD" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
+  it("offers no currency switch while the catalog is empty", async () => {
+    // arrange
+    const products: readonly ReturnType<typeof createProduct>[] = [];
+
+    // act
+    renderStore({ products });
+
+    // assert
+    await screen.findByRole("heading", {
+      level: 2,
+      name: "The store is getting ready",
+    });
+    expect(
+      screen.queryByRole("radiogroup", { name: "Currency" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("moves a free resource into the plans once it is priced", async () => {
+    // arrange
+    const catalog = { products: [createProduct()] };
+    const { router } = renderStore({ catalog });
+    await screen.findByRole("region", { name: "Free resources" });
+    catalog.products = [
+      { ...createProduct(), price: { eurCents: 1900, usdCents: 2200 } },
+    ];
+
+    // act
+    await act(() => router.revalidate());
+
+    // assert
+    const plans = await screen.findByRole("region", { name: "Plans" });
+    expect(
+      within(plans).getByRole("heading", { level: 3, name: "Hormone Harmony" }),
+    ).toBeInTheDocument();
+    expect(within(plans).getByText("€19.00")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Free resources" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds a plan to the cart from its card", async () => {
+    // arrange
+    const user = userEvent.setup();
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({ products: [createPlan()], success: true }),
+      ),
+    );
+    renderStore({ products: [createPlan()] });
+
+    // act
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Add 30-Day Fat Loss Plan to cart",
+      }),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    expect(
+      await within(dialog).findByText("30-Day Fat Loss Plan"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        hidden: true,
+        name: "30-Day Fat Loss Plan is in your cart",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("distinguishes an empty live catalog from a loading or error state", async () => {
@@ -397,13 +587,13 @@ describe("store catalog", () => {
 
     // assert
     expect(screen.getByRole("status")).toHaveTextContent(
-      "2 resources match your filters.",
+      "2 products match your filters.",
     );
 
     await user.click(screen.getByRole("radio", { name: "Muscle Building" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "1 resource matches your filters.",
+      "1 product matches your filters.",
     );
   });
 
@@ -416,7 +606,7 @@ describe("store catalog", () => {
 
     // assert
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "No resources match your filters.",
+      "No products match your filters.",
     );
   });
 
@@ -639,8 +829,10 @@ describe("store catalog", () => {
 });
 
 function renderStore(options: {
+  catalog?: { products: readonly StoreProduct[] };
   catalogError?: Response;
-  products?: readonly ReturnType<typeof createProduct>[];
+  initialCurrency?: StoreCurrency;
+  products?: readonly StoreProduct[];
   url?: string;
 }) {
   const loadCatalog = () => {
@@ -648,13 +840,13 @@ function renderStore(options: {
       throw options.catalogError;
     }
 
-    return { products: options.products ?? [] };
+    return { products: options.catalog?.products ?? options.products ?? [] };
   };
   const router = createMemoryRouter(
     [
       {
         Component: () => (
-          <StoreCartProvider>
+          <StoreCartProvider initialCurrency={options.initialCurrency ?? "EUR"}>
             <StoreCartButton />
             {/* The public layout renders every route inside this landmark, so
                 the harness does too and axe judges the real page structure. */}
@@ -725,7 +917,22 @@ function createCatalog() {
   ];
 }
 
-function createProduct() {
+function createPlan(): StoreProduct {
+  return {
+    ...createProduct(),
+    cover: {
+      alt: "30-Day Fat Loss Plan cover",
+      url: "/api/store/covers/fat-loss-plan.webp",
+    },
+    goals: [GOAL_FAT_LOSS],
+    price: { eurCents: 3900, usdCents: 4500 },
+    slug: "fat-loss-plan",
+    title: "30-Day Fat Loss Plan",
+    types: [TYPE_WORKOUTS],
+  };
+}
+
+function createProduct(): StoreProduct {
   return {
     cardSummary: "A practical cycle-aware guide.",
     cover: {
@@ -736,6 +943,7 @@ function createProduct() {
     detailDescription: "Phase-by-phase nutrition guidance.",
     goals: [GOAL_WELLNESS],
     includedItems: ["Phase-by-phase guidance"],
+    price: null,
     slug: "hormone-harmony",
     title: "Hormone Harmony",
     types: [TYPE_E_BOOKS],

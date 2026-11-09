@@ -29,6 +29,12 @@ const PDF_COMMENT_START = Buffer.from("\n%");
 
 const KILOBYTE = 1024;
 
+export function fileOf(sample: SampleResource): File {
+  return new File([new Uint8Array(sample.buffer)], sample.name, {
+    type: sample.mimeType,
+  });
+}
+
 export function readableSizeOf({ buffer }: SampleResource): string {
   return buffer.byteLength < KILOBYTE
     ? `${buffer.byteLength} B`

@@ -39,12 +39,64 @@ describe("Store contracts", () => {
               displayOrder: 3,
             },
           ],
+          price: null,
         },
       ],
     };
 
     // act
     const result = storeCatalogResponseSchema.parse(response);
+
+    // assert
+    expect(result).toEqual(response);
+  });
+
+  it("parses a paid product's fixed prices in minor units", () => {
+    // arrange
+    const response = {
+      success: true,
+      products: [
+        {
+          slug: "glute-plan",
+          title: "Glute Plan",
+          creatorName: "Eli Lungu",
+          cardSummary: "A twelve-week plan.",
+          detailDescription: "Progressive glute training.",
+          includedItems: ["Weekly sessions"],
+          cover: { url: "/api/store/covers/covers%2Fglute.webp", alt: "Cover" },
+          types: [{ slug: "workouts", label: "Workouts", displayOrder: 1 }],
+          goals: [
+            {
+              slug: "muscle-building",
+              label: "Muscle Building",
+              displayOrder: 1,
+            },
+          ],
+          price: { eurCents: 3900, usdCents: 4500 },
+        },
+      ],
+    };
+
+    // act
+    const result = storeCatalogResponseSchema.parse(response);
+
+    // assert
+    expect(result).toEqual(response);
+  });
+
+  it("names the paid products a free request was refused for", () => {
+    // arrange
+    const response = {
+      success: false,
+      error: {
+        code: "paid_products",
+        message: "Unable to deliver store resources.",
+        paidProductSlugs: ["glute-plan"],
+      },
+    };
+
+    // act
+    const result = storeAcquisitionResponseSchema.parse(response);
 
     // assert
     expect(result).toEqual(response);

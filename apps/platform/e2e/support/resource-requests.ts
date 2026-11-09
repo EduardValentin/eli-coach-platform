@@ -1,7 +1,7 @@
 import type { APIRequestContext, APIResponse } from "@playwright/test";
 
 import { answerOf, type ApiAnswer } from "./api-answers";
-import type { SampleResource } from "./sample-resources";
+import { fileOf, type SampleResource } from "./sample-resources";
 
 export type ResourceResponse = {
   status: number;
@@ -37,12 +37,7 @@ export class ResourceRequests {
   ): FormData {
     const parts = new FormData();
 
-    parts.append(
-      "file",
-      new File([new Uint8Array(sample.buffer)], sample.name, {
-        type: sample.mimeType,
-      }),
-    );
+    parts.append("file", fileOf(sample));
     parts.append("title", title);
     parts.append("description", description);
     tags.forEach((tag) => parts.append("tags", tag));

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createEmailAcceptance } from "~/shared/submission-checks/email-address";
 
-import { PublishedProduct } from "../product";
+import { ProductPricing, PublishedProduct } from "../product";
 
 import { AcquisitionRequest, evaluateDeliveryLimit } from "./acquisition";
 
@@ -16,11 +16,15 @@ const command = {
   productSlugs: ["hormone-harmony"],
 } as const;
 
-function createProduct(slug: string): PublishedProduct {
+function createProduct(
+  slug: string,
+  pricing: ProductPricing = ProductPricing.free(),
+): PublishedProduct {
   return PublishedProduct.reconstitute({
     id: 7,
     slug,
     displayOrder: 1,
+    pricing,
     version: {
       id: 11,
       sequence: 2,
@@ -193,6 +197,65 @@ describe("AcquisitionRequest.selectProducts", () => {
     expect(selection).toEqual({
       status: "unavailable_products",
       availableProductSlugs: ["hormone-harmony"],
+    });
+  });
+});
+
+describe("AcquisitionRequest.selectProducts with paid products", () => {
+  it("refuses a free request naming every paid product it holds", () => {
+    // arrange
+    const request = AcquisitionRequest.from(
+      {
+        ...command,
+        productSlugs: ["hormone-harmony", "glute-plan", "strength-plan"],
+      },
+      requestedAt,
+      emailAcceptance,
+    );
+    const pricing = ProductPricing.reconstitute({
+      kind: "paid",
+      eurCents: 3900,
+      usdCents: 4500,
+    });
+
+    // act
+    const selection = request.selectProducts([
+      createProduct("hormone-harmony"),
+      createProduct("glute-plan", pricing),
+      createProduct("strength-plan", pricing),
+    ]);
+
+    // assert
+    expect(selection).toEqual({
+      status: "paid_products",
+      paidProductSlugs: ["glute-plan", "strength-plan"],
+    });
+  });
+
+  it("reports unavailability before payment when a slug is also missing", () => {
+    // arrange
+    const request = AcquisitionRequest.from(
+      { ...command, productSlugs: ["glute-plan", "removed-guide"] },
+      requestedAt,
+      emailAcceptance,
+    );
+
+    // act
+    const selection = request.selectProducts([
+      createProduct(
+        "glute-plan",
+        ProductPricing.reconstitute({
+          kind: "paid",
+          eurCents: 3900,
+          usdCents: 4500,
+        }),
+      ),
+    ]);
+
+    // assert
+    expect(selection).toEqual({
+      status: "unavailable_products",
+      availableProductSlugs: ["glute-plan"],
     });
   });
 });

@@ -1,6 +1,6 @@
 import {
   MAX_PUBLICATION_BYTES,
-  resolvePublicationTarget,
+  type ChangeProductPriceUseCase,
   type PlanNewProductUseCase,
   type PlanProductRevisionUseCase,
   type ProductCoverInput,
@@ -22,13 +22,20 @@ import { isSecureManagementTransport } from "~/bounded-contexts/sales/store/adap
 
 import {
   newProductMetadataSchema,
+  productPriceChangeSchema,
   productValidationMetadataSchema,
   productVersionMetadataSchema,
 } from "~/bounded-contexts/sales/store/public/store-management";
-import { readFormDataRequestBody } from "~/shared/http/index.server";
+import {
+  readFormDataRequestBody,
+  readTextRequestBody,
+} from "~/shared/http/index.server";
+
+const MAX_PRICE_CHANGE_BODY_BYTES = 4 * 1024;
 
 type StoreProductManagementControllerOptions = {
   authConfig: ManagementAuthConfig;
+  changeProductPriceUseCase: ChangeProductPriceUseCase;
   managementAuthenticatorPort: ManagementAuthenticatorPort;
   planNewProductUseCase: PlanNewProductUseCase;
   planProductRevisionUseCase: PlanProductRevisionUseCase;
@@ -49,6 +56,12 @@ type ParsedPayload<Metadata> = {
 
 type PayloadParse<Metadata> =
   | { status: "parsed"; payload: ParsedPayload<Metadata> }
+  | { status: "rejected"; response: Response };
+
+type PriceChangeBody = ReturnType<typeof productPriceChangeSchema.parse>;
+
+type PriceChangeParse =
+  | { status: "parsed"; body: PriceChangeBody }
   | { status: "rejected"; response: Response };
 
 export class StoreProductManagementController {
@@ -74,35 +87,20 @@ export class StoreProductManagementController {
 
     const { cover, downloads, metadata } = parsed.payload;
     const domainMetadata = toDomainMetadata(metadata);
-    const target = resolvePublicationTarget(metadata);
-
-    if (!target) {
-      /**
-       * The metadata schema already forbids naming neither, but that is a
-       * runtime refinement rather than a type-level one, so both fields stay
-       * optional here. Answering rather than asserting keeps a weakened schema
-       * from turning into a thrown exception.
-       */
-      return errorResponse(
-        "invalid_request",
-        "Provide either slug for a new product or targetProductSlug for a revision.",
-        400,
-      );
-    }
-
     const result: PublicationPlanResult =
-      target.kind === "revision"
+      "targetProductSlug" in metadata
         ? await this.options.planProductRevisionUseCase.execute({
             cover,
             downloads,
             metadata: domainMetadata,
-            productSlug: target.targetProductSlug,
+            productSlug: metadata.targetProductSlug,
           })
         : await this.options.planNewProductUseCase.execute({
             cover,
             downloads,
             metadata: domainMetadata,
-            slug: target.slug,
+            pricing: metadata.pricing,
+            slug: metadata.slug,
           });
 
     if (result.status === "unavailable") {
@@ -141,6 +139,7 @@ export class StoreProductManagementController {
         downloads,
         idempotencyKey: metadata.idempotencyKey,
         metadata: toDomainMetadata(metadata),
+        pricing: metadata.pricing,
         publishedBy: authorized.principal,
         slug: metadata.slug,
       }),
@@ -183,6 +182,39 @@ export class StoreProductManagementController {
         productId,
         publishedBy: authorized.principal,
       }),
+    );
+  }
+
+  async changeProductPrice(
+    request: Request,
+    productIdParameter: string | undefined,
+  ): Promise<Response> {
+    const authorized = await this.authorize(request);
+
+    if (authorized.status === "rejected") {
+      return authorized.response;
+    }
+
+    const productId = parseProductId(productIdParameter);
+
+    if (productId === null) {
+      return errorResponse("not_found", "Unknown product.", 404);
+    }
+
+    const parsed = await this.parsePriceChange(request);
+
+    if (parsed.status === "rejected") {
+      return parsed.response;
+    }
+
+    return this.priceChangeResponse(
+      await this.options.changeProductPriceUseCase.execute({
+        idempotencyKey: parsed.body.idempotencyKey,
+        pricing: parsed.body.pricing,
+        productId,
+        publishedBy: authorized.principal,
+      }),
+      parsed.body.pricing,
     );
   }
 
@@ -282,6 +314,67 @@ export class StoreProductManagementController {
         401,
       ),
     };
+  }
+
+  private priceChangeResponse(
+    result: PublishProductResult,
+    pricing: PriceChangeBody["pricing"],
+  ): Response {
+    if (result.status !== "published" && result.status !== "replayed") {
+      return publicationResponse(result);
+    }
+
+    return Response.json(
+      { success: true, publication: { ...publicationBody(result), pricing } },
+      { status: result.status === "replayed" ? 200 : 201 },
+    );
+  }
+
+  private async parsePriceChange(request: Request): Promise<PriceChangeParse> {
+    const body = await readTextRequestBody(request, {
+      maxBytes: MAX_PRICE_CHANGE_BODY_BYTES,
+    });
+
+    if (body.status === "too_large") {
+      return {
+        status: "rejected",
+        response: errorResponse(
+          "payload_too_large",
+          `A price change may not exceed ${MAX_PRICE_CHANGE_BODY_BYTES} bytes.`,
+          413,
+        ),
+      };
+    }
+
+    let decoded: unknown;
+
+    try {
+      decoded = JSON.parse(body.text);
+    } catch {
+      return {
+        status: "rejected",
+        response: errorResponse(
+          "invalid_request",
+          "The price change body is not valid JSON.",
+          400,
+        ),
+      };
+    }
+
+    const parsedBody = productPriceChangeSchema.safeParse(decoded);
+
+    if (!parsedBody.success) {
+      return {
+        status: "rejected",
+        response: errorResponse(
+          "invalid_request",
+          "The body does not match the price change schema.",
+          400,
+        ),
+      };
+    }
+
+    return { status: "parsed", body: parsedBody.data };
   }
 
   private async parsePayload<Metadata extends MetadataShape>(
@@ -432,6 +525,23 @@ function toDomainMetadata(metadata: MetadataShape): ProductVersionMetadata {
   };
 }
 
+type SettledPublication = Extract<
+  PublishProductResult,
+  { status: "published" | "replayed" }
+>;
+
+function publicationBody(result: SettledPublication) {
+  return {
+    id: result.publication.id,
+    operation: result.publication.operation,
+    productId: result.publication.productId,
+    productSlug: result.publication.productSlug,
+    productVersionId: result.publication.productVersionId,
+    publishedAt: result.publication.publishedAt.toISOString(),
+    replayed: result.status === "replayed",
+  };
+}
+
 function publicationResponse(result: PublishProductResult): Response {
   if (result.status === "unavailable") {
     return errorResponse(
@@ -454,18 +564,7 @@ function publicationResponse(result: PublishProductResult): Response {
   }
 
   return Response.json(
-    {
-      success: true,
-      publication: {
-        id: result.publication.id,
-        operation: result.publication.operation,
-        productId: result.publication.productId,
-        productSlug: result.publication.productSlug,
-        productVersionId: result.publication.productVersionId,
-        publishedAt: result.publication.publishedAt.toISOString(),
-        replayed: result.status === "replayed",
-      },
-    },
+    { success: true, publication: publicationBody(result) },
     { status: result.status === "replayed" ? 200 : 201 },
   );
 }

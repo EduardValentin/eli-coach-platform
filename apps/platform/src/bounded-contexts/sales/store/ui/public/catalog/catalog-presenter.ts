@@ -11,9 +11,10 @@ import {
 
 export type CatalogPresentation = {
   dimensions: readonly StoreCatalogFilterDimension[];
-  filteredProducts: readonly StoreProduct[];
+  freeResources: readonly StoreProduct[];
   matchCountText: string;
   offersFilters: boolean;
+  plans: readonly StoreProduct[];
   selection: StoreCatalogFilterSelection;
 };
 
@@ -27,21 +28,22 @@ export function presentCatalog(
 
   return {
     dimensions,
-    filteredProducts,
+    freeResources: filteredProducts.filter((product) => product.price === null),
     matchCountText: describeMatchCount(filteredProducts.length),
     offersFilters: offersAnyFilter(dimensions),
+    plans: filteredProducts.filter((product) => product.price !== null),
     selection,
   };
 }
 
 function describeMatchCount(matchCount: number): string {
   if (matchCount === 0) {
-    return "No resources match your filters.";
+    return "No products match your filters.";
   }
 
   if (matchCount === 1) {
-    return "1 resource matches your filters.";
+    return "1 product matches your filters.";
   }
 
-  return `${matchCount} resources match your filters.`;
+  return `${matchCount} products match your filters.`;
 }

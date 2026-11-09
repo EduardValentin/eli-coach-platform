@@ -55,7 +55,18 @@ beforeAll(() => {
     unobserve() {}
   }
 
+  class IntersectionObserverStub {
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return [];
+    }
+    unobserve() {}
+  }
+
   globalThis.ResizeObserver = ResizeObserverStub;
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver;
   server.listen({ onUnhandledRequest: "error" });
 });
 
@@ -178,6 +189,7 @@ function renderPublicSite() {
               token: "XXXX.DUMMY.TOKEN.XXXX",
             },
             session: { kind: "anonymous" as const },
+            storeCurrency: "EUR",
             storePath: "/store",
             waitlist: presentWaitlist(createWaitlist()),
           };
@@ -208,6 +220,7 @@ function createCatalog() {
     detailDescription: "Phase-by-phase nutrition guidance.",
     goals: [{ displayOrder: 3, label: "Wellness", slug: "wellness" }],
     includedItems: ["Phase-by-phase guidance"],
+    price: null,
     slug: "hormone-harmony",
     title: "Hormone Harmony",
     types: [{ displayOrder: 3, label: "E-Books", slug: "e-books" }],

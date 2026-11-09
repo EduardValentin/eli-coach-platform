@@ -131,6 +131,36 @@ describe("StoreAcquisitionController", () => {
     });
   });
 
+  it("names the paid products a free request cannot deliver", async () => {
+    // arrange
+    const acquireProductsUseCase = {
+      execute: vi.fn().mockResolvedValue({
+        status: "paid_products",
+        paidProductSlugs: ["glute-plan"],
+      }),
+    } as unknown as AcquireProductsUseCase;
+    const storeAcquisitionController = new StoreAcquisitionController(
+      acquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+      },
+    );
+
+    // act
+    const response = await storeAcquisitionController.acquire(createRequest());
+
+    // assert
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: {
+        code: "paid_products",
+        message: "Unable to deliver store resources.",
+        paidProductSlugs: ["glute-plan"],
+      },
+    });
+  });
+
   it("returns a retryable response when delivery outcome is ambiguous", async () => {
     // arrange
     const acquireProductsUseCase = {

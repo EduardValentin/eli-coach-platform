@@ -257,9 +257,9 @@ export const productPublicationsTable = appSchema.table(
     productId: integer("product_id")
       .notNull()
       .references(() => productsTable.id),
-    productVersionId: integer("product_version_id")
-      .notNull()
-      .references(() => productVersionsTable.id),
+    productVersionId: integer("product_version_id").references(
+      () => productVersionsTable.id,
+    ),
     operation: varchar("operation", { length: 32 }).notNull(),
     idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
     payloadDigest: varchar("payload_digest", { length: 64 }).notNull(),
@@ -282,7 +282,11 @@ export const productPublicationsTable = appSchema.table(
     ),
     check(
       "product_publications_operation_check",
-      sql`${table.operation} in ('create_product', 'revise_product')`,
+      sql`${table.operation} in ('create_product', 'revise_product', 'reprice_product')`,
+    ),
+    check(
+      "product_publications_version_check",
+      sql`(${table.operation} in ('create_product', 'revise_product')) = (${table.productVersionId} is not null)`,
     ),
     check(
       "product_publications_payload_digest_check",
@@ -295,6 +299,39 @@ export const productPublicationsTable = appSchema.table(
     check(
       "product_publications_published_by_id_check",
       sql`length(btrim(${table.publishedById})) > 0`,
+    ),
+  ],
+);
+
+export const productPriceRevisionsTable = appSchema.table(
+  "product_price_revisions",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => productsTable.id),
+    sequence: integer("sequence").notNull(),
+    eurCents: integer("eur_cents"),
+    usdCents: integer("usd_cents"),
+    publicationId: integer("publication_id")
+      .notNull()
+      .references(() => productPublicationsTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("product_price_revisions_product_sequence_unique").on(
+      table.productId,
+      table.sequence,
+    ),
+    uniqueIndex("product_price_revisions_publication_unique").on(
+      table.publicationId,
+    ),
+    check("product_price_revisions_sequence_check", sql`${table.sequence} > 0`),
+    check(
+      "product_price_revisions_amounts_check",
+      sql`(${table.eurCents} is null and ${table.usdCents} is null) or (${table.eurCents} between 1 and 99999999 and ${table.usdCents} between 1 and 99999999)`,
     ),
   ],
 );

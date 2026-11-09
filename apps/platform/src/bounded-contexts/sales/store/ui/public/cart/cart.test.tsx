@@ -13,17 +13,21 @@ import {
 import { StrictMode, type PropsWithChildren } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { STORE_CURRENCY_COOKIE_NAME } from "~/bounded-contexts/sales/store/public/store-currency";
+
 import { createStoreCartStore, STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider, useStoreCart } from "./cart-provider";
 
 function wrapper({ children }: PropsWithChildren) {
-  return <StoreCartProvider>{children}</StoreCartProvider>;
+  return (
+    <StoreCartProvider initialCurrency="EUR">{children}</StoreCartProvider>
+  );
 }
 
 function strictModeWrapper({ children }: PropsWithChildren) {
   return (
     <StrictMode>
-      <StoreCartProvider>{children}</StoreCartProvider>
+      <StoreCartProvider initialCurrency="EUR">{children}</StoreCartProvider>
     </StrictMode>
   );
 }
@@ -67,7 +71,7 @@ describe("StoreCartProvider", () => {
     const user = userEvent.setup();
     const recordCartContentsRender = vi.fn();
     render(
-      <StoreCartProvider>
+      <StoreCartProvider initialCurrency="EUR">
         <CartContentsConsumer onRender={recordCartContentsRender} />
         <AlternateCartOpener />
       </StoreCartProvider>,
@@ -109,7 +113,7 @@ describe("StoreCartProvider", () => {
 
   it("labels persisted carts with the configured schema version", () => {
     // arrange
-    const cart = createStoreCartStore();
+    const cart = createStoreCartStore("EUR");
     cart.persist.setOptions({ version: 2 });
 
     // act
@@ -182,6 +186,49 @@ describe("StoreCartProvider", () => {
 
     // assert
     expect(result.current.productSlugs).toEqual([]);
+  });
+
+  it("starts in the currency it is handed and keeps it out of browser storage", () => {
+    // arrange
+    const { result } = renderHook(useWholeStoreCart, {
+      wrapper: ({ children }: PropsWithChildren) => (
+        <StoreCartProvider initialCurrency="USD">{children}</StoreCartProvider>
+      ),
+    });
+
+    // act
+    act(() => {
+      result.current.addProduct("hormone-harmony");
+    });
+
+    // assert
+    expect(result.current.currency).toBe("USD");
+    expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
+      productSlugs: ["hormone-harmony"],
+      version: 1,
+    });
+  });
+
+  it("remembers a currency switch in a year-long cookie for the whole app", () => {
+    // arrange
+    const writeCookie = vi.spyOn(document, "cookie", "set");
+    const { result } = renderHook(useWholeStoreCart, { wrapper });
+
+    // act
+    act(() => {
+      result.current.addProduct("hormone-harmony");
+      result.current.setCurrency("USD");
+    });
+
+    // assert
+    expect(result.current.currency).toBe("USD");
+    expect(writeCookie).toHaveBeenCalledWith(
+      `${STORE_CURRENCY_COOKIE_NAME}=USD; Path=/; Max-Age=31536000; SameSite=Lax`,
+    );
+    expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
+      productSlugs: ["hormone-harmony"],
+      version: 1,
+    });
   });
 
   it("keeps an in-memory cart when browser storage rejects writes", () => {

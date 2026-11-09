@@ -5,8 +5,8 @@ import { createStoreCartStore } from "./cart";
 describe("createStoreCartStore", () => {
   it("keeps carts isolated between provider trees", () => {
     // arrange
-    const firstCart = createStoreCartStore();
-    const secondCart = createStoreCartStore();
+    const firstCart = createStoreCartStore("EUR");
+    const secondCart = createStoreCartStore("EUR");
 
     // act
     firstCart.getState().addProduct("hormone-harmony");

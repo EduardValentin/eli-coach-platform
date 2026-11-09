@@ -1,17 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { Product, type PublicationPlacement } from "./product";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
 import {
   MAX_PUBLICATION_BYTES,
   ProductPublicationDraft,
-  resolvePublicationTarget,
   validateSlugFormat,
   type ProductCoverInput,
   type ProductDownloadInput,
+  type PersistPublicationCommand,
   type ProductVersionMetadata,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
+import { ProductPricing, type ProductPricingInput } from "./product-pricing";
 
 const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PNG_BYTES = Uint8Array.from([
@@ -49,7 +50,6 @@ const taxonomy = {
 
 const placement = {
   displayOrder: 5,
-  operation: "create_product",
   productId: null,
   productSlug: "glute-growth-guide",
   versionSequence: 1,
@@ -61,6 +61,7 @@ function existingProduct(
   return Product.reconstitute({
     displayOrder: 2,
     id: 7,
+    currentPricing: ProductPricing.free(),
     latestVersionSequence: 3,
     lifecycleStatus,
     slug: "glute-growth-guide",
@@ -76,14 +77,20 @@ function draftOf(
     cover: ProductCoverInput;
     downloads: readonly ProductDownloadInput[];
     metadata: ProductVersionMetadata;
+    pricing: ProductPricingInput;
   }> = {},
 ): ProductPublicationDraft {
-  return ProductPublicationDraft.from({
+  return ProductPublicationDraft.forNewProduct({
     cover,
     downloads,
     metadata,
+    pricing: { kind: "free" },
     ...overrides,
   });
+}
+
+function revisionDraft(): ProductPublicationDraft {
+  return ProductPublicationDraft.forRevision({ cover, downloads, metadata });
 }
 
 describe("validateSlugFormat", () => {
@@ -101,25 +108,6 @@ describe("validateSlugFormat", () => {
 
     // assert
     expect(issue).toEqual(expected);
-  });
-});
-
-describe("resolvePublicationTarget", () => {
-  it.each([
-    [
-      { targetProductSlug: "guide", slug: "unused" },
-      { kind: "revision", targetProductSlug: "guide" },
-    ],
-    [{ slug: "guide" }, { kind: "new", slug: "guide" }],
-    [{}, null],
-  ])("resolves %o", (metadataFields, expected) => {
-    // arrange
-
-    // act
-    const target = resolvePublicationTarget(metadataFields);
-
-    // assert
-    expect(target).toEqual(expected);
   });
 });
 
@@ -155,12 +143,75 @@ describe("ProductPublicationDraft.plan", () => {
         goals: [taxonomy.goals[0]],
         metadata,
         operation: "create_product",
+        pricing: { kind: "free" },
         productId: null,
         productSlug: "glute-growth-guide",
         totalUploadBytes: 14,
         types: [taxonomy.types[0]],
         versionSequence: 1,
       },
+    });
+  });
+
+  it("resolves the pricing of a paid product into the plan", () => {
+    // arrange
+    const draft = draftOf({
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    });
+
+    // act
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
+
+    // assert
+    expect(result).toMatchObject({
+      status: "valid",
+      plan: { pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 } },
+    });
+  });
+
+  it("plans a revision draft without touching the pricing", () => {
+    // arrange
+    const draft = revisionDraft();
+
+    // act
+    const result = draft.plan(
+      existingProduct().revisionPlacement(),
+      taxonomy,
+      productAssetDigestPort,
+    );
+
+    // assert
+    expect(result.status === "valid" ? result.plan : null).toMatchObject({
+      operation: "revise_product",
+    });
+    expect(result.status === "valid" ? result.plan : null).not.toHaveProperty(
+      "pricing",
+    );
+  });
+
+  it("folds price issues into the other publication issues", () => {
+    // arrange
+    const draft = draftOf({
+      metadata: { ...metadata, typeSlugs: ["meal-prep"] },
+      pricing: { kind: "paid", eurCents: 0 },
+    });
+
+    // act
+    const result = draft.plan(placement, taxonomy, productAssetDigestPort);
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "unknown_type", slug: "meal-prep" }),
+        {
+          code: "price_out_of_range",
+          currency: "EUR",
+          minimum: 1,
+          maximum: 99_999_999,
+        },
+        { code: "missing_price", currency: "USD" },
+      ]),
     });
   });
 
@@ -367,12 +418,10 @@ describe("ProductPublicationDraft.requestDigest", () => {
 
     // act
     const first = draft.requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
     const second = draftOf().requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
@@ -389,12 +438,10 @@ describe("ProductPublicationDraft.requestDigest", () => {
 
     // act
     const original = draftOf().requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
     const changed = renamed.requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
@@ -403,24 +450,82 @@ describe("ProductPublicationDraft.requestDigest", () => {
     expect(changed).not.toBe(original);
   });
 
+  it.each<[string, ProductPricingInput, ProductPricingInput]>([
+    [
+      "a free product turns paid",
+      { kind: "free" },
+      { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    ],
+    [
+      "one amount changes",
+      { kind: "paid", eurCents: 3900, usdCents: 4500 },
+      { kind: "paid", eurCents: 3900, usdCents: 4600 },
+    ],
+    [
+      "the amounts swap currencies",
+      { kind: "paid", eurCents: 3900 },
+      { kind: "paid", usdCents: 3900 },
+    ],
+    [
+      "a paid pricing without amounts replaces free",
+      { kind: "free" },
+      { kind: "paid" },
+    ],
+  ])("changes when %s", (_label, before, after) => {
+    // arrange
+    const contentDigestPort: ProductAssetDigestPort = {
+      sha256: (bytes) => new TextDecoder().decode(bytes),
+    };
+    const original = draftOf({ pricing: before });
+    const repriced = draftOf({ pricing: after });
+
+    // act
+    const originalDigest = original.requestDigest(
+      "glute-growth-guide",
+      contentDigestPort,
+    );
+    const repricedDigest = repriced.requestDigest(
+      "glute-growth-guide",
+      contentDigestPort,
+    );
+
+    // assert
+    expect(repricedDigest).not.toBe(originalDigest);
+  });
+
   it("changes when the publication targets another product", () => {
     // arrange
     const draft = draftOf();
 
     // act
-    const original = draft.requestDigest(
-      "create_product",
-      "guide",
-      productAssetDigestPort,
-    );
+    const original = draft.requestDigest("guide", productAssetDigestPort);
     const retargeted = draft.requestDigest(
-      "create_product",
       "glute-growth-guide",
       productAssetDigestPort,
     );
 
     // assert
     expect(retargeted).not.toBe(original);
+  });
+});
+
+describe("ProductPublicationDraft.requestDigest per operation", () => {
+  it("tells a new product from a revision of the same content and target", () => {
+    // arrange
+    const revision = revisionDraft();
+
+    // act
+    const newProductDigest = draftOf().requestDigest(
+      "glute-growth-guide",
+      productAssetDigestPort,
+    );
+    const revisionDigest = revision.requestDigest(
+      "glute-growth-guide",
+      productAssetDigestPort,
+    );
+
+    // assert
+    expect(revisionDigest).not.toBe(newProductDigest);
   });
 });
 
@@ -544,7 +649,7 @@ describe("ProductPublicationDraft.planCreation", () => {
 describe("ProductPublicationDraft.planRevision", () => {
   it("plans the next version where the product already sits", () => {
     // arrange
-    const draft = draftOf();
+    const draft = revisionDraft();
 
     // act
     const result = draft.planRevision(
@@ -565,7 +670,7 @@ describe("ProductPublicationDraft.planRevision", () => {
 
   it("rejects a revision of an unknown product", () => {
     // arrange
-    const draft = draftOf();
+    const draft = revisionDraft();
 
     // act
     const result = draft.planRevision(null, taxonomy, productAssetDigestPort);
@@ -579,7 +684,7 @@ describe("ProductPublicationDraft.planRevision", () => {
 
   it("rejects a revision of a retired product", () => {
     // arrange
-    const draft = draftOf();
+    const draft = revisionDraft();
 
     // act
     const result = draft.planRevision(
@@ -599,7 +704,9 @@ describe("ProductPublicationDraft.planRevision", () => {
 describe("ProductPublicationDraft.persistCommand", () => {
   it("carries the plan and the request identity into the port command", () => {
     // arrange
-    const draft = draftOf();
+    const draft = draftOf({
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    });
     const result = draft.plan(placement, taxonomy, productAssetDigestPort);
     const plan = result.status === "valid" ? result.plan : null;
 
@@ -620,6 +727,7 @@ describe("ProductPublicationDraft.persistCommand", () => {
       metadata,
       operation: "create_product",
       payloadDigest: "digest-1",
+      pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
       productId: null,
       productSlug: "glute-growth-guide",
       publishedBy: { kind: "machine", id: "management-agent" },
@@ -653,5 +761,34 @@ describe("ProductPublicationDraft.plannedAssetContents", () => {
       { assetKey: "products/sha-6.pdf", bytes: PDF_BYTES },
       { assetKey: "products/sha-7.pdf", bytes: secondDownloadBytes },
     ]);
+  });
+});
+
+describe("ProductPublicationDraft factories", () => {
+  it("requires a pricing for a new product and accepts none for a revision", () => {
+    // arrange
+    const forNewProduct = ProductPublicationDraft.forNewProduct;
+    const forRevision = ProductPublicationDraft.forRevision;
+
+    // act
+    // assert
+    expectTypeOf(forNewProduct).parameter(0).toHaveProperty("pricing");
+    expectTypeOf(forRevision).parameter(0).not.toHaveProperty("pricing");
+  });
+});
+
+describe("PersistPublicationCommand", () => {
+  it("cannot describe a new product without pricing", () => {
+    // arrange
+    type NewProductWithoutPricing = Omit<
+      PersistPublicationCommand,
+      "pricing"
+    > & {
+      operation: "create_product";
+    };
+
+    // act
+    // assert
+    expectTypeOf<NewProductWithoutPricing>().not.toExtend<PersistPublicationCommand>();
   });
 });

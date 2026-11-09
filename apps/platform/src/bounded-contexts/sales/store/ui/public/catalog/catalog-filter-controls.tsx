@@ -1,7 +1,9 @@
 import { FilterChip, FilterChipGroup } from "~/shared/design-system/filters";
+import { cn } from "~/shared/design-system/lib";
 import { Filter } from "lucide-react";
 import { useCallback, useRef } from "react";
 
+import { STORE_CAPTION_CLASS } from "../presentation/store-caption";
 import type {
   StoreCatalogFilterDimension,
   StoreCatalogFilterSelection,
@@ -37,10 +39,15 @@ export function StoreCatalogFilters(props: {
 }) {
   return (
     <div className="mb-16" ref={props.chipsRef}>
-      <p className="mb-4 flex items-center gap-2 text-label uppercase text-text-muted">
+      <div
+        className={cn(
+          STORE_CAPTION_CLASS,
+          "mb-4 flex items-center gap-2 text-sm text-copy-muted",
+        )}
+      >
         <Filter aria-hidden="true" size={16} />
         Filters
-      </p>
+      </div>
       <div className="flex flex-col gap-3">
         {props.dimensions.map((dimension) => (
           <CatalogFilterRow
@@ -68,7 +75,12 @@ function CatalogFilterRow(props: {
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-      <span className="w-12 shrink-0 text-label uppercase text-text-muted">
+      <span
+        className={cn(
+          STORE_CAPTION_CLASS,
+          "w-12 shrink-0 text-xs text-copy-muted",
+        )}
+      >
         {descriptor.label}
       </span>
       <FilterChipGroup
@@ -82,7 +94,12 @@ function CatalogFilterRow(props: {
         tone={descriptor.tone}
         value={props.selectedSlug ?? UNFILTERED_VALUE}
       >
-        <FilterChip value={UNFILTERED_VALUE}>All</FilterChip>
+        <FilterChip
+          data-parity={`filter-${descriptor.param}-all`}
+          value={UNFILTERED_VALUE}
+        >
+          All
+        </FilterChip>
         {values.map((value) => (
           <FilterChip key={value.slug} value={value.slug}>
             {value.label}

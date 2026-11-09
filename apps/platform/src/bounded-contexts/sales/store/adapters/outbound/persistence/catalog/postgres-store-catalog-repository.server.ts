@@ -10,6 +10,8 @@ import { sql } from "drizzle-orm";
 import type { DatabaseClient } from "~/shared/database";
 import { executorOf } from "~/shared/database/index.server";
 
+import { StoredProductPricing } from "../stored-product-pricing.server";
+
 type PublishedProductRow = {
   productId: number;
   slug: string;
@@ -27,6 +29,8 @@ type PublishedProductRow = {
   coverSizeBytes: number;
   coverSha256: string;
   publishedAt: Date | string;
+  eurCents: number | null;
+  usdCents: number | null;
 };
 
 type PublishedProductAssetRow = ProductAsset & {
@@ -119,7 +123,9 @@ export class PostgresStoreCatalogRepository implements StoreCatalogPort {
           current_version.cover_mime_type as "coverMimeType",
           current_version.cover_size_bytes as "coverSizeBytes",
           current_version.cover_sha256 as "coverSha256",
-          current_version.published_at as "publishedAt"
+          current_version.published_at as "publishedAt",
+          current_price.eur_cents as "eurCents",
+          current_price.usd_cents as "usdCents"
         from app.products product
         join lateral (
           select product_version.*
@@ -129,6 +135,13 @@ export class PostgresStoreCatalogRepository implements StoreCatalogPort {
           order by product_version.sequence desc
           limit 1
         ) current_version on true
+        left join lateral (
+          select price_revision.eur_cents, price_revision.usd_cents
+          from app.product_price_revisions price_revision
+          where price_revision.product_id = product.id
+          order by price_revision.sequence desc
+          limit 1
+        ) current_price on true
         where product.lifecycle_status = 'published'
           and (${slug}::text is null or product.slug = ${slug})
         order by product.display_order, product.id
@@ -214,6 +227,7 @@ function mapPublishedProduct(
     id: row.productId,
     slug: row.slug,
     displayOrder: row.displayOrder,
+    pricing: StoredProductPricing.fromColumns(row).toPricing(),
     version: {
       id: row.versionId,
       sequence: row.versionSequence,

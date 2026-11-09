@@ -322,7 +322,7 @@ only touches files whose most recent write is older than two hours: this
 suite's own runs finish in minutes, so a younger foreign file is presumed to
 belong to a suite still running concurrently rather than one that aborted,
 and is left in place with a one-line log
-(`skipping possibly-active registry <file>`) instead of being swept. Sweeping
+(`skipping possibly-active run <run id>`) instead of being swept. Sweeping
 a still-active run's file would delete a concurrently running suite's users
 out from under it.
 

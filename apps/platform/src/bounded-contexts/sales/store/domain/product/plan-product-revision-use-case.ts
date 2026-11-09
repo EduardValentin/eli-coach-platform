@@ -34,7 +34,7 @@ export class PlanProductRevisionUseCase {
       const taxonomy =
         await this.options.storeProductPublicationsPort.getTaxonomy();
 
-      return ProductPublicationDraft.from(command).planRevision(
+      return ProductPublicationDraft.forRevision(command).planRevision(
         product,
         taxonomy,
         this.options.productAssetDigestPort,

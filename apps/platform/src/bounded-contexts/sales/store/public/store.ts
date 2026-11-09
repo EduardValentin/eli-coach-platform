@@ -26,6 +26,12 @@ export const storeProductSchema = z.object({
   }),
   types: z.array(taxonomyValueSchema),
   goals: z.array(taxonomyValueSchema),
+  price: z
+    .object({
+      eurCents: z.number().int().positive(),
+      usdCents: z.number().int().positive(),
+    })
+    .nullable(),
 });
 
 const storeCatalogSuccessSchema = z.object({
@@ -115,6 +121,7 @@ const storeAcquisitionErrorCodeSchema = z.enum([
   "email_subaddress_refused",
   "bot_verification_failed",
   "unavailable_products",
+  "paid_products",
   "idempotency_conflict",
   "delivery_unavailable",
   "delivery_retryable",
@@ -129,6 +136,7 @@ const storeAcquisitionErrorSchema = z.object({
     code: storeAcquisitionErrorCodeSchema,
     message: z.string().min(1),
     availableProductSlugs: z.array(productSlugSchema).optional(),
+    paidProductSlugs: z.array(productSlugSchema).optional(),
   }),
 });
 

@@ -7,12 +7,14 @@ import {
   type ProductVersionMetadata,
   type PublicationPlanResult,
 } from "./product-publication";
+import type { ProductPricingInput } from "./product-pricing";
 import type { StoreProductPublicationsPort } from "./store-product-publications-port";
 
 export type PlanNewProductCommand = {
   cover: ProductCoverInput;
   downloads: readonly ProductDownloadInput[];
   metadata: ProductVersionMetadata;
+  pricing: ProductPricingInput;
   slug: string;
 };
 
@@ -43,7 +45,7 @@ export class PlanNewProductUseCase {
       const taxonomy =
         await this.options.storeProductPublicationsPort.getTaxonomy();
 
-      return ProductPublicationDraft.from(command).planCreation(
+      return ProductPublicationDraft.forNewProduct(command).planCreation(
         { displayOrder, existingProduct, slug: command.slug },
         taxonomy,
         this.options.productAssetDigestPort,

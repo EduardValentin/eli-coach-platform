@@ -15,7 +15,7 @@ describe("presentCatalog", () => {
 
     // assert
     expect(presentation.offersFilters).toBe(true);
-    expect(presentation.matchCountText).toBe("2 resources match your filters.");
+    expect(presentation.matchCountText).toBe("3 products match your filters.");
   });
 
   it("narrows to a single match under a type filter", () => {
@@ -27,12 +27,11 @@ describe("presentCatalog", () => {
     const presentation = presentCatalog(products, searchParams);
 
     // assert
-    expect(
-      presentation.filteredProducts.map((product) => product.slug),
-    ).toEqual(["hormone-harmony"]);
-    expect(presentation.matchCountText).toBe(
-      "1 resource matches your filters.",
-    );
+    expect(presentation.plans).toEqual([]);
+    expect(presentation.freeResources.map((product) => product.slug)).toEqual([
+      "hormone-harmony",
+    ]);
+    expect(presentation.matchCountText).toBe("1 product matches your filters.");
   });
 
   it("reports no matches for a filter combination no product carries", () => {
@@ -44,10 +43,44 @@ describe("presentCatalog", () => {
     const presentation = presentCatalog(products, searchParams);
 
     // assert
-    expect(presentation.filteredProducts).toEqual([]);
-    expect(presentation.matchCountText).toBe(
-      "No resources match your filters.",
-    );
+    expect(presentation.plans).toEqual([]);
+    expect(presentation.freeResources).toEqual([]);
+    expect(presentation.matchCountText).toBe("No products match your filters.");
+  });
+
+  it("sets paid products apart as plans and keeps the free ones as free resources", () => {
+    // arrange
+    const products = createCatalog();
+    const searchParams = new URLSearchParams();
+
+    // act
+    const presentation = presentCatalog(products, searchParams);
+
+    // assert
+    expect(presentation.plans.map((product) => product.slug)).toEqual([
+      "fat-loss-plan",
+    ]);
+    expect(presentation.freeResources.map((product) => product.slug)).toEqual([
+      "hormone-harmony",
+      "lean-kitchen",
+    ]);
+  });
+
+  it("applies the filters to the plans as well as the free resources", () => {
+    // arrange
+    const products = createCatalog();
+    const searchParams = new URLSearchParams("goal=fat-loss");
+
+    // act
+    const presentation = presentCatalog(products, searchParams);
+
+    // assert
+    expect(presentation.plans.map((product) => product.slug)).toEqual([
+      "fat-loss-plan",
+    ]);
+    expect(presentation.freeResources.map((product) => product.slug)).toEqual([
+      "lean-kitchen",
+    ]);
   });
 });
 
@@ -68,6 +101,14 @@ function createCatalog(): readonly StoreProduct[] {
       slug: "lean-kitchen",
       types: [TYPE_WORKOUTS],
     }),
+    {
+      ...createProduct({
+        goals: [GOAL_FAT_LOSS],
+        slug: "fat-loss-plan",
+        types: [TYPE_WORKOUTS],
+      }),
+      price: { eurCents: 3900, usdCents: 4500 },
+    },
   ];
 }
 
@@ -83,6 +124,7 @@ function createProduct(
     creatorName: "Eli",
     detailDescription: "Phase-by-phase guidance.",
     includedItems: ["A weekly plan"],
+    price: null,
     title: product.slug,
     ...product,
   };

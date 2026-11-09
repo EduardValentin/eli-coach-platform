@@ -10,6 +10,12 @@ import {
 } from "./product-asset-keys";
 import type { ProductAssetContent } from "./product-asset-writer-port";
 import type { ProductAssetDigestPort } from "./product-asset-digest-port";
+import type { ProductPriceIssue } from "./product-price";
+import {
+  ProductPricing,
+  type ProductPricingInput,
+  type ProductPricingSnapshot,
+} from "./product-pricing";
 import {
   resolveCoverFormat,
   resolveDownloadFormat,
@@ -60,13 +66,16 @@ export type PlannedProductCover = {
   sizeBytes: number;
 };
 
-export type PublicationPlan = {
+type PublicationOperationPricing =
+  | { operation: "create_product"; pricing: ProductPricingSnapshot }
+  | { operation: "revise_product" };
+
+export type PublicationPlan = PublicationOperationPricing & {
   cover: PlannedProductCover;
   displayOrder: number;
   downloads: readonly PlannedProductAsset[];
   goals: readonly StoreTaxonomyValue[];
   metadata: ProductVersionMetadata;
-  operation: PublicationOperation;
   productId: number | null;
   productSlug: string;
   totalUploadBytes: number;
@@ -79,7 +88,7 @@ export type ProductPublication = {
   operation: PublicationOperation;
   productId: number;
   productSlug: string;
-  productVersionId: number;
+  productVersionId: number | null;
   publishedAt: Date;
 };
 
@@ -93,14 +102,13 @@ export type StoreTaxonomySnapshot = {
   types: readonly StoreTaxonomyValue[];
 };
 
-export type PersistPublicationCommand = {
+export type PersistPublicationCommand = PublicationOperationPricing & {
   cover: PlannedProductCover;
   displayOrder: number;
   downloads: readonly PlannedProductAsset[];
   goalSlugs: readonly string[];
   idempotencyKey: string;
   metadata: ProductVersionMetadata;
-  operation: PublicationOperation;
   payloadDigest: string;
   productId: number | null;
   productSlug: string;
@@ -128,7 +136,9 @@ export type PublicationIssue =
     }
   | { code: "unknown_type"; acceptedSlugs: readonly string[]; slug: string }
   | { code: "unknown_goal"; acceptedSlugs: readonly string[]; slug: string }
-  | { code: "payload_too_large"; maxBytes: number; totalBytes: number };
+  | { code: "payload_too_large"; maxBytes: number; totalBytes: number }
+  | { code: "price_unchanged" }
+  | ProductPriceIssue;
 
 export type PublicationPlanResult =
   | { status: "valid"; plan: PublicationPlan }
@@ -147,10 +157,6 @@ export type RetireProductResult =
   | { status: "not_found" }
   | { status: "unavailable" };
 
-export type PublicationTarget =
-  | { kind: "new"; slug: string }
-  | { kind: "revision"; targetProductSlug: string };
-
 const PRODUCT_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 /**
  * ASCII record and unit separators, spelled as escapes so they survive
@@ -167,40 +173,43 @@ export function validateSlugFormat(slug: string): PublicationIssue | null {
     : { code: "invalid_slug", slug };
 }
 
-export function resolvePublicationTarget(metadata: {
-  slug?: string;
-  targetProductSlug?: string;
-}): PublicationTarget | null {
-  if (metadata.targetProductSlug) {
-    return { kind: "revision", targetProductSlug: metadata.targetProductSlug };
-  }
-
-  if (metadata.slug) {
-    return { kind: "new", slug: metadata.slug };
-  }
-
-  return null;
-}
-
-type ProductPublicationDraftProps = {
+type ProductContentDraftProps = {
   cover: ProductCoverInput;
   downloads: readonly ProductDownloadInput[];
   metadata: ProductVersionMetadata;
 };
+
+type NewProductDraftProps = ProductContentDraftProps & {
+  pricing: ProductPricingInput;
+};
+
+type PublicationIntent =
+  | { operation: "create_product"; pricing: ProductPricingInput }
+  | { operation: "revise_product" };
 
 export class ProductPublicationDraft {
   readonly cover: ProductCoverInput;
   readonly downloads: readonly ProductDownloadInput[];
   readonly metadata: ProductVersionMetadata;
 
-  private constructor(props: ProductPublicationDraftProps) {
+  private constructor(
+    props: ProductContentDraftProps,
+    private readonly intent: PublicationIntent,
+  ) {
     this.cover = props.cover;
     this.downloads = props.downloads;
     this.metadata = props.metadata;
   }
 
-  static from(props: ProductPublicationDraftProps): ProductPublicationDraft {
-    return new ProductPublicationDraft(props);
+  static forNewProduct(props: NewProductDraftProps): ProductPublicationDraft {
+    return new ProductPublicationDraft(props, {
+      operation: "create_product",
+      pricing: props.pricing,
+    });
+  }
+
+  static forRevision(props: ProductContentDraftProps): ProductPublicationDraft {
+    return new ProductPublicationDraft(props, { operation: "revise_product" });
   }
 
   /**
@@ -208,12 +217,11 @@ export class ProductPublicationDraft {
    * so an idempotent retry can be recognised before any validation runs.
    */
   requestDigest(
-    operation: PublicationOperation,
     target: string,
     productAssetDigestPort: ProductAssetDigestPort,
   ): string {
     const canonical = [
-      operation,
+      this.intent.operation,
       target,
       this.metadata.title,
       this.metadata.creatorName,
@@ -230,6 +238,7 @@ export class ProductPublicationDraft {
             `${download.customerFilename}=${productAssetDigestPort.sha256(download.bytes)}`,
         )
         .join(CANONICAL_LIST_SEPARATOR),
+      this.canonicalPricing(),
     ].join(CANONICAL_FIELD_SEPARATOR);
 
     return productAssetDigestPort.sha256(new TextEncoder().encode(canonical));
@@ -278,7 +287,6 @@ export class ProductPublicationDraft {
     return this.plan(
       {
         displayOrder: input.displayOrder,
-        operation: "create_product",
         productId: null,
         productSlug: input.slug,
         versionSequence: 1,
@@ -316,6 +324,7 @@ export class ProductPublicationDraft {
     const issues: PublicationIssue[] = [];
     const downloads = this.planDownloads(issues, productAssetDigestPort);
     const cover = this.planCover(issues, productAssetDigestPort);
+    const operation = this.planOperation(issues);
     const types = resolveTaxonomy(
       this.metadata.typeSlugs,
       taxonomy.types,
@@ -339,7 +348,7 @@ export class ProductPublicationDraft {
       issues.push(sizeIssue);
     }
 
-    if (issues.length > 0 || !cover) {
+    if (issues.length > 0 || !cover || !operation) {
       return { status: "invalid", issues };
     }
 
@@ -351,7 +360,7 @@ export class ProductPublicationDraft {
         downloads,
         goals: goals.values,
         metadata: this.metadata,
-        operation: placement.operation,
+        ...operation,
         productId: placement.productId,
         productSlug: placement.productSlug,
         totalUploadBytes,
@@ -376,7 +385,7 @@ export class ProductPublicationDraft {
       goalSlugs: plan.metadata.goalSlugs,
       idempotencyKey: input.idempotencyKey,
       metadata: plan.metadata,
-      operation: plan.operation,
+      ...this.operationOf(plan),
       payloadDigest: input.payloadDigest,
       productId: plan.productId,
       productSlug: plan.productSlug,
@@ -403,6 +412,47 @@ export class ProductPublicationDraft {
         )!.bytes,
       })),
     ];
+  }
+
+  private canonicalPricing(): string {
+    if (this.intent.operation === "revise_product") {
+      return "";
+    }
+
+    const { pricing } = this.intent;
+    const amounts =
+      pricing.kind === "paid"
+        ? [pricing.eurCents ?? "", pricing.usdCents ?? ""]
+        : [];
+
+    return [pricing.kind, ...amounts].join(CANONICAL_LIST_SEPARATOR);
+  }
+
+  private planOperation(
+    issues: PublicationIssue[],
+  ): PublicationOperationPricing | null {
+    if (this.intent.operation === "revise_product") {
+      return { operation: "revise_product" };
+    }
+
+    const parsed = ProductPricing.parse(this.intent.pricing);
+
+    if (parsed.status === "invalid") {
+      issues.push(...parsed.issues);
+
+      return null;
+    }
+
+    return {
+      operation: "create_product",
+      pricing: parsed.pricing.toSnapshot(),
+    };
+  }
+
+  private operationOf(plan: PublicationPlan): PublicationOperationPricing {
+    return plan.operation === "create_product"
+      ? { operation: plan.operation, pricing: plan.pricing }
+      : { operation: plan.operation };
   }
 
   private planDownloads(

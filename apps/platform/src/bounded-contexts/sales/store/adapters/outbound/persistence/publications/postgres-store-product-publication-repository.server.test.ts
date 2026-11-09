@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   Product,
+  ProductPricing,
+  type PersistPriceChangeCommand,
   type PersistPublicationCommand,
 } from "~/bounded-contexts/sales/store/domain/product";
 
@@ -52,10 +54,12 @@ describe("PostgresStoreProductPublicationRepository", () => {
       rows: [
         {
           displayOrder: 2,
+          eurCents: null,
           id: 7,
           latestVersionSequence: "3",
           lifecycleStatus: "published",
           slug: "glute-growth-guide",
+          usdCents: null,
         },
       ],
     });
@@ -71,11 +75,44 @@ describe("PostgresStoreProductPublicationRepository", () => {
     // assert
     expect(product).toEqual(
       Product.reconstitute({
+        currentPricing: ProductPricing.free(),
         displayOrder: 2,
         id: 7,
         latestVersionSequence: 3,
         lifecycleStatus: "published",
         slug: "glute-growth-guide",
+      }),
+    );
+  });
+
+  it("maps the product's current paid pricing", async () => {
+    // arrange
+    const execute = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          displayOrder: 2,
+          eurCents: 3900,
+          id: 7,
+          latestVersionSequence: 1,
+          lifecycleStatus: "published",
+          slug: "glute-growth-guide",
+          usdCents: 4500,
+        },
+      ],
+    });
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository(createDatabase(execute));
+
+    // act
+    const product =
+      await postgresStoreProductPublicationRepository.findProductById(7);
+
+    // assert
+    expect(product?.currentPricing).toEqual(
+      ProductPricing.reconstitute({
+        kind: "paid",
+        eurCents: 3900,
+        usdCents: 4500,
       }),
     );
   });
@@ -230,6 +267,149 @@ describe("PostgresStoreProductPublicationRepository", () => {
     expect(transaction).toHaveBeenCalledTimes(3);
   });
 
+  it("records a price change as a publication without a content version", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: 7 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [{ createdAt: "2026-11-08T12:00:00.000Z", id: 52 }],
+      })
+      .mockResolvedValueOnce({ rows: [] });
+    const transaction = vi.fn((work) => work({ execute }));
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
+
+    // act
+    const publication =
+      await postgresStoreProductPublicationRepository.persistPriceChange(
+        priceChangeCommand(),
+      );
+
+    // assert
+    expect(publication).toEqual({
+      status: "recorded",
+      publication: {
+        id: 52,
+        operation: "reprice_product",
+        productId: 7,
+        productSlug: "glute-growth-guide",
+        productVersionId: null,
+        publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+      },
+    });
+    expect(execute).toHaveBeenCalledTimes(4);
+  });
+
+  it("settles a racing retry of the same price change on the stored publication", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: 7 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            createdAt: "2026-11-08T12:00:00.000Z",
+            id: 52,
+            operation: "reprice_product",
+            payloadDigest: "c".repeat(64),
+            productId: 7,
+            productSlug: "glute-growth-guide",
+            productVersionId: null,
+          },
+        ],
+      });
+    const transaction = vi.fn((work) => work({ execute }));
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
+
+    // act
+    const publication =
+      await postgresStoreProductPublicationRepository.persistPriceChange(
+        priceChangeCommand(),
+      );
+
+    // assert
+    expect(publication).toMatchObject({
+      status: "replayed",
+      publication: { id: 52, productVersionId: null },
+    });
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it("refuses a racing request reusing the key with a different payload", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: 7 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            createdAt: "2026-11-08T12:00:00.000Z",
+            id: 52,
+            operation: "reprice_product",
+            payloadDigest: "d".repeat(64),
+            productId: 7,
+            productSlug: "glute-growth-guide",
+            productVersionId: null,
+          },
+        ],
+      });
+    const transaction = vi.fn((work) => work({ execute }));
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
+
+    // act
+    const outcome =
+      await postgresStoreProductPublicationRepository.persistPriceChange(
+        priceChangeCommand(),
+      );
+
+    // assert
+    expect(outcome).toEqual({ status: "idempotency_conflict" });
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries a serialization failure while recording a price change", async () => {
+    // arrange
+    const recorded = {
+      status: "recorded" as const,
+      publication: {
+        id: 52,
+        operation: "reprice_product" as const,
+        productId: 7,
+        productSlug: "glute-growth-guide",
+        productVersionId: null,
+        publishedAt: new Date("2026-11-08T12:00:00.000Z"),
+      },
+    };
+    const transaction = vi
+      .fn()
+      .mockRejectedValueOnce({ code: "40001" })
+      .mockResolvedValueOnce(recorded);
+    const postgresStoreProductPublicationRepository =
+      new PostgresStoreProductPublicationRepository({
+        transaction,
+      } as unknown as DatabaseClient);
+
+    // act
+    const result =
+      await postgresStoreProductPublicationRepository.persistPriceChange(
+        priceChangeCommand(),
+      );
+
+    // assert
+    expect(result).toBe(recorded);
+    expect(transaction).toHaveBeenCalledTimes(2);
+  });
+
   it("reports retirement of an unknown product as no rows changed", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({ rows: [] });
@@ -277,10 +457,22 @@ function persistCommand(): PersistPublicationCommand {
     },
     operation: "create_product",
     payloadDigest: "c".repeat(64),
+    pricing: { kind: "free" },
     productId: null,
     productSlug: "glute-growth-guide",
     publishedBy: { kind: "machine", id: "management-api-agent" },
     typeSlugs: ["e-books"],
     versionSequence: 1,
+  };
+}
+
+function priceChangeCommand(): PersistPriceChangeCommand {
+  return {
+    idempotencyKey: "reprice-1",
+    payloadDigest: "c".repeat(64),
+    pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
+    productId: 7,
+    productSlug: "glute-growth-guide",
+    publishedBy: { kind: "machine", id: "management-api-agent" },
   };
 }

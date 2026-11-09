@@ -1,3 +1,5 @@
+import type { ProductPricing } from "./product-pricing";
+
 const STORE_COVER_MIME_TYPES = [
   "image/avif",
   "image/gif",
@@ -55,6 +57,7 @@ type PublishedProductProps = {
   id: number;
   slug: string;
   displayOrder: number;
+  pricing: ProductPricing;
   version: PublishedProductVersion;
 };
 
@@ -62,17 +65,23 @@ export class PublishedProduct {
   readonly id: number;
   readonly slug: string;
   readonly displayOrder: number;
+  readonly pricing: ProductPricing;
   readonly version: PublishedProductVersion;
 
   private constructor(props: PublishedProductProps) {
     this.id = props.id;
     this.slug = props.slug;
     this.displayOrder = props.displayOrder;
+    this.pricing = props.pricing;
     this.version = props.version;
   }
 
   static reconstitute(props: PublishedProductProps): PublishedProduct {
     return new PublishedProduct(props);
+  }
+
+  isPaid(): boolean {
+    return this.pricing.isPaid();
   }
 
   deliveryResource(): { title: string; typeLabels: readonly string[] } {
@@ -83,11 +92,11 @@ export class PublishedProduct {
   }
 }
 
-export type PublicationOperation = "create_product" | "revise_product";
+export type PublicationOperation =
+  "create_product" | "reprice_product" | "revise_product";
 
 export type PublicationPlacement = {
   displayOrder: number;
-  operation: PublicationOperation;
   productId: number | null;
   productSlug: string;
   versionSequence: number;
@@ -110,7 +119,21 @@ export type PurchasabilityDecision =
   | { status: "purchasable" }
   | { status: "unavailable"; purchasableSlugs: readonly string[] };
 
+export type PriceChangePlan = {
+  pricing: ProductPricing;
+  productId: number;
+  productSlug: string;
+};
+
+type PriceChangeRefusal =
+  { code: "price_unchanged" } | { code: "product_retired" };
+
+export type PriceChangeDecision =
+  | { status: "planned"; plan: PriceChangePlan }
+  | { status: "refused"; issue: PriceChangeRefusal };
+
 type ProductProps = {
+  currentPricing: ProductPricing;
   id: number;
   slug: string;
   displayOrder: number;
@@ -119,6 +142,7 @@ type ProductProps = {
 };
 
 export class Product {
+  readonly currentPricing: ProductPricing;
   readonly id: number;
   readonly slug: string;
   readonly displayOrder: number;
@@ -126,6 +150,7 @@ export class Product {
   readonly latestVersionSequence: number;
 
   private constructor(props: ProductProps) {
+    this.currentPricing = props.currentPricing;
     this.id = props.id;
     this.slug = props.slug;
     this.displayOrder = props.displayOrder;
@@ -169,6 +194,21 @@ export class Product {
       : { status: "unavailable", purchasableSlugs };
   }
 
+  planPriceChange(next: ProductPricing): PriceChangeDecision {
+    if (this.lifecycleStatus === "archived") {
+      return { status: "refused", issue: { code: "product_retired" } };
+    }
+
+    if (this.currentPricing.equals(next)) {
+      return { status: "refused", issue: { code: "price_unchanged" } };
+    }
+
+    return {
+      status: "planned",
+      plan: { pricing: next, productId: this.id, productSlug: this.slug },
+    };
+  }
+
   canBeRevised(): boolean {
     return this.lifecycleStatus !== "archived";
   }
@@ -180,7 +220,6 @@ export class Product {
   revisionPlacement(): PublicationPlacement {
     return {
       displayOrder: this.displayOrder,
-      operation: "revise_product",
       productId: this.id,
       productSlug: this.slug,
       versionSequence: this.nextVersionSequence(),

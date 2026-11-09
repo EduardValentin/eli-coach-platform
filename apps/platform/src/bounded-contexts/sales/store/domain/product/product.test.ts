@@ -6,6 +6,8 @@ import {
   type LockedProductState,
   type PinnedProductSelection,
 } from "./product";
+import { ProductPrice } from "./product-price";
+import { ProductPricing } from "./product-pricing";
 
 const selection: PinnedProductSelection = {
   productId: 1,
@@ -26,6 +28,7 @@ describe("Product.revisionPlacement", () => {
     const product = Product.reconstitute({
       displayOrder: 2,
       id: 7,
+      currentPricing: ProductPricing.free(),
       latestVersionSequence: 3,
       lifecycleStatus: "published",
       slug: "glute-growth-guide",
@@ -37,7 +40,6 @@ describe("Product.revisionPlacement", () => {
     // assert
     expect(placement).toEqual({
       displayOrder: 2,
-      operation: "revise_product",
       productId: 7,
       productSlug: "glute-growth-guide",
       versionSequence: 4,
@@ -184,6 +186,7 @@ describe("Product#canBeRevised", () => {
         displayOrder: 1,
         lifecycleStatus,
         latestVersionSequence: 3,
+        currentPricing: ProductPricing.free(),
       });
 
       // act
@@ -204,6 +207,7 @@ describe("Product#nextVersionSequence", () => {
       displayOrder: 1,
       lifecycleStatus: "published",
       latestVersionSequence: 3,
+      currentPricing: ProductPricing.free(),
     });
 
     // act
@@ -250,6 +254,7 @@ describe("PublishedProduct#deliveryResource", () => {
         goals: [{ slug: "wellness", label: "Wellness", displayOrder: 3 }],
         publishedAt: new Date("2026-07-30T10:00:00.000Z"),
       },
+      pricing: ProductPricing.free(),
     });
 
     // act
@@ -260,5 +265,141 @@ describe("PublishedProduct#deliveryResource", () => {
       title: "Hormone Harmony",
       typeLabels: ["E-Books"],
     });
+  });
+});
+
+const paidPricing = ProductPricing.paid(
+  ProductPrice.reconstitute({ eurCents: 3900, usdCents: 4500 }),
+);
+
+function productPriced(
+  currentPricing: ProductPricing,
+  lifecycleStatus: "archived" | "published" = "published",
+): Product {
+  return Product.reconstitute({
+    currentPricing,
+    displayOrder: 2,
+    id: 7,
+    latestVersionSequence: 3,
+    lifecycleStatus,
+    slug: "glute-growth-guide",
+  });
+}
+
+describe("Product.planPriceChange", () => {
+  it("plans a free product turning paid", () => {
+    // arrange
+    const product = productPriced(ProductPricing.free());
+
+    // act
+    const decision = product.planPriceChange(paidPricing);
+
+    // assert
+    expect(decision).toEqual({
+      status: "planned",
+      plan: {
+        pricing: paidPricing,
+        productId: 7,
+        productSlug: "glute-growth-guide",
+      },
+    });
+  });
+
+  it("plans a paid product turning free", () => {
+    // arrange
+    const product = productPriced(paidPricing);
+
+    // act
+    const decision = product.planPriceChange(ProductPricing.free());
+
+    // assert
+    expect(decision).toEqual({
+      status: "planned",
+      plan: {
+        pricing: ProductPricing.free(),
+        productId: 7,
+        productSlug: "glute-growth-guide",
+      },
+    });
+  });
+
+  it("plans new amounts for a paid product", () => {
+    // arrange
+    const product = productPriced(paidPricing);
+    const next = ProductPricing.reconstitute({
+      kind: "paid",
+      eurCents: 4900,
+      usdCents: 5500,
+    });
+
+    // act
+    const decision = product.planPriceChange(next);
+
+    // assert
+    expect(decision).toMatchObject({
+      status: "planned",
+      plan: { pricing: next },
+    });
+  });
+
+  it.each([
+    [
+      "the same amounts",
+      paidPricing,
+      ProductPricing.reconstitute({
+        kind: "paid",
+        eurCents: 3900,
+        usdCents: 4500,
+      }),
+    ],
+    ["free to free", ProductPricing.free(), ProductPricing.free()],
+  ])("refuses %s as unchanged", (_label, currentPricing, next) => {
+    // arrange
+    const product = productPriced(currentPricing);
+
+    // act
+    const decision = product.planPriceChange(next);
+
+    // assert
+    expect(decision).toEqual({
+      status: "refused",
+      issue: { code: "price_unchanged" },
+    });
+  });
+
+  it("refuses a retired product", () => {
+    // arrange
+    const product = productPriced(ProductPricing.free(), "archived");
+
+    // act
+    const decision = product.planPriceChange(paidPricing);
+
+    // assert
+    expect(decision).toEqual({
+      status: "refused",
+      issue: { code: "product_retired" },
+    });
+  });
+});
+
+describe("PublishedProduct.isPaid", () => {
+  it.each([
+    ["paid", paidPricing, true],
+    ["free", ProductPricing.free(), false],
+  ])("reports a %s published product", (_label, pricing, paid) => {
+    // arrange
+    const publishedProduct = PublishedProduct.reconstitute({
+      displayOrder: 1,
+      id: 7,
+      pricing,
+      slug: "hormone-harmony",
+      version: {} as PublishedProduct["version"],
+    });
+
+    // act
+    const isPaid = publishedProduct.isPaid();
+
+    // assert
+    expect(isPaid).toBe(paid);
   });
 });

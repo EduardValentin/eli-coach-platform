@@ -4,12 +4,14 @@ import { FindPublishedCoverUseCase } from "./find-published-cover-use-case";
 import { FindPublishedProductUseCase } from "./find-published-product-use-case";
 import { ListPublishedProductsUseCase } from "./list-published-products-use-case";
 import { PublishedProduct } from "./product";
+import { ProductPricing } from "./product-pricing";
 import type { StoreCatalogPort } from "./store-catalog-port";
 
 const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
+  pricing: ProductPricing.free(),
   version: {
     id: 11,
     sequence: 2,

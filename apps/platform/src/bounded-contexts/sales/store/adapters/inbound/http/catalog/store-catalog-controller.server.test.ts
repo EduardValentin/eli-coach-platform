@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   type FindPublishedProductUseCase,
   type ListPublishedProductsUseCase,
+  ProductPricing,
   PublishedProduct,
 } from "~/bounded-contexts/sales/store/domain/product";
 
@@ -41,8 +42,41 @@ describe("StoreCatalogController", () => {
             alt: "Hormone Harmony cover",
             url: "/platform/api/store/covers/covers%2Fhormone-harmony.webp",
           },
+          price: null,
         }),
       ],
+    });
+  });
+
+  it("returns a paid product with its fixed prices", async () => {
+    // arrange
+    const findPublishedProductUseCase = {
+      execute: vi.fn().mockResolvedValue({
+        status: "available",
+        product: createProduct(
+          ProductPricing.reconstitute({
+            kind: "paid",
+            eurCents: 3900,
+            usdCents: 4500,
+          }),
+        ),
+      }),
+    } as unknown as FindPublishedProductUseCase;
+    const storeCatalogController = new StoreCatalogController({
+      appBasePath: "/",
+      findPublishedProductUseCase,
+      listPublishedProductsUseCase: {
+        execute: vi.fn(),
+      } as unknown as ListPublishedProductsUseCase,
+    });
+
+    // act
+    const response =
+      await storeCatalogController.getPublishedProductBySlug("hormone-harmony");
+
+    // assert
+    await expect(response.json()).resolves.toMatchObject({
+      price: { eurCents: 3900, usdCents: 4500 },
     });
   });
 
@@ -75,10 +109,13 @@ describe("StoreCatalogController", () => {
   });
 });
 
-export function createProduct(): PublishedProduct {
+function createProduct(
+  pricing: ProductPricing = ProductPricing.free(),
+): PublishedProduct {
   return PublishedProduct.reconstitute({
     displayOrder: 1,
     id: 7,
+    pricing,
     slug: "hormone-harmony",
     version: {
       assets: [

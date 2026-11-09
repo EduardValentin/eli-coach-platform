@@ -1,10 +1,16 @@
 import type { Product } from "./product";
+import type { PersistPriceChangeCommand } from "./product-price-change";
 import type {
   PersistPublicationCommand,
   ProductPublication,
   StoredPublicationRecord,
   StoreTaxonomySnapshot,
 } from "./product-publication";
+
+export type PriceChangePersistence =
+  | { status: "recorded"; publication: ProductPublication }
+  | { status: "replayed"; publication: ProductPublication }
+  | { status: "idempotency_conflict" };
 
 export interface StoreProductPublicationsPort {
   findProductById(productId: number): Promise<Product | null>;
@@ -14,6 +20,9 @@ export interface StoreProductPublicationsPort {
   ): Promise<StoredPublicationRecord | null>;
   getNextDisplayOrder(): Promise<number>;
   getTaxonomy(): Promise<StoreTaxonomySnapshot>;
+  persistPriceChange(
+    command: PersistPriceChangeCommand,
+  ): Promise<PriceChangePersistence>;
   persistPublication(
     command: PersistPublicationCommand,
   ): Promise<ProductPublication>;

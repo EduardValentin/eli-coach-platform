@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PrepareAcquisitionCommand } from "~/bounded-contexts/sales/store/domain/acquisition";
-import { PublishedProduct } from "~/bounded-contexts/sales/store/domain/product";
+import {
+  ProductPricing,
+  PublishedProduct,
+} from "~/bounded-contexts/sales/store/domain/product";
 
 import type { DatabaseClient } from "~/shared/database";
 
@@ -11,6 +14,7 @@ const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
+  pricing: ProductPricing.free(),
   version: {
     id: 11,
     sequence: 2,
