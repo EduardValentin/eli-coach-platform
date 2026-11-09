@@ -1,9 +1,11 @@
-import { cn, useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import {
-  buttonVariants,
-  cardVariants,
-} from "~/shared/design-system/primitives";
-import { Check } from "lucide-react";
+  ConfirmationHeading,
+  ConfirmationPage,
+  ConfirmationReading,
+  ConfirmationReadings,
+} from "~/shared/design-system/layout";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import {
   Link,
   useLoaderData,
@@ -75,59 +77,31 @@ function PaymentConfirmation(props: { confirmation: PaidConfirmation }) {
       : waitingStartSummary(confirmation.waitingStartsOn, timeZone);
 
   return (
-    <div
-      className="min-h-screen bg-surface-page px-4 pt-32 pb-16 sm:px-6"
-      data-parity-root="CheckoutComplete"
-    >
-      <div
-        className={cn(
-          cardVariants({ variant: "panel" }),
-          "mx-auto w-full max-w-xl px-6 py-10 sm:px-10",
-        )}
-      >
-        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-surface text-feedback-success">
-          <Check aria-hidden="true" size={28} />
+    <ConfirmationPage data-parity-root="CheckoutComplete">
+      <ConfirmationHeading outcome="confirmed">
+        {PAYMENT_CONFIRMED_HEADING}
+      </ConfirmationHeading>
+
+      <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
+        {INVITATION_LEAD}{" "}
+        <span className="font-medium text-text-primary">
+          {confirmation.email}
         </span>
+        {INVITATION_TAIL}
+      </p>
 
-        <h1 className="mt-6 text-center font-heading text-display-sm text-text-primary">
-          {PAYMENT_CONFIRMED_HEADING}
-        </h1>
+      <ConfirmationReadings className="mt-8">
+        <ConfirmationReading term="Bundle" value={confirmation.bundleTitle} />
+        <ConfirmationReading term="Amount" value={confirmation.amount} />
+        <ConfirmationReading term="Renews" value={confirmation.renewalLabel} />
+        <ConfirmationReading term="Your start" value={startSummary} />
+      </ConfirmationReadings>
 
-        <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
-          {INVITATION_LEAD}{" "}
-          <span className="font-medium text-text-primary">
-            {confirmation.email}
-          </span>
-          {INVITATION_TAIL}
-        </p>
-
-        <dl className="mt-8 grid gap-3 rounded-card border border-border-subtle bg-surface-quiet px-5 py-4 text-sm">
-          <Reading term="Bundle" value={confirmation.bundleTitle} />
-          <Reading term="Amount" value={confirmation.amount} />
-          <Reading term="Renews" value={confirmation.renewalLabel} />
-          <Reading term="Your start" value={startSummary} />
-        </dl>
-
-        <div className="mt-8 flex justify-center">
-          <Link className={buttonVariants({ variant: "outline" })} to="/">
-            Back to the home page
-          </Link>
-        </div>
+      <div className="mt-8 flex justify-center">
+        <Link className={buttonVariants({ variant: "outline" })} to="/">
+          Back to the home page
+        </Link>
       </div>
-    </div>
-  );
-}
-
-function Reading(props: { term: string; value: string }) {
-  return (
-    <div
-      className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
-      data-parity={`reading-${props.term.toLowerCase().replace(/\s+/g, "-")}`}
-    >
-      <dt className="text-text-secondary">{props.term}</dt>
-      <dd className="font-medium text-text-primary sm:text-right">
-        {props.value}
-      </dd>
-    </div>
+    </ConfirmationPage>
   );
 }

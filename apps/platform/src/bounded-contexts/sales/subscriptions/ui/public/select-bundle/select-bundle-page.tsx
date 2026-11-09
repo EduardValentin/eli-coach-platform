@@ -1,7 +1,6 @@
 import { joinBasePath } from "~/shared/http/base-path";
 import { cn } from "~/shared/design-system/lib";
-import { Button } from "~/shared/design-system/primitives";
-import { X } from "lucide-react";
+import { DismissibleNotice } from "~/shared/design-system/primitives";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   useSearchParams,
@@ -155,22 +154,13 @@ function CancelledPaymentNotice(props: { onDismissed: () => void }) {
   };
 
   return (
-    <div
-      className="mx-auto flex max-w-xl items-start gap-3 rounded-control border border-border-subtle bg-surface-base px-4 py-3 text-left"
+    <DismissibleNotice
+      className="mx-auto max-w-xl"
       data-parity="cancelled-notice"
-      role="status"
+      onDismiss={dismiss}
     >
-      <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>
-      <Button
-        aria-label="Dismiss"
-        className="-mt-1 -mr-2 text-text-secondary"
-        onClick={dismiss}
-        size="icon-xs"
-        variant="outline"
-      >
-        <X aria-hidden="true" size={16} />
-      </Button>
-    </div>
+      {CANCELLED_NOTICE}
+    </DismissibleNotice>
   );
 }
 

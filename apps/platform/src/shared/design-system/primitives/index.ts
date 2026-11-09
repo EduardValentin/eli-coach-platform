@@ -16,6 +16,7 @@ export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
 export { DateTimeLabel } from "./date-time-label";
 export { DisabledActionHint } from "./disabled-action-hint";
+export { DismissibleNotice } from "./dismissible-notice";
 export { FieldError } from "./field-error";
 export { FileDropzone, FilePickerButton } from "./file-dropzone";
 export { FieldHint } from "./field-hint";
