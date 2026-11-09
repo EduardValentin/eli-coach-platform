@@ -11,7 +11,7 @@ test(
     await privacyPolicy.open();
 
     // assert
-    await privacyPolicy.expectVersion("2.3", "8 November 2026");
+    await privacyPolicy.expectVersion("2.3", "9 November 2026");
     await privacyPolicy.expectSentenceCount(CARD_ON_FILE_SENTENCE, 2);
   },
 );

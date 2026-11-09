@@ -99,7 +99,7 @@ describe("privacy policy content", () => {
     const expectedIdentity = {
       id: "privacy-policy",
       version: "2.3",
-      effectiveDate: "2026-11-08",
+      effectiveDate: "2026-11-09",
     };
 
     // act
@@ -153,7 +153,7 @@ describe("privacy policy content", () => {
 
     // assert
     expect(text).toContain(
-      "It is Privacy Policy version 2.3, effective 8 November 2026.",
+      "It is Privacy Policy version 2.3, effective 9 November 2026.",
     );
   });
 

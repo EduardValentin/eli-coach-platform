@@ -114,7 +114,7 @@ const privacyPageLink = {
 export const PRIVACY_POLICY = {
   id: "privacy-policy",
   version: PRIVACY_POLICY_VERSION,
-  effectiveDate: "2026-11-08",
+  effectiveDate: "2026-11-09",
   title: "Privacy Policy",
   description:
     "How Evoa Fitness handles personal data for its public website, coaching waitlist, digital Store, and 1-on-1 coaching platform.",
@@ -126,7 +126,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.3, effective 8 November 2026.",
+            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.3, effective 9 November 2026.",
           ],
         },
         {
