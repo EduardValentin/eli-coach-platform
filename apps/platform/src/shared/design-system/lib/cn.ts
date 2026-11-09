@@ -62,6 +62,9 @@ const twMerge = extendTailwindMerge({
       container: ["reading", "content", "portal", "stage"],
       animate: ["heartbeat", "panel-enter", "progress-indeterminate"],
     },
+    classGroups: {
+      z: [{ z: ["sheet-overlay", "sheet", "floating-over-sheet"] }],
+    },
   },
 });
 
