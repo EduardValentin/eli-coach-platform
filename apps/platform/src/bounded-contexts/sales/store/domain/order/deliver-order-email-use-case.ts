@@ -89,7 +89,7 @@ export class DeliverOrderEmailUseCase {
       orderId: delivery.order.id,
       reason,
     });
-    await this.recordQuietly(() =>
+    await this.recordOutcome(delivery, () =>
       this.options.storeOrdersPort.recordEmailRejected({
         deliveryAttemptId: delivery.deliveryAttemptId,
       }),
@@ -101,7 +101,7 @@ export class DeliverOrderEmailUseCase {
   private async recordRetryable(
     delivery: OrderEmailDelivery,
   ): Promise<DeliverOrderEmailResult> {
-    await this.recordQuietly(() =>
+    await this.recordOutcome(delivery, () =>
       this.options.storeOrdersPort.recordEmailRetryable({
         deliveryAttemptId: delivery.deliveryAttemptId,
       }),
@@ -110,11 +110,16 @@ export class DeliverOrderEmailUseCase {
     return "not_sent";
   }
 
-  private async recordQuietly(record: () => Promise<void>): Promise<void> {
+  private async recordOutcome(
+    delivery: OrderEmailDelivery,
+    record: () => Promise<void>,
+  ): Promise<void> {
     try {
       await record();
     } catch {
-      return;
+      this.options.orderIncidentsPort.orderEmailAuditPending({
+        orderId: delivery.order.id,
+      });
     }
   }
 }
