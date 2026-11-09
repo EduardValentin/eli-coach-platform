@@ -8,7 +8,7 @@ import {
   type RecordedCheckoutPurchase,
   type RefreshPaymentCardUseCase,
 } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
-import type { PaidCheckoutSession } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
+import type { PaidCheckoutSession } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { describe, expect, it, vi } from "vitest";
 

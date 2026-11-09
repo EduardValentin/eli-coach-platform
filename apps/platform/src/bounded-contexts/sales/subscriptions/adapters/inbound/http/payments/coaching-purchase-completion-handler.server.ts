@@ -9,8 +9,8 @@ import {
   type RecordedCheckoutPurchase,
   type RefreshPaymentCardUseCase,
 } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
-import type { PaidCheckoutSession } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-completion-handler-port.server";
+import type { PaidCheckoutSession } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
+import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
 
 type HandlerOutcome = Awaited<
   ReturnType<PaymentCompletionHandlerPort["handle"]>

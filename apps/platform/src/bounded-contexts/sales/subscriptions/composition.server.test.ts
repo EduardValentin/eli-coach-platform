@@ -93,38 +93,26 @@ describe("composeSubscriptionsFeature", () => {
       loggerPort: logger,
     };
     const paidSession = await openCheckoutSession(handles.paymentCheckoutPort);
-    const { feature } = composeSubscriptionsFeature({
-      ...handles,
-      paymentEventsPort: {
-        verify: async () => ({
-          kind: "checkout_completed",
-          eventId: "evt_1",
-          session: {
-            id: paidSession.id,
-            customerId: "cus_1",
-            subscriptionId: "sub_1",
-            paymentIntentId: null,
-            amountCents: 44700,
-            currency: "eur",
-            customerEmail: "ana@example.com",
-            paidAt: new Date("2026-10-20T10:00:00.000Z"),
-            metadata: { purpose: "coaching-subscription" },
-          },
-        }),
-      },
-    });
+    const { paymentHandlers } = composeSubscriptionsFeature(handles);
 
     // act
-    const response = await feature.stripeWebhookController.handleEvent(
-      new Request("https://evoa.fit/api/stripe/webhooks", {
-        body: "{}",
-        headers: { "stripe-signature": "t=1,v1=signed" },
-        method: "POST",
-      }),
+    const outcome = await paymentHandlers.paymentCompletionHandlerPort.handle(
+      "evt_1",
+      {
+        id: paidSession.id,
+        customerId: "cus_1",
+        subscriptionId: "sub_1",
+        paymentIntentId: null,
+        amountCents: 44700,
+        currency: "eur",
+        customerEmail: "ana@example.com",
+        paidAt: new Date("2026-10-20T10:00:00.000Z"),
+        metadata: { purpose: "coaching-subscription" },
+      },
     );
 
     // assert
-    expect(response.status).toBe(200);
+    expect(outcome).toBe("ignored");
     expect(logger.error).toHaveBeenCalledWith(
       "Payment event was not recorded.",
       {
@@ -231,7 +219,9 @@ async function openCheckoutSession(
 function createHandles(
   featureFlags: Record<string, boolean>,
 ): SubscriptionsFeatureHandles {
-  const paymentsAdapter = new PaymentsAdapter({ PAYMENTS_PROVIDER: "memory" });
+  const paymentsAdapter = new PaymentsAdapter({
+    paymentProvider: { name: "memory" },
+  });
 
   return {
     admissionsFacade: {
@@ -265,7 +255,6 @@ function createHandles(
     loggerPort: createLogger(),
     paymentCheckoutPort: paymentsAdapter.paymentCheckoutPort,
     paymentCustomerCardsPort: paymentsAdapter.paymentCustomerCardsPort,
-    paymentEventsPort: paymentsAdapter.paymentEventsPort,
     paymentSubscriptionsPort: paymentsAdapter.paymentSubscriptionsPort,
     pricingEligibilitySourceFacade: {
       tierForEmail: async () => "regular",
@@ -273,7 +262,6 @@ function createHandles(
     },
     productEmailPort: new InMemoryProductEmailAdapter(),
     publicAppUrl: "https://evoa.fit",
-    webhookSigningSecret: "whsec_unit",
   };
 }
 

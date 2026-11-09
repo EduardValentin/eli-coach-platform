@@ -21,6 +21,8 @@
         "src/bounded-contexts/*/*/adapters/inbound/http/*.ts",
         "src/bounded-contexts/*/*/adapters/inbound/http/*/*.ts",
         "src/bounded-contexts/*/*/adapters/outbound/persistence/schema.server.ts",
+        "src/bounded-contexts/*/shared/*/adapters/inbound/http/*.ts",
+        "src/bounded-contexts/*/shared/*/adapters/outbound/persistence/schema.server.ts",
         "src/bounded-contexts/*/*/ui/*/*-page.tsx",
         "src/bounded-contexts/*/*/ui/*/*/*-page.tsx",
         "src/surfaces/*/pages/**/*.tsx",

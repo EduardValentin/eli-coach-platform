@@ -50,8 +50,4 @@ export const subscriptionsApiRoutes = [
     SUBSCRIPTIONS_API_PATHS.paymentMethodSession.slice(1),
     "./adapters/inbound/http/client/payment-method-session.ts",
   ),
-  route(
-    SUBSCRIPTIONS_API_PATHS.stripeWebhooks.slice(1),
-    "./adapters/inbound/http/stripe-webhooks/stripe-webhooks.ts",
-  ),
 ];

@@ -7,7 +7,7 @@ import {
   type PaymentCardsPort,
 } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
 import type { ClockPort } from "~/bounded-contexts/sales/subscriptions/domain/clock-port";
-import { recordEventOnce } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/payment-events/postgres-payment-event-ledger-repository.server";
+import { recordEventOnce } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/persistence/postgres-payment-event-ledger-repository.server";
 import { and, eq, type SQL } from "drizzle-orm";
 
 import { paymentCardsTable } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/schema.server";

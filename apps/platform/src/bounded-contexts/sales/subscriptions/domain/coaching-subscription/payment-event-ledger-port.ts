@@ -1,4 +1,4 @@
-export type PaymentEventEntry = {
+type PaymentEventEntry = {
   eventId: string;
   receivedAt: Date;
 };

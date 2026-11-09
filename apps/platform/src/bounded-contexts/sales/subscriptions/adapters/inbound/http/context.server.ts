@@ -4,13 +4,11 @@ import type { SubscriptionController } from "~/bounded-contexts/sales/subscripti
 import type { CoachSalesController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/coach/coach-sales-controller.server";
 import type { PaymentLinksController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/coach/payment-links-controller.server";
 import type { CheckoutsController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/public-site/checkouts-controller.server";
-import type { StripeWebhookController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/stripe-webhooks/stripe-webhook-controller.server";
 
 export type SubscriptionsFeature = {
   checkoutsController: CheckoutsController;
   coachSalesController: CoachSalesController;
   paymentLinksController: PaymentLinksController;
-  stripeWebhookController: StripeWebhookController;
   subscriptionController: SubscriptionController;
 };
 

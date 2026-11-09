@@ -1,6 +1,6 @@
-import { PaymentEventReaderAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-reader-adapter.server";
-import type { PaymentEventVerdict } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentEventsPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-events-port.server";
+import { PaymentEventReaderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-reader-adapter.server";
+import type { PaymentEventVerdict } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
+import type { PaymentEventsPort } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-events-port.server";
 import type { PaymentProviderVocabularyPort } from "../payment-provider-vocabulary-port.server";
 
 const MEMORY_SIGNATURE = "memory";

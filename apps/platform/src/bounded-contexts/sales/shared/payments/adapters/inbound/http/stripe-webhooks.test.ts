@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  subscriptionsContext,
-  type SubscriptionsFeature,
-} from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/context.server";
+  paymentsContext,
+  type PaymentsFeature,
+} from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -11,20 +11,15 @@ import {
 
 import * as stripeWebhooksRoute from "./stripe-webhooks";
 
-function subscriptionsArgs(
-  feature: Partial<SubscriptionsFeature>,
-  request?: Request,
-) {
+function paymentsArgs(feature: Partial<PaymentsFeature>, request?: Request) {
   return createRequestArgs({
-    contexts: [
-      contextEntry(subscriptionsContext, feature as SubscriptionsFeature),
-    ],
+    contexts: [contextEntry(paymentsContext, feature as PaymentsFeature)],
     request,
   });
 }
 
 describe("Stripe webhook route", () => {
-  it("hands a posted Stripe event to the subscriptions webhook controller", async () => {
+  it("hands a posted Stripe event to the webhook controller", async () => {
     // arrange
     const response = new Response(null, { status: 200 });
     const handleEvent = vi.fn().mockResolvedValue(response);
@@ -35,7 +30,7 @@ describe("Stripe webhook route", () => {
 
     // act
     const answered = await stripeWebhooksRoute.action(
-      subscriptionsArgs(
+      paymentsArgs(
         { stripeWebhookController: { handleEvent } as never },
         request,
       ),
@@ -52,7 +47,7 @@ describe("Stripe webhook route", () => {
 
     // act
     const response = await stripeWebhooksRoute.loader(
-      subscriptionsArgs({ stripeWebhookController: { handleEvent } as never }),
+      paymentsArgs({ stripeWebhookController: { handleEvent } as never }),
     );
 
     // assert

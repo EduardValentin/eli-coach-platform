@@ -4,9 +4,9 @@ import type {
   PaymentEventVerdict,
   PaymentRefund,
   PaymentSubscriptionChange,
-} from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-event-types.server";
-import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-completion-handler-port.server";
-import type { PaymentEventsPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-events-port.server";
+} from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
+import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
+import type { PaymentEventsPort } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-events-port.server";
 import { describe, expect, it, vi } from "vitest";
 
 import { StripeWebhookController } from "./stripe-webhook-controller.server";

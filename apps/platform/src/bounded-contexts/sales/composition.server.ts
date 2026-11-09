@@ -1,5 +1,11 @@
 import type { MiddlewareFunction } from "react-router";
 
+import { paymentsContext } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/context.server";
+import {
+  composePayments,
+  composePaymentsFeature,
+} from "~/bounded-contexts/sales/shared/payments/composition.server";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/shared/payments/config.server";
 import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import {
   composeManagementAuth,
@@ -11,18 +17,19 @@ import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbo
 import { composeWaitlistFeature } from "~/bounded-contexts/sales/waitlist/composition.server";
 import { subscriptionsContext } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/context.server";
 import {
+  composeSubscriptionPayments,
   composeSubscriptionsFeature,
-  composePayments,
+  type SubscriptionPaymentHandles,
   type SubscriptionsFeatureHandles,
-  type PaymentHandles,
 } from "~/bounded-contexts/sales/subscriptions/composition.server";
-import type { PaymentsConfig } from "~/bounded-contexts/sales/subscriptions/config.server";
 
 type SalesHandles = Omit<
   StoreFeatureHandles &
     Parameters<typeof composeWaitlistFeature>[0] &
     SubscriptionsFeatureHandles,
-  "managementAuth" | "pricingEligibilitySourceFacade" | keyof PaymentHandles
+  | "managementAuth"
+  | "pricingEligibilitySourceFacade"
+  | keyof SubscriptionPaymentHandles
 > & {
   managementApiConfig: ManagementApiConfig;
   paymentsConfig: PaymentsConfig;
@@ -33,6 +40,7 @@ export type SalesComposition = {
 };
 
 export function composeSales(handles: SalesHandles): SalesComposition {
+  const payments = composePayments(handles.paymentsConfig);
   const store = composeStoreFeature({
     ...handles,
     managementAuth: composeManagementAuth(handles),
@@ -40,9 +48,26 @@ export function composeSales(handles: SalesHandles): SalesComposition {
   const waitlist = composeWaitlistFeature(handles);
   const subscriptions = composeSubscriptionsFeature({
     ...handles,
-    ...composePayments(handles.paymentsConfig),
+    ...composeSubscriptionPayments({
+      paymentProvider: payments.paymentProvider,
+      paymentsConfig: handles.paymentsConfig,
+    }),
     pricingEligibilitySourceFacade:
       waitlist.handles.pricingEligibilitySourceFacade,
+  });
+  const paymentsFeature = composePaymentsFeature({
+    ...handles,
+    ...payments,
+    paymentCompletionHandlers: [
+      subscriptions.paymentHandlers.paymentCompletionHandlerPort,
+    ],
+    paymentSubscriptionChangeHandlers: [
+      subscriptions.paymentHandlers.paymentSubscriptionChangeHandlerPort,
+    ],
+    paymentRefundHandlerPort:
+      subscriptions.paymentHandlers.paymentRefundHandlerPort,
+    paymentCardHandlerPort:
+      subscriptions.paymentHandlers.paymentCardHandlerPort,
   });
 
   return {
@@ -50,6 +75,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
       context.set(storeContext, store);
       context.set(waitlistContext, waitlist.feature);
       context.set(subscriptionsContext, subscriptions.feature);
+      context.set(paymentsContext, paymentsFeature);
       return next();
     },
   };

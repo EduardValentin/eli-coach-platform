@@ -1,14 +1,10 @@
 import type { SubscriptionsIncidentsPort } from "~/bounded-contexts/sales/subscriptions/domain/payment-link";
 import type { CoachingSubscriptionIncidentsPort } from "~/bounded-contexts/sales/subscriptions/domain/coaching-subscription";
-import type { PaymentWebhookIncidentsPort } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/payments/payment-webhook-incidents-port.server";
 import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import { errorClassOf } from "~/shared/logging/error-fields.server";
 
 export class SubscriptionsIncidentsAdapter
-  implements
-    SubscriptionsIncidentsPort,
-    CoachingSubscriptionIncidentsPort,
-    PaymentWebhookIncidentsPort
+  implements SubscriptionsIncidentsPort, CoachingSubscriptionIncidentsPort
 {
   constructor(private readonly loggerPort: LoggerPort) {}
 
@@ -89,26 +85,6 @@ export class SubscriptionsIncidentsAdapter
     });
   }
 
-  paymentEventHandlingFailed({
-    error,
-    eventId,
-    handler,
-  }: {
-    error: unknown;
-    eventId: string;
-    handler: string;
-  }) {
-    this.loggerPort.error(
-      "Payment event handler failed; Stripe will redeliver.",
-      {
-        errorCategory: "payment_event_handling_failure",
-        errorClass: errorClassOf(error),
-        eventId,
-        handler,
-      },
-    );
-  }
-
   paymentEventRejected({
     eventId,
     reason,
@@ -117,20 +93,6 @@ export class SubscriptionsIncidentsAdapter
       errorCategory: "payment_event_rejected",
       eventId,
       reason,
-    });
-  }
-
-  paymentEventUnrouted({
-    eventId,
-    purpose,
-  }: {
-    eventId: string;
-    purpose: string | null;
-  }) {
-    this.loggerPort.error("Payment event matched no payment handler.", {
-      errorCategory: "payment_event_unrouted",
-      eventId,
-      purpose,
     });
   }
 

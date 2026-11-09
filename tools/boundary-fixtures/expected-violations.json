@@ -28,6 +28,16 @@
   "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/recipes/recipe-builder.tsx": [
     "not-to-unresolvable"
   ],
+  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/memory/stripe-confined.server.ts": [
+    "not-to-unresolvable",
+    "stripe-confined"
+  ],
+  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/reads-component.server.ts": [
+    "bounded-context-shared-imports-no-component"
+  ],
+  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/stripe/stripe-client.server.ts": [
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/facades/names-database.server.ts": [
     "no-database-types-outside-persistence"
   ],
@@ -51,6 +61,7 @@
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-facade.server.ts": [
     "component-roots-read-provider-paths"
   ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/payments/reads-shared-payments.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/payments/stripe/stripe-client.server.ts": [
     "not-to-unresolvable"
   ],
