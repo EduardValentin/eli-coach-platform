@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 
 const CARD_FIELDS = [
   { id: 'card-number', label: 'Card number', placeholder: '4242 4242 4242 4242' },
@@ -71,5 +72,17 @@ export function StandInReading({ term, value }: { term: string; value: string })
       <dt className="text-muted-foreground">{term}</dt>
       <dd className="text-right font-medium text-text-primary">{value}</dd>
     </div>
+  );
+}
+
+export function StandInClosed({ body, linkLabel, linkTo }: { body: string; linkLabel: string; linkTo: string }) {
+  return (
+    <>
+      <h1 className="text-xl font-medium text-text-primary">This checkout session has closed</h1>
+      <p className="mt-3 text-sm text-muted-foreground">{body}</p>
+      <Link className="mt-6 inline-block text-sm text-text-primary underline underline-offset-4" to={linkTo}>
+        {linkLabel}
+      </Link>
+    </>
   );
 }

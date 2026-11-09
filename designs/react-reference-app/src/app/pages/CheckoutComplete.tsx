@@ -1,11 +1,13 @@
 import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
-import { buttonVariants, cn } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ThemeButton';
 import {
-  CONFIRMATION_READINGS_CLASS,
+  ConfirmationActions,
   ConfirmationHeading,
+  ConfirmationLead,
   ConfirmationPage,
   ConfirmationReading,
+  ConfirmationReadings,
 } from '../components/CheckoutConfirmation';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
@@ -43,24 +45,24 @@ export function CheckoutComplete() {
     <ConfirmationPage landmarkLabel="Payment confirmation" parityRoot="CheckoutComplete">
       <ConfirmationHeading outcome="confirmed">{HEADING}</ConfirmationHeading>
 
-      <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
+      <ConfirmationLead>
         Your invitation is on its way to{' '}
         <span className="font-medium text-text-primary">{journey.profile.identity.email}</span>. It works
         for 30 days once it arrives — you'll create your account from it.
-      </p>
+      </ConfirmationLead>
 
-      <dl className={cn('mt-8', CONFIRMATION_READINGS_CLASS)}>
+      <ConfirmationReadings className="mt-8">
         <ConfirmationReading term="Bundle" value={bundle.title} />
         <ConfirmationReading term="Amount" value={`€${bundleTotal(bundle, journey.pricing)}`} />
         <ConfirmationReading term="Renews" value={renewalLabel(bundle.months)} />
         <ConfirmationReading term="Your start" value={startSummary} />
-      </dl>
+      </ConfirmationReadings>
 
-      <div className="mt-8 flex justify-center">
-        <Link className={cn(buttonVariants({ variant: 'outline' }))} to="/">
+      <ConfirmationActions>
+        <Link className={buttonVariants({ variant: 'outline' })} to="/">
           Back to the home page
         </Link>
-      </div>
+      </ConfirmationActions>
     </ConfirmationPage>
   );
 }

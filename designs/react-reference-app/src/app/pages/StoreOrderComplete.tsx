@@ -1,7 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AlertCircle, CheckCircle2, Clock, Loader2, Mail } from 'lucide-react';
-import { ConfirmationHeading, ConfirmationPage } from '../components/CheckoutConfirmation';
+import {
+  ConfirmationActions,
+  ConfirmationHeading,
+  ConfirmationLead,
+  ConfirmationPage,
+} from '../components/CheckoutConfirmation';
 import { StoreOrderSummary } from '../components/StoreOrderSummary';
 import { Button, buttonVariants } from '../components/ThemeButton';
 import { LABEL_CLASS } from '../components/typography';
@@ -63,9 +68,9 @@ export function StoreOrderComplete() {
     return (
       <ConfirmationPage landmarkLabel="Order confirmation" parityRoot="StoreOrderComplete">
         <ConfirmationHeading outcome="not-completed">Payment not completed</ConfirmationHeading>
-        <p className="mt-4 text-center text-base leading-relaxed text-text-secondary" data-parity="order-lead">
+        <ConfirmationLead data-parity="order-lead">
           We couldn&apos;t confirm a payment for this checkout. Head back to the store to try again.
-        </p>
+        </ConfirmationLead>
         <BackToStore />
       </ConfirmationPage>
     );
@@ -87,13 +92,13 @@ function ConfirmedOrderView({ order, sessionId }: { order: ConfirmedOrder; sessi
     <ConfirmationPage landmarkLabel="Order confirmation" parityRoot="StoreOrderComplete">
       <ConfirmationHeading outcome="confirmed">Order confirmed</ConfirmationHeading>
 
-      <p className="mt-4 text-center text-base leading-relaxed text-text-secondary" data-parity="order-lead">
+      <ConfirmationLead data-parity="order-lead">
         Your order email is on its way to{' '}
         <span className="font-medium text-text-primary" data-parity="order-email">
           {order.email}
         </span>
         . Your download link is in that email and works for seven days.
-      </p>
+      </ConfirmationLead>
 
       <h2 className={`mt-8 ${LABEL_CLASS}`}>Your order</h2>
       <StoreOrderSummary className="mt-2" currency={order.currency} lines={order.lines} />
@@ -171,10 +176,10 @@ function FeedbackLine({ icon, children }: { icon: ReactNode; children: ReactNode
 
 function BackToStore() {
   return (
-    <div className="mt-8 flex justify-center">
+    <ConfirmationActions>
       <Link className={buttonVariants({ variant: 'outline' })} to="/store">
         Back to the store
       </Link>
-    </div>
+    </ConfirmationActions>
   );
 }

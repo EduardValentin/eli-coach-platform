@@ -1,10 +1,9 @@
 import { formatStorePrice, type Currency } from '../context/StoreContext';
 import { storeOrderTotal, type StoreOrderLine } from '../domain/storeOrder';
-import { CONFIRMATION_READINGS_CLASS } from './CheckoutConfirmation';
+import { ConfirmationReadings } from './CheckoutConfirmation';
 import { FreeTag } from './FreeTag';
 import { Price } from './Price';
 import { LABEL_CLASS } from './typography';
-import { cn } from './ui/utils';
 
 type StoreOrderSummaryProps = {
   lines: readonly StoreOrderLine[];
@@ -14,7 +13,7 @@ type StoreOrderSummaryProps = {
 
 export function StoreOrderSummary({ lines, currency, className }: StoreOrderSummaryProps) {
   return (
-    <dl className={cn(CONFIRMATION_READINGS_CLASS, className)} data-parity="order-summary">
+    <ConfirmationReadings className={className} data-parity="order-summary">
       {lines.map((line) => (
         <div className="flex items-baseline justify-between gap-4" data-parity="order-line" key={line.productId}>
           <dt className="min-w-0 text-text-primary" data-parity="order-line-title">
@@ -36,10 +35,12 @@ export function StoreOrderSummary({ lines, currency, className }: StoreOrderSumm
         data-parity="order-total-row"
       >
         <dt className={LABEL_CLASS}>Total</dt>
-        <dd className="text-lg font-semibold text-text-primary" data-parity="order-total">
-          {formatStorePrice(storeOrderTotal(lines), currency)}
+        <dd>
+          <Price data-parity="order-total" size="md">
+            {formatStorePrice(storeOrderTotal(lines), currency)}
+          </Price>
         </dd>
       </div>
-    </dl>
+    </ConfirmationReadings>
   );
 }

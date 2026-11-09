@@ -5,6 +5,7 @@ type StyleProps = { style?: CSSProperties };
 export const EMAIL_BRAND = {
   pink: '#C81D6B',
   pinkOnDark: '#E03A7E',
+  mutedOnDark: '#D9D9D9',
   pinkSoft: '#FFF5F8',
   pinkBorder: '#F4D8E4',
   teal: '#00796B',

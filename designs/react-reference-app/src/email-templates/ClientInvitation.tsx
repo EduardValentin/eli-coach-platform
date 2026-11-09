@@ -258,7 +258,7 @@ const heroSubheadStyle: React.CSSProperties = {
   fontFamily: FONT_SANS,
   fontSize: '15px',
   lineHeight: 1.55,
-  color: '#D9D9D9',
+  color: BRAND.mutedOnDark,
   fontWeight: 400,
   maxWidth: '420px',
   marginLeft: 'auto',

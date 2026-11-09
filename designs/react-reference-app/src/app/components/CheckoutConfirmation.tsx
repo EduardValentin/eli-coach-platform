@@ -1,10 +1,7 @@
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { Check, ShoppingBag } from 'lucide-react';
 import { cardVariants } from './ui/card';
 import { cn } from './ui/utils';
-
-export const CONFIRMATION_READINGS_CLASS =
-  'grid gap-3 rounded-card border border-border-subtle bg-surface-quiet px-5 py-4 text-sm';
 
 type ConfirmationOutcome = 'confirmed' | 'not-completed';
 
@@ -45,6 +42,26 @@ export function ConfirmationHeading(props: { outcome: ConfirmationOutcome; child
       <h1 className="mt-6 text-center font-serif text-display-sm text-text-primary">{props.children}</h1>
     </>
   );
+}
+
+export function ConfirmationLead({ className, ...props }: ComponentProps<'p'>) {
+  return <p className={cn('mt-4 text-center text-base leading-relaxed text-text-secondary', className)} {...props} />;
+}
+
+export function ConfirmationReadings({ className, ...props }: ComponentProps<'dl'>) {
+  return (
+    <dl
+      className={cn(
+        'grid gap-3 rounded-card border border-border-subtle bg-surface-quiet px-5 py-4 text-sm',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ConfirmationActions({ className, ...props }: ComponentProps<'div'>) {
+  return <div className={cn('mt-8 flex justify-center', className)} {...props} />;
 }
 
 function readingParityHook(term: string): string {

@@ -6,6 +6,7 @@ import {
   STAND_IN_FIELD_CLASS,
   STAND_IN_READINGS_CLASS,
   StandInCardFields,
+  StandInClosed,
   StandInReading,
 } from '../components/ProviderStandIn';
 import { Button } from '../components/ThemeButton';
@@ -34,11 +35,7 @@ export function StoreCheckoutStandIn() {
   if (!session) {
     return (
       <StandInShell>
-        <h1 className="text-xl font-medium text-text-primary">This checkout session has closed</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Go back to the store to check out again.</p>
-        <Link className="mt-6 inline-block text-sm text-text-primary underline underline-offset-4" to="/store">
-          Back to the store
-        </Link>
+        <StandInClosed body="Go back to the store to check out again." linkLabel="Back to the store" linkTo="/store" />
       </StandInShell>
     );
   }
