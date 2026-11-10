@@ -13,6 +13,7 @@ import { OrderCheckout } from "./order-checkout";
 import type { OrderDeliveryPort } from "./order-delivery-port";
 import type { OrderEmailDelivery } from "./order-email-delivery";
 import { OrderPayment } from "./order-payment";
+import { OrderRefund } from "./order-refund";
 import { OrderRequest } from "./order-request";
 import { PlaceOrderUseCase } from "./place-order-use-case";
 import { PrepareOrderEmailResendUseCase } from "./prepare-order-email-resend-use-case";
@@ -142,6 +143,21 @@ function paidOrder(): Order {
 
   if (outcome.status !== "paid") {
     throw new Error("Expected the order to be paid.");
+  }
+
+  return outcome.order;
+}
+
+function refundedOrder(): Order {
+  const outcome = paidOrder().refundWith(
+    OrderRefund.received({
+      refundedMinorUnits: 3900,
+      refundedAt: new Date("2026-11-10T09:00:00.000Z"),
+    }),
+  );
+
+  if (outcome.status !== "refunded") {
+    throw new Error("Expected the order to be refunded.");
   }
 
   return outcome.order;
@@ -1037,6 +1053,21 @@ describe("PrepareOrderEmailResendUseCase", () => {
     expect(storeOrdersPort.prepareResend).not.toHaveBeenCalled();
   });
 
+  it("answers not found for a refunded order without preparing an email", async () => {
+    // arrange
+    const storeOrdersPort = createStoreOrders({
+      findByCheckoutSession: vi.fn().mockResolvedValue(refundedOrder()),
+    });
+    const useCase = createResendUseCase(storeOrdersPort);
+
+    // act
+    const result = await useCase.execute("cs_test_order");
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(storeOrdersPort.prepareResend).not.toHaveBeenCalled();
+  });
+
   it("answers rate limited inside the order's cooldown or daily cap", async () => {
     // arrange
     const storeOrdersPort = createStoreOrders({
@@ -1144,6 +1175,26 @@ describe("ReadOrderConfirmationUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not_completed" });
+  });
+
+  it("answers not completed for a refunded order, without asking the provider", async () => {
+    // arrange
+    const storeCheckoutPort = createCheckout({
+      isPaid: vi.fn().mockResolvedValue(true),
+    });
+    const useCase = createReadUseCase(
+      createStoreOrders({
+        findByCheckoutSession: vi.fn().mockResolvedValue(refundedOrder()),
+      }),
+      storeCheckoutPort,
+    );
+
+    // act
+    const result = await useCase.execute("cs_test_order");
+
+    // assert
+    expect(result).toEqual({ status: "not_completed" });
+    expect(storeCheckoutPort.isPaid).not.toHaveBeenCalled();
   });
 
   it("answers not completed for a session no order holds, without asking the provider", async () => {

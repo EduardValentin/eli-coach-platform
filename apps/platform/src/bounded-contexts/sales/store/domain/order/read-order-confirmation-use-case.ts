@@ -18,12 +18,12 @@ export class ReadOrderConfirmationUseCase {
     const order =
       await this.options.storeOrdersPort.findByCheckoutSession(sessionId);
 
-    if (!order) {
+    if (!order || order.status === "refunded") {
       return { status: "not_completed" };
     }
 
     if (
-      order.status === "paid" ||
+      order.isConfirmable() ||
       (await this.options.storeCheckoutPort.isPaid(sessionId))
     ) {
       return { status: "confirmed", confirmation: order.confirmation() };
