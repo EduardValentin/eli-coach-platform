@@ -4,8 +4,6 @@ type PaidDigitalDeliveryConsent = Readonly<{
   statement: string;
   confirmationNotice: string;
   termsVersion: string;
-  termsHref: string;
-  termsLinkLabel: string;
   withdrawalTermsHref: string;
   withdrawalTermsLinkLabel: string;
 }>;
@@ -761,10 +759,8 @@ export const PAID_DIGITAL_DELIVERY_CONSENT = {
   statement:
     "Start my download now. I understand I lose my 14-day right to withdraw once delivery starts.",
   confirmationNotice:
-    "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
+    "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw.",
   termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-  termsHref: "/terms",
-  termsLinkLabel: `Terms & Conditions version ${WEBSITE_AND_STORE_TERMS_DOCUMENT.version}`,
   withdrawalTermsHref: "/terms#immediate-digital-delivery-and-withdrawal",
   withdrawalTermsLinkLabel: "How withdrawal works",
 } as const satisfies PaidDigitalDeliveryConsent;

@@ -30,9 +30,6 @@ describe("LegalOrderTermsAdapter", () => {
     expect(terms).toEqual({
       version: "1.0",
       document,
-      linkLabel: PAID_DIGITAL_DELIVERY_CONSENT.termsLinkLabel,
-      path: PAID_DIGITAL_DELIVERY_CONSENT.termsHref,
-      deliveryConsentStatement: PAID_DIGITAL_DELIVERY_CONSENT.statement,
       deliveryConfirmationNotice:
         PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice,
     });

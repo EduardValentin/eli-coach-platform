@@ -7,9 +7,6 @@ type TermsDocument = {
 export type OrderTerms = {
   version: string;
   document: TermsDocument;
-  linkLabel: string;
-  path: string;
-  deliveryConsentStatement: string;
   deliveryConfirmationNotice: string;
 };
 

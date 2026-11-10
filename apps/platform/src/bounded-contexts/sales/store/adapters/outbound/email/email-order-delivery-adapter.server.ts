@@ -69,8 +69,7 @@ export class EmailOrderDeliveryAdapter implements OrderDeliveryPort {
       contactEmail: this.options.contactEmail,
       currentYear: orderEmail.sentAt.getUTCFullYear(),
       currency: orderEmail.currency,
-      deliveryConfirmationNotice: orderEmail.terms.deliveryConfirmationNotice,
-      deliveryConsentStatement: orderEmail.terms.deliveryConsentStatement,
+      deliveryConfirmation: `${orderEmail.terms.deliveryConfirmationNotice} ${STORE_ORDER_EMAIL_COPY.termsAttachedNote(orderEmail.terms.version)}`,
       downloadUrl: downloadUrl.toString(),
       lines: orderEmail.lines.map((line) => ({
         title: line.title,
@@ -79,8 +78,6 @@ export class EmailOrderDeliveryAdapter implements OrderDeliveryPort {
             ? null
             : formatStoreAmount(line.amountMinorUnits, orderEmail.currency),
       })),
-      termsLinkLabel: orderEmail.terms.linkLabel,
-      termsUrl: this.publicUrl(orderEmail.terms.path),
       total: formatStoreAmount(orderEmail.totalMinorUnits, orderEmail.currency),
     };
   }
@@ -102,12 +99,8 @@ export class EmailOrderDeliveryAdapter implements OrderDeliveryPort {
       ),
       `TOTAL (${viewModel.currency}): ${viewModel.total}`,
       "",
-      `${copy.consentEyebrow}:`,
-      `“${viewModel.deliveryConsentStatement}”`,
-      viewModel.deliveryConfirmationNotice,
-      `Your order is governed by ${viewModel.termsLinkLabel} (${viewModel.termsUrl}), which you accepted when you ordered.`,
-      "",
       copy.receiptNote,
+      viewModel.deliveryConfirmation,
       `Questions? Reply to this email or write to ${viewModel.contactEmail}.`,
       "",
       copy.footer,

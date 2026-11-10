@@ -1,15 +1,13 @@
 import { render as renderEmail } from '@react-email/render';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
 import { StoreOrder, type StoreOrderProps } from './StoreOrder';
 
 const DOWNLOAD_URL = 'https://evoa.fit/downloads#grant-1';
-const TERMS_URL = 'https://evoa.fit/terms';
 const CONTACT_HREF = 'mailto:contact@evoa.fit';
 
 async function mountStoreOrder(props: StoreOrderProps) {
-  const html = await renderEmail(<StoreOrder downloadUrl={DOWNLOAD_URL} termsUrl={TERMS_URL} {...props} />);
+  const html = await renderEmail(<StoreOrder downloadUrl={DOWNLOAD_URL} {...props} />);
   const parsed = new DOMParser().parseFromString(html, 'text/html');
 
   render(<div dangerouslySetInnerHTML={{ __html: parsed.body.innerHTML }} />);
@@ -47,7 +45,7 @@ describe('StoreOrder', () => {
     expect(rows.some((row) => row?.includes('€'))).toBe(false);
   });
 
-  it('carries one download action, the delivery consent and the Terms version she accepted', async () => {
+  it('carries one download action and confirms her immediate-delivery request with the Terms version she accepted', async () => {
     // arrange
     const props: StoreOrderProps = {};
 
@@ -56,9 +54,12 @@ describe('StoreOrder', () => {
 
     // assert
     expect(screen.getByRole('link', { name: 'Download your order' })).toHaveAttribute('href', DOWNLOAD_URL);
-    expect(screen.getByText(`“${PAID_DIGITAL_DELIVERY_CONSENT.statement}”`)).toBeInTheDocument();
-    expect(screen.getByText(PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Terms & Conditions version 1.0' })).toHaveAttribute('href', TERMS_URL);
+    expect(
+      screen.getByText(
+        'You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw. Your Terms & Conditions (version 1.0) are attached.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Terms & Conditions/ })).not.toBeInTheDocument();
     expect(screen.getByText('The link works for the next seven days.')).toBeInTheDocument();
     expect(
       screen

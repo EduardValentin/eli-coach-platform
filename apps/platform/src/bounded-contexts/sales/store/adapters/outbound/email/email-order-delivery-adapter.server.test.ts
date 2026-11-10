@@ -12,12 +12,8 @@ const terms = {
     contentType: "application/pdf",
     content: new Uint8Array([37, 80, 68, 70]),
   },
-  linkLabel: "Terms & Conditions version 1.0",
-  path: "/terms",
-  deliveryConsentStatement:
-    "I expressly request that Evoa Fitness begin supplying the digital content before the 14-day withdrawal period ends.",
   deliveryConfirmationNotice:
-    "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
+    "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw.",
 };
 
 const orderEmail: OrderEmail = {
@@ -93,10 +89,9 @@ describe("EmailOrderDeliveryAdapter", () => {
     expect(sent.html).toContain("TOTAL (EUR)");
     expect(sent.html).toContain("€68.00");
     expect(sent.html).toContain(
-      terms.deliveryConfirmationNotice.replace("&", "&amp;"),
+      "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw. Your Terms &amp; Conditions (version 1.0) are attached.",
     );
-    expect(sent.html).toContain('href="https://eli.example/eli/terms"');
-    expect(sent.html).toContain("Terms &amp; Conditions version 1.0");
+    expect(sent.html).not.toContain('href="https://eli.example/eli/terms"');
     expect(sent.html).toContain(
       "Stripe sends your payment receipt in a separate email.",
     );
@@ -105,6 +100,9 @@ describe("EmailOrderDeliveryAdapter", () => {
     );
     expect(sent.text).toContain("- Hormone Harmony E-Book — FREE");
     expect(sent.text).toContain("TOTAL (EUR): €68.00");
+    expect(sent.text).toContain(
+      "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw. Your Terms & Conditions (version 1.0) are attached.",
+    );
   });
 
   it("names the provider's key after the order attempt", () => {

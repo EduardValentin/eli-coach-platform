@@ -245,10 +245,8 @@ const orderTerms = {
     contentType: "application/pdf",
     content: new Uint8Array([37, 80, 68, 70]),
   },
-  linkLabel: "Terms & Conditions version 1.0",
-  path: "/terms",
-  deliveryConsentStatement: "I expressly request immediate supply.",
-  deliveryConfirmationNotice: "Evoa Fitness confirms this request.",
+  deliveryConfirmationNotice:
+    "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw.",
 };
 
 function createPlaceOrderUseCase(options: {

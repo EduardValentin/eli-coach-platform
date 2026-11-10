@@ -361,7 +361,6 @@ export function EmailPreview() {
         <StoreOrder
           variant={variant as StoreOrderVariant}
           downloadUrl={`${window.location.origin}/downloads`}
-          termsUrl={`${window.location.origin}/terms`}
         />
       );
     }

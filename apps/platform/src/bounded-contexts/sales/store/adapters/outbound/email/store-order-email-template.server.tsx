@@ -29,8 +29,9 @@ export const STORE_ORDER_EMAIL_COPY = {
   ],
   orderEyebrow: "YOUR ORDER",
   freeLabel: "FREE",
-  consentEyebrow: "YOUR REQUEST FOR IMMEDIATE DELIVERY",
   receiptNote: "Stripe sends your payment receipt in a separate email.",
+  termsAttachedNote: (termsVersion: string) =>
+    `Your Terms & Conditions (version ${termsVersion}) are attached.`,
   footer:
     "You received this email because you placed an order in the Evoa Fitness store.",
 } as const;
@@ -44,12 +45,9 @@ export type StoreOrderEmailViewModel = {
   contactEmail: string;
   currentYear: number;
   currency: string;
-  deliveryConfirmationNotice: string;
-  deliveryConsentStatement: string;
+  deliveryConfirmation: string;
   downloadUrl: string;
   lines: readonly StoreOrderEmailLine[];
-  termsLinkLabel: string;
-  termsUrl: string;
   total: string;
 };
 
@@ -135,28 +133,13 @@ export function StoreOrderEmailTemplate(options: StoreOrderEmailViewModel) {
                 </table>
               </div>
             </EmailSection>
-            <EmailSection style={consentSectionStyle}>
-              <EmailText style={consentEyebrowStyle}>
-                {COPY.consentEyebrow}
-              </EmailText>
-              <EmailText style={consentStatementStyle}>
-                {`“${options.deliveryConsentStatement}”`}
-              </EmailText>
-              <EmailText style={consentNoteStyle}>
-                {options.deliveryConfirmationNotice}
-              </EmailText>
-              <EmailText style={consentNoteStyle}>
-                Your order is governed by{" "}
-                <EmailLink href={options.termsUrl} style={inlineLinkStyle}>
-                  {options.termsLinkLabel}
-                </EmailLink>
-                , which you accepted when you ordered.
-              </EmailText>
-            </EmailSection>
             <EmailDivider style={dividerStyle} />
             <EmailSection style={reassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
                 {COPY.receiptNote}
+              </EmailText>
+              <EmailText style={reassuranceTextStyle}>
+                {options.deliveryConfirmation}
               </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{" "}
@@ -314,7 +297,7 @@ const downloadButtonStyle: CSSProperties = {
   textDecoration: "none",
 };
 const orderOuterStyle: CSSProperties = {
-  padding: "24px 24px 8px",
+  padding: "24px 24px 28px",
 };
 const orderCardStyle: CSSProperties = {
   padding: "24px 24px 20px",
@@ -380,36 +363,6 @@ const totalAmountCellStyle: CSSProperties = {
   color: EMAIL_COLORS.ink,
   fontWeight: 600,
   lineHeight: 1.3,
-};
-const consentSectionStyle: CSSProperties = {
-  padding: "24px 36px 28px",
-};
-const consentEyebrowStyle: CSSProperties = {
-  margin: "0 0 10px",
-  fontFamily: EMAIL_FONTS.sans,
-  fontSize: "11px",
-  letterSpacing: "0.18em",
-  color: EMAIL_COLORS.teal,
-  fontWeight: 600,
-  lineHeight: 1.4,
-};
-const consentStatementStyle: CSSProperties = {
-  margin: "0 0 12px",
-  padding: "0 0 0 14px",
-  borderLeft: `2px solid ${EMAIL_COLORS.cardBorder}`,
-  fontFamily: EMAIL_FONTS.sans,
-  fontSize: "13px",
-  lineHeight: 1.6,
-  color: EMAIL_COLORS.body,
-  fontWeight: 400,
-};
-const consentNoteStyle: CSSProperties = {
-  margin: "0 0 10px",
-  fontFamily: EMAIL_FONTS.sans,
-  fontSize: "13px",
-  lineHeight: 1.6,
-  color: EMAIL_COLORS.muted,
-  fontWeight: 400,
 };
 const inlineLinkStyle: CSSProperties = {
   color: EMAIL_COLORS.pink,

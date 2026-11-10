@@ -23,7 +23,6 @@ export type StoreOrderProps = {
   variant?: StoreOrderVariant;
   contactEmail?: string;
   downloadUrl?: string;
-  termsUrl?: string;
 };
 
 const BRAND = EMAIL_BRAND;
@@ -37,6 +36,8 @@ const EYEBROW = 'Store — your order';
 const HEADING = 'Thank you for your order.';
 const SUBHEAD = 'Everything you ordered, in one download.';
 const BUTTON_LABEL = 'Download your order';
+
+const DELIVERY_CONFIRMATION = `${PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice} Your Terms & Conditions (version ${PAID_DIGITAL_DELIVERY_CONSENT.termsVersion}) are attached.`;
 
 const BODY_PARAGRAPHS = [
   'Hi there,',
@@ -64,7 +65,6 @@ export function StoreOrder({
   variant = 'paid-and-free',
   contactEmail = DEFAULT_CONTACT_EMAIL,
   downloadUrl = '/downloads',
-  termsUrl = PAID_DIGITAL_DELIVERY_CONSENT.termsHref,
 }: StoreOrderProps) {
   const order = SAMPLE_ORDERS[variant];
 
@@ -135,25 +135,13 @@ export function StoreOrder({
               </div>
             </EmailSection>
 
-            <EmailSection style={consentSectionStyle}>
-              <EmailText style={consentEyebrowStyle}>YOUR REQUEST FOR IMMEDIATE DELIVERY</EmailText>
-              <EmailText style={consentStatementStyle}>{`“${PAID_DIGITAL_DELIVERY_CONSENT.statement}”`}</EmailText>
-              <EmailText style={consentNoteStyle}>{PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice}</EmailText>
-              <EmailText style={consentNoteStyle}>
-                Your order is governed by{' '}
-                <EmailLink href={termsUrl} style={inlineLinkStyle}>
-                  {PAID_DIGITAL_DELIVERY_CONSENT.termsLinkLabel}
-                </EmailLink>
-                , which you accepted when you ordered.
-              </EmailText>
-            </EmailSection>
-
             <EmailDivider style={dividerStyle} />
 
             <EmailSection style={reassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
                 Stripe sends your payment receipt in a separate email.
               </EmailText>
+              <EmailText style={reassuranceTextStyle}>{DELIVERY_CONFIRMATION}</EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
                 <EmailLink href={`mailto:${contactEmail}`} style={inlineLinkStyle}>
@@ -327,7 +315,7 @@ const downloadButtonStyle: React.CSSProperties = {
 };
 
 const orderOuterStyle: React.CSSProperties = {
-  padding: '24px 24px 8px',
+  padding: '24px 24px 28px',
 };
 
 const orderCardStyle: React.CSSProperties = {
@@ -402,40 +390,6 @@ const totalAmountCellStyle: React.CSSProperties = {
   color: BRAND.ink,
   fontWeight: 600,
   lineHeight: 1.3,
-};
-
-const consentSectionStyle: React.CSSProperties = {
-  padding: '24px 36px 28px',
-};
-
-const consentEyebrowStyle: React.CSSProperties = {
-  margin: '0 0 10px',
-  fontFamily: FONT_SANS,
-  fontSize: '11px',
-  letterSpacing: '0.18em',
-  color: BRAND.teal,
-  fontWeight: 600,
-  lineHeight: 1.4,
-};
-
-const consentStatementStyle: React.CSSProperties = {
-  margin: '0 0 12px',
-  padding: '0 0 0 14px',
-  borderLeft: `2px solid ${BRAND.cardBorder}`,
-  fontFamily: FONT_SANS,
-  fontSize: '13px',
-  lineHeight: 1.6,
-  color: BRAND.body,
-  fontWeight: 400,
-};
-
-const consentNoteStyle: React.CSSProperties = {
-  margin: '0 0 10px',
-  fontFamily: FONT_SANS,
-  fontSize: '13px',
-  lineHeight: 1.6,
-  color: BRAND.muted,
-  fontWeight: 400,
 };
 
 const inlineLinkStyle: React.CSSProperties = {

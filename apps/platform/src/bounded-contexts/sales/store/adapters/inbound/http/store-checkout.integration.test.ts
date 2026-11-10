@@ -207,6 +207,9 @@ describe("Store checkout integration", () => {
     );
     expect(emails[0]!.text).toContain("TOTAL (USD): $78.00");
     expect(emails[0]!.text).toContain(`- ${HORMONE_HARMONY.title} — FREE`);
+    expect(emails[0]!.text).toContain(
+      `${PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice} Your Terms & Conditions (version ${WEBSITE_AND_STORE_TERMS_DOCUMENT.version}) are attached.`,
+    );
     expect(await readAttemptStatuses()).toEqual(["accepted"]);
   });
 
