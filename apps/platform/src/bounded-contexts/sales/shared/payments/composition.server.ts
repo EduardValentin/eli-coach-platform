@@ -22,7 +22,7 @@ type PaymentsHandles = {
 type PaymentHandlers = {
   paymentCompletionHandlers: readonly PaymentCompletionHandlerPort[];
   paymentSubscriptionChangeHandlers: readonly PaymentSubscriptionChangeHandlerPort[];
-  paymentRefundHandlerPort: PaymentRefundHandlerPort;
+  paymentRefundHandlers: readonly PaymentRefundHandlerPort[];
   paymentCardHandlerPort: PaymentCardHandlerPort;
 };
 
@@ -53,7 +53,7 @@ export function composePaymentsFeature(
         handles.loggerPort,
       ),
       paymentEventsPort: handles.paymentEventsPort,
-      paymentRefundHandlerPort: handles.paymentRefundHandlerPort,
+      paymentRefundHandlers: handles.paymentRefundHandlers,
       signingSecret: handles.webhookSigningSecret,
       subscriptionChangeHandlersByPurpose: byPurpose(
         handles.paymentSubscriptionChangeHandlers,
