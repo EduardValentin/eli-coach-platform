@@ -1,5 +1,7 @@
 import type { MiddlewareFunction } from "react-router";
 
+import type { ApiKeyAccountsFacade } from "~/bounded-contexts/access/public/api-key-accounts-facade";
+
 import { paymentsContext } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/context.server";
 import {
   composePayments,
@@ -12,7 +14,6 @@ import {
   composeStoreFeature,
   type StoreFeatureHandles,
 } from "~/bounded-contexts/sales/store/composition.server";
-import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import { composeWaitlistFeature } from "~/bounded-contexts/sales/waitlist/composition.server";
 import { subscriptionsContext } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/context.server";
@@ -32,7 +33,7 @@ type SalesHandles = Omit<
   | "pricingEligibilitySourceFacade"
   | keyof SubscriptionPaymentHandles
 > & {
-  managementApiConfig: ManagementApiConfig;
+  apiKeyAccountsFacade: ApiKeyAccountsFacade;
   paymentsConfig: PaymentsConfig;
 };
 

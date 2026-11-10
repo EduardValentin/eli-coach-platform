@@ -21,8 +21,6 @@ import {
   refinePayments,
 } from "~/bounded-contexts/sales/shared/payments/config.server";
 import {
-  managementApiShape,
-  refineManagementApi,
   refineStoreAssets,
   storeAssetsShape,
 } from "~/bounded-contexts/sales/store/config.server";
@@ -69,14 +67,12 @@ const runtimeEnvironmentSchema = z
     ...clientFilesShape,
     ...exerciseVideosShape,
     ...recipePhotosShape,
-    ...managementApiShape,
     ...assessmentCallsShape,
     ...featureFlagsShape,
   })
   .superRefine(refineBotDetection)
   .superRefine(refineFeatureFlagOverrides)
   .superRefine(refineClerk)
-  .superRefine(refineManagementApi)
   .superRefine(refineProductEmail)
   .superRefine(refinePayments)
   .superRefine(refineStoreAssets)

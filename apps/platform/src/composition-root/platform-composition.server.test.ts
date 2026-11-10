@@ -17,7 +17,6 @@ function createRuntimeEnvironment() {
     APP_NAME: "eli-coach-platform",
     ...CLERK_TEST_ENVIRONMENT,
     ENVIRONMENT: "local",
-    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,

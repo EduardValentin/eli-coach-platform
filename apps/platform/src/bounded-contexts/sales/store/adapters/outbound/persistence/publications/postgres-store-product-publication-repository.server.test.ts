@@ -460,7 +460,7 @@ function persistCommand(): PersistPublicationCommand {
     pricing: { kind: "free" },
     productId: null,
     productSlug: "glute-growth-guide",
-    publishedBy: { kind: "machine", id: "management-api-agent" },
+    publishedBy: { kind: "user", id: "account-coach" },
     typeSlugs: ["e-books"],
     versionSequence: 1,
   };
@@ -473,6 +473,6 @@ function priceChangeCommand(): PersistPriceChangeCommand {
     pricing: { kind: "paid", eurCents: 3900, usdCents: 4500 },
     productId: 7,
     productSlug: "glute-growth-guide",
-    publishedBy: { kind: "machine", id: "management-api-agent" },
+    publishedBy: { kind: "user", id: "account-coach" },
   };
 }

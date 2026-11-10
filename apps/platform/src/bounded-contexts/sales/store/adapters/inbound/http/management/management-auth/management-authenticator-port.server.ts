@@ -22,7 +22,5 @@ export interface ManagementAuthenticatorPort {
 }
 
 export type ManagementAuthConfig = {
-  principalId: string;
-  secret: string;
   transportPolicy: ManagementTransportPolicy;
 };

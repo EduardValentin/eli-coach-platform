@@ -34,11 +34,7 @@ function createManagementAuth(): {
     managementAuthenticatorPort: {
       authenticate: async () => ({ status: "unauthenticated" }),
     },
-    config: {
-      principalId: "management",
-      secret: "unit-test-secret",
-      transportPolicy: "any",
-    },
+    config: { transportPolicy: "any" },
   };
 }
 
