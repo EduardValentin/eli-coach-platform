@@ -11,6 +11,7 @@ import {
   ProvisionAccountUseCase,
   ReadInvitationStandingUseCase,
   ResendInvitationUseCase,
+  ResolveApiKeyAccountUseCase,
   ResolveInvitationUseCase,
   type IdentityInvitationsPort,
   type InvitationTokenGeneratorPort,
@@ -18,6 +19,7 @@ import {
 } from "~/bounded-contexts/access/accounts/domain/account";
 import type { ClockPort } from "~/bounded-contexts/access/accounts/domain/clock-port";
 import type { AccountInvitationsFacade } from "~/bounded-contexts/access/public/account-invitations-facade";
+import type { ApiKeyAccountsFacade } from "~/bounded-contexts/access/public/api-key-accounts-facade";
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/public/paths";
 import type { IdentityConfig } from "~/bounded-contexts/access/accounts/config.server";
 
@@ -25,7 +27,9 @@ import { AccountController } from "~/bounded-contexts/access/accounts/adapters/i
 import { InvitationsController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/public-site/invitations-controller.server";
 import { AccountWebhookController } from "~/bounded-contexts/access/accounts/adapters/inbound/http/account-webhook-controller.server";
 import { AccountInvitationsFacadeAdapter } from "~/bounded-contexts/access/accounts/adapters/inbound/facades/account-invitations-facade-adapter.server";
+import { ApiKeyAccountsFacadeAdapter } from "~/bounded-contexts/access/accounts/adapters/inbound/facades/api-key-accounts-facade-adapter.server";
 import { EmailAccountInvitationNotificationsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/email/email-account-invitation-notifications-adapter.server";
+import { createApiKeyVerifierAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-api-key-verifier-adapter.server";
 import { createIdentityInvitationsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-identity-invitations-adapter.server";
 import { createInvitationReferencesAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/identity/create-invitation-references-adapter.server";
 import { AccountsIncidentsAdapter } from "~/bounded-contexts/access/accounts/adapters/outbound/logging/accounts-incidents-adapter.server";
@@ -52,7 +56,10 @@ export type AccountsFeatureHandles = {
 };
 
 type AccountsComposition = {
-  facades: { accountInvitationsFacade: AccountInvitationsFacade };
+  facades: {
+    accountInvitationsFacade: AccountInvitationsFacade;
+    apiKeyAccountsFacade: ApiKeyAccountsFacade;
+  };
   feature: AccountsFeature;
 };
 
@@ -101,6 +108,14 @@ export function composeAccountsFeature(
         }),
         resendInvitationUseCase: new ResendInvitationUseCase(deliveryPorts),
       }),
+      apiKeyAccountsFacade: new ApiKeyAccountsFacadeAdapter(
+        new ResolveApiKeyAccountUseCase({
+          accountsPort: postgresAccountRepository,
+          apiKeyVerifierPort: createApiKeyVerifierAdapter(
+            handles.identityConfig,
+          ),
+        }),
+      ),
     },
     feature: {
       accountController: new AccountController(),

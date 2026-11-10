@@ -28,4 +28,9 @@ export {
 export { ReadInvitationStandingUseCase } from "./read-invitation-standing-use-case";
 export { ResendInvitationUseCase } from "./resend-invitation-use-case";
 export { ResolveInvitationUseCase } from "./resolve-invitation-use-case";
+export { ResolveApiKeyAccountUseCase } from "./resolve-api-key-account-use-case";
+export {
+  type ApiKeyHolder,
+  type ApiKeyVerifierPort,
+} from "./api-key-verifier-port";
 export { DeleteAccountUseCase } from "./delete-account-use-case";
