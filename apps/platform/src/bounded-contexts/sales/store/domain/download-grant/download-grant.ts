@@ -3,6 +3,7 @@ import type { ProductAsset } from "../product";
 export type DownloadGrantItem = {
   productSlug: string;
   productTitle: string;
+  productTypeLabels: readonly string[];
   productVersionId: number;
   assets: readonly ProductAsset[];
 };

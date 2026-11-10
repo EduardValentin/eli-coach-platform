@@ -5,8 +5,10 @@ import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";
 import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
+  storeDownloadContentsResponseSchema,
   type StoreAcquisitionResponse,
   type StoreCatalogResponse,
+  type StoreDownloadResource,
 } from "~/bounded-contexts/sales/store/public/store";
 import {
   storeCheckoutResponseSchema,
@@ -17,6 +19,12 @@ import {
 
 export type StoreOrderEmailOutcome =
   StoreOrderEmailResendOutcome | "unavailable";
+
+export type StoreDownloadContents =
+  | { status: "loading" }
+  | { status: "available"; resources: readonly StoreDownloadResource[] }
+  | { status: "unavailable" }
+  | { status: "unconfirmed" };
 
 const STORE_CATALOG_ROUTE_PATH = STORE_API_PATHS.catalog;
 export const STORE_CATALOG_API_URL = joinBasePath(
@@ -110,6 +118,34 @@ export function useStoreOrderEmailFetcher() {
   };
 }
 
+export function useStoreDownloadContentsFetcher(
+  token: string | null,
+): StoreDownloadContents {
+  const fetcher = useFetcher<unknown>();
+  const { data, state, submit } = fetcher;
+  const requestedToken = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!token || requestedToken.current === token) {
+      return;
+    }
+
+    requestedToken.current = token;
+    const formData = new FormData();
+    formData.set("token", token);
+    void submit(formData, {
+      action: STORE_API_PATHS.downloadContents,
+      method: "post",
+    });
+  }, [submit, token]);
+
+  if (state !== "idle" || data === undefined) {
+    return { status: "loading" };
+  }
+
+  return parseStoreDownloadContents(data);
+}
+
 // The fetcher is re-keyed to forget a response the drawer has dealt with; a
 // keyed fetcher is torn down when its key goes out of use, so the discarded
 // response can never re-run the effect that reads it.
@@ -176,6 +212,24 @@ function parseStoreOrderEmailOutcome(data: unknown): StoreOrderEmailOutcome {
   }
 
   return parsedResponse.data.outcome;
+}
+
+function parseStoreDownloadContents(data: unknown): StoreDownloadContents {
+  const parsedResponse = storeDownloadContentsResponseSchema.safeParse(data);
+
+  if (!parsedResponse.success) {
+    return { status: "unconfirmed" };
+  }
+
+  switch (parsedResponse.data.status) {
+    case "available":
+      return parsedResponse.data;
+    case "unavailable":
+    case "invalid_request":
+      return { status: "unavailable" };
+    case "temporarily_unavailable":
+      return { status: "unconfirmed" };
+  }
 }
 
 function createFetcherKey(): string {

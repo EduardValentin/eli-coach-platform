@@ -37,7 +37,7 @@ export function DownloadPage() {
 
   return (
     <>
-    <main className="w-full min-h-screen pb-24 bg-surface-page">
+    <main className="w-full min-h-screen pb-24 bg-surface-page" data-parity-root="DownloadPage">
       <Navbar theme="dark" />
 
       <div className="max-w-2xl mx-auto px-6 pt-32">
@@ -67,17 +67,30 @@ export function DownloadPage() {
               for seven days after each request.
             </p>
 
-            <ul className="bg-card rounded-card border border-stroke-faint shadow-card divide-y divide-stroke-faint mb-10">
+            <ul
+              className="bg-card rounded-card border border-stroke-faint shadow-card divide-y divide-stroke-faint mb-10"
+              data-parity="download-resources"
+            >
               {GRANTED_RESOURCES.map((resource) => (
-                <li key={resource.title} className="flex items-center gap-4 p-5">
+                <li
+                  key={resource.title}
+                  className="flex items-center gap-4 p-5"
+                  data-parity="download-resource"
+                >
                   <span className="w-11 h-11 shrink-0 bg-brand-soft text-brand rounded-compact flex items-center justify-center">
                     <FileText size={20} aria-hidden="true" />
                   </span>
                   <span className="flex flex-col">
-                    <span className="font-medium text-foreground">
+                    <span
+                      className="font-medium text-foreground"
+                      data-parity="download-resource-title"
+                    >
                       {resource.title}
                     </span>
-                    <span className="text-xs uppercase tracking-wider text-copy-muted">
+                    <span
+                      className="text-xs uppercase tracking-wider text-copy-muted"
+                      data-parity="download-resource-type"
+                    >
                       {resource.type}
                     </span>
                   </span>

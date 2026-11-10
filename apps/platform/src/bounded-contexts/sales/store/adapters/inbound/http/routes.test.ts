@@ -13,6 +13,7 @@ import * as acquisitionsRoute from "./acquisitions/acquisitions";
 import * as catalogRoute from "./catalog/catalog";
 import * as checkoutsRoute from "./checkouts/checkouts";
 import * as coverRoute from "./covers/covers";
+import * as downloadContentsRoute from "./downloads/download-contents";
 import * as downloadsRoute from "./downloads/downloads";
 import * as managementProductRoute from "./management/management-product";
 import * as managementProductPricesRoute from "./management/management-product-prices";
@@ -88,6 +89,34 @@ describe("Store API routes", () => {
     expect(downloaded).toBe(downloadResponse);
     expect(acquire).toHaveBeenCalledWith(acquisitionRequest);
     expect(download).toHaveBeenCalledWith(downloadRequest);
+  });
+
+  it("routes download contents POST requests and refuses reads", async () => {
+    // arrange
+    const contentsRequest = new Request(
+      "https://eli.example/api/store/downloads/contents",
+      { method: "POST" },
+    );
+    const contentsResponse = Response.json({ status: "unavailable" });
+    const contents = vi.fn().mockResolvedValue(contentsResponse);
+    const feature = { storeDownloadController: { contents } as never };
+
+    // act
+    const answered = await downloadContentsRoute.action(
+      storeArgs(contentsRequest, feature),
+    );
+    const contentsRead = await downloadContentsRoute.loader(
+      storeArgs(
+        new Request("https://eli.example/api/store/downloads/contents"),
+        feature,
+      ),
+    );
+
+    // assert
+    expect(answered).toBe(contentsResponse);
+    expect(contents).toHaveBeenCalledWith(contentsRequest);
+    expect(contentsRead.status).toBe(405);
+    expect(contentsRead.headers.get("Allow")).toBe("POST");
   });
 
   it("routes checkout and order email POST requests and refuses reads", async () => {

@@ -11,6 +11,7 @@ export const STORE_API_PATHS = {
   catalog: `/api/${STORE_ROUTE_SEGMENT}/catalog`,
   acquisitions: `/api/${STORE_ROUTE_SEGMENT}/acquisitions`,
   downloads: `/api/${STORE_ROUTE_SEGMENT}/downloads`,
+  downloadContents: `/api/${STORE_ROUTE_SEGMENT}/downloads/contents`,
   covers: `/api/${STORE_ROUTE_SEGMENT}/covers`,
   checkouts: `/api/${STORE_ROUTE_SEGMENT}/checkouts`,
   orderEmails: `/api/${STORE_ROUTE_SEGMENT}/orders/email`,

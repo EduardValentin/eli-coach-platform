@@ -43,6 +43,10 @@ export const storeApiRoutes = [
     "./adapters/inbound/http/downloads/downloads.ts",
   ),
   route(
+    STORE_API_PATHS.downloadContents.slice(1),
+    "./adapters/inbound/http/downloads/download-contents.ts",
+  ),
+  route(
     `${STORE_API_PATHS.covers.slice(1)}/:assetKey`,
     "./adapters/inbound/http/covers/covers.ts",
   ),

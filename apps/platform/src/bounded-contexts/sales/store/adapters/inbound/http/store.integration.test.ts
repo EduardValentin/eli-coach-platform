@@ -371,6 +371,79 @@ describe("Store integration", () => {
     );
   });
 
+  it("lists a free request's resources from the version pinned when it was requested, uncached", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+    });
+    const [delivered] = await suite.sentEmails();
+    await seedNextPublishedVersion();
+
+    // act
+    const response = await requestDownloadContents(
+      downloadTokenFrom(delivered!),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    await expect(response.json()).resolves.toEqual({
+      status: "available",
+      resources: [{ title: "Hormone Harmony", typeLabels: ["E-Books"] }],
+    });
+  });
+
+  it("answers the same unavailable contents for an unknown, a revoked and an expired token", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "0b9c8d7e-6f5a-4b4c-9d3e-2f1a0b9c8d7e",
+    });
+    const [delivered] = await suite.sentEmails();
+    const issuedToken = downloadTokenFrom(delivered!);
+
+    // act
+    const unknown = await requestDownloadContents("never-issued-token");
+    await suite.setServerClock(new Date("2030-01-01T00:00:00.000Z"));
+    const expired = await requestDownloadContents(issuedToken);
+    await suite.setServerClock(fixedNow);
+    await suite.postgres.executeSql({
+      sql: `update app.download_grants set status = 'revoked'`,
+      values: [],
+    });
+    const revoked = await requestDownloadContents(issuedToken);
+
+    // assert
+    for (const response of [unknown, expired, revoked]) {
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      await expect(response.json()).resolves.toEqual({
+        status: "unavailable",
+      });
+    }
+  });
+
+  it("keeps the contents answer uncached on the path the download page reads it through", async () => {
+    // arrange
+    const formData = new FormData();
+    formData.set("token", "never-issued-token");
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/api/store/downloads/contents.data"), {
+        body: formData,
+        method: "POST",
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(await response.text()).toContain("unavailable");
+  });
+
   it("deduplicates genuinely concurrent acquisitions with one idempotency key", async () => {
     // arrange
     await seedPublishedProductVersion();
@@ -960,6 +1033,18 @@ async function requestDownload(token: string): Promise<Response> {
 
   return suite.request(
     new Request(suite.url("/api/store/downloads"), {
+      body: formData,
+      method: "POST",
+    }),
+  );
+}
+
+async function requestDownloadContents(token: string): Promise<Response> {
+  const formData = new FormData();
+  formData.set("token", token);
+
+  return suite.request(
+    new Request(suite.url("/api/store/downloads/contents"), {
       body: formData,
       method: "POST",
     }),

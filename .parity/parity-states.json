@@ -6557,5 +6557,13 @@
         "waitFor": "[data-parity=\"resend-feedback\"] p"
       }
     ]
+  },
+  "download-ready": {
+    "prototype": [],
+    "real": [
+      {
+        "waitFor": "[data-parity-root=\"DownloadPage\"] [data-parity=\"download-resources\"]"
+      }
+    ]
   }
 }

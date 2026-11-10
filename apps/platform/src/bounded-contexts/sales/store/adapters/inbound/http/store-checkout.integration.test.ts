@@ -233,6 +233,28 @@ describe("Store checkout integration", () => {
     );
   });
 
+  it("lists every item of the paid order, free ones included, for the emailed link, uncached", async () => {
+    // arrange
+    await seedCatalog();
+    await placeAndPay();
+    const [orderEmail] = await suite.sentEmails();
+
+    // act
+    const response = await requestDownloadContents(
+      downloadTokenFrom(orderEmail!),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    await expect(response.json()).resolves.toEqual({
+      status: "available",
+      resources: [FAT_LOSS, NUTRITIONAL_RESET, HORMONE_HARMONY].map(
+        (product) => ({ title: product.title, typeLabels: ["E-Books"] }),
+      ),
+    });
+  });
+
   it("answers a replay of the same submission with the same payment page and keeps one order", async () => {
     // arrange
     await seedCatalog();
@@ -806,6 +828,18 @@ async function requestDownload(token: string): Promise<Response> {
 
   return suite.request(
     new Request(suite.url("/api/store/downloads"), {
+      body: formData,
+      method: "POST",
+    }),
+  );
+}
+
+async function requestDownloadContents(token: string): Promise<Response> {
+  const formData = new FormData();
+  formData.set("token", token);
+
+  return suite.request(
+    new Request(suite.url("/api/store/downloads/contents"), {
       body: formData,
       method: "POST",
     }),

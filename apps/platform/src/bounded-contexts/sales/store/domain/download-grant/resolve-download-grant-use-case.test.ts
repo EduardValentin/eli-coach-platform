@@ -13,6 +13,7 @@ const activeGrant = DownloadGrant.reconstitute({
     {
       productSlug: "hormone-harmony",
       productTitle: "Hormone Harmony",
+      productTypeLabels: ["E-Books"],
       productVersionId: 11,
       assets: [
         {

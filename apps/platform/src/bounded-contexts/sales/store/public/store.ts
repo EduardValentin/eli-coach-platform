@@ -150,11 +150,33 @@ export const storeAcquisitionResponseSchema = z.discriminatedUnion("success", [
   storeAcquisitionErrorSchema,
 ]);
 
-export const storeDownloadRequestSchema = z.object({
+export const storeDownloadRequestSchema = z.strictObject({
   token: z.string().trim().min(1).max(512),
 });
 
+const storeDownloadResourceSchema = z.object({
+  title: z.string().min(1),
+  typeLabels: z.array(z.string().min(1)),
+});
+
+export const storeDownloadContentsResponseSchema = z.discriminatedUnion(
+  "status",
+  [
+    z.object({
+      status: z.literal("available"),
+      resources: z.array(storeDownloadResourceSchema).min(1),
+    }),
+    z.object({ status: z.literal("unavailable") }),
+    z.object({ status: z.literal("invalid_request") }),
+    z.object({ status: z.literal("temporarily_unavailable") }),
+  ],
+);
+
 export type StoreProduct = z.infer<typeof storeProductSchema>;
+export type StoreDownloadResource = z.infer<typeof storeDownloadResourceSchema>;
+export type StoreDownloadContentsResponse = z.infer<
+  typeof storeDownloadContentsResponseSchema
+>;
 export type StoreCatalogResponse = z.infer<typeof storeCatalogResponseSchema>;
 export type StoreAcquisitionResponse = z.infer<
   typeof storeAcquisitionResponseSchema

@@ -1,61 +1,101 @@
 import { DeadEndLink } from "~/shared/design-system/layout";
-import { Button } from "~/shared/design-system/primitives";
-import { Download, LinkIcon } from "lucide-react";
+import { cn } from "~/shared/design-system/lib";
+import { Button, cardVariants } from "~/shared/design-system/primitives";
+import { Download, FileText, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
+import type { StoreDownloadResource } from "~/bounded-contexts/sales/store/public/store";
 
+import {
+  useStoreDownloadContentsFetcher,
+  type StoreDownloadContents,
+} from "../api-client";
 import { DOWNLOAD_API_URL, usePrivateDownloadToken } from "./download-state";
 
 export const meta: MetaFunction = () => [
-  { title: "Your Resources | Free Resources | Evoa" },
+  { title: "Your Resources | Store | Evoa" },
   {
     name: "description",
-    content: "Download the free resources you requested from Evoa.",
+    content: "Download the resources you requested from Evoa.",
   },
 ];
 
+export const handle = { publicContentFrame: "full-bleed" } as const;
+
 export default function DownloadRoute() {
   const token = usePrivateDownloadToken();
+  const contents = useStoreDownloadContentsFetcher(token);
 
-  if (token === null) {
-    return (
-      <div aria-busy="true" className="mx-auto max-w-2xl py-16 text-center">
-        <h1 className="font-heading text-display-md text-text-primary">
-          Preparing your resources
-        </h1>
-        <p className="mt-3 text-text-secondary">
-          Checking your private download link…
-        </p>
+  return (
+    <div
+      className="min-h-screen w-full bg-surface-page pb-24"
+      data-parity-root="DownloadPage"
+    >
+      <div className="mx-auto max-w-2xl px-6 pt-32">
+        <DownloadState contents={contents} token={token} />
       </div>
-    );
+    </div>
+  );
+}
+
+function DownloadState({
+  contents,
+  token,
+}: {
+  contents: StoreDownloadContents;
+  token: string | null;
+}) {
+  if (token === "") {
+    return <UnavailableDownload />;
   }
 
-  if (!token) {
+  if (token === null || contents.status === "loading") {
+    return <PreparingDownload />;
+  }
+
+  if (contents.status === "unavailable") {
     return <UnavailableDownload />;
   }
 
   return (
-    <div className="mx-auto max-w-2xl py-8">
-      <h1 className="font-heading text-display-lg tracking-tight text-text-primary">
+    <ReadyDownload
+      resources={contents.status === "available" ? contents.resources : []}
+      token={token}
+    />
+  );
+}
+
+function PreparingDownload() {
+  return (
+    <div aria-busy="true" className="mx-auto max-w-2xl py-16 text-center">
+      <h1 className="font-heading text-display-md text-text-primary">
+        Preparing your resources
+      </h1>
+      <p className="mt-3 text-text-secondary">
+        Checking your private download link…
+      </p>
+    </div>
+  );
+}
+
+function ReadyDownload({
+  resources,
+  token,
+}: {
+  resources: readonly StoreDownloadResource[];
+  token: string;
+}) {
+  return (
+    <div className="py-8">
+      <h1 className="mb-4 font-heading text-4xl tracking-tight text-text-primary md:text-5xl">
         Your resources
       </h1>
-      <p className="mt-4 text-lg text-text-secondary">
-        Everything you requested is ready. Your private link can be reused for
-        seven days after the request.
+      <p className="mb-10 text-lg text-copy-muted">
+        Everything you requested is ready. Your download stays available for
+        seven days after each request.
       </p>
-      <div className="my-10 rounded-panel border border-border-subtle bg-surface-base p-8 shadow-soft">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-brand-primary-soft text-brand-primary">
-          <Download aria-hidden="true" size={30} />
-        </span>
-        <h2 className="mt-5 text-center font-heading text-display-sm text-text-primary">
-          One secure download
-        </h2>
-        <p className="mt-2 text-center text-sm text-text-secondary">
-          Single files download directly. Multiple resources arrive together in
-          a ZIP file.
-        </p>
-      </div>
+      {resources.length > 0 && <DownloadResources resources={resources} />}
       <form action={DOWNLOAD_API_URL} method="post">
         <input name="token" type="hidden" value={token} />
         <Button
@@ -69,7 +109,7 @@ export default function DownloadRoute() {
           Download your resources
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-text-secondary">
+      <p className="mt-6 text-center text-sm text-copy-muted">
         Need something else?{" "}
         <Link
           className="-mx-2 inline-flex min-h-11 items-center px-2 text-brand-primary underline underline-offset-2"
@@ -80,6 +120,47 @@ export default function DownloadRoute() {
         .
       </p>
     </div>
+  );
+}
+
+function DownloadResources({
+  resources,
+}: {
+  resources: readonly StoreDownloadResource[];
+}) {
+  return (
+    <ul
+      className={cn(cardVariants(), "mb-10 divide-y divide-stroke-faint")}
+      data-parity="download-resources"
+    >
+      {resources.map((resource, position) => (
+        <li
+          className="flex items-center gap-4 p-5"
+          data-parity="download-resource"
+          key={`${position}-${resource.title}`}
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-compact bg-brand-primary-soft text-brand-primary">
+            <FileText aria-hidden="true" size={20} />
+          </span>
+          <span className="flex flex-col">
+            <span
+              className="font-medium text-text-primary"
+              data-parity="download-resource-title"
+            >
+              {resource.title}
+            </span>
+            {resource.typeLabels.length > 0 && (
+              <span
+                className="text-xs uppercase tracking-wider text-copy-muted"
+                data-parity="download-resource-type"
+              >
+                {resource.typeLabels.join(", ")}
+              </span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
