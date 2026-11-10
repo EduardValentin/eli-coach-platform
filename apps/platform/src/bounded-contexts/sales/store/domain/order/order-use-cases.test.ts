@@ -156,6 +156,7 @@ function propsOf(order: Order): Parameters<typeof Order.reconstitute>[0] {
     status: order.status,
     checkout: order.checkout,
     payment: order.payment,
+    refund: order.refund,
     consents: order.consents,
     deliveryConsent: order.deliveryConsent,
     idempotencyKey: order.idempotencyKey,
@@ -171,6 +172,7 @@ function createStoreOrders(
     findByIdempotencyKey: vi.fn().mockResolvedValue(null),
     findByCheckoutSession: vi.fn().mockResolvedValue(null),
     lockForPayment: vi.fn().mockResolvedValue(null),
+    lockByPaymentIntent: vi.fn().mockResolvedValue(null),
     place: vi.fn().mockResolvedValue({ status: "placed" }),
     attachCheckout: vi.fn().mockResolvedValue(undefined),
     recordPaymentWithGrant: vi
@@ -180,6 +182,7 @@ function createStoreOrders(
       .fn()
       .mockResolvedValue({ status: "prepared", deliveryAttemptId: 52 }),
     rotateGrantToken: vi.fn().mockResolvedValue(undefined),
+    recordRefund: vi.fn().mockResolvedValue(undefined),
     recordEmailAccepted: vi.fn().mockResolvedValue(undefined),
     recordEmailRejected: vi.fn().mockResolvedValue(undefined),
     recordEmailRetryable: vi.fn().mockResolvedValue(undefined),
@@ -233,6 +236,7 @@ function createIncidents() {
     orderEmailRejected: vi.fn(),
     orderEmailAuditPending: vi.fn(),
     orderLinkRotationPending: vi.fn(),
+    orderRefunded: vi.fn(),
     termsDocumentMissing: vi.fn(),
   };
 }

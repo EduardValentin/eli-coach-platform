@@ -7,13 +7,14 @@ import type { OrderCheckout } from "./order-checkout";
 import { OrderConsents } from "./order-consents";
 import { OrderItem, type OrderLine } from "./order-item";
 import type { OrderPayment } from "./order-payment";
+import type { OrderRefund } from "./order-refund";
 import type { OrderRequest } from "./order-request";
 
 const EMAIL_ATTEMPT_TOKEN_PREFIX_LENGTH = 24;
 
 export const STORE_ORDER_PURPOSE = "store-order";
 
-export type OrderStatus = "pending" | "paid";
+export type OrderStatus = "pending" | "paid" | "refunded";
 
 export type OrderConfirmation = {
   email: string;
@@ -36,6 +37,10 @@ export type OrderPaymentOutcome =
   | { status: "already_paid" }
   | { status: "session_mismatch" };
 
+export type OrderRefundOutcome =
+  | { status: "refunded"; order: Order; firstRefund: boolean }
+  | { status: "not_paid" };
+
 type PlaceOrderInput = {
   id: string;
   request: OrderRequest;
@@ -53,6 +58,7 @@ type OrderProps = {
   status: OrderStatus;
   checkout: OrderCheckout | null;
   payment: OrderPayment | null;
+  refund: OrderRefund | null;
   consents: OrderConsents;
   deliveryConsent: DeliveryConsent;
   idempotencyKey: string;
@@ -68,6 +74,7 @@ export class Order {
   readonly status: OrderStatus;
   readonly checkout: OrderCheckout | null;
   readonly payment: OrderPayment | null;
+  readonly refund: OrderRefund | null;
   readonly consents: OrderConsents;
   readonly deliveryConsent: DeliveryConsent;
   readonly idempotencyKey: string;
@@ -82,6 +89,7 @@ export class Order {
     this.status = props.status;
     this.checkout = props.checkout;
     this.payment = props.payment;
+    this.refund = props.refund;
     this.consents = props.consents;
     this.deliveryConsent = props.deliveryConsent;
     this.idempotencyKey = props.idempotencyKey;
@@ -120,6 +128,7 @@ export class Order {
         status: "pending",
         checkout: null,
         payment: null,
+        refund: null,
         consents: OrderConsents.given({
           versions: input.consentVersions,
           marketingConsent: request.marketingConsent,
@@ -169,7 +178,7 @@ export class Order {
       return { status: "session_mismatch" };
     }
 
-    if (this.status === "paid") {
+    if (this.status !== "pending") {
       return { status: "already_paid" };
     }
 
@@ -177,6 +186,26 @@ export class Order {
       status: "paid",
       order: new Order({ ...this.props(), status: "paid", payment }),
     };
+  }
+
+  refundWith(refund: OrderRefund): OrderRefundOutcome {
+    if (this.status === "pending") {
+      return { status: "not_paid" };
+    }
+
+    return {
+      status: "refunded",
+      order: new Order({
+        ...this.props(),
+        status: "refunded",
+        refund: this.refund?.superseding(refund) ?? refund,
+      }),
+      firstRefund: this.refund === null,
+    };
+  }
+
+  isConfirmable(): boolean {
+    return this.status === "paid";
   }
 
   chargeDiffers(payment: OrderPayment): boolean {
@@ -202,6 +231,7 @@ export class Order {
       status: this.status,
       checkout: this.checkout,
       payment: this.payment,
+      refund: this.refund,
       consents: this.consents,
       deliveryConsent: this.deliveryConsent,
       idempotencyKey: this.idempotencyKey,

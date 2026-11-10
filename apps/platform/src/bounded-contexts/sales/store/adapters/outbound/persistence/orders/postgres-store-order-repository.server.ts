@@ -5,6 +5,7 @@ import {
   OrderConsents,
   OrderItem,
   OrderPayment,
+  OrderRefund,
   type AttachOrderCheckoutCommand,
   type OrderEmailAttempt,
   type OrderRecording,
@@ -32,13 +33,15 @@ type OrderRow = {
   id: string;
   email: string;
   currency: StoreCurrency;
-  status: "pending" | "paid";
+  status: "pending" | "paid" | "refunded";
   checkoutSessionId: string | null;
   checkoutUrl: string | null;
   paymentIntentId: string | null;
   chargedMinorUnits: number | null;
   chargedCurrency: string | null;
   paidAt: Date | string | null;
+  refundedMinorUnits: number | null;
+  refundedAt: Date | string | null;
   termsVersion: string;
   privacyPolicyVersion: string;
   marketingConsentVersion: string;
@@ -103,6 +106,13 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
     return this.loadOrder(
       this.executor,
       sql`store_order.id = ${orderId} for update of store_order`,
+    );
+  }
+
+  lockByPaymentIntent(paymentIntentId: string): Promise<Order | null> {
+    return this.loadOrder(
+      this.executor,
+      sql`store_order.payment_intent_id = ${paymentIntentId} for update of store_order`,
     );
   }
 
@@ -213,6 +223,23 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
     if (rotated.rows.length === 0) {
       throw new Error("The order holds no active grant to rotate.");
     }
+  }
+
+  async recordRefund(order: Order): Promise<void> {
+    const refund = order.refund;
+
+    if (!refund) {
+      throw new Error("Only a refunded order records its refund.");
+    }
+
+    await this.executor.execute(sql`
+      update app.store_orders
+      set status = 'refunded',
+        refunded_minor_units = ${refund.refundedMinorUnits},
+        refunded_at = ${refund.refundedAt},
+        updated_at = now()
+      where id = ${order.id}
+    `);
   }
 
   async recordEmailAccepted(command: {
@@ -527,6 +554,8 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
         store_order.charged_minor_units as "chargedMinorUnits",
         store_order.charged_currency as "chargedCurrency",
         store_order.paid_at as "paidAt",
+        store_order.refunded_minor_units as "refundedMinorUnits",
+        store_order.refunded_at as "refundedAt",
         store_order.terms_version as "termsVersion",
         store_order.privacy_policy_version as "privacyPolicyVersion",
         store_order.marketing_consent_version as "marketingConsentVersion",
@@ -579,6 +608,7 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
             })
           : null,
       payment: this.toPayment(row),
+      refund: this.toRefund(row),
       consents: OrderConsents.reconstitute({
         termsVersion: row.termsVersion,
         privacyPolicyVersion: row.privacyPolicyVersion,
@@ -601,7 +631,7 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
 
   private toPayment(row: OrderRow): OrderPayment | null {
     if (
-      row.status !== "paid" ||
+      row.status === "pending" ||
       row.checkoutSessionId === null ||
       row.chargedMinorUnits === null ||
       row.chargedCurrency === null ||
@@ -616,6 +646,17 @@ export class PostgresStoreOrderRepository implements StoreOrdersPort {
       amountMinorUnits: row.chargedMinorUnits,
       currency: row.chargedCurrency,
       paidAt: new Date(row.paidAt),
+    });
+  }
+
+  private toRefund(row: OrderRow): OrderRefund | null {
+    if (row.refundedMinorUnits === null || row.refundedAt === null) {
+      return null;
+    }
+
+    return OrderRefund.reconstitute({
+      refundedMinorUnits: row.refundedMinorUnits,
+      refundedAt: new Date(row.refundedAt),
     });
   }
 

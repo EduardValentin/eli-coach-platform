@@ -2,6 +2,7 @@ import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import type { PaymentProvider } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-provider.server";
 import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
+import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";
 import { PostgresPaymentEventLedgerRepository } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/persistence/postgres-payment-event-ledger-repository.server";
 import { AcquireProductsUseCase } from "~/bounded-contexts/sales/store/domain/acquisition";
 import { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
@@ -11,6 +12,7 @@ import {
   PlaceOrderUseCase,
   PrepareOrderEmailResendUseCase,
   ReadOrderConfirmationUseCase,
+  RefundOrderUseCase,
 } from "~/bounded-contexts/sales/store/domain/order";
 import type { EmailAcceptancePort } from "~/bounded-contexts/sales/store/domain/email-acceptance-port";
 import {
@@ -37,6 +39,7 @@ import { StoreAcquisitionController } from "~/bounded-contexts/sales/store/adapt
 import { StoreCheckoutController } from "~/bounded-contexts/sales/store/adapters/inbound/http/checkouts/store-checkout-controller.server";
 import { StoreOrderController } from "~/bounded-contexts/sales/store/adapters/inbound/http/orders/store-order-controller.server";
 import { StoreOrderCompletionHandler } from "~/bounded-contexts/sales/store/adapters/inbound/http/payments/store-order-completion-handler.server";
+import { StoreOrderRefundHandler } from "~/bounded-contexts/sales/store/adapters/inbound/http/payments/store-order-refund-handler.server";
 import { PostgresStoreOrderRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/orders/postgres-store-order-repository.server";
 import { RandomOrderIdsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/orders/random-order-ids-adapter.server";
 import { createStoreCheckoutAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/payments/create-store-checkout-adapter.server";
@@ -90,6 +93,7 @@ type StoreComposition = {
   feature: StoreFeature;
   paymentHandlers: {
     paymentCompletionHandlerPort: PaymentCompletionHandlerPort;
+    paymentRefundHandlerPort: PaymentRefundHandlerPort;
   };
 };
 
@@ -166,9 +170,14 @@ export function composeStoreFeature(
     productAssetWriterPort: filesystemProductAssetStoreAdapter,
     ...planOptions,
   };
+  const postgresDownloadGrantRepository = new PostgresDownloadGrantRepository(
+    handles.database,
+  );
+  const postgresPaymentEventLedgerRepository =
+    new PostgresPaymentEventLedgerRepository(handles.database);
   const resolveDownloadGrantUseCase = new ResolveDownloadGrantUseCase({
     clockPort: handles.clockPort,
-    downloadGrantsPort: new PostgresDownloadGrantRepository(handles.database),
+    downloadGrantsPort: postgresDownloadGrantRepository,
     downloadTokenHasherPort: new DownloadTokenSha256Adapter(),
   });
 
@@ -246,13 +255,20 @@ export function composeStoreFeature(
       paymentCompletionHandlerPort: new StoreOrderCompletionHandler({
         completeOrderUseCase: new CompleteOrderUseCase({
           ...orderEmailAttemptDependencies,
-          paymentEventLedgerPort: new PostgresPaymentEventLedgerRepository(
-            handles.database,
-          ),
+          paymentEventLedgerPort: postgresPaymentEventLedgerRepository,
           orderIncidentsPort: storeIncidentsAdapter,
         }),
         deliverOrderEmailUseCase,
         unitOfWork: createUnitOfWork(handles.database),
+      }),
+      paymentRefundHandlerPort: new StoreOrderRefundHandler({
+        refundOrderUseCase: new RefundOrderUseCase({
+          storeOrdersPort: postgresStoreOrderRepository,
+          downloadGrantsPort: postgresDownloadGrantRepository,
+          paymentEventLedgerPort: postgresPaymentEventLedgerRepository,
+          orderIncidentsPort: storeIncidentsAdapter,
+          clockPort: handles.clockPort,
+        }),
       }),
     },
   };

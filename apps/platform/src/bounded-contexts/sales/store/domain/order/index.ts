@@ -18,6 +18,7 @@ export { type OrderIdsPort } from "./order-ids-port";
 export { type OrderIncidentsPort } from "./order-incidents-port";
 export { OrderItem } from "./order-item";
 export { OrderPayment } from "./order-payment";
+export { OrderRefund } from "./order-refund";
 export {
   PlaceOrderUseCase,
   type PlaceOrderResult,
@@ -26,6 +27,10 @@ export {
   PrepareOrderEmailResendUseCase,
   type PrepareOrderEmailResendResult,
 } from "./prepare-order-email-resend-use-case";
+export {
+  RefundOrderUseCase,
+  type RefundOrderResult,
+} from "./refund-order-use-case";
 export {
   ReadOrderConfirmationUseCase,
   type ReadOrderConfirmationResult,

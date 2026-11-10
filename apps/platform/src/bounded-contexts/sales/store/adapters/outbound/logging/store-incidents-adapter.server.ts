@@ -100,6 +100,13 @@ export class StoreIncidentsAdapter
     );
   }
 
+  orderRefunded(incident: Parameters<OrderIncidentsPort["orderRefunded"]>[0]) {
+    this.loggerPort.info(
+      "Store order was refunded and its download access revoked.",
+      { eventCategory: "store_order_refunded", ...incident },
+    );
+  }
+
   termsDocumentMissing(
     incident: Parameters<OrderIncidentsPort["termsDocumentMissing"]>[0],
   ) {

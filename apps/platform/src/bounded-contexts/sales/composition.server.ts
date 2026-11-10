@@ -68,6 +68,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
       subscriptions.paymentHandlers.paymentSubscriptionChangeHandlerPort,
     ],
     paymentRefundHandlers: [
+      store.paymentHandlers.paymentRefundHandlerPort,
       subscriptions.paymentHandlers.paymentRefundHandlerPort,
     ],
     paymentCardHandlerPort:
