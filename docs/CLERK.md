@@ -204,6 +204,50 @@ it as-is; nothing in this path ever updates `role` on an existing row. So:
   account to `COACH` afterward is a direct data change, not something this
   variable does.
 
+## Store publishing API keys
+
+The Store management API (see [STORE_PUBLISHING.md](STORE_PUBLISHING.md))
+admits a Clerk API key issued to the coach's user, and nothing else. On every
+management request the app calls Clerk's Backend API (`POST /api_keys/verify`)
+with the presented key: a key Clerk does not accept is refused `401`, a key
+whose user has no active account or a CLIENT account is refused `403`, and a
+Clerk outage, rate limit or refusal of the instance's own secret key is
+answered `503 auth_unavailable`. The app never caches the answer and never
+creates an account from a key. The agent stores the key under its own name
+for it, `STORE_API_KEY`; the app has no variable for it.
+
+LOCAL and TEST share the Development instance, so one key serves both; the
+coach must have signed in once on each environment whose database the agent
+publishes to, since accounts live per database while the key lives per
+instance. The future Production instance gets its own key.
+
+1. **Enable API keys on the instance** in the Clerk Dashboard's API keys
+   settings (already on for the Development instance). With the feature off,
+   every management request answers `503 auth_unavailable`.
+2. **Create a key for the coach's user**, from her user page in the
+   Dashboard or with the Backend API:
+
+   ```bash
+   curl -sS -X POST https://api.clerk.com/api_keys \
+     -H "Authorization: Bearer $CLERK_SECRET_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"name":"Store publishing agent","subject":"user_..."}'
+   ```
+
+   The response's `secret` (`ak_...`) is shown once; copy it then.
+3. **Hand it to the agent** as `STORE_API_KEY` through the agent's own secret
+   store, never a repository file or chat log. One key per agent, so each can
+   be revoked alone.
+4. **Revoke it** from the coach's user page in the Dashboard or with
+   `POST https://api.clerk.com/api_keys/{api_key_id}/revoke`. Clerk keeps
+   accepting a revoked key for about a minute (measured on the Development
+   instance, 2026-11-10); after that the app answers `401`. Deleting the
+   coach's Clerk user also removes her keys.
+
+The E2E lane does the same with the Backend API: the `storeProductRequests`
+fixture creates a fresh Clerk user with a COACH account, issues it a key, and
+the test's Clerk cleanup deletes the user and with it the key.
+
 ## E2E lane
 
 `pnpm test:e2e` runs the Playwright suite under `apps/platform/e2e/`. It is
@@ -266,8 +310,7 @@ Prerequisites:
   asserts the mode from the public environment endpoint and fails until the
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not
   start the relay.
-- Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`,
-  `STORE_ASSET_ROOT`, `CLIENT_MEDIA_ROOT`, `CLIENT_RESOURCE_ROOT`, `EXERCISE_VIDEO_ROOT` and `RECIPE_PHOTO_ROOT` included — `pnpm secrets:local:prepare`,
+- Every other variable the runtime schema requires, `STORE_ASSET_ROOT`, `CLIENT_MEDIA_ROOT`, `CLIENT_RESOURCE_ROOT`, `EXERCISE_VIDEO_ROOT` and `RECIPE_PHOTO_ROOT` included — `pnpm secrets:local:prepare`,
   `pnpm store:assets:local:prepare`, `pnpm client:media:local:prepare`, `pnpm client:resources:local:prepare`, `pnpm exercise:videos:local:prepare` and `pnpm recipe:photos:local:prepare` provide them. A `.env` predating one of
   them fails as `Timed out waiting 120000ms from config.webServer`, which
   names neither the variable nor the schema; the `ZodError` that explains it
