@@ -10,7 +10,14 @@ import {
 import { expect, test } from "../support/fixtures";
 import { resolveRunId } from "../support/run-id";
 import type { StoreProductFields } from "../support/store-product-requests";
-import { deliverCheckoutCompleted } from "../support/stripe-events";
+import {
+  deliverCheckoutCompleted,
+  deliverStripeEvent,
+} from "../support/stripe-events";
+import {
+  refundPartOfStoreOrderInStripe,
+  refundRestOfStoreOrderInStripe,
+} from "../support/stripe-store-orders";
 
 const RUN_ID = resolveRunId();
 const PLAN_PRICING: ProductPricingRequest = {
@@ -21,6 +28,8 @@ const PLAN_PRICING: ProductPricingRequest = {
 const FREE_PRICING: ProductPricingRequest = { kind: "free" };
 const CARDHOLDER_NAME = "Ana Buyer";
 const ORDER_SUBJECT = "Your order is confirmed";
+const FREE_GUIDE_SUBJECT = "Your guide is ready";
+const PARTIAL_REFUND_CENTS = 1000;
 const TERMS_ATTACHMENT = "terms-and-conditions-1.0.pdf";
 const BUNDLE_FILENAME = "eli-resources.zip";
 const DOWNLOAD_LINK = /\/store\/download#[\w-]+$/;
@@ -172,5 +181,105 @@ test(
     await storeCartDrawer.expectLinePrice(plan.title, "$45.00");
     await storeCartDrawer.expectFreeLine(guide.title);
     await expect(page).toHaveURL(new RegExp(`${STORE_PATH}$`));
+  },
+);
+
+test(
+  "a buyer whose order the coach refunds in Stripe finds her download link unavailable and can still get the free guide",
+  { tag: "@critical" },
+  async ({
+    registerCheckoutSessionForCleanup,
+    scenarioTag,
+    storeCartDrawer,
+    storeCatalog,
+    storeDownload,
+    storeOrderComplete,
+    storeProductRequests,
+    stripeCheckout,
+    visitorEmail,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    const plan = storeProductFieldsOf("Lean Plan", scenarioTag, PLAN_PRICING);
+    const guide = storeProductFieldsOf(
+      "Mobility Guide",
+      scenarioTag,
+      FREE_PRICING,
+    );
+    await storeProductRequests.publishAccepted(plan);
+    await storeProductRequests.publishAccepted(guide);
+    await storeCatalog.open();
+    await storeCatalog.addToCart(plan.title);
+    await storeCartDrawer.close();
+    await storeCatalog.getForFree(guide.title);
+    await storeCartDrawer.continueToPayment(visitorEmail);
+    const sessionId = await stripeCheckout.waitForOpenedSessionId();
+    registerCheckoutSessionForCleanup(sessionId);
+    await stripeCheckout.payStoreOrderWithTestCard(CARDHOLDER_NAME);
+    await storeOrderComplete.expectConfirmedFor(visitorEmail);
+    await deliverCheckoutCompleted({ baseURL: E2E_APP_URL, sessionId });
+    const orderLink = downloadLinkIn(
+      await emailTo(visitorEmail, ORDER_SUBJECT),
+    );
+    await storeDownload.open(orderLink);
+
+    // act
+    const partialRefund = await refundPartOfStoreOrderInStripe(
+      sessionId,
+      PARTIAL_REFUND_CENTS,
+    );
+    const partialRefundEvent = {
+      baseURL: E2E_APP_URL,
+      type: "charge.refunded",
+      objectId: partialRefund.chargeId,
+      causedBy: partialRefund.requestId,
+    } as const;
+    const partialDelivery = await deliverStripeEvent(partialRefundEvent);
+    await storeDownload.downloadRefused();
+    await storeDownload.openUnavailable(orderLink);
+
+    // assert
+    expect(partialDelivery.status).toBe(200);
+    await storeDownload.expectNoMentionOf(plan.title);
+    await storeDownload.expectNoMentionOf(guide.title);
+
+    // act
+    await storeOrderComplete.open(sessionId);
+
+    // assert
+    await storeOrderComplete.expectPaymentNotCompleted();
+    expect(await subjectsTo(visitorEmail)).toEqual([ORDER_SUBJECT]);
+
+    // act
+    const redelivery = await deliverStripeEvent(partialRefundEvent);
+    const restRefund = await refundRestOfStoreOrderInStripe(sessionId);
+    const restDelivery = await deliverStripeEvent({
+      baseURL: E2E_APP_URL,
+      type: "charge.refunded",
+      objectId: restRefund.chargeId,
+      causedBy: restRefund.requestId,
+    });
+    await storeDownload.openUnavailable(orderLink);
+
+    // assert
+    expect(redelivery.status).toBe(200);
+    expect(restDelivery.status).toBe(200);
+    expect(await subjectsTo(visitorEmail)).toEqual([ORDER_SUBJECT]);
+
+    // act
+    await storeCatalog.open();
+    await storeCatalog.getForFree(guide.title);
+    await storeCartDrawer.sendFreeResources(visitorEmail);
+    const guideEmail = await emailTo(visitorEmail, FREE_GUIDE_SUBJECT);
+    await storeDownload.open(downloadLinkIn(guideEmail));
+    const download = await storeDownload.download();
+
+    // assert
+    expect(download.suggestedFilename).toBe(`${guide.slug}.pdf`);
+    expect(await subjectsTo(visitorEmail)).toEqual([
+      FREE_GUIDE_SUBJECT,
+      ORDER_SUBJECT,
+    ]);
   },
 );
