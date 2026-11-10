@@ -20,11 +20,11 @@ export class OrderRefund {
     return new OrderRefund(snapshot);
   }
 
-  supersededBy(later: OrderRefund): OrderRefund {
+  mergedWith(reported: OrderRefund): OrderRefund {
     return new OrderRefund({
       refundedMinorUnits: Math.max(
         this.refundedMinorUnits,
-        later.refundedMinorUnits,
+        reported.refundedMinorUnits,
       ),
       refundedAt: this.refundedAt,
     });

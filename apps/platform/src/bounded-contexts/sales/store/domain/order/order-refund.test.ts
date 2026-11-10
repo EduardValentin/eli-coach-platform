@@ -29,7 +29,7 @@ describe("OrderRefund", () => {
     });
 
     // act
-    const updated = first.supersededBy(later);
+    const updated = first.mergedWith(later);
 
     // assert
     expect(updated.toSnapshot()).toEqual({
@@ -50,7 +50,7 @@ describe("OrderRefund", () => {
     });
 
     // act
-    const updated = recorded.supersededBy(late);
+    const updated = recorded.mergedWith(late);
 
     // assert
     expect(updated.toSnapshot()).toEqual({

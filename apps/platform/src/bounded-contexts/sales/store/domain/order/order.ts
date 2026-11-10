@@ -198,7 +198,7 @@ export class Order {
       order: new Order({
         ...this.props(),
         status: "refunded",
-        refund: this.refund?.supersededBy(refund) ?? refund,
+        refund: this.refund?.mergedWith(refund) ?? refund,
       }),
       firstRefund: this.refund === null,
     };

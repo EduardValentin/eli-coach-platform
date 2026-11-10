@@ -23,20 +23,29 @@ export class StoreDownloadPage {
   }
 
   async open(link: string): Promise<void> {
-    await this.load(link);
+    await this.openLink(link);
     await expect(
       this.page.getByRole("heading", { level: 1, name: "Your resources" }),
     ).toBeVisible();
   }
 
-  async openUnavailable(link: string): Promise<void> {
-    await this.load(link);
-    await this.expectUnavailable();
+  async openLink(link: string): Promise<void> {
+    await this.page.goto("about:blank");
+    await this.page.goto(link);
   }
 
-  async downloadRefused(): Promise<void> {
+  async requestDownload(): Promise<void> {
     await this.downloadButton.click();
-    await this.expectUnavailable();
+  }
+
+  async expectUnavailable(): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", {
+        level: 1,
+        name: "This link is no longer available",
+      }),
+    ).toBeVisible();
+    await expect(this.downloadButton).toHaveCount(0);
   }
 
   async expectNoMentionOf(text: string): Promise<void> {
@@ -54,21 +63,6 @@ export class StoreDownloadPage {
         await readFile(await download.path()),
       ),
     };
-  }
-
-  private async expectUnavailable(): Promise<void> {
-    await expect(
-      this.page.getByRole("heading", {
-        level: 1,
-        name: "This link is no longer available",
-      }),
-    ).toBeVisible();
-    await expect(this.downloadButton).toHaveCount(0);
-  }
-
-  private async load(link: string): Promise<void> {
-    await this.page.goto("about:blank");
-    await this.page.goto(link);
   }
 
   private archiveEntryNamesOf(archive: Buffer): string[] {

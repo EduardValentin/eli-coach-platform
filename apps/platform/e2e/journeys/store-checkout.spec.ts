@@ -236,11 +236,17 @@ test(
       causedBy: partialRefund.requestId,
     } as const;
     const partialDelivery = await deliverStripeEvent(partialRefundEvent);
-    await storeDownload.downloadRefused();
-    await storeDownload.openUnavailable(orderLink);
+    await storeDownload.requestDownload();
 
     // assert
     expect(partialDelivery.status).toBe(200);
+    await storeDownload.expectUnavailable();
+
+    // act
+    await storeDownload.openLink(orderLink);
+
+    // assert
+    await storeDownload.expectUnavailable();
     await storeDownload.expectNoMentionOf(plan.title);
     await storeDownload.expectNoMentionOf(guide.title);
 
@@ -260,11 +266,12 @@ test(
       objectId: restRefund.chargeId,
       causedBy: restRefund.requestId,
     });
-    await storeDownload.openUnavailable(orderLink);
+    await storeDownload.openLink(orderLink);
 
     // assert
     expect(redelivery.status).toBe(200);
     expect(restDelivery.status).toBe(200);
+    await storeDownload.expectUnavailable();
     expect(await subjectsTo(visitorEmail)).toEqual([ORDER_SUBJECT]);
 
     // act
