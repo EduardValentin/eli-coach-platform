@@ -36,7 +36,6 @@ function createRuntimeEnvironmentWithoutDatabase() {
     APP_NAME: "eli-coach-platform",
     ...CLERK_TEST_ENVIRONMENT,
     ENVIRONMENT: "local",
-    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
@@ -113,10 +112,6 @@ describe("platform container", () => {
     vi.stubEnv("CLERK_SIGN_IN_URL", CLERK_TEST_ENVIRONMENT.CLERK_SIGN_IN_URL);
     vi.stubEnv("CLERK_SIGN_UP_URL", CLERK_TEST_ENVIRONMENT.CLERK_SIGN_UP_URL);
     vi.stubEnv("ENVIRONMENT", "local");
-    vi.stubEnv(
-      "MANAGEMENT_API_SECRET",
-      "unit-test-management-api-secret-value",
-    );
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("PUBLIC_APP_URL", "https://eli.example");
     vi.stubEnv("STORE_ASSET_ROOT", storeAssetRoot);

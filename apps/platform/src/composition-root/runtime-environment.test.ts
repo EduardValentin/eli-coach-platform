@@ -42,7 +42,6 @@ function buildEnvironment(
     NODE_ENV: "test",
     PORT: "3000",
     PUBLIC_APP_URL: "https://evoa.fit",
-    MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
     EXERCISE_VIDEO_ROOT: "/tmp/eli-coach-exercise-videos-test",
@@ -115,7 +114,6 @@ describe("runtime environment", () => {
         buildEnvironment({
           CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
           ENVIRONMENT: "production",
-          MANAGEMENT_API_SECRET: "production-management-api-secret-value",
           NODE_ENV: "production",
           STORE_ASSET_ROOT: "/srv/store-assets",
           CLIENT_RESOURCE_ROOT: "/srv/client-resources",
@@ -353,49 +351,14 @@ describe("runtime environment", () => {
     expect(environment.RECIPE_PHOTO_ROOT).toBe("/srv/recipe-photos");
   });
 
-  it("requires a configured management API secret", () => {
+  it("starts without any Store management credential outside LOCAL", () => {
     // arrange
     // act
-    const loadWithoutManagementSecret = () =>
-      loadTestRuntimeEnvironment({
-        MANAGEMENT_API_SECRET: undefined,
-      });
+    const loadOutsideLocal = () =>
+      loadTestRuntimeEnvironment({ ENVIRONMENT: "test" });
 
     // assert
-    expect(loadWithoutManagementSecret).toThrow();
-  });
-
-  it.each([
-    ["a placeholder", "replace-me"],
-    ["a short secret", "too-short"],
-  ])(
-    "rejects %s management API secret outside LOCAL",
-    (_description, secret) => {
-      // arrange
-      // act
-      const loadWeakManagementSecret = () =>
-        loadTestRuntimeEnvironment({
-          MANAGEMENT_API_SECRET: secret,
-        });
-
-      // assert
-      expect(loadWeakManagementSecret).toThrow(
-        "Deployed Store management requires a non-placeholder MANAGEMENT_API_SECRET of at least 32 characters.",
-      );
-    },
-  );
-
-  it("accepts a placeholder management API secret in LOCAL, where it guards nothing", () => {
-    // arrange
-    // act
-    const environment = loadTestRuntimeEnvironment({
-      ENVIRONMENT: "local",
-      MANAGEMENT_API_SECRET: "replace-me",
-      NODE_ENV: "development",
-    });
-
-    // assert
-    expect(environment.MANAGEMENT_API_SECRET).toBe("replace-me");
+    expect(loadOutsideLocal).not.toThrow();
   });
 
   it("rejects every Cloudflare Turnstile test-key family in deployed environments", () => {

@@ -1,5 +1,6 @@
 import type { ApiIntegrationTestSuite } from "./api-integration-test-suite";
 import { mintSessionToken } from "./clerk-session";
+import { clerkVerifiesApiKey } from "./wire-mock/expectations/clerk-backend-api";
 
 export type AccountSession = { sessionId: string; subjectId: string };
 
@@ -17,6 +18,8 @@ export const CLIENT_SESSION: AccountSession = {
   sessionId: "sess_platformrigclient",
   subjectId: "user_platformrigclient",
 };
+
+const COACH_API_KEY_SECRET = "ak_platformrigcoach";
 
 const WAITLIST_MODE_FLAG = "WAITLIST_MODE";
 
@@ -73,6 +76,18 @@ export class PlatformRig {
 
   async provisionOtherCoach(): Promise<void> {
     await this.insertAccount(OTHER_COACH_SESSION, "COACH");
+  }
+
+  async authorizeStorePublishing(): Promise<string> {
+    await this.suite.wireMock.stub(
+      clerkVerifiesApiKey({
+        secret: COACH_API_KEY_SECRET,
+        subjectId: COACH_SESSION.subjectId,
+      }),
+    );
+    await this.insertAccount(COACH_SESSION, "COACH");
+
+    return `Bearer ${COACH_API_KEY_SECRET}`;
   }
 
   async requestAs(

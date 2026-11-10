@@ -145,6 +145,7 @@ export function createPlatformContainer(options: {
   });
   const sales = composeSales({
     admissionsFacade: clients.facades.admissionsFacade,
+    apiKeyAccountsFacade: access.facades.apiKeyAccountsFacade,
     appBasePath: environment.APP_BASE_PATH,
     botVerifierPort,
     clientLookupFacade: clients.facades.clientLookupFacade,
@@ -159,7 +160,6 @@ export function createPlatformContainer(options: {
     featureFlagsFacade: operations.facades.featureFlagsFacade,
     linkTokens,
     loggerPort: consoleLoggerAdapter,
-    managementApiConfig: environment,
     paymentsConfig: environment,
     privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
     productEmailPort,

@@ -4,6 +4,7 @@ import type { WireMockStub } from "../wire-mock-container";
 
 export const CLERK_JWKS_PATH = "/v1/jwks";
 export const CLERK_INVITATIONS_PATH = "/v1/invitations";
+export const CLERK_API_KEY_VERIFICATION_PATH = "/api_keys/verify";
 export const CLERK_INVITATION_URL =
   "https://accounts.evoa.fit/sign-up?__clerk_ticket=integration_ticket";
 
@@ -181,9 +182,82 @@ export function clerkSessionRevocationPath(sessionId: string): string {
   return `/v1/sessions/${sessionId}/revoke`;
 }
 
+const clerkFindsNoApiKey: WireMockStub = {
+  priority: 10,
+  request: { method: "POST", urlPath: CLERK_API_KEY_VERIFICATION_PATH },
+  response: {
+    headers: jsonHeaders,
+    status: 404,
+    jsonBody: {
+      errors: [
+        {
+          code: "api_key_not_found",
+          long_message: "API Key not found",
+          message: "API Key not found",
+        },
+      ],
+    },
+  },
+};
+
+export const clerkFailsToVerifyApiKeys: WireMockStub = {
+  priority: 1,
+  request: { method: "POST", urlPath: CLERK_API_KEY_VERIFICATION_PATH },
+  response: {
+    headers: jsonHeaders,
+    status: 500,
+    jsonBody: {
+      errors: [
+        {
+          code: "internal_clerk_error",
+          long_message: "Something went wrong on Clerk's side.",
+          message: "Something went wrong",
+        },
+      ],
+    },
+  },
+};
+
+export function clerkVerifiesApiKey(apiKey: {
+  secret: string;
+  subjectId: string;
+}): WireMockStub {
+  return {
+    priority: 5,
+    request: {
+      bodyPatterns: [{ equalTo: JSON.stringify({ secret: apiKey.secret }) }],
+      method: "POST",
+      urlPath: CLERK_API_KEY_VERIFICATION_PATH,
+    },
+    response: {
+      headers: jsonHeaders,
+      status: 200,
+      jsonBody: {
+        claims: null,
+        created_at: 1_700_000_000_000,
+        created_by: null,
+        description: null,
+        expiration: null,
+        expired: false,
+        id: `ak_id_${apiKey.subjectId}`,
+        last_used_at: null,
+        name: "Publishing agent",
+        object: "api_key",
+        revocation_reason: null,
+        revoked: false,
+        scopes: [],
+        subject: apiKey.subjectId,
+        type: "api_key",
+        updated_at: 1_700_000_000_000,
+      },
+    },
+  };
+}
+
 export const clerkBackendApiStubs: readonly WireMockStub[] = [
   clerkServesTheSuiteSigningKey,
   clerkRevokesAnySession,
   clerkCreatesInvitations,
   clerkRevokesInvitations,
+  clerkFindsNoApiKey,
 ];

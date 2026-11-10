@@ -28,6 +28,7 @@ import {
 } from "~/bounded-contexts/sales/store/domain/product";
 import type { ClockPort } from "~/bounded-contexts/sales/store/domain/clock-port";
 import type { TermsFacade } from "~/bounded-contexts/legal/public";
+import type { ApiKeyAccountsFacade } from "~/bounded-contexts/access/public/api-key-accounts-facade";
 import type { BotVerifierPort } from "~/shared/submission-checks/bot-detection/index.server";
 import type { ProductEmailPort } from "~/shared/email/index.server";
 import type {
@@ -65,8 +66,7 @@ import type { LoggerPort } from "~/shared/logging/logger-port.server";
 import { StoreIncidentsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents-adapter.server";
 import { LegalConsentVersionsAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/legal/legal-consent-versions-adapter.server";
 import { createManagementAuthConfig } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-auth-config.server";
-import { createManagementAuthenticatorAdapter } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/create-management-authenticator-adapter.server";
-import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
+import { ApiKeyManagementAuthenticatorAdapter } from "~/bounded-contexts/sales/store/adapters/outbound/access/api-key-management-authenticator-adapter.server";
 
 type ManagementAuth = {
   managementAuthenticatorPort: ManagementAuthenticatorPort;
@@ -274,16 +274,14 @@ export function composeStoreFeature(
   };
 }
 
-export function composeManagementAuth(site: {
-  managementApiConfig: ManagementApiConfig;
+export function composeManagementAuth(handles: {
+  apiKeyAccountsFacade: ApiKeyAccountsFacade;
   publicAppUrl: string;
 }): ManagementAuth {
   return {
-    managementAuthenticatorPort: createManagementAuthenticatorAdapter(
-      site.managementApiConfig,
+    managementAuthenticatorPort: new ApiKeyManagementAuthenticatorAdapter(
+      handles.apiKeyAccountsFacade,
     ),
-    config: createManagementAuthConfig(site.managementApiConfig, {
-      PUBLIC_APP_URL: site.publicAppUrl,
-    }),
+    config: createManagementAuthConfig(handles.publicAppUrl),
   };
 }

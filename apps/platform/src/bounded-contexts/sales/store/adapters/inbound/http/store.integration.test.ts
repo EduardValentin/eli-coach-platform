@@ -12,7 +12,15 @@ import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
 } from "~/shared/submission-checks/bot-detection";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import {
   ApiIntegrationTestSuite,
@@ -22,10 +30,12 @@ import {
   resendFailsWithoutVerdict,
   resendRejects,
 } from "~integration-test-config/wire-mock/expectations/resend-emails";
+import { PlatformRig } from "~integration-test-config/platform-rig";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-const MANAGEMENT_SECRET = "integration-management-api-secret-value";
+const rig = new PlatformRig(suite);
+let managementAuthorization = "";
 const publishedAt = new Date("2026-07-30T10:00:00.000Z");
 const republishedAt = new Date("2026-07-30T11:00:00.000Z");
 const storeSubmissionToken = turnstileTokenForAction(
@@ -44,6 +54,10 @@ const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
 describe("Store integration", () => {
   beforeAll(async () => {
     await suite.start();
+  });
+
+  beforeEach(async () => {
+    managementAuthorization = await rig.authorizeStorePublishing();
   });
 
   afterEach(async () => {
@@ -1076,7 +1090,7 @@ async function changeSeededProductPrice(body: {
       {
         body: JSON.stringify(body),
         headers: {
-          authorization: `Bearer ${MANAGEMENT_SECRET}`,
+          authorization: managementAuthorization,
           "content-type": "application/json",
           "x-forwarded-proto": "https",
         },

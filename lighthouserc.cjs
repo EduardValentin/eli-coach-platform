@@ -9,8 +9,6 @@ const LIGHTHOUSE_CLERK_SIGN_IN_URL =
   "https://distinct-mastiff-1353.accounts.dev/sign-in";
 const LIGHTHOUSE_CLERK_SIGN_UP_URL =
   "https://distinct-mastiff-1353.accounts.dev/sign-up";
-const LIGHTHOUSE_MANAGEMENT_API_SECRET =
-  "lighthouse-audit-dummy-management-api-secret-value";
 
 // A Development instance redirects every cookieless page request through
 // Clerk's dev-browser handshake, which a Production visitor never sees and
@@ -24,7 +22,6 @@ Object.assign(process.env, {
   CLERK_SECRET_KEY: LIGHTHOUSE_CLERK_SECRET_KEY,
   CLERK_SIGN_IN_URL: LIGHTHOUSE_CLERK_SIGN_IN_URL,
   CLERK_SIGN_UP_URL: LIGHTHOUSE_CLERK_SIGN_UP_URL,
-  MANAGEMENT_API_SECRET: LIGHTHOUSE_MANAGEMENT_API_SECRET,
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: fs.mkdtempSync(

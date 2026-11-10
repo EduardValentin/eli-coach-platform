@@ -10,8 +10,15 @@ validation, checksums, and the publication record.
 
 ## Routes
 
-All require `Authorization: Bearer $MANAGEMENT_API_SECRET`, and HTTPS outside
-LOCAL. The credential is checked before the body is read.
+All require `Authorization: Bearer $STORE_API_KEY`, and HTTPS outside LOCAL.
+`STORE_API_KEY` is the agent's own name for a Clerk API key issued to the
+coach's user; the app keeps no copy of it. Each request asks Clerk who the key
+belongs to, and only a key whose user has a COACH account is admitted; the
+publication records her account as the publisher. A key never creates an
+account, so the coach must have signed in once on the environment the agent
+publishes to. Transport and credential are checked before the body is read.
+[CLERK.md](CLERK.md#store-publishing-api-keys) says how to create, hand over
+and revoke a key.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -94,7 +101,7 @@ pnpm --filter @eli-coach-platform/platform store:cover ./guide.pdf ./cover.webp
 
 ```bash
 curl -sS -X POST "$APP_URL/api/management/store/products" \
-  -H "Authorization: Bearer $MANAGEMENT_API_SECRET" \
+  -H "Authorization: Bearer $STORE_API_KEY" \
   -F 'metadata={"slug":"glute-growth-guide","idempotencyKey":"b2d1c0f6-6f1a-4a2e-9c37-2f5f9a4c1d88","title":"Glute Growth Guide","creatorName":"Eli Lungu","cardSummary":"A practical guide to training the glutes with intent.","detailDescription":"Anatomy, exercise selection, and an example workout.","includedItems":["The three glute muscles and what each one does"],"coverAlt":"Cover of Glute Growth Guide.","typeSlugs":["e-books","workouts"],"goalSlugs":["muscle-building"],"downloads":[{"field":"file0","customerFilename":"GluteGrowthGuide.pdf"}],"pricing":{"kind":"free"}};type=application/json' \
   -F 'cover=@./cover.webp' \
   -F 'file0=@./GluteGrowthGuide.pdf'
@@ -117,12 +124,12 @@ the rules above, so making a product free is always explicit:
 
 ```bash
 curl -sS -X POST "$APP_URL/api/management/store/products/42/prices" \
-  -H "Authorization: Bearer $MANAGEMENT_API_SECRET" \
+  -H "Authorization: Bearer $STORE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"idempotencyKey":"5c0e6a3e-1f0b-4d8e-a3f4-0a7b2c9d6e11","pricing":{"kind":"paid","eurCents":3900,"usdCents":4500}}'
 
 curl -sS -X POST "$APP_URL/api/management/store/products/42/prices" \
-  -H "Authorization: Bearer $MANAGEMENT_API_SECRET" \
+  -H "Authorization: Bearer $STORE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"idempotencyKey":"9a4f2d71-3c6e-4b0a-8e15-6d2f7c1b0a93","pricing":{"kind":"free"}}'
 ```
@@ -153,10 +160,11 @@ it rather than failing on the slug it created.
 | `200` | Dry run, replay, or retirement |
 | `201` | Published |
 | `400` | Rejected payload — `error.issues` says which rule |
-| `401` / `403` | Bad credential / not permitted or plaintext transport |
+| `401` | No credential, or a key Clerk does not accept (unknown, revoked, expired) |
+| `403` | `forbidden`: a valid key whose user is not the coach or has no account; `insecure_transport`: plain HTTP outside LOCAL |
 | `404` | Unknown product |
 | `409` | Key reused with a different payload |
 | `413` | Over 25 MB |
-| `503` | Database, filesystem, or auth provider unavailable |
+| `503` | Database, filesystem, or Clerk unavailable (`auth_unavailable` when the key could not be checked) |
 
 Failures publish nothing and leave no partial product visible.

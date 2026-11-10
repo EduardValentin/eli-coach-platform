@@ -145,13 +145,9 @@ Dashboard configuration this app assumes, and the opt-in TEST webhook relay
 (`deploy/test/docker-compose.webhook-relay.yml`), which needs its own
 `CLERK_WEBHOOK_RELAY_TOKEN` in the same runtime file.
 
-Publishing is guarded by one environment-scoped bearer secret:
-
-- `MANAGEMENT_API_SECRET`
-
-Outside LOCAL the app refuses to start with the `replace-me` placeholder or with
-anything shorter than 32 characters. It is a `terraform-infra` value on TEST and
-PROD like every other runtime secret.
+Store publishing needs no runtime secret of its own: the publishing agent holds
+a Clerk API key issued to the coach's user, and the app checks it with
+`CLERK_SECRET_KEY` (see [CLERK.md](CLERK.md#store-publishing-api-keys)).
 
 Local development can use Cloudflare's published testing keys from `.env.example`. Production runtime config must provide real Cloudflare keys; the app rejects production startup with the testing keys.
 

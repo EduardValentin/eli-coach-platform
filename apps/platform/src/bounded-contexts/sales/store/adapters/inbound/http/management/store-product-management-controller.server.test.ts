@@ -20,7 +20,7 @@ const PNG_BYTES = Uint8Array.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
 const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
-const PRINCIPAL = { kind: "machine", id: "management-api-agent" } as const;
+const PRINCIPAL = { kind: "user", id: "account-coach" } as const;
 
 const metadata = {
   cardSummary: "A practical guide to glute training.",
@@ -110,11 +110,7 @@ function createController(options: {
   useCases?: PublicationUseCases;
 }): StoreProductManagementController {
   return new StoreProductManagementController({
-    authConfig: {
-      principalId: PRINCIPAL.id,
-      secret: "a-management-secret-of-sufficient-length",
-      transportPolicy: options.transportPolicy ?? "any",
-    },
+    authConfig: { transportPolicy: options.transportPolicy ?? "any" },
     managementAuthenticatorPort:
       options.managementAuthenticatorPort ?? createAuthenticator(),
     ...(options.useCases ?? createUseCases()),
