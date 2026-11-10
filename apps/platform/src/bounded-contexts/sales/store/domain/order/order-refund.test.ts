@@ -37,4 +37,25 @@ describe("OrderRefund", () => {
       refundedAt: firstRefundedAt,
     });
   });
+
+  it("keeps the larger cumulative amount when an earlier refund's event arrives late", () => {
+    // arrange
+    const recorded = OrderRefund.reconstitute({
+      refundedMinorUnits: 2900,
+      refundedAt: firstRefundedAt,
+    });
+    const late = OrderRefund.received({
+      refundedMinorUnits: 2400,
+      refundedAt: laterRefundedAt,
+    });
+
+    // act
+    const updated = recorded.supersededBy(late);
+
+    // assert
+    expect(updated.toSnapshot()).toEqual({
+      refundedMinorUnits: 2900,
+      refundedAt: firstRefundedAt,
+    });
+  });
 });

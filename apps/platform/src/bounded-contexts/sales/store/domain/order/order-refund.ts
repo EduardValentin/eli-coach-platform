@@ -22,7 +22,10 @@ export class OrderRefund {
 
   supersededBy(later: OrderRefund): OrderRefund {
     return new OrderRefund({
-      refundedMinorUnits: later.refundedMinorUnits,
+      refundedMinorUnits: Math.max(
+        this.refundedMinorUnits,
+        later.refundedMinorUnits,
+      ),
       refundedAt: this.refundedAt,
     });
   }
