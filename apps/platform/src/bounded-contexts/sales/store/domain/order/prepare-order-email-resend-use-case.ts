@@ -34,11 +34,11 @@ export class PrepareOrderEmailResendUseCase {
     const order =
       await this.options.storeOrdersPort.findByCheckoutSession(sessionId);
 
-    if (!order || order.status === "refunded") {
+    if (!order || order.isRefunded()) {
       return { status: "not_found" };
     }
 
-    if (!order.isConfirmable()) {
+    if (!order.isPaid()) {
       return { status: "processing" };
     }
 

@@ -29,10 +29,10 @@ describe("OrderRefund", () => {
     });
 
     // act
-    const superseded = first.superseding(later);
+    const updated = first.supersededBy(later);
 
     // assert
-    expect(superseded.toSnapshot()).toEqual({
+    expect(updated.toSnapshot()).toEqual({
       refundedMinorUnits: 6800,
       refundedAt: firstRefundedAt,
     });

@@ -43,6 +43,7 @@ const ORDER_KEY = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
 const SECOND_ORDER_KEY = "1b2c3d4e-5f60-4b7c-9d8e-0f1a2b3c4d5e";
 const PAID_EVENT_ID = "evt_store_order_paid";
 const REFUND_EVENT_ID = "evt_store_order_refunded";
+const CART_TOTAL_MINOR_UNITS = 6800;
 const SECOND_REFUND_EVENT_ID = "evt_store_order_refunded_again";
 const placedAt = new Date("2026-11-09T10:00:00.000Z");
 const paidAt = new Date("2026-11-09T10:03:00.000Z");
@@ -713,9 +714,10 @@ describe("Store checkout integration", () => {
 
     // act
     const refund = await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
-      refundedMinorUnits: 6800,
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
     });
     const contents = await requestDownloadContents(
       downloadTokenFrom(orderEmail!),
@@ -725,7 +727,11 @@ describe("Store checkout integration", () => {
     // assert
     expect(refund.status).toBe(200);
     expect(await readRefunds()).toEqual([
-      { status: "refunded", refundedMinorUnits: 6800, refundedAt },
+      {
+        status: "refunded",
+        refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+        refundedAt,
+      },
     ]);
     expect(await readOrders()).toEqual([{ ...paidOrder, status: "refunded" }]);
     expect(await readOrderItems()).toEqual(paidItems);
@@ -748,6 +754,7 @@ describe("Store checkout integration", () => {
     await placeAndPay();
     await rig.holdClock(refundedAt);
     await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
       refundedMinorUnits: 1500,
@@ -756,9 +763,10 @@ describe("Store checkout integration", () => {
 
     // act
     const redelivered = await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
-      refundedMinorUnits: 6800,
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
     });
 
     // assert
@@ -781,6 +789,7 @@ describe("Store checkout integration", () => {
     const [orderEmail] = await suite.sentEmails();
     await rig.holdClock(refundedAt);
     await deliverRefundWebhook({
+      chargedMinorUnits: 3900,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
       refundedMinorUnits: 1500,
@@ -789,6 +798,7 @@ describe("Store checkout integration", () => {
 
     // act
     const secondRefund = await deliverRefundWebhook({
+      chargedMinorUnits: 3900,
       eventId: SECOND_REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
       refundedMinorUnits: 3900,
@@ -817,9 +827,10 @@ describe("Store checkout integration", () => {
 
     // act
     const refund = await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: "pi_nobody_holds",
-      refundedMinorUnits: 6800,
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
     });
 
     // assert
@@ -838,9 +849,10 @@ describe("Store checkout integration", () => {
     await seedCatalog();
     await placeAndPay();
     await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
-      refundedMinorUnits: 6800,
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
     });
 
     // act
@@ -859,9 +871,10 @@ describe("Store checkout integration", () => {
     await seedCatalog();
     await placeAndPay();
     await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
       eventId: REFUND_EVENT_ID,
       paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
-      refundedMinorUnits: 6800,
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
     });
 
     // act
@@ -944,7 +957,7 @@ async function deliverPaidWebhook(options: {
       event: {
         data: {
           object: paidStoreCheckoutSession({
-            amountTotal: options.amountTotal ?? 6800,
+            amountTotal: options.amountTotal ?? CART_TOTAL_MINOR_UNITS,
             createdAt: signedAt,
             currency:
               sessionRequest.form.get("line_items[0][price_data][currency]") ===
@@ -971,6 +984,7 @@ async function deliverPaidWebhook(options: {
 async function deliverRefundWebhook(refund: {
   eventId: string;
   paymentIntentId: string;
+  chargedMinorUnits: number;
   refundedMinorUnits: number;
 }): Promise<Response> {
   const signedAt = rig.now();
@@ -980,13 +994,13 @@ async function deliverRefundWebhook(refund: {
       event: {
         data: {
           object: {
-            amount: 6800,
+            amount: refund.chargedMinorUnits,
             amount_refunded: refund.refundedMinorUnits,
             currency: "eur",
             id: `ch_of_${refund.paymentIntentId}`,
             object: "charge",
             payment_intent: refund.paymentIntentId,
-            refunded: refund.refundedMinorUnits >= 6800,
+            refunded: refund.refundedMinorUnits >= refund.chargedMinorUnits,
           },
         },
         id: refund.eventId,

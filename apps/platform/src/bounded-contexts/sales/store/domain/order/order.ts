@@ -198,14 +198,18 @@ export class Order {
       order: new Order({
         ...this.props(),
         status: "refunded",
-        refund: this.refund?.superseding(refund) ?? refund,
+        refund: this.refund?.supersededBy(refund) ?? refund,
       }),
       firstRefund: this.refund === null,
     };
   }
 
-  isConfirmable(): boolean {
+  isPaid(): boolean {
     return this.status === "paid";
+  }
+
+  isRefunded(): boolean {
+    return this.status === "refunded";
   }
 
   chargeDiffers(payment: OrderPayment): boolean {

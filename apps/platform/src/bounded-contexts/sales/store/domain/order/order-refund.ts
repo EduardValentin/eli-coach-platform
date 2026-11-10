@@ -20,7 +20,7 @@ export class OrderRefund {
     return new OrderRefund(snapshot);
   }
 
-  superseding(later: OrderRefund): OrderRefund {
+  supersededBy(later: OrderRefund): OrderRefund {
     return new OrderRefund({
       refundedMinorUnits: later.refundedMinorUnits,
       refundedAt: this.refundedAt,

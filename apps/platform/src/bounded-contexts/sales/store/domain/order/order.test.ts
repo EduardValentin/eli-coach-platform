@@ -431,16 +431,21 @@ function paidOrder(): Order {
   return outcome.order;
 }
 
-function refundedOrder(refundedMinorUnits: number): Order {
-  const outcome = paidOrder().refundWith(
-    OrderRefund.received({ refundedMinorUnits, refundedAt }),
-  );
+function refundOf(order: Order, refund: OrderRefund) {
+  const outcome = order.refundWith(refund);
 
   if (outcome.status !== "refunded") {
     throw new Error("Expected the order to be refunded.");
   }
 
-  return outcome.order;
+  return outcome;
+}
+
+function refundedOrder(refundedMinorUnits: number): Order {
+  return refundOf(
+    paidOrder(),
+    OrderRefund.received({ refundedMinorUnits, refundedAt }),
+  ).order;
 }
 
 describe("Order refund", () => {
@@ -453,12 +458,10 @@ describe("Order refund", () => {
     });
 
     // act
-    const outcome = order.refundWith(refund);
+    const { order: refunded, firstRefund } = refundOf(order, refund);
 
     // assert
-    expect(outcome.status).toBe("refunded");
-    const refunded = outcome.status === "refunded" ? outcome.order : order;
-    expect(outcome).toMatchObject({ firstRefund: true });
+    expect(firstRefund).toBe(true);
     expect(refunded.status).toBe("refunded");
     expect(refunded.refund?.toSnapshot()).toEqual({
       refundedMinorUnits: 1500,
@@ -480,11 +483,10 @@ describe("Order refund", () => {
     });
 
     // act
-    const outcome = order.refundWith(later);
+    const { order: refunded, firstRefund } = refundOf(order, later);
 
     // assert
-    expect(outcome).toMatchObject({ status: "refunded", firstRefund: false });
-    const refunded = outcome.status === "refunded" ? outcome.order : order;
+    expect(firstRefund).toBe(false);
     expect(refunded.refund?.toSnapshot()).toEqual({
       refundedMinorUnits: 6800,
       refundedAt,
@@ -515,15 +517,22 @@ describe("Order refund", () => {
     expect(outcome).toEqual({ status: "already_paid" });
   });
 
-  it("is confirmable only while paid", () => {
+  it("tells a paid order from a refunded one", () => {
     // arrange
     const orders = [opened(placedOrder()), paidOrder(), refundedOrder(6800)];
 
     // act
-    const confirmable = orders.map((order) => order.isConfirmable());
+    const states = orders.map((order) => ({
+      paid: order.isPaid(),
+      refunded: order.isRefunded(),
+    }));
 
     // assert
-    expect(confirmable).toEqual([false, true, false]);
+    expect(states).toEqual([
+      { paid: false, refunded: false },
+      { paid: true, refunded: false },
+      { paid: false, refunded: true },
+    ]);
   });
 });
 
