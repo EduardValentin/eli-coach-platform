@@ -10,7 +10,15 @@ import {
 } from "~/bounded-contexts/legal/public";
 import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 import { STORE_ACQUISITION_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import {
   ApiIntegrationTestSuite,
@@ -37,7 +45,7 @@ import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expe
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const MANAGEMENT_SECRET = "integration-management-api-secret-value";
+let managementAuthorization = "";
 const BUYER = "woman@example.com";
 const ORDER_KEY = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
 const SECOND_ORDER_KEY = "1b2c3d4e-5f60-4b7c-9d8e-0f1a2b3c4d5e";
@@ -104,6 +112,10 @@ type StoreOrderRow = {
 describe("Store checkout integration", () => {
   beforeAll(async () => {
     await suite.start();
+  });
+
+  beforeEach(async () => {
+    managementAuthorization = await rig.authorizeStorePublishing();
   });
 
   afterEach(async () => {
@@ -982,7 +994,7 @@ function managementHeaders(
 ): Record<string, string> {
   return {
     ...headers,
-    authorization: `Bearer ${MANAGEMENT_SECRET}`,
+    authorization: managementAuthorization,
     "x-forwarded-proto": "https",
   };
 }

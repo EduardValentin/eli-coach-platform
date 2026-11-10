@@ -2,16 +2,38 @@ import { readdir } from "node:fs/promises";
 
 import { STORE_ACQUISITION_TURNSTILE_ACTION } from "~/shared/submission-checks/bot-detection";
 import { MAX_PUBLICATION_BYTES } from "~/bounded-contexts/sales/store/domain/product";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import {
   ApiIntegrationTestSuite,
   type SentEmail,
 } from "~integration-test-config/api-integration-test-suite";
+import {
+  CLIENT_SESSION,
+  COACH_SESSION,
+  PlatformRig,
+} from "~integration-test-config/platform-rig";
+import {
+  CLERK_API_KEY_VERIFICATION_PATH,
+  clerkFailsToVerifyApiKeys,
+  clerkVerifiesApiKey,
+} from "~integration-test-config/wire-mock/expectations/clerk-backend-api";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-const MANAGEMENT_SECRET = "integration-management-api-secret-value";
+const rig = new PlatformRig(suite);
+const CLIENT_API_KEY_SECRET = "ak_platformrigclient";
+const UNPROVISIONED_API_KEY_SECRET = "ak_platformrigunprovisioned";
+const UNPROVISIONED_SUBJECT_ID = "user_platformrigunprovisioned";
+let managementAuthorization = "";
 const storeSubmissionToken = turnstileTokenForAction(
   STORE_ACQUISITION_TURNSTILE_ACTION,
 );
@@ -47,6 +69,10 @@ describe("Store management integration", () => {
     await suite.start();
   });
 
+  beforeEach(async () => {
+    managementAuthorization = await rig.authorizeStorePublishing();
+  });
+
   afterEach(async () => {
     await suite.reset();
   });
@@ -55,9 +81,9 @@ describe("Store management integration", () => {
     await suite.stop();
   });
 
-  it("refuses an unauthenticated publication without storing the upload", async () => {
+  it("refuses a key Clerk does not know without storing the upload", async () => {
     // arrange
-    const request = publicationRequest({ credential: "Bearer wrong-secret" });
+    const request = publicationRequest({ credential: "Bearer ak_unknown" });
 
     // act
     const response = await suite.request(request);
@@ -66,6 +92,104 @@ describe("Store management integration", () => {
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({
       error: { code: "unauthorized" },
+    });
+    await expect(assetRootEntries()).resolves.toEqual([]);
+  });
+
+  it("refuses the retired shared management secret as an unknown key", async () => {
+    // arrange
+    const request = publicationRequest({
+      credential: "Bearer integration-management-api-secret-value",
+    });
+
+    // act
+    const response = await suite.request(request);
+
+    // assert
+    expect(response.status).toBe(401);
+    await expect(assetRootEntries()).resolves.toEqual([]);
+  });
+
+  it("refuses a request without a credential before asking Clerk", async () => {
+    // arrange
+    const request = publicationRequest({ credential: null });
+
+    // act
+    const response = await suite.request(request);
+
+    // assert
+    expect(response.status).toBe(401);
+    await expect(
+      suite.wireMock.recordedRequests(CLERK_API_KEY_VERIFICATION_PATH),
+    ).resolves.toEqual([]);
+    await expect(assetRootEntries()).resolves.toEqual([]);
+  });
+
+  it("forbids a client's key without storing the upload", async () => {
+    // arrange
+    await rig.provisionClient();
+    await suite.wireMock.stub(
+      clerkVerifiesApiKey({
+        secret: CLIENT_API_KEY_SECRET,
+        subjectId: CLIENT_SESSION.subjectId,
+      }),
+    );
+
+    // act
+    const response = await suite.request(
+      publicationRequest({ credential: `Bearer ${CLIENT_API_KEY_SECRET}` }),
+    );
+
+    // assert
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      error: { code: "forbidden" },
+    });
+    await expect(assetRootEntries()).resolves.toEqual([]);
+  });
+
+  it("forbids a key whose user has no account, and creates none", async () => {
+    // arrange
+    await suite.wireMock.stub(
+      clerkVerifiesApiKey({
+        secret: UNPROVISIONED_API_KEY_SECRET,
+        subjectId: UNPROVISIONED_SUBJECT_ID,
+      }),
+    );
+
+    // act
+    const response = await suite.request(
+      publicationRequest({
+        credential: `Bearer ${UNPROVISIONED_API_KEY_SECRET}`,
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      error: { code: "forbidden" },
+    });
+    await expect(
+      suite.postgres.countRows({
+        tableName: "app.accounts",
+        values: [UNPROVISIONED_SUBJECT_ID],
+        whereClause: "auth_subject_id = $1",
+      }),
+    ).resolves.toBe(0);
+    await expect(assetRootEntries()).resolves.toEqual([]);
+  });
+
+  it("answers temporarily unavailable when Clerk cannot check the key", async () => {
+    // arrange
+    await suite.wireMock.stub(clerkFailsToVerifyApiKeys);
+
+    // act
+    const response = await suite.request(publicationRequest());
+
+    // assert
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      error: { code: "auth_unavailable" },
     });
     await expect(assetRootEntries()).resolves.toEqual([]);
   });
@@ -82,25 +206,30 @@ describe("Store management integration", () => {
     expect(await response.json()).toMatchObject({
       error: { code: "insecure_transport" },
     });
+    await expect(assetRootEntries()).resolves.toEqual([]);
   });
 
   it("refuses an upload beyond the publication ceiling", async () => {
     // arrange
-    const request = new Request(suite.url("/api/management/store/products"), {
-      body: new Uint8Array(MAX_PUBLICATION_BYTES + 1),
-      headers: {
-        authorization: `Bearer ${MANAGEMENT_SECRET}`,
-        "content-type": "multipart/form-data; boundary=oversized",
-        "x-forwarded-proto": "https",
-      },
-      method: "POST",
-    });
+    const request = oversizedPublicationRequest(managementAuthorization);
 
     // act
     const response = await suite.request(request);
 
     // assert
     expect(response.status).toBe(413);
+    await expect(assetRootEntries()).resolves.toEqual([]);
+  });
+
+  it("checks the credential before reading an oversized upload", async () => {
+    // arrange
+    const request = oversizedPublicationRequest("Bearer ak_unknown");
+
+    // act
+    const response = await suite.request(request);
+
+    // assert
+    expect(response.status).toBe(401);
     await expect(assetRootEntries()).resolves.toEqual([]);
   });
 
@@ -210,6 +339,23 @@ describe("Store management integration", () => {
       goals: [{ slug: "muscle-building" }],
     });
     await expect(assetRootEntries()).resolves.toEqual(["covers", "products"]);
+  });
+
+  it("records the coach's account as the publisher", async () => {
+    // arrange
+    // act
+    const response = await suite.request(publicationRequest());
+
+    // assert
+    expect(response.status).toBe(201);
+    await expect(
+      suite.postgres.countRows({
+        tableName: "app.product_publications",
+        values: [COACH_SESSION.subjectId],
+        whereClause:
+          "published_by_kind = 'user' and published_by_id = (select id::text from app.accounts where auth_subject_id = $1)",
+      }),
+    ).resolves.toBe(1);
   });
 
   it("returns the same publication when an idempotency key is replayed", async () => {
@@ -322,7 +468,7 @@ describe("Store management integration", () => {
         suite.url(`/api/management/store/products/${publication.productId}`),
         {
           headers: {
-            authorization: `Bearer ${MANAGEMENT_SECRET}`,
+            authorization: managementAuthorization,
             "x-forwarded-proto": "https",
           },
           method: "PATCH",
@@ -715,7 +861,7 @@ describe("Store management integration", () => {
         suite.url(`/api/management/store/products/${publication.productId}`),
         {
           headers: {
-            authorization: `Bearer ${MANAGEMENT_SECRET}`,
+            authorization: managementAuthorization,
             "x-forwarded-proto": "https",
           },
           method: "PATCH",
@@ -851,7 +997,7 @@ describe("Store management integration", () => {
     const response = await suite.request(
       new Request(suite.url("/api/management/store/products/4040"), {
         headers: {
-          authorization: `Bearer ${MANAGEMENT_SECRET}`,
+          authorization: managementAuthorization,
           "x-forwarded-proto": "https",
         },
         method: "PATCH",
@@ -866,7 +1012,7 @@ describe("Store management integration", () => {
 function publicationRequest(
   options: {
     coverBytes?: Uint8Array<ArrayBuffer>;
-    credential?: string;
+    credential?: string | null;
     downloadBytes?: Uint8Array<ArrayBuffer>;
     forwardedProtocol?: string;
     idempotencyKey?: string;
@@ -905,11 +1051,28 @@ function publicationRequest(
     new File([options.downloadBytes ?? PDF_BYTES], "guide.pdf"),
   );
 
+  const headers = new Headers({
+    "x-forwarded-proto": options.forwardedProtocol ?? "https",
+  });
+
+  if (options.credential !== null) {
+    headers.set("authorization", options.credential ?? managementAuthorization);
+  }
+
   return new Request(suite.url(path), {
     body: formData,
+    headers,
+    method: "POST",
+  });
+}
+
+function oversizedPublicationRequest(authorization: string): Request {
+  return new Request(suite.url("/api/management/store/products"), {
+    body: new Uint8Array(MAX_PUBLICATION_BYTES + 1),
     headers: {
-      authorization: options.credential ?? `Bearer ${MANAGEMENT_SECRET}`,
-      "x-forwarded-proto": options.forwardedProtocol ?? "https",
+      authorization,
+      "content-type": "multipart/form-data; boundary=oversized",
+      "x-forwarded-proto": "https",
     },
     method: "POST",
   });
@@ -934,7 +1097,7 @@ async function readCatalog(): Promise<CatalogBody> {
 function priceChangeRequest(
   productId: number,
   body: Record<string, unknown>,
-  credential = `Bearer ${MANAGEMENT_SECRET}`,
+  credential = managementAuthorization,
 ): Request {
   return new Request(
     suite.url(`/api/management/store/products/${productId}/prices`),
