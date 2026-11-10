@@ -7,7 +7,6 @@ type TermsDocument = {
 export type OrderTerms = {
   version: string;
   document: TermsDocument;
-  deliveryConfirmationNotice: string;
 };
 
 export interface OrderTermsPort {

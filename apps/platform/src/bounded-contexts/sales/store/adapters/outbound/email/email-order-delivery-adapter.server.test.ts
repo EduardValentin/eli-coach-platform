@@ -12,8 +12,6 @@ const terms = {
     contentType: "application/pdf",
     content: new Uint8Array([37, 80, 68, 70]),
   },
-  deliveryConfirmationNotice:
-    "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw.",
 };
 
 const orderEmail: OrderEmail = {
@@ -88,9 +86,7 @@ describe("EmailOrderDeliveryAdapter", () => {
     expect(sent.html).toContain("FREE");
     expect(sent.html).toContain("TOTAL (EUR)");
     expect(sent.html).toContain("€68.00");
-    expect(sent.html).toContain(
-      "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw. Your Terms &amp; Conditions (version 1.0) are attached.",
-    );
+    expect(sent.html).not.toContain("right to withdraw");
     expect(sent.html).not.toContain('href="https://eli.example/eli/terms"');
     expect(sent.html).toContain(
       "Stripe sends your payment receipt in a separate email.",
@@ -100,9 +96,7 @@ describe("EmailOrderDeliveryAdapter", () => {
     );
     expect(sent.text).toContain("- Hormone Harmony E-Book — FREE");
     expect(sent.text).toContain("TOTAL (EUR): €68.00");
-    expect(sent.text).toContain(
-      "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw. Your Terms & Conditions (version 1.0) are attached.",
-    );
+    expect(sent.text).not.toContain("right to withdraw");
   });
 
   it("names the provider's key after the order attempt", () => {

@@ -30,8 +30,6 @@ export const STORE_ORDER_EMAIL_COPY = {
   orderEyebrow: "YOUR ORDER",
   freeLabel: "FREE",
   receiptNote: "Stripe sends your payment receipt in a separate email.",
-  termsAttachedNote: (termsVersion: string) =>
-    `Your Terms & Conditions (version ${termsVersion}) are attached.`,
   footer:
     "You received this email because you placed an order in the Evoa Fitness store.",
 } as const;
@@ -45,7 +43,6 @@ export type StoreOrderEmailViewModel = {
   contactEmail: string;
   currentYear: number;
   currency: string;
-  deliveryConfirmation: string;
   downloadUrl: string;
   lines: readonly StoreOrderEmailLine[];
   total: string;
@@ -137,9 +134,6 @@ export function StoreOrderEmailTemplate(options: StoreOrderEmailViewModel) {
             <EmailSection style={reassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
                 {COPY.receiptNote}
-              </EmailText>
-              <EmailText style={reassuranceTextStyle}>
-                {options.deliveryConfirmation}
               </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{" "}

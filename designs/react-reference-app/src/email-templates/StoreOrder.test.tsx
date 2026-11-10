@@ -45,7 +45,7 @@ describe('StoreOrder', () => {
     expect(rows.some((row) => row?.includes('€'))).toBe(false);
   });
 
-  it('carries one download action and confirms her immediate-delivery request with the Terms version she accepted', async () => {
+  it('carries one download action', async () => {
     // arrange
     const props: StoreOrderProps = {};
 
@@ -54,12 +54,6 @@ describe('StoreOrder', () => {
 
     // assert
     expect(screen.getByRole('link', { name: 'Download your order' })).toHaveAttribute('href', DOWNLOAD_URL);
-    expect(
-      screen.getByText(
-        'You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw. Your Terms & Conditions (version 1.0) are attached.',
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Terms & Conditions/ })).not.toBeInTheDocument();
     expect(screen.getByText('The link works for the next seven days.')).toBeInTheDocument();
     expect(
       screen

@@ -1,4 +1,3 @@
-import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
 import {
   EMAIL_BRAND,
   EMAIL_FONT_SANS,
@@ -36,8 +35,6 @@ const EYEBROW = 'Store — your order';
 const HEADING = 'Thank you for your order.';
 const SUBHEAD = 'Everything you ordered, in one download.';
 const BUTTON_LABEL = 'Download your order';
-
-const DELIVERY_CONFIRMATION = `${PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice} Your Terms & Conditions (version ${PAID_DIGITAL_DELIVERY_CONSENT.termsVersion}) are attached.`;
 
 const BODY_PARAGRAPHS = [
   'Hi there,',
@@ -141,7 +138,6 @@ export function StoreOrder({
               <EmailText style={reassuranceTextStyle}>
                 Stripe sends your payment receipt in a separate email.
               </EmailText>
-              <EmailText style={reassuranceTextStyle}>{DELIVERY_CONFIRMATION}</EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
                 <EmailLink href={`mailto:${contactEmail}`} style={inlineLinkStyle}>

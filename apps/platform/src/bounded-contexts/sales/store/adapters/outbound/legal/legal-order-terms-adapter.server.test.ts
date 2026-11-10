@@ -1,4 +1,3 @@
-import { PAID_DIGITAL_DELIVERY_CONSENT } from "~/bounded-contexts/legal/public";
 import { describe, expect, it, vi } from "vitest";
 
 import { LegalOrderTermsAdapter } from "./legal-order-terms-adapter.server";
@@ -30,8 +29,6 @@ describe("LegalOrderTermsAdapter", () => {
     expect(terms).toEqual({
       version: "1.0",
       document,
-      deliveryConfirmationNotice:
-        PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice,
     });
   });
 

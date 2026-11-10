@@ -69,7 +69,6 @@ export class EmailOrderDeliveryAdapter implements OrderDeliveryPort {
       contactEmail: this.options.contactEmail,
       currentYear: orderEmail.sentAt.getUTCFullYear(),
       currency: orderEmail.currency,
-      deliveryConfirmation: `${orderEmail.terms.deliveryConfirmationNotice} ${STORE_ORDER_EMAIL_COPY.termsAttachedNote(orderEmail.terms.version)}`,
       downloadUrl: downloadUrl.toString(),
       lines: orderEmail.lines.map((line) => ({
         title: line.title,
@@ -100,7 +99,6 @@ export class EmailOrderDeliveryAdapter implements OrderDeliveryPort {
       `TOTAL (${viewModel.currency}): ${viewModel.total}`,
       "",
       copy.receiptNote,
-      viewModel.deliveryConfirmation,
       `Questions? Reply to this email or write to ${viewModel.contactEmail}.`,
       "",
       copy.footer,

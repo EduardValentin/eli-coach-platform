@@ -245,8 +245,6 @@ const orderTerms = {
     contentType: "application/pdf",
     content: new Uint8Array([37, 80, 68, 70]),
   },
-  deliveryConfirmationNotice:
-    "You asked us to deliver right away and confirmed that this ends your 14-day right to withdraw.",
 };
 
 function createPlaceOrderUseCase(options: {

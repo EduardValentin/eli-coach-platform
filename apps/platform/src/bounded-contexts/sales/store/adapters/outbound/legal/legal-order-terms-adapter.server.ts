@@ -2,10 +2,7 @@ import type {
   OrderTerms,
   OrderTermsPort,
 } from "~/bounded-contexts/sales/store/domain/order";
-import {
-  PAID_DIGITAL_DELIVERY_CONSENT,
-  type TermsFacade,
-} from "~/bounded-contexts/legal/public";
+import type { TermsFacade } from "~/bounded-contexts/legal/public";
 
 export class LegalOrderTermsAdapter implements OrderTermsPort {
   constructor(private readonly termsFacade: TermsFacade) {}
@@ -20,8 +17,6 @@ export class LegalOrderTermsAdapter implements OrderTermsPort {
     return {
       version,
       document,
-      deliveryConfirmationNotice:
-        PAID_DIGITAL_DELIVERY_CONSENT.confirmationNotice,
     };
   }
 }
