@@ -94,7 +94,7 @@ async function fillPaidCheckoutForm(
 ) {
   await fillCheckoutForm(user, email);
   await user.click(
-    screen.getByRole('checkbox', { name: /^I expressly request/ }),
+    screen.getByRole('checkbox', { name: /^Start my download now/ }),
   );
 }
 
@@ -499,7 +499,7 @@ describe('CartDrawer', () => {
       expect(placeStoreOrder).not.toHaveBeenCalled();
       expect(
         screen.getByRole('checkbox', {
-          name: `${PAID_DIGITAL_DELIVERY_CONSENT.statement} (required)`,
+          name: `${PAID_DIGITAL_DELIVERY_CONSENT.statement} ${PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsLinkLabel} (required)`,
         }),
       ).not.toBeChecked();
     });
@@ -589,7 +589,7 @@ describe('CartDrawer', () => {
         'Checkout is temporarily unavailable. Your cart and details are saved, so please try again shortly.',
       );
       expect(screen.getByRole('textbox', { name: /email address/i })).toHaveValue('woman@example.com');
-      expect(screen.getByRole('checkbox', { name: /^I expressly request/ })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: /^Start my download now/ })).toBeChecked();
       expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeEnabled();
     });
   });
@@ -604,7 +604,7 @@ describe('CartDrawer', () => {
     await user.click(screen.getByRole('button', { name: /^continue$/i }));
 
     // assert
-    expect(screen.queryByRole('checkbox', { name: /^I expressly request/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /^Start my download now/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Your order' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /send my resources/i })).toBeDisabled();
   });

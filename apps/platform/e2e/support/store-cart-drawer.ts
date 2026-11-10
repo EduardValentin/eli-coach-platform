@@ -5,7 +5,7 @@ import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 export const FREE_TAG = "Free";
 
 const IMMEDIATE_DELIVERY_REQUEST =
-  /^I expressly request that Evoa Fitness begin supplying the digital content/;
+  /^Start my download now\. I understand I lose my 14-day right to withdraw/;
 
 export class StoreCartDrawer {
   constructor(private readonly page: Page) {}

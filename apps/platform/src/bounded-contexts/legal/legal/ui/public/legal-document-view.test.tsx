@@ -71,6 +71,22 @@ const LEGAL_DOCUMENT_FIXTURE = {
 } as const satisfies LegalDocument;
 
 describe("LegalDocumentView", () => {
+  it("anchors each section by its id so a link can open the document at it", () => {
+    // arrange
+    // act
+    render(
+      <MemoryRouter>
+        <LegalDocumentView document={LEGAL_DOCUMENT_FIXTURE} />
+      </MemoryRouter>,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Supported blocks" })
+        .parentElement,
+    ).toHaveAttribute("id", "supported-blocks");
+  });
+
   it("renders each legal block with native semantics and safe link behavior", () => {
     // arrange
     // act

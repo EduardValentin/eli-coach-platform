@@ -110,6 +110,12 @@ describe("StoreCartDrawer with a plan in the cart", () => {
     ).toEqual(["€39.00", "Free", "€39.00"]);
     expect(deliveryConsent(dialog)).not.toBeChecked();
     expect(
+      within(dialog).getByRole("link", { name: "How withdrawal works" }),
+    ).toHaveAttribute(
+      "href",
+      "/terms#immediate-digital-delivery-and-withdrawal",
+    );
+    expect(
       within(dialog).getByText(
         /We use your email to process your order and keep evidence of your purchase and choices\./,
       ),
@@ -365,7 +371,9 @@ describe("StoreCartDrawer with only free resources", () => {
     ).not.toBeInTheDocument();
     expect(
       within(dialog).queryByRole("checkbox", {
-        name: requiredName(PAID_DIGITAL_DELIVERY_CONSENT.statement),
+        name: requiredName(
+          `${PAID_DIGITAL_DELIVERY_CONSENT.statement} ${PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsLinkLabel}`,
+        ),
       }),
     ).not.toBeInTheDocument();
     expect(
@@ -474,7 +482,9 @@ function termsCheckbox(dialog: HTMLElement): HTMLElement {
 
 function deliveryConsent(dialog: HTMLElement): HTMLElement {
   return within(dialog).getByRole("checkbox", {
-    name: requiredName(PAID_DIGITAL_DELIVERY_CONSENT.statement),
+    name: requiredName(
+      `${PAID_DIGITAL_DELIVERY_CONSENT.statement} ${PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsLinkLabel}`,
+    ),
   });
 }
 

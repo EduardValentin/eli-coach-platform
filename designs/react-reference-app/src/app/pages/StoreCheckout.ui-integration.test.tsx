@@ -70,7 +70,7 @@ async function continueToHostedPage(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: /^continue$/i }));
   await user.type(screen.getByRole('textbox', { name: /email address/i }), 'woman@example.com');
   await user.click(screen.getByRole('checkbox', { name: /^I agree to the Terms/ }));
-  await user.click(screen.getByRole('checkbox', { name: /^I expressly request/ }));
+  await user.click(screen.getByRole('checkbox', { name: /^Start my download now/ }));
   await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
   await screen.findByRole('heading', { name: 'Pay for your order' }, WAIT);
 }
@@ -228,7 +228,7 @@ describe('paying for a store cart through the Stripe stand-in', () => {
       // assert
       expect(within(drawer).getByRole('textbox', { name: /email address/i })).toHaveValue('woman@example.com');
       expect(within(drawer).getByRole('checkbox', { name: /^I agree to the Terms/ })).toBeChecked();
-      expect(within(drawer).getByRole('checkbox', { name: /^I expressly request/ })).toBeChecked();
+      expect(within(drawer).getByRole('checkbox', { name: /^Start my download now/ })).toBeChecked();
       expect(within(drawer).getByRole('checkbox', { name: /^Keep me posted/ })).not.toBeChecked();
       expect(within(drawer).getByRole('button', { name: 'Continue to payment' })).toBeEnabled();
     },

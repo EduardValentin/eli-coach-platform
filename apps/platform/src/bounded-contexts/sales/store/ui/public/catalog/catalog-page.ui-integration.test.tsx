@@ -879,7 +879,7 @@ describe("returning from a cancelled payment", () => {
       within(dialog).getByRole("checkbox", { name: /^I agree to the Terms/ }),
     ).toBeChecked();
     expect(
-      within(dialog).getByRole("checkbox", { name: /^I expressly request/ }),
+      within(dialog).getByRole("checkbox", { name: /^Start my download now/ }),
     ).toBeChecked();
     expect(
       within(dialog).getByRole("button", { name: "Continue to payment" }),

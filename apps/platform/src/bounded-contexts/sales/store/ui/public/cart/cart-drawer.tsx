@@ -477,7 +477,18 @@ function PaidCheckoutDetails(
                 checkboxParity="delivery-consent-checkbox"
                 data-parity="delivery-consent"
                 disabled={props.isSubmitting}
-                label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
+                label={
+                  <>
+                    {PAID_DIGITAL_DELIVERY_CONSENT.statement}{" "}
+                    <Link
+                      reloadDocument
+                      to={PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsHref}
+                      variant="in-text"
+                    >
+                      {PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsLinkLabel}
+                    </Link>
+                  </>
+                }
                 layout="statement"
                 onBlur={field.onBlur}
                 onCheckedChange={field.onChange}

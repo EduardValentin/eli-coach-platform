@@ -1,42 +1,61 @@
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
-import { useNavigate } from 'react-router';
-import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from 'lucide-react';
-import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import { useNavigate } from "react-router";
+import { CheckCircle2, Loader2, Mail, ShoppingBag, Trash2 } from "lucide-react";
+import { PAID_DIGITAL_DELIVERY_CONSENT } from "~/bounded-contexts/legal/public";
 
-import { isPaid, useStore, type CartItem, type Currency, type PaidProduct } from '../context/StoreContext';
-import { useAppState } from '../context/AppContext';
-import { storeOrderLines, type StoreOrderLine } from '../domain/storeOrder';
-import { CheckboxField } from './CheckboxField';
-import { DisabledActionHint } from './DisabledActionHint';
-import { DismissibleNotice } from './DismissibleNotice';
-import { FreeTag } from './FreeTag';
-import { Price } from './Price';
-import { InlineProblem } from './InlineProblem';
-import { StoreOrderSummary } from './StoreOrderSummary';
-import { Button } from './ThemeButton';
-import { Alert } from './ui/alert';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Link, linkVariants } from './ui/link';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from './ui/sheet';
-import { LABEL_CLASS } from './typography';
+import {
+  isPaid,
+  useStore,
+  type CartItem,
+  type Currency,
+  type PaidProduct,
+} from "../context/StoreContext";
+import { useAppState } from "../context/AppContext";
+import { storeOrderLines, type StoreOrderLine } from "../domain/storeOrder";
+import { CheckboxField } from "./CheckboxField";
+import { DisabledActionHint } from "./DisabledActionHint";
+import { DismissibleNotice } from "./DismissibleNotice";
+import { FreeTag } from "./FreeTag";
+import { Price } from "./Price";
+import { InlineProblem } from "./InlineProblem";
+import { StoreOrderSummary } from "./StoreOrderSummary";
+import { Button } from "./ThemeButton";
+import { Alert } from "./ui/alert";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Link, linkVariants } from "./ui/link";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
+import { LABEL_CLASS } from "./typography";
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
   STORE_ACQUISITION_ERROR_MESSAGES,
   submitStoreAcquisition,
-} from '../services/storeAcquisitionService';
-import { placeStoreOrder, SUBADDRESS_REFUSED_MESSAGE } from '../services/storeOrderService';
+} from "../services/storeAcquisitionService";
+import {
+  placeStoreOrder,
+  SUBADDRESS_REFUSED_MESSAGE,
+} from "../services/storeOrderService";
 
-const CONTACT_EMAIL = 'contact@evoa.fit';
-const EMAIL_PROBLEM = 'Enter a valid email address.';
-const TERMS_PROBLEM = 'Accept the Terms & Conditions to continue.';
-const PAID_SUBMIT_HINT = 'Enter your email and tick both required boxes to continue.';
+const CONTACT_EMAIL = "contact@evoa.fit";
+const EMAIL_PROBLEM = "Enter a valid email address.";
+const TERMS_PROBLEM = "Accept the Terms & Conditions to continue.";
+const PAID_SUBMIT_HINT =
+  "Enter your email and tick both required boxes to continue.";
 const CHECKOUT_UNAVAILABLE_PROBLEM =
-  'Checkout is temporarily unavailable. Your cart and details are saved, so please try again shortly.';
-const PAYMENT_NOT_COMPLETED_NOTICE = 'Payment not completed. Your cart is saved.';
+  "Checkout is temporarily unavailable. Your cart and details are saved, so please try again shortly.";
+const PAYMENT_NOT_COMPLETED_NOTICE =
+  "Payment not completed. Your cart is saved.";
 
-type CheckoutStep = 'cart' | 'details' | 'success';
+type CheckoutStep = "cart" | "details" | "success";
 
 export function CartDrawer() {
   const {
@@ -56,8 +75,8 @@ export function CartDrawer() {
   const { appState } = useAppState();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<CheckoutStep>('cart');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<CheckoutStep>("cart");
+  const [email, setEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [deliveryConsent, setDeliveryConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
@@ -81,7 +100,7 @@ export function CartDrawer() {
   }, [emailFocusRequest]);
 
   useEffect(() => {
-    if (cartNotice !== 'payment-not-completed') return;
+    if (cartNotice !== "payment-not-completed") return;
 
     const rememberedDetails = takeCheckoutDetails();
     if (rememberedDetails) {
@@ -94,12 +113,14 @@ export function CartDrawer() {
 
   const isPaidCheckout = cart.some((item) => isPaid(item.product));
   const canSubmit = !isSubmitting && email.trim().length > 0 && termsAccepted;
-  const canContinueToPayment = email.trim().length > 0 && termsAccepted && deliveryConsent;
-  const termsProblem = submitAttempted && !termsAccepted ? TERMS_PROBLEM : undefined;
+  const canContinueToPayment =
+    email.trim().length > 0 && termsAccepted && deliveryConsent;
+  const termsProblem =
+    submitAttempted && !termsAccepted ? TERMS_PROBLEM : undefined;
 
   const closeDrawer = () => {
     setIsCartOpen(false);
-    setStep('cart');
+    setStep("cart");
     setSubmitAttempted(false);
     setEmailProblem(null);
     setResponseProblem(null);
@@ -121,7 +142,7 @@ export function CartDrawer() {
   const showDetails = () => {
     setResponseProblem(null);
     dismissCartNotice();
-    setStep('details');
+    setStep("details");
   };
 
   const deliver = async (submittedEmail: string) => {
@@ -134,7 +155,7 @@ export function CartDrawer() {
         marketingConsent,
         outcome: appState.storeCheckoutOutcome,
       });
-      setStep('success');
+      setStep("success");
       setTermsAccepted(false);
       setMarketingConsent(false);
       setSubmitAttempted(false);
@@ -145,9 +166,9 @@ export function CartDrawer() {
         return;
       }
       setResponseProblem(error.message);
-      if (error.code === 'UNAVAILABLE_PRODUCT' && cart.length > 0) {
+      if (error.code === "UNAVAILABLE_PRODUCT" && cart.length > 0) {
         removeFromCart(cart[cart.length - 1].product.id);
-        setStep('cart');
+        setStep("cart");
       }
     } finally {
       setIsSubmitting(false);
@@ -168,19 +189,26 @@ export function CartDrawer() {
     });
     setIsSubmitting(false);
 
-    if (placed.status === 'opened') {
-      rememberCheckoutDetails({ email, termsAccepted, deliveryConsent, marketingConsent });
+    if (placed.status === "opened") {
+      rememberCheckoutDetails({
+        email,
+        termsAccepted,
+        deliveryConsent,
+        marketingConsent,
+      });
       closeDrawer();
       navigate(placed.checkoutUrl);
       return;
     }
-    if (placed.status === 'subaddress_refused') {
+    if (placed.status === "subaddress_refused") {
       showEmailProblem(SUBADDRESS_REFUSED_MESSAGE);
       return;
     }
-    if (placed.status === 'unavailable_products') {
-      setResponseProblem(unavailableProductsProblem(cart, placed.availableProductIds));
-      setStep('cart');
+    if (placed.status === "unavailable_products") {
+      setResponseProblem(
+        unavailableProductsProblem(cart, placed.availableProductIds),
+      );
+      setStep("cart");
       return;
     }
     setResponseProblem(CHECKOUT_UNAVAILABLE_PROBLEM);
@@ -228,7 +256,7 @@ export function CartDrawer() {
 
   const detailsStep: CartDetailsStepProps = {
     fields,
-    onBack: () => setStep('cart'),
+    onBack: () => setStep("cart"),
     responseError: responseProblem,
     responseErrorId,
   };
@@ -241,7 +269,7 @@ export function CartDrawer() {
         data-parity-root="CartDrawer"
         onOpenAutoFocus={(event) => {
           openerRef.current = document.activeElement as HTMLElement | null;
-          if (cartNotice === 'payment-not-completed') {
+          if (cartNotice === "payment-not-completed") {
             event.preventDefault();
             closeButtonRef.current?.focus();
           }
@@ -249,11 +277,16 @@ export function CartDrawer() {
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           const opener = openerRef.current;
-          const focusTarget = opener?.isConnected ? opener : document.querySelector('main');
+          const focusTarget = opener?.isConnected
+            ? opener
+            : document.querySelector("main");
           focusTarget?.focus();
         }}
       >
-        <div className="border-b border-border-subtle bg-surface-page px-6 py-6" data-parity="cart-header">
+        <div
+          className="border-b border-border-subtle bg-surface-page px-6 py-6"
+          data-parity="cart-header"
+        >
           <SheetTitle className="flex items-center gap-2 !text-display-sm leading-8">
             <ShoppingBag aria-hidden="true" className="text-brand" />
             Your cart
@@ -262,8 +295,11 @@ export function CartDrawer() {
             Review your cart and tell us which email to use.
           </SheetDescription>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6" data-parity="cart-body">
-          {step === 'cart' && (
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6"
+          data-parity="cart-body"
+        >
+          {step === "cart" && (
             <CartReview
               items={cart}
               formatPrice={formatPrice}
@@ -272,7 +308,7 @@ export function CartDrawer() {
               onRemove={removeFromCart}
               responseError={responseProblem}
               notice={
-                cartNotice === 'payment-not-completed' && (
+                cartNotice === "payment-not-completed" && (
                   <DismissibleNotice
                     className="mb-2"
                     data-parity="payment-not-completed-notice"
@@ -284,7 +320,7 @@ export function CartDrawer() {
               }
             />
           )}
-          {step === 'details' && isPaidCheckout && (
+          {step === "details" && isPaidCheckout && (
             <PaidCheckoutDetails
               {...detailsStep}
               canContinueToPayment={canContinueToPayment}
@@ -298,10 +334,14 @@ export function CartDrawer() {
               onSubmit={submitPaidCheckout}
             />
           )}
-          {step === 'details' && !isPaidCheckout && (
-            <FreeClaimDetails {...detailsStep} canSubmit={canSubmit} onSubmit={submitFreeClaim} />
+          {step === "details" && !isPaidCheckout && (
+            <FreeClaimDetails
+              {...detailsStep}
+              canSubmit={canSubmit}
+              onSubmit={submitFreeClaim}
+            />
           )}
-          {step === 'success' && <AcquisitionSuccess />}
+          {step === "success" && <AcquisitionSuccess />}
         </div>
       </SheetContent>
     </Sheet>
@@ -333,13 +373,20 @@ type CartDetailsSubmission = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-function FreeClaimDetails(props: CartDetailsStepProps & CartDetailsSubmission & { canSubmit: boolean }) {
+function FreeClaimDetails(
+  props: CartDetailsStepProps & CartDetailsSubmission & { canSubmit: boolean },
+) {
   return (
     <CartDetailsForm
       {...props}
       intro="Enter your email and we'll send one private download link for everything in your cart."
       submitAction={
-        <Button disabled={!props.canSubmit} size="lg-tight" type="submit" width="full">
+        <Button
+          disabled={!props.canSubmit}
+          size="lg-tight"
+          type="submit"
+          width="full"
+        >
           <SubmitLabel isSubmitting={props.fields.isSubmitting} />
         </Button>
       }
@@ -364,7 +411,13 @@ function PaidCheckoutDetails(
 ) {
   const isSubmitting = props.fields.isSubmitting;
   const paidSubmit = (
-    <Button aria-busy={isSubmitting || undefined} disabled={isSubmitting} size="lg-tight" type="submit" width="full">
+    <Button
+      aria-busy={isSubmitting || undefined}
+      disabled={isSubmitting}
+      size="lg-tight"
+      type="submit"
+      width="full"
+    >
       <PaidSubmitLabel isSubmitting={isSubmitting} />
     </Button>
   );
@@ -377,13 +430,19 @@ function PaidCheckoutDetails(
         props.canContinueToPayment ? (
           paidSubmit
         ) : (
-          <DisabledActionHint reason={PAID_SUBMIT_HINT}>{paidSubmit}</DisabledActionHint>
+          <DisabledActionHint reason={PAID_SUBMIT_HINT}>
+            {paidSubmit}
+          </DisabledActionHint>
         )
       }
     >
       <div className="mt-6" data-parity="order-summary-block">
         <h3 className={LABEL_CLASS}>Your order</h3>
-        <StoreOrderSummary className="mt-2" currency={props.currency} lines={props.lines} />
+        <StoreOrderSummary
+          className="mt-2"
+          currency={props.currency}
+          lines={props.lines}
+        />
       </div>
       <CartDetailsFields
         fields={props.fields}
@@ -394,7 +453,17 @@ function PaidCheckoutDetails(
             checked={props.deliveryConsent}
             data-parity="delivery-consent"
             disabled={isSubmitting}
-            label={PAID_DIGITAL_DELIVERY_CONSENT.statement}
+            label={
+              <>
+                {PAID_DIGITAL_DELIVERY_CONSENT.statement}{" "}
+                <Link
+                  to={PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsHref}
+                  variant="in-text"
+                >
+                  {PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsLinkLabel}
+                </Link>
+              </>
+            }
             layout="statement"
             onCheckedChange={props.onDeliveryConsentChange}
             required
@@ -407,13 +476,22 @@ function PaidCheckoutDetails(
 
 function CartDetailsForm(
   props: CartDetailsStepProps &
-    CartDetailsSubmission & { children: ReactNode; intro: string; submitAction: ReactNode },
+    CartDetailsSubmission & {
+      children: ReactNode;
+      intro: string;
+      submitAction: ReactNode;
+    },
 ) {
   return (
     <form className="flex flex-1 flex-col" noValidate onSubmit={props.onSubmit}>
       <div>
-        <h2 className="font-serif text-display-sm leading-8 text-text-primary">Almost there</h2>
-        <p className="mt-2 text-sm text-text-secondary" data-parity="details-intro">
+        <h2 className="font-serif text-display-sm leading-8 text-text-primary">
+          Almost there
+        </h2>
+        <p
+          className="mt-2 text-sm text-text-secondary"
+          data-parity="details-intro"
+        >
           {props.intro}
         </p>
         {props.children}
@@ -425,8 +503,16 @@ function CartDetailsForm(
           </div>
         )}
       </div>
-      <div className="mt-auto flex gap-4 border-t border-border-subtle pt-6" data-parity="details-actions">
-        <Button disabled={props.fields.isSubmitting} onClick={props.onBack} size="lg" variant="outline">
+      <div
+        className="mt-auto flex gap-4 border-t border-border-subtle pt-6"
+        data-parity="details-actions"
+      >
+        <Button
+          disabled={props.fields.isSubmitting}
+          onClick={props.onBack}
+          size="lg"
+          variant="outline"
+        >
           Back
         </Button>
         {props.submitAction}
@@ -451,7 +537,9 @@ function CartDetailsFields({
           Email address
         </Label>
         <Input
-          aria-describedby={fields.emailProblem ? fields.emailErrorId : undefined}
+          aria-describedby={
+            fields.emailProblem ? fields.emailErrorId : undefined
+          }
           aria-invalid={fields.emailProblem ? true : undefined}
           autoComplete="email"
           disabled={fields.isSubmitting}
@@ -479,7 +567,7 @@ function CartDetailsFields({
           errorRole="alert"
           label={
             <>
-              I agree to the{' '}
+              I agree to the{" "}
               <Link to="/terms" variant="in-text">
                 Terms &amp; Conditions
               </Link>
@@ -500,8 +588,11 @@ function CartDetailsFields({
           layout="statement"
           onCheckedChange={fields.onMarketingConsentChange}
         />
-        <p className="text-sm leading-relaxed text-text-secondary" data-parity="privacy-note">
-          {privacyPurpose} Read our{' '}
+        <p
+          className="text-sm leading-relaxed text-text-secondary"
+          data-parity="privacy-note"
+        >
+          {privacyPurpose} Read our{" "}
           <Link to="/privacy" variant="in-text">
             Privacy Policy
           </Link>
@@ -512,42 +603,53 @@ function CartDetailsFields({
   );
 }
 
-function unavailableProductsProblem(cart: CartItem[], availableProductIds: string[]): string {
+function unavailableProductsProblem(
+  cart: CartItem[],
+  availableProductIds: string[],
+): string {
   const availableTitles = cart
     .filter((item) => availableProductIds.includes(item.product.id))
     .map((item) => item.product.title);
 
   if (availableTitles.length === 0) {
-    return 'The items in your cart are no longer available. Remove them to continue.';
+    return "The items in your cart are no longer available. Remove them to continue.";
   }
 
-  return `Some items in your cart are no longer available. Still available: ${availableTitles.join(', ')}. Remove the rest to continue.`;
+  return `Some items in your cart are no longer available. Still available: ${availableTitles.join(", ")}. Remove the rest to continue.`;
 }
 
 function SubmitLabel(props: { isSubmitting: boolean }) {
   if (props.isSubmitting) {
     return (
       <>
-        <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />
+        <Loader2
+          aria-hidden="true"
+          className="animate-spin motion-reduce:hidden"
+          size={18}
+        />
         Sending…
       </>
     );
   }
 
-  return 'Send my resources';
+  return "Send my resources";
 }
 
 function PaidSubmitLabel(props: { isSubmitting: boolean }) {
   if (props.isSubmitting) {
     return (
       <>
-        <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />
+        <Loader2
+          aria-hidden="true"
+          className="animate-spin motion-reduce:hidden"
+          size={18}
+        />
         Opening checkout…
       </>
     );
   }
 
-  return 'Continue to payment';
+  return "Continue to payment";
 }
 
 function CartReview(props: {
@@ -562,9 +664,17 @@ function CartReview(props: {
   if (props.items.length === 0) {
     return (
       <div className="m-auto text-center">
-        <ShoppingBag aria-hidden="true" className="mx-auto mb-4 text-icon-muted" size={44} />
-        <p className="font-serif text-display-sm text-text-primary">Your cart is empty</p>
-        <p className="mt-2 text-sm text-text-secondary">Add a plan or a free resource from the store to get started.</p>
+        <ShoppingBag
+          aria-hidden="true"
+          className="mx-auto mb-4 text-icon-muted"
+          size={44}
+        />
+        <p className="font-serif text-display-sm text-text-primary">
+          Your cart is empty
+        </p>
+        <p className="mt-2 text-sm text-text-secondary">
+          Add a plan or a free resource from the store to get started.
+        </p>
       </div>
     );
   }
@@ -579,7 +689,11 @@ function CartReview(props: {
       )}
       <ul className="divide-y divide-border-subtle">
         {props.items.map((item) => (
-          <li className="flex gap-4 py-4" data-parity="cart-item" key={item.product.id}>
+          <li
+            className="flex gap-4 py-4"
+            data-parity="cart-item"
+            key={item.product.id}
+          >
             <img
               alt={`Cover of ${item.product.title}.`}
               className="h-24 w-20 rounded-field object-cover shadow-card"
@@ -597,7 +711,11 @@ function CartReview(props: {
                   {props.formatPrice(item.product)}
                 </Price>
               ) : (
-                <FreeTag className="mt-1 self-start" data-parity="cart-item-type" size="sm" />
+                <FreeTag
+                  className="mt-1 self-start"
+                  data-parity="cart-item-type"
+                  size="sm"
+                />
               )}
               <button
                 aria-label={`Remove ${item.product.title} from cart`}
@@ -611,7 +729,10 @@ function CartReview(props: {
           </li>
         ))}
       </ul>
-      <div className="mt-auto border-t border-border-subtle pt-6" data-parity="cart-summary">
+      <div
+        className="mt-auto border-t border-border-subtle pt-6"
+        data-parity="cart-summary"
+      >
         {props.total && (
           <dl className="mb-6 flex items-baseline justify-between gap-4">
             <dt className={LABEL_CLASS}>Total</dt>
@@ -622,7 +743,12 @@ function CartReview(props: {
             </dd>
           </dl>
         )}
-        <Button onClick={props.onContinue} size="lg" variant="inverted" width="full">
+        <Button
+          onClick={props.onContinue}
+          size="lg"
+          variant="inverted"
+          width="full"
+        >
           Continue
         </Button>
       </div>
@@ -639,13 +765,19 @@ function AcquisitionSuccess() {
       >
         <CheckCircle2 aria-hidden="true" size={32} />
       </span>
-      <h2 className="font-serif text-display-md text-text-primary">Check your inbox</h2>
+      <h2 className="font-serif text-display-md text-text-primary">
+        Check your inbox
+      </h2>
       <p className="mx-auto mt-3 max-w-sm text-text-secondary">
-        Your resources are on their way. The private download link will stay active for seven days.
+        Your resources are on their way. The private download link will stay
+        active for seven days.
       </p>
       <p className="mt-5 text-sm text-text-secondary">
-        Nothing there? Contact{' '}
-        <a className={linkVariants({ variant: 'in-text' })} href={`mailto:${CONTACT_EMAIL}`}>
+        Nothing there? Contact{" "}
+        <a
+          className={linkVariants({ variant: "in-text" })}
+          href={`mailto:${CONTACT_EMAIL}`}
+        >
           {CONTACT_EMAIL}
         </a>
         .
