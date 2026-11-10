@@ -78,6 +78,15 @@ export class PostgresDownloadGrantRepository implements DownloadGrantsPort {
       items: groupGrantItems(result.rows),
     });
   }
+
+  async revokeForOrder(orderId: string): Promise<void> {
+    await this.executor.execute(sql`
+      update app.download_grants
+      set status = 'revoked'
+      where order_id = ${orderId}
+        and status = 'active'
+    `);
+  }
 }
 
 function groupGrantItems(

@@ -35,22 +35,23 @@ export class StoreCartDrawer {
   }
 
   async continueToPayment(email: string): Promise<void> {
-    await this.dialog.getByRole("button", { name: "Continue" }).click();
-    await this.dialog
-      .getByRole("textbox", { name: "Email address (required)", exact: true })
-      .fill(email);
-    await this.dialog
-      .getByRole("checkbox", {
-        name: "I agree to the Terms & Conditions. (required)",
-        exact: true,
-      })
-      .check();
+    await this.enterDetails(email);
     await this.dialog
       .getByRole("checkbox", { name: IMMEDIATE_DELIVERY_REQUEST })
       .check();
     await this.dialog
       .getByRole("button", { name: "Continue to payment" })
       .click();
+  }
+
+  async sendFreeResources(email: string): Promise<void> {
+    await this.enterDetails(email);
+    await this.dialog
+      .getByRole("button", { name: "Send my resources" })
+      .click();
+    await expect(
+      this.dialog.getByRole("heading", { name: "Check your inbox" }),
+    ).toBeVisible();
   }
 
   async expectOpen(): Promise<void> {
@@ -78,5 +79,18 @@ export class StoreCartDrawer {
   async expectTotal(price: string): Promise<void> {
     await expect(this.dialog.getByRole("term")).toHaveText("Total");
     await expect(this.dialog.getByRole("definition")).toHaveText(price);
+  }
+
+  private async enterDetails(email: string): Promise<void> {
+    await this.dialog.getByRole("button", { name: "Continue" }).click();
+    await this.dialog
+      .getByRole("textbox", { name: "Email address (required)", exact: true })
+      .fill(email);
+    await this.dialog
+      .getByRole("checkbox", {
+        name: "I agree to the Terms & Conditions. (required)",
+        exact: true,
+      })
+      .check();
   }
 }

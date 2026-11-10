@@ -464,6 +464,8 @@ export const storeOrdersTable = appSchema.table(
     chargedMinorUnits: integer("charged_minor_units"),
     chargedCurrency: varchar("charged_currency", { length: 3 }),
     paidAt: timestamp("paid_at", { withTimezone: true }),
+    refundedMinorUnits: integer("refunded_minor_units"),
+    refundedAt: timestamp("refunded_at", { withTimezone: true }),
     termsVersion: varchar("terms_version", { length: 64 }).notNull(),
     privacyPolicyVersion: varchar("privacy_policy_version", {
       length: 64,
@@ -491,6 +493,9 @@ export const storeOrdersTable = appSchema.table(
     uniqueIndex("store_orders_checkout_session_unique").on(
       table.checkoutSessionId,
     ),
+    uniqueIndex("store_orders_payment_intent_unique")
+      .on(table.paymentIntentId)
+      .where(sql`${table.paymentIntentId} is not null`),
     index("store_orders_recipient_placed_idx").on(
       table.recipientId,
       table.placedAt,
@@ -505,7 +510,7 @@ export const storeOrdersTable = appSchema.table(
     ),
     check(
       "store_orders_status_check",
-      sql`${table.status} in ('pending', 'paid')`,
+      sql`${table.status} in ('pending', 'paid', 'refunded')`,
     ),
     check(
       "store_orders_checkout_check",
@@ -513,7 +518,11 @@ export const storeOrdersTable = appSchema.table(
     ),
     check(
       "store_orders_payment_check",
-      sql`(${table.status} = 'paid' and ${table.checkoutSessionId} is not null and ${table.chargedMinorUnits} is not null and ${table.chargedMinorUnits} >= 0 and ${table.chargedCurrency} is not null and ${table.paidAt} is not null) or (${table.status} = 'pending' and ${table.paymentIntentId} is null and ${table.chargedMinorUnits} is null and ${table.chargedCurrency} is null and ${table.paidAt} is null)`,
+      sql`(${table.status} in ('paid', 'refunded') and ${table.checkoutSessionId} is not null and ${table.chargedMinorUnits} is not null and ${table.chargedMinorUnits} >= 0 and ${table.chargedCurrency} is not null and ${table.paidAt} is not null) or (${table.status} = 'pending' and ${table.paymentIntentId} is null and ${table.chargedMinorUnits} is null and ${table.chargedCurrency} is null and ${table.paidAt} is null)`,
+    ),
+    check(
+      "store_orders_refund_check",
+      sql`(${table.status} = 'refunded' and ${table.refundedMinorUnits} > 0 and ${table.refundedAt} is not null) or (${table.status} <> 'refunded' and ${table.refundedMinorUnits} is null and ${table.refundedAt} is null)`,
     ),
     check(
       "store_orders_marketing_consent_check",

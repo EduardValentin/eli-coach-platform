@@ -31,6 +31,7 @@ const activeGrant = DownloadGrant.reconstitute({
 function createDownloadGrants(grant: DownloadGrant | null): DownloadGrantsPort {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(grant),
+    revokeForOrder: vi.fn().mockResolvedValue(undefined),
   };
 }
 

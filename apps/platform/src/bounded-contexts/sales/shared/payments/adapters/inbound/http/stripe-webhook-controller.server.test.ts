@@ -7,6 +7,8 @@ import type {
 } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 import type { PaymentCompletionHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-completion-handler-port.server";
 import type { PaymentEventsPort } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-events-port.server";
+import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";
+import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { describe, expect, it, vi } from "vitest";
 
 import { StripeWebhookController } from "./stripe-webhook-controller.server";
@@ -300,15 +302,21 @@ describe("StripeWebhookController with a subscription change", () => {
 });
 
 describe("StripeWebhookController with a refunded charge", () => {
-  it("hands the refund to the one refund handler and acknowledges it", async () => {
+  it("stops at the first refund handler that owns the refund and acknowledges it", async () => {
     // arrange
-    const { stripeWebhookController, refundHandler } = createController({
+    const {
+      stripeWebhookController,
+      storeRefundHandler,
+      subscriptionRefundHandler,
+      incidents,
+    } = createController({
       verdict: {
         kind: "charge_refunded",
         eventId: "evt_refunded",
         refund: chargeRefund,
       },
     });
+    storeRefundHandler.handle.mockResolvedValue("recorded");
 
     // act
     const response = await stripeWebhookController.handleEvent(
@@ -317,15 +325,17 @@ describe("StripeWebhookController with a refunded charge", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(refundHandler.handle).toHaveBeenCalledWith(
+    expect(storeRefundHandler.handle).toHaveBeenCalledWith(
       "evt_refunded",
       chargeRefund,
     );
+    expect(subscriptionRefundHandler.handle).not.toHaveBeenCalled();
+    expect(incidents.paymentEventUnrouted).not.toHaveBeenCalled();
   });
 
-  it("answers 500 and reports the refunds handler when it fails", async () => {
+  it("offers a refund one handler does not own to the next one", async () => {
     // arrange
-    const { stripeWebhookController, refundHandler, incidents } =
+    const { stripeWebhookController, subscriptionRefundHandler, incidents } =
       createController({
         verdict: {
           kind: "charge_refunded",
@@ -333,7 +343,102 @@ describe("StripeWebhookController with a refunded charge", () => {
           refund: chargeRefund,
         },
       });
-    refundHandler.handle.mockRejectedValue(new Error("database down"));
+
+    // act
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(subscriptionRefundHandler.handle).toHaveBeenCalledWith(
+      "evt_refunded",
+      chargeRefund,
+    );
+    expect(incidents.paymentEventUnrouted).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges a refund no handler owns and reports it unrouted", async () => {
+    // arrange
+    const { stripeWebhookController, subscriptionRefundHandler, incidents } =
+      createController({
+        verdict: {
+          kind: "charge_refunded",
+          eventId: "evt_refunded",
+          refund: chargeRefund,
+        },
+      });
+    subscriptionRefundHandler.handle.mockResolvedValue("unowned");
+
+    // act
+    const response = await stripeWebhookController.handleEvent(
+      createWebhookRequest(),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(incidents.paymentEventUnrouted).toHaveBeenCalledWith({
+      eventId: "evt_refunded",
+      purpose: null,
+    });
+  });
+
+  it("offers the refund to every handler inside one unit of work", async () => {
+    // arrange
+    const events: string[] = [];
+    const {
+      stripeWebhookController,
+      storeRefundHandler,
+      subscriptionRefundHandler,
+    } = createController({
+      verdict: {
+        kind: "charge_refunded",
+        eventId: "evt_refunded",
+        refund: chargeRefund,
+      },
+      unitOfWork: async (work) => {
+        events.push("unit-of-work-opened");
+        const outcome = await work();
+        events.push("unit-of-work-committed");
+        return outcome;
+      },
+    });
+    storeRefundHandler.handle.mockImplementation(async () => {
+      events.push("store");
+      return "unowned";
+    });
+    subscriptionRefundHandler.handle.mockImplementation(async () => {
+      events.push("subscriptions");
+      return "recorded";
+    });
+
+    // act
+    await stripeWebhookController.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(events).toEqual([
+      "unit-of-work-opened",
+      "store",
+      "subscriptions",
+      "unit-of-work-committed",
+    ]);
+  });
+
+  it("answers 500 and reports the refunds handler when one fails", async () => {
+    // arrange
+    const {
+      stripeWebhookController,
+      storeRefundHandler,
+      subscriptionRefundHandler,
+      incidents,
+    } = createController({
+      verdict: {
+        kind: "charge_refunded",
+        eventId: "evt_refunded",
+        refund: chargeRefund,
+      },
+    });
+    storeRefundHandler.handle.mockRejectedValue(new Error("database down"));
 
     // act
     const response = await stripeWebhookController.handleEvent(
@@ -342,11 +447,13 @@ describe("StripeWebhookController with a refunded charge", () => {
 
     // assert
     expect(response.status).toBe(500);
+    expect(subscriptionRefundHandler.handle).not.toHaveBeenCalled();
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
       error: expect.any(Error),
       eventId: "evt_refunded",
       handler: "charge-refunds",
     });
+    expect(incidents.paymentEventUnrouted).not.toHaveBeenCalled();
   });
 });
 
@@ -464,6 +571,7 @@ describe("StripeWebhookController when the handler fails", () => {
 function createController(options: {
   outcome?: HandlerOutcome;
   signingSecret?: string | undefined;
+  unitOfWork?: UnitOfWork;
   verdict: PaymentEventVerdict;
 }) {
   const verify = vi.fn().mockResolvedValue(options.verdict);
@@ -475,7 +583,16 @@ function createController(options: {
     purpose: "coaching-subscription",
     handle: vi.fn().mockResolvedValue("recorded"),
   };
-  const refundHandler = { handle: vi.fn().mockResolvedValue("recorded") };
+  const storeRefundHandler = {
+    handle: vi
+      .fn<PaymentRefundHandlerPort["handle"]>()
+      .mockResolvedValue("unowned"),
+  };
+  const subscriptionRefundHandler = {
+    handle: vi
+      .fn<PaymentRefundHandlerPort["handle"]>()
+      .mockResolvedValue("recorded"),
+  };
   const cardHandler = { handle: vi.fn().mockResolvedValue("recorded") };
   const incidents = {
     paymentEventHandlingFailed: vi.fn(),
@@ -483,14 +600,14 @@ function createController(options: {
   };
   const paymentEventsPort: PaymentEventsPort = { verify };
   const stripeWebhookController = new StripeWebhookController({
-    unitOfWork: (work) => work(),
+    unitOfWork: options.unitOfWork ?? ((work) => work()),
     paymentCardHandlerPort: cardHandler,
     completionHandlersByPurpose: new Map([
       [coachingHandler.purpose, coachingHandler],
     ]),
     paymentWebhookIncidentsPort: incidents,
     paymentEventsPort,
-    paymentRefundHandlerPort: refundHandler,
+    paymentRefundHandlers: [storeRefundHandler, subscriptionRefundHandler],
     subscriptionChangeHandlersByPurpose: new Map([
       [subscriptionHandler.purpose, subscriptionHandler],
     ]),
@@ -503,8 +620,9 @@ function createController(options: {
     coachingHandler,
     stripeWebhookController,
     incidents,
-    refundHandler,
+    storeRefundHandler,
     subscriptionHandler,
+    subscriptionRefundHandler,
     verify,
   };
 }

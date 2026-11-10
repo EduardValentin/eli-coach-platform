@@ -12,6 +12,7 @@ import type {
   PaymentSubscriptionChange,
 } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-event-types.server";
 import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-refund-handler-port.server";
+import type { PaymentRefundHandling } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-event-handlers.server";
 import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-subscription-change-handler-port.server";
 import type { PaymentCardHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-card-handler-port.server";
 import type { PaymentEventsPort } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/payment-events-port.server";
@@ -25,7 +26,7 @@ type StripeWebhookControllerOptions = {
   >;
   paymentWebhookIncidentsPort: PaymentWebhookIncidentsPort;
   paymentEventsPort: PaymentEventsPort;
-  paymentRefundHandlerPort: PaymentRefundHandlerPort;
+  paymentRefundHandlers: readonly PaymentRefundHandlerPort[];
   signingSecret: string | undefined;
   subscriptionChangeHandlersByPurpose: ReadonlyMap<
     string,
@@ -155,11 +156,34 @@ export class StripeWebhookController {
     return this.deliver({
       eventId,
       handler: REFUNDS_HANDLER,
-      handle: () =>
-        this.options.unitOfWork(() =>
-          this.options.paymentRefundHandlerPort.handle(eventId, refund),
-        ),
+      handle: async () => {
+        const handling = await this.options.unitOfWork(() =>
+          this.offerRefund(eventId, refund),
+        );
+
+        if (handling === "unowned") {
+          this.options.paymentWebhookIncidentsPort.paymentEventUnrouted({
+            eventId,
+            purpose: null,
+          });
+        }
+      },
     });
+  }
+
+  private async offerRefund(
+    eventId: string,
+    refund: PaymentRefund,
+  ): Promise<PaymentRefundHandling> {
+    for (const paymentRefundHandlerPort of this.options.paymentRefundHandlers) {
+      const handling = await paymentRefundHandlerPort.handle(eventId, refund);
+
+      if (handling !== "unowned") {
+        return handling;
+      }
+    }
+
+    return "unowned";
   }
 
   private deliverCardChange(

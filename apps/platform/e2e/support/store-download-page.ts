@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 type StoreDownloadedFile = {
   suggestedFilename: string;
@@ -18,18 +18,43 @@ const COMMENT_LENGTH_OFFSET = 32;
 export class StoreDownloadPage {
   constructor(private readonly page: Page) {}
 
+  private get downloadButton(): Locator {
+    return this.page.getByRole("button", { name: "Download your resources" });
+  }
+
   async open(link: string): Promise<void> {
-    await this.page.goto(link);
+    await this.openLink(link);
     await expect(
       this.page.getByRole("heading", { level: 1, name: "Your resources" }),
     ).toBeVisible();
   }
 
+  async openLink(link: string): Promise<void> {
+    await this.page.goto("about:blank");
+    await this.page.goto(link);
+  }
+
+  async requestDownload(): Promise<void> {
+    await this.downloadButton.click();
+  }
+
+  async expectUnavailable(): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", {
+        level: 1,
+        name: "This link is no longer available",
+      }),
+    ).toBeVisible();
+    await expect(this.downloadButton).toHaveCount(0);
+  }
+
+  async expectNoMentionOf(text: string): Promise<void> {
+    await expect(this.page.getByRole("main")).not.toContainText(text);
+  }
+
   async download(): Promise<StoreDownloadedFile> {
     const downloadEvent = this.page.waitForEvent("download");
-    await this.page
-      .getByRole("button", { name: "Download your resources" })
-      .click();
+    await this.downloadButton.click();
     const download = await downloadEvent;
 
     return {

@@ -42,8 +42,13 @@ const BUYER = "woman@example.com";
 const ORDER_KEY = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
 const SECOND_ORDER_KEY = "1b2c3d4e-5f60-4b7c-9d8e-0f1a2b3c4d5e";
 const PAID_EVENT_ID = "evt_store_order_paid";
+const REFUND_EVENT_ID = "evt_store_order_refunded";
+const CART_TOTAL_MINOR_UNITS = 6800;
+const SECOND_REFUND_EVENT_ID = "evt_store_order_refunded_again";
 const placedAt = new Date("2026-11-09T10:00:00.000Z");
 const paidAt = new Date("2026-11-09T10:03:00.000Z");
+const refundedAt = new Date("2026-11-10T09:00:00.000Z");
+const laterRefundedAt = new Date("2026-11-11T09:00:00.000Z");
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const PAST_COOLDOWN_MS = 2 * 60 * 1000;
 const CHECKOUT_COMPLETE_PAGE = "/store/checkout/complete";
@@ -81,6 +86,12 @@ const HORMONE_HARMONY: SeededProduct = {
   displayOrder: 3,
 };
 const CART = [FAT_LOSS.slug, NUTRITIONAL_RESET.slug, HORMONE_HARMONY.slug];
+
+type StoreOrderRefundRow = {
+  status: string;
+  refundedMinorUnits: number | null;
+  refundedAt: Date | null;
+};
 
 type StoreOrderRow = {
   id: string;
@@ -690,6 +701,199 @@ describe("Store checkout integration", () => {
     });
     expect(await readOrders()).toHaveLength(2);
   });
+
+  it("revokes a refunded order's download access, free items included, and keeps the rest of the order as it was", async () => {
+    // arrange
+    await rig.holdClock(placedAt);
+    await seedCatalog();
+    await placeAndPay();
+    const [orderEmail] = await suite.sentEmails();
+    const [paidOrder] = await readOrders();
+    const paidItems = await readOrderItems();
+    await rig.holdClock(refundedAt);
+
+    // act
+    const refund = await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+    });
+    const contents = await requestDownloadContents(
+      downloadTokenFrom(orderEmail!),
+    );
+    const download = await requestDownload(downloadTokenFrom(orderEmail!));
+
+    // assert
+    expect(refund.status).toBe(200);
+    expect(await readRefunds()).toEqual([
+      {
+        status: "refunded",
+        refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+        refundedAt,
+      },
+    ]);
+    expect(await readOrders()).toEqual([{ ...paidOrder, status: "refunded" }]);
+    expect(await readOrderItems()).toEqual(paidItems);
+    expect(await readGrants()).toEqual([
+      expect.objectContaining({ itemCount: 3, status: "revoked" }),
+    ]);
+    expect(contents.status).toBe(200);
+    expect(await contents.json()).toEqual({ status: "unavailable" });
+    expect(download.status).toBe(303);
+    expect(download.headers.get("Location")).toBe(
+      suite.path("/store/download?unavailable=1"),
+    );
+    expect(await suite.sentEmails()).toHaveLength(1);
+  });
+
+  it("changes nothing when Stripe delivers the same refund again", async () => {
+    // arrange
+    await rig.holdClock(placedAt);
+    await seedCatalog();
+    await placeAndPay();
+    await rig.holdClock(refundedAt);
+    await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: 1500,
+    });
+    await rig.holdClock(laterRefundedAt);
+
+    // act
+    const redelivered = await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+    });
+
+    // assert
+    expect(redelivered.status).toBe(200);
+    expect(await readRefunds()).toEqual([
+      { status: "refunded", refundedMinorUnits: 1500, refundedAt },
+    ]);
+    expect(await readGrants()).toEqual([
+      expect.objectContaining({ status: "revoked" }),
+    ]);
+  });
+
+  it("records a later refund's cumulative amount and keeps the first refund's time, the single file staying refused", async () => {
+    // arrange
+    await rig.holdClock(placedAt);
+    await seedCatalog();
+    await suite.wireMock.stub(stripeCreatesStoreCheckoutSession());
+    await placeOrder({ productSlugs: [FAT_LOSS.slug] });
+    await deliverPaidWebhook({ amountTotal: 3900 });
+    const [orderEmail] = await suite.sentEmails();
+    await rig.holdClock(refundedAt);
+    await deliverRefundWebhook({
+      chargedMinorUnits: 3900,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: 1500,
+    });
+    await rig.holdClock(laterRefundedAt);
+
+    // act
+    const secondRefund = await deliverRefundWebhook({
+      chargedMinorUnits: 3900,
+      eventId: SECOND_REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: 3900,
+    });
+    const download = await requestDownload(downloadTokenFrom(orderEmail!));
+
+    // assert
+    expect(secondRefund.status).toBe(200);
+    expect(await readRefunds()).toEqual([
+      { status: "refunded", refundedMinorUnits: 3900, refundedAt },
+    ]);
+    expect(await readGrants()).toEqual([
+      expect.objectContaining({ itemCount: 1, status: "revoked" }),
+    ]);
+    expect(download.status).toBe(303);
+    expect(download.headers.get("Location")).toBe(
+      suite.path("/store/download?unavailable=1"),
+    );
+  });
+
+  it("acknowledges a refund for a payment no order or subscription holds and leaves every order as it was", async () => {
+    // arrange
+    await seedCatalog();
+    await placeAndPay();
+    const ordersBefore = await readOrders();
+
+    // act
+    const refund = await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: "pi_nobody_holds",
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+    });
+
+    // assert
+    expect(refund.status).toBe(200);
+    expect(await readOrders()).toEqual(ordersBefore);
+    expect(await readRefunds()).toEqual([
+      { status: "paid", refundedMinorUnits: null, refundedAt: null },
+    ]);
+    expect(await readGrants()).toEqual([
+      expect.objectContaining({ status: "active" }),
+    ]);
+  });
+
+  it("lets the refunded buyer request the order's free product again and download it from the new link", async () => {
+    // arrange
+    await seedCatalog();
+    await placeAndPay();
+    await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+    });
+
+    // act
+    const freeRequest = await requestFreeAcquisition();
+    const [, freeEmail] = await suite.sentEmails();
+    const download = await requestDownload(downloadTokenFrom(freeEmail!));
+
+    // assert
+    expect(freeRequest.status).toBe(201);
+    expect(download.status).toBe(200);
+    expect(await download.text()).toBe(HORMONE_HARMONY.fileBytes);
+  });
+
+  it("shows a refunded order's page as payment not completed without asking Stripe, and answers not found to a resend", async () => {
+    // arrange
+    await seedCatalog();
+    await placeAndPay();
+    await deliverRefundWebhook({
+      chargedMinorUnits: CART_TOTAL_MINOR_UNITS,
+      eventId: REFUND_EVENT_ID,
+      paymentIntentId: paymentIntentOf(STRIPE_STORE_CHECKOUT_SESSION_ID),
+      refundedMinorUnits: CART_TOTAL_MINOR_UNITS,
+    });
+
+    // act
+    const response = await requestOrderPage(STRIPE_STORE_CHECKOUT_SESSION_ID);
+    const resend = await requestResend(STRIPE_STORE_CHECKOUT_SESSION_ID);
+
+    // assert
+    const page = await visibleDocument(response);
+    expect(response.status).toBe(200);
+    expect(page).toMatch(/<h1[^>]*>Payment not completed<\/h1>/);
+    expect(page).toContain("confirm a payment for this checkout");
+    expect(page).not.toContain(BUYER);
+    expect(await stripeSessionReads(STRIPE_STORE_CHECKOUT_SESSION_ID)).toBe(0);
+    expect(await resend.json()).toEqual({
+      success: true,
+      outcome: "not_found",
+    });
+    expect(await suite.sentEmails()).toHaveLength(1);
+  });
 });
 
 async function placeOrder(options: {
@@ -753,7 +957,7 @@ async function deliverPaidWebhook(options: {
       event: {
         data: {
           object: paidStoreCheckoutSession({
-            amountTotal: options.amountTotal ?? 6800,
+            amountTotal: options.amountTotal ?? CART_TOTAL_MINOR_UNITS,
             createdAt: signedAt,
             currency:
               sessionRequest.form.get("line_items[0][price_data][currency]") ===
@@ -770,6 +974,37 @@ async function deliverPaidWebhook(options: {
         },
         id: options.eventId ?? PAID_EVENT_ID,
         type: "checkout.session.completed",
+      },
+      signedAt,
+      url: suite.url("/api/stripe/webhooks"),
+    }),
+  );
+}
+
+async function deliverRefundWebhook(refund: {
+  eventId: string;
+  paymentIntentId: string;
+  chargedMinorUnits: number;
+  refundedMinorUnits: number;
+}): Promise<Response> {
+  const signedAt = rig.now();
+
+  return suite.request(
+    stripeWebhook({
+      event: {
+        data: {
+          object: {
+            amount: refund.chargedMinorUnits,
+            amount_refunded: refund.refundedMinorUnits,
+            currency: "eur",
+            id: `ch_of_${refund.paymentIntentId}`,
+            object: "charge",
+            payment_intent: refund.paymentIntentId,
+            refunded: refund.refundedMinorUnits >= refund.chargedMinorUnits,
+          },
+        },
+        id: refund.eventId,
+        type: "charge.refunded",
       },
       signedAt,
       url: suite.url("/api/stripe/webhooks"),
@@ -896,6 +1131,20 @@ async function readOrders(): Promise<StoreOrderRow[]> {
       join app.store_recipients recipient
         on recipient.id = store_order.recipient_id
       order by store_order.placed_at, store_order.id
+    `,
+    values: [],
+  });
+}
+
+async function readRefunds(): Promise<StoreOrderRefundRow[]> {
+  return suite.postgres.queryRows<StoreOrderRefundRow>({
+    sql: `
+      select
+        status,
+        refunded_minor_units as "refundedMinorUnits",
+        refunded_at as "refundedAt"
+      from app.store_orders
+      order by placed_at, id
     `,
     values: [],
   });

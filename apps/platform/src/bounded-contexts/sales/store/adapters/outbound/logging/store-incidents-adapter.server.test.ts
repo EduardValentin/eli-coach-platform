@@ -185,6 +185,34 @@ describe("StoreIncidentsAdapter", () => {
     );
   });
 
+  it("logs a refunded order by order, amount and currency as information", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const storeIncidentsAdapter = new StoreIncidentsAdapter(
+      new ConsoleLoggerAdapter(),
+    );
+
+    // act
+    storeIncidentsAdapter.orderRefunded({
+      orderId: "order-1",
+      refundedMinorUnits: 1500,
+      currency: "EUR",
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Store order was refunded and its download access revoked.",
+      {
+        currency: "EUR",
+        eventCategory: "store_order_refunded",
+        orderId: "order-1",
+        refundedMinorUnits: 1500,
+      },
+    );
+  });
+
   it("logs order email failures by order only", () => {
     // arrange
     const consoleError = vi

@@ -16,6 +16,9 @@ export interface OrderIncidentsPort {
   orderEmailRejected(incident: OrderIncident & { reason: string }): void;
   orderEmailAuditPending(incident: OrderIncident): void;
   orderLinkRotationPending(incident: OrderIncident): void;
+  orderRefunded(
+    incident: OrderIncident & { refundedMinorUnits: number; currency: string },
+  ): void;
   termsDocumentMissing(
     incident: OrderIncident & { termsVersion: string },
   ): void;

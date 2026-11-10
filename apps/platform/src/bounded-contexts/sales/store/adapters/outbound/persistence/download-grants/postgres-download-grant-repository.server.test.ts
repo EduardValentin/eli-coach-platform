@@ -1,3 +1,5 @@
+import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it, vi } from "vitest";
 
 import type { DatabaseClient } from "~/shared/database";
@@ -59,5 +61,26 @@ describe("PostgresDownloadGrantRepository", () => {
         },
       ],
     });
+  });
+
+  it("revokes the order's active grant and leaves every other grant alone", async () => {
+    // arrange
+    const execute = vi.fn().mockResolvedValue({ rows: [] });
+    const postgresDownloadGrantRepository = new PostgresDownloadGrantRepository(
+      {
+        execute,
+      } as unknown as DatabaseClient,
+    );
+
+    // act
+    await postgresDownloadGrantRepository.revokeForOrder("order-1");
+
+    // assert
+    const [[statement]] = execute.mock.calls as [[SQL]];
+    const query = new PgDialect().sqlToQuery(statement);
+    expect(query.sql.replace(/\s+/g, " ").trim()).toBe(
+      "update app.download_grants set status = 'revoked' where order_id = $1 and status = 'active'",
+    );
+    expect(query.params).toEqual(["order-1"]);
   });
 });

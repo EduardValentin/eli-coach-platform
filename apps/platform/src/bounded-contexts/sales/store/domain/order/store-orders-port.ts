@@ -46,6 +46,7 @@ export interface StoreOrdersPort {
   findByIdempotencyKey(idempotencyKey: string): Promise<Order | null>;
   findByCheckoutSession(sessionId: string): Promise<Order | null>;
   lockForPayment(orderId: string): Promise<Order | null>;
+  lockByPaymentIntent(paymentIntentId: string): Promise<Order | null>;
   place(order: Order): Promise<OrderRecording>;
   attachCheckout(command: AttachOrderCheckoutCommand): Promise<void>;
   recordPaymentWithGrant(
@@ -55,6 +56,7 @@ export interface StoreOrdersPort {
     command: PrepareOrderResendCommand,
   ): Promise<OrderResendPreparation>;
   rotateGrantToken(command: RotateGrantTokenCommand): Promise<void>;
+  recordRefund(order: Order): Promise<void>;
   recordEmailAccepted(command: {
     deliveryAttemptId: number;
     provider: string;

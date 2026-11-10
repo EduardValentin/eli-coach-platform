@@ -8,10 +8,12 @@ import { OrderCheckout } from "./order-checkout";
 import { OrderConsents } from "./order-consents";
 import { OrderEmailAttempt } from "./order-email-attempt";
 import { OrderPayment } from "./order-payment";
+import { OrderRefund } from "./order-refund";
 import { OrderRequest } from "./order-request";
 
 const placedAt = new Date("2026-11-09T10:00:00.000Z");
 const paidAt = new Date("2026-11-09T10:05:00.000Z");
+const refundedAt = new Date("2026-11-10T09:00:00.000Z");
 
 function publishedProduct(options: {
   id: number;
@@ -140,6 +142,7 @@ function opened(order: Order): Order {
       url: "https://checkout.stripe.com/c/pay/cs_test_1",
     }),
     payment: order.payment,
+    refund: order.refund,
     consents: order.consents,
     deliveryConsent: order.deliveryConsent,
     idempotencyKey: order.idempotencyKey,
@@ -407,6 +410,129 @@ describe("Order", () => {
       totalMinorUnits: 6800,
       termsVersion: "1.0",
     });
+  });
+});
+
+function paidOrder(): Order {
+  const outcome = opened(placedOrder()).markPaid(
+    OrderPayment.received({
+      checkoutSessionId: "cs_test_1",
+      paymentIntentId: "pi_1",
+      amountMinorUnits: 6800,
+      currency: "eur",
+      paidAt,
+    }),
+  );
+
+  if (outcome.status !== "paid") {
+    throw new Error("Expected the order to be paid.");
+  }
+
+  return outcome.order;
+}
+
+function refundOf(order: Order, refund: OrderRefund) {
+  const outcome = order.refundWith(refund);
+
+  if (outcome.status !== "refunded") {
+    throw new Error("Expected the order to be refunded.");
+  }
+
+  return outcome;
+}
+
+function refundedOrder(refundedMinorUnits: number): Order {
+  return refundOf(
+    paidOrder(),
+    OrderRefund.received({ refundedMinorUnits, refundedAt }),
+  ).order;
+}
+
+describe("Order refund", () => {
+  it("is refunded with the first refund, keeping its items, amounts, payment and consents", () => {
+    // arrange
+    const order = paidOrder();
+    const refund = OrderRefund.received({
+      refundedMinorUnits: 1500,
+      refundedAt,
+    });
+
+    // act
+    const { order: refunded, firstRefund } = refundOf(order, refund);
+
+    // assert
+    expect(firstRefund).toBe(true);
+    expect(refunded.status).toBe("refunded");
+    expect(refunded.refund?.toSnapshot()).toEqual({
+      refundedMinorUnits: 1500,
+      refundedAt,
+    });
+    expect(refunded.items).toBe(order.items);
+    expect(refunded.payment).toBe(order.payment);
+    expect(refunded.consents).toBe(order.consents);
+    expect(refunded.deliveryConsent).toBe(order.deliveryConsent);
+    expect(refunded.confirmation()).toEqual(order.confirmation());
+  });
+
+  it("takes a later refund's cumulative amount and keeps the first refund's moment", () => {
+    // arrange
+    const order = refundedOrder(1500);
+    const later = OrderRefund.received({
+      refundedMinorUnits: 6800,
+      refundedAt: new Date("2026-11-11T09:00:00.000Z"),
+    });
+
+    // act
+    const { order: refunded, firstRefund } = refundOf(order, later);
+
+    // assert
+    expect(firstRefund).toBe(false);
+    expect(refunded.refund?.toSnapshot()).toEqual({
+      refundedMinorUnits: 6800,
+      refundedAt,
+    });
+  });
+
+  it("refuses a refund for an order still waiting for its payment", () => {
+    // arrange
+    const order = opened(placedOrder());
+
+    // act
+    const outcome = order.refundWith(
+      OrderRefund.received({ refundedMinorUnits: 1500, refundedAt }),
+    );
+
+    // assert
+    expect(outcome).toEqual({ status: "not_paid" });
+  });
+
+  it("ignores a late completion for a refunded order like one for a paid order", () => {
+    // arrange
+    const order = refundedOrder(6800);
+
+    // act
+    const outcome = order.markPaid(order.payment!);
+
+    // assert
+    expect(outcome).toEqual({ status: "already_paid" });
+  });
+
+  it("tells a paid order from a refunded one", () => {
+    // arrange
+    const orders = [opened(placedOrder()), paidOrder(), refundedOrder(6800)];
+
+    // act
+    const states = orders.map((order) => ({
+      paid: order.isPaid(),
+      refunded: order.isRefunded(),
+    }));
+
+    // assert
+    expect(states).toEqual([
+      { paid: false, refunded: false },
+      { paid: true, refunded: false },
+      { paid: false, refunded: true },
+    ]);
   });
 });
 
