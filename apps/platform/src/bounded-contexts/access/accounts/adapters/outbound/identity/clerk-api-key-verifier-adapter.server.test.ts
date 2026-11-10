@@ -10,7 +10,16 @@ function clerkError(status: number, code: string): ClerkAPIResponseError {
   });
 }
 
-type VerifiedApiKey = { subject: string };
+type VerifiedApiKey = { expired: boolean; revoked: boolean; subject: string };
+
+function verifiedApiKey(overrides: Partial<VerifiedApiKey>): VerifiedApiKey {
+  return {
+    expired: false,
+    revoked: false,
+    subject: "user_coach",
+    ...overrides,
+  };
+}
 
 function clientVerifying(verify: (secret: string) => Promise<VerifiedApiKey>) {
   return { apiKeys: { verify } };
@@ -21,7 +30,7 @@ describe("ClerkApiKeyVerifierAdapter#verify", () => {
     // arrange
     const verify = vi
       .fn<(secret: string) => Promise<VerifiedApiKey>>()
-      .mockResolvedValue({ subject: "user_coach" });
+      .mockResolvedValue(verifiedApiKey({}));
     const clerkApiKeyVerifierAdapter = new ClerkApiKeyVerifierAdapter(
       clientVerifying(verify),
     );
@@ -37,7 +46,9 @@ describe("ClerkApiKeyVerifierAdapter#verify", () => {
   it("answers nobody for a valid key issued to an organization", async () => {
     // arrange
     const clerkApiKeyVerifierAdapter = new ClerkApiKeyVerifierAdapter(
-      clientVerifying(vi.fn().mockResolvedValue({ subject: "org_evoa" })),
+      clientVerifying(
+        vi.fn().mockResolvedValue(verifiedApiKey({ subject: "org_evoa" })),
+      ),
     );
 
     // act
@@ -46,6 +57,25 @@ describe("ClerkApiKeyVerifierAdapter#verify", () => {
     // assert
     expect(holder).toBeNull();
   });
+
+  it.each([
+    ["revoked", verifiedApiKey({ revoked: true })],
+    ["expired", verifiedApiKey({ expired: true })],
+  ])(
+    "answers nobody for a key Clerk still returns but marks %s",
+    async (_label, apiKey) => {
+      // arrange
+      const clerkApiKeyVerifierAdapter = new ClerkApiKeyVerifierAdapter(
+        clientVerifying(vi.fn().mockResolvedValue(apiKey)),
+      );
+
+      // act
+      const holder = await clerkApiKeyVerifierAdapter.verify("ak_coach");
+
+      // assert
+      expect(holder).toBeNull();
+    },
+  );
 
   it.each([
     ["unknown, revoked or expired", 404, "api_key_not_found"],
