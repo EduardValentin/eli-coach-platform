@@ -151,6 +151,7 @@
   --color-feedback-danger-on-inverted: #f87171;
   --color-feedback-success: #0f7a36;
   --color-feedback-success-soft: rgba(15, 122, 54, 0.1);
+  --color-feedback-warning: #a16207;
   --color-success-surface: #e8f6ed;
   --color-savings-badge-text: oklch(0.43 0.17 150.069);
   --color-savings-badge-surface: oklch(0.962 0.044 156.743);
@@ -399,6 +400,7 @@
   --color-feedback-danger-on-inverted: var(--color-feedback-danger-on-inverted);
   --color-feedback-success: var(--color-feedback-success);
   --color-feedback-success-soft: var(--color-feedback-success-soft);
+  --color-feedback-warning: var(--color-feedback-warning);
   --color-success-surface: var(--color-success-surface);
   --color-savings-badge-text: var(--color-savings-badge-text);
   --color-savings-badge-surface: var(--color-savings-badge-surface);
@@ -441,6 +443,10 @@
   --color-overlay-medium: var(--color-overlay-medium);
   --color-overlay-soft: var(--color-overlay-soft);
   --color-overlay-modal: var(--color-overlay-modal);
+
+  --z-index-sheet-overlay: 70;
+  --z-index-sheet: 71;
+  --z-index-floating-over-sheet: 72;
 }
 
 @layer base {

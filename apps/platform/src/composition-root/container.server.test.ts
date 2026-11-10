@@ -8,7 +8,7 @@ import { RouterContextProvider } from "react-router";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  coachingSalesContext,
+  subscriptionsContext,
   waitlistContext,
 } from "~/bounded-contexts/sales/public/request-context";
 
@@ -153,7 +153,7 @@ describe("platform container", () => {
     });
   });
 
-  it("closes coaching sales when the sales mode cannot be read without a database", async () => {
+  it("closes subscriptions when the sales mode cannot be read without a database", async () => {
     // arrange
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const container = createPlatformContainer({
@@ -163,7 +163,7 @@ describe("platform container", () => {
 
     // act
     const confirmation = context
-      .get(coachingSalesContext)
+      .get(subscriptionsContext)
       .checkoutsController.loadConfirmation(
         createRequestArgs({
           request: new Request(

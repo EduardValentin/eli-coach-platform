@@ -22,6 +22,8 @@ import { Pricing } from "./pages/Pricing";
 import { SelectBundle } from "./pages/SelectBundle";
 import { CheckoutStandIn } from "./pages/CheckoutStandIn";
 import { CheckoutComplete } from "./pages/CheckoutComplete";
+import { StoreCheckoutStandIn } from "./pages/StoreCheckoutStandIn";
+import { StoreOrderComplete } from "./pages/StoreOrderComplete";
 import { InvitationLanding } from "./pages/InvitationLanding";
 import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
@@ -126,11 +128,13 @@ export const router = createBrowserRouter(
         { path: "book", Component: Book },
         { path: "book/:bookingId/join", Component: JoinCall },
         { path: "store", Component: Store },
+        { path: "store/checkout/complete", Component: StoreOrderComplete },
         { path: "store/:productId", Component: ProductDetails },
         { path: "pricing", Component: Pricing },
         { path: "select-bundle", Component: SelectBundle },
         { path: "checkout/complete", Component: CheckoutComplete },
         { path: "checkout/:sessionId", Component: CheckoutStandIn },
+        { path: "checkout/store/:sessionId", Component: StoreCheckoutStandIn },
         { path: "invitation", Component: InvitationLanding },
         { path: "email-preview", Component: EmailPreview },
         { path: "downloads", Component: DownloadPage },

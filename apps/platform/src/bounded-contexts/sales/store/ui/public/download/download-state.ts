@@ -1,5 +1,5 @@
 import { joinBasePath } from "~/shared/http/base-path";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";
 
 export const DOWNLOAD_API_URL = joinBasePath(
@@ -20,16 +20,17 @@ export function resolvePrivateDownloadToken(
 
 export function usePrivateDownloadToken(): string | null {
   const [token, setToken] = useState<string | null>(null);
+  const resolvedToken = useRef<string | null>(null);
 
   useEffect(() => {
-    const resolvedToken = resolvePrivateDownloadToken(window.location);
+    resolvedToken.current ??= resolvePrivateDownloadToken(window.location);
 
     window.history.replaceState(
       window.history.state,
       "",
       `${window.location.pathname}${window.location.search}`,
     );
-    setToken(resolvedToken);
+    setToken(resolvedToken.current);
   }, []);
 
   return token;

@@ -251,6 +251,42 @@ describe("StoreCartDrawer", () => {
     });
   });
 
+  it("puts focus on Close when the cart reopens after a cancelled payment", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const loadedDialog = await screen.findByRole("dialog", {
+      name: "Your cart",
+    });
+    await within(loadedDialog).findByText("Hormone Harmony");
+    await user.keyboard("{Escape}");
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Return from a cancelled payment" }),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    expect(within(dialog).getByRole("status")).toHaveTextContent(
+      "Payment not completed. Your cart is saved.",
+    );
+    expect(within(dialog).getByText("Hormone Harmony")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Close" })).toHaveFocus();
+  });
+
   it("marks the email and the terms as required and the marketing consent as optional", async () => {
     // arrange
     const user = userEvent.setup();
@@ -1027,57 +1063,6 @@ describe("StoreCartDrawer with plans", () => {
     expect(within(dialog).queryByText(/€/)).not.toBeInTheDocument();
   });
 
-  it("asks to complete the order and shows the generic failure when the plan is refused", async () => {
-    // arrange
-    const user = userEvent.setup();
-    seedCart(["fat-loss-plan", "hormone-harmony"]);
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json({
-          products: [...createPlans(), createProduct()],
-          success: true,
-        }),
-      ),
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
-        HttpResponse.json(
-          {
-            error: {
-              code: "paid_products",
-              message: "Paid products cannot be acquired for free.",
-              paidProductSlugs: ["fat-loss-plan"],
-            },
-            success: false,
-          },
-          { status: 409 },
-        ),
-      ),
-    );
-    renderCart();
-    await user.click(
-      await screen.findByRole("button", { name: "Cart, 2 items" }),
-    );
-    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await continueToAcquisitionDetails(dialog, user);
-    await user.type(emailField(dialog), "woman@example.com");
-    await user.click(termsCheckbox(dialog));
-
-    // act
-    await user.click(
-      within(dialog).getByRole("button", { name: "Complete order" }),
-    );
-
-    // assert
-    expect(
-      await within(dialog).findByText(
-        "We couldn't send your resources right now. Your cart is saved, so please try again.",
-      ),
-    ).toBeInTheDocument();
-    expect(readStoredProductSlugs()).toEqual([
-      "fat-loss-plan",
-      "hormone-harmony",
-    ]);
-  });
-
   it("invites a plan or a free resource while the cart is empty", async () => {
     // arrange
     const user = userEvent.setup();
@@ -1116,6 +1101,7 @@ function renderCart(options?: {
         <StoreCartProvider initialCurrency={options?.initialCurrency ?? "EUR"}>
           <StoreCartButton />
           <StoreCartTestControls />
+          <CancelledPaymentReturnTestControl />
           <DisappearingStoreCartTestControl />
           {/* The drawer falls back to the page's main landmark when the cart
               empties and every opener is gone, so the harness has to have one. */}
@@ -1185,6 +1171,18 @@ function DisappearingStoreCartTestControl() {
       type="button"
     >
       Open cart from disappearing control
+    </button>
+  );
+}
+
+function CancelledPaymentReturnTestControl() {
+  const openCartAfterCancelledPayment = useStoreCart(
+    (cart) => cart.openCartAfterCancelledPayment,
+  );
+
+  return (
+    <button onClick={openCartAfterCancelledPayment} type="button">
+      Return from a cancelled payment
     </button>
   );
 }

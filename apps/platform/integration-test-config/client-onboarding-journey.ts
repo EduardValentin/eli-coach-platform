@@ -1,10 +1,10 @@
 import {
   ANA,
   FIRST_PURCHASE,
-  type CoachingSalesJourney,
+  type SubscriptionsJourney,
   type Purchase,
   type Visitor,
-} from "./coaching-sales-journey";
+} from "./subscriptions-journey";
 import type { PhotoPart, ProgressPhotoView } from "./measurements-journey";
 import type { AccountSession, PlatformRig } from "./platform-rig";
 import { clerkServesUser } from "./wire-mock/expectations/clerk-backend-api";
@@ -80,7 +80,7 @@ const CONSENT_GIVEN_AT = new Date("2020-01-01T00:00:00.000Z");
 export class ClientOnboardingJourney {
   constructor(
     private readonly rig: PlatformRig,
-    private readonly sales: CoachingSalesJourney,
+    private readonly sales: SubscriptionsJourney,
   ) {}
 
   async admit(

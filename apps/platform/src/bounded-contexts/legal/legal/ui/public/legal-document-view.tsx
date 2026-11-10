@@ -49,7 +49,11 @@ export function LegalDocumentView({ document }: LegalDocumentViewProps) {
 
       <div className="grid gap-10 px-6 py-10 sm:px-8 lg:px-12">
         {document.sections.map((section) => (
-          <section className="grid gap-4" key={section.id}>
+          <section
+            className="grid scroll-mt-28 gap-4"
+            id={section.id}
+            key={section.id}
+          >
             <h2 className="font-heading text-display-sm text-text-primary">
               {section.heading}
             </h2>

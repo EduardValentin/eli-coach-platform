@@ -5,7 +5,7 @@ import type { DatabaseClient } from "~/shared/database";
 import { PostgresDownloadGrantRepository } from "./postgres-download-grant-repository.server";
 
 describe("PostgresDownloadGrantRepository", () => {
-  it("groups every pinned product version and asset in grant order", async () => {
+  it("groups every pinned product version with its type labels and assets in grant order", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({
       rows: [
@@ -15,6 +15,7 @@ describe("PostgresDownloadGrantRepository", () => {
           expiresAt: "2026-08-06T12:00:00.000Z",
           productSlug: "hormone-harmony",
           productTitle: "Hormone Harmony",
+          productTypeLabels: ["E-Books", "Nutrition Plans"],
           productVersionId: 11,
           assetKey: "products/hormone-harmony.pdf",
           customerFilename: "hormone-harmony.pdf",
@@ -44,6 +45,7 @@ describe("PostgresDownloadGrantRepository", () => {
         {
           productSlug: "hormone-harmony",
           productTitle: "Hormone Harmony",
+          productTypeLabels: ["E-Books", "Nutrition Plans"],
           productVersionId: 11,
           assets: [
             {

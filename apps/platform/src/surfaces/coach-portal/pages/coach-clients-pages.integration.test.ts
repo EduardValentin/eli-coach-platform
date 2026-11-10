@@ -16,8 +16,8 @@ import {
 } from "~integration-test-config/client-profile-journey";
 import {
   ANA,
-  CoachingSalesJourney,
-} from "~integration-test-config/coaching-sales-journey";
+  SubscriptionsJourney,
+} from "~integration-test-config/subscriptions-journey";
 import { ClientsJourney } from "~integration-test-config/clients-journey";
 import {
   CLIENT_SESSION,
@@ -38,7 +38,7 @@ import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/s
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const clients = new ClientsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const lifecycle = new SubscriptionLifecycleJourney(rig);

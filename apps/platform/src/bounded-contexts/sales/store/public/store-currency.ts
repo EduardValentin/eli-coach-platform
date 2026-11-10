@@ -12,6 +12,7 @@ export type StorePrice = NonNullable<StoreProduct["price"]>;
 
 export const DEFAULT_STORE_CURRENCY: StoreCurrency = "EUR";
 export const STORE_CURRENCY_COOKIE_NAME = "eli_store_currency";
+const MINOR_UNITS_PER_MAJOR = 100;
 
 const PRICE_FORMATS: Readonly<Record<StoreCurrency, Intl.NumberFormat>> = {
   EUR: new Intl.NumberFormat("en-IE", {
@@ -43,7 +44,21 @@ export function formatStorePrice(
   price: StorePrice,
   currency: StoreCurrency,
 ): string {
+  return formatStoreAmount(storePriceAmount(price, currency), currency);
+}
+
+export function storePriceAmount(
+  price: StorePrice,
+  currency: StoreCurrency,
+): number {
+  return price[STORE_CURRENCY_AMOUNT_FIELDS[currency]];
+}
+
+export function formatStoreAmount(
+  amountMinorUnits: number,
+  currency: StoreCurrency,
+): string {
   return PRICE_FORMATS[currency].format(
-    price[STORE_CURRENCY_AMOUNT_FIELDS[currency]] / 100,
+    amountMinorUnits / MINOR_UNITS_PER_MAJOR,
   );
 }

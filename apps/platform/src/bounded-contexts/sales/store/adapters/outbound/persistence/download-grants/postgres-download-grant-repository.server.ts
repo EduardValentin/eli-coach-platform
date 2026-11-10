@@ -15,6 +15,7 @@ type DownloadGrantRow = {
   expiresAt: Date | string;
   productSlug: string;
   productTitle: string;
+  productTypeLabels: string[];
   productVersionId: number;
   assetKey: string | null;
   customerFilename: string | null;
@@ -38,6 +39,14 @@ export class PostgresDownloadGrantRepository implements DownloadGrantsPort {
         download_grant.expires_at as "expiresAt",
         product.slug as "productSlug",
         product_version.title as "productTitle",
+        array(
+          select product_type.display_label
+          from app.product_version_type_assignments type_assignment
+          join app.product_types product_type
+            on product_type.id = type_assignment.product_type_id
+          where type_assignment.product_version_id = product_version.id
+          order by product_type.display_order
+        ) as "productTypeLabels",
         product_version.id as "productVersionId",
         asset.asset_key as "assetKey",
         asset.customer_filename as "customerFilename",
@@ -93,6 +102,7 @@ function groupGrantItems(
     items.set(row.productVersionId, {
       productSlug: row.productSlug,
       productTitle: row.productTitle,
+      productTypeLabels: row.productTypeLabels,
       productVersionId: row.productVersionId,
       assets: asset ? [asset] : [],
     });

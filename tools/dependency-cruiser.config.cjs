@@ -5,7 +5,8 @@ const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
 const APP = "^apps/platform/src/";
 const BOUNDED_CONTEXTS_ROOT = "^apps/platform/src/bounded-contexts/";
 const BOUNDED_CONTEXT = `${BOUNDED_CONTEXTS_ROOT}[^/]+/`;
-const COMPONENT = "(?!public/)[^/]+";
+const COMPONENT = "(?!(?:public|shared)/)[^/]+";
+const UNIT = `(?:${COMPONENT}|shared/[^/]+)`;
 const BOUNDED_CONTEXT_PUBLIC = `${BOUNDED_CONTEXT}public/`;
 function publishedFoldersOf(boundedContexts) {
   return `${BOUNDED_CONTEXTS_ROOT}${boundedContexts}/(public|${COMPONENT}/ui/shared)/`;
@@ -26,12 +27,12 @@ function flatOrInConceptFolder(patterns) {
 const SCHEMA_FILE = "adapters/outbound/persistence/schema\\.server\\.ts$";
 const COMPONENT_SCHEMA = `${BOUNDED_CONTEXT}${COMPONENT}/${SCHEMA_FILE}`;
 const REQUEST_KEYS = "adapters/inbound/http/[a-z-]*context\\.server\\.ts$";
-const COMPONENT_COMPOSITION = `${BOUNDED_CONTEXT}${COMPONENT}/composition\\.server\\.ts$`;
+const COMPONENT_COMPOSITION = `${BOUNDED_CONTEXT}${UNIT}/composition\\.server\\.ts$`;
 const BOUNDED_CONTEXT_COMPOSITION = `${BOUNDED_CONTEXT}composition\\.server\\.ts$`;
 const BOUNDED_CONTEXT_REQUEST_CONTEXT = `${BOUNDED_CONTEXT}public/request-context\\.ts$`;
 const COMPOSITION_ROOT = "^apps/platform/src/composition-root/";
 const ROUTE_MODULES = flatOrInConceptFolder([
-  `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/http/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+  `${BOUNDED_CONTEXT}${UNIT}/adapters/inbound/http/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
   `${BOUNDED_CONTEXT}${COMPONENT}/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
@@ -61,7 +62,7 @@ const COMPONENT_ORDER = {
     "check-ins",
   ],
   programs: ["exercise-library", "nutrition-library"],
-  sales: ["store", "waitlist", "coaching-sales"],
+  sales: ["store", "waitlist", "subscriptions"],
 };
 
 const COMBINED_ORDER = BOUNDED_CONTEXT_ORDER.flatMap((boundedContext) =>
@@ -85,7 +86,7 @@ function requireEveryFolderOrdered(directory) {
       return [`${boundedContext} (not in BOUNDED_CONTEXT_ORDER)`];
     }
     return foldersOf(path.join(directory, boundedContext))
-      .filter((folder) => folder !== "public")
+      .filter((folder) => !["public", "shared"].includes(folder))
       .filter(
         (component) => !COMPONENT_ORDER[boundedContext].includes(component),
       )
@@ -280,7 +281,7 @@ module.exports = {
       comment:
         "A request-context key file (adapters/inbound/http/*context.server.ts) creates a router context and nothing else: at runtime it imports only react-router; everything else it names is a type.",
       severity: "error",
-      from: { path: `${BOUNDED_CONTEXT}${COMPONENT}/${REQUEST_KEYS}` },
+      from: { path: `${BOUNDED_CONTEXT}${UNIT}/${REQUEST_KEYS}` },
       to: {
         pathNot: "(^|/)react-router(/|$)",
         dependencyTypesNot: ["type-only"],
@@ -294,7 +295,7 @@ module.exports = {
       from: {
         path: APP,
         pathNot: [
-          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/outbound/persistence/`,
+          `${BOUNDED_CONTEXT}${UNIT}/adapters/outbound/persistence/`,
           COMPONENT_COMPOSITION,
           BOUNDED_CONTEXT_COMPOSITION,
           COMPOSITION_ROOT,
@@ -373,13 +374,13 @@ module.exports = {
       from: {
         path: APP,
         pathNot: [
-          `${BOUNDED_CONTEXT}${COMPONENT}/(adapters/inbound/http|ui)/`,
+          `${BOUNDED_CONTEXT}${UNIT}/(adapters/inbound/http|ui)/`,
           COMPONENT_COMPOSITION,
           BOUNDED_CONTEXT_COMPOSITION,
           BOUNDED_CONTEXT_REQUEST_CONTEXT,
         ],
       },
-      to: { path: `${BOUNDED_CONTEXT}${COMPONENT}/${REQUEST_KEYS}` },
+      to: { path: `${BOUNDED_CONTEXT}${UNIT}/${REQUEST_KEYS}` },
     },
     {
       name: "composition-only-from-above",
@@ -428,7 +429,7 @@ module.exports = {
           BOUNDED_CONTEXT_COMPOSITION,
           `${BOUNDED_CONTEXT}routes\\.ts$`,
           BOUNDED_CONTEXT_PUBLIC,
-          `${BOUNDED_CONTEXT}${COMPONENT}/config\\.server\\.ts$`,
+          `${BOUNDED_CONTEXT}${UNIT}/config\\.server\\.ts$`,
         ],
       },
     },
@@ -494,11 +495,12 @@ module.exports = {
     {
       name: "stripe-confined",
       comment:
-        "Stripe stays behind the coaching-sales payments adapter: nothing else names stripe.",
+        "Stripe stays behind two folders of the sales bounded context: its shared payments plumbing's adapters/outbound/stripe/ (the client, the webhook events and their vocabulary) and each sales component's adapters/outbound/payments/stripe/ (its own checkout and other payment adapters). Nothing else names stripe.",
       severity: "error",
       from: {
         pathNot: [
-          `${BOUNDED_CONTEXT}coaching-sales/adapters/outbound/payments/stripe/`,
+          `${BOUNDED_CONTEXTS_ROOT}sales/shared/payments/adapters/outbound/stripe/`,
+          `${BOUNDED_CONTEXTS_ROOT}sales/${COMPONENT}/adapters/outbound/payments/stripe/`,
         ],
       },
       to: { path: "(^|node_modules/)stripe(/|$)" },
@@ -564,9 +566,9 @@ module.exports = {
       comment:
         "An inbound adapter (controller, route, facade) never imports its component's persistence or email adapters; the composition hands them in through ports. A provider adapter's vocabulary under adapters/outbound/<provider>/ stays readable.",
       severity: "error",
-      from: { path: `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/` },
+      from: { path: `${BOUNDED_CONTEXT}${UNIT}/adapters/inbound/` },
       to: {
-        path: `${BOUNDED_CONTEXT}${COMPONENT}/adapters/outbound/(persistence|email)/`,
+        path: `${BOUNDED_CONTEXT}${UNIT}/adapters/outbound/(persistence|email)/`,
       },
     },
     {
@@ -639,10 +641,10 @@ module.exports = {
       from: { path: ROUTE_MODULES },
       to: {
         path: [
-          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/(outbound|inbound/facades)/`,
-          `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/http/.*(?<!context)\\.server\\.tsx?$`,
+          `${BOUNDED_CONTEXT}${UNIT}/adapters/(outbound|inbound/facades)/`,
+          `${BOUNDED_CONTEXT}${UNIT}/adapters/inbound/http/.*(?<!context)\\.server\\.tsx?$`,
           `${BOUNDED_CONTEXT}${COMPONENT}/adapters/inbound/http/management/management-auth/`,
-          `${BOUNDED_CONTEXT}${COMPONENT}/(composition|config)\\.server\\.ts$`,
+          `${BOUNDED_CONTEXT}${UNIT}/(composition|config)\\.server\\.ts$`,
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
           "^apps/platform/src/shared/(email|images|documents|private-files|tokens|submission-checks/bot-detection)/",
@@ -713,6 +715,17 @@ module.exports = {
       from: { path: "^apps/platform/src/bounded-contexts/([^/]+)/" },
       to: {
         path: "^apps/platform/src/bounded-contexts/(?!$1/)[^/]+/[^/]+/domain/",
+      },
+    },
+    {
+      name: "bounded-context-shared-imports-no-component",
+      comment:
+        "A bounded context may hold a shared/ folder of technical plumbing its components share (sales/shared/payments: the payment provider client, the webhook endpoint and the payment-event ledger). Its components and its root modules import it; it sits below them and imports nothing of any bounded context outside its own shared/: no component, no root module, no public/ and no other bounded context.",
+      severity: "error",
+      from: { path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/shared/` },
+      to: {
+        path: BOUNDED_CONTEXTS_ROOT,
+        pathNot: `${BOUNDED_CONTEXTS_ROOT}$1/shared/`,
       },
     },
     {

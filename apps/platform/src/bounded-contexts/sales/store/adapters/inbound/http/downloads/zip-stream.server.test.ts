@@ -244,6 +244,7 @@ function createGrant(entries: readonly [string, Buffer][]): DownloadGrant {
         ),
         productSlug: "nutrition-guide",
         productTitle: "Nutrition Guide",
+        productTypeLabels: ["E-Books"],
         productVersionId: 11,
       },
     ],

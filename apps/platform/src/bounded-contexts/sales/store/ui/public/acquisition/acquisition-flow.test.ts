@@ -2,10 +2,12 @@ import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/ema
 import { describe, expect, it } from "vitest";
 
 import type { StoreAcquisitionResponse } from "~/bounded-contexts/sales/store/public/store";
+import type { StoreCheckoutResponse } from "~/bounded-contexts/sales/store/public/store-orders";
 
 import {
   reduceAcquisitionFlow,
   resolveAcquisitionError,
+  resolveCheckoutError,
 } from "./acquisition-flow";
 
 const createIdempotencyKey = () => "new-key";
@@ -19,7 +21,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -50,7 +52,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -76,7 +78,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -99,7 +101,7 @@ describe("reduceAcquisitionFlow", () => {
     // act
     const result = reduceAcquisitionFlow(
       state,
-      { type: "response", response },
+      { type: "acquisition-response", response },
       createIdempotencyKey,
     );
 
@@ -113,5 +115,99 @@ describe("reduceAcquisitionFlow", () => {
       { type: "reset-challenge" },
     ]);
     expect(resolveAcquisitionError(response)).toBeNull();
+  });
+});
+
+describe("reduceAcquisitionFlow for a paid checkout", () => {
+  it("opens the hosted payment page and issues a new key for any later attempt", () => {
+    // arrange
+    const state = { idempotencyKey: "current-key", step: "details" as const };
+    const response: StoreCheckoutResponse = {
+      success: true,
+      checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_order",
+    };
+
+    // act
+    const result = reduceAcquisitionFlow(
+      state,
+      { type: "checkout-response", response },
+      createIdempotencyKey,
+    );
+
+    // assert
+    expect(result.state).toEqual({
+      idempotencyKey: "new-key",
+      step: "details",
+    });
+    expect(result.effects).toEqual([
+      {
+        type: "open-checkout",
+        checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_order",
+      },
+      { type: "reset-challenge" },
+    ]);
+  });
+
+  it("keeps the key so a retry replays the same order when checkout is unavailable", () => {
+    // arrange
+    const state = { idempotencyKey: "current-key", step: "details" as const };
+    const response: StoreCheckoutResponse = {
+      success: false,
+      error: { code: "checkout_unavailable", message: "Unavailable." },
+    };
+
+    // act
+    const result = reduceAcquisitionFlow(
+      state,
+      { type: "checkout-response", response },
+      createIdempotencyKey,
+    );
+
+    // assert
+    expect(result.state).toEqual(state);
+    expect(result.effects).toEqual([{ type: "reset-challenge" }]);
+  });
+
+  it("returns to the unchanged cart with a new key when products were withdrawn", () => {
+    // arrange
+    const state = { idempotencyKey: "current-key", step: "details" as const };
+    const response: StoreCheckoutResponse = {
+      success: false,
+      error: {
+        code: "unavailable_products",
+        message: "Unavailable.",
+        availableProductSlugs: [],
+      },
+    };
+
+    // act
+    const result = reduceAcquisitionFlow(
+      state,
+      { type: "checkout-response", response },
+      createIdempotencyKey,
+    );
+
+    // assert
+    expect(result.state).toEqual({ idempotencyKey: "new-key", step: "cart" });
+    expect(result.effects).toEqual([{ type: "reset-challenge" }]);
+    expect(resolveCheckoutError(response, [])).toBe(
+      "The items in your cart are no longer available. Remove them to continue.",
+    );
+  });
+
+  it("asks her to review her details when the order holds no paid item", () => {
+    // arrange
+    const response: StoreCheckoutResponse = {
+      success: false,
+      error: { code: "no_paid_items", message: "No paid items." },
+    };
+
+    // act
+    const message = resolveCheckoutError(response, []);
+
+    // assert
+    expect(message).toBe(
+      "Please review your email and consent choices, then try again.",
+    );
   });
 });

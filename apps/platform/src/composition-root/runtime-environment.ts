@@ -19,7 +19,7 @@ import {
 import {
   paymentsShape,
   refinePayments,
-} from "~/bounded-contexts/sales/coaching-sales/config.server";
+} from "~/bounded-contexts/sales/shared/payments/config.server";
 import {
   managementApiShape,
   refineManagementApi,

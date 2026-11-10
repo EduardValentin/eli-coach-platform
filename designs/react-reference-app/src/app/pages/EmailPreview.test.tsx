@@ -20,6 +20,22 @@ async function previewedEmail(title: string, distinguishingCopy: string) {
 }
 
 describe('EmailPreview', () => {
+  it('previews the store order email in both sample currencies', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Store order' }));
+    const euroMarkup = await previewedEmail('Store order — paid-and-free', 'TOTAL (EUR)');
+    await user.click(screen.getByRole('button', { name: 'One plan (USD)' }));
+
+    // assert
+    expect(euroMarkup).toContain('Download your order');
+    const dollarMarkup = await previewedEmail('Store order — paid-only', 'TOTAL (USD)');
+    expect(dollarMarkup).toContain('$55.00');
+  });
+
   it('previews the client invitation through the preview surface', async () => {
     // arrange
     const user = userEvent.setup();

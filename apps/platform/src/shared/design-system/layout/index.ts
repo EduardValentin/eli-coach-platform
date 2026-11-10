@@ -1,4 +1,12 @@
 export { AppShell } from "./app-shell";
+export {
+  ConfirmationActions,
+  ConfirmationHeading,
+  ConfirmationLead,
+  ConfirmationPage,
+  ConfirmationReading,
+  ConfirmationReadings,
+} from "./confirmation-page";
 export { DeadEndLink, DeadEndPage, DeadEndPanel } from "./dead-end-page";
 export { NavigationDialog, type NavigationMenu } from "./navigation-dialog";
 export {

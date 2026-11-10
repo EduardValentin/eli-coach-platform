@@ -17,8 +17,8 @@ import {
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
-} from "~integration-test-config/coaching-sales-journey";
+  SubscriptionsJourney,
+} from "~integration-test-config/subscriptions-journey";
 import {
   ClientsJourney,
   INVITATION_API,
@@ -46,7 +46,7 @@ import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/s
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const journey = new CoachingSalesJourney(rig);
+const journey = new SubscriptionsJourney(rig);
 const clients = new ClientsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 

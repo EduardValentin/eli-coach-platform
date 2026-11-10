@@ -8,6 +8,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -32,6 +33,7 @@ import CatalogRoute, {
 import type { StoreProduct } from "~/bounded-contexts/sales/store/public/store";
 
 import { STORE_CART_STORAGE_KEY } from "../cart/cart";
+import { STORE_CHECKOUT_DETAILS_STORAGE_KEY } from "../cart/cart-storage";
 import { StoreCartProvider } from "../cart/cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "../cart/cart-drawer";
 import { STORE_CATALOG_API_URL } from "../api-client";
@@ -72,6 +74,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  sessionStorage.clear();
   document.cookie = `${STORE_CURRENCY_COOKIE_NAME}=; Path=/; Max-Age=0`;
   server.resetHandlers();
 });
@@ -827,6 +830,104 @@ describe("store catalog", () => {
     expect(document.body).not.toHaveFocus();
   });
 });
+
+describe("returning from a cancelled payment", () => {
+  it("opens her saved cart with the payment notice and drops the return marker from the address", async () => {
+    // arrange
+    seedCancelledCheckout();
+
+    // act
+    const { router } = renderStore({
+      products: [createPlan(), createProduct()],
+      url: "/store?payment=cancelled",
+    });
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    expect(await within(dialog).findByRole("status")).toHaveTextContent(
+      "Payment not completed. Your cart is saved.",
+    );
+    expect(
+      within(dialog).getByText("30-Day Fat Loss Plan"),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("");
+    });
+  });
+
+  it("brings back her email and ticked boxes on the details step", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCancelledCheckout();
+    renderStore({
+      products: [createPlan(), createProduct()],
+      url: "/store?payment=cancelled",
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+
+    // act
+    await user.click(
+      await within(dialog).findByRole("button", { name: "Continue" }),
+    );
+
+    // assert
+    expect(within(dialog).queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("textbox", { name: /^Email address/ }),
+    ).toHaveValue("woman@example.com");
+    expect(
+      within(dialog).getByRole("checkbox", { name: /^I agree to the Terms/ }),
+    ).toBeChecked();
+    expect(
+      within(dialog).getByRole("checkbox", { name: /^Start my download now/ }),
+    ).toBeChecked();
+    expect(
+      within(dialog).getByRole("button", { name: "Continue to payment" }),
+    ).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("lets her dismiss the payment notice", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCancelledCheckout();
+    renderStore({
+      products: [createPlan(), createProduct()],
+      url: "/store?payment=cancelled",
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await within(dialog).findByRole("status");
+
+    // act
+    await user.click(within(dialog).getByRole("button", { name: "Dismiss" }));
+
+    // assert
+    expect(within(dialog).queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
+function seedCancelledCheckout() {
+  localStorage.setItem(
+    STORE_CART_STORAGE_KEY,
+    JSON.stringify({ productSlugs: ["fat-loss-plan"], version: 1 }),
+  );
+  sessionStorage.setItem(
+    STORE_CHECKOUT_DETAILS_STORAGE_KEY,
+    JSON.stringify({
+      deliveryConsent: true,
+      email: "woman@example.com",
+      marketingConsent: false,
+      termsAccepted: true,
+    }),
+  );
+  server.use(
+    http.get(STORE_CATALOG_API_URL, () =>
+      HttpResponse.json({
+        products: [createPlan(), createProduct()],
+        success: true,
+      }),
+    ),
+  );
+}
 
 function renderStore(options: {
   catalog?: { products: readonly StoreProduct[] };

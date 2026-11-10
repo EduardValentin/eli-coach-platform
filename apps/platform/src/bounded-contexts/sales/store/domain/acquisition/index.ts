@@ -8,14 +8,18 @@ export {
   type StoreConsentVersions,
 } from "./consent-versions-port";
 export {
-  evaluateDeliveryLimit,
+  STORE_DELIVERY_LIMIT_POLICY,
+  type DeliveryLimitPolicy,
   type StoreDeliveryLimitWindow,
-} from "./acquisition";
+} from "./delivery-limit-policy";
 export {
   type ProductDeliveryPort,
   type ProductDeliveryResult,
 } from "./product-delivery-port";
-export { type CreateDownloadTokenResult } from "./download-token-generator-port";
+export {
+  type CreateDownloadTokenResult,
+  type DownloadTokenGeneratorPort,
+} from "./download-token-generator-port";
 export { type PayloadDigestGeneratorPort } from "./payload-digest-generator-port";
 export {
   type AcquisitionPreparation,

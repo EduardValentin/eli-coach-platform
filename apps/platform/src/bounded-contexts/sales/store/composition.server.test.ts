@@ -5,6 +5,7 @@ import type {
   ManagementAuthConfig,
 } from "~/bounded-contexts/sales/store/adapters/inbound/http/management/management-auth/management-authenticator-port.server";
 import { InMemoryProductEmailAdapter } from "~/shared/email/index.server";
+import { createPaymentProviderAdapter } from "~/bounded-contexts/sales/shared/payments/adapters/outbound/create-payment-provider-adapter.server";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -52,7 +53,7 @@ describe("composeStoreFeature", () => {
 
   it("maps a catalog repository failure to an unavailable response", async () => {
     // arrange
-    const feature = composeStoreFeature({
+    const { feature } = composeStoreFeature({
       appBasePath: "/",
       botVerifierPort: {
         verifySubmission: async () => ({ status: "verified" }),
@@ -66,8 +67,12 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      paymentProvider: createPaymentProviderAdapter({
+        PAYMENTS_PROVIDER: "memory",
+      }),
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+        termsDocument: () => null,
       },
     });
 
@@ -82,7 +87,7 @@ describe("composeStoreFeature", () => {
 
   it("maps a grant repository failure to a temporary-unavailable response", async () => {
     // arrange
-    const feature = composeStoreFeature({
+    const { feature } = composeStoreFeature({
       appBasePath: "/",
       botVerifierPort: {
         verifySubmission: async () => ({ status: "verified" }),
@@ -96,8 +101,12 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      paymentProvider: createPaymentProviderAdapter({
+        PAYMENTS_PROVIDER: "memory",
+      }),
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+        termsDocument: () => null,
       },
     });
     const formData = new FormData();
@@ -119,7 +128,7 @@ describe("composeStoreFeature", () => {
 
   it("hands the subaddress policy to the store request", async () => {
     // arrange
-    const feature = composeStoreFeature({
+    const { feature } = composeStoreFeature({
       appBasePath: "/",
       botVerifierPort: {
         verifySubmission: async () => ({ status: "verified" }),
@@ -133,8 +142,12 @@ describe("composeStoreFeature", () => {
       productEmailPort: new InMemoryProductEmailAdapter(),
       publicAppUrl: "https://eli.example",
       storeAssetRoot,
+      paymentProvider: createPaymentProviderAdapter({
+        PAYMENTS_PROVIDER: "memory",
+      }),
       termsFacade: {
         currentTerms: () => ({ version: "1.0", hash: "terms-hash" }),
+        termsDocument: () => null,
       },
     });
     const formData = new FormData();

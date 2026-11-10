@@ -170,14 +170,12 @@ describe("website and Store Terms content", () => {
     // act
     const derivedValues = {
       consentVersion: PAID_DIGITAL_DELIVERY_CONSENT.termsVersion,
-      consentLabel: PAID_DIGITAL_DELIVERY_CONSENT.termsLinkLabel,
       artifactPath: websiteAndStoreTermsPdfArtifactPath(version),
     };
 
     // assert
     expect(derivedValues).toEqual({
       consentVersion: version,
-      consentLabel: `Terms & Conditions version ${version}`,
       artifactPath: `apps/platform/src/bounded-contexts/legal/legal/artifacts/website-and-store-terms/${version}/terms-and-conditions.pdf`,
     });
   });

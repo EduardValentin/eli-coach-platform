@@ -15,7 +15,11 @@ import {
 } from "~/shared/http/index.server";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import { STORE_DOWNLOAD_PATH } from "~/bounded-contexts/sales/store/public/paths";
-import { storeDownloadRequestSchema } from "~/bounded-contexts/sales/store/public/store";
+import {
+  storeDownloadContentsResponseSchema,
+  storeDownloadRequestSchema,
+  type StoreDownloadContentsResponse,
+} from "~/bounded-contexts/sales/store/public/store";
 
 import recoveryDocument from "./download-recovery.html?raw";
 
@@ -23,7 +27,13 @@ type ZipDeliveryStream = {
   create(grant: DownloadGrant): Promise<ProductAssetOpenResult>;
 };
 
+type DownloadTokenRead =
+  | { status: "read"; token: string }
+  | { status: "unreadable"; httpStatus: 400 | 413 }
+  | { status: "malformed" };
+
 const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
+const PRIVATE_RESPONSE_HEADERS = { "Cache-Control": "no-store" };
 
 export class StoreDownloadController {
   constructor(
@@ -36,26 +46,19 @@ export class StoreDownloadController {
   ) {}
 
   async download(request: Request): Promise<Response> {
-    const requestBody = await readFormDataRequestBody(request, {
-      maxBytes: MAX_DOWNLOAD_BODY_BYTES,
-    });
+    const tokenRead = await this.readDownloadToken(request);
 
-    if (requestBody.status !== "valid") {
+    if (tokenRead.status === "unreadable") {
       return createDownloadRecoveryResponse({
         appBasePath: this.options.appBasePath,
         heading: "This download request could not be processed",
         message: "Return to the store and request your free resources again.",
-        status: requestBody.status === "too_large" ? 413 : 400,
+        status: tokenRead.httpStatus,
         title: "Download request unavailable",
       });
     }
 
-    const formData = requestBody.formData;
-    const parsedRequest = storeDownloadRequestSchema.safeParse({
-      token: formData.get("token"),
-    });
-
-    if (!parsedRequest.success) {
+    if (tokenRead.status === "malformed") {
       return createUnavailableResponse();
     }
 
@@ -63,7 +66,7 @@ export class StoreDownloadController {
 
     try {
       resolution = await this.resolveDownloadGrantUseCase.execute(
-        parsedRequest.data.token,
+        tokenRead.token,
       );
     } catch {
       return createTemporaryUnavailableResponse(this.options.appBasePath);
@@ -99,6 +102,82 @@ export class StoreDownloadController {
     } catch {
       return createTemporaryUnavailableResponse(this.options.appBasePath);
     }
+  }
+
+  async contents(request: Request): Promise<Response> {
+    const tokenRead = await this.readDownloadToken(request);
+
+    if (tokenRead.status === "unreadable") {
+      return this.contentsResponse(
+        { status: "invalid_request" },
+        tokenRead.httpStatus,
+      );
+    }
+
+    if (tokenRead.status === "malformed") {
+      return this.contentsResponse({ status: "unavailable" }, 200);
+    }
+
+    let resolution: DownloadGrantResolution;
+
+    try {
+      resolution = await this.resolveDownloadGrantUseCase.execute(
+        tokenRead.token,
+      );
+    } catch {
+      return this.contentsResponse({ status: "temporarily_unavailable" }, 503);
+    }
+
+    if (
+      resolution.status === "unavailable" ||
+      resolution.delivery.kind === "empty"
+    ) {
+      return this.contentsResponse({ status: "unavailable" }, 200);
+    }
+
+    return this.contentsResponse(
+      {
+        status: "available",
+        resources: resolution.grant.items.map((item) => ({
+          title: item.productTitle,
+          typeLabels: [...item.productTypeLabels],
+        })),
+      },
+      200,
+    );
+  }
+
+  private async readDownloadToken(
+    request: Request,
+  ): Promise<DownloadTokenRead> {
+    const requestBody = await readFormDataRequestBody(request, {
+      maxBytes: MAX_DOWNLOAD_BODY_BYTES,
+    });
+
+    if (requestBody.status !== "valid") {
+      return {
+        status: "unreadable",
+        httpStatus: requestBody.status === "too_large" ? 413 : 400,
+      };
+    }
+
+    const parsedRequest = storeDownloadRequestSchema.safeParse(
+      Object.fromEntries(requestBody.formData),
+    );
+
+    return parsedRequest.success
+      ? { status: "read", token: parsedRequest.data.token }
+      : { status: "malformed" };
+  }
+
+  private contentsResponse(
+    answer: StoreDownloadContentsResponse,
+    status: number,
+  ): Response {
+    return Response.json(storeDownloadContentsResponseSchema.parse(answer), {
+      headers: PRIVATE_RESPONSE_HEADERS,
+      status,
+    });
   }
 
   private async streamSingleAsset(asset: ProductAsset): Promise<Response> {

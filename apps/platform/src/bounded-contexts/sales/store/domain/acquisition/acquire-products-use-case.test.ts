@@ -11,6 +11,7 @@ import {
 } from "../product";
 
 import { AcquireProductsUseCase } from "./acquire-products-use-case";
+import { STORE_DELIVERY_LIMIT_POLICY } from "./delivery-limit-policy";
 import type { ProductDeliveryPort } from "./product-delivery-port";
 import type {
   AcquisitionPreparation,
@@ -162,6 +163,7 @@ function createUseCase(options: {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -324,6 +326,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -525,6 +528,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "2.0",
+          paidDeliveryConsentTermsVersion: "2.0",
           privacyPolicyVersion: "3.0",
           termsVersion: "2.0",
         }),
@@ -583,6 +587,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -621,6 +626,7 @@ describe("AcquireProductsUseCase", () => {
       consentVersionsPort: {
         current: () => ({
           marketingConsentVersion: "1.0",
+          paidDeliveryConsentTermsVersion: "1.0",
           privacyPolicyVersion: "2.0",
           termsVersion: "1.0",
         }),
@@ -675,10 +681,9 @@ describe("AcquireProductsUseCase", () => {
     // assert
     expect(storeAcquisitionsPort.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
-        cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
-        dailyLimit: 10,
-        dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
         deliveryLimitKey: "woman@example.com",
+        policy: STORE_DELIVERY_LIMIT_POLICY,
+        requestedAt: new Date("2026-07-30T12:00:00.000Z"),
       }),
     );
   });

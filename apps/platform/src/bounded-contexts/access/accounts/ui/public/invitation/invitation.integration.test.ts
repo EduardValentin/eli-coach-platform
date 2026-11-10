@@ -11,8 +11,8 @@ import {
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import {
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
-} from "~integration-test-config/coaching-sales-journey";
+  SubscriptionsJourney,
+} from "~integration-test-config/subscriptions-journey";
 import {
   ClientsJourney,
   INVITATION_API,
@@ -30,7 +30,7 @@ import {
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const journey = new CoachingSalesJourney(rig);
+const journey = new SubscriptionsJourney(rig);
 const clients = new ClientsJourney(rig);
 
 const INVITATION_PAGE = "/invitation";

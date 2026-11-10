@@ -28,6 +28,7 @@ describe("StoreDownloadController", () => {
               assets: [asset],
               productSlug: "hormone-harmony",
               productTitle: "Hormone Harmony",
+              productTypeLabels: ["E-Books"],
               productVersionId: 11,
             },
           ],
@@ -101,6 +102,7 @@ describe("StoreDownloadController", () => {
           assets: [],
           productSlug: "empty-guide",
           productTitle: "Empty Guide",
+          productTypeLabels: ["E-Books"],
           productVersionId: 11,
         },
       ],
@@ -120,12 +122,14 @@ describe("StoreDownloadController", () => {
           ],
           productSlug: "guide",
           productTitle: "Guide",
+          productTypeLabels: ["E-Books"],
           productVersionId: 11,
         },
         {
           assets: [],
           productSlug: "empty-guide",
           productTitle: "Empty Guide",
+          productTypeLabels: ["E-Books"],
           productVersionId: 12,
         },
       ],
@@ -247,6 +251,7 @@ describe("StoreDownloadController", () => {
               assets: [asset],
               productSlug: "hormone-harmony",
               productTitle: "Hormone Harmony",
+              productTypeLabels: ["E-Books"],
               productVersionId: 11,
             },
           ],
@@ -314,6 +319,188 @@ describe("StoreDownloadController", () => {
     expect(responseBody).toContain(
       "This download request could not be processed",
     );
+  });
+
+  it("answers the grant's resources with their titles and type labels in grant order, uncached", async () => {
+    // arrange
+    const asset = {
+      assetKey: "products/hormone-harmony.pdf",
+      customerFilename: "Hormone Harmony.pdf",
+      mimeType: "application/pdf",
+      sha256: "a".repeat(64),
+      sizeBytes: 5,
+    };
+    const resolveDownloadGrantUseCase = {
+      execute: vi.fn().mockResolvedValue({
+        status: "available",
+        delivery: { kind: "bundle", assets: [asset, asset] },
+        grant: {
+          expiresAt: new Date("2026-08-06T10:00:00.000Z"),
+          id: 31,
+          items: [
+            {
+              assets: [asset],
+              productSlug: "hormone-harmony",
+              productTitle: "Hormone Harmony",
+              productTypeLabels: ["E-Books"],
+              productVersionId: 11,
+            },
+            {
+              assets: [asset],
+              productSlug: "core-challenge",
+              productTitle: "10-Day Core Challenge",
+              productTypeLabels: ["Workouts", "Nutrition Plans"],
+              productVersionId: 12,
+            },
+          ],
+          status: "active",
+        },
+      }),
+    } as unknown as ResolveDownloadGrantUseCase;
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
+      createUnusedAssetStore(),
+      {
+        appBasePath: "/eli",
+        zipDeliveryStream: { create: vi.fn() },
+      },
+    );
+
+    // act
+    const response = await storeDownloadController.contents(
+      createRequest("opaque-token"),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    await expect(response.json()).resolves.toEqual({
+      status: "available",
+      resources: [
+        { title: "Hormone Harmony", typeLabels: ["E-Books"] },
+        {
+          title: "10-Day Core Challenge",
+          typeLabels: ["Workouts", "Nutrition Plans"],
+        },
+      ],
+    });
+    expect(resolveDownloadGrantUseCase.execute).toHaveBeenCalledWith(
+      "opaque-token",
+    );
+  });
+
+  it.each([
+    {
+      scenario: "missing, expired or revoked grant",
+      resolution: { status: "unavailable" },
+    },
+    {
+      scenario: "grant with an empty product",
+      resolution: {
+        status: "available",
+        delivery: { kind: "empty" },
+        grant: {
+          expiresAt: new Date("2026-08-06T10:00:00.000Z"),
+          id: 31,
+          items: [
+            {
+              assets: [],
+              productSlug: "empty-guide",
+              productTitle: "Empty Guide",
+              productTypeLabels: [],
+              productVersionId: 11,
+            },
+          ],
+          status: "active",
+        },
+      },
+    },
+  ])(
+    "answers the same privacy-safe unavailable contents for a $scenario",
+    async ({ resolution }) => {
+      // arrange
+      const resolveDownloadGrantUseCase = {
+        execute: vi.fn().mockResolvedValue(resolution),
+      } as unknown as ResolveDownloadGrantUseCase;
+      const storeDownloadController = new StoreDownloadController(
+        resolveDownloadGrantUseCase,
+        createUnusedAssetStore(),
+        {
+          appBasePath: "/eli",
+          zipDeliveryStream: { create: vi.fn() },
+        },
+      );
+
+      // act
+      const response = await storeDownloadController.contents(
+        createRequest("bad-token"),
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      await expect(response.json()).resolves.toEqual({
+        status: "unavailable",
+      });
+    },
+  );
+
+  it("answers unavailable contents for a body carrying more than the token, without resolving a grant", async () => {
+    // arrange
+    const resolveDownloadGrantUseCase = {
+      execute: vi.fn(),
+    } as unknown as ResolveDownloadGrantUseCase;
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
+      createUnusedAssetStore(),
+      {
+        appBasePath: "/eli",
+        zipDeliveryStream: { create: vi.fn() },
+      },
+    );
+    const formData = new FormData();
+    formData.set("token", "opaque-token");
+    formData.set("extra", "value");
+
+    // act
+    const response = await storeDownloadController.contents(
+      new Request("https://eli.example/api/store/downloads/contents", {
+        body: formData,
+        method: "POST",
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ status: "unavailable" });
+    expect(resolveDownloadGrantUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it("answers temporary unavailability for the contents when grant resolution fails", async () => {
+    // arrange
+    const resolveDownloadGrantUseCase = {
+      execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+    } as unknown as ResolveDownloadGrantUseCase;
+    const storeDownloadController = new StoreDownloadController(
+      resolveDownloadGrantUseCase,
+      createUnusedAssetStore(),
+      {
+        appBasePath: "/eli",
+        zipDeliveryStream: { create: vi.fn() },
+      },
+    );
+
+    // act
+    const response = await storeDownloadController.contents(
+      createRequest("opaque-token"),
+    );
+
+    // assert
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    await expect(response.json()).resolves.toEqual({
+      status: "temporarily_unavailable",
+    });
   });
 });
 

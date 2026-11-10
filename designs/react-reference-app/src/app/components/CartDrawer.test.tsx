@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import {
   afterAll,
   afterEach,
@@ -11,6 +11,7 @@ import {
   it,
   vi,
 } from 'vitest';
+import { PAID_DIGITAL_DELIVERY_CONSENT } from '~/bounded-contexts/legal/public';
 import { CartDrawer } from './CartDrawer';
 import { AppProvider } from '../context/AppContext';
 import {
@@ -23,8 +24,10 @@ import {
   StoreAcquisitionError,
   STORE_ACQUISITION_ERROR_MESSAGES,
 } from '../services/storeAcquisitionService';
+import { SUBADDRESS_REFUSED_MESSAGE } from '../services/storeOrderService';
 
 const submitStoreAcquisition = vi.hoisted(() => vi.fn());
+const placeStoreOrder = vi.hoisted(() => vi.fn());
 
 vi.mock('../services/storeAcquisitionService', async (importOriginal) => {
   const actual = await importOriginal<
@@ -34,6 +37,17 @@ vi.mock('../services/storeAcquisitionService', async (importOriginal) => {
   return {
     ...actual,
     submitStoreAcquisition,
+  };
+});
+
+vi.mock('../services/storeOrderService', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('../services/storeOrderService')
+  >();
+
+  return {
+    ...actual,
+    placeStoreOrder,
   };
 });
 
@@ -55,6 +69,11 @@ function AddButtons({ products }: { products: Product[] }) {
   );
 }
 
+function CurrentRoute() {
+  const { pathname } = useLocation();
+  return <span data-testid="route">{pathname}</span>;
+}
+
 function renderCart(products: Product[]) {
   return render(
     <MemoryRouter>
@@ -62,9 +81,20 @@ function renderCart(products: Product[]) {
         <StoreProvider>
           <AddButtons products={products} />
           <CartDrawer />
+          <CurrentRoute />
         </StoreProvider>
       </AppProvider>
     </MemoryRouter>,
+  );
+}
+
+async function fillPaidCheckoutForm(
+  user: ReturnType<typeof userEvent.setup>,
+  email: string,
+) {
+  await fillCheckoutForm(user, email);
+  await user.click(
+    screen.getByRole('checkbox', { name: /^Start my download now/ }),
   );
 }
 
@@ -120,6 +150,11 @@ describe('CartDrawer', () => {
   beforeEach(() => {
     submitStoreAcquisition.mockReset();
     submitStoreAcquisition.mockResolvedValue({ success: true });
+    placeStoreOrder.mockReset();
+    placeStoreOrder.mockResolvedValue({
+      status: 'opened',
+      checkoutUrl: '/checkout/store/cs_store_test',
+    });
   });
 
   afterEach(() => {
@@ -316,23 +351,8 @@ describe('CartDrawer', () => {
     // assert
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Enter a valid email address.');
+    expect(screen.getByRole('textbox', { name: /email address/i })).toHaveFocus();
     expect(submitStoreAcquisition).not.toHaveBeenCalled();
-  });
-
-  it('keeps order framing for carts containing paid products', async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderCart([paidPlan]);
-    await openCartWith(user, [paidPlan]);
-    await fillCheckoutForm(user, 'woman@example.com');
-
-    // act
-    const submit = screen.getByRole('button', { name: /complete order/i });
-    expect(submit).toHaveTextContent('Complete order');
-    await user.click(submit);
-
-    // assert
-    await screen.findByRole('heading', { name: /order complete/i });
   });
 
   it('preserves the form and cart when delivery fails so the visitor can retry', async () => {
@@ -432,5 +452,160 @@ describe('CartDrawer', () => {
     // assert
     expect(screen.getAllByText('Free')).toHaveLength(2);
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
+  });
+
+  describe('a cart with a paid item', () => {
+    it('summarises every item with its price or Free and the total in her currency', async () => {
+      // arrange
+      const user = userEvent.setup();
+      localStorage.setItem('evoa.storeCurrency', 'USD');
+      renderCart([paidPlan, freeEbook]);
+      await openCartWith(user, [paidPlan, freeEbook]);
+
+      // act
+      await user.click(screen.getByRole('button', { name: /^continue$/i }));
+
+      // assert
+      const summary = screen.getByRole('heading', { name: 'Your order' })
+        .nextElementSibling as HTMLElement;
+      expect(within(summary).getAllByRole('term').map((term) => term.textContent)).toEqual([
+        paidPlan.title,
+        freeEbook.title,
+        'Total',
+      ]);
+      expect(within(summary).getAllByRole('definition').map((value) => value.textContent)).toEqual([
+        '$45.00',
+        'Free',
+        '$45.00',
+      ]);
+    });
+
+    it('keeps payment out of reach until the immediate-delivery request is ticked', async () => {
+      // arrange
+      const user = userEvent.setup();
+      renderCart([paidPlan]);
+      await openCartWith(user, [paidPlan]);
+      await fillCheckoutForm(user, 'woman@example.com');
+      const submit = screen.getByRole('button', { name: 'Continue to payment' });
+
+      // act
+      await user.click(submit);
+
+      // assert
+      expect(submit).toHaveAttribute('aria-disabled', 'true');
+      expect(
+        await screen.findByText('Enter your email and tick both required boxes to continue.'),
+      ).toBeInTheDocument();
+      expect(placeStoreOrder).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole('checkbox', {
+          name: `${PAID_DIGITAL_DELIVERY_CONSENT.statement} ${PAID_DIGITAL_DELIVERY_CONSENT.withdrawalTermsLinkLabel} (required)`,
+        }),
+      ).not.toBeChecked();
+    });
+
+    it('places the order with her consents and hands her to the hosted payment page', async () => {
+      // arrange
+      const user = userEvent.setup();
+      renderCart([paidPlan, freeEbook]);
+      await openCartWith(user, [paidPlan, freeEbook]);
+      await fillPaidCheckoutForm(user, ' woman@example.com ');
+
+      // act
+      await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
+
+      // assert
+      await waitFor(() =>
+        expect(screen.getByTestId('route')).toHaveTextContent('/checkout/store/cs_store_test'),
+      );
+      expect(placeStoreOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'woman@example.com',
+          items: [paidPlan, freeEbook],
+          currency: 'EUR',
+          termsAccepted: true,
+          deliveryConsent: true,
+          marketing: false,
+          outcome: 'paid-success',
+        }),
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /order complete/i })).not.toBeInTheDocument();
+    });
+
+    it('asks for her main address when the email carries a + part', async () => {
+      // arrange
+      const user = userEvent.setup();
+      placeStoreOrder.mockResolvedValueOnce({ status: 'subaddress_refused' });
+      renderCart([paidPlan]);
+      await openCartWith(user, [paidPlan]);
+      await fillPaidCheckoutForm(user, 'woman+store@example.com');
+
+      // act
+      await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
+
+      // assert
+      expect(await screen.findByRole('alert')).toHaveTextContent(SUBADDRESS_REFUSED_MESSAGE);
+      const emailInput = screen.getByRole('textbox', { name: /email address/i });
+      expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+      await waitFor(() => expect(emailInput).toHaveFocus());
+    });
+
+    it('names the products still available and keeps her whole cart', async () => {
+      // arrange
+      const user = userEvent.setup();
+      placeStoreOrder.mockResolvedValueOnce({
+        status: 'unavailable_products',
+        availableProductIds: [paidPlan.id],
+      });
+      renderCart([paidPlan, secondPaidPlan]);
+      await openCartWith(user, [paidPlan, secondPaidPlan]);
+      await fillPaidCheckoutForm(user, 'woman@example.com');
+
+      // act
+      await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
+
+      // assert
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        `Some items in your cart are no longer available. Still available: ${paidPlan.title}. Remove the rest to continue.`,
+      );
+      expect(screen.getAllByRole('listitem')).toHaveLength(2);
+      expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
+    });
+
+    it('keeps her cart and entries when checkout cannot be opened', async () => {
+      // arrange
+      const user = userEvent.setup();
+      placeStoreOrder.mockResolvedValueOnce({ status: 'checkout_unavailable' });
+      renderCart([paidPlan]);
+      await openCartWith(user, [paidPlan]);
+      await fillPaidCheckoutForm(user, 'woman@example.com');
+
+      // act
+      await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
+
+      // assert
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Checkout is temporarily unavailable. Your cart and details are saved, so please try again shortly.',
+      );
+      expect(screen.getByRole('textbox', { name: /email address/i })).toHaveValue('woman@example.com');
+      expect(screen.getByRole('checkbox', { name: /^Start my download now/ })).toBeChecked();
+      expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeEnabled();
+    });
+  });
+
+  it('asks a free-only cart for no immediate-delivery request and no order summary', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCart([freeEbook]);
+    await openCartWith(user, [freeEbook]);
+
+    // act
+    await user.click(screen.getByRole('button', { name: /^continue$/i }));
+
+    // assert
+    expect(screen.queryByRole('checkbox', { name: /^Start my download now/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Your order' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send my resources/i })).toBeDisabled();
   });
 });

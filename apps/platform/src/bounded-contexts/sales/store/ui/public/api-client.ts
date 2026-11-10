@@ -5,9 +5,26 @@ import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";
 import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
+  storeDownloadContentsResponseSchema,
   type StoreAcquisitionResponse,
   type StoreCatalogResponse,
+  type StoreDownloadResource,
 } from "~/bounded-contexts/sales/store/public/store";
+import {
+  storeCheckoutResponseSchema,
+  storeOrderEmailResendResponseSchema,
+  type StoreCheckoutResponse,
+  type StoreOrderEmailResendOutcome,
+} from "~/bounded-contexts/sales/store/public/store-orders";
+
+export type StoreOrderEmailOutcome =
+  StoreOrderEmailResendOutcome | "unavailable";
+
+export type StoreDownloadContents =
+  | { status: "loading" }
+  | { status: "available"; resources: readonly StoreDownloadResource[] }
+  | { status: "unavailable" }
+  | { status: "unconfirmed" };
 
 const STORE_CATALOG_ROUTE_PATH = STORE_API_PATHS.catalog;
 export const STORE_CATALOG_API_URL = joinBasePath(
@@ -18,6 +35,11 @@ export const STORE_ACQUISITIONS_API_PATH = STORE_API_PATHS.acquisitions;
 export const STORE_ACQUISITIONS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
   STORE_ACQUISITIONS_API_PATH,
+);
+export const STORE_CHECKOUTS_API_PATH = STORE_API_PATHS.checkouts;
+export const STORE_CHECKOUTS_API_URL = joinBasePath(
+  import.meta.env.BASE_URL,
+  STORE_CHECKOUTS_API_PATH,
 );
 
 export function useStoreCatalogFetcher(options: { enabled: boolean }) {
@@ -56,26 +78,95 @@ export function useStoreCatalogFetcher(options: { enabled: boolean }) {
   };
 }
 
+export function useStoreAcquisitionFetcher() {
+  return useKeyedSubmissionFetcher({
+    action: STORE_ACQUISITIONS_API_PATH,
+    parseResponse: parseStoreAcquisitionResponse,
+  });
+}
+
+export function useStoreCheckoutFetcher() {
+  return useKeyedSubmissionFetcher({
+    action: STORE_CHECKOUTS_API_PATH,
+    parseResponse: parseStoreCheckoutResponse,
+  });
+}
+
+export function useStoreOrderEmailFetcher() {
+  const fetcher = useFetcher<unknown>();
+  const { data, state, submit: fetcherSubmit } = fetcher;
+  const isSubmitting = state !== "idle";
+  const submit = useCallback(
+    (sessionId: string) => {
+      const formData = new FormData();
+      formData.set("sessionId", sessionId);
+      void fetcherSubmit(formData, {
+        action: STORE_API_PATHS.orderEmails,
+        method: "post",
+      });
+    },
+    [fetcherSubmit],
+  );
+
+  return {
+    isSubmitting,
+    outcome:
+      isSubmitting || data === undefined
+        ? null
+        : parseStoreOrderEmailOutcome(data),
+    submit,
+  };
+}
+
+export function useStoreDownloadContentsFetcher(
+  token: string | null,
+): StoreDownloadContents {
+  const fetcher = useFetcher<unknown>();
+  const { data, state, submit } = fetcher;
+  const requestedToken = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!token || requestedToken.current === token) {
+      return;
+    }
+
+    requestedToken.current = token;
+    const formData = new FormData();
+    formData.set("token", token);
+    void submit(formData, {
+      action: STORE_API_PATHS.downloadContents,
+      method: "post",
+    });
+  }, [submit, token]);
+
+  if (state !== "idle" || data === undefined) {
+    return { status: "loading" };
+  }
+
+  return parseStoreDownloadContents(data);
+}
+
 // The fetcher is re-keyed to forget a response the drawer has dealt with; a
 // keyed fetcher is torn down when its key goes out of use, so the discarded
 // response can never re-run the effect that reads it.
-export function useStoreAcquisitionFetcher() {
+function useKeyedSubmissionFetcher<Response>(options: {
+  action: string;
+  parseResponse: (data: unknown) => Response;
+}) {
+  const { action, parseResponse } = options;
   const [fetcherKey, setFetcherKey] = useState(createFetcherKey);
   const fetcher = useFetcher<unknown>({ key: fetcherKey });
   const { data, state, submit: fetcherSubmit } = fetcher;
   const isSubmitting = state === "submitting";
   const parsedResponse = useMemo(
-    () => (data === undefined ? null : parseStoreAcquisitionResponse(data)),
-    [data],
+    () => (data === undefined ? null : parseResponse(data)),
+    [data, parseResponse],
   );
   const submit = useCallback(
     (formData: FormData) => {
-      void fetcherSubmit(formData, {
-        action: STORE_ACQUISITIONS_API_PATH,
-        method: "post",
-      });
+      void fetcherSubmit(formData, { action, method: "post" });
     },
-    [fetcherSubmit],
+    [action, fetcherSubmit],
   );
   const reset = useCallback(() => {
     setFetcherKey(createFetcherKey());
@@ -97,6 +188,48 @@ function parseStoreAcquisitionResponse(
   return parsedResponse.success
     ? parsedResponse.data
     : createStoreServerErrorResponse();
+}
+
+function parseStoreCheckoutResponse(data: unknown): StoreCheckoutResponse {
+  const parsedResponse = storeCheckoutResponseSchema.safeParse(data);
+
+  return parsedResponse.success
+    ? parsedResponse.data
+    : {
+        error: {
+          code: "checkout_unavailable",
+          message: "Checkout is temporarily unavailable.",
+        },
+        success: false,
+      };
+}
+
+function parseStoreOrderEmailOutcome(data: unknown): StoreOrderEmailOutcome {
+  const parsedResponse = storeOrderEmailResendResponseSchema.safeParse(data);
+
+  if (!parsedResponse.success || !parsedResponse.data.success) {
+    return "unavailable";
+  }
+
+  return parsedResponse.data.outcome;
+}
+
+function parseStoreDownloadContents(data: unknown): StoreDownloadContents {
+  const parsedResponse = storeDownloadContentsResponseSchema.safeParse(data);
+
+  if (!parsedResponse.success) {
+    return { status: "unconfirmed" };
+  }
+
+  switch (parsedResponse.data.status) {
+    case "available":
+      return parsedResponse.data;
+    case "unavailable":
+    case "invalid_request":
+      return { status: "unavailable" };
+    case "temporarily_unavailable":
+      return { status: "unconfirmed" };
+  }
 }
 
 function createFetcherKey(): string {

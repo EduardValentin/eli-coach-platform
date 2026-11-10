@@ -33,6 +33,7 @@ function buildGrant(overrides: {
       {
         productSlug: "hormone-harmony",
         productTitle: "Hormone Harmony",
+        productTypeLabels: ["E-Books"],
         productVersionId: 11,
         assets: [asset],
       },
@@ -77,6 +78,7 @@ describe("DownloadGrant.delivery", () => {
           {
             productSlug: "hormone-harmony",
             productTitle: "Hormone Harmony",
+            productTypeLabels: ["E-Books"],
             productVersionId: 11,
             assets: [asset],
           },
@@ -91,6 +93,7 @@ describe("DownloadGrant.delivery", () => {
           {
             productSlug: "hormone-harmony",
             productTitle: "Hormone Harmony",
+            productTypeLabels: ["E-Books"],
             productVersionId: 11,
             assets: [asset, secondAsset],
           },
@@ -105,6 +108,7 @@ describe("DownloadGrant.delivery", () => {
           {
             productSlug: "hormone-harmony",
             productTitle: "Hormone Harmony",
+            productTypeLabels: ["E-Books"],
             productVersionId: 11,
             assets: [],
           },

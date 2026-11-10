@@ -1,5 +1,4 @@
 import {
-  evaluateDeliveryLimit,
   type AcquisitionPreparation,
   type PrepareAcquisitionCommand,
   type ResolvedPriorAcquisition,
@@ -426,10 +425,11 @@ async function resolveLimitedWindow(
   transaction: Parameters<Parameters<DatabaseClient["transaction"]>[0]>[0],
   command: PrepareAcquisitionCommand,
 ): Promise<StoreDeliveryLimitWindow | null> {
+  const windows = command.policy.windowsAt(command.requestedAt);
   const usageResult = await transaction.execute<DeliveryUsageRow>(sql`
     select
       count(*) filter (
-        where attempt.created_at > ${command.cooldownSince}
+        where attempt.created_at > ${windows.cooldownSince}
       ) as "cooldownCount",
       count(*) as "dailyCount"
     from app.store_recipients recipient
@@ -438,7 +438,7 @@ async function resolveLimitedWindow(
     join app.delivery_attempts attempt
       on attempt.request_id = request.id
     where recipient.delivery_limit_key = ${command.deliveryLimitKey}
-      and attempt.created_at > ${command.dailyWindowSince}
+      and attempt.created_at > ${windows.dailyWindowSince}
       and attempt.status in ('pending', 'accepted')
   `);
   const [usage] = usageResult.rows;
@@ -447,13 +447,10 @@ async function resolveLimitedWindow(
     return null;
   }
 
-  return evaluateDeliveryLimit(
-    {
-      cooldownCount: Number(usage.cooldownCount),
-      dailyCount: Number(usage.dailyCount),
-    },
-    command.dailyLimit,
-  );
+  return command.policy.limitedWindow({
+    cooldownCount: Number(usage.cooldownCount),
+    dailyCount: Number(usage.dailyCount),
+  });
 }
 
 async function lockCurrentProducts(

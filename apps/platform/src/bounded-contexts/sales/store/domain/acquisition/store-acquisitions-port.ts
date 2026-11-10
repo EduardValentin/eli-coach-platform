@@ -1,6 +1,9 @@
 import type { PublishedProduct } from "../product";
 
-import type { StoreDeliveryLimitWindow } from "./acquisition";
+import type {
+  DeliveryLimitPolicy,
+  StoreDeliveryLimitWindow,
+} from "./delivery-limit-policy";
 
 export type PrepareAcquisitionCommand = {
   normalizedEmail: string;
@@ -17,9 +20,7 @@ export type PrepareAcquisitionCommand = {
   tokenSha256: string;
   deliveryProvider: string;
   providerIdempotencyKey: string;
-  cooldownSince: Date;
-  dailyWindowSince: Date;
-  dailyLimit: number;
+  policy: DeliveryLimitPolicy;
   deliveryLimitKey: string;
 };
 

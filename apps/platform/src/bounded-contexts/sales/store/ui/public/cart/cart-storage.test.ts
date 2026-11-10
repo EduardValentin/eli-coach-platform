@@ -5,13 +5,22 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   STORE_CART_PERSIST_OPTIONS,
   STORE_CART_STORAGE_KEY,
+  STORE_CHECKOUT_DETAILS_STORAGE_KEY,
 } from "./cart-storage";
 
 const storage = STORE_CART_PERSIST_OPTIONS.storage;
 
+const checkoutDetails = {
+  deliveryConsent: true,
+  email: "woman@example.com",
+  marketingConsent: false,
+  termsAccepted: true,
+};
+
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
 });
 
 describe("store cart storage", () => {
@@ -30,7 +39,68 @@ describe("store cart storage", () => {
 
     // assert
     expect(storedCart).toEqual({
-      state: { productSlugs: ["hormone-harmony"] },
+      state: { checkoutDetails: null, productSlugs: ["hormone-harmony"] },
+      version: 1,
+    });
+  });
+
+  it("keeps her checkout details in the tab's session storage, apart from the cart", () => {
+    // arrange
+    const cart = {
+      state: { checkoutDetails, productSlugs: ["fat-loss-plan"] },
+      version: 1,
+    };
+
+    // act
+    storage.setItem(STORE_CART_STORAGE_KEY, cart);
+
+    // assert
+    expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
+      productSlugs: ["fat-loss-plan"],
+      version: 1,
+    });
+    expect(
+      JSON.parse(sessionStorage.getItem(STORE_CHECKOUT_DETAILS_STORAGE_KEY)!),
+    ).toEqual(checkoutDetails);
+    expect(storage.getItem(STORE_CART_STORAGE_KEY)).toEqual(cart);
+  });
+
+  it("forgets her checkout details once they are cleared", () => {
+    // arrange
+    storage.setItem(STORE_CART_STORAGE_KEY, {
+      state: { checkoutDetails, productSlugs: ["fat-loss-plan"] },
+      version: 1,
+    });
+
+    // act
+    storage.setItem(STORE_CART_STORAGE_KEY, {
+      state: { checkoutDetails: null, productSlugs: [] },
+      version: 1,
+    });
+
+    // assert
+    expect(
+      sessionStorage.getItem(STORE_CHECKOUT_DETAILS_STORAGE_KEY),
+    ).toBeNull();
+  });
+
+  it("reads no checkout details from a malformed stored value", () => {
+    // arrange
+    localStorage.setItem(
+      STORE_CART_STORAGE_KEY,
+      JSON.stringify({ productSlugs: ["fat-loss-plan"], version: 1 }),
+    );
+    sessionStorage.setItem(
+      STORE_CHECKOUT_DETAILS_STORAGE_KEY,
+      JSON.stringify({ email: 7 }),
+    );
+
+    // act
+    const storedCart = storage.getItem(STORE_CART_STORAGE_KEY);
+
+    // assert
+    expect(storedCart).toEqual({
+      state: { checkoutDetails: null, productSlugs: ["fat-loss-plan"] },
       version: 1,
     });
   });
@@ -84,7 +154,7 @@ describe("store cart storage", () => {
     // act
     const writeCart = () =>
       storage.setItem(STORE_CART_STORAGE_KEY, {
-        state: { productSlugs: ["hormone-harmony"] },
+        state: { checkoutDetails: null, productSlugs: ["hormone-harmony"] },
         version: 1,
       });
 

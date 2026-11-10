@@ -4,7 +4,7 @@ import { createEmailAcceptance } from "~/shared/submission-checks/email-address"
 
 import { ProductPricing, PublishedProduct } from "../product";
 
-import { AcquisitionRequest, evaluateDeliveryLimit } from "./acquisition";
+import { AcquisitionRequest } from "./acquisition";
 
 const requestedAt = new Date("2026-07-30T12:00:00.000Z");
 const emailAcceptance = createEmailAcceptance("allowed");
@@ -104,33 +104,6 @@ describe("AcquisitionRequest.from", () => {
     expect(request.idempotencyKey).toBe(command.idempotencyKey);
     expect(request.marketingConsent).toBe(true);
     expect(request.requestedAt).toBe(requestedAt);
-  });
-});
-
-describe("AcquisitionRequest#deliveryLimitKey", () => {
-  it.each([
-    ["person+tag@example.com", "person@example.com"],
-    ["person@example.com", "person@example.com"],
-    ["woman+one+two@example.com", "woman@example.com"],
-    ["woman@sub.example.com", "woman@sub.example.com"],
-    ["no-at-sign", "no-at-sign"],
-    // A local part that is only a tag folds to a bare domain key. Such an
-    // address collides with others of the same shape, which is acceptable
-    // because no provider issues a mailbox without a base name.
-    ["+guides@example.com", "@example.com"],
-  ])("strips the plus tag from %s", (raw, expected) => {
-    // arrange
-    const request = AcquisitionRequest.from(
-      { ...command, email: raw },
-      requestedAt,
-      emailAcceptance,
-    );
-
-    // act
-    const key = request.deliveryLimitKey;
-
-    // assert
-    expect(key).toBe(expected);
   });
 });
 
@@ -257,22 +230,5 @@ describe("AcquisitionRequest.selectProducts with paid products", () => {
       status: "unavailable_products",
       availableProductSlugs: ["glute-plan"],
     });
-  });
-});
-
-describe("evaluateDeliveryLimit", () => {
-  it.each([
-    [{ cooldownCount: 1, dailyCount: 1 }, "cooldown"],
-    [{ cooldownCount: 0, dailyCount: 10 }, "daily"],
-    [{ cooldownCount: 0, dailyCount: 9 }, null],
-  ])("decides %o as %s", (usage, expected) => {
-    // arrange
-    const dailyLimit = 10;
-
-    // act
-    const window = evaluateDeliveryLimit(usage, dailyLimit);
-
-    // assert
-    expect(window).toBe(expected);
   });
 });

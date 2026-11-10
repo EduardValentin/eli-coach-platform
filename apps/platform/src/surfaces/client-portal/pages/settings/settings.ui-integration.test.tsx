@@ -30,17 +30,17 @@ import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profi
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import { CLIENT_PROFILE_API_PATHS } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/clients/public/paths";
-import { clientAction as cancelSubscription } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/client/subscription-cancellation";
-import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
+import { clientAction as cancelSubscription } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/client/subscription-cancellation";
+import type { ClientSettings } from "~/bounded-contexts/sales/subscriptions/public/client-subscription";
 import {
   CLIENT_SETTINGS_PATH,
-  COACHING_SALES_API_PATHS,
-} from "~/bounded-contexts/sales/coaching-sales/public/paths";
+  SUBSCRIPTIONS_API_PATHS,
+} from "~/bounded-contexts/sales/subscriptions/public/paths";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import SettingsRoute from "./settings";
 
-const CANCELLATION_URL = COACHING_SALES_API_PATHS.subscriptionCancellation;
+const CANCELLATION_URL = SUBSCRIPTIONS_API_PATHS.subscriptionCancellation;
 const UNIT_PREFERENCE_URL = `http://localhost${CLIENT_PROFILE_API_PATHS.unitPreference}`;
 const UNSAVED = "Your changes weren't saved. Try again.";
 
@@ -364,7 +364,7 @@ describe("her payment method", () => {
     expect(form).toHaveAttribute("method", "post");
     expect(form).toHaveAttribute(
       "action",
-      "/api/coaching-sales/payment-method-session",
+      "/api/subscriptions/payment-method-session",
     );
   });
 

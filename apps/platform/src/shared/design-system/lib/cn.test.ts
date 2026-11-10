@@ -150,3 +150,21 @@ describe("cn enabled-only states", () => {
     expect(merged).toBe("bg-primary not-aria-disabled:hover:bg-primary-hover");
   });
 });
+
+describe("cn overlay layers", () => {
+  it("lets a caller's z-index replace a named overlay layer", () => {
+    // arrange
+    const classes = [
+      "z-sheet",
+      "z-sheet-overlay",
+      "z-floating-over-sheet",
+      "z-50",
+    ];
+
+    // act
+    const merged = cn(...classes);
+
+    // assert
+    expect(merged).toBe("z-50");
+  });
+});

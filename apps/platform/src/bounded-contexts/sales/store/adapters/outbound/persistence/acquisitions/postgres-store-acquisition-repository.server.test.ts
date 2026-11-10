@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PrepareAcquisitionCommand } from "~/bounded-contexts/sales/store/domain/acquisition";
+import {
+  STORE_DELIVERY_LIMIT_POLICY,
+  type PrepareAcquisitionCommand,
+} from "~/bounded-contexts/sales/store/domain/acquisition";
 import {
   ProductPricing,
   PublishedProduct,
@@ -53,9 +56,7 @@ const command = {
   deliveryProvider: "resend",
   providerIdempotencyKey:
     "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
-  cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
-  dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
-  dailyLimit: 10,
+  policy: STORE_DELIVERY_LIMIT_POLICY,
   deliveryLimitKey: "woman@example.com",
 } satisfies PrepareAcquisitionCommand;
 

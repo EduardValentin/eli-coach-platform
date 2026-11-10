@@ -17,10 +17,9 @@ const DETAIL_ANSWERS_PATH = "/api/client-onboarding/detail-answers";
 const ONBOARDING_DRAFT_PATH = "/api/client-onboarding/draft";
 const INVITATION_RESENDS_PATH = "/api/clients/invitation-resends";
 const SUBSCRIPTION_CANCELLATION_PATH =
-  "/api/coaching-sales/subscription-cancellation";
-const PROGRAM_START_PATH = "/api/coaching-sales/program-start";
-const PAYMENT_METHOD_SESSION_PATH =
-  "/api/coaching-sales/payment-method-session";
+  "/api/subscriptions/subscription-cancellation";
+const PROGRAM_START_PATH = "/api/subscriptions/program-start";
+const PAYMENT_METHOD_SESSION_PATH = "/api/subscriptions/payment-method-session";
 const SUBSCRIPTION_PATHS = [
   SUBSCRIPTION_CANCELLATION_PATH,
   PROGRAM_START_PATH,

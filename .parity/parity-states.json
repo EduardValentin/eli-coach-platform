@@ -622,7 +622,17 @@
     }
   ],
   "checkout-immediate": {
-    "prototype": [],
+    "prototype": [
+      {
+        "click": "[data-parity=\"option-immediate\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay €/]"
+      }
+    ],
     "real": [
       {
         "click": "[data-parity=\"option-immediate\"]"
@@ -636,7 +646,17 @@
     ]
   },
   "checkout-waiting": {
-    "prototype": [],
+    "prototype": [
+      {
+        "click": "[data-parity=\"option-waiting\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay €/]"
+      }
+    ],
     "real": [
       {
         "click": "[data-parity=\"option-waiting\"]"
@@ -6325,12 +6345,20 @@
       "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
     }
   ],
-  "cart-paid-details": [
+  "cart-paid-details-empty": [
     {
-      "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
+      "use": "cart-mixed"
     },
     {
       "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"order-summary-block\"]"
+    }
+  ],
+  "cart-paid-details-filled": [
+    {
+      "use": "cart-paid-details-empty"
     },
     {
       "fill": [
@@ -6339,7 +6367,203 @@
       ]
     },
     {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] button:has-text(\"Complete order\")"
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"delivery-consent-checkbox\"]"
     }
-  ]
+  ],
+  "cart-paid-hint": [
+    {
+      "use": "cart-paid-details-empty"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "cart-paid-hint-focus": [
+    {
+      "use": "cart-paid-details-empty"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "cart-checkout-unavailable": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [role=\"alert\"]"
+    }
+  ],
+  "cart-unavailable-products": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-summary\"]"
+    }
+  ],
+  "cart-subaddress-refused": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor+store@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] input[type=\"email\"][aria-invalid=\"true\"]"
+    }
+  ],
+  "cart-payment-not-completed": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "click": "a[href*=\"payment=cancelled\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
+    }
+  ],
+  "order-confirmed": {
+    "prototype": [
+      {
+        "use": "cart-paid-details-filled"
+      },
+      {
+        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay /]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"StoreOrderComplete\"] [data-parity=\"order-email\"]"
+      }
+    ],
+    "real": []
+  },
+  "order-resend-sent": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "order-resend-processing": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "order-resend-try-later": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "download-ready": {
+    "prototype": [],
+    "real": [
+      {
+        "waitFor": "[data-parity-root=\"DownloadPage\"] [data-parity=\"download-resources\"]"
+      }
+    ]
+  }
 }

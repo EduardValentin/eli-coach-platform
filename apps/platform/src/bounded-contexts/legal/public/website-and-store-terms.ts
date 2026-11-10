@@ -2,10 +2,9 @@ import type { LegalDocument, LegalLink } from "./legal-document";
 
 type PaidDigitalDeliveryConsent = Readonly<{
   statement: string;
-  confirmationNotice: string;
   termsVersion: string;
-  termsHref: string;
-  termsLinkLabel: string;
+  withdrawalTermsHref: string;
+  withdrawalTermsLinkLabel: string;
 }>;
 
 const EVOA_FITNESS_TERMS_SUPPORT_EMAIL = "support@evoa.com";
@@ -757,10 +756,8 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
 
 export const PAID_DIGITAL_DELIVERY_CONSENT = {
   statement:
-    "I expressly request that Evoa Fitness begin supplying the digital content before the 14-day withdrawal period ends. I acknowledge that, once supply begins following this request and after Evoa Fitness provides the required contract confirmation, I lose the applicable statutory right to withdraw from this digital-content purchase. This does not affect mandatory remedies if the content is missing, defective, inaccessible, or not as described.",
-  confirmationNotice:
-    "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
+    "Start my download now. I understand I lose my 14-day right to withdraw once delivery starts.",
   termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-  termsHref: "/terms",
-  termsLinkLabel: `Terms & Conditions version ${WEBSITE_AND_STORE_TERMS_DOCUMENT.version}`,
+  withdrawalTermsHref: "/terms#immediate-digital-delivery-and-withdrawal",
+  withdrawalTermsLinkLabel: "How withdrawal works",
 } as const satisfies PaidDigitalDeliveryConsent;

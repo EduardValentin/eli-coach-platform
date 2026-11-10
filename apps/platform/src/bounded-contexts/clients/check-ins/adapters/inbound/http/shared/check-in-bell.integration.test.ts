@@ -14,9 +14,9 @@ import { ClientOnboardingJourney } from "~integration-test-config/client-onboard
 import {
   ANA,
   CALL_ENDED_INSTANT,
-  CoachingSalesJourney,
+  SubscriptionsJourney,
   type Visitor,
-} from "~integration-test-config/coaching-sales-journey";
+} from "~integration-test-config/subscriptions-journey";
 import { NotificationsJourney } from "~integration-test-config/notifications-journey";
 import {
   COACH_SESSION,
@@ -32,7 +32,7 @@ import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/s
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
-const sales = new CoachingSalesJourney(rig);
+const sales = new SubscriptionsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 const notifications = new NotificationsJourney(rig);

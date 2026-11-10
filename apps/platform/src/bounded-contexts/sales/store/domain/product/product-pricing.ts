@@ -1,5 +1,6 @@
 import {
   ProductPrice,
+  type StoreCurrency,
   type ProductPriceInput,
   type ProductPriceIssue,
   type ProductPriceSnapshot,
@@ -56,6 +57,10 @@ export class ProductPricing {
 
   isPaid(): boolean {
     return this.state.kind === "paid";
+  }
+
+  amountIn(currency: StoreCurrency): number {
+    return this.state.kind === "free" ? 0 : this.state.price.amountIn(currency);
   }
 
   equals(other: ProductPricing): boolean {

@@ -17,20 +17,20 @@ import {
 import { AssessmentCallsSection } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-calls/assessment-calls-section";
 import { useCoachClock } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/use-coach-clock";
 import { ViewClientLink } from "~/bounded-contexts/clients/clients/ui/coach/clients/view-client-link";
-import type { CallSalesState } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
-import { coachingSalesContext } from "~/bounded-contexts/sales/public/request-context";
-import { CallSalesStateBadge } from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
-import { PaymentLinkAction } from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/payment-link-action";
+import type { CallSalesState } from "~/bounded-contexts/sales/subscriptions/public/subscriptions";
+import { subscriptionsContext } from "~/bounded-contexts/sales/public/request-context";
+import { CallSalesStateBadge } from "~/bounded-contexts/sales/subscriptions/ui/coach/call-sales/call-sales-state-badge";
+import { PaymentLinkAction } from "~/bounded-contexts/sales/subscriptions/ui/coach/call-sales/payment-link-action";
 import {
   PRICING_DETAIL_LABEL,
   pricingTierLabel,
-} from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/pricing-tier-label";
+} from "~/bounded-contexts/sales/subscriptions/ui/coach/call-sales/pricing-tier-label";
 import {
   matchesSalesFilter,
   SalesStatusFilter,
   SALES_STATUS_PARAM,
   useSalesFilterParam,
-} from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/sales-status-filter";
+} from "~/bounded-contexts/sales/subscriptions/ui/coach/call-sales/sales-status-filter";
 
 export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-calls-error-boundary";
 
@@ -38,7 +38,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
   const listing = await context
     .get(assessmentCallsContext)
     .coachAssessmentCallsController.loadCalls();
-  const { coachSalesController } = context.get(coachingSalesContext);
+  const { coachSalesController } = context.get(subscriptionsContext);
   const [callSales, pricingTiers] = await Promise.all([
     coachSalesController.loadCallSales(listing.calls.map((call) => call.id)),
     coachSalesController.loadPricingTiers(

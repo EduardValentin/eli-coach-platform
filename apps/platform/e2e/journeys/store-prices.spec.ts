@@ -1,7 +1,6 @@
 import type { ProductPricingRequest } from "~/bounded-contexts/sales/store/public/store-management";
 
-import { subjectsTo } from "../support/email-capture";
-import { expect, test } from "../support/fixtures";
+import { test } from "../support/fixtures";
 import { resolveRunId } from "../support/run-id";
 import type { StoreProductFields } from "../support/store-product-requests";
 
@@ -17,8 +16,6 @@ const RAISED_PLAN_PRICING: ProductPricingRequest = {
   usdCents: 5500,
 };
 const FREE_PRICING: ProductPricingRequest = { kind: "free" };
-const NOT_SENT =
-  "We couldn't send your resources right now. Your cart is saved, so please try again.";
 
 function storeProductFieldsOf(
   name: string,
@@ -124,42 +121,5 @@ test(
 
     // assert
     await storeCatalog.expectPlanAt(plan.title, "€49.00");
-  },
-);
-
-test(
-  "a free request whose cart holds a paid plan is refused and sends no email",
-  { tag: "@completeness" },
-  async ({
-    scenarioTag,
-    storeCartDrawer,
-    storeCatalog,
-    storeProductRequests,
-    visitorEmail,
-  }) => {
-    // arrange
-    const plan = storeProductFieldsOf(
-      "Strength Plan",
-      scenarioTag,
-      PLAN_PRICING,
-    );
-    const guide = storeProductFieldsOf(
-      "Recovery Guide",
-      scenarioTag,
-      FREE_PRICING,
-    );
-    await storeProductRequests.publishAccepted(plan);
-    await storeProductRequests.publishAccepted(guide);
-    await storeCatalog.open();
-    await storeCatalog.addToCart(plan.title);
-    await storeCartDrawer.close();
-    await storeCatalog.getForFree(guide.title);
-
-    // act
-    await storeCartDrawer.completeOrder(visitorEmail);
-
-    // assert
-    await storeCartDrawer.expectAlert(NOT_SENT);
-    expect(await subjectsTo(visitorEmail)).toEqual([]);
   },
 );

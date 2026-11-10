@@ -41,7 +41,7 @@ import {
   COACH_CLIENTS_PATH,
   coachClientPath,
 } from "~/bounded-contexts/clients/clients/public/paths";
-import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
+import type { ClientSubscription } from "~/bounded-contexts/sales/subscriptions/public/client-subscription";
 import { frameworkModeLoader } from "~/composition-root/test-support/framework-mode-action";
 
 import CoachClientRoute, { ErrorBoundary } from "./client";

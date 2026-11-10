@@ -1,6 +1,10 @@
 import { relative } from "@react-router/dev/routes";
 
-import { STORE_API_PATHS, STORE_ROUTE_SEGMENT } from "./public/paths";
+import {
+  STORE_API_PATHS,
+  STORE_CHECKOUT_COMPLETE_ROUTE_SEGMENT,
+  STORE_ROUTE_SEGMENT,
+} from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 
@@ -9,6 +13,10 @@ export const storePublicRoutes = [
   route(
     `${STORE_ROUTE_SEGMENT}/download`,
     "./ui/public/download/download-page.tsx",
+  ),
+  route(
+    STORE_CHECKOUT_COMPLETE_ROUTE_SEGMENT,
+    "./ui/public/checkout-complete/checkout-complete-page.tsx",
   ),
   route(`${STORE_ROUTE_SEGMENT}/:slug`, "./ui/public/product/product-page.tsx"),
 ];
@@ -23,8 +31,20 @@ export const storeApiRoutes = [
     "./adapters/inbound/http/acquisitions/acquisitions.ts",
   ),
   route(
+    STORE_API_PATHS.checkouts.slice(1),
+    "./adapters/inbound/http/checkouts/checkouts.ts",
+  ),
+  route(
+    STORE_API_PATHS.orderEmails.slice(1),
+    "./adapters/inbound/http/orders/order-emails.ts",
+  ),
+  route(
     STORE_API_PATHS.downloads.slice(1),
     "./adapters/inbound/http/downloads/downloads.ts",
+  ),
+  route(
+    STORE_API_PATHS.downloadContents.slice(1),
+    "./adapters/inbound/http/downloads/download-contents.ts",
   ),
   route(
     `${STORE_API_PATHS.covers.slice(1)}/:assetKey`,
