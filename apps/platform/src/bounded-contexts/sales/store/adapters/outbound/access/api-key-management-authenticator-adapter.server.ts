@@ -1,4 +1,7 @@
-import type { ApiKeyAccountsFacade } from "~/bounded-contexts/access/public/api-key-accounts-facade";
+import type {
+  ApiKeyAccountDto,
+  ApiKeyAccountsFacade,
+} from "~/bounded-contexts/access/public/api-key-accounts-facade";
 import type {
   ManagementAuthenticationResult,
   ManagementAuthenticatorPort,
@@ -17,12 +20,7 @@ export class ApiKeyManagementAuthenticatorAdapter implements ManagementAuthentic
 
     switch (resolution.status) {
       case "resolved":
-        return resolution.account.role === "COACH"
-          ? {
-              status: "authenticated",
-              principal: { kind: "user", id: resolution.account.id },
-            }
-          : { status: "forbidden" };
+        return this.admitCoach(resolution.account);
       case "unprovisioned":
         return { status: "forbidden" };
       case "invalid":
@@ -30,5 +28,18 @@ export class ApiKeyManagementAuthenticatorAdapter implements ManagementAuthentic
       case "unavailable":
         return { status: "unavailable" };
     }
+  }
+
+  private admitCoach(
+    account: ApiKeyAccountDto,
+  ): ManagementAuthenticationResult {
+    if (account.role !== "COACH") {
+      return { status: "forbidden" };
+    }
+
+    return {
+      status: "authenticated",
+      principal: { kind: "user", id: account.id },
+    };
   }
 }

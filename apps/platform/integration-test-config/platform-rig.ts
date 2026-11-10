@@ -19,7 +19,7 @@ export const CLIENT_SESSION: AccountSession = {
   subjectId: "user_platformrigclient",
 };
 
-export const COACH_API_KEY_SECRET = "ak_platformrigcoach";
+const COACH_API_KEY_SECRET = "ak_platformrigcoach";
 
 const WAITLIST_MODE_FLAG = "WAITLIST_MODE";
 

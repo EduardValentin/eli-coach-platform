@@ -5,7 +5,8 @@ import {
   type RuntimeStage,
 } from "~/shared/runtime/production-runtime";
 
-const PLACEHOLDER_SECRET = "replace-me";
+const PLACEHOLDER_VALUE = "replace-me";
+
 export const storeAssetsShape = {
   STORE_ASSET_ROOT: z.string().trim().min(1),
 };
@@ -18,7 +19,7 @@ export function refineStoreAssets(
 ): void {
   if (
     !isProductionRuntime(environment) ||
-    environment.STORE_ASSET_ROOT !== PLACEHOLDER_SECRET
+    environment.STORE_ASSET_ROOT !== PLACEHOLDER_VALUE
   ) {
     return;
   }

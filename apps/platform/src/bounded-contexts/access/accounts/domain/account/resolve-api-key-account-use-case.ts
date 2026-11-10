@@ -51,9 +51,13 @@ export class ResolveApiKeyAccountUseCase {
   }
 
   private readBearerCredential(header: string | null): string | null {
-    const separatorIndex = header?.indexOf(" ") ?? -1;
+    if (!header) {
+      return null;
+    }
 
-    if (!header || separatorIndex <= 0) {
+    const separatorIndex = header.indexOf(" ");
+
+    if (separatorIndex <= 0) {
       return null;
     }
 

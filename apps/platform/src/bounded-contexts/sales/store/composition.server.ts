@@ -258,14 +258,14 @@ export function composeStoreFeature(
   };
 }
 
-export function composeManagementAuth(site: {
+export function composeManagementAuth(handles: {
   apiKeyAccountsFacade: ApiKeyAccountsFacade;
   publicAppUrl: string;
 }): ManagementAuth {
   return {
     managementAuthenticatorPort: new ApiKeyManagementAuthenticatorAdapter(
-      site.apiKeyAccountsFacade,
+      handles.apiKeyAccountsFacade,
     ),
-    config: createManagementAuthConfig(site.publicAppUrl),
+    config: createManagementAuthConfig(handles.publicAppUrl),
   };
 }

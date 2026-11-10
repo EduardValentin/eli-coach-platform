@@ -112,7 +112,8 @@ describe("Store management integration", () => {
 
   it("refuses a request without a credential before asking Clerk", async () => {
     // arrange
-    const request = publicationRequest({ credential: null });
+    const request = publicationRequest();
+    request.headers.delete("authorization");
 
     // act
     const response = await suite.request(request);
@@ -1012,7 +1013,7 @@ describe("Store management integration", () => {
 function publicationRequest(
   options: {
     coverBytes?: Uint8Array<ArrayBuffer>;
-    credential?: string | null;
+    credential?: string;
     downloadBytes?: Uint8Array<ArrayBuffer>;
     forwardedProtocol?: string;
     idempotencyKey?: string;
@@ -1051,17 +1052,12 @@ function publicationRequest(
     new File([options.downloadBytes ?? PDF_BYTES], "guide.pdf"),
   );
 
-  const headers = new Headers({
-    "x-forwarded-proto": options.forwardedProtocol ?? "https",
-  });
-
-  if (options.credential !== null) {
-    headers.set("authorization", options.credential ?? managementAuthorization);
-  }
-
   return new Request(suite.url(path), {
     body: formData,
-    headers,
+    headers: {
+      authorization: options.credential ?? managementAuthorization,
+      "x-forwarded-proto": options.forwardedProtocol ?? "https",
+    },
     method: "POST",
   });
 }

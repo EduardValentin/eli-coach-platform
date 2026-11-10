@@ -189,6 +189,7 @@ type PlatformFixtures = {
   storeCartDrawer: StoreCartDrawer;
   storeOrderComplete: StoreOrderCompletePage;
   storeDownload: StoreDownloadPage;
+  storePublishingApiKey: string;
   storeProductRequests: StoreProductRequests;
   coachEmail: string;
   scenarioTag: string;
@@ -701,8 +702,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new StoreDownloadPage(page));
   },
 
-  storeProductRequests: async (
-    { baseURL, clerkBackendClient, databasePool, mintTestEmail, playwright },
+  storePublishingApiKey: async (
+    { clerkBackendClient, databasePool, mintTestEmail },
     use,
   ) => {
     const coach = await clerkBackendClient.users.createUser({
@@ -714,9 +715,21 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
       name: "e2e store publishing",
       subject: coach.id,
     });
+
+    if (!apiKey.secret) {
+      throw new Error("Clerk issued the API key without its secret.");
+    }
+
+    await use(apiKey.secret);
+  },
+
+  storeProductRequests: async (
+    { baseURL, playwright, storePublishingApiKey },
+    use,
+  ) => {
     const management = await playwright.request.newContext({
       baseURL,
-      extraHTTPHeaders: { Authorization: `Bearer ${apiKey.secret}` },
+      extraHTTPHeaders: { Authorization: `Bearer ${storePublishingApiKey}` },
     });
 
     await use(

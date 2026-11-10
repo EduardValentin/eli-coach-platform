@@ -1,4 +1,4 @@
-type ApiKeyAccountDto = { id: string; role: "CLIENT" | "COACH" };
+export type ApiKeyAccountDto = { id: string; role: "CLIENT" | "COACH" };
 
 export type ApiKeyAccountResolutionDto =
   | { status: "resolved"; account: ApiKeyAccountDto }

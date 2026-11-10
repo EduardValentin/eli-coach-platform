@@ -354,10 +354,11 @@ describe("runtime environment", () => {
   it("starts without any Store management credential outside LOCAL", () => {
     // arrange
     // act
-    const environment = loadTestRuntimeEnvironment({ ENVIRONMENT: "test" });
+    const loadOutsideLocal = () =>
+      loadTestRuntimeEnvironment({ ENVIRONMENT: "test" });
 
     // assert
-    expect(environment.ENVIRONMENT).toBe("test");
+    expect(loadOutsideLocal).not.toThrow();
   });
 
   it("rejects every Cloudflare Turnstile test-key family in deployed environments", () => {
