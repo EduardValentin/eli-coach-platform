@@ -701,12 +701,22 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new StoreDownloadPage(page));
   },
 
-  storeProductRequests: async ({ baseURL, playwright }, use) => {
+  storeProductRequests: async (
+    { baseURL, clerkBackendClient, databasePool, mintTestEmail, playwright },
+    use,
+  ) => {
+    const coach = await clerkBackendClient.users.createUser({
+      emailAddress: [mintTestEmail()],
+    });
+    await databasePool.query(INSERT_ACCOUNT, [coach.id, "COACH"]);
+    recordCoachAccount(coach.id, RUN_ID);
+    const apiKey = await clerkBackendClient.apiKeys.create({
+      name: "e2e store publishing",
+      subject: coach.id,
+    });
     const management = await playwright.request.newContext({
       baseURL,
-      extraHTTPHeaders: {
-        Authorization: `Bearer ${requireEnv("MANAGEMENT_API_SECRET")}`,
-      },
+      extraHTTPHeaders: { Authorization: `Bearer ${apiKey.secret}` },
     });
 
     await use(
