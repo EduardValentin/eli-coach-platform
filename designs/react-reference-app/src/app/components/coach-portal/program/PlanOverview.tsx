@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
 import { blockingMessage, sequenceProblems } from '../../../domain/programRules';
@@ -17,6 +18,7 @@ type PlanOverviewProps = {
   onChange: (update: BlocksUpdate) => void;
   onOpenBlock: (blockId: string) => void;
   onUseSuggestion: () => void;
+  settings: ReactNode;
 };
 
 const LEVEL_LABELS: Record<LevelHint, string> = {
@@ -39,13 +41,16 @@ function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => voi
   );
 }
 
-export function PlanOverview({ content, dayOne, preferredWeekday, today, level, onChange, onOpenBlock, onUseSuggestion }: PlanOverviewProps) {
+export function PlanOverview({ content, dayOne, preferredWeekday, today, level, onChange, onOpenBlock, onUseSuggestion, settings }: PlanOverviewProps) {
   const { blocks } = content.plan;
   const problems = sequenceProblems(blocks);
 
   return (
     <section className="grid grid-cols-1 gap-6">
-      <h2 className={WIDGET_TITLE_CLASS}>Plan overview</h2>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <h2 className={WIDGET_TITLE_CLASS}>Plan overview</h2>
+        {settings}
+      </div>
       {blocks.length === 0 ? (
         <SuggestionBanner level={level} onUse={onUseSuggestion} />
       ) : (

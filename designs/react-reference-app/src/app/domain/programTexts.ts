@@ -145,3 +145,49 @@ export function versionWithStandardText(version: ProgramVersion, target: Program
   const { standard } = programText(version, target, language);
   return standard === null ? version : versionWithText(version, target, standard);
 }
+
+export type TextProgress = { written: number; total: number };
+
+function versionText(key: VersionTextKey): ProgramTextTarget {
+  return { kind: 'version', key };
+}
+
+function guideTarget(key: GuideTextKey): ProgramTextTarget {
+  return { kind: 'guide', key };
+}
+
+export function programWideTexts(version: ProgramVersion): ProgramTextTarget[] {
+  const whatChanged = version.number > 1 ? [versionText('whatChanged')] : [];
+  return [
+    versionText('title'),
+    versionText('focus'),
+    versionText('personalNote'),
+    ...whatChanged,
+    guideTarget('legend'),
+    guideTarget('lowEnergy'),
+    versionText('nutrition'),
+    versionText('lifestyle'),
+  ];
+}
+
+export function blockTexts(block: Block): ProgramTextTarget[] {
+  const own = (key: BlockTextKey): ProgramTextTarget => ({ kind: 'block', blockId: block.id, key });
+  const hasCoolDown = block.sessions.some(session => session.coolDown.enabled);
+  return [
+    own('intro'),
+    own('note'),
+    ...(block.calibrationWeek ? [guideTarget('calibration')] : []),
+    own('split'),
+    guideTarget('warmUp'),
+    guideTarget('progression'),
+    ...(hasCoolDown ? [guideTarget('coolDown')] : []),
+    own('missedDay'),
+    guideTarget('noWeight'),
+    guideTarget('steps'),
+  ];
+}
+
+export function textProgress(version: ProgramVersion, targets: readonly ProgramTextTarget[], language: ProgramLanguage): TextProgress {
+  const written = targets.filter(target => isWritten(programText(version, target, language).value)).length;
+  return { written, total: targets.length };
+}

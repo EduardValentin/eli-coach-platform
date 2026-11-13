@@ -18,8 +18,9 @@ type EditorTopBarProps = {
   basedOn: ProgramVersion | undefined;
   railToggle: ReactNode;
   libraryToggle: ReactNode;
-  currentTitle: string | null;
-  onOverview: () => void;
+  modeTitle: string;
+  placeTitle: string;
+  onOverview: (() => void) | null;
   onOpenWarnings: () => void;
   onPreview: () => void;
   onPublish: () => void;
@@ -39,33 +40,27 @@ function draftLine(name: string, version: ProgramVersion, basedOn: ProgramVersio
   return `${name} · v${version.number} draft${origin}`;
 }
 
-function Breadcrumb({ currentTitle, onOverview }: { currentTitle: string | null; onOverview: () => void }) {
+type BreadcrumbProps = Pick<EditorTopBarProps, 'modeTitle' | 'placeTitle' | 'onOverview'>;
+
+function Breadcrumb({ modeTitle, placeTitle, onOverview }: BreadcrumbProps) {
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
       <ol className={cn(WIDGET_TITLE_CLASS, 'flex min-w-0 items-center gap-1')}>
-        {currentTitle === null ? (
-          <li aria-current="page" className="truncate">
-            Overview
-          </li>
-        ) : (
-          <>
-            <li className="shrink-0">
-              <button
-                type="button"
-                onClick={onOverview}
-                className="rounded-tile text-text-secondary transition-colors hover:text-text-primary"
-              >
-                Overview
-              </button>
-            </li>
-            <li className="flex min-w-0 items-center gap-1">
-              <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-text-secondary" />
-              <span aria-current="page" className="truncate">
-                {currentTitle}
-              </span>
-            </li>
-          </>
-        )}
+        <li className="shrink-0 text-text-secondary">
+          {onOverview ? (
+            <button type="button" onClick={onOverview} className="rounded-tile transition-colors hover:text-text-primary">
+              {modeTitle}
+            </button>
+          ) : (
+            modeTitle
+          )}
+        </li>
+        <li className="flex min-w-0 items-center gap-1">
+          <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-text-secondary" />
+          <span aria-current="page" className="truncate">
+            {placeTitle}
+          </span>
+        </li>
       </ol>
     </nav>
   );
@@ -87,7 +82,8 @@ export function EditorTopBar({
   basedOn,
   railToggle,
   libraryToggle,
-  currentTitle,
+  modeTitle,
+  placeTitle,
   onOverview,
   onOpenWarnings,
   onPreview,
@@ -112,7 +108,7 @@ export function EditorTopBar({
         </div>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
           <h1 className="truncate text-xs text-text-secondary">{draftLine(name, version, basedOn)}</h1>
-          <Breadcrumb currentTitle={currentTitle} onOverview={onOverview} />
+          <Breadcrumb modeTitle={modeTitle} placeTitle={placeTitle} onOverview={onOverview} />
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {warningsCount > 0 && <WarningsButton count={warningsCount} onClick={onOpenWarnings} />}

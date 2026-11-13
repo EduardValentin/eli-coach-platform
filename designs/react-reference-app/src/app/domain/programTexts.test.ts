@@ -3,7 +3,7 @@ import { programForSeed } from '../services/programSamples';
 import { SAMPLE_EXERCISES } from '../services/exerciseSamples';
 import { currentVersion, type ProgramVersion } from './program';
 import { GUIDE_TEXT_KEYS, templateText } from './programTemplates';
-import { isCustomised, isWritten, printedTitle, programText, versionWithStandardText, versionWithText, type ProgramTextTarget } from './programTexts';
+import { blockTexts, isCustomised, isWritten, printedTitle, programText, programWideTexts, textProgress, versionWithStandardText, versionWithText, type ProgramTextTarget } from './programTexts';
 
 function publishedVersion(): ProgramVersion {
   const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: new Date(2026, 8, 16), equipment: [] }, SAMPLE_EXERCISES);
@@ -89,5 +89,32 @@ describe('guide texts', () => {
   it('no longer carries a rest-day or hard-cardio-swap text', () => {
     expect(GUIDE_TEXT_KEYS).not.toContain('restDay');
     expect(GUIDE_TEXT_KEYS).not.toContain('hiitAside');
+  });
+});
+
+describe('textProgress', () => {
+  it('counts standard texts as written and empty optional texts as not', () => {
+    // arrange
+    const version = publishedVersion();
+    const block = { ...version.content.plan.blocks[0], calibrationWeek: false, clientNote: '' };
+
+    // act
+    const progress = textProgress(version, blockTexts(block), 'en');
+
+    // assert
+    expect(progress).toEqual({ written: progress.total - 1, total: blockTexts(block).length });
+  });
+
+  it('asks what changed only from version 2', () => {
+    // arrange
+    const version = publishedVersion();
+
+    // act
+    const first = programWideTexts(version);
+    const second = programWideTexts({ ...version, number: 2 });
+
+    // assert
+    expect(first).not.toContainEqual({ kind: 'version', key: 'whatChanged' });
+    expect(second).toContainEqual({ kind: 'version', key: 'whatChanged' });
   });
 });

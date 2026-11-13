@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
@@ -7,7 +7,7 @@ import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
 import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
-import { sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
+import { EDITOR_MODE_LABELS, sectionHash, sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutlineDrawer } from '../../components/coach-portal/program/ProgramOutlineDrawer';
@@ -47,7 +47,9 @@ function ProgramEditor(props: EditorProps) {
   const { content } = draft;
   const { today, ruleContext } = editor;
   const { selected } = editor;
-  const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
+  const main = useRef<HTMLElement>(null);
+  const placeKey = `${editor.mode}${sectionHash(selected)}`;
+  const blockIndex = editor.mode === 'structure' && selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
   const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
   const openSessionId = block && openSessionOf(block, openSessions[block.id]);
   const openBlock: OpenBlock | undefined = block && {
@@ -65,6 +67,10 @@ function ProgramEditor(props: EditorProps) {
     panel.finishTarget();
   }
 
+  useEffect(() => {
+    if (main.current) main.current.scrollTop = 0;
+  }, [placeKey]);
+
   function selectFromRail(section: EditorSection) {
     editor.select(section);
     rail.hide();
@@ -76,8 +82,9 @@ function ProgramEditor(props: EditorProps) {
         journey={journey}
         version={draft}
         basedOn={currentVersion(program)}
-        currentTitle={selected.kind === 'plan' ? null : sectionTitle(selected, content.plan.blocks)}
-        onOverview={() => editor.select({ kind: 'plan' })}
+        modeTitle={EDITOR_MODE_LABELS[editor.mode]}
+        placeTitle={sectionTitle(selected, content.plan.blocks)}
+        onOverview={selected.kind === 'plan' ? null : () => editor.select({ kind: 'plan' })}
         onOpenWarnings={() => setPublishing('warnings')}
         libraryToggle={
           block && (
@@ -100,17 +107,21 @@ function ProgramEditor(props: EditorProps) {
       <div className="flex min-h-0 flex-1">
         <ProgramOutlineDrawer
           rail={rail}
-          content={content}
+          mode={editor.mode}
+          version={draft}
+          language={program.language}
           dayOne={ruleContext.dayOne}
           today={today}
           selected={selected}
+          locationOf={editor.locationOf}
           onSelect={selectFromRail}
+          onSwitchMode={rail.hide}
           onAddBlock={() => {
             rail.hide();
             setAddingBlock(true);
           }}
         />
-        <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
+        <main ref={main} aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
           <div className="mx-auto w-full max-w-5xl">
             <EditorSectionContent section={selected} journey={journey} program={program} draft={draft} editor={editor} openBlock={openBlock} />
           </div>
@@ -139,7 +150,7 @@ function ProgramEditor(props: EditorProps) {
         problems={editor.problems}
         warnings={editor.warnings}
         onPublish={editor.publish}
-        onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
+        onOpenBlock={blockId => editor.openInStructure({ kind: 'block', blockId })}
       />
       <ClientPreviewDialog
         open={previewing}

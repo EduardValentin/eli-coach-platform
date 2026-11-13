@@ -67,7 +67,7 @@ describe('ProgramEditorPage', () => {
     const main = screen.getByRole('main');
     expect(within(main).getByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
     expect(within(main).getByRole('region', { name: 'Week' })).toBeInTheDocument();
-    await user.click(within(breadcrumb()).getByRole('button', { name: 'Overview' }));
+    await user.click(within(breadcrumb()).getByRole('button', { name: 'Structure' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Plan overview' })).toBeInTheDocument();
   });
 

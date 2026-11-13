@@ -12,12 +12,12 @@ import { versionWithStandardText, versionWithText } from '../../../domain/progra
 import { initialContent, newBlock } from '../../../domain/programSuggestions';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import type { DocumentEditing } from '../../program-view/documentEditing';
-import { isTextsPath, sectionFromHash, sectionHash, textsPath, type EditorSection, type StructureSection } from './editorSection';
+import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
 
 type EditorInput = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
-function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date): StructureSection {
+function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date): EditorSection {
   const { blocks } = draft.content.plan;
   if (draft.number === 1) return { kind: 'plan' };
   const position = currentPosition(blocks, dayOne, today);
@@ -33,10 +33,8 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   const ruleContext = ruleContextFor({ journey, program, draft, today, exercises });
   const { content } = draft;
   const draftPath = `${programPath}/draft`;
-  const onTexts = isTextsPath(location.pathname);
-  const selected: EditorSection = onTexts
-    ? { kind: 'texts' }
-    : (sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ruleContext.dayOne, today));
+  const mode = modeOfPath(location.pathname);
+  const selected = sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ruleContext.dayOne, today);
   const equipment = libraryEquipmentFor(journey.profile.coaching?.equipment ?? []);
   const journeySetup = setupFromJourney(journey);
   const setup: ProgramSetup = {
@@ -46,12 +44,16 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     splitShape: content.plan.blocks[0]?.split.shape ?? journeySetup.splitShape,
   };
 
+  function locationOf(targetMode: EditorMode, section: EditorSection) {
+    return { pathname: modePath(draftPath, targetMode), search: location.search, hash: sectionHash(section) };
+  }
+
   function select(section: EditorSection) {
-    if (section.kind === 'texts') {
-      navigate({ pathname: textsPath(draftPath), search: location.search });
-      return;
-    }
-    navigate({ pathname: draftPath, search: location.search, hash: sectionHash(section) }, { replace: !onTexts });
+    navigate(locationOf(mode, section), { replace: true });
+  }
+
+  function openInStructure(section: EditorSection) {
+    navigate(locationOf('structure', section), { replace: mode === 'structure' });
   }
 
   function updateBlocks(update: BlocksUpdate) {
@@ -98,14 +100,16 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     today,
     ruleContext,
     equipment,
+    mode,
     selected,
+    locationOf,
     problems: blockingProblems(content, ruleContext),
     warnings: warnings(content, ruleContext),
     opensOn: ruleContext.startDate && isAfter(startOfDay(ruleContext.startDate), startOfDay(today)) ? ruleContext.startDate : null,
     select,
+    openInStructure,
     updateBlocks,
     replaceBlock,
-    textsLocation: { pathname: textsPath(draftPath), search: location.search },
     textEditing,
     addBlock,
     removeBlock,

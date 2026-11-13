@@ -10,7 +10,7 @@ import { Button } from '../../ui/button';
 import { BlockWorkspace } from './BlockWorkspace';
 import type { EditorSection } from './editorSection';
 import { PlanOverview } from './PlanOverview';
-import { SetupSection } from './SetupSection';
+import { ProgramSettings } from './ProgramSettings';
 import { TextsWorkspace } from './TextsWorkspace';
 import type { useEditorState } from './useEditorState';
 
@@ -61,7 +61,7 @@ function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState>
   return (
     <div className="flex justify-end">
       <Button asChild variant="outline">
-        <Link to={editor.textsLocation}>
+        <Link to={editor.locationOf('texts', { kind: 'plan' })}>
           Continue to texts
           <ArrowRight aria-hidden="true" />
         </Link>
@@ -70,41 +70,35 @@ function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState>
   );
 }
 
-function StructureSectionContent({ section, program, draft, editor, openBlock }: EditorSectionContentProps) {
+function StructureOverview({ program, draft, editor }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor'>) {
   const { updateSetup } = usePrograms();
-  const { content } = draft;
-  if (section.kind === 'plan') {
-    return (
-      <PlanOverview
-        content={content}
-        dayOne={editor.ruleContext.dayOne}
-        preferredWeekday={editor.ruleContext.preferredWeekday}
-        today={editor.today}
-        level={program.level}
-        onChange={editor.updateBlocks}
-        onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
-        onUseSuggestion={editor.applySuggestion}
-      />
-    );
-  }
-  if (section.kind === 'block') return openBlock ? <OpenBlockWorkspace program={program} draft={draft} editor={editor} openBlock={openBlock} /> : null;
-  return <SetupSection program={program} onSetupChange={patch => updateSetup(program.callId, patch)} />;
-}
-
-function leadsToTexts(section: EditorSection, blocks: readonly Block[]): boolean {
-  if (section.kind === 'block') return blocks.at(-1)?.id === section.blockId;
-  return section.kind !== 'texts';
+  return (
+    <PlanOverview
+      content={draft.content}
+      dayOne={editor.ruleContext.dayOne}
+      preferredWeekday={editor.ruleContext.preferredWeekday}
+      today={editor.today}
+      level={program.level}
+      onChange={editor.updateBlocks}
+      onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
+      onUseSuggestion={editor.applySuggestion}
+      settings={<ProgramSettings program={program} onChange={patch => updateSetup(program.callId, patch)} />}
+    />
+  );
 }
 
 export function EditorSectionContent(props: EditorSectionContentProps) {
-  const { section, journey, program, draft, editor } = props;
-  if (section.kind === 'texts') {
-    return <TextsWorkspace journey={journey} program={program} draft={draft} today={editor.today} editing={editor.textEditing} />;
+  const { section, journey, program, draft, editor, openBlock } = props;
+  if (editor.mode === 'texts') {
+    return <TextsWorkspace section={section} journey={journey} program={program} draft={draft} today={editor.today} editing={editor.textEditing} />;
   }
+  if (section.kind === 'plan') return <StructureOverview program={program} draft={draft} editor={editor} />;
+  if (!openBlock) return null;
+  const isLastBlock = draft.content.plan.blocks.at(-1)?.id === openBlock.block.id;
   return (
     <div className="grid gap-6">
-      <StructureSectionContent {...props} />
-      {leadsToTexts(section, draft.content.plan.blocks) && <ContinueToTexts editor={editor} />}
+      <OpenBlockWorkspace program={program} draft={draft} editor={editor} openBlock={openBlock} />
+      {isLastBlock && <ContinueToTexts editor={editor} />}
     </div>
   );
 }

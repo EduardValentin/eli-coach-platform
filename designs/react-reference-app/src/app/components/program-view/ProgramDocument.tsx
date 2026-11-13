@@ -514,36 +514,47 @@ function WhatChanged({ view }: { view: ProgramView }) {
   );
 }
 
-type ProgramDocumentProps = { view: ProgramView; editing?: DocumentEditing };
+export type DocumentPart = 'whole' | 'program-wide' | 'block';
 
-export function ProgramDocument({ view, editing }: ProgramDocumentProps) {
+type ProgramDocumentProps = { view: ProgramView; editing?: DocumentEditing; part?: DocumentPart };
+
+export function ProgramDocument({ view, editing, part = 'whole' }: ProgramDocumentProps) {
   return (
     <DocumentEditingProvider editing={editing ?? null}>
-      <DocumentPages view={view} />
+      <DocumentPages view={view} part={part} />
     </DocumentEditingProvider>
   );
 }
 
-function DocumentPages({ view }: { view: ProgramView }) {
+function DocumentPages({ view, part }: { view: ProgramView; part: DocumentPart }) {
   const { version } = view;
   const block = currentBlock(view);
+  const showsProgramWide = part !== 'block';
+  const showsBlock = part !== 'program-wide';
 
   return (
     <article
       data-parity-root="ProgramDocument"
       data-program-document
       aria-label={`${view.clientName} program`}
-      className="mx-auto w-full max-w-[210mm] space-y-document-section bg-surface-base px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]"
+      className={cn(
+        'mx-auto w-full max-w-[210mm] space-y-document-section bg-surface-base px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]',
+        { 'pt-10 sm:pt-[18mm]': !showsProgramWide },
+      )}
     >
       <RunningHeader text={`${view.clientName} · Program v${version.number}`} />
-      <Cover view={view} block={block} />
-      {block && <AtAGlance view={view} block={block} />}
-      <WhatChanged view={view} />
-      <Section label="Overview" title="Your plan" print="keep">
-        <PlanStrip view={view} />
-      </Section>
-      <Legend view={view} />
-      {block && (
+      {showsProgramWide && (
+        <>
+          <Cover view={view} block={block} />
+          {block && <AtAGlance view={view} block={block} />}
+          <WhatChanged view={view} />
+          <Section label="Overview" title="Your plan" print="keep">
+            <PlanStrip view={view} />
+          </Section>
+          <Legend view={view} />
+        </>
+      )}
+      {showsBlock && block && (
         <Fragment key={block.id}>
           <BlockSection view={view} block={block} />
           <SplitSection view={view} block={block} />
@@ -553,13 +564,17 @@ function DocumentPages({ view }: { view: ProgramView }) {
           <StepsSection view={view} block={block} />
         </Fragment>
       )}
-      <TextSection view={view} label="Low-energy days" target={guide('lowEnergy')} fallbackTitle="Low-energy session" />
-      <TextSection view={view} label="Beyond training" target={NUTRITION} fallbackTitle="Nutrition" />
-      <TextSection view={view} label="Beyond training" target={LIFESTYLE} fallbackTitle="Lifestyle" />
-      <footer data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>
-        <p className={CARD_TITLE_CLASS}>Disclaimer</p>
-        <p className={DOCUMENT_NOTE_CLASS}>{DISCLAIMER_TEXT}</p>
-      </footer>
+      {showsProgramWide && (
+        <>
+          <TextSection view={view} label="Low-energy days" target={guide('lowEnergy')} fallbackTitle="Low-energy session" />
+          <TextSection view={view} label="Beyond training" target={NUTRITION} fallbackTitle="Nutrition" />
+          <TextSection view={view} label="Beyond training" target={LIFESTYLE} fallbackTitle="Lifestyle" />
+          <footer data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>
+            <p className={CARD_TITLE_CLASS}>Disclaimer</p>
+            <p className={DOCUMENT_NOTE_CLASS}>{DISCLAIMER_TEXT}</p>
+          </footer>
+        </>
+      )}
     </article>
   );
 }

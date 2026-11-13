@@ -360,6 +360,30 @@ describe('ProgramDocument', () => {
     expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   });
 
+  it('splits into the program-wide pages and the block pages', () => {
+    // arrange
+    const view = viewFor();
+    const block = currentBlockOf(view);
+
+    // act
+    const { unmount } = render(<ProgramDocument view={view} part="program-wide" />);
+
+    // assert
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Your sessions' })).not.toBeInTheDocument();
+
+    // act
+    unmount();
+    render(<ProgramDocument view={view} part="block" />);
+
+    // assert
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Your sessions' })).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^Block 1 of \\d+ · ${block.weeks} weeks$`))).toBeInTheDocument();
+  });
+
   it('turns every text into a slot in editing mode, with empty optional texts as fields', () => {
     // arrange
     const view = viewFor();
