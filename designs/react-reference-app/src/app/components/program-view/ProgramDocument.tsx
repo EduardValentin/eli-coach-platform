@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import type { ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, WEEKDAY_LABELS, WEEKDAYS, weekdayAbbreviation, weekCounts, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
 import { blockDates, nextCheckpoint } from '../../domain/programCalendar';
-import { cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
+import { cardioMinutes, roundsItemAmount, SEGMENT_KIND_LABELS } from '../../domain/programCardio';
 import { fillTemplate } from '../../domain/programTemplates';
 import { estimatedMinutes } from '../../domain/sessionTiming';
 import { counted } from '../../utils/counted';
@@ -10,7 +10,6 @@ import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { BLOCK_SWATCH } from './blockColours';
-import { CycleAdjustments } from './CycleAdjustments';
 import { Emphasised, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, programTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
 import { TrackingTable } from './TrackingTable';
@@ -285,7 +284,7 @@ function SessionCard({ view, block, session }: SessionCardProps) {
   return (
     <section aria-label={session.name} data-print-card className="space-y-document-gap">
       <div data-print-heading className="space-y-document-gap">
-        <CardHeader title={session.name} minutes={estimatedMinutes(session)} />
+        <CardHeader title={session.name} minutes={estimatedMinutes(session, view.exercisesById)} />
         {warmUp.length > 0 && (
           <div className="space-y-1">
             <SubHeading>Warm-up</SubHeading>
@@ -310,7 +309,7 @@ function RoundsLines({ view, segment }: { view: ProgramView; segment: RoundsSegm
   const items = segment.items.map(item => `${exerciseName(item.exerciseId, view.exercisesById)} · ${roundsItemAmount(item)}`);
   return (
     <div className="space-y-1">
-      <p className="font-semibold">{`${segment.rounds} rounds`}</p>
+      <p className="font-semibold">{`${SEGMENT_KIND_LABELS.rounds} · ${segment.rounds} rounds`}</p>
       {items.length > 0 && <ItemList lines={items} />}
       {segment.easySeconds > 0 && <p className="text-text-secondary">{`${segment.easySeconds} s easy between exercises`}</p>}
       {segment.restBetweenRoundsSeconds > 0 && <p className="text-text-secondary">{`${segment.restBetweenRoundsSeconds} s rest between rounds`}</p>}
@@ -361,23 +360,13 @@ function CardioSection({ view, block }: { view: ProgramView; block: Block }) {
   );
 }
 
-function CycleSection({ view }: { view: ProgramView }) {
-  const { title, paragraphs } = parseTemplate(programTemplate(view, 'cycle'));
-  return (
-    <Section label="Cycle" title={title || 'Listening to your cycle'} print="keep">
-      <Prose paragraphs={paragraphs} />
-      <CycleAdjustments rules={view.version.content.cycleRules} labelClassName={DOCUMENT_LABEL_CLASS} className="max-w-measure text-document-body" />
-    </Section>
-  );
-}
-
 function StepsSection({ view, block }: { view: ProgramView; block: Block }) {
   const text = fillTemplate(programTemplate(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
   return <TemplateSection label="Cardio and steps" text={text} fallbackTitle="Daily steps" />;
 }
 
 export function ProgramDocument({ view }: { view: ProgramView }) {
-  const { program, version } = view;
+  const { version } = view;
   const { content } = version;
   const block = currentBlock(view);
 
@@ -410,7 +399,6 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
           <StepsSection view={view} block={block} />
         </>
       )}
-      {program.cycleMode === 'adapted' && <CycleSection view={view} />}
       <TemplateSection label="Low-energy days" text={programTemplate(view, 'lowEnergy')} fallbackTitle="Low-energy session" />
       <TemplateSection label="Beyond training" text={content.nutritionNotes || NUTRITION_FALLBACK} fallbackTitle="Nutrition" />
       <TemplateSection label="Beyond training" text={content.lifestyleNotes || LIFESTYLE_FALLBACK} fallbackTitle="Lifestyle" />

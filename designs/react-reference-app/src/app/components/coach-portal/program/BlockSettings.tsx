@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Info } from 'lucide-react';
 import type { Block, SplitShape, TrainingDays } from '../../../domain/program';
-import { STEPS_STEP, TARGET_MINUTES } from '../../../domain/programDefaults';
+import { DAILY_STEP_TARGETS, TARGET_MINUTES } from '../../../domain/programDefaults';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { IconHint } from '../../IconHint';
 import { InlineProblem } from '../../InlineProblem';
@@ -22,13 +22,10 @@ type BlockSettingsProps = {
 
 const SPLIT_SHAPES = Object.keys(SPLIT_TEMPLATES) as SplitShape[];
 const TRAINING_DAY_OPTIONS: Option<TrainingDays>[] = ([2, 3, 4, 5] as const).map(days => ({ value: days, label: `${days} days` }));
-const MIN_STEPS = 4000;
-const MAX_STEPS = 12000;
 const CALIBRATION_HINT = 'Week 1 keeps the planned values; she stops 2–3 reps short while finding her weights.';
 
 function stepOptions(current: number): Option<number>[] {
-  const values = new Set<number>([current]);
-  for (let steps = MIN_STEPS; steps <= MAX_STEPS; steps += STEPS_STEP) values.add(steps);
+  const values = new Set<number>([current, ...DAILY_STEP_TARGETS]);
   return [...values].sort((a, b) => a - b).map(value => ({ value, label: value.toLocaleString('en-US') }));
 }
 

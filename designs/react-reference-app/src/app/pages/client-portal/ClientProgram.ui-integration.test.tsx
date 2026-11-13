@@ -115,7 +115,7 @@ describe('the client Program page', () => {
     expect(screen.getByRole('tabpanel').textContent).not.toBe(mondayPanel);
   });
 
-  it('lists the warm-up exercises of a strength day and spells out a rounds segment', async () => {
+  it('lists the warm-up exercises of a strength day and spells out an intervals segment', async () => {
     // arrange
     renderProgram('two-versions');
     const tabs = await screen.findByRole('tablist', { name: 'This week' });
@@ -128,7 +128,7 @@ describe('the client Program page', () => {
 
     // assert
     const segments = within(within(screen.getByRole('tabpanel')).getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
-    expect(segments.map(segment => segment.textContent)).toContainEqual(expect.stringMatching(/^Rounds · \d+ rounds · .+ \d+ s · \d+ s easy between/));
+    expect(segments.map(segment => segment.textContent)).toContainEqual(expect.stringMatching(/^Intervals · \d+ rounds · .+ \d+ s · \d+ s easy between/));
   });
 
   it('loads a collapsed section only once it is opened', async () => {

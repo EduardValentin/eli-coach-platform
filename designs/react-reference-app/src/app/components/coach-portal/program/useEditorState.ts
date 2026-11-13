@@ -23,7 +23,7 @@ function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date)
 }
 
 export function useEditorState({ journey, program, draft, programPath }: EditorInput) {
-  const { updateDraft, discardDraft, publishDraft } = usePrograms();
+  const { updateDraft, setWhatChanged, discardDraft, publishDraft } = usePrograms();
   const { exercises } = useTraining();
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,7 +36,6 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   const setup: ProgramSetup = {
     ...journeySetup,
     level: program.level,
-    cycleMode: program.cycleMode,
     language: program.language,
     splitShape: content.plan.blocks[0]?.split.shape ?? journeySetup.splitShape,
   };
@@ -51,6 +50,10 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
 
   function replaceContent(next: ProgramContent) {
     updateDraft(program.callId, () => next);
+  }
+
+  function setFocus(focus: string) {
+    updateDraft(program.callId, current => ({ ...current, header: { ...current.header, focus } }));
   }
 
   function replaceBlock(block: Block) {
@@ -96,6 +99,8 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     updateBlocks,
     replaceBlock,
     replaceContent,
+    setFocus,
+    setWhatChanged: (whatChanged: string) => setWhatChanged(program.callId, whatChanged),
     addBlock,
     removeBlock,
     applySuggestion,

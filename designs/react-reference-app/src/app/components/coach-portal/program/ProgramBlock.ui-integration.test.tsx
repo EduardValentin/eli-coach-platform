@@ -117,7 +117,7 @@ describe('ProgramBlock', () => {
     expect(within(section).queryByRole('link', { name: 'Build program' })).not.toBeInTheDocument();
   });
 
-  it('lists the draft blocks and what is still missing', () => {
+  it('lists the draft blocks and says it is ready to publish', () => {
     // arrange
     const query = '&pseed=draft&jstage=approved';
 
@@ -133,8 +133,8 @@ describe('ProgramBlock', () => {
       'Hypertrophy · 6 wk3 of 3 sessions',
       'Deload · 1 wk3 of 3 sessions',
     ]);
-    const missing = within(section).getByRole('list', { name: 'Still missing' });
-    expect(within(missing).getAllByRole('listitem').map(item => item.textContent)).toEqual(['Focus not set']);
+    expect(within(section).queryByRole('list', { name: 'Still missing' })).not.toBeInTheDocument();
+    expect(within(section).getByText('Ready to publish')).toBeInTheDocument();
     expect(within(section).getByRole('link', { name: 'Continue draft' })).toHaveAttribute(
       'href',
       '/coach/clients/c1/program/draft',
@@ -152,23 +152,7 @@ describe('ProgramBlock', () => {
     const section = programSection();
     expect(within(section).getByText('2 of 3 sessions')).toBeInTheDocument();
     const missing = within(section).getByRole('list', { name: 'Still missing' });
-    expect(within(missing).getAllByRole('listitem').map(item => item.textContent)).toEqual([
-      'Focus not set',
-      '1 session without exercises',
-    ]);
-  });
-
-  it('says the draft is ready once nothing is missing', () => {
-    // arrange
-    renderBlock('&pseed=draft&jstage=approved');
-
-    // act
-    editDraft(content => ({ ...content, header: { ...content.header, focus: 'Technique on the main lifts' } }));
-
-    // assert
-    const section = programSection();
-    expect(within(section).queryByRole('list', { name: 'Still missing' })).not.toBeInTheDocument();
-    expect(within(section).getByText('Ready to publish')).toBeInTheDocument();
+    expect(within(missing).getAllByRole('listitem').map(item => item.textContent)).toEqual(['1 session without exercises']);
   });
 
   it('summarises the published version and where she is in the plan', () => {

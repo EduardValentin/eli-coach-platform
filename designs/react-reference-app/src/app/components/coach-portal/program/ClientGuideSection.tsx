@@ -5,7 +5,7 @@ import { LABEL_CLASS } from '../../typography';
 import { TextCardStack, type TextCard } from '../../program-view/ProgramText';
 import { ClientTextEditor } from './ClientTextEditor';
 
-type GuideEntry = { key: Exclude<GuideTextKey, 'cycle'>; title: string; where: string; hint?: string };
+type GuideEntry = { key: GuideTextKey; title: string; where: string; hint?: string };
 type GuideGroup = { title: string; entries: GuideEntry[] };
 
 const GUIDE_GROUPS: GuideGroup[] = [
@@ -23,7 +23,7 @@ const GUIDE_GROUPS: GuideGroup[] = [
     title: 'Day by day',
     entries: [
       { key: 'lowEnergy', title: 'Low-energy session', where: 'Under every training day, and in the PDF.' },
-      { key: 'hiitAside', title: 'Hard cardio swap', where: 'Under cardio days with hard rounds.' },
+      { key: 'hiitAside', title: 'Hard cardio swap', where: 'Under cardio days with hard intervals.' },
       { key: 'restDay', title: 'Rest day', where: 'On rest days.' },
     ],
   },
@@ -65,7 +65,7 @@ export function ClientGuideSection({ content, language, onChange }: ClientGuideS
     <SettingsSection
       headingId="guide-heading"
       title="Client guide"
-      description="Standard explanations every client reads alongside her program. Edit them to sound like you; Reset to template brings back the original."
+      description="Standard explanations every client reads alongside her program."
     >
       <SettingsBody className="grid gap-6">
         {GUIDE_GROUPS.map(group => (

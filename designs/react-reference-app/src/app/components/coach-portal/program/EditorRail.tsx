@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { GanttChart, Plus } from 'lucide-react';
-import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type CycleMode, type ProgramContent } from '../../../domain/program';
+import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type ProgramContent } from '../../../domain/program';
 import { blockSpan, blockStatus, daysUntil, type PlanSchedule } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { LABEL_CLASS } from '../../typography';
@@ -12,7 +12,6 @@ import { currentWeekText, endedText } from './blockParts';
 
 type EditorRailProps = {
   content: ProgramContent;
-  cycleMode: CycleMode;
   dayOne: Date | null;
   today: Date;
   selected: EditorSection;
@@ -120,7 +119,7 @@ function BlockEntry({
   );
 }
 
-export function EditorRail({ content, cycleMode, dayOne, today, selected, onSelect, onAddBlock }: EditorRailProps) {
+export function EditorRail({ content, dayOne, today, selected, onSelect, onAddBlock }: EditorRailProps) {
   const { blocks } = content.plan;
   const overview: EditorSection = { kind: 'plan' };
   const overviewCurrent = isSameSection(overview, selected);
@@ -173,7 +172,6 @@ export function EditorRail({ content, cycleMode, dayOne, today, selected, onSele
       </RailGroup>
       <RailGroup title="Program">
         {entry({ kind: 'header' })}
-        {cycleMode !== 'general' && entry({ kind: 'cycle' })}
         {entry({ kind: 'nutrition' })}
         {entry({ kind: 'lifestyle' })}
         {entry({ kind: 'guide' })}

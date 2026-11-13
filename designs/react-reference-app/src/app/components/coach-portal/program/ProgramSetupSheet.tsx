@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
-import { CYCLE_MODE_LABELS, type CycleMode } from '../../../domain/cycleMode';
 import type { ClientJourney } from '../../../domain/journey';
 import { findOnboardingField, type OnboardingField, type OnboardingOption } from '../../../domain/onboardingSchema';
 import type { LevelHint, ProgramLanguage, SplitShape } from '../../../domain/program';
@@ -15,14 +14,17 @@ import {
   TRAINING_DAY_LABELS,
   type ClientEquipment,
 } from '../../../domain/clientProfile';
+import { DAILY_STEP_TARGETS } from '../../../domain/programDefaults';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
+import { possessive } from '../../../utils/resourceLabels';
 import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
 import { asList, type OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
 import { UNSAVED_MESSAGE } from '../../client-profile/ProfileFormSection';
 import { PROFILE_FIELDS } from '../../client-profile/profileFields';
+import { PortalPageHeader } from '../../PortalPageHeader';
 import { SettingsSection } from '../../SettingsSection';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion';
 import { Button, buttonVariants } from '../../ui/button';
@@ -31,7 +33,6 @@ import { Form } from '../../ui/form';
 type SetupPanel = { name: string; fields: OnboardingField[] };
 
 const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
-const DAILY_STEPS = [4000, 5000, 6000, 8000, 10000];
 const FIRST_PANEL = 'Program';
 
 function optionsOf(labels: Record<string, string>): OnboardingOption[] {
@@ -48,10 +49,9 @@ function splitOptions(): OnboardingOption[] {
   return (Object.keys(SPLIT_TEMPLATES) as SplitShape[]).map(shape => ({ value: shape, label: SPLIT_TEMPLATES[shape].label }));
 }
 
-function panelsFor(journey: ClientJourney): SetupPanel[] {
+function setupPanels(): SetupPanel[] {
   const goal = findOnboardingField('primaryGoal')?.options ?? [];
-  const steps = DAILY_STEPS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
-  const cyclePanels = journey.profile.identity.gender === 'male' ? [] : [{ name: 'Cycle', fields: [field({ id: 'cycleMode', label: 'Cycle mode', kind: 'select', options: optionsOf(CYCLE_MODE_LABELS) })] }];
+  const steps = DAILY_STEP_TARGETS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
   return [
     {
       name: FIRST_PANEL,
@@ -67,7 +67,6 @@ function panelsFor(journey: ClientJourney): SetupPanel[] {
       ],
     },
     { name: 'Equipment', fields: [{ ...PROFILE_FIELDS.equipment, requirement: 'optional' }] },
-    ...cyclePanels,
   ];
 }
 
@@ -80,7 +79,6 @@ function valuesFrom(setup: ProgramSetup, clientEquipment: readonly ClientEquipme
     trainingDays: String(setup.trainingDays),
     sessionMinutes: String(setup.sessionMinutes),
     equipment: [...clientEquipment],
-    cycleMode: setup.cycleMode,
     dailySteps: String(setup.dailySteps),
   };
 }
@@ -98,7 +96,6 @@ function setupFrom(values: OnboardingValues): ProgramSetup {
     splitShape: text(values, 'splitShape') as SplitShape,
     trainingDays: Number(text(values, 'trainingDays')) as ProgramSetup['trainingDays'],
     sessionMinutes: Number(text(values, 'sessionMinutes')) as ProgramSetup['sessionMinutes'],
-    cycleMode: text(values, 'cycleMode') as CycleMode,
     dailySteps: Number(text(values, 'dailySteps')),
   };
 }
@@ -115,6 +112,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
     defaultValues: valuesFrom(setupFromJourney(journey), currentEquipment),
   });
   const { isSubmitting } = form.formState;
+  const headingId = useId();
 
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
@@ -137,37 +135,38 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   });
 
   return (
-    <SettingsSection
-      headingId="program-setup-heading"
-      title="Set up the program"
-      className="mx-auto w-full max-w-xl"
-      footer={
-        <>
-          <Link to={clientDetailPathForJourney(journey)} className={buttonVariants({ variant: 'outline' })}>
-            Cancel
-          </Link>
-          <Button type="button" onClick={create} disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
-            Continue to plan
-          </Button>
-        </>
-      }
-    >
-      <Form {...form}>
-        <Accordion type="multiple" defaultValue={[FIRST_PANEL]}>
-          {panelsFor(journey).map(panel => (
-            <AccordionItem key={panel.name} value={panel.name} className="px-5 sm:px-6">
-              <AccordionTrigger headingTag="h3" className="text-base">
-                {panel.name}
-              </AccordionTrigger>
-              <AccordionContent className="grid gap-6 pt-1 pb-6">
-                {panel.fields.map(definition => (
-                  <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </Form>
-    </SettingsSection>
+    <div className="mx-auto w-full max-w-xl">
+      <PortalPageHeader headingId={headingId} title={`Set up ${possessive(journey.profile.identity.firstName)} program`} />
+      <SettingsSection
+        headingId={headingId}
+        footer={
+          <>
+            <Link to={clientDetailPathForJourney(journey)} className={buttonVariants({ variant: 'outline' })}>
+              Cancel
+            </Link>
+            <Button type="button" onClick={create} disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
+              Continue to plan
+            </Button>
+          </>
+        }
+      >
+        <Form {...form}>
+          <Accordion type="multiple" defaultValue={[FIRST_PANEL]}>
+            {setupPanels().map(panel => (
+              <AccordionItem key={panel.name} value={panel.name} className="px-5 sm:px-6">
+                <AccordionTrigger headingTag="h2" className="text-base">
+                  {panel.name}
+                </AccordionTrigger>
+                <AccordionContent className="grid gap-6 pt-1 pb-6">
+                  {panel.fields.map(definition => (
+                    <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </Form>
+      </SettingsSection>
+    </div>
   );
 }

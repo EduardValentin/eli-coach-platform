@@ -107,7 +107,7 @@ export function CopyBlockDialog({ open, onOpenChange, programs, journeys, onCopy
       <SheetDialogHeader title="Copy from another client" description="The sessions of the chosen block replace this block's sessions." />
       <SheetDialogBody>
         {sources.length === 0 ? (
-          <EmptyState icon={Users} title="No other client has a program yet." description="Once another client has a program, you can copy a block from it." />
+          <EmptyState icon={Users} title="No other client has a program yet." />
         ) : (
           open && <CopyBlockForm programs={sources} journeys={journeys} onCopy={onCopy} onCancel={() => onOpenChange(false)} />
         )}

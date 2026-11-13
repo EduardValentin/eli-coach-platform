@@ -5,7 +5,7 @@ import { currentVersion, draftOf, roleForSlot } from '../domain/program';
 import { slotPlanFor } from '../domain/splitTemplates';
 
 const DAY_ONE = new Date(2026, 8, 1);
-const CLIENT: SeedClient = { callId: 'call-1', dayOne: DAY_ONE, cycleMode: 'adapted', equipment: ['Dumbbells', 'Bench'] };
+const CLIENT: SeedClient = { callId: 'call-1', dayOne: DAY_ONE, equipment: ['Dumbbells', 'Bench'] };
 const exercisesById = new Map(SAMPLE_EXERCISES.map(exercise => [exercise.id, exercise]));
 
 describe('programForSeed', () => {
@@ -138,10 +138,6 @@ describe('programForSeed', () => {
 
     // assert
     expect(program).toMatchObject({ goal: 'Lose fat' });
-  });
-
-  it('gives the program the cycle mode it is seeded with', () => {
-    expect(programForSeed('draft', { ...CLIENT, cycleMode: 'general' }, SAMPLE_EXERCISES)?.cycleMode).toBe('general');
   });
 
   it('opens every main compound row with two warm-up sets', () => {

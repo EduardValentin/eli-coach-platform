@@ -33,9 +33,7 @@ function missingFrom(version: ProgramVersion): string[] {
     0,
   );
   const missing: string[] = [];
-  if (!content.header.focus.trim()) missing.push('Focus not set');
   if (emptySessions > 0) missing.push(`${counted(emptySessions, 'session')} without exercises`);
-  if (version.number >= 2 && !version.whatChanged.trim()) missing.push('What changed not written');
   return missing;
 }
 

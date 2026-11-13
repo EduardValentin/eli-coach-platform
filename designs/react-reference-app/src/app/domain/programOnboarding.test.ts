@@ -1,17 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { seedJourney } from '../services/clientJourneySamples';
-import type { ClientJourney, OnboardingFormId } from './journey';
+import type { ClientJourney } from './journey';
 import type { CoachingFacts } from './clientProfile';
 import { EQUIPMENT } from './exercises';
-import {
-  estimatedCycleDay,
-  libraryEquipmentFor,
-  recurringSymptoms,
-  setupFromJourney,
-} from './programOnboarding';
+import { libraryEquipmentFor, setupFromJourney } from './programOnboarding';
 
-function demoJourney(cycleOverrides: Record<string, unknown> = {}, stage: ClientJourney['stage'] = 'approved'): ClientJourney {
-  const journey = seedJourney({
+function demoJourney(stage: ClientJourney['stage'] = 'approved'): ClientJourney {
+  return seedJourney({
     callId: 'program-onboarding',
     identity: {
       firstName: 'Ana',
@@ -38,17 +33,6 @@ function demoJourney(cycleOverrides: Record<string, unknown> = {}, stage: Client
     daysSincePayment: 'stage',
     now: new Date(2026, 8, 21, 12, 0, 0),
   });
-  const cycle: OnboardingFormId = 'cycle-context';
-  return {
-    ...journey,
-    onboarding: {
-      ...journey.onboarding,
-      answers: {
-        ...journey.onboarding.answers,
-        [cycle]: { ...journey.onboarding.answers[cycle], ...cycleOverrides },
-      },
-    },
-  } as ClientJourney;
 }
 
 function withCoaching(edit: Partial<CoachingFacts>): ClientJourney {
@@ -68,7 +52,6 @@ describe('setupFromJourney', () => {
       trainingDays: 3,
       sessionMinutes: 60,
       goal: 'Lose fat',
-      cycleMode: 'adapted',
       language: 'en',
       dailySteps: 6000,
       splitShape: 'full-body',
@@ -78,7 +61,7 @@ describe('setupFromJourney', () => {
   it('follows the coach edits to her coaching facts', () => {
     // act
     const setup = setupFromJourney(
-      withCoaching({ trainingDays: 4, level: 'advanced', cycleMode: 'general' }),
+      withCoaching({ trainingDays: 4, level: 'advanced' }),
     );
 
     // assert
@@ -86,13 +69,12 @@ describe('setupFromJourney', () => {
       trainingDays: 4,
       splitShape: 'upper-lower',
       level: 'advanced',
-      cycleMode: 'general',
     });
   });
 
   it('starts from neutral defaults before her answers are approved', () => {
     // act
-    const setup = setupFromJourney(demoJourney({}, 'submitted'));
+    const setup = setupFromJourney(demoJourney('submitted'));
 
     // assert
     expect(setup).toMatchObject({
@@ -100,7 +82,6 @@ describe('setupFromJourney', () => {
       level: 'beginner',
       trainingDays: 3,
       sessionMinutes: 60,
-      cycleMode: 'general',
     });
   });
 });
@@ -128,70 +109,5 @@ describe('libraryEquipmentFor', () => {
 
     // assert
     expect(equipment).toEqual([]);
-  });
-});
-
-describe('estimatedCycleDay', () => {
-  const today = new Date(2026, 8, 25);
-
-  it('counts days since the last period inside the cycle length', () => {
-    // act
-    const day = estimatedCycleDay(demoJourney(), today);
-
-    // assert
-    expect(day).toBe(18);
-  });
-
-  it('wraps around the cycle length', () => {
-    // act
-    const day = estimatedCycleDay(demoJourney(), new Date(2026, 9, 10));
-
-    // assert
-    expect(day).toBe(4);
-  });
-
-  it('uses the middle of an irregular range', () => {
-    // arrange
-    const journey = demoJourney({ cycleLength: null, cycleLengthMin: 26, cycleLengthMax: 32 });
-
-    // act
-    const day = estimatedCycleDay(journey, today);
-
-    // assert
-    expect(day).toBe(18);
-  });
-
-  it('is unknown when the last period is unknown', () => {
-    // act
-    const day = estimatedCycleDay(demoJourney({ lastPeriodUnknown: 'true' }), today);
-
-    // assert
-    expect(day).toBeNull();
-  });
-
-  it('is unknown when no length is given', () => {
-    // act
-    const day = estimatedCycleDay(demoJourney({ cycleLength: null }), today);
-
-    // assert
-    expect(day).toBeNull();
-  });
-
-  it('is unknown outside the adapted mode', () => {
-    // act
-    const day = estimatedCycleDay(demoJourney({ hormonalContraception: 'Combined pill' }), today);
-
-    // assert
-    expect(day).toBeNull();
-  });
-});
-
-describe('recurringSymptoms', () => {
-  it('drops None', () => {
-    // act
-    const symptoms = recurringSymptoms(demoJourney({ recurringSymptoms: ['None', 'Cramps'] }));
-
-    // assert
-    expect(symptoms).toEqual(['Cramps']);
   });
 });

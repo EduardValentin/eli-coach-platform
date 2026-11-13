@@ -1,13 +1,10 @@
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
-import type { ClientJourney } from '../../../domain/journey';
 import type { Block, Program, ProgramVersion } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
-import { recurringSymptoms } from '../../../domain/programOnboarding';
 import { BlockWorkspace } from './BlockWorkspace';
 import { ClientGuideSection } from './ClientGuideSection';
-import { CycleRulesEditor } from './CycleRulesEditor';
 import type { EditorSection } from './editorSection';
 import { HeaderSection } from './HeaderSection';
 import { LifestyleSection } from './LifestyleSection';
@@ -25,7 +22,6 @@ export type OpenBlock = {
 
 type EditorSectionContentProps = {
   section: EditorSection;
-  journey: ClientJourney;
   program: Program;
   draft: ProgramVersion;
   editor: ReturnType<typeof useEditorState>;
@@ -58,7 +54,7 @@ function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSe
   );
 }
 
-export function EditorSectionContent({ section, journey, program, draft, editor, openBlock }: EditorSectionContentProps) {
+export function EditorSectionContent({ section, program, draft, editor, openBlock }: EditorSectionContentProps) {
   const { updateSetup } = usePrograms();
   const { content } = draft;
   if (section.kind === 'plan') {
@@ -79,17 +75,12 @@ export function EditorSectionContent({ section, journey, program, draft, editor,
   if (section.kind === 'header') {
     return (
       <HeaderSection
-        journey={journey}
         program={program}
-        version={draft}
         content={content}
         onContentChange={editor.replaceContent}
         onSetupChange={patch => updateSetup(program.callId, patch)}
       />
     );
-  }
-  if (section.kind === 'cycle') {
-    return <CycleRulesEditor content={content} language={program.language} symptoms={recurringSymptoms(journey)} onChange={editor.replaceContent} />;
   }
   if (section.kind === 'guide') {
     return <ClientGuideSection content={content} language={program.language} onChange={editor.replaceContent} />;

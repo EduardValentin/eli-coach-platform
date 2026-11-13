@@ -99,42 +99,34 @@ async function openPanel(user: User, name: string) {
 }
 
 describe('ProgramSetupSheet', () => {
-  it('groups the fields into four panels with the program panel open', () => {
+  it('titles the page once and groups the fields into three panels with the program panel open', () => {
     // arrange / act
     renderSheet('&pseed=none&jstage=approved');
 
     // assert
-    for (const name of ['Program', 'Schedule', 'Equipment', 'Cycle']) {
-      expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
-    }
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: /^Set up .+’s program$/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual(['Program', 'Schedule', 'Equipment']);
     expect(screen.getByRole('button', { name: 'Program' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Schedule' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('keeps the daily steps with the schedule and only the cycle mode under Cycle', async () => {
+  it('keeps the daily steps with the schedule, in thousands from 4,000 to 12,000', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved');
-
-    // act
     await openPanel(user, 'Schedule');
-    await openPanel(user, 'Cycle');
-
-    // assert
     const schedule = screen.getByRole('region', { name: 'Schedule' });
     for (const name of ['Split', 'Training days', 'Session length']) expect(within(schedule).getByRole('radiogroup', { name })).toBeInTheDocument();
-    expect(within(schedule).getByRole('combobox', { name: 'Daily steps' })).toHaveTextContent('6,000');
-    const cycle = screen.getByRole('region', { name: 'Cycle' });
-    expect(within(cycle).getAllByRole('combobox')).toHaveLength(1);
-    expect(within(cycle).getByRole('combobox', { name: 'Cycle mode' })).toBeInTheDocument();
-  });
+    const steps = within(schedule).getByRole('combobox', { name: 'Daily steps' });
+    expect(steps).toHaveTextContent('6,000');
 
-  it('leaves the cycle panel out for a male client', () => {
-    // arrange / act
-    renderSheet('&pseed=none&jstage=approved&jgender=male');
+    // act
+    await user.click(steps);
 
     // assert
-    for (const name of ['Program', 'Schedule', 'Equipment']) expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 3, name: 'Cycle' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual([
+      '4,000', '5,000', '6,000', '7,000', '8,000', '9,000', '10,000', '11,000', '12,000',
+    ]);
   });
 
   it('prefills from her profile and creates the draft', async () => {
@@ -142,7 +134,6 @@ describe('ProgramSetupSheet', () => {
     const user = renderSheet('&pseed=none&jstage=approved');
 
     // assert
-    expect(screen.getByRole('heading', { name: 'Set up the program' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Goal' })).toHaveTextContent('Lose fat');
     expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Beginner');
     expect(screen.getByRole('combobox', { name: 'Program language' })).toHaveTextContent('English');
@@ -249,7 +240,7 @@ describe('ProgramSetupSheet', () => {
     const user = renderSheet('&pseed=none&jstage=approved');
 
     // act
-    for (const name of ['Schedule', 'Equipment', 'Cycle']) await openPanel(user, name);
+    for (const name of ['Schedule', 'Equipment']) await openPanel(user, name);
 
     // assert
     expect(screen.queryByText(/Suggested from/)).not.toBeInTheDocument();

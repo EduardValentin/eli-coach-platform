@@ -172,7 +172,7 @@ describe('ProgramEditorPage', () => {
     expect(within(screen.getByRole('list', { name: 'Plan summary' })).getByText(`Starts ${format(dayOne, 'd MMMM')}`)).toBeInTheDocument();
   });
 
-  it('opens the checklist on the warnings from the top bar', async () => {
+  it('opens the publish dialog on the warnings from the top bar', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
 
@@ -180,7 +180,7 @@ describe('ProgramEditorPage', () => {
     await user.click(screen.getByRole('button', { name: /^\d+ things? worth a look$/ }));
 
     // assert
-    const sheet = screen.getByRole('dialog', { name: 'Publish checklist' });
+    const sheet = screen.getByRole('dialog', { name: 'Publish version 1' });
     expect(within(sheet).getByRole('heading', { name: 'Worth a look' })).toBeInTheDocument();
   });
 

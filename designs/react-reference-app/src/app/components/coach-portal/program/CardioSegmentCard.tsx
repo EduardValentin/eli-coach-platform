@@ -92,7 +92,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
       </div>
       <ExerciseItemList
-        label="Round exercises"
+        label="Interval exercises"
         items={items}
         nameOf={nameOf}
         actions={{
@@ -161,7 +161,7 @@ type DropState = { isOver: boolean; canDrop: boolean; itemType: string | symbol 
 
 function dropHint(itemType: string | symbol | null, segment: CardioSegment): string {
   if (itemType === CARDIO_SEGMENT) return 'Move here';
-  return segment.kind === 'rounds' ? 'Add to the rounds' : 'Replace';
+  return segment.kind === 'rounds' ? 'Add to the intervals' : 'Replace';
 }
 
 function itemCount(segment: RoundsSegment): string {

@@ -18,33 +18,6 @@ function main(): HTMLElement {
 }
 
 describe('program-wide sections', () => {
-  it('requires what changed from version 2', async () => {
-    // arrange
-    const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
-    await user.click(screen.getByRole('button', { name: 'Publish' }));
-    const checklist = screen.getByRole('dialog', { name: 'Publish checklist' });
-    expect(within(checklist).getByRole('button', { name: 'Publish' })).toBeDisabled();
-    expect(within(checklist).getByText('Say what changed and why')).toBeInTheDocument();
-    await user.click(within(checklist).getByRole('button', { name: 'Keep editing' }));
-    await user.click(within(rail()).getByRole('button', { name: 'Intro & setup' }));
-
-    // act
-    await user.type(within(main()).getByRole('textbox', { name: /What changed and why/ }), 'Raised the squat volume');
-
-    // assert
-    await user.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(screen.queryByText('Say what changed and why')).not.toBeInTheDocument();
-  });
-
-  it('hides cycle rules in general mode', () => {
-    // arrange / act
-    renderProgramEditor('&jgender=male&pseed=draft');
-
-    // assert
-    expect(within(rail()).getByRole('button', { name: 'Nutrition' })).toBeInTheDocument();
-    expect(within(rail()).queryByRole('button', { name: 'Cycle rules' })).not.toBeInTheDocument();
-  });
-
   it("marks a Romanian program's texts as pending", async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft');
@@ -61,17 +34,6 @@ describe('program-wide sections', () => {
     expect(within(intro).getByText('Romanian text pending')).toBeInTheDocument();
   });
 
-  it('prefills one cycle rule per declared symptom', async () => {
-    // arrange
-    const user = renderProgramEditor('&pseed=draft&jgender=female');
-
-    // act
-    await user.click(within(rail()).getByRole('button', { name: 'Cycle rules' }));
-
-    // assert
-    expect(within(main()).getAllByRole('textbox', { name: /^Symptom period/ }).length).toBeGreaterThan(0);
-  });
-
   it('writes nutrition guidance', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft');
@@ -84,6 +46,50 @@ describe('program-wide sections', () => {
     expect(within(main()).getByRole('textbox', { name: 'Nutrition guidance' })).toHaveValue('Protein at every meal');
     expect(within(main()).getByText('Meal plan — designed in the next round')).toBeInTheDocument();
     expect(within(main()).queryByText(/Until then/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the publish notes out of the intro section', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
+
+    // act
+    await user.click(within(rail()).getByRole('button', { name: 'Intro & setup' }));
+
+    // assert
+    expect(within(main()).getByRole('textbox', { name: /Personal note/ })).toBeInTheDocument();
+    expect(within(main()).queryByRole('textbox', { name: /Focus until the next check-in form/ })).not.toBeInTheDocument();
+    expect(within(main()).queryByRole('textbox', { name: /What changed and why/ })).not.toBeInTheDocument();
+  });
+
+  it('leaves the cycle out of the program sections', () => {
+    // arrange / act
+    renderProgramEditor('&pseed=draft&jgender=female');
+
+    // assert
+    expect(within(rail()).getByRole('button', { name: 'Nutrition' })).toBeInTheDocument();
+    expect(within(rail()).queryByRole('button', { name: /cycle/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the client profile from the top bar and returns focus when it closes', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft');
+    const trigger = screen.getByRole('button', { name: 'Client profile' });
+
+    // act
+    await user.click(trigger);
+
+    // assert
+    const profile = screen.getByRole('dialog');
+    expect(within(profile).getByText('Goal')).toBeInTheDocument();
+    expect(within(profile).getByText('Days per week')).toBeInTheDocument();
+    expect(within(main()).queryByText('Days per week')).not.toBeInTheDocument();
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it('shows no notes explaining the editor', async () => {
@@ -139,33 +145,16 @@ describe('program-wide sections', () => {
     expect(within(main()).getByRole('textbox', { name: 'How to read your session' })).toHaveDisplayValue(/\*\*A, B, C\*\*/);
   });
 
-  it('lists the cycle adjustments the coach set under listening to your cycle', async () => {
-    // arrange
-    const user = renderProgramEditor('&pseed=draft&jgender=female');
-    await user.click(within(rail()).getByRole('button', { name: 'Cycle rules' }));
-    const [period] = within(main()).getAllByRole('textbox', { name: /^Symptom period/ });
-    await user.clear(period);
-    await user.type(period, 'Cramps, days 1–2');
-
-    // act
-    await user.click(within(main()).getByRole('combobox', { name: 'Adjustment 1' }));
-    await user.click(screen.getByRole('option', { name: 'RIR +1' }));
-    await user.click(screen.getByRole('button', { name: 'Preview as client' }));
-    const preview = screen.getByRole('dialog', { name: 'Preview as client' });
-    await user.click(within(preview).getByRole('button', { name: 'Listening to your cycle' }));
-
-    // assert
-    const adjustments = within(preview).getByRole('list', { name: 'Your adjustments' });
-    expect(within(adjustments).getByRole('listitem')).toHaveTextContent('Cramps, days 1–2: stop each set 1 rep earlier than usual');
-  });
-
   it('shows the focus, the personal note and the missed-day note to the client', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft');
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    const publish = screen.getByRole('dialog', { name: 'Publish version 1' });
+    await user.type(within(publish).getByRole('textbox', { name: /Focus until the next check-in form/ }), 'Own the squat pattern');
+    await user.click(within(publish).getByRole('button', { name: 'Keep editing' }));
     await user.click(within(rail()).getByRole('button', { name: 'Intro & setup' }));
 
     // act
-    await user.type(within(main()).getByRole('textbox', { name: /Focus until the next check-in form/ }), 'Own the squat pattern');
     await user.type(within(main()).getByRole('textbox', { name: /Personal note/ }), 'So glad to start with you');
     await user.click(screen.getByRole('button', { name: 'Preview as client' }));
     const preview = screen.getByRole('dialog', { name: 'Preview as client' });

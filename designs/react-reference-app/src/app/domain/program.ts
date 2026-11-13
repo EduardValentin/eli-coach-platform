@@ -1,9 +1,6 @@
-import type { CycleMode } from './cycleMode';
 import type { ExerciseRole, MovementPattern } from './exercises';
 import type { GuideTexts } from './programTemplates';
 import { counted } from '../utils/counted';
-
-export type { CycleMode };
 
 export type ProgramLanguage = 'en' | 'ro';
 export type LevelHint = 'beginner' | 'intermediate' | 'advanced';
@@ -109,12 +106,9 @@ export type Block = {
   dailySteps: number;
   missedDayNote: string;
 };
-export type CycleAdjustment = 'none' | 'rir-plus-one' | 'one-set-less' | 'hiit-to-liss' | 'low-energy-session';
-export type CycleRule = { id: string; symptomPeriod: string; adjustment: CycleAdjustment };
 export type ProgramContent = {
   header: { title: string; focus: string; personalNote: string };
   plan: { blocks: Block[] };
-  cycleRules: CycleRule[];
   nutritionNotes: string;
   lifestyleNotes: string;
   guideTexts?: GuideTexts;
@@ -131,7 +125,6 @@ export type Program = {
   callId: string;
   goal: string;
   language: ProgramLanguage;
-  cycleMode: CycleMode;
   level: LevelHint;
   versions: ProgramVersion[];
 };
@@ -318,7 +311,6 @@ export function contentWithFreshIds(content: ProgramContent): ProgramContent {
   return {
     ...structuredClone(content),
     plan: { blocks: content.plan.blocks.map(block => blockWithFreshIds(structuredClone(block))) },
-    cycleRules: content.cycleRules.map(rule => ({ ...rule, id: newId() })),
   };
 }
 

@@ -15,7 +15,7 @@ import {
 } from '../../domain/program';
 import { currentPosition, type PlanPosition } from '../../domain/programCalendar';
 import { cardioMinutes, CARDIO_INTENSITY_TEXT, roundsText } from '../../domain/programCardio';
-import { estimatedMinutes } from '../../domain/sessionTiming';
+import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
 import { counted } from '../../utils/counted';
 
 const SECONDS_PER_MINUTE = 60;
@@ -27,7 +27,6 @@ export type ProgramView = {
   today: Date;
   preferredWeekday: Weekday;
   exercisesById: ReadonlyMap<string, Exercise>;
-  cycleDay: number | null;
   position: PlanPosition;
   clientName: string;
 };
@@ -59,8 +58,10 @@ export function dayEntryLabel(block: Block, weekday: Weekday): string {
   return 'Rest';
 }
 
-export function sessionSummary(session: Session): string {
-  return `${counted(session.rows.length, 'exercise')} · ~${estimatedMinutes(session)} min`;
+export function sessionSummary(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string {
+  const exercises = counted(session.rows.length, 'exercise');
+  const minutes = estimatedMinutes(session, exercisesById);
+  return minutes === 0 ? exercises : `${exercises} · ${estimatedDuration(minutes)}`;
 }
 
 export function cardioSummary(cardio: CardioSession): string {

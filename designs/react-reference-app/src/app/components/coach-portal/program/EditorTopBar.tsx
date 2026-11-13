@@ -10,6 +10,7 @@ import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { cn } from '../../ui/utils';
+import { ClientProfilePopover } from './ClientProfilePopover';
 
 type EditorTopBarProps = {
   journey: ClientJourney;
@@ -115,6 +116,7 @@ export function EditorTopBar({
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {warningsCount > 0 && <WarningsButton count={warningsCount} onClick={onOpenWarnings} />}
+          <ClientProfilePopover journey={journey} />
           {libraryToggle}
           {opensOn && <p className="hidden text-sm text-text-secondary xl:block">{`Publishing opens on ${formatJourneyDate(opensOn)}`}</p>}
           <Button variant="outline" aria-label="Preview as client" onClick={onPreview}>

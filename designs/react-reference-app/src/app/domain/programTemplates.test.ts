@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fillTemplate, templateText, type TemplateKey } from './programTemplates';
 
 const KEYS: TemplateKey[] = [
-  'legend', 'warmUp', 'coolDown', 'progression', 'steps', 'cycle', 'hiitAside', 'missedDay', 'calibration',
+  'legend', 'warmUp', 'coolDown', 'progression', 'steps', 'hiitAside', 'missedDay', 'calibration',
   'block.foundation', 'block.hypertrophy', 'block.strength', 'block.deload',
   'split.full-body', 'split.upper-lower', 'lowEnergy',
 ];

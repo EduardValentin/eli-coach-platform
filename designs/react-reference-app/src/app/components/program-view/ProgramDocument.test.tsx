@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
 import { BLOCK_TYPE_LABELS, currentVersion, formatRange, warmUpItemText, workingSets } from '../../domain/program';
-import type { CycleMode } from '../../domain/cycleMode';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
@@ -13,8 +12,8 @@ import { viewOf, type ProgramView } from './programView';
 const DAY_ONE = new Date(2026, 8, 16);
 const TODAY = new Date(2026, 8, 22);
 
-function viewFor(cycleMode: CycleMode, seed: 'published' | 'two-versions' = 'published'): ProgramView {
-  const program = programForSeed(seed, { callId: 'ac-demo-client-1', dayOne: DAY_ONE, cycleMode, equipment: [] }, SAMPLE_EXERCISES);
+function viewFor(seed: 'published' | 'two-versions' = 'published'): ProgramView {
+  const program = programForSeed(seed, { callId: 'ac-demo-client-1', dayOne: DAY_ONE, equipment: [] }, SAMPLE_EXERCISES);
   if (!program) throw new Error('seed missing');
   const version = currentVersion(program);
   if (!version) throw new Error('version missing');
@@ -25,7 +24,6 @@ function viewFor(cycleMode: CycleMode, seed: 'published' | 'two-versions' = 'pub
     today: TODAY,
     preferredWeekday: 'mon',
     exercises: SAMPLE_EXERCISES,
-    cycleDay: 12,
     clientName: 'Ana Pop',
   });
 }
@@ -35,7 +33,7 @@ const STEADY_SET = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: {
 describe('TrackingTable', () => {
   it('has a column per week and a row per set', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = { ...currentBlockOf(view), weeks: 6, calibrationWeek: true };
     const session = structuredClone(block.sessions[0]);
     session.rows = [{ ...session.rows[0], sets: [STEADY_SET, STEADY_SET, STEADY_SET, STEADY_SET] }];
@@ -57,7 +55,7 @@ describe('TrackingTable', () => {
 
   it('prescribes each set on its own line when the sets differ', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = currentBlockOf(view);
     const session = structuredClone(block.sessions[0]);
     const topSet = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
@@ -74,7 +72,7 @@ describe('TrackingTable', () => {
 
   it('skips rows without an exercise', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = currentBlockOf(view);
     const session = structuredClone(block.sessions[0]);
     session.rows = [{ ...session.rows[0], exerciseId: '' }];
@@ -90,7 +88,7 @@ describe('TrackingTable', () => {
 describe('ProgramDocument', () => {
   it('opens with a cover band naming the client, version, date, coach and current block', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = currentBlockOf(view);
 
     // act
@@ -104,15 +102,11 @@ describe('ProgramDocument', () => {
     expect(within(cover).getByText(`${BLOCK_TYPE_LABELS[block.type]} block`)).toBeInTheDocument();
   });
 
-  it("carries the coach's title, personal note, missed-day note and cycle adjustments", () => {
+  it("carries the coach's title, personal note and missed-day note", () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const { content } = view.version;
     content.header = { title: 'Your first program', focus: '', personalNote: 'So glad to start with you' };
-    content.cycleRules = [
-      { id: 'r1', symptomPeriod: 'Cramps, days 1–2', adjustment: 'one-set-less' },
-      { id: 'r2', symptomPeriod: 'Bloating', adjustment: 'none' },
-    ];
     currentBlockOf(view).missedDayNote = 'Missed one? Pick up with the next session.';
 
     // act
@@ -122,13 +116,11 @@ describe('ProgramDocument', () => {
     expect(screen.getByText('Your first program')).toBeInTheDocument();
     expect(screen.getByText('So glad to start with you')).toBeInTheDocument();
     expect(screen.getByText('Missed one? Pick up with the next session.')).toBeInTheDocument();
-    const adjustments = screen.getByRole('list', { name: 'Your adjustments' });
-    expect(within(adjustments).getAllByRole('listitem').map(item => item.textContent)).toEqual(['Cramps, days 1–2: do one set less per exercise']);
   });
 
   it('gives the current block and week, next check-in, daily steps and sessions per week at a glance', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = currentBlockOf(view);
     const sessionDays = Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
 
@@ -145,7 +137,7 @@ describe('ProgramDocument', () => {
 
   it('lays the week out as a table with a cell for each of the seven days', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
 
     // act
     render(<ProgramDocument view={view} />);
@@ -158,7 +150,7 @@ describe('ProgramDocument', () => {
 
   it('prints one exercise table row per set with the exercise named once', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const [session] = currentBlockOf(view).sessions;
     const [row] = session.rows;
     const name = view.exercisesById.get(row.exerciseId)?.name ?? '';
@@ -179,7 +171,7 @@ describe('ProgramDocument', () => {
 
   it('tracks each working set of a session with its reps target', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const [session] = currentBlockOf(view).sessions;
     const workingCount = session.rows.reduce((total, row) => total + workingSets(row.sets).length, 0);
     const [firstSet] = workingSets(session.rows[0].sets);
@@ -196,7 +188,7 @@ describe('ProgramDocument', () => {
 
   it('prints no identifiers, no video links and the legend heading once', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
 
     // act
     const { container } = render(<ProgramDocument view={view} />);
@@ -209,9 +201,9 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('complementary', { name: 'How to read your session' })).toBeInTheDocument();
   });
 
-  it('lists the plan, sessions with tracking tables and the cycle section for an adapted program', () => {
+  it('lists the plan, sessions with tracking tables and the low-energy session', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const sessionCount = currentBlockOf(view).sessions.length;
 
     // act
@@ -219,27 +211,14 @@ describe('ProgramDocument', () => {
 
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Your plan' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Listening to your cycle' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
     expect(screen.getAllByRole('table', { name: /^Track / })).toHaveLength(sessionCount);
     expect(screen.getByRole('contentinfo')).toHaveTextContent("Your coach's full disclaimer accompanies this program.");
   });
 
-  it('omits the cycle section for a general program but keeps the low-energy session', () => {
-    // arrange
-    const view = viewFor('general');
-
-    // act
-    render(<ProgramDocument view={view} />);
-
-    // assert
-    expect(screen.queryByRole('heading', { name: 'Listening to your cycle' })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
-  });
-
   it('titles the block section with the intro template line, never a generic heading as well', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = currentBlockOf(view);
     const { title } = parseTemplate(block.introText || programTemplate(view, `block.${block.type}`));
 
@@ -254,7 +233,7 @@ describe('ProgramDocument', () => {
 
   it('titles the split and steps sections with their template lines', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const block = currentBlockOf(view);
     const split = parseTemplate(block.split.text).title;
 
@@ -270,7 +249,7 @@ describe('ProgramDocument', () => {
 
   it('lists each warm-up exercise with its sets and amount on the session card', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const [session] = currentBlockOf(view).sessions;
     const lines = session.warmUp.items.map(item => `${view.exercisesById.get(item.exerciseId)?.name} · ${warmUpItemText(item)}`);
 
@@ -287,7 +266,7 @@ describe('ProgramDocument', () => {
 
   it('prints the cool-down note and stretches when the cool-down is on', () => {
     // arrange
-    const view = viewFor('adapted');
+    const view = viewFor();
     const [session] = currentBlockOf(view).sessions;
     const [stretch] = SAMPLE_EXERCISES;
     session.coolDown = { enabled: true, note: 'Walk easy for five minutes.', items: [{ id: 'cd-1', exerciseId: stretch.id, seconds: 30 }] };
@@ -302,9 +281,9 @@ describe('ProgramDocument', () => {
     expect(within(card).getAllByRole('listitem').map(item => item.textContent)).toContain(`${stretch.name} · 30 s`);
   });
 
-  it('prints a rounds segment as its rounds, its exercises and the non-zero easy and rest times', () => {
+  it('prints an intervals segment as its rounds, its exercises and the non-zero easy and rest times', () => {
     // arrange
-    const view = viewFor('adapted', 'two-versions');
+    const view = viewFor('two-versions');
     const cardio = currentBlockOf(view).cardioSessions.find(candidate => candidate.segments.some(segment => segment.kind === 'rounds'));
     if (!cardio) throw new Error('rounds cardio missing');
     const rounds = cardio.segments.find(segment => segment.kind === 'rounds');
@@ -316,7 +295,7 @@ describe('ProgramDocument', () => {
 
     // assert
     const card = screen.getByRole('region', { name: cardio.name });
-    expect(within(card).getByText(`${rounds.rounds} rounds`)).toBeInTheDocument();
+    expect(within(card).getByText(`Intervals · ${rounds.rounds} rounds`)).toBeInTheDocument();
     expect(within(card).getAllByRole('listitem').map(entry => entry.textContent)).toContain(`${view.exercisesById.get(item.exerciseId)?.name} · ${item.workSeconds} s`);
     expect(within(card).getByText(`${rounds.easySeconds} s easy between exercises`)).toBeInTheDocument();
     expect(within(card).queryByText(/between rounds/)).not.toBeInTheDocument();
@@ -324,7 +303,7 @@ describe('ProgramDocument', () => {
 
   it('shows what changed from version 2', () => {
     // arrange
-    const view = viewFor('adapted', 'two-versions');
+    const view = viewFor('two-versions');
 
     // act
     render(<ProgramDocument view={view} />);

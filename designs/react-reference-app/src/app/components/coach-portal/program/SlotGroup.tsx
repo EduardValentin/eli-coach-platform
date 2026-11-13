@@ -4,7 +4,7 @@ import type { Exercise } from '../../../context/TrainingContext';
 import { MOVEMENT_PATTERN_LABELS, type MovementPattern } from '../../../domain/exercises';
 import type { Session, Slot } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
-import type { SlotPlan } from '../../../domain/splitTemplates';
+import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
 import { ChoiceGroup, ChoiceOption, MultiChoiceGroup, MultiChoiceOption } from '../../ChoiceGroup';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
@@ -85,14 +85,21 @@ function PatternChips({ plan, choices, onChange }: PatternPickerProps) {
   );
 }
 
+function PatternBadges({ patterns }: { patterns: readonly MovementPattern[] }) {
+  if (patterns.length === 0) return null;
+  return (
+    <span className="flex flex-wrap gap-1">
+      {patterns.map(pattern => (
+        <Badge key={pattern} tone="muted">
+          {MOVEMENT_PATTERN_LABELS[pattern]}
+        </Badge>
+      ))}
+    </span>
+  );
+}
+
 function PatternTags({ plan, choices, onChange }: PatternPickerProps) {
-  if (choices.length === 0) {
-    return plan.patterns.map(pattern => (
-      <Badge key={pattern} tone="muted">
-        {MOVEMENT_PATTERN_LABELS[pattern]}
-      </Badge>
-    ));
-  }
+  if (choices.length === 0) return <PatternBadges patterns={plan.patterns} />;
   if (SINGLE_PATTERN_SLOTS.includes(plan.slot)) return <MainPatternPicker plan={plan} choices={choices} onChange={onChange} />;
   return <PatternChips plan={plan} choices={choices} onChange={onChange} />;
 }
@@ -100,7 +107,8 @@ function PatternTags({ plan, choices, onChange }: PatternPickerProps) {
 export function SlotGroup({ session, plan, choices, onPatternsChange, library, edits, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
   const { slot, label } = plan;
   const units = slotUnits(session, slot);
-  const addLabel = `Add exercise to ${label}`;
+  const heading = `${slot} · ${label}`;
+  const addLabel = `Add exercise to ${heading}`;
   const several = !SINGLE_CARD_SLOTS.includes(slot);
   const placeAt = (placement: Placement) => (dragged: DraggedItem) =>
     onChange(dragged.kind === PLAN_ROW ? edits.move(dragged.item.rowId, placement) : edits.add(dragged.item.exercise, placement));
@@ -124,13 +132,18 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
 
   return (
     <section className="grid gap-2">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h4 className="text-sm font-semibold text-text-primary">{`${slot} · ${label}`}</h4>
-        <PatternTags plan={plan} choices={choices} onChange={onPatternsChange} />
+      <header className="flex items-start gap-3">
+        <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
+          <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
+          {units.length > 0 ? (
+            <PatternBadges patterns={slotExercisePatterns(session, slot, library)} />
+          ) : (
+            <PatternTags plan={plan} choices={choices} onChange={onPatternsChange} />
+          )}
+        </div>
         {several && units.length > 0 && (
-          <Button variant="ghost" size="xs" className="ml-auto" aria-label={addLabel} onClick={() => onAdd(slot)}>
+          <Button variant="ghost" size="icon-xs" aria-label={addLabel} onClick={() => onAdd(slot)}>
             <Plus aria-hidden="true" />
-            Add
           </Button>
         )}
       </header>

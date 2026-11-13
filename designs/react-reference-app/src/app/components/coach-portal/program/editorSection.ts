@@ -4,7 +4,6 @@ export type EditorSection =
   | { kind: 'header' }
   | { kind: 'plan' }
   | { kind: 'block'; blockId: string }
-  | { kind: 'cycle' }
   | { kind: 'nutrition' }
   | { kind: 'lifestyle' }
   | { kind: 'guide' };
@@ -13,7 +12,6 @@ const BLOCK_HASH_PREFIX = '#block-';
 const NAMED_SECTIONS: Record<string, EditorSection> = {
   '#header': { kind: 'header' },
   '#plan': { kind: 'plan' },
-  '#cycle': { kind: 'cycle' },
   '#nutrition': { kind: 'nutrition' },
   '#lifestyle': { kind: 'lifestyle' },
   '#guide': { kind: 'guide' },
@@ -36,7 +34,6 @@ export function isSameSection(a: EditorSection, b: EditorSection): boolean {
 const NAMED_TITLES: Record<Exclude<EditorSection['kind'], 'block'>, string> = {
   header: 'Intro & setup',
   plan: 'Overview',
-  cycle: 'Cycle rules',
   nutrition: 'Nutrition',
   lifestyle: 'Lifestyle',
   guide: 'Client guide',

@@ -96,7 +96,7 @@ function SessionReadCard({ session, days, exercisesById }: { session: Session; d
         headingId={headingId}
         name={session.name}
         days={days}
-        meta={sessionSummary(session)}
+        meta={sessionSummary(session, exercisesById)}
       />
       <div className="grid gap-4 p-3 sm:p-4">
         {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}

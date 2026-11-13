@@ -33,7 +33,6 @@ export function FocusCard({ view, action }: FocusCardProps) {
   const { dayOne, position } = view;
   const block = currentBlock(view);
   const inPlan = position.status === 'in-plan';
-  const showCycle = view.program.cycleMode === 'adapted' && view.cycleDay !== null;
   const { focus, personalNote } = view.version.content.header;
 
   return (
@@ -65,7 +64,6 @@ export function FocusCard({ view, action }: FocusCardProps) {
       {inPlan && dayOne && (
         <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-4 border-t border-border-subtle pt-4">
           <Reading label="Next check-in form" value={format(nextCheckpoint(dayOne, view.preferredWeekday, view.today), 'EEEE, d MMMM')} />
-          {showCycle && <Reading label="Cycle day" value={`~${view.cycleDay} (estimate)`} />}
         </dl>
       )}
     </ClientWidget>

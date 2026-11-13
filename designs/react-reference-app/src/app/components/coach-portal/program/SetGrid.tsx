@@ -137,7 +137,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
                         onCommit={rir => changeSet(index, { ...set, rir })}
                       />
                     ) : (
-                      <Input size="sm" aria-label={`${label} RIR`} className="w-16" value="" disabled readOnly />
+                      <Input size="xs" aria-label={`${label} RIR`} className="w-16" value="" disabled readOnly />
                     )}
                   </td>
                   <td className={CELL_CLASS}>

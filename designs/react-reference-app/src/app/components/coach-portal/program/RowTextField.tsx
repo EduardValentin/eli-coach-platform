@@ -44,7 +44,7 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
     <div className="grid gap-1">
       <div className="flex items-center gap-1">
         <Input
-          size="sm"
+          size="xs"
           type={type}
           min={type === 'number' ? 1 : undefined}
           inputMode={type === 'number' ? 'numeric' : undefined}
@@ -58,7 +58,7 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
           onBlur={() => setInvalid(parse(text) === null)}
         />
         {suffix && (
-          <span id={suffixId} className="min-w-7 text-xs whitespace-nowrap text-text-secondary">
+          <span id={suffixId} className="min-w-8 text-xs whitespace-nowrap text-text-secondary">
             {suffix.trim()}
           </span>
         )}

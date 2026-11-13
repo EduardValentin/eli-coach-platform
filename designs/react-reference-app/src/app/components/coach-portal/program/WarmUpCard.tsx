@@ -70,7 +70,8 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
         </ExerciseItemList>
         <Button variant="ghost" size="xs" className="w-fit" onClick={onPickExercise}>
           <Plus aria-hidden="true" />
-          Add warm-up exercise
+          Add exercise
+          <span className="sr-only">{' to warm-up'}</span>
         </Button>
       </section>
     </DropZone>

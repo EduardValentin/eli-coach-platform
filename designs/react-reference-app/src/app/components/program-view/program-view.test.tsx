@@ -21,12 +21,12 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
-function viewAt(today: Date, cycleDay: number | null = 12, exercises: readonly Exercise[] = SAMPLE_EXERCISES): ProgramView {
-  const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: DAY_ONE, cycleMode: 'adapted', equipment: [] }, SAMPLE_EXERCISES);
+function viewAt(today: Date, exercises: readonly Exercise[] = SAMPLE_EXERCISES): ProgramView {
+  const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: DAY_ONE, equipment: [] }, SAMPLE_EXERCISES);
   if (!program) throw new Error('seed missing');
   const version = currentVersion(program);
   if (!version) throw new Error('version missing');
-  return viewOf({ program, version, dayOne: DAY_ONE, today, preferredWeekday: 'mon', exercises, cycleDay });
+  return viewOf({ program, version, dayOne: DAY_ONE, today, preferredWeekday: 'mon', exercises });
 }
 
 function sessionWith(view: ProgramView, edit: (session: Session) => Session): Session {
@@ -34,7 +34,7 @@ function sessionWith(view: ProgramView, edit: (session: Session) => Session): Se
 }
 
 describe('FocusCard', () => {
-  it('shows the block, week, next check-in and cycle estimate', () => {
+  it('shows the block, week and next check-in', () => {
     // arrange
     const view = viewAt(TODAY);
 
@@ -44,23 +44,10 @@ describe('FocusCard', () => {
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Foundation' })).toBeInTheDocument();
     expect(screen.getByText('Week 1 of 11')).toBeInTheDocument();
-    expect(screen.getAllByRole('term')).toHaveLength(2);
+    expect(screen.getAllByRole('term')).toHaveLength(1);
     expect(screen.getByText('Next check-in form')).toBeInTheDocument();
     expect(screen.getByText('Monday, 5 October')).toBeInTheDocument();
-    expect(screen.getByText('Cycle day')).toBeInTheDocument();
-    expect(screen.getByText('~12 (estimate)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument();
-  });
-
-  it('omits the cycle line without an estimate', () => {
-    // arrange
-    const view = viewAt(TODAY, null);
-
-    // act
-    render(<FocusCard view={view} />);
-
-    // assert
-    expect(screen.queryByText(/Cycle day/)).not.toBeInTheDocument();
   });
 
   it('tells the client the plan has ended', () => {
@@ -336,7 +323,7 @@ describe('DayContent', () => {
     const segments = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
     expect(segments.map(segment => segment.textContent)).toEqual([
       'Stationary bike · 5 min · You can hold a conversation',
-      'Rounds · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
+      'Intervals · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
       'Stationary bike · 5 min · You can hold a conversation',
     ]);
     expect(screen.getByText(/Swap this for a 30-minute easy walk/)).toBeInTheDocument();
@@ -352,7 +339,7 @@ describe('DayContent', () => {
 
     // assert
     const segment = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem')[0];
-    expect(segment).toHaveTextContent('Rounds · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · 60 s between rounds · Hard: only a few words at a time');
+    expect(segment).toHaveTextContent('Intervals · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · 60 s between rounds · Hard: only a few words at a time');
   });
 });
 

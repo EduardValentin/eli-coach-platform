@@ -3,7 +3,7 @@ import { ChevronDown, Timer } from 'lucide-react';
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
-import { estimatedMinutes } from '../../domain/sessionTiming';
+import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -163,7 +163,7 @@ export function SessionDay({ session, exercisesById, progressionText }: SessionD
 
   return (
     <section aria-labelledby={headingId} className="@container grid gap-4">
-      <DayHeader headingId={headingId} name={session.name} meta={`~${estimatedMinutes(session)} min`} />
+      <DayHeader headingId={headingId} name={session.name} meta={estimatedDuration(estimatedMinutes(session, exercisesById))} />
       {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
       <ol className="grid items-start gap-3 @3xl:grid-cols-2">
         {sessionUnits(session).map(({ key, rows }) =>

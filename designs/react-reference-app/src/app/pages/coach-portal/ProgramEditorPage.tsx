@@ -12,7 +12,7 @@ import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutlineDrawer } from '../../components/coach-portal/program/ProgramOutlineDrawer';
 import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
-import { PublishChecklist, type ChecklistStart } from '../../components/coach-portal/program/PublishChecklist';
+import { PublishDialog, type PublishDialogStart } from '../../components/coach-portal/program/PublishDialog';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
 import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
@@ -41,13 +41,12 @@ function ProgramEditor(props: EditorProps) {
   const panel = useLibraryPanel();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
-  const [checklist, setChecklist] = useState<ChecklistStart | null>(null);
+  const [publishing, setPublishing] = useState<PublishDialogStart | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [openSessions, setOpenSessions] = useState<Record<string, string>>({});
   const { content } = draft;
   const { today, ruleContext } = editor;
-  const { cycleMode } = program;
-  const selected: EditorSection = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' } : editor.selected;
+  const { selected } = editor;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
   const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
   const openSessionId = block && openSessionOf(block, openSessions[block.id]);
@@ -66,11 +65,6 @@ function ProgramEditor(props: EditorProps) {
     panel.finishTarget();
   }
 
-  function requestPublish() {
-    if (editor.problems.length > 0 || editor.warnings.length > 0) setChecklist('top');
-    else editor.publish();
-  }
-
   function selectFromRail(section: EditorSection) {
     editor.select(section);
     rail.hide();
@@ -84,7 +78,7 @@ function ProgramEditor(props: EditorProps) {
         basedOn={currentVersion(program)}
         currentTitle={selected.kind === 'plan' ? null : sectionTitle(selected, content.plan.blocks)}
         onOverview={() => editor.select({ kind: 'plan' })}
-        onOpenWarnings={() => setChecklist('warnings')}
+        onOpenWarnings={() => setPublishing('warnings')}
         libraryToggle={
           block && (
             <Button onClick={panel.toggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={panel.visible}>
@@ -98,7 +92,7 @@ function ProgramEditor(props: EditorProps) {
           </Button>
         }
         onPreview={() => setPreviewing(true)}
-        onPublish={requestPublish}
+        onPublish={() => setPublishing('top')}
         onDiscard={editor.discard}
         opensOn={editor.opensOn}
         warningsCount={editor.warnings.length}
@@ -107,7 +101,6 @@ function ProgramEditor(props: EditorProps) {
         <ProgramOutlineDrawer
           rail={rail}
           content={content}
-          cycleMode={cycleMode}
           dayOne={ruleContext.dayOne}
           today={today}
           selected={selected}
@@ -119,7 +112,7 @@ function ProgramEditor(props: EditorProps) {
         />
         <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
           <div className="mx-auto w-full max-w-5xl">
-            <EditorSectionContent section={selected} journey={journey} program={program} draft={draft} editor={editor} openBlock={openBlock} />
+            <EditorSectionContent section={selected} program={program} draft={draft} editor={editor} openBlock={openBlock} />
           </div>
         </main>
         {block && panel.visible && (
@@ -136,14 +129,17 @@ function ProgramEditor(props: EditorProps) {
           />
         )}
       </div>
-      <PublishChecklist
-        open={checklist !== null}
+      <PublishDialog
+        open={publishing !== null}
         onOpenChange={open => {
-          if (!open) setChecklist(null);
+          if (!open) setPublishing(null);
         }}
-        startAt={checklist ?? 'top'}
+        startAt={publishing ?? 'top'}
+        version={draft}
         problems={editor.problems}
         warnings={editor.warnings}
+        onFocusChange={editor.setFocus}
+        onWhatChangedChange={editor.setWhatChanged}
         onPublish={editor.publish}
         onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
       />
@@ -181,7 +177,7 @@ export function ProgramEditorPage() {
   if (isSetup && program) return <Navigate to={draftPath} replace />;
   if (isSetup) {
     return (
-      <main className="min-h-screen bg-surface-subtle px-4 py-10">
+      <main className="min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16">
         <ProgramSetupSheet journey={journey} onCreated={() => navigate(draftPath)} />
       </main>
     );

@@ -1,4 +1,4 @@
-import type { CycleAdjustment, ProgramLanguage } from './program';
+import type { ProgramLanguage } from './program';
 
 export type TemplateKey =
   | 'legend'
@@ -6,7 +6,6 @@ export type TemplateKey =
   | 'coolDown'
   | 'progression'
   | 'steps'
-  | 'cycle'
   | 'hiitAside'
   | 'missedDay'
   | 'calibration'
@@ -20,7 +19,7 @@ export type TemplateKey =
   | 'noWeight'
   | 'restDay';
 
-export const GUIDE_TEXT_KEYS = ['legend', 'warmUp', 'progression', 'coolDown', 'noWeight', 'lowEnergy', 'hiitAside', 'restDay', 'calibration', 'steps', 'cycle'] as const;
+export const GUIDE_TEXT_KEYS = ['legend', 'warmUp', 'progression', 'coolDown', 'noWeight', 'lowEnergy', 'hiitAside', 'restDay', 'calibration', 'steps'] as const;
 export type GuideTextKey = (typeof GUIDE_TEXT_KEYS)[number];
 export type GuideTexts = Partial<Record<GuideTextKey, string>>;
 
@@ -66,12 +65,6 @@ We alternate between lower body days (legs and glutes) and upper body days (back
     'progression': `**How to progress:** when you hit the top of the rep range on all sets with the target RIR, increase the weight next session (lower body +2.5–5 kg, upper body +1–2.5 kg, or the next dumbbell). If you can't reach the bottom of the range, keep the weight and build up again.`,
     'steps': `**Daily steps: [daily steps]**
 Walking is one of the most underrated tools for health and fat loss. Spread your steps through the day: a short walk after meals counts.`,
-    'cycle': `**Listening to your cycle**
-Your program is built around how *you* feel, not a textbook calendar. On days when symptoms like cramps, fatigue or headaches hit, you have options:
-— keep the session but stop each set 1 rep earlier than usual, or
-— do one set less per exercise, or
-— swap it for your **Low-energy session** below.
-None of these are "skipping". Log how you felt in your check-in so we can learn your pattern and plan ahead for next cycle.`,
     'hiitAside': `Low energy or cramps today? Swap this for a 30-minute easy walk. It still counts.`,
     'missedDay': `If you miss a session, just continue with the next one in the order. Don't try to double up.`,
     'lowEnergy': `Low-energy session (20–30 min): mobility, an easy walk or light exercises. It still counts.`,
@@ -85,17 +78,6 @@ const PLACEHOLDER_VALUE_KEYS: Record<string, string> = {
   'daily steps': 'steps',
   '2–3': 'days',
 };
-
-const CYCLE_ADJUSTMENT_TEXT: Record<Exclude<CycleAdjustment, 'none'>, string> = {
-  'rir-plus-one': 'stop each set 1 rep earlier than usual',
-  'one-set-less': 'do one set less per exercise',
-  'hiit-to-liss': 'swap hard cardio for an easy walk or bike ride',
-  'low-energy-session': 'swap the session for your low-energy session',
-};
-
-export function cycleAdjustmentText(adjustment: Exclude<CycleAdjustment, 'none'>): string {
-  return CYCLE_ADJUSTMENT_TEXT[adjustment];
-}
 
 export function isGuideTextKey(key: TemplateKey): key is GuideTextKey {
   return (GUIDE_TEXT_KEYS as readonly string[]).includes(key);

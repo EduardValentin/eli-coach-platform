@@ -26,7 +26,7 @@ export type ProgramContextType = {
   hydrated: boolean;
   programFor(callId: string): Program | undefined;
   createProgram(callId: string, setup: ProgramSetup): Program;
-  updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'level' | 'cycleMode' | 'language'>>): void;
+  updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'level' | 'language'>>): void;
   updateDraft(callId: string, update: (content: ProgramContent) => ProgramContent): void;
   setWhatChanged(callId: string, text: string): void;
   startDraft(callId: string): void;
@@ -44,7 +44,7 @@ function seedFacts(journey: ClientJourney): CoachingFacts {
 
 function seedClient(callId: string, journey: ClientJourney | null, dayOne: Date | null): SeedClient {
   const facts = journey && seedFacts(journey);
-  return { callId, dayOne, cycleMode: facts?.cycleMode ?? 'general', equipment: facts ? libraryEquipmentFor(facts.equipment) : [] };
+  return { callId, dayOne, equipment: facts ? libraryEquipmentFor(facts.equipment) : [] };
 }
 
 function withVersion(program: Program, number: number, change: (version: ProgramVersion) => ProgramVersion): Program {
@@ -126,7 +126,6 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
         callId,
         goal: setup.goal,
         language: setup.language,
-        cycleMode: setup.cycleMode,
         level: setup.level,
         versions: [{ number: 1, state: 'draft', publishedAt: null, whatChanged: '', content: initialContent(setup, exercisesRef.current) }],
       };

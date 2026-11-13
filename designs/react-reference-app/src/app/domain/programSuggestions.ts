@@ -192,7 +192,6 @@ export function initialContent(setup: ProgramSetup, library: readonly Exercise[]
   return {
     header: { title: 'Program — weeks 1–2', focus: '', personalNote: '' },
     plan: { blocks },
-    cycleRules: [],
     nutritionNotes: '',
     lifestyleNotes: '',
   };

@@ -6,6 +6,7 @@ import { HintPopover } from '../HintPopover';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from './blockColours';
+import { HoveredDayLabel, HoveredDayLine, useHoveredDay } from './TimelineHover';
 
 const DAYS_PER_WEEK = 7;
 const REM_PER_WEEK = 3.5;
@@ -72,6 +73,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
   const dates = boundaries(blocks, start);
   const lastDate = dates.length - 1;
   const marker = todayMarker(blocks, dayOne, today);
+  const { hovered, pointerHandlers } = useHoveredDay(start, planDays);
 
   return (
     <figure className="overflow-hidden rounded-card border border-border bg-surface-base">
@@ -81,7 +83,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
         tabIndex={0}
         className="overflow-x-auto px-6 pt-5 pb-3"
       >
-        <div className="relative grid" style={{ minWidth: `${weeks * REM_PER_WEEK}rem` }}>
+        <div className="relative grid" style={{ minWidth: `${weeks * REM_PER_WEEK}rem` }} {...pointerHandlers}>
           {marker && (
             <p className="relative h-6 text-xs font-semibold text-text-primary tabular-nums">
               <TodayMarkerLabel marker={marker} today={today} />
@@ -133,6 +135,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
                 {format(boundary.date, SHORT_DATE)}
               </span>
             ))}
+            {hovered && <HoveredDayLabel hovered={hovered} />}
           </div>
           <ol aria-hidden="true" className="mt-1 flex border-t border-border text-caption leading-none tabular-nums text-text-secondary">
             {Array.from({ length: weeks }, (_, week) => (
@@ -164,6 +167,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
               style={{ left: `${marker.offset * 100}%` }}
             />
           )}
+          {hovered && <HoveredDayLine hovered={hovered} className={marker ? 'top-6' : 'top-0'} />}
         </div>
       </div>
       <figcaption className="flex items-center gap-2 border-t border-border-subtle px-6 py-2.5 text-xs text-text-secondary">

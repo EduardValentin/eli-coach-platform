@@ -1,4 +1,4 @@
-import { CalendarDays, Download, Dumbbell, Footprints, HeartPulse, History, Info, Leaf, ListChecks, Salad } from 'lucide-react';
+import { CalendarDays, Download, Dumbbell, Footprints, History, Info, Leaf, ListChecks, Salad } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
@@ -10,7 +10,6 @@ import { weekdayOf } from '../../domain/programCalendar';
 import { fillTemplate } from '../../domain/programTemplates';
 import { splitLabel } from '../../domain/splitTemplates';
 import { formatJourneyDate } from '../../utils/journeyLabels';
-import { CycleAdjustments } from './CycleAdjustments';
 import { DayContent } from './DayContent';
 import { PlanTimeline } from './PlanTimeline';
 import { FocusCard } from './FocusCard';
@@ -122,14 +121,6 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
           <Section title="Your split" id="split" icon={Dumbbell}>
             <TextCardStack cards={[templateCard('split', block.split.text, splitLabel(block))]} />
           </Section>
-          {program.cycleMode === 'adapted' && (
-            <Section title="Listening to your cycle" id="cycle" icon={HeartPulse}>
-              <div className="grid gap-4">
-                <TemplateBody paragraphs={parseTemplate(programTemplate(view, 'cycle')).paragraphs} />
-                <CycleAdjustments rules={content.cycleRules} labelClassName={LABEL_CLASS} className="text-sm leading-relaxed text-text-primary" />
-              </div>
-            </Section>
-          )}
           <Section title="How to read your session" id="legend" icon={ListChecks}>
             <TemplateBody paragraphs={parseTemplate(programTemplate(view, 'legend')).paragraphs} />
           </Section>

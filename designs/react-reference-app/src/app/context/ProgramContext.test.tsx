@@ -16,7 +16,6 @@ const SETUP: ProgramSetup = {
   level: 'beginner',
   trainingDays: 3,
   sessionMinutes: 60,
-  cycleMode: 'adapted',
   language: 'en',
   dailySteps: 6000,
   splitShape: 'full-body',
@@ -100,7 +99,6 @@ describe('creating a program', () => {
       goal: 'Lose fat',
       level: 'beginner',
       language: 'en',
-      cycleMode: 'adapted',
     });
     expect(program?.versions).toHaveLength(1);
     expect(program?.versions[0]).toMatchObject({ number: 1, state: 'draft', publishedAt: null, whatChanged: '' });

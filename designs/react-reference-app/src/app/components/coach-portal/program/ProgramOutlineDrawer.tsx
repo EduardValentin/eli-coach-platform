@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import type { CycleMode, ProgramContent } from '../../../domain/program';
+import type { ProgramContent } from '../../../domain/program';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import type { EditorSection } from './editorSection';
@@ -9,7 +9,6 @@ import type { useRailDrawer } from './useRailDrawer';
 type ProgramOutlineDrawerProps = {
   rail: ReturnType<typeof useRailDrawer>;
   content: ProgramContent;
-  cycleMode: CycleMode;
   dayOne: Date | null;
   today: Date;
   selected: EditorSection;
@@ -17,7 +16,7 @@ type ProgramOutlineDrawerProps = {
   onAddBlock: () => void;
 };
 
-export function ProgramOutlineDrawer({ rail, content, cycleMode, dayOne, today, selected, onSelect, onAddBlock }: ProgramOutlineDrawerProps) {
+export function ProgramOutlineDrawer({ rail, content, dayOne, today, selected, onSelect, onAddBlock }: ProgramOutlineDrawerProps) {
   return (
     <>
       {rail.open && <div aria-hidden="true" className="fixed inset-0 z-40 bg-overlay-medium lg:hidden" data-parity="drawer-backdrop" onClick={rail.hide} />}
@@ -37,7 +36,7 @@ export function ProgramOutlineDrawer({ rail, content, cycleMode, dayOne, today, 
             <X size={18} />
           </Button>
         </div>
-        <EditorRail content={content} cycleMode={cycleMode} dayOne={dayOne} today={today} selected={selected} onSelect={onSelect} onAddBlock={onAddBlock} />
+        <EditorRail content={content} dayOne={dayOne} today={today} selected={selected} onSelect={onSelect} onAddBlock={onAddBlock} />
       </aside>
     </>
   );

@@ -197,6 +197,10 @@ export function blockShorterThanElapsed({ draftBlocks, publishedBlocks, dayOne, 
   return [{ code: 'block-shorter-than-elapsed', blockId: block?.id, detail: String(weekOfBlock - 1) }];
 }
 
+export function requiresWhatChanged(versionNumber: number): boolean {
+  return versionNumber >= 2;
+}
+
 export function blockingProblems(
   content: ProgramContent,
   whatChanged: string,
@@ -208,7 +212,7 @@ export function blockingProblems(
     ...missingSessionProblems(blocks, ctx),
     ...blockShorterThanElapsed({ draftBlocks: blocks, publishedBlocks: ctx.publishedBlocks, dayOne: ctx.dayOne, today: ctx.publishDay }),
   ];
-  if (ctx.versionNumber >= 2 && whatChanged.trim() === '') findings.push({ code: 'what-changed-missing' });
+  if (requiresWhatChanged(ctx.versionNumber) && whatChanged.trim() === '') findings.push({ code: 'what-changed-missing' });
   if (ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(ctx.publishDay))) {
     findings.push({ code: 'start-date-not-reached', detail: format(ctx.startDate, 'd MMMM') });
   }
@@ -313,16 +317,16 @@ function supersetMuscleWarning({ block, session }: SessionPlace, index: number, 
   return [{ code: 'superset-same-muscle', blockId: block.id, sessionId: session.id, detail: session.name }];
 }
 
-function overTargetWarning({ block, session }: SessionPlace): RuleFinding<WarningCode>[] {
-  if (!isOverTarget(session, block)) return [];
-  return [{ code: 'session-over-target', blockId: block.id, sessionId: session.id, detail: `${session.name}, ${estimatedMinutes(session)} min` }];
+function overTargetWarning({ block, session }: SessionPlace, exercises: Exercises): RuleFinding<WarningCode>[] {
+  if (!isOverTarget(session, block, exercises)) return [];
+  return [{ code: 'session-over-target', blockId: block.id, sessionId: session.id, detail: `${session.name}, ${estimatedMinutes(session, exercises)} min` }];
 }
 
 function sessionWarnings(block: Block, exercises: Exercises): RuleFinding<WarningCode>[] {
   return block.sessions.flatMap(session => {
     const place = { block, session };
     const rowFindings = session.rows.flatMap((row, index) => [...roleSlotWarning(place, row, exercises), ...supersetMuscleWarning(place, index, exercises)]);
-    return [...rowFindings, ...overTargetWarning(place)];
+    return [...rowFindings, ...overTargetWarning(place, exercises)];
   });
 }
 

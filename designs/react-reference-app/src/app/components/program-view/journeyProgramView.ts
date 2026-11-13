@@ -2,7 +2,6 @@ import type { Exercise } from '../../context/TrainingContext';
 import type { ClientJourney } from '../../domain/journey';
 import type { Program, ProgramVersion } from '../../domain/program';
 import { checkInWeekdayOf, dayOneOf } from '../../domain/programCalendar';
-import { estimatedCycleDay } from '../../domain/programOnboarding';
 import { journeyClientName } from '../../utils/journeyLabels';
 import { viewOf, type ProgramView } from './programView';
 
@@ -23,7 +22,6 @@ export function journeyProgramView({ journey, program, version, exercises, today
     today,
     preferredWeekday: checkInWeekdayOf(journey),
     exercises,
-    cycleDay: estimatedCycleDay(journey, today),
     clientName: journeyClientName(journey),
   });
 }

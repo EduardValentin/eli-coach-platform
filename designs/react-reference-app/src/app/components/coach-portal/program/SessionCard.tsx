@@ -6,7 +6,7 @@ import { SLOTS, type Block, type Session } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import type { RowContext } from '../../../domain/programSuggestions';
 import { rowEdits } from '../../../domain/sessionEditing';
-import { estimatedMinutes, isOverTarget } from '../../../domain/sessionTiming';
+import { estimatedDuration, estimatedMinutes, isOverTarget } from '../../../domain/sessionTiming';
 import { patternChoicesFor, slotPlanOrFallback, withMainPattern, withSecondaryPatterns } from '../../../domain/splitTemplates';
 import { warmUpEdits } from '../../../domain/warmUpEditing';
 import { describeLoss } from '../../../domain/weekEditing';
@@ -36,8 +36,9 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
   const nameField = useRef<HTMLInputElement>(null);
   const confirm = useResetConfirm();
   const edits = rowEdits(session, context);
-  const minutes = estimatedMinutes(session);
-  const overTarget = isOverTarget(session, block);
+  const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
+  const minutes = estimatedMinutes(session, exercisesById);
+  const overTarget = isOverTarget(session, block, exercisesById);
 
   function clear() {
     confirm.request({
@@ -51,7 +52,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
   if (!expanded) {
     return (
       <article ref={articleRef} aria-labelledby={headingId} className={SESSION_ARTICLE_CLASS}>
-        <CollapsedSessionHeader headingId={headingId} name={session.name} summary={sessionSummary(session)} onExpand={onExpand} />
+        <CollapsedSessionHeader headingId={headingId} name={session.name} summary={sessionSummary(session, exercisesById)} onExpand={onExpand} />
       </article>
     );
   }
@@ -64,7 +65,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
         </h3>
         <SessionNameInput value={session.name} inputRef={nameField} onChange={name => onChange({ ...session, name })} />
         <p className={cn('flex gap-2 text-sm tabular-nums', { 'text-warning': overTarget, 'text-text-secondary': !overTarget })}>
-          <span>{`~${minutes} min · target ${block.targetMinutes}`}</span>
+          <span>{`${estimatedDuration(minutes)} · target ${block.targetMinutes}`}</span>
           {overTarget && <span>Over target</span>}
         </p>
         <RowActionsMenu

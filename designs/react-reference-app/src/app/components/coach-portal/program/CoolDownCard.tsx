@@ -1,4 +1,3 @@
-import { useId } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Session } from '../../../domain/program';
@@ -24,7 +23,6 @@ function acceptsStretch(dragged: DraggedItem): boolean {
 }
 
 export function CoolDownCard({ session, library, edits, onChange, onPickStretch }: CoolDownCardProps) {
-  const noteId = useId();
   const { coolDown } = session;
   const { items } = coolDown;
   return (
@@ -41,17 +39,12 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
         </div>
         {coolDown.enabled && (
           <>
-            <div className="grid gap-1.5">
-              <label htmlFor={noteId} className="text-sm font-medium text-text-primary">
-                Cool-down note
-              </label>
-              <Textarea
-                id={noteId}
-                placeholder="Easy walk and a few stretches"
-                value={coolDown.note}
-                onChange={event => onChange(edits.change({ ...coolDown, note: event.target.value }))}
-              />
-            </div>
+            <Textarea
+              aria-label="Cool-down note"
+              placeholder="Easy walk and a few stretches"
+              value={coolDown.note}
+              onChange={event => onChange(edits.change({ ...coolDown, note: event.target.value }))}
+            />
             <ExerciseItemList
               label="Stretches"
               items={items}

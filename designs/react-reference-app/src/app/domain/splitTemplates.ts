@@ -1,3 +1,4 @@
+import type { Exercise } from '../context/TrainingContext';
 import type { MovementPattern } from './exercises';
 import { WEEKDAYS, type Block, type Session, type Slot, type SplitShape, type Weekday } from './program';
 
@@ -137,4 +138,11 @@ export function splitLabel(block: Block): string {
 
 export function slotPlanOrFallback(block: Block, session: Session, slot: Slot): SlotPlan {
   return slotPlanFor(block, session, slot) ?? FALLBACK_SLOT_PLANS[slot];
+}
+
+export function slotExercisePatterns(session: Session, slot: Slot, library: readonly Exercise[]): MovementPattern[] {
+  const patterns = session.rows
+    .filter(row => row.slot === slot)
+    .flatMap(row => library.find(exercise => exercise.id === row.exerciseId)?.pattern ?? []);
+  return [...new Set(patterns)];
 }

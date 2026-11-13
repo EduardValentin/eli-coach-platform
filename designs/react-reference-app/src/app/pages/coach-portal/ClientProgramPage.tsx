@@ -49,7 +49,6 @@ function clientTexts(view: ProgramView, block: Block): TextCard[] {
   return [
     ...blockIntroCards(view, block, 'Client note'),
     templateCard('split', block.split.text, `Split · ${splitLabel(block)}`),
-    ...(view.program.cycleMode === 'adapted' ? [templateCard('cycle', programTemplate(view, 'cycle'), 'Listening to your cycle')] : []),
     templateCard('low-energy', programTemplate(view, 'lowEnergy'), 'Low-energy session'),
   ];
 }

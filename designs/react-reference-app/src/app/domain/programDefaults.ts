@@ -17,7 +17,13 @@ import { cardioPreset } from './programCardio';
 export type RowDefaults = { sets: SetSpec[]; restSeconds: number };
 
 export const STEPS_DEFAULT = 6000;
-export const STEPS_STEP = 1000;
+const STEPS_STEP = 1000;
+const STEPS_MIN = 4000;
+const STEPS_MAX = 12000;
+export const DAILY_STEP_TARGETS: readonly number[] = Array.from(
+  { length: (STEPS_MAX - STEPS_MIN) / STEPS_STEP + 1 },
+  (_, index) => STEPS_MIN + index * STEPS_STEP,
+);
 export const TARGET_MINUTES = [30, 45, 60] as const;
 
 type Prescription = { setCount: number; reps: Range; rir: Range; restSeconds: number };
