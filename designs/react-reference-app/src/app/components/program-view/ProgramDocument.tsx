@@ -202,7 +202,7 @@ function PlanStrip({ view }: { view: ProgramView }) {
   const { blocks } = view.version.content.plan;
   const { dayOne, position } = view;
   return (
-    <ol className="flex gap-1">
+    <ol className="flex gap-1 max-sm:flex-col max-sm:gap-document-gap">
       {blocks.map((block, index) => {
         const dates = dayOne ? blockDates(blocks, index, dayOne) : null;
         const isCurrent = position.status === 'in-plan' && position.blockIndex === index;
@@ -211,9 +211,12 @@ function PlanStrip({ view }: { view: ProgramView }) {
             key={block.id}
             aria-current={isCurrent ? 'true' : undefined}
             style={{ flexGrow: block.weeks, flexBasis: 0 }}
-            className={cn('flex min-w-28 flex-col gap-0.5', DOCUMENT_NOTE_CLASS, { 'text-text-primary': isCurrent })}
+            className={cn('relative flex flex-col gap-0.5 max-sm:pl-3.5 sm:min-w-28', DOCUMENT_NOTE_CLASS, { 'text-text-primary': isCurrent })}
           >
-            <span aria-hidden="true" className={cn('mb-1 h-1.5 rounded-full', BLOCK_SWATCH[block.type])} />
+            <span
+              aria-hidden="true"
+              className={cn('mb-1 h-1.5 rounded-full max-sm:absolute max-sm:inset-y-0 max-sm:left-0 max-sm:mb-0 max-sm:h-auto max-sm:w-1.5', BLOCK_SWATCH[block.type])}
+            />
             <span className="text-document-body font-semibold text-text-primary">
               {BLOCK_TYPE_LABELS[block.type]}
               {isCurrent && <span className="font-normal text-text-secondary"> · now</span>}
@@ -250,7 +253,7 @@ function LegendBody({ text }: { text: string }) {
       <DocumentHeading level={2} className={CARD_TITLE_CLASS}>
         {title || LEGEND_FALLBACK_TITLE}
       </DocumentHeading>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-document-table">
+      <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-document-table max-sm:gap-y-0 sm:grid-cols-[max-content_1fr] max-sm:[&>div+div>dt]:mt-2">
         {paragraphs.map(paragraph => {
           const term = paragraph.lead?.replace(/:$/, '') ?? '';
           const description = paragraph.body.replace(LIST_DASH, '');

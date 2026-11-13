@@ -18,8 +18,8 @@ type TextSlotProps = {
 
 type SlotButtonProps = { label: string; icon: ReactNode; onClick: () => void; className?: string };
 
-const SLOT_BUTTON_CLASS =
-  'absolute top-0 right-0 text-text-secondary sm:right-auto sm:-left-11';
+const SLOT_BUTTON_CLASS = 'absolute top-0 right-0 text-text-secondary';
+const SLOT_FRAME_CLASS = 'relative pr-10';
 
 const SlotButton = forwardRef<HTMLButtonElement, SlotButtonProps>(({ label, icon, onClick, className }, ref) => (
   <Button ref={ref} type="button" variant="ghost" size="icon-xs" aria-label={label} onClick={onClick} className={cn(SLOT_BUTTON_CLASS, className)}>
@@ -81,7 +81,7 @@ function EditableSlot({ editing, target, text, className, children }: EditableSl
 
   if (!showsTextarea) {
     return (
-      <div className={cn('group/slot relative max-sm:pr-10', className)}>
+      <div className={cn('group/slot', SLOT_FRAME_CLASS, className)}>
         {children(text.value)}
         <SlotButton
           ref={editButton}
@@ -96,7 +96,7 @@ function EditableSlot({ editing, target, text, className, children }: EditableSl
 
   return (
     <div className={className}>
-      <div className="relative grid gap-1.5 max-sm:pr-10">
+      <div className={cn('grid gap-1.5', SLOT_FRAME_CLASS)}>
         <Textarea
           ref={textarea}
           aria-label={text.name}
