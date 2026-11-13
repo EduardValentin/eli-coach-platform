@@ -28,7 +28,7 @@ export type ProgramContextType = {
   createProgram(callId: string, setup: ProgramSetup): Program;
   updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'level' | 'language'>>): void;
   updateDraft(callId: string, update: (content: ProgramContent) => ProgramContent): void;
-  setWhatChanged(callId: string, text: string): void;
+  updateDraftVersion(callId: string, update: (version: ProgramVersion) => ProgramVersion): void;
   startDraft(callId: string): void;
   discardDraft(callId: string): void;
   publishDraft(callId: string, now: Date): PublishOutcome;
@@ -145,10 +145,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
     [changeDraft],
   );
 
-  const setWhatChanged = useCallback<ProgramContextType['setWhatChanged']>(
-    (callId, text) => changeDraft(callId, version => ({ ...version, whatChanged: text })),
-    [changeDraft],
-  );
+  const updateDraftVersion = useCallback<ProgramContextType['updateDraftVersion']>((callId, update) => changeDraft(callId, update), [changeDraft]);
 
   const startDraft = useCallback<ProgramContextType['startDraft']>(
     callId =>
@@ -185,7 +182,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       const draft = program && draftOf(program);
       if (!program || !draft) return { status: 'blocked', problems: [] };
       const context = ruleContextFor({ journey: journeyForCall(callId), program, draft, today: now, exercises: exercisesRef.current });
-      const problems = blockingProblems(draft.content, draft.whatChanged, context);
+      const problems = blockingProblems(draft.content, context);
       if (problems.length > 0) return { status: 'blocked', problems };
       commit({ ...programsRef.current, [callId]: publishedAfter(program, draft, now) });
       if (draft.number === 1) markProgramReady(callId, now);
@@ -200,8 +197,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<ProgramContextType>(
-    () => ({ hydrated, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
-    [hydrated, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
+    () => ({ hydrated, programFor, programs, createProgram, updateSetup, updateDraft, updateDraftVersion, startDraft, discardDraft, publishDraft, exerciseConsumers }),
+    [hydrated, programFor, programs, createProgram, updateSetup, updateDraft, updateDraftVersion, startDraft, discardDraft, publishDraft, exerciseConsumers],
   );
 
   return <ProgramContext.Provider value={value}>{children}</ProgramContext.Provider>;

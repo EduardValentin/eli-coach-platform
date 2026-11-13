@@ -1,42 +1,42 @@
 import { BLOCK_TYPE_LABELS, type Block } from '../../../domain/program';
 
-export type EditorSection =
-  | { kind: 'header' }
-  | { kind: 'plan' }
-  | { kind: 'block'; blockId: string }
-  | { kind: 'nutrition' }
-  | { kind: 'lifestyle' }
-  | { kind: 'guide' };
+export type EditorSection = { kind: 'setup' } | { kind: 'plan' } | { kind: 'block'; blockId: string } | { kind: 'texts' };
+export type StructureSection = Exclude<EditorSection, { kind: 'texts' }>;
 
 const BLOCK_HASH_PREFIX = '#block-';
-const NAMED_SECTIONS: Record<string, EditorSection> = {
-  '#header': { kind: 'header' },
+const TEXTS_PATH_SUFFIX = '/texts';
+const NAMED_SECTIONS: Record<string, StructureSection> = {
+  '#setup': { kind: 'setup' },
   '#plan': { kind: 'plan' },
-  '#nutrition': { kind: 'nutrition' },
-  '#lifestyle': { kind: 'lifestyle' },
-  '#guide': { kind: 'guide' },
 };
 
-export function sectionHash(section: EditorSection): string {
+export function sectionHash(section: StructureSection): string {
   return section.kind === 'block' ? `${BLOCK_HASH_PREFIX}${section.blockId}` : `#${section.kind}`;
 }
 
-export function sectionFromHash(hash: string, blocks: readonly Block[]): EditorSection | null {
+export function sectionFromHash(hash: string, blocks: readonly Block[]): StructureSection | null {
   if (!hash.startsWith(BLOCK_HASH_PREFIX)) return NAMED_SECTIONS[hash] ?? null;
   const blockId = hash.slice(BLOCK_HASH_PREFIX.length);
   return blocks.some(block => block.id === blockId) ? { kind: 'block', blockId } : null;
 }
 
+export function isTextsPath(pathname: string): boolean {
+  return pathname.endsWith(TEXTS_PATH_SUFFIX);
+}
+
+export function textsPath(draftPath: string): string {
+  return `${draftPath}${TEXTS_PATH_SUFFIX}`;
+}
+
 export function isSameSection(a: EditorSection, b: EditorSection): boolean {
-  return sectionHash(a) === sectionHash(b);
+  if (a.kind === 'block' && b.kind === 'block') return a.blockId === b.blockId;
+  return a.kind === b.kind;
 }
 
 const NAMED_TITLES: Record<Exclude<EditorSection['kind'], 'block'>, string> = {
-  header: 'Intro & setup',
+  setup: 'Setup',
   plan: 'Overview',
-  nutrition: 'Nutrition',
-  lifestyle: 'Lifestyle',
-  guide: 'Client guide',
+  texts: 'Texts',
 };
 
 export function sectionTitle(section: EditorSection, blocks: readonly Block[]): string {

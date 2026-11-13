@@ -87,6 +87,17 @@ describe('WhatChangedBanner', () => {
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 
+  it('is left out when the coach wrote nothing about the change', () => {
+    // arrange
+    const unwritten = { ...version, whatChanged: '' };
+
+    // act
+    render(<WhatChangedBanner version={unwritten} dismissedVersion={null} onDismiss={vi.fn()} />);
+
+    // assert
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
+
   it('is hidden once that version was dismissed', () => {
     // arrange / act
     render(<WhatChangedBanner version={version} dismissedVersion={2} onDismiss={vi.fn()} />);
@@ -306,7 +317,8 @@ describe('DayContent', () => {
     render(<DayContent view={view} block={currentBlockOf(view)} weekday="sat" />);
 
     // assert
-    expect(screen.getByText('Rest day. A short walk still counts.')).toBeInTheDocument();
+    expect(screen.getByText('Rest day')).toBeInTheDocument();
+    expect(screen.queryByText(/A short walk still counts/)).not.toBeInTheDocument();
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
   });
 
@@ -326,7 +338,7 @@ describe('DayContent', () => {
       'Intervals · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
       'Stationary bike · 5 min · You can hold a conversation',
     ]);
-    expect(screen.getByText(/Swap this for a 30-minute easy walk/)).toBeInTheDocument();
+    expect(screen.queryByText(/Swap this for a 30-minute easy walk/)).not.toBeInTheDocument();
   });
 
   it('renders rounds as the round count and its exercises', () => {

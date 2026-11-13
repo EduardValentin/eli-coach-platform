@@ -1,15 +1,17 @@
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
 import type { Block, Program, ProgramVersion } from '../../../domain/program';
+import type { ClientJourney } from '../../../domain/journey';
 import type { LibraryTarget } from '../../../domain/programEditing';
+import { Button } from '../../ui/button';
 import { BlockWorkspace } from './BlockWorkspace';
-import { ClientGuideSection } from './ClientGuideSection';
 import type { EditorSection } from './editorSection';
-import { HeaderSection } from './HeaderSection';
-import { LifestyleSection } from './LifestyleSection';
-import { NutritionSection } from './NutritionSection';
 import { PlanOverview } from './PlanOverview';
+import { SetupSection } from './SetupSection';
+import { TextsWorkspace } from './TextsWorkspace';
 import type { useEditorState } from './useEditorState';
 
 export type OpenBlock = {
@@ -22,6 +24,7 @@ export type OpenBlock = {
 
 type EditorSectionContentProps = {
   section: EditorSection;
+  journey: ClientJourney;
   program: Program;
   draft: ProgramVersion;
   editor: ReturnType<typeof useEditorState>;
@@ -54,7 +57,20 @@ function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSe
   );
 }
 
-export function EditorSectionContent({ section, program, draft, editor, openBlock }: EditorSectionContentProps) {
+function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState> }) {
+  return (
+    <div className="flex justify-end">
+      <Button asChild variant="outline">
+        <Link to={editor.textsLocation}>
+          Continue to texts
+          <ArrowRight aria-hidden="true" />
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+function StructureSectionContent({ section, program, draft, editor, openBlock }: EditorSectionContentProps) {
   const { updateSetup } = usePrograms();
   const { content } = draft;
   if (section.kind === 'plan') {
@@ -72,21 +88,23 @@ export function EditorSectionContent({ section, program, draft, editor, openBloc
     );
   }
   if (section.kind === 'block') return openBlock ? <OpenBlockWorkspace program={program} draft={draft} editor={editor} openBlock={openBlock} /> : null;
-  if (section.kind === 'header') {
-    return (
-      <HeaderSection
-        program={program}
-        content={content}
-        onContentChange={editor.replaceContent}
-        onSetupChange={patch => updateSetup(program.callId, patch)}
-      />
-    );
+  return <SetupSection program={program} onSetupChange={patch => updateSetup(program.callId, patch)} />;
+}
+
+function leadsToTexts(section: EditorSection, blocks: readonly Block[]): boolean {
+  if (section.kind === 'block') return blocks.at(-1)?.id === section.blockId;
+  return section.kind !== 'texts';
+}
+
+export function EditorSectionContent(props: EditorSectionContentProps) {
+  const { section, journey, program, draft, editor } = props;
+  if (section.kind === 'texts') {
+    return <TextsWorkspace journey={journey} program={program} draft={draft} today={editor.today} editing={editor.textEditing} />;
   }
-  if (section.kind === 'guide') {
-    return <ClientGuideSection content={content} language={program.language} onChange={editor.replaceContent} />;
-  }
-  if (section.kind === 'nutrition') {
-    return <NutritionSection notes={content.nutritionNotes} onChange={nutritionNotes => editor.replaceContent({ ...content, nutritionNotes })} />;
-  }
-  return <LifestyleSection notes={content.lifestyleNotes} onChange={lifestyleNotes => editor.replaceContent({ ...content, lifestyleNotes })} />;
+  return (
+    <div className="grid gap-6">
+      <StructureSectionContent {...props} />
+      {leadsToTexts(section, draft.content.plan.blocks) && <ContinueToTexts editor={editor} />}
+    </div>
+  );
 }

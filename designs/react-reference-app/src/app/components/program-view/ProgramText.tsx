@@ -2,13 +2,11 @@ import { ChevronDown } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type Block } from '../../domain/program';
 import { guideText, isGuideTextKey, templateText, type TemplateKey } from '../../domain/programTemplates';
+import { isWritten } from '../../domain/programTexts';
 import { LABEL_CLASS, WIDGET_SUBHEADING_CLASS } from '../typography';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '../ui/utils';
 import type { ProgramView } from './programView';
-
-export const NUTRITION_FALLBACK = 'Your coach will add nutrition guidance here.';
-export const LIFESTYLE_FALLBACK = 'Nothing extra this time.';
 
 export function programTemplate(view: ProgramView, key: TemplateKey): string {
   const { language } = view.program;
@@ -115,12 +113,17 @@ export type TextCard = { key: string; title: string; eyebrow?: string; content: 
 
 export function blockIntroCards(view: ProgramView, block: Block, noteTitle: string): TextCard[] {
   const calibration = view.position.status === 'in-plan' && view.position.calibration;
+  const calibrationText = calibration ? programTemplate(view, 'calibration') : '';
   return [
-    templateCard('intro', block.introText || programTemplate(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
-    ...(block.clientNote ? [templateCard('note', block.clientNote, noteTitle)] : []),
-    ...(calibration ? [templateCard('calibration', programTemplate(view, 'calibration'), 'Calibration week')] : []),
-    ...(block.missedDayNote.trim() ? [templateCard('missed-day', block.missedDayNote, 'If you miss a session')] : []),
+    ...writtenCard('intro', block.introText, `${BLOCK_TYPE_LABELS[block.type]} block`),
+    ...writtenCard('note', block.clientNote, noteTitle),
+    ...writtenCard('calibration', calibrationText, 'Calibration week'),
+    ...writtenCard('missed-day', block.missedDayNote, 'If you miss a session'),
   ];
+}
+
+export function writtenCard(key: string, text: string, fallbackTitle: string): TextCard[] {
+  return isWritten(text) ? [templateCard(key, text, fallbackTitle)] : [];
 }
 
 export function templateCard(key: string, text: string, fallbackTitle: string): TextCard {

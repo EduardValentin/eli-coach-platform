@@ -37,7 +37,6 @@ const exercises = new Map(
 );
 
 const context = (overrides: Partial<RuleContext> = {}): RuleContext => ({
-  versionNumber: 1,
   publishDay,
   dayOne: publishDay,
   preferredWeekday: 'mon',
@@ -100,31 +99,30 @@ const codes = (findings: { code: string }[]) => findings.map(finding => finding.
 
 describe('blockingProblems sequence', () => {
   it('requires Foundation to come first', () => {
-    const found = blockingProblems(content(blocks({ type: 'hypertrophy' }, { type: 'foundation' })), 'x', context());
+    const found = blockingProblems(content(blocks({ type: 'hypertrophy' }, { type: 'foundation' })), context());
     expect(codes(found)).toContain('foundation-not-first');
   });
 
   it('refuses a plan that starts with a Deload', () => {
-    const found = blockingProblems(content(blocks({ type: 'deload', weeks: 1 })), 'x', context());
+    const found = blockingProblems(content(blocks({ type: 'deload', weeks: 1 })), context());
     expect(codes(found)).toContain('starts-with-deload');
   });
 
   it('refuses consecutive Deloads', () => {
     const found = blockingProblems(
       content(blocks({ type: 'foundation' }, { type: 'deload', weeks: 1 }, { type: 'deload', weeks: 1 })),
-      'x',
       context(),
     );
     expect(codes(found)).toContain('consecutive-deloads');
   });
 
   it('refuses a Deload that is not one week, naming the block', () => {
-    const found = blockingProblems(content(blocks({ type: 'foundation' }, { type: 'deload', weeks: 2 })), 'x', context());
+    const found = blockingProblems(content(blocks({ type: 'foundation' }, { type: 'deload', weeks: 2 })), context());
     expect(found).toContainEqual({ code: 'deload-not-one-week', blockId: 'b2' });
   });
 
   it('accepts a well-formed sequence', () => {
-    const found = blockingProblems(content(blocks({ type: 'foundation' }, { type: 'deload', weeks: 1 })), 'x', context());
+    const found = blockingProblems(content(blocks({ type: 'foundation' }, { type: 'deload', weeks: 1 })), context());
     expect(found).toEqual([]);
   });
 });
@@ -139,7 +137,7 @@ describe('the window that must hold filled sessions', () => {
     const dayOne = addDays(publishDay, 2);
 
     // act
-    const found = blockingProblems(content(filledThenEmpty(2)), 'x', context({ dayOne, preferredWeekday: 'mon' }));
+    const found = blockingProblems(content(filledThenEmpty(2)), context({ dayOne, preferredWeekday: 'mon' }));
 
     // assert
     expect(found).toContainEqual({ code: 'missing-sessions', blockId: 'b2', detail: 'Hypertrophy block 2' });
@@ -150,8 +148,8 @@ describe('the window that must hold filled sessions', () => {
     const dayOne = addDays(publishDay, -13);
 
     // act
-    const inside = blockingProblems(content(filledThenEmpty(2)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
-    const outside = blockingProblems(content(filledThenEmpty(3)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
+    const inside = blockingProblems(content(filledThenEmpty(2)), context({ dayOne, preferredWeekday: 'wed' }));
+    const outside = blockingProblems(content(filledThenEmpty(3)), context({ dayOne, preferredWeekday: 'wed' }));
 
     // assert
     expect(codes(inside)).toContain('missing-sessions');
@@ -163,7 +161,7 @@ describe('the window that must hold filled sessions', () => {
     const dayOne = addDays(publishDay, -14);
 
     // act
-    const found = blockingProblems(content(filledThenEmpty(3)), 'x', context({ dayOne, preferredWeekday: 'tue' }));
+    const found = blockingProblems(content(filledThenEmpty(3)), context({ dayOne, preferredWeekday: 'tue' }));
 
     // assert
     expect(codes(found)).toContain('missing-sessions');
@@ -175,13 +173,13 @@ describe('missing-sessions', () => {
 
   it('flags a block inside the window whose sessions have no exercises', () => {
     const planBlocks = blocks({ type: 'foundation', weeks: 2, sessions: [emptySession], days: { mon: 's1' } });
-    const found = blockingProblems(content(planBlocks), 'x', context());
+    const found = blockingProblems(content(planBlocks), context());
     expect(found).toContainEqual({ code: 'missing-sessions', blockId: 'b1', detail: 'Foundation block 1' });
   });
 
   it('passes when the rows carry exercises', () => {
     const planBlocks = blocks({ type: 'foundation', weeks: 2, days: { mon: 's1' } });
-    expect(codes(blockingProblems(content(planBlocks), 'x', context()))).not.toContain('missing-sessions');
+    expect(codes(blockingProblems(content(planBlocks), context()))).not.toContain('missing-sessions');
   });
 
   it('ignores an empty block that starts after the window', () => {
@@ -190,7 +188,7 @@ describe('missing-sessions', () => {
       { weeks: 2, days: { mon: 's1' } },
       { weeks: 4, sessions: [emptySession], days: { mon: 's1' } },
     );
-    expect(codes(blockingProblems(content(planBlocks), 'x', context()))).not.toContain('missing-sessions');
+    expect(codes(blockingProblems(content(planBlocks), context()))).not.toContain('missing-sessions');
   });
 
   it('flags a calendar cardio day whose session has no segments', () => {
@@ -199,7 +197,7 @@ describe('missing-sessions', () => {
     const planBlocks = [{ ...block, cardioSessions: block.cardioSessions.map(cardio => ({ ...cardio, segments: [] })) }];
 
     // act
-    const found = blockingProblems(content(planBlocks), 'x', context());
+    const found = blockingProblems(content(planBlocks), context());
 
     // assert
     expect(found).toContainEqual({ code: 'missing-sessions', blockId: 'b1', detail: 'Foundation block 1' });
@@ -210,7 +208,7 @@ describe('missing-sessions', () => {
     const planBlocks = blocks({ type: 'foundation', weeks: 2, days: { mon: 's1' }, cardio: { wed: 'liss' } });
 
     // act
-    const found = blockingProblems(content(planBlocks), 'x', context());
+    const found = blockingProblems(content(planBlocks), context());
 
     // assert
     expect(codes(found)).not.toContain('missing-sessions');
@@ -218,7 +216,7 @@ describe('missing-sessions', () => {
 
   it('measures the window from the publish day when day 1 is not set', () => {
     const planBlocks = blocks({ type: 'foundation', weeks: 2, sessions: [emptySession], days: { mon: 's1' } });
-    const found = blockingProblems(content(planBlocks), 'x', context({ dayOne: null }));
+    const found = blockingProblems(content(planBlocks), context({ dayOne: null }));
     expect(codes(found)).toContain('missing-sessions');
   });
 });
@@ -264,7 +262,6 @@ describe('blockShorterThanElapsed', () => {
     const published = blocks({ type: 'foundation', weeks: 8 });
     const found = blockingProblems(
       content(blocks({ type: 'foundation', weeks: 3 })),
-      'x',
       context({ dayOne, publishedBlocks: published }),
     );
     expect(codes(found)).toContain('block-shorter-than-elapsed');
@@ -437,7 +434,6 @@ describe('ruleContextFor', () => {
 
     // assert
     expect(ruleContext).toMatchObject({
-      versionNumber: 2,
       publishDay,
       dayOne,
       preferredWeekday: 'thu',

@@ -32,7 +32,6 @@ export type BlockingCode =
   | 'consecutive-deloads'
   | 'deload-not-one-week'
   | 'missing-sessions'
-  | 'what-changed-missing'
   | 'start-date-not-reached'
   | 'details-pending'
   | 'block-shorter-than-elapsed';
@@ -51,7 +50,6 @@ export type WarningCode =
 export type RuleFinding<Code> = { code: Code; blockId?: string; sessionId?: string; detail?: string };
 
 export type RuleContext = {
-  versionNumber: number;
   publishDay: Date;
   dayOne: Date | null;
   preferredWeekday: Weekday;
@@ -95,7 +93,6 @@ const BLOCKING_MESSAGES: Record<BlockingCode, string> = {
   'consecutive-deloads': 'Two Deloads cannot follow each other',
   'deload-not-one-week': 'A Deload lasts exactly one week',
   'missing-sessions': '{detail} has sessions without exercises before the next check-in form',
-  'what-changed-missing': 'Say what changed and why',
   'start-date-not-reached': 'Publishing opens on {detail}',
   'details-pending': 'Answer or close the details request first',
   'block-shorter-than-elapsed': 'This block has already run {detail} weeks',
@@ -128,7 +125,6 @@ export function warningMessage(finding: RuleFinding<WarningCode>): string {
 export function ruleContextFor({ journey, program, draft, today, exercises }: RuleInput): RuleContext {
   const subscription = journey?.subscription;
   return {
-    versionNumber: draft.number,
     publishDay: today,
     dayOne: dayOneOf(journey),
     preferredWeekday: checkInWeekdayOf(journey),
@@ -197,22 +193,13 @@ export function blockShorterThanElapsed({ draftBlocks, publishedBlocks, dayOne, 
   return [{ code: 'block-shorter-than-elapsed', blockId: block?.id, detail: String(weekOfBlock - 1) }];
 }
 
-export function requiresWhatChanged(versionNumber: number): boolean {
-  return versionNumber >= 2;
-}
-
-export function blockingProblems(
-  content: ProgramContent,
-  whatChanged: string,
-  ctx: RuleContext,
-): RuleFinding<BlockingCode>[] {
+export function blockingProblems(content: ProgramContent, ctx: RuleContext): RuleFinding<BlockingCode>[] {
   const { blocks } = content.plan;
   const findings = [
     ...sequenceProblems(blocks),
     ...missingSessionProblems(blocks, ctx),
     ...blockShorterThanElapsed({ draftBlocks: blocks, publishedBlocks: ctx.publishedBlocks, dayOne: ctx.dayOne, today: ctx.publishDay }),
   ];
-  if (requiresWhatChanged(ctx.versionNumber) && whatChanged.trim() === '') findings.push({ code: 'what-changed-missing' });
   if (ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(ctx.publishDay))) {
     findings.push({ code: 'start-date-not-reached', detail: format(ctx.startDate, 'd MMMM') });
   }

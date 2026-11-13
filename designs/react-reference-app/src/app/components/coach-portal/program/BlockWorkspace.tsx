@@ -7,7 +7,6 @@ import { blockStatus } from '../../../domain/programCalendar';
 import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
 import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
 import { BlockHeader } from './BlockHeader';
-import { BlockTexts } from './BlockTexts';
 import { CardioSessionCard } from './CardioSessionCard';
 import { SessionCard } from './SessionCard';
 import { SessionDragLayer } from './sessionDnd';
@@ -121,7 +120,6 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
           ),
         )}
       </div>
-      <BlockTexts block={block} language={language} onChange={onChange} />
       <SessionDragLayer />
     </section>
   );

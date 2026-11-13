@@ -204,6 +204,7 @@ export const router = createBrowserRouter(
         { path: "coach/checkins/:checkinId/join", element: <CheckinJoin party="coach" /> },
         { path: "coach/clients/:id/program/new", Component: ProgramEditorPage },
         { path: "coach/clients/:id/program/draft", Component: ProgramEditorPage },
+        { path: "coach/clients/:id/program/draft/texts", Component: ProgramEditorPage },
         { path: "coach/clients/:id/program/document/:version", Component: CoachProgramDocument },
         { path: "coach/nutrition/recipe-builder", Component: RecipeBuilderPage },
         { path: "coach/nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },

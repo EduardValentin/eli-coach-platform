@@ -13,7 +13,8 @@ import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DayContent } from './DayContent';
 import { PlanTimeline } from './PlanTimeline';
 import { FocusCard } from './FocusCard';
-import { blockIntroCards, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, ProgramText, programTemplate, TemplateBody, templateCard, TextCardStack } from './ProgramText';
+import { isWritten } from '../../domain/programTexts';
+import { blockIntroCards, parseTemplate, ProgramText, programTemplate, TemplateBody, TextCardStack, writtenCard } from './ProgramText';
 import { WeekStrip } from './WeekStrip';
 import { WhatChangedBanner, readDismissedVersion } from './WhatChangedBanner';
 import { currentBlock, weekStart, type ProgramView } from './programView';
@@ -26,7 +27,7 @@ function CardioAndSteps({ view, block }: { view: ProgramView; block: Block }) {
   const steps = fillTemplate(programTemplate(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
   return (
     <div className="grid gap-3">
-      <ProgramText text={steps} />
+      {isWritten(steps) && <ProgramText text={steps} />}
       <ul className="divide-y divide-border-subtle">
         {WEEKDAYS.flatMap(weekday => {
           const cardio = cardioOn(block, weekday);
@@ -89,6 +90,7 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
   const weekday = selected ?? (view.position.status === 'in-plan' ? weekdayOf(today) : 'mon');
   const superseded = program.versions.filter(candidate => candidate.state === 'superseded');
   const { content } = version;
+  const legend = programTemplate(view, 'legend');
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -118,21 +120,29 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
           <Section title="About this block" id="about" icon={Info}>
             <AboutBlock view={view} block={block} />
           </Section>
-          <Section title="Your split" id="split" icon={Dumbbell}>
-            <TextCardStack cards={[templateCard('split', block.split.text, splitLabel(block))]} />
-          </Section>
-          <Section title="How to read your session" id="legend" icon={ListChecks}>
-            <TemplateBody paragraphs={parseTemplate(programTemplate(view, 'legend')).paragraphs} />
-          </Section>
+          {isWritten(block.split.text) && (
+            <Section title="Your split" id="split" icon={Dumbbell}>
+              <TextCardStack cards={writtenCard('split', block.split.text, splitLabel(block))} />
+            </Section>
+          )}
+          {isWritten(legend) && (
+            <Section title="How to read your session" id="legend" icon={ListChecks}>
+              <TemplateBody paragraphs={parseTemplate(legend).paragraphs} />
+            </Section>
+          )}
           <Section title="Cardio and steps" id="cardio" icon={Footprints}>
             <CardioAndSteps view={view} block={block} />
           </Section>
-          <Section title="Nutrition" id="nutrition" icon={Salad}>
-            <ProgramText text={content.nutritionNotes || NUTRITION_FALLBACK} />
-          </Section>
-          <Section title="Lifestyle" id="lifestyle" icon={Leaf}>
-            <ProgramText text={content.lifestyleNotes || LIFESTYLE_FALLBACK} />
-          </Section>
+          {isWritten(content.nutritionNotes) && (
+            <Section title="Nutrition" id="nutrition" icon={Salad}>
+              <ProgramText text={content.nutritionNotes} />
+            </Section>
+          )}
+          {isWritten(content.lifestyleNotes) && (
+            <Section title="Lifestyle" id="lifestyle" icon={Leaf}>
+              <ProgramText text={content.lifestyleNotes} />
+            </Section>
+          )}
           <Section title="Your plan" id="plan" icon={CalendarDays}>
             <PlanTimeline blocks={content.plan.blocks} dayOne={view.dayOne} preferredWeekday={view.preferredWeekday} today={today} />
           </Section>

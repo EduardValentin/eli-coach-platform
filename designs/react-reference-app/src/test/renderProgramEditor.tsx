@@ -50,6 +50,7 @@ export function renderProgramEditor(search: string, path = '/coach/clients/c1/pr
                   <ProgramProvider>
                     <Routes>
                       <Route path="/coach/clients/:id/program/draft" element={<ProgramEditorPage />} />
+                      <Route path="/coach/clients/:id/program/draft/texts" element={<ProgramEditorPage />} />
                       <Route path="/coach/clients/:id/program" element={<p>Program page</p>} />
                       <Route path="/coach/clients/:id" element={<p>Client page</p>} />
                     </Routes>

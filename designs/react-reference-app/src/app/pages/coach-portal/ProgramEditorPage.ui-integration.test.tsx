@@ -44,9 +44,7 @@ describe('ProgramEditorPage', () => {
     expect(within(rail()).getByRole('button', { name: /^Overview/ })).toHaveAttribute('aria-current', 'true');
     expect(within(breadcrumb()).getByText('Overview')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 2, name: 'Plan overview' })).toBeInTheDocument();
-    const summary = screen.getByRole('list', { name: 'Plan summary' });
-    expect(within(summary).getByText('11 weeks')).toBeInTheDocument();
-    expect(within(summary).getByText('Starts on publication')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Plan summary' })).not.toBeInTheDocument();
     const rows = blockRows();
     expect(rows).toHaveLength(3);
     expect(within(rows[0]).getByRole('combobox', { name: 'Type of block 1' })).toHaveTextContent('Foundation');
@@ -168,8 +166,6 @@ describe('ProgramEditorPage', () => {
     const firstForm = firstCheckInFormAfter(dayOne);
     const chips = within(screen.getByRole('list', { name: 'Check-in forms' })).getAllByRole('listitem');
     expect(chips[0]).toHaveTextContent(format(firstForm, 'd MMM'));
-    expect(within(screen.getByRole('list', { name: 'Plan summary' })).getByText(`Next check-in form ${format(firstForm, 'd MMMM')}`)).toBeInTheDocument();
-    expect(within(screen.getByRole('list', { name: 'Plan summary' })).getByText(`Starts ${format(dayOne, 'd MMMM')}`)).toBeInTheDocument();
   });
 
   it('opens the publish dialog on the warnings from the top bar', async () => {

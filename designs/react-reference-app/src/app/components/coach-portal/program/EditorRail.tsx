@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react';
-import { GanttChart, Plus } from 'lucide-react';
+import { FileText, GanttChart, Plus } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type ProgramContent } from '../../../domain/program';
 import { blockSpan, blockStatus, daysUntil, type PlanSchedule } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
@@ -119,25 +119,25 @@ function BlockEntry({
   );
 }
 
+const STEP_CARD_CLASS = cn(ENTRY_CLASS, 'grid border border-border bg-surface-base p-3 hover:bg-surface-quiet');
+const CURRENT_STEP_CARD_CLASS = 'border-primary/40 bg-surface-quiet shadow-card';
+
+const OVERVIEW: EditorSection = { kind: 'plan' };
+const SETUP: EditorSection = { kind: 'setup' };
+const TEXTS: EditorSection = { kind: 'texts' };
+
 export function EditorRail({ content, dayOne, today, selected, onSelect, onAddBlock }: EditorRailProps) {
   const { blocks } = content.plan;
-  const overview: EditorSection = { kind: 'plan' };
-  const overviewCurrent = isSameSection(overview, selected);
-  const entry = (section: EditorSection) => (
-    <RailEntry current={isSameSection(section, selected)} onClick={() => onSelect(section)}>
-      {sectionTitle(section, blocks)}
-    </RailEntry>
-  );
+  const overviewCurrent = isSameSection(OVERVIEW, selected);
+  const textsCurrent = isSameSection(TEXTS, selected);
 
   return (
     <nav aria-label="Program sections" className="grid content-start gap-6 p-3">
       <button
         type="button"
         aria-current={overviewCurrent ? 'true' : undefined}
-        onClick={() => onSelect(overview)}
-        className={cn(ENTRY_CLASS, 'grid gap-2.5 border border-border bg-surface-base p-3 hover:bg-surface-quiet', {
-          'border-primary/40 bg-surface-quiet shadow-card': overviewCurrent,
-        })}
+        onClick={() => onSelect(OVERVIEW)}
+        className={cn(STEP_CARD_CLASS, 'gap-2.5', { [CURRENT_STEP_CARD_CLASS]: overviewCurrent })}
       >
         <span className="flex items-center gap-2 font-semibold text-text-primary">
           <GanttChart aria-hidden="true" size={18} />
@@ -171,11 +171,22 @@ export function EditorRail({ content, dayOne, today, selected, onSelect, onAddBl
         </li>
       </RailGroup>
       <RailGroup title="Program">
-        {entry({ kind: 'header' })}
-        {entry({ kind: 'nutrition' })}
-        {entry({ kind: 'lifestyle' })}
-        {entry({ kind: 'guide' })}
+        <RailEntry current={isSameSection(SETUP, selected)} onClick={() => onSelect(SETUP)}>
+          {sectionTitle(SETUP, blocks)}
+        </RailEntry>
       </RailGroup>
+      <button
+        type="button"
+        aria-current={textsCurrent ? 'true' : undefined}
+        onClick={() => onSelect(TEXTS)}
+        className={cn(STEP_CARD_CLASS, 'gap-0.5', { [CURRENT_STEP_CARD_CLASS]: textsCurrent })}
+      >
+        <span className="flex items-center gap-2 font-semibold text-text-primary">
+          <FileText aria-hidden="true" size={18} />
+          {sectionTitle(TEXTS, blocks)}
+        </span>
+        <span className="text-xs text-text-secondary">Write what she reads</span>
+      </button>
     </nav>
   );
 }

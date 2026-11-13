@@ -1,6 +1,7 @@
 import { Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 import type { ProgramVersion } from '../../domain/program';
+import { isWritten } from '../../domain/programTexts';
 import { WIDGET_SUBHEADING_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 
@@ -30,7 +31,7 @@ type WhatChangedBannerProps = {
 };
 
 export function WhatChangedBanner({ version, dismissedVersion, onDismiss }: WhatChangedBannerProps) {
-  if (version.number <= 1 || version.number === dismissedVersion) return null;
+  if (version.number <= 1 || !isWritten(version.whatChanged) || version.number === dismissedVersion) return null;
   const headingId = `what-changed-v${version.number}`;
 
   function dismiss() {

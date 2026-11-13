@@ -1,5 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
 import { BLOCK_TYPE_LABELS, currentVersion, formatRange, warmUpItemText, workingSets } from '../../domain/program';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
@@ -310,5 +310,71 @@ describe('ProgramDocument', () => {
 
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'What changed in v2' })).toBeInTheDocument();
+  });
+
+  it('leaves out every optional text the coach did not write', () => {
+    // arrange
+    const view = viewFor('two-versions');
+    const { content } = view.version;
+    view.version.whatChanged = ' ';
+    content.header = { ...content.header, focus: '', personalNote: '' };
+    content.nutritionNotes = '';
+    content.lifestyleNotes = '';
+    currentBlockOf(view).clientNote = '';
+
+    // act
+    const { container } = render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(screen.queryByRole('region', { name: 'What changed in v2' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Nutrition' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Lifestyle' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/A note from/)).not.toBeInTheDocument();
+    expect(container).not.toHaveTextContent('Your coach will add nutrition guidance here.');
+    expect(container).not.toHaveTextContent('Nothing extra this time.');
+  });
+
+  it('prints the written nutrition and lifestyle guidance', () => {
+    // arrange
+    const view = viewFor();
+    view.version.content.nutritionNotes = 'Protein at every meal';
+    view.version.content.lifestyleNotes = 'Lights out by 23:00';
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(within(screen.getByRole('region', { name: 'Nutrition' })).getByText('Protein at every meal')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Lifestyle' })).getByText('Lights out by 23:00')).toBeInTheDocument();
+  });
+
+  it('offers no editing without an editing mode', () => {
+    // arrange
+    const view = viewFor();
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
+  });
+
+  it('turns every text into a slot in editing mode, with empty optional texts as fields', () => {
+    // arrange
+    const view = viewFor();
+    const write = vi.fn();
+
+    // act
+    render(<ProgramDocument view={view} editing={{ write, reset: vi.fn() }} />);
+
+    // assert
+    expect(screen.getByRole('heading', { level: 2, name: 'Ana Pop' })).toBeInTheDocument();
+    for (const name of ['Focus until the next check-in', 'Personal note', 'Note for this block', 'Nutrition', 'Lifestyle']) {
+      expect(screen.getByRole('textbox', { name })).toHaveValue('');
+    }
+    for (const name of ['Program title', 'How to read your session', 'Block intro', 'Split text', 'Warm-up', 'How to progress', 'Missed-day note', 'No weight listed', 'Daily steps', 'Low-energy session']) {
+      expect(screen.getByRole('button', { name: `Edit ${name}` })).toBeInTheDocument();
+    }
   });
 });

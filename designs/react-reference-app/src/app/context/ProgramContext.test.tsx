@@ -161,7 +161,7 @@ describe('publishing', () => {
       hooks.programs.startDraft(DEMO_JOURNEY_CALL_ID);
     });
     act(() => {
-      hooks.programs.setWhatChanged(DEMO_JOURNEY_CALL_ID, 'Raised the steps');
+      hooks.programs.updateDraftVersion(DEMO_JOURNEY_CALL_ID, version => ({ ...version, whatChanged: 'Raised the steps' }));
     });
 
     // act
@@ -249,7 +249,7 @@ describe('drafts', () => {
         ...content,
         header: { ...content.header, title: 'Spring plan' },
       }));
-      hooks.programs.setWhatChanged(DEMO_JOURNEY_CALL_ID, 'Because');
+      hooks.programs.updateDraftVersion(DEMO_JOURNEY_CALL_ID, version => ({ ...version, whatChanged: 'Because' }));
       hooks.programs.updateSetup(DEMO_JOURNEY_CALL_ID, { level: 'intermediate' });
     });
 

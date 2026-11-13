@@ -6,7 +6,7 @@ import { ProgramSummary } from '../../components/coach-portal/program/ProgramSum
 import { CollapsiblePortalWidget } from '../../components/CollapsiblePortalWidget';
 import { BlockSessions } from '../../components/program-view/BlockSessions';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
-import { blockIntroCards, programTemplate, templateCard, TextCardStack, type TextCard } from '../../components/program-view/ProgramText';
+import { blockIntroCards, programTemplate, TextCardStack, writtenCard, type TextCard } from '../../components/program-view/ProgramText';
 import { currentBlock, weekDates, type ProgramView } from '../../components/program-view/programView';
 import { WeekDayCards } from '../../components/program-view/WeekDayCards';
 import { PortalBackLink } from '../../components/PortalBackLink';
@@ -48,8 +48,8 @@ function weekText(block: Block): string {
 function clientTexts(view: ProgramView, block: Block): TextCard[] {
   return [
     ...blockIntroCards(view, block, 'Client note'),
-    templateCard('split', block.split.text, `Split · ${splitLabel(block)}`),
-    templateCard('low-energy', programTemplate(view, 'lowEnergy'), 'Low-energy session'),
+    ...writtenCard('split', block.split.text, `Split · ${splitLabel(block)}`),
+    ...writtenCard('low-energy', programTemplate(view, 'lowEnergy'), 'Low-energy session'),
   ];
 }
 

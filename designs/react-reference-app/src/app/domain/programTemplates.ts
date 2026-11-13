@@ -6,7 +6,6 @@ export type TemplateKey =
   | 'coolDown'
   | 'progression'
   | 'steps'
-  | 'hiitAside'
   | 'missedDay'
   | 'calibration'
   | 'block.foundation'
@@ -16,10 +15,9 @@ export type TemplateKey =
   | 'split.full-body'
   | 'split.upper-lower'
   | 'lowEnergy'
-  | 'noWeight'
-  | 'restDay';
+  | 'noWeight';
 
-export const GUIDE_TEXT_KEYS = ['legend', 'warmUp', 'progression', 'coolDown', 'noWeight', 'lowEnergy', 'hiitAside', 'restDay', 'calibration', 'steps'] as const;
+export const GUIDE_TEXT_KEYS = ['legend', 'warmUp', 'progression', 'coolDown', 'noWeight', 'lowEnergy', 'calibration', 'steps'] as const;
 export type GuideTextKey = (typeof GUIDE_TEXT_KEYS)[number];
 export type GuideTexts = Partial<Record<GuideTextKey, string>>;
 
@@ -65,11 +63,9 @@ We alternate between lower body days (legs and glutes) and upper body days (back
     'progression': `**How to progress:** when you hit the top of the rep range on all sets with the target RIR, increase the weight next session (lower body +2.5–5 kg, upper body +1–2.5 kg, or the next dumbbell). If you can't reach the bottom of the range, keep the weight and build up again.`,
     'steps': `**Daily steps: [daily steps]**
 Walking is one of the most underrated tools for health and fat loss. Spread your steps through the day: a short walk after meals counts.`,
-    'hiitAside': `Low energy or cramps today? Swap this for a 30-minute easy walk. It still counts.`,
     'missedDay': `If you miss a session, just continue with the next one in the order. Don't try to double up.`,
     'lowEnergy': `Low-energy session (20–30 min): mobility, an easy walk or light exercises. It still counts.`,
     'noWeight': `No weight listed? Pick one that lets you finish the set at the RIR shown.`,
-    'restDay': `Rest day. A short walk still counts.`,
   },
   ro: {},
 };

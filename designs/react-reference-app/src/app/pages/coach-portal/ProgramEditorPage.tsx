@@ -112,7 +112,7 @@ function ProgramEditor(props: EditorProps) {
         />
         <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
           <div className="mx-auto w-full max-w-5xl">
-            <EditorSectionContent section={selected} program={program} draft={draft} editor={editor} openBlock={openBlock} />
+            <EditorSectionContent section={selected} journey={journey} program={program} draft={draft} editor={editor} openBlock={openBlock} />
           </div>
         </main>
         {block && panel.visible && (
@@ -138,8 +138,6 @@ function ProgramEditor(props: EditorProps) {
         version={draft}
         problems={editor.problems}
         warnings={editor.warnings}
-        onFocusChange={editor.setFocus}
-        onWhatChangedChange={editor.setWhatChanged}
         onPublish={editor.publish}
         onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
       />
