@@ -54,23 +54,25 @@ describe('ProgramDocument', () => {
     // assert
     expect(screen.getByText('Your first program')).toBeInTheDocument();
     expect(screen.getByText('So glad to start with you')).toBeInTheDocument();
-    expect(screen.getByText('Missed one? Pick up with the next session.')).toBeInTheDocument();
+    const missedDay = screen.getByText('Missed one?').parentElement;
+    expect(missedDay).toHaveTextContent('Missed one?Pick up with the next session.');
   });
 
-  it('gives the current block and week, next check-in and daily steps on the cover', () => {
+  it('states each fact once: the current block on the plan strip, the steps in their own section', () => {
     // arrange
     const view = viewFor();
     const block = currentBlockOf(view);
+    const steps = block.dailySteps.toLocaleString('en-US');
 
     // act
     render(<ProgramDocument view={view} />);
 
     // assert
-    const facts = within(screen.getByRole('banner')).getByText('Now').closest('dl');
-    expect(facts).toHaveTextContent(`Now${BLOCK_TYPE_LABELS[block.type]} · week 1 of ${block.weeks}`);
-    expect(facts).toHaveTextContent(/Next check-in form\w+day, \d{1,2} \w+Daily steps/);
-    expect(facts).toHaveTextContent(`Daily steps${block.dailySteps.toLocaleString('en-US')}`);
-    expect(screen.queryByRole('region', { name: 'At a glance' })).not.toBeInTheDocument();
+    const plan = screen.getByRole('region', { name: 'Plan' });
+    expect(within(plan).getByRole('listitem', { current: true })).toHaveTextContent(`${BLOCK_TYPE_LABELS[block.type]}${block.weeks} weeks · 16 Sep–13 OctNow`);
+    expect(screen.getByRole('banner')).not.toHaveTextContent(steps);
+    expect(screen.getAllByText(new RegExp(steps))).toHaveLength(1);
+    expect(screen.queryByText(/^Block 1 of/)).not.toBeInTheDocument();
   });
 
   it('lays the whole block out as weeks of seven dated days, her weeks starting on her first day', () => {
@@ -84,7 +86,7 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const calendar = screen.getByRole('table', { name: 'Calendar' });
     const [, ...weeks] = within(calendar).getAllByRole('row');
     expect(weeks).toHaveLength(block.weeks);
     expect(within(calendar).getAllByRole('columnheader').map(header => header.textContent)).toEqual(order.map(day => day[0].toUpperCase() + day.slice(1)));
@@ -93,7 +95,7 @@ describe('ProgramDocument', () => {
     expect(within(weeks[0]).getAllByRole('cell')[0].querySelector('time')).toHaveAttribute('datetime', '2026-09-16');
   });
 
-  it('puts a tick box on every training and cardio day and none on a rest day', () => {
+  it('prints a tick box on every training and cardio day and none on a rest day', () => {
     // arrange
     const view = viewFor();
     const block = currentBlockOf(view);
@@ -104,17 +106,17 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const calendar = screen.getByRole('table', { name: 'Calendar' });
     const [, ...weeks] = within(calendar).getAllByRole('row');
     for (const week of weeks) {
       const cells = within(week).getAllByRole('cell');
       cells.forEach((cell, index) => {
         const rests = block.calendar[order[index]].kind === 'rest';
         expect(cell).toHaveTextContent(rests ? /Rest$/ : /\S/);
-        expect(within(cell).queryAllByRole('img', { name: 'Tick box' })).toHaveLength(rests ? 0 : 1);
+        expect(cell.querySelectorAll('[data-print-only]')).toHaveLength(rests ? 0 : 1);
       });
     }
-    expect(within(calendar).getAllByRole('img', { name: 'Tick box' })).toHaveLength(block.weeks * (7 - restDays));
+    expect(calendar.querySelectorAll('[data-print-only]')).toHaveLength(block.weeks * (7 - restDays));
   });
 
   it('marks the check-in form days that fall inside the block', () => {
@@ -126,10 +128,10 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const calendar = screen.getByRole('table', { name: 'Calendar' });
     const checkIns = within(calendar).getAllByRole('cell').filter(cell => cell.textContent?.includes('check-in form due'));
     expect(checkIns.map(cell => cell.querySelector('time')?.getAttribute('datetime'))).toEqual(['2026-10-05']);
-    expect(screen.getByText('Send your check-in form that day')).toBeInTheDocument();
+    expect(screen.getByText('Check-in form due · Mon 5 Oct')).toBeInTheDocument();
   });
 
   it('lays the block out from Monday without dates or check-ins before the plan has a first day', () => {
@@ -141,10 +143,10 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const calendar = screen.getByRole('table', { name: 'Calendar' });
     expect(within(calendar).getAllByRole('columnheader')[0]).toHaveTextContent('Mon');
     expect(calendar.querySelector('time')).toBeNull();
-    expect(screen.queryByText('Send your check-in form that day')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Check-in form due/)).not.toBeInTheDocument();
   });
 
   it('prints each exercise once, headed by its letter, with a row per set and a log column per week', () => {
@@ -161,11 +163,12 @@ describe('ProgramDocument', () => {
 
     // assert
     const table = screen.getByRole('table', { name: `${session.name} exercises` });
-    const [, , ...body] = within(table).getAllByRole('row');
+    const [, , ...body] = within(table).getAllByRole('row', { hidden: true });
     expect(body).toHaveLength(setCount + session.rows.length);
     expect(within(table).getAllByRole('rowheader', { name: new RegExp(`^${row.slot} ${name}`) })).toHaveLength(1);
-    const headers = within(table).getAllByRole('columnheader').map(header => header.textContent);
-    expect(headers).toEqual(['Write kg × reps', 'Set', 'Reps', 'RIR', ...Array.from({ length: block.weeks }, (_, index) => `Week ${index + 1}`)]);
+    expect(within(table).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR']);
+    const logHeaders = within(table).getAllByRole('columnheader', { hidden: true }).slice(3);
+    expect(logHeaders.map(header => header.textContent)).toEqual(['Log: kg × reps', ...Array.from({ length: block.weeks }, (_, index) => `Week ${index + 1}`)]);
     expect(table).not.toHaveTextContent('—');
   });
 
@@ -184,7 +187,7 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('complementary', { name: 'How to read your session' })).toBeInTheDocument();
   });
 
-  it('lists the plan, a log table per session and the low-energy session', () => {
+  it('lists the plan, a log table per session, the low-energy session without a repeated title and the disclaimer', () => {
     // arrange
     const view = viewFor();
     const sessionCount = currentBlockOf(view).sessions.length;
@@ -193,10 +196,12 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    expect(screen.getByRole('heading', { level: 2, name: 'Your plan' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Plan' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /^Your (plan|sessions)$/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Low-energy session' })).queryByRole('heading')).not.toBeInTheDocument();
+    expect(screen.getByText('Low-energy session (20–30 min):')).toBeInTheDocument();
     expect(screen.getAllByRole('table', { name: / exercises$/ })).toHaveLength(sessionCount);
-    expect(screen.getByRole('contentinfo')).toHaveTextContent("Your coach's full disclaimer accompanies this program.");
+    expect(screen.getByRole('contentinfo')).toHaveTextContent("See your coach's disclaimer.");
   });
 
   it('titles the block section with the intro template line, never a generic heading as well', () => {
@@ -227,7 +232,7 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('heading', { level: 2, name: split })).toBeInTheDocument();
     expect(screen.getAllByText(split)).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 2, name: `Daily steps: ${block.dailySteps.toLocaleString('en-US')}` })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: `Your ${block.weeks} weeks` })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Calendar' })).toBeInTheDocument();
     expect(screen.queryByText('Schedule')).not.toBeInTheDocument();
   });
 
@@ -243,7 +248,7 @@ describe('ProgramDocument', () => {
     // assert
     const card = screen.getByRole('region', { name: session.name });
     expect(lines.length).toBeGreaterThan(0);
-    expect(within(card).getByRole('heading', { level: 4, name: 'Warm-up' })).toBeInTheDocument();
+    expect(within(card).getByRole('heading', { level: 3, name: 'Warm-up' })).toBeInTheDocument();
     const items = within(card).getAllByRole('listitem').map(item => item.textContent);
     for (const line of lines) expect(items).toContain(line);
   });
@@ -260,12 +265,12 @@ describe('ProgramDocument', () => {
 
     // assert
     const card = screen.getByRole('region', { name: session.name });
-    expect(within(card).getByRole('heading', { level: 4, name: 'Cool-down' })).toBeInTheDocument();
+    expect(within(card).getByRole('heading', { level: 3, name: 'Cool-down' })).toBeInTheDocument();
     expect(within(card).getByText('Walk easy for five minutes.')).toBeInTheDocument();
     expect(within(card).getAllByRole('listitem').map(item => item.textContent)).toContain(`${stretch.name} · 30 s`);
   });
 
-  it('prints an intervals segment as its rounds, its exercises and the non-zero easy and rest times', () => {
+  it('prints a one-exercise intervals segment as rounds of work and easy time, numbering only several segments', () => {
     // arrange
     const view = viewFor('two-versions');
     const cardio = currentBlockOf(view).cardioSessions.find(candidate => candidate.segments.some(segment => segment.kind === 'rounds'));
@@ -279,10 +284,14 @@ describe('ProgramDocument', () => {
 
     // assert
     const card = screen.getByRole('region', { name: cardio.name });
-    expect(within(card).getByText(`Intervals · ${rounds.rounds} rounds`)).toBeInTheDocument();
-    expect(within(card).getAllByRole('listitem').map(entry => entry.textContent)).toContain(`${view.exercisesById.get(item.exerciseId)?.name} · ${item.workSeconds} s`);
-    expect(within(card).getByText(`${rounds.easySeconds} s easy between exercises`)).toBeInTheDocument();
+    const name = view.exercisesById.get(item.exerciseId)?.name;
+    expect(within(card).getAllByRole('listitem').map(entry => entry.textContent)).toContain(
+      `${name} · ${rounds.rounds} × (${item.workSeconds} s ${rounds.intensity} / ${rounds.easySeconds} s easy)`,
+    );
     expect(within(card).queryByText(/between rounds/)).not.toBeInTheDocument();
+    const single = currentBlockOf(view).cardioSessions.find(candidate => candidate.segments.length === 1);
+    if (!single) throw new Error('single-segment cardio missing');
+    expect(within(screen.getByRole('region', { name: single.name })).queryByRole('list')).not.toBeInTheDocument();
   });
 
   it('shows what changed from version 2', () => {
@@ -355,7 +364,8 @@ describe('ProgramDocument', () => {
     // assert
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Your sessions' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: 'Calendar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Every session' })).not.toBeInTheDocument();
 
     // act
     unmount();
@@ -364,8 +374,10 @@ describe('ProgramDocument', () => {
     // assert
     expect(screen.queryByRole('banner')).not.toBeInTheDocument();
     expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Your sessions' })).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`^Block 1 of \\d+ · ${block.weeks} weeks$`))).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Calendar' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Every session' })).toBeInTheDocument();
+    expect(screen.getAllByRole('table', { name: / exercises$/ })).toHaveLength(block.sessions.length);
+    expect(screen.queryByRole('complementary', { name: 'How to read your session' })).not.toBeInTheDocument();
   });
 
   it('turns every text into a slot in editing mode, with empty optional texts as fields', () => {

@@ -12,3 +12,4 @@ export const DOCUMENT_SECTION_TITLE_CLASS = 'font-serif text-document-section fo
 export const DOCUMENT_CARD_TITLE_CLASS = 'font-serif text-document-card font-semibold text-text-primary';
 export const DOCUMENT_PROSE_CLASS = 'max-w-measure space-y-document-tight text-document-body';
 export const DOCUMENT_VALUE_CLASS = 'font-semibold tabular-nums text-text-primary';
+export const DOCUMENT_HEAD_CLASS = 'text-document-note font-semibold text-text-primary';

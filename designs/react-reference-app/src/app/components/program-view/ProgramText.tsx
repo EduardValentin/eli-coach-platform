@@ -16,6 +16,7 @@ export function programTemplate(view: ProgramView, key: TemplateKey): string {
 const HEADING_LINE = /^\*\*([^*]+)\*\*$/;
 const LEAD_LINE = /^\*\*([^*]+)\*\*\s+(.+)$/;
 const LIST_ITEM = /^—\s+/;
+const ORDERED_ITEM = /^\d+\.\s+/;
 const EMPHASIS = /(\*\*[^*]+\*\*|\*[^*]+\*)/;
 
 export type TemplateParagraph = { lead?: string; body: string };
@@ -45,19 +46,25 @@ export function nonEmptyLines(text: string): string[] {
   return text.split('\n').filter(line => line.trim() !== '');
 }
 
-type TextRun = { kind: 'paragraph'; paragraph: TemplateParagraph } | { kind: 'list'; items: string[] };
+type ListKind = 'list' | 'ordered';
+type TextRun = { kind: 'paragraph'; paragraph: TemplateParagraph } | { kind: ListKind; items: string[] };
 
-function isListItem(paragraph: TemplateParagraph): boolean {
-  return paragraph.lead === undefined && LIST_ITEM.test(paragraph.body);
+const ITEM_MARKERS: Record<ListKind, RegExp> = { list: LIST_ITEM, ordered: ORDERED_ITEM };
+
+function listKindOf(paragraph: TemplateParagraph): ListKind | null {
+  if (paragraph.lead !== undefined) return null;
+  if (LIST_ITEM.test(paragraph.body)) return 'list';
+  return ORDERED_ITEM.test(paragraph.body) ? 'ordered' : null;
 }
 
 function runsOf(paragraphs: readonly TemplateParagraph[]): TextRun[] {
   const runs: TextRun[] = [];
   for (const paragraph of paragraphs) {
     const previous = runs.at(-1);
-    if (!isListItem(paragraph)) runs.push({ kind: 'paragraph', paragraph });
-    else if (previous?.kind === 'list') previous.items.push(paragraph.body.replace(LIST_ITEM, ''));
-    else runs.push({ kind: 'list', items: [paragraph.body.replace(LIST_ITEM, '')] });
+    const kind = listKindOf(paragraph);
+    if (kind === null) runs.push({ kind: 'paragraph', paragraph });
+    else if (previous?.kind === kind) previous.items.push(paragraph.body.replace(ITEM_MARKERS[kind], ''));
+    else runs.push({ kind, items: [paragraph.body.replace(ITEM_MARKERS[kind], '')] });
   }
   return runs;
 }
@@ -65,6 +72,7 @@ function runsOf(paragraphs: readonly TemplateParagraph[]): TextRun[] {
 export const TEMPLATE_TEXT_CLASSES = {
   body: 'max-w-prose space-y-3 text-sm leading-relaxed text-text-primary',
   list: 'list-disc space-y-1.5 pl-5 marker:text-text-label',
+  ordered: 'list-decimal space-y-1.5 pl-5 marker:font-semibold marker:tabular-nums',
   lead: 'font-semibold text-text-primary',
 };
 
@@ -83,19 +91,19 @@ type TemplateBodyProps = { paragraphs: readonly TemplateParagraph[]; className?:
 export function TemplateBody({ paragraphs, className }: TemplateBodyProps) {
   return (
     <div className={cn(TEMPLATE_TEXT_CLASSES.body, className)}>
-      {runsOf(paragraphs).map((run, index) =>
-        run.kind === 'list' ? (
-          <ul key={index} className={TEMPLATE_TEXT_CLASSES.list}>
+      {runsOf(paragraphs).map((run, index) => {
+        if (run.kind === 'paragraph') return <Paragraph key={index} paragraph={run.paragraph} />;
+        const List = run.kind === 'ordered' ? 'ol' : 'ul';
+        return (
+          <List key={index} className={TEMPLATE_TEXT_CLASSES[run.kind]}>
             {run.items.map(item => (
               <li key={item}>
                 <Emphasised text={item} />
               </li>
             ))}
-          </ul>
-        ) : (
-          <Paragraph key={index} paragraph={run.paragraph} />
-        ),
-      )}
+          </List>
+        );
+      })}
     </div>
   );
 }

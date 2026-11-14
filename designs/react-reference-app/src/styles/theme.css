@@ -53,6 +53,7 @@
   --rir-failure: var(--destructive);
   --rir-near: var(--warning);
   --rir-far: var(--success);
+  --rir-ink: var(--text-primary);
   /* A check-in awaiting someone's action: pending counts, ad-hoc markers, and the
      request accent. Distinct from --metric-energy below, which shares the value but
      answers to measured effort rather than to workflow state. */
@@ -227,7 +228,7 @@
   --space-document-tight: 0.5714rem;
   --space-document-gap: 1.1429rem;
   --space-document-section: 2.2857rem;
-  --container-measure: 75ch;
+  --container-measure: 68ch;
   --size-public-platform-phone-base: 16.25rem;
   --size-public-platform-phone-sm: 17.5rem;
   --radius-checkbox: 0.25rem;
