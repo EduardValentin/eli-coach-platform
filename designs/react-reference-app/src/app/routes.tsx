@@ -29,6 +29,7 @@ import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
 import { ClientProgram } from "./pages/client-portal/ClientProgram";
 import { ClientProgramDocument } from "./pages/client-portal/ClientProgramDocument";
+import { ClientExercise } from "./pages/client-portal/ClientExercise";
 import { ClientMessages } from "./pages/client-portal/ClientMessages";
 import { CoachLayout } from "./components/coach-portal/CoachLayout";
 import { CoachDashboard } from "./pages/coach-portal/CoachDashboard";
@@ -152,6 +153,7 @@ export const router = createBrowserRouter(
           children: [
             { index: true, Component: ClientDashboard },
             { path: "program", Component: ClientProgram },
+            { path: "exercises/:exerciseId", Component: ClientExercise },
             { path: "messages", Component: ClientMessages },
             { path: "cycle", Component: ClientCycleTracker },
             { path: "checkins", Component: ClientCheckins },

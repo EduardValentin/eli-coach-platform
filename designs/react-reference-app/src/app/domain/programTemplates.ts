@@ -55,7 +55,6 @@ We alternate between lower body days (legs and glutes) and upper body days (back
     'legend': `**How to read your session**
 **A, B, C** — do the exercises in this order.
 **C1 / C2** — superset: do one set of C1, then one set of C2, then rest. Repeat for all sets.
-**W1, W2** — warm-up sets: lighter, to build up to your working weight. You don't log them.
 **Reps 8–10** — pick a weight that lets you reach this range with good form.
 **RIR 2** — stop each set when you feel you could do about 2 more reps.
 **RIR 0** — to failure: keep going until you can't do another rep with good form. Stop there, don't swing or cheat the last rep.

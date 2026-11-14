@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
-import { BLOCK_TYPE_LABELS, currentVersion, warmUpItemText, WEEKDAYS, type Weekday } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, currentVersion, positionLabel, warmUpItemText, WEEKDAYS, workingSets, type Weekday } from '../../domain/program';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
@@ -156,7 +156,7 @@ describe('ProgramDocument', () => {
     const [session] = block.sessions;
     const [row] = session.rows;
     const name = view.exercisesById.get(row.exerciseId)?.name ?? '';
-    const setCount = session.rows.reduce((total, candidate) => total + candidate.sets.length, 0);
+    const setCount = session.rows.reduce((total, candidate) => total + workingSets(candidate.sets).length, 0);
 
     // act
     render(<ProgramDocument view={view} />);
@@ -170,6 +170,51 @@ describe('ProgramDocument', () => {
     const logHeaders = within(table).getAllByRole('columnheader', { hidden: true }).slice(3);
     expect(logHeaders.map(header => header.textContent)).toEqual(['Log: kg × reps', ...Array.from({ length: block.weeks }, (_, index) => `Week ${index + 1}`)]);
     expect(table).not.toHaveTextContent('—');
+  });
+
+  it('lists each exercise with swaps after the session, linking the exercise and every swap to its exercise page', () => {
+    // arrange
+    const view = viewFor();
+    const [session] = currentBlockOf(view).sessions;
+    const withSwaps = session.rows.filter(row => row.substitutions.length > 0);
+    const [row] = withSwaps;
+    const [swapId] = row.substitutions;
+    const linkTo = (id: string) => `${window.location.origin}/portal/exercises/${id}`;
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const swaps = screen.getByRole('region', { name: `${session.name} swaps` });
+    const terms = within(swaps).getAllByRole('term');
+    expect(withSwaps.length).toBeGreaterThan(0);
+    expect(terms).toHaveLength(withSwaps.length);
+    expect(terms[0]).toHaveTextContent(`${positionLabel(session, row)} ${view.exercisesById.get(row.exerciseId)?.name}`);
+    expect(within(terms[0]).getByRole('link')).toHaveAttribute('href', linkTo(row.exerciseId));
+    const swapLink = within(within(swaps).getAllByRole('definition')[0]).getByRole('link', { name: view.exercisesById.get(swapId)?.name });
+    expect(swapLink).toHaveAttribute('href', linkTo(swapId));
+  });
+
+  it('links the warm-up and cardio exercises to their exercise pages', () => {
+    // arrange
+    const view = viewFor('two-versions');
+    const block = currentBlockOf(view);
+    const [session] = block.sessions;
+    const [warmUp] = session.warmUp.items;
+    const [cardio] = block.cardioSessions;
+    const [segment] = cardio.segments;
+    if (segment.kind !== 'steady') throw new Error('steady segment missing');
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const card = screen.getByRole('region', { name: session.name });
+    expect(within(card).getAllByRole('link', { name: view.exercisesById.get(warmUp.exerciseId)?.name })[0]).toHaveAttribute(
+      'href',
+      `${window.location.origin}/portal/exercises/${warmUp.exerciseId}`,
+    );
+    expect(within(screen.getByRole('region', { name: cardio.name })).getByRole('link')).toHaveAttribute('href', `${window.location.origin}/portal/exercises/${segment.exerciseId}`);
   });
 
   it('prints no identifiers, no video links and the legend heading once', () => {

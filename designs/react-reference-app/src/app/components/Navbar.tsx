@@ -5,8 +5,9 @@ import { isSignedIn, useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { useStore } from '../context/StoreContext';
 import { isBeforeStage, type ClientJourney } from '../domain/journey';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
+import { keepingSignInReturn, signInReturnTarget } from '../utils/signInReturn';
 import { buttonVariants } from './ThemeButton';
 import { NavigationDialog } from './ui/navigation-dialog';
 
@@ -37,6 +38,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
   // The rule before the actions only earns its place when something follows it.
   const hasNavActions = hasCartItems || !appState.isWaitlistMode;
   const navigate = useNavigate();
+  const { search } = useLocation();
   const [isSigningIn, setIsSigningIn] = useState(false);
   // Every page renders its own Navbar, so a visitor can leave mid-sign-in.
   // The completion must not then steer the page they moved on to.
@@ -75,10 +77,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
       const session = await completeSignIn(appState.signInOutcome);
       if (!isMounted.current) return;
       setAppState({ session });
+      const returnTarget = signInReturnTarget(search);
+      if (returnTarget) navigate(returnTarget, { replace: true });
     } catch {
       // Account provisioning failed, so the session was never established.
       if (!isMounted.current) return;
-      navigate('/sign-in-failed');
+      navigate(keepingSignInReturn('/sign-in-failed', search));
     } finally {
       if (isMounted.current) setIsSigningIn(false);
     }

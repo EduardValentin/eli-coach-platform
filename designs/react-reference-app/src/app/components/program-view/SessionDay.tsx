@@ -1,23 +1,26 @@
-import { useId, type ReactNode } from 'react';
-import { ChevronDown, Timer } from 'lucide-react';
+import { Fragment, useId, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight, Timer } from 'lucide-react';
+import { Link } from 'react-router';
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
 import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
+import { buttonVariants } from '../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
+import { useExercisePageHref } from './exercisePageLinks';
 import { PositionBadge } from './PositionBadge';
 import { RirValue } from './RirValue';
 import { coolDownLines, exerciseNameOf, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
-function namesOf(ids: readonly string[], exercisesById: Library): string[] {
-  return ids.flatMap(id => exercisesById.get(id)?.name ?? []);
+function exercisesOf(ids: readonly string[], exercisesById: Library): Exercise[] {
+  return ids.flatMap(id => exercisesById.get(id) ?? []);
 }
 
 function repsText(set: SetSpec, exercise: Exercise | undefined): string {
@@ -79,8 +82,43 @@ function SetLine({ set, index, exercise }: { set: SetSpec; index: number; exerci
 
 type ExerciseCardProps = { session: Session; row: Row; exercisesById: Library; progressionText: string };
 
+function SwapName({ swap }: { swap: Exercise }) {
+  const pageHref = useExercisePageHref()(swap.id);
+  if (!pageHref) return swap.name;
+  return (
+    <Link to={pageHref} className="font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary">
+      {swap.name}
+    </Link>
+  );
+}
+
+function SwapLine({ swaps }: { swaps: readonly Exercise[] }) {
+  return (
+    <p>
+      {'Swap for: '}
+      {swaps.map((swap, index) => (
+        <Fragment key={swap.id}>
+          {index > 0 && ', '}
+          <SwapName swap={swap} />
+        </Fragment>
+      ))}
+    </p>
+  );
+}
+
+function ExercisePageLink({ exercise }: { exercise: Exercise }) {
+  const pageHref = useExercisePageHref()(exercise.id);
+  if (!pageHref) return null;
+  return (
+    <Link to={pageHref} className={buttonVariants({ variant: 'link', size: 'xs', className: 'h-auto w-fit px-0 has-[>svg]:px-0' })}>
+      Open exercise page
+      <ChevronRight aria-hidden="true" />
+    </Link>
+  );
+}
+
 function ExerciseDetails({ row, exercise, exercisesById, progressionText }: { row: Row; exercise: Exercise | undefined; exercisesById: Library; progressionText: string }) {
-  const swaps = namesOf(row.substitutions, exercisesById);
+  const swaps = exercisesOf(row.substitutions, exercisesById);
   const progression = row.progression.kind === 'custom' ? row.progression.text : progressionText;
   return (
     <Collapsible className="-mb-1 border-t border-border-subtle">
@@ -90,8 +128,13 @@ function ExerciseDetails({ row, exercise, exercisesById, progressionText }: { ro
       </CollapsibleTrigger>
       <CollapsibleContent className="grid gap-2.5 pb-3 text-sm leading-relaxed text-text-primary">
         {row.cues && <p>{row.cues}</p>}
-        {exercise?.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />}
-        {swaps.length > 0 && <p>{`Swap for: ${swaps.join(', ')}`}</p>}
+        {exercise && (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />}
+            <ExercisePageLink exercise={exercise} />
+          </div>
+        )}
+        {swaps.length > 0 && <SwapLine swaps={swaps} />}
         <p className="text-text-secondary">{progression}</p>
       </CollapsibleContent>
     </Collapsible>

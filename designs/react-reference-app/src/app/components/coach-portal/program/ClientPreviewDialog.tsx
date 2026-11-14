@@ -1,4 +1,5 @@
 import { ClientProgramBody } from '../../program-view/ClientProgramBody';
+import { WithoutExercisePageLinks } from '../../program-view/exercisePageLinks';
 import type { ProgramView } from '../../program-view/programView';
 import { PhoneFrame } from '../../PhoneFrame';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
@@ -14,7 +15,9 @@ export function ClientPreviewDialog({ open, onOpenChange, view }: ClientPreviewD
         </DialogHeader>
         <PhoneFrame className="w-[390px] max-w-full mx-auto">
           <div className="max-h-[720px] overflow-y-auto px-4 pt-12 pb-4">
-            <ClientProgramBody view={view} />
+            <WithoutExercisePageLinks>
+              <ClientProgramBody view={view} />
+            </WithoutExercisePageLinks>
           </div>
         </PhoneFrame>
       </DialogContent>

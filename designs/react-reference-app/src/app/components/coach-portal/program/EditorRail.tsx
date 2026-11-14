@@ -41,7 +41,7 @@ function blockDetail(schedule: PlanSchedule, index: number): Detail {
   const block = blocks[index];
   const status = blockStatus(schedule, index);
   if (status.kind === 'ended') return { text: endedText(status), tone: 'muted' };
-  if (status.kind === 'current') return { text: `${currentWeekText(block, status)}${status.calibration ? ' · calibration' : ''}`, tone: 'default' };
+  if (status.kind === 'current') return { text: currentWeekText(block, status), tone: 'default' };
   const { startWeek, endWeek } = blockSpan(blocks, index);
   const empty = filledSessionCount(block) === 0;
   const when = status.start ? `starts in ${daysUntil(today, status.start)} days` : weekSpan(startWeek, endWeek);

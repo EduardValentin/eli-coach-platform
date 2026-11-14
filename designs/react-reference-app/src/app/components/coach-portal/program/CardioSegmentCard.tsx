@@ -54,7 +54,7 @@ function IntensityField({ value, onChange }: { value: CardioIntensity; onChange:
       <span aria-hidden="true" className={LABEL_CLASS}>
         Intensity
       </span>
-      <div className="w-60 max-w-full">
+      <div className="w-52 max-w-full">
         <ChoiceGroup size="xs" aria-label="Intensity" value={value} onValueChange={next => onChange(next as CardioIntensity)}>
           {INTENSITY_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
@@ -87,10 +87,25 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   const { items } = segment;
   return (
     <div className="grid gap-3">
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+      <fieldset className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
+        <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
         <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
-      </div>
+        <NumberField
+          label="Easy between exercises"
+          unit="s"
+          value={segment.easySeconds}
+          parse={parseWholeNumber}
+          onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
+        />
+        <NumberField
+          label="Rest between rounds"
+          unit="s"
+          value={segment.restBetweenRoundsSeconds}
+          parse={parseWholeNumber}
+          onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
+        />
+      </fieldset>
       <ExerciseItemList
         label="Interval exercises"
         items={items}
@@ -124,22 +139,6 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         <Plus aria-hidden="true" />
         Add exercise
       </Button>
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <NumberField
-          label="Easy between exercises"
-          unit="s"
-          value={segment.easySeconds}
-          parse={parseWholeNumber}
-          onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
-        />
-        <NumberField
-          label="Rest between rounds"
-          unit="s"
-          value={segment.restBetweenRoundsSeconds}
-          parse={parseWholeNumber}
-          onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
-        />
-      </div>
     </div>
   );
 }

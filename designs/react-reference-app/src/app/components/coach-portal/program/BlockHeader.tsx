@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type Ref } from 'react';
-import { ChevronDown, Copy, Info, RotateCcw, Trash2 } from 'lucide-react';
+import { ChevronDown, Copy, RotateCcw, Trash2 } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
-import { BLOCK_TYPE_LABELS, type Block, type BlockType, type Program, type ProgramLanguage, type Session, type SplitShape, type TrainingDays } from '../../../domain/program';
+import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramLanguage, type Session, type SplitShape, type TrainingDays } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { blockWithSessionsFrom, blockWithType } from '../../../domain/programEditing';
 import { blockWithSplit, describeLoss, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
-import { IconHint } from '../../IconHint';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
@@ -109,21 +108,12 @@ function CollapsedBlockBar({ block, index, status, toggle }: BarProps & { toggle
 
 type BlockActions = { onCopy: () => void; onReset: () => void; onRemove: () => void };
 
-const BLOCK_TYPE_HINTS: Partial<Record<BlockType, string>> = {
-  foundation: 'Suggested for beginners, weeks 1–2.',
-};
-
 function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: BarProps & { toggle: SettingsToggleProps | null; actions: BlockActions; onChangeType: (block: Block) => void }) {
   const line = statusLine(block, status);
   return (
     <div className="flex items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
       <BlockNumber block={block} index={index} size="md" />
       <BlockTypeSelect value={block.type} label="Block type" appearance="title" onChange={type => onChangeType(blockWithType(block, type))} />
-      {BLOCK_TYPE_HINTS[block.type] && (
-        <IconHint label={`When to use ${BLOCK_TYPE_LABELS[block.type]}`} icon={<Info aria-hidden="true" size={14} />} size="compact" tone="muted">
-          {BLOCK_TYPE_HINTS[block.type]}
-        </IconHint>
-      )}
       {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
       <div className="ml-auto flex items-center gap-1">
         {toggle && <SettingsToggle {...toggle} />}

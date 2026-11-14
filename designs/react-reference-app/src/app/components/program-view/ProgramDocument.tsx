@@ -1,8 +1,8 @@
 import { format } from 'date-fns';
 import { Fragment, type ReactNode } from 'react';
-import { BLOCK_TYPE_LABELS, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, positionLabel, warmUpItemText, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
 import { blockDates } from '../../domain/programCalendar';
-import { cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
+import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
 import { fillTemplate, type GuideTextKey } from '../../domain/programTemplates';
 import { printedTitle, programText, type BlockTextKey, type ProgramTextTarget } from '../../domain/programTexts';
 import { estimatedMinutes } from '../../domain/sessionTiming';
@@ -21,10 +21,11 @@ import { BlockCalendar } from './BlockCalendar';
 import { BLOCK_RULE, BLOCK_SWATCH } from './blockColours';
 import { DocumentEditingProvider, DocumentHeading, type DocumentEditing } from './documentEditing';
 import { DocumentTextSlot, useShowsText } from './DocumentTextSlot';
+import { ExerciseLink } from './ExerciseLink';
 import { PositionBadge } from './PositionBadge';
 import { Emphasised, parseTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
-import { cardioSegmentText, coolDownLines, currentBlock, exerciseName, warmUpLines, type ProgramView } from './programView';
+import { currentBlock, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_TEXT = "See your coach's disclaimer.";
@@ -32,7 +33,7 @@ const LIST_DASH = /^—\s*/;
 const LEAD_IN = /^([^:?,.]{3,40}[:?,])\s+(.+)$/;
 const LEAD_IN_END = /[:,]$/;
 const TERM_SEPARATOR = /\s*[,/]\s*/;
-const MARK_TERM = /^(?:[A-D]\d?|W\d)$/;
+const MARK_TERM = /^[A-D]\d?$/;
 const SHORT_DATE = 'd MMM';
 
 const BOX_CLASS = 'rounded-field border border-divider p-document-gap';
@@ -40,7 +41,6 @@ const TERM_ROW_CLASS = 'grid gap-x-4 gap-y-0.5 text-document-table sm:grid-cols-
 const TERM_CLASS = 'font-semibold text-text-primary';
 const NOTE_FIGURE_CLASS = 'max-w-measure space-y-document-tight border-l-2 border-text-primary pl-4';
 const FOCUS_CLASS = 'max-w-measure font-serif text-document-card italic text-text-primary';
-const WARM_UP_MARK_CLASS = 'inline-flex h-5 items-center rounded-checkbox bg-set-warm-up-soft px-1 text-document-note font-semibold text-set-warm-up';
 const EDITED_TEXT_TYPOGRAPHY = { body: DOCUMENT_PROSE_CLASS, heading: DOCUMENT_SECTION_TITLE_CLASS };
 
 const TITLE: ProgramTextTarget = { kind: 'version', key: 'title' };
@@ -230,7 +230,7 @@ function LegendTerm({ term }: { term: string }) {
       {marks.map((mark, index) => (
         <Fragment key={mark}>
           {index > 0 && <span className="sr-only">, </span>}
-          {mark.startsWith('W') ? <span className={WARM_UP_MARK_CLASS}>{mark}</span> : <PositionBadge label={mark} size="xs" />}
+          <PositionBadge label={mark} size="xs" />
         </Fragment>
       ))}
     </span>
@@ -359,11 +359,16 @@ function CardHeader({ title, minutes, rule, level }: CardHeaderProps) {
   );
 }
 
-function ItemList({ lines }: { lines: readonly string[] }) {
+type RoutineItem = { key: string; exerciseId: string; amount: string };
+
+function ItemList({ view, items }: { view: ProgramView; items: readonly RoutineItem[] }) {
   return (
     <ul className="flex flex-wrap gap-x-5 gap-y-0.5 text-document-table text-text-primary">
-      {lines.map(line => (
-        <li key={line}>{line}</li>
+      {items.map(item => (
+        <li key={item.key}>
+          <ExerciseLink exerciseId={item.exerciseId} exercisesById={view.exercisesById} />
+          {` · ${item.amount}`}
+        </li>
       ))}
     </ul>
   );
@@ -380,18 +385,57 @@ function RoutineLine({ title, children }: { title: string; children: ReactNode }
   );
 }
 
+function SwapsList({ view, session }: { view: ProgramView; session: Session }) {
+  const { exercisesById } = view;
+  const rows = session.rows.filter(row => row.exerciseId !== '' && row.substitutions.some(id => exercisesById.has(id)));
+  if (rows.length === 0) return null;
+  return (
+    <section aria-label={`${session.name} swaps`} data-print-keep className="space-y-1.5 border-t border-divider pt-document-tight">
+      <DocumentHeading level={3} className={DOCUMENT_HEAD_CLASS}>
+        Swaps
+      </DocumentHeading>
+      <dl className="space-y-1 text-document-table">
+        {rows.map(row => (
+          <div key={row.id} className="grid gap-x-3 gap-y-0.5 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+            <dt className="flex items-baseline gap-2 font-semibold text-text-primary">
+              <PositionBadge label={positionLabel(session, row)} size="xs" />{' '}
+              <ExerciseLink exerciseId={row.exerciseId} exercisesById={exercisesById} />
+            </dt>
+            <dd className="flex items-baseline gap-2 max-sm:pl-7">
+              <span aria-hidden="true" className="text-text-secondary">
+                →
+              </span>
+              <span className="sr-only">Swap for </span>
+              <span>
+                {row.substitutions
+                  .filter(id => exercisesById.has(id))
+                  .map((id, index) => (
+                    <Fragment key={id}>
+                      {index > 0 && ', '}
+                      <ExerciseLink exerciseId={id} exercisesById={exercisesById} />
+                    </Fragment>
+                  ))}
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 type SessionCardProps = { view: ProgramView; block: Block; session: Session };
 
 function SessionCard({ view, block, session }: SessionCardProps) {
-  const warmUp = warmUpLines(session, view.exercisesById);
-  const coolDown = coolDownLines(session, view.exercisesById);
+  const warmUp = session.warmUp.items.map(item => ({ key: item.id, exerciseId: item.exerciseId, amount: warmUpItemText(item) }));
+  const coolDown = session.coolDown.items.map(item => ({ key: item.id, exerciseId: item.exerciseId, amount: `${item.seconds} s` }));
   return (
     <section aria-label={session.name} data-print-card className="space-y-document-tight">
       <div data-print-heading className="space-y-document-tight">
         <CardHeader title={session.name} minutes={estimatedMinutes(session, view.exercisesById)} rule={BLOCK_RULE[block.type]} level={2} />
         {warmUp.length > 0 && (
           <RoutineLine title="Warm-up">
-            <ItemList lines={warmUp} />
+            <ItemList view={view} items={warmUp} />
           </RoutineLine>
         )}
       </div>
@@ -399,42 +443,67 @@ function SessionCard({ view, block, session }: SessionCardProps) {
       {session.coolDown.enabled && (
         <RoutineLine title="Cool-down">
           {session.coolDown.note && <p className="max-w-measure text-document-table text-text-primary">{session.coolDown.note}</p>}
-          {coolDown.length > 0 && <ItemList lines={coolDown} />}
+          {coolDown.length > 0 && <ItemList view={view} items={coolDown} />}
         </RoutineLine>
       )}
+      <SwapsList view={view} session={session} />
     </section>
   );
 }
 
-function roundsLine(view: ProgramView, segment: RoundsSegment): string {
-  const items = segment.items.map(item => `${exerciseName(item.exerciseId, view.exercisesById)} ${roundsItemAmount(item)}`);
-  const restBetweenRounds = segment.restBetweenRoundsSeconds > 0 ? [`${segment.restBetweenRoundsSeconds} s rest between rounds`] : [];
+function RoundsLine({ view, segment }: { view: ProgramView; segment: RoundsSegment }) {
+  const restBetweenRounds = segment.restBetweenRoundsSeconds > 0 ? ` · ${segment.restBetweenRoundsSeconds} s rest between rounds` : '';
   const [only] = segment.items;
   if (segment.items.length === 1) {
     const work = `${roundsItemAmount(only)} ${segment.intensity}`;
     const round = segment.easySeconds > 0 ? `(${work} / ${segment.easySeconds} s easy)` : work;
-    return [`${exerciseName(only.exerciseId, view.exercisesById)} · ${segment.rounds} × ${round}`, ...restBetweenRounds].join(' · ');
+    return (
+      <>
+        <ExerciseLink exerciseId={only.exerciseId} exercisesById={view.exercisesById} />
+        {` · ${segment.rounds} × ${round}${restBetweenRounds}`}
+      </>
+    );
   }
-  const easy = segment.easySeconds > 0 ? [`${segment.easySeconds} s easy between exercises`] : [];
-  return [`${segment.rounds} rounds: ${items.join(', ')}`, ...easy, ...restBetweenRounds].join(' · ');
+  const easy = segment.easySeconds > 0 ? ` · ${segment.easySeconds} s easy between exercises` : '';
+  return (
+    <>
+      {`${segment.rounds} rounds: `}
+      {segment.items.map((item, index) => (
+        <Fragment key={item.id}>
+          {index > 0 && ', '}
+          <ExerciseLink exerciseId={item.exerciseId} exercisesById={view.exercisesById} />
+          {` ${roundsItemAmount(item)}`}
+        </Fragment>
+      ))}
+      {`${easy}${restBetweenRounds}`}
+    </>
+  );
 }
 
-function segmentLine(view: ProgramView, segment: CardioSegment): string {
-  return segment.kind === 'rounds' ? roundsLine(view, segment) : cardioSegmentText(segment, view.exercisesById);
+function SegmentLine({ view, segment }: { view: ProgramView; segment: CardioSegment }) {
+  if (segment.kind === 'rounds') return <RoundsLine view={view} segment={segment} />;
+  return (
+    <>
+      <ExerciseLink exerciseId={segment.exerciseId} exercisesById={view.exercisesById} />
+      {` · ${segment.minutes} min · ${CARDIO_INTENSITY_TEXT[segment.intensity]}`}
+    </>
+  );
 }
 
 function CardioCard({ view, cardio }: { view: ProgramView; cardio: CardioSession }) {
-  const lines = cardio.segments.map(segment => ({ id: segment.id, text: segmentLine(view, segment) }));
+  const [only] = cardio.segments;
   return (
     <section aria-label={cardio.name} data-print-keep className="space-y-document-tight">
       <CardHeader title={cardio.name} minutes={cardioMinutes(cardio)} rule="border-training-recovery" level={3} />
-      {lines.length === 1 ? (
-        <p className="text-document-table">{lines[0].text}</p>
+      {cardio.segments.length === 1 ? (
+        <p className="text-document-table">
+          <SegmentLine view={view} segment={only} />
+        </p>
       ) : (
         <ol className="list-decimal space-y-1 pl-5 text-document-table marker:font-semibold marker:text-text-secondary">
-          {lines.map(line => (
-            <li key={line.id} className="pl-1">
-              {line.text}
+          {cardio.segments.map(segment => (
+            <li key={segment.id} className="pl-1">
+              <SegmentLine view={view} segment={segment} />
             </li>
           ))}
         </ol>
