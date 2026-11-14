@@ -1,18 +1,17 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
-import { BLOCK_TYPE_LABELS, currentVersion, formatRange, warmUpItemText, workingSets } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, currentVersion, warmUpItemText, WEEKDAYS, type Weekday } from '../../domain/program';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
 import { parseTemplate, programTemplate } from './ProgramText';
-import { TrackingTable } from './TrackingTable';
 import { viewOf, type ProgramView } from './programView';
 
 const DAY_ONE = new Date(2026, 8, 16);
 const TODAY = new Date(2026, 8, 22);
 
-function viewFor(seed: 'published' | 'two-versions' = 'published'): ProgramView {
+function viewFor(seed: 'published' | 'two-versions' = 'published', dayOne: Date | null = DAY_ONE): ProgramView {
   const program = programForSeed(seed, { callId: 'ac-demo-client-1', dayOne: DAY_ONE, equipment: [] }, SAMPLE_EXERCISES);
   if (!program) throw new Error('seed missing');
   const version = currentVersion(program);
@@ -20,7 +19,7 @@ function viewFor(seed: 'published' | 'two-versions' = 'published'): ProgramView 
   return viewOf({
     program,
     version,
-    dayOne: DAY_ONE,
+    dayOne,
     today: TODAY,
     preferredWeekday: 'mon',
     exercises: SAMPLE_EXERCISES,
@@ -28,68 +27,10 @@ function viewFor(seed: 'published' | 'two-versions' = 'published'): ProgramView 
   });
 }
 
-const STEADY_SET = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-
-describe('TrackingTable', () => {
-  it('has a column per week and a row per set', () => {
-    // arrange
-    const view = viewFor();
-    const block = { ...currentBlockOf(view), weeks: 6, calibrationWeek: true };
-    const session = structuredClone(block.sessions[0]);
-    session.rows = [{ ...session.rows[0], sets: [STEADY_SET, STEADY_SET, STEADY_SET, STEADY_SET] }];
-
-    // act
-    render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);
-
-    // assert
-    const table = screen.getByRole('table', { name: `Track ${session.name}` });
-    expect(within(table).getByRole('columnheader', { name: 'Week 1 (calibration)' })).toBeInTheDocument();
-    expect(within(table).getByRole('columnheader', { name: 'Week 6' })).toBeInTheDocument();
-    expect(within(table).getAllByRole('columnheader', { name: 'kg × reps' })).toHaveLength(6);
-    expect(within(table).getAllByRole('row')).toHaveLength(2 + 4);
-    expect(within(table).getAllByRole('rowheader')).toHaveLength(1);
-    expect(within(table).getByRole('rowheader')).toHaveTextContent('4 working sets × 8–10 · RIR 1–2');
-    expect(within(table).getByRole('cell', { name: '1 · 8–10' })).toBeInTheDocument();
-    expect(within(table).getByRole('cell', { name: '4 · 8–10' })).toBeInTheDocument();
-  });
-
-  it('prescribes each set on its own line when the sets differ', () => {
-    // arrange
-    const view = viewFor();
-    const block = currentBlockOf(view);
-    const session = structuredClone(block.sessions[0]);
-    const topSet = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
-    session.rows = [{ ...session.rows[0], sets: [topSet, STEADY_SET] }];
-
-    // act
-    render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);
-
-    // assert
-    expect(screen.getByRole('cell', { name: '1 · 5 · RIR 2' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '2 · 8–10 · RIR 1–2' })).toBeInTheDocument();
-    expect(screen.getByRole('rowheader')).not.toHaveTextContent('2 working sets');
-  });
-
-  it('skips rows without an exercise', () => {
-    // arrange
-    const view = viewFor();
-    const block = currentBlockOf(view);
-    const session = structuredClone(block.sessions[0]);
-    session.rows = [{ ...session.rows[0], exerciseId: '' }];
-
-    // act
-    render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);
-
-    // assert
-    expect(screen.queryByRole('rowheader')).not.toBeInTheDocument();
-  });
-});
-
 describe('ProgramDocument', () => {
-  it('opens with a cover band naming the client, version, date, coach and current block', () => {
+  it('opens with a cover band naming the client, version, date and coach on one line', () => {
     // arrange
     const view = viewFor();
-    const block = currentBlockOf(view);
 
     // act
     render(<ProgramDocument view={view} />);
@@ -97,9 +38,7 @@ describe('ProgramDocument', () => {
     // assert
     const cover = screen.getByRole('banner');
     expect(within(cover).getByRole('heading', { level: 1, name: 'Ana Pop' })).toBeInTheDocument();
-    expect(within(cover).getByText(/^Program · Version 1 · \d{1,2} \w+ 2026$/)).toBeInTheDocument();
-    expect(within(cover).getByText('Coach: Eli')).toBeInTheDocument();
-    expect(within(cover).getByText(`${BLOCK_TYPE_LABELS[block.type]} block`)).toBeInTheDocument();
+    expect(within(cover).getByText(/^Version 1 · \d{1,2} \w+ 2026 · Coach Eli$/)).toBeInTheDocument();
   });
 
   it("carries the coach's title, personal note and missed-day note", () => {
@@ -118,40 +57,101 @@ describe('ProgramDocument', () => {
     expect(screen.getByText('Missed one? Pick up with the next session.')).toBeInTheDocument();
   });
 
-  it('gives the current block and week, next check-in, daily steps and sessions per week at a glance', () => {
+  it('gives the current block and week, next check-in and daily steps on the cover', () => {
     // arrange
     const view = viewFor();
     const block = currentBlockOf(view);
-    const sessionDays = Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
 
     // act
     render(<ProgramDocument view={view} />);
 
     // assert
-    const glance = screen.getByRole('region', { name: 'At a glance' });
-    expect(glance).toHaveTextContent(`Now${BLOCK_TYPE_LABELS[block.type]} · week 1 of ${block.weeks}`);
-    expect(glance).toHaveTextContent(/Next check-in form\w+day, \d{1,2} \w+Daily steps/);
-    expect(glance).toHaveTextContent(`Daily steps${block.dailySteps.toLocaleString('en-US')}`);
-    expect(glance).toHaveTextContent(`Sessions per week${sessionDays} strength`);
+    const facts = within(screen.getByRole('banner')).getByText('Now').closest('dl');
+    expect(facts).toHaveTextContent(`Now${BLOCK_TYPE_LABELS[block.type]} · week 1 of ${block.weeks}`);
+    expect(facts).toHaveTextContent(/Next check-in form\w+day, \d{1,2} \w+Daily steps/);
+    expect(facts).toHaveTextContent(`Daily steps${block.dailySteps.toLocaleString('en-US')}`);
+    expect(screen.queryByRole('region', { name: 'At a glance' })).not.toBeInTheDocument();
   });
 
-  it('lays the week out as a table with a cell for each of the seven days', () => {
+  it('lays the whole block out as weeks of seven dated days, her weeks starting on her first day', () => {
     // arrange
     const view = viewFor();
+    const block = currentBlockOf(view);
+    const firstDay: Weekday = 'wed';
+    const order = [...WEEKDAYS.slice(WEEKDAYS.indexOf(firstDay)), ...WEEKDAYS.slice(0, WEEKDAYS.indexOf(firstDay))];
 
     // act
     render(<ProgramDocument view={view} />);
 
     // assert
-    const week = screen.getByRole('table', { name: 'This week' });
-    expect(within(week).getAllByRole('columnheader')).toHaveLength(7);
-    expect(within(week).getAllByRole('cell')).toHaveLength(7);
+    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const [, ...weeks] = within(calendar).getAllByRole('row');
+    expect(weeks).toHaveLength(block.weeks);
+    expect(within(calendar).getAllByRole('columnheader').map(header => header.textContent)).toEqual(order.map(day => day[0].toUpperCase() + day.slice(1)));
+    expect(within(weeks[0]).getByRole('rowheader')).toHaveTextContent('Week 1 16–22 Sep');
+    for (const week of weeks) expect(within(week).getAllByRole('cell')).toHaveLength(7);
+    expect(within(weeks[0]).getAllByRole('cell')[0].querySelector('time')).toHaveAttribute('datetime', '2026-09-16');
   });
 
-  it('prints one exercise table row per set with the exercise named once', () => {
+  it('puts a tick box on every training and cardio day and none on a rest day', () => {
     // arrange
     const view = viewFor();
-    const [session] = currentBlockOf(view).sessions;
+    const block = currentBlockOf(view);
+    const order: Weekday[] = ['wed', 'thu', 'fri', 'sat', 'sun', 'mon', 'tue'];
+    const restDays = order.filter(day => block.calendar[day].kind === 'rest').length;
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const [, ...weeks] = within(calendar).getAllByRole('row');
+    for (const week of weeks) {
+      const cells = within(week).getAllByRole('cell');
+      cells.forEach((cell, index) => {
+        const rests = block.calendar[order[index]].kind === 'rest';
+        expect(cell).toHaveTextContent(rests ? /Rest$/ : /\S/);
+        expect(within(cell).queryAllByRole('img', { name: 'Tick box' })).toHaveLength(rests ? 0 : 1);
+      });
+    }
+    expect(within(calendar).getAllByRole('img', { name: 'Tick box' })).toHaveLength(block.weeks * (7 - restDays));
+  });
+
+  it('marks the check-in form days that fall inside the block', () => {
+    // arrange
+    const view = viewFor();
+    const block = currentBlockOf(view);
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    const checkIns = within(calendar).getAllByRole('cell').filter(cell => cell.textContent?.includes('check-in form due'));
+    expect(checkIns.map(cell => cell.querySelector('time')?.getAttribute('datetime'))).toEqual(['2026-10-05']);
+    expect(screen.getByText('Send your check-in form that day')).toBeInTheDocument();
+  });
+
+  it('lays the block out from Monday without dates or check-ins before the plan has a first day', () => {
+    // arrange
+    const view = viewFor('published', null);
+    const block = currentBlockOf(view);
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const calendar = screen.getByRole('table', { name: `Your ${block.weeks} weeks` });
+    expect(within(calendar).getAllByRole('columnheader')[0]).toHaveTextContent('Mon');
+    expect(calendar.querySelector('time')).toBeNull();
+    expect(screen.queryByText('Send your check-in form that day')).not.toBeInTheDocument();
+  });
+
+  it('prints each exercise once, headed by its letter, with a row per set and a log column per week', () => {
+    // arrange
+    const view = viewFor();
+    const block = currentBlockOf(view);
+    const [session] = block.sessions;
     const [row] = session.rows;
     const name = view.exercisesById.get(row.exerciseId)?.name ?? '';
     const setCount = session.rows.reduce((total, candidate) => total + candidate.sets.length, 0);
@@ -161,29 +161,12 @@ describe('ProgramDocument', () => {
 
     // assert
     const table = screen.getByRole('table', { name: `${session.name} exercises` });
-    const [, ...body] = within(table).getAllByRole('row');
-    expect(body).toHaveLength(setCount);
-    expect(within(table).getAllByRole('rowheader', { name: new RegExp(`^${name}`) })).toHaveLength(1);
-    for (const header of ['Position', 'Exercise', 'Set', 'Reps', 'RIR', 'Weight', 'Rest']) {
-      expect(within(table).getByRole('columnheader', { name: header })).toBeInTheDocument();
-    }
-  });
-
-  it('tracks each working set of a session with its reps target', () => {
-    // arrange
-    const view = viewFor();
-    const [session] = currentBlockOf(view).sessions;
-    const workingCount = session.rows.reduce((total, row) => total + workingSets(row.sets).length, 0);
-    const [firstSet] = workingSets(session.rows[0].sets);
-
-    // act
-    render(<ProgramDocument view={view} />);
-
-    // assert
-    const grid = screen.getByRole('table', { name: `Track ${session.name}` });
-    const [, , ...body] = within(grid).getAllByRole('row');
-    expect(body).toHaveLength(workingCount);
-    expect(within(body[0]).getByRole('cell', { name: new RegExp(`^1 · ${formatRange(firstSet.reps)}`) })).toBeInTheDocument();
+    const [, , ...body] = within(table).getAllByRole('row');
+    expect(body).toHaveLength(setCount + session.rows.length);
+    expect(within(table).getAllByRole('rowheader', { name: new RegExp(`^${row.slot} ${name}`) })).toHaveLength(1);
+    const headers = within(table).getAllByRole('columnheader').map(header => header.textContent);
+    expect(headers).toEqual(['Write kg × reps', 'Set', 'Reps', 'RIR', ...Array.from({ length: block.weeks }, (_, index) => `Week ${index + 1}`)]);
+    expect(table).not.toHaveTextContent('—');
   });
 
   it('prints no identifiers, no video links and the legend heading once', () => {
@@ -201,7 +184,7 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('complementary', { name: 'How to read your session' })).toBeInTheDocument();
   });
 
-  it('lists the plan, sessions with tracking tables and the low-energy session', () => {
+  it('lists the plan, a log table per session and the low-energy session', () => {
     // arrange
     const view = viewFor();
     const sessionCount = currentBlockOf(view).sessions.length;
@@ -212,7 +195,7 @@ describe('ProgramDocument', () => {
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Your plan' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
-    expect(screen.getAllByRole('table', { name: /^Track / })).toHaveLength(sessionCount);
+    expect(screen.getAllByRole('table', { name: / exercises$/ })).toHaveLength(sessionCount);
     expect(screen.getByRole('contentinfo')).toHaveTextContent("Your coach's full disclaimer accompanies this program.");
   });
 
@@ -244,7 +227,8 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('heading', { level: 2, name: split })).toBeInTheDocument();
     expect(screen.getAllByText(split)).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 2, name: `Daily steps: ${block.dailySteps.toLocaleString('en-US')}` })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'This week' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: `Your ${block.weeks} weeks` })).toBeInTheDocument();
+    expect(screen.queryByText('Schedule')).not.toBeInTheDocument();
   });
 
   it('lists each warm-up exercise with its sets and amount on the session card', () => {
@@ -395,7 +379,7 @@ describe('ProgramDocument', () => {
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Ana Pop' })).toBeInTheDocument();
     for (const name of ['Focus until the next check-in', 'Personal note', 'Note for this block', 'Nutrition', 'Lifestyle']) {
-      expect(screen.getByRole('textbox', { name })).toHaveValue('');
+      expect(screen.getByRole('textbox', { name })).toHaveTextContent(/^$/);
     }
     for (const name of ['Program title', 'How to read your session', 'Block intro', 'Split text', 'Warm-up', 'How to progress', 'Missed-day note', 'No weight listed', 'Daily steps', 'Low-energy session']) {
       expect(screen.getByRole('button', { name: `Edit ${name}` })).toBeInTheDocument();

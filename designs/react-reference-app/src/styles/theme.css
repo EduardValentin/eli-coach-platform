@@ -75,6 +75,10 @@
   --training-foundation-soft: rgba(37, 99, 235, 0.1);
   --training-deload: #616161;
   --training-deload-soft: rgba(97, 97, 97, 0.1);
+  --set-warm-up: #6E5B4A;
+  --set-warm-up-soft: #F3EEE8;
+  --check-in-marker: #AC502C;
+  --check-in-marker-soft: rgba(172, 80, 44, 0.1);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* Categorical tints named by hue */
@@ -343,6 +347,10 @@
   --color-training-foundation-soft: var(--training-foundation-soft);
   --color-training-deload: var(--training-deload);
   --color-training-deload-soft: var(--training-deload-soft);
+  --color-set-warm-up: var(--set-warm-up);
+  --color-set-warm-up-soft: var(--set-warm-up-soft);
+  --color-check-in-marker: var(--check-in-marker);
+  --color-check-in-marker-soft: var(--check-in-marker-soft);
   --color-surface-inverted: var(--surface-inverted);
   --color-surface-inverted-foreground: var(--surface-inverted-foreground);
   /* === Marketing / public landing utilities === */

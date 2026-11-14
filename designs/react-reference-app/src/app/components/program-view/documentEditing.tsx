@@ -6,14 +6,26 @@ export type DocumentEditing = {
   reset: (target: ProgramTextTarget) => void;
 };
 
-const DocumentEditingContext = createContext<DocumentEditing | null>(null);
+export type DocumentTypography = { body: string; heading: string };
 
-export function DocumentEditingProvider({ editing, children }: { editing: DocumentEditing | null; children: ReactNode }) {
-  return <DocumentEditingContext.Provider value={editing}>{children}</DocumentEditingContext.Provider>;
+type DocumentEditingValue = { editing: DocumentEditing | null; typography: DocumentTypography };
+
+const NO_TYPOGRAPHY: DocumentTypography = { body: '', heading: '' };
+
+const DocumentEditingContext = createContext<DocumentEditingValue>({ editing: null, typography: NO_TYPOGRAPHY });
+
+type DocumentEditingProviderProps = { editing: DocumentEditing | null; typography?: DocumentTypography; children: ReactNode };
+
+export function DocumentEditingProvider({ editing, typography = NO_TYPOGRAPHY, children }: DocumentEditingProviderProps) {
+  return <DocumentEditingContext.Provider value={{ editing, typography }}>{children}</DocumentEditingContext.Provider>;
 }
 
 export function useDocumentEditing(): DocumentEditing | null {
-  return useContext(DocumentEditingContext);
+  return useContext(DocumentEditingContext).editing;
+}
+
+export function useDocumentTypography(): DocumentTypography {
+  return useContext(DocumentEditingContext).typography;
 }
 
 type HeadingLevel = 1 | 2 | 3 | 4;

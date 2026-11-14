@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { renderProgramEditor, stubEditorBrowserApis } from '../../../../test/renderProgramEditor';
+import { clearRichText, writeRichText } from '../../../../test/richText';
 
 beforeAll(stubEditorBrowserApis);
 
@@ -146,7 +147,7 @@ describe('texts page', () => {
     expect(screen.getByRole('button', { name: 'Publish' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Preview as client' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Exercise library' })).not.toBeInTheDocument();
-    expect(within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in' })).toHaveValue('');
+    expect(within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in' })).toHaveTextContent(/^$/);
     expect(within(programDocument()).getByRole('button', { name: 'Edit How to read your session' })).toBeInTheDocument();
     expect(within(programDocument()).getByRole('region', { name: 'Nutrition' })).toBeInTheDocument();
     expect(within(programDocument()).queryByRole('textbox', { name: 'Note for this block' })).not.toBeInTheDocument();
@@ -157,7 +158,7 @@ describe('texts page', () => {
     const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
 
     // act
-    await user.type(within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in' }), 'Own the squat pattern');
+    await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in' }), 'Own the squat pattern');
     await user.click(within(programDocument()).getByRole('button', { name: 'Done editing Focus until the next check-in' }));
 
     // assert
@@ -172,7 +173,7 @@ describe('texts page', () => {
     // assert
     const field = within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in' });
     expect(field).toHaveFocus();
-    expect(field).toHaveValue('Own the squat pattern');
+    expect(field).toHaveTextContent('Own the squat pattern');
 
     // act
     await user.keyboard('{Escape}');
@@ -184,7 +185,7 @@ describe('texts page', () => {
   it('keeps written texts on the draft across the structure and back', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
-    await user.type(within(programDocument()).getByRole('textbox', { name: 'Personal note' }), 'So glad to start with you');
+    await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'Personal note' }), 'So glad to start with you');
 
     // act
     await user.click(screen.getByRole('link', { name: 'Structure' }));
@@ -209,8 +210,8 @@ describe('texts page', () => {
     expect(within(programDocument()).queryByRole('button', { name: 'Reset to standard text' })).not.toBeInTheDocument();
 
     // act
-    await user.clear(legend);
-    await user.type(legend, 'Do the exercises in order, A first.');
+    await clearRichText(user, legend);
+    await writeRichText(user, legend, 'Do the exercises in order, A first.');
     await user.click(screen.getByRole('button', { name: 'Preview as client' }));
     const preview = screen.getByRole('dialog', { name: 'Preview as client' });
     await user.click(within(preview).getByRole('button', { name: 'How to read your session' }));
@@ -223,7 +224,10 @@ describe('texts page', () => {
     await user.click(within(programDocument()).getByRole('button', { name: 'Reset to standard text' }));
 
     // assert
-    expect(within(programDocument()).getByRole('textbox', { name: 'How to read your session' })).toHaveDisplayValue(/\*\*A, B, C\*\*/);
+    const reset = within(programDocument()).getByRole('textbox', { name: 'How to read your session' });
+    expect(reset).toHaveTextContent(/^How to read your session/);
+    expect(within(reset).getByText('A, B, C')).toBeInTheDocument();
+    expect(reset).not.toHaveTextContent('**');
   });
 
   it('writes the texts of the block chosen in the rail and counts them there', async () => {
@@ -234,7 +238,7 @@ describe('texts page', () => {
     expect(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ })).toHaveTextContent(`${slots - 1} of ${slots} texts written`);
 
     // act
-    await user.type(within(programDocument()).getByRole('textbox', { name: 'Note for this block' }), 'Time to add weight');
+    await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'Note for this block' }), 'Time to add weight');
 
     // assert
     expect(within(programDocument()).getByRole('heading', { name: /^Hypertrophy block/ })).toBeInTheDocument();
@@ -246,7 +250,22 @@ describe('texts page', () => {
 
     // assert
     expect(within(programDocument()).getByRole('heading', { name: /^Foundation block/ })).toBeInTheDocument();
-    expect(within(programDocument()).getByRole('textbox', { name: 'Note for this block' })).toHaveValue('');
+    expect(within(programDocument()).getByRole('textbox', { name: 'Note for this block' })).toHaveTextContent(/^$/);
+  });
+
+  it('offers only the formatting each text prints', () => {
+    // arrange / act
+    renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+
+    // assert
+    const toolsOf = (name: string) => {
+      const toolbar = within(programDocument()).queryByRole('group', { name: `Formatting for ${name}` });
+      return toolbar ? within(toolbar).getAllByRole('button').map(button => button.getAttribute('aria-label')) : [];
+    };
+    expect(within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in' })).toBeInTheDocument();
+    expect(toolsOf('Focus until the next check-in')).toEqual([]);
+    expect(toolsOf('Personal note')).toEqual(['Bold', 'Italic', 'Bulleted list']);
+    expect(toolsOf('Nutrition')).toEqual(['Heading', 'Bold', 'Italic', 'Bulleted list']);
   });
 
   it("marks a Romanian program's standard texts as pending", async () => {

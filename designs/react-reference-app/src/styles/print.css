@@ -70,6 +70,11 @@
     break-after: avoid;
   }
 
+  [data-program-document] > header ~ [data-print-new-page],
+  [data-program-document] [data-print-card] {
+    break-before: page;
+  }
+
   [data-program-document] p {
     orphans: 3;
     widows: 3;

@@ -9,7 +9,9 @@ export type ProgramTextTarget =
   | { kind: 'guide'; key: GuideTextKey }
   | { kind: 'block'; blockId: string; key: BlockTextKey };
 
-type TextDescription = { name: string; placeholder: string; hint?: string };
+export type TextFormatting = 'plain' | 'paragraphs' | 'titled';
+
+type TextDescription = { name: string; placeholder: string; formatting: TextFormatting; hint?: string };
 
 export type ProgramText = TextDescription & {
   value: string;
@@ -18,32 +20,33 @@ export type ProgramText = TextDescription & {
 };
 
 const VERSION_TEXTS: Record<VersionTextKey, TextDescription> = {
-  title: { name: 'Program title', placeholder: 'e.g. Program — weeks 1–4' },
-  focus: { name: 'Focus until the next check-in', placeholder: 'What she concentrates on until her next check-in form' },
-  personalNote: { name: 'Personal note', placeholder: 'A few words from you to open her program' },
-  whatChanged: { name: 'What changed and why', placeholder: 'What you changed in this version, and why' },
-  nutrition: { name: 'Nutrition', placeholder: 'e.g. protein at every meal, two litres of water a day' },
-  lifestyle: { name: 'Lifestyle', placeholder: 'e.g. lights out by 23:00, a 10-minute walk after lunch' },
+  title: { name: 'Program title', placeholder: 'e.g. Program — weeks 1–4', formatting: 'plain' },
+  focus: { name: 'Focus until the next check-in', placeholder: 'What she concentrates on until her next check-in form', formatting: 'plain' },
+  personalNote: { name: 'Personal note', placeholder: 'A few words from you to open her program', formatting: 'paragraphs' },
+  whatChanged: { name: 'What changed and why', placeholder: 'What you changed in this version, and why', formatting: 'paragraphs' },
+  nutrition: { name: 'Nutrition', placeholder: 'e.g. protein at every meal, two litres of water a day', formatting: 'titled' },
+  lifestyle: { name: 'Lifestyle', placeholder: 'e.g. lights out by 23:00, a 10-minute walk after lunch', formatting: 'titled' },
 };
 
 const BLOCK_TEXTS: Record<BlockTextKey, TextDescription> = {
-  intro: { name: 'Block intro', placeholder: 'What this block is for and how it should feel' },
-  note: { name: 'Note for this block', placeholder: 'Anything personal she should know about this block' },
-  split: { name: 'Split text', placeholder: 'How her training week is split' },
-  missedDay: { name: 'Missed-day note', placeholder: 'What she does when she misses a session' },
+  intro: { name: 'Block intro', placeholder: 'What this block is for and how it should feel', formatting: 'titled' },
+  note: { name: 'Note for this block', placeholder: 'Anything personal she should know about this block', formatting: 'paragraphs' },
+  split: { name: 'Split text', placeholder: 'How her training week is split', formatting: 'titled' },
+  missedDay: { name: 'Missed-day note', placeholder: 'What she does when she misses a session', formatting: 'paragraphs' },
 };
 
 const GUIDE_TEXTS: Record<GuideTextKey, TextDescription> = {
-  legend: { name: 'How to read your session', placeholder: 'One line per term: **Term** — what it means' },
-  warmUp: { name: 'Warm-up', placeholder: 'How she warms up before every session' },
-  progression: { name: 'How to progress', placeholder: 'When she adds weight or reps' },
-  coolDown: { name: 'Cool-down', placeholder: 'How she cools down after a session' },
-  noWeight: { name: 'No weight listed', placeholder: 'How she picks a weight when none is listed' },
-  lowEnergy: { name: 'Low-energy session', placeholder: 'What she does on a low-energy day' },
-  calibration: { name: 'Calibration week', placeholder: 'How the first week of a block works' },
+  legend: { name: 'How to read your session', placeholder: 'One line per term: the term in bold, then what it means', formatting: 'titled' },
+  warmUp: { name: 'Warm-up', placeholder: 'How she warms up before every session', formatting: 'titled' },
+  progression: { name: 'How to progress', placeholder: 'When she adds weight or reps', formatting: 'paragraphs' },
+  coolDown: { name: 'Cool-down', placeholder: 'How she cools down after a session', formatting: 'paragraphs' },
+  noWeight: { name: 'No weight listed', placeholder: 'How she picks a weight when none is listed', formatting: 'plain' },
+  lowEnergy: { name: 'Low-energy session', placeholder: 'What she does on a low-energy day', formatting: 'titled' },
+  calibration: { name: 'Calibration week', placeholder: 'How the first week of a block works', formatting: 'paragraphs' },
   steps: {
     name: 'Daily steps',
     placeholder: 'Why her daily steps matter',
+    formatting: 'titled',
     hint: '[daily steps] prints as the daily steps target of the block.',
   },
 };

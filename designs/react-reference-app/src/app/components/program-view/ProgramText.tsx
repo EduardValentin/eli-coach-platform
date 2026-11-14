@@ -62,10 +62,16 @@ function runsOf(paragraphs: readonly TemplateParagraph[]): TextRun[] {
   return runs;
 }
 
+export const TEMPLATE_TEXT_CLASSES = {
+  body: 'max-w-prose space-y-3 text-sm leading-relaxed text-text-primary',
+  list: 'list-disc space-y-1.5 pl-5 marker:text-text-label',
+  lead: 'font-semibold text-text-primary',
+};
+
 function Paragraph({ paragraph }: { paragraph: TemplateParagraph }) {
   return (
     <p>
-      {paragraph.lead && <span className="font-semibold text-text-primary">{paragraph.lead}</span>}
+      {paragraph.lead && <span className={TEMPLATE_TEXT_CLASSES.lead}>{paragraph.lead}</span>}
       {paragraph.lead && ' '}
       <Emphasised text={paragraph.body} />
     </p>
@@ -76,10 +82,10 @@ type TemplateBodyProps = { paragraphs: readonly TemplateParagraph[]; className?:
 
 export function TemplateBody({ paragraphs, className }: TemplateBodyProps) {
   return (
-    <div className={cn('max-w-prose space-y-3 text-sm leading-relaxed text-text-primary', className)}>
+    <div className={cn(TEMPLATE_TEXT_CLASSES.body, className)}>
       {runsOf(paragraphs).map((run, index) =>
         run.kind === 'list' ? (
-          <ul key={index} className="list-disc space-y-1.5 pl-5 marker:text-text-label">
+          <ul key={index} className={TEMPLATE_TEXT_CLASSES.list}>
             {run.items.map(item => (
               <li key={item}>
                 <Emphasised text={item} />

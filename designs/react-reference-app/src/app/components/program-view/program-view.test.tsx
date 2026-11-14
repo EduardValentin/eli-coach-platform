@@ -372,9 +372,11 @@ describe('SessionTable', () => {
     }));
   }
 
-  function renderSession(session: Session) {
+  const FOUR_WEEKS = { weeks: 4, calibrationWeek: false };
+
+  function renderSession(session: Session, block = FOUR_WEEKS) {
     const exercises = new Map(SAMPLE_EXERCISES.map(exercise => [exercise.id, exercise]));
-    return render(<SessionTable session={session} exercisesById={exercises} />);
+    return render(<SessionTable session={session} block={block} exercisesById={exercises} />);
   }
 
   it('labels supersets, shows the unit and formats rest', () => {
@@ -385,14 +387,13 @@ describe('SessionTable', () => {
     renderSession(superset(view));
 
     // assert
-    expect(screen.getByRole('cell', { name: 'C1 Superset' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'C2 Superset' })).toBeInTheDocument();
+    const [first, second] = screen.getAllByRole('rowheader');
+    expect(first).toHaveTextContent(/^C1 .+ Superset .*Rest 2 min$/);
+    expect(second).toHaveTextContent(/^C2 .+ Superset .*Rest 90 s$/);
     expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
-    expect(screen.getByRole('cell', { name: '2 min' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '90 s' })).toBeInTheDocument();
   });
 
-  it('prints a row for every set with its kind, reps, RIR and weight', () => {
+  it('prints a row for every set with its kind, reps, RIR, prescribed weight and an empty box per week', () => {
     // arrange
     const view = viewAt(TODAY);
     const warmUp = { kind: 'warm-up' as const, reps: { min: 10, max: 10 } };
@@ -404,30 +405,58 @@ describe('SessionTable', () => {
     renderSession(session);
 
     // assert
-    const [, ...rows] = screen.getAllByRole('row');
+    const [, , , ...rows] = screen.getAllByRole('row');
     const cellsOf = (index: number) => within(rows[index]).getAllByRole('cell').map(cell => cell.textContent);
     expect(rows).toHaveLength(3);
-    expect(cellsOf(0)).toEqual(expect.arrayContaining(['Warm-up', '10', '—']));
-    expect(cellsOf(1)).toEqual(['1', '5', '2', '60 kg']);
-    expect(cellsOf(2)).toEqual(['2', '8–10', '1–2', '—']);
+    expect(cellsOf(0)).toEqual(['Warm-up', '10', '', '', '', '', '']);
+    expect(cellsOf(1)).toEqual(['1', '5 60 kg', '2', '', '', '', '']);
+    expect(cellsOf(2)).toEqual(['2', '8–10', '1–2', '', '', '', '']);
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
   });
 
-  it('prints cues, swaps and a custom progression under the exercise', () => {
+  it('prints the cues the coach wrote for her, swaps and a custom progression under the exercise', () => {
     // arrange
     const view = viewAt(TODAY);
+    const [, swap] = SAMPLE_EXERCISES;
     const session = sessionWith(view, original => ({
       ...original,
-      rows: [{ ...original.rows[0], cues: 'Brace first', progression: { kind: 'custom' as const, text: 'Add 2 kg weekly' } }],
+      rows: [
+        {
+          ...original.rows[0],
+          cues: 'Brace first',
+          touched: ['cues' as const],
+          substitutions: [swap.id],
+          progression: { kind: 'custom' as const, text: 'Add 2 kg weekly' },
+        },
+        { ...original.rows[1], cues: 'Library description', touched: [] },
+      ],
     }));
 
     // act
     renderSession(session);
 
     // assert
-    const exercise = screen.getByRole('rowheader');
-    expect(exercise).toHaveTextContent('Brace first');
-    expect(exercise).toHaveTextContent('Add 2 kg weekly');
+    const [tailored, standard] = screen.getAllByRole('rowheader');
+    expect(tailored).toHaveTextContent('Brace first');
+    expect(tailored).toHaveTextContent('Add 2 kg weekly');
+    expect(tailored).toHaveTextContent(`Swap: ${swap.name}`);
+    expect(standard).not.toHaveTextContent('Library description');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('heads a log column for each week of the block, marking the calibration week', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const session = sessionWith(view, current => current);
+
+    // act
+    renderSession(session, { weeks: 6, calibrationWeek: true });
+
+    // assert
+    expect(screen.getByRole('columnheader', { name: 'Write kg × reps' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Week 1 calibration' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Week 6' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Week 7' })).not.toBeInTheDocument();
   });
 
   it('still names an archived exercise and flags a removed one', () => {
@@ -440,10 +469,10 @@ describe('SessionTable', () => {
     const rows = [first, { ...second, exerciseId: 'gone' }];
 
     // act
-    render(<SessionTable session={{ ...session, rows }} exercisesById={exercises} />);
+    render(<SessionTable session={{ ...session, rows }} block={FOUR_WEEKS} exercisesById={exercises} />);
 
     // assert
-    expect(screen.getByRole('rowheader', { name: new RegExp(`^${archived.name}`) })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: new RegExp(`^${first.slot} ${archived.name}`) })).toBeInTheDocument();
     expect(screen.getByText('Exercise removed')).toBeInTheDocument();
   });
 });

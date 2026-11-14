@@ -13,3 +13,10 @@ export const BLOCK_SOFT: Record<BlockType, string> = {
   strength: 'bg-training-strength-soft',
   deload: 'bg-training-deload-soft',
 };
+
+export const BLOCK_RULE: Record<BlockType, string> = {
+  foundation: 'border-training-foundation',
+  hypertrophy: 'border-training-hypertrophy',
+  strength: 'border-training-strength',
+  deload: 'border-training-deload',
+};
