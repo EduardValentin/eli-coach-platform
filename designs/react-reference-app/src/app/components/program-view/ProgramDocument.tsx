@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { Fragment, type ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, positionLabel, warmUpItemText, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
-import { blockDates } from '../../domain/programCalendar';
+import { blockDates, planWeeks } from '../../domain/programCalendar';
 import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
 import { fillTemplate, type GuideTextKey } from '../../domain/programTemplates';
 import { printedTitle, programText, type BlockTextKey, type ProgramTextTarget } from '../../domain/programTexts';
@@ -25,7 +25,7 @@ import { ExerciseLink } from './ExerciseLink';
 import { PositionBadge } from './PositionBadge';
 import { Emphasised, parseTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
-import { currentBlock, type ProgramView } from './programView';
+import { currentBlock, exerciseName, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_TEXT = "See your coach's disclaimer.";
@@ -191,29 +191,50 @@ function Cover({ view }: { view: ProgramView }) {
   );
 }
 
+const LATER_LABELS_GIVE_WAY = 1000;
+const ALIGNED_LABELS_FROM_WIDTH = [
+  'flex-row',
+  'flex-row',
+  '@min-[24rem]:flex-row',
+  '@min-[36rem]:flex-row',
+  '@min-[48rem]:flex-row',
+  '@min-[60rem]:flex-row',
+  '@min-[72rem]:flex-row',
+];
+
+function labelShare(blocks: readonly Block[], block: Block): string {
+  return `calc((100% - ${blocks.length - 1} * var(--spacing)) * ${block.weeks / planWeeks(blocks)})`;
+}
+
 function PlanStrip({ view }: { view: ProgramView }) {
   const { blocks } = view.version.content.plan;
   const { dayOne, position } = view;
   return (
-    <section aria-label="Plan" data-print-keep className="space-y-document-tight">
+    <section aria-label="Plan" data-print-keep className="@container space-y-document-tight">
       <span aria-hidden="true" className="flex h-1.5 gap-1">
         {blocks.map(block => (
           <span key={block.id} style={{ flexGrow: block.weeks, flexBasis: 0 }} className={cn('rounded-full', BLOCK_SWATCH[block.type])} />
         ))}
       </span>
-      <ol className="flex flex-wrap gap-x-6 gap-y-1 text-document-table">
+      <ol className={cn('flex flex-col gap-x-1 gap-y-2 text-document-table', ALIGNED_LABELS_FROM_WIDTH[blocks.length])}>
         {blocks.map((block, index) => {
           const dates = dayOne ? blockDates(blocks, index, dayOne) : null;
           const isCurrent = position.status === 'in-plan' && position.blockIndex === index;
           return (
-            <li key={block.id} aria-current={isCurrent ? 'true' : undefined} className="inline-flex items-center gap-2 whitespace-nowrap">
-              <span aria-hidden="true" className={cn('size-2.5 rounded-full', BLOCK_SWATCH[block.type])} />
-              <span className="font-semibold text-text-primary">{BLOCK_TYPE_LABELS[block.type]}</span>
-              <span className="text-text-secondary tabular-nums">
+            <li
+              key={block.id}
+              aria-current={isCurrent ? 'true' : undefined}
+              style={{ flexBasis: labelShare(blocks, block), flexShrink: LATER_LABELS_GIVE_WAY ** index }}
+              className="min-w-max whitespace-nowrap"
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-text-primary">{BLOCK_TYPE_LABELS[block.type]}</span>
+                {isCurrent && <span className="rounded-full bg-text-primary px-1.5 text-document-note font-semibold text-surface-base">Now</span>}
+              </span>
+              <span className="block text-text-secondary tabular-nums">
                 {counted(block.weeks, 'week')}
                 {dates && ` · ${format(dates.start, SHORT_DATE)}–${format(dates.end, SHORT_DATE)}`}
               </span>
-              {isCurrent && <span className="rounded-full bg-text-primary px-1.5 text-document-note font-semibold text-surface-base">Now</span>}
             </li>
           );
         })}
@@ -239,6 +260,8 @@ function LegendTerm({ term }: { term: string }) {
 
 const LEGEND = guide('legend');
 const LEGEND_FALLBACK_TITLE = 'How to read your session';
+const LINKS_TERM = 'Exercise names';
+const LINKS_DEFINITION = 'Tap one for its video and how-to.';
 
 function Legend({ view }: { view: ProgramView }) {
   const shows = useShowsText(view, LEGEND);
@@ -275,6 +298,10 @@ function LegendBody({ text }: { text: string }) {
             </div>
           );
         })}
+        <div className={TERM_ROW_CLASS}>
+          <dt className={TERM_CLASS}>{LINKS_TERM}</dt>
+          <dd className="max-w-measure text-text-primary">{LINKS_DEFINITION}</dd>
+        </div>
       </dl>
     </>
   );
@@ -288,21 +315,18 @@ function BlockSection({ view, block }: { view: ProgramView; block: Block }) {
   const title = parseTemplate(valueOf(view, intro)).title || fallbackTitle;
   return (
     <section aria-label={title} className="space-y-document-gap">
-      <div className="space-y-document-tight">
-        <span aria-hidden="true" className={cn('block h-1.5 rounded-full', BLOCK_SWATCH[block.type])} />
-        <DocumentTextSlot
-          view={view}
-          target={intro}
-          className="space-y-document-gap"
-          unwritten={
-            <DocumentHeading level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
-              {fallbackTitle}
-            </DocumentHeading>
-          }
-        >
-          {value => <TitledProse text={value} fallbackTitle={fallbackTitle} />}
-        </DocumentTextSlot>
-      </div>
+      <DocumentTextSlot
+        view={view}
+        target={intro}
+        className="space-y-document-gap"
+        unwritten={
+          <DocumentHeading level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
+            {fallbackTitle}
+          </DocumentHeading>
+        }
+      >
+        {value => <TitledProse text={value} fallbackTitle={fallbackTitle} />}
+      </DocumentTextSlot>
       {showsNote && <NoteFromCoach view={view} target={note} />}
       {block.calibrationWeek && (
         <DocumentTextSlot view={view} target={guide('calibration')}>
@@ -399,7 +423,7 @@ function SwapsList({ view, session }: { view: ProgramView; session: Session }) {
           <div key={row.id} className="grid gap-x-3 gap-y-0.5 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
             <dt className="flex items-baseline gap-2 font-semibold text-text-primary">
               <PositionBadge label={positionLabel(session, row)} size="xs" />{' '}
-              <ExerciseLink exerciseId={row.exerciseId} exercisesById={exercisesById} />
+              {exerciseName(row.exerciseId, exercisesById)}
             </dt>
             <dd className="flex items-baseline gap-2 max-sm:pl-7">
               <span aria-hidden="true" className="text-text-secondary">

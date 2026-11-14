@@ -51,19 +51,19 @@ We alternate between lower body days (legs and glutes) and upper body days (back
 1. 3–5 min light cardio (brisk walk, bike, jumping jacks) until you feel warm.
 2. Mobility for today's movements (listed below).
 3. Warm-up sets on your first exercise: build up gradually to your working weight. These don't count as working sets.`,
-    'coolDown': `**Cool-down (optional, 5 min):** easy walking and a few stretches for the muscles you trained. Hold each stretch 20–30 seconds and breathe slowly.`,
+    'coolDown': `**Cool-down (optional, 5 min):** Easy walking and a few stretches for the muscles you trained. Hold each stretch 20–30 seconds and breathe slowly.`,
     'legend': `**How to read your session**
-**A, B, C** — do the exercises in this order.
-**C1 / C2** — superset: do one set of C1, then one set of C2, then rest. Repeat for all sets.
-**Reps 8–10** — pick a weight that lets you reach this range with good form.
-**RIR 2** — stop each set when you feel you could do about 2 more reps.
-**RIR 0** — to failure: keep going until you can't do another rep with good form. Stop there, don't swing or cheat the last rep.
-**Pause** — hold the position for 1–2 seconds at the hardest point of the rep.
-**Rest** — time between sets (or between rounds in a superset).`,
-    'progression': `**How to progress:** when you hit the top of the rep range on all sets with the target RIR, increase the weight next session (lower body +2.5–5 kg, upper body +1–2.5 kg, or the next dumbbell). If you can't reach the bottom of the range, keep the weight and build up again.`,
+**A, B, C** — Do the exercises in this order.
+**C1 / C2** — Superset: do one set of C1, then one set of C2, then rest. Repeat for all sets.
+**Reps 8–10** — Pick a weight that lets you reach this range with good form.
+**RIR 2** — Stop each set when you feel you could do about 2 more reps.
+**RIR 0** — To failure: keep going until you can't do another rep with good form. Stop there, don't swing or cheat the last rep.
+**Pause** — Hold the position for 1–2 seconds at the hardest point of the rep.
+**Rest** — Time between sets (or between rounds in a superset).`,
+    'progression': `**How to progress:** When you hit the top of the rep range on all sets with the target RIR, increase the weight next session (lower body +2.5–5 kg, upper body +1–2.5 kg, or the next dumbbell). If you can't reach the bottom of the range, keep the weight and build up again.`,
     'steps': `**Daily steps: [daily steps]**
 Walking is one of the most underrated tools for health and fat loss. Spread your steps through the day: a short walk after meals counts.`,
-    'missedDay': `If you miss a session, just continue with the next one in the order. Don't try to double up.`,
+    'missedDay': `**If you miss a session:** Just continue with the next one in the order. Don't try to double up.`,
     'lowEnergy': `Low-energy session (20–30 min): mobility, an easy walk or light exercises. It still counts.`,
     'noWeight': `No weight listed? Pick one that lets you finish the set at the RIR shown.`,
   },

@@ -15,7 +15,7 @@ const LOG_COLUMN_CLASS = 'max-sm:hidden';
 const ALIGN_CLASS = 'px-1.5 text-left';
 const HEAD_CLASS = cn(DOCUMENT_HEAD_CLASS, ALIGN_CLASS, 'py-1 align-bottom whitespace-nowrap');
 const CELL_CLASS = cn(ALIGN_CLASS, 'py-1 align-middle whitespace-nowrap tabular-nums');
-const SET_INDENT_CLASS = 'pl-7';
+const SET_INDENT_CLASS = 'pl-7 print:pl-1.5';
 const RIR_INDENT_CLASS = 'pl-3';
 const BRACKET_CLASS = 'border-l-2';
 const NOTE_LINE_CLASS = cn(DOCUMENT_NOTE_CLASS, 'block');
@@ -36,11 +36,24 @@ function tailoredCue(row: Row): string {
   return row.touched.includes('cues') ? row.cues.trim() : '';
 }
 
-function restLine(session: Session, row: Row): string | null {
+type RestNote = { value: string; after: string };
+
+function restNote(session: Session, row: Row): RestNote | null {
   const superset = supersetOf(session, row);
-  if (superset.length === 0) return `Rest ${restText(row.restSeconds)}`;
+  const value = restText(row.restSeconds);
+  if (superset.length === 0) return { value, after: '' };
   if (superset.at(-1)?.id !== row.id) return null;
-  return `Rest ${restText(row.restSeconds)} after ${positionLabel(session, row)}`;
+  return { value, after: ` after ${positionLabel(session, row)}` };
+}
+
+function Rest({ note }: { note: RestNote }) {
+  return (
+    <span className={DOCUMENT_NOTE_CLASS}>
+      {' Rest '}
+      <span className={DOCUMENT_VALUE_CLASS}>{note.value}</span>
+      {note.after}
+    </span>
+  );
 }
 
 function listed(amounts: readonly string[]): string {
@@ -66,7 +79,7 @@ type ExerciseHeaderProps = { session: Session; row: Row; exercisesById: Readonly
 
 function ExerciseHeader({ session, row, exercisesById, columns, bracket }: ExerciseHeaderProps) {
   const cue = tailoredCue(row);
-  const rest = restLine(session, row);
+  const rest = restNote(session, row);
   const warmUp = warmUpSetsText(row.sets, exercisesById.get(row.exerciseId));
   return (
     <tr>
@@ -76,7 +89,7 @@ function ExerciseHeader({ session, row, exercisesById, columns, bracket }: Exerc
           <span className="min-w-0 flex-1">
             <span className="flex flex-wrap items-baseline gap-x-3">
               <ExerciseLink exerciseId={row.exerciseId} exercisesById={exercisesById} className="text-document-body font-semibold text-text-primary" />
-              {rest && <span className={DOCUMENT_NOTE_CLASS}>{` ${rest}`}</span>}
+              {rest && <Rest note={rest} />}
             </span>
             {warmUp && (
               <span className={cn(NOTE_LINE_CLASS, 'max-w-measure')}>
@@ -140,10 +153,10 @@ export function SessionTable({ session, block, exercisesById }: SessionTableProp
   return (
     <table aria-label={`${session.name} exercises`} className="w-full border-collapse text-document-table text-text-primary sm:table-fixed">
       <colgroup>
-        <col className="sm:w-[8%]" />
-        <col className="sm:w-[13%]" />
-        {columns.weight && <col className="sm:w-[10%]" />}
-        <col className="sm:w-[9%]" />
+        <col className="sm:w-[8%] print:w-[9mm]" />
+        <col className="sm:w-[13%] print:w-[20mm]" />
+        {columns.weight && <col className="sm:w-[10%] print:w-[15mm]" />}
+        <col className="sm:w-[9%] print:w-[11mm]" />
         {columns.weeks.map(week => (
           <col key={week} className={LOG_COLUMN_CLASS} />
         ))}

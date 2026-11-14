@@ -19,9 +19,9 @@ const KIND_NAME: Record<DayKind, string> = {
 };
 
 const CELL_CLASS =
-  'relative border border-divider align-top max-sm:flex max-sm:items-baseline max-sm:gap-3 max-sm:border-0 max-sm:border-t max-sm:py-2 max-sm:pr-3 max-sm:pl-4 sm:h-14 sm:py-1 sm:pr-1 sm:pl-2 print:h-[10mm] print:py-0.5';
-const TICK_BOX_CLASS = 'inline-block size-[5mm] shrink-0 rounded-checkbox border-[1pt] border-text-primary bg-surface-base';
-const CHECK_IN_DATE_CLASS = 'inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-check-in-marker px-1 text-surface-base';
+  'relative border border-divider align-top max-sm:flex max-sm:items-baseline max-sm:gap-3 max-sm:border-0 max-sm:border-t max-sm:py-2 max-sm:pr-3 max-sm:pl-4 sm:h-14 sm:py-1 sm:pr-1 sm:pl-2 print:h-[12.5mm] print:pt-[0.2mm] print:pb-0';
+const TICK_BOX_CLASS = 'inline-block size-[4mm] shrink-0 rounded-checkbox border-[1pt] border-text-primary bg-surface-base';
+const CHECK_IN_DATE_CLASS = 'inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-check-in-marker px-1 text-surface-base print:h-[3.8mm] print:min-w-[3.8mm]';
 
 function weekRange(week: BlockWeek): string | null {
   const first = week.days[0].date;
@@ -57,12 +57,12 @@ function DayCell({ block, day }: { block: Block; day: BlockDay }) {
       {kind !== 'rest' && (
         <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-[3px]', kind === 'session' ? BLOCK_SWATCH[block.type] : 'bg-training-recovery')} />
       )}
-      <span className={cn(DOCUMENT_NOTE_CLASS, 'block min-h-5 font-semibold whitespace-nowrap tabular-nums max-sm:w-16 max-sm:shrink-0 print:min-h-[5mm]')}>
+      <span className={cn(DOCUMENT_NOTE_CLASS, 'block min-h-5 font-semibold whitespace-nowrap tabular-nums max-sm:w-16 max-sm:shrink-0 print:h-[3.8mm] print:min-h-0 print:leading-[3.8mm]')}>
         <span aria-hidden="true" className="sm:hidden">{`${weekdayAbbreviation(day.weekday)} `}</span>
         {day.date && <DayDate date={day.date} checkIn={day.checkIn} />}
       </span>{' '}
-      <span className={cn('block text-document-table leading-tight text-balance max-sm:flex-1 sm:mt-0.5', KIND_NAME[kind])}>{dayEntryLabel(block, day.weekday)}</span>
-      {kind !== 'rest' && <span data-print-only className={cn(TICK_BOX_CLASS, 'absolute top-1 right-1')} />}
+      <span className={cn('block text-document-table leading-tight text-balance max-sm:flex-1 sm:mt-0.5 print:mt-0 print:leading-[1.1]', KIND_NAME[kind])}>{dayEntryLabel(block, day.weekday)}</span>
+      {kind !== 'rest' && <span data-print-only className={cn(TICK_BOX_CLASS, 'absolute right-[0.5mm] bottom-[0.5mm]')} />}
     </td>
   );
 }
@@ -105,7 +105,7 @@ export function BlockCalendar({ view, block }: { view: ProgramView; block: Block
           <tr role="row">
             <td className="w-[14%]" />
             {weekdaysOf(weeks).map(weekday => (
-              <th key={weekday} role="columnheader" scope="col" className={cn(DOCUMENT_HEAD_CLASS, 'px-2 pb-1 text-left')}>
+              <th key={weekday} role="columnheader" scope="col" className={cn(DOCUMENT_HEAD_CLASS, 'px-2 pb-1 text-left print:pb-0.5')}>
                 {weekdayAbbreviation(weekday)}
               </th>
             ))}

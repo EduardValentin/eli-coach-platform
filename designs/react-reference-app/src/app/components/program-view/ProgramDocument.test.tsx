@@ -69,7 +69,7 @@ describe('ProgramDocument', () => {
 
     // assert
     const plan = screen.getByRole('region', { name: 'Plan' });
-    expect(within(plan).getByRole('listitem', { current: true })).toHaveTextContent(`${BLOCK_TYPE_LABELS[block.type]}${block.weeks} weeks · 16 Sep–13 OctNow`);
+    expect(within(plan).getByRole('listitem', { current: true })).toHaveTextContent(`${BLOCK_TYPE_LABELS[block.type]}Now${block.weeks} weeks · 16 Sep–13 Oct`);
     expect(screen.getByRole('banner')).not.toHaveTextContent(steps);
     expect(screen.getAllByText(new RegExp(steps))).toHaveLength(1);
     expect(screen.queryByText(/^Block 1 of/)).not.toBeInTheDocument();
@@ -172,7 +172,7 @@ describe('ProgramDocument', () => {
     expect(table).not.toHaveTextContent('—');
   });
 
-  it('lists each exercise with swaps after the session, linking the exercise and every swap to its exercise page', () => {
+  it('lists each exercise with swaps after the session, naming the exercise and linking every swap to its exercise page', () => {
     // arrange
     const view = viewFor();
     const [session] = currentBlockOf(view).sessions;
@@ -190,7 +190,7 @@ describe('ProgramDocument', () => {
     expect(withSwaps.length).toBeGreaterThan(0);
     expect(terms).toHaveLength(withSwaps.length);
     expect(terms[0]).toHaveTextContent(`${positionLabel(session, row)} ${view.exercisesById.get(row.exerciseId)?.name}`);
-    expect(within(terms[0]).getByRole('link')).toHaveAttribute('href', linkTo(row.exerciseId));
+    expect(within(terms[0]).queryByRole('link')).not.toBeInTheDocument();
     const swapLink = within(within(swaps).getAllByRole('definition')[0]).getByRole('link', { name: view.exercisesById.get(swapId)?.name });
     expect(swapLink).toHaveAttribute('href', linkTo(swapId));
   });
@@ -230,6 +230,22 @@ describe('ProgramDocument', () => {
     expect(screen.queryByText(/watch video/i)).not.toBeInTheDocument();
     expect(screen.getAllByText('How to read your session')).toHaveLength(1);
     expect(screen.getByRole('complementary', { name: 'How to read your session' })).toBeInTheDocument();
+  });
+
+  it('explains once, in the legend, that the exercise names open their exercise pages', () => {
+    // arrange
+    const view = viewFor();
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const legend = screen.getByRole('complementary', { name: 'How to read your session' });
+    const terms = within(legend).getAllByRole('term');
+    const definitions = within(legend).getAllByRole('definition');
+    expect(terms.at(-1)).toHaveTextContent('Exercise names');
+    expect(definitions.at(-1)).toHaveTextContent('Tap one for its video and how-to.');
+    expect(screen.getAllByText('Exercise names')).toHaveLength(1);
   });
 
   it('lists the plan, a log table per session, the low-energy session without a repeated title and the disclaimer', () => {

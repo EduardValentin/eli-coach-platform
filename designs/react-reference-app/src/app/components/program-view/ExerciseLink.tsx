@@ -1,4 +1,3 @@
-import { ArrowUpRight } from 'lucide-react';
 import type { Exercise } from '../../context/TrainingContext';
 import { clientExerciseUrl } from '../../utils/exerciseLinks';
 import { cn } from '../ui/utils';
@@ -17,7 +16,6 @@ export function ExerciseLink({ exerciseId, exercisesById, className }: ExerciseL
       className={cn('underline decoration-divider decoration-1 underline-offset-2 hover:decoration-current print:no-underline', className)}
     >
       {exercise.name}
-      <ArrowUpRight aria-hidden="true" className="ml-px hidden size-[0.85em] text-text-secondary print:inline" />
     </a>
   );
 }

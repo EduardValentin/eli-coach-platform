@@ -13,7 +13,6 @@
     }
 
     @bottom-left {
-      content: "See your coach's disclaimer.";
       vertical-align: top;
       padding-top: 3mm;
       font-family: var(--font-sans);
@@ -30,6 +29,14 @@
       font-size: 8pt;
       letter-spacing: 0.04em;
       color: var(--text-secondary);
+    }
+  }
+
+  @page :first {
+    margin-top: 12mm;
+
+    @bottom-left {
+      content: "See your coach's disclaimer.";
     }
   }
 
@@ -75,7 +82,7 @@
   [data-program-document] > header {
     margin-inline: 0;
     padding-inline: 6mm;
-    padding-block: 6mm 5mm;
+    padding-block: 5.5mm 3mm;
   }
 
   [data-program-document] [data-print-keep],
