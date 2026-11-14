@@ -8,6 +8,7 @@ import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDi
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
 import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
 import { EDITOR_MODE_LABELS, sectionHash, sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
+import { EditorAnnouncerProvider } from '../../components/coach-portal/program/editorAnnouncer';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutlineDrawer } from '../../components/coach-portal/program/ProgramOutlineDrawer';
@@ -197,7 +198,9 @@ export function ProgramEditorPage() {
 
   return (
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
-      <ProgramEditor journey={journey} program={program} draft={draft} programPath={programPath} />
+      <EditorAnnouncerProvider>
+        <ProgramEditor journey={journey} program={program} draft={draft} programPath={programPath} />
+      </EditorAnnouncerProvider>
     </DndProvider>
   );
 }
