@@ -91,10 +91,10 @@ describe("ChoiceGroup", () => {
   });
 
   it.each([
-    { size: "sm", height: "h-[calc(var(--size-control-sm)-6px)]" },
-    { size: "md", height: "h-[calc(var(--size-control-md)-8px)]" },
+    { size: "sm", height: "min-h-[calc(var(--size-control-sm)-6px)]" },
+    { size: "md", height: "min-h-[calc(var(--size-control-md)-8px)]" },
   ] as const)(
-    "sizes its options to sit inside a $size field",
+    "keeps its options at least the inner height of a $size field",
     ({ size, height }) => {
       // arrange
       const onValueChange = () => {};
@@ -168,7 +168,7 @@ describe("ChoiceGroup", () => {
     );
     expect(screen.getByRole("radio", { name: "EUR" })).not.toHaveClass(
       "data-[state=checked]:bg-primary",
-      "h-[calc(var(--size-control-sm)-6px)]",
+      "min-h-[calc(var(--size-control-sm)-6px)]",
     );
   });
 });

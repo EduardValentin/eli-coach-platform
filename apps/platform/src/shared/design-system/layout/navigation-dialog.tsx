@@ -108,7 +108,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
   const menu: NavigationMenu = { close, firstLinkRef, isOpen };
   const panelVariant: NavigationPanelVariant = isOpen ? "open" : "closed";
   const menuButtonProps = {
-    "aria-controls": contentId,
+    "aria-controls": isDialogMounted ? contentId : undefined,
     "aria-expanded": isOpen,
     "aria-label": isOpen ? "Close menu" : "Open menu",
     children: isOpen ? closeMenuIcon : openMenuIcon,

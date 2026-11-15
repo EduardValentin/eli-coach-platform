@@ -26,13 +26,13 @@ const tabsListClasses = cva(
 );
 
 const tabsTriggerClasses = cva(
-  "inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-field border border-transparent px-2 py-1 text-sm font-medium text-text-primary transition-[color,box-shadow] hover:text-primary focus-visible:border-focus-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "relative hit-area inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-field px-2 py-1 text-sm font-medium text-text-primary transition-[color,box-shadow] hover:text-primary disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "",
         segmented:
-          "h-auto flex-auto px-4 py-2.5 font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+          "h-auto flex-auto px-4 py-[11px] font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
       },
     },
     defaultVariants: {

@@ -608,7 +608,6 @@ function CartDetailsFields(props: {
               data-parity="terms-consent"
               disabled={props.isSubmitting}
               error={fieldState.error?.message}
-              errorRole="alert"
               label={
                 <>
                   I agree to the{" "}

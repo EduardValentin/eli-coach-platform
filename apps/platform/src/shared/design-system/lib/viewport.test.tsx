@@ -7,23 +7,28 @@ import { useIsDesktopViewport, useIsMobileViewport } from "./viewport";
 
 type ViewportListener = () => void;
 
+const DEFAULT_TEXT_SIZE = 16;
+
 const viewport = {
   listeners: new Set<ViewportListener>(),
+  textSize: DEFAULT_TEXT_SIZE,
   width: 0,
 };
 
 function matchesWidth(query: string, width: number): boolean {
-  const max = /max-width:\s*(\d+)px/.exec(query);
-  const min = /min-width:\s*(\d+)px/.exec(query);
+  const below = /width < ([\d.]+)em/.exec(query);
+  const min = /min-width: ([\d.]+)em/.exec(query);
+  const widthInEm = width / viewport.textSize;
 
   return (
-    (max === null || width <= Number(max[1])) &&
-    (min === null || width >= Number(min[1]))
+    (below === null || widthInEm < Number(below[1])) &&
+    (min === null || widthInEm >= Number(min[1]))
   );
 }
 
-function viewportIs(width: number) {
+function viewportIs(width: number, textSize = DEFAULT_TEXT_SIZE) {
   viewport.width = width;
+  viewport.textSize = textSize;
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: (query: string) => ({
@@ -69,6 +74,17 @@ describe("useIsDesktopViewport", () => {
     expect(result.current).toBe(desktop);
   });
 
+  it("answers false at 1024 px once the browser text is enlarged to 20 px", () => {
+    // arrange
+    viewportIs(1024, 20);
+
+    // act
+    const { result } = renderHook(() => useIsDesktopViewport());
+
+    // assert
+    expect(result.current).toBe(false);
+  });
+
   it("follows the viewport across the large breakpoint", () => {
     // arrange
     viewportIs(1280);
@@ -95,5 +111,16 @@ describe("useIsMobileViewport", () => {
 
     // assert
     expect(result.current).toBe(mobile);
+  });
+
+  it("answers true at 768 px once the browser text is enlarged to 20 px", () => {
+    // arrange
+    viewportIs(768, 20);
+
+    // act
+    const { result } = renderHook(() => useIsMobileViewport());
+
+    // assert
+    expect(result.current).toBe(true);
   });
 });

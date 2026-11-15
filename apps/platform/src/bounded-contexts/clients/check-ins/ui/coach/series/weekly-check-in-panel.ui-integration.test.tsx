@@ -128,7 +128,7 @@ beforeAll(() => {
       addEventListener: vi.fn(),
       addListener: vi.fn(),
       dispatchEvent: vi.fn(),
-      matches: query.includes("min-width: 1024px"),
+      matches: query.includes("min-width: 64em"),
       media: query,
       onchange: null,
       removeEventListener: vi.fn(),
@@ -336,7 +336,7 @@ describe("setting up a weekly check-in", () => {
 
     // assert
     expect(focusOnOpen).toBe(
-      within(dialog).getByRole("heading", { level: 3, name: SET_UP_TITLE }),
+      within(dialog).getByRole("heading", { level: 2, name: SET_UP_TITLE }),
     );
     expect(dialog).toHaveTextContent(
       "Pick the day and hour. Every week until her paid period ends is booked.",

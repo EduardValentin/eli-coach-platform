@@ -252,6 +252,7 @@ function SelectInput({
         {...controlAttributes}
         className="w-full"
         data-parity={`field-${field.id}-trigger`}
+        ref={controller.ref}
       >
         <SelectValue placeholder={field.placeholder ?? SELECT_PLACEHOLDER} />
       </SelectTrigger>
@@ -413,11 +414,12 @@ function ChipChoices({ controller, field }: ProfileFieldRowProps) {
 
   return (
     <div className="mt-2 flex flex-wrap gap-2">
-      {(field.options ?? []).map((option) => (
+      {(field.options ?? []).map((option, index) => (
         <CheckboxChip
           aria-label={option.label}
           isChecked={chosen.includes(option.value)}
           key={option.value}
+          ref={index === 0 ? controller.ref : undefined}
           onChange={(event) =>
             controller.onChange(
               event.target.checked

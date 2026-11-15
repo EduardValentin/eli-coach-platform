@@ -3,7 +3,8 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { createRef } from "react";
+import { Dialog as RadixDialog } from "radix-ui";
+import { createRef, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -17,11 +18,15 @@ afterEach(() => {
   cleanup();
 });
 
+function renderInDialog(header: ReactNode) {
+  return render(<RadixDialog.Root>{header}</RadixDialog.Root>);
+}
+
 describe("SheetDialogHeader", () => {
   it("heads the sheet with its visible title and description above a rule", () => {
     // arrange
     // act
-    render(
+    renderInDialog(
       <SheetDialogHeader
         description="Same time of day, same tape."
         title="Add measurements"
@@ -30,7 +35,7 @@ describe("SheetDialogHeader", () => {
 
     // assert
     const title = screen.getByRole("heading", {
-      level: 3,
+      level: 2,
       name: "Add measurements",
     });
     const description = screen.getByText("Same time of day, same tape.");
@@ -65,7 +70,7 @@ describe("SheetDialogHeader", () => {
     const titleRef = createRef<HTMLHeadingElement>();
 
     // act
-    render(
+    renderInDialog(
       <SheetDialogHeader title="Request a check-in" titleRef={titleRef} />,
     );
 
@@ -79,7 +84,7 @@ describe("SheetDialogHeader", () => {
   it("keeps its title out of the focus order when no caller focuses it", () => {
     // arrange
     // act
-    render(<SheetDialogHeader title="Add measurements" />);
+    renderInDialog(<SheetDialogHeader title="Add measurements" />);
 
     // assert
     expect(
@@ -90,7 +95,9 @@ describe("SheetDialogHeader", () => {
   it("draws its rule in the faint stroke when the sheet asks for it", () => {
     // arrange
     // act
-    render(<SheetDialogHeader rule="faint" title="Request a check-in" />);
+    renderInDialog(
+      <SheetDialogHeader rule="faint" title="Request a check-in" />,
+    );
 
     // assert
     const band = screen.getByRole("heading", {
@@ -103,7 +110,7 @@ describe("SheetDialogHeader", () => {
   it("leaves the description out when there is none", () => {
     // arrange
     // act
-    render(<SheetDialogHeader title="Add resource" />);
+    renderInDialog(<SheetDialogHeader title="Add resource" />);
 
     // assert
     expect(

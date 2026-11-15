@@ -91,7 +91,7 @@ export function DialogFrame({
       >
         {children}
         {placement === "centred" && dismissal === "allowed" && (
-          <RadixDialog.Close className="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100">
+          <RadixDialog.Close className="hit-area absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100">
             <X aria-hidden="true" className="size-4" />
             <span className="sr-only">Close</span>
           </RadixDialog.Close>

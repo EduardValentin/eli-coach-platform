@@ -39,7 +39,7 @@ export function Pagination({
 }
 
 export function PaginationList(props: React.ComponentPropsWithoutRef<"ul">) {
-  return <ul className="flex flex-row items-center gap-1" {...props} />;
+  return <ul className="flex flex-row items-center gap-2" {...props} />;
 }
 
 type PaginationPageStatus = "current" | "other";

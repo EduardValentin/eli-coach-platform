@@ -83,6 +83,41 @@ describe("FieldLayout", () => {
     expect(control).toBeInvalid();
   });
 
+  it("leaves its control undescribed while it has neither a hint nor a problem", () => {
+    // arrange
+    // act
+    render(
+      <FieldLayout label="Weight">
+        {(control) => <input {...control} />}
+      </FieldLayout>,
+    );
+
+    // assert
+    expect(screen.getByRole("textbox", { name: "Weight" })).not.toHaveAttribute(
+      "aria-describedby",
+    );
+  });
+
+  it("describes its control by the problem alone when it has no hint, and announces it", () => {
+    // arrange
+    const error = PROBLEM;
+
+    // act
+    render(
+      <FieldLayout error={error} label="Weight">
+        {(control) => <input {...control} />}
+      </FieldLayout>,
+    );
+
+    // assert
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(PROBLEM);
+    expect(screen.getByRole("textbox", { name: "Weight" })).toHaveAttribute(
+      "aria-describedby",
+      alert.id,
+    );
+  });
+
   it.each([
     { hintPlacement: "before-control", order: ["LABEL", "P", "INPUT"] },
     { hintPlacement: "after-control", order: ["LABEL", "INPUT", "P"] },

@@ -2,9 +2,34 @@ import * as React from "react";
 import { DropdownMenu as RadixDropdownMenu } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import {
+  OpenStateContext,
+  useOpenState,
+  useTriggerControls,
+} from "../lib/open-state";
 
-export const DropdownMenu = RadixDropdownMenu.Root;
-export const DropdownMenuTrigger = RadixDropdownMenu.Trigger;
+export function DropdownMenu({
+  defaultOpen,
+  onOpenChange,
+  open,
+  ...props
+}: React.ComponentProps<typeof RadixDropdownMenu.Root>) {
+  const openState = useOpenState({ defaultOpen, onOpenChange, open });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <RadixDropdownMenu.Root {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
+}
+
+export function DropdownMenuTrigger(
+  props: React.ComponentProps<typeof RadixDropdownMenu.Trigger>,
+) {
+  const controls = useTriggerControls();
+
+  return <RadixDropdownMenu.Trigger {...controls} {...props} />;
+}
 
 type DropdownMenuContentProps = React.ComponentPropsWithoutRef<
   typeof RadixDropdownMenu.Content
@@ -41,7 +66,7 @@ export const DropdownMenuItem = React.forwardRef<
 >(({ className, variant = "default", ...props }, ref) => (
   <RadixDropdownMenu.Item
     className={cn(
-      "relative flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm outline-hidden select-none focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-[variant=destructive]:text-feedback-danger data-[variant=destructive]:focus:bg-feedback-danger/10 data-[variant=destructive]:focus:text-feedback-danger data-[variant=destructive]:*:[svg]:!text-feedback-danger [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-text-muted",
+      "relative flex min-h-12 cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm outline-hidden select-none focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-[variant=destructive]:text-feedback-danger data-[variant=destructive]:focus:bg-feedback-danger/10 data-[variant=destructive]:focus:text-feedback-danger data-[variant=destructive]:*:[svg]:!text-feedback-danger [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-text-muted",
       className,
     )}
     data-variant={variant}

@@ -18,6 +18,7 @@ import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ResponsiveSheetDialog } from "./responsive-sheet-dialog";
+import { SheetDialogHeader } from "./sheet-dialog-parts";
 
 const PHONE_WIDTH = 390;
 const DESKTOP_WIDTH = 1280;
@@ -29,10 +30,12 @@ const viewport = {
   width: DESKTOP_WIDTH,
 };
 
-function maxWidthOf(query: string): number {
-  const match = /max-width:\s*(\d+)px/.exec(query);
+const PIXELS_PER_EM = 16;
 
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+function narrowerThanOf(query: string): number {
+  const match = /width < ([\d.]+)em/.exec(query);
+
+  return match ? Number(match[1]) * PIXELS_PER_EM : Number.POSITIVE_INFINITY;
 }
 
 function viewportIs(width: number) {
@@ -43,7 +46,7 @@ function viewportIs(width: number) {
       addEventListener: (_type: string, listener: ViewportListener) =>
         viewport.listeners.add(listener),
       get matches() {
-        return viewport.width <= maxWidthOf(query);
+        return viewport.width < narrowerThanOf(query);
       },
       media: query,
       removeEventListener: (_type: string, listener: ViewportListener) =>
@@ -343,6 +346,69 @@ describe("ResponsiveSheetDialog", () => {
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       });
       expect(screen.getByRole("button", { name: "Manage" })).toHaveFocus();
+    },
+  );
+});
+
+function ScheduleCheckIn({ description }: { description?: string }) {
+  return (
+    <MotionConfig reducedMotion="always">
+      <ResponsiveSheetDialog
+        description="Pick a time"
+        onOpenChange={() => {}}
+        open
+        title="Schedule a check-in"
+      >
+        <SheetDialogHeader
+          description={description}
+          title="Schedule a check-in"
+        />
+      </ResponsiveSheetDialog>
+    </MotionConfig>
+  );
+}
+
+describe("ResponsiveSheetDialog with a shown header", () => {
+  it.each([
+    ["a wide screen", DESKTOP_WIDTH],
+    ["a phone", PHONE_WIDTH],
+  ])(
+    "is named and described once, by its visible title and description, on %s",
+    async (_viewport, width) => {
+      // arrange
+      viewportIs(width);
+
+      // act
+      render(<ScheduleCheckIn description="Pick a time" />);
+
+      // assert
+      const dialog = await screen.findByRole("dialog", {
+        name: "Schedule a check-in",
+      });
+      expect(dialog).toHaveAccessibleDescription("Pick a time");
+      expect(screen.getAllByRole("heading")).toEqual([
+        screen.getByRole("heading", { level: 2, name: "Schedule a check-in" }),
+      ]);
+      expect(screen.getAllByText("Pick a time")).toHaveLength(1);
+    },
+  );
+
+  it.each([
+    ["a wide screen", DESKTOP_WIDTH],
+    ["a phone", PHONE_WIDTH],
+  ])(
+    "is left undescribed when its header has no description on %s",
+    async (_viewport, width) => {
+      // arrange
+      viewportIs(width);
+
+      // act
+      render(<ScheduleCheckIn />);
+
+      // assert
+      expect(
+        await screen.findByRole("dialog", { name: "Schedule a check-in" }),
+      ).not.toHaveAttribute("aria-describedby");
     },
   );
 });

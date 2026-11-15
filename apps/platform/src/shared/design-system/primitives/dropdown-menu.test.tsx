@@ -30,6 +30,50 @@ function renderResourceActions() {
 }
 
 describe("DropdownMenu", () => {
+  it("points its trigger at no menu while closed", () => {
+    // arrange, act
+    renderResourceActions();
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Actions for Meal plan" }),
+    ).not.toHaveAttribute("aria-controls");
+  });
+
+  it("points its trigger at its menu while open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderResourceActions();
+    const trigger = screen.getByRole("button", {
+      name: "Actions for Meal plan",
+    });
+
+    // act
+    await user.click(trigger);
+
+    // assert
+    expect(trigger).toHaveAttribute(
+      "aria-controls",
+      screen.getByRole("menu").id,
+    );
+  });
+
+  it("gives every item the 48px pointer target", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderResourceActions();
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Meal plan" }),
+    );
+
+    // assert
+    for (const item of screen.getAllByRole("menuitem")) {
+      expect(item).toHaveClass("min-h-12");
+    }
+  });
+
   it("opens its menu when the trigger is clicked", async () => {
     // arrange
     const user = userEvent.setup();

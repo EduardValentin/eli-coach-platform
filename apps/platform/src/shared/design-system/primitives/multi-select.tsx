@@ -8,11 +8,7 @@ import type { FieldControlAttributes } from "./field-layout";
 import type { FieldSize } from "./field-size";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { SearchField } from "./search-field";
-import {
-  FIELD_TAB_INDEX,
-  SelectTriggerChevron,
-  selectTriggerClasses,
-} from "./select";
+import { SelectTriggerChevron, selectTriggerClasses } from "./select";
 
 type MultiSelectSummary = "count" | "names";
 
@@ -106,7 +102,7 @@ function OptionList<Value extends string>({
           {shown.map((option) => (
             <li key={option}>
               <label
-                className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-primary"
+                className="flex min-h-12 cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-primary"
                 data-parity="multi-select-option"
               >
                 <Checkbox
@@ -164,7 +160,6 @@ export function MultiSelect<Value extends string>({
             "min-w-auto",
             growingTriggerHeight({ size }),
           )}
-          tabIndex={FIELD_TAB_INDEX}
           type="button"
           {...fieldAttributes}
         >

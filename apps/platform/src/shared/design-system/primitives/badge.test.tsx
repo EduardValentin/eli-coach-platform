@@ -20,14 +20,14 @@ describe("badge", () => {
     expect(screen.getByText("Today")).toBeInTheDocument();
   });
 
-  it("tints a brand-secondary badge with the secondary brand", () => {
+  it("tints a brand-secondary badge with the secondary brand in its deep ink", () => {
     // arrange, act
     render(<Badge tone="brand-secondary">Today</Badge>);
 
     // assert
     expect(screen.getByText("Today")).toHaveClass(
       "bg-brand-secondary-surface",
-      "text-brand-secondary",
+      "text-brand-secondary-ink",
     );
   });
 

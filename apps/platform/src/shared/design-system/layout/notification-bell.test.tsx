@@ -55,10 +55,12 @@ const axe = configureAxe({ rules: { region: { enabled: false } } });
 
 let viewportWidth = DESKTOP_WIDTH;
 
-function maxWidthOf(query: string): number {
-  const match = /max-width:\s*(\d+)px/.exec(query);
+const PIXELS_PER_EM = 16;
 
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+function narrowerThanOf(query: string): number {
+  const match = /width < ([\d.]+)em/.exec(query);
+
+  return match ? Number(match[1]) * PIXELS_PER_EM : Number.POSITIVE_INFINITY;
 }
 
 beforeEach(() => {
@@ -66,7 +68,7 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", (query: string) => ({
     addEventListener: () => {},
     get matches() {
-      return viewportWidth <= maxWidthOf(query);
+      return viewportWidth < narrowerThanOf(query);
     },
     media: query,
     removeEventListener: () => {},

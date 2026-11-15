@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const iconButtonVariants = cva(
-  "outline-none disabled:pointer-events-none disabled:opacity-50",
+  "relative hit-area outline-none disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {

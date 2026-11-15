@@ -14,7 +14,11 @@ export function FieldError({ message, ...props }: FieldErrorProps) {
   }
 
   return (
-    <p className="text-sm font-medium text-feedback-danger" {...props}>
+    <p
+      className="text-sm font-medium text-feedback-danger"
+      role="alert"
+      {...props}
+    >
       {message}
     </p>
   );

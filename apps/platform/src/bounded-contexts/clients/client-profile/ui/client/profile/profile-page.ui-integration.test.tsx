@@ -220,7 +220,7 @@ describe("the add measurements sheet", () => {
     });
     expect(
       within(sheet).getByRole("heading", {
-        level: 3,
+        level: 2,
         name: "Add measurements",
       }),
     ).toBeInTheDocument();

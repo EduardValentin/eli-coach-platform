@@ -14,6 +14,8 @@ import {
   type DialogDismissal,
 } from "../lib/dialog-frame";
 
+type BottomSheetLabels = "spoken" | "shown";
+
 type BottomSheetProps = {
   children: ReactNode;
   className?: string;
@@ -21,6 +23,7 @@ type BottomSheetProps = {
   dismissal?: DialogDismissal;
   id?: string;
   initialFocus?: RefObject<HTMLElement | null>;
+  labels?: BottomSheetLabels;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   returnFocusTo?: RefObject<HTMLElement | null>;
@@ -57,6 +60,7 @@ export function BottomSheet(props: BottomSheetProps) {
     dismissal = "allowed",
     id,
     initialFocus,
+    labels = "spoken",
     onOpenChange,
     open,
     returnFocusTo,
@@ -146,13 +150,17 @@ export function BottomSheet(props: BottomSheetProps) {
                   className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-surface-muted"
                   data-parity="sheet-handle"
                 />
-                <RadixDialog.Title className="sr-only">
-                  {title}
-                </RadixDialog.Title>
-                {description && (
-                  <RadixDialog.Description className="sr-only">
-                    {description}
-                  </RadixDialog.Description>
+                {labels === "spoken" && (
+                  <>
+                    <RadixDialog.Title className="sr-only">
+                      {title}
+                    </RadixDialog.Title>
+                    {description && (
+                      <RadixDialog.Description className="sr-only">
+                        {description}
+                      </RadixDialog.Description>
+                    )}
+                  </>
                 )}
                 {children}
               </motion.div>

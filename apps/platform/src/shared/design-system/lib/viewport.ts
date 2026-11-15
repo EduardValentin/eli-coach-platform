@@ -17,9 +17,9 @@ function viewportQuery(media: string): ViewportQuery {
   };
 }
 
-const MOBILE_VIEWPORT = viewportQuery("(max-width: 767px)");
+const MOBILE_VIEWPORT = viewportQuery("(width < 48em)");
 
-const DESKTOP_VIEWPORT = viewportQuery("(min-width: 1024px)");
+const DESKTOP_VIEWPORT = viewportQuery("(min-width: 64em)");
 
 function serverMatchesNoViewport() {
   return false;

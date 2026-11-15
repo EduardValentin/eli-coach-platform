@@ -20,7 +20,6 @@ type CheckboxFieldProps = Omit<
   disabled?: boolean;
   error?: string;
   errorParity?: string;
-  errorRole?: "alert";
   frame?: CheckboxFieldFrame;
   label: React.ReactNode;
   layout?: CheckboxFieldLayout;
@@ -42,7 +41,6 @@ export const CheckboxField = React.forwardRef<
       disabled,
       error,
       errorParity,
-      errorRole,
       frame = "none",
       label,
       layout = "inline",
@@ -88,12 +86,7 @@ export const CheckboxField = React.forwardRef<
           </label>
         </div>
         {children}
-        <FieldError
-          data-parity={errorParity}
-          id={errorId}
-          message={error}
-          role={errorRole}
-        />
+        <FieldError data-parity={errorParity} id={errorId} message={error} />
       </div>
     );
   },

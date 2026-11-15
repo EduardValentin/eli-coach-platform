@@ -719,7 +719,7 @@ describe("adding a resource", () => {
       expect(
         within(dialog).getByRole("textbox", { name: "Description" }),
       ).toHaveValue("Start on Monday.");
-      expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+      expect(within(dialog).getByRole("alert")).toHaveTextContent(message);
       expect(
         within(dialog).getByRole("button", { name: "Add resource" }),
       ).toBeEnabled();
@@ -1435,7 +1435,9 @@ describe("editing a resource's details", () => {
       );
     });
     expect(title).toHaveValue("Plate portions guide for every meal");
-    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      `Keep the title to ${MAX_RESOURCE_TITLE_LENGTH} characters.`,
+    );
   });
 });
 
@@ -2140,7 +2142,7 @@ function onAPhone() {
       addEventListener: vi.fn(),
       addListener: vi.fn(),
       dispatchEvent: vi.fn(),
-      matches: query.includes("max-width: 767px"),
+      matches: query.includes("width < 48em"),
       media: query,
       onchange: null,
       removeEventListener: vi.fn(),

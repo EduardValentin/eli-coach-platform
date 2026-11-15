@@ -108,7 +108,6 @@ describe("CheckboxField", () => {
       <CheckboxField
         checked={false}
         error={error}
-        errorRole="alert"
         label={STATEMENT}
         onCheckedChange={vi.fn()}
       />,

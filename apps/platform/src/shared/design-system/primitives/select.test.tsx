@@ -54,14 +54,66 @@ describe("Select", () => {
     );
   });
 
-  it("stays in Safari's default Tab order like the native field it replaces", () => {
+  it("leaves its tab order to the native button", () => {
     // arrange, act
     renderHourSelect();
 
     // assert
-    expect(screen.getByRole("combobox", { name: "Start" })).toHaveAttribute(
+    expect(screen.getByRole("combobox", { name: "Start" })).not.toHaveAttribute(
       "tabindex",
-      "0",
+    );
+  });
+
+  it("points the trigger at no listbox while it is closed", () => {
+    // arrange, act
+    renderHourSelect();
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Start" })).not.toHaveAttribute(
+      "aria-controls",
+    );
+  });
+
+  it("points the trigger at its listbox while it is open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderHourSelect();
+    const trigger = screen.getByRole("combobox", { name: "Start" });
+
+    // act
+    trigger.focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(trigger).toHaveAttribute(
+      "aria-controls",
+      screen.getByRole("listbox").id,
+    );
+  });
+
+  it("gives every option row the 48px pointer target", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderHourSelect();
+
+    // act
+    screen.getByRole("combobox", { name: "Start" }).focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(screen.getByRole("option", { name: "10:00" })).toHaveClass(
+      "min-h-12",
+    );
+  });
+
+  it("grows its trigger's pointer target to 48px", () => {
+    // arrange, act
+    renderHourSelect();
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Start" })).toHaveClass(
+      "relative",
+      "hit-area",
     );
   });
 

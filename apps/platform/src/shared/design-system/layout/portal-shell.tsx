@@ -17,6 +17,7 @@ import type { DataAttributes } from "../lib/data-attributes";
 import { focusMainContent } from "../lib/focus-main-content";
 import { AttentionDot } from "../primitives/attention-dot";
 import { buttonVariants } from "../primitives/button";
+import { SkipLink } from "../primitives/skip-link";
 import { BottomSheet } from "./bottom-sheet";
 import { NavigationDialog } from "./navigation-dialog";
 import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
@@ -128,9 +129,7 @@ export function PortalShell(props: PortalShellProps) {
 
   return (
     <div className="min-h-dvh bg-surface-page" data-parity-root="PortalShell">
-      <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
-        Skip to main content
-      </a>
+      <SkipLink targetId={MAIN_CONTENT_ID} />
       {mobileNavigation.kind === "drawer" ? (
         <PortalDrawerNavigation
           label={mobileNavigation.label}
@@ -368,7 +367,7 @@ function PortalTabBar(props: PortalTabBarProps) {
         })}
         <li className="flex-1">
           <button
-            aria-controls={MORE_SHEET_ID}
+            aria-controls={more.expanded ? MORE_SHEET_ID : undefined}
             aria-expanded={more.expanded}
             className={cn(
               TAB_CLASS_NAME,

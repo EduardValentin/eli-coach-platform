@@ -46,12 +46,12 @@ describe("FieldError", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("announces its message when it is given the alert role", () => {
+  it("announces its message as an alert", () => {
     // arrange
     const message = "Tick the box to carry on.";
 
     // act
-    render(<FieldError id="consent-error" message={message} role="alert" />);
+    render(<FieldError id="consent-error" message={message} />);
 
     // assert
     expect(screen.getByRole("alert")).toHaveTextContent(message);

@@ -1,6 +1,19 @@
-import type { ReactNode, RefObject } from "react";
+import { Dialog as RadixDialog } from "radix-ui";
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 import { cn } from "../lib/cn";
+
+export type ShownHeader = { description?: string };
+
+export const ShownHeaderContext = createContext<
+  (header: ShownHeader | null) => void
+>(() => {});
 
 type SheetDialogRule = "subtle" | "faint";
 
@@ -22,6 +35,13 @@ export function SheetDialogHeader({
   rule = "subtle",
   titleRef,
 }: SheetDialogHeaderProps) {
+  const announceHeader = useContext(ShownHeaderContext);
+
+  useLayoutEffect(() => {
+    announceHeader({ description });
+    return () => announceHeader(null);
+  }, [announceHeader, description]);
+
   return (
     <div
       className={cn(
@@ -30,20 +50,20 @@ export function SheetDialogHeader({
       )}
       data-parity="sheet-header"
     >
-      <h3
+      <RadixDialog.Title
         className="pr-10 text-lg leading-snug font-semibold text-text-primary outline-none md:text-xl"
         ref={titleRef}
         tabIndex={titleRef ? -1 : undefined}
       >
         {title}
-      </h3>
+      </RadixDialog.Title>
       {description && (
-        <p
+        <RadixDialog.Description
           className="mt-1 text-xs text-text-secondary sm:text-sm"
           data-parity="sheet-description"
         >
           {description}
-        </p>
+        </RadixDialog.Description>
       )}
     </div>
   );

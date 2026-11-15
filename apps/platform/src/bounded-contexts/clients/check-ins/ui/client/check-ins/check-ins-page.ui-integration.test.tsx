@@ -337,7 +337,7 @@ beforeAll(() => {
       addEventListener: vi.fn(),
       addListener: vi.fn(),
       dispatchEvent: vi.fn(),
-      matches: query.includes("min-width: 1024px"),
+      matches: query.includes("min-width: 64em"),
       media: query,
       onchange: null,
       removeEventListener: vi.fn(),
@@ -843,7 +843,7 @@ describe("the client asking for a check-in", () => {
       name: "Request a check-in",
     });
     const title = within(dialog).getByRole("heading", {
-      level: 3,
+      level: 2,
       name: "Request a check-in",
     });
     const focusOnOpen = document.activeElement;

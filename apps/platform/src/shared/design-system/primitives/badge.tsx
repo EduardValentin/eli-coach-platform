@@ -9,7 +9,7 @@ const badgeClasses = cva(
     variants: {
       tone: {
         "brand-secondary":
-          "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary",
+          "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary-ink",
         muted: "border-border-default text-text-muted",
         secondary: "border-transparent bg-secondary text-secondary-foreground",
         pending:

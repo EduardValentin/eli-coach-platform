@@ -9,13 +9,12 @@ import { FIELD_FRAME_CLASS } from "../primitives/field-frame";
 import { fieldSizeClasses } from "../primitives/field-size";
 import { Calendar, type CalendarYearRange } from "./calendar";
 
-const TRIGGER_CLASS = "flex items-center justify-between gap-2 text-left";
+const TRIGGER_CLASS =
+  "relative hit-area flex items-center justify-between gap-2 text-left";
 
 const ICON_SIZE = 16;
 
 const NOON_UTC = 12;
-
-const FIELD_TAB_INDEX = 0;
 
 const spelledOutDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -86,7 +85,6 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
             )}
             onBlur={leaveField}
             ref={ref}
-            tabIndex={FIELD_TAB_INDEX}
             type="button"
             {...buttonProps}
           >

@@ -56,6 +56,7 @@ export {
   SelectTrigger,
   SelectValue,
 } from "./select";
+export { SkipLink } from "./skip-link";
 export { Stepper } from "./stepper";
 export {
   Table,

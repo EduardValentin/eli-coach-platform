@@ -113,14 +113,13 @@ describe("MultiSelect", () => {
     ).toBeInTheDocument();
   });
 
-  it("stays in Safari's tab order like the select it sits beside", () => {
+  it("leaves its tab order to the native button", () => {
     // arrange, act
     renderTagFilter([]);
 
     // assert
-    expect(screen.getByRole("button", { name: "Tags" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Tags" })).not.toHaveAttribute(
       "tabindex",
-      "0",
     );
   });
 

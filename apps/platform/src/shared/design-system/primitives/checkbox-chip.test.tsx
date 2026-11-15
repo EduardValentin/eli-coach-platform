@@ -92,7 +92,7 @@ describe("CheckboxChip", () => {
       "data-[state=on]:hover:bg-primary-hover",
     );
     expect(unselected).toHaveClass(
-      "data-[state=off]:border-border-default",
+      "data-[state=off]:border-control-border-soft",
       "data-[state=off]:text-text-muted",
       "data-[state=off]:hover:border-primary",
       "data-[state=off]:hover:text-primary",
@@ -141,7 +141,7 @@ describe("CheckboxChip", () => {
     );
     expect(selected).not.toHaveClass("min-h-11", "font-semibold");
     expect(unselected).toHaveClass(
-      "data-[state=off]:border-border-default",
+      "data-[state=off]:border-control-border-soft",
       "data-[state=off]:text-text-muted",
       "data-[state=off]:hover:bg-primary-soft",
       "data-[state=off]:hover:text-primary",

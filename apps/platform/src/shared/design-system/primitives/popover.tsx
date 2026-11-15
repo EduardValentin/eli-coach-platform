@@ -2,9 +2,35 @@ import * as React from "react";
 import { Popover as RadixPopover } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import {
+  OpenStateContext,
+  useOpenState,
+  useTriggerControls,
+} from "../lib/open-state";
 
-export const Popover = RadixPopover.Root;
-export const PopoverTrigger = RadixPopover.Trigger;
+export function Popover({
+  defaultOpen,
+  onOpenChange,
+  open,
+  ...props
+}: React.ComponentProps<typeof RadixPopover.Root>) {
+  const openState = useOpenState({ defaultOpen, onOpenChange, open });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <RadixPopover.Root {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
+}
+
+export function PopoverTrigger(
+  props: React.ComponentProps<typeof RadixPopover.Trigger>,
+) {
+  const controls = useTriggerControls();
+
+  return <RadixPopover.Trigger {...controls} {...props} />;
+}
+
 export const PopoverAnchor = RadixPopover.Anchor;
 
 type PopoverContentProps = React.ComponentPropsWithoutRef<
