@@ -29,6 +29,7 @@ import { currentBlock, exerciseName, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_TEXT = "See your coach's disclaimer.";
+const TERM_SEPARATOR_MARK = '—';
 const LIST_DASH = /^—\s*/;
 const LEAD_IN = /^([^:?,.]{3,40}[:?,])\s+(.+)$/;
 const LEAD_IN_END = /[:,]$/;
@@ -298,6 +299,7 @@ function Legend({ view }: { view: ProgramView }) {
         label={{ text: LEGEND_FALLBACK_TITLE, level: 2, className: DOCUMENT_CARD_TITLE_CLASS }}
         className="space-y-document-tight"
         typography={EDITED_LEGEND_TYPOGRAPHY}
+        leadSeparator={TERM_SEPARATOR_MARK}
       >
         {value => <LegendBody text={value} />}
       </DocumentTextSlot>
@@ -391,7 +393,7 @@ function TermRow({ text }: { text: string }) {
 
 function EverySessionRow({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
   return (
-    <DocumentTextSlot view={view} target={target} typography={EDITED_TERM_ROW_TYPOGRAPHY}>
+    <DocumentTextSlot view={view} target={target} typography={EDITED_TERM_ROW_TYPOGRAPHY} leadSeparator={TERM_SEPARATOR_MARK}>
       {value => <TermRow text={value} />}
     </DocumentTextSlot>
   );

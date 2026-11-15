@@ -69,8 +69,10 @@ describe('OnboardingFieldControl on an invalid submit', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     // assert
-    expect(await screen.findAllByRole('alert')).toHaveLength(2);
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts).toHaveLength(2);
     expect(screen.getByRole('checkbox', { name: 'Barbell' })).toHaveFocus();
+    expect(screen.getByRole('group', { name: /^Equipment/ })).toHaveAccessibleDescription(alerts[0].textContent ?? '');
   });
 
   it('moves focus to an empty select trigger when it is the first invalid field', async () => {

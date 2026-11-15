@@ -34,7 +34,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
       className="rounded-control border border-border-subtle bg-surface-subtle p-3"
       activeClassName="ring-2 ring-primary/40"
     >
-      <section className="grid gap-3">
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-sm font-semibold text-text-primary">Cool-down</h4>
           <Switch aria-label="Cool-down" checked={coolDown.enabled} onCheckedChange={enabled => onChange(edits.change({ ...coolDown, enabled }))} />

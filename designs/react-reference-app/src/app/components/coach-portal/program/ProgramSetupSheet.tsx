@@ -123,10 +123,10 @@ function setupTitle(journey: ClientJourney): string {
   return `Build ${possessive(journey.profile.identity.firstName)} program`;
 }
 
-type SetupFrameProps = { journey: ClientJourney; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
+type SetupFrameProps = { journey: ClientJourney; title: string; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
 
-function SetupFrame({ journey, onLeave, children }: SetupFrameProps) {
-  useDocumentTitle(setupTitle(journey));
+function SetupFrame({ journey, title, onLeave, children }: SetupFrameProps) {
+  useDocumentTitle(title);
   return (
     <div className="mx-auto w-full max-w-xl">
       <nav aria-label="Back to the client" className="mb-4">
@@ -144,21 +144,20 @@ function SetupFrame({ journey, onLeave, children }: SetupFrameProps) {
   );
 }
 
+const NOT_READY_TITLE = 'Program not ready yet';
+
 export function ProgramSetupNotReady({ journey }: { journey: ClientJourney }) {
   const her = clientPronouns(journey.profile.identity.gender).possessive.lower;
-  useDocumentTitle(setupTitle(journey));
   return (
-    <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-6 py-12 text-center sm:px-10')}>
-      <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-surface-subtle text-text-secondary">
-        <ClipboardList size={28} />
-      </span>
-      <h1 className={PORTAL_PAGE_TITLE_CLASS}>Program not ready yet</h1>
-      <p className="text-base text-text-secondary">{`The program opens once ${her} answers are approved.`}</p>
-      <Link to={clientDetailPathForJourney(journey)} className={cn(buttonVariants({ variant: 'outline', size: 'md' }), 'mt-4')}>
-        <ArrowLeft aria-hidden="true" />
-        {`Back to ${journeyClientName(journey)}`}
-      </Link>
-    </div>
+    <SetupFrame journey={journey} title={NOT_READY_TITLE}>
+      <div className={cn(cardVariants({ variant: 'panel' }), 'flex flex-col items-center px-6 py-12 text-center sm:px-10')}>
+        <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-surface-subtle text-text-secondary">
+          <ClipboardList size={28} />
+        </span>
+        <h1 className={cn(PORTAL_PAGE_TITLE_CLASS, 'mt-6')}>{NOT_READY_TITLE}</h1>
+        <p className="mt-2 text-base text-text-secondary">{`The program opens once ${her} answers are approved.`}</p>
+      </div>
+    </SetupFrame>
   );
 }
 
@@ -232,7 +231,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   }
 
   return (
-    <SetupFrame journey={journey} onLeave={cancel}>
+    <SetupFrame journey={journey} title={setupTitle(journey)} onLeave={cancel}>
       <PortalPageHeader headingId={headingId} title={setupTitle(journey)} />
       <Form {...form}>
         <form noValidate onSubmit={create}>

@@ -22,8 +22,8 @@ const LANGUAGES: Option<ProgramLanguage>[] = [
   { value: 'ro', label: 'Romanian' },
 ];
 
-const FIELD_CLASS = 'grid gap-1 sm:flex sm:items-center sm:gap-2';
-const SELECT_CLASS = 'sm:min-w-36';
+const FIELD_CLASS = 'grid min-w-36 flex-1 gap-1 sm:flex sm:flex-none sm:items-center sm:gap-2';
+const SELECT_CLASS = 'w-full min-w-0 sm:w-auto sm:min-w-36';
 const LANGUAGE_FIXED_REASON = 'Fixed once a version is published';
 
 export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
@@ -31,7 +31,7 @@ export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
   const languageFixed = program.versions.some(other => other.state === 'published');
 
   return (
-    <div role="group" aria-label="Program settings" className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:items-center sm:gap-5">
+    <div role="group" aria-label="Program settings" className="flex w-full flex-wrap items-center gap-4 sm:w-auto">
       <div className={FIELD_CLASS}>
         <Label htmlFor={ids.level} className="text-text-secondary">
           Level
@@ -48,7 +48,7 @@ export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
               {LANGUAGE_FIXED_REASON}
             </IconHint>
           </span>
-          <span className="flex min-h-10 items-center text-sm font-medium text-text-primary sm:w-36">{LANGUAGES.find(option => option.value === program.language)?.label}</span>
+          <span className="flex min-h-10 items-center text-sm font-medium text-text-primary sm:min-w-36">{LANGUAGES.find(option => option.value === program.language)?.label}</span>
         </div>
       ) : (
         <div className={FIELD_CLASS}>

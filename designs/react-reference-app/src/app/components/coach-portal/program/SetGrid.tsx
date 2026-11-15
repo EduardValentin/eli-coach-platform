@@ -123,7 +123,7 @@ function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange,
   const hasProblem = Boolean(reps.problem ?? rirProblem ?? weight.problem);
 
   return (
-    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 py-2 @min-[34rem]:items-start @min-[34rem]:gap-y-2 @min-[34rem]:py-1', wideColumns(repsSuffix))}>
+    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 py-2 @min-[34rem]:items-start @min-[34rem]:gap-y-2 @min-[34rem]:py-2', wideColumns(repsSuffix))}>
       <span className="text-sm font-medium text-text-secondary tabular-nums @min-[34rem]:flex @min-[34rem]:h-(--size-control-xs) @min-[34rem]:items-center">
         <span className="@min-[34rem]:sr-only">Set </span>
         {index + 1}
@@ -135,7 +135,7 @@ function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange,
           </ChoiceOption>
         ))}
       </ChoiceGroup>
-      <div className="col-span-full grid grid-cols-[minmax(0,0.9fr)_minmax(0,0.8fr)_minmax(0,1.7fr)_auto] items-end gap-2 @min-[34rem]:contents">
+      <div className="col-span-full grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-2 @min-[18rem]:grid-cols-[minmax(0,0.9fr)_minmax(0,0.8fr)_minmax(0,1.7fr)_auto] @min-[34rem]:contents">
         <SetCell label="Reps">{reps.field}</SetCell>
         <SetCell label="RIR">{working ? rir.field : <NoRir label={label} />}</SetCell>
         <SetCell label="Weight">{weight.field}</SetCell>
@@ -176,7 +176,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
   }
 
   return (
-    <div className="@container grid gap-3">
+    <div className="@container grid grid-cols-[minmax(0,1fr)] gap-3">
       <div>
         <div aria-hidden="true" className={cn('hidden gap-x-2 pb-1 @min-[34rem]:grid', wideColumns(repsSuffix), LABEL_CLASS)}>
           <span>Set</span>
@@ -185,7 +185,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           <span>RIR</span>
           <span>Weight</span>
         </div>
-        <ol aria-label={`Sets for ${exerciseName}`} className="grid divide-y divide-border-subtle @min-[34rem]:divide-y-0">
+        <ol aria-label={`Sets for ${exerciseName}`} className="grid grid-cols-[minmax(0,1fr)] divide-y divide-border-subtle @min-[34rem]:divide-y-0">
           {sets.map((set, index) => (
             <SetRow
               key={index}
@@ -200,7 +200,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           ))}
         </ol>
       </div>
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-4">
         <div className="grid gap-1">
           <span aria-hidden="true" className={LABEL_CLASS}>
             Rest
@@ -215,7 +215,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
             onCommit={seconds => onChange(withField(row, 'restSeconds', seconds))}
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-x-2 gap-y-4">
           <Button variant="ghost" size="xs" onClick={addWarmUp}>
             <Plus aria-hidden="true" />
             Add warm-up set

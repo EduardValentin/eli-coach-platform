@@ -115,7 +115,7 @@ function RowStats({ stats }: { stats: readonly Stat[] }) {
   return (
     <dl className="flex basis-full flex-wrap items-baseline gap-y-1 pl-16.5 text-sm tabular-nums">
       {stats.map(stat => (
-        <div key={stat.term} className="flex items-baseline gap-1.5 border-border-subtle pr-3 not-first:border-l not-first:pl-3">
+        <div key={stat.term} className="flex flex-wrap items-baseline gap-x-1.5 border-border-subtle pr-3 not-first:border-l not-first:pl-3">
           <dt className="text-text-secondary">{stat.term}</dt>
           <dd className="font-semibold text-text-primary">{stat.value}</dd>
         </div>
@@ -212,7 +212,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
         </div>
       )}
       {detailsOpen && (
-        <div id={detailsId} className="grid gap-4 border-t border-border-subtle px-3 py-4">
+        <div id={detailsId} className="grid grid-cols-[minmax(0,1fr)] gap-4 border-t border-border-subtle px-3 py-4">
           <ExerciseRowDetails
             row={row}
             exercise={exercise}

@@ -152,12 +152,12 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
       <DropZone
         rules={{ sessionId: cardio.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addSteady(dragged.item.exercise.id)) }}
         accepts={acceptsCardioExercise}
-        className={cn('grid gap-3 rounded-b-card p-3 sm:p-4', SESSION_CONTENT_CLASS)}
+        className={cn('grid grid-cols-[minmax(0,1fr)] gap-3 rounded-b-card p-3 sm:p-4', SESSION_CONTENT_CLASS)}
         activeClassName="ring-2 ring-inset ring-primary/40"
       >
         {segments.length === 0 && <PresetRow onChoose={kind => onChange(edits.applyPreset(kind))} />}
         {segments.length > 0 && (
-          <ol aria-label="Segments" className="grid gap-2">
+          <ol aria-label="Segments" className="grid grid-cols-[minmax(0,1fr)] gap-2">
             {segments.map((segment, index) => (
               <li key={segment.id}>
                 <CardioSegmentCard

@@ -51,7 +51,7 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
       className="rounded-control border border-border-subtle bg-surface-subtle p-3"
       activeClassName="ring-2 ring-primary/40"
     >
-      <section className="grid gap-2">
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-2">
         <h4 className="text-sm font-semibold text-text-primary">Warm-up</h4>
         <ExerciseItemList
           emptyFocus={addButton}

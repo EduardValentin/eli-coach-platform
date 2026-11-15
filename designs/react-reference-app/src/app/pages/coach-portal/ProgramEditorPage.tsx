@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { Library, ListTree } from 'lucide-react';
+import { ListTree } from 'lucide-react';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
@@ -122,13 +122,7 @@ function ProgramEditor(props: EditorProps) {
           placeHeading={placeHeading}
           onOverview={selected.kind === 'plan' ? null : () => editor.select({ kind: 'plan' })}
           onOpenChecks={setPublishing}
-          libraryToggle={
-            block && (
-              <Button onClick={panel.toggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={panel.visible}>
-                <Library size={20} />
-              </Button>
-            )
-          }
+          library={block ? { open: panel.visible, onToggle: panel.toggle } : null}
           railToggle={
             <Button ref={rail.openButton} onClick={rail.show} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
               <ListTree size={20} />

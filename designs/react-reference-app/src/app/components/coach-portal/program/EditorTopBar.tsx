@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
-import { AlertCircle, AlertTriangle, ArrowLeft, ChevronRight, Eye, Send, Trash2, UserRound } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, ChevronRight, Eye, Library, Send, Trash2, UserRound } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
 import type { ProgramVersion } from '../../../domain/program';
 import { counted } from '../../../utils/counted';
@@ -22,7 +22,7 @@ type EditorTopBarProps = {
   version: ProgramVersion;
   basedOn: ProgramVersion | undefined;
   railToggle: ReactNode;
-  libraryToggle: ReactNode;
+  library: { open: boolean; onToggle: () => void } | null;
   placeTitle: string;
   placeHeading: Ref<HTMLHeadingElement>;
   onOverview: (() => void) | null;
@@ -35,7 +35,7 @@ type EditorTopBarProps = {
   warningsCount: number;
 };
 
-const SMALL_SCREEN_QUERY = '(min-width: 640px)';
+const SMALL_SCREEN_QUERY = '(min-width: 40em)';
 const PLACE_TITLE_CLASS = cn(WIDGET_TITLE_CLASS, 'truncate outline-none');
 
 function discardDescription(version: ProgramVersion): string {
@@ -111,7 +111,7 @@ function PublishButton({ opensOn, onPublish }: Pick<EditorTopBarProps, 'opensOn'
   const button = (
     <Button onClick={onPublish}>
       <Send aria-hidden="true" />
-      Publish
+      <span className="@max-[20em]:sr-only">Publish</span>
     </Button>
   );
   if (!opensOn) return button;
@@ -144,7 +144,7 @@ export function EditorTopBar({
   version,
   basedOn,
   railToggle,
-  libraryToggle,
+  library,
   placeTitle,
   placeHeading,
   onOverview,
@@ -164,6 +164,7 @@ export function EditorTopBar({
   const name = journeyClientName(journey);
   const smallScreenActions: RowMenuAction[] = small
     ? [
+        ...(library ? [{ name: 'library', label: library.open ? 'Close exercise library' : 'Exercise library', icon: Library, onSelect: library.onToggle }] : []),
         { name: 'preview', label: 'Preview as client', icon: Eye, onSelect: onPreview },
         {
           name: 'profile',
@@ -179,7 +180,7 @@ export function EditorTopBar({
 
   return (
     <>
-      <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
+      <header className="@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
         <nav aria-label="Editor" className="flex shrink-0 items-center gap-2">
           <Button asChild variant="ghost" size="icon-sm">
             <Link to={clientDetailPathForJourney(journey)} aria-label={`Back to ${name}`}>
@@ -201,10 +202,14 @@ export function EditorTopBar({
           }}
           returnFocus={profileReturnFocus}
         >
-          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+          <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 sm:flex-wrap">
             {(problemsCount > 0 || warningsCount > 0) && <ChecksButton problems={problemsCount} warnings={warningsCount} onOpen={onOpenChecks} />}
             <ClientProfileTrigger />
-            {libraryToggle}
+            {library && (
+              <Button onClick={library.onToggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={library.open} className="max-sm:hidden">
+                <Library size={20} />
+              </Button>
+            )}
             <Button variant="outline" aria-label="Preview as client" onClick={onPreview} className="max-sm:hidden">
               <Eye aria-hidden="true" />
               <span className="hidden lg:inline">Preview as client</span>

@@ -415,7 +415,7 @@ describe('texts page', () => {
     // assert
     expect(within(rail()).getByRole('button', { name: /^1 Foundation/ })).toHaveTextContent(/^1 Foundation \d+ need Romanian$/);
     const edit = within(programDocument()).getByRole('button', { name: 'Edit Block intro' });
-    expect(within(edit.parentElement as HTMLElement).getByText('Romanian text pending')).toBeInTheDocument();
+    expect(within(edit.parentElement as HTMLElement).getByRole('button', { name: 'Romanian text pending' })).toBeInTheDocument();
 
     // act
     await user.click(edit);

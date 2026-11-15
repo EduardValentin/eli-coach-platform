@@ -183,7 +183,7 @@ function LibraryFrame({ isDrawer, headingId, asideRef, onClose, children }: Fram
   useInertOutside(drawerRoot, isDrawer);
   if (!isDrawer) {
     return (
-      <aside ref={asideRef} aria-labelledby={headingId} className="flex w-80 shrink-0 flex-col border-l border-border bg-card">
+      <aside ref={asideRef} aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
         {children}
       </aside>
     );

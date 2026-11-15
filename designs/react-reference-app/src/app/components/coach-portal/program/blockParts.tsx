@@ -54,7 +54,7 @@ export function BlockTypeSelect({ value, label, appearance, problemId, onChange 
         aria-invalid={problemId ? true : undefined}
         className={cn({
           'w-auto min-w-0 bg-transparent px-2 text-left text-lg font-semibold whitespace-normal text-text-primary shadow-none hover:bg-surface-quiet md:text-lg *:data-[slot=select-value]:line-clamp-2': appearance === 'title',
-          'w-auto min-w-40': appearance === 'field',
+          'w-auto max-w-full min-w-0 sm:min-w-40': appearance === 'field',
         })}
       >
         <SelectValue />

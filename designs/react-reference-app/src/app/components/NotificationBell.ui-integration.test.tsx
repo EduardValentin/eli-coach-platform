@@ -250,6 +250,16 @@ describe('the coach’s bell', () => {
   it('opens as a sheet on a phone', async () => {
     // arrange
     window.innerWidth = PHONE_WIDTH;
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: query.startsWith('(width <'),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
     renderAt('/coach?session=coach');
 
     // act

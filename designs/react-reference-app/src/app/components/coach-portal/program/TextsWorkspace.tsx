@@ -24,7 +24,7 @@ export function TextsWorkspace({ section, journey, program, draft, today, editin
       : journeyProgramView({ ...input, fallbackDayOne: today });
 
   return (
-    <div data-editor-column="" className="mx-auto mb-24 w-full max-w-[210mm] overflow-hidden border border-border bg-surface-base shadow-card">
+    <div className="mx-auto w-full max-w-[210mm] overflow-clip border border-border bg-surface-base shadow-card">
       <ProgramDocument view={view} editing={editing} part={section.kind === 'block' ? 'block' : 'program-wide'} />
     </div>
   );

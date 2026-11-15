@@ -121,7 +121,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
   return (
     <div
       className={cn(
-        'flex items-start gap-2 rounded-card border border-border bg-surface-base py-2.5 pr-2 pl-1.5 shadow-card transition-opacity motion-reduce:transition-none sm:gap-3',
+        'flex flex-wrap items-start gap-2 rounded-card border border-border bg-surface-base py-2.5 pr-2 pl-1.5 shadow-card transition-opacity motion-reduce:transition-none sm:gap-3',
         {
           'opacity-40': isDragging,
         },
@@ -144,10 +144,10 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
       ) : (
         <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
       )}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-3">
+      <div className="flex min-w-0 flex-1 basis-48 flex-wrap items-center gap-x-3 gap-y-3">
         <BlockNumber block={block} index={index} size="sm" />
         {status.kind === 'ended' ? (
-          <span className="min-w-40 text-sm font-medium text-text-primary">{typeLabel}</span>
+          <span className="text-sm font-medium text-text-primary sm:min-w-40">{typeLabel}</span>
         ) : (
           <BlockTypeSelect
             value={block.type}

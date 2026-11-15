@@ -62,7 +62,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
   }
 
   return (
-    <section className="grid gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
       <BlockHeader
         key={block.id}
         blocks={blocks}
@@ -78,7 +78,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
         measureRef={header.measureRef}
       />
       <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
-      <div className="grid gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
         {planned.map(entry =>
           entry.kind === 'cardio' ? (
             <CardioSessionCard

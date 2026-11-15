@@ -404,8 +404,9 @@ describe('ProgramSetupSheet', () => {
     // assert
     expect(screen.getByRole('heading', { level: 1, name: 'Program not ready yet' })).toBeInTheDocument();
     expect(screen.getByText('The program opens once her answers are approved.')).toBeInTheDocument();
+    expect(document.title).toBe('Program not ready yet · Evoa');
     expect(screen.getAllByRole('link')).toHaveLength(1);
-    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
+    expect(within(screen.getByRole('navigation', { name: 'Back to the client' })).getByRole('link', { name: 'Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
     expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
   });
 

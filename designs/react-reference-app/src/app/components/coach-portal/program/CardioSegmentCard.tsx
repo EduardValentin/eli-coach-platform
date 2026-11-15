@@ -94,7 +94,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   const { items } = segment;
   const addButton = useRef<HTMLButtonElement>(null);
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
       <fieldset className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
         <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
@@ -259,7 +259,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
       data-segment-id={segment.id}
-      className={cn(DRAGGABLE_CARD_CLASS, 'grid gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }))}
+      className={cn(DRAGGABLE_CARD_CLASS, 'grid grid-cols-[minmax(0,1fr)] gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />

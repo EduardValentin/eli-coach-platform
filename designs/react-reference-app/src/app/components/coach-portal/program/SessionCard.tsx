@@ -97,7 +97,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
           ]}
         />
       </header>
-      <div className={cn('grid gap-5 p-3 sm:p-4', SESSION_CONTENT_CLASS)}>
+      <div className={cn('grid grid-cols-[minmax(0,1fr)] gap-5 p-3 sm:p-4', SESSION_CONTENT_CLASS)}>
         <WarmUpCard
           session={session}
           library={library}

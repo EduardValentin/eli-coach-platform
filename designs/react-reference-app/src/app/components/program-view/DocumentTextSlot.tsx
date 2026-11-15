@@ -1,7 +1,8 @@
-import { Pencil } from 'lucide-react';
+import { Languages, Pencil } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type FocusEvent, type ReactNode } from 'react';
 import { isCustomised, isWritten, programText, type ProgramText, type ProgramTextTarget, type TextFormatting } from '../../domain/programTexts';
 import { showUndoToast } from '../../utils/showUndoToast';
+import { IconHint } from '../IconHint';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { RichTextEditor, type RichTextEditorHandle, type RichTextTheme, type RichTextTool } from '../ui/rich-text-editor';
@@ -21,11 +22,15 @@ type TextSlotProps = {
   className?: string;
   unwritten?: ReactNode;
   typography?: Partial<DocumentTypography>;
+  leadSeparator?: string;
   children: (value: string) => ReactNode;
 };
 
-const EDIT_BUTTON_CLASS =
-  'text-text-secondary sm:absolute sm:right-[calc(8mm-1rem)]';
+const EDIT_BUTTON_CLASS = 'text-text-secondary';
+const SLOT_TOOLS_CLASS =
+  'float-right ml-2 flex items-center gap-2 sm:absolute sm:right-[calc(8mm-1rem)] sm:ml-0 sm:flex-col sm:gap-4';
+const PENDING_TEXT = 'Romanian text pending';
+const PENDING_HINT = 'Romanian text pending: this text still prints the English standard.';
 const EMPTY_LABEL_CLASS = 'text-document-body font-semibold text-text-primary';
 const TOOLS: Record<TextFormatting, readonly RichTextTool[]> = {
   plain: [],
@@ -67,7 +72,7 @@ function useEditorTheme(override: Partial<DocumentTypography> | undefined): Rich
 function PendingBadge({ id }: { id?: string }) {
   return (
     <Badge id={id} tone="pending">
-      Romanian text pending
+      {PENDING_TEXT}
     </Badge>
   );
 }
@@ -105,7 +110,7 @@ type EditableSlotProps = Omit<TextSlotProps, 'view' | 'unwritten'> & { editing: 
 
 type FocusTarget = 'editor' | 'edit' | 'label' | 'restore' | null;
 
-function EditableSlot({ editing, target, text, label, labelledBy, className, typography, children }: EditableSlotProps) {
+function EditableSlot({ editing, target, text, label, labelledBy, className, typography, leadSeparator, children }: EditableSlotProps) {
   const [open, setOpen] = useState(false);
   const [focusRequest, setFocusRequest] = useState(0);
   const editor = useRef<RichTextEditorHandle>(null);
@@ -156,9 +161,8 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
 
   if (!open && written) {
     return (
-      <div onClick={start} className={cn('group/slot cursor-text rounded-field outline-offset-4 hover:outline hover:outline-control-border-soft', className)}>
-        <div className={cn('float-right ml-2 flex items-center gap-2', { 'sm:contents': !text.pending })}>
-          {text.pending && <PendingBadge />}
+      <div onClick={start} className={cn('group/slot flow-root cursor-text rounded-field outline-offset-4 hover:outline hover:outline-control-border-soft', className)}>
+        <div className={SLOT_TOOLS_CLASS}>
           <Button
             ref={editButton}
             type="button"
@@ -173,6 +177,11 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
           >
             <Pencil />
           </Button>
+          {text.pending && (
+            <IconHint label={PENDING_TEXT} icon={<Languages aria-hidden="true" className="size-4" />} className="text-status-pending">
+              {PENDING_HINT}
+            </IconHint>
+          )}
         </div>
         {children(text.value)}
       </div>
@@ -184,7 +193,7 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
 
   return (
     <div
-      className={cn('grid gap-1.5', className)}
+      className={cn('grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5', className)}
       onFocus={event => {
         if (!restoringFocus.current && event.target.getAttribute('role') === 'textbox') setOpen(true);
       }}
@@ -193,7 +202,17 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
       }}
       onPointerDown={() => setOpen(true)}
     >
-      {ownLabel && <EmptyLabel id={ownLabelId} label={label ?? { text: text.name }} optional={text.optional} />}
+      {(ownLabel || text.hint || text.pending) && (
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          {ownLabel && <EmptyLabel id={ownLabelId} label={label ?? { text: text.name }} optional={text.optional} />}
+          {text.hint && (
+            <p id={hintId} className="text-sm text-text-secondary">
+              {text.hint}
+            </p>
+          )}
+          {text.pending && <PendingBadge id={pendingId} />}
+        </div>
+      )}
       <RichTextEditor
         ref={editor}
         label={text.name}
@@ -206,24 +225,13 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
         tools={TOOLS[text.formatting]}
         lines={text.formatting === 'plain' ? 'one' : 'many'}
         controls={open ? 'shown' : 'hidden'}
-        className={cn({ '-mx-[calc(0.75rem+1px)] -my-[calc(0.5rem+1px)]': written })}
+        frame={written ? 'outline' : 'field'}
+        leadSeparator={leadSeparator}
         onChange={value => {
           editing.write(target, value);
           setOpen(true);
         }}
         onEscape={finish}
-        notes={
-          (text.hint || text.pending) && (
-            <>
-              {text.hint && (
-                <p id={hintId} className="text-sm text-text-secondary">
-                  {text.hint}
-                </p>
-              )}
-              {text.pending && <PendingBadge id={pendingId} />}
-            </>
-          )
-        }
         actions={
           <>
             {isCustomised(text) && (
@@ -241,12 +249,13 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
   );
 }
 
-export function DocumentTextSlot({ view, target, label, labelledBy, className, unwritten, typography, children }: TextSlotProps) {
+export function DocumentTextSlot({ view, target, unwritten, ...slot }: TextSlotProps) {
   const editing = useDocumentEditing();
   const text = textOf(view, target);
+  const { className, children } = slot;
   if (editing) {
     return (
-      <EditableSlot editing={editing} target={target} text={text} label={label} labelledBy={labelledBy} className={className} typography={typography}>
+      <EditableSlot {...slot} editing={editing} target={target} text={text}>
         {children}
       </EditableSlot>
     );

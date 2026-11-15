@@ -63,9 +63,10 @@ type RichTextEditorProps = {
   theme: RichTextTheme;
   tools: readonly RichTextTool[];
   lines?: "one" | "many";
+  frame?: "field" | "outline";
   controls?: "shown" | "hidden";
   actions?: React.ReactNode;
-  notes?: React.ReactNode;
+  leadSeparator?: string;
   placeholder?: string;
   describedBy?: string;
   className?: string;
@@ -190,6 +191,33 @@ function registerAllowedContent(editor: LexicalEditor, tools: readonly RichTextT
   );
 }
 
+const HIDDEN_STYLE = "display: none";
+
+function escapedPattern(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function registerLeadSeparator(editor: LexicalEditor, separator: string): () => void {
+  const pattern = new RegExp(`^\\s*${escapedPattern(separator)}\\s*`);
+  return editor.registerNodeTransform(TextNode, (text) => {
+    const lead = text.getPreviousSibling();
+    const followsLead = text.getIndexWithinParent() === 1 && $isTextNode(lead) && lead.hasFormat("bold") && !text.hasFormat("bold");
+    const match = followsLead ? pattern.exec(text.getTextContent()) : null;
+    const hidden = text.getStyle() === HIDDEN_STYLE;
+    if (!match) {
+      if (hidden) text.setStyle("");
+      return;
+    }
+    if (match[0].length < text.getTextContentSize()) {
+      const [separatorText, rest] = text.splitText(match[0].length);
+      separatorText.setStyle(HIDDEN_STYLE);
+      rest.setStyle("");
+      return;
+    }
+    if (!hidden) text.setStyle(HIDDEN_STYLE);
+  });
+}
+
 function formatWithin(formats: readonly TextFormatType[]) {
   return (format: TextFormatType): boolean => {
     if (!formats.includes(format)) return true;
@@ -236,7 +264,7 @@ function registerShortcuts(editor: LexicalEditor, tools: readonly RichTextTool[]
 }
 
 function useRichTextEditor(props: RichTextEditorProps) {
-  const { value, theme, tools } = props;
+  const { value, theme, tools, leadSeparator } = props;
   const latest = React.useRef(props);
   latest.current = props;
   const written = React.useRef<string | null>(null);
@@ -262,6 +290,7 @@ function useRichTextEditor(props: RichTextEditorProps) {
       registerHistory(editor, createEmptyHistoryState(), 300),
       registerAllowedContent(editor, enabled),
       registerShortcuts(editor, enabled),
+      leadSeparator ? registerLeadSeparator(editor, leadSeparator) : () => {},
       editor.registerCommand(FORMAT_TEXT_COMMAND, formatWithin(allowedFormats(enabled)), COMMAND_PRIORITY_HIGH),
       editor.registerCommand(
         KEY_ESCAPE_COMMAND,
@@ -287,7 +316,7 @@ function useRichTextEditor(props: RichTextEditorProps) {
         latest.current.onChange(text);
       }),
     );
-  }, [editor, toolsKey]);
+  }, [editor, toolsKey, leadSeparator]);
 
   React.useLayoutEffect(() => {
     if (value === written.current) return;
@@ -309,11 +338,14 @@ const TOOL_SPECS: Record<RichTextTool, ToolSpec> = {
   list: { label: "Bulleted list", shortcut: "Control+Shift+8 Meta+Shift+8", icon: <List /> },
 };
 
-const ENTRY_FRAME_CLASS = "min-w-0 rounded-field border border-control-border-soft bg-surface-base outline-none";
-const ENTRY_BOX_CLASS = "box-content block px-3 py-2 [grid-area:1/1]";
+const FRAME_CLASS = {
+  field: "box-content min-w-0 rounded-field border border-control-border-soft bg-surface-base px-3 py-2",
+  outline:
+    "min-w-0 rounded-field outline-1 outline-offset-8 outline-control-border-soft [--focus-ring-halo:0_0_#0000] [--focus-ring-offset:8px]",
+} as const;
 const LINES_CLASS = { one: "min-h-8", many: "min-h-12" } as const;
-const CONTROLS_BAR_CLASS =
-  "fixed bottom-4 z-30 grid gap-2 rounded-field border border-border bg-surface-base p-2 shadow-card";
+const CONTROLS_ROW_CLASS =
+  "sticky bottom-0 z-10 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-field border border-border bg-surface-base px-2 py-1";
 const ROVING_KEYS = new Set(["ArrowRight", "ArrowLeft", "Home", "End"]);
 
 function runTool(editor: LexicalEditor, tool: RichTextTool) {
@@ -345,7 +377,7 @@ function Toolbar({ editor, label, tools, state }: ToolbarProps) {
   }
 
   return (
-    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex flex-wrap gap-4">
+    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex min-w-0 flex-nowrap gap-4 overflow-x-auto">
       {tools.map((tool) => (
         <Toggle
           key={tool}
@@ -368,53 +400,11 @@ function Toolbar({ editor, label, tools, state }: ToolbarProps) {
   );
 }
 
-const BAR_CLEARANCE = 8;
-
-function keepAbove(frame: HTMLElement, bar: HTMLElement) {
-  const barTop = bar.getBoundingClientRect().top;
-  const { top, bottom, height } = frame.getBoundingClientRect();
-  if (bottom <= barTop - BAR_CLEARANCE) return;
-  const clearance = window.innerHeight - barTop + BAR_CLEARANCE;
-  frame.style.scrollMarginBottom = `${clearance}px`;
-  frame.scrollIntoView({ block: height < barTop - BAR_CLEARANCE && top >= 0 ? "end" : "start" });
-}
-
-type ColumnBox = { left: number; width: number };
-
-function useColumnOf(element: React.RefObject<HTMLElement | null>, active: boolean): ColumnBox | undefined {
-  const [box, setBox] = React.useState<ColumnBox>();
-
-  React.useLayoutEffect(() => {
-    const target = element.current?.closest<HTMLElement>("[data-editor-column]") ?? element.current;
-    if (!active || !target) return;
-    const measure = () => {
-      const { left, width } = target.getBoundingClientRect();
-      setBox({ left, width });
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(target);
-    window.addEventListener("resize", measure);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [element, active]);
-
-  return active ? box : undefined;
-}
-
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>((props, ref) => {
-  const { label, labelledBy, placeholder, describedBy, theme, tools, lines = "many", controls = "shown", actions, notes, className, onEscape } = props;
+  const { label, labelledBy, placeholder, describedBy, theme, tools, lines = "many", frame = "field", controls = "shown", actions, className, onEscape } = props;
   const { editor, toolbar, empty } = useRichTextEditor(props);
   const content = React.useRef<HTMLDivElement>(null);
   const shown = controls === "shown" && (tools.length > 0 || Boolean(actions));
-  const column = useColumnOf(content, shown);
-  const bar = React.useRef<HTMLDivElement>(null);
-
-  React.useLayoutEffect(() => {
-    if (column && content.current && bar.current) keepAbove(content.current, bar.current);
-  }, [column]);
 
   React.useLayoutEffect(() => {
     editor.setRootElement(content.current);
@@ -439,8 +429,10 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     onEscape();
   }
 
+  const entryClass = cn("block [grid-area:1/1]", FRAME_CLASS[frame], { [LINES_CLASS[lines]]: frame === "field" });
+
   return (
-    <div className={cn("grid", className)} onKeyDown={onKeyDown}>
+    <div className={cn("grid min-w-0 grid-cols-[minmax(0,1fr)]", className)} onKeyDown={onKeyDown}>
       <div
         ref={content}
         contentEditable
@@ -451,20 +443,17 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
         aria-placeholder={placeholder}
-        className={cn(ENTRY_FRAME_CLASS, ENTRY_BOX_CLASS, LINES_CLASS[lines], theme.root)}
+        className={cn(entryClass, theme.root)}
       />
       {empty && placeholder && (
-        <p aria-hidden="true" className={cn("pointer-events-none border border-transparent", ENTRY_BOX_CLASS, theme.root, "text-muted-foreground")}>
+        <p aria-hidden="true" className={cn(entryClass, theme.root, "pointer-events-none border-transparent bg-transparent text-muted-foreground outline-transparent")}>
           {placeholder}
         </p>
       )}
       {shown && (
-        <div ref={bar} style={column} className={CONTROLS_BAR_CLASS}>
-          {notes && <div className="flex flex-wrap items-center gap-x-3 gap-y-1">{notes}</div>}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
-            {actions && <div className="ml-auto flex flex-wrap items-center gap-4">{actions}</div>}
-          </div>
+        <div className={CONTROLS_ROW_CLASS}>
+          {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
+          {actions && <div className="ml-auto flex shrink-0 flex-wrap items-center gap-4">{actions}</div>}
         </div>
       )}
     </div>

@@ -40,7 +40,7 @@ function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
           <span className="sr-only">{` ${positions.join(' and ')}`}</span>
         </Button>
       </div>
-      <div className="grid gap-2 px-2 pb-2">{children}</div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2 px-2 pb-2">{children}</div>
     </div>
   );
 }
@@ -148,7 +148,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
   };
 
   return (
-    <section ref={section} className="grid gap-2">
+    <section ref={section} className="grid grid-cols-[minmax(0,1fr)] gap-2">
       <header className="flex items-start gap-3">
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
           <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
@@ -168,13 +168,13 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
         {units.length === 0 ? (
           <EmptyDropTarget rules={rulesAt({ slot })} place={heading} onAdd={() => onAdd(slot)} />
         ) : (
-          <div className="grid">
+          <div className="grid grid-cols-[minmax(0,1fr)]">
             {several && <DropSeparator rules={rulesAt({ slot, beforeRowId: units[0].rows[0].id })} />}
             {units.map((unit, index) => {
               const next = units[index + 1];
               const { group } = unit;
               return (
-                <div key={unit.key} className="grid">
+                <div key={unit.key} className="grid grid-cols-[minmax(0,1fr)]">
                   {group === undefined ? (
                     card(unit.rows[0].id)
                   ) : (

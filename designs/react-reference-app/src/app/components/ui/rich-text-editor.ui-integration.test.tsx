@@ -7,7 +7,7 @@ import { RichTextEditor, type RichTextEditorHandle } from './rich-text-editor';
 
 const THEME = { root: '', heading: '', list: '', bold: '', italic: '' };
 
-function renderEditor(initial: string, onEscape = vi.fn()) {
+function renderEditor(initial: string, onEscape = vi.fn(), leadSeparator?: string) {
   const handle = createRef<RichTextEditorHandle>();
   const saved: string[] = [];
   function Harness() {
@@ -26,6 +26,7 @@ function renderEditor(initial: string, onEscape = vi.fn()) {
           setValue(text);
         }}
         onEscape={onEscape}
+        leadSeparator={leadSeparator}
       />
     );
   }
@@ -120,6 +121,20 @@ describe('RichTextEditor', () => {
     await focusAtEnd(handle);
 
     // assert
+    expect(saved).toEqual([]);
+  });
+
+  it('hides the separator after a bold lead-in without changing the stored text', async () => {
+    // arrange
+    const { handle, saved } = renderEditor('**RIR 2** — Stop with 2 reps left.', vi.fn(), '—');
+
+    // act
+    await focusAtEnd(handle);
+
+    // assert
+    expect(screen.getByText(/^\s*—\s*$/)).not.toBeVisible();
+    expect(screen.getByText('RIR 2')).toBeVisible();
+    expect(screen.getByText('Stop with 2 reps left.')).toBeVisible();
     expect(saved).toEqual([]);
   });
 });

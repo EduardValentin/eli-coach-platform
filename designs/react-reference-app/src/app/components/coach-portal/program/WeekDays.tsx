@@ -131,7 +131,7 @@ export function WeekDays(props: WeekDaysProps) {
   const headingId = useId();
   const confirm = useResetConfirm();
   return (
-    <section aria-labelledby={headingId} className="grid gap-2 lg:**:scroll-mt-[calc(var(--block-header-height)+0.5rem)]">
+    <section aria-labelledby={headingId} className="grid grid-cols-[minmax(0,1fr)] gap-2 lg:**:scroll-mt-[calc(var(--block-header-height)+0.5rem)]">
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
