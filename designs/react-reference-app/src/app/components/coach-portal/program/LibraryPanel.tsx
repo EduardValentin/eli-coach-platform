@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref, type RefObject } from 'react';
 import { useDrag } from 'react-dnd';
-import { GripVertical, Plus, X } from 'lucide-react';
+import { GripVertical, Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import {
   MOVEMENT_PATTERN_LABELS,
@@ -22,13 +22,15 @@ import { WatchVideoButton } from '../../WatchVideoButton';
 import { Badge } from '../../ui/badge';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { SelectTriggerChevron, selectTriggerClasses } from '../../ui/select';
 import { Sheet, SheetContent, SheetTitle } from '../../ui/sheet';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { usePendingFocus } from './usePendingFocus';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
-import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { OptionSelect } from './OptionSelect';
 
 export type LibraryType = 'resistance' | 'mobility' | 'stretching' | 'cardio';
 export type LibraryPurpose = {
@@ -73,11 +75,15 @@ function anyOf<Value>(chosen: readonly Value[], values: readonly Value[]): boole
   return chosen.length === 0 || values.some(value => chosen.includes(value));
 }
 
-function activeFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
+function searchFilters(filters: Filters): ActiveFilter[] {
   const query = filters.query.trim();
+  if (!query) return [];
+  return [{ key: 'query', label: `Search: “${query}”`, remove: (current: Filters) => ({ ...current, query: '' }) }];
+}
+
+function panelFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
   const patterns = type === 'resistance' ? filters.patterns : [];
   return [
-    ...(query ? [{ key: 'query', label: `Search: “${query}”`, remove: (current: Filters) => ({ ...current, query: '' }) }] : []),
     ...patterns.map(pattern => ({
       key: `pattern-${pattern}`,
       label: `Pattern: ${MOVEMENT_PATTERN_LABELS[pattern]}`,
@@ -115,57 +121,59 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
     <div
       ref={drag as unknown as Ref<HTMLDivElement>}
       className={cn(
-        'group flex cursor-grab touch-none items-start select-none gap-2 rounded-control border bg-card p-3 transition-shadow hover:shadow-card active:cursor-grabbing motion-reduce:transition-none',
+        'group grid cursor-grab touch-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1.5 rounded-control border bg-card p-3 select-none transition-shadow hover:shadow-card active:cursor-grabbing motion-reduce:transition-none',
         { 'border-primary opacity-50': isDragging, 'border-border': !isDragging },
       )}
     >
-      <div className="grid min-w-0 flex-1 gap-1.5">
-        <p className="text-sm leading-tight font-medium break-words text-text-primary">{exercise.name}</p>
-        {exercise.primaryMuscles.length > 0 && (
-          <span className="flex flex-wrap gap-1">
-            {exercise.primaryMuscles.map(muscle => (
-              <Badge key={muscle} tone="muted" className="max-w-full break-words whitespace-normal">
-                {muscle}
-              </Badge>
-            ))}
-          </span>
-        )}
-        {exercise.equipment.length > 0 && <span className="text-xs break-words text-text-secondary">{exercise.equipment.join(', ')}</span>}
-      </div>
+      <p className="text-sm leading-tight font-medium break-words text-text-primary">{exercise.name}</p>
       <span className="flex items-center gap-6">
         {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />}
         <IconActionButton icon={Plus} label={`Add ${exercise.name}`} hint="Add exercise" onClick={() => onAdd(exercise)} />
         <GripVertical aria-hidden="true" size={16} className="text-text-secondary group-hover:text-primary" />
       </span>
+      {exercise.primaryMuscles.length > 0 && (
+        <span className="col-span-2 flex flex-wrap gap-1">
+          {exercise.primaryMuscles.map(muscle => (
+            <Badge key={muscle} tone="muted" className="max-w-full break-words whitespace-normal">
+              {muscle}
+            </Badge>
+          ))}
+        </span>
+      )}
+      {exercise.equipment.length > 0 && <span className="col-span-2 text-xs break-words text-text-secondary">{exercise.equipment.join(', ')}</span>}
     </div>
   );
 }
 
-type NoMatchesProps = {
-  type: LibraryType;
-  filters: readonly ActiveFilter[];
-  containerRef: RefObject<HTMLDivElement>;
-  onRemove: (filter: ActiveFilter, index: number) => void;
-  onClear: () => void;
-};
+type FilterChipsProps = { filters: readonly ActiveFilter[]; onRemove: (filter: ActiveFilter, index: number) => void };
 
-function NoMatches({ type, filters, containerRef, onRemove, onClear }: NoMatchesProps) {
+function FilterChips({ filters, onRemove }: FilterChipsProps) {
+  return (
+    <ul aria-label="Active filters" data-active-filters="" className="flex flex-wrap gap-x-2 gap-y-5">
+      {filters.map((filter, index) => (
+        <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
+      ))}
+    </ul>
+  );
+}
+
+type NoMatchesProps = FilterChipsProps & { type: LibraryType; onClear: () => void };
+
+function NoMatches({ type, filters, onRemove, onClear }: NoMatchesProps) {
   const kind = `${TYPE_OPTIONS.find(option => option.value === type)?.label.toLowerCase()} exercises`;
   if (filters.length === 0) return <p className="px-1 py-4 text-sm text-text-secondary">{`No ${kind} yet.`}</p>;
   return (
-    <div ref={containerRef} className="grid justify-items-start gap-4 px-1 py-4">
+    <div className="grid justify-items-start gap-4 px-1 py-4">
       <div className="grid gap-1">
         <p className="text-sm font-semibold text-text-primary">No matches</p>
         <p className="text-sm text-text-secondary">{`No ${kind} match these filters. Remove one to see more.`}</p>
       </div>
-      <ul aria-label="Active filters" className="flex flex-wrap gap-2">
-        {filters.map((filter, index) => (
-          <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
-        ))}
-      </ul>
-      <Button variant="outline" size="xs" data-clear-filters="" onClick={onClear}>
-        Clear filters
-      </Button>
+      <div className="grid justify-items-start gap-6">
+        <FilterChips filters={filters} onRemove={onRemove} />
+        <Button variant="outline" size="xs" onClick={onClear}>
+          Clear filters
+        </Button>
+      </div>
     </div>
   );
 }
@@ -176,6 +184,62 @@ function SwitchRow({ label, checked, onCheckedChange }: { label: string; checked
       <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} />
       {label}
     </label>
+  );
+}
+
+type FiltersPopoverProps = {
+  type: LibraryType;
+  filters: Filters;
+  activeCount: number;
+  triggerRef: RefObject<HTMLButtonElement>;
+  onChange: (next: Partial<Filters>) => void;
+  onClear: (panel: HTMLElement | null) => void;
+};
+
+function FiltersPopover({ type, filters, activeCount, triggerRef, onChange, onClear }: FiltersPopoverProps) {
+  const panel = useRef<HTMLDivElement>(null);
+  const { patterns, muscles, onlyHers, bodyweightOnly } = filters;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          ref={triggerRef}
+          type="button"
+          data-slot="select-trigger"
+          aria-label={activeCount === 0 ? 'Filters' : `Filters, ${activeCount} active`}
+          className={selectTriggerClasses('w-full')}
+        >
+          <span data-slot="select-value">
+            Filters
+            {activeCount > 0 && <Badge tone="count">{activeCount}</Badge>}
+          </span>
+          <SelectTriggerChevron />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent ref={panel} aria-label="Filters" align="end" collisionPadding={16} className="grid gap-4">
+        <div className="grid gap-2">
+          {type === 'resistance' && (
+            <MultiSelect
+              label="Pattern"
+              selected={patterns}
+              options={MOVEMENT_PATTERNS}
+              labels={MOVEMENT_PATTERN_LABELS}
+              onToggle={value => onChange({ patterns: toggled(patterns, value) })}
+            />
+          )}
+          <MultiSelect label="Muscle" selected={muscles} options={MUSCLES} labels={MUSCLE_LABELS} onToggle={value => onChange({ muscles: toggled(muscles, value) })} />
+        </div>
+        <div className="grid gap-2">
+          <SwitchRow label="Only her equipment" checked={onlyHers} onCheckedChange={checked => onChange({ onlyHers: checked })} />
+          <SwitchRow label="Bodyweight" checked={bodyweightOnly} onCheckedChange={checked => onChange({ bodyweightOnly: checked })} />
+        </div>
+        {activeCount > 0 && (
+          <Button variant="outline" size="xs" className="justify-self-start" onClick={() => onClear(panel.current)}>
+            Clear filters
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -219,7 +283,8 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
   const announce = useEditorAnnouncer();
   const focusLater = usePendingFocus();
-  const noMatches = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const filtersTrigger = useRef<HTMLButtonElement>(null);
   const headingId = useId();
   const purposeId = useId();
   const isDrawer = presentation === 'drawer';
@@ -240,6 +305,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
     .filter(exercise => anyOf(muscles, exercise.primaryMuscles))
     .filter(exercise => !onlyHers || exercise.equipment.every(item => equipment.includes(item)))
     .filter(exercise => !bodyweightOnly || exercise.equipment.length === 0);
+  const fromPanel = panelFilters(filters, type);
   useCountAnnouncement(shown.length, JSON.stringify([type, filters]));
 
   function add(exercise: Exercise) {
@@ -250,9 +316,14 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   function removeFilter(filter: ActiveFilter, index: number) {
     setFilters(filter.remove);
     focusLater(() => {
-      const chips = [...(noMatches.current?.querySelectorAll<HTMLElement>('li button') ?? [])];
-      return chips[index] ?? chips.at(-1) ?? searchRef.current;
+      const chips = [...(content.current?.querySelectorAll<HTMLElement>('[data-active-filters] li button') ?? [])];
+      return chips[index] ?? chips.at(-1) ?? filtersTrigger.current;
     });
+  }
+
+  function clearPanelFilters(panel: HTMLElement | null) {
+    change({ patterns: [], muscles: [], onlyHers: false, bodyweightOnly: false });
+    focusLater(() => panel?.querySelector<HTMLElement>('button') ?? filtersTrigger.current);
   }
 
   function clearFilters() {
@@ -262,57 +333,50 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
 
   return (
     <LibraryFrame isDrawer={isDrawer} headingId={headingId} onClose={onClose}>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
-        <LibraryHeading isDrawer={isDrawer} headingId={headingId} />
-        {purpose && (
-          <p id={purposeId} className="sr-only">
-            {purpose.label}
-          </p>
-        )}
-        <SearchField
-          ref={searchRef}
-          aria-label="Search exercises"
-          aria-describedby={purpose ? purposeId : undefined}
-          placeholder="Search exercises"
-          value={query}
-          onChange={event => change({ query: event.target.value })}
-        />
-        <ChoiceGroup aria-label="Exercise type" value={type} onValueChange={value => setType(value as LibraryType)}>
-          {TYPE_OPTIONS.map(option => (
-            <ChoiceOption key={option.value} value={option.value}>
-              {option.label}
-            </ChoiceOption>
-          ))}
-        </ChoiceGroup>
-        <div className="grid grid-cols-2 gap-2">
-          {type === 'resistance' && (
-            <MultiSelect
-              label="Pattern"
-              selected={patterns}
-              options={MOVEMENT_PATTERNS}
-              labels={MOVEMENT_PATTERN_LABELS}
-              onToggle={value => change({ patterns: toggled(patterns, value) })}
-            />
+      <div ref={content} className="contents">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
+          <LibraryHeading isDrawer={isDrawer} headingId={headingId} />
+          {purpose && (
+            <p id={purposeId} className="sr-only">
+              {purpose.label}
+            </p>
           )}
-          <MultiSelect label="Muscle" selected={muscles} options={MUSCLES} labels={MUSCLE_LABELS} onToggle={value => change({ muscles: toggled(muscles, value) })} />
+          <SearchField
+            ref={searchRef}
+            aria-label="Search exercises"
+            aria-describedby={purpose ? purposeId : undefined}
+            placeholder="Search exercises"
+            value={query}
+            onChange={event => change({ query: event.target.value })}
+          />
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-2">
+              <OptionSelect label="Exercise type" options={TYPE_OPTIONS} value={type} onChange={setType} />
+              <FiltersPopover
+                type={type}
+                filters={filters}
+                activeCount={fromPanel.length}
+                triggerRef={filtersTrigger}
+                onChange={change}
+                onClear={clearPanelFilters}
+              />
+            </div>
+            {shown.length > 0 && fromPanel.length > 0 && <FilterChips filters={fromPanel} onRemove={removeFilter} />}
+          </div>
         </div>
-        <div className="grid gap-2">
-          <SwitchRow label="Only her equipment" checked={onlyHers} onCheckedChange={checked => change({ onlyHers: checked })} />
-          <SwitchRow label="Bodyweight" checked={bodyweightOnly} onCheckedChange={checked => change({ bodyweightOnly: checked })} />
+        <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
+          {shown.length === 0 ? (
+            <NoMatches type={type} filters={[...searchFilters(filters), ...fromPanel]} onRemove={removeFilter} onClear={clearFilters} />
+          ) : (
+            <ul aria-label="Exercises" className="grid gap-3">
+              {shown.map(exercise => (
+                <li key={exercise.id}>
+                  <LibraryExerciseCard exercise={exercise} onAdd={add} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
-        {shown.length === 0 ? (
-          <NoMatches type={type} filters={activeFilters(filters, type)} containerRef={noMatches} onRemove={removeFilter} onClear={clearFilters} />
-        ) : (
-          <ul aria-label="Exercises" className="grid gap-3">
-            {shown.map(exercise => (
-              <li key={exercise.id}>
-                <LibraryExerciseCard exercise={exercise} onAdd={add} />
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </LibraryFrame>
   );

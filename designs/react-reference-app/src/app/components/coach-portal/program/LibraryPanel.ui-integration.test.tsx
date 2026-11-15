@@ -113,7 +113,7 @@ async function openFirstBlockOfDraft(user: ReturnType<typeof userEvent.setup>) {
   await user.click(
     within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation\b/ }),
   );
-  expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).toBeChecked();
+  expect(within(library()).getByRole('button', { name: 'Remove filter Only her equipment' })).toBeInTheDocument();
 }
 
 function firstSession(): HTMLElement {
@@ -122,6 +122,16 @@ function firstSession(): HTMLElement {
 
 function library(): HTMLElement {
   return screen.getByRole('complementary', { name: 'Exercise library' });
+}
+
+function chipLabels(): string[] {
+  return within(within(library()).getByRole('list', { name: 'Active filters' }))
+    .getAllByRole('listitem')
+    .map(chip => chip.textContent ?? '');
+}
+
+async function showAllEquipment(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(within(library()).getByRole('button', { name: 'Remove filter Only her equipment' }));
 }
 
 async function clearFirstSession(user: ReturnType<typeof userEvent.setup>) {
@@ -150,7 +160,7 @@ describe('LibraryPanel', () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
     await clearFirstSession(user);
-    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+    await showAllEquipment(user);
 
     // act
     await user.click(within(library()).getByRole('button', { name: 'Add Barbell Back Squat' }));
@@ -165,7 +175,7 @@ describe('LibraryPanel', () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
     await clearFirstSession(user);
-    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+    await showAllEquipment(user);
 
     // act
     await user.click(within(library()).getByRole('button', { name: 'Add Leg Press' }));
@@ -183,7 +193,7 @@ describe('LibraryPanel', () => {
 
     // act
     await user.click(screen.getByRole('button', { name: 'Reference the archived hip thrust' }));
-    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+    await showAllEquipment(user);
 
     // assert
     expect(within(firstSession()).getByText('archived')).toBeInTheDocument();
@@ -221,7 +231,7 @@ describe('LibraryPanel', () => {
     await user.click(screen.getByRole('link', { name: 'open the draft' }));
     await openFirstBlockOfDraft(user);
     await clearFirstSession(user);
-    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+    await showAllEquipment(user);
 
     // act
     await user.click(within(library()).getByRole('button', { name: 'Add Leg Press' }));
@@ -237,7 +247,7 @@ describe('LibraryPanel', () => {
   it('narrows the list by search', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
-    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+    await showAllEquipment(user);
 
     // act
     await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'LUNGE');
@@ -259,7 +269,7 @@ describe('LibraryPanel', () => {
     await user.click(within(filters()).getByRole('button', { name: 'Remove filter Only her equipment' }));
 
     // assert
-    expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).not.toBeChecked();
+    expect(within(library()).getByRole('button', { name: 'Filters' })).toBeInTheDocument();
     expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('zzz');
     expect(within(filters()).getAllByRole('listitem')).toHaveLength(1);
     expect(within(filters()).getByRole('button', { name: 'Remove filter Search: “zzz”' })).toHaveFocus();
@@ -275,9 +285,106 @@ describe('LibraryPanel', () => {
 
     // assert
     expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('');
-    expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).not.toBeChecked();
+    expect(within(library()).getByRole('button', { name: 'Filters' })).toBeInTheDocument();
     expect(within(library()).getByRole('button', { name: 'Add Barbell Back Squat' })).toBeInTheDocument();
     expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveFocus();
+  });
+
+  it('opens the filters panel from the Filters button and closes it on Escape, returning focus to the button', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    const filtersButton = within(library()).getByRole('button', { name: 'Filters, 1 active' });
+
+    // act
+    await user.click(filtersButton);
+
+    // assert
+    const panel = screen.getByRole('dialog', { name: 'Filters' });
+    expect(within(panel).getByRole('switch', { name: 'Only her equipment' })).toBeChecked();
+    expect(within(panel).getByRole('switch', { name: 'Bodyweight' })).not.toBeChecked();
+    expect(within(panel).getByRole('button', { name: 'Pattern' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Muscle' })).toBeInTheDocument();
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: 'Filters' })).not.toBeInTheDocument();
+    await waitFor(() => expect(filtersButton).toHaveFocus());
+  });
+
+  it('counts the active filters on the Filters button and lists each as a chip', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(library()).getByRole('button', { name: 'Filters, 1 active' }));
+
+    // act
+    await user.click(within(screen.getByRole('dialog', { name: 'Filters' })).getByRole('switch', { name: 'Bodyweight' }));
+
+    // assert
+    expect(within(library()).getByRole('button', { name: 'Filters, 2 active' })).toBeInTheDocument();
+    expect(chipLabels()).toEqual(['Only her equipment', 'Bodyweight']);
+    expect(within(library()).queryByRole('button', { name: 'Add Barbell Back Squat' })).not.toBeInTheDocument();
+    expect(within(library()).getAllByRole('button', { name: 'Add Push-Up' }).length).toBeGreaterThan(0);
+  });
+
+  it('turns a filter off from its chip, lowering the count and moving focus to the next chip', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(library()).getByRole('button', { name: 'Filters, 1 active' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Filters' })).getByRole('switch', { name: 'Bodyweight' }));
+    await user.keyboard('{Escape}');
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Remove filter Bodyweight' }));
+
+    // assert
+    expect(within(library()).getByRole('button', { name: 'Filters, 1 active' })).toBeInTheDocument();
+    expect(chipLabels()).toEqual(['Only her equipment']);
+    expect(within(library()).getByRole('button', { name: 'Remove filter Only her equipment' })).toHaveFocus();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Remove filter Only her equipment' }));
+
+    // assert
+    expect(within(library()).queryByRole('list', { name: 'Active filters' })).not.toBeInTheDocument();
+    expect(within(library()).getByRole('button', { name: 'Filters' })).toHaveFocus();
+  });
+
+  it('clears the panel filters from the panel, keeping the search', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'squat');
+    await user.click(within(library()).getByRole('button', { name: 'Filters, 1 active' }));
+    const panel = screen.getByRole('dialog', { name: 'Filters' });
+    await user.click(within(panel).getByRole('switch', { name: 'Bodyweight' }));
+
+    // act
+    await user.click(within(panel).getByRole('button', { name: 'Clear filters' }));
+
+    // assert
+    expect(within(panel).getByRole('switch', { name: 'Only her equipment' })).not.toBeChecked();
+    expect(within(panel).getByRole('switch', { name: 'Bodyweight' })).not.toBeChecked();
+    expect(within(panel).queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
+    expect(within(library()).getByRole('button', { name: 'Filters' })).toBeInTheDocument();
+    expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('squat');
+  });
+
+  it('shows the exercises of the type chosen in the Type dropdown', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await showAllEquipment(user);
+    const typeSelect = within(library()).getByRole('combobox', { name: 'Exercise type' });
+    expect(typeSelect).toHaveTextContent('Resistance');
+
+    // act
+    await user.click(typeSelect);
+    await user.click(await screen.findByRole('option', { name: 'Cardio' }));
+
+    // assert
+    expect(typeSelect).toHaveTextContent('Cardio');
+    expect(within(library()).getByRole('button', { name: 'Add Stationary bike' })).toBeInTheDocument();
+    expect(within(library()).queryByRole('button', { name: 'Add Barbell Back Squat' })).not.toBeInTheDocument();
   });
 
   it('opens as a drawer on narrow screens and closes on Escape returning focus to the opener', async () => {

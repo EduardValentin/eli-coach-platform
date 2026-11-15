@@ -136,6 +136,20 @@ describe('ClientProgramPage', () => {
     expect(within(week).queryByRole('button', { name: /options$/ })).not.toBeInTheDocument();
   });
 
+  it('shows the length of every training day under its chip', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const days = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem');
+    expect(within(days[0]).getByText(/^~\d+ min$/)).toBeInTheDocument();
+    expect(within(days[1]).getByText('30 min')).toBeInTheDocument();
+    expect(within(days[5]).queryByText(/min$/)).not.toBeInTheDocument();
+  });
+
   it('lists every set of each exercise in the current block', () => {
     // arrange
     const query = '&pseed=two-versions';

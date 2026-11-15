@@ -79,7 +79,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
         onRemove={onRemove}
         measureRef={header.measureRef}
       />
-      <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
+      <WeekDays block={block} library={library} onChange={onChange} onOpenSession={openFromWeek} />
       <LibraryTargetContext.Provider value={libraryTarget}>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
           {planned.map(entry =>

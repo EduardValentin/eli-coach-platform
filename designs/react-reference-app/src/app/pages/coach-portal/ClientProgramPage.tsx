@@ -93,7 +93,7 @@ function ReadView({ view, block }: { view: ProgramView; block: Block }) {
     <>
       <SettingsSection headingId="program-this-week" title="This week" icon={CalendarDays} description={weekText(block)} className="mb-8">
         <SettingsBody>
-          <WeekDayCards block={block} dates={weekDates(view)} today={view.today} />
+          <WeekDayCards block={block} dates={weekDates(view)} today={view.today} exercisesById={view.exercisesById} />
         </SettingsBody>
       </SettingsSection>
       <section aria-labelledby="program-sessions" className="mb-8 grid gap-4">

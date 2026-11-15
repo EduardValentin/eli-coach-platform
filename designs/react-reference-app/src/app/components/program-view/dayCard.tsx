@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
-import { WEEKDAY_LABELS, weekdayAbbreviation, type BlockType, type CalendarEntry, type CardioSession, type Weekday } from '../../domain/program';
+import type { Exercise } from '../../context/TrainingContext';
+import { WEEKDAY_LABELS, weekdayAbbreviation, type BlockType, type CalendarEntry, type CardioSession, type Session, type Weekday } from '../../domain/program';
 import { cardioMinutes } from '../../domain/programCardio';
+import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
 import { EYEBROW_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { BLOCK_RULE, BLOCK_SOFT } from './blockColours';
@@ -43,9 +45,18 @@ export function DayName({ day }: { day: Weekday }) {
   );
 }
 
+export const DAY_CARDS_CLASS = 'grid auto-rows-fr grid-cols-2';
+
+function DayLength({ children }: { children: string }) {
+  return <span className="px-0.5 text-xs text-text-secondary tabular-nums">{children}</span>;
+}
+
+export function SessionLength({ session, exercisesById }: { session: Session; exercisesById: ReadonlyMap<string, Exercise> }) {
+  return <DayLength>{estimatedDuration(estimatedMinutes(session, exercisesById))}</DayLength>;
+}
+
 export function CardioLength({ cardio }: { cardio: CardioSession }) {
-  if (cardio.segments.length === 0) return null;
-  return <span className="px-0.5 text-xs text-text-secondary tabular-nums">{`${cardioMinutes(cardio)} min`}</span>;
+  return <DayLength>{`${cardioMinutes(cardio)} min`}</DayLength>;
 }
 
 export function RestLabel() {

@@ -1,11 +1,13 @@
 import { useId, useRef } from 'react';
+import type { Exercise } from '../../../context/TrainingContext';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
 import { emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
-import { CARDIO_CHIP_CLASS, CardioLength, CHIP_LABEL_CLASS, DayCardFrame, DayName, RestLabel, sessionChipClass } from '../../program-view/dayCard';
+import { CARDIO_CHIP_CLASS, CardioLength, CHIP_LABEL_CLASS, DAY_CARDS_CLASS, DayCardFrame, DayName, RestLabel, SessionLength, sessionChipClass } from '../../program-view/dayCard';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +19,8 @@ import {
 } from '../../ui/dropdown-menu';
 import { useResetConfirm, type ResetRequest } from './ResetConfirm';
 
-type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
-type DayCardProps = WeekDaysProps & { day: Weekday; onRequest: (request: ResetRequest) => void };
+type WeekDaysProps = { block: Block; library: readonly Exercise[]; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
+type DayCardProps = Omit<WeekDaysProps, 'library'> & { day: Weekday; exercisesById: ReadonlyMap<string, Exercise>; onRequest: (request: ResetRequest) => void };
 type DayMenuProps = { block: Block; day: Weekday; onChoose: (choice: DayChoice, trigger: HTMLElement | null) => void };
 
 function DayMenu({ block, day, onChoose }: DayMenuProps) {
@@ -92,7 +94,7 @@ function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
   return keepsContent ? [] : describeLoss(block, { kind: 'day', weekday: day });
 }
 
-function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProps) {
+function DayCard({ block, day, exercisesById, onChange, onOpenSession, onRequest }: DayCardProps) {
   const session = sessionOn(block, day);
   const cardio = cardioOn(block, day);
 
@@ -117,9 +119,12 @@ function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProp
         />
       </div>
       {session && (
-        <button type="button" onClick={() => onOpenSession(session.id)} className={sessionChipClass(block.type)}>
-          <span className={CHIP_LABEL_CLASS}>{session.name}</span>
-        </button>
+        <>
+          <button type="button" onClick={() => onOpenSession(session.id)} className={sessionChipClass(block.type)}>
+            <span className={CHIP_LABEL_CLASS}>{session.name}</span>
+          </button>
+          <SessionLength session={session} exercisesById={exercisesById} />
+        </>
       )}
       {cardio && <CardioSummary cardio={cardio} onOpen={() => onOpenSession(cardio.id)} />}
       {!session && !cardio && <RestLabel />}
@@ -127,17 +132,18 @@ function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProp
   );
 }
 
-export function WeekDays(props: WeekDaysProps) {
+export function WeekDays({ library, ...props }: WeekDaysProps) {
   const headingId = useId();
   const confirm = useResetConfirm();
+  const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
   return (
     <section aria-labelledby={headingId} className="grid grid-cols-[minmax(0,1fr)] gap-2 lg:**:scroll-mt-[calc(var(--block-header-height)+0.5rem)]">
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
-      <ol className="grid grid-cols-2 gap-x-2 gap-y-3 sm:grid-cols-7">
+      <ol className={cn(DAY_CARDS_CLASS, 'gap-x-2 gap-y-3 sm:grid-cols-7')}>
         {WEEKDAYS.map(day => (
-          <DayCard key={day} {...props} day={day} onRequest={confirm.request} />
+          <DayCard key={day} {...props} day={day} exercisesById={exercisesById} onRequest={confirm.request} />
         ))}
       </ol>
       {confirm.dialog}
