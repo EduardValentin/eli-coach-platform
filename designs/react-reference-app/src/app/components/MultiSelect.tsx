@@ -3,7 +3,7 @@ import { SearchField } from "./SearchField";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { FIELD_TAB_INDEX, SelectTrigger, SelectTriggerChevron, selectTriggerClasses } from "./ui/select";
+import { SelectTrigger, SelectTriggerChevron, selectTriggerClasses } from "./ui/select";
 import { cn } from "./ui/utils";
 
 type Summary = "count" | "names";
@@ -84,7 +84,7 @@ function OptionList<Value extends string>({
         <ul aria-label={label} className="flex max-h-72 min-h-0 flex-col overflow-y-auto">
           {shown.map((option) => (
             <li key={option}>
-              <label className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground" data-parity="multi-select-option">
+              <label className="flex min-h-12 cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground" data-parity="multi-select-option">
                 <Checkbox checked={selected.includes(option)} onCheckedChange={() => onToggle(option)} />
                 {labels[option]}
                 {counts && <Badge tone="count">{counts[option]}</Badge>}
@@ -136,7 +136,6 @@ export function MultiSelect<Value extends string>({
           id={id}
           data-slot="select-trigger"
           data-size={size}
-          tabIndex={FIELD_TAB_INDEX}
           aria-label={triggerName(required ? `${label} (required)` : label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}

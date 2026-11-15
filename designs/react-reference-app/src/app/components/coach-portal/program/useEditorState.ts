@@ -1,6 +1,7 @@
 import { isAfter, startOfDay } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { useAppState } from '../../../context/AppContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
 import type { ClientJourney } from '../../../domain/journey';
@@ -10,10 +11,13 @@ import { libraryEquipmentFor, setupFromJourney, type ProgramSetup } from '../../
 import { blockingProblems, ruleContextFor, warnings } from '../../../domain/programRules';
 import { versionWithStandardText, versionWithText } from '../../../domain/programTexts';
 import { initialContent, newBlock } from '../../../domain/programSuggestions';
+import { writeProgramThroughServer } from '../../../services/programWriteService';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import type { DocumentEditing } from '../../program-view/documentEditing';
 import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
+
+export type WriteResult = 'written' | 'failed';
 
 type EditorInput = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
@@ -27,6 +31,7 @@ function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date)
 export function useEditorState({ journey, program, draft, programPath }: EditorInput) {
   const { updateDraft, updateDraftVersion, discardDraft, publishDraft } = usePrograms();
   const { exercises } = useTraining();
+  const { appState } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
   const today = new Date();
@@ -84,16 +89,26 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     reset: target => updateDraftVersion(program.callId, version => versionWithStandardText(version, target, program.language)),
   };
 
-  function publish() {
-    const outcome = publishDraft(program.callId, new Date());
-    if (outcome.status === 'blocked') return;
-    toast.success(`Version ${outcome.version.number} published`);
+  function publish(): WriteResult {
+    try {
+      const outcome = writeProgramThroughServer(appState.programWrite, () => publishDraft(program.callId, new Date()));
+      if (outcome.status === 'blocked') return 'failed';
+      toast.success(`Version ${outcome.version.number} published`);
+    } catch {
+      return 'failed';
+    }
     navigate(programPath);
+    return 'written';
   }
 
-  function discard() {
-    discardDraft(program.callId);
+  function discard(): WriteResult {
+    try {
+      writeProgramThroughServer(appState.programWrite, () => discardDraft(program.callId));
+    } catch {
+      return 'failed';
+    }
     navigate(draft.number === 1 ? clientDetailPathForJourney(journey) : programPath);
+    return 'written';
   }
 
   return {

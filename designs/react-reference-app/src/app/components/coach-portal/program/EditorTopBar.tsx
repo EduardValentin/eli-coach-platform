@@ -1,16 +1,21 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
-import { AlertTriangle, ArrowLeft, ChevronRight, Eye, Send, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, ChevronRight, Eye, Send, Trash2, UserRound } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
 import type { ProgramVersion } from '../../../domain/program';
 import { counted } from '../../../utils/counted';
 import { clientDetailPathForJourney, formatJourneyDate, journeyClientName } from '../../../utils/journeyLabels';
-import { RowActionsMenu } from '../../RowActionsMenu';
+import { DisabledActionHint } from '../../DisabledActionHint';
+import { HintPopover } from '../../HintPopover';
+import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
+import { Alert } from '../../ui/alert';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { cn } from '../../ui/utils';
-import { ClientProfilePopover } from './ClientProfilePopover';
+import { ClientProfilePopover, ClientProfileTrigger } from './ClientProfilePopover';
+import type { PublishDialogStart } from './PublishDialog';
+import type { WriteResult } from './useEditorState';
 
 type EditorTopBarProps = {
   journey: ClientJourney;
@@ -18,16 +23,20 @@ type EditorTopBarProps = {
   basedOn: ProgramVersion | undefined;
   railToggle: ReactNode;
   libraryToggle: ReactNode;
-  modeTitle: string;
   placeTitle: string;
+  placeHeading: Ref<HTMLHeadingElement>;
   onOverview: (() => void) | null;
-  onOpenWarnings: () => void;
+  onOpenChecks: (start: PublishDialogStart) => void;
   onPreview: () => void;
   onPublish: () => void;
-  onDiscard: () => void;
+  onDiscard: () => WriteResult;
   opensOn: Date | null;
+  problemsCount: number;
   warningsCount: number;
 };
+
+const SMALL_SCREEN_QUERY = '(min-width: 640px)';
+const PLACE_TITLE_CLASS = cn(WIDGET_TITLE_CLASS, 'truncate outline-none');
 
 function discardDescription(version: ProgramVersion): string {
   return version.number > 1
@@ -40,39 +49,93 @@ function draftLine(name: string, version: ProgramVersion, basedOn: ProgramVersio
   return `${name} · v${version.number} draft${origin}`;
 }
 
-type BreadcrumbProps = Pick<EditorTopBarProps, 'modeTitle' | 'placeTitle' | 'onOverview'>;
+function useIsSmallScreen(): boolean {
+  const [small, setSmall] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia(SMALL_SCREEN_QUERY);
+    const update = () => setSmall(!query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return small;
+}
 
-function Breadcrumb({ modeTitle, placeTitle, onOverview }: BreadcrumbProps) {
+type PlaceProps = Pick<EditorTopBarProps, 'placeTitle' | 'placeHeading' | 'onOverview'>;
+
+function Place({ placeTitle, placeHeading, onOverview }: PlaceProps) {
+  const heading = (
+    <h1 ref={placeHeading} tabIndex={-1} className={PLACE_TITLE_CLASS}>
+      {placeTitle}
+    </h1>
+  );
+  if (!onOverview) return heading;
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
-      <ol className={cn(WIDGET_TITLE_CLASS, 'flex min-w-0 items-center gap-1')}>
-        <li className="shrink-0 text-text-secondary">
-          {onOverview ? (
-            <button type="button" onClick={onOverview} className="rounded-tile transition-colors hover:text-text-primary">
-              {modeTitle}
-            </button>
-          ) : (
-            modeTitle
-          )}
+      <ol className="flex min-w-0 items-center gap-1">
+        <li className="shrink-0">
+          <button type="button" onClick={onOverview} className={cn(WIDGET_TITLE_CLASS, 'relative hit-area rounded-tile text-text-secondary transition-colors hover:text-text-primary')}>
+            Overview
+          </button>
         </li>
-        <li className="flex min-w-0 items-center gap-1">
+        <li aria-current="page" className="flex min-w-0 items-center gap-1">
           <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-text-secondary" />
-          <span aria-current="page" className="truncate">
-            {placeTitle}
-          </span>
+          {heading}
         </li>
       </ol>
     </nav>
   );
 }
 
-function WarningsButton({ count, onClick }: { count: number; onClick: () => void }) {
-  const label = `${counted(count, 'thing')} worth a look`;
+type ChecksButtonProps = { problems: number; warnings: number; onOpen: (start: PublishDialogStart) => void };
+
+function ChecksButton({ problems, warnings, onOpen }: ChecksButtonProps) {
+  const blocked = problems > 0;
+  const label = blocked ? `${counted(problems, 'problem')} to fix before publishing` : `${counted(warnings, 'thing')} worth a look`;
   return (
-    <Button variant="ghost" aria-label={label} onClick={onClick} className="text-warning tabular-nums">
-      <AlertTriangle aria-hidden="true" />
-      {count}
+    <HintPopover hint={label} align="end">
+      <Button
+        variant="ghost"
+        aria-label={label}
+        onClick={() => onOpen(blocked ? 'top' : 'warnings')}
+        className={cn('tabular-nums', { 'text-destructive': blocked, 'text-warning': !blocked })}
+      >
+        {blocked ? <AlertCircle aria-hidden="true" /> : <AlertTriangle aria-hidden="true" />}
+        {blocked ? problems : warnings}
+      </Button>
+    </HintPopover>
+  );
+}
+
+function PublishButton({ opensOn, onPublish }: Pick<EditorTopBarProps, 'opensOn' | 'onPublish'>) {
+  const button = (
+    <Button onClick={onPublish}>
+      <Send aria-hidden="true" />
+      Publish
     </Button>
+  );
+  if (!opensOn) return button;
+  return <DisabledActionHint reason={`Publishing opens on ${formatJourneyDate(opensOn)}`}>{button}</DisabledActionHint>;
+}
+
+function DiscardDialog({ open, onOpenChange, version, onDiscard }: { open: boolean; onOpenChange: (open: boolean) => void; version: ProgramVersion; onDiscard: () => WriteResult }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={next => {
+        setFailed(false);
+        onOpenChange(next);
+      }}
+      title="Discard this draft?"
+      description={discardDescription(version)}
+      confirmLabel="Discard draft"
+      cancelLabel="Keep editing"
+      tone="destructive"
+      onConfirm={() => setFailed(onDiscard() === 'failed')}
+    >
+      {failed && <Alert>The draft wasn’t discarded and nothing changed. Try again.</Alert>}
+    </ConfirmDialog>
   );
 }
 
@@ -82,23 +145,42 @@ export function EditorTopBar({
   basedOn,
   railToggle,
   libraryToggle,
-  modeTitle,
   placeTitle,
+  placeHeading,
   onOverview,
-  onOpenWarnings,
+  onOpenChecks,
   onPreview,
   onPublish,
   onDiscard,
   opensOn,
+  problemsCount,
   warningsCount,
 }: EditorTopBarProps) {
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileReturnFocus = useRef<HTMLElement | null>(null);
+  const draftActions = useRef<HTMLSpanElement>(null);
+  const small = useIsSmallScreen();
   const name = journeyClientName(journey);
+  const smallScreenActions: RowMenuAction[] = small
+    ? [
+        { name: 'preview', label: 'Preview as client', icon: Eye, onSelect: onPreview },
+        {
+          name: 'profile',
+          label: 'Client profile',
+          icon: UserRound,
+          onSelect: () => {
+            profileReturnFocus.current = draftActions.current?.querySelector('button') ?? null;
+            setProfileOpen(true);
+          },
+        },
+      ]
+    : [];
 
   return (
     <>
-      <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border bg-card px-3 py-2 lg:px-6">
-        <div className="flex shrink-0 items-center gap-1">
+      <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
+        <div className="flex shrink-0 items-center gap-2">
           <Button asChild variant="ghost" size="icon-sm">
             <Link to={clientDetailPathForJourney(journey)} aria-label={`Back to ${name}`}>
               <ArrowLeft size={20} />
@@ -107,47 +189,47 @@ export function EditorTopBar({
           {railToggle}
         </div>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
-          <h1 className="truncate text-xs text-text-secondary">{draftLine(name, version, basedOn)}</h1>
-          <Breadcrumb modeTitle={modeTitle} placeTitle={placeTitle} onOverview={onOverview} />
+          <p className="text-xs break-words text-text-secondary">{draftLine(name, version, basedOn)}</p>
+          <Place placeTitle={placeTitle} placeHeading={placeHeading} onOverview={onOverview} />
         </div>
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          {warningsCount > 0 && <WarningsButton count={warningsCount} onClick={onOpenWarnings} />}
-          <ClientProfilePopover journey={journey} />
-          {libraryToggle}
-          {opensOn && <p className="hidden text-sm text-text-secondary xl:block">{`Publishing opens on ${formatJourneyDate(opensOn)}`}</p>}
-          <Button variant="outline" aria-label="Preview as client" onClick={onPreview}>
-            <Eye aria-hidden="true" />
-            <span className="hidden lg:inline">Preview as client</span>
-          </Button>
-          <Button disabled={opensOn !== null} onClick={onPublish}>
-            <Send aria-hidden="true" />
-            Publish
-          </Button>
-          <RowActionsMenu
-            label="Draft actions"
-            parityRoot="DraftActionsMenu"
-            actions={[
-              {
-                name: 'discard',
-                label: 'Discard draft',
-                icon: Trash2,
-                tone: 'destructive',
-                onSelect: () => setConfirmingDiscard(true),
-              },
-            ]}
-          />
-        </div>
+        <ClientProfilePopover
+          journey={journey}
+          open={profileOpen}
+          onOpenChange={open => {
+            if (open) profileReturnFocus.current = null;
+            setProfileOpen(open);
+          }}
+          returnFocus={profileReturnFocus}
+        >
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {(problemsCount > 0 || warningsCount > 0) && <ChecksButton problems={problemsCount} warnings={warningsCount} onOpen={onOpenChecks} />}
+            <ClientProfileTrigger />
+            {libraryToggle}
+            <Button variant="outline" aria-label="Preview as client" onClick={onPreview} className="max-sm:hidden">
+              <Eye aria-hidden="true" />
+              <span className="hidden lg:inline">Preview as client</span>
+            </Button>
+            <PublishButton opensOn={opensOn} onPublish={onPublish} />
+            <span ref={draftActions} className="contents">
+              <RowActionsMenu
+                label="Draft actions"
+                parityRoot="DraftActionsMenu"
+                actions={[
+                  ...smallScreenActions,
+                  {
+                    name: 'discard',
+                    label: 'Discard draft',
+                    icon: Trash2,
+                    tone: 'destructive',
+                    onSelect: () => setConfirmingDiscard(true),
+                  },
+                ]}
+              />
+            </span>
+          </div>
+        </ClientProfilePopover>
       </header>
-      <ConfirmDialog
-        open={confirmingDiscard}
-        onOpenChange={setConfirmingDiscard}
-        title="Discard this draft?"
-        description={discardDescription(version)}
-        confirmLabel="Discard draft"
-        cancelLabel="Keep editing"
-        tone="destructive"
-        onConfirm={onDiscard}
-      />
+      <DiscardDialog open={confirmingDiscard} onOpenChange={setConfirmingDiscard} version={version} onDiscard={onDiscard} />
     </>
   );
 }

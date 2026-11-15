@@ -45,7 +45,7 @@ export function IconHint({
         aria-label={label}
         data-parity={parity}
         className={cn(
-          'inline-flex items-center justify-center',
+          'relative hit-area inline-flex items-center justify-center',
           SIZE_CLASS[size],
           TONE_CLASS[tone],
           className,

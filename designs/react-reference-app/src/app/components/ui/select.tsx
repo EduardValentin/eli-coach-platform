@@ -4,12 +4,22 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
+import { OpenStateContext, useOpenState, useTriggerControls } from "./open-state";
 import { cn } from "./utils";
 
 function Select({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+  const openState = useOpenState({ open, defaultOpen, onOpenChange });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <SelectPrimitive.Root data-slot="select" {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
 }
 
 function SelectGroup({
@@ -30,14 +40,9 @@ type SelectTriggerProps = React.ComponentProps<
   size?: "sm" | "md";
 };
 
-// Safari's default Tab order visits text fields only and skips buttons unless
-// they carry an explicit tabindex; a control that stands in for a form field
-// must stay reachable like the native field it replaces.
-export const FIELD_TAB_INDEX = 0;
-
 function selectTriggerClasses(className?: string): string {
   return cn(
-    "border-control-border-soft data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-focus-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-field border bg-surface-base px-3 py-1 text-base md:text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=md]:min-h-(--size-control-md) data-[size=sm]:min-h-(--size-control-sm) data-[size=sm]:px-2.5 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+    "relative hit-area border-control-border-soft data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-focus-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-field border bg-surface-base px-3 py-1 text-base md:text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=md]:min-h-(--size-control-md) data-[size=sm]:min-h-(--size-control-sm) data-[size=sm]:px-2.5 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     className,
   );
 }
@@ -53,21 +58,25 @@ function SelectTriggerChevron(props: React.ComponentProps<typeof ChevronDownIcon
 }
 
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, size = "md", children, ...props }, ref) => (
-    <SelectPrimitive.Trigger
-      ref={ref}
-      data-slot="select-trigger"
-      data-size={size}
-      tabIndex={FIELD_TAB_INDEX}
-      className={selectTriggerClasses(className)}
-      {...props}
-    >
-      {children}
-      <SelectPrimitive.Icon asChild>
-        <SelectTriggerChevron />
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
-  ),
+  ({ className, size = "md", children, ...props }, ref) => {
+    const controls = useTriggerControls();
+
+    return (
+      <SelectPrimitive.Trigger
+        ref={ref}
+        data-slot="select-trigger"
+        data-size={size}
+        className={selectTriggerClasses(className)}
+        {...controls}
+        {...props}
+      >
+        {children}
+        <SelectPrimitive.Icon asChild>
+          <SelectTriggerChevron />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+    );
+  },
 );
 SelectTrigger.displayName = "SelectTrigger";
 
@@ -168,7 +177,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[state=checked]:bg-active-surface data-[state=checked]:text-primary-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[state=checked]:bg-active-surface data-[state=checked]:text-primary-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex min-h-12 w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}

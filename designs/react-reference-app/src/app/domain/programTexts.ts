@@ -11,7 +11,7 @@ export type ProgramTextTarget =
 
 export type TextFormatting = 'plain' | 'paragraphs' | 'titled';
 
-type TextDescription = { name: string; placeholder: string; formatting: TextFormatting; hint?: string };
+type TextDescription = { name: string; placeholder: string; formatting: TextFormatting; optional: boolean; hint?: string };
 
 export type ProgramText = TextDescription & {
   value: string;
@@ -20,33 +20,34 @@ export type ProgramText = TextDescription & {
 };
 
 const VERSION_TEXTS: Record<VersionTextKey, TextDescription> = {
-  title: { name: 'Program title', placeholder: 'e.g. Program — weeks 1–4', formatting: 'plain' },
-  focus: { name: 'Focus until the next check-in', placeholder: 'What she concentrates on until her next check-in form', formatting: 'plain' },
-  personalNote: { name: 'Personal note', placeholder: 'A few words from you to open her program', formatting: 'paragraphs' },
-  whatChanged: { name: 'What changed and why', placeholder: 'What you changed in this version, and why', formatting: 'paragraphs' },
-  nutrition: { name: 'Nutrition', placeholder: 'e.g. protein at every meal, two litres of water a day', formatting: 'titled' },
-  lifestyle: { name: 'Lifestyle', placeholder: 'e.g. lights out by 23:00, a 10-minute walk after lunch', formatting: 'titled' },
+  title: { name: 'Program title', placeholder: 'e.g. Program — weeks 1–4', formatting: 'plain', optional: true },
+  focus: { name: 'Focus until the next check-in', placeholder: 'What she concentrates on until her next check-in form', formatting: 'plain', optional: true },
+  personalNote: { name: 'Note from Eli', placeholder: 'A few words from you to open her program', formatting: 'paragraphs', optional: true },
+  whatChanged: { name: 'What changed and why', placeholder: 'What you changed in this version, and why', formatting: 'paragraphs', optional: false },
+  nutrition: { name: 'Nutrition', placeholder: 'e.g. protein at every meal, two litres of water a day', formatting: 'titled', optional: true },
+  lifestyle: { name: 'Lifestyle', placeholder: 'e.g. lights out by 23:00, a 10-minute walk after lunch', formatting: 'titled', optional: true },
 };
 
 const BLOCK_TEXTS: Record<BlockTextKey, TextDescription> = {
-  intro: { name: 'Block intro', placeholder: 'What this block is for and how it should feel', formatting: 'titled' },
-  note: { name: 'Note for this block', placeholder: 'Anything personal she should know about this block', formatting: 'paragraphs' },
-  split: { name: 'Split text', placeholder: 'How her training week is split', formatting: 'titled' },
-  missedDay: { name: 'Missed-day note', placeholder: 'What she does when she misses a session', formatting: 'paragraphs' },
+  intro: { name: 'Block intro', placeholder: 'What this block is for and how it should feel', formatting: 'titled', optional: false },
+  note: { name: 'Note for this block', placeholder: 'Anything personal she should know about this block', formatting: 'paragraphs', optional: true },
+  split: { name: 'Split text', placeholder: 'How her training week is split', formatting: 'titled', optional: false },
+  missedDay: { name: 'Missed-day note', placeholder: 'What she does when she misses a session', formatting: 'paragraphs', optional: false },
 };
 
 const GUIDE_TEXTS: Record<GuideTextKey, TextDescription> = {
-  legend: { name: 'How to read your session', placeholder: 'One line per term: the term in bold, then what it means', formatting: 'titled' },
-  warmUp: { name: 'Warm-up', placeholder: 'How she warms up before every session', formatting: 'titled' },
-  progression: { name: 'How to progress', placeholder: 'When she adds weight or reps', formatting: 'paragraphs' },
-  coolDown: { name: 'Cool-down', placeholder: 'How she cools down after a session', formatting: 'paragraphs' },
-  noWeight: { name: 'No weight listed', placeholder: 'How she picks a weight when none is listed', formatting: 'plain' },
-  lowEnergy: { name: 'Low-energy session', placeholder: 'What she does on a low-energy day', formatting: 'titled' },
-  calibration: { name: 'Calibration week', placeholder: 'How the first week of a block works', formatting: 'paragraphs' },
+  legend: { name: 'How to read your session', placeholder: 'One line per term: the term in bold, then what it means', formatting: 'titled', optional: false },
+  warmUp: { name: 'Warm-up', placeholder: 'How she warms up before every session', formatting: 'titled', optional: false },
+  progression: { name: 'How to progress', placeholder: 'When she adds weight or reps', formatting: 'paragraphs', optional: false },
+  coolDown: { name: 'Cool-down', placeholder: 'How she cools down after a session', formatting: 'paragraphs', optional: false },
+  noWeight: { name: 'No weight listed', placeholder: 'How she picks a weight when none is listed', formatting: 'plain', optional: false },
+  lowEnergy: { name: 'Low-energy session', placeholder: 'What she does on a low-energy day', formatting: 'titled', optional: false },
+  calibration: { name: 'Calibration week', placeholder: 'How the first week of a block works', formatting: 'paragraphs', optional: false },
   steps: {
     name: 'Daily steps',
     placeholder: 'Why her daily steps matter',
     formatting: 'titled',
+    optional: false,
     hint: '[daily steps] prints as the daily steps target of the block.',
   },
 };
@@ -59,7 +60,6 @@ const VERSION_FIELDS: Record<Exclude<VersionTextKey, 'whatChanged'>, (content: P
   lifestyle: content => content.lifestyleNotes,
 };
 
-const NO_TEMPLATE: TemplateText = { text: '', pending: false };
 const TITLE_FALLBACK = 'Training program';
 
 export function printedTitle(content: ProgramContent): string {
@@ -116,6 +116,10 @@ function contentWithValue(content: ProgramContent, key: Exclude<VersionTextKey, 
   return { ...content, header: { ...content.header, [key]: text } };
 }
 
+function usesFallback(value: string, template: TemplateText): boolean {
+  return template.pending && isWritten(value) && value === template.text;
+}
+
 export function programText(version: ProgramVersion, target: ProgramTextTarget, language: ProgramLanguage): ProgramText {
   if (target.kind === 'version') {
     return { ...VERSION_TEXTS[target.key], value: versionValue(version, target.key), standard: null, pending: false };
@@ -123,12 +127,12 @@ export function programText(version: ProgramVersion, target: ProgramTextTarget, 
   if (target.kind === 'guide') {
     const template = templateText(target.key, language);
     const value = guideText(version.content.guideTexts, target.key, language);
-    return { ...GUIDE_TEXTS[target.key], value, standard: template.text, pending: template.pending };
+    return { ...GUIDE_TEXTS[target.key], value, standard: template.text, pending: usesFallback(value, template) };
   }
   const block = blockOf(version, target.blockId);
   const template = blockTemplate(block, target.key, language);
-  const { pending } = template ?? NO_TEMPLATE;
-  return { ...BLOCK_TEXTS[target.key], value: blockValue(block, target.key), standard: template?.text ?? null, pending };
+  const value = blockValue(block, target.key);
+  return { ...BLOCK_TEXTS[target.key], value, standard: template?.text ?? null, pending: template !== null && usesFallback(value, template) };
 }
 
 export function versionWithText(version: ProgramVersion, target: ProgramTextTarget, text: string): ProgramVersion {
@@ -149,7 +153,7 @@ export function versionWithStandardText(version: ProgramVersion, target: Program
   return standard === null ? version : versionWithText(version, target, standard);
 }
 
-export type TextProgress = { written: number; total: number };
+export type TextProgress = { toWrite: number; pending: number };
 
 function versionText(key: VersionTextKey): ProgramTextTarget {
   return { kind: 'version', key };
@@ -191,6 +195,9 @@ export function blockTexts(block: Block): ProgramTextTarget[] {
 }
 
 export function textProgress(version: ProgramVersion, targets: readonly ProgramTextTarget[], language: ProgramLanguage): TextProgress {
-  const written = targets.filter(target => isWritten(programText(version, target, language).value)).length;
-  return { written, total: targets.length };
+  const texts = targets.map(target => programText(version, target, language));
+  return {
+    toWrite: texts.filter(text => !text.optional && !isWritten(text.value)).length,
+    pending: texts.filter(text => text.pending).length,
+  };
 }

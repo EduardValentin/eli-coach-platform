@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import { RowActionsMenu } from '../../RowActionsMenu';
+import { useEditorAnnouncer } from './editorAnnouncer';
 
 type ListedExercise = { id: string; exerciseId: string };
 export type ItemListActions = { onMoveUp: (itemId: string) => void; onMoveDown: (itemId: string) => void; onRemove: (itemId: string) => void };
@@ -36,6 +37,7 @@ function ExerciseItemRow({ name, position, count, onMoveUp, onMoveDown, onRemove
 }
 
 export function ExerciseItemList<Item extends ListedExercise>({ label, items, nameOf, actions, children }: ExerciseItemListProps<Item>) {
+  const announce = useEditorAnnouncer();
   if (items.length === 0) return null;
   return (
     <ol aria-label={label} className="@container grid divide-y divide-border-subtle rounded-field border border-border-subtle bg-surface-base">
@@ -47,8 +49,14 @@ export function ExerciseItemList<Item extends ListedExercise>({ label, items, na
             name={name}
             position={index + 1}
             count={items.length}
-            onMoveUp={() => actions.onMoveUp(item.id)}
-            onMoveDown={() => actions.onMoveDown(item.id)}
+            onMoveUp={() => {
+              actions.onMoveUp(item.id);
+              announce(`${name} moved up`);
+            }}
+            onMoveDown={() => {
+              actions.onMoveDown(item.id);
+              announce(`${name} moved down`);
+            }}
             onRemove={() => actions.onRemove(item.id)}
           >
             {children(item, name)}

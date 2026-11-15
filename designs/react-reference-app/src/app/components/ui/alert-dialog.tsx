@@ -3,20 +3,32 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 
+import { OpenStateContext, useOpenState, useTriggerControls } from './open-state';
 import { cn } from './utils';
 import { buttonVariants } from './button';
 
 function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
+  const openState = useOpenState({ open, defaultOpen, onOpenChange });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
 }
 
 function AlertDialogTrigger({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Trigger>) {
+  const controls = useTriggerControls();
+
   return (
-    <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
+    <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...controls} {...props} />
   );
 }
 

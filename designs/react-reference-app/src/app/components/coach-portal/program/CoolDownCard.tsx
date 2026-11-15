@@ -59,7 +59,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
                 <CountField className="w-16" label={`${name} seconds`} value={item.seconds} suffix="s" onCommit={seconds => onChange(edits.changeItem({ ...item, seconds }))} />
               )}
             </ExerciseItemList>
-            <Button variant="ghost" size="xs" className="w-fit" onClick={onPickStretch}>
+            <Button variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickStretch}>
               <Plus aria-hidden="true" />
               Add stretch
             </Button>

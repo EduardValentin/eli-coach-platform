@@ -3,16 +3,18 @@ import { WEEKDAY_LABELS, weekdayAbbreviation, type BlockType, type CalendarEntry
 import { cardioMinutes } from '../../domain/programCardio';
 import { LABEL_CLASS } from '../typography';
 import { cn } from '../ui/utils';
-import { BLOCK_SOFT } from './blockColours';
+import { BLOCK_RULE, BLOCK_SOFT } from './blockColours';
 
 const KIND_CHIP_CLASS =
-  'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-left text-xs font-medium outline-none hover:shadow-soft';
+  'relative hit-area inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-field border px-2 py-1 text-left text-xs font-medium outline-none hover:shadow-soft';
+
+export const CHIP_LABEL_CLASS = 'line-clamp-2 min-w-0 break-words';
 
 export function sessionChipClass(type: BlockType): string {
-  return cn(KIND_CHIP_CLASS, BLOCK_SOFT[type], 'text-text-primary');
+  return cn(KIND_CHIP_CLASS, BLOCK_SOFT[type], BLOCK_RULE[type], 'text-text-primary');
 }
 
-export const CARDIO_CHIP_CLASS = cn(KIND_CHIP_CLASS, 'bg-training-recovery-soft text-training-recovery');
+export const CARDIO_CHIP_CLASS = cn(KIND_CHIP_CLASS, 'border-training-recovery bg-training-recovery-soft text-training-recovery-ink');
 
 type DayCardFrameProps = { entry: CalendarEntry['kind']; current?: 'date'; children: ReactNode };
 
@@ -20,9 +22,9 @@ export function DayCardFrame({ entry, current, children }: DayCardFrameProps) {
   return (
     <li
       aria-current={current}
-      className={cn('grid content-start gap-2 rounded-control border p-2', {
+      className={cn('grid min-w-0 content-start gap-2 rounded-control border p-2', {
         'border-border bg-card': entry !== 'rest',
-        'border-border-subtle bg-surface-subtle': entry === 'rest',
+        'border-dashed border-border bg-card': entry === 'rest',
         'border-primary ring-2 ring-primary/30': current === 'date',
       })}
     >

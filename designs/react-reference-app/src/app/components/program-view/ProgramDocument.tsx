@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useId, type ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, positionLabel, warmUpItemText, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
 import { blockDates, planWeeks } from '../../domain/programCalendar';
 import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
@@ -19,8 +19,8 @@ import {
 import { cn } from '../ui/utils';
 import { BlockCalendar } from './BlockCalendar';
 import { BLOCK_RULE, BLOCK_SWATCH } from './blockColours';
-import { DocumentEditingProvider, DocumentHeading, type DocumentEditing } from './documentEditing';
-import { DocumentTextSlot, useShowsText } from './DocumentTextSlot';
+import { DocumentEditingProvider, DocumentHeading, useDocumentEditing, type DocumentEditing } from './documentEditing';
+import { DocumentTextSlot, OptionalMark, useShowsText } from './DocumentTextSlot';
 import { ExerciseLink } from './ExerciseLink';
 import { PositionBadge } from './PositionBadge';
 import { Emphasised, parseTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
@@ -42,6 +42,16 @@ const TERM_CLASS = 'font-semibold text-text-primary';
 const NOTE_FIGURE_CLASS = 'max-w-measure space-y-document-tight border-l-2 border-text-primary pl-4';
 const FOCUS_CLASS = 'max-w-measure font-serif text-document-card italic text-text-primary';
 const EDITED_TEXT_TYPOGRAPHY = { body: DOCUMENT_PROSE_CLASS, heading: DOCUMENT_SECTION_TITLE_CLASS };
+const EDITED_LEAD_IN_ROWS_CLASS =
+  'space-y-1 text-document-table sm:[&>p:has(>strong:first-child)]:grid sm:[&>p]:grid-cols-[10rem_minmax(0,1fr)] sm:[&>p]:gap-x-4 sm:[&>p>:not(:first-child)]:col-start-2';
+const EDITED_LEGEND_TYPOGRAPHY = { body: EDITED_LEAD_IN_ROWS_CLASS, heading: DOCUMENT_CARD_TITLE_CLASS };
+const EDITED_TERM_ROW_TYPOGRAPHY = {
+  body: cn(
+    EDITED_LEAD_IN_ROWS_CLASS,
+    'sm:[&:has(>h3)]:grid sm:[&:has(>h3)]:grid-cols-[10rem_minmax(0,1fr)] sm:[&:has(>h3)]:gap-x-4 sm:[&>h3]:row-start-1 sm:[&:has(>h3)>:not(h3)]:col-start-2',
+  ),
+  heading: cn(TERM_CLASS, 'text-document-table'),
+};
 
 const TITLE: ProgramTextTarget = { kind: 'version', key: 'title' };
 const FOCUS: ProgramTextTarget = { kind: 'version', key: 'focus' };
@@ -86,12 +96,12 @@ function Prose({ paragraphs }: { paragraphs: readonly TemplateParagraph[] }) {
   return <TemplateBody paragraphs={paragraphs} className={DOCUMENT_PROSE_CLASS} />;
 }
 
-type SectionProps = { title: string; children: ReactNode; print?: 'keep' };
+type SectionProps = { title: string; children: ReactNode; print?: 'keep'; headingId?: string };
 
-function Section({ title, children, print }: SectionProps) {
+function Section({ title, children, print, headingId }: SectionProps) {
   return (
     <section aria-label={title} data-print-keep={print === 'keep' ? '' : undefined} className="space-y-document-gap">
-      <DocumentHeading level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
+      <DocumentHeading id={headingId} level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
         {title}
       </DocumentHeading>
       {children}
@@ -133,7 +143,12 @@ function TextSection({ view, target, fallbackTitle, fill = unchanged }: TextSect
   const title = parseTemplate(fill(valueOf(view, target))).title || fallbackTitle;
   return (
     <section aria-label={title} data-print-keep>
-      <DocumentTextSlot view={view} target={target} className="space-y-document-gap">
+      <DocumentTextSlot
+        view={view}
+        target={target}
+        label={{ text: fallbackTitle, level: 2, className: DOCUMENT_SECTION_TITLE_CLASS }}
+        className="space-y-document-gap"
+      >
         {value => <TitledProse text={fill(value)} fallbackTitle={fallbackTitle} />}
       </DocumentTextSlot>
     </section>
@@ -150,10 +165,14 @@ function runningHeaderText(view: ProgramView, block: Block | null): string {
 }
 
 function NoteFromCoach({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
+  const captionId = useId();
   return (
     <figure data-print-keep className={NOTE_FIGURE_CLASS}>
-      <figcaption className={DOCUMENT_HEAD_CLASS}>{`A note from ${COACH_NAME}`}</figcaption>
-      <DocumentTextSlot view={view} target={target}>
+      <figcaption id={captionId} className={DOCUMENT_HEAD_CLASS}>
+        {`A note from ${COACH_NAME}`}
+        <OptionalMark view={view} target={target} />
+      </figcaption>
+      <DocumentTextSlot view={view} target={target} labelledBy={captionId}>
         {value => <ParagraphsOf text={value} />}
       </DocumentTextSlot>
     </figure>
@@ -269,7 +288,13 @@ function Legend({ view }: { view: ProgramView }) {
   const title = parseTemplate(valueOf(view, LEGEND)).title || LEGEND_FALLBACK_TITLE;
   return (
     <aside aria-label={title} data-print-keep className={cn(BOX_CLASS, 'bg-surface-subtle')}>
-      <DocumentTextSlot view={view} target={LEGEND} className="space-y-document-tight" typography={{ heading: DOCUMENT_CARD_TITLE_CLASS }}>
+      <DocumentTextSlot
+        view={view}
+        target={LEGEND}
+        label={{ text: LEGEND_FALLBACK_TITLE, level: 2, className: DOCUMENT_CARD_TITLE_CLASS }}
+        className="space-y-document-tight"
+        typography={EDITED_LEGEND_TYPOGRAPHY}
+      >
         {value => <LegendBody text={value} />}
       </DocumentTextSlot>
     </aside>
@@ -318,6 +343,7 @@ function BlockSection({ view, block }: { view: ProgramView; block: Block }) {
       <DocumentTextSlot
         view={view}
         target={intro}
+        label={{ text: fallbackTitle, level: 2, className: DOCUMENT_SECTION_TITLE_CLASS }}
         className="space-y-document-gap"
         unwritten={
           <DocumentHeading level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
@@ -348,7 +374,11 @@ function TermRow({ text }: { text: string }) {
 }
 
 function EverySessionRow({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
-  return <DocumentTextSlot view={view} target={target}>{value => <TermRow text={value} />}</DocumentTextSlot>;
+  return (
+    <DocumentTextSlot view={view} target={target} typography={EDITED_TERM_ROW_TYPOGRAPHY}>
+      {value => <TermRow text={value} />}
+    </DocumentTextSlot>
+  );
 }
 
 function EverySession({ view, block }: { view: ProgramView; block: Block }) {
@@ -556,11 +586,12 @@ function StepsSection({ view, block }: { view: ProgramView; block: Block }) {
 
 function WhatChanged({ view }: { view: ProgramView }) {
   const shows = useShowsText(view, WHAT_CHANGED);
+  const headingId = useId();
   const { number } = view.version;
   if (number <= 1 || !shows) return null;
   return (
-    <Section title={`What changed in v${number}`} print="keep">
-      <DocumentTextSlot view={view} target={WHAT_CHANGED}>
+    <Section title={`What changed in v${number}`} print="keep" headingId={headingId}>
+      <DocumentTextSlot view={view} target={WHAT_CHANGED} labelledBy={headingId}>
         {value => <ParagraphsOf text={value} />}
       </DocumentTextSlot>
     </Section>
@@ -573,13 +604,14 @@ type ProgramDocumentProps = { view: ProgramView; editing?: DocumentEditing; part
 
 export function ProgramDocument({ view, editing, part = 'whole' }: ProgramDocumentProps) {
   return (
-    <DocumentEditingProvider editing={editing ?? null} typography={EDITED_TEXT_TYPOGRAPHY}>
+    <DocumentEditingProvider editing={editing ?? null} typography={EDITED_TEXT_TYPOGRAPHY} topLevel={editing && part !== 'block' ? 2 : 1}>
       <DocumentPages view={view} part={part} />
     </DocumentEditingProvider>
   );
 }
 
 function DocumentPages({ view, part }: { view: ProgramView; part: DocumentPart }) {
+  const editing = useDocumentEditing();
   const block = currentBlock(view);
   const showsProgramWide = part !== 'block';
   const blockShown = part !== 'program-wide' ? block : null;
@@ -591,7 +623,7 @@ function DocumentPages({ view, part }: { view: ProgramView; part: DocumentPart }
       aria-label={`${view.clientName} program`}
       className={cn(
         'mx-auto w-full max-w-[210mm] space-y-document-section bg-surface-base px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]',
-        { 'pt-10 sm:pt-[18mm]': !showsProgramWide },
+        { 'pt-10 sm:pt-[18mm]': !showsProgramWide, relative: editing !== null },
       )}
     >
       <RunningHeader text={runningHeaderText(view, block)} />

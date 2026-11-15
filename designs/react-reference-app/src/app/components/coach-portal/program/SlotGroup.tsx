@@ -2,12 +2,15 @@ import type { ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { MOVEMENT_PATTERN_LABELS, type MovementPattern } from '../../../domain/exercises';
-import type { Session, Slot } from '../../../domain/program';
+import { positionLabel, type Row, type Session, type Slot } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
 import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
-import { ChoiceGroup, ChoiceOption, MultiChoiceGroup, MultiChoiceOption } from '../../ChoiceGroup';
-import { Badge } from '../../ui/badge';
+import { CheckboxChip } from '../../CheckboxChip';
+import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
+import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseCard } from './ExerciseCard';
 import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, type SessionDropRules } from './sessionDnd';
 
@@ -23,21 +26,19 @@ type SlotGroupProps = {
   onAddSubstitution: (rowId: string) => void;
 };
 
-function SupersetUnit({ children, onUngroup }: { children: ReactNode; onUngroup: () => void }) {
+type SupersetUnitProps = { positions: readonly string[]; onUngroup: () => void; children: ReactNode };
+
+function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
   return (
-    <div className="overflow-hidden rounded-control border border-brand-secondary">
-      <div className="flex items-center justify-between gap-2 bg-brand-secondary px-3 py-1.5 text-brand-secondary-foreground">
-        <span className="text-label uppercase">Superset</span>
-        <Button
-          variant="ghost"
-          size="xs"
-          className="h-auto px-2 py-0.5 text-brand-secondary-foreground hover:bg-brand-secondary-hover hover:text-brand-secondary-foreground"
-          onClick={onUngroup}
-        >
+    <div className="rounded-control border-l-2 border-brand-secondary bg-brand-secondary-soft">
+      <div className="flex items-center justify-between gap-2 py-1 pr-1 pl-3">
+        <span className={cn(LABEL_CLASS, 'text-brand-secondary-ink')}>Superset</span>
+        <Button variant="ghost" size="xs" className="text-brand-secondary-ink" onClick={onUngroup}>
           Ungroup
+          <span className="sr-only">{` ${positions.join(' and ')}`}</span>
         </Button>
       </div>
-      <div className="grid gap-2 p-2">{children}</div>
+      <div className="grid gap-2 px-2 pb-2">{children}</div>
     </div>
   );
 }
@@ -65,54 +66,59 @@ function MainPatternPicker({ plan, choices, onChange }: PatternPickerProps) {
 }
 
 function PatternChips({ plan, choices, onChange }: PatternPickerProps) {
+  const toggle = (pattern: MovementPattern, checked: boolean) =>
+    onChange(choices.filter(choice => (choice === pattern ? checked : plan.patterns.includes(choice))));
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <MultiChoiceGroup
-        size="xs"
-        aria-label={`${plan.label} patterns`}
-        value={plan.patterns}
-        onValueChange={values => onChange(values as MovementPattern[])}
-        className="w-auto"
-      >
-        {choices.map(pattern => (
-          <MultiChoiceOption key={pattern} value={pattern}>
-            {MOVEMENT_PATTERN_LABELS[pattern]}
-          </MultiChoiceOption>
-        ))}
-      </MultiChoiceGroup>
+    <fieldset className="flex flex-wrap items-center gap-2">
+      <legend className="sr-only">{`${plan.label} patterns`}</legend>
+      {choices.map(pattern => (
+        <CheckboxChip
+          key={pattern}
+          size="compact"
+          aria-label={MOVEMENT_PATTERN_LABELS[pattern]}
+          checked={plan.patterns.includes(pattern)}
+          onCheckedChange={checked => toggle(pattern, checked)}
+        >
+          {MOVEMENT_PATTERN_LABELS[pattern]}
+        </CheckboxChip>
+      ))}
       {plan.patterns.length === 0 && <span className="text-xs text-text-secondary">Any pattern</span>}
-    </div>
+    </fieldset>
   );
 }
 
-function PatternBadges({ patterns }: { patterns: readonly MovementPattern[] }) {
+function PatternText({ patterns }: { patterns: readonly MovementPattern[] }) {
   if (patterns.length === 0) return null;
   return (
-    <span className="flex flex-wrap gap-1">
-      {patterns.map(pattern => (
-        <Badge key={pattern} tone="muted">
-          {MOVEMENT_PATTERN_LABELS[pattern]}
-        </Badge>
-      ))}
-    </span>
+    <p className="text-sm text-text-secondary">
+      <span className="sr-only">Patterns: </span>
+      {patterns.map(pattern => MOVEMENT_PATTERN_LABELS[pattern]).join(' · ')}
+    </p>
   );
 }
 
 function PatternTags({ plan, choices, onChange }: PatternPickerProps) {
-  if (choices.length === 0) return <PatternBadges patterns={plan.patterns} />;
+  if (choices.length === 0) return <PatternText patterns={plan.patterns} />;
   if (SINGLE_PATTERN_SLOTS.includes(plan.slot)) return <MainPatternPicker plan={plan} choices={choices} onChange={onChange} />;
   return <PatternChips plan={plan} choices={choices} onChange={onChange} />;
 }
 
 export function SlotGroup({ session, plan, choices, onPatternsChange, library, edits, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
+  const announce = useEditorAnnouncer();
   const { slot, label } = plan;
   const units = slotUnits(session, slot);
   const heading = `${slot} · ${label}`;
-  const addLabel = `Add exercise to ${heading}`;
   const several = !SINGLE_CARD_SLOTS.includes(slot);
   const placeAt = (placement: Placement) => (dragged: DraggedItem) =>
     onChange(dragged.kind === PLAN_ROW ? edits.move(dragged.item.rowId, placement) : edits.add(dragged.item.exercise, placement));
   const rulesAt = (placement: Placement): SessionDropRules => ({ sessionId: session.id, onDrop: placeAt(placement) });
+
+  function ungroup(group: string, rows: readonly Row[]) {
+    const positions = rows.map(row => positionLabel(session, row));
+    onChange(edits.ungroup(group));
+    announce(`${positions.join(' and ')} ungrouped`);
+  }
+
   const card = (rowId: string) => {
     const row = session.rows.find(other => other.id === rowId);
     if (!row) return null;
@@ -136,31 +142,32 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
           <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
           {units.length > 0 ? (
-            <PatternBadges patterns={slotExercisePatterns(session, slot, library)} />
+            <PatternText patterns={slotExercisePatterns(session, slot, library)} />
           ) : (
             <PatternTags plan={plan} choices={choices} onChange={onPatternsChange} />
           )}
         </div>
         {several && units.length > 0 && (
-          <Button variant="ghost" size="icon-xs" aria-label={addLabel} onClick={() => onAdd(slot)}>
+          <Button variant="ghost" size="icon-xs" aria-label={`Add exercise to ${heading}`} onClick={() => onAdd(slot)}>
             <Plus aria-hidden="true" />
           </Button>
         )}
       </header>
       <DropZone rules={rulesAt({ slot })} className="rounded-control" activeClassName="bg-primary-soft">
         {units.length === 0 ? (
-          <EmptyDropTarget rules={rulesAt({ slot })} addLabel={addLabel} onAdd={() => onAdd(slot)} />
+          <EmptyDropTarget rules={rulesAt({ slot })} place={heading} onAdd={() => onAdd(slot)} />
         ) : (
           <div className="grid">
             {several && <DropSeparator rules={rulesAt({ slot, beforeRowId: units[0].rows[0].id })} />}
             {units.map((unit, index) => {
               const next = units[index + 1];
+              const { group } = unit;
               return (
                 <div key={unit.key} className="grid">
-                  {unit.group === undefined ? (
+                  {group === undefined ? (
                     card(unit.rows[0].id)
                   ) : (
-                    <SupersetUnit onUngroup={() => onChange(edits.ungroup(unit.group as string))}>
+                    <SupersetUnit positions={unit.rows.map(row => positionLabel(session, row))} onUngroup={() => ungroup(group, unit.rows)}>
                       {unit.rows.map(row => card(row.id))}
                     </SupersetUnit>
                   )}

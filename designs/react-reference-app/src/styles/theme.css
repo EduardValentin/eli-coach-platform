@@ -16,7 +16,7 @@
   --secondary: oklch(0.95 0.0058 264.53);
   --secondary-foreground: #030213;
   --muted: #ececf0;
-  --muted-foreground: #6a6a7a;
+  --muted-foreground: #42424D;
   --accent: var(--primary-soft);
   --accent-foreground: var(--primary);
   --destructive: #d1183c;
@@ -25,7 +25,7 @@
   --border: rgba(0, 0, 0, 0.1);
   --input: transparent;
   --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+  --switch-background: #8E9095;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --font-weight-semibold: 600;
@@ -39,19 +39,20 @@
      where --brand itself only reaches 2.7:1. */
   --brand-on-inverted: #F06BA6;
   --focus-ring: var(--brand);
-  --brand-secondary: #00796B;
-  --brand-secondary-hover: #005A4F;
+  --brand-secondary: #006156;
+  --brand-secondary-hover: #004A41;
   --brand-secondary-foreground: #ffffff;
   --brand-secondary-soft: rgba(0, 121, 107, 0.1);
   --brand-secondary-surface: #E6F2F0;
+  --brand-secondary-ink: #003630;
   --success: #0F7A36;
   --success-foreground: #ffffff;
   --success-soft: rgba(15, 122, 54, 0.1);
   --success-surface: #E8F6ED;
-  --warning: #A16207;
+  --warning: #5F3A05;
   --warning-soft: rgba(161, 98, 7, 0.1);
   --rir-failure: var(--destructive);
-  --rir-near: var(--warning);
+  --rir-near: #A16207;
   --rir-far: var(--success);
   --rir-ink: var(--text-primary);
   /* A check-in awaiting someone's action: pending counts, ad-hoc markers, and the
@@ -70,13 +71,14 @@
   --training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
   --training-recovery: #00796b;
   --training-recovery-soft: rgba(0, 121, 107, 0.1);
+  --training-recovery-ink: #003630;
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
   --training-foundation: #2563eb;
   --training-foundation-soft: rgba(37, 99, 235, 0.1);
   --training-deload: #616161;
   --training-deload-soft: rgba(97, 97, 97, 0.1);
-  --set-warm-up: #6E5B4A;
+  --set-warm-up: #57483B;
   --check-in-marker: #AC502C;
   --check-in-marker-soft: rgba(172, 80, 44, 0.1);
   --surface-inverted: #0C0C0C;
@@ -113,7 +115,7 @@
   --label-foreground: oklch(0.371 0 0);
   --placeholder-soft: oklch(0.552 0 0);
   --icon-muted: oklch(0.708 0 0);
-  --control-border-soft: oklch(0.922 0 0);
+  --control-border-soft: oklch(0.64 0 0);
   --border-default: rgba(0, 0, 0, 0.1);
   --stroke-quiet: oklch(0.985 0 0);
   --stroke-faint: oklch(0.97 0 0);
@@ -180,8 +182,8 @@
      below is what turns them into the text-text-primary / text-text-secondary /
      bg-surface-base utilities. */
   --text-primary: #121212;
-  --text-secondary: #616161;
-  --text-muted: #6a6a7a;
+  --text-secondary: #424242;
+  --text-muted: #42424D;
   --portal-accent: var(--brand);
   --portal-accent-hover: var(--brand-hover);
   --surface-base: #ffffff;
@@ -194,6 +196,7 @@
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
   --size-control-xl: 3.75rem;
+  --size-hit-target: 3rem;
   --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
   /* The middle stop of the scale DESIGN.md already documents; production has
      carried it as --font-size-display-md all along. The 404 page is the first
@@ -325,6 +328,7 @@
   --color-brand-secondary-foreground: var(--brand-secondary-foreground);
   --color-brand-secondary-soft: var(--brand-secondary-soft);
   --color-brand-secondary-surface: var(--brand-secondary-surface);
+  --color-brand-secondary-ink: var(--brand-secondary-ink);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
@@ -341,6 +345,7 @@
   --color-training-hypertrophy-soft: var(--training-hypertrophy-soft);
   --color-training-recovery: var(--training-recovery);
   --color-training-recovery-soft: var(--training-recovery-soft);
+  --color-training-recovery-ink: var(--training-recovery-ink);
   --color-training-rest: var(--training-rest);
   --color-training-rest-soft: var(--training-rest-soft);
   --color-training-foundation: var(--training-foundation);
@@ -720,6 +725,17 @@
   outline-color: var(--focus-ring);
   outline-offset: 2px;
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
+}
+
+/* Grows a positioned control's pointer target to --size-hit-target without moving layout.
+   A later sibling's area paints over an earlier one's, so neighbours need the gap DESIGN.md names. */
+@utility hit-area {
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - var(--size-hit-target)) / 2));
+    inset-inline: min(0px, calc((100% - var(--size-hit-target)) / 2));
+  }
 }
 
 @layer components {

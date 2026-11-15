@@ -35,7 +35,6 @@ import {
   type TextFormatType,
 } from "lexical";
 import { Bold, Heading, Italic, List } from "lucide-react";
-import { fieldSurfaceClass } from "./input";
 import { Toggle } from "./toggle";
 import { cn } from "./utils";
 
@@ -58,15 +57,18 @@ export type RichTextEditorHandle = { focus: () => void };
 
 type RichTextEditorProps = {
   label: string;
+  labelledBy?: string;
   value: string;
   format: RichTextFormat;
   theme: RichTextTheme;
   tools: readonly RichTextTool[];
+  lines?: "one" | "many";
+  controls?: "shown" | "reserved";
+  actions?: React.ReactNode;
   placeholder?: string;
   describedBy?: string;
   className?: string;
   onChange: (text: string) => void;
-  onFocus?: () => void;
   onEscape?: () => void;
 };
 
@@ -297,93 +299,75 @@ function useRichTextEditor(props: RichTextEditorProps) {
   return { editor, toolbar, empty };
 }
 
-type ToolButtonProps = {
-  label: string;
-  shortcut: string;
-  pressed: boolean;
-  disabled?: boolean;
-  onPress: () => void;
-  children: React.ReactNode;
+type ToolSpec = { label: string; shortcut: string; icon: React.ReactNode };
+
+const TOOL_SPECS: Record<RichTextTool, ToolSpec> = {
+  heading: { label: "Heading", shortcut: "Control+Alt+1 Meta+Alt+1", icon: <Heading /> },
+  bold: { label: "Bold", shortcut: "Control+B Meta+B", icon: <Bold /> },
+  italic: { label: "Italic", shortcut: "Control+I Meta+I", icon: <Italic /> },
+  list: { label: "Bulleted list", shortcut: "Control+Shift+8 Meta+Shift+8", icon: <List /> },
 };
 
-function ToolButton({ label, shortcut, pressed, disabled, onPress, children }: ToolButtonProps) {
-  return (
-    <Toggle
-      size="sm"
-      aria-label={label}
-      aria-keyshortcuts={shortcut}
-      title={label}
-      pressed={pressed}
-      disabled={disabled}
-      onMouseDown={(event) => event.preventDefault()}
-      onPressedChange={onPress}
-    >
-      {children}
-    </Toggle>
-  );
+const ENTRY_FRAME_CLASS = "min-w-0 rounded-field border border-control-border-soft bg-surface-base outline-none";
+const ENTRY_BOX_CLASS = "box-content block px-3 py-2 [grid-area:1/1]";
+const LINES_CLASS = { one: "min-h-8", many: "min-h-12" } as const;
+const CONTROLS_ROW_CLASS = "flex min-h-(--size-control-xs) flex-wrap items-center gap-2";
+const ROVING_KEYS = new Set(["ArrowRight", "ArrowLeft", "Home", "End"]);
+
+function runTool(editor: LexicalEditor, tool: RichTextTool) {
+  if (tool === "heading") editor.update($toggleHeadingLine);
+  if (tool === "bold" || tool === "italic") editor.dispatchCommand(FORMAT_TEXT_COMMAND, tool);
+  if (tool === "list") toggleList(editor);
+  editor.focus();
+}
+
+function rovingTarget(key: string, index: number, count: number): number {
+  if (key === "Home") return 0;
+  if (key === "End") return count - 1;
+  return (index + (key === "ArrowRight" ? 1 : -1) + count) % count;
 }
 
 type ToolbarProps = { editor: LexicalEditor; label: string; tools: readonly RichTextTool[]; state: ToolbarState };
 
 function Toolbar({ editor, label, tools, state }: ToolbarProps) {
-  function run(action: () => void) {
-    action();
-    editor.focus();
+  const enabled = tools.filter((tool) => tool !== "heading" || state.headingAvailable);
+  const [current, setCurrent] = React.useState<RichTextTool | undefined>(enabled[0]);
+  const stop = current && enabled.includes(current) ? current : enabled[0];
+
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (!ROVING_KEYS.has(event.key) || !stop) return;
+    event.preventDefault();
+    const next = enabled[rovingTarget(event.key, enabled.indexOf(stop), enabled.length)];
+    setCurrent(next);
+    event.currentTarget.querySelector<HTMLElement>(`[data-tool="${next}"]`)?.focus();
   }
 
   return (
-    <div
-      role="group"
-      aria-label={`Formatting for ${label}`}
-      className="invisible absolute bottom-full left-0 z-10 mb-1 flex gap-0.5 rounded-field border border-border bg-surface-base p-0.5 shadow-card group-focus-within/editor:visible"
-    >
-      {tools.includes("heading") && (
-        <ToolButton
-          label="Heading"
-          shortcut="Control+Alt+1 Meta+Alt+1"
-          pressed={state.heading}
-          disabled={!state.headingAvailable}
-          onPress={() => run(() => editor.update($toggleHeadingLine))}
+    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex gap-2">
+      {tools.map((tool) => (
+        <Toggle
+          key={tool}
+          data-tool={tool}
+          size="sm"
+          aria-label={TOOL_SPECS[tool].label}
+          aria-keyshortcuts={TOOL_SPECS[tool].shortcut}
+          title={TOOL_SPECS[tool].label}
+          tabIndex={tool === stop ? undefined : -1}
+          pressed={state[tool]}
+          disabled={!enabled.includes(tool)}
+          onFocus={() => setCurrent(tool)}
+          onMouseDown={(event) => event.preventDefault()}
+          onPressedChange={() => runTool(editor, tool)}
         >
-          <Heading />
-        </ToolButton>
-      )}
-      {tools.includes("bold") && (
-        <ToolButton
-          label="Bold"
-          shortcut="Control+B Meta+B"
-          pressed={state.bold}
-          onPress={() => run(() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"))}
-        >
-          <Bold />
-        </ToolButton>
-      )}
-      {tools.includes("italic") && (
-        <ToolButton
-          label="Italic"
-          shortcut="Control+I Meta+I"
-          pressed={state.italic}
-          onPress={() => run(() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"))}
-        >
-          <Italic />
-        </ToolButton>
-      )}
-      {tools.includes("list") && (
-        <ToolButton
-          label="Bulleted list"
-          shortcut="Control+Shift+8 Meta+Shift+8"
-          pressed={state.list}
-          onPress={() => run(() => toggleList(editor))}
-        >
-          <List />
-        </ToolButton>
-      )}
+          {TOOL_SPECS[tool].icon}
+        </Toggle>
+      ))}
     </div>
   );
 }
 
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>((props, ref) => {
-  const { label, placeholder, describedBy, theme, tools, className, onFocus } = props;
+  const { label, labelledBy, placeholder, describedBy, theme, tools, lines = "many", controls = "shown", actions, className, onEscape } = props;
   const { editor, toolbar, empty } = useRichTextEditor(props);
   const content = React.useRef<HTMLDivElement>(null);
 
@@ -403,30 +387,41 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     [editor],
   );
 
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (event.key !== "Escape" || !onEscape) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onEscape();
+  }
+
   return (
-    <div className={cn("group/editor relative", className)}>
-      <div data-field-frame="" className={cn(fieldSurfaceClass, "relative block px-3 py-2")}>
+    <div className={cn("grid gap-2", className)} onKeyDown={onKeyDown}>
+      <div className="grid">
         <div
           ref={content}
           contentEditable
           suppressContentEditableWarning
-          tabIndex={0}
           role="textbox"
           aria-multiline="true"
-          aria-label={label}
+          aria-label={labelledBy ? undefined : label}
+          aria-labelledby={labelledBy}
           aria-describedby={describedBy}
           aria-placeholder={placeholder}
-          data-field-entry=""
-          onFocus={onFocus}
-          className={cn("min-h-12 outline-none", theme.root)}
+          className={cn(ENTRY_FRAME_CLASS, ENTRY_BOX_CLASS, LINES_CLASS[lines], theme.root)}
         />
         {empty && placeholder && (
-          <p aria-hidden="true" className={cn("pointer-events-none absolute inset-x-3 top-2", theme.root, "text-muted-foreground")}>
+          <p aria-hidden="true" className={cn("pointer-events-none border border-transparent", ENTRY_BOX_CLASS, theme.root, "text-muted-foreground")}>
             {placeholder}
           </p>
         )}
       </div>
-      {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
+      {controls === "reserved" && <div aria-hidden="true" className={CONTROLS_ROW_CLASS} />}
+      {controls === "shown" && (tools.length > 0 || actions) && (
+        <div className={CONTROLS_ROW_CLASS}>
+          {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
+          {actions && <div className="ml-auto flex flex-wrap items-center gap-2">{actions}</div>}
+        </div>
+      )}
     </div>
   );
 });

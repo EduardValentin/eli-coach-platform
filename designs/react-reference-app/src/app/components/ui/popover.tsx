@@ -3,18 +3,30 @@
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
+import { OpenStateContext, useOpenState, useTriggerControls } from "./open-state";
 import { cn } from "./utils";
 
 function Popover({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
+  const openState = useOpenState({ open, defaultOpen, onOpenChange });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <PopoverPrimitive.Root data-slot="popover" {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
 }
 
 function PopoverTrigger({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
+  const controls = useTriggerControls();
+
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...controls} {...props} />;
 }
 
 function PopoverContent({

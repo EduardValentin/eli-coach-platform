@@ -8,16 +8,23 @@ export type DocumentEditing = {
 
 export type DocumentTypography = { body: string; heading: string };
 
-type DocumentEditingValue = { editing: DocumentEditing | null; typography: DocumentTypography };
+export type HeadingLevel = 1 | 2 | 3 | 4;
+
+type DocumentEditingValue = { editing: DocumentEditing | null; typography: DocumentTypography; topLevel: HeadingLevel };
 
 const NO_TYPOGRAPHY: DocumentTypography = { body: '', heading: '' };
 
-const DocumentEditingContext = createContext<DocumentEditingValue>({ editing: null, typography: NO_TYPOGRAPHY });
+const DocumentEditingContext = createContext<DocumentEditingValue>({ editing: null, typography: NO_TYPOGRAPHY, topLevel: 1 });
 
-type DocumentEditingProviderProps = { editing: DocumentEditing | null; typography?: DocumentTypography; children: ReactNode };
+type DocumentEditingProviderProps = {
+  editing: DocumentEditing | null;
+  typography?: DocumentTypography;
+  topLevel?: HeadingLevel;
+  children: ReactNode;
+};
 
-export function DocumentEditingProvider({ editing, typography = NO_TYPOGRAPHY, children }: DocumentEditingProviderProps) {
-  return <DocumentEditingContext.Provider value={{ editing, typography }}>{children}</DocumentEditingContext.Provider>;
+export function DocumentEditingProvider({ editing, typography = NO_TYPOGRAPHY, topLevel = 1, children }: DocumentEditingProviderProps) {
+  return <DocumentEditingContext.Provider value={{ editing, typography, topLevel }}>{children}</DocumentEditingContext.Provider>;
 }
 
 export function useDocumentEditing(): DocumentEditing | null {
@@ -28,13 +35,16 @@ export function useDocumentTypography(): DocumentTypography {
   return useContext(DocumentEditingContext).typography;
 }
 
-type HeadingLevel = 1 | 2 | 3 | 4;
-type DocumentHeadingProps = { level: HeadingLevel; className?: string; children: ReactNode };
+type DocumentHeadingProps = { level: HeadingLevel; id?: string; className?: string; children: ReactNode };
 
 const HEADING_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5'] as const;
 
-export function DocumentHeading({ level, className, children }: DocumentHeadingProps) {
-  const nested = useDocumentEditing() !== null;
-  const Tag = HEADING_TAGS[nested ? level : level - 1];
-  return <Tag className={className}>{children}</Tag>;
+export function DocumentHeading({ level, id, className, children }: DocumentHeadingProps) {
+  const { topLevel } = useContext(DocumentEditingContext);
+  const Tag = HEADING_TAGS[level + topLevel - 2];
+  return (
+    <Tag id={id} className={className}>
+      {children}
+    </Tag>
+  );
 }

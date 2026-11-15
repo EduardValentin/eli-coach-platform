@@ -17,24 +17,29 @@ export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarge
     const cardio = block.cardioSessions.find(other => other.id === target.sessionId);
     if (!cardio) return null;
     const label = `Adding to ${cardio.name}`;
-    if (target.kind === 'rounds-item') return { key, label, type: 'cardio', alsoTagged: 'Conditioning', patterns: [] };
-    return { key, label, type: 'cardio', patterns: [] };
+    if (target.kind === 'rounds-item') {
+      return { key, label, destination: `${cardio.name} · Intervals`, place: 'Intervals', type: 'cardio', alsoTagged: 'Conditioning', patterns: [] };
+    }
+    return { key, label, destination: cardio.name, place: cardio.name, type: 'cardio', patterns: [] };
   }
   const session = block.sessions.find(other => other.id === target.sessionId);
   if (!session) return null;
-  if (target.kind === 'warm-up') {
-    return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', alsoTagged: 'Conditioning', patterns: [] };
-  }
-  if (target.kind === 'cool-down') return { key, label: `Adding to ${session.name} · Cool-down`, type: 'stretching', patterns: [] };
+  const into = (place: string) => ({ key, label: `Adding to ${session.name} · ${place}`, destination: `${session.name} · ${place}`, place });
+  if (target.kind === 'warm-up') return { ...into('Warm-up'), type: 'mobility', alsoTagged: 'Conditioning', patterns: [] };
+  if (target.kind === 'cool-down') return { ...into('Cool-down'), type: 'stretching', patterns: [] };
   if (target.kind === 'slot') {
     const plan = slotPlanFor(block, session, target.slot);
-    return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [] };
+    const label = plan?.label ?? target.slot;
+    return { ...into(`${target.slot} ${label}`), place: `${target.slot} · ${label}`, type: 'resistance', patterns: plan?.patterns ?? [] };
   }
   const row = session.rows.find(other => other.id === target.rowId);
   const exercise = library.find(item => item.id === row?.exerciseId);
+  const name = exercise?.name ?? 'this exercise';
   return {
     key,
-    label: `Adding a substitution for ${exercise?.name ?? 'this exercise'}`,
+    label: `Adding a substitution for ${name}`,
+    destination: `the substitutions for ${name}`,
+    place: `substitutions for ${name}`,
     type: 'resistance',
     patterns: exercise?.pattern ? [exercise.pattern] : [],
   };
@@ -84,9 +89,7 @@ export function useLibraryPanel() {
   }
 
   function finishTarget() {
-    if (!panelTarget) return;
-    if (isWide) setPanelTarget(null);
-    else close();
+    if (panelTarget && !isWide) close();
   }
 
   useEffect(() => {

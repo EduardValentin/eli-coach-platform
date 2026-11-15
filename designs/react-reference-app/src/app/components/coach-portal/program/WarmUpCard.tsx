@@ -63,12 +63,12 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
         >
           {(item, name) => (
             <>
-              <CountField className="w-14" label={`${name} sets`} value={item.sets} suffix="sets ×" onCommit={sets => onChange(edits.changeItem({ ...item, sets }))} />
+              <CountField className="w-14" label={`${name} sets`} value={item.sets} suffix={item.sets === 1 ? 'set ×' : 'sets ×'} onCommit={sets => onChange(edits.changeItem({ ...item, sets }))} />
               <AmountField item={item} exercise={exerciseOf(item.exerciseId)} name={name} onChange={next => onChange(edits.changeItem(next))} />
             </>
           )}
         </ExerciseItemList>
-        <Button variant="ghost" size="xs" className="w-fit" onClick={onPickExercise}>
+        <Button variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickExercise}>
           <Plus aria-hidden="true" />
           Add exercise
           <span className="sr-only">{' to warm-up'}</span>

@@ -1,18 +1,21 @@
+import type { ReactNode } from 'react';
 import { Copy, Plus, X } from 'lucide-react';
 import { formatRange, isWorkingSet, withField, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
-import { RowTextField } from './RowTextField';
+import { RowTextField, useRowTextField } from './RowTextField';
 import { formatRest, parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM } from './rowFields';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 
 type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChange: (row: Row) => void };
 type SetKind = SetSpec['kind'];
 
-const HEAD_CLASS = 'px-1 pb-1 text-left font-normal';
-const CELL_CLASS = 'px-1 py-1';
+const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.5rem_9.5rem_4rem_4rem_7.5rem_2rem]';
+const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.5rem_9.5rem_6.5rem_4rem_7.5rem_2rem]';
+const MINI_LABEL_CLASS = cn(LABEL_CLASS, '@min-[34rem]:hidden');
+const FIELD_WIDTH = 'w-full @min-[34rem]:w-16';
+const WEIGHT_WIDTH = 'w-full @min-[34rem]:w-20';
 const KIND_OPTIONS: { value: SetKind; label: string }[] = [
   { value: 'warm-up', label: 'Warm-up' },
   { value: 'working', label: 'Working' },
@@ -20,6 +23,10 @@ const KIND_OPTIONS: { value: SetKind; label: string }[] = [
 const WEIGHT_PROBLEM = 'Use a weight in kg, or leave it empty';
 const NEW_SET_REPS: Range = { min: 8, max: 8 };
 const FALLBACK_RIR: Range = { min: 2, max: 2 };
+
+function wideColumns(repsSuffix: string): string {
+  return repsSuffix ? WIDE_COLUMNS_WITH_REPS_SUFFIX : WIDE_COLUMNS;
+}
 
 function parseWeight(text: string): number | undefined | null {
   const trimmed = text.trim();
@@ -48,6 +55,105 @@ function likeFirst(set: SetSpec, first: WorkingSet): SetSpec {
   return withWeight({ ...set, reps: { ...first.reps }, rir: { ...first.rir } }, first.weightKg);
 }
 
+function SetCell({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="grid min-w-0 content-start gap-1">
+      <span aria-hidden="true" className={MINI_LABEL_CLASS}>
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function NoRir({ label }: { label: string }) {
+  return (
+    <span className="flex h-(--size-control-xs) items-center px-2 text-sm text-text-secondary">
+      <span aria-hidden="true">—</span>
+      <span className="sr-only">{`${label} RIR: none on a warm-up set`}</span>
+    </span>
+  );
+}
+
+type SetRowProps = {
+  set: SetSpec;
+  index: number;
+  repsSuffix: string;
+  removable: boolean;
+  rirForNewWorking: Range;
+  onChange: (set: SetSpec) => void;
+  onRemove: () => void;
+};
+
+function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange, onRemove }: SetRowProps) {
+  const label = `Set ${index + 1}`;
+  const working = isWorkingSet(set);
+  const reps = useRowTextField({
+    className: FIELD_WIDTH,
+    label: `${label} reps`,
+    value: set.reps,
+    format: formatRange,
+    parse: parseRange,
+    problem: RANGE_PROBLEM,
+    suffix: repsSuffix || undefined,
+    onCommit: next => onChange({ ...set, reps: next }),
+  });
+  const rir = useRowTextField({
+    className: FIELD_WIDTH,
+    label: `${label} RIR`,
+    value: working ? set.rir : rirForNewWorking,
+    format: formatRange,
+    parse: parseRange,
+    problem: RANGE_PROBLEM,
+    onCommit: next => working && onChange({ ...set, rir: next }),
+  });
+  const weight = useRowTextField({
+    className: WEIGHT_WIDTH,
+    type: 'number',
+    label: `${label} weight`,
+    placeholder: 'by RIR',
+    value: set.weightKg,
+    format: formatWeight,
+    parse: parseWeight,
+    problem: WEIGHT_PROBLEM,
+    suffix: 'kg',
+    onCommit: next => onChange(withWeight(set, next)),
+  });
+  const rirProblem = working ? rir.problem : null;
+  const hasProblem = Boolean(reps.problem ?? rirProblem ?? weight.problem);
+
+  return (
+    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-2 py-2 @min-[34rem]:items-start @min-[34rem]:py-1', wideColumns(repsSuffix))}>
+      <span className="text-sm font-medium text-text-secondary tabular-nums @min-[34rem]:flex @min-[34rem]:h-(--size-control-xs) @min-[34rem]:items-center">
+        <span className="@min-[34rem]:sr-only">Set </span>
+        {index + 1}
+      </span>
+      <ChoiceGroup size="xs" aria-label={`${label} kind`} value={set.kind} onValueChange={kind => onChange(asKind(set, kind as SetKind, rirForNewWorking))}>
+        {KIND_OPTIONS.map(option => (
+          <ChoiceOption key={option.value} value={option.value}>
+            {option.label}
+          </ChoiceOption>
+        ))}
+      </ChoiceGroup>
+      <div className="col-span-full grid grid-cols-[minmax(0,0.9fr)_minmax(0,0.8fr)_minmax(0,1.7fr)_auto] items-end gap-2 @min-[34rem]:contents">
+        <SetCell label="Reps">{reps.field}</SetCell>
+        <SetCell label="RIR">{working ? rir.field : <NoRir label={label} />}</SetCell>
+        <SetCell label="Weight">{weight.field}</SetCell>
+        <Button variant="ghost" size="icon-xs" className="justify-self-end" aria-label={`Remove ${label.toLowerCase()}`} disabled={!removable} onClick={onRemove}>
+          <X aria-hidden="true" />
+        </Button>
+      </div>
+      {hasProblem && (
+        <div className="col-span-full flex flex-wrap gap-x-4 gap-y-1">
+          {reps.problem}
+          {rirProblem}
+          {weight.problem}
+        </div>
+      )}
+    </li>
+  );
+}
+
 export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProps) {
   const { sets } = row;
   const changeSets = (next: SetSpec[]) => onChange(withField(row, 'sets', next));
@@ -70,110 +176,35 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
   }
 
   return (
-    <div className="grid gap-3">
-      <div className="relative -mx-1 overflow-x-auto">
-        <table className="w-full min-w-[30rem] max-w-2xl text-sm">
-          <caption className="sr-only">{`Sets for ${exerciseName}`}</caption>
-          <thead>
-            <tr className={LABEL_CLASS}>
-              <th scope="col" className={HEAD_CLASS}>
-                Set
-              </th>
-              <th scope="col" className={HEAD_CLASS}>
-                Kind
-              </th>
-              <th scope="col" className={HEAD_CLASS}>
-                Reps
-              </th>
-              <th scope="col" className={HEAD_CLASS}>
-                RIR
-              </th>
-              <th scope="col" className={HEAD_CLASS}>
-                Weight
-              </th>
-              <th scope="col" className={HEAD_CLASS}>
-                <span className="sr-only">Remove</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sets.map((set, index) => {
-              const label = `Set ${index + 1}`;
-              return (
-                <tr key={index}>
-                  <th scope="row" className="w-8 px-1 py-1 text-left font-medium text-text-secondary tabular-nums">
-                    {index + 1}
-                  </th>
-                  <td className={cn(CELL_CLASS, 'w-40')}>
-                    <ChoiceGroup size="xs" aria-label={`${label} kind`} value={set.kind} onValueChange={kind => changeSet(index, asKind(set, kind as SetKind, rirForNewWorking))}>
-                      {KIND_OPTIONS.map(option => (
-                        <ChoiceOption key={option.value} value={option.value}>
-                          {option.label}
-                        </ChoiceOption>
-                      ))}
-                    </ChoiceGroup>
-                  </td>
-                  <td className={CELL_CLASS}>
-                    <RowTextField
-                      className="w-20"
-                      label={`${label} reps`}
-                      value={set.reps}
-                      format={formatRange}
-                      parse={parseRange}
-                      problem={RANGE_PROBLEM}
-                      suffix={repsSuffix || undefined}
-                      onCommit={reps => changeSet(index, { ...set, reps })}
-                    />
-                  </td>
-                  <td className={CELL_CLASS}>
-                    {isWorkingSet(set) ? (
-                      <RowTextField
-                        className="w-16"
-                        label={`${label} RIR`}
-                        value={set.rir}
-                        format={formatRange}
-                        parse={parseRange}
-                        problem={RANGE_PROBLEM}
-                        onCommit={rir => changeSet(index, { ...set, rir })}
-                      />
-                    ) : (
-                      <Input size="xs" aria-label={`${label} RIR`} className="w-16" value="" disabled readOnly />
-                    )}
-                  </td>
-                  <td className={CELL_CLASS}>
-                    <RowTextField
-                      className="w-20"
-                      type="number"
-                      label={`${label} weight`}
-                      placeholder="by RIR"
-                      value={set.weightKg}
-                      format={formatWeight}
-                      parse={parseWeight}
-                      problem={WEIGHT_PROBLEM}
-                      suffix="kg"
-                      onCommit={weightKg => changeSet(index, withWeight(set, weightKg))}
-                    />
-                  </td>
-                  <td className="px-1 py-1 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label={`Remove ${label.toLowerCase()}`}
-                      disabled={isWorkingSet(set) && working.length === 1}
-                      onClick={() => changeSets(sets.filter((_, at) => at !== index))}
-                    >
-                      <X aria-hidden="true" />
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <div className="@container grid gap-3">
+      <div>
+        <div aria-hidden="true" className={cn('hidden gap-x-2 pb-1 @min-[34rem]:grid', wideColumns(repsSuffix), LABEL_CLASS)}>
+          <span>Set</span>
+          <span>Kind</span>
+          <span>Reps</span>
+          <span>RIR</span>
+          <span>Weight</span>
+        </div>
+        <ol aria-label={`Sets for ${exerciseName}`} className="grid divide-y divide-border-subtle @min-[34rem]:divide-y-0">
+          {sets.map((set, index) => (
+            <SetRow
+              key={index}
+              set={set}
+              index={index}
+              repsSuffix={repsSuffix}
+              removable={!(isWorkingSet(set) && working.length === 1)}
+              rirForNewWorking={rirForNewWorking}
+              onChange={next => changeSet(index, next)}
+              onRemove={() => changeSets(sets.filter((_, at) => at !== index))}
+            />
+          ))}
+        </ol>
       </div>
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-        <label className="grid gap-1">
-          <span className={LABEL_CLASS}>Rest</span>
+        <div className="grid gap-1">
+          <span aria-hidden="true" className={LABEL_CLASS}>
+            Rest
+          </span>
           <RowTextField
             className="w-20"
             label="Rest"
@@ -183,8 +214,8 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
             problem={REST_PROBLEM}
             onCommit={seconds => onChange(withField(row, 'restSeconds', seconds))}
           />
-        </label>
-        <div className="flex flex-wrap gap-1">
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Button variant="ghost" size="xs" onClick={addWarmUp}>
             <Plus aria-hidden="true" />
             Add warm-up set

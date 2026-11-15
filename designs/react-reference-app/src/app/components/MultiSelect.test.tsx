@@ -2,7 +2,6 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { MultiSelect } from "./MultiSelect";
-import { FIELD_TAB_INDEX } from "./ui/select";
 
 type Tag = "strength" | "recovery";
 
@@ -69,13 +68,13 @@ describe("MultiSelect", () => {
     expect(screen.getByRole("button", { name: "Tags (required)" })).toBeInTheDocument();
   });
 
-  it("stays in Safari's tab order like the select it sits beside", () => {
+  it("leaves its tab order to the native button", () => {
     // arrange
     // act
     renderFilter([]);
 
     // assert
-    expect(screen.getByRole("button", { name: "Tags" })).toHaveAttribute("tabindex", String(FIELD_TAB_INDEX));
+    expect(screen.getByRole("button", { name: "Tags" })).not.toHaveAttribute("tabindex");
   });
 
   it("says how many options are chosen", () => {

@@ -1,6 +1,6 @@
 import { useId, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus, Repeat, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
 import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, segmentMinutes, type CardioEdits } from '../../../domain/programCardio';
@@ -16,6 +16,7 @@ import { ExerciseItemList } from './ExerciseItemList';
 import { CountField } from './RowTextField';
 import { parseWholeNumber } from './rowFields';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { useEditorAnnouncer } from './editorAnnouncer';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
 type ItemMeasure = 'reps' | 'seconds';
@@ -41,21 +42,24 @@ type NumberFieldProps = { label: string; unit?: string; value: number; parse?: (
 
 function NumberField({ label, unit, value, parse, onCommit }: NumberFieldProps) {
   return (
-    <label className="grid content-start gap-1">
-      <span className={LABEL_CLASS}>{label}</span>
+    <div className="grid content-start gap-1">
+      <span aria-hidden="true" className={LABEL_CLASS}>
+        {label}
+      </span>
       <CountField className="w-20" label={label} value={value} parse={parse} suffix={unit} onCommit={onCommit} />
-    </label>
+    </div>
   );
 }
 
 function IntensityField({ value, onChange }: { value: CardioIntensity; onChange: (value: CardioIntensity) => void }) {
+  const labelId = useId();
   return (
     <div className="grid content-start gap-1">
-      <span aria-hidden="true" className={LABEL_CLASS}>
+      <span id={labelId} className={LABEL_CLASS}>
         Intensity
       </span>
       <div className="w-52 max-w-full">
-        <ChoiceGroup size="xs" aria-label="Intensity" value={value} onValueChange={next => onChange(next as CardioIntensity)}>
+        <ChoiceGroup size="xs" aria-labelledby={labelId} value={value} onValueChange={next => onChange(next as CardioIntensity)}>
           {INTENSITY_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
               {option.label}
@@ -91,13 +95,15 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
         <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
-        <NumberField
-          label="Easy between exercises"
-          unit="s"
-          value={segment.easySeconds}
-          parse={parseWholeNumber}
-          onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
-        />
+        {items.length > 1 && (
+          <NumberField
+            label="Easy between exercises"
+            unit="s"
+            value={segment.easySeconds}
+            parse={parseWholeNumber}
+            onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
+          />
+        )}
         <NumberField
           label="Rest between rounds"
           unit="s"
@@ -122,7 +128,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           return (
             <>
               <CountField className="w-16" label={`${name} ${measure}`} value={amount} onCommit={next => onItem(measuredItem(item, measure, next))} />
-              <div className="w-28">
+              <div className="w-28 shrink-0">
                 <ChoiceGroup size="xs" aria-label={`${name} measured in`} value={measure} onValueChange={next => onItem(measuredItem(item, next as ItemMeasure, amount))}>
                   {MEASURE_OPTIONS.map(option => (
                     <ChoiceOption key={option.value} value={option.value}>
@@ -167,12 +173,39 @@ function itemCount(segment: RoundsSegment): string {
   return counted(segment.items.length, 'exercise');
 }
 
+type SegmentTitleProps = { segment: CardioSegment; kindLabel: string; headingId: string; exerciseName: string | null; onReplaceExercise: () => void };
+
+function SegmentTitle({ segment, kindLabel, headingId, exerciseName, onReplaceExercise }: SegmentTitleProps) {
+  if (segment.kind === 'rounds') {
+    return (
+      <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
+        <Badge tone="training-recovery">{kindLabel}</Badge>
+        <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
+      </h5>
+    );
+  }
+  return (
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
+      <h5 id={headingId} className="flex min-w-0 items-center gap-2.5">
+        <Badge tone="training-recovery">{kindLabel}</Badge>
+        <span className="min-w-0 text-sm font-medium text-text-primary">{exerciseName ?? 'No exercise yet'}</span>
+      </h5>
+      <Button variant="outline" size="xs" onClick={onReplaceExercise}>
+        <Repeat aria-hidden="true" />
+        {exerciseName ? 'Replace' : 'Choose exercise'}
+        {exerciseName && <span className="sr-only">{` ${exerciseName}`}</span>}
+      </Button>
+    </div>
+  );
+}
+
 export function CardioSegmentCard(props: CardioSegmentCardProps) {
   const { cardioId, segment, position, count, library, edits, onChange, onReplaceExercise, onAddRoundsItem } = props;
   const headingId = useId();
+  const announce = useEditorAnnouncer();
   const kindLabel = SEGMENT_KIND_LABELS[segment.kind];
   const steadyExerciseId = segment.kind === 'steady' ? segment.exerciseId : '';
-  const exerciseName = library.find(item => item.id === steadyExerciseId)?.name ?? 'Choose an exercise';
+  const exerciseName = library.find(item => item.id === steadyExerciseId)?.name ?? null;
   const isRounds = segment.kind === 'rounds';
   const label = `${position}. ${kindLabel}`;
 
@@ -204,6 +237,11 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
   );
   const targeted = isOver && canDrop;
 
+  function move(direction: 'up' | 'down') {
+    onChange(direction === 'up' ? edits.moveUp(segment.id) : edits.moveDown(segment.id));
+    announce(`${kindLabel} segment moved ${direction}`);
+  }
+
   return (
     <article
       ref={drop as unknown as Ref<HTMLElement>}
@@ -212,22 +250,14 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />
-        <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
-          <Badge tone="training-recovery">{kindLabel}</Badge>
-          {segment.kind === 'rounds' ? (
-            <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
-          ) : (
-            <Button variant="link" size="xs" className="h-auto min-w-0 px-0 text-sm font-medium text-text-primary" aria-label={`Replace ${exerciseName}`} onClick={onReplaceExercise}>
-              <span className="truncate">{exerciseName}</span>
-            </Button>
-          )}
-        </h5>
+        <SegmentTitle segment={segment} kindLabel={kindLabel} headingId={headingId} exerciseName={exerciseName} onReplaceExercise={onReplaceExercise} />
         {segment.kind === 'rounds' && <p className="text-sm font-medium text-text-primary tabular-nums">{`${segmentMinutes(segment)} min`}</p>}
         <RowActionsMenu
           label={`${label} actions`}
+          size="xs"
           actions={[
-            { name: 'up', label: 'Move up', icon: ArrowUp, disabled: position === 1, onSelect: () => onChange(edits.moveUp(segment.id)) },
-            { name: 'down', label: 'Move down', icon: ArrowDown, disabled: position === count, onSelect: () => onChange(edits.moveDown(segment.id)) },
+            { name: 'up', label: 'Move up', icon: ArrowUp, disabled: position === 1, onSelect: () => move('up') },
+            { name: 'down', label: 'Move down', icon: ArrowDown, disabled: position === count, onSelect: () => move('down') },
             { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(segment.id)) },
           ]}
         />

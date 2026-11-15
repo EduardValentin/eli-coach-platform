@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Plus, Sparkles, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { withField, type LastSetTechnique, type Row } from '../../../domain/program';
@@ -64,7 +64,7 @@ function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitu
           </ul>
         )}
         {room && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="xs" onClick={onAddSubstitution}>
               <Plus aria-hidden="true" />
               Add substitution
@@ -84,6 +84,8 @@ function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitu
 
 export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
   const { row, exercise, onChange } = props;
+  const techniqueLabelId = useId();
+  const progressionLabelId = useId();
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -96,11 +98,11 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
           />
         </Detail>
         <div className="grid content-start gap-1.5">
-          <span aria-hidden="true" className={LABEL_CLASS}>
+          <span id={techniqueLabelId} className={LABEL_CLASS}>
             Last-set technique
           </span>
           <Select value={row.lastSetTechnique} onValueChange={value => onChange(withField(row, 'lastSetTechnique', value as LastSetTechnique))}>
-            <SelectTrigger size="sm" aria-label="Last-set technique">
+            <SelectTrigger size="sm" aria-labelledby={techniqueLabelId}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -114,14 +116,14 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
         </div>
       </div>
       <div className="grid gap-1.5">
-        <span aria-hidden="true" className={LABEL_CLASS}>
+        <span id={progressionLabelId} className={LABEL_CLASS}>
           Progression
         </span>
         <Select
           value={row.progression.kind}
           onValueChange={value => onChange(withField(row, 'progression', value === 'custom' ? { kind: 'custom', text: '' } : { kind: 'double' }))}
         >
-          <SelectTrigger size="sm" aria-label="Progression" className="sm:w-60">
+          <SelectTrigger size="sm" aria-labelledby={progressionLabelId} className="sm:w-60">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -142,7 +144,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
         <Detail label="Cues">
           <Textarea value={row.cues} onChange={event => onChange(withField(row, 'cues', event.target.value))} />
         </Detail>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             size="xs"
@@ -151,9 +153,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
           >
             Reset from library
           </Button>
-          {exercise?.videoUrl && (
-            <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />
-          )}
+          {exercise?.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />}
         </div>
       </div>
     </>

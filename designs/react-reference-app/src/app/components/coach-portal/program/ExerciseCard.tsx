@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
-import { ArrowDown, ArrowUp, ChevronDown, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Link2, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { positionLabel, setsBreakdown, type Row, type Session } from '../../../domain/program';
 import { counted } from '../../../utils/counted';
@@ -9,6 +9,7 @@ import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
+import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
 import { PositionBadge } from '../../program-view/PositionBadge';
 import { RirValue } from '../../program-view/RirValue';
@@ -28,20 +29,53 @@ type ExerciseCardProps = {
   onAddSubstitution: (rowId: string) => void;
 };
 
-function groupingActions({ row, edits, onChange }: Pick<ExerciseCardProps, 'row' | 'edits' | 'onChange'>): RowMenuAction[] {
+type MenuContext = Pick<ExerciseCardProps, 'row' | 'library' | 'edits' | 'onChange'> & { name: string; announce: (message: string) => void };
+
+function groupingActions({ row, library, edits, onChange, name, announce }: MenuContext): RowMenuAction[] {
   if (SINGLE_CARD_SLOTS.includes(row.slot)) return [];
-  const group = row.supersetGroup;
-  if (group) return [{ name: 'ungroup', label: 'Ungroup', icon: Link2Off, onSelect: () => onChange(edits.ungroup(group)) }];
-  return [{ name: 'superset', label: 'Superset with next', icon: Link2, disabled: !edits.canSupersetWithNext(row.id), onSelect: () => onChange(edits.supersetWithNext(row.id)) }];
+  const { rows } = edits.session;
+  const next = rows[rows.findIndex(other => other.id === row.id) + 1];
+  const nextName = exerciseNameOf(library.find(item => item.id === next?.exerciseId));
+  return [
+    {
+      name: 'superset',
+      label: 'Superset with next',
+      icon: Link2,
+      disabled: !edits.canSupersetWithNext(row.id),
+      onSelect: () => {
+        onChange(edits.supersetWithNext(row.id));
+        announce(`${name} and ${nextName} grouped as a superset`);
+      },
+    },
+  ];
 }
 
-function menuActions({ row, edits, onChange }: Pick<ExerciseCardProps, 'row' | 'edits' | 'onChange'>): RowMenuAction[] {
+function menuActions(context: MenuContext): RowMenuAction[] {
+  const { row, edits, onChange, name, announce } = context;
   const { rows } = edits.session;
   const index = rows.findIndex(other => other.id === row.id);
   return [
-    { name: 'up', label: 'Move up', icon: ArrowUp, disabled: index === 0, onSelect: () => onChange(edits.moveUp(row.id)) },
-    { name: 'down', label: 'Move down', icon: ArrowDown, disabled: index === rows.length - 1, onSelect: () => onChange(edits.moveDown(row.id)) },
-    ...groupingActions({ row, edits, onChange }),
+    {
+      name: 'up',
+      label: 'Move up',
+      icon: ArrowUp,
+      disabled: index === 0,
+      onSelect: () => {
+        onChange(edits.moveUp(row.id));
+        announce(`${name} moved up`);
+      },
+    },
+    {
+      name: 'down',
+      label: 'Move down',
+      icon: ArrowDown,
+      disabled: index === rows.length - 1,
+      onSelect: () => {
+        onChange(edits.moveDown(row.id));
+        announce(`${name} moved down`);
+      },
+    },
+    ...groupingActions(context),
     { name: 'reset', label: 'Reset to block defaults', icon: RotateCcw, onSelect: () => onChange(edits.reset(row.id)) },
     { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(row.id)) },
   ];
@@ -62,7 +96,7 @@ function rowStats(row: Row, repsSuffix: string): Stat[] {
 
 function RowStats({ stats }: { stats: readonly Stat[] }) {
   return (
-    <dl className="flex flex-wrap items-baseline gap-y-1 pl-9.5 text-sm tabular-nums">
+    <dl className="flex basis-full flex-wrap items-baseline gap-y-1 pl-16.5 text-sm tabular-nums">
       {stats.map(stat => (
         <div key={stat.term} className="flex items-baseline gap-1.5 border-border-subtle pr-3 not-first:border-l not-first:pl-3">
           <dt className="text-text-secondary">{stat.term}</dt>
@@ -78,9 +112,22 @@ function dropHint(row: Row, itemType: string | symbol | null): string {
   return itemType === PLAN_ROW ? 'Swap' : 'Add to the next group';
 }
 
+type DisclosureProps = { label: string; name: string; open: boolean; controls: string; onToggle: () => void };
+
+function DisclosureButton({ label, name, open, controls, onToggle }: DisclosureProps) {
+  return (
+    <Button variant="ghost" size="xs" aria-expanded={open} aria-controls={open ? controls : undefined} onClick={onToggle}>
+      {label}
+      <span className="sr-only">{` for ${name}`}</span>
+      <ChevronDown aria-hidden="true" className={cn('transition-transform motion-reduce:transition-none', { 'rotate-180': open })} />
+    </Button>
+  );
+}
+
 export function ExerciseCard({ session, row, exercise, library, edits, onChange, onAddSubstitution }: ExerciseCardProps) {
   const [setsOpen, setSetsOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const announce = useEditorAnnouncer();
   const headingId = useId();
   const setsId = useId();
   const detailsId = useId();
@@ -113,7 +160,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
-      className={cn(DRAGGABLE_CARD_CLASS, 'scroll-mt-4 lg:scroll-mt-[calc(var(--block-header-height)+4rem)]', draggableCardState({ targeted, dragging: isDragging }))}
+      className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2 p-3">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-0.5" />
@@ -133,26 +180,13 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
               {exercise.equipment.length > 0 && <span className="text-xs text-text-secondary">{exercise.equipment.join(', ')}</span>}
             </p>
           )}
-          <RowStats stats={rowStats(row, repsSuffix(exercise))} />
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="xs" aria-expanded={setsOpen} aria-controls={setsId} onClick={() => setSetsOpen(open => !open)}>
-            Sets
-            <ChevronDown aria-hidden="true" className={cn('transition-transform motion-reduce:transition-none', { 'rotate-180': setsOpen })} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="xs"
-            aria-label={`Details for ${name}`}
-            aria-expanded={detailsOpen}
-            aria-controls={detailsId}
-            onClick={() => setDetailsOpen(open => !open)}
-          >
-            Details
-            <ChevronDown aria-hidden="true" className={cn('transition-transform motion-reduce:transition-none', { 'rotate-180': detailsOpen })} />
-          </Button>
-          <RowActionsMenu label={`${name} actions`} actions={menuActions({ row, edits, onChange })} />
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <DisclosureButton label="Sets" name={name} open={setsOpen} controls={setsId} onToggle={() => setSetsOpen(open => !open)} />
+          <DisclosureButton label="Details" name={name} open={detailsOpen} controls={detailsId} onToggle={() => setDetailsOpen(open => !open)} />
+          <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, onChange, name, announce })} />
         </div>
+        <RowStats stats={rowStats(row, repsSuffix(exercise))} />
       </div>
       {setsOpen && (
         <div id={setsId} className="border-t border-border-subtle px-3 py-3">
@@ -160,7 +194,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
         </div>
       )}
       {detailsOpen && (
-        <div id={detailsId} className="grid gap-4 border-t border-border-subtle bg-surface-subtle px-3 py-4">
+        <div id={detailsId} className="grid gap-4 border-t border-border-subtle px-3 py-4">
           <ExerciseRowDetails
             row={row}
             exercise={exercise}

@@ -74,6 +74,7 @@ import { EXERCISE_VIDEO_UPLOAD_OUTCOMES } from '../services/exerciseVideoService
 import { FOOD_SEEDS } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
+import { PROGRAM_WRITE_OUTCOMES } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES } from '../services/recipePhotoService';
 import {
   RESOURCE_LOAD_OUTCOMES,
@@ -1410,6 +1411,28 @@ export function DevToggle() {
                       <SelectItem value="draft">Draft version 1</SelectItem>
                       <SelectItem value="published">Version 1 published</SelectItem>
                       <SelectItem value="two-versions">Two versions and a draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-program-write" className={DEV_LABEL_CLASS}>
+                    Program saves
+                  </Label>
+                  <Select
+                    value={appState.programWrite}
+                    onValueChange={(value) =>
+                      setAppState({
+                        programWrite: optionOrDefault(PROGRAM_WRITE_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-program-write" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails (create, publish, discard)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

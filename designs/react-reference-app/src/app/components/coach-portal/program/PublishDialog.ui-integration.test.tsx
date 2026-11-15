@@ -27,7 +27,7 @@ async function choose(user: User, combobox: HTMLElement, option: string) {
 
 async function emptyFirstBlock(user: User) {
   await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
-  await choose(user, screen.getByRole('combobox', { name: 'Split shape' }), 'Upper / Lower');
+  await choose(user, screen.getByRole('combobox', { name: 'Split' }), 'Upper / Lower');
   await user.click(within(screen.getByRole('dialog', { name: 'Change the split?' })).getByRole('button', { name: 'Rebuild sessions' }));
 }
 
@@ -113,12 +113,56 @@ describe('PublishDialog', () => {
     expect(await screen.findByText('Version 3 published')).toBeInTheDocument();
   });
 
-  it('holds publishing until the start date on the waiting path', () => {
-    // arrange / act
-    renderProgramEditor('&pseed=draft&jstage=approved&jstart=waiting');
+  it('holds publishing until the start date on the waiting path and says why', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&jstart=waiting');
+    const publish = screen.getByRole('button', { name: 'Publish' });
+    expect(publish).toHaveAttribute('aria-disabled', 'true');
+
+    // act
+    await user.hover(publish);
+    await user.click(publish);
 
     // assert
-    expect(screen.getByText(/^Publishing opens on \d{1,2} [A-Z][a-z]+$/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled();
+    expect(await screen.findByText(/^Publishing opens on \d{1,2} [A-Z][a-z]+$/)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Publish version 1' })).not.toBeInTheDocument();
+  });
+
+  it('opens with focus on "Keep editing" and drops the publish promise while blocked', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await emptyFirstBlock(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+
+    // assert
+    expect(within(publishDialog()).getByRole('button', { name: 'Keep editing' })).toHaveFocus();
+    expect(within(publishDialog()).queryByText('The client sees this version as soon as you publish it.')).not.toBeInTheDocument();
+  });
+
+  it('opens with focus on "Keep editing" when publishing is open', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+
+    // assert
+    expect(within(publishDialog(3)).getByRole('button', { name: 'Keep editing' })).toHaveFocus();
+    expect(publishDialog(3)).toHaveAccessibleDescription('The client sees this version as soon as you publish it.');
+  });
+
+  it('keeps the draft and says so when publishing fails', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready&pwrite=fails');
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+
+    // act
+    await user.click(within(publishDialog(3)).getByRole('button', { name: /^Publish/ }));
+
+    // assert
+    expect(within(publishDialog(3)).getByRole('alert')).toHaveTextContent('Publishing didn’t go through. Your draft is unchanged, so try again.');
+    expect(screen.queryByText('Program page')).not.toBeInTheDocument();
   });
 });

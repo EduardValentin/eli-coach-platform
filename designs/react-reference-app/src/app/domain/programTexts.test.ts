@@ -93,16 +93,34 @@ describe('guide texts', () => {
 });
 
 describe('textProgress', () => {
-  it('counts standard texts as written and empty optional texts as not', () => {
+  it('counts only required texts still to write, never an empty optional text', () => {
     // arrange
     const version = publishedVersion();
-    const block = { ...version.content.plan.blocks[0], calibrationWeek: false, clientNote: '' };
+    const block = version.content.plan.blocks[0];
+    const cleared = versionWithText(versionWithText(version, { kind: 'block', blockId: block.id, key: 'note' }, ''), { kind: 'block', blockId: block.id, key: 'split' }, '');
 
     // act
-    const progress = textProgress(version, blockTexts(block), 'en');
+    const progress = textProgress(cleared, blockTexts(block), 'en');
 
     // assert
-    expect(progress).toEqual({ written: progress.total - 1, total: blockTexts(block).length });
+    expect(progress).toEqual({ toWrite: 1, pending: 0 });
+  });
+
+  it('counts the standard texts a Romanian program still prints in English', () => {
+    // arrange
+    const version = publishedVersion();
+    const block = version.content.plan.blocks[0];
+    const intro: ProgramTextTarget = { kind: 'block', blockId: block.id, key: 'intro' };
+    const before = textProgress(version, blockTexts(block), 'ro');
+
+    // act
+    const after = textProgress(versionWithText(version, intro, 'Bine ai venit'), blockTexts(block), 'ro');
+
+    // assert
+    expect(before.pending).toBeGreaterThan(0);
+    expect(after.pending).toBe(before.pending - 1);
+    expect(programText(version, intro, 'ro').pending).toBe(true);
+    expect(textProgress(version, blockTexts(block), 'en').pending).toBe(0);
   });
 
   it('asks what changed only from version 2', () => {

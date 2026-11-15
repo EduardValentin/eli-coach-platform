@@ -1,6 +1,6 @@
 import { isSameDay } from 'date-fns';
 import { cardioOn, sessionOn, WEEKDAYS, type Block, type Weekday } from '../../domain/program';
-import { CARDIO_CHIP_CLASS, CardioLength, DayCardFrame, DayName, RestLabel, sessionChipClass } from './dayCard';
+import { CARDIO_CHIP_CLASS, CardioLength, CHIP_LABEL_CLASS, DayCardFrame, DayName, RestLabel, sessionChipClass } from './dayCard';
 import { sessionAnchor } from './programView';
 
 type WeekDayCardsProps = { block: Block; dates: Record<Weekday, Date>; today: Date };
@@ -17,13 +17,13 @@ function DayCard({ block, day, date, today }: { block: Block; day: Weekday; date
       </h3>
       {session && (
         <a href={`#${sessionAnchor(session.id)}`} className={sessionChipClass(block.type)}>
-          <span className="truncate">{session.name}</span>
+          <span className={CHIP_LABEL_CLASS}>{session.name}</span>
         </a>
       )}
       {cardio && (
         <>
           <a href={`#${sessionAnchor(cardio.id)}`} className={CARDIO_CHIP_CLASS}>
-            <span className="truncate">{cardio.name}</span>
+            <span className={CHIP_LABEL_CLASS}>{cardio.name}</span>
           </a>
           <CardioLength cardio={cardio} />
         </>

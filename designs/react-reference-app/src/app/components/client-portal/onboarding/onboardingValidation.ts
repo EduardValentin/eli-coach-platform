@@ -50,6 +50,7 @@ function amountMessage(field: OnboardingField): string {
 }
 
 function requiredMessage(field: OnboardingField): string {
+  if (field.requiredMessage) return field.requiredMessage;
   if (isNumericField(field)) return amountMessage(field);
 
   return REQUIRED_MESSAGES[field.kind] ?? TEXT_REQUIRED_MESSAGE;

@@ -74,7 +74,7 @@ async function openFirstBlock(search: string) {
   );
   const user = userEvent.setup();
   await user.click(
-    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation 4 wk/ }),
+    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation\b/ }),
   );
   return user;
 }
@@ -110,7 +110,7 @@ function renderEditorThenProfile() {
 
 async function openFirstBlockOfDraft(user: ReturnType<typeof userEvent.setup>) {
   await user.click(
-    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation 4 wk/ }),
+    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation\b/ }),
   );
   expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).toBeChecked();
 }
@@ -246,6 +246,21 @@ describe('LibraryPanel', () => {
     expect(within(library()).queryByRole('button', { name: 'Add Leg Press' })).not.toBeInTheDocument();
   });
 
+  it('names the filters that leave nothing and clears them', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'zzz');
+    expect(within(library()).getByText('No resistance exercises match “zzz” · Only her equipment.')).toBeInTheDocument();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Clear filters' }));
+
+    // assert
+    expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('');
+    expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).not.toBeChecked();
+    expect(within(library()).getByRole('button', { name: 'Add Barbell Back Squat' })).toBeInTheDocument();
+  });
+
   it('opens as a drawer on narrow screens and closes on Escape returning focus to the opener', async () => {
     // arrange
     stubPhoneViewport();
@@ -257,9 +272,13 @@ describe('LibraryPanel', () => {
     await user.click(opener);
 
     // assert
-    expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveFocus();
+    const drawer = screen.getByRole('dialog', { name: 'Exercise library' });
+    expect(drawer).toHaveAttribute('aria-modal', 'true');
+    expect(within(drawer).getByRole('searchbox', { name: 'Search exercises' })).toHaveFocus();
+    expect(screen.getByRole('main', { name: 'Program editor' }).closest('[inert]')).not.toBeNull();
     await user.keyboard('{Escape}');
-    expect(screen.queryByRole('complementary', { name: 'Exercise library' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
+    expect(screen.getByRole('main', { name: 'Program editor' }).closest('[inert]')).toBeNull();
     expect(opener).toHaveFocus();
   });
 });

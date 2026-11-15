@@ -5,15 +5,19 @@ import { useRef, type ReactNode, type RefObject } from 'react';
 import type { DialogDismissal } from './dialog';
 import { cn } from './utils';
 
+type BottomSheetLabels = 'spoken' | 'shown';
+
 interface BottomSheetProps {
   id?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  labels?: BottomSheetLabels;
   className?: string;
   dismissal?: DialogDismissal;
   initialFocus?: RefObject<HTMLElement | null>;
+  returnFocusTo?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }
 
@@ -36,9 +40,11 @@ export function BottomSheet({
   onOpenChange,
   title,
   description,
+  labels = 'spoken',
   className,
   dismissal = 'allowed',
   initialFocus,
+  returnFocusTo,
   children,
 }: BottomSheetProps) {
   const shouldReduceMotion = useReducedMotion() === true;
@@ -54,7 +60,10 @@ export function BottomSheet({
   };
   const returnFocusToOpener = (event: Event) => {
     event.preventDefault();
-    if (isFocusLost()) {
+    const target = returnFocusTo?.current;
+    if (target?.isConnected) {
+      target.focus();
+    } else if (isFocusLost()) {
       opener.current?.focus();
     }
   };
@@ -121,11 +130,15 @@ export function BottomSheet({
                   className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-surface-muted"
                   data-parity="sheet-handle"
                 />
-                <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
-                {description && (
-                  <DialogPrimitive.Description className="sr-only">
-                    {description}
-                  </DialogPrimitive.Description>
+                {labels === 'spoken' && (
+                  <>
+                    <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+                    {description && (
+                      <DialogPrimitive.Description className="sr-only">
+                        {description}
+                      </DialogPrimitive.Description>
+                    )}
+                  </>
                 )}
                 {children}
               </motion.div>

@@ -1,4 +1,12 @@
-import { ReactNode, type RefObject } from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +32,10 @@ const RULE_COLOR_CLASS: Record<SheetDialogRule, string> = {
   faint: 'border-stroke-faint',
 };
 
+type ShownHeader = { description?: string };
+
+const ShownHeaderContext = createContext<(header: ShownHeader | null) => void>(() => {});
+
 interface ResponsiveSheetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,6 +44,7 @@ interface ResponsiveSheetDialogProps {
   width?: SheetDialogWidth;
   dismissal?: DialogDismissal;
   initialFocus?: RefObject<HTMLElement | null>;
+  returnFocusTo?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }
 
@@ -43,9 +56,12 @@ export function ResponsiveSheetDialog({
   width = 'full',
   dismissal = 'allowed',
   initialFocus,
+  returnFocusTo,
   children,
 }: ResponsiveSheetDialogProps) {
   const isMobile = useIsMobile();
+  const [shownHeader, setShownHeader] = useState<ShownHeader | null>(null);
+  const spokenDescription = shownHeader ? shownHeader.description : description;
 
   const focusInitialTarget = (event: Event) => {
     const target = initialFocus?.current;
@@ -58,14 +74,16 @@ export function ResponsiveSheetDialog({
   if (isMobile) {
     return (
       <BottomSheet
-        description={description}
+        description={spokenDescription}
         dismissal={dismissal}
         initialFocus={initialFocus}
+        returnFocusTo={returnFocusTo}
+        labels={shownHeader ? 'shown' : 'spoken'}
         onOpenChange={onOpenChange}
         open={open}
         title={title}
       >
-        {children}
+        <ShownHeaderContext.Provider value={setShownHeader}>{children}</ShownHeaderContext.Provider>
       </BottomSheet>
     );
   }
@@ -74,16 +92,22 @@ export function ResponsiveSheetDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         dismissal={dismissal}
+        returnFocusTo={returnFocusTo}
         onOpenAutoFocus={focusInitialTarget}
         size="md"
         className={cn(
           'gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col',
           DIALOG_WIDTH_CLASS[width]
         )}
+        {...(spokenDescription ? {} : { 'aria-describedby': undefined })}
       >
-        <DialogTitle className="sr-only">{title}</DialogTitle>
-        {description && <DialogDescription className="sr-only">{description}</DialogDescription>}
-        {children}
+        {!shownHeader && (
+          <>
+            <DialogTitle className="sr-only">{title}</DialogTitle>
+            {description && <DialogDescription className="sr-only">{description}</DialogDescription>}
+          </>
+        )}
+        <ShownHeaderContext.Provider value={setShownHeader}>{children}</ShownHeaderContext.Provider>
       </DialogContent>
     </Dialog>
   );
@@ -102,23 +126,33 @@ export function SheetDialogHeader({
   rule?: SheetDialogRule;
   titleRef?: RefObject<HTMLHeadingElement>;
 }) {
+  const announceHeader = useContext(ShownHeaderContext);
+
+  useLayoutEffect(() => {
+    announceHeader({ description });
+    return () => announceHeader(null);
+  }, [announceHeader, description]);
+
   return (
     <div
       data-parity="sheet-header"
       className={cn('shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8', RULE_COLOR_CLASS[rule])}
     >
       {eyebrow}
-      <h3
+      <DialogPrimitive.Title
         ref={titleRef}
         tabIndex={titleRef ? -1 : undefined}
         className="pr-10 text-lg font-semibold leading-snug text-text-primary outline-none md:text-xl"
       >
         {title}
-      </h3>
+      </DialogPrimitive.Title>
       {description && (
-        <p data-parity="sheet-description" className="mt-1 text-xs text-text-secondary sm:text-sm">
+        <DialogPrimitive.Description
+          data-parity="sheet-description"
+          className="mt-1 text-xs text-text-secondary sm:text-sm"
+        >
           {description}
-        </p>
+        </DialogPrimitive.Description>
       )}
     </div>
   );

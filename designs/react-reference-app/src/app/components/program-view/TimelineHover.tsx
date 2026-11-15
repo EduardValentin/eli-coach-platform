@@ -27,11 +27,11 @@ export function useHoveredDay(start: Date, planDays: number) {
   };
 }
 
-export function HoveredDayLine({ hovered, className }: { hovered: HoveredDay; className: string }) {
+export function HoveredDayLine({ hovered }: { hovered: HoveredDay }) {
   return (
     <span
       aria-hidden="true"
-      className={cn('pointer-events-none absolute bottom-11 w-px -translate-x-1/2 bg-text-primary/40 transition-[left] duration-100 ease-out motion-reduce:transition-none', className)}
+      className="pointer-events-none absolute top-0 bottom-0 w-px -translate-x-1/2 bg-text-primary/40 transition-[left] duration-100 ease-out motion-reduce:transition-none"
       style={{ left: `${hovered.offset * 100}%` }}
     />
   );

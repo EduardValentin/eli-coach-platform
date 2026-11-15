@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
@@ -8,11 +8,12 @@ import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDi
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
 import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
 import { EDITOR_MODE_LABELS, sectionHash, sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
-import { EditorAnnouncerProvider } from '../../components/coach-portal/program/editorAnnouncer';
+import { EditorAnnouncerProvider, useEditorAnnouncer } from '../../components/coach-portal/program/editorAnnouncer';
+import { EditorSkeleton } from '../../components/coach-portal/program/EditorSkeleton';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutlineDrawer } from '../../components/coach-portal/program/ProgramOutlineDrawer';
-import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
+import { ProgramSetupNotReady, ProgramSetupSheet, ProgramSetupSkeleton } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { PublishDialog, type PublishDialogStart } from '../../components/coach-portal/program/PublishDialog';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
@@ -20,13 +21,19 @@ import { useRailDrawer } from '../../components/coach-portal/program/useRailDraw
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { Button } from '../../components/ui/button';
+import { SkipLink } from '../../components/ui/skip-link';
 import { usePrograms } from '../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
-import type { ClientJourney } from '../../domain/journey';
-import { currentVersion, draftOf, type Block, type Program, type ProgramVersion } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, currentVersion, draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../domain/program';
+import { isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { blockWithLibraryPick } from '../../domain/programEditing';
 import { plannedId, plannedSessions } from '../../domain/weekEditing';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
+import { journeyClientName } from '../../utils/journeyLabels';
+
+const EDITOR_ID = 'editor';
+const SETUP_PAGE_CLASS = 'min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16';
 
 function openSessionOf(block: Block, chosen: string | undefined): string | undefined {
   const ids = plannedSessions(block).map(plannedId);
@@ -40,6 +47,7 @@ function ProgramEditor(props: EditorProps) {
   const editor = useEditorState(props);
   const rail = useRailDrawer();
   const panel = useLibraryPanel();
+  const announce = useEditorAnnouncer();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
   const [publishing, setPublishing] = useState<PublishDialogStart | null>(null);
@@ -49,7 +57,18 @@ function ProgramEditor(props: EditorProps) {
   const { today, ruleContext } = editor;
   const { selected } = editor;
   const main = useRef<HTMLElement>(null);
+  const placeHeading = useRef<HTMLHeadingElement>(null);
+  const blockAdded = useRef(false);
+  const focusAfterAdding = useMemo<RefObject<HTMLElement | null>>(
+    () => ({
+      get current() {
+        return blockAdded.current ? placeHeading.current : null;
+      },
+    }),
+    [],
+  );
   const placeKey = `${editor.mode}${sectionHash(selected)}`;
+  const placeTitle = sectionTitle(selected, content.plan.blocks);
   const blockIndex = editor.mode === 'structure' && selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
   const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
   const openSessionId = block && openSessionOf(block, openSessions[block.id]);
@@ -60,12 +79,26 @@ function ProgramEditor(props: EditorProps) {
     onOpenSession: sessionId => setOpenSessions(current => ({ ...current, [block.id]: sessionId })),
     onOpenLibrary: panel.openFor,
   };
+  useDocumentTitle(`${EDITOR_MODE_LABELS[editor.mode]} · ${placeTitle} · ${journeyClientName(journey)}`);
 
   function addFromLibrary(exercise: Exercise) {
     if (!block) return;
     const pick = { exercise, target: panel.panelTarget?.target ?? null, openSessionId };
     editor.replaceBlock(blockWithLibraryPick(block, pick, { blockType: block.type, library: exercises, equipment: editor.equipment }));
     panel.finishTarget();
+  }
+
+  function addBlock(type: BlockType, weeks: number) {
+    blockAdded.current = true;
+    setAddingBlock(false);
+    editor.addBlock(type, weeks);
+    announce(`${BLOCK_TYPE_LABELS[type]} block added as block ${content.plan.blocks.length + 1}`);
+  }
+
+  function startAddingBlock() {
+    rail.hide();
+    blockAdded.current = false;
+    setAddingBlock(true);
   }
 
   useEffect(() => {
@@ -79,32 +112,36 @@ function ProgramEditor(props: EditorProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle" data-parity-root="ProgramEditorPage">
-      <EditorTopBar
-        journey={journey}
-        version={draft}
-        basedOn={currentVersion(program)}
-        modeTitle={EDITOR_MODE_LABELS[editor.mode]}
-        placeTitle={sectionTitle(selected, content.plan.blocks)}
-        onOverview={selected.kind === 'plan' ? null : () => editor.select({ kind: 'plan' })}
-        onOpenWarnings={() => setPublishing('warnings')}
-        libraryToggle={
-          block && (
-            <Button onClick={panel.toggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={panel.visible}>
-              <Library size={20} />
+      <div className="contents" {...rail.behindProps}>
+        <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
+        <EditorTopBar
+          journey={journey}
+          version={draft}
+          basedOn={currentVersion(program)}
+          placeTitle={placeTitle}
+          placeHeading={placeHeading}
+          onOverview={selected.kind === 'plan' ? null : () => editor.select({ kind: 'plan' })}
+          onOpenChecks={setPublishing}
+          libraryToggle={
+            block && (
+              <Button onClick={panel.toggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={panel.visible}>
+                <Library size={20} />
+              </Button>
+            )
+          }
+          railToggle={
+            <Button ref={rail.openButton} onClick={rail.show} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
+              <ListTree size={20} />
             </Button>
-          )
-        }
-        railToggle={
-          <Button ref={rail.openButton} onClick={rail.show} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
-            <ListTree size={20} />
-          </Button>
-        }
-        onPreview={() => setPreviewing(true)}
-        onPublish={() => setPublishing('top')}
-        onDiscard={editor.discard}
-        opensOn={editor.opensOn}
-        warningsCount={editor.warnings.length}
-      />
+          }
+          onPreview={() => setPreviewing(true)}
+          onPublish={() => setPublishing('top')}
+          onDiscard={editor.discard}
+          opensOn={editor.opensOn}
+          problemsCount={editor.problems.length}
+          warningsCount={editor.warnings.length}
+        />
+      </div>
       <div className="flex min-h-0 flex-1">
         <ProgramOutlineDrawer
           rail={rail}
@@ -117,14 +154,26 @@ function ProgramEditor(props: EditorProps) {
           locationOf={editor.locationOf}
           onSelect={selectFromRail}
           onSwitchMode={rail.hide}
-          onAddBlock={() => {
-            rail.hide();
-            setAddingBlock(true);
-          }}
+          onAddBlock={startAddingBlock}
         />
-        <main ref={main} aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
+        <main
+          ref={main}
+          id={EDITOR_ID}
+          tabIndex={-1}
+          aria-label="Program editor"
+          {...rail.behindProps}
+          className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
+        >
           <div className="mx-auto w-full max-w-5xl">
-            <EditorSectionContent section={selected} journey={journey} program={program} draft={draft} editor={editor} openBlock={openBlock} />
+            <EditorSectionContent
+              section={selected}
+              journey={journey}
+              program={program}
+              draft={draft}
+              editor={editor}
+              openBlock={openBlock}
+              onAddBlock={startAddingBlock}
+            />
           </div>
         </main>
         {block && panel.visible && (
@@ -162,12 +211,23 @@ function ProgramEditor(props: EditorProps) {
         open={addingBlock}
         onOpenChange={setAddingBlock}
         lastBlock={content.plan.blocks.at(-1)}
-        onAdd={(type, weeks) => {
-          setAddingBlock(false);
-          editor.addBlock(type, weeks);
-        }}
+        returnFocusTo={focusAfterAdding}
+        onAdd={addBlock}
       />
     </div>
+  );
+}
+
+function SetupPage({ journey, draftPath }: { journey: ClientJourney; draftPath: string }) {
+  const navigate = useNavigate();
+  return (
+    <main className={SETUP_PAGE_CLASS}>
+      {isBeforeStage(journey.stage, 'approved') ? (
+        <ProgramSetupNotReady journey={journey} />
+      ) : (
+        <ProgramSetupSheet journey={journey} onCreated={() => navigate(draftPath)} />
+      )}
+    </main>
   );
 }
 
@@ -176,22 +236,23 @@ export function ProgramEditorPage() {
   const { id = '' } = useParams();
   const journey = useJourneyClient(id);
   const { hydrated, programFor } = usePrograms();
-  const navigate = useNavigate();
   const isSetup = useLocation().pathname.endsWith('/new');
   const programPath = `/coach/clients/${id}/program`;
   const draftPath = `${programPath}/draft`;
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return isSetup ? (
+      <main className={SETUP_PAGE_CLASS}>
+        <ProgramSetupSkeleton />
+      </main>
+    ) : (
+      <EditorSkeleton />
+    );
+  }
   if (!journey) return <Navigate to="/coach/clients" replace />;
   const program = programFor(journey.callId);
   if (isSetup && program) return <Navigate to={draftPath} replace />;
-  if (isSetup) {
-    return (
-      <main className="min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16">
-        <ProgramSetupSheet journey={journey} onCreated={() => navigate(draftPath)} />
-      </main>
-    );
-  }
+  if (isSetup) return <SetupPage journey={journey} draftPath={draftPath} />;
   if (!program) return <ClientNotFound />;
   const draft = draftOf(program);
   if (!draft) return <Navigate to={programPath} replace />;

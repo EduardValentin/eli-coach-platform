@@ -5,6 +5,8 @@ import { cn } from '../ui/utils';
 const MIDDLE_RIR = 2;
 const FAR_RIR = 4;
 const SOLID_UP_TO_RIR = 1;
+const SOLID_INK_SHARE = 0.3;
+const TEXT_INK_SHARE = 0.75;
 
 function mix(from: string, to: string, share: number): string {
   return `color-mix(in oklch, ${to} ${Math.round(share * 100)}%, ${from})`;
@@ -17,9 +19,11 @@ function rirColour(rir: Range): string {
 }
 
 function rirStyle(rir: Range): CSSProperties {
-  const ink = mix(rirColour(rir), 'var(--rir-ink)', 0.3);
-  if (rir.min <= SOLID_UP_TO_RIR) return { color: 'var(--surface-base)', backgroundColor: ink };
-  return { color: ink, backgroundColor: mix('transparent', rirColour(rir), 0.12) };
+  const colour = rirColour(rir);
+  if (rir.min <= SOLID_UP_TO_RIR) {
+    return { color: 'var(--surface-base)', backgroundColor: mix(colour, 'var(--rir-ink)', SOLID_INK_SHARE) };
+  }
+  return { color: mix(colour, 'var(--rir-ink)', TEXT_INK_SHARE), backgroundColor: mix('transparent', colour, 0.12) };
 }
 
 export function RirValue({ rir, className }: { rir: Range; className?: string }) {

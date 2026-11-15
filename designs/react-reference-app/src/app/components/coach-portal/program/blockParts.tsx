@@ -42,16 +42,18 @@ export function BlockNumber({ block, index, size }: BlockNumberProps) {
   );
 }
 
-type BlockTypeSelectProps = { value: BlockType; label: string; appearance: 'title' | 'field'; onChange: (type: BlockType) => void };
+type BlockTypeSelectProps = { value: BlockType; label: string; appearance: 'title' | 'field'; problemId?: string; onChange: (type: BlockType) => void };
 
-export function BlockTypeSelect({ value, label, appearance, onChange }: BlockTypeSelectProps) {
+export function BlockTypeSelect({ value, label, appearance, problemId, onChange }: BlockTypeSelectProps) {
   return (
     <Select value={value} onValueChange={next => onChange(next as BlockType)}>
       <SelectTrigger
         size={appearance === 'field' ? 'sm' : undefined}
         aria-label={label}
+        aria-describedby={problemId}
+        aria-invalid={problemId ? true : undefined}
         className={cn({
-          'w-auto border-transparent bg-transparent px-2 text-lg font-semibold text-text-primary shadow-none hover:bg-surface-quiet md:text-lg': appearance === 'title',
+          'w-auto min-w-0 bg-transparent px-2 text-left text-lg font-semibold whitespace-normal text-text-primary shadow-none hover:bg-surface-quiet md:text-lg *:data-[slot=select-value]:line-clamp-2': appearance === 'title',
           'w-40': appearance === 'field',
         })}
       >

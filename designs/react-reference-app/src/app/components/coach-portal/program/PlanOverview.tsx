@@ -1,10 +1,8 @@
 import type { ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
-import { blockingMessage, sequenceProblems } from '../../../domain/programRules';
+import { blockingMessage, sequenceProblems, type BlockingCode, type RuleFinding } from '../../../domain/programRules';
 import { suggestedBlocks } from '../../../domain/programSuggestions';
-import { InlineProblem } from '../../InlineProblem';
-import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { PlanBlockList, type BlocksUpdate } from './PlanBlockList';
 import { PlanTimeline } from '../../program-view/PlanTimeline';
@@ -17,6 +15,7 @@ type PlanOverviewProps = {
   level: LevelHint;
   onChange: (update: BlocksUpdate) => void;
   onOpenBlock: (blockId: string) => void;
+  onAddBlock: () => void;
   onUseSuggestion: () => void;
   settings: ReactNode;
 };
@@ -41,14 +40,21 @@ function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => voi
   );
 }
 
-export function PlanOverview({ content, dayOne, preferredWeekday, today, level, onChange, onOpenBlock, onUseSuggestion, settings }: PlanOverviewProps) {
+function problemsByBlock(problems: readonly RuleFinding<BlockingCode>[]): Map<string, string[]> {
+  const byBlock = new Map<string, string[]>();
+  for (const { blockId, ...problem } of problems) {
+    if (blockId) byBlock.set(blockId, [...(byBlock.get(blockId) ?? []), blockingMessage(problem)]);
+  }
+  return byBlock;
+}
+
+export function PlanOverview({ content, dayOne, preferredWeekday, today, level, onChange, onOpenBlock, onAddBlock, onUseSuggestion, settings }: PlanOverviewProps) {
   const { blocks } = content.plan;
-  const problems = sequenceProblems(blocks);
 
   return (
     <section className="grid grid-cols-1 gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <h2 className={WIDGET_TITLE_CLASS}>Plan overview</h2>
+      <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
+        <h2 className="sr-only">Plan overview</h2>
         {settings}
       </div>
       {blocks.length === 0 ? (
@@ -61,19 +67,12 @@ export function PlanOverview({ content, dayOne, preferredWeekday, today, level, 
             statuses={blocks.map((_, index) => blockStatus({ blocks, dayOne, today }, index))}
             dayOne={dayOne}
             today={today}
+            problems={problemsByBlock(sequenceProblems(blocks))}
             onChange={onChange}
             onOpenBlock={onOpenBlock}
+            onAddBlock={onAddBlock}
           />
         </>
-      )}
-      {problems.length > 0 && (
-        <ul aria-label="Plan problems" className="grid gap-2">
-          {problems.map(problem => (
-            <li key={`${problem.code}:${problem.blockId ?? ''}`}>
-              <InlineProblem>{blockingMessage(problem)}</InlineProblem>
-            </li>
-          ))}
-        </ul>
       )}
     </section>
   );

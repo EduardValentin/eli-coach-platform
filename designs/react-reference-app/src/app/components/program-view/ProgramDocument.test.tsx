@@ -414,6 +414,19 @@ describe('ProgramDocument', () => {
     expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   });
 
+  it('starts the block pages at the second heading level in editing mode, with no cover above them', () => {
+    // arrange
+    const view = viewFor();
+
+    // act
+    render(<ProgramDocument view={view} editing={{ write: vi.fn(), reset: vi.fn() }} part="block" />);
+
+    // assert
+    expect(screen.queryByRole('heading', { level: 3, name: 'Calendar' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Calendar' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Every session' })).toBeInTheDocument();
+  });
+
   it('splits into the program-wide pages and the block pages', () => {
     // arrange
     const view = viewFor();
@@ -451,9 +464,10 @@ describe('ProgramDocument', () => {
 
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Ana Pop' })).toBeInTheDocument();
-    for (const name of ['Focus until the next check-in', 'Personal note', 'Note for this block', 'Nutrition', 'Lifestyle']) {
+    for (const name of ['Focus until the next check-in (optional)', 'Nutrition (optional)', 'Lifestyle (optional)']) {
       expect(screen.getByRole('textbox', { name })).toHaveTextContent(/^$/);
     }
+    expect(screen.getAllByRole('textbox', { name: 'A note from Eli (optional)' })).toHaveLength(2);
     for (const name of ['Program title', 'How to read your session', 'Block intro', 'Split text', 'Warm-up', 'How to progress', 'Missed-day note', 'No weight listed', 'Daily steps', 'Low-energy session']) {
       expect(screen.getByRole('button', { name: `Edit ${name}` })).toBeInTheDocument();
     }

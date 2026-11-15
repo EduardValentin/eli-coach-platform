@@ -6,10 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialo
 
 type ClientPreviewDialogProps = { open: boolean; onOpenChange: (open: boolean) => void; view: ProgramView };
 
+function focusCloseButton(event: Event) {
+  const dialog = event.currentTarget as HTMLElement;
+  const close = [...dialog.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Close');
+  if (!close) return;
+  event.preventDefault();
+  close.focus();
+}
+
 export function ClientPreviewDialog({ open, onOpenChange, view }: ClientPreviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent aria-describedby={undefined} onOpenAutoFocus={focusCloseButton}>
         <DialogHeader>
           <DialogTitle>Preview as client</DialogTitle>
         </DialogHeader>

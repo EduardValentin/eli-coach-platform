@@ -1,7 +1,8 @@
-import { useEffect, useId } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link } from 'react-router';
-import { toast } from 'sonner';
+import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useForm, type UseFormReturn } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router';
+import { ChevronRight, ClipboardList } from 'lucide-react';
+import { useAppState } from '../../../context/AppContext';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import type { ClientJourney } from '../../../domain/journey';
@@ -18,55 +19,67 @@ import { DAILY_STEP_TARGETS } from '../../../domain/programDefaults';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
-import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
+import { writeProgramThroughServer } from '../../../services/programWriteService';
+import { clientDetailPathForJourney, clientPronouns, journeyClientName } from '../../../utils/journeyLabels';
 import { possessive } from '../../../utils/resourceLabels';
 import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
 import { asList, type OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
-import { UNSAVED_MESSAGE } from '../../client-profile/ProfileFormSection';
 import { PROFILE_FIELDS } from '../../client-profile/profileFields';
+import { DeadEndPanel } from '../../ErrorPage';
 import { PortalPageHeader } from '../../PortalPageHeader';
 import { SettingsSection } from '../../SettingsSection';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion';
+import { Alert } from '../../ui/alert';
 import { Button, buttonVariants } from '../../ui/button';
+import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Form } from '../../ui/form';
-
-type SetupPanel = { name: string; fields: OnboardingField[] };
+import { Skeleton } from '../../ui/skeleton';
 
 const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
-const FIRST_PANEL = 'Program';
+const NOT_CREATED_MESSAGE = 'The program wasn’t created. Your choices are still here, so try again.';
+const SKELETON_FIELDS = 8;
+
+const COACH_GOAL_LABELS: Record<string, string> = {
+  'Lose fat': 'Fat loss',
+  'Build muscle': 'Muscle gain',
+  'Maintain a healthy weight': 'Weight maintenance',
+  'Learn to balance activity and nutrition': 'Activity and nutrition balance',
+  'Improve overall health': 'Overall health',
+  'Work with my menstrual cycle': 'Cycle-aware training',
+};
 
 function optionsOf(labels: Record<string, string>): OnboardingOption[] {
   return Object.entries(labels).map(([value, label]) => ({ value, label }));
 }
 
-type SetupFieldSpec = { id: keyof ProgramSetup; label: string; kind: 'select' | 'radio'; options: OnboardingOption[] };
-
-function field({ id, label, kind, options }: SetupFieldSpec): OnboardingField {
-  return { id, label, kind, requirement: 'optional', options };
+function goalOptions(): OnboardingOption[] {
+  return (findOnboardingField('primaryGoal')?.options ?? []).map(option => ({ value: option.value, label: COACH_GOAL_LABELS[option.value] ?? option.label }));
 }
 
 function splitOptions(): OnboardingOption[] {
   return (Object.keys(SPLIT_TEMPLATES) as SplitShape[]).map(shape => ({ value: shape, label: SPLIT_TEMPLATES[shape].label }));
 }
 
-function setupPanels(): SetupPanel[] {
-  const goal = findOnboardingField('primaryGoal')?.options ?? [];
-  const steps = DAILY_STEP_TARGETS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
+function stepOptions(): OnboardingOption[] {
+  return DAILY_STEP_TARGETS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
+}
+
+type SetupFieldSpec = Pick<OnboardingField, 'label' | 'kind' | 'options'> & { id: keyof ProgramSetup };
+
+function choice({ id, label, kind, options }: SetupFieldSpec): OnboardingField {
+  return { id, label, kind, requirement: 'optional', options };
+}
+
+function setupFields(): OnboardingField[] {
   return [
-    {
-      name: FIRST_PANEL,
-      fields: [field({ id: 'goal', label: 'Goal', kind: 'select', options: goal }), field({ id: 'level', label: 'Level', kind: 'select', options: optionsOf(CLIENT_LEVEL_LABELS) }), field({ id: 'language', label: 'Program language', kind: 'select', options: optionsOf(LANGUAGE_LABELS) })],
-    },
-    {
-      name: 'Schedule',
-      fields: [
-        field({ id: 'splitShape', label: 'Split', kind: 'radio', options: splitOptions() }),
-        field({ id: 'trainingDays', label: 'Training days', kind: 'radio', options: optionsOf(TRAINING_DAY_LABELS) }),
-        field({ id: 'sessionMinutes', label: 'Session length', kind: 'radio', options: optionsOf(SESSION_MINUTE_LABELS) }),
-        field({ id: 'dailySteps', label: 'Daily steps', kind: 'select', options: steps }),
-      ],
-    },
-    { name: 'Equipment', fields: [{ ...PROFILE_FIELDS.equipment, requirement: 'optional' }] },
+    { id: 'goal', label: 'Goal', kind: 'select', requirement: 'required', requiredMessage: 'Choose a goal.', options: goalOptions() },
+    choice({ id: 'level', label: 'Level', kind: 'select', options: optionsOf(CLIENT_LEVEL_LABELS) }),
+    choice({ id: 'trainingDays', label: 'Training days', kind: 'radio', options: optionsOf(TRAINING_DAY_LABELS) }),
+    choice({ id: 'splitShape', label: 'Split', kind: 'radio', options: splitOptions() }),
+    choice({ id: 'sessionMinutes', label: 'Session length', kind: 'radio', options: optionsOf(SESSION_MINUTE_LABELS) }),
+    choice({ id: 'dailySteps', label: 'Daily steps', kind: 'select', options: stepOptions() }),
+    { ...PROFILE_FIELDS.equipment, requiredMessage: 'Choose at least one equipment option.' },
+    choice({ id: 'language', label: 'Program language', kind: 'select', options: optionsOf(LANGUAGE_LABELS) }),
   ];
 }
 
@@ -104,69 +117,156 @@ function sameEquipment(chosen: readonly ClientEquipment[], current: readonly Cli
   return chosen.length === current.length && chosen.every(item => current.includes(item));
 }
 
-export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourney; onCreated: () => void }) {
-  const { createProgram } = usePrograms();
-  const { updateClientProfile } = useClientJourneys();
-  const currentEquipment = journey.profile.coaching?.equipment ?? [];
-  const form = useForm<OnboardingValues>({
-    defaultValues: valuesFrom(setupFromJourney(journey), currentEquipment),
-  });
-  const { isSubmitting } = form.formState;
-  const headingId = useId();
+function setupTitle(journey: ClientJourney): string {
+  return `Build ${possessive(journey.profile.identity.firstName)} program`;
+}
 
+function SetupFrame({ journey, children }: { journey: ClientJourney; children: ReactNode }) {
+  useDocumentTitle(setupTitle(journey));
+  return (
+    <div className="mx-auto w-full max-w-xl">
+      <nav aria-label="Breadcrumb" className="mb-2">
+        <ol className="flex flex-wrap items-center gap-1 text-sm text-text-secondary">
+          <li>
+            <Link to={clientDetailPathForJourney(journey)} className="inline-flex min-h-12 items-center font-medium transition-colors hover:text-text-primary">
+              {journeyClientName(journey)}
+            </Link>
+          </li>
+          <li aria-current="page" className="flex items-center gap-1">
+            <ChevronRight aria-hidden="true" size={16} />
+            Build program
+          </li>
+        </ol>
+      </nav>
+      {children}
+    </div>
+  );
+}
+
+export function ProgramSetupNotReady({ journey }: { journey: ClientJourney }) {
+  const her = clientPronouns(journey.profile.identity.gender).possessive.lower;
+  return (
+    <SetupFrame journey={journey}>
+      <DeadEndPanel
+        icon={ClipboardList}
+        title={setupTitle(journey)}
+        description={`The program opens once ${her} answers are approved.`}
+        action={
+          <Link to={clientDetailPathForJourney(journey)} className={buttonVariants({ variant: 'outline', size: 'md' })}>
+            {`Back to ${journeyClientName(journey)}`}
+          </Link>
+        }
+      />
+    </SetupFrame>
+  );
+}
+
+export function ProgramSetupSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-xl">
+      <p role="status" className="sr-only">
+        Loading the program setup
+      </p>
+      <Skeleton className="mb-5 h-5 w-40" />
+      <Skeleton className="mb-8 h-10 w-72 max-w-full" />
+      <div aria-hidden="true" className="grid gap-6 rounded-panel border border-border-subtle bg-surface-base px-5 py-6 sm:px-6">
+        {Array.from({ length: SKELETON_FIELDS }, (_, index) => (
+          <div key={index} className="grid gap-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function useSplitFollowingDays(form: UseFormReturn<OnboardingValues>) {
+  const splitChosen = useRef(false);
   useEffect(() => {
-    const subscription = form.watch((values, { name }) => {
-      if (name !== 'trainingDays') return;
+    const subscription = form.watch((values, { name, type }) => {
+      if (name === 'splitShape' && type === 'change') splitChosen.current = true;
+      if (name !== 'trainingDays' || splitChosen.current) return;
       form.setValue('splitShape', splitShapeFor(Number(values.trainingDays)));
     });
     return () => subscription.unsubscribe();
   }, [form]);
+}
+
+export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourney; onCreated: () => void }) {
+  const { createProgram } = usePrograms();
+  const { updateClientProfile } = useClientJourneys();
+  const { appState } = useAppState();
+  const navigate = useNavigate();
+  const currentEquipment = journey.profile.coaching?.equipment ?? [];
+  const form = useForm<OnboardingValues>({
+    defaultValues: valuesFrom(setupFromJourney(journey), currentEquipment),
+  });
+  const { isSubmitting, isDirty } = form.formState;
+  const headingId = useId();
+  const [failed, setFailed] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const clientPath = clientDetailPathForJourney(journey);
+  useSplitFollowingDays(form);
 
   const create = form.handleSubmit(async values => {
     const equipment = clientEquipmentOf(asList(values.equipment));
+    setFailed(false);
     try {
-      if (!sameEquipment(equipment, currentEquipment)) await updateClientProfile(journey.callId, { coaching: { equipment } });
+      await writeProgramThroughServer(appState.programWrite, async () => {
+        if (!sameEquipment(equipment, currentEquipment)) await updateClientProfile(journey.callId, { coaching: { equipment } });
+        createProgram(journey.callId, setupFrom(values));
+      });
     } catch {
-      toast.error(UNSAVED_MESSAGE);
+      setFailed(true);
       return;
     }
-    createProgram(journey.callId, setupFrom(values));
     onCreated();
   });
 
+  function cancel(event: MouseEvent<HTMLAnchorElement>) {
+    if (!isDirty) return;
+    event.preventDefault();
+    setConfirmingLeave(true);
+  }
+
   return (
-    <div className="mx-auto w-full max-w-xl">
-      <PortalPageHeader headingId={headingId} title={`Set up ${possessive(journey.profile.identity.firstName)} program`} />
-      <SettingsSection
-        headingId={headingId}
-        footer={
-          <>
-            <Link to={clientDetailPathForJourney(journey)} className={buttonVariants({ variant: 'outline' })}>
-              Cancel
-            </Link>
-            <Button type="button" onClick={create} disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
-              Continue to plan
-            </Button>
-          </>
-        }
-      >
-        <Form {...form}>
-          <Accordion type="multiple" defaultValue={[FIRST_PANEL]}>
-            {setupPanels().map(panel => (
-              <AccordionItem key={panel.name} value={panel.name} className="px-5 sm:px-6">
-                <AccordionTrigger headingTag="h2" className="text-base">
-                  {panel.name}
-                </AccordionTrigger>
-                <AccordionContent className="grid gap-6 pt-1 pb-6">
-                  {panel.fields.map(definition => (
-                    <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </Form>
-      </SettingsSection>
-    </div>
+    <SetupFrame journey={journey}>
+      <PortalPageHeader headingId={headingId} title={setupTitle(journey)} />
+      <Form {...form}>
+        <form noValidate onSubmit={create}>
+          <SettingsSection
+            headingId={headingId}
+            footer={
+              <>
+                <Link to={clientPath} onClick={cancel} className={buttonVariants({ variant: 'outline', size: 'md' })}>
+                  Cancel
+                </Link>
+                <Button type="submit" size="md" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
+                  {isSubmitting ? 'Creating…' : 'Create program'}
+                </Button>
+              </>
+            }
+          >
+            <div className="grid gap-6 px-5 py-6 sm:px-6">
+              {setupFields().map(definition => (
+                <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
+              ))}
+              {failed && <Alert>{NOT_CREATED_MESSAGE}</Alert>}
+            </div>
+          </SettingsSection>
+        </form>
+      </Form>
+      <ConfirmDialog
+        open={confirmingLeave}
+        onOpenChange={setConfirmingLeave}
+        title="Unsaved changes"
+        description="Leave without creating the program? The choices you made here are lost."
+        cancelLabel="Keep editing"
+        confirmLabel="Discard"
+        tone="destructive"
+        onConfirm={() => navigate(clientPath)}
+      />
+    </SetupFrame>
   );
 }

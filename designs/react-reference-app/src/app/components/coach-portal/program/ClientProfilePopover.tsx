@@ -1,11 +1,11 @@
-import { useId } from 'react';
+import { useId, type ReactNode, type RefObject } from 'react';
 import { UserRound } from 'lucide-react';
 import { SESSION_MINUTE_LABELS, TRAINING_DAY_LABELS, type CoachingFacts } from '../../../domain/clientProfile';
 import type { ClientJourney } from '../../../domain/journey';
 import { journeyClientName } from '../../../utils/journeyLabels';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '../../ui/popover';
 
 function profileFacts(coaching: CoachingFacts | null): [string, string][] {
   if (!coaching) return [];
@@ -21,18 +21,44 @@ function profileFacts(coaching: CoachingFacts | null): [string, string][] {
   return facts.filter((fact): fact is [string, string] => fact[1] !== null);
 }
 
-export function ClientProfilePopover({ journey }: { journey: ClientJourney }) {
+export function ClientProfileTrigger() {
+  return (
+    <PopoverTrigger asChild>
+      <Button variant="ghost" size="icon-sm" aria-label="Client profile" className="max-sm:hidden">
+        <UserRound aria-hidden="true" size={20} />
+      </Button>
+    </PopoverTrigger>
+  );
+}
+
+type ClientProfilePopoverProps = {
+  journey: ClientJourney;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  returnFocus: RefObject<HTMLElement | null>;
+  children: ReactNode;
+};
+
+export function ClientProfilePopover({ journey, open, onOpenChange, returnFocus, children }: ClientProfilePopoverProps) {
   const headingId = useId();
   const facts = profileFacts(journey.profile.coaching);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Client profile">
-          <UserRound aria-hidden="true" size={20} />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} collisionPadding={16} aria-labelledby={headingId} className="grid w-80 gap-3 rounded-card">
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverAnchor asChild>{children}</PopoverAnchor>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        collisionPadding={16}
+        aria-labelledby={headingId}
+        onCloseAutoFocus={event => {
+          const target = returnFocus.current;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+        className="grid w-80 gap-3 rounded-card"
+      >
         <h2 id={headingId} className={WIDGET_TITLE_CLASS}>
           {journeyClientName(journey)}
         </h2>

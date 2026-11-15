@@ -148,7 +148,7 @@ function isNeededToPublish(blocks: readonly Block[], index: number, schedule: Pu
 
 export function sequenceProblems(blocks: readonly Block[]): RuleFinding<BlockingCode>[] {
   const findings: RuleFinding<BlockingCode>[] = [];
-  if (blocks[0]?.type === 'deload') findings.push({ code: 'starts-with-deload' });
+  if (blocks[0]?.type === 'deload') findings.push({ code: 'starts-with-deload', blockId: blocks[0].id });
   blocks.forEach((block, index) => {
     if (block.type === 'foundation' && index > 0) findings.push({ code: 'foundation-not-first', blockId: block.id });
     if (block.type !== 'deload') return;

@@ -10,6 +10,7 @@ import { BlockHeader } from './BlockHeader';
 import { CardioSessionCard } from './CardioSessionCard';
 import { SessionCard } from './SessionCard';
 import { SessionDragLayer } from './sessionDnd';
+import { useMeasuredHeight } from './useMeasuredHeight';
 import { WeekDays } from './WeekDays';
 
 type BlockWorkspaceProps = {
@@ -30,26 +31,13 @@ type BlockWorkspaceProps = {
   onOpenLibrary: (target: LibraryTarget) => void;
 };
 
-function useStickyHeaderHeight() {
-  const slot = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
-  useEffect(() => {
-    const header = slot.current?.firstElementChild;
-    if (!header || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => setHeight(header.getBoundingClientRect().height));
-    observer.observe(header);
-    return () => observer.disconnect();
-  }, []);
-  return { slot, height };
-}
-
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function BlockWorkspace(props: BlockWorkspaceProps) {
   const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary } = props;
-  const header = useStickyHeaderHeight();
+  const header = useMeasuredHeight();
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const planned = plannedSessions(block);
@@ -75,21 +63,20 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
 
   return (
     <section className="grid gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
-      <div ref={header.slot} className="contents">
-        <BlockHeader
-          key={block.id}
-          blocks={blocks}
-          index={blockIndex}
-          status={blockStatus({ blocks, dayOne, today }, blockIndex)}
-          dayOne={dayOne}
-          today={today}
-          language={language}
-          otherPrograms={otherPrograms}
-          journeys={journeys}
-          onChange={onChange}
-          onRemove={onRemove}
-        />
-      </div>
+      <BlockHeader
+        key={block.id}
+        blocks={blocks}
+        index={blockIndex}
+        status={blockStatus({ blocks, dayOne, today }, blockIndex)}
+        dayOne={dayOne}
+        today={today}
+        language={language}
+        otherPrograms={otherPrograms}
+        journeys={journeys}
+        onChange={onChange}
+        onRemove={onRemove}
+        measureRef={header.measureRef}
+      />
       <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
       <div className="grid gap-4">
         {planned.map(entry =>

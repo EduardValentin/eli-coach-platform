@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, type ReactNode } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -93,13 +93,44 @@ describe('ResponsiveSheetDialog width', () => {
   });
 });
 
+function renderInSheet(header: ReactNode) {
+  return render(
+    <ResponsiveSheetDialog onOpenChange={() => {}} open title="Request a check-in" description="Pick a time">
+      {header}
+    </ResponsiveSheetDialog>,
+  );
+}
+
 describe('SheetDialogHeader', () => {
+  it('names and describes the sheet once, through its visible title and description', () => {
+    // arrange
+    // act
+    renderInSheet(<SheetDialogHeader title="Request a check-in" description="Pick a time" />);
+
+    // assert
+    const dialog = screen.getByRole('dialog', { name: 'Request a check-in' });
+    expect(dialog).toHaveAccessibleDescription('Pick a time');
+    expect(screen.getAllByRole('heading')).toEqual([
+      screen.getByRole('heading', { level: 2, name: 'Request a check-in' }),
+    ]);
+    expect(screen.getAllByText('Pick a time')).toHaveLength(1);
+  });
+
+  it('leaves the sheet undescribed when its header has no description', () => {
+    // arrange
+    // act
+    renderInSheet(<SheetDialogHeader title="Add a block" />);
+
+    // assert
+    expect(screen.getByRole('dialog', { name: 'Add a block' })).not.toHaveAttribute('aria-describedby');
+  });
+
   it('hands its title to a caller that focuses it, reachable by script but not by Tab and without an outline', () => {
     // arrange
     const titleRef = createRef<HTMLHeadingElement>();
 
     // act
-    render(<SheetDialogHeader title="Request a check-in" titleRef={titleRef} />);
+    renderInSheet(<SheetDialogHeader title="Request a check-in" titleRef={titleRef} />);
 
     // assert
     const title = screen.getByRole('heading', { name: 'Request a check-in' });
@@ -111,7 +142,7 @@ describe('SheetDialogHeader', () => {
   it('draws its rule in the faint stroke when the sheet asks for it', () => {
     // arrange
     // act
-    render(<SheetDialogHeader rule="faint" title="Request a check-in" />);
+    renderInSheet(<SheetDialogHeader rule="faint" title="Request a check-in" />);
 
     // assert
     const band = screen.getByRole('heading', { name: 'Request a check-in' }).parentElement;

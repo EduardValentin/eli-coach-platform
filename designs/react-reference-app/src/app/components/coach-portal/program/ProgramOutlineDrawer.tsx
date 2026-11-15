@@ -14,6 +14,9 @@ export function ProgramOutlineDrawer({ rail, ...railProps }: ProgramOutlineDrawe
       <aside
         ref={rail.aside}
         aria-label="Program outline"
+        role={rail.isDrawer ? 'dialog' : undefined}
+        aria-modal={rail.isDrawer || undefined}
+        {...rail.asideProps}
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-80 shrink-0 flex-col overflow-y-auto border-r border-border bg-card duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:w-72 lg:translate-x-0',
           {

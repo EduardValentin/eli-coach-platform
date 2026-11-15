@@ -29,6 +29,7 @@ type EditorSectionContentProps = {
   draft: ProgramVersion;
   editor: ReturnType<typeof useEditorState>;
   openBlock: OpenBlock | undefined;
+  onAddBlock: () => void;
 };
 
 function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor'> & { openBlock: OpenBlock }) {
@@ -70,7 +71,7 @@ function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState>
   );
 }
 
-function StructureOverview({ program, draft, editor }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor'>) {
+function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor' | 'onAddBlock'>) {
   const { updateSetup } = usePrograms();
   return (
     <PlanOverview
@@ -81,6 +82,7 @@ function StructureOverview({ program, draft, editor }: Pick<EditorSectionContent
       level={program.level}
       onChange={editor.updateBlocks}
       onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
+      onAddBlock={onAddBlock}
       onUseSuggestion={editor.applySuggestion}
       settings={<ProgramSettings program={program} onChange={patch => updateSetup(program.callId, patch)} />}
     />
@@ -88,11 +90,11 @@ function StructureOverview({ program, draft, editor }: Pick<EditorSectionContent
 }
 
 export function EditorSectionContent(props: EditorSectionContentProps) {
-  const { section, journey, program, draft, editor, openBlock } = props;
+  const { section, journey, program, draft, editor, openBlock, onAddBlock } = props;
   if (editor.mode === 'texts') {
     return <TextsWorkspace section={section} journey={journey} program={program} draft={draft} today={editor.today} editing={editor.textEditing} />;
   }
-  if (section.kind === 'plan') return <StructureOverview program={program} draft={draft} editor={editor} />;
+  if (section.kind === 'plan') return <StructureOverview program={program} draft={draft} editor={editor} onAddBlock={onAddBlock} />;
   if (!openBlock) return null;
   const isLastBlock = draft.content.plan.blocks.at(-1)?.id === openBlock.block.id;
   return (
