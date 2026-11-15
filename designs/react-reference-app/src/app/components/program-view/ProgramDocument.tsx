@@ -42,10 +42,11 @@ const TERM_ROW_CLASS = 'grid gap-x-4 gap-y-0.5 text-document-table sm:grid-cols-
 const TERM_CLASS = 'font-semibold text-text-primary';
 const NOTE_FIGURE_CLASS = 'max-w-measure space-y-document-tight border-l-2 border-text-primary pl-4';
 const FOCUS_CLASS = 'max-w-measure font-serif text-document-card italic text-text-primary';
+const LABEL_FOCUS_TARGET = -1;
 const EDITED_TEXT_TYPOGRAPHY = { body: DOCUMENT_PROSE_CLASS, heading: DOCUMENT_SECTION_TITLE_CLASS };
 const EDITED_LEAD_IN_ROWS_CLASS =
-  'space-y-1 text-document-table sm:[&>p:has(>strong:first-child)]:grid sm:[&>p]:grid-cols-[10rem_minmax(0,1fr)] sm:[&>p]:gap-x-4 sm:[&>p>:not(:first-child)]:col-start-2';
-const EDITED_LEGEND_TYPOGRAPHY = { body: EDITED_LEAD_IN_ROWS_CLASS, heading: DOCUMENT_CARD_TITLE_CLASS };
+  'space-y-1 text-document-table max-sm:[&>p>strong:first-child]:block sm:[&>p:has(>strong:first-child)]:grid sm:[&>p]:grid-cols-[10rem_minmax(0,1fr)] sm:[&>p]:gap-x-4 sm:[&>p>:not(:first-child)]:col-start-2';
+const EDITED_LEGEND_TYPOGRAPHY = { body: cn(EDITED_LEAD_IN_ROWS_CLASS, '[&>h3]:mb-document-tight'), heading: DOCUMENT_CARD_TITLE_CLASS };
 const EDITED_TERM_ROW_TYPOGRAPHY = {
   body: cn(
     EDITED_LEAD_IN_ROWS_CLASS,
@@ -102,7 +103,7 @@ type SectionProps = { title: string; children: ReactNode; print?: 'keep'; headin
 function Section({ title, children, print, headingId }: SectionProps) {
   return (
     <section aria-label={title} data-print-keep={print === 'keep' ? '' : undefined} className="space-y-document-gap">
-      <DocumentHeading id={headingId} level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
+      <DocumentHeading id={headingId} tabIndex={headingId ? LABEL_FOCUS_TARGET : undefined} level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
         {title}
       </DocumentHeading>
       {children}
@@ -167,9 +168,10 @@ function runningHeaderText(view: ProgramView, block: Block | null): string {
 
 function NoteFromCoach({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
   const captionId = useId();
+  const editing = useDocumentEditing();
   return (
     <figure data-print-keep className={NOTE_FIGURE_CLASS}>
-      <figcaption id={captionId} className={DOCUMENT_HEAD_CLASS}>
+      <figcaption id={captionId} tabIndex={editing ? LABEL_FOCUS_TARGET : undefined} className={DOCUMENT_HEAD_CLASS}>
         {`A note from ${COACH_NAME}`}
         <OptionalMark view={view} target={target} />
       </figcaption>
@@ -285,6 +287,7 @@ const LINKS_DEFINITION = 'Tap one for its video and how-to.';
 
 function Legend({ view }: { view: ProgramView }) {
   const shows = useShowsText(view, LEGEND);
+  const editing = useDocumentEditing();
   if (!shows) return null;
   const title = parseTemplate(valueOf(view, LEGEND)).title || LEGEND_FALLBACK_TITLE;
   return (
@@ -298,12 +301,27 @@ function Legend({ view }: { view: ProgramView }) {
       >
         {value => <LegendBody text={value} />}
       </DocumentTextSlot>
+      {editing && (
+        <dl className="mt-1">
+          <LinksRow />
+        </dl>
+      )}
     </aside>
+  );
+}
+
+function LinksRow() {
+  return (
+    <div className={TERM_ROW_CLASS}>
+      <dt className={TERM_CLASS}>{LINKS_TERM}</dt>
+      <dd className="max-w-measure text-text-primary">{LINKS_DEFINITION}</dd>
+    </div>
   );
 }
 
 function LegendBody({ text }: { text: string }) {
   const { title, paragraphs } = parseTemplate(text);
+  const editing = useDocumentEditing();
   return (
     <>
       <DocumentHeading level={2} className={DOCUMENT_CARD_TITLE_CLASS}>
@@ -324,10 +342,7 @@ function LegendBody({ text }: { text: string }) {
             </div>
           );
         })}
-        <div className={TERM_ROW_CLASS}>
-          <dt className={TERM_CLASS}>{LINKS_TERM}</dt>
-          <dd className="max-w-measure text-text-primary">{LINKS_DEFINITION}</dd>
-        </div>
+        {!editing && <LinksRow />}
       </dl>
     </>
   );

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { MOVEMENT_PATTERN_LABELS, type MovementPattern } from '../../../domain/exercises';
@@ -11,7 +11,8 @@ import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
-import { ExerciseCard } from './ExerciseCard';
+import { ExerciseCard, type RowFocus, type SlotTarget } from './ExerciseCard';
+import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
 import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, type SessionDropRules } from './sessionDnd';
 
 type SlotGroupProps = {
@@ -21,6 +22,7 @@ type SlotGroupProps = {
   onPatternsChange: (patterns: MovementPattern[]) => void;
   library: readonly Exercise[];
   edits: RowEdits;
+  slots: readonly SlotTarget[];
   onChange: (session: Session) => void;
   onAdd: (slot: Slot) => void;
   onAddSubstitution: (rowId: string) => void;
@@ -31,7 +33,7 @@ type SupersetUnitProps = { positions: readonly string[]; onUngroup: () => void; 
 function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
   return (
     <div className="rounded-control border-l-2 border-brand-secondary bg-brand-secondary-soft">
-      <div className="flex items-center justify-between gap-2 py-1 pr-1 pl-3">
+      <div className="flex items-center justify-between gap-2 py-2 pr-1 pl-3">
         <span className={cn(LABEL_CLASS, 'text-brand-secondary-ink')}>Superset</span>
         <Button variant="ghost" size="xs" className="text-brand-secondary-ink" onClick={onUngroup}>
           Ungroup
@@ -103,8 +105,14 @@ function PatternTags({ plan, choices, onChange }: PatternPickerProps) {
   return <PatternChips plan={plan} choices={choices} onChange={onChange} />;
 }
 
-export function SlotGroup({ session, plan, choices, onPatternsChange, library, edits, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
+export function SlotGroup({ session, plan, choices, onPatternsChange, library, edits, slots, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
   const announce = useEditorAnnouncer();
+  const section = useRef<HTMLElement>(null);
+  const focusLater = usePendingFocus();
+  const focus: RowFocus = {
+    onRow: rowId => focusLater(() => actionsTriggerIn(`[data-row-id="${rowId}"]`)),
+    onSlotAdd: () => focusLater(() => section.current?.querySelector<HTMLElement>('[data-slot-add]')),
+  };
   const { slot, label } = plan;
   const units = slotUnits(session, slot);
   const heading = `${slot} · ${label}`;
@@ -116,6 +124,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
   function ungroup(group: string, rows: readonly Row[]) {
     const positions = rows.map(row => positionLabel(session, row));
     onChange(edits.ungroup(group));
+    focus.onRow(rows[0].id);
     announce(`${positions.join(' and ')} ungrouped`);
   }
 
@@ -130,6 +139,8 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
         exercise={library.find(item => item.id === row.exerciseId)}
         library={library}
         edits={edits}
+        slots={slots}
+        focus={focus}
         onChange={onChange}
         onAddSubstitution={onAddSubstitution}
       />
@@ -137,7 +148,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
   };
 
   return (
-    <section className="grid gap-2">
+    <section ref={section} className="grid gap-2">
       <header className="flex items-start gap-3">
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
           <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
@@ -148,7 +159,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
           )}
         </div>
         {several && units.length > 0 && (
-          <Button variant="ghost" size="icon-xs" aria-label={`Add exercise to ${heading}`} onClick={() => onAdd(slot)}>
+          <Button variant="ghost" size="icon-xs" aria-label={`Add exercise to ${heading}`} data-slot-add="" onClick={() => onAdd(slot)}>
             <Plus aria-hidden="true" />
           </Button>
         )}

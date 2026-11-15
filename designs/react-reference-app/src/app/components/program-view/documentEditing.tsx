@@ -35,15 +35,15 @@ export function useDocumentTypography(): DocumentTypography {
   return useContext(DocumentEditingContext).typography;
 }
 
-type DocumentHeadingProps = { level: HeadingLevel; id?: string; className?: string; children: ReactNode };
+type DocumentHeadingProps = { level: HeadingLevel; id?: string; tabIndex?: number; className?: string; children: ReactNode };
 
 const HEADING_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5'] as const;
 
-export function DocumentHeading({ level, id, className, children }: DocumentHeadingProps) {
+export function DocumentHeading({ level, id, tabIndex, className, children }: DocumentHeadingProps) {
   const { topLevel } = useContext(DocumentEditingContext);
   const Tag = HEADING_TAGS[level + topLevel - 2];
   return (
-    <Tag id={id} className={className}>
+    <Tag id={id} tabIndex={tabIndex} className={className}>
       {children}
     </Tag>
   );

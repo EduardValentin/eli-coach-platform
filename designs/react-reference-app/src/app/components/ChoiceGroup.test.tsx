@@ -29,7 +29,7 @@ describe("ChoiceGroup", () => {
     // assert
     expect(screen.getByRole("radiogroup", { name: "Sides" })).toHaveAttribute("data-size", "md");
     expect(screen.getByRole("radio", { name: "One side at a time" })).toHaveClass(
-      "group-data-[size=md]/choice:h-[calc(var(--size-control-md)-8px)]",
+      "group-data-[size=md]/choice:min-h-[calc(var(--size-control-md)-8px)]",
     );
   });
 });

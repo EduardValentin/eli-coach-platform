@@ -105,7 +105,7 @@ async function clearEquipment(user: User) {
 }
 
 describe('ProgramSetupSheet', () => {
-  it('titles the page once under a breadcrumb back to the client', () => {
+  it('titles the page once under a link back to the client', () => {
     // arrange / act
     renderSheet('&pseed=none&jstage=approved');
 
@@ -113,8 +113,8 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1, name: 'Build Jane’s program' })).toBeInTheDocument();
     expect(screen.queryAllByRole('heading', { level: 2 })).toHaveLength(0);
-    const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' });
-    expect(within(breadcrumb).getByRole('link', { name: 'Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
+    const back = screen.getByRole('navigation', { name: 'Back to the client' });
+    expect(within(back).getByRole('link', { name: 'Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
     expect(document.title).toBe('Build Jane’s program · Evoa');
   });
 
@@ -384,12 +384,27 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getByText('Client page')).toBeInTheDocument();
   });
 
+  it('asks before leaving through the link back to her with unsaved changes', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+    await user.click(screen.getByRole('radio', { name: '4 days' }));
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'Jane Doe' }));
+
+    // assert
+    expect(screen.getByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+    expect(screen.queryByText('Client page')).not.toBeInTheDocument();
+  });
+
   it('shows no form until her answers are approved', () => {
     // arrange / act
     renderSheet('&pseed=none&jstage=reviewing');
 
     // assert
+    expect(screen.getByRole('heading', { level: 1, name: 'Program not ready yet' })).toBeInTheDocument();
     expect(screen.getByText('The program opens once her answers are approved.')).toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(1);
     expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
     expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
   });

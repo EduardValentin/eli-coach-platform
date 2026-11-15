@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import { cn } from './ui/utils';
 
 type CheckboxChipSize = 'touch' | 'compact';
@@ -30,13 +30,10 @@ const SIZE_CLASSES: Record<
   },
 };
 
-export function CheckboxChip({
-  checked,
-  onCheckedChange,
-  children,
-  size = 'touch',
-  ...props
-}: CheckboxChipProps) {
+export const CheckboxChip = forwardRef<HTMLInputElement, CheckboxChipProps>(function CheckboxChip(
+  { checked, onCheckedChange, children, size = 'touch', ...props },
+  ref,
+) {
   const classes = SIZE_CLASSES[size];
   return (
     <label
@@ -47,6 +44,7 @@ export function CheckboxChip({
       )}
     >
       <input
+        ref={ref}
         type="checkbox"
         className="absolute inset-0 cursor-pointer opacity-0"
         checked={checked}
@@ -56,4 +54,4 @@ export function CheckboxChip({
       <span aria-hidden="true">{children}</span>
     </label>
   );
-}
+});

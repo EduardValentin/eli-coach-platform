@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Session } from '../../../domain/program';
@@ -23,6 +24,7 @@ function acceptsStretch(dragged: DraggedItem): boolean {
 }
 
 export function CoolDownCard({ session, library, edits, onChange, onPickStretch }: CoolDownCardProps) {
+  const addButton = useRef<HTMLButtonElement>(null);
   const { coolDown } = session;
   const { items } = coolDown;
   return (
@@ -46,6 +48,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
               onChange={event => onChange(edits.change({ ...coolDown, note: event.target.value }))}
             />
             <ExerciseItemList
+          emptyFocus={addButton}
               label="Stretches"
               items={items}
               nameOf={exerciseId => exerciseNameOf(library.find(other => other.id === exerciseId))}
@@ -59,7 +62,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
                 <CountField className="w-16" label={`${name} seconds`} value={item.seconds} suffix="s" onCommit={seconds => onChange(edits.changeItem({ ...item, seconds }))} />
               )}
             </ExerciseItemList>
-            <Button variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickStretch}>
+            <Button ref={addButton} variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickStretch}>
               <Plus aria-hidden="true" />
               Add stretch
             </Button>

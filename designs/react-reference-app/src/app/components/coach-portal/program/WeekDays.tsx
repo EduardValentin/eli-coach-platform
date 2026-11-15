@@ -98,7 +98,7 @@ function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProp
 
   return (
     <DayCardFrame entry={block.calendar[day].kind}>
-      <div className="flex items-center justify-between gap-1 pb-1">
+      <div className="flex items-center justify-between gap-1 pb-3">
         <h4 className="line-clamp-2 min-w-0 break-words">
           <DayName day={day} />
         </h4>

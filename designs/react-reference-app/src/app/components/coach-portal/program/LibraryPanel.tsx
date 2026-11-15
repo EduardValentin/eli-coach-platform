@@ -128,7 +128,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
         {exercise.primaryMuscles.length > 0 && (
           <span className="flex flex-wrap gap-1">
             {exercise.primaryMuscles.map(muscle => (
-              <Badge key={muscle} tone="muted">
+              <Badge key={muscle} tone="muted" className="max-w-full break-words whitespace-normal">
                 {muscle}
               </Badge>
             ))}
@@ -136,7 +136,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
         )}
         {exercise.equipment.length > 0 && <span className="text-xs break-words text-text-secondary">{exercise.equipment.join(', ')}</span>}
       </div>
-      <span className="flex items-center gap-2">
+      <span className="flex items-center gap-4">
         {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />}
         <Button variant="ghost" size="icon-xs" aria-label={`Add ${exercise.name}`} onClick={() => onAdd(exercise)}>
           <Plus aria-hidden="true" />
@@ -149,8 +149,8 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
 
 function PurposeChip({ purpose, added, onDismiss }: { purpose: LibraryPurpose; added: boolean; onDismiss: () => void }) {
   return (
-    <div className="grid gap-1">
-      <p className="flex items-center justify-between gap-2 rounded-field bg-primary-soft py-1 pr-1 pl-3 text-sm font-medium text-primary">
+    <div className="grid min-w-0 gap-1">
+      <p className="flex min-w-0 items-center justify-between gap-2 rounded-field bg-primary-soft py-1 pr-1 pl-3 text-sm font-medium text-primary">
         <span className="min-w-0 truncate">{purpose.label}</span>
         <Button variant="ghost" size="icon-xs" aria-label="Stop adding" onClick={onDismiss}>
           <X aria-hidden="true" />
@@ -239,7 +239,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
 
   return (
     <LibraryFrame isDrawer={isDrawer} headingId={headingId} asideRef={asideRef} onClose={onClose}>
-      <div className="grid gap-3 border-b border-border-subtle p-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 id={headingId} className={WIDGET_TITLE_CLASS}>
             Exercise library
@@ -251,7 +251,9 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
           )}
         </div>
         {purpose && <PurposeChip purpose={purpose} added={addedFor === purpose.key} onDismiss={onDismissPurpose} />}
-        <SearchField ref={searchRef} size="sm" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => change({ query: event.target.value })} />
+        <label className="relative hit-area block">
+          <SearchField ref={searchRef} size="sm" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => change({ query: event.target.value })} />
+        </label>
         <ChoiceGroup size="xs" aria-label="Exercise type" value={type} onValueChange={value => setType(value as LibraryType)}>
           {TYPE_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
@@ -271,12 +273,12 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
           )}
           <MultiSelect label="Muscle" selected={muscles} options={MUSCLES} labels={MUSCLE_LABELS} onToggle={value => change({ muscles: toggled(muscles, value) })} />
         </div>
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm text-text-primary">
+        <div className="flex flex-wrap gap-x-4 gap-y-3">
+          <label className="flex min-h-12 items-center gap-2 text-sm text-text-primary">
             <Switch checked={onlyHers} onCheckedChange={checked => change({ onlyHers: checked })} aria-label="Only her equipment" />
             Only her equipment
           </label>
-          <label className="flex items-center gap-2 text-sm text-text-primary">
+          <label className="flex min-h-12 items-center gap-2 text-sm text-text-primary">
             <Switch checked={bodyweightOnly} onCheckedChange={checked => change({ bodyweightOnly: checked })} aria-label="Bodyweight" />
             Bodyweight
           </label>
@@ -286,7 +288,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
         {shown.length === 0 ? (
           <NoMatches type={type} filters={filters} onClear={() => setFilters(CLEARED_FILTERS)} />
         ) : (
-          <ul aria-label="Exercises" className="grid gap-2">
+          <ul aria-label="Exercises" className="grid gap-3">
             {shown.map(exercise => (
               <li key={exercise.id}>
                 <LibraryExerciseCard exercise={exercise} onAdd={add} />

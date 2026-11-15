@@ -123,7 +123,7 @@ function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange,
   const hasProblem = Boolean(reps.problem ?? rirProblem ?? weight.problem);
 
   return (
-    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-2 py-2 @min-[34rem]:items-start @min-[34rem]:py-1', wideColumns(repsSuffix))}>
+    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 py-2 @min-[34rem]:items-start @min-[34rem]:gap-y-2 @min-[34rem]:py-1', wideColumns(repsSuffix))}>
       <span className="text-sm font-medium text-text-secondary tabular-nums @min-[34rem]:flex @min-[34rem]:h-(--size-control-xs) @min-[34rem]:items-center">
         <span className="@min-[34rem]:sr-only">Set </span>
         {index + 1}

@@ -3,7 +3,7 @@ import type { To } from 'react-router';
 import { AlertCircle, GanttChart, Plus } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type ProgramLanguage, type ProgramVersion } from '../../../domain/program';
 import { blockSpan, blockStatus, type PlanSchedule } from '../../../domain/programCalendar';
-import { blockingMessage, sequenceProblems } from '../../../domain/programRules';
+import { sequenceProblems } from '../../../domain/programRules';
 import { blockTexts, programWideTexts, textProgress, type ProgramTextTarget } from '../../../domain/programTexts';
 import { counted } from '../../../utils/counted';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
@@ -55,19 +55,15 @@ function structureDetails(schedule: PlanSchedule, index: number): Detail[] {
   return empty > 0 ? [dates, { text: `${counted(empty, 'session')} empty`, tone: 'warning' }] : [dates];
 }
 
-function problemsByBlock(blocks: readonly Block[]): Map<string, string> {
-  const problems = new Map<string, string>();
-  for (const problem of sequenceProblems(blocks)) {
-    if (problem.blockId && !problems.has(problem.blockId)) problems.set(problem.blockId, blockingMessage(problem));
-  }
-  return problems;
+function blocksWithProblems(blocks: readonly Block[]): Set<string> {
+  return new Set(sequenceProblems(blocks).flatMap(problem => (problem.blockId ? [problem.blockId] : [])));
 }
 
 function textsDetail(version: ProgramVersion, targets: readonly ProgramTextTarget[], language: ProgramLanguage): Detail {
   const { toWrite, pending } = textProgress(version, targets, language);
-  const writing = toWrite === 0 ? 'All texts ready' : `${toWrite} to write`;
-  const romanian = pending === 0 ? '' : ` · ${pending} need Romanian`;
-  return { text: `${writing}${romanian}`, tone: toWrite + pending === 0 ? 'muted' : 'warning' };
+  if (toWrite + pending === 0) return { text: 'All texts ready', tone: 'muted' };
+  const parts = [toWrite > 0 ? `${toWrite} to write` : '', pending > 0 ? `${pending} need Romanian` : ''];
+  return { text: parts.filter(Boolean).join(' · '), tone: 'warning' };
 }
 
 function DetailLine({ detail }: { detail: Detail }) {
@@ -84,11 +80,11 @@ function DetailLine({ detail }: { detail: Detail }) {
   );
 }
 
-function ProblemLine({ problem }: { problem: string }) {
+function ProblemMark() {
   return (
-    <span className="flex items-start gap-1 text-xs text-destructive">
-      <AlertCircle aria-hidden="true" size={14} className="mt-px shrink-0" />
-      {` ${problem}`}
+    <span className="text-destructive">
+      <AlertCircle aria-hidden="true" size={16} />
+      <span className="sr-only"> has a problem</span>
     </span>
   );
 }
@@ -111,7 +107,7 @@ type BlockEntryProps = {
   block: Block;
   index: number;
   details: readonly Detail[];
-  problem: string | undefined;
+  problem: boolean;
   current: boolean;
   onClick: () => void;
 };
@@ -130,11 +126,13 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         )}
       >
         <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', BLOCK_SWATCH[block.type])} />
-        <span className="font-medium text-text-primary">{`${index + 1} ${BLOCK_TYPE_LABELS[block.type]}`}</span>
+        <span className="flex items-center justify-between gap-2 font-medium text-text-primary">
+          {`${index + 1} ${BLOCK_TYPE_LABELS[block.type]}`}
+          {problem && <ProblemMark />}
+        </span>
         {details.map(detail => (
           <DetailLine key={detail.text} detail={detail} />
         ))}
-        {problem && <ProblemLine problem={problem} />}
       </button>
     </li>
   );
@@ -150,7 +148,7 @@ export function EditorRail(props: EditorRailProps) {
   const { blocks } = version.content.plan;
   const overviewCurrent = isSameSection(OVERVIEW, selected);
   const writing = mode === 'texts';
-  const problems = writing ? new Map<string, string>() : problemsByBlock(blocks);
+  const flagged = writing ? new Set<string>() : blocksWithProblems(blocks);
 
   return (
     <div className="grid content-start gap-6 p-3">
@@ -180,7 +178,7 @@ export function EditorRail(props: EditorRailProps) {
                 block={block}
                 index={index}
                 details={writing ? [textsDetail(version, blockTexts(block), language)] : structureDetails({ blocks, dayOne, today }, index)}
-                problem={problems.get(block.id)}
+                problem={flagged.has(block.id)}
                 current={isSameSection(section, selected)}
                 onClick={() => onSelect(section)}
               />

@@ -284,6 +284,7 @@ describe('ProgramEditorPage', () => {
     expect(skip).toHaveAttribute('href', '#editor');
     expect(screen.getByRole('main', { name: 'Program editor' })).toHaveAttribute('id', 'editor');
     expect(skip.compareDocumentPosition(screen.getByRole('link', { name: 'Back to Jane Doe' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(screen.getByRole('navigation', { name: 'Editor' })).getByRole('link', { name: 'Back to Jane Doe' })).toBeInTheDocument();
   });
 
   it('adds a block from the row under the block list and explains the fixed Deload length', async () => {
@@ -328,7 +329,7 @@ describe('ProgramEditorPage', () => {
     const typeAfter = within(blockRows()[1]).getByRole('combobox', { name: 'Type of block 2' });
     expect(typeAfter).toHaveAccessibleDescription('Foundation must be the first block');
     expect(typeAfter).toHaveAttribute('aria-invalid', 'true');
-    expect(within(rail()).getByRole('button', { name: /^2 Foundation .*Foundation must be the first block$/ })).toBeInTheDocument();
+    expect(within(rail()).getByRole('button', { name: /^2 Foundation has a problem/ })).toBeInTheDocument();
   });
 
   it('counts blocking problems in the top bar and opens the publish dialog at them', async () => {

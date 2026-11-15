@@ -63,8 +63,9 @@ type RichTextEditorProps = {
   theme: RichTextTheme;
   tools: readonly RichTextTool[];
   lines?: "one" | "many";
-  controls?: "shown" | "reserved";
+  controls?: "shown" | "hidden";
   actions?: React.ReactNode;
+  notes?: React.ReactNode;
   placeholder?: string;
   describedBy?: string;
   className?: string;
@@ -311,7 +312,8 @@ const TOOL_SPECS: Record<RichTextTool, ToolSpec> = {
 const ENTRY_FRAME_CLASS = "min-w-0 rounded-field border border-control-border-soft bg-surface-base outline-none";
 const ENTRY_BOX_CLASS = "box-content block px-3 py-2 [grid-area:1/1]";
 const LINES_CLASS = { one: "min-h-8", many: "min-h-12" } as const;
-const CONTROLS_ROW_CLASS = "flex min-h-(--size-control-xs) flex-wrap items-center gap-2";
+const CONTROLS_BAR_CLASS =
+  "fixed bottom-4 z-30 grid gap-2 rounded-field border border-border bg-surface-base p-2 shadow-card";
 const ROVING_KEYS = new Set(["ArrowRight", "ArrowLeft", "Home", "End"]);
 
 function runTool(editor: LexicalEditor, tool: RichTextTool) {
@@ -343,7 +345,7 @@ function Toolbar({ editor, label, tools, state }: ToolbarProps) {
   }
 
   return (
-    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex gap-2">
+    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex flex-wrap gap-4">
       {tools.map((tool) => (
         <Toggle
           key={tool}
@@ -366,10 +368,53 @@ function Toolbar({ editor, label, tools, state }: ToolbarProps) {
   );
 }
 
+const BAR_CLEARANCE = 8;
+
+function keepAbove(frame: HTMLElement, bar: HTMLElement) {
+  const barTop = bar.getBoundingClientRect().top;
+  const { top, bottom, height } = frame.getBoundingClientRect();
+  if (bottom <= barTop - BAR_CLEARANCE) return;
+  const clearance = window.innerHeight - barTop + BAR_CLEARANCE;
+  frame.style.scrollMarginBottom = `${clearance}px`;
+  frame.scrollIntoView({ block: height < barTop - BAR_CLEARANCE && top >= 0 ? "end" : "start" });
+}
+
+type ColumnBox = { left: number; width: number };
+
+function useColumnOf(element: React.RefObject<HTMLElement | null>, active: boolean): ColumnBox | undefined {
+  const [box, setBox] = React.useState<ColumnBox>();
+
+  React.useLayoutEffect(() => {
+    const target = element.current?.closest<HTMLElement>("[data-editor-column]") ?? element.current;
+    if (!active || !target) return;
+    const measure = () => {
+      const { left, width } = target.getBoundingClientRect();
+      setBox({ left, width });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(target);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [element, active]);
+
+  return active ? box : undefined;
+}
+
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>((props, ref) => {
-  const { label, labelledBy, placeholder, describedBy, theme, tools, lines = "many", controls = "shown", actions, className, onEscape } = props;
+  const { label, labelledBy, placeholder, describedBy, theme, tools, lines = "many", controls = "shown", actions, notes, className, onEscape } = props;
   const { editor, toolbar, empty } = useRichTextEditor(props);
   const content = React.useRef<HTMLDivElement>(null);
+  const shown = controls === "shown" && (tools.length > 0 || Boolean(actions));
+  const column = useColumnOf(content, shown);
+  const bar = React.useRef<HTMLDivElement>(null);
+
+  React.useLayoutEffect(() => {
+    if (column && content.current && bar.current) keepAbove(content.current, bar.current);
+  }, [column]);
 
   React.useLayoutEffect(() => {
     editor.setRootElement(content.current);
@@ -395,31 +440,31 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
   }
 
   return (
-    <div className={cn("grid gap-2", className)} onKeyDown={onKeyDown}>
-      <div className="grid">
-        <div
-          ref={content}
-          contentEditable
-          suppressContentEditableWarning
-          role="textbox"
-          aria-multiline="true"
-          aria-label={labelledBy ? undefined : label}
-          aria-labelledby={labelledBy}
-          aria-describedby={describedBy}
-          aria-placeholder={placeholder}
-          className={cn(ENTRY_FRAME_CLASS, ENTRY_BOX_CLASS, LINES_CLASS[lines], theme.root)}
-        />
-        {empty && placeholder && (
-          <p aria-hidden="true" className={cn("pointer-events-none border border-transparent", ENTRY_BOX_CLASS, theme.root, "text-muted-foreground")}>
-            {placeholder}
-          </p>
-        )}
-      </div>
-      {controls === "reserved" && <div aria-hidden="true" className={CONTROLS_ROW_CLASS} />}
-      {controls === "shown" && (tools.length > 0 || actions) && (
-        <div className={CONTROLS_ROW_CLASS}>
-          {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
-          {actions && <div className="ml-auto flex flex-wrap items-center gap-2">{actions}</div>}
+    <div className={cn("grid", className)} onKeyDown={onKeyDown}>
+      <div
+        ref={content}
+        contentEditable
+        suppressContentEditableWarning
+        role="textbox"
+        aria-multiline="true"
+        aria-label={labelledBy ? undefined : label}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-placeholder={placeholder}
+        className={cn(ENTRY_FRAME_CLASS, ENTRY_BOX_CLASS, LINES_CLASS[lines], theme.root)}
+      />
+      {empty && placeholder && (
+        <p aria-hidden="true" className={cn("pointer-events-none border border-transparent", ENTRY_BOX_CLASS, theme.root, "text-muted-foreground")}>
+          {placeholder}
+        </p>
+      )}
+      {shown && (
+        <div ref={bar} style={column} className={CONTROLS_BAR_CLASS}>
+          {notes && <div className="flex flex-wrap items-center gap-x-3 gap-y-1">{notes}</div>}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
+            {actions && <div className="ml-auto flex flex-wrap items-center gap-4">{actions}</div>}
+          </div>
         </div>
       )}
     </div>

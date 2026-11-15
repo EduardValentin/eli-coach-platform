@@ -209,10 +209,23 @@ describe('texts page', () => {
     expect(within(programDocument()).getByRole('button', { name: 'Edit Focus until the next check-in' })).toHaveFocus();
   });
 
-  it('closes an empty text on Done or Escape, keeping focus on the field', async () => {
+  it('shows an empty text at rest as its heading and field only', () => {
+    // arrange / act
+    renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+
+    // assert
+    const nutrition = within(programDocument()).getByRole('region', { name: 'Nutrition' });
+    expect(within(nutrition).getByRole('heading', { name: 'Nutrition (optional)' })).toBeInTheDocument();
+    expect(within(nutrition).getByRole('textbox', { name: 'Nutrition (optional)' })).toBeInTheDocument();
+    expect(within(nutrition).queryByRole('toolbar')).not.toBeInTheDocument();
+    expect(within(nutrition).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('closes an empty text on Done or Escape, leaving focus on its heading', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
     const nutrition = within(programDocument()).getByRole('textbox', { name: 'Nutrition (optional)' });
+    const heading = within(programDocument()).getByRole('heading', { name: 'Nutrition (optional)' });
     await user.click(nutrition);
     expect(within(programDocument()).getByRole('toolbar', { name: 'Formatting for Nutrition' })).toBeInTheDocument();
 
@@ -220,7 +233,7 @@ describe('texts page', () => {
     await user.click(within(programDocument()).getByRole('button', { name: 'Done editing Nutrition' }));
 
     // assert
-    expect(nutrition).toHaveFocus();
+    expect(heading).toHaveFocus();
     expect(within(programDocument()).queryByRole('toolbar', { name: 'Formatting for Nutrition' })).not.toBeInTheDocument();
     expect(within(programDocument()).queryByRole('button', { name: 'Done editing Nutrition' })).not.toBeInTheDocument();
 
@@ -229,8 +242,15 @@ describe('texts page', () => {
     await user.keyboard('{Escape}');
 
     // assert
-    expect(nutrition).toHaveFocus();
+    expect(heading).toHaveFocus();
     expect(within(programDocument()).queryByRole('button', { name: 'Done editing Nutrition' })).not.toBeInTheDocument();
+
+    // act
+    await user.tab();
+
+    // assert
+    expect(nutrition).toHaveFocus();
+    expect(within(programDocument()).getByRole('button', { name: 'Done editing Nutrition' })).toBeInTheDocument();
   });
 
   it('reaches the formatting toolbar in one tab stop after the text and moves inside it with the arrow keys', async () => {
@@ -328,6 +348,7 @@ describe('texts page', () => {
 
     // assert
     expect(within(programDocument()).getByText('Do the exercises in order, A first.')).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('button', { name: 'Edit How to read your session' })).toHaveFocus();
   });
 
   it('counts in the rail only the texts still to write', async () => {
@@ -392,7 +413,7 @@ describe('texts page', () => {
     await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
 
     // assert
-    expect(within(rail()).getByRole('button', { name: /^1 Foundation/ })).toHaveTextContent(/All texts ready · \d+ need Romanian/);
+    expect(within(rail()).getByRole('button', { name: /^1 Foundation/ })).toHaveTextContent(/^1 Foundation \d+ need Romanian$/);
     const edit = within(programDocument()).getByRole('button', { name: 'Edit Block intro' });
     expect(within(edit.parentElement as HTMLElement).getByText('Romanian text pending')).toBeInTheDocument();
 

@@ -83,13 +83,13 @@ function EmptyLabel({ id, label, optional }: EmptyLabelProps) {
   );
   if (label.level) {
     return (
-      <DocumentHeading id={id} level={label.level} className={label.className}>
+      <DocumentHeading id={id} tabIndex={-1} level={label.level} className={label.className}>
         {content}
       </DocumentHeading>
     );
   }
   return (
-    <p id={id} className={label.className ?? EMPTY_LABEL_CLASS}>
+    <p id={id} tabIndex={-1} className={label.className ?? EMPTY_LABEL_CLASS}>
       {content}
     </p>
   );
@@ -103,10 +103,11 @@ function crossesSlotEdge(event: FocusEvent<HTMLElement>): boolean {
 
 type EditableSlotProps = Omit<TextSlotProps, 'view' | 'unwritten'> & { editing: DocumentEditing; text: ProgramText };
 
-type FocusTarget = 'editor' | 'edit' | null;
+type FocusTarget = 'editor' | 'edit' | 'label' | 'restore' | null;
 
 function EditableSlot({ editing, target, text, label, labelledBy, className, typography, children }: EditableSlotProps) {
   const [open, setOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState(0);
   const editor = useRef<RichTextEditorHandle>(null);
   const editButton = useRef<HTMLButtonElement>(null);
   const focusNext = useRef<FocusTarget>(null);
@@ -117,13 +118,17 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
   const pendingId = useId();
   const written = isWritten(text.value);
 
+  const labelId = labelledBy ?? (written ? undefined : ownLabelId);
+
   useEffect(() => {
+    const target = focusNext.current === 'restore' ? (open ? 'editor' : 'edit') : focusNext.current;
     restoringFocus.current = true;
-    if (focusNext.current === 'editor') editor.current?.focus();
-    if (focusNext.current === 'edit') editButton.current?.focus();
+    if (target === 'editor') editor.current?.focus();
+    if (target === 'edit') editButton.current?.focus();
+    if (target === 'label' && labelId) document.getElementById(labelId)?.focus();
     restoringFocus.current = false;
     focusNext.current = null;
-  }, [open]);
+  }, [open, focusRequest, labelId]);
 
   function start() {
     focusNext.current = 'editor';
@@ -131,15 +136,22 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
   }
 
   function finish() {
-    focusNext.current = written ? 'edit' : 'editor';
+    focusNext.current = written ? 'edit' : 'label';
     setOpen(false);
+    setFocusRequest(request => request + 1);
+  }
+
+  function undoReset(previous: string) {
+    editing.write(target, previous);
+    focusNext.current = 'restore';
+    setFocusRequest(request => request + 1);
   }
 
   function reset() {
     const previous = text.value;
     editor.current?.focus();
     editing.reset(target);
-    showUndoToast({ message: 'Standard text restored', onUndo: () => editing.write(target, previous) });
+    showUndoToast({ message: 'Standard text restored', onUndo: () => undoReset(previous) });
   }
 
   if (!open && written) {
@@ -168,35 +180,24 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
   }
 
   const ownLabel = !written && !labelledBy;
-  const head = ownLabel || Boolean(text.hint) || text.pending;
   const describedBy = [text.hint ? hintId : '', text.pending ? pendingId : ''].filter(Boolean).join(' ') || undefined;
 
   return (
     <div
       className={cn('grid gap-1.5', className)}
       onFocus={event => {
-        if (!restoringFocus.current && crossesSlotEdge(event)) setOpen(true);
+        if (!restoringFocus.current && event.target.getAttribute('role') === 'textbox') setOpen(true);
       }}
       onBlur={event => {
         if (crossesSlotEdge(event)) setOpen(false);
       }}
       onPointerDown={() => setOpen(true)}
     >
-      {head && (
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          {ownLabel && <EmptyLabel id={ownLabelId} label={label ?? { text: text.name }} optional={text.optional} />}
-          {text.hint && (
-            <p id={hintId} className="text-sm text-text-secondary">
-              {text.hint}
-            </p>
-          )}
-          {text.pending && <PendingBadge id={pendingId} />}
-        </div>
-      )}
+      {ownLabel && <EmptyLabel id={ownLabelId} label={label ?? { text: text.name }} optional={text.optional} />}
       <RichTextEditor
         ref={editor}
         label={text.name}
-        labelledBy={labelledBy ?? (ownLabel ? ownLabelId : undefined)}
+        labelledBy={labelId}
         describedBy={describedBy}
         placeholder={text.placeholder}
         value={text.value}
@@ -204,13 +205,25 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
         theme={theme}
         tools={TOOLS[text.formatting]}
         lines={text.formatting === 'plain' ? 'one' : 'many'}
-        controls={open ? 'shown' : 'reserved'}
-        className={cn({ '-mx-3': written, '-mt-2': written && !head })}
+        controls={open ? 'shown' : 'hidden'}
+        className={cn({ '-mx-[calc(0.75rem+1px)] -my-[calc(0.5rem+1px)]': written })}
         onChange={value => {
           editing.write(target, value);
           setOpen(true);
         }}
         onEscape={finish}
+        notes={
+          (text.hint || text.pending) && (
+            <>
+              {text.hint && (
+                <p id={hintId} className="text-sm text-text-secondary">
+                  {text.hint}
+                </p>
+              )}
+              {text.pending && <PendingBadge id={pendingId} />}
+            </>
+          )
+        }
         actions={
           <>
             {isCustomised(text) && (

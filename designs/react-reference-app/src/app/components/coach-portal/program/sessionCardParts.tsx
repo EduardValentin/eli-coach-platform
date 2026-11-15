@@ -52,12 +52,14 @@ type SessionNameInputProps = { value: string; inputRef?: Ref<HTMLInputElement>; 
 
 export function SessionNameInput({ value, inputRef, onChange }: SessionNameInputProps) {
   return (
-    <Input
-      ref={inputRef}
-      aria-label="Session name"
-      value={value}
-      onChange={event => onChange(event.target.value)}
-      className="h-auto w-auto min-w-0 flex-1 basis-40 rounded-none border-x-0 border-t-0 border-b bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-text-secondary md:text-xl"
-    />
+    <label className="relative hit-area flex min-w-0 flex-1 basis-40">
+      <Input
+        ref={inputRef}
+        aria-label="Session name"
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        className="h-auto w-full min-w-0 rounded-none border-x-0 border-t-0 border-b bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-text-secondary md:text-xl"
+      />
+    </label>
   );
 }

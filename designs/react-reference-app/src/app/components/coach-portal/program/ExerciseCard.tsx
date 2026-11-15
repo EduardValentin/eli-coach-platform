@@ -1,8 +1,8 @@
 import { useId, useState, type ReactNode, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
-import { ArrowDown, ArrowUp, ChevronDown, Link2, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, CornerDownRight, Link2, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { positionLabel, setsBreakdown, type Row, type Session } from '../../../domain/program';
+import { positionLabel, setsBreakdown, type Row, type Session, type Slot } from '../../../domain/program';
 import { counted } from '../../../utils/counted';
 import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
@@ -19,19 +19,24 @@ import { formatRest } from './rowFields';
 import { acceptsIntoSession, LIBRARY_EXERCISE, PLAN_ROW, useSessionDrop, type DraggedItem, type PlanRowItem } from './sessionDnd';
 import { SetGrid } from './SetGrid';
 
+export type SlotTarget = { slot: Slot; label: string };
+export type RowFocus = { onRow: (rowId: string) => void; onSlotAdd: () => void };
+
 type ExerciseCardProps = {
   session: Session;
   row: Row;
   exercise: Exercise | undefined;
   library: readonly Exercise[];
   edits: RowEdits;
+  slots: readonly SlotTarget[];
+  focus: RowFocus;
   onChange: (session: Session) => void;
   onAddSubstitution: (rowId: string) => void;
 };
 
-type MenuContext = Pick<ExerciseCardProps, 'row' | 'library' | 'edits' | 'onChange'> & { name: string; announce: (message: string) => void };
+type MenuContext = Pick<ExerciseCardProps, 'row' | 'library' | 'edits' | 'slots' | 'focus' | 'onChange'> & { name: string; announce: (message: string) => void };
 
-function groupingActions({ row, library, edits, onChange, name, announce }: MenuContext): RowMenuAction[] {
+function groupingActions({ row, library, edits, focus, onChange, name, announce }: MenuContext): RowMenuAction[] {
   if (SINGLE_CARD_SLOTS.includes(row.slot)) return [];
   const { rows } = edits.session;
   const next = rows[rows.findIndex(other => other.id === row.id) + 1];
@@ -44,40 +49,52 @@ function groupingActions({ row, library, edits, onChange, name, announce }: Menu
       disabled: !edits.canSupersetWithNext(row.id),
       onSelect: () => {
         onChange(edits.supersetWithNext(row.id));
+        focus.onRow(row.id);
         announce(`${name} and ${nextName} grouped as a superset`);
       },
     },
   ];
 }
 
-function menuActions(context: MenuContext): RowMenuAction[] {
-  const { row, edits, onChange, name, announce } = context;
+function moveToSlotActions({ row, edits, slots, focus, onChange, name, announce }: MenuContext): RowMenuAction[] {
   const { rows } = edits.session;
-  const index = rows.findIndex(other => other.id === row.id);
+  const open = (target: SlotTarget) =>
+    target.slot !== row.slot && !(SINGLE_CARD_SLOTS.includes(target.slot) && rows.some(other => other.slot === target.slot));
+  return slots.filter(open).map(target => ({
+    name: `move-to-${target.slot}`,
+    label: `Move to ${target.slot} · ${target.label}`,
+    icon: CornerDownRight,
+    onSelect: () => {
+      onChange(edits.move(row.id, { slot: target.slot }));
+      focus.onRow(row.id);
+      announce(`${name} moved to ${target.slot} · ${target.label}`);
+    },
+  }));
+}
+
+function menuActions(context: MenuContext): RowMenuAction[] {
+  const { row, edits, focus, onChange, name, announce } = context;
+  const slotRows = edits.session.rows.filter(other => other.slot === row.slot);
+  const index = slotRows.findIndex(other => other.id === row.id);
+  const move = (direction: 'up' | 'down') => {
+    onChange(direction === 'up' ? edits.moveUp(row.id) : edits.moveDown(row.id));
+    focus.onRow(row.id);
+    announce(`${name} moved ${direction}`);
+  };
+  const remove = () => {
+    const neighbour = slotRows[index + 1] ?? slotRows[index - 1];
+    onChange(edits.remove(row.id));
+    if (neighbour) focus.onRow(neighbour.id);
+    else focus.onSlotAdd();
+    announce(`${name} removed`);
+  };
   return [
-    {
-      name: 'up',
-      label: 'Move up',
-      icon: ArrowUp,
-      disabled: index === 0,
-      onSelect: () => {
-        onChange(edits.moveUp(row.id));
-        announce(`${name} moved up`);
-      },
-    },
-    {
-      name: 'down',
-      label: 'Move down',
-      icon: ArrowDown,
-      disabled: index === rows.length - 1,
-      onSelect: () => {
-        onChange(edits.moveDown(row.id));
-        announce(`${name} moved down`);
-      },
-    },
+    { name: 'up', label: 'Move up', icon: ArrowUp, disabled: index === 0, onSelect: () => move('up') },
+    { name: 'down', label: 'Move down', icon: ArrowDown, disabled: index === slotRows.length - 1, onSelect: () => move('down') },
+    ...moveToSlotActions(context),
     ...groupingActions(context),
     { name: 'reset', label: 'Reset to block defaults', icon: RotateCcw, onSelect: () => onChange(edits.reset(row.id)) },
-    { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(row.id)) },
+    { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: remove },
   ];
 }
 
@@ -124,7 +141,7 @@ function DisclosureButton({ label, name, open, controls, onToggle }: DisclosureP
   );
 }
 
-export function ExerciseCard({ session, row, exercise, library, edits, onChange, onAddSubstitution }: ExerciseCardProps) {
+export function ExerciseCard({ session, row, exercise, library, edits, slots, focus, onChange, onAddSubstitution }: ExerciseCardProps) {
   const [setsOpen, setSetsOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const announce = useEditorAnnouncer();
@@ -160,6 +177,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
+      data-row-id={row.id}
       className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2 p-3">
@@ -184,7 +202,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <DisclosureButton label="Sets" name={name} open={setsOpen} controls={setsId} onToggle={() => setSetsOpen(open => !open)} />
           <DisclosureButton label="Details" name={name} open={detailsOpen} controls={detailsId} onToggle={() => setDetailsOpen(open => !open)} />
-          <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, onChange, name, announce })} />
+          <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />
         </div>
         <RowStats stats={rowStats(row, repsSuffix(exercise))} />
       </div>

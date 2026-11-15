@@ -109,14 +109,15 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       </Setting>
       <Setting label="Split name">
         {labelId => (
-          <Input
-            size="sm"
-            className="w-40"
-            aria-labelledby={labelId}
-            placeholder={SPLIT_TEMPLATES[block.split.shape].label}
-            value={block.split.name}
-            onChange={event => onChange({ ...block, split: { ...block.split, name: event.target.value } })}
-          />
+          <label className="relative hit-area block w-40">
+            <Input
+              size="sm"
+              aria-labelledby={labelId}
+              placeholder={SPLIT_TEMPLATES[block.split.shape].label}
+              value={block.split.name}
+              onChange={event => onChange({ ...block, split: { ...block.split, name: event.target.value } })}
+            />
+          </label>
         )}
       </Setting>
       <Setting label="Target">

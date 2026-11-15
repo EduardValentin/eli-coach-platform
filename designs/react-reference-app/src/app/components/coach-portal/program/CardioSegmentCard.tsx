@@ -1,4 +1,4 @@
-import { useId, type Ref } from 'react';
+import { useId, useRef, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { ArrowDown, ArrowUp, Plus, Repeat, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
@@ -29,9 +29,12 @@ type CardioSegmentCardProps = {
   library: readonly Exercise[];
   edits: CardioEdits;
   onChange: (cardio: CardioSession) => void;
+  focus: SegmentFocus;
   onReplaceExercise: () => void;
   onAddRoundsItem: () => void;
 };
+
+export type SegmentFocus = { onSegment: (segmentId: string) => void; onRemoved: (segmentId: string) => void };
 
 const INTENSITY_OPTIONS = (Object.keys(CARDIO_INTENSITY_LABELS) as CardioIntensity[]).map(value => ({ value, label: CARDIO_INTENSITY_LABELS[value] }));
 const MEASURE_OPTIONS: { value: ItemMeasure; label: string }[] = [
@@ -89,6 +92,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   const onSegment = (next: RoundsSegment) => onChange(edits.changeSegment(next));
   const onItem = (item: RoundsItem) => onChange(edits.changeRoundsItem(segment.id, item));
   const { items } = segment;
+  const addButton = useRef<HTMLButtonElement>(null);
   return (
     <div className="grid gap-3">
       <fieldset className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
@@ -113,6 +117,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         />
       </fieldset>
       <ExerciseItemList
+        emptyFocus={addButton}
         label="Interval exercises"
         items={items}
         nameOf={nameOf}
@@ -141,7 +146,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           );
         }}
       </ExerciseItemList>
-      <Button variant="outline" size="xs" className="w-fit" onClick={onAddItem}>
+      <Button ref={addButton} variant="outline" size="xs" className="w-fit" onClick={onAddItem}>
         <Plus aria-hidden="true" />
         Add exercise
       </Button>
@@ -200,7 +205,7 @@ function SegmentTitle({ segment, kindLabel, headingId, exerciseName, onReplaceEx
 }
 
 export function CardioSegmentCard(props: CardioSegmentCardProps) {
-  const { cardioId, segment, position, count, library, edits, onChange, onReplaceExercise, onAddRoundsItem } = props;
+  const { cardioId, segment, position, count, library, edits, focus, onChange, onReplaceExercise, onAddRoundsItem } = props;
   const headingId = useId();
   const announce = useEditorAnnouncer();
   const kindLabel = SEGMENT_KIND_LABELS[segment.kind];
@@ -239,13 +244,21 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
 
   function move(direction: 'up' | 'down') {
     onChange(direction === 'up' ? edits.moveUp(segment.id) : edits.moveDown(segment.id));
+    focus.onSegment(segment.id);
     announce(`${kindLabel} segment moved ${direction}`);
+  }
+
+  function remove() {
+    onChange(edits.remove(segment.id));
+    focus.onRemoved(segment.id);
+    announce(`${kindLabel} segment removed`);
   }
 
   return (
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
+      data-segment-id={segment.id}
       className={cn(DRAGGABLE_CARD_CLASS, 'grid gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
@@ -258,7 +271,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
           actions={[
             { name: 'up', label: 'Move up', icon: ArrowUp, disabled: position === 1, onSelect: () => move('up') },
             { name: 'down', label: 'Move down', icon: ArrowDown, disabled: position === count, onSelect: () => move('down') },
-            { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(segment.id)) },
+            { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: remove },
           ]}
         />
       </div>

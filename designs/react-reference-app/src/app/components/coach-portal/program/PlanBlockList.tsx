@@ -137,17 +137,17 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
           aria-label={`Reorder ${typeLabel} block`}
           aria-describedby={instructionsId}
           onKeyDown={onHandleKey}
-          className="flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary active:cursor-grabbing"
+          className="relative hit-area flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary active:cursor-grabbing"
         >
           <GripVertical aria-hidden="true" size={18} />
         </button>
       ) : (
         <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
       )}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-3">
         <BlockNumber block={block} index={index} size="sm" />
         {status.kind === 'ended' ? (
-          <span className="w-40 text-sm font-medium text-text-primary">{typeLabel}</span>
+          <span className="min-w-40 text-sm font-medium text-text-primary">{typeLabel}</span>
         ) : (
           <BlockTypeSelect
             value={block.type}
@@ -157,10 +157,10 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
             onChange={type => onChange(current => replaceAt(current, index, blockWithType(current[index], type)))}
           />
         )}
-        <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+        <label className="relative hit-area flex items-center gap-1.5 text-sm text-text-secondary">
           <Input size="sm" className="w-16 tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
           wk
-        </span>
+        </label>
         <span className="min-w-0 flex-1 basis-28 text-sm break-words text-text-label">
           {splitLabel(block)}
           {line && <span className="text-text-secondary">{` · ${line}`}</span>}
@@ -170,7 +170,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
           size="xs"
           aria-label={`Open block ${position}, ${filledSessionsText(filled, total)}`}
           onClick={onOpen}
-          className={cn('tabular-nums', {
+          className={cn('h-auto min-h-8 text-left whitespace-normal tabular-nums', {
             'text-warning': filled < total,
             'text-text-secondary': filled === total,
           })}

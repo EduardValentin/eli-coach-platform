@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
-import { ChevronRight, ClipboardList } from 'lucide-react';
+import { ArrowLeft, ClipboardList } from 'lucide-react';
 import { useAppState } from '../../../context/AppContext';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
@@ -26,14 +26,16 @@ import { possessive } from '../../../utils/resourceLabels';
 import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
 import { asList, type OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
 import { PROFILE_FIELDS } from '../../client-profile/profileFields';
-import { DeadEndPanel } from '../../ErrorPage';
 import { PortalPageHeader } from '../../PortalPageHeader';
+import { PORTAL_PAGE_TITLE_CLASS } from '../../typography';
 import { SettingsSection } from '../../SettingsSection';
 import { Alert } from '../../ui/alert';
 import { Button, buttonVariants } from '../../ui/button';
+import { cardVariants } from '../../ui/card';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Form } from '../../ui/form';
 import { Skeleton } from '../../ui/skeleton';
+import { cn } from '../../ui/utils';
 
 const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
 const NOT_CREATED_MESSAGE = 'The program wasn’t created. Your choices are still here, so try again.';
@@ -121,22 +123,21 @@ function setupTitle(journey: ClientJourney): string {
   return `Build ${possessive(journey.profile.identity.firstName)} program`;
 }
 
-function SetupFrame({ journey, children }: { journey: ClientJourney; children: ReactNode }) {
+type SetupFrameProps = { journey: ClientJourney; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
+
+function SetupFrame({ journey, onLeave, children }: SetupFrameProps) {
   useDocumentTitle(setupTitle(journey));
   return (
     <div className="mx-auto w-full max-w-xl">
-      <nav aria-label="Breadcrumb" className="mb-2">
-        <ol className="flex flex-wrap items-center gap-1 text-sm text-text-secondary">
-          <li>
-            <Link to={clientDetailPathForJourney(journey)} className="inline-flex min-h-12 items-center font-medium transition-colors hover:text-text-primary">
-              {journeyClientName(journey)}
-            </Link>
-          </li>
-          <li aria-current="page" className="flex items-center gap-1">
-            <ChevronRight aria-hidden="true" size={16} />
-            Build program
-          </li>
-        </ol>
+      <nav aria-label="Back to the client" className="mb-4">
+        <Link
+          to={clientDetailPathForJourney(journey)}
+          onClick={onLeave}
+          className="relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+        >
+          <ArrowLeft aria-hidden="true" size={16} />
+          {journeyClientName(journey)}
+        </Link>
       </nav>
       {children}
     </div>
@@ -145,19 +146,19 @@ function SetupFrame({ journey, children }: { journey: ClientJourney; children: R
 
 export function ProgramSetupNotReady({ journey }: { journey: ClientJourney }) {
   const her = clientPronouns(journey.profile.identity.gender).possessive.lower;
+  useDocumentTitle(setupTitle(journey));
   return (
-    <SetupFrame journey={journey}>
-      <DeadEndPanel
-        icon={ClipboardList}
-        title={setupTitle(journey)}
-        description={`The program opens once ${her} answers are approved.`}
-        action={
-          <Link to={clientDetailPathForJourney(journey)} className={buttonVariants({ variant: 'outline', size: 'md' })}>
-            {`Back to ${journeyClientName(journey)}`}
-          </Link>
-        }
-      />
-    </SetupFrame>
+    <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-6 py-12 text-center sm:px-10')}>
+      <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-surface-subtle text-text-secondary">
+        <ClipboardList size={28} />
+      </span>
+      <h1 className={PORTAL_PAGE_TITLE_CLASS}>Program not ready yet</h1>
+      <p className="text-base text-text-secondary">{`The program opens once ${her} answers are approved.`}</p>
+      <Link to={clientDetailPathForJourney(journey)} className={cn(buttonVariants({ variant: 'outline', size: 'md' }), 'mt-4')}>
+        <ArrowLeft aria-hidden="true" />
+        {`Back to ${journeyClientName(journey)}`}
+      </Link>
+    </div>
   );
 }
 
@@ -231,7 +232,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   }
 
   return (
-    <SetupFrame journey={journey}>
+    <SetupFrame journey={journey} onLeave={cancel}>
       <PortalPageHeader headingId={headingId} title={setupTitle(journey)} />
       <Form {...form}>
         <form noValidate onSubmit={create}>

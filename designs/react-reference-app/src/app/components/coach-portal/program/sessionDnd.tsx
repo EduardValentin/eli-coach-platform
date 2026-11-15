@@ -61,6 +61,7 @@ export function EmptyDropTarget({ rules, place, onAdd }: { rules: SessionDropRul
     <div ref={drop as unknown as Ref<HTMLDivElement>}>
       <button
         type="button"
+        data-slot-add=""
         onClick={onAdd}
         className={cn(
           'flex min-h-12 w-full items-center justify-center gap-2 rounded-field border border-dashed px-4 py-3 text-sm font-medium transition-colors outline-none motion-reduce:transition-none',

@@ -1,4 +1,4 @@
-import { useId, type Ref } from 'react';
+import { useId, useRef, type Ref } from 'react';
 import { ChevronDown, Eraser, PencilLine, Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioSession } from '../../../domain/program';
@@ -19,7 +19,7 @@ import { Button } from '../../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../ui/dropdown-menu';
 import { cn } from '../../ui/utils';
 import { cardioSummary } from '../../program-view/programView';
-import { CardioSegmentCard } from './CardioSegmentCard';
+import { CardioSegmentCard, type SegmentFocus } from './CardioSegmentCard';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { useResetConfirm } from './ResetConfirm';
 import {
@@ -32,6 +32,7 @@ import {
   useNameFocusOnExpand,
 } from './sessionCardParts';
 import { useMeasuredHeight } from './useMeasuredHeight';
+import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 
 type CardioSessionCardProps = {
@@ -66,11 +67,13 @@ function PresetRow({ onChoose }: { onChoose: (kind: (typeof CARDIO_PRESET_KINDS)
   );
 }
 
-function AddSegmentMenu({ onAdd }: { onAdd: (kind: (typeof SEGMENT_KINDS)[number]) => void }) {
+type AddSegmentMenuProps = { triggerRef: Ref<HTMLButtonElement>; onAdd: (kind: (typeof SEGMENT_KINDS)[number]) => void };
+
+function AddSegmentMenu({ triggerRef, onAdd }: AddSegmentMenuProps) {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="xs" className="w-fit">
+        <Button ref={triggerRef} variant="ghost" size="xs" className="w-fit">
           <Plus aria-hidden="true" />
           Add segment
           <ChevronDown aria-hidden="true" />
@@ -95,6 +98,18 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
   const announce = useEditorAnnouncer();
   const edits = cardioEdits(cardio, library);
   const { segments } = cardio;
+  const addSegment = useRef<HTMLButtonElement>(null);
+  const focusLater = usePendingFocus();
+  const focusSegment = (segmentId: string) => focusLater(() => actionsTriggerIn(`[data-segment-id="${segmentId}"]`));
+  const segmentFocus: SegmentFocus = {
+    onSegment: focusSegment,
+    onRemoved: segmentId => {
+      const index = segments.findIndex(segment => segment.id === segmentId);
+      const neighbour = segments[index + 1] ?? segments[index - 1];
+      if (neighbour) focusSegment(neighbour.id);
+      else focusLater(() => addSegment.current);
+    },
+  };
 
   function clear() {
     confirm.request({
@@ -152,6 +167,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
                   count={segments.length}
                   library={library}
                   edits={edits}
+                  focus={segmentFocus}
                   onChange={onChange}
                   onReplaceExercise={() => onOpenLibrary({ kind: 'cardio-exercise', sessionId: cardio.id, segmentId: segment.id })}
                   onAddRoundsItem={() => onOpenLibrary({ kind: 'rounds-item', sessionId: cardio.id, segmentId: segment.id })}
@@ -160,7 +176,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
             ))}
           </ol>
         )}
-        <AddSegmentMenu onAdd={kind => onChange(edits.addSegment(kind))} />
+        <AddSegmentMenu triggerRef={addSegment} onAdd={kind => onChange(edits.addSegment(kind))} />
       </DropZone>
       {confirm.dialog}
     </article>

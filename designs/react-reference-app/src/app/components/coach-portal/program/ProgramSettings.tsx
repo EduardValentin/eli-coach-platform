@@ -23,7 +23,7 @@ const LANGUAGES: Option<ProgramLanguage>[] = [
 ];
 
 const FIELD_CLASS = 'grid gap-1 sm:flex sm:items-center sm:gap-2';
-const SELECT_CLASS = 'sm:w-36';
+const SELECT_CLASS = 'sm:min-w-36';
 const LANGUAGE_FIXED_REASON = 'Fixed once a version is published';
 
 export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {

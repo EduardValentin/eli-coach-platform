@@ -180,14 +180,14 @@ export function EditorTopBar({
   return (
     <>
       <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
-        <div className="flex shrink-0 items-center gap-2">
+        <nav aria-label="Editor" className="flex shrink-0 items-center gap-2">
           <Button asChild variant="ghost" size="icon-sm">
             <Link to={clientDetailPathForJourney(journey)} aria-label={`Back to ${name}`}>
               <ArrowLeft size={20} />
             </Link>
           </Button>
           {railToggle}
-        </div>
+        </nav>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
           <p className="text-xs break-words text-text-secondary">{draftLine(name, version, basedOn)}</p>
           <Place placeTitle={placeTitle} placeHeading={placeHeading} onOverview={onOverview} />
@@ -201,7 +201,7 @@ export function EditorTopBar({
           }}
           returnFocus={profileReturnFocus}
         >
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
             {(problemsCount > 0 || warningsCount > 0) && <ChecksButton problems={problemsCount} warnings={warningsCount} onOpen={onOpenChecks} />}
             <ClientProfileTrigger />
             {libraryToggle}

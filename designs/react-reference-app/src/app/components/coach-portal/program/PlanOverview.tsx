@@ -53,7 +53,7 @@ export function PlanOverview({ content, dayOne, preferredWeekday, today, level, 
 
   return (
     <section className="grid grid-cols-1 gap-6">
-      <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <h2 className="sr-only">Plan overview</h2>
         {settings}
       </div>

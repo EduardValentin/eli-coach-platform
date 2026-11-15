@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { formatRange, type Session, type WarmUpItem } from '../../../domain/program';
@@ -41,6 +42,7 @@ function AmountField({ item, exercise, name, onChange }: { item: WarmUpItem; exe
 }
 
 export function WarmUpCard({ session, library, edits, onChange, onPickExercise }: WarmUpCardProps) {
+  const addButton = useRef<HTMLButtonElement>(null);
   const exerciseOf = (exerciseId: string) => library.find(other => other.id === exerciseId);
   return (
     <DropZone
@@ -52,6 +54,7 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
       <section className="grid gap-2">
         <h4 className="text-sm font-semibold text-text-primary">Warm-up</h4>
         <ExerciseItemList
+          emptyFocus={addButton}
           label="Warm-up exercises"
           items={session.warmUp.items}
           nameOf={exerciseId => exerciseNameOf(exerciseOf(exerciseId))}
@@ -68,7 +71,7 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
             </>
           )}
         </ExerciseItemList>
-        <Button variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickExercise}>
+        <Button ref={addButton} variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickExercise}>
           <Plus aria-hidden="true" />
           Add exercise
           <span className="sr-only">{' to warm-up'}</span>

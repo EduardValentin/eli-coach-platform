@@ -503,17 +503,21 @@ describe('BlockWorkspace', () => {
     expect(within(substitutions).getAllByRole('button', { name: /^Remove / })).toHaveLength(chips.length);
   });
 
-  it('moves a card down through its menu', async () => {
+  it('keeps Move up and down inside the slot and moves a card to another slot from its menu', async () => {
     // arrange
     const user = await openFirstBlock();
-    const [mainName] = within(card(/^A /)).getAllByRole('heading', { level: 5 }).map(heading => heading.textContent ?? '');
+    const [mainName] = within(card(/^A /)).getAllByRole('heading', { level: 5 }).map(heading => (heading.textContent ?? '').replace(/^A /, ''));
+    await user.click(within(card(/^A /)).getByRole('button', { name: /actions$/ }));
+    expect(await screen.findByRole('menuitem', { name: 'Move down' })).toHaveAttribute('data-disabled');
+    expect(screen.queryByRole('menuitem', { name: /^Move to B / })).not.toBeInTheDocument();
 
     // act
-    await user.click(within(card(/^A /)).getByRole('button', { name: /actions$/ }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Move down' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Move to C · Accessories' }));
 
     // assert
-    expect(card(/^B /)).toHaveAccessibleName(mainName.replace(/^A /, 'B '));
+    const moved = within(slotGroup('C · Accessories')).getByRole('article', { name: new RegExp(`${mainName}$`) });
+    expect(within(moved).getByRole('button', { name: `${mainName} actions` })).toHaveFocus();
+    expect(within(slotGroup('A · Main lift')).getByRole('button', { name: 'Add or drop an exercise in A · Main lift' })).toBeInTheDocument();
   });
 
   it('changing the block type refills untouched values', async () => {
@@ -837,5 +841,48 @@ describe('BlockWorkspace keyboard and screen reader support', () => {
     // assert
     expect(within(cardio).getByRole('group', { name: 'Start from' })).toBeInTheDocument();
     expect(await screen.findByText('Easy cardio cleared')).toBeInTheDocument();
+  });
+
+  it('keeps focus on a moved card and hands it to the next card, then the add button, after a remove', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await clearFirstSession(user);
+    await addToAccessories(user, 'Overhead Press');
+    await addFromLibrary(user, 'Dumbbell Rows');
+
+    // act
+    await user.click(within(card(/Overhead Press$/)).getByRole('button', { name: 'Overhead Press actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Move down' }));
+
+    // assert
+    expect(positions()).toEqual(['C', 'C']);
+    expect(within(card(/Overhead Press$/)).getByRole('button', { name: 'Overhead Press actions' })).toHaveFocus();
+
+    // act
+    await user.keyboard('{Enter}');
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+
+    // assert
+    expect(within(card(/Dumbbell Rows$/)).getByRole('button', { name: 'Dumbbell Rows actions' })).toHaveFocus();
+
+    // act
+    await user.keyboard('{Enter}');
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+
+    // assert
+    expect(within(slotGroup('C · Accessories')).getByRole('button', { name: 'Add or drop an exercise in C · Accessories' })).toHaveFocus();
+  });
+
+  it('hands focus to the next warm-up exercise after a remove and to Add exercise once the list empties', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const warmUp = () => within(session('Full Body A')).getByRole('list', { name: 'Warm-up exercises' });
+    await user.click(within(warmUp()).getByRole('button', { name: '90/90 Hip Switches actions' }));
+
+    // act
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+
+    // assert
+    expect(within(session('Full Body A')).getByRole('button', { name: 'Add exercise to warm-up' })).toHaveFocus();
   });
 });

@@ -55,6 +55,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
   const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
   const minutes = estimatedMinutes(session, exercisesById);
   const overTarget = isOverTarget(session, block, exercisesById);
+  const slotTargets = SLOTS.map(slot => ({ slot, label: slotPlanOrFallback(block, session, slot).label }));
 
   function clear() {
     confirm.request({
@@ -115,6 +116,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
             }
             library={library}
             edits={edits}
+            slots={slotTargets}
             onChange={onChange}
             onAdd={target => onOpenLibrary({ kind: 'slot', sessionId: session.id, slot: target })}
             onAddSubstitution={rowId => onOpenLibrary({ kind: 'substitution', sessionId: session.id, rowId })}
