@@ -15,7 +15,7 @@ type ChoiceSize = 'xs' | 'sm' | 'md';
 
 const GROUP_LOOKS = {
   segmented:
-    'group/choice inline-flex w-full max-w-full flex-wrap rounded-field border border-control-border-soft p-[3px] gap-1 data-[size=xs]:gap-0.5',
+    'group/choice inline-flex w-full max-w-full flex-wrap rounded-field border border-control-border-soft bg-surface-quiet/50 p-[3px] gap-1 data-[size=xs]:gap-0.5',
   pill: 'flex w-fit items-center gap-2 rounded-full border border-control-border-soft bg-surface-base p-1 shadow-card',
 } as const;
 

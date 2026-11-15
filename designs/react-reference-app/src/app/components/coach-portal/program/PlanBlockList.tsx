@@ -124,6 +124,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
         'flex flex-wrap items-start gap-2 rounded-card border border-border bg-surface-base py-2.5 pr-2 pl-1.5 shadow-card transition-opacity motion-reduce:transition-none sm:gap-3',
         {
           'opacity-40': isDragging,
+          'bg-surface-subtle': status.kind === 'ended',
         },
       )}
     >
@@ -270,7 +271,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, onCha
           </li>
         ))}
       </ol>
-      <Button variant="add" size="md" className="mt-1.5" onClick={onAddBlock}>
+      <Button variant="ghost" className="mt-2" onClick={onAddBlock}>
         <Plus aria-hidden="true" />
         Add block
       </Button>

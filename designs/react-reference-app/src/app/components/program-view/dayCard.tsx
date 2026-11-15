@@ -24,7 +24,7 @@ export function DayCardFrame({ entry, current, children }: DayCardFrameProps) {
       aria-current={current}
       className={cn('grid min-w-0 content-start gap-2 rounded-control border p-2', {
         'border-border bg-card': entry !== 'rest',
-        'border-dashed border-border bg-card': entry === 'rest',
+        'border-border-subtle bg-surface-subtle': entry === 'rest',
         'border-primary ring-2 ring-primary/30': current === 'date',
       })}
     >

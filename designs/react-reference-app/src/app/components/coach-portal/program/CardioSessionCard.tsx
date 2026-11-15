@@ -52,7 +52,7 @@ function acceptsCardioExercise(dragged: DraggedItem): boolean {
 function PresetRow({ onChoose }: { onChoose: (kind: (typeof CARDIO_PRESET_KINDS)[number]) => void }) {
   const labelId = useId();
   return (
-    <div className="grid gap-2 rounded-control border border-dashed border-border bg-card p-3">
+    <div className="grid gap-2 rounded-control border border-dashed border-border bg-surface-subtle p-3">
       <p id={labelId} className={LABEL_CLASS}>
         Start from
       </p>

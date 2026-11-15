@@ -7,7 +7,7 @@ import { RadioGroup } from "./radio-group";
 
 const GROUP_LOOKS = {
   segmented:
-    "inline-flex w-full max-w-full flex-wrap gap-1 rounded-field border border-control-border-soft p-[3px]",
+    "inline-flex w-full max-w-full flex-wrap gap-1 rounded-field border border-control-border-soft bg-surface-quiet/50 p-[3px]",
   pill: "flex w-fit items-center gap-2 rounded-full border border-control-border-soft bg-surface-base p-1 shadow-card",
 } as const;
 

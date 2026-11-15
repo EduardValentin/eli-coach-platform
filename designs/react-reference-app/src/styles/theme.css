@@ -16,7 +16,7 @@
   --secondary: oklch(0.95 0.0058 264.53);
   --secondary-foreground: #030213;
   --muted: #ececf0;
-  --muted-foreground: #42424D;
+  --muted-foreground: #3C3C47;
   --accent: var(--primary-soft);
   --accent-foreground: var(--primary);
   --destructive: #d1183c;
@@ -49,7 +49,7 @@
   --success-foreground: #ffffff;
   --success-soft: rgba(15, 122, 54, 0.1);
   --success-surface: #E8F6ED;
-  --warning: #5F3A05;
+  --warning: #583604;
   --warning-soft: rgba(161, 98, 7, 0.1);
   --rir-failure: var(--destructive);
   --rir-near: #A16207;
@@ -112,7 +112,7 @@
   /* Fine-neutral text & borders */
   --copy-muted: oklch(0.439 0 0);
   --link-muted: oklch(0.46 0 0);
-  --label-foreground: oklch(0.371 0 0);
+  --label-foreground: oklch(0.35 0 0);
   --placeholder-soft: oklch(0.552 0 0);
   --icon-muted: oklch(0.708 0 0);
   --control-border-soft: oklch(0.64 0 0);
@@ -182,8 +182,8 @@
      below is what turns them into the text-text-primary / text-text-secondary /
      bg-surface-base utilities. */
   --text-primary: #121212;
-  --text-secondary: #424242;
-  --text-muted: #42424D;
+  --text-secondary: #3D3D3D;
+  --text-muted: #3C3C47;
   --portal-accent: var(--brand);
   --portal-accent-hover: var(--brand-hover);
   --surface-base: #ffffff;

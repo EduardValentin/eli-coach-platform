@@ -123,7 +123,7 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         className={cn(
           ENTRY_CLASS,
           'relative grid gap-0.5 overflow-hidden border border-control-border-soft bg-surface-base py-2 pr-3 pl-4 hover:bg-surface-quiet',
-          { 'border-text-primary shadow-card': current },
+          { 'border-text-primary bg-surface-quiet shadow-card': current },
         )}
       >
         <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', BLOCK_SWATCH[block.type])} />
@@ -175,7 +175,7 @@ export function EditorRail(props: EditorRailProps) {
           aria-current={overviewCurrent ? 'true' : undefined}
           onClick={() => onSelect(OVERVIEW)}
           className={cn(ENTRY_CLASS, 'grid gap-2.5 border border-control-border-soft bg-surface-base p-3 hover:bg-surface-quiet', {
-            'border-text-primary shadow-card': overviewCurrent,
+            'border-text-primary bg-surface-quiet shadow-card': overviewCurrent,
           })}
         >
           <span className="flex items-center gap-2 font-semibold text-text-primary">
@@ -202,7 +202,7 @@ export function EditorRail(props: EditorRailProps) {
           })}
           {!writing && (
             <li>
-              <Button variant="add" size="md" onClick={onAddBlock}>
+              <Button variant="ghost" className="w-full justify-start has-[>svg]:px-4" onClick={onAddBlock}>
                 <Plus aria-hidden="true" />
                 Add block
               </Button>

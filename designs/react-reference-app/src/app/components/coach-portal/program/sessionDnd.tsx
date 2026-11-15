@@ -67,7 +67,7 @@ export function EmptyDropTarget({ rules, place, onAdd }: { rules: SessionDropRul
   const readiness = dropReadiness(state);
   return (
     <div ref={drop as unknown as Ref<HTMLDivElement>}>
-      <Button variant="add" size="md" data-slot-add="" data-drop={readiness} onClick={onAdd}>
+      <Button variant="drop" size="md" data-slot-add="" data-drop={readiness} onClick={onAdd}>
         <Plus aria-hidden="true" />
         {readiness === 'over' ? 'Release to add' : 'Add or drop an exercise'}
         <span className="sr-only">{` in ${place}`}</span>
