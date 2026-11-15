@@ -11,8 +11,8 @@ import { Checkbox } from '../../ui/checkbox';
 type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChange: (row: Row) => void };
 type SetKind = SetSpec['kind'];
 
-const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.5rem_5rem_4rem_4rem_7.5rem_2rem]';
-const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.5rem_5rem_6.5rem_4rem_7.5rem_2rem]';
+const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.5rem_5rem_4rem_4rem_7.5rem_2.5rem]';
+const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.5rem_5rem_6.5rem_4rem_7.5rem_2.5rem]';
 const MINI_LABEL_CLASS = cn(LABEL_CLASS, '@min-[34rem]:hidden');
 const FIELD_WIDTH = 'w-full @min-[34rem]:w-16';
 const WEIGHT_WIDTH = 'w-full @min-[34rem]:w-20';
@@ -136,7 +136,7 @@ function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange,
         <SetCell label="Reps">{reps.field}</SetCell>
         <SetCell label="RIR">{working ? rir.field : <NoRir label={label} />}</SetCell>
         <SetCell label="Weight">{weight.field}</SetCell>
-        <Button variant="ghost" size="icon-xs" className="justify-self-end" aria-label={`Remove ${label.toLowerCase()}`} disabled={!removable} onClick={onRemove}>
+        <Button variant="ghost" size="icon-xs" className="ml-2 justify-self-end" aria-label={`Remove ${label.toLowerCase()}`} disabled={!removable} onClick={onRemove}>
           <X aria-hidden="true" />
         </Button>
       </div>

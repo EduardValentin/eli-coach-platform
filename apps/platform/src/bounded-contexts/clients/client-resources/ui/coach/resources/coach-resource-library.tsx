@@ -138,10 +138,10 @@ function ReadyResourceLibrary({
               onChooseTag={browsing.chooseTag}
               onSearch={browsing.typeSearch}
               searched={listing.searched}
-              sort={(size) => (
+              sort={(toggleSize) => (
                 <ResourceSortControl
                   onChange={browsing.chooseSort}
-                  size={size}
+                  toggleSize={toggleSize}
                   sort={{
                     direction: browsing.browse.direction,
                     key: browsing.browse.sort,

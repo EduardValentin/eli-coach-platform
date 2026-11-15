@@ -107,7 +107,7 @@ export function SlotGroup({ session, plan, library, edits, slots, onChange, onAd
           <IconActionButton icon={Plus} label={`Add exercise to ${heading}`} hint="Add exercise" data-slot-add="" onClick={() => onAdd(slot)} />
         )}
       </header>
-      <DropZone rules={rulesAt({ slot })} className="rounded-control" activeClassName="bg-primary-soft">
+      <DropZone rules={rulesAt({ slot })} className="rounded-control" tone="fill">
         {units.length === 0 ? (
           <EmptyDropTarget rules={rulesAt({ slot })} place={heading} onAdd={() => onAdd(slot)} />
         ) : (

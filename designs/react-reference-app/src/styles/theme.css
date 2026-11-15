@@ -42,7 +42,7 @@
   --brand-secondary: #006156;
   --brand-secondary-hover: #004A41;
   --brand-secondary-foreground: #ffffff;
-  --brand-secondary-soft: rgba(0, 121, 107, 0.1);
+  --brand-secondary-soft: rgba(0, 97, 86, 0.1);
   --brand-secondary-surface: #E6F2F0;
   --brand-secondary-ink: #003630;
   --success: #0F7A36;
@@ -50,9 +50,8 @@
   --success-soft: rgba(15, 122, 54, 0.1);
   --success-surface: #E8F6ED;
   --warning: #583604;
-  --warning-soft: rgba(161, 98, 7, 0.1);
   --rir-failure: var(--destructive);
-  --rir-near: #A16207;
+  --rir-near: var(--tint-amber);
   --rir-far: var(--success);
   --rir-ink: var(--text-primary);
   /* A check-in awaiting someone's action: pending counts, ad-hoc markers, and the
@@ -80,7 +79,6 @@
   --training-deload-soft: rgba(97, 97, 97, 0.1);
   --set-warm-up: #57483B;
   --check-in-marker: #853B1D;
-  --check-in-marker-soft: rgba(133, 59, 29, 0.1);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* Categorical tints named by hue */
@@ -334,7 +332,6 @@
   --color-success-soft: var(--success-soft);
   --color-success-surface: var(--success-surface);
   --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
   --color-status-pending: var(--status-pending);
   --color-status-pending-soft: var(--status-pending-soft);
   --color-metric-energy: var(--metric-energy);
@@ -354,7 +351,6 @@
   --color-training-deload-soft: var(--training-deload-soft);
   --color-set-warm-up: var(--set-warm-up);
   --color-check-in-marker: var(--check-in-marker);
-  --color-check-in-marker-soft: var(--check-in-marker-soft);
   --color-surface-inverted: var(--surface-inverted);
   --color-surface-inverted-foreground: var(--surface-inverted-foreground);
   /* === Marketing / public landing utilities === */

@@ -36,7 +36,6 @@ export function OnboardingConsent({
       data-parity={PARITY_HOOKS[agreement]}
       error={problem ?? undefined}
       errorParity={`${PARITY_HOOKS[agreement]}-error`}
-      errorRole="alert"
       frame="inset"
       label={statement}
       layout="statement"

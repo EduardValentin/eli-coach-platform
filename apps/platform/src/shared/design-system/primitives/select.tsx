@@ -34,7 +34,7 @@ type SelectTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixSelect.Trigger
 >;
 
-export function selectTriggerClasses(): string {
+function selectTriggerClasses(): string {
   return cn(
     FIELD_FRAME_CLASS,
     "relative hit-area flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
@@ -42,7 +42,7 @@ export function selectTriggerClasses(): string {
   );
 }
 
-export function SelectTriggerChevron(
+function SelectTriggerChevron(
   slotProps: React.ComponentProps<typeof ChevronDown>,
 ) {
   return (
@@ -53,6 +53,27 @@ export function SelectTriggerChevron(
     />
   );
 }
+
+type FieldTriggerProps = React.ComponentPropsWithoutRef<"button"> & {
+  icon?: React.ReactNode;
+};
+
+export const FieldTrigger = React.forwardRef<
+  HTMLButtonElement,
+  FieldTriggerProps
+>(({ children, className, icon = <SelectTriggerChevron />, ...props }, ref) => (
+  <button
+    className={cn(selectTriggerClasses(), className)}
+    ref={ref}
+    type="button"
+    {...props}
+  >
+    {children}
+    {icon}
+  </button>
+));
+
+FieldTrigger.displayName = "FieldTrigger";
 
 export const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Trigger>,
@@ -88,7 +109,7 @@ export const SelectContent = React.forwardRef<
   <RadixSelect.Portal>
     <RadixSelect.Content
       className={cn(
-        "relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-field border bg-surface-base text-text-primary shadow-action motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
+        "relative z-floating-over-sheet max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-field border bg-surface-base text-text-primary shadow-action motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,

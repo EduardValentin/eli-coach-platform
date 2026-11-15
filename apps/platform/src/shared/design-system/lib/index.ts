@@ -28,6 +28,7 @@ export {
 export { useSaveFetcher, type SaveOutcome } from "./use-save-fetcher";
 export { PhoneLink } from "./phone-link";
 export {
+  EYEBROW_CLASS,
   LABEL_CLASS,
   PORTAL_PAGE_TITLE_CLASS,
   VALUE_CLASS,

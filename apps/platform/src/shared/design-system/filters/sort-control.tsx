@@ -27,11 +27,13 @@ export type SortOption<Key extends string> = {
   order: SortOrder;
 };
 
+export type SortToggleSize = "sm" | "md";
+
 type SortControlProps<Key extends string> = {
   className?: string;
   onChange: (sort: SortChoice<Key>) => void;
   options: readonly SortOption<Key>[];
-  size?: "sm" | "md";
+  size?: SortToggleSize;
   sort: SortChoice<Key>;
 };
 

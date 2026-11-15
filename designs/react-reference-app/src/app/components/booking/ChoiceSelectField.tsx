@@ -1,4 +1,4 @@
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
+import { FieldError } from '../FieldError';
 import { Label } from '../ui/label';
 import {
   Select,
@@ -59,11 +59,7 @@ export function ChoiceSelectField({
           ))}
         </SelectContent>
       </Select>
-      {error && (
-        <p id={errorId} className={FIELD_ERROR_CLASS}>
-          {error}
-        </p>
-      )}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }

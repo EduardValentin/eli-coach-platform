@@ -1,8 +1,9 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'motion/react';
-import { useRef, type ReactNode, type RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 import type { DialogDismissal } from './dialog';
+import { useReturnFocusToOpener } from './use-return-focus-to-opener';
 import { cn } from './utils';
 
 type BottomSheetLabels = 'spoken' | 'shown';
@@ -30,10 +31,6 @@ function isDismissingDrag(info: PanInfo) {
   return info.offset.y > DISMISS_DRAG_OFFSET || info.velocity.y > DISMISS_DRAG_VELOCITY;
 }
 
-function isFocusLost() {
-  return document.activeElement === null || document.activeElement === document.body;
-}
-
 export function BottomSheet({
   id,
   open,
@@ -48,24 +45,15 @@ export function BottomSheet({
   children,
 }: BottomSheetProps) {
   const shouldReduceMotion = useReducedMotion() === true;
-  const opener = useRef<HTMLElement | null>(null);
+  const { rememberOpener, returnLostFocusToOpener } = useReturnFocusToOpener(returnFocusTo);
 
-  const rememberOpener = (event: Event) => {
-    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const openWithOpenerRemembered = (event: Event) => {
+    rememberOpener();
     const target = initialFocus?.current;
     if (!target) return;
 
     event.preventDefault();
     target.focus();
-  };
-  const returnFocusToOpener = (event: Event) => {
-    event.preventDefault();
-    const target = returnFocusTo?.current;
-    if (target?.isConnected) {
-      target.focus();
-    } else if (isFocusLost()) {
-      opener.current?.focus();
-    }
   };
   const descriptionAttributes = description ? {} : { 'aria-describedby': undefined };
   const overlayMotionProps = shouldReduceMotion
@@ -114,10 +102,10 @@ export function BottomSheet({
               asChild
               id={id}
               {...descriptionAttributes}
-              onCloseAutoFocus={returnFocusToOpener}
+              onCloseAutoFocus={returnLostFocusToOpener}
               onEscapeKeyDown={preventWhenLocked}
               onInteractOutside={preventWhenLocked}
-              onOpenAutoFocus={rememberOpener}
+              onOpenAutoFocus={openWithOpenerRemembered}
             >
               <motion.div
                 className={cn(

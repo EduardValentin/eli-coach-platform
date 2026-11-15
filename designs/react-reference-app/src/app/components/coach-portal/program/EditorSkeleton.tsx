@@ -1,11 +1,12 @@
 import { Skeleton } from '../../ui/skeleton';
+import { EditorShell } from './EditorShell';
 
 const RAIL_ENTRIES = 3;
 const BLOCK_ROWS = 3;
 
 export function EditorSkeleton() {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
+    <EditorShell>
       <p role="status" className="sr-only">
         Loading the program editor
       </p>
@@ -41,6 +42,6 @@ export function EditorSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </EditorShell>
   );
 }

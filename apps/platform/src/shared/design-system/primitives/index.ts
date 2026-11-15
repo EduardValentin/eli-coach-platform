@@ -47,6 +47,7 @@ export { RowActionsMenu, type RowMenuAction } from "./row-actions-menu";
 export { SearchField } from "./search-field";
 export { SectionEyebrow } from "./section-eyebrow";
 export {
+  FieldTrigger,
   Select,
   SelectContent,
   SelectGroup,

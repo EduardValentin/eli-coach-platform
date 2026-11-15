@@ -65,20 +65,19 @@ function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitu
       rules={substitutionDrop}
       accepts={acceptsSubstitution}
       className={cn('rounded-field', { [LIBRARY_TARGET_CLASS]: filling })}
-      activeClassName="ring-2 ring-primary/40"
     >
       <fieldset className="grid gap-1.5">
         <legend className={cn(LABEL_CLASS, 'mb-1.5')}>Substitutions</legend>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-6">
           {row.substitutions.length > 0 && (
-            <ul className="contents">
+            <ul className="flex min-w-0 flex-wrap gap-x-2 gap-y-6">
               {row.substitutions.map(id => (
                 <RemovableChip key={id} label={nameOf(id)} removeLabel={`Remove ${nameOf(id)}`} onRemove={() => onRemoveSubstitution(id)} />
               ))}
             </ul>
           )}
           {room && (
-            <>
+            <div className="flex items-center gap-4">
               <IconActionButton
                 icon={Plus}
                 label={`Add substitution for ${exerciseNameOf(exercise)}`}
@@ -91,7 +90,7 @@ function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitu
                   Suggest
                 </Button>
               )}
-            </>
+            </div>
           )}
         </div>
       </fieldset>

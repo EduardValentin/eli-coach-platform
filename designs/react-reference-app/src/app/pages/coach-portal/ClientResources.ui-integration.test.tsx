@@ -506,7 +506,7 @@ describe('coach resources page', () => {
       // assert
       expect(await within(dialog).findByText(message, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
       expect(within(dialog).getByLabelText('Replace')).toHaveAccessibleDescription(message);
-      expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+      expect(within(dialog).getAllByRole('alert')).toEqual([within(dialog).getByText(message)]);
       expect(within(dialog).getByText('Cycle-syncing_starter-guide.pdf')).toBeInTheDocument();
       expect(within(dialog).getByRole('textbox', { name: 'Title (required)' })).toHaveValue('Cycle syncing starter guide');
       expect(within(dialog).getByRole('textbox', { name: 'Description' })).toHaveValue('Read before Monday.');

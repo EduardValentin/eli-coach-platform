@@ -103,7 +103,11 @@ describe("appointment card", () => {
     );
 
     // assert
-    expect(screen.getByRole("term")).toHaveClass("text-label", "uppercase");
+    expect(screen.getByRole("term")).toHaveClass(
+      "text-xs",
+      "font-medium",
+      "text-text-secondary",
+    );
   });
 
   it("renders no detail list when there are no details", () => {

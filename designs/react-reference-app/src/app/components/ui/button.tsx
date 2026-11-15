@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "./utils";
 
 const buttonClasses = cva(
-  "relative hit-area inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-field font-medium transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 aria-invalid:border-destructive",
+  "relative hit-area inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
@@ -26,6 +26,11 @@ const buttonClasses = cva(
           "font-normal text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary data-[state=open]:text-text-primary [&>svg:last-child]:transition-transform motion-reduce:[&>svg:last-child]:transition-none data-[state=open]:[&>svg:last-child]:rotate-180",
         drop: "w-full border border-dashed border-control-border-soft bg-surface-subtle text-text-secondary not-aria-disabled:hover:border-primary not-aria-disabled:hover:bg-primary-soft not-aria-disabled:hover:text-primary data-[drop=ready]:border-primary/40 data-[drop=ready]:bg-primary-soft data-[drop=over]:border-primary data-[drop=over]:bg-primary-soft data-[drop=over]:text-primary",
       },
+      corner: {
+        field: "rounded-field",
+        control: "rounded-control",
+        pill: "rounded-full",
+      },
       size: {
         xs: "h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5",
         sm: "h-(--size-control-sm) px-4 text-sm has-[>svg]:px-3",
@@ -44,6 +49,7 @@ const buttonClasses = cva(
     compoundVariants: [{ variant: "drop", size: "md", class: "text-sm" }],
     defaultVariants: {
       variant: "primary",
+      corner: "field",
       size: "sm",
       elevation: "flat",
     },
@@ -65,14 +71,14 @@ const Button = React.forwardRef<
     ButtonVariantProps & {
       asChild?: boolean;
     }
->(({ className, variant, size, elevation, asChild = false, ...props }, ref) => {
+>(({ className, variant, corner, size, elevation, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
       ref={ref}
-      className={buttonVariants({ variant, size, elevation, className })}
+      className={buttonVariants({ variant, corner, size, elevation, className })}
       {...props}
     />
   );

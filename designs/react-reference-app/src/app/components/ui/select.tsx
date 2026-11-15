@@ -53,6 +53,26 @@ function SelectTriggerChevron(props: React.ComponentProps<typeof ChevronDownIcon
   );
 }
 
+type FieldTriggerProps = React.ComponentProps<"button"> & {
+  icon?: React.ReactNode;
+};
+
+const FieldTrigger = React.forwardRef<HTMLButtonElement, FieldTriggerProps>(
+  ({ className, children, icon = <SelectTriggerChevron />, ...props }, ref) => (
+    <button
+      ref={ref}
+      type="button"
+      data-slot="select-trigger"
+      className={selectTriggerClasses(className)}
+      {...props}
+    >
+      {children}
+      {icon}
+    </button>
+  ),
+);
+FieldTrigger.displayName = "FieldTrigger";
+
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
   ({ className, children, ...props }, ref) => {
     const controls = useTriggerControls();
@@ -247,6 +267,5 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  SelectTriggerChevron,
-  selectTriggerClasses,
+  FieldTrigger,
 };

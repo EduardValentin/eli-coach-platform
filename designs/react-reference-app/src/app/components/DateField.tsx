@@ -7,8 +7,9 @@ import {
 import { format, isValid, parseISO } from 'date-fns';
 import type { Matcher } from 'react-day-picker';
 import { BrandCalendar, type YearRange } from './BrandCalendar';
-import { DateFieldTrigger } from './DateFieldTrigger';
+import { CalendarDays } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { FieldTrigger } from './ui/select';
 
 const ISO_DATE = 'yyyy-MM-dd';
 
@@ -55,13 +56,17 @@ export const DateField = forwardRef<HTMLButtonElement, DateFieldProps>(
     return (
       <Popover modal open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <DateFieldTrigger
-            text={selected ? format(selected, 'd MMMM yyyy') : ''}
-            placeholder={placeholder}
+          <FieldTrigger
+            data-placeholder={selected ? undefined : ''}
+            icon={<CalendarDays size={16} className="text-muted-foreground" aria-hidden="true" />}
             onBlur={leaveField}
             ref={ref}
             {...buttonProps}
-          />
+          >
+            <span data-slot="select-value">
+              {selected ? format(selected, 'd MMMM yyyy') : placeholder}
+            </span>
+          </FieldTrigger>
         </PopoverTrigger>
         <PopoverContent
           align="start"

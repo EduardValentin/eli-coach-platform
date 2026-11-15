@@ -1,3 +1,4 @@
+import { useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
@@ -33,13 +34,10 @@ type BlockWorkspaceProps = {
   libraryTarget: LibraryTarget | null;
 };
 
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 export function BlockWorkspace(props: BlockWorkspaceProps) {
   const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary, libraryTarget } = props;
   const header = useMeasuredHeight();
+  const reducedMotion = useReducedMotion() === true;
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const planned = plannedSessions(block);
@@ -47,9 +45,9 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
 
   useEffect(() => {
     if (!scrollTarget) return;
-    articles.current.get(scrollTarget)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    articles.current.get(scrollTarget)?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
     setScrollTarget(null);
-  }, [scrollTarget]);
+  }, [scrollTarget, reducedMotion]);
 
   function openFromWeek(sessionId: string) {
     onOpenSession(sessionId);

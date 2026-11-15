@@ -52,13 +52,13 @@ function acceptsCardioExercise(dragged: DraggedItem): boolean {
 function PresetRow({ onChoose }: { onChoose: (kind: (typeof CARDIO_PRESET_KINDS)[number]) => void }) {
   const labelId = useId();
   return (
-    <div className="grid gap-2 rounded-control border border-dashed border-border bg-surface-subtle p-3">
+    <div className="grid gap-2 rounded-control border border-border-subtle bg-surface-subtle p-3">
       <p id={labelId} className={LABEL_CLASS}>
         Start from
       </p>
-      <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-2">
+      <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-x-2 gap-y-6">
         {CARDIO_PRESET_KINDS.map(kind => (
-          <Button key={kind} variant="outline" size="xs" className="rounded-full" onClick={() => onChoose(kind)}>
+          <Button key={kind} variant="outline" size="xs" corner="pill" onClick={() => onChoose(kind)}>
             {CARDIO_PRESET_NAMES[kind]}
           </Button>
         ))}
@@ -153,7 +153,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
         rules={{ sessionId: cardio.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addSteady(dragged.item.exercise.id)) }}
         accepts={acceptsCardioExercise}
         className={cn('grid grid-cols-[minmax(0,1fr)] gap-3 rounded-b-card p-3 sm:p-4', SESSION_CONTENT_CLASS)}
-        activeClassName="ring-2 ring-inset ring-primary/40"
+        tone="inset"
       >
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-sm font-semibold text-text-primary">Segments</h4>

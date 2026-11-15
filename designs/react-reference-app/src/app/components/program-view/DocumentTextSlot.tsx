@@ -2,6 +2,7 @@ import { Languages, Pencil } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type FocusEvent, type ReactNode } from 'react';
 import { isCustomised, isWritten, programText, type ProgramText, type ProgramTextTarget, type TextFormatting } from '../../domain/programTexts';
 import { showUndoToast } from '../../utils/showUndoToast';
+import { IconActionButton } from '../IconActionButton';
 import { IconHint } from '../IconHint';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -26,9 +27,8 @@ type TextSlotProps = {
   children: (value: string) => ReactNode;
 };
 
-const EDIT_BUTTON_CLASS = 'text-text-secondary';
 const SLOT_TOOLS_CLASS =
-  'float-right ml-2 flex items-center gap-2 sm:absolute sm:right-[calc(8mm-1rem)] sm:ml-0 sm:flex-col sm:gap-4';
+  'float-right ml-2 flex items-center gap-7 sm:absolute sm:right-[calc(8mm-1rem)] sm:ml-0 sm:flex-col';
 const PENDING_TEXT = 'Romanian text pending';
 const PENDING_HINT = 'Romanian text pending: this text still prints the English standard.';
 const EMPTY_LABEL_CLASS = 'text-document-body font-semibold text-text-primary';
@@ -163,20 +163,17 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
     return (
       <div onClick={start} className={cn('group/slot flow-root cursor-text rounded-field outline-offset-4 hover:outline hover:outline-control-border-soft', className)}>
         <div className={SLOT_TOOLS_CLASS}>
-          <Button
+          <IconActionButton
             ref={editButton}
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            aria-label={`Edit ${text.name}`}
+            icon={Pencil}
+            label={`Edit ${text.name}`}
+            hint="Edit"
+            tone="muted"
             onClick={event => {
               event.stopPropagation();
               start();
             }}
-            className={EDIT_BUTTON_CLASS}
-          >
-            <Pencil />
-          </Button>
+          />
           {text.pending && (
             <IconHint label={PENDING_TEXT} icon={<Languages aria-hidden="true" className="size-4" />} className="text-status-pending">
               {PENDING_HINT}

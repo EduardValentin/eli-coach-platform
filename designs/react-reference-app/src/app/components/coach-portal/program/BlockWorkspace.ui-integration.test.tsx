@@ -69,11 +69,15 @@ async function clearFirstSession(user: User) {
   await user.click(within(screen.getByRole('dialog', { name: 'Clear Full Body A?' })).getByRole('button', { name: 'Clear session' }));
 }
 
+const LIBRARY_COUNT_ANNOUNCEMENT = /^(\d+ exercises?|No exercises match)$/;
+
 async function showAllEquipment(user: User) {
   await user.click(within(library()).getByRole('button', { name: /^Filters/ }));
   const equipmentFilter = within(screen.getByRole('dialog', { name: 'Filters' })).getByRole('switch', { name: 'Only her equipment' });
-  if (equipmentFilter.getAttribute('aria-checked') === 'true') await user.click(equipmentFilter);
+  const narrowed = equipmentFilter.getAttribute('aria-checked') === 'true';
+  if (narrowed) await user.click(equipmentFilter);
   await user.keyboard('{Escape}');
+  if (narrowed) await screen.findByText(LIBRARY_COUNT_ANNOUNCEMENT, {}, { timeout: 3000 });
 }
 
 async function addFromLibrary(user: User, name: string) {

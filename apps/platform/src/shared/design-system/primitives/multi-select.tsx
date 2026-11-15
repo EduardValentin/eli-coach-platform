@@ -6,7 +6,7 @@ import { Checkbox } from "./checkbox";
 import type { FieldControlAttributes } from "./field-layout";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { SearchField } from "./search-field";
-import { SelectTriggerChevron, selectTriggerClasses } from "./select";
+import { FieldTrigger } from "./select";
 
 type MultiSelectSummary = "count" | "names";
 
@@ -138,17 +138,12 @@ export function MultiSelect<Value extends string>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <FieldTrigger
           aria-label={accessibleTriggerName(
             required ? `${label} (required)` : label,
             selected.length,
           )}
-          className={cn(
-            selectTriggerClasses(),
-            "min-w-auto",
-            GROWING_TRIGGER_HEIGHT_CLASS,
-          )}
-          type="button"
+          className={cn("min-w-auto", GROWING_TRIGGER_HEIGHT_CLASS)}
           {...fieldAttributes}
         >
           <span
@@ -164,8 +159,7 @@ export function MultiSelect<Value extends string>({
               summary={summary}
             />
           </span>
-          <SelectTriggerChevron />
-        </button>
+        </FieldTrigger>
       </PopoverTrigger>
       <PopoverContent
         aria-label={label}

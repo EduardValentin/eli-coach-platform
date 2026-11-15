@@ -41,6 +41,8 @@ function reversed(direction: SortDirection): SortDirection {
   return direction === 'asc' ? 'desc' : 'asc';
 }
 
+type SortToggleSize = 'sm' | 'md';
+
 export function SortControl<Key extends string>({
   options,
   sort,
@@ -51,7 +53,7 @@ export function SortControl<Key extends string>({
   options: readonly SortOption<Key>[];
   sort: SortChoice<Key>;
   onChange: (sort: SortChoice<Key>) => void;
-  size?: 'sm' | 'md';
+  size?: SortToggleSize;
   className?: string;
 }) {
   const chosen = options.find((option) => option.key === sort.key) ?? options[0];

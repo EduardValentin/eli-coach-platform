@@ -1,22 +1,13 @@
 import { useId, useRef } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
+import { Bed, Dumbbell, HeartPulse } from 'lucide-react';
 import { WEEKDAY_LABELS, WEEKDAYS, type Block, type Weekday } from '../../../domain/program';
 import { emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
 import { DAY_CARDS_CLASS, DayCard } from '../../program-view/dayCard';
+import { RowActionsMenu } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
-import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
 import { useResetConfirm } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; library: readonly Exercise[]; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
@@ -24,48 +15,28 @@ type DayMenuProps = { block: Block; day: Weekday; onChoose: (choice: DayChoice, 
 
 function DayMenu({ block, day, onChoose }: DayMenuProps) {
   const trigger = useRef<HTMLButtonElement>(null);
-  const chosen = useRef<DayChoice | null>(null);
-  const choose = (choice: DayChoice) => {
-    chosen.current = choice;
-  };
-
-  function runOnceFocusIsBackOnTheTrigger() {
-    const choice = chosen.current;
-    chosen.current = null;
-    if (choice) onChoose(choice, trigger.current);
-  }
+  const choose = (choice: DayChoice) => onChoose(choice, trigger.current);
 
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button ref={trigger} variant="ghost" size="icon-xs" aria-label={`${WEEKDAY_LABELS[day]} options`} className="-mr-1 shrink-0">
-          <MoreHorizontal aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-40" onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Dumbbell aria-hidden="true" className="mr-2 size-4 text-text-secondary" />
-            Session
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            {block.sessions.map(session => (
-              <DropdownMenuItem key={session.id} onSelect={() => choose({ kind: 'session', sessionId: session.id })}>
-                {session.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuItem onSelect={() => choose({ kind: 'cardio', session: emptyCardioSession() })}>
-          <HeartPulse aria-hidden="true" />
-          Cardio
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => choose({ kind: 'rest' })}>
-          <Bed aria-hidden="true" />
-          Rest
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowActionsMenu
+      label={`${WEEKDAY_LABELS[day]} options`}
+      size="xs"
+      triggerRef={trigger}
+      actions={[
+        {
+          name: 'session',
+          label: 'Session',
+          icon: Dumbbell,
+          actions: block.sessions.map(session => ({
+            name: session.id,
+            label: session.name,
+            onSelect: () => choose({ kind: 'session', sessionId: session.id }),
+          })),
+        },
+        { name: 'cardio', label: 'Cardio', icon: HeartPulse, onSelect: () => choose({ kind: 'cardio', session: emptyCardioSession() }) },
+        { name: 'rest', label: 'Rest', icon: Bed, onSelect: () => choose({ kind: 'rest' }) },
+      ]}
+    />
   );
 }
 

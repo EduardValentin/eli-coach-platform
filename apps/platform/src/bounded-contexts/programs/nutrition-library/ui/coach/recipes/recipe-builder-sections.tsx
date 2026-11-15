@@ -9,7 +9,7 @@ import {
 import {
   cn,
   describedByOf,
-  LABEL_CLASS,
+  EYEBROW_CLASS,
   toggled,
 } from "~/shared/design-system/lib";
 import {
@@ -230,7 +230,7 @@ export function FoodLibraryAside({
       >
         <div className="rounded-field border-b bg-surface-base p-4 px-3">
           <div className="mb-3 flex items-center justify-between">
-            <p className={LABEL_CLASS}>Food library</p>
+            <p className={EYEBROW_CLASS}>Food library</p>
             <Button
               aria-label="Close food library"
               className="lg:hidden"

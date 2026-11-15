@@ -16,6 +16,7 @@ import { pickableItems } from '../../../domain/libraryLifecycle';
 import { counted } from '../../../utils/counted';
 import { IconActionButton } from '../../IconActionButton';
 import { MultiSelect } from '../../MultiSelect';
+import { EmptyState } from '../../EmptyState';
 import { RemovableChip } from '../../RemovableChip';
 import { SearchField } from '../../SearchField';
 import { WatchVideoButton } from '../../WatchVideoButton';
@@ -23,7 +24,7 @@ import { Badge } from '../../ui/badge';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
-import { SelectTriggerChevron, selectTriggerClasses } from '../../ui/select';
+import { FieldTrigger } from '../../ui/select';
 import { Sheet, SheetContent, SheetTitle } from '../../ui/sheet';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
@@ -156,22 +157,23 @@ function NoMatches({ type, filters, onRemove, onClear }: NoMatchesProps) {
   const kind = `${TYPE_OPTIONS.find(option => option.value === type)?.label.toLowerCase()} exercises`;
   if (filters.length === 0) return <p className="px-1 py-4 text-sm text-text-secondary">{`No ${kind} yet.`}</p>;
   return (
-    <div className="grid justify-items-start gap-4 px-1 py-4">
-      <div className="grid gap-1">
-        <p className="text-sm font-semibold text-text-primary">No matches</p>
-        <p className="text-sm text-text-secondary">{`No ${kind} match these filters. Remove one to see more.`}</p>
-      </div>
-      <div className="grid justify-items-start gap-6">
-        <ul aria-label="Active filters" data-active-filters="" className="flex flex-wrap gap-x-2 gap-y-5">
-          {filters.map((filter, index) => (
-            <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
-          ))}
-        </ul>
-        <Button variant="outline" size="xs" onClick={onClear}>
-          Clear filters
-        </Button>
-      </div>
-    </div>
+    <EmptyState
+      density="compact"
+      title="No matches"
+      description={`No ${kind} match these filters. Remove one to see more.`}
+      action={
+        <div className="grid justify-items-start gap-6">
+          <ul aria-label="Active filters" data-active-filters="" className="flex flex-wrap gap-x-2 gap-y-6">
+            {filters.map((filter, index) => (
+              <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
+            ))}
+          </ul>
+          <Button variant="outline" size="xs" onClick={onClear}>
+            Clear filters
+          </Button>
+        </div>
+      }
+    />
   );
 }
 
@@ -205,19 +207,12 @@ function FiltersPopover({ type, filters, activeCount, triggerRef, onChange, onCl
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          ref={triggerRef}
-          type="button"
-          data-slot="select-trigger"
-          aria-label={activeCount === 0 ? 'Filters' : `Filters, ${activeCount} active`}
-          className={selectTriggerClasses('w-full')}
-        >
+        <FieldTrigger ref={triggerRef} aria-label={activeCount === 0 ? 'Filters' : `Filters, ${activeCount} active`}>
           <span data-slot="select-value">
             Filters
             {activeCount > 0 && <Badge tone="count">{activeCount}</Badge>}
           </span>
-          <SelectTriggerChevron />
-        </button>
+        </FieldTrigger>
       </PopoverTrigger>
       <PopoverContent aria-label="Filters" align="end" collisionPadding={16} className="grid gap-4">
         <div className="grid gap-2">

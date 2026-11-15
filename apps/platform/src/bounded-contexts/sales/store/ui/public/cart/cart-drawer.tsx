@@ -1,5 +1,5 @@
 import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
-import { LABEL_CLASS } from "~/shared/design-system/lib";
+import { EYEBROW_CLASS, LABEL_CLASS } from "~/shared/design-system/lib";
 import {
   PAID_DIGITAL_DELIVERY_CONSENT,
   STORE_MARKETING_CONSENT,
@@ -663,7 +663,7 @@ function PaidOrderSummary(props: {
 }) {
   return (
     <div className="mt-6" data-parity="order-summary-block">
-      <h3 className={LABEL_CLASS}>Your order</h3>
+      <h3 className={EYEBROW_CLASS}>Your order</h3>
       <StoreOrderSummary
         className="mt-2"
         currency={props.currency}

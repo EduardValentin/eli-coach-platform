@@ -24,6 +24,7 @@ const buttonVariants = cva(
       corner: {
         field: 'rounded-field',
         control: 'rounded-control',
+        pill: 'rounded-full',
       },
       size: {
         xs: 'h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5',

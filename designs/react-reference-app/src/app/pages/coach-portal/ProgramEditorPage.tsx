@@ -9,6 +9,7 @@ import { ClientPreviewDialog } from '../../components/coach-portal/program/Clien
 import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
 import { EDITOR_MODE_LABELS, sectionHash, sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
 import { EditorAnnouncerProvider, useEditorAnnouncer } from '../../components/coach-portal/program/editorAnnouncer';
+import { EditorShell } from '../../components/coach-portal/program/EditorShell';
 import { EditorSkeleton } from '../../components/coach-portal/program/EditorSkeleton';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
@@ -120,7 +121,7 @@ function ProgramEditor(props: EditorProps) {
 
   return (
     <Sheet open={railOpen && !isDesktop} onOpenChange={setRailOpen}>
-      <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle" data-parity-root="ProgramEditorPage">
+      <EditorShell data-parity-root="ProgramEditorPage">
         <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
         <EditorTopBar
           journey={journey}
@@ -213,7 +214,7 @@ function ProgramEditor(props: EditorProps) {
           returnFocusTo={focusAfterAdding}
           onAdd={addBlock}
         />
-      </div>
+      </EditorShell>
     </Sheet>
   );
 }

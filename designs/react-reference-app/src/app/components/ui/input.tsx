@@ -14,7 +14,7 @@ const inputVariants = cva("h-(--size-control-md) px-3", {
     appearance: {
       field: "",
       "inline-title":
-        "rounded-none border-x-0 border-t-0 border-b bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-text-secondary md:text-xl dark:bg-transparent",
+        "rounded-none focus-visible:rounded-field border-x-0 border-t-0 border-b bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-text-secondary md:text-xl dark:bg-transparent",
     },
   },
   defaultVariants: {

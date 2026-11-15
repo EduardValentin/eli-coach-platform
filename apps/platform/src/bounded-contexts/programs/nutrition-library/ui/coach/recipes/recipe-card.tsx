@@ -1,5 +1,5 @@
 import { joinBasePath } from "~/shared/http/base-path";
-import { cn, LABEL_CLASS } from "~/shared/design-system/lib";
+import { cn, EYEBROW_CLASS } from "~/shared/design-system/lib";
 import {
   cardVariants,
   ItemVisual,
@@ -78,7 +78,7 @@ export function RecipeCard({ recipe, tags }: RecipeCardProps) {
         </div>
 
         <div>
-          <p className={cn("mb-1.5", LABEL_CLASS)}>Per recipe</p>
+          <p className={cn("mb-1.5", EYEBROW_CLASS)}>Per recipe</p>
           <MacroTiles
             kcalTone="quiet"
             macros={recipe.macros}

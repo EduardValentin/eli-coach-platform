@@ -3,10 +3,12 @@ import {
   RESOURCE_SORT_KEYS,
   type ResourceSortKey,
 } from "~/bounded-contexts/clients/client-resources/domain/client-resources";
-import { SortControl, type SortOption } from "~/shared/design-system/filters";
+import {
+  SortControl,
+  type SortOption,
+  type SortToggleSize,
+} from "~/shared/design-system/filters";
 import type { SortChoice } from "~/shared/design-system/lib";
-
-import type { ResourceToolbarControlSize } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-toolbar";
 
 const SORT_PRESENTATION: Record<
   ResourceSortKey,
@@ -34,20 +36,20 @@ const RESOURCE_SORT_OPTIONS: readonly SortOption<ResourceSortKey>[] =
 type ResourceSortControlProps = {
   sort: SortChoice<ResourceSortKey>;
   onChange: (sort: SortChoice<ResourceSortKey>) => void;
-  size: ResourceToolbarControlSize;
+  toggleSize: SortToggleSize;
 };
 
 export function ResourceSortControl({
   sort,
   onChange,
-  size,
+  toggleSize,
 }: ResourceSortControlProps) {
   return (
     <SortControl
       className="col-span-2 md:w-64"
       onChange={onChange}
       options={RESOURCE_SORT_OPTIONS}
-      size={size}
+      size={toggleSize}
       sort={sort}
     />
   );

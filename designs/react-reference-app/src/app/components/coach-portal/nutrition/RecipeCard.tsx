@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Clock } from 'lucide-react';
 import { useNutrition, recipeMacros } from '../../../context/NutritionContext';
 import type { Recipe, Tag } from '../../../context/NutritionContext';
-import { VALUE_CLASS } from '../../typography';
+import { EYEBROW_CLASS, VALUE_CLASS } from '../../typography';
 import { cardVariants } from '../../ui/card';
 import { cn } from '../../ui/utils';
 import { MACRO_TILE } from './nutrition-constants';
@@ -47,7 +47,7 @@ export function RecipeCard({ recipe, actions }: RecipeCardProps) {
         </div>
 
         <div>
-          <p className="text-label uppercase text-text-secondary mb-1.5">Per recipe</p>
+          <p className={cn('mb-1.5', EYEBROW_CLASS)}>Per recipe</p>
           <dl className="grid grid-cols-4 gap-2" data-parity="recipe-macro-tiles">
             {macroTiles.map((m) => (
               <div

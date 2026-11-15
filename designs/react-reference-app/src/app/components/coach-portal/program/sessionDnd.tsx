@@ -76,10 +76,20 @@ export function EmptyDropTarget({ rules, place, onAdd }: { rules: SessionDropRul
   );
 }
 
-export function DropZone({ rules, accepts, className, activeClassName, children }: { rules: SessionDropRules; accepts?: typeof acceptsIntoSession; className?: string; activeClassName: string; children: ReactNode }) {
+type DropZoneTone = 'ring' | 'inset' | 'fill';
+
+const DROP_ZONE_ACTIVE_CLASS: Record<DropZoneTone, string> = {
+  ring: 'ring-2 ring-primary/40',
+  inset: 'ring-2 ring-inset ring-primary/40',
+  fill: 'bg-primary-soft',
+};
+
+type DropZoneProps = { rules: SessionDropRules; accepts?: typeof acceptsIntoSession; className?: string; tone?: DropZoneTone; children: ReactNode };
+
+export function DropZone({ rules, accepts, className, tone = 'ring', children }: DropZoneProps) {
   const [{ isOver, canDrop }, drop] = useSessionDrop(rules, accepts);
   return (
-    <div ref={drop as unknown as Ref<HTMLDivElement>} className={cn(className, { [activeClassName]: isOver && canDrop })}>
+    <div ref={drop as unknown as Ref<HTMLDivElement>} className={cn(className, { [DROP_ZONE_ACTIVE_CLASS[tone]]: isOver && canDrop })}>
       {children}
     </div>
   );

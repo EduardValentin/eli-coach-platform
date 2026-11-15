@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { format, parseISO, startOfMonth, subYears } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { MAX_BOOKING_AGE, MIN_BOOKING_AGE } from '../../services/visitorProfile';
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
+import { FieldError } from '../FieldError';
 import { BrandCalendar } from '../BrandCalendar';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -97,11 +97,7 @@ export function DateOfBirthField({
           </div>
         </PopoverContent>
       </Popover>
-      {error && (
-        <p id={errorId} className={FIELD_ERROR_CLASS}>
-          {error}
-        </p>
-      )}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }

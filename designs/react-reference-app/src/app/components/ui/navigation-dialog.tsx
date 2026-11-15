@@ -10,6 +10,7 @@ import {
   type RefObject,
 } from 'react';
 
+import { useTriggerControls } from './open-state';
 import { useCloseMobileNavigationOnDesktop } from './use-close-mobile-navigation-on-desktop';
 
 type NavigationMenuState = 'closed' | 'closing' | 'open';
@@ -106,10 +107,11 @@ export function NavigationDialog(props: NavigationDialogProps) {
     mobileControlRef: menuButtonRef,
   });
 
+  const menuButtonControls = useTriggerControls({ open: isDialogMounted, contentId });
   const menu: NavigationMenu = { close, firstLinkRef, isOpen };
   const panelVariant: NavigationPanelVariant = isOpen ? 'open' : 'closed';
   const menuButtonProps = {
-    'aria-controls': contentId,
+    ...menuButtonControls,
     'aria-expanded': isOpen,
     'aria-label': isOpen ? 'Close menu' : 'Open menu',
     children: isOpen ? closeMenuIcon : openMenuIcon,

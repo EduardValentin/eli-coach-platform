@@ -34,7 +34,6 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
       rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsStretch}
       className={cn('rounded-control border border-border-subtle bg-surface-subtle p-3', { [LIBRARY_TARGET_CLASS]: filling })}
-      activeClassName="ring-2 ring-primary/40"
     >
       <section className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <div className="flex items-center gap-3">

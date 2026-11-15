@@ -564,7 +564,6 @@ function CartDetailsFields({
           data-parity="terms-consent"
           disabled={fields.isSubmitting}
           error={fields.termsProblem}
-          errorRole="alert"
           label={
             <>
               I agree to the{" "}

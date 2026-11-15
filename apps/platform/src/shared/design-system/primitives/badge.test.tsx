@@ -94,8 +94,21 @@ describe("badge", () => {
     // assert
     expect(screen.getByText("3")).toHaveClass(
       "rounded-full",
-      "bg-current/12",
-      "text-caption",
+      "bg-current/10",
+      "text-xs",
+      "tabular-nums",
+    );
+  });
+
+  it("draws a count on a filled control on the base surface", () => {
+    // arrange, act
+    render(<Badge tone="count-on-fill">3</Badge>);
+
+    // assert
+    expect(screen.getByText("3")).toHaveClass(
+      "rounded-full",
+      "bg-surface-base",
+      "text-xs",
       "tabular-nums",
     );
   });

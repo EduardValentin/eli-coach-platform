@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import {
   hasTag,
   isNewTag,
@@ -17,6 +17,7 @@ import {
   withTag,
   withoutTag,
 } from '../domain/tags';
+import { RemovableChip } from './RemovableChip';
 import { fieldSurfaceClass } from './ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from './ui/popover';
 import { cn } from './ui/utils';
@@ -47,22 +48,6 @@ function optionsFor(
   return creatable
     ? [...existing, { kind: 'create', tag: normalizeTag(text) }]
     : existing;
-}
-
-function TagChip({ tag, onRemove }: { tag: string; onRemove: () => void }) {
-  return (
-    <li className="inline-flex h-8 max-w-full items-center gap-1 rounded-tile bg-surface-neutral pr-1 pl-2.5 text-sm text-text-primary">
-      <span className="truncate">{tag}</span>
-      <button
-        aria-label={`Remove ${tag}`}
-        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-muted-hover hover:text-text-primary"
-        onClick={onRemove}
-        type="button"
-      >
-        <X aria-hidden="true" className="size-3.5" />
-      </button>
-    </li>
-  );
 }
 
 export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
@@ -177,7 +162,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
           <div
             className={cn(
               fieldSurfaceClass,
-              'min-h-(--size-control-md) cursor-text flex-wrap items-center gap-1.5 px-3 py-1.5 focus-within:border-focus-ring',
+              'min-h-(--size-control-md) cursor-text flex-wrap items-center gap-x-4 gap-y-6 px-3 py-1.5 focus-within:border-focus-ring',
               { 'border-destructive': invalid === true },
             )}
             data-field-frame=""
@@ -189,13 +174,14 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
             {value.length > 0 && (
               <ul aria-label="Chosen tags" className="contents">
                 {value.map((tag) => (
-                  <TagChip
+                  <RemovableChip
                     key={tag}
+                    label={tag}
                     onRemove={() => {
                       onChange(withoutTag(value, tag));
                       entry.current?.focus();
                     }}
-                    tag={tag}
+                    removeLabel={`Remove ${tag}`}
                   />
                 ))}
               </ul>

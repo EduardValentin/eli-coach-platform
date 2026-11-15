@@ -3,7 +3,7 @@ import { SearchField } from "./SearchField";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { SelectTrigger, SelectTriggerChevron, selectTriggerClasses } from "./ui/select";
+import { FieldTrigger } from "./ui/select";
 import { cn } from "./ui/utils";
 
 type Summary = "count" | "names";
@@ -127,14 +127,11 @@ export function MultiSelect<Value extends string>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
+        <FieldTrigger
           id={id}
-          data-slot="select-trigger"
           aria-label={triggerName(required ? `${label} (required)` : label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
-          className={selectTriggerClasses("w-full")}
         >
           <span
             data-slot="select-value"
@@ -142,8 +139,7 @@ export function MultiSelect<Value extends string>({
           >
             <TriggerSummary label={label} selected={selected} labels={labels} summary={summary} placeholder={placeholder} />
           </span>
-          <SelectTriggerChevron />
-        </button>
+        </FieldTrigger>
       </PopoverTrigger>
       <PopoverContent aria-label={label} align="start" className="flex w-(--radix-popover-trigger-width) min-w-56 max-w-md flex-col gap-1 p-1">
         <OptionList label={label} selected={selected} options={options} labels={labels} onToggle={onToggle} counts={counts} />

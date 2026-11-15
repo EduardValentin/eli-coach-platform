@@ -52,7 +52,6 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
       rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsLibraryExercise}
       className={cn('rounded-control border border-border-subtle bg-surface-subtle p-3', { [LIBRARY_TARGET_CLASS]: filling })}
-      activeClassName="ring-2 ring-primary/40"
     >
       <section className="grid grid-cols-[minmax(0,1fr)] gap-2">
         <div className="flex items-center justify-between gap-3">

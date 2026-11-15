@@ -6,6 +6,12 @@ function focusedElement(): HTMLElement | null {
     : null;
 }
 
+function isFocusLost() {
+  return (
+    document.activeElement === null || document.activeElement === document.body
+  );
+}
+
 export function useReturnFocusToOpener(
   returnFocusTo?: RefObject<HTMLElement | null>,
 ) {
@@ -18,17 +24,23 @@ export function useReturnFocusToOpener(
       opener.current?.closest<HTMLElement>('[role="dialog"]') ?? null;
   };
 
+  const focusTarget = () =>
+    [returnFocusTo?.current, opener.current, openerDialog.current].find(
+      (candidate) => candidate?.isConnected,
+    );
+
   const returnFocusToOpener = (event: Event) => {
-    const target = [
-      returnFocusTo?.current,
-      opener.current,
-      openerDialog.current,
-    ].find((candidate) => candidate?.isConnected);
+    const target = focusTarget();
     if (!target) return;
 
     event.preventDefault();
     target.focus();
   };
 
-  return { rememberOpener, returnFocusToOpener };
+  const returnLostFocusToOpener = (event: Event) => {
+    event.preventDefault();
+    if (isFocusLost()) focusTarget()?.focus();
+  };
+
+  return { rememberOpener, returnFocusToOpener, returnLostFocusToOpener };
 }

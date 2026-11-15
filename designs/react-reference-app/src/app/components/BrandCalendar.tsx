@@ -125,7 +125,7 @@ function createMonthYearCaption({ from, to }: YearRange) {
             <SelectTrigger aria-label="Month" className="flex-1">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="z-[60]">
+            <SelectContent>
               {MONTH_LABELS.map((label, month) => (
                 <SelectItem key={label} value={String(month)}>
                   {label}
@@ -143,7 +143,7 @@ function createMonthYearCaption({ from, to }: YearRange) {
             <SelectTrigger aria-label="Year" className="w-[5.5rem]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="z-[60]">
+            <SelectContent>
               {years.map((year) => (
                 <SelectItem key={year} value={String(year)}>
                   {year}

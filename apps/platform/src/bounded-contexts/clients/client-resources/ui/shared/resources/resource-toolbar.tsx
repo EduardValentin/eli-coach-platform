@@ -1,3 +1,4 @@
+import type { SortToggleSize } from "~/shared/design-system/filters";
 import { useIsMobileViewport } from "~/shared/design-system/lib";
 import {
   SearchField,
@@ -15,8 +16,6 @@ import type { ResourceBrowseView } from "~/bounded-contexts/clients/client-resou
 import { RESOURCE_TOOLBAR_COPY } from "./resource-copy";
 
 const ALL_TAGS = "__all__";
-
-export type ResourceToolbarControlSize = "sm" | "md";
 
 type TagFilterProps = {
   chosen: string | null;
@@ -58,7 +57,7 @@ type ResourceToolbarProps = {
   typedSearch: string;
   onChooseTag: (tag: string | null) => void;
   onSearch: (search: string) => void;
-  sort?: (size: ResourceToolbarControlSize) => ReactNode;
+  sort?: (toggleSize: SortToggleSize) => ReactNode;
 };
 
 export function ResourceToolbar({
@@ -70,7 +69,7 @@ export function ResourceToolbar({
   onSearch,
   sort,
 }: ResourceToolbarProps) {
-  const size = useIsMobileViewport() ? "md" : "sm";
+  const toggleSize = useIsMobileViewport() ? "md" : "sm";
 
   return (
     <div
@@ -92,7 +91,7 @@ export function ResourceToolbar({
         placeholder={RESOURCE_TOOLBAR_COPY.searchPlaceholder}
         value={typedSearch}
       />
-      {sort?.(size)}
+      {sort?.(toggleSize)}
     </div>
   );
 }
