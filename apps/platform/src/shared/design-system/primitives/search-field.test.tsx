@@ -27,20 +27,18 @@ describe("SearchField", () => {
     );
   });
 
-  it("passes its size and value handling through to the input", async () => {
+  it("stands at the field height and passes value handling through to the input", async () => {
     // arrange
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
-      <SearchField aria-label="Search calls" onChange={onChange} size="sm" />,
-    );
+    render(<SearchField aria-label="Search calls" onChange={onChange} />);
     const field = screen.getByRole("searchbox", { name: "Search calls" });
 
     // act
     await user.type(field, "Ana");
 
     // assert
-    expect(field).toHaveClass("h-(--size-control-sm)");
+    expect(field).toHaveClass("h-(--size-control-md)");
     expect(onChange).toHaveBeenCalledTimes(3);
   });
 });

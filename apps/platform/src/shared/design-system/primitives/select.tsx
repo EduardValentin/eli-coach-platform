@@ -10,7 +10,7 @@ import {
 } from "../lib/open-state";
 import { Badge } from "./badge";
 import { FIELD_FRAME_CLASS } from "./field-frame";
-import { fieldSizeClasses, type FieldSize } from "./field-size";
+import { FIELD_SIZE_CLASS } from "./field-size";
 
 export function Select({
   defaultOpen,
@@ -32,15 +32,13 @@ export const SelectValue = RadixSelect.Value;
 
 type SelectTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixSelect.Trigger
-> & {
-  size?: FieldSize;
-};
+>;
 
-export function selectTriggerClasses(size: FieldSize): string {
+export function selectTriggerClasses(): string {
   return cn(
     FIELD_FRAME_CLASS,
     "relative hit-area flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
-    fieldSizeClasses({ size }),
+    FIELD_SIZE_CLASS,
   );
 }
 
@@ -59,12 +57,12 @@ export function SelectTriggerChevron(
 export const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Trigger>,
   SelectTriggerProps
->(({ children, className, size = "md", ...props }, ref) => {
+>(({ children, className, ...props }, ref) => {
   const controls = useTriggerControls();
 
   return (
     <RadixSelect.Trigger
-      className={cn(selectTriggerClasses(size), className)}
+      className={cn(selectTriggerClasses(), className)}
       ref={ref}
       {...controls}
       {...props}

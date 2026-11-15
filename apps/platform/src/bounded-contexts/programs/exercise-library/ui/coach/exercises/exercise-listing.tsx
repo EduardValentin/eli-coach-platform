@@ -185,7 +185,6 @@ export function ExerciseListing({
               listing.chooseSelection(selection.withQuery(event.target.value))
             }
             placeholder="Search by name or muscle"
-            size="sm"
             value={selection.query}
           />
         }

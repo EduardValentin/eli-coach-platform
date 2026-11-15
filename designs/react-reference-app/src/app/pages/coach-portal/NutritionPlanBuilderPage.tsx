@@ -188,7 +188,6 @@ export function NutritionPlanBuilderPage() {
           >
             <SelectTrigger
               aria-label="View plan block"
-              size="sm"
               className="w-auto"
             >
               <SelectValue />

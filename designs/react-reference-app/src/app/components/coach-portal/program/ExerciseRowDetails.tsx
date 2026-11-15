@@ -110,7 +110,6 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
       <Detail label="Tempo">
         {labelId => (
           <Input
-            size="sm"
             aria-labelledby={labelId}
             placeholder="Lower for 3 seconds, pause 1 second at the bottom"
             value={row.tempo ?? ''}
@@ -143,7 +142,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
         <Detail label="Last set">
           {labelId => (
             <Select value={row.lastSetTechnique} onValueChange={value => onChange(withField(row, 'lastSetTechnique', value as LastSetTechnique))}>
-              <SelectTrigger size="sm" aria-labelledby={labelId}>
+              <SelectTrigger aria-labelledby={labelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +161,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
               value={row.progression.kind}
               onValueChange={value => onChange(withField(row, 'progression', value === 'custom' ? { kind: 'custom', text: '' } : { kind: 'double' }))}
             >
-              <SelectTrigger size="sm" aria-labelledby={labelId}>
+              <SelectTrigger aria-labelledby={labelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

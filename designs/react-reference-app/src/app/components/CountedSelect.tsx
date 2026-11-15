@@ -26,7 +26,7 @@ export function CountedSelect<Value extends string>({
 }) {
   return (
     <Select value={value} onValueChange={(chosen) => onChoose(chosen as Value)}>
-      <SelectTrigger aria-label={label} size="sm" className="w-full" data-parity={parity}>
+      <SelectTrigger aria-label={label} className="w-full" data-parity={parity}>
         <SelectValue>{labels[value]}</SelectValue>
       </SelectTrigger>
       <SelectContent>

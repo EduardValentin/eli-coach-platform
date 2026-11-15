@@ -24,7 +24,6 @@ import {
 import { blockDates, checkInWeekdayOf, currentPosition, dayOneOf, nextCheckpoint } from './programCalendar';
 import { hasHardRounds, isLightCardio } from './programCardio';
 import { estimatedMinutes, isOverTarget } from './sessionTiming';
-import { slotPlanFor } from './splitTemplates';
 
 export type BlockingCode =
   | 'foundation-not-first'
@@ -44,7 +43,6 @@ export type WarningCode =
   | 'hiit-before-heavy-legs'
   | 'hiit-over-two'
   | 'superset-same-muscle'
-  | 'role-slot-mismatch'
   | 'session-over-target';
 
 export type RuleFinding<Code> = { code: Code; blockId?: string; sessionId?: string; detail?: string };
@@ -106,7 +104,6 @@ const WARNING_MESSAGES: Record<WarningCode, string> = {
   'hiit-before-heavy-legs': 'HIIT the day before {detail}',
   'hiit-over-two': 'More than 2 HIIT sessions a week',
   'superset-same-muscle': '{detail} supersets two exercises on the same muscle',
-  'role-slot-mismatch': '{detail} does not match its slot',
   'session-over-target': '{detail} runs over the target',
 };
 
@@ -281,13 +278,6 @@ function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<Warni
   return findings;
 }
 
-function roleSlotWarning({ block, session }: SessionPlace, row: Row, exercises: Exercises): RuleFinding<WarningCode>[] {
-  const exercise = exercises.get(row.exerciseId);
-  const planned = slotPlanFor(block, session, row.slot)?.patterns;
-  if (!exercise?.pattern || !planned || planned.length === 0 || planned.includes(exercise.pattern)) return [];
-  return [{ code: 'role-slot-mismatch', blockId: block.id, sessionId: session.id, detail: exercise.name }];
-}
-
 function sharesMuscleWithLaterPartner(row: Row, later: readonly Row[], exercises: Exercises): boolean {
   if (row.supersetGroup === undefined) return false;
   const muscles = primaryMusclesOf(row.exerciseId, exercises);
@@ -312,7 +302,7 @@ function overTargetWarning({ block, session }: SessionPlace, exercises: Exercise
 function sessionWarnings(block: Block, exercises: Exercises): RuleFinding<WarningCode>[] {
   return block.sessions.flatMap(session => {
     const place = { block, session };
-    const rowFindings = session.rows.flatMap((row, index) => [...roleSlotWarning(place, row, exercises), ...supersetMuscleWarning(place, index, exercises)]);
+    const rowFindings = session.rows.flatMap((_, index) => supersetMuscleWarning(place, index, exercises));
     return [...rowFindings, ...overTargetWarning(place, exercises)];
   });
 }

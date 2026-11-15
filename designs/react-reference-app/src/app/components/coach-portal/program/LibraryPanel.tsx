@@ -132,7 +132,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
         )}
         {exercise.equipment.length > 0 && <span className="text-xs break-words text-text-secondary">{exercise.equipment.join(', ')}</span>}
       </div>
-      <span className="flex items-center gap-4">
+      <span className="flex items-center gap-6">
         {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />}
         <IconActionButton icon={Plus} label={`Add ${exercise.name}`} hint="Add exercise" onClick={() => onAdd(exercise)} />
         <GripVertical aria-hidden="true" size={16} className="text-text-secondary group-hover:text-primary" />
@@ -271,14 +271,13 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
         )}
         <SearchField
           ref={searchRef}
-          size="sm"
           aria-label="Search exercises"
           aria-describedby={purpose ? purposeId : undefined}
           placeholder="Search exercises"
           value={query}
           onChange={event => change({ query: event.target.value })}
         />
-        <ChoiceGroup size="xs" aria-label="Exercise type" value={type} onValueChange={value => setType(value as LibraryType)}>
+        <ChoiceGroup aria-label="Exercise type" value={type} onValueChange={value => setType(value as LibraryType)}>
           {TYPE_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
               {option.label}
@@ -297,7 +296,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
           )}
           <MultiSelect label="Muscle" selected={muscles} options={MUSCLES} labels={MUSCLE_LABELS} onToggle={value => change({ muscles: toggled(muscles, value) })} />
         </div>
-        <div className="grid">
+        <div className="grid gap-2">
           <SwitchRow label="Only her equipment" checked={onlyHers} onCheckedChange={checked => change({ onlyHers: checked })} />
           <SwitchRow label="Bodyweight" checked={bodyweightOnly} onCheckedChange={checked => change({ bodyweightOnly: checked })} />
         </div>

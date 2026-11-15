@@ -340,64 +340,15 @@ describe('cardio schedule warnings', () => {
 });
 
 describe('slot pattern warnings', () => {
-  const fullBody = (sessions: Session[]): Block => blocks({ sessions })[0];
-
-  it('warns about an exercise whose pattern is not one its slot plans for', () => {
+  it('leaves the pattern of each slot to the coach', () => {
     // arrange
-    const planned = session('s1', [row('frontSquat', 'A'), row('pushUp', 'C'), row('burpee', 'D')]);
+    const chosen = session('s1', [row('frontSquat', 'A'), row('pushUp', 'C'), row('burpee', 'D')]);
 
     // act
-    const found = warnings(content([fullBody([planned])]), context());
+    const found = warnings(content([blocks({ sessions: [chosen] })[0]]), context());
 
     // assert
-    expect(found.filter(finding => finding.code === 'role-slot-mismatch')).toEqual([
-      { code: 'role-slot-mismatch', blockId: 'b1', sessionId: 's1', detail: 'Exercise burpee' },
-    ]);
-    expect(warningMessage(found.find(finding => finding.code === 'role-slot-mismatch')!)).toBe('Exercise burpee does not match its slot');
-  });
-
-  it('follows the main lift pattern the coach chose', () => {
-    // arrange
-    const planned = { ...session('s1', [row('frontSquat', 'A')]), slotPatterns: { A: ['hinge' as const] } };
-
-    // act
-    const found = warnings(content([fullBody([planned])]), context());
-
-    // assert
-    expect(found).toContainEqual({ code: 'role-slot-mismatch', blockId: 'b1', sessionId: 's1', detail: 'Exercise frontSquat' });
-  });
-
-  it('never warns about a slot the coach left open to any pattern', () => {
-    // arrange
-    const planned = { ...session('s1', [row('pushUp', 'B')]), slotPatterns: { B: [] } };
-
-    // act
-    const found = warnings(content([fullBody([planned])]), context());
-
-    // assert
-    expect(codes(found)).not.toContain('role-slot-mismatch');
-  });
-
-  it('accepts any role in a slot whose patterns match', () => {
-    // arrange
-    const planned = session('s1', [row('pushUp', 'C'), row('frontSquat', 'A')]);
-
-    // act
-    const found = warnings(content([fullBody([planned])]), context());
-
-    // assert
-    expect(codes(found)).not.toContain('role-slot-mismatch');
-  });
-
-  it('never warns about rows in a slot without a plan or exercises without a pattern', () => {
-    // arrange
-    const sessions = Array.from({ length: 6 }, (_, index) => session(`s${index + 1}`, index === 5 ? [row('jacks', 'D')] : [row('curl', 'C')]));
-
-    // act
-    const found = warnings(content([fullBody(sessions)]), context());
-
-    // assert
-    expect(codes(found)).not.toContain('role-slot-mismatch');
+    expect(found.filter(finding => finding.sessionId === 's1')).toEqual([]);
   });
 });
 

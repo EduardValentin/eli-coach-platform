@@ -131,7 +131,7 @@ function dropHint(row: Row, itemType: string | symbol | null): string {
 }
 
 const CARD_GRID_CLASS = cn(
-  'grid grid-cols-[auto_auto_auto_minmax(0,1fr)_auto] items-start gap-x-3 px-3',
+  'grid grid-cols-[auto_auto_auto_minmax(0,1fr)_auto] items-start gap-x-4 px-3',
   '[grid-template-areas:"handle_info_info_info_menu"_"._stats_stats_stats_stats"_"._sets_details_._."_"setspanel_setspanel_setspanel_setspanel_setspanel"_"detailspanel_detailspanel_detailspanel_detailspanel_detailspanel"]',
   'sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]',
   'sm:[grid-template-areas:"handle_info_sets_details_menu"_"._stats_stats_stats_stats"_"setspanel_setspanel_setspanel_setspanel_setspanel"_"detailspanel_detailspanel_detailspanel_detailspanel_detailspanel"]',

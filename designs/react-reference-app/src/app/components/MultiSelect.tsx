@@ -7,7 +7,6 @@ import { SelectTrigger, SelectTriggerChevron, selectTriggerClasses } from "./ui/
 import { cn } from "./ui/utils";
 
 type Summary = "count" | "names";
-type TriggerSize = ComponentProps<typeof SelectTrigger>["size"];
 
 const SEARCHABLE_ABOVE = 8;
 
@@ -70,7 +69,6 @@ function OptionList<Value extends string>({
     <>
       {searchable && (
         <SearchField
-          size="sm"
           placeholder="Search"
           aria-label={`Search ${label.toLowerCase()}`}
           value={query}
@@ -105,7 +103,6 @@ export function MultiSelect<Value extends string>({
   onToggle,
   counts,
   summary = "count",
-  size = "sm",
   placeholder,
   required,
   id,
@@ -119,7 +116,6 @@ export function MultiSelect<Value extends string>({
   onToggle: (value: Value) => void;
   counts?: Record<Value, number>;
   summary?: Summary;
-  size?: TriggerSize;
   placeholder?: string;
   required?: boolean;
   id?: string;
@@ -135,7 +131,6 @@ export function MultiSelect<Value extends string>({
           type="button"
           id={id}
           data-slot="select-trigger"
-          data-size={size}
           aria-label={triggerName(required ? `${label} (required)` : label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}

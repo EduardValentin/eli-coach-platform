@@ -5,16 +5,14 @@ import { cn } from './ui/utils';
 
 type SearchFieldProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   className?: string;
-  size?: 'md' | 'sm';
 };
 
 export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
-  ({ className, size = 'md', ...inputProps }, ref) => (
+  ({ className, ...inputProps }, ref) => (
     <div className={cn('relative', className)}>
       <Input
         ref={ref}
         type="search"
-        size={size}
         className="pl-9"
         {...inputProps}
       />

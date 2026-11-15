@@ -12,17 +12,16 @@ type OptionSelectProps<Value extends string | number> = {
   labelledBy?: string;
   triggerRef?: Ref<HTMLButtonElement>;
   disabled?: boolean;
-  size?: 'sm' | 'md';
 };
 
-export function OptionSelect<Value extends string | number>({ options, value, onChange, id, label, labelledBy, triggerRef, disabled, size }: OptionSelectProps<Value>) {
+export function OptionSelect<Value extends string | number>({ options, value, onChange, id, label, labelledBy, triggerRef, disabled }: OptionSelectProps<Value>) {
   return (
     <Select
       value={String(value)}
       disabled={disabled}
       onValueChange={next => onChange(options.find(option => String(option.value) === next)!.value)}
     >
-      <SelectTrigger ref={triggerRef} id={id} aria-label={label} aria-labelledby={labelledBy} size={size}>
+      <SelectTrigger ref={triggerRef} id={id} aria-label={label} aria-labelledby={labelledBy}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

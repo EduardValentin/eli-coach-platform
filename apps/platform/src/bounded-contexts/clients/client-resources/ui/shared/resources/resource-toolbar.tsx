@@ -23,16 +23,9 @@ type TagFilterProps = {
   options: readonly ResourceTagOptionView[];
   searched: number;
   onChoose: (tag: string | null) => void;
-  size: ResourceToolbarControlSize;
 };
 
-function TagFilter({
-  chosen,
-  options,
-  searched,
-  onChoose,
-  size,
-}: TagFilterProps) {
+function TagFilter({ chosen, options, searched, onChoose }: TagFilterProps) {
   return (
     <Select
       onValueChange={(value) => onChoose(value === ALL_TAGS ? null : value)}
@@ -41,7 +34,6 @@ function TagFilter({
       <SelectTrigger
         aria-label={RESOURCE_TOOLBAR_COPY.tag}
         className="w-full md:w-56"
-        size={size}
       >
         <SelectValue>{chosen ?? RESOURCE_TOOLBAR_COPY.allTags}</SelectValue>
       </SelectTrigger>
@@ -91,7 +83,6 @@ export function ResourceToolbar({
           onChoose={onChooseTag}
           options={tagOptions}
           searched={searched}
-          size={size}
         />
       </div>
       <SearchField
@@ -99,7 +90,6 @@ export function ResourceToolbar({
         className="min-w-0 md:w-64"
         onChange={(event) => onSearch(event.target.value)}
         placeholder={RESOURCE_TOOLBAR_COPY.searchPlaceholder}
-        size={size}
         value={typedSearch}
       />
       {sort?.(size)}

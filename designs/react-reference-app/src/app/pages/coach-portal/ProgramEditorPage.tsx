@@ -165,7 +165,7 @@ function ProgramEditor(props: EditorProps) {
             aria-label="Program editor"
             className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
           >
-            <TabsContent value={editor.mode} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-none">
+            <TabsContent value={editor.mode} tabIndex={-1} labelWithoutTabs={EDITOR_MODE_LABELS[editor.mode]} className="mx-auto w-full max-w-5xl flex-none">
               <EditorSectionContent
                 section={selected}
                 journey={journey}

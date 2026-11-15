@@ -69,11 +69,7 @@ export function SortControl<Key extends string>({
       data-parity-root="SortControl"
     >
       <Select onValueChange={chooseKey} value={sort.key}>
-        <SelectTrigger
-          aria-label="Sort by"
-          className="min-w-0 flex-1"
-          size={size}
-        >
+        <SelectTrigger aria-label="Sort by" className="min-w-0 flex-1">
           <SelectValue>
             {`${chosen.label}: ${directionLabel.toLowerCase()}`}
           </SelectValue>

@@ -128,7 +128,7 @@ function SetupFrame({ journey, title, onLeave, children }: SetupFrameProps) {
   useDocumentTitle(title);
   return (
     <div className="mx-auto w-full max-w-xl">
-      <PortalBackLink to={clientDetailPathForJourney(journey)} onClick={onLeave}>
+      <PortalBackLink to={clientDetailPathForJourney(journey)} onClick={onLeave} navigationLabel="Back to the client">
         Back to {journeyClientName(journey)}
       </PortalBackLink>
       {children}

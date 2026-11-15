@@ -12,11 +12,6 @@ export type SplitTemplate = {
 };
 
 const SESSION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
-const PATTERN_FAMILIES: readonly MovementPattern[][] = [
-  ['squat', 'hinge', 'lunge'],
-  ['horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull'],
-];
-const CHOOSABLE_SLOTS: readonly Slot[] = ['A', 'B'];
 const SLOT_LABELS: Record<Slot, string> = { A: 'Main lift', B: 'Secondary', C: 'Accessories', D: 'Core / finisher' };
 const CORE: SlotPlan = { slot: 'D', patterns: ['core'], label: SLOT_LABELS.D };
 const ISOLATION: SlotPlan = { slot: 'C', patterns: ['isolation'], label: SLOT_LABELS.C };
@@ -88,7 +83,7 @@ export const SPLIT_TEMPLATES: Record<SplitShape, SplitTemplate> = {
   },
 };
 
-function templatePlanFor(block: Block, session: Session, slot: Slot): SlotPlan | undefined {
+export function slotPlanFor(block: Block, session: Session, slot: Slot): SlotPlan | undefined {
   const index = block.sessions.findIndex(other => other.id === session.id);
   if (index < 0) return undefined;
   const template = SPLIT_TEMPLATES[block.split.shape].sessions(block.sessions.length)[index];
@@ -96,40 +91,6 @@ function templatePlanFor(block: Block, session: Session, slot: Slot): SlotPlan |
   const [first] = plans;
   if (!first) return undefined;
   return { ...first, patterns: plans.flatMap(plan => plan.patterns) };
-}
-
-export function slotPlanFor(block: Block, session: Session, slot: Slot): SlotPlan | undefined {
-  const plan = templatePlanFor(block, session, slot);
-  const chosen = session.slotPatterns?.[slot];
-  return plan && chosen ? { ...plan, patterns: chosen } : plan;
-}
-
-export function patternChoicesFor(block: Block, session: Session, slot: Slot): MovementPattern[] {
-  if (!CHOOSABLE_SLOTS.includes(slot)) return [];
-  const defaults = templatePlanFor(block, session, slot)?.patterns ?? [];
-  const family = PATTERN_FAMILIES.find(patterns => defaults.length > 0 && defaults.every(pattern => patterns.includes(pattern)));
-  return family ? [...family] : [];
-}
-
-function inFamilyOrder(patterns: readonly MovementPattern[], choices: readonly MovementPattern[]): MovementPattern[] {
-  return choices.filter(pattern => patterns.includes(pattern));
-}
-
-export function withMainPattern(block: Block, session: Session, pattern: MovementPattern): Session {
-  const [previous] = slotPlanFor(block, session, 'A')?.patterns ?? [];
-  const secondary = slotPlanFor(block, session, 'B')?.patterns ?? [];
-  const swapsWithSecondary = previous !== undefined && secondary.includes(pattern);
-  const swapped = inFamilyOrder(
-    secondary.map(other => (other === pattern ? previous : other)),
-    patternChoicesFor(block, session, 'B'),
-  );
-  const slotPatterns = { ...session.slotPatterns, A: [pattern], ...(swapsWithSecondary ? { B: swapped } : {}) };
-  return { ...session, slotPatterns };
-}
-
-export function withSecondaryPatterns(block: Block, session: Session, patterns: readonly MovementPattern[]): Session {
-  const slotPatterns = { ...session.slotPatterns, B: inFamilyOrder(patterns, patternChoicesFor(block, session, 'B')) };
-  return { ...session, slotPatterns };
 }
 
 export function splitLabel(block: Block): string {

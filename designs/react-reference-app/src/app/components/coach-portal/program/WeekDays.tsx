@@ -98,7 +98,7 @@ function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProp
 
   return (
     <DayCardFrame entry={block.calendar[day].kind}>
-      <div className="flex items-center justify-between gap-1 pb-3">
+      <div className="flex items-center justify-between gap-1 pb-5">
         <h4 className="line-clamp-2 min-w-0 break-words">
           <DayName day={day} />
         </h4>
@@ -135,7 +135,7 @@ export function WeekDays(props: WeekDaysProps) {
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-7">
+      <ol className="grid grid-cols-2 gap-x-2 gap-y-3 sm:grid-cols-7">
         {WEEKDAYS.map(day => (
           <DayCard key={day} {...props} day={day} onRequest={confirm.request} />
         ))}

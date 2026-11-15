@@ -1,11 +1,9 @@
 import * as React from "react";
-import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
 import { Badge } from "./badge";
 import { Checkbox } from "./checkbox";
 import type { FieldControlAttributes } from "./field-layout";
-import type { FieldSize } from "./field-size";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { SearchField } from "./search-field";
 import { SelectTriggerChevron, selectTriggerClasses } from "./select";
@@ -14,14 +12,7 @@ type MultiSelectSummary = "count" | "names";
 
 const SEARCHABLE_ABOVE = 8;
 
-const growingTriggerHeight = cva("h-auto", {
-  variants: {
-    size: {
-      sm: "min-h-(--size-control-sm)",
-      md: "min-h-(--size-control-md)",
-    },
-  },
-});
+const GROWING_TRIGGER_HEIGHT_CLASS = "h-auto min-h-(--size-control-md)";
 
 type MultiSelectSelection<Value extends string> = {
   label: string;
@@ -88,7 +79,6 @@ function OptionList<Value extends string>({
           className="m-1 shrink-0"
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search"
-          size="sm"
           value={query}
         />
       )}
@@ -123,7 +113,6 @@ function OptionList<Value extends string>({
 type MultiSelectProps<Value extends string> = OptionListProps<Value> &
   Partial<FieldControlAttributes> & {
     summary?: MultiSelectSummary;
-    size?: FieldSize;
     placeholder?: string;
     required?: boolean;
   };
@@ -141,7 +130,6 @@ export function MultiSelect<Value extends string>({
   placeholder,
   required,
   selected,
-  size = "sm",
   summary = "count",
   ...fieldAttributes
 }: MultiSelectProps<Value>) {
@@ -156,9 +144,9 @@ export function MultiSelect<Value extends string>({
             selected.length,
           )}
           className={cn(
-            selectTriggerClasses(size),
+            selectTriggerClasses(),
             "min-w-auto",
-            growingTriggerHeight({ size }),
+            GROWING_TRIGGER_HEIGHT_CLASS,
           )}
           type="button"
           {...fieldAttributes}

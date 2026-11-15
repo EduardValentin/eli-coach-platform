@@ -145,7 +145,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
       ) : (
         <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
       )}
-      <div className="flex min-w-0 flex-1 basis-48 flex-wrap items-center gap-x-3 gap-y-3">
+      <div className="flex min-w-0 flex-1 basis-48 flex-wrap items-center gap-x-3 gap-y-4">
         <BlockNumber block={block} index={index} size="sm" />
         {status.kind === 'ended' ? (
           <span className="text-sm font-medium text-text-primary sm:min-w-40">{typeLabel}</span>
@@ -159,7 +159,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
           />
         )}
         <span className="flex items-center gap-1.5 text-sm text-text-secondary">
-          <Input size="sm" frameClassName="w-16" className="tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
+          <Input className="w-16 tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
           wk
         </span>
         <span className="min-w-0 flex-1 basis-28 text-sm break-words text-text-label">

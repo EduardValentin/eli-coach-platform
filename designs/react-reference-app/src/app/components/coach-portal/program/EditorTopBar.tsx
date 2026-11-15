@@ -169,8 +169,8 @@ export function EditorTopBar({
 
   return (
     <>
-      <header className="@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
-        <nav aria-label="Editor" className="flex shrink-0 items-center gap-2">
+      <header className="@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
+        <nav aria-label="Editor" className="flex shrink-0 items-center gap-4">
           <Button asChild variant="ghost" size="icon-sm">
             <Link to={clientDetailPathForJourney(journey)} aria-label={`Back to ${name}`}>
               <ArrowLeft size={20} />
@@ -191,7 +191,7 @@ export function EditorTopBar({
           }}
           returnFocus={profileReturnFocus}
         >
-          <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 sm:flex-wrap">
+          <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-4 sm:flex-wrap">
             {(problemsCount > 0 || warningsCount > 0) && <ChecksButton problems={problemsCount} warnings={warningsCount} onOpen={onOpenChecks} />}
             <ClientProfileTrigger />
             {library && (

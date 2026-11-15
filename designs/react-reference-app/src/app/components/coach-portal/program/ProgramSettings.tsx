@@ -37,7 +37,7 @@ export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
           Level
         </Label>
         <div className={SELECT_CLASS}>
-          <OptionSelect id={ids.level} size="sm" options={LEVELS} value={program.level} onChange={level => onChange({ level })} />
+          <OptionSelect id={ids.level} options={LEVELS} value={program.level} onChange={level => onChange({ level })} />
         </div>
       </div>
       {languageFixed ? (
@@ -56,7 +56,7 @@ export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
             Language
           </Label>
           <div className={SELECT_CLASS}>
-            <OptionSelect id={ids.language} size="sm" options={LANGUAGES} value={program.language} onChange={language => onChange({ language })} />
+            <OptionSelect id={ids.language} options={LANGUAGES} value={program.language} onChange={language => onChange({ language })} />
           </div>
         </div>
       )}

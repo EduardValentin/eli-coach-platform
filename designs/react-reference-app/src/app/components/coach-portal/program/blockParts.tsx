@@ -48,7 +48,6 @@ export function BlockTypeSelect({ value, label, appearance, problemId, onChange 
   return (
     <Select value={value} onValueChange={next => onChange(next as BlockType)}>
       <SelectTrigger
-        size={appearance === 'field' ? 'sm' : undefined}
         aria-label={label}
         aria-describedby={problemId}
         aria-invalid={problemId ? true : undefined}

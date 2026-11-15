@@ -37,7 +37,7 @@ export function SessionNameInput({ value, inputRef, onChange }: SessionNameInput
     <Input
       ref={inputRef}
       appearance="inline-title"
-      frameClassName="flex-1 basis-40"
+      className="flex-1 basis-40"
       aria-label="Session name"
       value={value}
       onChange={event => onChange(event.target.value)}

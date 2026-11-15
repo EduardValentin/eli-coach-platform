@@ -163,7 +163,6 @@ export function ExerciseAboutSection({
             onValueChange={(sides) =>
               changeValues(form, { perSide: sides === ONE_SIDE })
             }
-            size="md"
             value={values.perSide ? ONE_SIDE : BOTH_SIDES}
           >
             <ChoiceOption value={BOTH_SIDES}>Both sides together</ChoiceOption>
@@ -212,7 +211,6 @@ export function ExerciseWorkSection({
             options={MUSCLES}
             placeholder="Pick muscles"
             selected={values.primaryMuscles}
-            size="md"
             summary="names"
             {...fieldProblemAttributes(
               primaryProblemId,
@@ -239,7 +237,6 @@ export function ExerciseWorkSection({
             )}
             placeholder="Pick muscles"
             selected={values.secondaryMuscles}
-            size="md"
             summary="names"
           />
         </SettingsRow>
@@ -261,7 +258,6 @@ export function ExerciseWorkSection({
             options={EQUIPMENT}
             placeholder="Pick equipment"
             selected={values.equipment}
-            size="md"
             summary="names"
           />
         </SettingsRow>

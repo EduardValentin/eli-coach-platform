@@ -67,6 +67,17 @@ describe("segmented tabs", () => {
     expect(screen.getByRole("tablist")).toHaveClass("max-w-full", "flex-wrap");
   });
 
+  it("draws its bar inside the soft control border", () => {
+    // arrange, act
+    renderTabs();
+
+    // assert
+    expect(screen.getByRole("tablist")).toHaveClass(
+      "border",
+      "border-control-border-soft",
+    );
+  });
+
   it("spans an odd last tab across both columns when the bar pairs up", () => {
     // arrange, act
     renderTabs();

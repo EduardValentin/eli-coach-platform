@@ -68,7 +68,6 @@ export function SortControl<Key extends string>({
       <Select value={sort.key} onValueChange={chooseKey}>
         <SelectTrigger
           aria-label="Sort by"
-          size={size}
           className="min-w-0 flex-1"
         >
           <SelectValue>

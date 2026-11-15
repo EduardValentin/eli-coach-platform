@@ -219,7 +219,6 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
                 className="w-full sm:w-72"
                 onChange={(event) => listing.changeQuery(event.target.value)}
                 placeholder={search.placeholder}
-                size="sm"
                 value={selection.query}
               />
             )}

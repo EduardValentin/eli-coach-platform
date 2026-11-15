@@ -157,7 +157,6 @@ export function RecipePicker({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search recipes…"
             aria-label="Search recipes by name"
-            size="sm"
           />
 
           {/* Dropdown filters */}

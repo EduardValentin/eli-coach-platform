@@ -141,7 +141,7 @@ describe('BlockWorkspace', () => {
     await user.click(within(slotGroup('B · Secondary')).getByRole('button', { name: 'Add or drop an exercise in B · Secondary' }));
     expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveAccessibleDescription('Adding to Full Body A · B Secondary');
     expect(within(library()).queryByRole('button', { name: 'Stop adding' })).not.toBeInTheDocument();
-    expect(within(library()).getByRole('button', { name: /^Pattern, 2 selected/ })).toBeInTheDocument();
+    expect(within(library()).getByRole('button', { name: 'Pattern' })).toBeInTheDocument();
 
     // act
     await addFromLibrary(user, 'Romanian Deadlift');
@@ -197,42 +197,25 @@ describe('BlockWorkspace', () => {
     expect(positions()).toEqual(['C', 'C']);
   });
 
-  it('lets the coach choose the main lift pattern and swaps it out of the secondary slot', async () => {
+  it('names no pattern on an empty slot and offers no pattern choice', async () => {
     // arrange
     const user = await openFirstBlock();
-    await clearFirstSession(user);
-    const mainLift = within(slotGroup('A · Main lift')).getByRole('radiogroup', { name: 'Main lift pattern' });
-    const secondary = within(slotGroup('B · Secondary')).getByRole('group', { name: 'Secondary patterns' });
 
     // act
-    await user.click(within(mainLift).getByRole('radio', { name: 'Hinge' }));
+    await clearFirstSession(user);
 
     // assert
-    expect(within(mainLift).getByRole('radio', { name: 'Hinge' })).toBeChecked();
-    expect(within(secondary).getByRole('checkbox', { name: 'Squat' })).toBeChecked();
-    expect(within(secondary).getByRole('checkbox', { name: 'Hinge' })).not.toBeChecked();
-    expect(within(secondary).getByRole('checkbox', { name: 'Lunge' })).toBeChecked();
+    const mainLift = slotGroup('A · Main lift');
+    expect(within(mainLift).queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(within(mainLift).queryByText(/^Patterns:/)).not.toBeInTheDocument();
+    expect(within(slotGroup('B · Secondary')).queryByRole('group')).not.toBeInTheDocument();
+    expect(within(slotGroup('B · Secondary')).queryByText('Any pattern')).not.toBeInTheDocument();
   });
 
-  it('leaves the secondary slot open to any pattern when the coach clears every pattern', async () => {
+  it('names the pattern of the exercise placed in a slot', async () => {
     // arrange
     const user = await openFirstBlock();
     await clearFirstSession(user);
-    const secondary = within(slotGroup('B · Secondary')).getByRole('group', { name: 'Secondary patterns' });
-
-    // act
-    await user.click(within(secondary).getByRole('checkbox', { name: 'Hinge' }));
-    await user.click(within(secondary).getByRole('checkbox', { name: 'Lunge' }));
-
-    // assert
-    expect(within(slotGroup('B · Secondary')).getByText('Any pattern')).toBeInTheDocument();
-  });
-
-  it('names the pattern of the exercise in a slot instead of the planned one', async () => {
-    // arrange
-    const user = await openFirstBlock();
-    await clearFirstSession(user);
-    expect(within(slotGroup('A · Main lift')).getByRole('radio', { name: 'Squat' })).toBeChecked();
 
     await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
     const source = within(library()).getByRole('button', { name: 'Add Romanian Deadlift' }).closest('li')?.firstElementChild as HTMLElement;
@@ -245,7 +228,6 @@ describe('BlockWorkspace', () => {
     fireEvent.mouseUp(document.body, { clientX: 60, clientY: 60 });
 
     // assert
-    expect(within(slotGroup('A · Main lift')).queryByRole('radiogroup', { name: 'Main lift pattern' })).not.toBeInTheDocument();
     expect(within(slotGroup('A · Main lift')).getByText('Hinge')).toBeInTheDocument();
     expect(within(slotGroup('A · Main lift')).queryByText('Squat')).not.toBeInTheDocument();
   });
@@ -279,10 +261,11 @@ describe('BlockWorkspace', () => {
     const user = await openFirstBlock();
     const main = card(/^A /);
     await user.click(within(main).getByRole('button', { name: /^Sets for / }));
-    const kind = within(main).getByRole('radiogroup', { name: 'Set 3 kind' });
+    const warmUp = within(main).getByRole('checkbox', { name: 'Set 3 is a warm-up set' });
+    expect(warmUp).not.toBeChecked();
 
     // act
-    await user.click(within(kind).getByRole('radio', { name: 'Warm-up' }));
+    await user.click(warmUp);
 
     // assert
     expect(within(main).queryByRole('textbox', { name: 'Set 3 RIR' })).not.toBeInTheDocument();
@@ -316,15 +299,15 @@ describe('BlockWorkspace', () => {
 
     // assert
     const added = `Set ${before + 1}`;
-    expect(within(within(main).getByRole('radiogroup', { name: `${added} kind` })).getByRole('radio', { name: 'Working' })).toBeChecked();
+    expect(within(main).getByRole('checkbox', { name: `${added} is a warm-up set` })).not.toBeChecked();
     expect(setStats(main)).toEqual(expect.arrayContaining(['Warm-up 2 sets', 'Working 4 sets × 12–15']));
 
     // act
-    await user.click(within(within(main).getByRole('radiogroup', { name: `${added} kind` })).getByRole('radio', { name: 'Warm-up' }));
+    await user.click(within(main).getByRole('checkbox', { name: `${added} is a warm-up set` }));
     await user.click(within(main).getByRole('button', { name: 'Add set' }));
 
     // assert
-    expect(within(within(main).getByRole('radiogroup', { name: `Set ${before + 2} kind` })).getByRole('radio', { name: 'Warm-up' })).toBeChecked();
+    expect(within(main).getByRole('checkbox', { name: `Set ${before + 2} is a warm-up set` })).toBeChecked();
     expect(setStats(main)).toEqual(expect.arrayContaining(['Warm-up 4 sets', 'Working 3 sets × 12–15']));
 
     // act

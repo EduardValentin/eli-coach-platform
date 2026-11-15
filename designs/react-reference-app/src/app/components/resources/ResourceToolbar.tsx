@@ -43,13 +43,11 @@ function TagFilter({
   search,
   chosen,
   onChoose,
-  size,
 }: {
   resources: readonly Resource[];
   search: string;
   chosen: string | null;
   onChoose: (tag: string | null) => void;
-  size: 'sm' | 'md';
 }) {
   const searchedCount = resources.filter((resource) =>
     matchesSearch(resource, search),
@@ -60,7 +58,7 @@ function TagFilter({
       onValueChange={(value) => onChoose(value === ALL_TAGS ? null : value)}
       value={chosen ?? ALL_TAGS}
     >
-      <SelectTrigger aria-label="Tag" className="w-full md:w-56" size={size}>
+      <SelectTrigger aria-label="Tag" className="w-full md:w-56">
         <SelectValue>{chosen ?? 'All tags'}</SelectValue>
       </SelectTrigger>
       <SelectContent>
@@ -110,7 +108,6 @@ export function ResourceToolbar({
           onChoose={onTagChange}
           resources={resources}
           search={filter.query}
-          size={size}
         />
       </div>
       <SearchField
@@ -118,7 +115,6 @@ export function ResourceToolbar({
         className="min-w-0 md:w-64"
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search by title"
-        size={size}
         value={typedSearch}
       />
       {perspective === 'coach' && (

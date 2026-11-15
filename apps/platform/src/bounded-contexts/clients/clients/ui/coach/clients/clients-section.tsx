@@ -79,7 +79,6 @@ export function ClientsSection({ clients, avatarSrcs }: ClientsSectionProps) {
             id={SEARCH_FIELD_ID}
             onChange={(event) => changeQuery(event.target.value)}
             placeholder="Search by name or email"
-            size="sm"
             value={query}
           />
         </div>

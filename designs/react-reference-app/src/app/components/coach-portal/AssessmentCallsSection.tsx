@@ -237,7 +237,6 @@ function StatusFilter({
       <SelectTrigger
         aria-label="Status"
         data-parity="status-filter"
-        size="sm"
         className="w-full"
       >
         <SelectValue>{chosenLabel}</SelectValue>
@@ -411,7 +410,6 @@ export function AssessmentCallsSection({
                 id={SEARCH_FIELD_ID}
                 aria-label="Search calls"
                 placeholder="Search by name or email"
-                size="sm"
                 className="w-full sm:w-72"
                 value={query}
                 onChange={(event) => changeQuery(event.target.value)}

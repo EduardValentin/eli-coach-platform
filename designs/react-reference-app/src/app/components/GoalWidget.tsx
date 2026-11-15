@@ -118,7 +118,7 @@ export function GoalWidget({
             onValueChange={(value) => setSelectedType(value as GoalType)}
             value={selectedType}
           >
-            <SelectTrigger aria-label="Goal type" size="sm" className="w-full">
+            <SelectTrigger aria-label="Goal type" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

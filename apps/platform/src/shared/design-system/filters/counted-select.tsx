@@ -1,4 +1,3 @@
-import type { FieldSize } from "../primitives/field-size";
 import {
   Select,
   SelectContent,
@@ -14,7 +13,6 @@ type CountedSelectProps<Value extends string> = {
   labels: Readonly<Record<Value, string>>;
   onChoose: (value: Value) => void;
   options: readonly Value[];
-  size?: FieldSize;
   triggerParity?: string;
   value: Value;
 };
@@ -26,7 +24,6 @@ export function CountedSelect<Value extends string>({
   labels,
   onChoose,
   options,
-  size = "sm",
   triggerParity,
   value,
 }: CountedSelectProps<Value>) {
@@ -40,7 +37,7 @@ export function CountedSelect<Value extends string>({
 
   return (
     <Select onValueChange={choose} value={value}>
-      <SelectTrigger aria-label={label} data-parity={triggerParity} size={size}>
+      <SelectTrigger aria-label={label} data-parity={triggerParity}>
         <SelectValue>{labels[value]}</SelectValue>
       </SelectTrigger>
       <SelectContent>

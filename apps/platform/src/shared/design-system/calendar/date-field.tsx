@@ -6,7 +6,7 @@ import { cn } from "../lib/cn";
 import { useDisplayTimeZone } from "../lib/use-display-time-zone";
 import { Popover, PopoverContent, PopoverTrigger } from "../primitives";
 import { FIELD_FRAME_CLASS } from "../primitives/field-frame";
-import { fieldSizeClasses } from "../primitives/field-size";
+import { FIELD_SIZE_CLASS } from "../primitives/field-size";
 import { Calendar, type CalendarYearRange } from "./calendar";
 
 const TRIGGER_CLASS =
@@ -80,7 +80,7 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
             className={cn(
               FIELD_FRAME_CLASS,
               TRIGGER_CLASS,
-              fieldSizeClasses({ size: "md" }),
+              FIELD_SIZE_CLASS,
               className,
             )}
             onBlur={leaveField}

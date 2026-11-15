@@ -5,9 +5,7 @@ import { MOVEMENT_PATTERN_LABELS, type MovementPattern } from '../../../domain/e
 import { positionLabel, type Row, type Session, type Slot } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
 import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
-import { CheckboxChip } from '../../CheckboxChip';
 import { IconActionButton } from '../../IconActionButton';
-import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { EYEBROW_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
@@ -20,8 +18,6 @@ import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, t
 type SlotGroupProps = {
   session: Session;
   plan: SlotPlan;
-  choices: readonly MovementPattern[];
-  onPatternsChange: (patterns: MovementPattern[]) => void;
   library: readonly Exercise[];
   edits: RowEdits;
   slots: readonly SlotTarget[];
@@ -47,50 +43,6 @@ function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
   );
 }
 
-const SINGLE_PATTERN_SLOTS: readonly Slot[] = ['A'];
-
-type PatternPickerProps = { plan: SlotPlan; choices: readonly MovementPattern[]; onChange: (patterns: MovementPattern[]) => void };
-
-function MainPatternPicker({ plan, choices, onChange }: PatternPickerProps) {
-  return (
-    <ChoiceGroup
-      size="xs"
-      aria-label={`${plan.label} pattern`}
-      value={plan.patterns[0] ?? ''}
-      onValueChange={value => onChange([value as MovementPattern])}
-      className="w-auto"
-    >
-      {choices.map(pattern => (
-        <ChoiceOption key={pattern} value={pattern}>
-          {MOVEMENT_PATTERN_LABELS[pattern]}
-        </ChoiceOption>
-      ))}
-    </ChoiceGroup>
-  );
-}
-
-function PatternChips({ plan, choices, onChange }: PatternPickerProps) {
-  const toggle = (pattern: MovementPattern, checked: boolean) =>
-    onChange(choices.filter(choice => (choice === pattern ? checked : plan.patterns.includes(choice))));
-  return (
-    <fieldset className="flex flex-wrap items-center gap-2">
-      <legend className="sr-only">{`${plan.label} patterns`}</legend>
-      {choices.map(pattern => (
-        <CheckboxChip
-          key={pattern}
-          size="compact"
-          aria-label={MOVEMENT_PATTERN_LABELS[pattern]}
-          checked={plan.patterns.includes(pattern)}
-          onCheckedChange={checked => toggle(pattern, checked)}
-        >
-          {MOVEMENT_PATTERN_LABELS[pattern]}
-        </CheckboxChip>
-      ))}
-      {plan.patterns.length === 0 && <span className="text-xs text-text-secondary">Any pattern</span>}
-    </fieldset>
-  );
-}
-
 function PatternText({ patterns }: { patterns: readonly MovementPattern[] }) {
   if (patterns.length === 0) return null;
   return (
@@ -101,13 +53,7 @@ function PatternText({ patterns }: { patterns: readonly MovementPattern[] }) {
   );
 }
 
-function PatternTags({ plan, choices, onChange }: PatternPickerProps) {
-  if (choices.length === 0) return <PatternText patterns={plan.patterns} />;
-  if (SINGLE_PATTERN_SLOTS.includes(plan.slot)) return <MainPatternPicker plan={plan} choices={choices} onChange={onChange} />;
-  return <PatternChips plan={plan} choices={choices} onChange={onChange} />;
-}
-
-export function SlotGroup({ session, plan, choices, onPatternsChange, library, edits, slots, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
+export function SlotGroup({ session, plan, library, edits, slots, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
   const announce = useEditorAnnouncer();
   const section = useRef<HTMLElement>(null);
   const focusLater = usePendingFocus();
@@ -155,11 +101,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
       <header className="flex items-start gap-3">
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
           <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
-          {units.length > 0 ? (
-            <PatternText patterns={slotExercisePatterns(session, slot, library)} />
-          ) : (
-            <PatternTags plan={plan} choices={choices} onChange={onPatternsChange} />
-          )}
+          <PatternText patterns={slotExercisePatterns(session, slot, library)} />
         </div>
         {several && units.length > 0 && (
           <IconActionButton icon={Plus} label={`Add exercise to ${heading}`} hint="Add exercise" data-slot-add="" onClick={() => onAdd(slot)} />

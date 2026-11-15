@@ -14,7 +14,7 @@ const tabsListClasses = cva(
       variant: {
         default: "h-9 rounded-compact p-[3px]",
         segmented: cn(
-          "h-auto max-w-full flex-wrap gap-1 rounded-compact p-[3px]",
+          "h-auto max-w-full flex-wrap gap-1 rounded-compact border border-control-border-soft p-[3px]",
           PAIRS_A_FOURTH_TRIGGER_BELOW_SM,
         ),
       },

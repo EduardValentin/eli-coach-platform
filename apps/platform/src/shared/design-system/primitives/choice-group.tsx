@@ -2,7 +2,6 @@ import * as React from "react";
 import { RadioGroup as RadixRadioGroup } from "radix-ui";
 
 import { cn } from "../lib/cn";
-import type { FieldSize } from "./field-size";
 import { RadioGroup } from "./radio-group";
 
 const GROUP_LOOKS = {
@@ -21,26 +20,21 @@ type ChoiceGroupLook = keyof typeof GROUP_LOOKS;
 
 type ChoiceGroupProps = React.ComponentPropsWithoutRef<typeof RadioGroup> & {
   look?: ChoiceGroupLook;
-  size?: FieldSize;
 };
 
 type ChoiceOptionProps = React.ComponentPropsWithoutRef<
   typeof RadixRadioGroup.Item
 >;
 
-const ChoiceGroupContext = React.createContext<{
-  look: ChoiceGroupLook;
-  size: FieldSize;
-}>({ look: "segmented", size: "sm" });
+const ChoiceGroupLookContext =
+  React.createContext<ChoiceGroupLook>("segmented");
 
 export const ChoiceGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroup>,
   ChoiceGroupProps
->(({ className, look = "segmented", size = "sm", ...props }, ref) => {
-  const appearance = React.useMemo(() => ({ look, size }), [look, size]);
-
+>(({ className, look = "segmented", ...props }, ref) => {
   return (
-    <ChoiceGroupContext.Provider value={appearance}>
+    <ChoiceGroupLookContext.Provider value={look}>
       <RadioGroup
         className={cn(GROUP_LOOKS[look], className)}
         loop
@@ -48,7 +42,7 @@ export const ChoiceGroup = React.forwardRef<
         ref={ref}
         {...props}
       />
-    </ChoiceGroupContext.Provider>
+    </ChoiceGroupLookContext.Provider>
   );
 });
 
@@ -58,17 +52,14 @@ export const ChoiceOption = React.forwardRef<
   React.ElementRef<typeof RadixRadioGroup.Item>,
   ChoiceOptionProps
 >(({ className, ...props }, ref) => {
-  const { look, size } = React.useContext(ChoiceGroupContext);
+  const look = React.useContext(ChoiceGroupLookContext);
 
   return (
     <RadixRadioGroup.Item
       className={cn(
         OPTION_LOOKS[look],
         {
-          "min-h-[calc(var(--size-control-sm)-6px)]":
-            look === "segmented" && size === "sm",
-          "min-h-[calc(var(--size-control-md)-8px)]":
-            look === "segmented" && size === "md",
+          "min-h-[calc(var(--size-control-md)-8px)]": look === "segmented",
         },
         className,
       )}

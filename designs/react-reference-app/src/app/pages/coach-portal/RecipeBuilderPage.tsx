@@ -726,7 +726,6 @@ function RecipeBuilderInner() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name"
               aria-label="Search foods"
-              size="sm"
             />
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-page">
@@ -865,7 +864,6 @@ function RecipeBuilderInner() {
                         }
                       >
                         <SelectTrigger
-                          size="sm"
                           className="w-32"
                           aria-label={`Cooking method for ${food?.name}`}
                         >

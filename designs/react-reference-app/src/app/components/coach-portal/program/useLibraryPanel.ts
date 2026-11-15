@@ -29,7 +29,7 @@ export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarge
   if (target.kind === 'slot') {
     const plan = slotPlanFor(block, session, target.slot);
     const label = plan?.label ?? target.slot;
-    return { ...into(`${target.slot} ${label}`), type: 'resistance', patterns: plan?.patterns ?? [] };
+    return { ...into(`${target.slot} ${label}`), type: 'resistance', patterns: [] };
   }
   const row = session.rows.find(other => other.id === target.rowId);
   const exercise = library.find(item => item.id === row?.exerciseId);

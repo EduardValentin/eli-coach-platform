@@ -29,7 +29,7 @@ describe("MultiSelect", () => {
     renderFilter([]);
 
     // assert
-    expect(screen.getByRole("button", { name: "Tags" })).toHaveAttribute("data-size", "sm");
+    expect(screen.getByRole("button", { name: "Tags" })).toHaveClass("min-h-(--size-control-md)");
   });
 
   it("names itself as required, with how many options are chosen", () => {

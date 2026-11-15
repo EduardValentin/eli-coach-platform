@@ -97,7 +97,7 @@ function RailGroup({ title, children }: { title: string; children: ReactNode }) 
       <p id={titleId} className={cn(EYEBROW_CLASS, 'px-3')}>
         {title}
       </p>
-      <ul aria-labelledby={titleId} className="grid gap-2">
+      <ul aria-labelledby={titleId} className="grid gap-3">
         {children}
       </ul>
     </div>

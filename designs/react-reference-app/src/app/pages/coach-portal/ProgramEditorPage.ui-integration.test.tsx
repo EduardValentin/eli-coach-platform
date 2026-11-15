@@ -32,6 +32,12 @@ function firstCheckInFormAfter(dayOne: Date): Date {
   return day;
 }
 
+function expectEditorPanelNamedByExistingElements(name: string) {
+  const panel = screen.getByRole('tabpanel', { name });
+  const labelledBy = (panel.getAttribute('aria-labelledby') ?? '').split(' ').filter(id => id !== '');
+  expect(labelledBy.every(id => document.getElementById(id) !== null)).toBe(true);
+}
+
 describe('ProgramEditorPage', () => {
   it('opens on the overview for version 1 with three suggested blocks', () => {
     // arrange
@@ -384,9 +390,29 @@ describe('ProgramEditorPage', () => {
     // assert
     expect(within(screen.getByRole('dialog', { name: 'Preview as client' })).getByRole('button', { name: 'Close' })).toHaveFocus();
   });
+  it('names the editor panel by the Structure tab beside it', () => {
+    // arrange
+    // act
+    renderProgramEditor('&pseed=draft&jstage=approved');
+
+    // assert
+    expectEditorPanelNamedByExistingElements('Structure');
+  });
 });
 
 describe('ProgramEditorPage on a phone', () => {
+  it('names the editor panel while the outline with its tabs is closed', () => {
+    // arrange
+    stubPhoneViewport();
+
+    // act
+    renderProgramEditor('&pseed=draft&jstage=approved');
+
+    // assert
+    expect(screen.queryByRole('tablist', { name: 'Editing mode' })).not.toBeInTheDocument();
+    expectEditorPanelNamedByExistingElements('Structure');
+  });
+
   it('opens the outline as a modal sheet and keeps the rest out of reach', async () => {
     // arrange
     stubPhoneViewport();

@@ -41,7 +41,6 @@ export function ClientStatusFilter({
         aria-label="Status"
         className="w-full sm:w-56"
         data-parity="status-filter"
-        size="sm"
       >
         <SelectValue>{statusOptionLabel(status)}</SelectValue>
       </SelectTrigger>

@@ -63,8 +63,8 @@ function IntensityField({ value, onChange }: { value: CardioIntensity; onChange:
       <span id={labelId} className={LABEL_CLASS}>
         Intensity
       </span>
-      <div className="w-52 max-w-full">
-        <ChoiceGroup size="xs" aria-labelledby={labelId} value={value} onValueChange={next => onChange(next as CardioIntensity)}>
+      <div className="w-fit max-w-full">
+        <ChoiceGroup aria-labelledby={labelId} value={value} onValueChange={next => onChange(next as CardioIntensity)}>
           {INTENSITY_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
               {option.label}
@@ -96,7 +96,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   const { items } = segment;
   const addButton = useRef<HTMLButtonElement>(null);
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
       <fieldset className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
         <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
@@ -118,7 +118,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
         />
       </fieldset>
-      <div className="mt-1 flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <span className={LABEL_CLASS}>Exercises</span>
         <IconActionButton ref={addButton} icon={Plus} label="Add exercise to the intervals" hint="Add exercise" onClick={onAddItem} />
       </div>
@@ -139,8 +139,8 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           return (
             <>
               <CountField className="w-16" label={`${name} ${measure}`} value={amount} onCommit={next => onItem(measuredItem(item, measure, next))} />
-              <div className="w-28 shrink-0">
-                <ChoiceGroup size="xs" aria-label={`${name} measured in`} value={measure} onValueChange={next => onItem(measuredItem(item, next as ItemMeasure, amount))}>
+              <div className="w-fit shrink-0">
+                <ChoiceGroup aria-label={`${name} measured in`} value={measure} onValueChange={next => onItem(measuredItem(item, next as ItemMeasure, amount))}>
                   {MEASURE_OPTIONS.map(option => (
                     <ChoiceOption key={option.value} value={option.value}>
                       {option.label}

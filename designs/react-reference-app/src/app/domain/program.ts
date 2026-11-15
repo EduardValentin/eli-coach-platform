@@ -60,12 +60,10 @@ export type Row = {
 export type WarmUpItem = { id: string; exerciseId: string; sets: number; reps?: Range; seconds?: number };
 export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
 export type CoolDown = { enabled: boolean; items: CoolDownItem[] };
-export type SlotPatterns = Partial<Record<Slot, MovementPattern[]>>;
 export type Session = {
   id: string;
   originId: string;
   name: string;
-  slotPatterns?: SlotPatterns;
   warmUp: { items: WarmUpItem[] };
   coolDown: CoolDown;
   rows: Row[];

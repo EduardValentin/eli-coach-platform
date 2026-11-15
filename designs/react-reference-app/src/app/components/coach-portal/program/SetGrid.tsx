@@ -6,20 +6,16 @@ import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { RowTextField, useRowTextField } from './RowTextField';
 import { formatRest, parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM } from './rowFields';
-import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { Checkbox } from '../../ui/checkbox';
 
 type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChange: (row: Row) => void };
 type SetKind = SetSpec['kind'];
 
-const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.5rem_9.5rem_4rem_4rem_7.5rem_2rem]';
-const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.5rem_9.5rem_6.5rem_4rem_7.5rem_2rem]';
+const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.5rem_5rem_4rem_4rem_7.5rem_2rem]';
+const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.5rem_5rem_6.5rem_4rem_7.5rem_2rem]';
 const MINI_LABEL_CLASS = cn(LABEL_CLASS, '@min-[34rem]:hidden');
 const FIELD_WIDTH = 'w-full @min-[34rem]:w-16';
 const WEIGHT_WIDTH = 'w-full @min-[34rem]:w-20';
-const KIND_OPTIONS: { value: SetKind; label: string }[] = [
-  { value: 'warm-up', label: 'Warm-up' },
-  { value: 'working', label: 'Working' },
-];
 const WEIGHT_PROBLEM = 'Use a weight in kg, or leave it empty';
 
 function wideColumns(repsSuffix: string): string {
@@ -66,7 +62,7 @@ function SetCell({ label, children }: { label: string; children: ReactNode }) {
 
 function NoRir({ label }: { label: string }) {
   return (
-    <span className="flex h-(--size-control-xs) items-center px-2 text-sm text-text-secondary">
+    <span className="flex h-(--size-control-md) items-center px-2 text-sm text-text-secondary">
       <span aria-hidden="true">—</span>
       <span className="sr-only">{`${label} RIR: none on a warm-up set`}</span>
     </span>
@@ -121,18 +117,21 @@ function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange,
   const hasProblem = Boolean(reps.problem ?? rirProblem ?? weight.problem);
 
   return (
-    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 py-2 @min-[34rem]:items-start @min-[34rem]:gap-y-2 @min-[34rem]:py-2', wideColumns(repsSuffix))}>
-      <span className="text-sm font-medium text-text-secondary tabular-nums @min-[34rem]:flex @min-[34rem]:h-(--size-control-xs) @min-[34rem]:items-center">
+    <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 py-2 @min-[34rem]:gap-y-2', wideColumns(repsSuffix))}>
+      <span className="text-sm font-medium text-text-secondary tabular-nums @min-[34rem]:flex @min-[34rem]:h-(--size-control-md) @min-[34rem]:items-center">
         <span className="@min-[34rem]:sr-only">Set </span>
         {index + 1}
       </span>
-      <ChoiceGroup size="xs" aria-label={`${label} kind`} value={set.kind} onValueChange={kind => onChange(asKind(set, kind as SetKind, rirForNewWorking))}>
-        {KIND_OPTIONS.map(option => (
-          <ChoiceOption key={option.value} value={option.value}>
-            {option.label}
-          </ChoiceOption>
-        ))}
-      </ChoiceGroup>
+      <label className="flex h-(--size-control-md) cursor-pointer items-center gap-3 text-sm text-text-primary @min-[34rem]:justify-center">
+        <Checkbox
+          aria-label={`${label} is a warm-up set`}
+          checked={!working}
+          onCheckedChange={checked => onChange(asKind(set, checked === true ? 'warm-up' : 'working', rirForNewWorking))}
+        />
+        <span aria-hidden="true" className="@min-[34rem]:hidden">
+          Warm-up
+        </span>
+      </label>
       <div className="col-span-full grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-2 @min-[18rem]:grid-cols-[minmax(0,0.9fr)_minmax(0,0.8fr)_minmax(0,1.7fr)_auto] @min-[34rem]:contents">
         <SetCell label="Reps">{reps.field}</SetCell>
         <SetCell label="RIR">{working ? rir.field : <NoRir label={label} />}</SetCell>
@@ -166,7 +165,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
       <div>
         <div aria-hidden="true" className={cn('hidden gap-x-2 pb-1 @min-[34rem]:grid', wideColumns(repsSuffix), LABEL_CLASS)}>
           <span>Set</span>
-          <span>Kind</span>
+          <span className="text-center">Warm-up</span>
           <span>Reps</span>
           <span>RIR</span>
           <span>Weight</span>
@@ -186,8 +185,8 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           ))}
         </ol>
       </div>
-      <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle pt-3 @min-[34rem]:grid @min-[34rem]:items-start @min-[34rem]:gap-x-2', wideColumns(repsSuffix))}>
-        <span aria-hidden="true" className={cn(LABEL_CLASS, 'flex h-(--size-control-xs) items-center @min-[34rem]:col-span-2')}>
+      <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle pt-3 @min-[34rem]:grid @min-[34rem]:gap-x-2', wideColumns(repsSuffix))}>
+        <span aria-hidden="true" className={cn(LABEL_CLASS, 'flex h-(--size-control-md) items-center @min-[34rem]:col-span-2')}>
           Rest between sets
         </span>
         <div className="@min-[34rem]:col-span-3">
@@ -202,7 +201,7 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           />
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-x-2 gap-y-6">
         <Button variant="ghost" size="xs" onClick={() => changeSets(withSetAdded(sets))}>
           <Plus aria-hidden="true" />
           Add set

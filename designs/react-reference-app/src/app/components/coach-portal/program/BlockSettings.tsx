@@ -48,7 +48,7 @@ function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'bl
         {labelId => (
           <>
             <span className="flex items-center gap-1.5 text-sm text-text-secondary">
-              <Input size="sm" frameClassName="w-16" className="tabular-nums" aria-labelledby={labelId} {...weeks.inputProps} />
+              <Input className="w-16 tabular-nums" aria-labelledby={labelId} {...weeks.inputProps} />
               wk
             </span>
             {weeks.problem && <InlineProblem id={weeks.problemId}>{weeks.problem}</InlineProblem>}
@@ -82,7 +82,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       <Setting label="Split">
         {labelId => (
           <Select value={block.split.shape} onValueChange={value => onChangeShape(value as SplitShape, splitTrigger.current)}>
-            <SelectTrigger ref={splitTrigger} size="sm" className="w-36" aria-labelledby={labelId}>
+            <SelectTrigger ref={splitTrigger} className="w-36" aria-labelledby={labelId}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -98,7 +98,6 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       <Setting label="Training days">
         {labelId => (
           <OptionSelect
-            size="sm"
             labelledBy={labelId}
             triggerRef={daysTrigger}
             options={TRAINING_DAY_OPTIONS}
@@ -110,8 +109,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       <Setting label="Split name">
         {labelId => (
           <Input
-            size="sm"
-            frameClassName="w-40"
+            className="w-40"
             aria-labelledby={labelId}
             placeholder={SPLIT_TEMPLATES[block.split.shape].label}
             value={block.split.name}
@@ -122,7 +120,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       <Setting label="Target">
         {labelId => (
           <Select value={String(block.targetMinutes)} onValueChange={value => onChange({ ...block, targetMinutes: Number(value) })}>
-            <SelectTrigger size="sm" className="w-28" aria-labelledby={labelId}>
+            <SelectTrigger className="w-28" aria-labelledby={labelId}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -138,7 +136,6 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       <Setting label="Daily steps">
         {labelId => (
           <OptionSelect
-            size="sm"
             labelledBy={labelId}
             options={stepOptions(block.dailySteps)}
             value={block.dailySteps}

@@ -246,7 +246,6 @@ export function FoodLibraryAside({
             aria-label="Search foods"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by name"
-            size="sm"
             value={query}
           />
         </div>
@@ -517,7 +516,6 @@ function IngredientRow({
         <SelectTrigger
           aria-label={`Cooking method for ${foodName}`}
           className="w-32"
-          size="sm"
         >
           <SelectValue>{COOKING_METHOD_LABELS[method]}</SelectValue>
         </SelectTrigger>

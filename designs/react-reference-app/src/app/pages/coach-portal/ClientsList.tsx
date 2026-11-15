@@ -121,7 +121,6 @@ function StatusFilter({
       <SelectTrigger
         aria-label="Status"
         data-parity="status-filter"
-        size="sm"
         className="w-full sm:w-56"
       >
         <SelectValue>{status === 'all' ? 'All statuses' : status}</SelectValue>
@@ -380,7 +379,6 @@ export function ClientsList() {
             aria-label="Search clients"
             data-parity="clients-search"
             placeholder="Search by name or email"
-            size="sm"
             className="w-full sm:w-72"
             value={query}
             onChange={(event) => changeQuery(event.target.value)}
