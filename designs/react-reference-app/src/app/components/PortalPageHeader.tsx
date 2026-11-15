@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from 'react';
-import { LABEL_CLASS, PORTAL_PAGE_TITLE_CLASS } from './typography';
+import { PORTAL_PAGE_TITLE_CLASS, EYEBROW_CLASS } from './typography';
 import { cn } from './ui/utils';
 
 export function PortalPageHeader({
@@ -7,12 +7,14 @@ export function PortalPageHeader({
   title,
   subtitle,
   actions,
+  headingId,
   headingRef,
 }: {
   eyebrow?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  headingId?: string;
   headingRef?: Ref<HTMLHeadingElement>;
 }) {
   const focusable = headingRef !== undefined;
@@ -20,8 +22,9 @@ export function PortalPageHeader({
   return (
     <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="space-y-2">
-        {eyebrow && <p className={LABEL_CLASS}>{eyebrow}</p>}
+        {eyebrow && <p className={EYEBROW_CLASS}>{eyebrow}</p>}
         <h1
+          id={headingId}
           className={cn(PORTAL_PAGE_TITLE_CLASS, { 'outline-none': focusable })}
           ref={headingRef}
           tabIndex={focusable ? -1 : undefined}

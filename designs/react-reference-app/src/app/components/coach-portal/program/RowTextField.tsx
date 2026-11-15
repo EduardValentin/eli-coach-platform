@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { InlineProblem } from '../../InlineProblem';
 import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
@@ -17,7 +17,10 @@ type RowTextFieldProps<Value> = {
   className?: string;
 };
 
-export function RowTextField<Value>({ label, value, format, parse, problem, onCommit, suffix, type = 'text', placeholder, className }: RowTextFieldProps<Value>) {
+export function useRowTextField<Value>({ label, value, format, parse, problem, onCommit, suffix, type = 'text', placeholder, className }: RowTextFieldProps<Value>): {
+  field: ReactNode;
+  problem: ReactNode;
+} {
   const formatted = format(value);
   const [text, setText] = useState(formatted);
   const [shown, setShown] = useState(formatted);
@@ -40,11 +43,10 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
     onCommit(parsed);
   }
 
-  return (
-    <div className="grid gap-1">
-      <div className="flex items-center gap-1">
+  return {
+    field: (
+      <span className="flex items-center gap-1">
         <Input
-          size="sm"
           type={type}
           min={type === 'number' ? 1 : undefined}
           inputMode={type === 'number' ? 'numeric' : undefined}
@@ -58,12 +60,22 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
           onBlur={() => setInvalid(parse(text) === null)}
         />
         {suffix && (
-          <span id={suffixId} className="text-xs whitespace-nowrap text-text-secondary">
+          <span id={suffixId} className="min-w-8 text-xs whitespace-nowrap text-text-secondary">
             {suffix.trim()}
           </span>
         )}
-      </div>
-      {invalid && <InlineProblem id={problemId}>{problem}</InlineProblem>}
+      </span>
+    ),
+    problem: invalid ? <InlineProblem id={problemId}>{problem}</InlineProblem> : null,
+  };
+}
+
+export function RowTextField<Value>(props: RowTextFieldProps<Value>) {
+  const { field, problem } = useRowTextField(props);
+  return (
+    <div className="grid gap-1">
+      {field}
+      {problem}
     </div>
   );
 }

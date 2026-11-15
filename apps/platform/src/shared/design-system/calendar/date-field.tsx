@@ -2,20 +2,18 @@ import { CalendarDays } from "lucide-react";
 import * as React from "react";
 import type { Matcher } from "react-day-picker";
 
-import { cn } from "../lib/cn";
 import { useDisplayTimeZone } from "../lib/use-display-time-zone";
-import { Popover, PopoverContent, PopoverTrigger } from "../primitives";
-import { FIELD_FRAME_CLASS } from "../primitives/field-frame";
-import { fieldSizeClasses } from "../primitives/field-size";
+import {
+  FieldTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../primitives";
 import { Calendar, type CalendarYearRange } from "./calendar";
-
-const TRIGGER_CLASS = "flex items-center justify-between gap-2 text-left";
 
 const ICON_SIZE = 16;
 
 const NOON_UTC = 12;
-
-const FIELD_TAB_INDEX = 0;
 
 const spelledOutDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -77,30 +75,26 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
     return (
       <Popover modal onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
-          <button
-            className={cn(
-              FIELD_FRAME_CLASS,
-              TRIGGER_CLASS,
-              fieldSizeClasses({ size: "md" }),
-              className,
-            )}
+          <FieldTrigger
+            className={className}
+            data-placeholder={selected ? undefined : ""}
+            icon={
+              <CalendarDays
+                aria-hidden="true"
+                className="text-text-muted"
+                size={ICON_SIZE}
+              />
+            }
             onBlur={leaveField}
             ref={ref}
-            tabIndex={FIELD_TAB_INDEX}
-            type="button"
             {...buttonProps}
           >
-            <span className={cn({ "text-text-muted": !selected })}>
+            <span>
               {selected
                 ? spelledOutDateFormatter.format(selected)
                 : placeholder}
             </span>
-            <CalendarDays
-              aria-hidden="true"
-              className="text-text-muted"
-              size={ICON_SIZE}
-            />
-          </button>
+          </FieldTrigger>
         </PopoverTrigger>
         <PopoverContent
           className="w-80"

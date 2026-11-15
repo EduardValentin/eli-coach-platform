@@ -1,68 +1,42 @@
-import { useId } from 'react';
-import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
-import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
+import { useId, useRef } from 'react';
+import type { Exercise } from '../../../context/TrainingContext';
+import { Bed, Dumbbell, HeartPulse } from 'lucide-react';
+import { WEEKDAY_LABELS, WEEKDAYS, type Block, type Weekday } from '../../../domain/program';
 import { emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
-import { CARDIO_CHIP_CLASS, CardioLength, DayCardFrame, DayName, RestLabel, sessionChipClass } from '../../program-view/dayCard';
+import { DAY_CARDS_CLASS, DayCard } from '../../program-view/dayCard';
+import { RowActionsMenu } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
-import { Button } from '../../ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
-import { useResetConfirm, type ResetRequest } from './ResetConfirm';
+import { cn } from '../../ui/utils';
+import { useResetConfirm } from './ResetConfirm';
 
-type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
-type DayCardProps = WeekDaysProps & { day: Weekday; onRequest: (request: ResetRequest) => void };
+type WeekDaysProps = { block: Block; library: readonly Exercise[]; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
+type DayMenuProps = { block: Block; day: Weekday; onChoose: (choice: DayChoice, trigger: HTMLElement | null) => void };
 
-function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoose: (choice: DayChoice) => void }) {
+function DayMenu({ block, day, onChoose }: DayMenuProps) {
+  const trigger = useRef<HTMLButtonElement>(null);
+  const choose = (choice: DayChoice) => onChoose(choice, trigger.current);
+
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-xs" aria-label={`${WEEKDAY_LABELS[day]} options`} className="-mr-1">
-          <MoreHorizontal aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-40">
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Dumbbell aria-hidden="true" className="mr-2 size-4 text-text-secondary" />
-            Session
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            {block.sessions.map(session => (
-              <DropdownMenuItem key={session.id} onSelect={() => onChoose({ kind: 'session', sessionId: session.id })}>
-                {session.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuItem onSelect={() => onChoose({ kind: 'cardio', session: emptyCardioSession() })}>
-          <HeartPulse aria-hidden="true" />
-          Cardio
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onChoose({ kind: 'rest' })}>
-          <Bed aria-hidden="true" />
-          Rest
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function CardioSummary({ cardio, onOpen }: { cardio: CardioSession; onOpen: () => void }) {
-  return (
-    <>
-      <button type="button" onClick={onOpen} className={CARDIO_CHIP_CLASS}>
-        <span className="truncate">{cardio.name}</span>
-      </button>
-      <CardioLength cardio={cardio} />
-    </>
+    <RowActionsMenu
+      label={`${WEEKDAY_LABELS[day]} options`}
+      size="xs"
+      triggerRef={trigger}
+      actions={[
+        {
+          name: 'session',
+          label: 'Session',
+          icon: Dumbbell,
+          actions: block.sessions.map(session => ({
+            name: session.id,
+            label: session.name,
+            onSelect: () => choose({ kind: 'session', sessionId: session.id }),
+          })),
+        },
+        { name: 'cardio', label: 'Cardio', icon: HeartPulse, onSelect: () => choose({ kind: 'cardio', session: emptyCardioSession() }) },
+        { name: 'rest', label: 'Rest', icon: Bed, onSelect: () => choose({ kind: 'rest' }) },
+      ]}
+    />
   );
 }
 
@@ -79,51 +53,44 @@ function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
   return keepsContent ? [] : describeLoss(block, { kind: 'day', weekday: day });
 }
 
-function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProps) {
-  const session = sessionOn(block, day);
-  const cardio = cardioOn(block, day);
-
-  return (
-    <DayCardFrame entry={block.calendar[day].kind}>
-      <div className="flex items-center justify-between gap-1">
-        <h4>
-          <DayName day={day} />
-        </h4>
-        <DayMenu
-          block={block}
-          day={day}
-          onChoose={choice =>
-            onRequest({
-              title: dayTitle(block, day, choice),
-              confirmLabel: 'Change day',
-              lines: lostByChoice(block, day, choice),
-              apply: () => onChange(blockWithDay(block, day, choice)),
-            })
-          }
-        />
-      </div>
-      {session && (
-        <button type="button" onClick={() => onOpenSession(session.id)} className={sessionChipClass(block.type)}>
-          <span className="truncate">{session.name}</span>
-        </button>
-      )}
-      {cardio && <CardioSummary cardio={cardio} onOpen={() => onOpenSession(cardio.id)} />}
-      {!session && !cardio && <RestLabel />}
-    </DayCardFrame>
-  );
-}
-
-export function WeekDays(props: WeekDaysProps) {
+export function WeekDays({ block, library, onChange, onOpenSession }: WeekDaysProps) {
   const headingId = useId();
   const confirm = useResetConfirm();
+  const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
   return (
-    <section aria-labelledby={headingId} className="grid gap-2">
+    <section aria-labelledby={headingId} className="grid grid-cols-[minmax(0,1fr)] gap-2 lg:**:scroll-mt-[calc(var(--block-header-height)+0.5rem)]">
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-7">
+      <ol className={cn(DAY_CARDS_CLASS, 'sm:grid-cols-7')}>
         {WEEKDAYS.map(day => (
-          <DayCard key={day} {...props} day={day} onRequest={confirm.request} />
+          <DayCard
+            key={day}
+            block={block}
+            day={day}
+            exercisesById={exercisesById}
+            headingLevel="h4"
+            corner={
+              <DayMenu
+                block={block}
+                day={day}
+                onChoose={(choice, trigger) =>
+                  confirm.request({
+                    title: dayTitle(block, day, choice),
+                    confirmLabel: 'Change day',
+                    lines: lostByChoice(block, day, choice),
+                    apply: () => onChange(blockWithDay(block, day, choice)),
+                    returnFocus: trigger,
+                  })
+                }
+              />
+            }
+            renderChip={chip => (
+              <button type="button" onClick={() => onOpenSession(chip.id)} className={chip.className}>
+                {chip.label}
+              </button>
+            )}
+          />
         ))}
       </ol>
       {confirm.dialog}

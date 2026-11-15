@@ -355,7 +355,9 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     expect(emailField()).toHaveAccessibleDescription(
       "Enter a valid email address.",
     );
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Enter a valid email address.",
+    );
     expect(bookingRequests).toBe(0);
   });
 
@@ -579,7 +581,9 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
       EMAIL_SUBADDRESS_REFUSED_MESSAGE,
     );
     expect(emailField()).toHaveAttribute("aria-invalid", "true");
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+    );
     expect(
       screen.getByRole("heading", { level: 2, name: "Almost there" }),
     ).toBeInTheDocument();

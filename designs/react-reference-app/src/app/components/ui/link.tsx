@@ -11,6 +11,8 @@ const linkClasses = cva(
       variant: {
         'in-text':
           'py-3.5 text-brand hover:underline',
+        inline:
+          'underline decoration-divider decoration-1 underline-offset-2 hover:decoration-current print:no-underline',
       },
     },
     defaultVariants: {

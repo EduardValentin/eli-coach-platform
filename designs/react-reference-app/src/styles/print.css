@@ -11,6 +11,33 @@
       letter-spacing: 0.04em;
       color: var(--text-secondary);
     }
+
+    @bottom-left {
+      vertical-align: top;
+      padding-top: 3mm;
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      vertical-align: top;
+      padding-top: 3mm;
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+  }
+
+  @page :first {
+    margin-top: 12mm;
+
+    @bottom-left {
+      content: "See your coach's disclaimer.";
+    }
   }
 
   [data-print-hidden] {
@@ -40,6 +67,7 @@
   }
 
   [data-program-document] {
+    --space-document-section: 1.7143rem;
     max-width: none;
     padding: 0;
     color: black;
@@ -54,6 +82,7 @@
   [data-program-document] > header {
     margin-inline: 0;
     padding-inline: 6mm;
+    padding-block: 5.5mm 3mm;
   }
 
   [data-program-document] [data-print-keep],
@@ -70,6 +99,10 @@
     break-after: avoid;
   }
 
+  [data-program-document] [data-print-card] {
+    break-before: page;
+  }
+
   [data-program-document] p {
     orphans: 3;
     widows: 3;
@@ -77,5 +110,11 @@
 
   [data-program-document] thead {
     display: table-header-group;
+  }
+}
+
+@media not print {
+  [data-print-only] {
+    display: none !important;
   }
 }

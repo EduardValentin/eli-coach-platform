@@ -1,3 +1,4 @@
+import { useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
@@ -7,10 +8,11 @@ import { blockStatus } from '../../../domain/programCalendar';
 import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
 import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
 import { BlockHeader } from './BlockHeader';
-import { BlockTexts } from './BlockTexts';
 import { CardioSessionCard } from './CardioSessionCard';
+import { LibraryTargetContext } from './libraryTarget';
 import { SessionCard } from './SessionCard';
 import { SessionDragLayer } from './sessionDnd';
+import { useMeasuredHeight } from './useMeasuredHeight';
 import { WeekDays } from './WeekDays';
 
 type BlockWorkspaceProps = {
@@ -29,28 +31,13 @@ type BlockWorkspaceProps = {
   onChange: (block: Block) => void;
   onRemove: () => void;
   onOpenLibrary: (target: LibraryTarget) => void;
+  libraryTarget: LibraryTarget | null;
 };
 
-function useStickyHeaderHeight() {
-  const slot = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
-  useEffect(() => {
-    const header = slot.current?.firstElementChild;
-    if (!header || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => setHeight(header.getBoundingClientRect().height));
-    observer.observe(header);
-    return () => observer.disconnect();
-  }, []);
-  return { slot, height };
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 export function BlockWorkspace(props: BlockWorkspaceProps) {
-  const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary } = props;
-  const header = useStickyHeaderHeight();
+  const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary, libraryTarget } = props;
+  const header = useMeasuredHeight();
+  const reducedMotion = useReducedMotion() === true;
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const planned = plannedSessions(block);
@@ -58,9 +45,9 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
 
   useEffect(() => {
     if (!scrollTarget) return;
-    articles.current.get(scrollTarget)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    articles.current.get(scrollTarget)?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
     setScrollTarget(null);
-  }, [scrollTarget]);
+  }, [scrollTarget, reducedMotion]);
 
   function openFromWeek(sessionId: string) {
     onOpenSession(sessionId);
@@ -75,53 +62,53 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
   }
 
   return (
-    <section className="grid gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
-      <div ref={header.slot} className="contents">
-        <BlockHeader
-          key={block.id}
-          blocks={blocks}
-          index={blockIndex}
-          status={blockStatus({ blocks, dayOne, today }, blockIndex)}
-          dayOne={dayOne}
-          today={today}
-          language={language}
-          otherPrograms={otherPrograms}
-          journeys={journeys}
-          onChange={onChange}
-          onRemove={onRemove}
-        />
-      </div>
-      <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
-      <div className="grid gap-4">
-        {planned.map(entry =>
-          entry.kind === 'cardio' ? (
-            <CardioSessionCard
-              key={entry.cardio.id}
-              cardio={entry.cardio}
-              expanded={entry.cardio.id === openSessionId}
-              articleRef={articleRefFor(entry.cardio.id)}
-              library={library}
-              onExpand={() => onOpenSession(entry.cardio.id)}
-              onChange={next => onChange(blockWithCardio(block, next))}
-              onOpenLibrary={onOpenLibrary}
-            />
-          ) : (
-            <SessionCard
-              key={entry.session.id}
-              session={entry.session}
-              block={block}
-              expanded={entry.session.id === openSessionId}
-              articleRef={articleRefFor(entry.session.id)}
-              library={library}
-              context={context}
-              onExpand={() => onOpenSession(entry.session.id)}
-              onChange={next => onChange(blockWithSession(block, next))}
-              onOpenLibrary={onOpenLibrary}
-            />
-          ),
-        )}
-      </div>
-      <BlockTexts block={block} language={language} onChange={onChange} />
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
+      <BlockHeader
+        key={block.id}
+        blocks={blocks}
+        index={blockIndex}
+        status={blockStatus({ blocks, dayOne, today }, blockIndex)}
+        dayOne={dayOne}
+        today={today}
+        language={language}
+        otherPrograms={otherPrograms}
+        journeys={journeys}
+        onChange={onChange}
+        onRemove={onRemove}
+        measureRef={header.measureRef}
+      />
+      <WeekDays block={block} library={library} onChange={onChange} onOpenSession={openFromWeek} />
+      <LibraryTargetContext.Provider value={libraryTarget}>
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
+          {planned.map(entry =>
+            entry.kind === 'cardio' ? (
+              <CardioSessionCard
+                key={entry.cardio.id}
+                cardio={entry.cardio}
+                expanded={entry.cardio.id === openSessionId}
+                articleRef={articleRefFor(entry.cardio.id)}
+                library={library}
+                onExpand={() => onOpenSession(entry.cardio.id)}
+                onChange={next => onChange(blockWithCardio(block, next))}
+                onOpenLibrary={onOpenLibrary}
+              />
+            ) : (
+              <SessionCard
+                key={entry.session.id}
+                session={entry.session}
+                block={block}
+                expanded={entry.session.id === openSessionId}
+                articleRef={articleRefFor(entry.session.id)}
+                library={library}
+                context={context}
+                onExpand={() => onOpenSession(entry.session.id)}
+                onChange={next => onChange(blockWithSession(block, next))}
+                onOpenLibrary={onOpenLibrary}
+              />
+            ),
+          )}
+        </div>
+      </LibraryTargetContext.Provider>
       <SessionDragLayer />
     </section>
   );

@@ -3,13 +3,13 @@ import { session as emptySession } from '../../test/programFixtures';
 import { coolDownEdits } from './coolDownEditing';
 
 describe('coolDownEdits', () => {
-  it('keeps a cool-down note and stretches with seconds each', () => {
+  it('keeps the cool-down on with stretches with seconds each', () => {
     // arrange
     const session = emptySession();
 
     // act
-    const noted = coolDownEdits(session).change({ ...session.coolDown, enabled: true, note: 'Easy walk' });
-    const withHamstring = coolDownEdits(noted).add('hamstringStretch');
+    const turnedOn = coolDownEdits(session).change({ ...session.coolDown, enabled: true });
+    const withHamstring = coolDownEdits(turnedOn).add('hamstringStretch');
     const withQuad = coolDownEdits(withHamstring).add('quadStretch');
     const twice = coolDownEdits(withQuad).add('quadStretch');
     const [hamstring, quad] = withQuad.coolDown.items;
@@ -20,7 +20,6 @@ describe('coolDownEdits', () => {
     // assert
     expect(withQuad.coolDown).toEqual({
       enabled: true,
-      note: 'Easy walk',
       items: [
         { id: expect.any(String), exerciseId: 'hamstringStretch', seconds: 30 },
         { id: expect.any(String), exerciseId: 'quadStretch', seconds: 30 },

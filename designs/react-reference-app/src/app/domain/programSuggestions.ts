@@ -122,7 +122,7 @@ function emptySession(name: string): Session {
     originId: id,
     name,
     warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
+    coolDown: { enabled: false, items: [] },
     rows: [],
   };
 }
@@ -192,7 +192,6 @@ export function initialContent(setup: ProgramSetup, library: readonly Exercise[]
   return {
     header: { title: 'Program — weeks 1–2', focus: '', personalNote: '' },
     plan: { blocks },
-    cycleRules: [],
     nutritionNotes: '',
     lifestyleNotes: '',
   };

@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type RefObject } from 'react';
 import { BLOCK_TYPE_LABELS, BLOCK_TYPES, type Block, type BlockType } from '../../../domain/program';
 import { ResponsiveSheetDialog, SheetDialogActions, SheetDialogBody, SheetDialogHeader } from '../../ResponsiveSheetDialog';
 import { Button } from '../../ui/button';
@@ -13,6 +13,7 @@ type AddBlockDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lastBlock: Block | undefined;
+  returnFocusTo?: RefObject<HTMLElement | null>;
   onAdd: (type: BlockType, weeks: number) => void;
 };
 
@@ -26,6 +27,7 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: { lastBlock: Block | undef
   const [weeks, setWeeks] = useState(String(DEFAULT_WEEKS));
   const typeId = useId();
   const weeksId = useId();
+  const weeksHintId = useId();
   const isDeload = type === 'deload';
   const chosenWeeks = isDeload ? 1 : Number(weeks);
   const valid = Number.isInteger(chosenWeeks) && chosenWeeks >= 1;
@@ -62,8 +64,14 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: { lastBlock: Block | undef
           className="w-24"
           value={isDeload ? '1' : weeks}
           disabled={isDeload}
+          aria-describedby={isDeload ? weeksHintId : undefined}
           onChange={event => setWeeks(event.target.value)}
         />
+        {isDeload && (
+          <p id={weeksHintId} className="text-sm text-text-secondary">
+            A Deload lasts one week
+          </p>
+        )}
       </div>
       <SheetDialogActions>
         <Button type="submit" disabled={!valid}>
@@ -77,9 +85,9 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: { lastBlock: Block | undef
   );
 }
 
-export function AddBlockDialog({ open, onOpenChange, lastBlock, onAdd }: AddBlockDialogProps) {
+export function AddBlockDialog({ open, onOpenChange, lastBlock, returnFocusTo, onAdd }: AddBlockDialogProps) {
   return (
-    <ResponsiveSheetDialog open={open} onOpenChange={onOpenChange} title="Add a block" width="fit">
+    <ResponsiveSheetDialog open={open} onOpenChange={onOpenChange} title="Add a block" width="fit" returnFocusTo={returnFocusTo}>
       <SheetDialogHeader title="Add a block" />
       <SheetDialogBody>
         {open && <AddBlockForm lastBlock={lastBlock} onAdd={onAdd} onCancel={() => onOpenChange(false)} />}

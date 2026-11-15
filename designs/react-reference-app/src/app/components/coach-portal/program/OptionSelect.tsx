@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
 export type Option<Value extends string | number> = { value: Value; label: string };
@@ -8,18 +9,19 @@ type OptionSelectProps<Value extends string | number> = {
   onChange: (value: Value) => void;
   id?: string;
   label?: string;
+  labelledBy?: string;
+  triggerRef?: Ref<HTMLButtonElement>;
   disabled?: boolean;
-  size?: 'sm' | 'md';
 };
 
-export function OptionSelect<Value extends string | number>({ options, value, onChange, id, label, disabled, size }: OptionSelectProps<Value>) {
+export function OptionSelect<Value extends string | number>({ options, value, onChange, id, label, labelledBy, triggerRef, disabled }: OptionSelectProps<Value>) {
   return (
     <Select
       value={String(value)}
       disabled={disabled}
       onValueChange={next => onChange(options.find(option => String(option.value) === next)!.value)}
     >
-      <SelectTrigger id={id} aria-label={label} size={size}>
+      <SelectTrigger ref={triggerRef} id={id} aria-label={label} aria-labelledby={labelledBy}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -279,10 +279,11 @@ export function OnboardingFieldControl({ control, field, labelAdornment }: Field
                     </>
                   ) : (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {(field.options ?? []).map((option) => (
+                      {(field.options ?? []).map((option, index) => (
                         <CheckboxChip
                           aria-label={option.label}
                           key={option.value}
+                          ref={index === 0 ? controller.ref : undefined}
                           checked={asList(controller.value).includes(
                             option.value,
                           )}
@@ -332,6 +333,7 @@ export function OnboardingFieldControl({ control, field, labelAdornment }: Field
                   <SelectTrigger
                     className="w-full"
                     data-parity={`${parityHook}-trigger`}
+                    ref={controller.ref}
                   >
                     <SelectValue
                       placeholder={field.placeholder ?? 'Choose one'}

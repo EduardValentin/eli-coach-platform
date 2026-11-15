@@ -8,7 +8,7 @@ import {
   type VisitorGender,
   type VisitorPrimaryGoal,
 } from '../../services/visitorProfile';
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
+import { FieldError } from '../FieldError';
 import { Button } from '../ThemeButton';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -69,9 +69,7 @@ export function BookingDetailsStep({
               aria-describedby={fieldErrors.firstName ? 'first-name-error' : undefined}
             />
           </div>
-          {fieldErrors.firstName && (
-            <p id="first-name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.firstName}</p>
-          )}
+          <FieldError id="first-name-error" message={fieldErrors.firstName} />
         </div>
 
         <div className="space-y-2">
@@ -86,9 +84,7 @@ export function BookingDetailsStep({
             aria-invalid={Boolean(fieldErrors.lastName) || undefined}
             aria-describedby={fieldErrors.lastName ? 'last-name-error' : undefined}
           />
-          {fieldErrors.lastName && (
-            <p id="last-name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.lastName}</p>
-          )}
+          <FieldError id="last-name-error" message={fieldErrors.lastName} />
         </div>
       </div>
 
@@ -109,9 +105,7 @@ export function BookingDetailsStep({
             aria-describedby={fieldErrors.email ? 'email-error' : undefined}
           />
         </div>
-        {fieldErrors.email && (
-          <p id="email-error" className={FIELD_ERROR_CLASS}>{fieldErrors.email}</p>
-        )}
+        <FieldError id="email-error" message={fieldErrors.email} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -175,9 +169,7 @@ export function BookingDetailsStep({
           aria-invalid={Boolean(fieldErrors.notes) || undefined}
           aria-describedby={fieldErrors.notes ? 'notes-error' : undefined}
         />
-        {fieldErrors.notes && (
-          <p id="notes-error" className={FIELD_ERROR_CLASS}>{fieldErrors.notes}</p>
-        )}
+        <FieldError id="notes-error" message={fieldErrors.notes} />
       </div>
 
       <div className="pt-4">

@@ -118,7 +118,7 @@ beforeAll(() => {
       addEventListener: vi.fn(),
       addListener: vi.fn(),
       dispatchEvent: vi.fn(),
-      matches: query.includes("min-width: 1024px"),
+      matches: query.includes("min-width: 64em"),
       media: query,
       onchange: null,
       removeEventListener: vi.fn(),
@@ -159,7 +159,7 @@ describe("proposing a new time for a check-in", () => {
     await user.click(openerButton());
     const dialog = await screen.findByRole("dialog", { name: TITLE });
     const title = within(dialog).getByRole("heading", {
-      level: 3,
+      level: 2,
       name: TITLE,
     });
     const focusOnOpen = document.activeElement;

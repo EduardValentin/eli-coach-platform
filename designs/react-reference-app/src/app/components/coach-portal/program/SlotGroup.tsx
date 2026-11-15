@@ -1,13 +1,18 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { MOVEMENT_PATTERN_LABELS } from '../../../domain/exercises';
-import type { Session, Slot } from '../../../domain/program';
+import { MOVEMENT_PATTERN_LABELS, type MovementPattern } from '../../../domain/exercises';
+import { positionLabel, type Row, type Session, type Slot } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
-import type { SlotPlan } from '../../../domain/splitTemplates';
-import { Badge } from '../../ui/badge';
+import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
+import { IconActionButton } from '../../IconActionButton';
+import { EYEBROW_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
-import { ExerciseCard } from './ExerciseCard';
+import { cn } from '../../ui/utils';
+import { useEditorAnnouncer } from './editorAnnouncer';
+import { ExerciseCard, type RowFocus, type SlotTarget } from './ExerciseCard';
+import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
+import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
 import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, type SessionDropRules } from './sessionDnd';
 
 type SlotGroupProps = {
@@ -15,38 +20,63 @@ type SlotGroupProps = {
   plan: SlotPlan;
   library: readonly Exercise[];
   edits: RowEdits;
+  slots: readonly SlotTarget[];
   onChange: (session: Session) => void;
   onAdd: (slot: Slot) => void;
   onAddSubstitution: (rowId: string) => void;
 };
 
-function SupersetUnit({ children, onUngroup }: { children: ReactNode; onUngroup: () => void }) {
+type SupersetUnitProps = { positions: readonly string[]; onUngroup: () => void; children: ReactNode };
+
+function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
   return (
-    <div className="overflow-hidden rounded-control border border-brand-secondary">
-      <div className="flex items-center justify-between gap-2 bg-brand-secondary px-3 py-1.5 text-brand-secondary-foreground">
-        <span className="text-label uppercase">Superset</span>
-        <Button
-          variant="ghost"
-          size="xs"
-          className="h-auto px-2 py-0.5 text-brand-secondary-foreground hover:bg-brand-secondary-hover hover:text-brand-secondary-foreground"
-          onClick={onUngroup}
-        >
+    <div className="rounded-control border-l-2 border-brand-secondary bg-brand-secondary-soft">
+      <div className="flex flex-wrap items-center justify-between gap-2 py-2 pr-1 pl-3">
+        <span className={cn(EYEBROW_CLASS, 'text-brand-secondary-ink')}>Superset</span>
+        <Button variant="ghost" size="xs" className="text-brand-secondary-ink" onClick={onUngroup}>
           Ungroup
+          <span className="sr-only">{` ${positions.join(' and ')}`}</span>
         </Button>
       </div>
-      <div className="grid gap-2 p-2">{children}</div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2 px-2 pb-2">{children}</div>
     </div>
   );
 }
 
-export function SlotGroup({ session, plan, library, edits, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
-  const { slot, label, patterns } = plan;
+function PatternText({ patterns }: { patterns: readonly MovementPattern[] }) {
+  if (patterns.length === 0) return null;
+  return (
+    <p className="text-sm text-text-secondary">
+      <span className="sr-only">Patterns: </span>
+      {patterns.map(pattern => MOVEMENT_PATTERN_LABELS[pattern]).join(' · ')}
+    </p>
+  );
+}
+
+export function SlotGroup({ session, plan, library, edits, slots, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
+  const announce = useEditorAnnouncer();
+  const section = useRef<HTMLElement>(null);
+  const focusLater = usePendingFocus();
+  const focus: RowFocus = {
+    onRow: rowId => focusLater(() => actionsTriggerIn(`[data-row-id="${rowId}"]`)),
+    onSlotAdd: () => focusLater(() => section.current?.querySelector<HTMLElement>('[data-slot-add]')),
+  };
+  const { slot, label } = plan;
+  const filling = useIsLibraryTarget({ kind: 'slot', sessionId: session.id, slot });
   const units = slotUnits(session, slot);
-  const addLabel = `Add exercise to ${label}`;
+  const heading = `${slot} · ${label}`;
   const several = !SINGLE_CARD_SLOTS.includes(slot);
   const placeAt = (placement: Placement) => (dragged: DraggedItem) =>
     onChange(dragged.kind === PLAN_ROW ? edits.move(dragged.item.rowId, placement) : edits.add(dragged.item.exercise, placement));
   const rulesAt = (placement: Placement): SessionDropRules => ({ sessionId: session.id, onDrop: placeAt(placement) });
+
+  function ungroup(group: string, rows: readonly Row[]) {
+    const positions = rows.map(row => positionLabel(session, row));
+    onChange(edits.ungroup(group));
+    focus.onRow(rows[0].id);
+    announce(`${positions.join(' and ')} ungrouped`);
+  }
+
   const card = (rowId: string) => {
     const row = session.rows.find(other => other.id === rowId);
     if (!row) return null;
@@ -58,6 +88,8 @@ export function SlotGroup({ session, plan, library, edits, onChange, onAdd, onAd
         exercise={library.find(item => item.id === row.exerciseId)}
         library={library}
         edits={edits}
+        slots={slots}
+        focus={focus}
         onChange={onChange}
         onAddSubstitution={onAddSubstitution}
       />
@@ -65,35 +97,31 @@ export function SlotGroup({ session, plan, library, edits, onChange, onAdd, onAd
   };
 
   return (
-    <section className="grid gap-2">
-      <header className="flex flex-wrap items-center gap-2">
-        <h4 className="text-sm font-semibold text-text-primary">{`${slot} · ${label}`}</h4>
-        {patterns.map(pattern => (
-          <Badge key={pattern} tone="muted">
-            {MOVEMENT_PATTERN_LABELS[pattern]}
-          </Badge>
-        ))}
+    <section ref={section} className={cn('grid grid-cols-[minmax(0,1fr)] gap-2 rounded-control', { [LIBRARY_TARGET_CLASS]: filling })}>
+      <header className="flex items-start gap-3">
+        <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
+          <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
+          <PatternText patterns={slotExercisePatterns(session, slot, library)} />
+        </div>
         {several && units.length > 0 && (
-          <Button variant="ghost" size="xs" className="ml-auto" aria-label={addLabel} onClick={() => onAdd(slot)}>
-            <Plus aria-hidden="true" />
-            Add
-          </Button>
+          <IconActionButton icon={Plus} label={`Add exercise to ${heading}`} hint="Add exercise" data-slot-add="" onClick={() => onAdd(slot)} />
         )}
       </header>
-      <DropZone rules={rulesAt({ slot })} className="rounded-control" activeClassName="bg-primary-soft">
+      <DropZone rules={rulesAt({ slot })} className="rounded-control" tone="fill">
         {units.length === 0 ? (
-          <EmptyDropTarget rules={rulesAt({ slot })} addLabel={addLabel} onAdd={() => onAdd(slot)} />
+          <EmptyDropTarget rules={rulesAt({ slot })} place={heading} onAdd={() => onAdd(slot)} />
         ) : (
-          <div className="grid">
+          <div className="grid grid-cols-[minmax(0,1fr)]">
             {several && <DropSeparator rules={rulesAt({ slot, beforeRowId: units[0].rows[0].id })} />}
             {units.map((unit, index) => {
               const next = units[index + 1];
+              const { group } = unit;
               return (
-                <div key={unit.key} className="grid">
-                  {unit.group === undefined ? (
+                <div key={unit.key} className="grid grid-cols-[minmax(0,1fr)]">
+                  {group === undefined ? (
                     card(unit.rows[0].id)
                   ) : (
-                    <SupersetUnit onUngroup={() => onChange(edits.ungroup(unit.group as string))}>
+                    <SupersetUnit positions={unit.rows.map(row => positionLabel(session, row))} onUngroup={() => ungroup(group, unit.rows)}>
                       {unit.rows.map(row => card(row.id))}
                     </SupersetUnit>
                   )}

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type Ref } from 'react';
 import { MoreHorizontal, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { DisabledActionHint } from './DisabledActionHint';
 import { HintPopover } from './HintPopover';
@@ -7,6 +7,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { cn } from './ui/utils';
@@ -14,13 +17,22 @@ import { cn } from './ui/utils';
 export type RowMenuAction = {
   name: string;
   label: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   tone?: 'default' | 'destructive';
   disabled?: boolean;
   disabledHint?: string;
   disabledReason?: string;
   onSelect: () => void;
 };
+
+type RowMenuSubmenu = {
+  name: string;
+  label: string;
+  icon: LucideIcon;
+  actions: readonly RowMenuAction[];
+};
+
+type RowMenuEntry = RowMenuAction | RowMenuSubmenu;
 
 type RowActionsMenuSize = 'xs' | 'sm';
 
@@ -55,7 +67,7 @@ function RowMenuItem({
       }}
       variant={tone}
     >
-      <Icon aria-hidden="true" className={cn({ 'opacity-50': flagged })} />
+      {Icon && <Icon aria-hidden="true" className={cn({ 'opacity-50': flagged })} />}
       <span className={cn({ 'opacity-50': flagged })}>{label}</span>
       {flagged && (
         <span className="ml-auto flex pl-2">
@@ -78,20 +90,53 @@ function RowMenuItem({
   );
 }
 
+function RowMenuSub({
+  submenu,
+  onChoose,
+}: {
+  submenu: RowMenuSubmenu;
+  onChoose: (run: () => void) => void;
+}) {
+  const { name, label, icon: Icon, actions } = submenu;
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger data-parity={`row-action-${name}`}>
+        <Icon aria-hidden="true" />
+        {label}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        {actions.map((action) => (
+          <RowMenuItem key={action.name} action={action} onChoose={onChoose} />
+        ))}
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
+}
+
+function isSubmenu(entry: RowMenuEntry): entry is RowMenuSubmenu {
+  return 'actions' in entry;
+}
+
 export function RowActionsMenu({
   label,
   actions,
   size = 'sm',
   parityRoot = 'RowActionsMenu',
+  triggerRef,
 }: {
   label: string;
-  actions: readonly RowMenuAction[];
+  actions: readonly RowMenuEntry[];
   size?: RowActionsMenuSize;
   parityRoot?: string;
+  triggerRef?: Ref<HTMLButtonElement>;
 }) {
   const chosenAction = useRef<(() => void) | null>(null);
 
   if (actions.length === 0) return null;
+
+  const chooseAction = (run: () => void) => {
+    chosenAction.current = run;
+  };
 
   const runOnceFocusIsBackOnTheTrigger = () => {
     const action = chosenAction.current;
@@ -103,6 +148,7 @@ export function RowActionsMenu({
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
+          ref={triggerRef}
           aria-label={label}
           size={TRIGGER_SIZE[size]}
           type="button"
@@ -118,15 +164,13 @@ export function RowActionsMenu({
         data-parity-root={parityRoot}
         onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
       >
-        {actions.map((action) => (
-          <RowMenuItem
-            key={action.name}
-            action={action}
-            onChoose={(run) => {
-              chosenAction.current = run;
-            }}
-          />
-        ))}
+        {actions.map((entry) =>
+          isSubmenu(entry) ? (
+            <RowMenuSub key={entry.name} submenu={entry} onChoose={chooseAction} />
+          ) : (
+            <RowMenuItem key={entry.name} action={entry} onChoose={chooseAction} />
+          ),
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

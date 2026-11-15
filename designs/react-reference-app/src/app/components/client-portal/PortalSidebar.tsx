@@ -16,8 +16,9 @@ import { AttentionDot } from '../AttentionDot';
 import { NavigationCount, NavigationCountLabel } from '../NavigationCount';
 import { NotificationBell } from '../NotificationBell';
 import { navigationLinkSlug } from '../navigation-link-slug';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 import { BottomSheet } from '../ui/bottom-sheet';
+import { useTriggerControls } from '../ui/open-state';
 import { Button } from '../ui/button';
 import { useCloseMobileNavigationOnDesktop } from '../ui/use-close-mobile-navigation-on-desktop';
 import { cn } from '../ui/utils';
@@ -27,6 +28,8 @@ import type { ClientPortalLink } from './navigation-links';
 export const PORTAL_MAIN_ID = 'portal-main';
 
 const MAX_BAR_TABS = 4;
+
+const MORE_SHEET_ID = 'portal-more-sheet';
 
 function NewLinkLabel() {
   return <span className="sr-only"> (new)</span>;
@@ -293,6 +296,7 @@ function MobileTabBar({
   const moreActive =
     moreOpen ||
     moreLinks.some((link) => isRouteActive(location.pathname, link.href));
+  const moreControls = useTriggerControls({ open: moreOpen, contentId: MORE_SHEET_ID });
 
   return (
     <nav
@@ -340,7 +344,7 @@ function MobileTabBar({
             type="button"
             onClick={onOpenMore}
             aria-expanded={moreOpen}
-            aria-controls="portal-more-sheet"
+            {...moreControls}
             data-parity="tab-more"
             className={cn(
               'flex flex-col items-center justify-center gap-1 h-full w-full transition-colors',
@@ -402,7 +406,7 @@ function MoreSheetNavigation({
               <span className="text-base font-medium flex-1 text-left">
                 {link.name}
               </span>
-              <span className={LABEL_CLASS}>Soon</span>
+              <span className={EYEBROW_CLASS}>Soon</span>
             </button>
           );
         }
@@ -555,7 +559,7 @@ export function PortalSidebar({
       />
 
       <BottomSheet
-        id="portal-more-sheet"
+        id={MORE_SHEET_ID}
         open={moreOpen}
         onOpenChange={(open) => setMoreSheet(open ? 'open' : 'closed')}
         title="More"

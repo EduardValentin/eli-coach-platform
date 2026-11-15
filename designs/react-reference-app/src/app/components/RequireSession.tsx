@@ -1,5 +1,6 @@
-import { Navigate, Outlet } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
 import { isSignedIn, useAppState, type PrototypeSession } from '../context/AppContext';
+import { signInPathReturningTo } from '../utils/signInReturn';
 
 type AuthenticatedSession = Exclude<PrototypeSession, 'anonymous'>;
 
@@ -9,9 +10,10 @@ type AuthenticatedSession = Exclude<PrototypeSession, 'anonymous'>;
 // rule drifted apart once already.
 export function RequireSession({ session }: { session: AuthenticatedSession }) {
   const { appState } = useAppState();
+  const location = useLocation();
 
   if (!isSignedIn(appState.session)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={signInPathReturningTo(location)} replace />;
   }
 
   if (appState.session !== session) {

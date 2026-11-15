@@ -1,5 +1,4 @@
 import type { Exercise } from '../context/TrainingContext';
-import type { CycleMode } from '../domain/cycleMode';
 import type { Equipment } from '../domain/exercises';
 import {
   contentWithFreshIds,
@@ -26,13 +25,12 @@ const SEED_SETUP: ProgramSetup = {
   level: 'beginner',
   trainingDays: 3,
   sessionMinutes: 60,
-  cycleMode: 'adapted',
   language: 'en',
   dailySteps: 6000,
   splitShape: 'full-body',
 };
 
-export type SeedClient = { callId: string; dayOne: Date | null; cycleMode: CycleMode; equipment: Equipment[] };
+export type SeedClient = { callId: string; dayOne: Date | null; equipment: Equipment[] };
 export type SeedClients = { demo: SeedClient; awaitingReview: SeedClient };
 
 export function seedRequiresProgramReady(seed: ProgramSeed): boolean {
@@ -91,7 +89,7 @@ function filledSession(session: Session, seed: SeedContext): Session {
 }
 
 function filledContent(library: readonly Exercise[], client: SeedClient): ProgramContent {
-  const content = initialContent({ ...SEED_SETUP, cycleMode: client.cycleMode }, library);
+  const content = initialContent(SEED_SETUP, library);
   return {
     ...content,
     plan: {
@@ -108,7 +106,6 @@ function programOf(client: SeedClient, versions: Program['versions']): Program {
     callId: client.callId,
     goal: SEED_SETUP.goal,
     language: SEED_SETUP.language,
-    cycleMode: client.cycleMode,
     level: SEED_SETUP.level,
     versions,
   };

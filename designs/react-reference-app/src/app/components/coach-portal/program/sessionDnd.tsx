@@ -55,34 +55,41 @@ export function DropSeparator({ rules }: { rules: SessionDropRules }) {
   );
 }
 
-export function EmptyDropTarget({ rules, addLabel, onAdd }: { rules: SessionDropRules; addLabel: string; onAdd: () => void }) {
-  const [{ isOver, canDrop }, drop] = useSessionDrop(rules);
-  const active = isOver && canDrop;
+type DropReadiness = 'over' | 'ready' | undefined;
+
+function dropReadiness({ isOver, canDrop }: { isOver: boolean; canDrop: boolean }): DropReadiness {
+  if (!canDrop) return undefined;
+  return isOver ? 'over' : 'ready';
+}
+
+export function EmptyDropTarget({ rules, place, onAdd }: { rules: SessionDropRules; place: string; onAdd: () => void }) {
+  const [state, drop] = useSessionDrop(rules);
+  const readiness = dropReadiness(state);
   return (
-    <div
-      ref={drop as unknown as Ref<HTMLDivElement>}
-      className={cn(
-        'flex flex-wrap items-center justify-between gap-3 rounded-field border border-dashed px-4 py-3 transition-colors motion-reduce:transition-none',
-        {
-          'border-primary bg-primary-soft text-primary': active,
-          'border-primary/40 bg-primary-soft text-text-secondary': canDrop && !isOver,
-          'border-border bg-surface-subtle text-text-secondary': !canDrop,
-        },
-      )}
-    >
-      <p className="text-sm">{active ? 'Release to add' : 'Drop an exercise here'}</p>
-      <Button variant="outline" size="xs" aria-label={addLabel} onClick={onAdd}>
+    <div ref={drop as unknown as Ref<HTMLDivElement>}>
+      <Button variant="drop" size="md" data-slot-add="" data-drop={readiness} onClick={onAdd}>
         <Plus aria-hidden="true" />
-        Add
+        {readiness === 'over' ? 'Release to add' : 'Add or drop an exercise'}
+        <span className="sr-only">{` in ${place}`}</span>
       </Button>
     </div>
   );
 }
 
-export function DropZone({ rules, accepts, className, activeClassName, children }: { rules: SessionDropRules; accepts?: typeof acceptsIntoSession; className?: string; activeClassName: string; children: ReactNode }) {
+type DropZoneTone = 'ring' | 'inset' | 'fill';
+
+const DROP_ZONE_ACTIVE_CLASS: Record<DropZoneTone, string> = {
+  ring: 'ring-2 ring-primary/40',
+  inset: 'ring-2 ring-inset ring-primary/40',
+  fill: 'bg-primary-soft',
+};
+
+type DropZoneProps = { rules: SessionDropRules; accepts?: typeof acceptsIntoSession; className?: string; tone?: DropZoneTone; children: ReactNode };
+
+export function DropZone({ rules, accepts, className, tone = 'ring', children }: DropZoneProps) {
   const [{ isOver, canDrop }, drop] = useSessionDrop(rules, accepts);
   return (
-    <div ref={drop as unknown as Ref<HTMLDivElement>} className={cn(className, { [activeClassName]: isOver && canDrop })}>
+    <div ref={drop as unknown as Ref<HTMLDivElement>} className={cn(className, { [DROP_ZONE_ACTIVE_CLASS[tone]]: isOver && canDrop })}>
       {children}
     </div>
   );

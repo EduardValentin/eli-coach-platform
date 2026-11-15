@@ -1,3 +1,4 @@
+import type { SortToggleSize } from "~/shared/design-system/filters";
 import { useIsMobileViewport } from "~/shared/design-system/lib";
 import {
   SearchField,
@@ -16,23 +17,14 @@ import { RESOURCE_TOOLBAR_COPY } from "./resource-copy";
 
 const ALL_TAGS = "__all__";
 
-export type ResourceToolbarControlSize = "sm" | "md";
-
 type TagFilterProps = {
   chosen: string | null;
   options: readonly ResourceTagOptionView[];
   searched: number;
   onChoose: (tag: string | null) => void;
-  size: ResourceToolbarControlSize;
 };
 
-function TagFilter({
-  chosen,
-  options,
-  searched,
-  onChoose,
-  size,
-}: TagFilterProps) {
+function TagFilter({ chosen, options, searched, onChoose }: TagFilterProps) {
   return (
     <Select
       onValueChange={(value) => onChoose(value === ALL_TAGS ? null : value)}
@@ -41,7 +33,6 @@ function TagFilter({
       <SelectTrigger
         aria-label={RESOURCE_TOOLBAR_COPY.tag}
         className="w-full md:w-56"
-        size={size}
       >
         <SelectValue>{chosen ?? RESOURCE_TOOLBAR_COPY.allTags}</SelectValue>
       </SelectTrigger>
@@ -66,7 +57,7 @@ type ResourceToolbarProps = {
   typedSearch: string;
   onChooseTag: (tag: string | null) => void;
   onSearch: (search: string) => void;
-  sort?: (size: ResourceToolbarControlSize) => ReactNode;
+  sort?: (toggleSize: SortToggleSize) => ReactNode;
 };
 
 export function ResourceToolbar({
@@ -78,7 +69,7 @@ export function ResourceToolbar({
   onSearch,
   sort,
 }: ResourceToolbarProps) {
-  const size = useIsMobileViewport() ? "md" : "sm";
+  const toggleSize = useIsMobileViewport() ? "md" : "sm";
 
   return (
     <div
@@ -91,7 +82,6 @@ export function ResourceToolbar({
           onChoose={onChooseTag}
           options={tagOptions}
           searched={searched}
-          size={size}
         />
       </div>
       <SearchField
@@ -99,10 +89,9 @@ export function ResourceToolbar({
         className="min-w-0 md:w-64"
         onChange={(event) => onSearch(event.target.value)}
         placeholder={RESOURCE_TOOLBAR_COPY.searchPlaceholder}
-        size={size}
         value={typedSearch}
       />
-      {sort?.(size)}
+      {sort?.(toggleSize)}
     </div>
   );
 }

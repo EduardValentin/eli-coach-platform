@@ -9,7 +9,7 @@ const badgeClasses = cva(
     variants: {
       tone: {
         "brand-secondary":
-          "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary",
+          "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary-ink",
         muted: "border-border-default text-text-muted",
         secondary: "border-transparent bg-secondary text-secondary-foreground",
         pending:
@@ -25,7 +25,9 @@ const badgeClasses = cva(
         "tint-cyan":
           "border-transparent bg-tint-cyan-soft text-text-primary [&>svg]:text-text-secondary",
         count:
-          "min-w-5 rounded-full border-transparent bg-current/12 px-1.5 text-caption font-medium tabular-nums opacity-80",
+          "min-w-5 rounded-full border-transparent bg-current/10 px-1.5 text-xs font-medium tabular-nums",
+        "count-on-fill":
+          "min-w-5 rounded-full border-transparent bg-surface-base px-1.5 text-xs font-medium tabular-nums",
       },
     },
     defaultVariants: {

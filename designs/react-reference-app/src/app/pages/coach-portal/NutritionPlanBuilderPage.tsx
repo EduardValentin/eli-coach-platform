@@ -56,7 +56,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../components/ui/dialog';
-import { LABEL_CLASS, VALUE_LG_CLASS } from '../../components/typography';
+import { LABEL_CLASS, VALUE_LG_CLASS, EYEBROW_CLASS } from '../../components/typography';
 import {
   PHASE_LABEL,
   PHASE_VAR,
@@ -188,7 +188,6 @@ export function NutritionPlanBuilderPage() {
           >
             <SelectTrigger
               aria-label="View plan block"
-              size="sm"
               className="w-auto"
             >
               <SelectValue />
@@ -425,7 +424,7 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
       aria-label="Plan summary"
       className="rounded-control border border-border bg-card p-4"
     >
-      <p className={`mb-3 ${LABEL_CLASS}`}>
+      <p className={`mb-3 ${EYEBROW_CLASS}`}>
         Plan · {range} · {n} days
       </p>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
@@ -546,7 +545,7 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
       aria-label="Per-phase calorie targets"
     >
       <div className="mb-2.5 flex items-center justify-between gap-3">
-        <p className={LABEL_CLASS}>Phase targets</p>
+        <p className={EYEBROW_CLASS}>Phase targets</p>
         <div className="flex items-center gap-3">
           {dirty && (
             <span className="text-xs font-medium text-text-secondary">
@@ -1080,7 +1079,7 @@ function DayOverviewCell({
           }
           return (
             <li key={slot.id} className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact border border-dashed border-border text-text-secondary">
+              <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact bg-surface-quiet text-text-secondary">
                 <Plus size={15} />
               </span>
               <span className="min-w-0 flex-1 truncate text-sm text-text-secondary">

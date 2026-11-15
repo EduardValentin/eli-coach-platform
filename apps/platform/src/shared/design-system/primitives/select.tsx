@@ -3,34 +3,46 @@ import * as React from "react";
 import { Select as RadixSelect } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import {
+  OpenStateContext,
+  useOpenState,
+  useTriggerControls,
+} from "../lib/open-state";
 import { Badge } from "./badge";
 import { FIELD_FRAME_CLASS } from "./field-frame";
-import { fieldSizeClasses, type FieldSize } from "./field-size";
+import { FIELD_SIZE_CLASS } from "./field-size";
 
-export const Select = RadixSelect.Root;
+export function Select({
+  defaultOpen,
+  onOpenChange,
+  open,
+  ...props
+}: React.ComponentProps<typeof RadixSelect.Root>) {
+  const openState = useOpenState({ defaultOpen, onOpenChange, open });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <RadixSelect.Root {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
+}
+
 export const SelectGroup = RadixSelect.Group;
 export const SelectValue = RadixSelect.Value;
 
 type SelectTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixSelect.Trigger
-> & {
-  size?: FieldSize;
-};
+>;
 
-// Safari's default Tab order visits text fields only and skips buttons unless
-// they carry an explicit tabindex; a control that stands in for a form field
-// must stay reachable like the native field it replaces.
-export const FIELD_TAB_INDEX = 0;
-
-export function selectTriggerClasses(size: FieldSize): string {
+function selectTriggerClasses(): string {
   return cn(
     FIELD_FRAME_CLASS,
-    "flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
-    fieldSizeClasses({ size }),
+    "relative hit-area flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
+    FIELD_SIZE_CLASS,
   );
 }
 
-export function SelectTriggerChevron(
+function SelectTriggerChevron(
   slotProps: React.ComponentProps<typeof ChevronDown>,
 ) {
   return (
@@ -42,22 +54,47 @@ export function SelectTriggerChevron(
   );
 }
 
-export const SelectTrigger = React.forwardRef<
-  React.ElementRef<typeof RadixSelect.Trigger>,
-  SelectTriggerProps
->(({ children, className, size = "md", ...props }, ref) => (
-  <RadixSelect.Trigger
-    className={cn(selectTriggerClasses(size), className)}
+type FieldTriggerProps = React.ComponentPropsWithoutRef<"button"> & {
+  icon?: React.ReactNode;
+};
+
+export const FieldTrigger = React.forwardRef<
+  HTMLButtonElement,
+  FieldTriggerProps
+>(({ children, className, icon = <SelectTriggerChevron />, ...props }, ref) => (
+  <button
+    className={cn(selectTriggerClasses(), className)}
     ref={ref}
-    tabIndex={FIELD_TAB_INDEX}
+    type="button"
     {...props}
   >
     {children}
-    <RadixSelect.Icon asChild>
-      <SelectTriggerChevron />
-    </RadixSelect.Icon>
-  </RadixSelect.Trigger>
+    {icon}
+  </button>
 ));
+
+FieldTrigger.displayName = "FieldTrigger";
+
+export const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof RadixSelect.Trigger>,
+  SelectTriggerProps
+>(({ children, className, ...props }, ref) => {
+  const controls = useTriggerControls();
+
+  return (
+    <RadixSelect.Trigger
+      className={cn(selectTriggerClasses(), className)}
+      ref={ref}
+      {...controls}
+      {...props}
+    >
+      {children}
+      <RadixSelect.Icon asChild>
+        <SelectTriggerChevron />
+      </RadixSelect.Icon>
+    </RadixSelect.Trigger>
+  );
+});
 
 SelectTrigger.displayName = "SelectTrigger";
 
@@ -72,7 +109,7 @@ export const SelectContent = React.forwardRef<
   <RadixSelect.Portal>
     <RadixSelect.Content
       className={cn(
-        "relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-field border bg-surface-base text-text-primary shadow-action motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
+        "relative z-floating-over-sheet max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-field border bg-surface-base text-text-primary shadow-action motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,
@@ -147,7 +184,7 @@ export const SelectItem = React.forwardRef<
 >(({ children, className, count, countParity, ...props }, ref) => (
   <RadixSelect.Item
     className={cn(
-      "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+      "relative flex min-h-12 w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
       className,
     )}
     ref={ref}

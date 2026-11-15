@@ -1,350 +1,589 @@
 import { format } from 'date-fns';
-import type { ReactNode } from 'react';
-import { BLOCK_TYPE_LABELS, WEEKDAY_LABELS, WEEKDAYS, weekdayAbbreviation, weekCounts, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
-import { blockDates, nextCheckpoint } from '../../domain/programCalendar';
-import { cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
-import { fillTemplate } from '../../domain/programTemplates';
+import { Fragment, useId, type ReactNode } from 'react';
+import { BLOCK_TYPE_LABELS, positionLabel, warmUpItemText, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
+import { blockDates, planWeeks } from '../../domain/programCalendar';
+import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
+import { fillTemplate, type GuideTextKey } from '../../domain/programTemplates';
+import { printedTitle, programText, type BlockTextKey, type ProgramTextTarget } from '../../domain/programTexts';
 import { estimatedMinutes } from '../../domain/sessionTiming';
 import { counted } from '../../utils/counted';
-import { formatJourneyDate } from '../../utils/journeyLabels';
-import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
+import {
+  DOCUMENT_CARD_TITLE_CLASS,
+  DOCUMENT_HEAD_CLASS,
+  DOCUMENT_LABEL_CLASS,
+  DOCUMENT_NOTE_CLASS,
+  DOCUMENT_PROSE_CLASS,
+  DOCUMENT_SECTION_TITLE_CLASS,
+  DOCUMENT_VALUE_CLASS,
+} from '../typography';
 import { cn } from '../ui/utils';
-import { BLOCK_SWATCH } from './blockColours';
-import { Emphasised, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, programTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
+import { BlockCalendar } from './BlockCalendar';
+import { BLOCK_RULE } from './blockColours';
+import { DocumentEditingProvider, DocumentHeading, useDocumentEditing, type DocumentEditing } from './documentEditing';
+import { DocumentTextSlot, OptionalMark, useShowsText } from './DocumentTextSlot';
+import { ExerciseLink } from './ExerciseLink';
+import { PlanStrip } from './PlanTimeline';
+import { PositionBadge } from './PositionBadge';
+import { Emphasised, parseTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
-import { TrackingTable } from './TrackingTable';
-import { cardioSegmentText, coolDownLines, currentBlock, dayEntryLabel, exerciseName, warmUpLines, type ProgramView } from './programView';
+import { currentBlock, exerciseName, hasCoolDown, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
-const DISCLAIMER_TEXT = "Your coach's full disclaimer accompanies this program.";
-const NO_WEIGHT_NOTE = 'No weight listed? Pick one that lets you finish the set at the RIR shown.';
+const DISCLAIMER_TEXT = "See your coach's disclaimer.";
+const TERM_SEPARATOR_MARK = '—';
 const LIST_DASH = /^—\s*/;
+const LEAD_IN = /^([^:?,.]{3,40}[:?,])\s+(.+)$/;
+const LEAD_IN_END = /[:,]$/;
+const TERM_SEPARATOR = /\s*[,/]\s*/;
+const MARK_TERM = /^[A-D]\d?$/;
+const SHORT_DATE = 'd MMM';
 
-const SECTION_TITLE_CLASS = 'font-serif text-document-section font-semibold text-balance text-text-primary';
-const CARD_TITLE_CLASS = 'text-document-card font-semibold text-text-primary';
-const PROSE_CLASS = 'max-w-measure space-y-document-tight text-document-body';
+const COVER_LABEL_CLASS = cn(DOCUMENT_LABEL_CLASS, 'text-text-primary');
 const BOX_CLASS = 'rounded-field border border-divider p-document-gap';
+const TERM_ROW_CLASS = 'grid gap-x-4 gap-y-0.5 text-document-table sm:grid-cols-[10rem_minmax(0,1fr)]';
+const TERM_CLASS = 'font-semibold text-text-primary';
+const NOTE_FIGURE_CLASS = 'max-w-measure space-y-document-tight border-l-2 border-text-primary pl-4';
+const FOCUS_CLASS = 'max-w-measure font-serif text-document-card italic text-text-primary';
+const LABEL_FOCUS_TARGET = -1;
+const EDITED_TEXT_TYPOGRAPHY = { body: DOCUMENT_PROSE_CLASS, heading: DOCUMENT_SECTION_TITLE_CLASS };
+const EDITED_LEAD_IN_ROWS_CLASS =
+  'space-y-1 text-document-table max-sm:[&>p>strong:first-child]:block sm:[&>p:has(>strong:first-child)]:grid sm:[&>p]:grid-cols-[10rem_minmax(0,1fr)] sm:[&>p]:gap-x-4 sm:[&>p>:not(:first-child)]:col-start-2';
+const EDITED_LEGEND_TYPOGRAPHY = { body: cn(EDITED_LEAD_IN_ROWS_CLASS, '[&>h3]:mb-document-tight'), heading: DOCUMENT_CARD_TITLE_CLASS };
+const EDITED_TERM_ROW_TYPOGRAPHY = {
+  body: cn(
+    EDITED_LEAD_IN_ROWS_CLASS,
+    'sm:[&:has(>h3)]:grid sm:[&:has(>h3)]:grid-cols-[10rem_minmax(0,1fr)] sm:[&:has(>h3)]:gap-x-4 sm:[&>h3]:row-start-1 sm:[&:has(>h3)>:not(h3)]:col-start-2',
+  ),
+  heading: cn(TERM_CLASS, 'text-document-table'),
+};
 
-function sessionsPerWeek(block: Block): string {
-  const { sessions, cardio } = weekCounts(block);
-  return cardio > 0 ? `${sessions} strength · ${cardio} cardio` : `${sessions} strength`;
+const TITLE: ProgramTextTarget = { kind: 'version', key: 'title' };
+const FOCUS: ProgramTextTarget = { kind: 'version', key: 'focus' };
+const PERSONAL_NOTE: ProgramTextTarget = { kind: 'version', key: 'personalNote' };
+const WHAT_CHANGED: ProgramTextTarget = { kind: 'version', key: 'whatChanged' };
+const NUTRITION: ProgramTextTarget = { kind: 'version', key: 'nutrition' };
+const LIFESTYLE: ProgramTextTarget = { kind: 'version', key: 'lifestyle' };
+
+function guide(key: GuideTextKey): ProgramTextTarget {
+  return { kind: 'guide', key };
 }
 
-function nowReading(view: ProgramView, block: Block): string {
-  const { position } = view;
-  if (position.status === 'in-plan') return `${BLOCK_TYPE_LABELS[block.type]} · week ${position.weekOfBlock} of ${block.weeks}`;
-  if (position.status === 'ended') return 'Plan complete';
-  return view.dayOne ? `Starts ${formatJourneyDate(view.dayOne)}` : 'Starts once your plan is published';
+function blockText(block: Block, key: BlockTextKey): ProgramTextTarget {
+  return { kind: 'block', blockId: block.id, key };
 }
 
-function nextCheckInReading(view: ProgramView): string {
-  if (!view.dayOne || view.position.status !== 'in-plan') return 'Set when your plan starts';
-  return format(nextCheckpoint(view.dayOne, view.preferredWeekday, view.today), 'EEEE, d MMMM');
+function valueOf(view: ProgramView, target: ProgramTextTarget): string {
+  return programText(view.version, target, view.program.language).value;
 }
 
-function blockLabel(view: ProgramView, block: Block): string {
-  const { blocks } = view.version.content.plan;
-  return `Block ${blocks.indexOf(block) + 1} of ${blocks.length} · ${counted(block.weeks, 'week')}`;
+function withLeadIn(paragraphs: readonly TemplateParagraph[]): TemplateParagraph[] {
+  const [first, ...rest] = paragraphs;
+  const match = first && first.lead === undefined ? LEAD_IN.exec(first.body) : null;
+  return match ? [{ lead: match[1], body: match[2] }, ...rest] : [...paragraphs];
+}
+
+type TermAndBody = { term: string; paragraphs: TemplateParagraph[] };
+
+function termAndBody(text: string): TermAndBody {
+  const { title, paragraphs } = parseTemplate(text);
+  if (title) return { term: title, paragraphs };
+  const [first, ...rest] = withLeadIn(paragraphs);
+  if (first?.lead === undefined) return { term: '', paragraphs };
+  return { term: first.lead.replace(LEAD_IN_END, ''), paragraphs: [{ body: first.body }, ...rest] };
+}
+
+function opensWith(paragraphs: readonly TemplateParagraph[], title: string): boolean {
+  return paragraphs[0]?.body.toLowerCase().startsWith(title.toLowerCase()) ?? false;
 }
 
 function Prose({ paragraphs }: { paragraphs: readonly TemplateParagraph[] }) {
-  return <TemplateBody paragraphs={paragraphs} className={PROSE_CLASS} />;
+  return <TemplateBody paragraphs={paragraphs} className={DOCUMENT_PROSE_CLASS} />;
 }
 
-type SectionProps = { label: string; title: string; children: ReactNode; print?: 'keep' };
+type SectionProps = { title: string; children: ReactNode; print?: 'keep'; headingId?: string };
 
-function Section({ label, title, children, print }: SectionProps) {
+function Section({ title, children, print, headingId }: SectionProps) {
   return (
     <section aria-label={title} data-print-keep={print === 'keep' ? '' : undefined} className="space-y-document-gap">
-      <hgroup data-print-heading className="space-y-0.5">
-        <p className={DOCUMENT_LABEL_CLASS}>{label}</p>
-        <h2 className={SECTION_TITLE_CLASS}>{title}</h2>
-      </hgroup>
+      <DocumentHeading id={headingId} tabIndex={headingId ? LABEL_FOCUS_TARGET : undefined} level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
+        {title}
+      </DocumentHeading>
       {children}
     </section>
   );
 }
 
-type TemplateSectionProps = { label: string; text: string; fallbackTitle: string };
+function ParagraphsOf({ text }: { text: string }) {
+  return <Prose paragraphs={parseTemplate(text).paragraphs} />;
+}
 
-function TemplateSection({ label, text, fallbackTitle }: TemplateSectionProps) {
+function TitledProse({ text, fallbackTitle }: { text: string; fallbackTitle: string }) {
   const { title, paragraphs } = parseTemplate(text);
+  if (!title && opensWith(paragraphs, fallbackTitle)) return <Prose paragraphs={withLeadIn(paragraphs)} />;
   return (
-    <Section label={label} title={title || fallbackTitle} print="keep">
+    <>
+      <DocumentHeading level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
+        {title || fallbackTitle}
+      </DocumentHeading>
       <Prose paragraphs={paragraphs} />
-    </Section>
+    </>
   );
 }
 
-function RunningHeader({ text }: { text: string }) {
-  return <style>{`@media print { @page { @top-left { content: ${JSON.stringify(text)}; } } }`}</style>;
+type TextSectionProps = {
+  view: ProgramView;
+  target: ProgramTextTarget;
+  fallbackTitle: string;
+  fill?: (text: string) => string;
+};
+
+function unchanged(text: string): string {
+  return text;
 }
 
-function Cover({ view, block }: { view: ProgramView; block: Block | null }) {
-  const { version } = view;
-  const date = version.publishedAt ? format(version.publishedAt, 'd MMMM yyyy') : 'Draft';
+function TextSection({ view, target, fallbackTitle, fill = unchanged }: TextSectionProps) {
+  const shows = useShowsText(view, target);
+  if (!shows) return null;
+  const title = parseTemplate(fill(valueOf(view, target))).title || fallbackTitle;
   return (
-    <header data-print-keep className="relative -mx-4 overflow-hidden bg-surface-subtle px-4 pt-7 pb-6 sm:-mx-[16mm] sm:px-[16mm]">
-      {block && <span aria-hidden="true" className={cn('absolute inset-x-0 top-0 h-1.5', BLOCK_SWATCH[block.type])} />}
-      <p className={DOCUMENT_LABEL_CLASS}>Training program</p>
-      <h1 className="mt-document-tight font-serif text-document-title font-semibold text-text-primary">{view.clientName}</h1>
-      <div className="mt-document-gap flex flex-wrap items-center gap-x-6 gap-y-2 text-document-body text-text-secondary">
-        <p>{`Program · Version ${version.number} · ${date}`}</p>
-        <p>{`Coach: ${COACH_NAME}`}</p>
-        {block && (
-          <p className="inline-flex items-center gap-2 rounded-full border border-divider bg-surface-base px-3 py-0.5 font-medium text-text-primary">
-            <span aria-hidden="true" className={cn('size-2 rounded-full', BLOCK_SWATCH[block.type])} />
-            {`${BLOCK_TYPE_LABELS[block.type]} block`}
-          </p>
-        )}
-      </div>
-      {version.content.header.focus && <p className="mt-document-gap max-w-measure font-serif text-document-card italic text-text-primary">{version.content.header.focus}</p>}
-    </header>
-  );
-}
-
-function Reading({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-0.5 border-l-2 border-divider pl-3">
-      <dt className={DOCUMENT_LABEL_CLASS}>{label}</dt>
-      <dd className="text-document-body font-medium tabular-nums text-text-primary">{value}</dd>
-    </div>
-  );
-}
-
-function AtAGlance({ view, block }: { view: ProgramView; block: Block }) {
-  return (
-    <section aria-label="At a glance" data-print-keep className="space-y-document-gap">
-      <h2 className={DOCUMENT_LABEL_CLASS}>At a glance</h2>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-document-gap">
-        <Reading label="Now" value={nowReading(view, block)} />
-        <Reading label="Next check-in form" value={nextCheckInReading(view)} />
-        <Reading label="Daily steps" value={block.dailySteps.toLocaleString('en-US')} />
-        <Reading label="Sessions per week" value={sessionsPerWeek(block)} />
-      </dl>
+    <section aria-label={title} data-print-keep>
+      <DocumentTextSlot
+        view={view}
+        target={target}
+        label={{ text: fallbackTitle, level: 2, className: DOCUMENT_SECTION_TITLE_CLASS }}
+        className="space-y-document-gap"
+      >
+        {value => <TitledProse text={fill(value)} fallbackTitle={fallbackTitle} />}
+      </DocumentTextSlot>
     </section>
   );
 }
 
-function PlanStrip({ view }: { view: ProgramView }) {
-  const { blocks } = view.version.content.plan;
-  const { dayOne, position } = view;
+function RunningHeader({ text }: { text: string }) {
+  return <style>{`@media print { @page { @top-left { content: ${JSON.stringify(text)}; } } @page :first { @top-left { content: none; } } }`}</style>;
+}
+
+function runningHeaderText(view: ProgramView, block: Block | null): string {
+  const parts = [view.clientName, `v${view.version.number}`, ...(block ? [BLOCK_TYPE_LABELS[block.type]] : [])];
+  return parts.join(' · ');
+}
+
+function NoteFromCoach({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
+  const captionId = useId();
+  const editing = useDocumentEditing();
   return (
-    <ol className="flex gap-1">
-      {blocks.map((block, index) => {
-        const dates = dayOne ? blockDates(blocks, index, dayOne) : null;
-        const isCurrent = position.status === 'in-plan' && position.blockIndex === index;
-        return (
-          <li
-            key={block.id}
-            aria-current={isCurrent ? 'true' : undefined}
-            style={{ flexGrow: block.weeks, flexBasis: 0 }}
-            className={cn('flex min-w-28 flex-col gap-0.5', DOCUMENT_NOTE_CLASS, { 'text-text-primary': isCurrent })}
-          >
-            <span aria-hidden="true" className={cn('mb-1 h-1.5 rounded-full', BLOCK_SWATCH[block.type])} />
-            <span className="text-document-body font-semibold text-text-primary">
-              {BLOCK_TYPE_LABELS[block.type]}
-              {isCurrent && <span className="font-normal text-text-secondary"> · now</span>}
-            </span>
-            <span>{counted(block.weeks, 'week')}</span>
-            {dates && <span>{`${formatJourneyDate(dates.start)} – ${formatJourneyDate(dates.end)}`}</span>}
-          </li>
-        );
-      })}
-    </ol>
+    <figure data-print-keep className={NOTE_FIGURE_CLASS}>
+      <figcaption id={captionId} tabIndex={editing ? LABEL_FOCUS_TARGET : undefined} className={DOCUMENT_HEAD_CLASS}>
+        {`A note from ${COACH_NAME}`}
+        <OptionalMark view={view} target={target} />
+      </figcaption>
+      <DocumentTextSlot view={view} target={target} labelledBy={captionId}>
+        {value => <ParagraphsOf text={value} />}
+      </DocumentTextSlot>
+    </figure>
   );
 }
 
-function Legend({ view }: { view: ProgramView }) {
-  const { title: parsedTitle, paragraphs } = parseTemplate(programTemplate(view, 'legend'));
-  const title = parsedTitle || 'How to read your session';
+function Cover({ view }: { view: ProgramView }) {
+  const { version } = view;
+  const date = version.publishedAt ? format(version.publishedAt, 'd MMMM yyyy') : 'Draft';
+  const showsNote = useShowsText(view, PERSONAL_NOTE);
   return (
-    <aside aria-label={title} data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight bg-surface-subtle')}>
-      <h2 className={CARD_TITLE_CLASS}>{title}</h2>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-document-table">
+    <header data-print-keep className="relative -mx-4 overflow-hidden bg-surface-subtle px-4 pt-7 pb-6 sm:-mx-[16mm] sm:px-[16mm]">
+      <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-text-primary" />
+      <DocumentTextSlot
+        view={view}
+        target={TITLE}
+        typography={{ body: COVER_LABEL_CLASS }}
+        unwritten={<p className={COVER_LABEL_CLASS}>{printedTitle(version.content)}</p>}
+      >
+        {value => <p className={COVER_LABEL_CLASS}>{value}</p>}
+      </DocumentTextSlot>
+      <DocumentHeading level={1} className="mt-document-tight font-serif text-document-title font-semibold text-text-primary">
+        {view.clientName}
+      </DocumentHeading>
+      <p className="mt-document-tight text-document-body text-text-secondary">{`Version ${version.number} · ${date} · Coach ${COACH_NAME}`}</p>
+      <DocumentTextSlot view={view} target={FOCUS} className="mt-document-gap" typography={{ body: FOCUS_CLASS }}>
+        {value => <p className={FOCUS_CLASS}>{value}</p>}
+      </DocumentTextSlot>
+      {showsNote && (
+        <div className="mt-document-gap">
+          <NoteFromCoach view={view} target={PERSONAL_NOTE} />
+        </div>
+      )}
+    </header>
+  );
+}
+
+const LATER_LABELS_GIVE_WAY = 1000;
+const ALIGNED_LABELS_FROM_WIDTH = [
+  'flex-row',
+  'flex-row',
+  '@min-[24rem]:flex-row',
+  '@min-[36rem]:flex-row',
+  '@min-[48rem]:flex-row',
+  '@min-[60rem]:flex-row',
+  '@min-[72rem]:flex-row',
+];
+
+function labelShare(blocks: readonly Block[], block: Block): string {
+  return `calc((100% - ${blocks.length - 1} * var(--spacing)) * ${block.weeks / planWeeks(blocks)})`;
+}
+
+function PlanSection({ view }: { view: ProgramView }) {
+  const { blocks } = view.version.content.plan;
+  const { dayOne, position } = view;
+  return (
+    <section aria-label="Plan" data-print-keep className="@container space-y-document-tight">
+      <PlanStrip blocks={blocks} dayOne={dayOne} gap="wide" />
+      <ol className={cn('flex flex-col gap-x-1 gap-y-2 text-document-table', ALIGNED_LABELS_FROM_WIDTH[blocks.length])}>
+        {blocks.map((block, index) => {
+          const dates = dayOne ? blockDates(blocks, index, dayOne) : null;
+          const isCurrent = position.status === 'in-plan' && position.blockIndex === index;
+          return (
+            <li
+              key={block.id}
+              aria-current={isCurrent ? 'true' : undefined}
+              style={{ flexBasis: labelShare(blocks, block), flexShrink: LATER_LABELS_GIVE_WAY ** index }}
+              className="min-w-max whitespace-nowrap"
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-text-primary">{BLOCK_TYPE_LABELS[block.type]}</span>
+                {isCurrent && <PositionBadge label="Now" size="xs" />}
+              </span>
+              <span className="block text-text-secondary tabular-nums">
+                {counted(block.weeks, 'week')}
+                {dates && ` · ${format(dates.start, SHORT_DATE)}–${format(dates.end, SHORT_DATE)}`}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function LegendTerm({ term }: { term: string }) {
+  const marks = term.split(TERM_SEPARATOR);
+  if (!marks.every(mark => MARK_TERM.test(mark))) return term;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      {marks.map((mark, index) => (
+        <Fragment key={mark}>
+          {index > 0 && <span className="sr-only">, </span>}
+          <PositionBadge label={mark} size="xs" />
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
+const LEGEND = guide('legend');
+const LEGEND_FALLBACK_TITLE = 'How to read your session';
+const LINKS_TERM = 'Exercise names';
+const LINKS_DEFINITION = 'Tap one for its video and how-to.';
+
+function Legend({ view }: { view: ProgramView }) {
+  const shows = useShowsText(view, LEGEND);
+  const editing = useDocumentEditing();
+  if (!shows) return null;
+  const title = parseTemplate(valueOf(view, LEGEND)).title || LEGEND_FALLBACK_TITLE;
+  return (
+    <aside aria-label={title} data-print-keep className={cn(BOX_CLASS, 'bg-surface-subtle')}>
+      <DocumentTextSlot
+        view={view}
+        target={LEGEND}
+        label={{ text: LEGEND_FALLBACK_TITLE, level: 2, className: DOCUMENT_CARD_TITLE_CLASS }}
+        className="space-y-document-tight"
+        typography={EDITED_LEGEND_TYPOGRAPHY}
+        leadSeparator={TERM_SEPARATOR_MARK}
+      >
+        {value => <LegendBody text={value} />}
+      </DocumentTextSlot>
+      {editing && (
+        <dl className="mt-1">
+          <LinksRow />
+        </dl>
+      )}
+    </aside>
+  );
+}
+
+function LinksRow() {
+  return (
+    <div className={TERM_ROW_CLASS}>
+      <dt className={TERM_CLASS}>{LINKS_TERM}</dt>
+      <dd className="max-w-measure text-text-primary">{LINKS_DEFINITION}</dd>
+    </div>
+  );
+}
+
+function LegendBody({ text }: { text: string }) {
+  const { title, paragraphs } = parseTemplate(text);
+  const editing = useDocumentEditing();
+  return (
+    <>
+      <DocumentHeading level={2} className={DOCUMENT_CARD_TITLE_CLASS}>
+        {title || LEGEND_FALLBACK_TITLE}
+      </DocumentHeading>
+      <dl className="space-y-1">
         {paragraphs.map(paragraph => {
-          const term = paragraph.lead?.replace(/:$/, '') ?? '';
+          const term = paragraph.lead?.replace(LEAD_IN_END, '') ?? '';
           const description = paragraph.body.replace(LIST_DASH, '');
           return (
-            <div key={`${term}${description}`} className="contents">
-              <dt className="font-semibold text-text-primary">{term}</dt>
+            <div key={`${term}${description}`} className={TERM_ROW_CLASS}>
+              <dt className={TERM_CLASS}>
+                <LegendTerm term={term} />
+              </dt>
               <dd className="max-w-measure text-text-primary">
                 <Emphasised text={description} />
               </dd>
             </div>
           );
         })}
+        {!editing && <LinksRow />}
       </dl>
-    </aside>
+    </>
   );
 }
 
 function BlockSection({ view, block }: { view: ProgramView; block: Block }) {
-  const intro = parseTemplate(block.introText || programTemplate(view, `block.${block.type}`));
-  const calibration = parseTemplate(programTemplate(view, 'calibration'));
+  const intro = blockText(block, 'intro');
+  const note = blockText(block, 'note');
+  const showsNote = useShowsText(view, note);
+  const fallbackTitle = `${BLOCK_TYPE_LABELS[block.type]} block`;
+  const title = parseTemplate(valueOf(view, intro)).title || fallbackTitle;
   return (
-    <Section label={blockLabel(view, block)} title={intro.title || `${BLOCK_TYPE_LABELS[block.type]} block`}>
-      <Prose paragraphs={intro.paragraphs} />
-      {block.clientNote && (
-        <figure data-print-keep className="max-w-measure space-y-document-tight border-l-2 border-text-primary pl-4">
-          <figcaption className={DOCUMENT_LABEL_CLASS}>{`A note from ${COACH_NAME}`}</figcaption>
-          <Prose paragraphs={parseTemplate(block.clientNote).paragraphs} />
-        </figure>
+    <section aria-label={title} className="space-y-document-gap">
+      <DocumentTextSlot
+        view={view}
+        target={intro}
+        label={{ text: fallbackTitle, level: 2, className: DOCUMENT_SECTION_TITLE_CLASS }}
+        className="space-y-document-gap"
+        unwritten={
+          <DocumentHeading level={2} className={DOCUMENT_SECTION_TITLE_CLASS}>
+            {fallbackTitle}
+          </DocumentHeading>
+        }
+      >
+        {value => <TitledProse text={value} fallbackTitle={fallbackTitle} />}
+      </DocumentTextSlot>
+      {showsNote && <NoteFromCoach view={view} target={note} />}
+      {block.calibrationWeek && (
+        <DocumentTextSlot view={view} target={guide('calibration')}>
+          {value => <ParagraphsOf text={value} />}
+        </DocumentTextSlot>
       )}
-      {block.calibrationWeek && <Prose paragraphs={calibration.paragraphs} />}
-    </Section>
+    </section>
   );
 }
 
-function SplitSection({ block }: { block: Block }) {
-  return <TemplateSection label="Split" text={block.split.text} fallbackTitle="Your split" />;
-}
-
-function WeekTable({ block }: { block: Block }) {
+function TermRow({ text }: { text: string }) {
+  const { term, paragraphs } = termAndBody(text);
   return (
-    <Section label="Schedule" title="This week" print="keep">
-      <table aria-label="This week" className="w-full table-fixed border-collapse text-document-table">
-        <thead>
-          <tr>
-            {WEEKDAYS.map(weekday => (
-              <th key={weekday} scope="col" className={cn(DOCUMENT_LABEL_CLASS, 'border-b border-text-primary px-1 py-1 text-left')}>
-                {weekdayAbbreviation(weekday)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {WEEKDAYS.map(weekday => {
-              const isRest = block.calendar[weekday].kind === 'rest';
-              return (
-                <td key={weekday} className={cn('border-b border-divider px-1 py-2 align-top font-medium', { 'font-normal text-text-secondary': isRest })}>
-                  {dayEntryLabel(block, weekday)}
-                </td>
-              );
-            })}
-          </tr>
-        </tbody>
-      </table>
-    </Section>
+    <div className={TERM_ROW_CLASS}>
+      <p className={TERM_CLASS}>{term}</p>
+      <TemplateBody paragraphs={paragraphs} className="max-w-measure space-y-1 text-document-table" />
+    </div>
   );
 }
 
-function SubHeading({ children }: { children: ReactNode }) {
-  return <h4 className={DOCUMENT_LABEL_CLASS}>{children}</h4>;
+function EverySessionRow({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
+  return (
+    <DocumentTextSlot view={view} target={target} typography={EDITED_TERM_ROW_TYPOGRAPHY} leadSeparator={TERM_SEPARATOR_MARK}>
+      {value => <TermRow text={value} />}
+    </DocumentTextSlot>
+  );
 }
 
 function EverySession({ view, block }: { view: ProgramView; block: Block }) {
-  const warmUp = parseTemplate(programTemplate(view, 'warmUp'));
-  const hasCoolDown = block.sessions.some(session => session.coolDown.enabled);
+  const anyCoolDown = block.sessions.some(session => session.coolDown.enabled);
   return (
-    <div data-print-keep className={cn(BOX_CLASS, 'space-y-document-gap')}>
-      <h3 className={CARD_TITLE_CLASS}>Every session</h3>
-      <div className="space-y-document-tight">
-        <SubHeading>{warmUp.title || 'Warm-up'}</SubHeading>
-        <Prose paragraphs={warmUp.paragraphs} />
-      </div>
-      <Prose paragraphs={parseTemplate(programTemplate(view, 'progression')).paragraphs} />
-      {hasCoolDown && <Prose paragraphs={parseTemplate(programTemplate(view, 'coolDown')).paragraphs} />}
-      <p className={DOCUMENT_NOTE_CLASS}>{NO_WEIGHT_NOTE}</p>
+    <section aria-label="Every session" data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>
+      <DocumentHeading level={2} className={DOCUMENT_CARD_TITLE_CLASS}>
+        Every session
+      </DocumentHeading>
+      <EverySessionRow view={view} target={guide('warmUp')} />
+      <EverySessionRow view={view} target={guide('progression')} />
+      {anyCoolDown && <EverySessionRow view={view} target={guide('coolDown')} />}
+      <EverySessionRow view={view} target={blockText(block, 'missedDay')} />
+      <EverySessionRow view={view} target={guide('noWeight')} />
+    </section>
+  );
+}
+
+type CardHeaderProps = { title: string; minutes: number; rule: string; level: 2 | 3 };
+
+function CardHeader({ title, minutes, rule, level }: CardHeaderProps) {
+  return (
+    <div className={cn('flex items-baseline justify-between gap-4 border-b-2 pb-1.5', rule)}>
+      <DocumentHeading level={level} className={DOCUMENT_CARD_TITLE_CLASS}>
+        {title}
+      </DocumentHeading>
+      <p className={cn(DOCUMENT_VALUE_CLASS, 'text-document-table whitespace-nowrap')}>
+        <span aria-hidden="true">{`~${minutes} min`}</span>
+        <span className="sr-only">{`About ${minutes} min`}</span>
+      </p>
     </div>
   );
 }
 
-function CardHeader({ title, minutes }: { title: string; minutes: number }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b-2 border-text-primary pb-1.5">
-      <h3 className={CARD_TITLE_CLASS}>{title}</h3>
-      <p className={cn(DOCUMENT_NOTE_CLASS, 'tabular-nums')}>{`About ${minutes} min`}</p>
-    </div>
-  );
-}
+type RoutineItem = { key: string; exerciseId: string; amount: string };
 
-function ItemList({ lines }: { lines: readonly string[] }) {
+function ItemList({ view, items }: { view: ProgramView; items: readonly RoutineItem[] }) {
   return (
-    <ul className="flex flex-wrap gap-x-6 gap-y-1 text-document-table text-text-primary">
-      {lines.map(line => (
-        <li key={line}>{line}</li>
+    <ul className="flex flex-wrap gap-x-5 gap-y-0.5 text-document-table text-text-primary">
+      {items.map(item => (
+        <li key={item.key}>
+          <ExerciseLink exerciseId={item.exerciseId} exercisesById={view.exercisesById} />
+          {` · ${item.amount}`}
+        </li>
       ))}
     </ul>
+  );
+}
+
+function RoutineLine({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-x-4 gap-y-0.5 max-sm:flex-col">
+      <DocumentHeading level={3} className={cn(DOCUMENT_HEAD_CLASS, 'shrink-0')}>
+        {title}
+      </DocumentHeading>
+      <div className="min-w-0 space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
+function SwapsList({ view, session }: { view: ProgramView; session: Session }) {
+  const { exercisesById } = view;
+  const rows = session.rows.filter(row => row.exerciseId !== '' && row.substitutions.some(id => exercisesById.has(id)));
+  if (rows.length === 0) return null;
+  return (
+    <section aria-label={`${session.name} swaps`} data-print-keep className="space-y-1.5 border-t border-divider pt-document-tight">
+      <DocumentHeading level={3} className={DOCUMENT_HEAD_CLASS}>
+        Swaps
+      </DocumentHeading>
+      <dl className="space-y-1 text-document-table">
+        {rows.map(row => (
+          <div key={row.id} className="grid gap-x-3 gap-y-0.5 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+            <dt className="flex items-baseline gap-2 font-semibold text-text-primary">
+              <PositionBadge label={positionLabel(session, row)} size="xs" />{' '}
+              {exerciseName(row.exerciseId, exercisesById)}
+            </dt>
+            <dd className="flex items-baseline gap-2 max-sm:pl-7">
+              <span aria-hidden="true" className="text-text-secondary">
+                →
+              </span>
+              <span className="sr-only">Swap for </span>
+              <span>
+                {row.substitutions
+                  .filter(id => exercisesById.has(id))
+                  .map((id, index) => (
+                    <Fragment key={id}>
+                      {index > 0 && ', '}
+                      <ExerciseLink exerciseId={id} exercisesById={exercisesById} />
+                    </Fragment>
+                  ))}
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
 type SessionCardProps = { view: ProgramView; block: Block; session: Session };
 
 function SessionCard({ view, block, session }: SessionCardProps) {
-  const warmUp = warmUpLines(session, view.exercisesById);
-  const coolDown = coolDownLines(session, view.exercisesById);
+  const warmUp = session.warmUp.items.map(item => ({ key: item.id, exerciseId: item.exerciseId, amount: warmUpItemText(item) }));
+  const coolDown = session.coolDown.items.map(item => ({ key: item.id, exerciseId: item.exerciseId, amount: `${item.seconds} s` }));
   return (
-    <section aria-label={session.name} data-print-card className="space-y-document-gap">
-      <div data-print-heading className="space-y-document-gap">
-        <CardHeader title={session.name} minutes={estimatedMinutes(session)} />
+    <section aria-label={session.name} data-print-card className="space-y-document-tight">
+      <div data-print-heading className="space-y-document-tight">
+        <CardHeader title={session.name} minutes={estimatedMinutes(session, view.exercisesById)} rule={BLOCK_RULE[block.type]} level={2} />
         {warmUp.length > 0 && (
-          <div className="space-y-1">
-            <SubHeading>Warm-up</SubHeading>
-            <ItemList lines={warmUp} />
-          </div>
+          <RoutineLine title="Warm-up">
+            <ItemList view={view} items={warmUp} />
+          </RoutineLine>
         )}
       </div>
-      <SessionTable session={session} exercisesById={view.exercisesById} />
-      {session.coolDown.enabled && (
-        <div className="space-y-1">
-          <SubHeading>Cool-down</SubHeading>
-          {session.coolDown.note && <p className="max-w-measure text-document-table text-text-primary">{session.coolDown.note}</p>}
-          {coolDown.length > 0 && <ItemList lines={coolDown} />}
-        </div>
+      <SessionTable session={session} block={block} exercisesById={view.exercisesById} />
+      {hasCoolDown(session) && (
+        <RoutineLine title="Cool-down">
+          <ItemList view={view} items={coolDown} />
+        </RoutineLine>
       )}
-      <TrackingTable session={session} block={block} exercisesById={view.exercisesById} />
+      <SwapsList view={view} session={session} />
     </section>
   );
 }
 
-function RoundsLines({ view, segment }: { view: ProgramView; segment: RoundsSegment }) {
-  const items = segment.items.map(item => `${exerciseName(item.exerciseId, view.exercisesById)} · ${roundsItemAmount(item)}`);
+function RoundsLine({ view, segment }: { view: ProgramView; segment: RoundsSegment }) {
+  const restBetweenRounds = segment.restBetweenRoundsSeconds > 0 ? ` · ${segment.restBetweenRoundsSeconds} s rest between rounds` : '';
+  const [only] = segment.items;
+  if (segment.items.length === 1) {
+    const work = `${roundsItemAmount(only)} ${segment.intensity}`;
+    const round = segment.easySeconds > 0 ? `(${work} / ${segment.easySeconds} s easy)` : work;
+    return (
+      <>
+        <ExerciseLink exerciseId={only.exerciseId} exercisesById={view.exercisesById} />
+        {` · ${segment.rounds} × ${round}${restBetweenRounds}`}
+      </>
+    );
+  }
+  const easy = segment.easySeconds > 0 ? ` · ${segment.easySeconds} s easy between exercises` : '';
   return (
-    <div className="space-y-1">
-      <p className="font-semibold">{`${segment.rounds} rounds`}</p>
-      {items.length > 0 && <ItemList lines={items} />}
-      {segment.easySeconds > 0 && <p className="text-text-secondary">{`${segment.easySeconds} s easy between exercises`}</p>}
-      {segment.restBetweenRoundsSeconds > 0 && <p className="text-text-secondary">{`${segment.restBetweenRoundsSeconds} s rest between rounds`}</p>}
-    </div>
+    <>
+      {`${segment.rounds} rounds: `}
+      {segment.items.map((item, index) => (
+        <Fragment key={item.id}>
+          {index > 0 && ', '}
+          <ExerciseLink exerciseId={item.exerciseId} exercisesById={view.exercisesById} />
+          {` ${roundsItemAmount(item)}`}
+        </Fragment>
+      ))}
+      {`${easy}${restBetweenRounds}`}
+    </>
   );
 }
 
-function SegmentItem({ view, segment }: { view: ProgramView; segment: CardioSegment }) {
-  return <li className="pl-1">{segment.kind === 'rounds' ? <RoundsLines view={view} segment={segment} /> : cardioSegmentText(segment, view.exercisesById)}</li>;
+function SegmentLine({ view, segment }: { view: ProgramView; segment: CardioSegment }) {
+  if (segment.kind === 'rounds') return <RoundsLine view={view} segment={segment} />;
+  return (
+    <>
+      <ExerciseLink exerciseId={segment.exerciseId} exercisesById={view.exercisesById} />
+      {` · ${segment.minutes} min · ${CARDIO_INTENSITY_TEXT[segment.intensity]}`}
+    </>
+  );
 }
 
 function CardioCard({ view, cardio }: { view: ProgramView; cardio: CardioSession }) {
+  const [only] = cardio.segments;
   return (
     <section aria-label={cardio.name} data-print-keep className="space-y-document-tight">
-      <CardHeader title={cardio.name} minutes={cardioMinutes(cardio)} />
-      <ol className="list-decimal space-y-document-tight pl-5 text-document-table marker:text-text-secondary">
-        {cardio.segments.map(segment => (
-          <SegmentItem key={segment.id} view={view} segment={segment} />
-        ))}
-      </ol>
+      <CardHeader title={cardio.name} minutes={cardioMinutes(cardio)} rule="border-training-recovery" level={3} />
+      {cardio.segments.length === 1 ? (
+        <p className="text-document-table">
+          <SegmentLine view={view} segment={only} />
+        </p>
+      ) : (
+        <ol className="list-decimal space-y-1 pl-5 text-document-table marker:font-semibold marker:text-text-secondary">
+          {cardio.segments.map(segment => (
+            <li key={segment.id} className="pl-1">
+              <SegmentLine view={view} segment={segment} />
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
-  );
-}
-
-function SessionsSection({ view, block }: { view: ProgramView; block: Block }) {
-  return (
-    <Section label="Training" title="Your sessions">
-      <EverySession view={view} block={block} />
-      <div className="space-y-document-section">
-        {block.sessions.map(session => (
-          <SessionCard key={session.id} view={view} block={block} session={session} />
-        ))}
-      </div>
-    </Section>
   );
 }
 
 function CardioSection({ view, block }: { view: ProgramView; block: Block }) {
   if (block.cardioSessions.length === 0) return null;
   return (
-    <Section label="Training" title="Your cardio">
+    <Section title="Cardio">
       <div className="space-y-document-gap">
         {block.cardioSessions.map(cardio => (
           <CardioCard key={cardio.id} view={view} cardio={cardio} />
@@ -355,52 +594,89 @@ function CardioSection({ view, block }: { view: ProgramView; block: Block }) {
 }
 
 function StepsSection({ view, block }: { view: ProgramView; block: Block }) {
-  const text = fillTemplate(programTemplate(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
-  return <TemplateSection label="Cardio and steps" text={text} fallbackTitle="Daily steps" />;
+  const fill = (text: string) => fillTemplate(text, { steps: block.dailySteps.toLocaleString('en-US') });
+  return <TextSection view={view} target={guide('steps')} fallbackTitle="Daily steps" fill={fill} />;
 }
 
-export function ProgramDocument({ view }: { view: ProgramView }) {
-  const { program, version } = view;
-  const { content } = version;
+function WhatChanged({ view }: { view: ProgramView }) {
+  const shows = useShowsText(view, WHAT_CHANGED);
+  const headingId = useId();
+  const { number } = view.version;
+  if (number <= 1 || !shows) return null;
+  return (
+    <Section title={`What changed in v${number}`} print="keep" headingId={headingId}>
+      <DocumentTextSlot view={view} target={WHAT_CHANGED} labelledBy={headingId}>
+        {value => <ParagraphsOf text={value} />}
+      </DocumentTextSlot>
+    </Section>
+  );
+}
+
+export type DocumentPart = 'whole' | 'program-wide' | 'block';
+
+type ProgramDocumentProps = { view: ProgramView; editing?: DocumentEditing; part?: DocumentPart };
+
+export function ProgramDocument({ view, editing, part = 'whole' }: ProgramDocumentProps) {
+  return (
+    <DocumentEditingProvider editing={editing ?? null} typography={EDITED_TEXT_TYPOGRAPHY} topLevel={editing && part !== 'block' ? 2 : 1}>
+      <DocumentPages view={view} part={part} />
+    </DocumentEditingProvider>
+  );
+}
+
+function DocumentPages({ view, part }: { view: ProgramView; part: DocumentPart }) {
+  const editing = useDocumentEditing();
   const block = currentBlock(view);
+  const showsProgramWide = part !== 'block';
+  const blockShown = part !== 'program-wide' ? block : null;
 
   return (
     <article
       data-parity-root="ProgramDocument"
       data-program-document
       aria-label={`${view.clientName} program`}
-      className="mx-auto w-full max-w-[210mm] space-y-document-section bg-surface-base px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]"
-    >
-      <RunningHeader text={`${view.clientName} · Program v${version.number}`} />
-      <Cover view={view} block={block} />
-      {block && <AtAGlance view={view} block={block} />}
-      {version.number > 1 && version.whatChanged && (
-        <Section label="Update" title={`What changed in v${version.number}`} print="keep">
-          <Prose paragraphs={parseTemplate(version.whatChanged).paragraphs} />
-        </Section>
+      className={cn(
+        'mx-auto w-full max-w-[210mm] space-y-document-section bg-surface-base px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]',
+        { 'pt-10 sm:pt-[18mm]': !showsProgramWide, relative: editing !== null },
       )}
-      <Section label="Overview" title="Your plan" print="keep">
-        <PlanStrip view={view} />
-      </Section>
-      <Legend view={view} />
-      {block && (
+    >
+      <RunningHeader text={runningHeaderText(view, block)} />
+      {showsProgramWide && (
         <>
-          <BlockSection view={view} block={block} />
-          <SplitSection block={block} />
-          <WeekTable block={block} />
-          <SessionsSection view={view} block={block} />
-          <CardioSection view={view} block={block} />
-          <StepsSection view={view} block={block} />
+          <Cover view={view} />
+          <WhatChanged view={view} />
+          <PlanSection view={view} />
         </>
       )}
-      {program.cycleMode === 'adapted' && <TemplateSection label="Cycle" text={programTemplate(view, 'cycle')} fallbackTitle="Listening to your cycle" />}
-      <TemplateSection label="Low-energy days" text={programTemplate(view, 'lowEnergy')} fallbackTitle="Low-energy session" />
-      <TemplateSection label="Beyond training" text={content.nutritionNotes || NUTRITION_FALLBACK} fallbackTitle="Nutrition" />
-      <TemplateSection label="Beyond training" text={content.lifestyleNotes || LIFESTYLE_FALLBACK} fallbackTitle="Lifestyle" />
-      <footer data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>
-        <p className={CARD_TITLE_CLASS}>Disclaimer</p>
-        <p className={DOCUMENT_NOTE_CLASS}>{DISCLAIMER_TEXT}</p>
-      </footer>
+      {blockShown && (
+        <Fragment key={blockShown.id}>
+          <BlockSection view={view} block={blockShown} />
+          <TextSection view={view} target={blockText(blockShown, 'split')} fallbackTitle="Your split" />
+          <BlockCalendar view={view} block={blockShown} />
+        </Fragment>
+      )}
+      <div className="space-y-document-section">
+        {showsProgramWide && <Legend view={view} />}
+        {blockShown && (
+          <>
+            <EverySession view={view} block={blockShown} />
+            <CardioSection view={view} block={blockShown} />
+            <StepsSection view={view} block={blockShown} />
+          </>
+        )}
+        {showsProgramWide && (
+          <>
+            <TextSection view={view} target={guide('lowEnergy')} fallbackTitle="Low-energy session" />
+            <TextSection view={view} target={NUTRITION} fallbackTitle="Nutrition" />
+            <TextSection view={view} target={LIFESTYLE} fallbackTitle="Lifestyle" />
+            <footer data-print-hidden className={cn(DOCUMENT_NOTE_CLASS, 'border-t border-divider pt-document-tight')}>
+              {DISCLAIMER_TEXT}
+            </footer>
+          </>
+        )}
+      </div>
+      {blockShown &&
+        blockShown.sessions.map(session => <SessionCard key={`${blockShown.id}-${session.id}`} view={view} block={blockShown} session={session} />)}
     </article>
   );
 }

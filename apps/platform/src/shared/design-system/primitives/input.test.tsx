@@ -27,15 +27,4 @@ describe("Input", () => {
       "aria-invalid:border-feedback-danger",
     );
   });
-
-  it("shrinks to the small control height when asked", () => {
-    // arrange
-    // act
-    render(<Input aria-label="Search" size="sm" />);
-
-    // assert
-    expect(screen.getByLabelText("Search")).toHaveClass(
-      "h-(--size-control-sm)",
-    );
-  });
 });

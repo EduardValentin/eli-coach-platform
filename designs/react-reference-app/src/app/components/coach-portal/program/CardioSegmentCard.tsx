@@ -1,9 +1,10 @@
-import { useId, type Ref } from 'react';
+import { useId, useRef, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus, Repeat, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
 import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, segmentMinutes, type CardioEdits } from '../../../domain/programCardio';
+import { IconActionButton } from '../../IconActionButton';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
@@ -16,6 +17,8 @@ import { ExerciseItemList } from './ExerciseItemList';
 import { CountField } from './RowTextField';
 import { parseWholeNumber } from './rowFields';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { useEditorAnnouncer } from './editorAnnouncer';
+import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
 type ItemMeasure = 'reps' | 'seconds';
@@ -28,9 +31,12 @@ type CardioSegmentCardProps = {
   library: readonly Exercise[];
   edits: CardioEdits;
   onChange: (cardio: CardioSession) => void;
+  focus: SegmentFocus;
   onReplaceExercise: () => void;
   onAddRoundsItem: () => void;
 };
+
+export type SegmentFocus = { onSegment: (segmentId: string) => void; onRemoved: (segmentId: string) => void };
 
 const INTENSITY_OPTIONS = (Object.keys(CARDIO_INTENSITY_LABELS) as CardioIntensity[]).map(value => ({ value, label: CARDIO_INTENSITY_LABELS[value] }));
 const MEASURE_OPTIONS: { value: ItemMeasure; label: string }[] = [
@@ -41,21 +47,24 @@ type NumberFieldProps = { label: string; unit?: string; value: number; parse?: (
 
 function NumberField({ label, unit, value, parse, onCommit }: NumberFieldProps) {
   return (
-    <label className="grid content-start gap-1">
-      <span className={LABEL_CLASS}>{label}</span>
+    <div className="grid content-start gap-1">
+      <span aria-hidden="true" className={LABEL_CLASS}>
+        {label}
+      </span>
       <CountField className="w-20" label={label} value={value} parse={parse} suffix={unit} onCommit={onCommit} />
-    </label>
+    </div>
   );
 }
 
 function IntensityField({ value, onChange }: { value: CardioIntensity; onChange: (value: CardioIntensity) => void }) {
+  const labelId = useId();
   return (
     <div className="grid content-start gap-1">
-      <span aria-hidden="true" className={LABEL_CLASS}>
+      <span id={labelId} className={LABEL_CLASS}>
         Intensity
       </span>
-      <div className="w-60 max-w-full">
-        <ChoiceGroup size="xs" aria-label="Intensity" value={value} onValueChange={next => onChange(next as CardioIntensity)}>
+      <div className="w-fit max-w-full">
+        <ChoiceGroup aria-labelledby={labelId} value={value} onValueChange={next => onChange(next as CardioIntensity)}>
           {INTENSITY_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
               {option.label}
@@ -85,14 +94,37 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   const onSegment = (next: RoundsSegment) => onChange(edits.changeSegment(next));
   const onItem = (item: RoundsItem) => onChange(edits.changeRoundsItem(segment.id, item));
   const { items } = segment;
+  const addButton = useRef<HTMLButtonElement>(null);
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
+      <fieldset className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
+        <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
         <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
+        {items.length > 1 && (
+          <NumberField
+            label="Easy between exercises"
+            unit="s"
+            value={segment.easySeconds}
+            parse={parseWholeNumber}
+            onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
+          />
+        )}
+        <NumberField
+          label="Rest between rounds"
+          unit="s"
+          value={segment.restBetweenRoundsSeconds}
+          parse={parseWholeNumber}
+          onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
+        />
+      </fieldset>
+      <div className="flex items-center justify-between gap-3">
+        <span className={LABEL_CLASS}>Exercises</span>
+        <IconActionButton ref={addButton} icon={Plus} label="Add exercise to the intervals" hint="Add exercise" onClick={onAddItem} />
       </div>
       <ExerciseItemList
-        label="Round exercises"
+        emptyFocus={addButton}
+        label="Interval exercises"
         items={items}
         nameOf={nameOf}
         actions={{
@@ -107,8 +139,8 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           return (
             <>
               <CountField className="w-16" label={`${name} ${measure}`} value={amount} onCommit={next => onItem(measuredItem(item, measure, next))} />
-              <div className="w-28">
-                <ChoiceGroup size="xs" aria-label={`${name} measured in`} value={measure} onValueChange={next => onItem(measuredItem(item, next as ItemMeasure, amount))}>
+              <div className="w-fit shrink-0">
+                <ChoiceGroup aria-label={`${name} measured in`} value={measure} onValueChange={next => onItem(measuredItem(item, next as ItemMeasure, amount))}>
                   {MEASURE_OPTIONS.map(option => (
                     <ChoiceOption key={option.value} value={option.value}>
                       {option.label}
@@ -120,26 +152,6 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           );
         }}
       </ExerciseItemList>
-      <Button variant="outline" size="xs" className="w-fit" onClick={onAddItem}>
-        <Plus aria-hidden="true" />
-        Add exercise
-      </Button>
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <NumberField
-          label="Easy between exercises"
-          unit="s"
-          value={segment.easySeconds}
-          parse={parseWholeNumber}
-          onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
-        />
-        <NumberField
-          label="Rest between rounds"
-          unit="s"
-          value={segment.restBetweenRoundsSeconds}
-          parse={parseWholeNumber}
-          onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
-        />
-      </div>
     </div>
   );
 }
@@ -161,19 +173,49 @@ type DropState = { isOver: boolean; canDrop: boolean; itemType: string | symbol 
 
 function dropHint(itemType: string | symbol | null, segment: CardioSegment): string {
   if (itemType === CARDIO_SEGMENT) return 'Move here';
-  return segment.kind === 'rounds' ? 'Add to the rounds' : 'Replace';
+  return segment.kind === 'rounds' ? 'Add to the intervals' : 'Replace';
 }
 
 function itemCount(segment: RoundsSegment): string {
   return counted(segment.items.length, 'exercise');
 }
 
+type SegmentTitleProps = { segment: CardioSegment; kindLabel: string; headingId: string; exerciseName: string | null; onReplaceExercise: () => void };
+
+function SegmentTitle({ segment, kindLabel, headingId, exerciseName, onReplaceExercise }: SegmentTitleProps) {
+  if (segment.kind === 'rounds') {
+    return (
+      <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
+        <Badge tone="training-recovery">{kindLabel}</Badge>
+        <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
+      </h5>
+    );
+  }
+  return (
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
+      <h5 id={headingId} className="flex min-w-0 items-center gap-2.5">
+        <Badge tone="training-recovery">{kindLabel}</Badge>
+        <span className="min-w-0 text-sm font-medium text-text-primary">{exerciseName ?? 'No exercise yet'}</span>
+      </h5>
+      {exerciseName ? (
+        <IconActionButton icon={Repeat} label={`Replace ${exerciseName}`} hint="Replace exercise" onClick={onReplaceExercise} />
+      ) : (
+        <Button variant="outline" size="xs" onClick={onReplaceExercise}>
+          <Repeat aria-hidden="true" />
+          Choose exercise
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function CardioSegmentCard(props: CardioSegmentCardProps) {
-  const { cardioId, segment, position, count, library, edits, onChange, onReplaceExercise, onAddRoundsItem } = props;
+  const { cardioId, segment, position, count, library, edits, focus, onChange, onReplaceExercise, onAddRoundsItem } = props;
   const headingId = useId();
+  const announce = useEditorAnnouncer();
   const kindLabel = SEGMENT_KIND_LABELS[segment.kind];
   const steadyExerciseId = segment.kind === 'steady' ? segment.exerciseId : '';
-  const exerciseName = library.find(item => item.id === steadyExerciseId)?.name ?? 'Choose an exercise';
+  const exerciseName = library.find(item => item.id === steadyExerciseId)?.name ?? null;
   const isRounds = segment.kind === 'rounds';
   const label = `${position}. ${kindLabel}`;
 
@@ -204,32 +246,38 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
     [cardioId, segment.id, isRounds, edits, onChange],
   );
   const targeted = isOver && canDrop;
+  const filling = useIsLibraryTarget({ kind: isRounds ? 'rounds-item' : 'cardio-exercise', sessionId: cardioId, segmentId: segment.id });
+
+  function move(direction: 'up' | 'down') {
+    onChange(direction === 'up' ? edits.moveUp(segment.id) : edits.moveDown(segment.id));
+    focus.onSegment(segment.id);
+    announce(`${kindLabel} segment moved ${direction}`);
+  }
+
+  function remove() {
+    onChange(edits.remove(segment.id));
+    focus.onRemoved(segment.id);
+    announce(`${kindLabel} segment removed`);
+  }
 
   return (
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
-      className={cn(DRAGGABLE_CARD_CLASS, 'grid gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }))}
+      data-segment-id={segment.id}
+      className={cn(DRAGGABLE_CARD_CLASS, 'grid grid-cols-[minmax(0,1fr)] gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }), { [LIBRARY_TARGET_CLASS]: filling })}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />
-        <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
-          <Badge tone="training-recovery">{kindLabel}</Badge>
-          {segment.kind === 'rounds' ? (
-            <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
-          ) : (
-            <Button variant="link" size="xs" className="h-auto min-w-0 px-0 text-sm font-medium text-text-primary" aria-label={`Replace ${exerciseName}`} onClick={onReplaceExercise}>
-              <span className="truncate">{exerciseName}</span>
-            </Button>
-          )}
-        </h5>
+        <SegmentTitle segment={segment} kindLabel={kindLabel} headingId={headingId} exerciseName={exerciseName} onReplaceExercise={onReplaceExercise} />
         {segment.kind === 'rounds' && <p className="text-sm font-medium text-text-primary tabular-nums">{`${segmentMinutes(segment)} min`}</p>}
         <RowActionsMenu
           label={`${label} actions`}
+          size="xs"
           actions={[
-            { name: 'up', label: 'Move up', icon: ArrowUp, disabled: position === 1, onSelect: () => onChange(edits.moveUp(segment.id)) },
-            { name: 'down', label: 'Move down', icon: ArrowDown, disabled: position === count, onSelect: () => onChange(edits.moveDown(segment.id)) },
-            { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(segment.id)) },
+            { name: 'up', label: 'Move up', icon: ArrowUp, disabled: position === 1, onSelect: () => move('up') },
+            { name: 'down', label: 'Move down', icon: ArrowDown, disabled: position === count, onSelect: () => move('down') },
+            { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: remove },
           ]}
         />
       </div>

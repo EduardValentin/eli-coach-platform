@@ -20,14 +20,14 @@ describe("badge", () => {
     expect(screen.getByText("Today")).toBeInTheDocument();
   });
 
-  it("tints a brand-secondary badge with the secondary brand", () => {
+  it("tints a brand-secondary badge with the secondary brand in its deep ink", () => {
     // arrange, act
     render(<Badge tone="brand-secondary">Today</Badge>);
 
     // assert
     expect(screen.getByText("Today")).toHaveClass(
       "bg-brand-secondary-surface",
-      "text-brand-secondary",
+      "text-brand-secondary-ink",
     );
   });
 
@@ -94,8 +94,21 @@ describe("badge", () => {
     // assert
     expect(screen.getByText("3")).toHaveClass(
       "rounded-full",
-      "bg-current/12",
-      "text-caption",
+      "bg-current/10",
+      "text-xs",
+      "tabular-nums",
+    );
+  });
+
+  it("draws a count on a filled control on the base surface", () => {
+    // arrange, act
+    render(<Badge tone="count-on-fill">3</Badge>);
+
+    // assert
+    expect(screen.getByText("3")).toHaveClass(
+      "rounded-full",
+      "bg-surface-base",
+      "text-xs",
       "tabular-nums",
     );
   });

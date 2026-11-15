@@ -437,7 +437,6 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
             </SettingsRow>
             <SettingsRow labelId={ids.sidesLabel} title="Sides" layout="stacked">
               <ChoiceGroup
-                size="md"
                 aria-labelledby={ids.sidesLabel}
                 value={draft.perSide ? ONE_SIDE : BOTH_SIDES}
                 onValueChange={(value) => set('perSide', value === ONE_SIDE)}
@@ -471,7 +470,6 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                 label="Primary muscles"
                 required={draft.type !== 'cardio'}
                 summary="names"
-                size="md"
                 placeholder="Pick muscles"
                 aria-invalid={shownProblems.primaryMuscles ? true : undefined}
                 aria-describedby={shownProblems.primaryMuscles ? ids.primaryProblem : undefined}
@@ -486,7 +484,6 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                 id={ids.secondary}
                 label="Secondary muscles"
                 summary="names"
-                size="md"
                 placeholder="Pick muscles"
                 selected={draft.secondaryMuscles}
                 options={MUSCLES.filter((muscle) => !draft.primaryMuscles.includes(muscle))}
@@ -499,7 +496,6 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                 id={ids.equipment}
                 label="Equipment"
                 summary="names"
-                size="md"
                 placeholder="Pick equipment"
                 selected={draft.equipment}
                 options={EQUIPMENT}

@@ -22,6 +22,46 @@ function renderDatePopover() {
 }
 
 describe("Popover", () => {
+  it("points its trigger at no content while closed", () => {
+    // arrange, act
+    renderDatePopover();
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Select a date" }),
+    ).not.toHaveAttribute("aria-controls");
+  });
+
+  it("points its trigger at its content while open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDatePopover();
+    const trigger = screen.getByRole("button", { name: "Select a date" });
+
+    // act
+    await user.click(trigger);
+
+    // assert
+    expect(trigger).toHaveAttribute(
+      "aria-controls",
+      screen.getByRole("dialog").id,
+    );
+  });
+
+  it("drops the pointer again once it closes", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDatePopover();
+    const trigger = screen.getByRole("button", { name: "Select a date" });
+    await user.click(trigger);
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(trigger).not.toHaveAttribute("aria-controls");
+  });
+
   it("opens its content when the trigger is clicked", async () => {
     // arrange
     const user = userEvent.setup();

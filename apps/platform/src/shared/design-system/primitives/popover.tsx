@@ -2,9 +2,35 @@ import * as React from "react";
 import { Popover as RadixPopover } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import {
+  OpenStateContext,
+  useOpenState,
+  useTriggerControls,
+} from "../lib/open-state";
 
-export const Popover = RadixPopover.Root;
-export const PopoverTrigger = RadixPopover.Trigger;
+export function Popover({
+  defaultOpen,
+  onOpenChange,
+  open,
+  ...props
+}: React.ComponentProps<typeof RadixPopover.Root>) {
+  const openState = useOpenState({ defaultOpen, onOpenChange, open });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <RadixPopover.Root {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
+}
+
+export function PopoverTrigger(
+  props: React.ComponentProps<typeof RadixPopover.Trigger>,
+) {
+  const controls = useTriggerControls();
+
+  return <RadixPopover.Trigger {...controls} {...props} />;
+}
+
 export const PopoverAnchor = RadixPopover.Anchor;
 
 type PopoverContentProps = React.ComponentPropsWithoutRef<
@@ -19,7 +45,7 @@ export const PopoverContent = React.forwardRef<
     <RadixPopover.Content
       align={align}
       className={cn(
-        "z-50 max-h-(--radix-popover-content-available-height) origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-field border bg-surface-base p-3 text-text-primary shadow-action outline-none motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
+        "z-floating-over-sheet max-h-(--radix-popover-content-available-height) origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-field border bg-surface-base p-3 text-text-primary shadow-action outline-none motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
         className,
       )}
       ref={ref}

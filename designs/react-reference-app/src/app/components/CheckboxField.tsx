@@ -3,7 +3,7 @@ import { Checkbox } from './ui/checkbox';
 import { cardVariants } from './ui/card';
 import { RequiredMark } from './ui/label';
 import { cn } from './ui/utils';
-import { FIELD_ERROR_CLASS } from '../utils/formFieldStyles';
+import { FieldError } from './FieldError';
 
 type CheckboxFieldLayout = 'inline' | 'statement';
 
@@ -16,7 +16,6 @@ type CheckboxFieldProps = Omit<React.ComponentPropsWithoutRef<'div'>, 'onChange'
   disabled?: boolean;
   error?: string;
   errorParity?: string;
-  errorRole?: 'alert';
   frame?: CheckboxFieldFrame;
   label: React.ReactNode;
   layout?: CheckboxFieldLayout;
@@ -35,7 +34,6 @@ export const CheckboxField = React.forwardRef<HTMLDivElement, CheckboxFieldProps
       disabled,
       error,
       errorParity,
-      errorRole,
       frame = 'none',
       label,
       layout = 'inline',
@@ -81,11 +79,7 @@ export const CheckboxField = React.forwardRef<HTMLDivElement, CheckboxFieldProps
           </label>
         </div>
         {children}
-        {error && (
-          <p className={FIELD_ERROR_CLASS} data-parity={errorParity} id={errorId} role={errorRole}>
-            {error}
-          </p>
-        )}
+        <FieldError data-parity={errorParity} id={errorId} message={error} />
       </div>
     );
   },

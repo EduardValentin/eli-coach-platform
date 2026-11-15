@@ -5,6 +5,7 @@ import { CLIENT_PORTAL_LINKS } from './navigation-links';
 import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { useUnopenedResources } from '../../hooks/useClientResources';
+import { SkipLink } from '../ui/skip-link';
 
 const RESOURCES_HREF = '/portal/resources';
 const CHECKINS_HREF = '/portal/checkins';
@@ -24,9 +25,7 @@ export function PortalLayout() {
 
   return (
     <div className="min-h-screen bg-surface-page">
-      <a className="ui-skip-link" href={`#${PORTAL_MAIN_ID}`}>
-        Skip to main content
-      </a>
+      <SkipLink targetId={PORTAL_MAIN_ID} />
 
       <PortalSidebar
         links={CLIENT_PORTAL_LINKS}

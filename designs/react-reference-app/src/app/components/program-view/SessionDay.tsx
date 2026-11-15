@@ -1,23 +1,27 @@
-import { useId, type ReactNode } from 'react';
-import { ChevronDown, Timer } from 'lucide-react';
+import { Fragment, useId, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight, Timer } from 'lucide-react';
+import { Link } from 'react-router';
 import type { Exercise } from '../../context/TrainingContext';
-import { formatRange, isWorkingSet, positionLabel, type ProgramLanguage, type Row, type Session, type SetSpec } from '../../domain/program';
+import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
-import { estimatedMinutes } from '../../domain/sessionTiming';
-import { templateText } from '../../domain/programTemplates';
-import { LABEL_CLASS } from '../typography';
+import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
+import { EYEBROW_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
+import { buttonVariants } from '../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Link as TextLink } from '../ui/link';
 import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
+import { useExercisePageHref } from './exercisePageLinks';
 import { PositionBadge } from './PositionBadge';
-import { coolDownLines, exerciseNameOf, plainText, restLabel, warmUpLines } from './programView';
+import { RirValue } from './RirValue';
+import { coolDownLines, hasCoolDown, exerciseNameOf, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
-function namesOf(ids: readonly string[], exercisesById: Library): string[] {
-  return ids.flatMap(id => exercisesById.get(id)?.name ?? []);
+function exercisesOf(ids: readonly string[], exercisesById: Library): Exercise[] {
+  return ids.flatMap(id => exercisesById.get(id) ?? []);
 }
 
 function repsText(set: SetSpec, exercise: Exercise | undefined): string {
@@ -54,7 +58,9 @@ function SetLine({ set, index, exercise }: { set: SetSpec; index: number; exerci
         {working && (
           <>
             <Dot />
-            <span className="whitespace-nowrap">{`RIR ${formatRange(set.rir)}`}</span>
+            <span className="whitespace-nowrap">
+              RIR <RirValue rir={set.rir} />
+            </span>
           </>
         )}
       </span>
@@ -75,11 +81,46 @@ function SetLine({ set, index, exercise }: { set: SetSpec; index: number; exerci
   );
 }
 
-type ExerciseCardProps = { session: Session; row: Row; exercisesById: Library; language: ProgramLanguage };
+type ExerciseCardProps = { session: Session; row: Row; exercisesById: Library; progressionText: string };
 
-function ExerciseDetails({ row, exercise, exercisesById, language }: { row: Row; exercise: Exercise | undefined; exercisesById: Library; language: ProgramLanguage }) {
-  const swaps = namesOf(row.substitutions, exercisesById);
-  const progression = row.progression.kind === 'custom' ? row.progression.text : plainText(templateText('progression', language).text);
+function SwapName({ swap }: { swap: Exercise }) {
+  const pageHref = useExercisePageHref()(swap.id);
+  if (!pageHref) return swap.name;
+  return (
+    <TextLink to={pageHref} variant="inline">
+      {swap.name}
+    </TextLink>
+  );
+}
+
+function SwapLine({ swaps }: { swaps: readonly Exercise[] }) {
+  return (
+    <p>
+      {'Swap for: '}
+      {swaps.map((swap, index) => (
+        <Fragment key={swap.id}>
+          {index > 0 && ', '}
+          <SwapName swap={swap} />
+        </Fragment>
+      ))}
+    </p>
+  );
+}
+
+function ExercisePageLink({ exercise }: { exercise: Exercise }) {
+  const pageHref = useExercisePageHref()(exercise.id);
+  if (!pageHref) return null;
+  return (
+    <Link to={pageHref} className={buttonVariants({ variant: 'link', size: 'inline' })}>
+      Open exercise page
+      <ChevronRight aria-hidden="true" />
+    </Link>
+  );
+}
+
+function ExerciseDetails({ row, exercise, exercisesById, progressionText }: { row: Row; exercise: Exercise | undefined; exercisesById: Library; progressionText: string }) {
+  const swaps = exercisesOf(row.substitutions, exercisesById);
+  const progression = row.progression.kind === 'custom' ? row.progression.text : progressionText;
   return (
     <Collapsible className="-mb-1 border-t border-border-subtle">
       <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-2 text-sm font-medium text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
@@ -88,15 +129,20 @@ function ExerciseDetails({ row, exercise, exercisesById, language }: { row: Row;
       </CollapsibleTrigger>
       <CollapsibleContent className="grid gap-2.5 pb-3 text-sm leading-relaxed text-text-primary">
         {row.cues && <p>{row.cues}</p>}
-        {exercise?.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />}
-        {swaps.length > 0 && <p>{`Swap for: ${swaps.join(', ')}`}</p>}
+        {exercise && (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />}
+            <ExercisePageLink exercise={exercise} />
+          </div>
+        )}
+        {swaps.length > 0 && <SwapLine swaps={swaps} />}
         <p className="text-text-secondary">{progression}</p>
       </CollapsibleContent>
     </Collapsible>
   );
 }
 
-function ExerciseCard({ session, row, exercisesById, language }: ExerciseCardProps) {
+function ExerciseCard({ session, row, exercisesById, progressionText }: ExerciseCardProps) {
   const headingId = useId();
   const exercise = exercisesById.get(row.exerciseId);
 
@@ -129,7 +175,7 @@ function ExerciseCard({ session, row, exercisesById, language }: ExerciseCardPro
         </span>
         {row.tempo && <span>{`Tempo ${row.tempo}`}</span>}
       </p>
-      <ExerciseDetails row={row} exercise={exercise} exercisesById={exercisesById} language={language} />
+      <ExerciseDetails row={row} exercise={exercise} exercisesById={exercisesById} progressionText={progressionText} />
     </article>
   );
 }
@@ -138,7 +184,7 @@ function Superset({ children }: { children: ReactNode }) {
   const labelId = useId();
   return (
     <li className="grid gap-2 @3xl:col-span-2">
-      <p id={labelId} className={LABEL_CLASS}>
+      <p id={labelId} className={EYEBROW_CLASS}>
         Superset
       </p>
       <ol aria-labelledby={labelId} className="grid items-start gap-2 border-l-2 border-brand/40 pl-3 @3xl:grid-cols-2">
@@ -148,29 +194,27 @@ function Superset({ children }: { children: ReactNode }) {
   );
 }
 
-type SessionDayProps = { session: Session; exercisesById: Library; language: ProgramLanguage };
+type SessionDayProps = { session: Session; exercisesById: Library; progressionText: string };
 
-export function SessionDay({ session, exercisesById, language }: SessionDayProps) {
+export function SessionDay({ session, exercisesById, progressionText }: SessionDayProps) {
   const headingId = useId();
   const warmUp = warmUpLines(session, exercisesById);
   const item = (row: Row) => (
     <li key={row.id}>
-      <ExerciseCard session={session} row={row} exercisesById={exercisesById} language={language} />
+      <ExerciseCard session={session} row={row} exercisesById={exercisesById} progressionText={progressionText} />
     </li>
   );
 
   return (
     <section aria-labelledby={headingId} className="@container grid gap-4">
-      <DayHeader headingId={headingId} name={session.name} meta={`~${estimatedMinutes(session)} min`} />
+      <DayHeader headingId={headingId} name={session.name} meta={estimatedDuration(estimatedMinutes(session, exercisesById))} />
       {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
       <ol className="grid items-start gap-3 @3xl:grid-cols-2">
         {sessionUnits(session).map(({ key, rows }) =>
           rows.length > 1 ? <Superset key={key}>{rows.map(item)}</Superset> : item(rows[0]),
         )}
       </ol>
-      {session.coolDown.enabled && (
-        <RoutineCard title="Cool-down" listLabel="Cool-down stretches" note={session.coolDown.note} lines={coolDownLines(session, exercisesById)} />
-      )}
+      {hasCoolDown(session) && <RoutineCard title="Cool-down" listLabel="Cool-down stretches" lines={coolDownLines(session, exercisesById)} />}
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import { Dialog as RadixDialog } from "radix-ui";
-import type { ReactNode, RefObject } from "react";
+import { useState, type ReactNode, type RefObject } from "react";
 
 import { cn } from "../lib/cn";
 
@@ -10,6 +10,7 @@ import {
   type DialogDismissal,
 } from "../lib/dialog-frame";
 import { BottomSheet } from "./bottom-sheet";
+import { ShownHeaderContext, type ShownHeader } from "./sheet-dialog-parts";
 import { useIsMobileViewport } from "../lib/viewport";
 
 type SheetDialogWidth = "full" | "fit";
@@ -43,24 +44,32 @@ export function ResponsiveSheetDialog({
   width = "full",
 }: ResponsiveSheetDialogProps) {
   const isMobileViewport = useIsMobileViewport();
+  const [shownHeader, setShownHeader] = useState<ShownHeader | null>(null);
+  const spokenDescription = shownHeader ? shownHeader.description : description;
+  const content = (
+    <ShownHeaderContext.Provider value={setShownHeader}>
+      {children}
+    </ShownHeaderContext.Provider>
+  );
 
   if (isMobileViewport) {
     return (
       <BottomSheet
-        description={description}
+        description={spokenDescription}
         dismissal={dismissal}
         initialFocus={initialFocus}
+        labels={shownHeader ? "shown" : "spoken"}
         onOpenChange={onOpenChange}
         open={open}
         returnFocusTo={returnFocusTo}
         title={title}
       >
-        {children}
+        {content}
       </BottomSheet>
     );
   }
 
-  const descriptionAttributes = description
+  const descriptionAttributes = spokenDescription
     ? {}
     : { "aria-describedby": undefined };
 
@@ -76,13 +85,17 @@ export function ResponsiveSheetDialog({
         returnFocusTo={returnFocusTo}
         {...descriptionAttributes}
       >
-        <DialogFrameTitle className="sr-only">{title}</DialogFrameTitle>
-        {description && (
-          <DialogFrameDescription className="sr-only">
-            {description}
-          </DialogFrameDescription>
+        {!shownHeader && (
+          <>
+            <DialogFrameTitle className="sr-only">{title}</DialogFrameTitle>
+            {description && (
+              <DialogFrameDescription className="sr-only">
+                {description}
+              </DialogFrameDescription>
+            )}
+          </>
         )}
-        {children}
+        {content}
       </DialogFrame>
     </RadixDialog.Root>
   );

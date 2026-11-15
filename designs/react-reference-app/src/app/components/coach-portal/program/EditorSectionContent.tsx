@@ -1,17 +1,17 @@
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
-import type { ClientJourney } from '../../../domain/journey';
 import type { Block, Program, ProgramVersion } from '../../../domain/program';
+import type { ClientJourney } from '../../../domain/journey';
 import type { LibraryTarget } from '../../../domain/programEditing';
-import { recurringSymptoms } from '../../../domain/programOnboarding';
+import { Button } from '../../ui/button';
 import { BlockWorkspace } from './BlockWorkspace';
-import { CycleRulesEditor } from './CycleRulesEditor';
 import type { EditorSection } from './editorSection';
-import { HeaderSection } from './HeaderSection';
-import { LifestyleSection } from './LifestyleSection';
-import { NutritionSection } from './NutritionSection';
 import { PlanOverview } from './PlanOverview';
+import { ProgramSettings } from './ProgramSettings';
+import { TextsWorkspace } from './TextsWorkspace';
 import type { useEditorState } from './useEditorState';
 
 export type OpenBlock = {
@@ -20,6 +20,7 @@ export type OpenBlock = {
   openSessionId: string | undefined;
   onOpenSession: (sessionId: string) => void;
   onOpenLibrary: (target: LibraryTarget) => void;
+  libraryTarget: LibraryTarget | null;
 };
 
 type EditorSectionContentProps = {
@@ -29,6 +30,7 @@ type EditorSectionContentProps = {
   draft: ProgramVersion;
   editor: ReturnType<typeof useEditorState>;
   openBlock: OpenBlock | undefined;
+  onAddBlock: () => void;
 };
 
 function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor'> & { openBlock: OpenBlock }) {
@@ -53,45 +55,54 @@ function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSe
       onChange={editor.replaceBlock}
       onRemove={() => editor.removeBlock(block.id)}
       onOpenLibrary={openBlock.onOpenLibrary}
+      libraryTarget={openBlock.libraryTarget}
     />
   );
 }
 
-export function EditorSectionContent({ section, journey, program, draft, editor, openBlock }: EditorSectionContentProps) {
+function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState> }) {
+  return (
+    <div className="flex justify-end">
+      <Button asChild variant="outline">
+        <Link to={editor.locationOf('texts', { kind: 'plan' })}>
+          Continue to texts
+          <ArrowRight aria-hidden="true" />
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor' | 'onAddBlock'>) {
   const { updateSetup } = usePrograms();
-  const { content } = draft;
-  if (section.kind === 'plan') {
-    return (
-      <PlanOverview
-        content={content}
-        dayOne={editor.ruleContext.dayOne}
-        preferredWeekday={editor.ruleContext.preferredWeekday}
-        today={editor.today}
-        level={program.level}
-        onChange={editor.updateBlocks}
-        onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
-        onUseSuggestion={editor.applySuggestion}
-      />
-    );
+  return (
+    <PlanOverview
+      content={draft.content}
+      dayOne={editor.ruleContext.dayOne}
+      preferredWeekday={editor.ruleContext.preferredWeekday}
+      today={editor.today}
+      level={program.level}
+      onChange={editor.updateBlocks}
+      onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
+      onAddBlock={onAddBlock}
+      onUseSuggestion={editor.applySuggestion}
+      settings={<ProgramSettings program={program} onChange={patch => updateSetup(program.callId, patch)} />}
+    />
+  );
+}
+
+export function EditorSectionContent(props: EditorSectionContentProps) {
+  const { section, journey, program, draft, editor, openBlock, onAddBlock } = props;
+  if (editor.mode === 'texts') {
+    return <TextsWorkspace section={section} journey={journey} program={program} draft={draft} today={editor.today} editing={editor.textEditing} />;
   }
-  if (section.kind === 'block') return openBlock ? <OpenBlockWorkspace program={program} draft={draft} editor={editor} openBlock={openBlock} /> : null;
-  if (section.kind === 'header') {
-    return (
-      <HeaderSection
-        journey={journey}
-        program={program}
-        version={draft}
-        content={content}
-        onContentChange={editor.replaceContent}
-        onSetupChange={patch => updateSetup(program.callId, patch)}
-      />
-    );
-  }
-  if (section.kind === 'cycle') {
-    return <CycleRulesEditor rules={content.cycleRules} symptoms={recurringSymptoms(journey)} onChange={cycleRules => editor.replaceContent({ ...content, cycleRules })} />;
-  }
-  if (section.kind === 'nutrition') {
-    return <NutritionSection notes={content.nutritionNotes} onChange={nutritionNotes => editor.replaceContent({ ...content, nutritionNotes })} />;
-  }
-  return <LifestyleSection notes={content.lifestyleNotes} onChange={lifestyleNotes => editor.replaceContent({ ...content, lifestyleNotes })} />;
+  if (section.kind === 'plan') return <StructureOverview program={program} draft={draft} editor={editor} onAddBlock={onAddBlock} />;
+  if (!openBlock) return null;
+  const isLastBlock = draft.content.plan.blocks.at(-1)?.id === openBlock.block.id;
+  return (
+    <div className="grid gap-6">
+      <OpenBlockWorkspace program={program} draft={draft} editor={editor} openBlock={openBlock} />
+      {isLastBlock && <ContinueToTexts editor={editor} />}
+    </div>
+  );
 }

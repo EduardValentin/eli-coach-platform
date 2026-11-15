@@ -154,7 +154,6 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
           <SearchField
             aria-label="Search foods"
             placeholder="Search by name"
-            size="sm"
             className="w-full sm:w-72"
             value={selection.query}
             onChange={(event) => listing.write({ q: event.target.value })}

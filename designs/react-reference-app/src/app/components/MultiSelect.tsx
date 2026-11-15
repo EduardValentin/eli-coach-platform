@@ -3,11 +3,10 @@ import { SearchField } from "./SearchField";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { FIELD_TAB_INDEX, SelectTrigger, SelectTriggerChevron, selectTriggerClasses } from "./ui/select";
+import { FieldTrigger } from "./ui/select";
 import { cn } from "./ui/utils";
 
 type Summary = "count" | "names";
-type TriggerSize = ComponentProps<typeof SelectTrigger>["size"];
 
 const SEARCHABLE_ABOVE = 8;
 
@@ -70,7 +69,6 @@ function OptionList<Value extends string>({
     <>
       {searchable && (
         <SearchField
-          size="sm"
           placeholder="Search"
           aria-label={`Search ${label.toLowerCase()}`}
           value={query}
@@ -84,7 +82,7 @@ function OptionList<Value extends string>({
         <ul aria-label={label} className="flex max-h-72 min-h-0 flex-col overflow-y-auto">
           {shown.map((option) => (
             <li key={option}>
-              <label className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground" data-parity="multi-select-option">
+              <label className="flex min-h-12 cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground" data-parity="multi-select-option">
                 <Checkbox checked={selected.includes(option)} onCheckedChange={() => onToggle(option)} />
                 {labels[option]}
                 {counts && <Badge tone="count">{counts[option]}</Badge>}
@@ -105,7 +103,6 @@ export function MultiSelect<Value extends string>({
   onToggle,
   counts,
   summary = "count",
-  size = "sm",
   placeholder,
   required,
   id,
@@ -119,7 +116,6 @@ export function MultiSelect<Value extends string>({
   onToggle: (value: Value) => void;
   counts?: Record<Value, number>;
   summary?: Summary;
-  size?: TriggerSize;
   placeholder?: string;
   required?: boolean;
   id?: string;
@@ -131,16 +127,11 @@ export function MultiSelect<Value extends string>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
+        <FieldTrigger
           id={id}
-          data-slot="select-trigger"
-          data-size={size}
-          tabIndex={FIELD_TAB_INDEX}
           aria-label={triggerName(required ? `${label} (required)` : label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
-          className={selectTriggerClasses("w-full")}
         >
           <span
             data-slot="select-value"
@@ -148,8 +139,7 @@ export function MultiSelect<Value extends string>({
           >
             <TriggerSummary label={label} selected={selected} labels={labels} summary={summary} placeholder={placeholder} />
           </span>
-          <SelectTriggerChevron />
-        </button>
+        </FieldTrigger>
       </PopoverTrigger>
       <PopoverContent aria-label={label} align="start" className="flex w-(--radix-popover-trigger-width) min-w-56 max-w-md flex-col gap-1 p-1">
         <OptionList label={label} selected={selected} options={options} labels={labels} onToggle={onToggle} counts={counts} />

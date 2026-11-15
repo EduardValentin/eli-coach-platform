@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
 import { ChevronDown, Copy, RotateCcw, Trash2 } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
 import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramLanguage, type Session, type SplitShape, type TrainingDays } from '../../../domain/program';
@@ -28,13 +28,14 @@ type BlockHeaderProps = {
   journeys: Record<string, ClientJourney>;
   onChange: (block: Block) => void;
   onRemove: () => void;
+  measureRef: (header: HTMLElement | null) => void;
 };
 
 const REBUILD = 'Rebuild sessions';
 const COLLAPSE_AFTER_PX = 80;
 
 function useScrolledPast(threshold: number) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement | null>(null);
   const [past, setPast] = useState(false);
   useEffect(() => {
     function onScroll(event: Event) {
@@ -111,7 +112,7 @@ type BlockActions = { onCopy: () => void; onReset: () => void; onRemove: () => v
 function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: BarProps & { toggle: SettingsToggleProps | null; actions: BlockActions; onChangeType: (block: Block) => void }) {
   const line = statusLine(block, status);
   return (
-    <div className="flex items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
+    <div className="flex min-w-0 items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
       <BlockNumber block={block} index={index} size="md" />
       <BlockTypeSelect value={block.type} label="Block type" appearance="title" onChange={type => onChangeType(blockWithType(block, type))} />
       {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
@@ -119,6 +120,7 @@ function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: 
         {toggle && <SettingsToggle {...toggle} />}
         <RowActionsMenu
           label="Block actions"
+          size="xs"
           parityRoot="BlockActionsMenu"
           actions={[
             { name: 'copy', label: 'Copy from another client…', icon: Copy, onSelect: actions.onCopy },
@@ -138,15 +140,15 @@ function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: 
   );
 }
 
-export function BlockHeader({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, onChange, onRemove }: BlockHeaderProps) {
+export function BlockHeader({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, onChange, onRemove, measureRef }: BlockHeaderProps) {
   const block = blocks[index];
   const [copying, setCopying] = useState(false);
   const confirm = useResetConfirm();
   const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit: value => onChange({ ...block, weeks: value }) });
   const settings = useCollapsingSettings();
 
-  function rebuild(title: string, next: Block, lines: string[]) {
-    confirm.request({ title, confirmLabel: REBUILD, lines, apply: () => onChange(next) });
+  function rebuild(title: string, next: Block, lines: string[], returnFocus?: HTMLElement | null) {
+    confirm.request({ title, confirmLabel: REBUILD, lines, apply: () => onChange(next), returnFocus });
   }
 
   function copySessions(sessions: Session[]) {
@@ -155,20 +157,29 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
     confirm.request({ title: "Replace this block's sessions?", confirmLabel: 'Replace sessions', lines: describeLoss(block, { kind: 'reset' }), apply: () => onChange(next) });
   }
 
-  const changeShape = (shape: SplitShape) => rebuild('Change the split?', blockWithSplit(block, shape, language), describeLoss(block, { kind: 'split' }));
-  const changeTrainingDays = (days: TrainingDays) =>
-    rebuild('Change training days?', relayoutBlock(block, days), describeLoss(block, { kind: 'training-days', days }));
+  const changeShape = (shape: SplitShape, trigger: HTMLElement | null) =>
+    rebuild('Change the split?', blockWithSplit(block, shape, language), describeLoss(block, { kind: 'split' }), trigger);
+  const changeTrainingDays = (days: TrainingDays, trigger: HTMLElement | null) =>
+    rebuild('Change training days?', relayoutBlock(block, days), describeLoss(block, { kind: 'training-days', days }), trigger);
   const actions: BlockActions = {
     onCopy: () => setCopying(true),
     onReset: () => rebuild('Reset to the split?', blockWithSplit(block, block.split.shape, language), describeLoss(block, { kind: 'reset' })),
     onRemove: () =>
       confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeLoss(block, { kind: 'remove-block' }), apply: onRemove }),
   };
+  const { headerRef: scrollRef } = settings;
+  const headerRef = useCallback(
+    (element: HTMLElement | null) => {
+      scrollRef.current = element;
+      measureRef(element);
+    },
+    [scrollRef, measureRef],
+  );
   const toggleControl = { buttonRef: settings.toggleButton, onToggle: settings.toggle };
 
   return (
     <header
-      ref={settings.headerRef}
+      ref={headerRef}
       className={cn('z-10 rounded-card border border-border bg-card shadow-card lg:sticky lg:-top-6', { 'lg:rounded-t-none lg:border-t-0': settings.collapsed })}
     >
       <h2 className="sr-only">{BLOCK_TYPE_LABELS[block.type]}</h2>

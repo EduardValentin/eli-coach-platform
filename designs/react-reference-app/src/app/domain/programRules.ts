@@ -1,4 +1,4 @@
-import { addDays, format, isAfter, max, startOfDay } from 'date-fns';
+import { addDays, format, isAfter, startOfDay } from 'date-fns';
 import type { Exercise } from '../context/TrainingContext';
 import { canStartWork, workStartDate } from './coachingSubscription';
 import type { Muscle } from './exercises';
@@ -24,7 +24,6 @@ import {
 import { blockDates, checkInWeekdayOf, currentPosition, dayOneOf, nextCheckpoint } from './programCalendar';
 import { hasHardRounds, isLightCardio } from './programCardio';
 import { estimatedMinutes, isOverTarget } from './sessionTiming';
-import { slotPlanFor } from './splitTemplates';
 
 export type BlockingCode =
   | 'foundation-not-first'
@@ -32,7 +31,6 @@ export type BlockingCode =
   | 'consecutive-deloads'
   | 'deload-not-one-week'
   | 'missing-sessions'
-  | 'what-changed-missing'
   | 'start-date-not-reached'
   | 'details-pending'
   | 'block-shorter-than-elapsed';
@@ -45,13 +43,11 @@ export type WarningCode =
   | 'hiit-before-heavy-legs'
   | 'hiit-over-two'
   | 'superset-same-muscle'
-  | 'role-slot-mismatch'
   | 'session-over-target';
 
 export type RuleFinding<Code> = { code: Code; blockId?: string; sessionId?: string; detail?: string };
 
 export type RuleContext = {
-  versionNumber: number;
   publishDay: Date;
   dayOne: Date | null;
   preferredWeekday: Weekday;
@@ -73,8 +69,8 @@ export type RuleInput = {
 type Exercises = ReadonlyMap<string, Exercise>;
 type ElapsedInput = { draftBlocks: readonly Block[]; publishedBlocks: readonly Block[] | null; dayOne: Date | null; today: Date };
 type SessionPlace = { block: Block; session: Session };
-
-const MINIMUM_CONTENT_DAYS = 14;
+type PublishSchedule = { publishDay: Date; dayOne: Date | null; preferredWeekday: Weekday };
+type PublishWindow = { from: Date; to: Date };
 const MAX_WEEKS_WITHOUT_DELOAD = 8;
 const MAX_HIIT_SESSIONS = 2;
 
@@ -95,7 +91,6 @@ const BLOCKING_MESSAGES: Record<BlockingCode, string> = {
   'consecutive-deloads': 'Two Deloads cannot follow each other',
   'deload-not-one-week': 'A Deload lasts exactly one week',
   'missing-sessions': '{detail} has sessions without exercises before the next check-in form',
-  'what-changed-missing': 'Say what changed and why',
   'start-date-not-reached': 'Publishing opens on {detail}',
   'details-pending': 'Answer or close the details request first',
   'block-shorter-than-elapsed': 'This block has already run {detail} weeks',
@@ -109,7 +104,6 @@ const WARNING_MESSAGES: Record<WarningCode, string> = {
   'hiit-before-heavy-legs': 'HIIT the day before {detail}',
   'hiit-over-two': 'More than 2 HIIT sessions a week',
   'superset-same-muscle': '{detail} supersets two exercises on the same muscle',
-  'role-slot-mismatch': '{detail} does not match its slot',
   'session-over-target': '{detail} runs over the target',
 };
 
@@ -128,7 +122,6 @@ export function warningMessage(finding: RuleFinding<WarningCode>): string {
 export function ruleContextFor({ journey, program, draft, today, exercises }: RuleInput): RuleContext {
   const subscription = journey?.subscription;
   return {
-    versionNumber: draft.number,
     publishDay: today,
     dayOne: dayOneOf(journey),
     preferredWeekday: checkInWeekdayOf(journey),
@@ -140,17 +133,19 @@ export function ruleContextFor({ journey, program, draft, today, exercises }: Ru
   };
 }
 
-function minimumContentWindow(ctx: RuleContext): { from: Date; to: Date } {
-  const checkpoint = nextCheckpoint(ctx.dayOne ?? ctx.publishDay, ctx.preferredWeekday, ctx.publishDay);
-  return {
-    from: ctx.publishDay,
-    to: max([checkpoint, addDays(ctx.publishDay, MINIMUM_CONTENT_DAYS)]),
-  };
+function publishWindow({ publishDay, dayOne, preferredWeekday }: PublishSchedule): PublishWindow {
+  return { from: publishDay, to: nextCheckpoint(dayOne ?? publishDay, preferredWeekday, addDays(publishDay, 1)) };
+}
+
+function isNeededToPublish(blocks: readonly Block[], index: number, schedule: PublishSchedule): boolean {
+  const window = publishWindow(schedule);
+  const { start, end } = blockDates(blocks, index, schedule.dayOne ?? schedule.publishDay);
+  return start <= window.to && end >= startOfDay(window.from);
 }
 
 export function sequenceProblems(blocks: readonly Block[]): RuleFinding<BlockingCode>[] {
   const findings: RuleFinding<BlockingCode>[] = [];
-  if (blocks[0]?.type === 'deload') findings.push({ code: 'starts-with-deload' });
+  if (blocks[0]?.type === 'deload') findings.push({ code: 'starts-with-deload', blockId: blocks[0].id });
   blocks.forEach((block, index) => {
     if (block.type === 'foundation' && index > 0) findings.push({ code: 'foundation-not-first', blockId: block.id });
     if (block.type !== 'deload') return;
@@ -172,12 +167,8 @@ function missingSessionProblems(
   blocks: readonly Block[],
   ctx: RuleContext,
 ): RuleFinding<BlockingCode>[] {
-  const window = minimumContentWindow(ctx);
-  const dayOne = ctx.dayOne ?? ctx.publishDay;
   return blocks.flatMap((block, index) => {
-    const { start, end } = blockDates(blocks, index, dayOne);
-    const overlaps = start <= window.to && end >= startOfDay(window.from);
-    if (!overlaps || !(hasUnfilledSessions(block) || hasEmptyCardioDay(block))) return [];
+    if (!isNeededToPublish(blocks, index, ctx) || !(hasUnfilledSessions(block) || hasEmptyCardioDay(block))) return [];
     return [
       {
         code: 'missing-sessions' as const,
@@ -199,18 +190,13 @@ export function blockShorterThanElapsed({ draftBlocks, publishedBlocks, dayOne, 
   return [{ code: 'block-shorter-than-elapsed', blockId: block?.id, detail: String(weekOfBlock - 1) }];
 }
 
-export function blockingProblems(
-  content: ProgramContent,
-  whatChanged: string,
-  ctx: RuleContext,
-): RuleFinding<BlockingCode>[] {
+export function blockingProblems(content: ProgramContent, ctx: RuleContext): RuleFinding<BlockingCode>[] {
   const { blocks } = content.plan;
   const findings = [
     ...sequenceProblems(blocks),
     ...missingSessionProblems(blocks, ctx),
     ...blockShorterThanElapsed({ draftBlocks: blocks, publishedBlocks: ctx.publishedBlocks, dayOne: ctx.dayOne, today: ctx.publishDay }),
   ];
-  if (ctx.versionNumber >= 2 && whatChanged.trim() === '') findings.push({ code: 'what-changed-missing' });
   if (ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(ctx.publishDay))) {
     findings.push({ code: 'start-date-not-reached', detail: format(ctx.startDate, 'd MMMM') });
   }
@@ -292,13 +278,6 @@ function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<Warni
   return findings;
 }
 
-function roleSlotWarning({ block, session }: SessionPlace, row: Row, exercises: Exercises): RuleFinding<WarningCode>[] {
-  const exercise = exercises.get(row.exerciseId);
-  const planned = slotPlanFor(block, session, row.slot)?.patterns;
-  if (!exercise?.pattern || !planned || planned.includes(exercise.pattern)) return [];
-  return [{ code: 'role-slot-mismatch', blockId: block.id, sessionId: session.id, detail: exercise.name }];
-}
-
 function sharesMuscleWithLaterPartner(row: Row, later: readonly Row[], exercises: Exercises): boolean {
   if (row.supersetGroup === undefined) return false;
   const muscles = primaryMusclesOf(row.exerciseId, exercises);
@@ -315,16 +294,16 @@ function supersetMuscleWarning({ block, session }: SessionPlace, index: number, 
   return [{ code: 'superset-same-muscle', blockId: block.id, sessionId: session.id, detail: session.name }];
 }
 
-function overTargetWarning({ block, session }: SessionPlace): RuleFinding<WarningCode>[] {
-  if (!isOverTarget(session, block)) return [];
-  return [{ code: 'session-over-target', blockId: block.id, sessionId: session.id, detail: `${session.name}, ${estimatedMinutes(session)} min` }];
+function overTargetWarning({ block, session }: SessionPlace, exercises: Exercises): RuleFinding<WarningCode>[] {
+  if (!isOverTarget(session, block, exercises)) return [];
+  return [{ code: 'session-over-target', blockId: block.id, sessionId: session.id, detail: `${session.name}, ${estimatedMinutes(session, exercises)} min` }];
 }
 
 function sessionWarnings(block: Block, exercises: Exercises): RuleFinding<WarningCode>[] {
   return block.sessions.flatMap(session => {
     const place = { block, session };
-    const rowFindings = session.rows.flatMap((row, index) => [...roleSlotWarning(place, row, exercises), ...supersetMuscleWarning(place, index, exercises)]);
-    return [...rowFindings, ...overTargetWarning(place)];
+    const rowFindings = session.rows.flatMap((_, index) => supersetMuscleWarning(place, index, exercises));
+    return [...rowFindings, ...overTargetWarning(place, exercises)];
   });
 }
 

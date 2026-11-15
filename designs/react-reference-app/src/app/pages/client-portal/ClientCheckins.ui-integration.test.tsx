@@ -234,7 +234,7 @@ describe('requesting a check-in', () => {
     const dialog = await openRequestDialog();
 
     // assert
-    expect(within(dialog).getByRole('heading', { level: 3, name: 'Request a check-in' })).toHaveFocus();
+    expect(within(dialog).getByRole('heading', { level: 2, name: 'Request a check-in' })).toHaveFocus();
     expect(within(dialog).getByLabelText('Add a note for your coach')).not.toHaveFocus();
   });
 

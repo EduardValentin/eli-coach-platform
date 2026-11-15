@@ -295,7 +295,6 @@ export function CheckinListing({
               <SearchField
                 aria-label="Search check-ins"
                 placeholder={search.placeholder}
-                size="sm"
                 className="w-full sm:w-72"
                 value={selection.query}
                 onChange={(event) => changeQuery(event.target.value)}

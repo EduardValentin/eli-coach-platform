@@ -13,6 +13,7 @@ import {
   ImagePlus,
   Save,
   Smile,
+  Unlink,
 } from 'lucide-react';
 import {
   useNutrition,
@@ -64,7 +65,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from '../../components/ui/popover';
-import { LABEL_CLASS, VALUE_CLASS } from '../../components/typography';
+import { LABEL_CLASS, VALUE_CLASS, EYEBROW_CLASS } from '../../components/typography';
 import {
   CATEGORY_SWATCH,
   MACRO_TILE,
@@ -190,15 +191,16 @@ function OrphanedTagChip({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border border-dashed border-border bg-transparent py-1 pl-3 pr-1 text-xs text-text-secondary"
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-quiet py-1 pl-2 pr-1 text-xs text-text-secondary"
       title="No longer in any ingredient — remove it, or click the label to keep it"
     >
       <button
         type="button"
         onClick={onKeep}
-        className="font-medium transition-colors hover:text-text-primary"
         aria-label={`${label} tag is no longer in any ingredient. Click to keep it.`}
+        className="inline-flex items-center gap-1 font-medium transition-colors hover:text-text-primary"
       >
+        <Unlink size={12} aria-hidden="true" />
         {label}
       </button>
       <button
@@ -707,7 +709,7 @@ function RecipeBuilderInner() {
         >
           <div className="p-4 px-3 border-b border-border rounded-field bg-card">
             <div className="flex items-center justify-between mb-3">
-              <p className={LABEL_CLASS}>Food library</p>
+              <p className={EYEBROW_CLASS}>Food library</p>
               <Button
                 ref={closeLibraryButton}
                 onClick={closeLibrary}
@@ -724,7 +726,6 @@ function RecipeBuilderInner() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name"
               aria-label="Search foods"
-              size="sm"
             />
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-page">
@@ -863,7 +864,6 @@ function RecipeBuilderInner() {
                         }
                       >
                         <SelectTrigger
-                          size="sm"
                           className="w-32"
                           aria-label={`Cooking method for ${food?.name}`}
                         >

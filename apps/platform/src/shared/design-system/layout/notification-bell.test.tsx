@@ -20,6 +20,7 @@ import {
   NotificationBell,
   type NotificationBellItem,
 } from "./notification-bell";
+import { matchesNarrowerThan } from "~test-support/viewport";
 
 const PHONE_WIDTH = 390;
 const DESKTOP_WIDTH = 1280;
@@ -55,18 +56,12 @@ const axe = configureAxe({ rules: { region: { enabled: false } } });
 
 let viewportWidth = DESKTOP_WIDTH;
 
-function maxWidthOf(query: string): number {
-  const match = /max-width:\s*(\d+)px/.exec(query);
-
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
-}
-
 beforeEach(() => {
   viewportWidth = DESKTOP_WIDTH;
   vi.stubGlobal("matchMedia", (query: string) => ({
     addEventListener: () => {},
     get matches() {
-      return viewportWidth <= maxWidthOf(query);
+      return matchesNarrowerThan(query, viewportWidth);
     },
     media: query,
     removeEventListener: () => {},

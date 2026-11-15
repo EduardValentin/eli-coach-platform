@@ -86,13 +86,19 @@ function optionsFor(
   return creatable ? [...existing, { kind: "create", tag }] : existing;
 }
 
-function TagChip({ onRemove, tag }: { onRemove: () => void; tag: string }) {
+type RemovableChipProps = {
+  label: string;
+  removeLabel: string;
+  onRemove: () => void;
+};
+
+function RemovableChip({ label, removeLabel, onRemove }: RemovableChipProps) {
   return (
-    <li className="inline-flex h-8 max-w-full items-center gap-1 rounded-tile bg-surface-neutral pr-1 pl-2.5 text-sm text-text-primary">
-      <span className="truncate">{tag}</span>
+    <li className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full border border-border-default bg-surface-base py-0.5 pr-1 pl-3 text-sm text-text-primary">
+      <span className="min-w-0 break-words">{label}</span>
       <button
-        aria-label={`Remove ${tag}`}
-        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-muted-hover hover:text-text-primary"
+        aria-label={removeLabel}
+        className="relative hit-area inline-flex size-6 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-muted-hover hover:text-text-primary"
         onClick={onRemove}
         type="button"
       >
@@ -270,7 +276,7 @@ export const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
           <div
             className={cn(
               FIELD_FRAME_CLASS,
-              "flex min-h-(--size-control-md) min-w-0 cursor-text flex-wrap items-center gap-1.5 px-3 py-1.5 text-base focus-within:border-focus-ring md:text-sm",
+              "flex min-h-(--size-control-md) min-w-0 cursor-text flex-wrap items-center gap-x-4 gap-y-6 px-3 py-1.5 text-base focus-within:border-focus-ring md:text-sm",
               { "border-feedback-danger": invalid === true },
             )}
             data-field-frame=""
@@ -282,13 +288,14 @@ export const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
             {value.length > 0 && (
               <ul aria-label="Chosen tags" className="contents">
                 {value.map((tag) => (
-                  <TagChip
+                  <RemovableChip
                     key={tag}
+                    label={tag}
                     onRemove={() => {
                       onChange(withoutTag(value, tag));
                       entry.current?.focus();
                     }}
-                    tag={tag}
+                    removeLabel={`Remove ${tag}`}
                   />
                 ))}
               </ul>

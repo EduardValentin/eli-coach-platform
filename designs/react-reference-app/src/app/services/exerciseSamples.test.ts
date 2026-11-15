@@ -79,6 +79,16 @@ describe('the sample exercises', () => {
       'Cable Hip Abduction',
       'Triceps Pushdown',
       'Biceps Curl',
+      'Leg Extension',
+      'Seated Leg Curl',
+      'Cable Glute Kickback',
+      'Machine Hip Abduction',
+      'Machine Hip Adduction',
+      'Cable Lateral Raise',
+      'Face Pull',
+      'Hammer Curl',
+      'Overhead Triceps Extension',
+      'Standing Calf Raise',
     ]);
     for (const exercise of isolation) {
       expect(exercise).toMatchObject({ role: 'isolation', difficulty: 'Beginner', tags: ['Hypertrophy'] });

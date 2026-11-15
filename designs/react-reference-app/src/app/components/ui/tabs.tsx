@@ -15,7 +15,7 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         default: "h-9 rounded-compact p-[3px]",
-        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-compact p-[3px] ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
+        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-compact border border-control-border-soft p-[3px] ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
       },
     },
     defaultVariants: {
@@ -25,13 +25,13 @@ const tabsListVariants = cva(
 );
 
 const tabsTriggerVariants = cva(
-  "data-[state=active]:bg-active-surface data-[state=active]:text-primary-foreground focus-visible:border-focus-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground hover:text-primary inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-field border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "data-[state=active]:bg-active-surface data-[state=active]:text-primary-foreground focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground hover:text-primary relative hit-area inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-field px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "",
         segmented:
-          "h-auto flex-auto px-4 py-2.5 font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+          "h-auto flex-auto px-4 py-[11px] font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
       },
     },
     defaultVariants: {
@@ -54,7 +54,17 @@ const tabsContentVariants = cva("flex-1 outline-none", {
 
 type TabsVariant = NonNullable<VariantProps<typeof tabsListVariants>["variant"]>;
 
-const TabsVariantContext = React.createContext<TabsVariant>("default");
+type TabsContextValue = {
+  variant: TabsVariant;
+  hasMountedList: boolean;
+  mountList: () => () => void;
+};
+
+const TabsContext = React.createContext<TabsContextValue>({
+  variant: "default",
+  hasMountedList: true,
+  mountList: () => () => {},
+});
 
 function Tabs({
   className,
@@ -63,14 +73,24 @@ function Tabs({
 }: React.ComponentProps<typeof TabsPrimitive.Root> & {
   variant?: TabsVariant;
 }) {
+  const [mountedLists, setMountedLists] = React.useState(0);
+  const mountList = React.useCallback(() => {
+    setMountedLists((count) => count + 1);
+    return () => setMountedLists((count) => count - 1);
+  }, []);
+  const context = React.useMemo(
+    () => ({ variant, hasMountedList: mountedLists > 0, mountList }),
+    [variant, mountedLists, mountList],
+  );
+
   return (
-    <TabsVariantContext.Provider value={variant}>
+    <TabsContext.Provider value={context}>
       <TabsPrimitive.Root
         data-slot="tabs"
         className={cn("flex flex-col gap-2", className)}
         {...props}
       />
-    </TabsVariantContext.Provider>
+    </TabsContext.Provider>
   );
 }
 
@@ -78,7 +98,8 @@ function TabsList({
   className,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
-  const variant = React.useContext(TabsVariantContext);
+  const { variant, mountList } = React.useContext(TabsContext);
+  React.useEffect(mountList, [mountList]);
 
   return (
     <TabsPrimitive.List
@@ -93,7 +114,7 @@ const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, ...props }, ref) => {
-  const variant = React.useContext(TabsVariantContext);
+  const { variant } = React.useContext(TabsContext);
 
   return (
     <TabsPrimitive.Trigger
@@ -108,14 +129,19 @@ TabsTrigger.displayName = 'TabsTrigger';
 
 function TabsContent({
   className,
+  labelWithoutTabs,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
-  const variant = React.useContext(TabsVariantContext);
+}: React.ComponentProps<typeof TabsPrimitive.Content> & {
+  labelWithoutTabs?: string;
+}) {
+  const { variant, hasMountedList } = React.useContext(TabsContext);
+  const nameWithoutTabs = hasMountedList || labelWithoutTabs === undefined ? {} : { "aria-labelledby": undefined, "aria-label": labelWithoutTabs };
 
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
       className={cn(tabsContentVariants({ variant }), className)}
+      {...nameWithoutTabs}
       {...props}
     />
   );

@@ -6,7 +6,7 @@ import { ProgramSummary } from '../../components/coach-portal/program/ProgramSum
 import { CollapsiblePortalWidget } from '../../components/CollapsiblePortalWidget';
 import { BlockSessions } from '../../components/program-view/BlockSessions';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
-import { blockIntroCards, programTemplate, templateCard, TextCardStack, type TextCard } from '../../components/program-view/ProgramText';
+import { blockIntroCards, programTemplate, TextCardStack, writtenCard, type TextCard } from '../../components/program-view/ProgramText';
 import { currentBlock, weekDates, type ProgramView } from '../../components/program-view/programView';
 import { WeekDayCards } from '../../components/program-view/WeekDayCards';
 import { PortalBackLink } from '../../components/PortalBackLink';
@@ -48,9 +48,8 @@ function weekText(block: Block): string {
 function clientTexts(view: ProgramView, block: Block): TextCard[] {
   return [
     ...blockIntroCards(view, block, 'Client note'),
-    templateCard('split', block.split.text, `Split · ${splitLabel(block)}`),
-    ...(view.program.cycleMode === 'adapted' ? [templateCard('cycle', programTemplate(view, 'cycle'), 'Listening to your cycle')] : []),
-    templateCard('low-energy', programTemplate(view, 'lowEnergy'), 'Low-energy session'),
+    ...writtenCard('split', block.split.text, `Split · ${splitLabel(block)}`),
+    ...writtenCard('low-energy', programTemplate(view, 'lowEnergy'), 'Low-energy session'),
   ];
 }
 
@@ -94,7 +93,7 @@ function ReadView({ view, block }: { view: ProgramView; block: Block }) {
     <>
       <SettingsSection headingId="program-this-week" title="This week" icon={CalendarDays} description={weekText(block)} className="mb-8">
         <SettingsBody>
-          <WeekDayCards block={block} dates={weekDates(view)} today={view.today} />
+          <WeekDayCards block={block} dates={weekDates(view)} today={view.today} exercisesById={view.exercisesById} />
         </SettingsBody>
       </SettingsSection>
       <section aria-labelledby="program-sessions" className="mb-8 grid gap-4">

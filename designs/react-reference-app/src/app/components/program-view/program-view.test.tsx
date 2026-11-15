@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
 import type { Exercise } from '../../context/TrainingContext';
@@ -8,6 +9,7 @@ import { cardioPreset } from '../../domain/programCardio';
 import { programForSeed } from '../../services/programSamples';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { DayContent } from './DayContent';
+import { WithoutExercisePageLinks } from './exercisePageLinks';
 import { FocusCard } from './FocusCard';
 import { SessionTable } from './SessionTable';
 import { WeekStrip } from './WeekStrip';
@@ -21,12 +23,12 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
-function viewAt(today: Date, cycleDay: number | null = 12, exercises: readonly Exercise[] = SAMPLE_EXERCISES): ProgramView {
-  const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: DAY_ONE, cycleMode: 'adapted', equipment: [] }, SAMPLE_EXERCISES);
+function viewAt(today: Date, exercises: readonly Exercise[] = SAMPLE_EXERCISES): ProgramView {
+  const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: DAY_ONE, equipment: [] }, SAMPLE_EXERCISES);
   if (!program) throw new Error('seed missing');
   const version = currentVersion(program);
   if (!version) throw new Error('version missing');
-  return viewOf({ program, version, dayOne: DAY_ONE, today, preferredWeekday: 'mon', exercises, cycleDay });
+  return viewOf({ program, version, dayOne: DAY_ONE, today, preferredWeekday: 'mon', exercises });
 }
 
 function sessionWith(view: ProgramView, edit: (session: Session) => Session): Session {
@@ -34,7 +36,7 @@ function sessionWith(view: ProgramView, edit: (session: Session) => Session): Se
 }
 
 describe('FocusCard', () => {
-  it('shows the block, week, next check-in and cycle estimate', () => {
+  it('shows the block, week and next check-in', () => {
     // arrange
     const view = viewAt(TODAY);
 
@@ -44,23 +46,10 @@ describe('FocusCard', () => {
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Foundation' })).toBeInTheDocument();
     expect(screen.getByText('Week 1 of 11')).toBeInTheDocument();
-    expect(screen.getAllByRole('term')).toHaveLength(2);
+    expect(screen.getAllByRole('term')).toHaveLength(1);
     expect(screen.getByText('Next check-in form')).toBeInTheDocument();
     expect(screen.getByText('Monday, 5 October')).toBeInTheDocument();
-    expect(screen.getByText('Cycle day')).toBeInTheDocument();
-    expect(screen.getByText('~12 (estimate)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument();
-  });
-
-  it('omits the cycle line without an estimate', () => {
-    // arrange
-    const view = viewAt(TODAY, null);
-
-    // act
-    render(<FocusCard view={view} />);
-
-    // assert
-    expect(screen.queryByText(/Cycle day/)).not.toBeInTheDocument();
   });
 
   it('tells the client the plan has ended', () => {
@@ -95,6 +84,17 @@ describe('WhatChangedBanner', () => {
 
     // act
     render(<WhatChangedBanner version={first} dismissedVersion={null} onDismiss={vi.fn()} />);
+
+    // assert
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
+
+  it('is left out when the coach wrote nothing about the change', () => {
+    // arrange
+    const unwritten = { ...version, whatChanged: '' };
+
+    // act
+    render(<WhatChangedBanner version={unwritten} dismissedVersion={null} onDismiss={vi.fn()} />);
 
     // assert
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('DayContent', () => {
     return withSession(view, session => ({
       ...session,
       name: 'Lower A',
-      coolDown: { enabled: true, note: '', items: [] },
+      coolDown: { enabled: true, items: [{ id: 'cd0', exerciseId: squat.id, seconds: 30 }] },
       warmUp: { items: [{ id: 'w1', exerciseId: deadlift.id, sets: 2, reps: { min: 8, max: 8 } }] },
       rows: [
         { ...session.rows[0], slot: 'A', supersetGroup: undefined, exerciseId: squat.id, sets: [warmUp, heavy, byFeel], restSeconds: 120, cues: 'Brace before you descend', substitutions: [deadlift.id] },
@@ -262,12 +262,12 @@ describe('DayContent', () => {
     expect(screen.getByText(/Low-energy session/)).toBeInTheDocument();
   });
 
-  it('lists the cool-down note and its stretches with their seconds', () => {
+  it('lists the cool-down as its stretches with their seconds', () => {
     // arrange
     const view = viewAt(TODAY);
     const block = withSession(view, session => ({
       ...strengthDay(view).sessions[0],
-      coolDown: { enabled: true, note: 'Walk easy for two minutes.', items: [{ id: 'cd1', exerciseId: squat.id, seconds: 40 }] },
+      coolDown: { enabled: true, items: [{ id: 'cd1', exerciseId: squat.id, seconds: 40 }] },
     }));
 
     // act
@@ -275,8 +275,20 @@ describe('DayContent', () => {
 
     // assert
     const coolDown = screen.getByRole('region', { name: 'Cool-down' });
-    expect(within(coolDown).getByText('Walk easy for two minutes.')).toBeInTheDocument();
     expect(within(within(coolDown).getByRole('list', { name: 'Cool-down stretches' })).getByRole('listitem')).toHaveTextContent(`${squat.name} · 40 s`);
+    expect(within(coolDown).queryByRole('paragraph')).not.toBeInTheDocument();
+  });
+
+  it('leaves out a cool-down that is on without stretches', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const block = withSession(view, () => ({ ...strengthDay(view).sessions[0], coolDown: { enabled: true, items: [] } }));
+
+    // act
+    render(<DayContent view={view} block={block} weekday="mon" />);
+
+    // assert
+    expect(screen.queryByRole('region', { name: 'Cool-down' })).not.toBeInTheDocument();
   });
 
   it('groups a superset under one label', () => {
@@ -297,7 +309,11 @@ describe('DayContent', () => {
     // arrange
     const user = userEvent.setup();
     const view = viewAt(TODAY);
-    render(<DayContent view={view} block={strengthDay(view)} weekday="mon" />);
+    render(
+      <MemoryRouter>
+        <DayContent view={view} block={strengthDay(view)} weekday="mon" />
+      </MemoryRouter>,
+    );
     const card = screen.getByRole('article', { name: `A ${squat.name}` });
     expect(within(card).queryByText('Brace before you descend')).not.toBeInTheDocument();
 
@@ -307,8 +323,48 @@ describe('DayContent', () => {
     // assert
     expect(within(card).getByText('Brace before you descend')).toBeInTheDocument();
     expect(within(card).getByRole('button', { name: 'Watch video' })).toBeInTheDocument();
-    expect(within(card).getByText(`Swap for: ${deadlift.name}`)).toBeInTheDocument();
+    expect(within(card).getByText(/^Swap for:/)).toHaveTextContent(`Swap for: ${deadlift.name}`);
     expect(within(card).getByText(/How to progress:/)).toBeInTheDocument();
+  });
+
+  it('links the exercise and each swap to their exercise pages, as the printed program does', async () => {
+    // arrange
+    const user = userEvent.setup();
+    const view = viewAt(TODAY);
+    render(
+      <MemoryRouter>
+        <DayContent view={view} block={strengthDay(view)} weekday="mon" />
+      </MemoryRouter>,
+    );
+    const card = screen.getByRole('article', { name: `A ${squat.name}` });
+
+    // act
+    await user.click(within(card).getByRole('button', { name: 'Cues, video and swaps' }));
+
+    // assert
+    expect(within(card).getByRole('link', { name: 'Open exercise page' })).toHaveAttribute('href', `/portal/exercises/${squat.id}`);
+    expect(within(card).getByRole('link', { name: deadlift.name })).toHaveAttribute('href', `/portal/exercises/${deadlift.id}`);
+  });
+
+  it('names the swaps without links in the coach preview', async () => {
+    // arrange
+    const user = userEvent.setup();
+    const view = viewAt(TODAY);
+    render(
+      <MemoryRouter>
+        <WithoutExercisePageLinks>
+          <DayContent view={view} block={strengthDay(view)} weekday="mon" />
+        </WithoutExercisePageLinks>
+      </MemoryRouter>,
+    );
+    const card = screen.getByRole('article', { name: `A ${squat.name}` });
+
+    // act
+    await user.click(within(card).getByRole('button', { name: 'Cues, video and swaps' }));
+
+    // assert
+    expect(within(card).getByText(`Swap for: ${deadlift.name}`)).toBeInTheDocument();
+    expect(within(card).queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('renders a rest day', () => {
@@ -319,7 +375,8 @@ describe('DayContent', () => {
     render(<DayContent view={view} block={currentBlockOf(view)} weekday="sat" />);
 
     // assert
-    expect(screen.getByText('Rest day. A short walk still counts.')).toBeInTheDocument();
+    expect(screen.getByText('Rest day')).toBeInTheDocument();
+    expect(screen.queryByText(/A short walk still counts/)).not.toBeInTheDocument();
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
   });
 
@@ -336,10 +393,10 @@ describe('DayContent', () => {
     const segments = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
     expect(segments.map(segment => segment.textContent)).toEqual([
       'Stationary bike · 5 min · You can hold a conversation',
-      'Rounds · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
+      'Intervals · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
       'Stationary bike · 5 min · You can hold a conversation',
     ]);
-    expect(screen.getByText(/Swap this for a 30-minute easy walk/)).toBeInTheDocument();
+    expect(screen.queryByText(/Swap this for a 30-minute easy walk/)).not.toBeInTheDocument();
   });
 
   it('renders rounds as the round count and its exercises', () => {
@@ -352,7 +409,7 @@ describe('DayContent', () => {
 
     // assert
     const segment = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem')[0];
-    expect(segment).toHaveTextContent('Rounds · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · 60 s between rounds · Hard: only a few words at a time');
+    expect(segment).toHaveTextContent('Intervals · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · 60 s between rounds · Hard: only a few words at a time');
   });
 });
 
@@ -373,12 +430,18 @@ describe('SessionTable', () => {
     }));
   }
 
-  function renderSession(session: Session) {
+  const FOUR_WEEKS = { weeks: 4, calibrationWeek: false };
+
+  function renderSession(session: Session, block = FOUR_WEEKS) {
     const exercises = new Map(SAMPLE_EXERCISES.map(exercise => [exercise.id, exercise]));
-    return render(<SessionTable session={session} exercisesById={exercises} />);
+    return render(<SessionTable session={session} block={block} exercisesById={exercises} />);
   }
 
-  it('labels supersets, shows the unit and formats rest', () => {
+  function exerciseHeaders(): HTMLElement[] {
+    return screen.getAllByRole('rowheader').filter(header => header.getAttribute('scope') === 'rowgroup');
+  }
+
+  it('prints a superset rest once, after its last exercise, in minutes from 90 s, and shows the unit', () => {
     // arrange
     const view = viewAt(TODAY);
 
@@ -386,49 +449,119 @@ describe('SessionTable', () => {
     renderSession(superset(view));
 
     // assert
-    expect(screen.getByRole('cell', { name: 'C1 Superset' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'C2 Superset' })).toBeInTheDocument();
+    const [first, second] = exerciseHeaders();
+    expect(first).toHaveTextContent(/^C1 /);
+    expect(first).not.toHaveTextContent(/Rest|Superset/);
+    expect(second).toHaveTextContent(/^C2 .+ Rest 1:30 after C2/);
     expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
-    expect(screen.getByRole('cell', { name: '2 min' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '90 s' })).toBeInTheDocument();
   });
 
-  it('prints a row for every set with its kind, reps, RIR and weight', () => {
+  it('prints a rest under 90 s in seconds and leaves the swaps out of the table', () => {
     // arrange
     const view = viewAt(TODAY);
-    const warmUp = { kind: 'warm-up' as const, reps: { min: 10, max: 10 } };
-    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 }, weightKg: 60 };
-    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [warmUp, top, steady] }] }));
+    const [, swap] = SAMPLE_EXERCISES;
+    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], restSeconds: 75, substitutions: [swap.id] }] }));
 
     // act
     renderSession(session);
 
     // assert
-    const [, ...rows] = screen.getAllByRole('row');
-    const cellsOf = (index: number) => within(rows[index]).getAllByRole('cell').map(cell => cell.textContent);
-    expect(rows).toHaveLength(3);
-    expect(cellsOf(0)).toEqual(expect.arrayContaining(['Warm-up', '10', '—']));
-    expect(cellsOf(1)).toEqual(['1', '5', '2', '60 kg']);
-    expect(cellsOf(2)).toEqual(['2', '8–10', '1–2', '—']);
+    expect(exerciseHeaders()[0]).toHaveTextContent('Rest 75 s');
+    expect(exerciseHeaders()[0]).not.toHaveTextContent(swap.name);
   });
 
-  it('prints cues, swaps and a custom progression under the exercise', () => {
+  it('links each exercise name to its exercise page', () => {
     // arrange
     const view = viewAt(TODAY);
+    const session = sessionWith(view, current => current);
+    const [row] = session.rows;
+    const name = SAMPLE_EXERCISES.find(exercise => exercise.id === row.exerciseId)?.name ?? '';
+
+    // act
+    renderSession(session);
+
+    // assert
+    expect(within(exerciseHeaders()[0]).getByRole('link', { name })).toHaveAttribute('href', `${window.location.origin}/portal/exercises/${row.exerciseId}`);
+  });
+
+  it('describes warm-up sets in a line under the name and gives each working set its reps, weight, RIR and a box per week', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const warmUp = { kind: 'warm-up' as const, reps: { min: 10, max: 10 } };
+    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 }, weightKg: 60 };
+    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [warmUp, warmUp, top, steady] }] }));
+
+    // act
+    renderSession(session);
+
+    // assert
+    const [, , , ...rows] = screen.getAllByRole('row', { hidden: true });
+    const setOf = (index: number) => within(rows[index]).getByRole('rowheader').textContent;
+    const cellsOf = (index: number) => within(rows[index]).getAllByRole('cell', { hidden: true }).map(cell => cell.textContent);
+    expect(exerciseHeaders()[0]).toHaveTextContent('Warm up first: 10, then 10 reps, lighter than your working sets. No need to log them.');
+    expect(rows).toHaveLength(2);
+    expect([setOf(0), setOf(1)]).toEqual(['1', '2']);
+    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'Weight', 'RIR']);
+    expect(cellsOf(0)).toEqual(['5', '60 kg', '2', '', '', '', '']);
+    expect(cellsOf(1)).toEqual(['8–10', '', '1–2', '', '', '', '']);
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
+  });
+
+  it('leaves the weight column out when no set prescribes a weight', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [steady] }] }));
+
+    // act
+    renderSession(session);
+
+    // assert
+    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR']);
+  });
+
+  it('prints the cues the coach wrote for her and a custom progression under the exercise', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const [, swap] = SAMPLE_EXERCISES;
     const session = sessionWith(view, original => ({
       ...original,
-      rows: [{ ...original.rows[0], cues: 'Brace first', progression: { kind: 'custom' as const, text: 'Add 2 kg weekly' } }],
+      rows: [
+        {
+          ...original.rows[0],
+          cues: 'Brace first',
+          touched: ['cues' as const],
+          substitutions: [swap.id],
+          progression: { kind: 'custom' as const, text: 'Add 2 kg weekly' },
+        },
+        { ...original.rows[1], cues: 'Library description', touched: [] },
+      ],
     }));
 
     // act
     renderSession(session);
 
     // assert
-    const exercise = screen.getByRole('rowheader');
-    expect(exercise).toHaveTextContent('Brace first');
-    expect(exercise).toHaveTextContent('Add 2 kg weekly');
+    const [tailored, standard] = exerciseHeaders();
+    expect(tailored).toHaveTextContent('Brace first');
+    expect(tailored).toHaveTextContent('Add 2 kg weekly');
+    expect(standard).not.toHaveTextContent('Library description');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('heads a log column for each week of the block, marking the calibration week', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const session = sessionWith(view, current => current);
+
+    // act
+    renderSession(session, { weeks: 6, calibrationWeek: true });
+
+    // assert
+    const logHeaders = screen.getAllByRole('columnheader', { hidden: true }).slice(3);
+    expect(logHeaders.map(header => header.textContent)).toEqual(['Log: kg × reps', 'Week 1 calibration', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6']);
+    expect(logHeaders.every(header => header.getAttribute('aria-hidden') === 'true')).toBe(true);
   });
 
   it('still names an archived exercise and flags a removed one', () => {
@@ -441,10 +574,10 @@ describe('SessionTable', () => {
     const rows = [first, { ...second, exerciseId: 'gone' }];
 
     // act
-    render(<SessionTable session={{ ...session, rows }} exercisesById={exercises} />);
+    render(<SessionTable session={{ ...session, rows }} block={FOUR_WEEKS} exercisesById={exercises} />);
 
     // assert
-    expect(screen.getByRole('rowheader', { name: new RegExp(`^${archived.name}`) })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: new RegExp(`^${first.slot} ${archived.name}`) })).toBeInTheDocument();
     expect(screen.getByText('Exercise removed')).toBeInTheDocument();
   });
 });

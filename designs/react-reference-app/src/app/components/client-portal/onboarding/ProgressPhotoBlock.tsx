@@ -15,12 +15,12 @@ import {
   PROGRESS_PHOTO_TYPES,
 } from '../../../domain/measurements';
 import { PROGRESS_PHOTO_CONSENT_COPY } from '../../../domain/onboardingCopy';
-import { FIELD_ERROR_CLASS } from '../../../utils/formFieldStyles';
 import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
 } from '../../progressPhotoFrame';
 import { CheckboxField } from '../../CheckboxField';
+import { FieldError } from '../../FieldError';
 import { MediaRemoveButton } from '../../MediaRemoveButton';
 import { cn } from '../../ui/utils';
 
@@ -127,6 +127,7 @@ export function ProgressPhotoBlock({
 }: ProgressPhotoBlockProps) {
   const groupId = useId();
   const noteId = useId();
+  const refusedId = useId();
   const [refused, setRefused] = useState(false);
   const locked = locksPhotos(consent);
 
@@ -193,15 +194,11 @@ export function ProgressPhotoBlock({
         ))}
       </div>
 
-      {refused && (
-        <p
-          className={FIELD_ERROR_CLASS}
-          data-parity="progress-photos-error"
-          role="alert"
-        >
-          {REFUSED_PHOTO_MESSAGE}
-        </p>
-      )}
+      <FieldError
+        data-parity="progress-photos-error"
+        id={refusedId}
+        message={refused ? REFUSED_PHOTO_MESSAGE : null}
+      />
 
       {locked && (
         <p

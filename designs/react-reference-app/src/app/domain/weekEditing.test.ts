@@ -11,7 +11,6 @@ function block(): Block {
       level: 'beginner',
       trainingDays: 3,
       sessionMinutes: 60,
-      cycleMode: 'general',
       language: 'en',
       dailySteps: 6000,
       splitShape: 'full-body',

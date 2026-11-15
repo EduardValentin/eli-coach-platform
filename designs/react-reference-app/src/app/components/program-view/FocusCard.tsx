@@ -5,9 +5,10 @@ import { BLOCK_TYPE_LABELS } from '../../domain/program';
 import { nextCheckpoint } from '../../domain/programCalendar';
 import { ClientWidget } from '../client-portal/ClientWidget';
 import { BLOCK_SWATCH } from './blockColours';
-import { LABEL_CLASS, VALUE_CLASS } from '../typography';
+import { LABEL_CLASS, VALUE_CLASS, EYEBROW_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
+import { parseTemplate, TemplateBody } from './ProgramText';
 import { currentBlock, type ProgramView } from './programView';
 
 type FocusCardProps = { view: ProgramView; action?: ReactNode };
@@ -32,7 +33,7 @@ export function FocusCard({ view, action }: FocusCardProps) {
   const { dayOne, position } = view;
   const block = currentBlock(view);
   const inPlan = position.status === 'in-plan';
-  const showCycle = view.program.cycleMode === 'adapted' && view.cycleDay !== null;
+  const { focus, personalNote } = view.version.content.header;
 
   return (
     <ClientWidget
@@ -49,10 +50,20 @@ export function FocusCard({ view, action }: FocusCardProps) {
           Calibration week
         </Badge>
       )}
+      {(focus.trim() || personalNote.trim()) && (
+        <div className="mt-4 grid gap-4">
+          {focus.trim() && <p className="max-w-prose font-serif text-lg leading-snug text-pretty text-text-primary italic">{focus}</p>}
+          {personalNote.trim() && (
+            <figure className="grid gap-1.5 border-l-2 border-border pl-3">
+              <figcaption className={EYEBROW_CLASS}>A note from your coach</figcaption>
+              <TemplateBody paragraphs={parseTemplate(personalNote).paragraphs} />
+            </figure>
+          )}
+        </div>
+      )}
       {inPlan && dayOne && (
         <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-4 border-t border-border-subtle pt-4">
           <Reading label="Next check-in form" value={format(nextCheckpoint(dayOne, view.preferredWeekday, view.today), 'EEEE, d MMMM')} />
-          {showCycle && <Reading label="Cycle day" value={`~${view.cycleDay} (estimate)`} />}
         </dl>
       )}
     </ClientWidget>

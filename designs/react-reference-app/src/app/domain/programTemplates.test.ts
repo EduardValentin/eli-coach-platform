@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fillTemplate, templateText, type TemplateKey } from './programTemplates';
 
 const KEYS: TemplateKey[] = [
-  'legend', 'warmUp', 'coolDown', 'progression', 'steps', 'cycle', 'hiitAside', 'missedDay', 'calibration',
+  'legend', 'warmUp', 'coolDown', 'progression', 'steps', 'missedDay', 'calibration',
   'block.foundation', 'block.hypertrophy', 'block.strength', 'block.deload',
   'split.full-body', 'split.upper-lower', 'lowEnergy',
 ];
@@ -33,7 +33,7 @@ describe('templateText', () => {
 
 describe('fillTemplate', () => {
   it('replaces the steps placeholder', () => {
-    expect(fillTemplate('Daily steps: [8,000]', { steps: '8,000' })).toBe('Daily steps: 8,000');
+    expect(fillTemplate('Daily steps: [daily steps]', { steps: '8,000' })).toBe('Daily steps: 8,000');
   });
 
   it('replaces the frequency placeholder with a number', () => {
@@ -41,6 +41,6 @@ describe('fillTemplate', () => {
   });
 
   it('keeps a placeholder with no value', () => {
-    expect(fillTemplate('Daily steps: [8,000]', {})).toBe('Daily steps: [8,000]');
+    expect(fillTemplate('Daily steps: [daily steps]', {})).toBe('Daily steps: [daily steps]');
   });
 });

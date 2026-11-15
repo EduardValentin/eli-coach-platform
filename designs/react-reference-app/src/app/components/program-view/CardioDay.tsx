@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
 import type { CardioSegment, CardioSession } from '../../domain/program';
-import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsText } from '../../domain/programCardio';
+import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsText, SEGMENT_KIND_LABELS } from '../../domain/programCardio';
 import { WIDGET_TITLE_CLASS } from '../typography';
 import { ColumnBreak, DayHeader } from './DayParts';
 import { exerciseName } from './programView';
@@ -12,7 +12,7 @@ const SEGMENT_CLASS = 'grid gap-1 rounded-card border border-l-4 border-border/5
 
 function Segment({ segment, exercisesById }: { segment: CardioSegment; exercisesById: Library }) {
   const nameOf = (id: string) => exerciseName(id, exercisesById);
-  const title = segment.kind === 'steady' ? nameOf(segment.exerciseId) : 'Rounds';
+  const title = segment.kind === 'steady' ? nameOf(segment.exerciseId) : SEGMENT_KIND_LABELS.rounds;
   const amount = segment.kind === 'steady' ? `${segment.minutes} min` : roundsText(segment, nameOf);
   return (
     <li className={SEGMENT_CLASS}>

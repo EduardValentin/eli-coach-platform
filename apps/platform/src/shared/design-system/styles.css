@@ -52,6 +52,7 @@
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
   --size-control-xl: 3.75rem;
+  --size-hit-target: 3rem;
   --size-avatar-sm: 3rem;
   --size-avatar-md: 3.5rem;
   --size-avatar-lg: 4rem;
@@ -106,11 +107,11 @@
   --color-secondary-foreground: #030213;
 
   --color-text-primary: #121212;
-  --color-text-secondary: #616161;
-  --color-text-muted: #6a6a7a;
+  --color-text-secondary: #3d3d3d;
+  --color-text-muted: #3c3c47;
   --color-text-inverted: #ffffff;
   --color-text-inverted-secondary: oklch(0.928 0.006 264.531);
-  --color-text-label: oklch(0.371 0 0);
+  --color-text-label: oklch(0.35 0 0);
   --color-copy-muted: oklch(0.439 0 0);
   --color-placeholder-soft: oklch(0.552 0 0);
   --color-icon-muted: oklch(0.708 0 0);
@@ -119,7 +120,7 @@
   --color-border-subtle: #e9e6e2;
   --color-border-strong: rgba(233, 230, 226, 0.6);
   --color-border-soft: rgba(233, 230, 226, 0.25);
-  --color-control-border-soft: oklch(0.922 0 0);
+  --color-control-border-soft: oklch(0.64 0 0);
   --color-stroke-quiet: oklch(0.985 0 0);
   --color-stroke-faint: oklch(0.97 0 0);
   --color-divider: oklch(0.87 0 0);
@@ -141,17 +142,18 @@
   --color-portal-accent: var(--color-brand-primary);
   --color-portal-accent-hover: var(--color-brand-primary-hover);
 
-  --color-brand-secondary: #00796b;
-  --color-brand-secondary-hover: #005a4f;
+  --color-brand-secondary: #006156;
+  --color-brand-secondary-hover: #004a41;
   --color-brand-secondary-foreground: #ffffff;
-  --color-brand-secondary-soft: rgba(0, 121, 107, 0.1);
+  --color-brand-secondary-soft: rgba(0, 97, 86, 0.1);
   --color-brand-secondary-surface: #e6f2f0;
+  --color-brand-secondary-ink: #003630;
 
   --color-feedback-danger: #d1183c;
   --color-feedback-danger-on-inverted: #f87171;
   --color-feedback-success: #0f7a36;
   --color-feedback-success-soft: rgba(15, 122, 54, 0.1);
-  --color-feedback-warning: #a16207;
+  --color-feedback-warning: #583604;
   --color-success-surface: #e8f6ed;
   --color-savings-badge-text: oklch(0.43 0.17 150.069);
   --color-savings-badge-surface: oklch(0.962 0.044 156.743);
@@ -395,6 +397,7 @@
   --color-brand-secondary-foreground: var(--color-brand-secondary-foreground);
   --color-brand-secondary-soft: var(--color-brand-secondary-soft);
   --color-brand-secondary-surface: var(--color-brand-secondary-surface);
+  --color-brand-secondary-ink: var(--color-brand-secondary-ink);
 
   --color-feedback-danger: var(--color-feedback-danger);
   --color-feedback-danger-on-inverted: var(--color-feedback-danger-on-inverted);
@@ -691,6 +694,15 @@
   }
   to {
     opacity: 0;
+  }
+}
+
+@utility hit-area {
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - var(--size-hit-target)) / 2));
+    inset-inline: min(0px, calc((100% - var(--size-hit-target)) / 2));
   }
 }
 

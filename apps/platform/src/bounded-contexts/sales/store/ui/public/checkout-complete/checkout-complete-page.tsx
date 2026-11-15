@@ -5,7 +5,7 @@ import {
   ConfirmationLead,
   ConfirmationPage,
 } from "~/shared/design-system/layout";
-import { cn, LABEL_CLASS } from "~/shared/design-system/lib";
+import { cn, EYEBROW_CLASS } from "~/shared/design-system/lib";
 import {
   Button,
   buttonVariants,
@@ -117,7 +117,7 @@ function ConfirmedOrderView(props: { order: ConfirmedOrder }) {
         . Your download link is in that email and works for seven days.
       </ConfirmationLead>
 
-      <h2 className={cn("mt-8", LABEL_CLASS)}>Your order</h2>
+      <h2 className={cn("mt-8", EYEBROW_CLASS)}>Your order</h2>
       <StoreOrderSummary
         className="mt-2"
         currency={order.currency}

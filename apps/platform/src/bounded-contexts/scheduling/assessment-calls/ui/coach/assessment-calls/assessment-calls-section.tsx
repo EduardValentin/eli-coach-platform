@@ -187,7 +187,6 @@ export function AssessmentCallsSection({
                 className="w-full sm:w-72"
                 onChange={(event) => changeQuery(event.target.value)}
                 placeholder="Search by name or email"
-                size="sm"
                 value={query}
               />
               <SortControl

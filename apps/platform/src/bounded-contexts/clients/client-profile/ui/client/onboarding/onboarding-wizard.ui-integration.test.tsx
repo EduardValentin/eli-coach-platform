@@ -399,7 +399,9 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     // assert
-    expect(await screen.findByRole("alert")).toHaveTextContent(MISSING_CONSENT);
+    expect(
+      (await screen.findAllByRole("alert")).map((alert) => alert.textContent),
+    ).toContain(MISSING_CONSENT);
     expect(screen.getByText("Step 2 of 5")).toBeVisible();
     expect(
       screen.getByRole("link", { name: "How I handle your data →" }),

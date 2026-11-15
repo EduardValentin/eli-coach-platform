@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { format, parseISO, startOfMonth, subYears } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { MAX_BOOKING_AGE, MIN_BOOKING_AGE } from '../../services/visitorProfile';
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
+import { FieldError } from '../FieldError';
 import { BrandCalendar } from '../BrandCalendar';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -19,11 +19,6 @@ const FIELD_BUTTON_CLASS =
 // The public header is fixed, so the calendar must not flip up into the
 // 80px it covers; 96px matches the page's scroll margin under that header.
 const FIXED_HEADER_CLEARANCE_PX = 96;
-
-// Safari's default Tab order visits text fields only and skips buttons unless
-// they carry an explicit tabindex; a control that stands in for a form field
-// must stay reachable like the native field it replaces.
-const FIELD_TAB_INDEX = 0;
 
 export function DateOfBirthField({
   id,
@@ -61,7 +56,6 @@ export function DateOfBirthField({
           <button
             id={id}
             type="button"
-            tabIndex={FIELD_TAB_INDEX}
             className={FIELD_BUTTON_CLASS}
             data-invalid={Boolean(error) || undefined}
             aria-describedby={error ? errorId : undefined}
@@ -103,11 +97,7 @@ export function DateOfBirthField({
           </div>
         </PopoverContent>
       </Popover>
-      {error && (
-        <p id={errorId} className={FIELD_ERROR_CLASS}>
-          {error}
-        </p>
-      )}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }

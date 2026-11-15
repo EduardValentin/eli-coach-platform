@@ -13,10 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { cn } from "../ui/utils";
 import { SettingsSection, SettingsRows, SettingsRow } from "../SettingsSection";
 import { useAssessmentCalls } from "../../context/AssessmentCallContext";
-import { FIELD_ERROR_CLASS } from "../../utils/formFieldStyles";
+import { FieldError } from "../FieldError";
 import {
   AssessmentCallError,
   ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES,
@@ -103,22 +102,6 @@ function isSameDraft(
     a.meetingLink === b.meetingLink &&
     a.weekdays.length === b.weekdays.length &&
     a.weekdays.every((day, index) => day === b.weekdays[index])
-  );
-}
-
-function FieldError({
-  id,
-  message,
-  className,
-}: {
-  id: string;
-  message: string;
-  className?: string;
-}) {
-  return (
-    <p id={id} role="alert" className={cn(FIELD_ERROR_CLASS, className)}>
-      {message}
-    </p>
   );
 }
 

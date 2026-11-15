@@ -67,4 +67,15 @@ describe('ProgramText', () => {
     expect(screen.getByText('How it should feel:')).toHaveClass('font-semibold');
     expect(screen.getByText('How it should feel:').closest('p')).toHaveTextContent('How it should feel: easy.');
   });
+
+  it('renders numbered lines as an ordered list', () => {
+    // act
+    render(<ProgramText text={`**Warm-up**\n1. Light cardio.\n2. Mobility.\nThen start.`} />);
+
+    // assert
+    const list = screen.getByRole('list');
+    expect(list.tagName).toBe('OL');
+    expect(within(list).getAllByRole('listitem').map(item => item.textContent)).toEqual(['Light cardio.', 'Mobility.']);
+    expect(screen.getByText('Then start.').tagName).toBe('P');
+  });
 });

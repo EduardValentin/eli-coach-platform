@@ -5,6 +5,7 @@ import { AuthNavActions } from "~/bounded-contexts/access/accounts/ui/public/aut
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { cn, MAIN_CONTENT_ID } from "~/shared/design-system/lib";
+import { SkipLink } from "~/shared/design-system/primitives";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import {
@@ -62,9 +63,7 @@ export function PublicLayout(props: PublicLayoutProps) {
         "bg-surface-subtle": scrollBehavior === "hero-overlay",
       })}
     >
-      <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
-        Skip to main content
-      </a>
+      <SkipLink targetId={MAIN_CONTENT_ID} />
       <PublicNavigation
         actions={(appearance) =>
           authControlsEnabled ? (

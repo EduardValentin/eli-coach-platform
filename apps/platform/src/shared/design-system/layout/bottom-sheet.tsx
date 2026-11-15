@@ -5,7 +5,7 @@ import {
   type PanInfo,
 } from "motion/react";
 import { Dialog as RadixDialog } from "radix-ui";
-import { useRef, type ReactNode, type RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 
 import { cn } from "../lib/cn";
 import {
@@ -13,6 +13,9 @@ import {
   preventDismissalWhenLocked,
   type DialogDismissal,
 } from "../lib/dialog-frame";
+import { useReturnFocusToOpener } from "../lib/use-return-focus-to-opener";
+
+type BottomSheetLabels = "spoken" | "shown";
 
 type BottomSheetProps = {
   children: ReactNode;
@@ -21,6 +24,7 @@ type BottomSheetProps = {
   dismissal?: DialogDismissal;
   id?: string;
   initialFocus?: RefObject<HTMLElement | null>;
+  labels?: BottomSheetLabels;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   returnFocusTo?: RefObject<HTMLElement | null>;
@@ -43,12 +47,6 @@ function isDismissingDrag(info: PanInfo) {
   );
 }
 
-function isFocusLost() {
-  return (
-    document.activeElement === null || document.activeElement === document.body
-  );
-}
-
 export function BottomSheet(props: BottomSheetProps) {
   const {
     children,
@@ -57,28 +55,19 @@ export function BottomSheet(props: BottomSheetProps) {
     dismissal = "allowed",
     id,
     initialFocus,
+    labels = "spoken",
     onOpenChange,
     open,
     returnFocusTo,
     title,
   } = props;
   const shouldReduceMotion = useReducedMotionConfig() === true;
-  const opener = useRef<HTMLElement | null>(null);
+  const { rememberOpener, returnLostFocusToOpener } =
+    useReturnFocusToOpener(returnFocusTo);
 
-  const rememberOpener = (event: Event) => {
-    opener.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+  const openWithOpenerRemembered = (event: Event) => {
+    rememberOpener();
     focusOnOpen(initialFocus, event);
-  };
-  const returnFocusToOpener = (event: Event) => {
-    event.preventDefault();
-    if (isFocusLost()) {
-      [returnFocusTo?.current, opener.current]
-        .find((candidate) => candidate?.isConnected)
-        ?.focus();
-    }
   };
   const descriptionAttributes = description
     ? {}
@@ -130,10 +119,10 @@ export function BottomSheet(props: BottomSheetProps) {
               asChild
               id={id}
               {...descriptionAttributes}
-              onCloseAutoFocus={returnFocusToOpener}
+              onCloseAutoFocus={returnLostFocusToOpener}
               onEscapeKeyDown={preventWhenLocked}
               onInteractOutside={preventWhenLocked}
-              onOpenAutoFocus={rememberOpener}
+              onOpenAutoFocus={openWithOpenerRemembered}
             >
               <motion.div
                 className={cn(
@@ -146,13 +135,17 @@ export function BottomSheet(props: BottomSheetProps) {
                   className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-surface-muted"
                   data-parity="sheet-handle"
                 />
-                <RadixDialog.Title className="sr-only">
-                  {title}
-                </RadixDialog.Title>
-                {description && (
-                  <RadixDialog.Description className="sr-only">
-                    {description}
-                  </RadixDialog.Description>
+                {labels === "spoken" && (
+                  <>
+                    <RadixDialog.Title className="sr-only">
+                      {title}
+                    </RadixDialog.Title>
+                    {description && (
+                      <RadixDialog.Description className="sr-only">
+                        {description}
+                      </RadixDialog.Description>
+                    )}
+                  </>
                 )}
                 {children}
               </motion.div>

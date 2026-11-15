@@ -53,10 +53,11 @@ const useFormField = () => {
     throw new Error("useFormField should be used within <FormField>");
   }
 
-  const { id } = itemContext;
+  const { id, hasDescription } = itemContext;
 
   return {
     id,
+    hasDescription,
     name: fieldContext.name,
     formItemId: `${id}-form-item`,
     formDescriptionId: `${id}-form-item-description`,
@@ -67,17 +68,26 @@ const useFormField = () => {
 
 type FormItemContextValue = {
   id: string;
+  hasDescription: boolean;
+  setHasDescription: (present: boolean) => void;
 };
 
-const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue,
-);
+const FormItemContext = React.createContext<FormItemContextValue>({
+  id: "",
+  hasDescription: false,
+  setHasDescription: () => {},
+});
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   const id = React.useId();
+  const [hasDescription, setHasDescription] = React.useState(false);
+  const itemContext = React.useMemo(
+    () => ({ id, hasDescription, setHasDescription }),
+    [id, hasDescription],
+  );
 
   return (
-    <FormItemContext.Provider value={{ id }}>
+    <FormItemContext.Provider value={itemContext}>
       <div
         data-slot="form-item"
         className={cn("grid gap-2", className)}
@@ -102,18 +112,20 @@ function FormLabel({ className, ...props }: LabelProps) {
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
-  const { error, formItemId, formDescriptionId, formMessageId } =
+  const { error, hasDescription, formItemId, formDescriptionId, formMessageId } =
     useFormField();
+  const describedBy = [
+    hasDescription && formDescriptionId,
+    error?.message && formMessageId,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <Slot
       data-slot="form-control"
       id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
+      aria-describedby={describedBy || undefined}
       aria-invalid={!!error}
       {...props}
     />
@@ -122,6 +134,12 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
 
 function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
   const { formDescriptionId } = useFormField();
+  const { setHasDescription } = React.useContext(FormItemContext);
+
+  React.useLayoutEffect(() => {
+    setHasDescription(true);
+    return () => setHasDescription(false);
+  }, [setHasDescription]);
 
   return (
     <p
@@ -145,6 +163,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
+      role={error ? "alert" : undefined}
       className={cn(FIELD_ERROR_CLASS, className)}
       {...props}
     >

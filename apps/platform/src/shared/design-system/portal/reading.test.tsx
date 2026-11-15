@@ -30,7 +30,7 @@ describe("Reading", () => {
     const term = screen.getByRole("term");
     const definition = screen.getByRole("definition");
     expect(term).toHaveTextContent("Bundle");
-    expect(term).toHaveClass("text-label", "uppercase", "text-text-secondary");
+    expect(term).toHaveClass("text-xs", "font-medium", "text-text-secondary");
     expect(definition).toHaveTextContent("3 months");
     expect(definition).toHaveClass(
       "mt-1",

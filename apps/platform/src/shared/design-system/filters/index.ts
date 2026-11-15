@@ -6,4 +6,8 @@ export {
 } from "./filter-chip-group";
 export { ListPager } from "./list-pager";
 export { ListingToolbar } from "./listing-toolbar";
-export { SortControl, type SortOption } from "./sort-control";
+export {
+  SortControl,
+  type SortOption,
+  type SortToggleSize,
+} from "./sort-control";

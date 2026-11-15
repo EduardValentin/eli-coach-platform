@@ -8,6 +8,7 @@ import {
   Alert,
   Button,
   CheckboxChip,
+  FieldError,
   Input,
   Label,
   Select,
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/shared/design-system/primitives";
-import { cn } from "~/shared/design-system/lib";
 import { toast } from "~/shared/design-system/toast";
 import { CalendarClock, TriangleAlert } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
@@ -54,7 +54,6 @@ const FIELD_BY_ERROR_CODE: Partial<
   no_weekday: "weekdays",
 };
 
-const FIELD_ERROR_CLASS = "text-sm font-medium text-feedback-danger";
 const FORM_ID = "assessment-call-settings-form";
 const START_HOUR_FIELD_ID = "start-hour";
 const END_HOUR_FIELD_ID = "end-hour";
@@ -232,7 +231,7 @@ function WeekdaysRow({ error, register, selected }: WeekdaysRowProps) {
           </CheckboxChip>
         ))}
       </div>
-      <FieldErrorText className="mt-2" id={errorId} message={error} />
+      <FieldError className="mt-2" id={errorId} message={error} />
     </SettingsRow>
   );
 }
@@ -275,7 +274,7 @@ function HoursRow({ control, error }: HoursRowProps) {
           options={HOUR_OPTIONS.end}
         />
       </div>
-      <FieldErrorText className="mt-2" id={errorId} message={error} />
+      <FieldError className="mt-2" id={errorId} message={error} />
     </SettingsRow>
   );
 }
@@ -309,7 +308,7 @@ function MeetingLinkRow({ error, register, value }: MeetingLinkRowProps) {
           setValueAs: toMeetingLinkValue,
         })}
       />
-      <FieldErrorText className="mt-2" id={errorId} message={error} />
+      <FieldError className="mt-2" id={errorId} message={error} />
       {value ? null : (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
           <TriangleAlert aria-hidden="true" size={14} />
@@ -367,24 +366,6 @@ function HourSelectField(props: {
         )}
       />
     </div>
-  );
-}
-
-function FieldErrorText(props: {
-  className?: string;
-  id: string;
-  message: string | undefined;
-}) {
-  const { className, id, message } = props;
-
-  if (!message) {
-    return null;
-  }
-
-  return (
-    <p className={cn(FIELD_ERROR_CLASS, className)} id={id} role="alert">
-      {message}
-    </p>
   );
 }
 

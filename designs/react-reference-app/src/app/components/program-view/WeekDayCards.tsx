@@ -1,43 +1,30 @@
 import { isSameDay } from 'date-fns';
-import { cardioOn, sessionOn, WEEKDAYS, type Block, type Weekday } from '../../domain/program';
-import { CARDIO_CHIP_CLASS, CardioLength, DayCardFrame, DayName, RestLabel, sessionChipClass } from './dayCard';
+import type { Exercise } from '../../context/TrainingContext';
+import { WEEKDAYS, type Block, type Weekday } from '../../domain/program';
+import { DAY_CARDS_CLASS, DayCard } from './dayCard';
 import { sessionAnchor } from './programView';
+import { cn } from '../ui/utils';
 
-type WeekDayCardsProps = { block: Block; dates: Record<Weekday, Date>; today: Date };
+type WeekDayCardsProps = { block: Block; dates: Record<Weekday, Date>; today: Date; exercisesById: ReadonlyMap<string, Exercise> };
 
-function DayCard({ block, day, date, today }: { block: Block; day: Weekday; date: Date; today: Date }) {
-  const session = sessionOn(block, day);
-  const cardio = cardioOn(block, day);
-
+export function WeekDayCards({ block, dates, today, exercisesById }: WeekDayCardsProps) {
   return (
-    <DayCardFrame entry={block.calendar[day].kind} current={isSameDay(date, today) ? 'date' : undefined}>
-      <h3 className="flex items-baseline justify-between gap-1">
-        <DayName day={day} />
-        <span className="text-xs tabular-nums text-text-secondary">{date.getDate()}</span>
-      </h3>
-      {session && (
-        <a href={`#${sessionAnchor(session.id)}`} className={sessionChipClass(block.type)}>
-          <span className="truncate">{session.name}</span>
-        </a>
-      )}
-      {cardio && (
-        <>
-          <a href={`#${sessionAnchor(cardio.id)}`} className={CARDIO_CHIP_CLASS}>
-            <span className="truncate">{cardio.name}</span>
-          </a>
-          <CardioLength cardio={cardio} />
-        </>
-      )}
-      {!session && !cardio && <RestLabel />}
-    </DayCardFrame>
-  );
-}
-
-export function WeekDayCards({ block, dates, today }: WeekDayCardsProps) {
-  return (
-    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+    <ol className={cn(DAY_CARDS_CLASS, 'sm:grid-cols-4 lg:grid-cols-7')}>
       {WEEKDAYS.map(day => (
-        <DayCard key={day} block={block} day={day} date={dates[day]} today={today} />
+        <DayCard
+          key={day}
+          block={block}
+          day={day}
+          exercisesById={exercisesById}
+          headingLevel="h3"
+          current={isSameDay(dates[day], today) ? 'date' : undefined}
+          corner={<span className="text-xs tabular-nums text-text-secondary">{dates[day].getDate()}</span>}
+          renderChip={chip => (
+            <a href={`#${sessionAnchor(chip.id)}`} className={chip.className}>
+              {chip.label}
+            </a>
+          )}
+        />
       ))}
     </ol>
   );

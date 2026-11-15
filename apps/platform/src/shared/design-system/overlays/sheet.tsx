@@ -73,7 +73,7 @@ export const SheetContent = React.forwardRef<
       {children}
       <RadixDialog.Close
         ref={closeButtonRef}
-        className="absolute right-5 top-5 inline-flex size-control-md items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary"
+        className="absolute right-5 top-4 inline-flex size-control-md items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary"
       >
         <span aria-hidden="true" className="text-2xl leading-none">
           ×

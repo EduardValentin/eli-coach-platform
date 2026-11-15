@@ -25,6 +25,9 @@ Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false);
 Element.prototype.setPointerCapture = vi.fn();
 Element.prototype.releasePointerCapture = vi.fn();
 
+Range.prototype.getBoundingClientRect = () => new DOMRect();
+Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
+
 afterEach(() => {
   cleanup();
   localStorage.clear();

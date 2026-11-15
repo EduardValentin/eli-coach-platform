@@ -1,31 +1,18 @@
 import * as React from "react";
-import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
 import { Badge } from "./badge";
 import { Checkbox } from "./checkbox";
 import type { FieldControlAttributes } from "./field-layout";
-import type { FieldSize } from "./field-size";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { SearchField } from "./search-field";
-import {
-  FIELD_TAB_INDEX,
-  SelectTriggerChevron,
-  selectTriggerClasses,
-} from "./select";
+import { FieldTrigger } from "./select";
 
 type MultiSelectSummary = "count" | "names";
 
 const SEARCHABLE_ABOVE = 8;
 
-const growingTriggerHeight = cva("h-auto", {
-  variants: {
-    size: {
-      sm: "min-h-(--size-control-sm)",
-      md: "min-h-(--size-control-md)",
-    },
-  },
-});
+const GROWING_TRIGGER_HEIGHT_CLASS = "h-auto min-h-(--size-control-md)";
 
 type MultiSelectSelection<Value extends string> = {
   label: string;
@@ -92,7 +79,6 @@ function OptionList<Value extends string>({
           className="m-1 shrink-0"
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search"
-          size="sm"
           value={query}
         />
       )}
@@ -106,7 +92,7 @@ function OptionList<Value extends string>({
           {shown.map((option) => (
             <li key={option}>
               <label
-                className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-primary"
+                className="flex min-h-12 cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-primary"
                 data-parity="multi-select-option"
               >
                 <Checkbox
@@ -127,7 +113,6 @@ function OptionList<Value extends string>({
 type MultiSelectProps<Value extends string> = OptionListProps<Value> &
   Partial<FieldControlAttributes> & {
     summary?: MultiSelectSummary;
-    size?: FieldSize;
     placeholder?: string;
     required?: boolean;
   };
@@ -145,7 +130,6 @@ export function MultiSelect<Value extends string>({
   placeholder,
   required,
   selected,
-  size = "sm",
   summary = "count",
   ...fieldAttributes
 }: MultiSelectProps<Value>) {
@@ -154,18 +138,12 @@ export function MultiSelect<Value extends string>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <FieldTrigger
           aria-label={accessibleTriggerName(
             required ? `${label} (required)` : label,
             selected.length,
           )}
-          className={cn(
-            selectTriggerClasses(size),
-            "min-w-auto",
-            growingTriggerHeight({ size }),
-          )}
-          tabIndex={FIELD_TAB_INDEX}
-          type="button"
+          className={cn("min-w-auto", GROWING_TRIGGER_HEIGHT_CLASS)}
           {...fieldAttributes}
         >
           <span
@@ -181,8 +159,7 @@ export function MultiSelect<Value extends string>({
               summary={summary}
             />
           </span>
-          <SelectTriggerChevron />
-        </button>
+        </FieldTrigger>
       </PopoverTrigger>
       <PopoverContent
         aria-label={label}

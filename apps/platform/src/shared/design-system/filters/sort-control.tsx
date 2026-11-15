@@ -27,11 +27,13 @@ export type SortOption<Key extends string> = {
   order: SortOrder;
 };
 
+export type SortToggleSize = "sm" | "md";
+
 type SortControlProps<Key extends string> = {
   className?: string;
   onChange: (sort: SortChoice<Key>) => void;
   options: readonly SortOption<Key>[];
-  size?: "sm" | "md";
+  size?: SortToggleSize;
   sort: SortChoice<Key>;
 };
 
@@ -69,11 +71,7 @@ export function SortControl<Key extends string>({
       data-parity-root="SortControl"
     >
       <Select onValueChange={chooseKey} value={sort.key}>
-        <SelectTrigger
-          aria-label="Sort by"
-          className="min-w-0 flex-1"
-          size={size}
-        >
+        <SelectTrigger aria-label="Sort by" className="min-w-0 flex-1">
           <SelectValue>
             {`${chosen.label}: ${directionLabel.toLowerCase()}`}
           </SelectValue>

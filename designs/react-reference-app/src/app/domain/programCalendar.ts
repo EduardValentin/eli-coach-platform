@@ -88,6 +88,26 @@ export function checkpointsWithin(dayOne: Date, preferred: Weekday, until: Date)
   return checkpoints;
 }
 
+export type BlockDay = { weekday: Weekday; date: Date | null; checkIn: boolean };
+export type BlockWeek = { week: number; days: BlockDay[] };
+type BlockSchedule = Pick<PlanSchedule, 'blocks' | 'dayOne'>;
+
+export function blockWeeks({ blocks, dayOne }: BlockSchedule, index: number, checkInWeekday: Weekday): BlockWeek[] {
+  const weekNumbers = Array.from({ length: blocks[index].weeks }, (_, offset) => offset + 1);
+  if (!dayOne) {
+    return weekNumbers.map(week => ({ week, days: WEEKDAYS.map(weekday => ({ weekday, date: null, checkIn: false })) }));
+  }
+  const { start, end } = blockDates(blocks, index, dayOne);
+  const checkIns = new Set(checkpointsWithin(dayOne, checkInWeekday, end).map(date => date.getTime()));
+  return weekNumbers.map(week => ({
+    week,
+    days: Array.from({ length: DAYS_PER_WEEK }, (_, day) => {
+      const date = addDays(start, (week - 1) * DAYS_PER_WEEK + day);
+      return { weekday: weekdayOf(date), date, checkIn: checkIns.has(date.getTime()) };
+    }),
+  }));
+}
+
 export function daysUntil(from: Date, to: Date): number {
   return differenceInCalendarDays(to, from);
 }

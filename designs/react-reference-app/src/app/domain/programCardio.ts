@@ -5,7 +5,7 @@ export type CardioPresetKind = 'liss' | 'moderate' | 'hiit' | 'finisher';
 export type SegmentKind = CardioSegment['kind'];
 export const CARDIO_PRESET_KINDS: readonly CardioPresetKind[] = ['liss', 'moderate', 'hiit', 'finisher'];
 export const SEGMENT_KINDS: readonly SegmentKind[] = ['steady', 'rounds'];
-export const SEGMENT_KIND_LABELS: Record<SegmentKind, string> = { steady: 'Steady', rounds: 'Rounds' };
+export const SEGMENT_KIND_LABELS: Record<SegmentKind, string> = { steady: 'Steady', rounds: 'Intervals' };
 export const CARDIO_INTENSITY_LABELS: Record<CardioIntensity, string> = { easy: 'Easy', moderate: 'Moderate', hard: 'Hard' };
 
 export const CARDIO_INTENSITY_TEXT: Record<CardioIntensity, string> = {

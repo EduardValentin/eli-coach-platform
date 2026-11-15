@@ -1,5 +1,5 @@
 import { COUNTRIES } from '../../services/countries';
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
+import { FieldError } from '../FieldError';
 import { Input } from '../ui/input';
 import {
   Select,
@@ -70,11 +70,7 @@ export function PhoneField({
           aria-describedby={describedBy}
         />
       </div>
-      {error && (
-        <p id={errorId} className={FIELD_ERROR_CLASS}>
-          {error}
-        </p>
-      )}
+      <FieldError id={errorId} message={error} />
     </fieldset>
   );
 }

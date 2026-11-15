@@ -44,7 +44,7 @@ export function IconHint({
       <button
         aria-label={label}
         className={cn(
-          "inline-flex items-center justify-center",
+          "relative hit-area inline-flex items-center justify-center",
           SIZE_CLASS[size],
           TONE_CLASS[tone],
           className,

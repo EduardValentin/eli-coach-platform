@@ -9,7 +9,7 @@ import {
 } from '../components/CheckoutConfirmation';
 import { StoreOrderSummary } from '../components/StoreOrderSummary';
 import { Button, buttonVariants } from '../components/ThemeButton';
-import { LABEL_CLASS } from '../components/typography';
+import { EYEBROW_CLASS } from '../components/typography';
 import { linkVariants } from '../components/ui/link';
 import { useAppState } from '../context/AppContext';
 import { useStore } from '../context/StoreContext';
@@ -104,7 +104,7 @@ function ConfirmedOrderView({ order, sessionId }: { order: ConfirmedOrder; sessi
         . Your download link is in that email and works for seven days.
       </ConfirmationLead>
 
-      <h2 className={`mt-8 ${LABEL_CLASS}`}>Your order</h2>
+      <h2 className={`mt-8 ${EYEBROW_CLASS}`}>Your order</h2>
       <StoreOrderSummary className="mt-2" currency={order.currency} lines={order.lines} />
       <p className="mt-3 text-sm text-text-secondary" data-parity="receipt-note">
         Stripe sends your payment receipt in a separate email.

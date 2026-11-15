@@ -90,33 +90,26 @@ describe("ChoiceGroup", () => {
     expect(screen.getByRole("radio", { name: "kg · cm" })).toBeChecked();
   });
 
-  it.each([
-    { size: "sm", height: "h-[calc(var(--size-control-sm)-6px)]" },
-    { size: "md", height: "h-[calc(var(--size-control-md)-8px)]" },
-  ] as const)(
-    "sizes its options to sit inside a $size field",
-    ({ size, height }) => {
-      // arrange
-      const onValueChange = () => {};
+  it("keeps its options the inner height of a field", () => {
+    // arrange
+    const onValueChange = () => {};
 
-      // act
-      render(
-        <ChoiceGroup
-          aria-label="Sides"
-          defaultValue="both"
-          onValueChange={onValueChange}
-          size={size}
-        >
-          <ChoiceOption value="both">Both sides together</ChoiceOption>
-        </ChoiceGroup>,
-      );
+    // act
+    render(
+      <ChoiceGroup
+        aria-label="Sides"
+        defaultValue="both"
+        onValueChange={onValueChange}
+      >
+        <ChoiceOption value="both">Both sides together</ChoiceOption>
+      </ChoiceGroup>,
+    );
 
-      // assert
-      expect(
-        screen.getByRole("radio", { name: "Both sides together" }),
-      ).toHaveClass(height);
-    },
-  );
+    // assert
+    expect(
+      screen.getByRole("radio", { name: "Both sides together" }),
+    ).toHaveClass("min-h-[calc(var(--size-control-md)-8px)]");
+  });
 
   it("marks the checked option with the primary fill", () => {
     // arrange
@@ -168,7 +161,7 @@ describe("ChoiceGroup", () => {
     );
     expect(screen.getByRole("radio", { name: "EUR" })).not.toHaveClass(
       "data-[state=checked]:bg-primary",
-      "h-[calc(var(--size-control-sm)-6px)]",
+      "min-h-[calc(var(--size-control-sm)-6px)]",
     );
   });
 });

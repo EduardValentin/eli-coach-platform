@@ -1,7 +1,6 @@
-import type { CycleMode } from './cycleMode';
-import type { ExerciseRole } from './exercises';
-
-export type { CycleMode };
+import type { ExerciseRole, MovementPattern } from './exercises';
+import type { GuideTexts } from './programTemplates';
+import { counted } from '../utils/counted';
 
 export type ProgramLanguage = 'en' | 'ro';
 export type LevelHint = 'beginner' | 'intermediate' | 'advanced';
@@ -60,7 +59,7 @@ export type Row = {
 };
 export type WarmUpItem = { id: string; exerciseId: string; sets: number; reps?: Range; seconds?: number };
 export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
-export type CoolDown = { enabled: boolean; note: string; items: CoolDownItem[] };
+export type CoolDown = { enabled: boolean; items: CoolDownItem[] };
 export type Session = {
   id: string;
   originId: string;
@@ -105,14 +104,12 @@ export type Block = {
   dailySteps: number;
   missedDayNote: string;
 };
-export type CycleAdjustment = 'none' | 'rir-plus-one' | 'one-set-less' | 'hiit-to-liss' | 'low-energy-session';
-export type CycleRule = { id: string; symptomPeriod: string; adjustment: CycleAdjustment };
 export type ProgramContent = {
   header: { title: string; focus: string; personalNote: string };
   plan: { blocks: Block[] };
-  cycleRules: CycleRule[];
   nutritionNotes: string;
   lifestyleNotes: string;
+  guideTexts?: GuideTexts;
 };
 export type VersionState = 'draft' | 'published' | 'superseded';
 export type ProgramVersion = {
@@ -126,7 +123,6 @@ export type Program = {
   callId: string;
   goal: string;
   language: ProgramLanguage;
-  cycleMode: CycleMode;
   level: LevelHint;
   versions: ProgramVersion[];
 };
@@ -171,6 +167,15 @@ export function workingSets(sets: readonly SetSpec[]): WorkingSet[] {
   return sets.filter(isWorkingSet);
 }
 
+const NEW_SET_REPS: Range = { min: 8, max: 8 };
+export const NEW_SET_RIR: Range = { min: 2, max: 2 };
+
+export function withSetAdded(sets: readonly SetSpec[]): SetSpec[] {
+  const last = sets.at(-1);
+  const added: SetSpec = last ? structuredClone(last) : { kind: 'working', reps: { ...NEW_SET_REPS }, rir: { ...NEW_SET_RIR } };
+  return [...sets, added];
+}
+
 export function setText(set: WorkingSet, repsSuffix = ''): string {
   return `${formatRange(set.reps)}${repsSuffix} · RIR ${formatRange(set.rir)}`;
 }
@@ -183,8 +188,23 @@ export function hasUniformSets(sets: readonly SetSpec[]): boolean {
 
 function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
   const [first] = sets;
-  if (!hasUniformSets(sets)) return `${sets.length} sets`;
-  return `${sets.length} × ${setText(first, repsSuffix)}`;
+  const count = counted(sets.length, 'working set');
+  if (!hasUniformSets(sets)) return count;
+  return `${count} × ${setText(first, repsSuffix)}`;
+}
+
+export type SetsBreakdown = { warmUp: number; working: number; reps: string | null; rir: Range | null };
+
+export function setsBreakdown(sets: readonly SetSpec[], repsSuffix = ''): SetsBreakdown {
+  const working = workingSets(sets);
+  const [first] = working;
+  const uniform = first !== undefined && hasUniformSets(sets);
+  return {
+    warmUp: sets.length - working.length,
+    working: working.length,
+    reps: uniform ? `${formatRange(first.reps)}${repsSuffix}` : null,
+    rir: uniform ? first.rir : null,
+  };
 }
 
 export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
@@ -192,7 +212,7 @@ export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
   const working = workingSets(sets);
   const warmUpCount = sets.length - working.length;
   const parts = [
-    ...(warmUpCount > 0 ? [`${warmUpCount} warm-up`] : []),
+    ...(warmUpCount > 0 ? [counted(warmUpCount, 'warm-up set')] : []),
     ...(working.length > 0 ? [workingSummary(working, repsSuffix)] : []),
   ];
   return parts.join(' · ');
@@ -298,7 +318,6 @@ export function contentWithFreshIds(content: ProgramContent): ProgramContent {
   return {
     ...structuredClone(content),
     plan: { blocks: content.plan.blocks.map(block => blockWithFreshIds(structuredClone(block))) },
-    cycleRules: content.cycleRules.map(rule => ({ ...rule, id: newId() })),
   };
 }
 

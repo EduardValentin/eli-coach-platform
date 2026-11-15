@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Block, Session } from './program';
-import { SPLIT_TEMPLATES, slotPlanFor, type SessionTemplate } from './splitTemplates';
+import { exercise, row } from '../../test/programFixtures';
+import { slotExercisePatterns, SPLIT_TEMPLATES, slotPlanFor, type SessionTemplate } from './splitTemplates';
 
 function patternsOf(template: SessionTemplate) {
   return template.slots.map(plan => [plan.slot, plan.patterns]);
@@ -12,7 +13,7 @@ function session(id: string): Session {
     originId: id,
     name: id,
     warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
+    coolDown: { enabled: false, items: [] },
     rows: [],
   };
 }
@@ -174,5 +175,42 @@ describe('slotPlanFor', () => {
 
     // assert
     expect(plan).toBeUndefined();
+  });
+});
+
+describe('slotExercisePatterns', () => {
+  it('names the patterns of the exercises in the slot, once each, in row order', () => {
+    // arrange
+    const library = [
+      exercise('split-squat', { pattern: 'lunge' }),
+      exercise('rdl', { pattern: 'hinge' }),
+      exercise('step-up', { pattern: 'lunge' }),
+      exercise('band-walk'),
+      exercise('bench', { pattern: 'horizontal-push' }),
+    ];
+    const filled = {
+      ...session('A'),
+      rows: [
+        row({ id: '1', slot: 'C', exerciseId: 'split-squat' }),
+        row({ id: '2', slot: 'C', exerciseId: 'rdl' }),
+        row({ id: '3', slot: 'C', exerciseId: 'step-up' }),
+        row({ id: '4', slot: 'C', exerciseId: 'band-walk' }),
+        row({ id: '5', slot: 'D', exerciseId: 'bench' }),
+      ],
+    };
+
+    // act
+    const patterns = slotExercisePatterns(filled, 'C', library);
+
+    // assert
+    expect(patterns).toEqual(['lunge', 'hinge']);
+  });
+
+  it('names no pattern for an empty slot', () => {
+    // act
+    const patterns = slotExercisePatterns(session('A'), 'A', [exercise('squat', { pattern: 'squat' })]);
+
+    // assert
+    expect(patterns).toEqual([]);
   });
 });

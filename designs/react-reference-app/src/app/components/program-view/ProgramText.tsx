@@ -1,22 +1,22 @@
 import { ChevronDown } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type Block } from '../../domain/program';
-import { templateText, type TemplateKey } from '../../domain/programTemplates';
-import { LABEL_CLASS, WIDGET_SUBHEADING_CLASS } from '../typography';
+import { guideText, isGuideTextKey, templateText, type TemplateKey } from '../../domain/programTemplates';
+import { isWritten } from '../../domain/programTexts';
+import { WIDGET_SUBHEADING_CLASS, EYEBROW_CLASS } from '../typography';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '../ui/utils';
 import type { ProgramView } from './programView';
 
-export const NUTRITION_FALLBACK = 'Your coach will add nutrition guidance here.';
-export const LIFESTYLE_FALLBACK = 'Nothing extra this time.';
-
 export function programTemplate(view: ProgramView, key: TemplateKey): string {
-  return templateText(key, view.program.language).text;
+  const { language } = view.program;
+  return isGuideTextKey(key) ? guideText(view.version.content.guideTexts, key, language) : templateText(key, language).text;
 }
 
 const HEADING_LINE = /^\*\*([^*]+)\*\*$/;
 const LEAD_LINE = /^\*\*([^*]+)\*\*\s+(.+)$/;
 const LIST_ITEM = /^—\s+/;
+const ORDERED_ITEM = /^\d+\.\s+/;
 const EMPHASIS = /(\*\*[^*]+\*\*|\*[^*]+\*)/;
 
 export type TemplateParagraph = { lead?: string; body: string };
@@ -46,27 +46,40 @@ export function nonEmptyLines(text: string): string[] {
   return text.split('\n').filter(line => line.trim() !== '');
 }
 
-type TextRun = { kind: 'paragraph'; paragraph: TemplateParagraph } | { kind: 'list'; items: string[] };
+type ListKind = 'list' | 'ordered';
+type TextRun = { kind: 'paragraph'; paragraph: TemplateParagraph } | { kind: ListKind; items: string[] };
 
-function isListItem(paragraph: TemplateParagraph): boolean {
-  return paragraph.lead === undefined && LIST_ITEM.test(paragraph.body);
+const ITEM_MARKERS: Record<ListKind, RegExp> = { list: LIST_ITEM, ordered: ORDERED_ITEM };
+
+function listKindOf(paragraph: TemplateParagraph): ListKind | null {
+  if (paragraph.lead !== undefined) return null;
+  if (LIST_ITEM.test(paragraph.body)) return 'list';
+  return ORDERED_ITEM.test(paragraph.body) ? 'ordered' : null;
 }
 
 function runsOf(paragraphs: readonly TemplateParagraph[]): TextRun[] {
   const runs: TextRun[] = [];
   for (const paragraph of paragraphs) {
     const previous = runs.at(-1);
-    if (!isListItem(paragraph)) runs.push({ kind: 'paragraph', paragraph });
-    else if (previous?.kind === 'list') previous.items.push(paragraph.body.replace(LIST_ITEM, ''));
-    else runs.push({ kind: 'list', items: [paragraph.body.replace(LIST_ITEM, '')] });
+    const kind = listKindOf(paragraph);
+    if (kind === null) runs.push({ kind: 'paragraph', paragraph });
+    else if (previous?.kind === kind) previous.items.push(paragraph.body.replace(ITEM_MARKERS[kind], ''));
+    else runs.push({ kind, items: [paragraph.body.replace(ITEM_MARKERS[kind], '')] });
   }
   return runs;
 }
 
+export const TEMPLATE_TEXT_CLASSES = {
+  body: 'max-w-prose space-y-3 text-sm leading-relaxed text-text-primary',
+  list: 'list-disc space-y-1.5 pl-5 marker:text-text-label',
+  ordered: 'list-decimal space-y-1.5 pl-5 marker:font-semibold marker:tabular-nums',
+  lead: 'font-semibold text-text-primary',
+};
+
 function Paragraph({ paragraph }: { paragraph: TemplateParagraph }) {
   return (
     <p>
-      {paragraph.lead && <span className="font-semibold text-text-primary">{paragraph.lead}</span>}
+      {paragraph.lead && <span className={TEMPLATE_TEXT_CLASSES.lead}>{paragraph.lead}</span>}
       {paragraph.lead && ' '}
       <Emphasised text={paragraph.body} />
     </p>
@@ -77,20 +90,20 @@ type TemplateBodyProps = { paragraphs: readonly TemplateParagraph[]; className?:
 
 export function TemplateBody({ paragraphs, className }: TemplateBodyProps) {
   return (
-    <div className={cn('max-w-prose space-y-3 text-sm leading-relaxed text-text-primary', className)}>
-      {runsOf(paragraphs).map((run, index) =>
-        run.kind === 'list' ? (
-          <ul key={index} className="list-disc space-y-1.5 pl-5 marker:text-text-label">
+    <div className={cn(TEMPLATE_TEXT_CLASSES.body, className)}>
+      {runsOf(paragraphs).map((run, index) => {
+        if (run.kind === 'paragraph') return <Paragraph key={index} paragraph={run.paragraph} />;
+        const List = run.kind === 'ordered' ? 'ol' : 'ul';
+        return (
+          <List key={index} className={TEMPLATE_TEXT_CLASSES[run.kind]}>
             {run.items.map(item => (
               <li key={item}>
                 <Emphasised text={item} />
               </li>
             ))}
-          </ul>
-        ) : (
-          <Paragraph key={index} paragraph={run.paragraph} />
-        ),
-      )}
+          </List>
+        );
+      })}
     </div>
   );
 }
@@ -114,11 +127,17 @@ export type TextCard = { key: string; title: string; eyebrow?: string; content: 
 
 export function blockIntroCards(view: ProgramView, block: Block, noteTitle: string): TextCard[] {
   const calibration = view.position.status === 'in-plan' && view.position.calibration;
+  const calibrationText = calibration ? programTemplate(view, 'calibration') : '';
   return [
-    templateCard('intro', block.introText || programTemplate(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
-    ...(block.clientNote ? [templateCard('note', block.clientNote, noteTitle)] : []),
-    ...(calibration ? [templateCard('calibration', programTemplate(view, 'calibration'), 'Calibration week')] : []),
+    ...writtenCard('intro', block.introText, `${BLOCK_TYPE_LABELS[block.type]} block`),
+    ...writtenCard('note', block.clientNote, noteTitle),
+    ...writtenCard('calibration', calibrationText, 'Calibration week'),
+    ...writtenCard('missed-day', block.missedDayNote, 'If you miss a session'),
   ];
+}
+
+export function writtenCard(key: string, text: string, fallbackTitle: string): TextCard[] {
+  return isWritten(text) ? [templateCard(key, text, fallbackTitle)] : [];
 }
 
 export function templateCard(key: string, text: string, fallbackTitle: string): TextCard {
@@ -138,7 +157,7 @@ export function TextCardStack({ cards }: { cards: readonly TextCard[] }) {
               <h3 id={headingId}>
                 <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-3 rounded-control px-4 py-3 text-left hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                   <span className="grid min-w-0 gap-0.5">
-                    {card.eyebrow && <span className={LABEL_CLASS}>{card.eyebrow}</span>}
+                    {card.eyebrow && <span className={EYEBROW_CLASS}>{card.eyebrow}</span>}
                     <span className="text-sm font-semibold text-pretty text-text-primary">{card.title}</span>
                   </span>
                   <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-text-secondary transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none" />

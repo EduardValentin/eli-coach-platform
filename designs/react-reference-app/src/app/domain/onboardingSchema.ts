@@ -31,6 +31,7 @@ export type OnboardingField = {
   label: string;
   kind: OnboardingFieldKind;
   requirement: FieldRequirement;
+  requiredMessage?: string;
   hint?: string;
   placeholder?: string;
   options?: OnboardingOption[];

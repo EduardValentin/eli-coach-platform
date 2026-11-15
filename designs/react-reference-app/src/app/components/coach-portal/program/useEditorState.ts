@@ -1,17 +1,23 @@
 import { isAfter, startOfDay } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { useAppState } from '../../../context/AppContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
 import type { ClientJourney } from '../../../domain/journey';
-import type { Block, BlockType, Program, ProgramContent, ProgramVersion } from '../../../domain/program';
+import type { Block, BlockType, Program, ProgramVersion } from '../../../domain/program';
 import { currentPosition } from '../../../domain/programCalendar';
 import { libraryEquipmentFor, setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { blockingProblems, ruleContextFor, warnings } from '../../../domain/programRules';
+import { versionWithStandardText, versionWithText } from '../../../domain/programTexts';
 import { initialContent, newBlock } from '../../../domain/programSuggestions';
+import { writeProgramThroughServer } from '../../../services/programWriteService';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
-import { sectionFromHash, sectionHash, type EditorSection } from './editorSection';
+import type { DocumentEditing } from '../../program-view/documentEditing';
+import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
+
+export type WriteResult = 'written' | 'failed';
 
 type EditorInput = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
@@ -23,34 +29,40 @@ function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date)
 }
 
 export function useEditorState({ journey, program, draft, programPath }: EditorInput) {
-  const { updateDraft, discardDraft, publishDraft } = usePrograms();
+  const { updateDraft, updateDraftVersion, discardDraft, publishDraft } = usePrograms();
   const { exercises } = useTraining();
+  const { appState } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
   const today = new Date();
   const ruleContext = ruleContextFor({ journey, program, draft, today, exercises });
   const { content } = draft;
+  const draftPath = `${programPath}/draft`;
+  const mode = modeOfPath(location.pathname);
   const selected = sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ruleContext.dayOne, today);
   const equipment = libraryEquipmentFor(journey.profile.coaching?.equipment ?? []);
   const journeySetup = setupFromJourney(journey);
   const setup: ProgramSetup = {
     ...journeySetup,
     level: program.level,
-    cycleMode: program.cycleMode,
     language: program.language,
     splitShape: content.plan.blocks[0]?.split.shape ?? journeySetup.splitShape,
   };
 
+  function locationOf(targetMode: EditorMode, section: EditorSection) {
+    return { pathname: modePath(draftPath, targetMode), search: location.search, hash: sectionHash(section) };
+  }
+
   function select(section: EditorSection) {
-    navigate({ pathname: location.pathname, search: location.search, hash: sectionHash(section) }, { replace: true });
+    navigate(locationOf(mode, section), { replace: true });
+  }
+
+  function openInStructure(section: EditorSection) {
+    navigate(locationOf('structure', section), { replace: mode === 'structure' });
   }
 
   function updateBlocks(update: BlocksUpdate) {
     updateDraft(program.callId, current => ({ ...current, plan: { blocks: update(current.plan.blocks) } }));
-  }
-
-  function replaceContent(next: ProgramContent) {
-    updateDraft(program.callId, () => next);
   }
 
   function replaceBlock(block: Block) {
@@ -72,30 +84,48 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     updateBlocks(() => initialContent(setup, exercises).plan.blocks);
   }
 
-  function publish() {
-    const outcome = publishDraft(program.callId, new Date());
-    if (outcome.status === 'blocked') return;
-    toast.success(`Version ${outcome.version.number} published`);
+  const textEditing: DocumentEditing = {
+    write: (target, text) => updateDraftVersion(program.callId, version => versionWithText(version, target, text)),
+    reset: target => updateDraftVersion(program.callId, version => versionWithStandardText(version, target, program.language)),
+  };
+
+  function publish(): WriteResult {
+    try {
+      const outcome = writeProgramThroughServer(appState.programWrite, () => publishDraft(program.callId, new Date()));
+      if (outcome.status === 'blocked') return 'failed';
+      toast.success(`Version ${outcome.version.number} published`);
+    } catch {
+      return 'failed';
+    }
     navigate(programPath);
+    return 'written';
   }
 
-  function discard() {
-    discardDraft(program.callId);
+  function discard(): WriteResult {
+    try {
+      writeProgramThroughServer(appState.programWrite, () => discardDraft(program.callId));
+    } catch {
+      return 'failed';
+    }
     navigate(draft.number === 1 ? clientDetailPathForJourney(journey) : programPath);
+    return 'written';
   }
 
   return {
     today,
     ruleContext,
     equipment,
+    mode,
     selected,
-    problems: blockingProblems(content, draft.whatChanged, ruleContext),
+    locationOf,
+    problems: blockingProblems(content, ruleContext),
     warnings: warnings(content, ruleContext),
     opensOn: ruleContext.startDate && isAfter(startOfDay(ruleContext.startDate), startOfDay(today)) ? ruleContext.startDate : null,
     select,
+    openInStructure,
     updateBlocks,
     replaceBlock,
-    replaceContent,
+    textEditing,
     addBlock,
     removeBlock,
     applySuggestion,

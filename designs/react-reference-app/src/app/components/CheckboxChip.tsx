@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import { cn } from './ui/utils';
 
 type CheckboxChipSize = 'touch' | 'compact';
@@ -16,27 +16,24 @@ const SIZE_CLASSES: Record<
   { base: string; selected: string; unselected: string }
 > = {
   touch: {
-    base: 'relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors',
+    base: 'relative hit-area inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors',
     selected:
       'border-primary bg-active-surface text-primary-foreground hover:bg-primary-hover',
     unselected:
-      'border-border text-muted-foreground hover:border-primary hover:text-primary',
+      'border-control-border-soft text-muted-foreground hover:border-primary hover:text-primary',
   },
   compact: {
-    base: 'relative inline-flex h-8 min-w-8 cursor-pointer items-center justify-center gap-2 rounded-full border px-3 text-center text-xs font-medium whitespace-nowrap outline-none transition-[color,box-shadow]',
+    base: 'relative hit-area inline-flex h-8 min-w-8 cursor-pointer items-center justify-center gap-2 rounded-full border px-3 text-center text-xs font-medium whitespace-nowrap outline-none transition-[color,box-shadow]',
     selected: 'border-primary bg-primary text-primary-foreground',
     unselected:
-      'border-border-default text-text-muted has-focus-visible:border-focus-ring hover:bg-primary-soft hover:text-primary',
+      'border-control-border-soft text-text-muted has-focus-visible:border-focus-ring hover:bg-primary-soft hover:text-primary',
   },
 };
 
-export function CheckboxChip({
-  checked,
-  onCheckedChange,
-  children,
-  size = 'touch',
-  ...props
-}: CheckboxChipProps) {
+export const CheckboxChip = forwardRef<HTMLInputElement, CheckboxChipProps>(function CheckboxChip(
+  { checked, onCheckedChange, children, size = 'touch', ...props },
+  ref,
+) {
   const classes = SIZE_CLASSES[size];
   return (
     <label
@@ -47,6 +44,7 @@ export function CheckboxChip({
       )}
     >
       <input
+        ref={ref}
         type="checkbox"
         className="absolute inset-0 cursor-pointer opacity-0"
         checked={checked}
@@ -56,4 +54,4 @@ export function CheckboxChip({
       <span aria-hidden="true">{children}</span>
     </label>
   );
-}
+});

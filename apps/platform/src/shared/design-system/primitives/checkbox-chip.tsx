@@ -19,7 +19,7 @@ export const CheckboxChip = React.forwardRef<
   <label
     className={cn(
       chipVariants({ tone: "checkbox", size }),
-      "relative justify-center",
+      "relative hit-area justify-center",
       className,
     )}
     data-chip-control=""

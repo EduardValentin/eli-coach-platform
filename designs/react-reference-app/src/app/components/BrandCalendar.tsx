@@ -122,10 +122,10 @@ function createMonthYearCaption({ from, to }: YearRange) {
               goToMonth(new Date(displayMonth.getFullYear(), Number(month), 1))
             }
           >
-            <SelectTrigger aria-label="Month" size="sm" className="flex-1">
+            <SelectTrigger aria-label="Month" className="flex-1">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="z-[60]">
+            <SelectContent>
               {MONTH_LABELS.map((label, month) => (
                 <SelectItem key={label} value={String(month)}>
                   {label}
@@ -140,10 +140,10 @@ function createMonthYearCaption({ from, to }: YearRange) {
               goToMonth(new Date(Number(year), displayMonth.getMonth(), 1))
             }
           >
-            <SelectTrigger aria-label="Year" size="sm" className="w-[5.5rem]">
+            <SelectTrigger aria-label="Year" className="w-[5.5rem]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="z-[60]">
+            <SelectContent>
               {years.map((year) => (
                 <SelectItem key={year} value={String(year)}>
                   {year}

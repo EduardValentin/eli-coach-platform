@@ -300,7 +300,7 @@ beforeAll(() => {
       addEventListener: vi.fn(),
       addListener: vi.fn(),
       dispatchEvent: vi.fn(),
-      matches: query.includes("min-width: 1024px"),
+      matches: query.includes("min-width: 64em"),
       media: query,
       onchange: null,
       removeEventListener: vi.fn(),

@@ -110,7 +110,7 @@ function AddToGroup({ groupId }: { groupId: string }) {
       value=""
       onValueChange={(foodId) => assignFoodToGroup(foodId, groupId)}
     >
-      <SelectTrigger size="sm">
+      <SelectTrigger>
         <SelectValue placeholder="Add a food…" />
       </SelectTrigger>
       <SelectContent>

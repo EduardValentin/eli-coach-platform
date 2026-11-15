@@ -15,7 +15,6 @@ import {
 } from '../../domain/resources';
 import { MAX_TAG_LENGTH } from '../../domain/tags';
 import type { NewResourceUpload } from '../../hooks/useClientResources';
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
 import {
   formatFileSize,
   RESOURCE_UPLOAD_HINT,
@@ -34,6 +33,7 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form';
+import { FieldError } from '../FieldError';
 import { Input } from '../ui/input';
 import { Progress } from '../ui/progress';
 import { Textarea } from '../ui/textarea';
@@ -176,16 +176,6 @@ function ResourceFileRow({
   );
 }
 
-function FileFieldError({ id, message }: { id: string; message: string | null }) {
-  if (!message) return null;
-
-  return (
-    <p className={FIELD_ERROR_CLASS} id={id}>
-      {message}
-    </p>
-  );
-}
-
 function ResourceForm({
   mode,
   vocabulary,
@@ -317,7 +307,7 @@ function ResourceForm({
                   prompt="Drop a file here or choose one"
                 />
               )}
-              <FileFieldError id={fileErrorId} message={fileError} />
+              <FieldError id={fileErrorId} message={fileError} />
             </div>
 
             <FormField

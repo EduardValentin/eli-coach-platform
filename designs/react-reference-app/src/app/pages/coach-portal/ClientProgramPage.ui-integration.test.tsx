@@ -136,6 +136,52 @@ describe('ClientProgramPage', () => {
     expect(within(week).queryByRole('button', { name: /options$/ })).not.toBeInTheDocument();
   });
 
+  it('shows the length of every training day under its chip', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const days = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem');
+    expect(within(days[0]).getByText(/^~\d+ min$/)).toBeInTheDocument();
+    expect(within(days[1]).getByText('30 min')).toBeInTheDocument();
+    expect(within(days[5]).queryByText(/min$/)).not.toBeInTheDocument();
+  });
+
+  it('heads every day card with its weekday and date and links a training chip to its session', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const days = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem');
+    const monday = days[0];
+    expect(within(monday).getByRole('heading', { name: 'Monday' })).toBeInTheDocument();
+    expect(within(monday).getByText(/^\d{1,2}$/)).toBeInTheDocument();
+    const chip = within(monday).getByRole('link', { name: 'Full Body A' });
+    expect(chip.getAttribute('href')).toMatch(/^#program-session-/);
+    expect(document.getElementById(chip.getAttribute('href')!.slice(1))).toBeInTheDocument();
+  });
+
+  it('shows a rest day as a Rest chip that links nowhere and has no length', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const saturday = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem')[5];
+    expect(within(saturday).getByRole('heading', { name: 'Saturday' })).toBeInTheDocument();
+    expect(within(saturday).getByText('Rest')).toBeInTheDocument();
+    expect(within(saturday).queryByRole('link')).not.toBeInTheDocument();
+    expect(within(saturday).queryByText(/min$/)).not.toBeInTheDocument();
+  });
+
   it('lists every set of each exercise in the current block', () => {
     // arrange
     const query = '&pseed=two-versions';

@@ -186,7 +186,6 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
           <SearchField
             aria-label="Search exercises"
             placeholder="Search by name or muscle"
-            size="sm"
             className="w-full sm:w-72"
             value={selection.query}
             onChange={(event) => listing.write({ q: event.target.value })}

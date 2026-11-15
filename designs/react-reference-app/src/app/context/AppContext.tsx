@@ -54,6 +54,7 @@ import { PROGRAM_SEEDS, seedRequiresProgramReady, type ProgramSeed } from '../se
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
+import { PROGRAM_WRITE_OUTCOMES, type ProgramWriteOutcome } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES, type RecipePhotoUpload } from '../services/recipePhotoService';
 import {
   EXERCISE_VIDEO_UPLOAD_OUTCOMES,
@@ -180,6 +181,7 @@ type AppState = {
   invitationLinkState: PrototypeInvitationLinkState;
   exerciseSeed: ExerciseSeed;
   programSeed: ProgramSeed;
+  programWrite: ProgramWriteOutcome;
   exerciseVideoUpload: ExerciseVideoUpload;
   foodSeed: FoodSeed;
   foodSave: FoodSaveOutcome;
@@ -247,6 +249,7 @@ const defaultState: AppState = {
   invitationLinkState: 'valid',
   exerciseSeed: 'seeded',
   programSeed: 'none',
+  programWrite: 'works',
   exerciseVideoUpload: 'works',
   foodSeed: 'seeded',
   foodSave: 'ok',
@@ -584,6 +587,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('pseed'),
     defaultState.programSeed,
   );
+  state.programWrite = optionOrDefault(
+    PROGRAM_WRITE_OUTCOMES,
+    params.get('pwrite'),
+    defaultState.programWrite,
+  );
   if (
     seedRequiresProgramReady(state.programSeed) &&
     isBeforeStage(state.journeyStage, 'program-ready')
@@ -714,6 +722,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('invitationstate');
     url.searchParams.delete('exseed');
     url.searchParams.delete('pseed');
+    url.searchParams.delete('pwrite');
     url.searchParams.delete('exupload');
     url.searchParams.delete('nutseed');
     url.searchParams.delete('fsave');
@@ -868,6 +877,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.programSeed !== defaultState.programSeed) {
       url.searchParams.set('pseed', appState.programSeed);
+    }
+    if (appState.programWrite !== defaultState.programWrite) {
+      url.searchParams.set('pwrite', appState.programWrite);
     }
     if (appState.exerciseVideoUpload !== defaultState.exerciseVideoUpload) {
       url.searchParams.set('exupload', appState.exerciseVideoUpload);

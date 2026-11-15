@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { XIcon } from "lucide-react";
 
+import { OpenStateContext, useOpenState, useTriggerControls } from "./open-state";
 import { cn } from "./utils";
 import { useReturnFocusToOpener } from "./use-return-focus-to-opener";
 
@@ -48,15 +49,26 @@ function useWideDialog(): boolean {
 }
 
 function Dialog({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+  const openState = useOpenState({ open, defaultOpen, onOpenChange });
+
+  return (
+    <OpenStateContext.Provider value={openState.open}>
+      <DialogPrimitive.Root data-slot="dialog" {...props} {...openState} />
+    </OpenStateContext.Provider>
+  );
 }
 
 function DialogTrigger({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
+  const controls = useTriggerControls();
+
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...controls} {...props} />;
 }
 
 function DialogPortal({
@@ -103,7 +115,7 @@ function DialogContent({
     dismissal?: DialogDismissal;
     returnFocusTo?: React.RefObject<HTMLElement | null>;
   }) {
-  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
+  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener(returnFocusTo);
 
   const escapeUnlessLocked = (event: KeyboardEvent) => {
     onEscapeKeyDown?.(event);
@@ -123,15 +135,7 @@ function DialogContent({
   const closeWithFocusReturned = (event: Event) => {
     onCloseAutoFocus?.(event);
     if (event.defaultPrevented) return;
-
-    const target = returnFocusTo?.current;
-    if (!target?.isConnected) {
-      returnFocusToOpener(event);
-      return;
-    }
-
-    event.preventDefault();
-    target.focus();
+    returnFocusToOpener(event);
   };
 
   return (
@@ -150,7 +154,7 @@ function DialogContent({
           {children}
         </DialogSizeContext.Provider>
         {offersCloseControl(size, dismissal) && (
-          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hit-area absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
             <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
