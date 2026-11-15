@@ -126,6 +126,24 @@ describe('BlockWorkspace', () => {
     expect(within(day('Monday')).getByText(`${cleared} min`)).toBeInTheDocument();
   });
 
+  it('heads every day card with its weekday and options menu and opens nothing from a rest day', async () => {
+    // arrange
+    await openFirstBlock();
+
+    // act
+    const saturday = day('Saturday');
+
+    // assert
+    expect(within(day('Monday')).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual([
+      'Monday options',
+      'Full Body A',
+    ]);
+    expect(within(day('Monday')).getByText(/min$/)).toBeInTheDocument();
+    expect(within(saturday).getByText('Rest')).toBeInTheDocument();
+    expect(within(saturday).getAllByRole('button').map(button => button.getAttribute('aria-label'))).toEqual(['Saturday options']);
+    expect(within(saturday).queryByText(/min$/)).not.toBeInTheDocument();
+  });
+
   it('places a session on another weekday from the day menu', async () => {
     // arrange
     const user = await openFirstBlock();

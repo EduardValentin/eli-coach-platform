@@ -1,10 +1,10 @@
 import { useId, useRef } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
-import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
+import { WEEKDAY_LABELS, WEEKDAYS, type Block, type Weekday } from '../../../domain/program';
 import { emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
-import { CARDIO_CHIP_CLASS, CardioLength, CHIP_LABEL_CLASS, DAY_CARDS_CLASS, DayCardFrame, DayName, RestLabel, SessionLength, sessionChipClass } from '../../program-view/dayCard';
+import { DAY_CARDS_CLASS, DayCard } from '../../program-view/dayCard';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
@@ -17,10 +17,9 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
-import { useResetConfirm, type ResetRequest } from './ResetConfirm';
+import { useResetConfirm } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; library: readonly Exercise[]; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
-type DayCardProps = Omit<WeekDaysProps, 'library'> & { day: Weekday; exercisesById: ReadonlyMap<string, Exercise>; onRequest: (request: ResetRequest) => void };
 type DayMenuProps = { block: Block; day: Weekday; onChoose: (choice: DayChoice, trigger: HTMLElement | null) => void };
 
 function DayMenu({ block, day, onChoose }: DayMenuProps) {
@@ -70,17 +69,6 @@ function DayMenu({ block, day, onChoose }: DayMenuProps) {
   );
 }
 
-function CardioSummary({ cardio, onOpen }: { cardio: CardioSession; onOpen: () => void }) {
-  return (
-    <>
-      <button type="button" onClick={onOpen} className={CARDIO_CHIP_CLASS}>
-        <span className={CHIP_LABEL_CLASS}>{cardio.name}</span>
-      </button>
-      <CardioLength cardio={cardio} />
-    </>
-  );
-}
-
 function dayTitle(block: Block, day: Weekday, choice: DayChoice): string {
   const weekday = WEEKDAY_LABELS[day];
   if (choice.kind === 'rest') return `Make ${weekday} a rest day?`;
@@ -94,45 +82,7 @@ function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
   return keepsContent ? [] : describeLoss(block, { kind: 'day', weekday: day });
 }
 
-function DayCard({ block, day, exercisesById, onChange, onOpenSession, onRequest }: DayCardProps) {
-  const session = sessionOn(block, day);
-  const cardio = cardioOn(block, day);
-
-  return (
-    <DayCardFrame entry={block.calendar[day].kind}>
-      <div className="flex items-center justify-between gap-1 pb-5">
-        <h4 className="line-clamp-2 min-w-0 break-words">
-          <DayName day={day} />
-        </h4>
-        <DayMenu
-          block={block}
-          day={day}
-          onChoose={(choice, trigger) =>
-            onRequest({
-              title: dayTitle(block, day, choice),
-              confirmLabel: 'Change day',
-              lines: lostByChoice(block, day, choice),
-              apply: () => onChange(blockWithDay(block, day, choice)),
-              returnFocus: trigger,
-            })
-          }
-        />
-      </div>
-      {session && (
-        <>
-          <button type="button" onClick={() => onOpenSession(session.id)} className={sessionChipClass(block.type)}>
-            <span className={CHIP_LABEL_CLASS}>{session.name}</span>
-          </button>
-          <SessionLength session={session} exercisesById={exercisesById} />
-        </>
-      )}
-      {cardio && <CardioSummary cardio={cardio} onOpen={() => onOpenSession(cardio.id)} />}
-      {!session && !cardio && <RestLabel />}
-    </DayCardFrame>
-  );
-}
-
-export function WeekDays({ library, ...props }: WeekDaysProps) {
+export function WeekDays({ block, library, onChange, onOpenSession }: WeekDaysProps) {
   const headingId = useId();
   const confirm = useResetConfirm();
   const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
@@ -141,9 +91,35 @@ export function WeekDays({ library, ...props }: WeekDaysProps) {
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
-      <ol className={cn(DAY_CARDS_CLASS, 'gap-x-2 gap-y-3 sm:grid-cols-7')}>
+      <ol className={cn(DAY_CARDS_CLASS, 'sm:grid-cols-7')}>
         {WEEKDAYS.map(day => (
-          <DayCard key={day} {...props} day={day} exercisesById={exercisesById} onRequest={confirm.request} />
+          <DayCard
+            key={day}
+            block={block}
+            day={day}
+            exercisesById={exercisesById}
+            headingLevel="h4"
+            corner={
+              <DayMenu
+                block={block}
+                day={day}
+                onChoose={(choice, trigger) =>
+                  confirm.request({
+                    title: dayTitle(block, day, choice),
+                    confirmLabel: 'Change day',
+                    lines: lostByChoice(block, day, choice),
+                    apply: () => onChange(blockWithDay(block, day, choice)),
+                    returnFocus: trigger,
+                  })
+                }
+              />
+            }
+            renderChip={chip => (
+              <button type="button" onClick={() => onOpenSession(chip.id)} className={chip.className}>
+                {chip.label}
+              </button>
+            )}
+          />
         ))}
       </ol>
       {confirm.dialog}
