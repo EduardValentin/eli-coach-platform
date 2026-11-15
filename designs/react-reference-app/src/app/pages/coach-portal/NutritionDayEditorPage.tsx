@@ -1066,7 +1066,7 @@ function DayEditorMealRow({
             aria-label={`Add a meal for ${roleLabel}`}
             onClick={() => setPickerOpen(true)}
             variant="outline"
-            className="h-auto w-full gap-2 rounded-control border-2 border-dashed py-5 text-text-secondary hover:text-text-primary"
+            className="h-auto w-full gap-2 rounded-control py-5 text-text-secondary hover:text-text-primary"
           >
             <Plus size={16} aria-hidden="true" />
             Add a meal

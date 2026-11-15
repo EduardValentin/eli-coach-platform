@@ -13,6 +13,7 @@ import {
   ImagePlus,
   Save,
   Smile,
+  Unlink,
 } from 'lucide-react';
 import {
   useNutrition,
@@ -190,15 +191,16 @@ function OrphanedTagChip({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border border-dashed border-border bg-transparent py-1 pl-3 pr-1 text-xs text-text-secondary"
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-quiet py-1 pl-2 pr-1 text-xs text-text-secondary"
       title="No longer in any ingredient — remove it, or click the label to keep it"
     >
       <button
         type="button"
         onClick={onKeep}
-        className="font-medium transition-colors hover:text-text-primary"
         aria-label={`${label} tag is no longer in any ingredient. Click to keep it.`}
+        className="inline-flex items-center gap-1 font-medium transition-colors hover:text-text-primary"
       >
+        <Unlink size={12} aria-hidden="true" />
         {label}
       </button>
       <button

@@ -1080,7 +1080,7 @@ function DayOverviewCell({
           }
           return (
             <li key={slot.id} className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact border border-dashed border-border text-text-secondary">
+              <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact bg-surface-quiet text-text-secondary">
                 <Plus size={15} />
               </span>
               <span className="min-w-0 flex-1 truncate text-sm text-text-secondary">
