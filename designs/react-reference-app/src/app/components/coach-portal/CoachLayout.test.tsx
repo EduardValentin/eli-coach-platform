@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -70,5 +71,23 @@ describe('CoachLayout portal attribute', () => {
     unmount();
 
     expect(document.documentElement.dataset.portal).toBeUndefined();
+  });
+});
+
+describe('CoachLayout skip link', () => {
+  it('opens with a skip link to the focusable main content', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderLayout();
+
+    // act
+    await user.tab();
+
+    // assert
+    const skipLink = screen.getByRole('link', { name: 'Skip to main content' });
+    const main = screen.getByRole('main');
+    expect(skipLink).toHaveFocus();
+    expect(skipLink).toHaveAttribute('href', `#${main.id}`);
+    expect(main).toHaveAttribute('tabindex', '-1');
   });
 });
