@@ -60,7 +60,7 @@ export function SettingsSection({
       {children}
 
       {footer && (
-        <div className="flex justify-end gap-3 border-t border-border-subtle px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap justify-end gap-3 [&>*]:max-w-full border-t border-border-subtle px-5 py-4 sm:px-6">
           {footer}
         </div>
       )}
