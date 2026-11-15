@@ -70,8 +70,10 @@ async function clearFirstSession(user: User) {
 }
 
 async function showAllEquipment(user: User) {
-  const equipmentChip = within(library()).queryByRole('button', { name: 'Remove filter Only her equipment' });
-  if (equipmentChip) await user.click(equipmentChip);
+  await user.click(within(library()).getByRole('button', { name: /^Filters/ }));
+  const equipmentFilter = within(screen.getByRole('dialog', { name: 'Filters' })).getByRole('switch', { name: 'Only her equipment' });
+  if (equipmentFilter.getAttribute('aria-checked') === 'true') await user.click(equipmentFilter);
+  await user.keyboard('{Escape}');
 }
 
 async function addFromLibrary(user: User, name: string) {
@@ -160,7 +162,7 @@ describe('BlockWorkspace', () => {
     await user.click(within(slotGroup('B · Secondary')).getByRole('button', { name: 'Add or drop an exercise in B · Secondary' }));
     expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveAccessibleDescription('Adding to Full Body A · B Secondary');
     expect(within(library()).queryByRole('button', { name: 'Stop adding' })).not.toBeInTheDocument();
-    expect(within(library()).queryByRole('button', { name: /^Remove filter Pattern/ })).not.toBeInTheDocument();
+    expect(within(library()).getByRole('button', { name: 'Filters, 1 active' })).toBeInTheDocument();
 
     // act
     await addFromLibrary(user, 'Romanian Deadlift');

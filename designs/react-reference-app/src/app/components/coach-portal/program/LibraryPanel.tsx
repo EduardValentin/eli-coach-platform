@@ -145,19 +145,12 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
   );
 }
 
-type FilterChipsProps = { filters: readonly ActiveFilter[]; onRemove: (filter: ActiveFilter, index: number) => void };
-
-function FilterChips({ filters, onRemove }: FilterChipsProps) {
-  return (
-    <ul aria-label="Active filters" data-active-filters="" className="flex flex-wrap gap-x-2 gap-y-5">
-      {filters.map((filter, index) => (
-        <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
-      ))}
-    </ul>
-  );
-}
-
-type NoMatchesProps = FilterChipsProps & { type: LibraryType; onClear: () => void };
+type NoMatchesProps = {
+  type: LibraryType;
+  filters: readonly ActiveFilter[];
+  onRemove: (filter: ActiveFilter, index: number) => void;
+  onClear: () => void;
+};
 
 function NoMatches({ type, filters, onRemove, onClear }: NoMatchesProps) {
   const kind = `${TYPE_OPTIONS.find(option => option.value === type)?.label.toLowerCase()} exercises`;
@@ -169,7 +162,11 @@ function NoMatches({ type, filters, onRemove, onClear }: NoMatchesProps) {
         <p className="text-sm text-text-secondary">{`No ${kind} match these filters. Remove one to see more.`}</p>
       </div>
       <div className="grid justify-items-start gap-6">
-        <FilterChips filters={filters} onRemove={onRemove} />
+        <ul aria-label="Active filters" data-active-filters="" className="flex flex-wrap gap-x-2 gap-y-5">
+          {filters.map((filter, index) => (
+            <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
+          ))}
+        </ul>
         <Button variant="outline" size="xs" onClick={onClear}>
           Clear filters
         </Button>
@@ -193,14 +190,20 @@ type FiltersPopoverProps = {
   activeCount: number;
   triggerRef: RefObject<HTMLButtonElement>;
   onChange: (next: Partial<Filters>) => void;
-  onClear: (panel: HTMLElement | null) => void;
+  onClear: () => void;
 };
 
 function FiltersPopover({ type, filters, activeCount, triggerRef, onChange, onClear }: FiltersPopoverProps) {
-  const panel = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
   const { patterns, muscles, onlyHers, bodyweightOnly } = filters;
+
+  function clear() {
+    onClear();
+    setOpen(false);
+  }
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           ref={triggerRef}
@@ -216,7 +219,7 @@ function FiltersPopover({ type, filters, activeCount, triggerRef, onChange, onCl
           <SelectTriggerChevron />
         </button>
       </PopoverTrigger>
-      <PopoverContent ref={panel} aria-label="Filters" align="end" collisionPadding={16} className="grid gap-4">
+      <PopoverContent aria-label="Filters" align="end" collisionPadding={16} className="grid gap-4">
         <div className="grid gap-2">
           {type === 'resistance' && (
             <MultiSelect
@@ -234,7 +237,7 @@ function FiltersPopover({ type, filters, activeCount, triggerRef, onChange, onCl
           <SwitchRow label="Bodyweight" checked={bodyweightOnly} onCheckedChange={checked => onChange({ bodyweightOnly: checked })} />
         </div>
         {activeCount > 0 && (
-          <Button variant="outline" size="xs" className="justify-self-start" onClick={() => onClear(panel.current)}>
+          <Button variant="outline" size="xs" className="justify-self-start" onClick={clear}>
             Clear filters
           </Button>
         )}
@@ -321,9 +324,8 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
     });
   }
 
-  function clearPanelFilters(panel: HTMLElement | null) {
+  function clearPanelFilters() {
     change({ patterns: [], muscles: [], onlyHers: false, bodyweightOnly: false });
-    focusLater(() => panel?.querySelector<HTMLElement>('button') ?? filtersTrigger.current);
   }
 
   function clearFilters() {
@@ -349,19 +351,16 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
             value={query}
             onChange={event => change({ query: event.target.value })}
           />
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-2">
-              <OptionSelect label="Exercise type" options={TYPE_OPTIONS} value={type} onChange={setType} />
-              <FiltersPopover
-                type={type}
-                filters={filters}
-                activeCount={fromPanel.length}
-                triggerRef={filtersTrigger}
-                onChange={change}
-                onClear={clearPanelFilters}
-              />
-            </div>
-            {shown.length > 0 && fromPanel.length > 0 && <FilterChips filters={fromPanel} onRemove={removeFilter} />}
+          <div className="grid grid-cols-2 gap-2">
+            <OptionSelect label="Exercise type" options={TYPE_OPTIONS} value={type} onChange={setType} />
+            <FiltersPopover
+              type={type}
+              filters={filters}
+              activeCount={fromPanel.length}
+              triggerRef={filtersTrigger}
+              onChange={change}
+              onClear={clearPanelFilters}
+            />
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
