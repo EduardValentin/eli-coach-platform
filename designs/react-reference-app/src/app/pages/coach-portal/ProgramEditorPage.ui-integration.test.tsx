@@ -412,7 +412,7 @@ describe('ProgramEditorPage on a phone', () => {
     await user.click(screen.getByRole('button', { name: 'Program sections' }));
 
     // act
-    await user.click(within(screen.getByRole('dialog', { name: 'Program outline' })).getByRole('link', { name: 'Texts' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Program outline' })).getByRole('tab', { name: 'Texts' }));
 
     // assert
     expect(screen.queryByRole('dialog', { name: 'Program outline' })).not.toBeInTheDocument();

@@ -32,8 +32,8 @@ describe('program structure sections', () => {
   it('switches between structure and texts at the top of a rail with the same overview and blocks', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jgender=female');
-    const modes = screen.getByRole('navigation', { name: 'Editing mode' });
-    expect(within(modes).getByRole('link', { name: 'Structure' })).toHaveAttribute('aria-current', 'page');
+    const modes = screen.getByRole('tablist', { name: 'Editing mode' });
+    expect(within(modes).getByRole('tab', { name: 'Structure' })).toHaveAttribute('aria-selected', 'true');
     expect(within(rail()).getByRole('button', { name: '1 Foundation weeks 1–4' })).toBeInTheDocument();
     expect(within(rail()).getByRole('button', { name: 'Add block' })).toBeInTheDocument();
     for (const removed of ['Setup', 'Intro & setup', 'Nutrition', 'Lifestyle', 'Client guide']) {
@@ -42,13 +42,84 @@ describe('program structure sections', () => {
     expect(within(rail()).queryByRole('button', { name: /cycle/i })).not.toBeInTheDocument();
 
     // act
-    await user.click(within(modes).getByRole('link', { name: 'Texts' }));
+    await user.click(within(modes).getByRole('tab', { name: 'Texts' }));
 
     // assert
-    expect(within(screen.getByRole('navigation', { name: 'Editing mode' })).getByRole('link', { name: 'Texts' })).toHaveAttribute('aria-current', 'page');
+    expect(within(screen.getByRole('tablist', { name: 'Editing mode' })).getByRole('tab', { name: 'Texts' })).toHaveAttribute('aria-selected', 'true');
     expect(within(rail()).getByRole('button', { name: /^Overview/ })).toHaveTextContent('All texts ready');
     expect(within(rail()).getByRole('button', { name: /^1 Foundation All texts ready$/ })).toBeInTheDocument();
     expect(within(rail()).queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
+  });
+
+  it('exposes the structure and texts views as tabs over one labelled panel', () => {
+    // arrange / act
+    renderProgramEditor('&pseed=draft&jstage=approved');
+    const tabs = screen.getByRole('tablist', { name: 'Editing mode' });
+    const structure = within(tabs).getByRole('tab', { name: 'Structure' });
+    const texts = within(tabs).getByRole('tab', { name: 'Texts' });
+
+    // assert
+    expect(structure).toHaveAttribute('aria-selected', 'true');
+    expect(texts).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tabpanel', { name: 'Structure' })).toHaveAttribute('id', structure.getAttribute('aria-controls'));
+    expect(screen.getByRole('main', { name: 'Program editor' })).toContainElement(screen.getByRole('tabpanel'));
+  });
+
+  it('moves focus between the tabs with the arrow, Home and End keys without navigating', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    const tabs = screen.getByRole('tablist', { name: 'Editing mode' });
+    await user.tab();
+    within(tabs).getByRole('tab', { name: 'Structure' }).focus();
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    expect(within(tabs).getByRole('tab', { name: 'Texts' })).toHaveFocus();
+    expect(within(tabs).getByRole('tab', { name: 'Structure' })).toHaveAttribute('aria-selected', 'true');
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    expect(within(tabs).getByRole('tab', { name: 'Structure' })).toHaveFocus();
+
+    // act
+    await user.keyboard('{End}');
+
+    // assert
+    expect(within(tabs).getByRole('tab', { name: 'Texts' })).toHaveFocus();
+
+    // act
+    await user.keyboard('{Home}');
+
+    // assert
+    expect(within(tabs).getByRole('tab', { name: 'Structure' })).toHaveFocus();
+  });
+
+  it('switches view with Enter or Space on the focused tab and keeps the block', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ }));
+    const tabs = screen.getByRole('tablist', { name: 'Editing mode' });
+    within(tabs).getByRole('tab', { name: 'Structure' }).focus();
+
+    // act
+    await user.keyboard('{ArrowRight}{Enter}');
+
+    // assert
+    expect(document.title).toBe('Texts · Block 2 · Hypertrophy · Jane Doe · Evoa');
+    expect(within(screen.getByRole('tablist', { name: 'Editing mode' })).getByRole('tab', { name: 'Texts' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel', { name: 'Texts' })).toBeInTheDocument();
+
+    // act
+    within(screen.getByRole('tablist', { name: 'Editing mode' })).getByRole('tab', { name: 'Texts' }).focus();
+    await user.keyboard('{ArrowLeft} ');
+
+    // assert
+    expect(document.title).toBe('Structure · Block 2 · Hypertrophy · Jane Doe · Evoa');
+    expect(within(screen.getByRole('tablist', { name: 'Editing mode' })).getByRole('tab', { name: 'Texts' })).toHaveAttribute('href', expect.stringContaining('#block-'));
   });
 
   it('keeps the place when switching between structure and texts', async () => {
@@ -57,7 +128,7 @@ describe('program structure sections', () => {
     await user.click(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ }));
 
     // act
-    await user.click(screen.getByRole('link', { name: 'Texts' }));
+    await user.click(screen.getByRole('tab', { name: 'Texts' }));
 
     // assert
     expect(document.title).toBe('Texts · Block 2 · Hypertrophy · Jane Doe · Evoa');
@@ -66,7 +137,7 @@ describe('program structure sections', () => {
     expect(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ })).toHaveAttribute('aria-current', 'true');
 
     // act
-    await user.click(screen.getByRole('link', { name: 'Structure' }));
+    await user.click(screen.getByRole('tab', { name: 'Structure' }));
 
     // assert
     expect(document.title).toBe('Structure · Block 2 · Hypertrophy · Jane Doe · Evoa');
@@ -141,7 +212,7 @@ describe('texts page', () => {
 
     // assert
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole('link', { name: 'Texts' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('tab', { name: 'Texts' })).toHaveAttribute('aria-selected', 'true');
     expect(within(rail()).getByRole('button', { name: /^Overview/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('button', { name: 'Publish' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Preview as client' })).toBeInTheDocument();
@@ -300,8 +371,8 @@ describe('texts page', () => {
     await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'A note from Eli (optional)' }), 'So glad to start with you');
 
     // act
-    await user.click(screen.getByRole('link', { name: 'Structure' }));
-    await user.click(screen.getByRole('link', { name: 'Texts' }));
+    await user.click(screen.getByRole('tab', { name: 'Structure' }));
+    await user.click(screen.getByRole('tab', { name: 'Texts' }));
 
     // assert
     expect(within(programDocument()).getByText('So glad to start with you')).toBeInTheDocument();
@@ -409,7 +480,7 @@ describe('texts page', () => {
     await user.click(screen.getByRole('option', { name: 'Romanian' }));
 
     // act
-    await user.click(screen.getByRole('link', { name: 'Texts' }));
+    await user.click(screen.getByRole('tab', { name: 'Texts' }));
     await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
 
     // assert

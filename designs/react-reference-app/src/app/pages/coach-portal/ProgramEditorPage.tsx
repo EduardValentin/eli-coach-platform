@@ -21,6 +21,7 @@ import { useRailDrawer } from '../../components/coach-portal/program/useRailDraw
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { Button } from '../../components/ui/button';
+import { Tabs, TabsContent } from '../../components/ui/tabs';
 import { SkipLink } from '../../components/ui/skip-link';
 import { usePrograms } from '../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
@@ -136,7 +137,7 @@ function ProgramEditor(props: EditorProps) {
           warningsCount={editor.warnings.length}
         />
       </div>
-      <div className="flex min-h-0 flex-1">
+      <Tabs value={editor.mode} activationMode="manual" variant="segmented" className="min-h-0 flex-1 flex-row gap-0">
         <ProgramOutlineDrawer
           rail={rail}
           mode={editor.mode}
@@ -158,7 +159,7 @@ function ProgramEditor(props: EditorProps) {
           {...rail.behindProps}
           className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
         >
-          <div className="mx-auto w-full max-w-5xl">
+          <TabsContent value={editor.mode} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-none">
             <EditorSectionContent
               section={selected}
               journey={journey}
@@ -168,7 +169,7 @@ function ProgramEditor(props: EditorProps) {
               openBlock={openBlock}
               onAddBlock={startAddingBlock}
             />
-          </div>
+          </TabsContent>
         </main>
         {block && panel.visible && (
           <LibraryPanel
@@ -183,7 +184,7 @@ function ProgramEditor(props: EditorProps) {
             onClose={panel.close}
           />
         )}
-      </div>
+      </Tabs>
       <PublishDialog
         open={publishing !== null}
         onOpenChange={open => {

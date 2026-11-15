@@ -1,5 +1,5 @@
-import { useId, type ReactNode } from 'react';
-import type { To } from 'react-router';
+import { useId, type KeyboardEvent, type ReactNode } from 'react';
+import { Link, type To } from 'react-router';
 import { AlertCircle, GanttChart, Plus } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type ProgramLanguage, type ProgramVersion } from '../../../domain/program';
 import { blockSpan, blockStatus, type PlanSchedule } from '../../../domain/programCalendar';
@@ -8,7 +8,7 @@ import { blockTexts, programWideTexts, textProgress, type ProgramTextTarget } fr
 import { counted } from '../../../utils/counted';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { LABEL_CLASS } from '../../typography';
-import { SegmentedNav } from '../../ui/segmented-nav';
+import { TabsList, TabsTrigger } from '../../ui/tabs';
 import { cn } from '../../ui/utils';
 import { EDITOR_MODE_LABELS, isSameSection, type EditorMode, type EditorSection } from './editorSection';
 import { BLOCK_SWATCH } from '../../program-view/blockColours';
@@ -24,8 +24,8 @@ type EditorRailProps = {
   selected: EditorSection;
   locationOf: (mode: EditorMode, section: EditorSection) => To;
   onSelect: (section: EditorSection) => void;
-  onAddBlock: () => void;
   onSwitchMode: () => void;
+  onAddBlock: () => void;
 };
 
 type Detail = { text: string; tone: 'muted' | 'warning' | 'default' };
@@ -138,9 +138,24 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
   );
 }
 
-function ModeSwitch({ mode, selected, locationOf, onSwitchMode }: Pick<EditorRailProps, 'mode' | 'selected' | 'locationOf' | 'onSwitchMode'>) {
-  const items = MODES.map(option => ({ label: EDITOR_MODE_LABELS[option], to: locationOf(option, selected), current: option === mode }));
-  return <SegmentedNav label="Editing mode" items={items} onNavigate={onSwitchMode} className="w-full" />;
+function activateOnSpace(event: KeyboardEvent<HTMLAnchorElement>) {
+  if (event.key !== ' ') return;
+  event.preventDefault();
+  event.currentTarget.click();
+}
+
+function ModeSwitch({ selected, locationOf, onSwitchMode }: Pick<EditorRailProps, 'selected' | 'locationOf' | 'onSwitchMode'>) {
+  return (
+    <TabsList aria-label="Editing mode" className="w-full">
+      {MODES.map(option => (
+        <TabsTrigger key={option} value={option} asChild>
+          <Link to={locationOf(option, selected)} onClick={onSwitchMode} onKeyDown={activateOnSpace}>
+            {EDITOR_MODE_LABELS[option]}
+          </Link>
+        </TabsTrigger>
+      ))}
+    </TabsList>
+  );
 }
 
 export function EditorRail(props: EditorRailProps) {

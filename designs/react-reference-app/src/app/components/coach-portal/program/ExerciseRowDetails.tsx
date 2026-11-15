@@ -140,7 +140,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
         )}
       </div>
       <Substitutions {...props} />
-      <div className="grid gap-1.5">
+      <div className="grid gap-2">
         <Detail label="Cues">
           <Textarea value={row.cues} onChange={event => onChange(withField(row, 'cues', event.target.value))} />
         </Detail>
