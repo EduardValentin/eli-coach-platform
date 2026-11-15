@@ -29,13 +29,24 @@ type ExerciseRowDetailsProps = {
 
 const TECHNIQUE_LABELS: Record<LastSetTechnique, string> = { none: 'None', 'drop-set': 'Drop set', 'rest-pause': 'Rest-pause' };
 
-function Detail({ label, children }: { label: string; children: (labelId: string) => ReactNode }) {
+type DetailProps = { label: string; actions?: ReactNode; children: (labelId: string) => ReactNode };
+
+function Detail({ label, actions, children }: DetailProps) {
   const labelId = useId();
   return (
     <div className="grid min-w-0 content-start gap-1.5">
-      <span id={labelId} className={LABEL_CLASS}>
-        {label}
-      </span>
+      {actions ? (
+        <div className="flex min-h-8 items-center gap-2">
+          <span id={labelId} className={LABEL_CLASS}>
+            {label}
+          </span>
+          {actions}
+        </div>
+      ) : (
+        <span id={labelId} className={LABEL_CLASS}>
+          {label}
+        </span>
+      )}
       {children(labelId)}
     </div>
   );
@@ -107,22 +118,26 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
           />
         )}
       </Detail>
-      <Detail label="Cues">
-        {labelId => (
-          <div className="grid gap-2">
-            <Textarea aria-labelledby={labelId} value={row.cues} onChange={event => onChange(withField(row, 'cues', event.target.value))} />
-            <div className="flex flex-wrap items-center gap-2">
-              <IconActionButton
-                icon={RotateCcw}
-                label="Reset cues from library"
-                hint="Reset from library"
-                disabled={!exercise}
-                onClick={() => exercise && onChange(resetCues(row, exercise))}
-              />
-              {exercise?.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />}
-            </div>
-          </div>
-        )}
+      <Detail
+        label="Cues"
+        actions={
+          <>
+            <IconActionButton
+              icon={RotateCcw}
+              label="Reset cues from library"
+              hint="Reset from library"
+              disabled={!exercise}
+              onClick={() => exercise && onChange(resetCues(row, exercise))}
+            />
+            {exercise?.videoUrl && (
+              <span className="ml-auto">
+                <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />
+              </span>
+            )}
+          </>
+        }
+      >
+        {labelId => <Textarea aria-labelledby={labelId} value={row.cues} onChange={event => onChange(withField(row, 'cues', event.target.value))} />}
       </Detail>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Detail label="Last set">
