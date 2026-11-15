@@ -199,7 +199,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
             </p>
           )}
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
           <DisclosureButton label="Sets" name={name} open={setsOpen} controls={setsId} onToggle={() => setSetsOpen(open => !open)} />
           <DisclosureButton label="Details" name={name} open={detailsOpen} controls={detailsId} onToggle={() => setDetailsOpen(open => !open)} />
           <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />

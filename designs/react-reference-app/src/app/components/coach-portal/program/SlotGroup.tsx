@@ -33,7 +33,7 @@ type SupersetUnitProps = { positions: readonly string[]; onUngroup: () => void; 
 function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
   return (
     <div className="rounded-control border-l-2 border-brand-secondary bg-brand-secondary-soft">
-      <div className="flex items-center justify-between gap-2 py-2 pr-1 pl-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 py-2 pr-1 pl-3">
         <span className={cn(LABEL_CLASS, 'text-brand-secondary-ink')}>Superset</span>
         <Button variant="ghost" size="xs" className="text-brand-secondary-ink" onClick={onUngroup}>
           Ungroup

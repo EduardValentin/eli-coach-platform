@@ -345,7 +345,7 @@ const FRAME_CLASS = {
 } as const;
 const LINES_CLASS = { one: "min-h-8", many: "min-h-12" } as const;
 const CONTROLS_ROW_CLASS =
-  "sticky bottom-0 z-10 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-field border border-border bg-surface-base px-2 py-1";
+  "sticky bottom-0 z-10 mt-3 flex flex-wrap items-center gap-4 rounded-field border border-border bg-surface-base px-1 py-1";
 const ROVING_KEYS = new Set(["ArrowRight", "ArrowLeft", "Home", "End"]);
 
 function runTool(editor: LexicalEditor, tool: RichTextTool) {
@@ -377,7 +377,7 @@ function Toolbar({ editor, label, tools, state }: ToolbarProps) {
   }
 
   return (
-    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex min-w-0 flex-nowrap gap-4 overflow-x-auto">
+    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex min-w-0 flex-wrap gap-4">
       {tools.map((tool) => (
         <Toggle
           key={tool}
@@ -400,11 +400,68 @@ function Toolbar({ editor, label, tools, state }: ToolbarProps) {
   );
 }
 
+const CARET_CLEARANCE = 8;
+
+function scrollParentOf(element: HTMLElement): HTMLElement | null {
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) return parent;
+  }
+  return null;
+}
+
+function keyboardInset(): number {
+  const viewport = window.visualViewport;
+  if (!viewport) return 0;
+  return Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+}
+
+function keepCaretAbove(content: HTMLElement, row: HTMLElement) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || !content.contains(selection.anchorNode)) return;
+  const caret = selection.getRangeAt(0).getBoundingClientRect();
+  const limit = row.getBoundingClientRect().top - CARET_CLEARANCE;
+  if (caret.height === 0 || caret.bottom <= limit) return;
+  scrollParentOf(content)?.scrollBy({ top: caret.bottom - limit });
+}
+
+function useControlsClearance(content: React.RefObject<HTMLElement | null>, row: React.RefObject<HTMLElement | null>, shown: boolean) {
+  React.useLayoutEffect(() => {
+    const entry = content.current;
+    const controls = row.current;
+    if (!shown || !entry || !controls) return;
+    const clear = () => {
+      entry.style.scrollMarginBottom = `${controls.offsetHeight + CARET_CLEARANCE}px`;
+    };
+    const liftAboveKeyboard = () => {
+      controls.style.bottom = `${keyboardInset()}px`;
+    };
+    const revealCaret = () => keepCaretAbove(entry, controls);
+    clear();
+    liftAboveKeyboard();
+    const observer = new ResizeObserver(clear);
+    observer.observe(controls);
+    window.visualViewport?.addEventListener("resize", liftAboveKeyboard);
+    window.visualViewport?.addEventListener("scroll", liftAboveKeyboard);
+    document.addEventListener("selectionchange", revealCaret);
+    entry.addEventListener("input", revealCaret);
+    return () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener("resize", liftAboveKeyboard);
+      window.visualViewport?.removeEventListener("scroll", liftAboveKeyboard);
+      document.removeEventListener("selectionchange", revealCaret);
+      entry.removeEventListener("input", revealCaret);
+      entry.style.scrollMarginBottom = "";
+    };
+  }, [content, row, shown]);
+}
+
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>((props, ref) => {
   const { label, labelledBy, placeholder, describedBy, theme, tools, lines = "many", frame = "field", controls = "shown", actions, className, onEscape } = props;
   const { editor, toolbar, empty } = useRichTextEditor(props);
   const content = React.useRef<HTMLDivElement>(null);
   const shown = controls === "shown" && (tools.length > 0 || Boolean(actions));
+  const row = React.useRef<HTMLDivElement>(null);
+  useControlsClearance(content, row, shown);
 
   React.useLayoutEffect(() => {
     editor.setRootElement(content.current);
@@ -451,9 +508,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         </p>
       )}
       {shown && (
-        <div className={CONTROLS_ROW_CLASS}>
+        <div ref={row} className={CONTROLS_ROW_CLASS}>
           {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
-          {actions && <div className="ml-auto flex shrink-0 flex-wrap items-center gap-4">{actions}</div>}
+          {actions && <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-4">{actions}</div>}
         </div>
       )}
     </div>

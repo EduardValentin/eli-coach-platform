@@ -236,7 +236,7 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
           <>
             {isCustomised(text) && (
               <Button type="button" variant="ghost" size="xs" onClick={reset}>
-                Reset to standard text
+                Reset<span className="max-sm:sr-only"> to standard text</span>
               </Button>
             )}
             <Button type="button" variant="outline" size="xs" onClick={finish}>
