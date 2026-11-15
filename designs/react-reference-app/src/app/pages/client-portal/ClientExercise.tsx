@@ -2,12 +2,10 @@ import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } fr
 import { ArrowLeftRight, ChevronRight, ListChecks, SearchX, VideoOff, type LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { EmptyState } from '../../components/EmptyState';
-import { PanelTitleIcon } from '../../components/PanelTitleIcon';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { WIDGET_TITLE_CLASS } from '../../components/typography';
+import { PortalWidget } from '../../components/PortalWidget';
 import { buttonVariants } from '../../components/ui/button';
-import { cardVariants } from '../../components/ui/card';
 import { cn } from '../../components/ui/utils';
 import type { Exercise } from '../../context/TrainingContext';
 import { useExerciseGuide } from '../../hooks/useExerciseGuide';
@@ -25,13 +23,9 @@ function useArrivalFocus(exerciseId: string, heading: RefObject<HTMLHeadingEleme
 function GuideSection({ title, icon, children }: { title: string; icon: LucideIcon; children: ReactNode }) {
   const headingId = useId();
   return (
-    <section aria-labelledby={headingId} className={cn(cardVariants(), 'grid gap-3 p-5 sm:p-6')}>
-      <h2 id={headingId} className={cn('flex items-center gap-2', WIDGET_TITLE_CLASS)}>
-        <PanelTitleIcon icon={icon} />
-        {title}
-      </h2>
+    <PortalWidget presentation="client" title={title} icon={icon} headingId={headingId}>
       {children}
-    </section>
+    </PortalWidget>
   );
 }
 
@@ -141,12 +135,14 @@ export function ClientExercise() {
           )}
           {swaps.length > 0 && (
             <GuideSection title="Swaps" icon={ArrowLeftRight}>
-              <p className="text-sm text-text-secondary">If you can't do this one today, do one of these instead.</p>
-              <ul className="divide-y divide-border-subtle">
-                {swaps.map(swap => (
-                  <SwapLink key={swap.id} swap={swap} />
-                ))}
-              </ul>
+              <div className="grid gap-3">
+                <p className="text-sm text-text-secondary">If you can't do this one today, do one of these instead.</p>
+                <ul className="divide-y divide-border-subtle">
+                  {swaps.map(swap => (
+                    <SwapLink key={swap.id} swap={swap} />
+                  ))}
+                </ul>
+              </div>
             </GuideSection>
           )}
         </div>

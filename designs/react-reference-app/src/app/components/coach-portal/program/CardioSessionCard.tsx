@@ -1,5 +1,5 @@
 import { useId, useRef, type Ref } from 'react';
-import { ChevronDown, Eraser, PencilLine, Plus } from 'lucide-react';
+import { Eraser, PencilLine, Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioSession } from '../../../domain/program';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../../../domain/programCardio';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import { counted } from '../../../utils/counted';
+import { IconActionButton } from '../../IconActionButton';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
@@ -29,7 +30,6 @@ import {
   SESSION_CONTENT_CLASS,
   SessionNameInput,
   sessionHeaderHeightStyle,
-  useNameFocusOnExpand,
 } from './sessionCardParts';
 import { useMeasuredHeight } from './useMeasuredHeight';
 import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
@@ -67,19 +67,15 @@ function PresetRow({ onChoose }: { onChoose: (kind: (typeof CARDIO_PRESET_KINDS)
   );
 }
 
-type AddSegmentMenuProps = { triggerRef: Ref<HTMLButtonElement>; onAdd: (kind: (typeof SEGMENT_KINDS)[number]) => void };
+type AddSegmentMenuProps = { sessionName: string; triggerRef: Ref<HTMLButtonElement>; onAdd: (kind: (typeof SEGMENT_KINDS)[number]) => void };
 
-function AddSegmentMenu({ triggerRef, onAdd }: AddSegmentMenuProps) {
+function AddSegmentMenu({ sessionName, triggerRef, onAdd }: AddSegmentMenuProps) {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button ref={triggerRef} variant="ghost" size="xs" className="w-fit">
-          <Plus aria-hidden="true" />
-          Add segment
-          <ChevronDown aria-hidden="true" />
-        </Button>
+        <IconActionButton ref={triggerRef} icon={Plus} label={`Add segment to ${sessionName}`} hint="Add segment" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-36">
+      <DropdownMenuContent align="end" className="min-w-36">
         {SEGMENT_KINDS.map(kind => (
           <DropdownMenuItem key={kind} onSelect={() => onAdd(kind)}>
             {SEGMENT_KIND_LABELS[kind]}
@@ -92,14 +88,18 @@ function AddSegmentMenu({ triggerRef, onAdd }: AddSegmentMenuProps) {
 
 export function CardioSessionCard({ cardio, expanded, articleRef, library, onExpand, onChange, onOpenLibrary }: CardioSessionCardProps) {
   const headingId = useId();
-  const { nameField, expand } = useNameFocusOnExpand(expanded, onExpand);
+  const nameField = useRef<HTMLInputElement>(null);
+  const focusLater = usePendingFocus();
+  const expand = () => {
+    focusLater(() => nameField.current);
+    onExpand();
+  };
   const header = useMeasuredHeight();
   const confirm = useResetConfirm();
   const announce = useEditorAnnouncer();
   const edits = cardioEdits(cardio, library);
   const { segments } = cardio;
   const addSegment = useRef<HTMLButtonElement>(null);
-  const focusLater = usePendingFocus();
   const focusSegment = (segmentId: string) => focusLater(() => actionsTriggerIn(`[data-segment-id="${segmentId}"]`));
   const segmentFocus: SegmentFocus = {
     onSegment: focusSegment,
@@ -155,6 +155,10 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
         className={cn('grid grid-cols-[minmax(0,1fr)] gap-3 rounded-b-card p-3 sm:p-4', SESSION_CONTENT_CLASS)}
         activeClassName="ring-2 ring-inset ring-primary/40"
       >
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="text-sm font-semibold text-text-primary">Segments</h4>
+          <AddSegmentMenu sessionName={cardio.name} triggerRef={addSegment} onAdd={kind => onChange(edits.addSegment(kind))} />
+        </div>
         {segments.length === 0 && <PresetRow onChoose={kind => onChange(edits.applyPreset(kind))} />}
         {segments.length > 0 && (
           <ol aria-label="Segments" className="grid grid-cols-[minmax(0,1fr)] gap-2">
@@ -176,7 +180,6 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
             ))}
           </ol>
         )}
-        <AddSegmentMenu triggerRef={addSegment} onAdd={kind => onChange(edits.addSegment(kind))} />
       </DropZone>
       {confirm.dialog}
     </article>

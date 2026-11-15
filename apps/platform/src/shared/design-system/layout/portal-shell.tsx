@@ -15,6 +15,7 @@ import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
 import type { DataAttributes } from "../lib/data-attributes";
 import { focusMainContent } from "../lib/focus-main-content";
+import { useTriggerControls } from "../lib/open-state";
 import { AttentionDot } from "../primitives/attention-dot";
 import { buttonVariants } from "../primitives/button";
 import { SkipLink } from "../primitives/skip-link";
@@ -336,6 +337,10 @@ type PortalTabBarProps = {
 
 function PortalTabBar(props: PortalTabBarProps) {
   const { activeHref, label, more, tabs } = props;
+  const moreControls = useTriggerControls({
+    open: more.expanded,
+    contentId: MORE_SHEET_ID,
+  });
 
   return (
     <nav
@@ -367,7 +372,7 @@ function PortalTabBar(props: PortalTabBarProps) {
         })}
         <li className="flex-1">
           <button
-            aria-controls={more.expanded ? MORE_SHEET_ID : undefined}
+            {...moreControls}
             aria-expanded={more.expanded}
             className={cn(
               TAB_CLASS_NAME,

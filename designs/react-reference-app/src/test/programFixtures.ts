@@ -51,7 +51,7 @@ export function session(overrides: Partial<Session> = {}): Session {
     originId: id,
     name: id,
     warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
+    coolDown: { enabled: false, items: [] },
     rows: [],
     ...overrides,
   };

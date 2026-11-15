@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { ArrowLeft, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { AvatarField } from '../../components/AvatarField';
 import { useCoachProfile } from '../../context/CoachProfileContext';
@@ -41,12 +42,7 @@ export function EditCoachProfile() {
 
   return (
     <div className="w-full max-w-3xl">
-      <Link
-        to="/coach"
-        className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary mb-8 transition-colors"
-      >
-        <ArrowLeft size={16} /> Back to Dashboard
-      </Link>
+      <PortalBackLink to="/coach">Back to Dashboard</PortalBackLink>
 
       <PortalPageHeader
         title="My Profile"

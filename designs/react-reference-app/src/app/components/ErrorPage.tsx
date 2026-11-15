@@ -73,20 +73,29 @@ export function DeadEndContent({
   );
 }
 
+type DeadEndAnnouncement = 'alert' | 'none';
+
+const ANNOUNCEMENT_ROLE: Record<DeadEndAnnouncement, 'alert' | undefined> = {
+  alert: 'alert',
+  none: undefined,
+};
+
 export function DeadEndPanel({
   icon,
   title,
   description,
   action,
+  announcement = 'alert',
 }: {
   icon: LucideIcon;
   title: string;
   description: ReactNode;
   action?: ReactNode;
+  announcement?: DeadEndAnnouncement;
 }) {
   return (
     <div
-      role="alert"
+      role={ANNOUNCEMENT_ROLE[announcement]}
       className="bg-surface-base rounded-panel shadow-soft border border-border-default/50 flex flex-col items-center px-6 py-16 text-center"
     >
       <DeadEndContent icon={icon} title={title} description={description}>

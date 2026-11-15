@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useRef, useState, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
 import { AlertCircle, AlertTriangle, ArrowLeft, ChevronRight, Eye, Library, Send, Trash2, UserRound } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
@@ -12,6 +12,7 @@ import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Alert } from '../../ui/alert';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
+import { useMediaQuery } from '../../ui/use-desktop';
 import { cn } from '../../ui/utils';
 import { ClientProfilePopover, ClientProfileTrigger } from './ClientProfilePopover';
 import type { PublishDialogStart } from './PublishDialog';
@@ -35,7 +36,7 @@ type EditorTopBarProps = {
   warningsCount: number;
 };
 
-const SMALL_SCREEN_QUERY = '(min-width: 40em)';
+const SM_QUERY = '(min-width: 40em)';
 const PLACE_TITLE_CLASS = cn(WIDGET_TITLE_CLASS, 'truncate outline-none');
 
 function discardDescription(version: ProgramVersion): string {
@@ -47,18 +48,6 @@ function discardDescription(version: ProgramVersion): string {
 function draftLine(name: string, version: ProgramVersion, basedOn: ProgramVersion | undefined): string {
   const origin = version.number > 1 && basedOn?.publishedAt ? ` · from v${version.number - 1}, ${formatJourneyDate(basedOn.publishedAt)}` : '';
   return `${name} · v${version.number} draft${origin}`;
-}
-
-function useIsSmallScreen(): boolean {
-  const [small, setSmall] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia(SMALL_SCREEN_QUERY);
-    const update = () => setSmall(!query.matches);
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-  return small;
 }
 
 type PlaceProps = Pick<EditorTopBarProps, 'placeTitle' | 'placeHeading' | 'onOverview'>;
@@ -160,7 +149,7 @@ export function EditorTopBar({
   const [profileOpen, setProfileOpen] = useState(false);
   const profileReturnFocus = useRef<HTMLElement | null>(null);
   const draftActions = useRef<HTMLSpanElement>(null);
-  const small = useIsSmallScreen();
+  const small = !useMediaQuery(SM_QUERY);
   const name = journeyClientName(journey);
   const smallScreenActions: RowMenuAction[] = small
     ? [

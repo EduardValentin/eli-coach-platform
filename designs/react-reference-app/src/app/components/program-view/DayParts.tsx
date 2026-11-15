@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 
 export function ColumnBreak() {
   return <span className="sr-only"> · </span>;
@@ -22,16 +22,15 @@ export function DayHeader({ headingId, name, meta }: DayHeaderProps) {
   );
 }
 
-type RoutineCardProps = { title: string; listLabel: string; note?: string; lines: readonly string[] };
+type RoutineCardProps = { title: string; listLabel: string; lines: readonly string[] };
 
-export function RoutineCard({ title, listLabel, note, lines }: RoutineCardProps) {
+export function RoutineCard({ title, listLabel, lines }: RoutineCardProps) {
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className="grid gap-2 rounded-control bg-surface-subtle p-3 sm:p-4">
-      <h4 id={headingId} className={LABEL_CLASS}>
+      <h4 id={headingId} className={EYEBROW_CLASS}>
         {title}
       </h4>
-      {note && <p className="max-w-prose text-sm leading-relaxed text-text-primary">{note}</p>}
       {lines.length > 0 && (
         <ul aria-label={listLabel} className="grid gap-x-6 divide-y divide-border-subtle text-sm text-text-primary tabular-nums sm:grid-cols-2 sm:divide-y-0">
           {lines.map(line => (

@@ -314,12 +314,12 @@ describe('ProgramDocument', () => {
     for (const line of lines) expect(items).toContain(line);
   });
 
-  it('prints the cool-down note and stretches when the cool-down is on', () => {
+  it('prints the cool-down stretches when the cool-down is on', () => {
     // arrange
     const view = viewFor();
     const [session] = currentBlockOf(view).sessions;
     const [stretch] = SAMPLE_EXERCISES;
-    session.coolDown = { enabled: true, note: 'Walk easy for five minutes.', items: [{ id: 'cd-1', exerciseId: stretch.id, seconds: 30 }] };
+    session.coolDown = { enabled: true, items: [{ id: 'cd-1', exerciseId: stretch.id, seconds: 30 }] };
 
     // act
     render(<ProgramDocument view={view} />);
@@ -327,7 +327,6 @@ describe('ProgramDocument', () => {
     // assert
     const card = screen.getByRole('region', { name: session.name });
     expect(within(card).getByRole('heading', { level: 3, name: 'Cool-down' })).toBeInTheDocument();
-    expect(within(card).getByText('Walk easy for five minutes.')).toBeInTheDocument();
     expect(within(card).getAllByRole('listitem').map(item => item.textContent)).toContain(`${stretch.name} · 30 s`);
   });
 

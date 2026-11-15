@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { WEEKDAY_LABELS, weekdayAbbreviation, type BlockType, type CalendarEntry, type CardioSession, type Weekday } from '../../domain/program';
 import { cardioMinutes } from '../../domain/programCardio';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { BLOCK_RULE, BLOCK_SOFT } from './blockColours';
 
@@ -36,7 +36,7 @@ export function DayCardFrame({ entry, current, children }: DayCardFrameProps) {
 export function DayName({ day }: { day: Weekday }) {
   const weekday = WEEKDAY_LABELS[day];
   return (
-    <span className={LABEL_CLASS}>
+    <span className={EYEBROW_CLASS}>
       <span aria-hidden="true">{weekdayAbbreviation(day)}</span>
       <span className="sr-only">{weekday}</span>
     </span>

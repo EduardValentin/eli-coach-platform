@@ -54,7 +54,7 @@ function blockOf(rows: Row[]): Block {
         originId: 'session-1',
         name: 'A',
         warmUp: { items: [] },
-        coolDown: { enabled: false, note: '', items: [] },
+        coolDown: { enabled: false, items: [] },
         rows,
       },
     ],

@@ -113,6 +113,10 @@ export function warmUpLines(session: Session, exercisesById: ReadonlyMap<string,
   return session.warmUp.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${warmUpItemText(item)}`);
 }
 
+export function hasCoolDown(session: Session): boolean {
+  return session.coolDown.enabled && session.coolDown.items.length > 0;
+}
+
 export function coolDownLines(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string[] {
   return session.coolDown.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${item.seconds} s`);
 }

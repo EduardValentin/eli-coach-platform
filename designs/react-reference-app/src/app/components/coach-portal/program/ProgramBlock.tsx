@@ -18,7 +18,7 @@ import { counted } from '../../../utils/counted';
 import { clientDetailPathForJourney, clientPronouns } from '../../../utils/journeyLabels';
 import { EmptyState } from '../../EmptyState';
 import { SettingsBody, SettingsSection } from '../../SettingsSection';
-import { LABEL_CLASS } from '../../typography';
+import { EYEBROW_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from '../../program-view/blockColours';
@@ -82,7 +82,7 @@ function DraftReadiness({ missing }: { missing: readonly string[] }) {
   }
   return (
     <div className="grid gap-3">
-      <p id={titleId} className={LABEL_CLASS}>
+      <p id={titleId} className={EYEBROW_CLASS}>
         Still missing
       </p>
       <ul aria-labelledby={titleId} className="grid gap-2">
@@ -100,7 +100,7 @@ function DraftReadiness({ missing }: { missing: readonly string[] }) {
 function DraftSummary({ version }: { version: ProgramVersion }) {
   return (
     <SettingsBody className="grid gap-4">
-      <p className={LABEL_CLASS}>{`Version ${version.number} · draft`}</p>
+      <p className={EYEBROW_CLASS}>{`Version ${version.number} · draft`}</p>
       <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8">
         <DraftBlocks blocks={version.content.plan.blocks} />
         <div className="self-start rounded-field bg-surface-quiet p-4">

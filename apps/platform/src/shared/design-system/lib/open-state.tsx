@@ -6,7 +6,9 @@ type OpenStateProps = {
   onOpenChange?: (open: boolean) => void;
 };
 
-type TriggerControls = { "aria-controls"?: undefined };
+type TriggerControls = { "aria-controls"?: string };
+
+type UnmanagedTrigger = { open: boolean; contentId: string };
 
 export const OpenStateContext = createContext(false);
 
@@ -28,6 +30,14 @@ export function useOpenState({
   return { open: open ?? uncontrolledOpen, onOpenChange: changeOpen };
 }
 
-export function useTriggerControls(): TriggerControls {
-  return useContext(OpenStateContext) ? {} : { "aria-controls": undefined };
+export function useTriggerControls(
+  unmanaged?: UnmanagedTrigger,
+): TriggerControls {
+  const contextOpen = useContext(OpenStateContext);
+  if (unmanaged) {
+    return {
+      "aria-controls": unmanaged.open ? unmanaged.contentId : undefined,
+    };
+  }
+  return contextOpen ? {} : { "aria-controls": undefined };
 }

@@ -126,7 +126,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
                         style={{ flexGrow: block.weeks, flexBasis: 0 }}
                       >
                         <span aria-hidden="true" className={cn('absolute inset-x-0 top-0 h-0.5 rounded-t-[inherit]', BLOCK_SWATCH[block.type])} />
-                        <Badge tone="count" className="relative z-[1] bg-surface-base text-xs opacity-100">
+                        <Badge tone="count-on-fill" className="relative z-[1]">
                           {index + 1}
                         </Badge>
                         <span
@@ -194,20 +194,29 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
   );
 }
 
+type PlanStripGap = 'tight' | 'wide';
+
 type PlanStripProps = {
   blocks: readonly Block[];
   dayOne: Date | null;
-  today: Date;
+  today?: Date;
+  gap?: PlanStripGap;
 };
 
-export function PlanStrip({ blocks, dayOne, today }: PlanStripProps) {
+const PLAN_STRIP_GAP_CLASS: Record<PlanStripGap, string> = {
+  tight: 'gap-0.5',
+  wide: 'gap-1',
+};
+
+export function PlanStrip({ blocks, dayOne, today, gap = 'tight' }: PlanStripProps) {
+  const schedule = today ? { blocks, dayOne, today } : null;
   return (
-    <span aria-hidden="true" className="flex h-1.5 gap-0.5">
+    <span aria-hidden="true" className={cn('flex h-1.5', PLAN_STRIP_GAP_CLASS[gap])}>
       {blocks.map((block, index) => (
         <span
           key={block.id}
           className={cn('rounded-full', BLOCK_SWATCH[block.type], {
-            'opacity-40': blockStatus({ blocks, dayOne, today }, index).kind === 'ended',
+            'opacity-40': schedule !== null && blockStatus(schedule, index).kind === 'ended',
           })}
           style={{ flexGrow: block.weeks, flexBasis: 0 }}
         />

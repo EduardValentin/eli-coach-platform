@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
-import { ArrowLeft, ClipboardList } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import { useAppState } from '../../../context/AppContext';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
@@ -26,16 +26,15 @@ import { possessive } from '../../../utils/resourceLabels';
 import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
 import { asList, type OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
 import { PROFILE_FIELDS } from '../../client-profile/profileFields';
+import { DeadEndPanel } from '../../ErrorPage';
+import { PortalBackLink } from '../../PortalBackLink';
 import { PortalPageHeader } from '../../PortalPageHeader';
-import { PORTAL_PAGE_TITLE_CLASS } from '../../typography';
 import { SettingsSection } from '../../SettingsSection';
 import { Alert } from '../../ui/alert';
 import { Button, buttonVariants } from '../../ui/button';
-import { cardVariants } from '../../ui/card';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Form } from '../../ui/form';
 import { Skeleton } from '../../ui/skeleton';
-import { cn } from '../../ui/utils';
 
 const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
 const NOT_CREATED_MESSAGE = 'The program wasn’t created. Your choices are still here, so try again.';
@@ -129,16 +128,9 @@ function SetupFrame({ journey, title, onLeave, children }: SetupFrameProps) {
   useDocumentTitle(title);
   return (
     <div className="mx-auto w-full max-w-xl">
-      <nav aria-label="Back to the client" className="mb-4">
-        <Link
-          to={clientDetailPathForJourney(journey)}
-          onClick={onLeave}
-          className="relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-        >
-          <ArrowLeft aria-hidden="true" size={16} />
-          {journeyClientName(journey)}
-        </Link>
-      </nav>
+      <PortalBackLink to={clientDetailPathForJourney(journey)} onClick={onLeave}>
+        Back to {journeyClientName(journey)}
+      </PortalBackLink>
       {children}
     </div>
   );
@@ -150,13 +142,12 @@ export function ProgramSetupNotReady({ journey }: { journey: ClientJourney }) {
   const her = clientPronouns(journey.profile.identity.gender).possessive.lower;
   return (
     <SetupFrame journey={journey} title={NOT_READY_TITLE}>
-      <div className={cn(cardVariants({ variant: 'panel' }), 'flex flex-col items-center px-6 py-12 text-center sm:px-10')}>
-        <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-surface-subtle text-text-secondary">
-          <ClipboardList size={28} />
-        </span>
-        <h1 className={cn(PORTAL_PAGE_TITLE_CLASS, 'mt-6')}>{NOT_READY_TITLE}</h1>
-        <p className="mt-2 text-base text-text-secondary">{`The program opens once ${her} answers are approved.`}</p>
-      </div>
+      <DeadEndPanel
+        icon={ClipboardList}
+        title={NOT_READY_TITLE}
+        description={`The program opens once ${her} answers are approved.`}
+        announcement="none"
+      />
     </SetupFrame>
   );
 }

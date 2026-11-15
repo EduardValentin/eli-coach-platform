@@ -2,6 +2,7 @@ import type { ReactNode, Ref } from 'react';
 import { useDragLayer, useDrop } from 'react-dnd';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
+import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { DragPreview, InsertionLine } from './dndParts';
 
@@ -54,28 +55,23 @@ export function DropSeparator({ rules }: { rules: SessionDropRules }) {
   );
 }
 
+type DropReadiness = 'over' | 'ready' | undefined;
+
+function dropReadiness({ isOver, canDrop }: { isOver: boolean; canDrop: boolean }): DropReadiness {
+  if (!canDrop) return undefined;
+  return isOver ? 'over' : 'ready';
+}
+
 export function EmptyDropTarget({ rules, place, onAdd }: { rules: SessionDropRules; place: string; onAdd: () => void }) {
-  const [{ isOver, canDrop }, drop] = useSessionDrop(rules);
-  const active = isOver && canDrop;
+  const [state, drop] = useSessionDrop(rules);
+  const readiness = dropReadiness(state);
   return (
     <div ref={drop as unknown as Ref<HTMLDivElement>}>
-      <button
-        type="button"
-        data-slot-add=""
-        onClick={onAdd}
-        className={cn(
-          'flex min-h-12 w-full items-center justify-center gap-2 rounded-field border border-dashed px-4 py-3 text-sm font-medium transition-colors outline-none motion-reduce:transition-none',
-          {
-            'border-primary bg-primary-soft text-primary': active,
-            'border-primary/40 bg-primary-soft text-text-secondary': canDrop && !isOver,
-            'border-control-border-soft bg-card text-text-secondary hover:border-primary hover:bg-primary-soft hover:text-primary': !canDrop,
-          },
-        )}
-      >
-        <Plus aria-hidden="true" className="size-4" />
-        {active ? 'Release to add' : 'Add or drop an exercise'}
+      <Button variant="add" size="md" data-slot-add="" data-drop={readiness} onClick={onAdd}>
+        <Plus aria-hidden="true" />
+        {readiness === 'over' ? 'Release to add' : 'Add or drop an exercise'}
         <span className="sr-only">{` in ${place}`}</span>
-      </button>
+      </Button>
     </div>
   );
 }

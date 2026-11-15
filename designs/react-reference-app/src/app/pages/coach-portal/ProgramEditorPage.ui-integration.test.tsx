@@ -116,7 +116,7 @@ describe('ProgramEditorPage', () => {
     await user.click(within(rail()).getByRole('button', { name: /^Overview/ }));
     const rows = blockRows();
     expect(rows).toHaveLength(4);
-    expect(within(rows[3]).getByText('3 of 3 sessions')).toBeInTheDocument();
+    expect(within(rows[3]).getByRole('button', { name: 'Open block 4, Hypertrophy · 3 of 3 sessions' })).toHaveTextContent('3/3');
   });
 
   it('moves a block up with the arrow key on its reorder handle', async () => {
@@ -154,7 +154,7 @@ describe('ProgramEditorPage', () => {
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
 
     // act
-    await user.click(within(blockRows()[1]).getByRole('button', { name: 'Open block 2, 3 of 3 sessions' }));
+    await user.click(within(blockRows()[1]).getByRole('button', { name: 'Open block 2, Hypertrophy · 3 of 3 sessions' }));
 
     // assert
     expect(await screen.findByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
@@ -387,25 +387,23 @@ describe('ProgramEditorPage', () => {
 });
 
 describe('ProgramEditorPage on a phone', () => {
-  it('opens the outline as a modal drawer and keeps the rest out of reach', async () => {
+  it('opens the outline as a modal sheet and keeps the rest out of reach', async () => {
     // arrange
     stubPhoneViewport();
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
-    const outline = screen.getByRole('complementary', { hidden: true, name: 'Program outline' });
-    expect(outline).toHaveAttribute('inert');
+    expect(screen.queryByRole('complementary', { name: 'Program outline' })).not.toBeInTheDocument();
 
     // act
     await user.click(screen.getByRole('button', { name: 'Program sections' }));
 
     // assert
-    const drawer = screen.getByRole('dialog', { name: 'Program outline' });
-    expect(drawer).toHaveAttribute('aria-modal', 'true');
-    expect(drawer).not.toHaveAttribute('inert');
-    expect(document.getElementById('editor')).toHaveAttribute('inert');
-    expect(screen.getByRole('button', { name: 'Close program sections' })).toHaveFocus();
+    const sheet = screen.getByRole('dialog', { name: 'Program outline' });
+    expect(sheet).toContainElement(document.activeElement as HTMLElement);
+    expect(screen.getByRole('button', { name: 'Program sections', hidden: true })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByRole('main', { name: 'Program editor' })).not.toBeInTheDocument();
   });
 
-  it('returns focus to the outline toggle after switching mode in the drawer', async () => {
+  it('returns focus to the outline toggle after switching mode in the sheet', async () => {
     // arrange
     stubPhoneViewport();
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
@@ -415,9 +413,55 @@ describe('ProgramEditorPage on a phone', () => {
     await user.click(within(screen.getByRole('dialog', { name: 'Program outline' })).getByRole('tab', { name: 'Texts' }));
 
     // assert
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Program sections' })).toHaveFocus());
     expect(screen.queryByRole('dialog', { name: 'Program outline' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Program sections' })).toHaveFocus();
     expect(document.title).toBe('Texts · Overview · Jane Doe · Evoa');
+  });
+
+  it('returns focus to the outline toggle after choosing a section in the sheet', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(screen.getByRole('button', { name: 'Program sections' }));
+
+    // act
+    await user.click(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ }));
+
+    // assert
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Program sections' })).toHaveFocus());
+    expect(screen.queryByRole('dialog', { name: 'Program outline' })).not.toBeInTheDocument();
+    expect(document.title).toBe('Structure · Block 2 · Hypertrophy · Jane Doe · Evoa');
+  });
+
+  it('closes the outline sheet on Escape with focus back on its toggle', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(screen.getByRole('button', { name: 'Program sections' }));
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Program sections' })).toHaveFocus());
+    expect(screen.queryByRole('dialog', { name: 'Program outline' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Program sections' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('returns focus to the draft actions after the client profile opened from them closes', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(screen.getByRole('button', { name: 'Draft actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Client profile' }));
+    expect(screen.getByRole('dialog', { name: 'Jane Doe' })).toBeInTheDocument();
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Draft actions' })).toHaveFocus());
+    expect(screen.queryByRole('dialog', { name: 'Jane Doe' })).not.toBeInTheDocument();
   });
 
   it('moves the preview and the client profile into the draft actions', async () => {

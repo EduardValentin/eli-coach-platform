@@ -5,7 +5,7 @@ import { BLOCK_TYPE_LABELS } from '../../domain/program';
 import { nextCheckpoint } from '../../domain/programCalendar';
 import { ClientWidget } from '../client-portal/ClientWidget';
 import { BLOCK_SWATCH } from './blockColours';
-import { LABEL_CLASS, VALUE_CLASS } from '../typography';
+import { LABEL_CLASS, VALUE_CLASS, EYEBROW_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { parseTemplate, TemplateBody } from './ProgramText';
@@ -55,7 +55,7 @@ export function FocusCard({ view, action }: FocusCardProps) {
           {focus.trim() && <p className="max-w-prose font-serif text-lg leading-snug text-pretty text-text-primary italic">{focus}</p>}
           {personalNote.trim() && (
             <figure className="grid gap-1.5 border-l-2 border-border pl-3">
-              <figcaption className={LABEL_CLASS}>A note from your coach</figcaption>
+              <figcaption className={EYEBROW_CLASS}>A note from your coach</figcaption>
               <TemplateBody paragraphs={parseTemplate(personalNote).paragraphs} />
             </figure>
           )}

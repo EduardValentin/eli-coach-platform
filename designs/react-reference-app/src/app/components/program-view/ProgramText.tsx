@@ -3,7 +3,7 @@ import { useId, type ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type Block } from '../../domain/program';
 import { guideText, isGuideTextKey, templateText, type TemplateKey } from '../../domain/programTemplates';
 import { isWritten } from '../../domain/programTexts';
-import { LABEL_CLASS, WIDGET_SUBHEADING_CLASS } from '../typography';
+import { WIDGET_SUBHEADING_CLASS, EYEBROW_CLASS } from '../typography';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '../ui/utils';
 import type { ProgramView } from './programView';
@@ -157,7 +157,7 @@ export function TextCardStack({ cards }: { cards: readonly TextCard[] }) {
               <h3 id={headingId}>
                 <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-3 rounded-control px-4 py-3 text-left hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                   <span className="grid min-w-0 gap-0.5">
-                    {card.eyebrow && <span className={LABEL_CLASS}>{card.eyebrow}</span>}
+                    {card.eyebrow && <span className={EYEBROW_CLASS}>{card.eyebrow}</span>}
                     <span className="text-sm font-semibold text-pretty text-text-primary">{card.title}</span>
                   </span>
                   <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-text-secondary transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none" />

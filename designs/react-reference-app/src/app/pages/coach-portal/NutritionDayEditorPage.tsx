@@ -42,7 +42,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../../components/ui/dialog';
-import { LABEL_CLASS } from '../../components/typography';
+import { EYEBROW_CLASS } from '../../components/typography';
 import {
   PHASE_LABEL,
   PHASE_VAR,
@@ -1020,7 +1020,7 @@ function DayEditorMealRow({
           {/* Alternatives */}
           {slot.alternativeRecipeIds.length > 0 && (
             <div className="space-y-1.5">
-              <p className={LABEL_CLASS}>Alternatives</p>
+              <p className={EYEBROW_CLASS}>Alternatives</p>
               <div className="flex flex-wrap gap-1.5">
                 {slot.alternativeRecipeIds.map((altId) => {
                   const altRecipe = recipes.find((r) => r.id === altId);
@@ -1132,7 +1132,7 @@ function IngredientSwaps({
 
   return (
     <div className="space-y-1.5">
-      <p className={LABEL_CLASS}>Swaps</p>
+      <p className={EYEBROW_CLASS}>Swaps</p>
       {swappableIngredients.map(({ ing, originalFood, siblings }) => {
         const activeSwapId = slot.ingredientSwaps?.[ing.foodId];
         const activeFood = activeSwapId

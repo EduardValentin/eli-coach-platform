@@ -35,7 +35,7 @@ import {
   type TextFormatType,
 } from "lexical";
 import { Bold, Heading, Italic, List } from "lucide-react";
-import { Toggle } from "./toggle";
+import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 import { cn } from "./utils";
 
 export type RichTextFormat = {
@@ -346,8 +346,6 @@ const FRAME_CLASS = {
 const LINES_CLASS = { one: "min-h-8", many: "min-h-12" } as const;
 const CONTROLS_ROW_CLASS =
   "sticky bottom-0 z-10 mt-3 flex flex-wrap items-center gap-4 rounded-field border border-border bg-surface-base px-1 py-1";
-const ROVING_KEYS = new Set(["ArrowRight", "ArrowLeft", "Home", "End"]);
-
 function runTool(editor: LexicalEditor, tool: RichTextTool) {
   if (tool === "heading") editor.update($toggleHeadingLine);
   if (tool === "bold" || tool === "italic") editor.dispatchCommand(FORMAT_TEXT_COMMAND, tool);
@@ -355,48 +353,42 @@ function runTool(editor: LexicalEditor, tool: RichTextTool) {
   editor.focus();
 }
 
-function rovingTarget(key: string, index: number, count: number): number {
-  if (key === "Home") return 0;
-  if (key === "End") return count - 1;
-  return (index + (key === "ArrowRight" ? 1 : -1) + count) % count;
-}
-
 type ToolbarProps = { editor: LexicalEditor; label: string; tools: readonly RichTextTool[]; state: ToolbarState };
 
 function Toolbar({ editor, label, tools, state }: ToolbarProps) {
-  const enabled = tools.filter((tool) => tool !== "heading" || state.headingAvailable);
-  const [current, setCurrent] = React.useState<RichTextTool | undefined>(enabled[0]);
-  const stop = current && enabled.includes(current) ? current : enabled[0];
+  const pressed = tools.filter((tool) => state[tool]);
 
-  function onKeyDown(event: React.KeyboardEvent) {
-    if (!ROVING_KEYS.has(event.key) || !stop) return;
-    event.preventDefault();
-    const next = enabled[rovingTarget(event.key, enabled.indexOf(stop), enabled.length)];
-    setCurrent(next);
-    event.currentTarget.querySelector<HTMLElement>(`[data-tool="${next}"]`)?.focus();
+  function runToggledTool(next: string[]) {
+    const toggled = tools.find((tool) => next.includes(tool) !== state[tool]);
+    if (toggled) runTool(editor, toggled);
   }
 
   return (
-    <div role="toolbar" aria-label={`Formatting for ${label}`} onKeyDown={onKeyDown} className="flex min-w-0 flex-wrap gap-4">
+    <ToggleGroup
+      type="multiple"
+      role="toolbar"
+      orientation="horizontal"
+      aria-label={`Formatting for ${label}`}
+      size="sm"
+      spacing="separate"
+      value={pressed}
+      onValueChange={runToggledTool}
+      className="min-w-0"
+    >
       {tools.map((tool) => (
-        <Toggle
+        <ToggleGroupItem
           key={tool}
-          data-tool={tool}
-          size="sm"
+          value={tool}
           aria-label={TOOL_SPECS[tool].label}
           aria-keyshortcuts={TOOL_SPECS[tool].shortcut}
           title={TOOL_SPECS[tool].label}
-          tabIndex={tool === stop ? undefined : -1}
-          pressed={state[tool]}
-          disabled={!enabled.includes(tool)}
-          onFocus={() => setCurrent(tool)}
+          disabled={tool === "heading" && !state.headingAvailable}
           onMouseDown={(event) => event.preventDefault()}
-          onPressedChange={() => runTool(editor, tool)}
         >
           {TOOL_SPECS[tool].icon}
-        </Toggle>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 

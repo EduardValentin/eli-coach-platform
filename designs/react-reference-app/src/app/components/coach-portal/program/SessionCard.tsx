@@ -1,4 +1,4 @@
-import { useId, type Ref } from 'react';
+import { useId, useRef, type Ref } from 'react';
 import { Eraser, PencilLine } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { coolDownEdits } from '../../../domain/coolDownEditing';
@@ -23,10 +23,10 @@ import {
   SESSION_CONTENT_CLASS,
   SessionNameInput,
   sessionHeaderHeightStyle,
-  useNameFocusOnExpand,
 } from './sessionCardParts';
 import { useMeasuredHeight } from './useMeasuredHeight';
 import { SlotGroup } from './SlotGroup';
+import { usePendingFocus } from './usePendingFocus';
 import { WarmUpCard } from './WarmUpCard';
 
 type SessionCardProps = {
@@ -47,7 +47,12 @@ function durationAgainstTarget(minutes: number, targetMinutes: number): string {
 
 export function SessionCard({ session, block, expanded, articleRef, library, context, onExpand, onChange, onOpenLibrary }: SessionCardProps) {
   const headingId = useId();
-  const { nameField, expand } = useNameFocusOnExpand(expanded, onExpand);
+  const nameField = useRef<HTMLInputElement>(null);
+  const focusLater = usePendingFocus();
+  const expand = () => {
+    focusLater(() => nameField.current);
+    onExpand();
+  };
   const header = useMeasuredHeight();
   const confirm = useResetConfirm();
   const announce = useEditorAnnouncer();

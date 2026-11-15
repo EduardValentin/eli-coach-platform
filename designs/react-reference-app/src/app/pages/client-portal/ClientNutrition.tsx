@@ -49,11 +49,7 @@ import { Badge } from '../../components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
 import { FilterChipGroup, FilterChip } from '../../components/FilterChipGroup';
 import { EmptyState } from '../../components/EmptyState';
-import {
-  LABEL_CLASS,
-  VALUE_LG_CLASS,
-  WIDGET_TITLE_CLASS,
-} from '../../components/typography';
+import { LABEL_CLASS, VALUE_LG_CLASS, WIDGET_TITLE_CLASS, EYEBROW_CLASS } from '../../components/typography';
 import { cn } from '../../components/ui/utils';
 
 // ---------------------------------------------------------------------------
@@ -180,7 +176,7 @@ function RecipeDetailBody({
 
         {/* Ingredients */}
         <div>
-          <p className={cn(LABEL_CLASS, 'mb-2')}>Ingredients</p>
+          <p className={cn(EYEBROW_CLASS, 'mb-2')}>Ingredients</p>
           <ul className="space-y-1.5 list-none p-0 m-0">
             {recipe.ingredients.map((ing, i) => {
               const food = foods.find((f) => f.id === ing.foodId);
@@ -215,7 +211,7 @@ function RecipeDetailBody({
         {/* B — Instructions */}
         {recipe.instructions && recipe.instructions.trim().length > 0 && (
           <div>
-            <p className={cn(LABEL_CLASS, 'mb-2')}>Instructions</p>
+            <p className={cn(EYEBROW_CLASS, 'mb-2')}>Instructions</p>
             <p className="text-sm text-text-primary whitespace-pre-line leading-relaxed">
               {recipe.instructions}
             </p>
@@ -399,7 +395,7 @@ function SlotCard({
       >
         <div className="px-4 pt-3 pb-3">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className={LABEL_CLASS}>{roleLabel}</p>
+            <p className={EYEBROW_CLASS}>{roleLabel}</p>
             {/* Swap button — only shown when there are alternatives */}
             {hasSwaps && (
               <Button
@@ -549,7 +545,7 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
               aria-hidden="true"
             />
-            <h3 className={LABEL_CLASS}>{CATEGORY_LABELS[group.category]}</h3>
+            <h3 className={EYEBROW_CLASS}>{CATEGORY_LABELS[group.category]}</h3>
           </div>
           <ul className="space-y-1 list-none p-0 m-0">
             {group.items.map((item) => (
@@ -701,7 +697,7 @@ export function ClientNutrition() {
 
       {/* Week strip */}
       <section aria-labelledby="week-strip-heading">
-        <h2 className={cn(LABEL_CLASS, 'mb-3')} id="week-strip-heading">
+        <h2 className={cn(EYEBROW_CLASS, 'mb-3')} id="week-strip-heading">
           This block
         </h2>
         <div className="overflow-x-auto -mx-0.5 pb-1">
@@ -821,7 +817,7 @@ export function ClientNutrition() {
             {/* Day macro meter */}
             {dayTotals && (
               <div className="px-5 py-4 border-b border-border-subtle rounded-field space-y-3">
-                <h3 className={LABEL_CLASS}>Daily totals</h3>
+                <h3 className={EYEBROW_CLASS}>Daily totals</h3>
                 <MacroBar
                   value={dayTotals.kcal}
                   max={target.kcal}
@@ -853,7 +849,7 @@ export function ClientNutrition() {
 
             {/* Meal slots */}
             <div className="px-5 py-4 space-y-3">
-              <h3 className={LABEL_CLASS}>Meals</h3>
+              <h3 className={EYEBROW_CLASS}>Meals</h3>
               {selectedDay.slots.map((slot) => (
                 <SlotCard
                   key={slot.id}

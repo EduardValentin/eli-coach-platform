@@ -35,6 +35,8 @@ const badgeVariants = cva(
           "border-transparent bg-training-recovery-soft text-training-recovery-ink",
         count:
           "rounded-full border-transparent bg-current/12 px-1.5 min-w-5 justify-center text-caption font-medium tabular-nums opacity-80",
+        "count-on-fill":
+          "rounded-full border-transparent bg-surface-base px-1.5 min-w-5 justify-center text-xs font-medium tabular-nums",
       },
     },
     defaultVariants: {

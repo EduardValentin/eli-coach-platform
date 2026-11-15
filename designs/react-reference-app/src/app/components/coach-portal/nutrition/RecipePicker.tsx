@@ -26,7 +26,7 @@ import { Badge } from '../../ui/badge';
 import { cn } from '../../ui/utils';
 import { ScrollArea } from '../../ui/scroll-area';
 import { SearchField } from '../../SearchField';
-import { LABEL_CLASS } from '../../typography';
+import { EYEBROW_CLASS } from '../../typography';
 import { RecipeVisual } from './RecipeVisual';
 import { TagPill } from './TagPill';
 import { TAG_FAMILY_LABELS, MACRO_DOT } from './nutrition-constants';
@@ -236,7 +236,7 @@ export function RecipePicker({
                 {/* Suggested for this meal */}
                 {suggested.length > 0 && (
                   <section aria-label={`Suggested for ${roleLabel}`}>
-                    <p className={`mb-2 ${LABEL_CLASS}`}>
+                    <p className={`mb-2 ${EYEBROW_CLASS}`}>
                       Suggested for {roleLabel}
                     </p>
                     <ul className="space-y-2 list-none p-0 m-0">
@@ -261,7 +261,7 @@ export function RecipePicker({
                 {others.length > 0 && (
                   <section aria-label="Other recipes">
                     {suggested.length > 0 && (
-                      <p className={`mb-2 ${LABEL_CLASS}`}>Other recipes</p>
+                      <p className={`mb-2 ${EYEBROW_CLASS}`}>Other recipes</p>
                     )}
                     <ul className="space-y-2 list-none p-0 m-0">
                       {others.map((recipe) => (

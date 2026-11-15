@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
@@ -73,6 +73,7 @@ async function openFirstBlock(search: string) {
     </MemoryRouter>,
   );
   const user = userEvent.setup();
+  if (!screen.queryByRole('navigation', { name: 'Program sections' })) await user.click(screen.getByRole('button', { name: 'Program sections' }));
   await user.click(
     within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation\b/ }),
   );
@@ -246,11 +247,28 @@ describe('LibraryPanel', () => {
     expect(within(library()).queryByRole('button', { name: 'Add Leg Press' })).not.toBeInTheDocument();
   });
 
-  it('names the filters that leave nothing and clears them', async () => {
+  it('lists each filter that leaves nothing as a chip that removes only that filter', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
     await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'zzz');
-    expect(within(library()).getByText('No resistance exercises match “zzz” · Only her equipment.')).toBeInTheDocument();
+    const filters = () => within(library()).getByRole('list', { name: 'Active filters' });
+    expect(within(library()).getByText('No matches')).toBeInTheDocument();
+    expect(within(filters()).getAllByRole('listitem').map(chip => chip.textContent)).toEqual(['Search: “zzz”', 'Only her equipment']);
+
+    // act
+    await user.click(within(filters()).getByRole('button', { name: 'Remove filter Only her equipment' }));
+
+    // assert
+    expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).not.toBeChecked();
+    expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('zzz');
+    expect(within(filters()).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(filters()).getByRole('button', { name: 'Remove filter Search: “zzz”' })).toHaveFocus();
+  });
+
+  it('clears every filter that leaves nothing at once', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'zzz');
 
     // act
     await user.click(within(library()).getByRole('button', { name: 'Clear filters' }));
@@ -259,6 +277,7 @@ describe('LibraryPanel', () => {
     expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('');
     expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).not.toBeChecked();
     expect(within(library()).getByRole('button', { name: 'Add Barbell Back Squat' })).toBeInTheDocument();
+    expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveFocus();
   });
 
   it('opens as a drawer on narrow screens and closes on Escape returning focus to the opener', async () => {
@@ -273,13 +292,27 @@ describe('LibraryPanel', () => {
 
     // assert
     const drawer = screen.getByRole('dialog', { name: 'Exercise library' });
-    expect(drawer).toHaveAttribute('aria-modal', 'true');
     expect(within(drawer).getByRole('searchbox', { name: 'Search exercises' })).toHaveFocus();
-    expect(screen.getByRole('main', { name: 'Program editor' }).closest('[inert]')).not.toBeNull();
+    expect(screen.queryByRole('main', { name: 'Program editor' })).not.toBeInTheDocument();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
-    expect(screen.getByRole('main', { name: 'Program editor' }).closest('[inert]')).toBeNull();
-    expect(opener).toHaveFocus();
+    expect(screen.getByRole('main', { name: 'Program editor' })).toBeInTheDocument();
+    await waitFor(() => expect(opener).toHaveFocus());
+  });
+
+  it('closes the drawer from its own close button, returning focus to the opener', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    const opener = within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' });
+    await user.click(opener);
+
+    // act
+    await user.click(within(screen.getByRole('dialog', { name: 'Exercise library' })).getByRole('button', { name: 'Close' }));
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
+    await waitFor(() => expect(opener).toHaveFocus());
   });
 });
 

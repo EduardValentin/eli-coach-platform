@@ -47,10 +47,10 @@ function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'bl
       <Setting label="Weeks">
         {labelId => (
           <>
-            <label className="relative hit-area flex items-center gap-1.5 text-sm text-text-secondary">
-              <Input size="sm" className="w-16 tabular-nums" aria-labelledby={labelId} {...weeks.inputProps} />
+            <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+              <Input size="sm" frameClassName="w-16" className="tabular-nums" aria-labelledby={labelId} {...weeks.inputProps} />
               wk
-            </label>
+            </span>
             {weeks.problem && <InlineProblem id={weeks.problemId}>{weeks.problem}</InlineProblem>}
           </>
         )}
@@ -109,15 +109,14 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
       </Setting>
       <Setting label="Split name">
         {labelId => (
-          <label className="relative hit-area block w-40">
-            <Input
-              size="sm"
-              aria-labelledby={labelId}
-              placeholder={SPLIT_TEMPLATES[block.split.shape].label}
-              value={block.split.name}
-              onChange={event => onChange({ ...block, split: { ...block.split, name: event.target.value } })}
-            />
-          </label>
+          <Input
+            size="sm"
+            frameClassName="w-40"
+            aria-labelledby={labelId}
+            placeholder={SPLIT_TEMPLATES[block.split.shape].label}
+            value={block.split.name}
+            onChange={event => onChange({ ...block, split: { ...block.split, name: event.target.value } })}
+          />
         )}
       </Setting>
       <Setting label="Target">

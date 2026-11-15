@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type Ref } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import { Input } from '../../ui/input';
 
 export const SESSION_ARTICLE_CLASS = 'rounded-card border border-border bg-card shadow-card';
@@ -8,24 +8,6 @@ export const SESSION_CONTENT_CLASS =
 
 export function sessionHeaderHeightStyle(height: number): CSSProperties {
   return { '--session-header-height': `${height}px` } as CSSProperties;
-}
-
-export function useNameFocusOnExpand(expanded: boolean, onExpand: () => void) {
-  const nameField = useRef<HTMLInputElement>(null);
-  const expandRequested = useRef(false);
-
-  useEffect(() => {
-    if (!expanded || !expandRequested.current) return;
-    expandRequested.current = false;
-    nameField.current?.focus();
-  }, [expanded]);
-
-  function expand() {
-    expandRequested.current = true;
-    onExpand();
-  }
-
-  return { nameField, expand };
 }
 
 type CollapsedSessionHeaderProps = { headingId: string; name: string; summary: string; onExpand: () => void };
@@ -52,14 +34,13 @@ type SessionNameInputProps = { value: string; inputRef?: Ref<HTMLInputElement>; 
 
 export function SessionNameInput({ value, inputRef, onChange }: SessionNameInputProps) {
   return (
-    <label className="relative hit-area flex min-w-0 flex-1 basis-40">
-      <Input
-        ref={inputRef}
-        aria-label="Session name"
-        value={value}
-        onChange={event => onChange(event.target.value)}
-        className="h-auto w-full min-w-0 rounded-none border-x-0 border-t-0 border-b bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-text-secondary md:text-xl"
-      />
-    </label>
+    <Input
+      ref={inputRef}
+      appearance="inline-title"
+      frameClassName="flex-1 basis-40"
+      aria-label="Session name"
+      value={value}
+      onChange={event => onChange(event.target.value)}
+    />
   );
 }

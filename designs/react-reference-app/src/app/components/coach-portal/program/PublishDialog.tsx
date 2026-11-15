@@ -36,7 +36,7 @@ function ProblemList({ problems, onOpenBlock }: { problems: RuleFinding<Blocking
             {problem.blockId === undefined ? (
               <InlineProblem>{blockingMessage(problem)}</InlineProblem>
             ) : (
-              <Button variant="link" className="h-auto whitespace-normal p-0 text-left text-destructive" onClick={() => onOpenBlock(problem.blockId!)}>
+              <Button variant="destructive-link" size="inline" onClick={() => onOpenBlock(problem.blockId!)}>
                 {blockingMessage(problem)}
               </Button>
             )}

@@ -5,17 +5,18 @@ import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
 import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Link as TextLink } from '../ui/link';
 import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
 import { useExercisePageHref } from './exercisePageLinks';
 import { PositionBadge } from './PositionBadge';
 import { RirValue } from './RirValue';
-import { coolDownLines, exerciseNameOf, restLabel, warmUpLines } from './programView';
+import { coolDownLines, hasCoolDown, exerciseNameOf, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
@@ -86,9 +87,9 @@ function SwapName({ swap }: { swap: Exercise }) {
   const pageHref = useExercisePageHref()(swap.id);
   if (!pageHref) return swap.name;
   return (
-    <Link to={pageHref} className="font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary">
+    <TextLink to={pageHref} variant="inline">
       {swap.name}
-    </Link>
+    </TextLink>
   );
 }
 
@@ -110,7 +111,7 @@ function ExercisePageLink({ exercise }: { exercise: Exercise }) {
   const pageHref = useExercisePageHref()(exercise.id);
   if (!pageHref) return null;
   return (
-    <Link to={pageHref} className={buttonVariants({ variant: 'link', size: 'xs', className: 'h-auto w-fit px-0 has-[>svg]:px-0' })}>
+    <Link to={pageHref} className={buttonVariants({ variant: 'link', size: 'inline' })}>
       Open exercise page
       <ChevronRight aria-hidden="true" />
     </Link>
@@ -183,7 +184,7 @@ function Superset({ children }: { children: ReactNode }) {
   const labelId = useId();
   return (
     <li className="grid gap-2 @3xl:col-span-2">
-      <p id={labelId} className={LABEL_CLASS}>
+      <p id={labelId} className={EYEBROW_CLASS}>
         Superset
       </p>
       <ol aria-labelledby={labelId} className="grid items-start gap-2 border-l-2 border-brand/40 pl-3 @3xl:grid-cols-2">
@@ -213,9 +214,7 @@ export function SessionDay({ session, exercisesById, progressionText }: SessionD
           rows.length > 1 ? <Superset key={key}>{rows.map(item)}</Superset> : item(rows[0]),
         )}
       </ol>
-      {session.coolDown.enabled && (
-        <RoutineCard title="Cool-down" listLabel="Cool-down stretches" note={session.coolDown.note} lines={coolDownLines(session, exercisesById)} />
-      )}
+      {hasCoolDown(session) && <RoutineCard title="Cool-down" listLabel="Cool-down stretches" lines={coolDownLines(session, exercisesById)} />}
     </section>
   );
 }

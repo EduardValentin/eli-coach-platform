@@ -64,7 +64,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from '../../components/ui/popover';
-import { LABEL_CLASS, VALUE_CLASS } from '../../components/typography';
+import { LABEL_CLASS, VALUE_CLASS, EYEBROW_CLASS } from '../../components/typography';
 import {
   CATEGORY_SWATCH,
   MACRO_TILE,
@@ -707,7 +707,7 @@ function RecipeBuilderInner() {
         >
           <div className="p-4 px-3 border-b border-border rounded-field bg-card">
             <div className="flex items-center justify-between mb-3">
-              <p className={LABEL_CLASS}>Food library</p>
+              <p className={EYEBROW_CLASS}>Food library</p>
               <Button
                 ref={closeLibraryButton}
                 onClick={closeLibrary}

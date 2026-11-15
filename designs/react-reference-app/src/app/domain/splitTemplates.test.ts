@@ -13,7 +13,7 @@ function session(id: string): Session {
     originId: id,
     name: id,
     warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
+    coolDown: { enabled: false, items: [] },
     rows: [],
   };
 }

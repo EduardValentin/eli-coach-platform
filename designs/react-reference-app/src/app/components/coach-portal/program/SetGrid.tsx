@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Copy, Plus, X } from 'lucide-react';
-import { formatRange, isWorkingSet, withField, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
+import { formatRange, isWorkingSet, NEW_SET_RIR, withField, withSetAdded, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
@@ -21,8 +21,6 @@ const KIND_OPTIONS: { value: SetKind; label: string }[] = [
   { value: 'working', label: 'Working' },
 ];
 const WEIGHT_PROBLEM = 'Use a weight in kg, or leave it empty';
-const NEW_SET_REPS: Range = { min: 8, max: 8 };
-const FALLBACK_RIR: Range = { min: 2, max: 2 };
 
 function wideColumns(repsSuffix: string): string {
   return repsSuffix ? WIDE_COLUMNS_WITH_REPS_SUFFIX : WIDE_COLUMNS;
@@ -160,20 +158,8 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
   const changeSet = (index: number, set: SetSpec) => changeSets(sets.map((other, at) => (at === index ? set : other)));
   const working = workingSets(sets);
   const [firstWorking] = working;
-  const lastWorking = working.at(-1);
   const warmUpCount = sets.length - working.length;
-  const rirForNewWorking = firstWorking?.rir ?? FALLBACK_RIR;
-
-  function addWarmUp() {
-    const firstWorkingIndex = sets.findIndex(isWorkingSet);
-    const at = firstWorkingIndex < 0 ? sets.length : firstWorkingIndex;
-    changeSets([...sets.slice(0, at), { kind: 'warm-up', reps: { ...NEW_SET_REPS } }, ...sets.slice(at)]);
-  }
-
-  function addWorking() {
-    const next: SetSpec = lastWorking ? structuredClone(lastWorking) : { kind: 'working', reps: { ...NEW_SET_REPS }, rir: { ...FALLBACK_RIR } };
-    changeSets([...sets, next]);
-  }
+  const rirForNewWorking = firstWorking?.rir ?? NEW_SET_RIR;
 
   return (
     <div className="@container grid grid-cols-[minmax(0,1fr)] gap-3">
@@ -200,14 +186,14 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           ))}
         </ol>
       </div>
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-4">
-        <div className="grid gap-1">
-          <span aria-hidden="true" className={LABEL_CLASS}>
-            Rest
-          </span>
+      <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle pt-3 @min-[34rem]:grid @min-[34rem]:items-start @min-[34rem]:gap-x-2', wideColumns(repsSuffix))}>
+        <span aria-hidden="true" className={cn(LABEL_CLASS, 'flex h-(--size-control-xs) items-center @min-[34rem]:col-span-2')}>
+          Rest between sets
+        </span>
+        <div className="@min-[34rem]:col-span-3">
           <RowTextField
             className="w-20"
-            label="Rest"
+            label="Rest between sets"
             value={row.restSeconds}
             format={formatRest}
             parse={parseRest}
@@ -215,25 +201,21 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
             onCommit={seconds => onChange(withField(row, 'restSeconds', seconds))}
           />
         </div>
-        <div className="flex flex-wrap gap-x-2 gap-y-4">
-          <Button variant="ghost" size="xs" onClick={addWarmUp}>
-            <Plus aria-hidden="true" />
-            Add warm-up set
-          </Button>
-          <Button variant="ghost" size="xs" onClick={addWorking}>
-            <Plus aria-hidden="true" />
-            Add working set
-          </Button>
-          <Button
-            variant="ghost"
-            size="xs"
-            disabled={working.length < 2}
-            onClick={() => firstWorking && changeSets(sets.map(set => likeFirst(set, firstWorking)))}
-          >
-            <Copy aria-hidden="true" />
-            Apply to all working sets
-          </Button>
-        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="ghost" size="xs" onClick={() => changeSets(withSetAdded(sets))}>
+          <Plus aria-hidden="true" />
+          Add set
+        </Button>
+        <Button
+          variant="ghost"
+          size="xs"
+          disabled={working.length < 2}
+          onClick={() => firstWorking && changeSets(sets.map(set => likeFirst(set, firstWorking)))}
+        >
+          <Copy aria-hidden="true" />
+          Apply to all working sets
+        </Button>
       </div>
       {warmUpCount > 0 && working.length === 0 && <p className="text-xs text-warning">Add at least one working set.</p>}
     </div>

@@ -2,7 +2,7 @@ import { CalendarDays, Download, Dumbbell, Footprints, History, Info, Leaf, List
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 import { Button } from '../ui/button';
 import { BLOCK_TYPE_LABELS, cardioOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
 import { cardioMinutes } from '../../domain/programCardio';
@@ -54,7 +54,7 @@ function PreviousVersions({ versions }: { versions: readonly ProgramVersion[] })
     <div className="grid gap-4">
       {[...groups].map(([label, group]) => (
         <section key={label} className="grid gap-2">
-          <h3 className={LABEL_CLASS}>{label}</h3>
+          <h3 className={EYEBROW_CLASS}>{label}</h3>
           <ul className="divide-y divide-border-subtle">
             {group.map(version => (
               <li key={version.number} className="flex items-center justify-between gap-3 py-2 text-sm text-text-primary tabular-nums">
@@ -108,7 +108,7 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
       <WhatChangedBanner version={version} dismissedVersion={dismissedVersion} onDismiss={() => setDismissedVersion(version.number)} />
       {block && (
         <section aria-labelledby="program-week" className="grid gap-4">
-          <h2 id="program-week" className={LABEL_CLASS}>
+          <h2 id="program-week" className={EYEBROW_CLASS}>
             This week
           </h2>
           <WeekStrip block={block} weekStart={weekStart(view)} today={today} selected={weekday} onSelect={setSelected} />

@@ -110,7 +110,7 @@ describe('programForSeed', () => {
     for (const session of sessions) {
       expect(session.warmUp.items).toEqual([{ id: expect.any(String), exerciseId: expect.any(String), sets: 1, reps: { min: 10, max: 10 } }]);
       expect(exercisesById.get(session.warmUp.items[0].exerciseId)?.type).toBe('mobility');
-      expect(session.coolDown).toEqual({ enabled: false, note: '', items: [] });
+      expect(session.coolDown).toEqual({ enabled: false, items: [] });
     }
   });
 

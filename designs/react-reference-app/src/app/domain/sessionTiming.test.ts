@@ -86,7 +86,6 @@ describe('estimatedMinutes', () => {
       rows: [row({ id: '1', exerciseId: 'squat', restSeconds: 60 }), row({ id: '2', exerciseId: 'plank', slot: 'D', sets: heldSets(3, 20), restSeconds: 60 })],
       coolDown: {
         enabled: true,
-        note: '',
         items: [
           { id: 'c1', exerciseId: 'child-pose', seconds: 30 },
           { id: 'c2', exerciseId: 'pigeon', seconds: 30 },

@@ -6,12 +6,14 @@ import { positionLabel, type Row, type Session, type Slot } from '../../../domai
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
 import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
 import { CheckboxChip } from '../../CheckboxChip';
+import { IconActionButton } from '../../IconActionButton';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
-import { LABEL_CLASS } from '../../typography';
+import { EYEBROW_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseCard, type RowFocus, type SlotTarget } from './ExerciseCard';
+import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
 import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, type SessionDropRules } from './sessionDnd';
 
@@ -34,7 +36,7 @@ function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
   return (
     <div className="rounded-control border-l-2 border-brand-secondary bg-brand-secondary-soft">
       <div className="flex flex-wrap items-center justify-between gap-2 py-2 pr-1 pl-3">
-        <span className={cn(LABEL_CLASS, 'text-brand-secondary-ink')}>Superset</span>
+        <span className={cn(EYEBROW_CLASS, 'text-brand-secondary-ink')}>Superset</span>
         <Button variant="ghost" size="xs" className="text-brand-secondary-ink" onClick={onUngroup}>
           Ungroup
           <span className="sr-only">{` ${positions.join(' and ')}`}</span>
@@ -114,6 +116,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
     onSlotAdd: () => focusLater(() => section.current?.querySelector<HTMLElement>('[data-slot-add]')),
   };
   const { slot, label } = plan;
+  const filling = useIsLibraryTarget({ kind: 'slot', sessionId: session.id, slot });
   const units = slotUnits(session, slot);
   const heading = `${slot} · ${label}`;
   const several = !SINGLE_CARD_SLOTS.includes(slot);
@@ -148,7 +151,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
   };
 
   return (
-    <section ref={section} className="grid grid-cols-[minmax(0,1fr)] gap-2">
+    <section ref={section} className={cn('grid grid-cols-[minmax(0,1fr)] gap-2 rounded-control', { [LIBRARY_TARGET_CLASS]: filling })}>
       <header className="flex items-start gap-3">
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
           <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
@@ -159,9 +162,7 @@ export function SlotGroup({ session, plan, choices, onPatternsChange, library, e
           )}
         </div>
         {several && units.length > 0 && (
-          <Button variant="ghost" size="icon-xs" aria-label={`Add exercise to ${heading}`} data-slot-add="" onClick={() => onAdd(slot)}>
-            <Plus aria-hidden="true" />
-          </Button>
+          <IconActionButton icon={Plus} label={`Add exercise to ${heading}`} hint="Add exercise" data-slot-add="" onClick={() => onAdd(slot)} />
         )}
       </header>
       <DropZone rules={rulesAt({ slot })} className="rounded-control" activeClassName="bg-primary-soft">

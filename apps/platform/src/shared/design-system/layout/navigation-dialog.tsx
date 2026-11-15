@@ -16,6 +16,7 @@ import {
 
 import { cn } from "../lib/cn";
 import { focusMainContent } from "../lib/focus-main-content";
+import { useTriggerControls } from "../lib/open-state";
 import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
 
 type NavigationMenuState = "closed" | "closing" | "open";
@@ -105,10 +106,14 @@ export function NavigationDialog(props: NavigationDialogProps) {
     mobileControlRef: menuButtonRef,
   });
 
+  const menuButtonControls = useTriggerControls({
+    open: isDialogMounted,
+    contentId,
+  });
   const menu: NavigationMenu = { close, firstLinkRef, isOpen };
   const panelVariant: NavigationPanelVariant = isOpen ? "open" : "closed";
   const menuButtonProps = {
-    "aria-controls": isDialogMounted ? contentId : undefined,
+    ...menuButtonControls,
     "aria-expanded": isOpen,
     "aria-label": isOpen ? "Close menu" : "Open menu",
     children: isOpen ? closeMenuIcon : openMenuIcon,

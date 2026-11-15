@@ -18,14 +18,15 @@ import {
 } from '../typography';
 import { cn } from '../ui/utils';
 import { BlockCalendar } from './BlockCalendar';
-import { BLOCK_RULE, BLOCK_SWATCH } from './blockColours';
+import { BLOCK_RULE } from './blockColours';
 import { DocumentEditingProvider, DocumentHeading, useDocumentEditing, type DocumentEditing } from './documentEditing';
 import { DocumentTextSlot, OptionalMark, useShowsText } from './DocumentTextSlot';
 import { ExerciseLink } from './ExerciseLink';
+import { PlanStrip } from './PlanTimeline';
 import { PositionBadge } from './PositionBadge';
 import { Emphasised, parseTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
-import { currentBlock, exerciseName, type ProgramView } from './programView';
+import { currentBlock, exerciseName, hasCoolDown, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_TEXT = "See your coach's disclaimer.";
@@ -229,16 +230,12 @@ function labelShare(blocks: readonly Block[], block: Block): string {
   return `calc((100% - ${blocks.length - 1} * var(--spacing)) * ${block.weeks / planWeeks(blocks)})`;
 }
 
-function PlanStrip({ view }: { view: ProgramView }) {
+function PlanSection({ view }: { view: ProgramView }) {
   const { blocks } = view.version.content.plan;
   const { dayOne, position } = view;
   return (
     <section aria-label="Plan" data-print-keep className="@container space-y-document-tight">
-      <span aria-hidden="true" className="flex h-1.5 gap-1">
-        {blocks.map(block => (
-          <span key={block.id} style={{ flexGrow: block.weeks, flexBasis: 0 }} className={cn('rounded-full', BLOCK_SWATCH[block.type])} />
-        ))}
-      </span>
+      <PlanStrip blocks={blocks} dayOne={dayOne} gap="wide" />
       <ol className={cn('flex flex-col gap-x-1 gap-y-2 text-document-table', ALIGNED_LABELS_FROM_WIDTH[blocks.length])}>
         {blocks.map((block, index) => {
           const dates = dayOne ? blockDates(blocks, index, dayOne) : null;
@@ -252,7 +249,7 @@ function PlanStrip({ view }: { view: ProgramView }) {
             >
               <span className="flex items-center gap-1.5">
                 <span className="font-semibold text-text-primary">{BLOCK_TYPE_LABELS[block.type]}</span>
-                {isCurrent && <span className="rounded-full bg-text-primary px-1.5 text-document-note font-semibold text-surface-base">Now</span>}
+                {isCurrent && <PositionBadge label="Now" size="xs" />}
               </span>
               <span className="block text-text-secondary tabular-nums">
                 {counted(block.weeks, 'week')}
@@ -400,7 +397,7 @@ function EverySessionRow({ view, target }: { view: ProgramView; target: ProgramT
 }
 
 function EverySession({ view, block }: { view: ProgramView; block: Block }) {
-  const hasCoolDown = block.sessions.some(session => session.coolDown.enabled);
+  const anyCoolDown = block.sessions.some(session => session.coolDown.enabled);
   return (
     <section aria-label="Every session" data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>
       <DocumentHeading level={2} className={DOCUMENT_CARD_TITLE_CLASS}>
@@ -408,7 +405,7 @@ function EverySession({ view, block }: { view: ProgramView; block: Block }) {
       </DocumentHeading>
       <EverySessionRow view={view} target={guide('warmUp')} />
       <EverySessionRow view={view} target={guide('progression')} />
-      {hasCoolDown && <EverySessionRow view={view} target={guide('coolDown')} />}
+      {anyCoolDown && <EverySessionRow view={view} target={guide('coolDown')} />}
       <EverySessionRow view={view} target={blockText(block, 'missedDay')} />
       <EverySessionRow view={view} target={guide('noWeight')} />
     </section>
@@ -512,10 +509,9 @@ function SessionCard({ view, block, session }: SessionCardProps) {
         )}
       </div>
       <SessionTable session={session} block={block} exercisesById={view.exercisesById} />
-      {session.coolDown.enabled && (
+      {hasCoolDown(session) && (
         <RoutineLine title="Cool-down">
-          {session.coolDown.note && <p className="max-w-measure text-document-table text-text-primary">{session.coolDown.note}</p>}
-          {coolDown.length > 0 && <ItemList view={view} items={coolDown} />}
+          <ItemList view={view} items={coolDown} />
         </RoutineLine>
       )}
       <SwapsList view={view} session={session} />
@@ -649,7 +645,7 @@ function DocumentPages({ view, part }: { view: ProgramView; part: DocumentPart }
         <>
           <Cover view={view} />
           <WhatChanged view={view} />
-          <PlanStrip view={view} />
+          <PlanSection view={view} />
         </>
       )}
       {blockShown && (

@@ -231,7 +231,7 @@ describe('newBlock and initialContent', () => {
 
     // assert
     expect(session.warmUp).toEqual({ items: [] });
-    expect(session.coolDown).toEqual({ enabled: false, note: '', items: [] });
+    expect(session.coolDown).toEqual({ enabled: false, items: [] });
   });
 
   it('builds the sessions of the chosen split rather than the one the days suggest', () => {

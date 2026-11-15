@@ -14,15 +14,19 @@ import {
 } from '../../../domain/exercises';
 import { pickableItems } from '../../../domain/libraryLifecycle';
 import { counted } from '../../../utils/counted';
+import { IconActionButton } from '../../IconActionButton';
 import { MultiSelect } from '../../MultiSelect';
+import { RemovableChip } from '../../RemovableChip';
 import { SearchField } from '../../SearchField';
 import { WatchVideoButton } from '../../WatchVideoButton';
 import { Badge } from '../../ui/badge';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
+import { Sheet, SheetContent, SheetTitle } from '../../ui/sheet';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
+import { usePendingFocus } from './usePendingFocus';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 
@@ -31,7 +35,6 @@ export type LibraryPurpose = {
   key: string;
   label: string;
   destination: string;
-  place: string;
   type: LibraryType;
   alsoTagged?: ExerciseTag;
   patterns: MovementPattern[];
@@ -43,10 +46,8 @@ type LibraryPanelProps = {
   purpose: LibraryPurpose | null;
   library: readonly Exercise[];
   equipment: readonly Equipment[];
-  asideRef: RefObject<HTMLElement>;
   searchRef: RefObject<HTMLInputElement>;
   onAdd: (exercise: Exercise) => void;
-  onDismissPurpose: () => void;
   onClose: () => void;
 };
 
@@ -59,6 +60,8 @@ const TYPE_OPTIONS: { value: LibraryType; label: string }[] = [
   { value: 'stretching', label: 'Stretching' },
   { value: 'cardio', label: 'Cardio' },
 ];
+type ActiveFilter = { key: string; label: string; remove: (filters: Filters) => Filters };
+
 const CLEARED_FILTERS: Filters = { query: '', patterns: [], muscles: [], onlyHers: false, bodyweightOnly: false };
 const COUNT_ANNOUNCE_DELAY_MS = 600;
 
@@ -70,31 +73,24 @@ function anyOf<Value>(chosen: readonly Value[], values: readonly Value[]): boole
   return chosen.length === 0 || values.some(value => chosen.includes(value));
 }
 
-function activeFilterNames(filters: Filters, type: LibraryType): string[] {
+function activeFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
   const query = filters.query.trim();
+  const patterns = type === 'resistance' ? filters.patterns : [];
   return [
-    ...(query ? [`“${query}”`] : []),
-    ...(type === 'resistance' && filters.patterns.length > 0 ? [`Pattern: ${filters.patterns.map(pattern => MOVEMENT_PATTERN_LABELS[pattern]).join(', ')}`] : []),
-    ...(filters.muscles.length > 0 ? [`Muscle: ${filters.muscles.map(muscle => MUSCLE_LABELS[muscle]).join(', ')}`] : []),
-    ...(filters.onlyHers ? ['Only her equipment'] : []),
-    ...(filters.bodyweightOnly ? ['Bodyweight'] : []),
+    ...(query ? [{ key: 'query', label: `Search: “${query}”`, remove: (current: Filters) => ({ ...current, query: '' }) }] : []),
+    ...patterns.map(pattern => ({
+      key: `pattern-${pattern}`,
+      label: `Pattern: ${MOVEMENT_PATTERN_LABELS[pattern]}`,
+      remove: (current: Filters) => ({ ...current, patterns: current.patterns.filter(other => other !== pattern) }),
+    })),
+    ...filters.muscles.map(muscle => ({
+      key: `muscle-${muscle}`,
+      label: `Muscle: ${MUSCLE_LABELS[muscle]}`,
+      remove: (current: Filters) => ({ ...current, muscles: current.muscles.filter(other => other !== muscle) }),
+    })),
+    ...(filters.onlyHers ? [{ key: 'only-hers', label: 'Only her equipment', remove: (current: Filters) => ({ ...current, onlyHers: false }) }] : []),
+    ...(filters.bodyweightOnly ? [{ key: 'bodyweight', label: 'Bodyweight', remove: (current: Filters) => ({ ...current, bodyweightOnly: false }) }] : []),
   ];
-}
-
-function useInertOutside(root: RefObject<HTMLElement>, active: boolean) {
-  useEffect(() => {
-    const own = root.current;
-    if (!active || !own) return;
-    const inerted: Element[] = [];
-    for (let node: Element = own; node.parentElement && node !== document.body; node = node.parentElement) {
-      for (const sibling of node.parentElement.children) {
-        if (sibling === node || sibling.hasAttribute('inert') || sibling.matches('[role="status"], [aria-live], script')) continue;
-        sibling.setAttribute('inert', '');
-        inerted.push(sibling);
-      }
-    }
-    return () => inerted.forEach(sibling => sibling.removeAttribute('inert'));
-  }, [root, active]);
 }
 
 function useCountAnnouncement(count: number, filtersKey: string) {
@@ -138,79 +134,94 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
       </div>
       <span className="flex items-center gap-4">
         {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />}
-        <Button variant="ghost" size="icon-xs" aria-label={`Add ${exercise.name}`} onClick={() => onAdd(exercise)}>
-          <Plus aria-hidden="true" />
-        </Button>
+        <IconActionButton icon={Plus} label={`Add ${exercise.name}`} hint="Add exercise" onClick={() => onAdd(exercise)} />
         <GripVertical aria-hidden="true" size={16} className="text-text-secondary group-hover:text-primary" />
       </span>
     </div>
   );
 }
 
-function PurposeChip({ purpose, added, onDismiss }: { purpose: LibraryPurpose; added: boolean; onDismiss: () => void }) {
-  return (
-    <div className="grid min-w-0 gap-1">
-      <p className="flex min-w-0 items-center justify-between gap-2 rounded-field bg-primary-soft py-1 pr-1 pl-3 text-sm font-medium text-primary">
-        <span className="min-w-0 truncate">{purpose.label}</span>
-        <Button variant="ghost" size="icon-xs" aria-label="Stop adding" onClick={onDismiss}>
-          <X aria-hidden="true" />
-        </Button>
-      </p>
-      {added && <p className="px-1 text-xs text-text-secondary">{`Added to ${purpose.place}`}</p>}
-    </div>
-  );
-}
+type NoMatchesProps = {
+  type: LibraryType;
+  filters: readonly ActiveFilter[];
+  containerRef: RefObject<HTMLDivElement>;
+  onRemove: (filter: ActiveFilter, index: number) => void;
+  onClear: () => void;
+};
 
-function NoMatches({ type, filters, onClear }: { type: LibraryType; filters: Filters; onClear: () => void }) {
-  const names = activeFilterNames(filters, type);
+function NoMatches({ type, filters, containerRef, onRemove, onClear }: NoMatchesProps) {
   const kind = `${TYPE_OPTIONS.find(option => option.value === type)?.label.toLowerCase()} exercises`;
+  if (filters.length === 0) return <p className="px-1 py-4 text-sm text-text-secondary">{`No ${kind} yet.`}</p>;
   return (
-    <div className="grid justify-items-center gap-3 px-1 py-6 text-center">
-      <p className="text-sm text-text-secondary">{names.length > 0 ? `No ${kind} match ${names.join(' · ')}.` : `No ${kind} yet.`}</p>
-      {names.length > 0 && (
-        <Button variant="outline" size="xs" onClick={onClear}>
-          Clear filters
-        </Button>
-      )}
+    <div ref={containerRef} className="grid justify-items-start gap-4 px-1 py-4">
+      <div className="grid gap-1">
+        <p className="text-sm font-semibold text-text-primary">No matches</p>
+        <p className="text-sm text-text-secondary">{`No ${kind} match these filters. Remove one to see more.`}</p>
+      </div>
+      <ul aria-label="Active filters" className="flex flex-wrap gap-2">
+        {filters.map((filter, index) => (
+          <RemovableChip key={filter.key} label={filter.label} removeLabel={`Remove filter ${filter.label}`} onRemove={() => onRemove(filter, index)} />
+        ))}
+      </ul>
+      <Button variant="outline" size="xs" data-clear-filters="" onClick={onClear}>
+        Clear filters
+      </Button>
     </div>
   );
 }
 
-type FrameProps = { isDrawer: boolean; headingId: string; asideRef: RefObject<HTMLElement>; onClose: () => void; children: ReactNode };
+function SwitchRow({ label, checked, onCheckedChange }: { label: string; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+  return (
+    <label className="flex min-h-12 cursor-pointer items-center gap-3 text-sm text-text-primary">
+      <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} />
+      {label}
+    </label>
+  );
+}
 
-function LibraryFrame({ isDrawer, headingId, asideRef, onClose, children }: FrameProps) {
-  const drawerRoot = useRef<HTMLDivElement>(null);
-  useInertOutside(drawerRoot, isDrawer);
+type FrameProps = { isDrawer: boolean; headingId: string; onClose: () => void; children: ReactNode };
+
+function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
   if (!isDrawer) {
     return (
-      <aside ref={asideRef} aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
+      <aside aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
         {children}
       </aside>
     );
   }
   return (
-    <div ref={drawerRoot}>
-      <div aria-hidden="true" className="fixed inset-0 z-40 bg-overlay-medium" data-parity="drawer-backdrop" onClick={onClose} />
-      <div
-        ref={asideRef as RefObject<HTMLDivElement>}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={headingId}
-        className="fixed inset-y-0 right-0 z-50 flex w-80 max-w-[calc(100vw-2rem)] shrink-0 flex-col bg-card shadow-drawer"
-      >
+    <Sheet open onOpenChange={open => !open && onClose()}>
+      <SheetContent padding="flush" width="sm" aria-describedby={undefined} className="bg-card">
         {children}
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
-export function LibraryPanel({ presentation, purpose, library, equipment, asideRef, searchRef, onAdd, onDismissPurpose, onClose }: LibraryPanelProps) {
+function LibraryHeading({ isDrawer, headingId }: { isDrawer: boolean; headingId: string }) {
+  if (isDrawer) {
+    return (
+      <SheetTitle className={cn(WIDGET_TITLE_CLASS, 'flex min-h-12 items-center font-sans')}>
+        Exercise library
+      </SheetTitle>
+    );
+  }
+  return (
+    <h2 id={headingId} className={WIDGET_TITLE_CLASS}>
+      Exercise library
+    </h2>
+  );
+}
+
+export function LibraryPanel({ presentation, purpose, library, equipment, searchRef, onAdd, onClose }: LibraryPanelProps) {
   const [filters, setFilters] = useState<Filters>({ ...CLEARED_FILTERS, onlyHers: true });
   const [type, setType] = useState<LibraryType>('resistance');
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
-  const [addedFor, setAddedFor] = useState<string | null>(null);
   const announce = useEditorAnnouncer();
+  const focusLater = usePendingFocus();
+  const noMatches = useRef<HTMLDivElement>(null);
   const headingId = useId();
+  const purposeId = useId();
   const isDrawer = presentation === 'drawer';
   const { query, patterns, muscles, onlyHers, bodyweightOnly } = filters;
   const change = (next: Partial<Filters>) => setFilters(current => ({ ...current, ...next }));
@@ -234,26 +245,39 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
   function add(exercise: Exercise) {
     onAdd(exercise);
     announce(purpose ? `${exercise.name} added to ${purpose.destination}` : `${exercise.name} added`);
-    setAddedFor(purpose?.key ?? null);
+  }
+
+  function removeFilter(filter: ActiveFilter, index: number) {
+    setFilters(filter.remove);
+    focusLater(() => {
+      const chips = [...(noMatches.current?.querySelectorAll<HTMLElement>('li button') ?? [])];
+      return chips[index] ?? chips.at(-1) ?? searchRef.current;
+    });
+  }
+
+  function clearFilters() {
+    setFilters(CLEARED_FILTERS);
+    focusLater(() => searchRef.current);
   }
 
   return (
-    <LibraryFrame isDrawer={isDrawer} headingId={headingId} asideRef={asideRef} onClose={onClose}>
+    <LibraryFrame isDrawer={isDrawer} headingId={headingId} onClose={onClose}>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h2 id={headingId} className={WIDGET_TITLE_CLASS}>
-            Exercise library
-          </h2>
-          {isDrawer && (
-            <Button onClick={onClose} variant="ghost" size="icon-sm" aria-label="Close exercise library">
-              <X aria-hidden="true" size={18} />
-            </Button>
-          )}
-        </div>
-        {purpose && <PurposeChip purpose={purpose} added={addedFor === purpose.key} onDismiss={onDismissPurpose} />}
-        <label className="relative hit-area block">
-          <SearchField ref={searchRef} size="sm" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => change({ query: event.target.value })} />
-        </label>
+        <LibraryHeading isDrawer={isDrawer} headingId={headingId} />
+        {purpose && (
+          <p id={purposeId} className="sr-only">
+            {purpose.label}
+          </p>
+        )}
+        <SearchField
+          ref={searchRef}
+          size="sm"
+          aria-label="Search exercises"
+          aria-describedby={purpose ? purposeId : undefined}
+          placeholder="Search exercises"
+          value={query}
+          onChange={event => change({ query: event.target.value })}
+        />
         <ChoiceGroup size="xs" aria-label="Exercise type" value={type} onValueChange={value => setType(value as LibraryType)}>
           {TYPE_OPTIONS.map(option => (
             <ChoiceOption key={option.value} value={option.value}>
@@ -273,20 +297,14 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
           )}
           <MultiSelect label="Muscle" selected={muscles} options={MUSCLES} labels={MUSCLE_LABELS} onToggle={value => change({ muscles: toggled(muscles, value) })} />
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-3">
-          <label className="flex min-h-12 items-center gap-2 text-sm text-text-primary">
-            <Switch checked={onlyHers} onCheckedChange={checked => change({ onlyHers: checked })} aria-label="Only her equipment" />
-            Only her equipment
-          </label>
-          <label className="flex min-h-12 items-center gap-2 text-sm text-text-primary">
-            <Switch checked={bodyweightOnly} onCheckedChange={checked => change({ bodyweightOnly: checked })} aria-label="Bodyweight" />
-            Bodyweight
-          </label>
+        <div className="grid">
+          <SwitchRow label="Only her equipment" checked={onlyHers} onCheckedChange={checked => change({ onlyHers: checked })} />
+          <SwitchRow label="Bodyweight" checked={bodyweightOnly} onCheckedChange={checked => change({ bodyweightOnly: checked })} />
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
         {shown.length === 0 ? (
-          <NoMatches type={type} filters={filters} onClear={() => setFilters(CLEARED_FILTERS)} />
+          <NoMatches type={type} filters={activeFilters(filters, type)} containerRef={noMatches} onRemove={removeFilter} onClear={clearFilters} />
         ) : (
           <ul aria-label="Exercises" className="grid gap-3">
             {shown.map(exercise => (

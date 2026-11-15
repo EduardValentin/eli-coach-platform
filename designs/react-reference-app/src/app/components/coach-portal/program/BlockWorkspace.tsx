@@ -8,6 +8,7 @@ import { blockWithSession, type LibraryTarget } from '../../../domain/programEdi
 import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
 import { BlockHeader } from './BlockHeader';
 import { CardioSessionCard } from './CardioSessionCard';
+import { LibraryTargetContext } from './libraryTarget';
 import { SessionCard } from './SessionCard';
 import { SessionDragLayer } from './sessionDnd';
 import { useMeasuredHeight } from './useMeasuredHeight';
@@ -29,6 +30,7 @@ type BlockWorkspaceProps = {
   onChange: (block: Block) => void;
   onRemove: () => void;
   onOpenLibrary: (target: LibraryTarget) => void;
+  libraryTarget: LibraryTarget | null;
 };
 
 function prefersReducedMotion(): boolean {
@@ -36,7 +38,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function BlockWorkspace(props: BlockWorkspaceProps) {
-  const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary } = props;
+  const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary, libraryTarget } = props;
   const header = useMeasuredHeight();
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
@@ -78,35 +80,37 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
         measureRef={header.measureRef}
       />
       <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
-        {planned.map(entry =>
-          entry.kind === 'cardio' ? (
-            <CardioSessionCard
-              key={entry.cardio.id}
-              cardio={entry.cardio}
-              expanded={entry.cardio.id === openSessionId}
-              articleRef={articleRefFor(entry.cardio.id)}
-              library={library}
-              onExpand={() => onOpenSession(entry.cardio.id)}
-              onChange={next => onChange(blockWithCardio(block, next))}
-              onOpenLibrary={onOpenLibrary}
-            />
-          ) : (
-            <SessionCard
-              key={entry.session.id}
-              session={entry.session}
-              block={block}
-              expanded={entry.session.id === openSessionId}
-              articleRef={articleRefFor(entry.session.id)}
-              library={library}
-              context={context}
-              onExpand={() => onOpenSession(entry.session.id)}
-              onChange={next => onChange(blockWithSession(block, next))}
-              onOpenLibrary={onOpenLibrary}
-            />
-          ),
-        )}
-      </div>
+      <LibraryTargetContext.Provider value={libraryTarget}>
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
+          {planned.map(entry =>
+            entry.kind === 'cardio' ? (
+              <CardioSessionCard
+                key={entry.cardio.id}
+                cardio={entry.cardio}
+                expanded={entry.cardio.id === openSessionId}
+                articleRef={articleRefFor(entry.cardio.id)}
+                library={library}
+                onExpand={() => onOpenSession(entry.cardio.id)}
+                onChange={next => onChange(blockWithCardio(block, next))}
+                onOpenLibrary={onOpenLibrary}
+              />
+            ) : (
+              <SessionCard
+                key={entry.session.id}
+                session={entry.session}
+                block={block}
+                expanded={entry.session.id === openSessionId}
+                articleRef={articleRefFor(entry.session.id)}
+                library={library}
+                context={context}
+                onExpand={() => onOpenSession(entry.session.id)}
+                onChange={next => onChange(blockWithSession(block, next))}
+                onOpenLibrary={onOpenLibrary}
+              />
+            ),
+          )}
+        </div>
+      </LibraryTargetContext.Provider>
       <SessionDragLayer />
     </section>
   );

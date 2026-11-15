@@ -217,7 +217,7 @@ describe('DayContent', () => {
     return withSession(view, session => ({
       ...session,
       name: 'Lower A',
-      coolDown: { enabled: true, note: '', items: [] },
+      coolDown: { enabled: true, items: [{ id: 'cd0', exerciseId: squat.id, seconds: 30 }] },
       warmUp: { items: [{ id: 'w1', exerciseId: deadlift.id, sets: 2, reps: { min: 8, max: 8 } }] },
       rows: [
         { ...session.rows[0], slot: 'A', supersetGroup: undefined, exerciseId: squat.id, sets: [warmUp, heavy, byFeel], restSeconds: 120, cues: 'Brace before you descend', substitutions: [deadlift.id] },
@@ -262,12 +262,12 @@ describe('DayContent', () => {
     expect(screen.getByText(/Low-energy session/)).toBeInTheDocument();
   });
 
-  it('lists the cool-down note and its stretches with their seconds', () => {
+  it('lists the cool-down as its stretches with their seconds', () => {
     // arrange
     const view = viewAt(TODAY);
     const block = withSession(view, session => ({
       ...strengthDay(view).sessions[0],
-      coolDown: { enabled: true, note: 'Walk easy for two minutes.', items: [{ id: 'cd1', exerciseId: squat.id, seconds: 40 }] },
+      coolDown: { enabled: true, items: [{ id: 'cd1', exerciseId: squat.id, seconds: 40 }] },
     }));
 
     // act
@@ -275,8 +275,20 @@ describe('DayContent', () => {
 
     // assert
     const coolDown = screen.getByRole('region', { name: 'Cool-down' });
-    expect(within(coolDown).getByText('Walk easy for two minutes.')).toBeInTheDocument();
     expect(within(within(coolDown).getByRole('list', { name: 'Cool-down stretches' })).getByRole('listitem')).toHaveTextContent(`${squat.name} · 40 s`);
+    expect(within(coolDown).queryByRole('paragraph')).not.toBeInTheDocument();
+  });
+
+  it('leaves out a cool-down that is on without stretches', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const block = withSession(view, () => ({ ...strengthDay(view).sessions[0], coolDown: { enabled: true, items: [] } }));
+
+    // act
+    render(<DayContent view={view} block={block} weekday="mon" />);
+
+    // assert
+    expect(screen.queryByRole('region', { name: 'Cool-down' })).not.toBeInTheDocument();
   });
 
   it('groups a superset under one label', () => {

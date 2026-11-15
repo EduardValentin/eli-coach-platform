@@ -33,7 +33,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Link, linkVariants } from "./ui/link";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
-import { LABEL_CLASS } from "./typography";
+import { LABEL_CLASS, EYEBROW_CLASS } from "./typography";
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -437,7 +437,7 @@ function PaidCheckoutDetails(
       }
     >
       <div className="mt-6" data-parity="order-summary-block">
-        <h3 className={LABEL_CLASS}>Your order</h3>
+        <h3 className={EYEBROW_CLASS}>Your order</h3>
         <StoreOrderSummary
           className="mt-2"
           currency={props.currency}

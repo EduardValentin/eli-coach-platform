@@ -1,4 +1,5 @@
 import { PlayCircle } from 'lucide-react';
+import { IconActionButton } from './IconActionButton';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
@@ -9,11 +10,9 @@ export function WatchVideoButton({ name, videoUrl, appearance = 'text' }: WatchV
     <Dialog>
       <DialogTrigger asChild>
         {appearance === 'icon' ? (
-          <Button variant="ghost" size="icon-xs" aria-label={`Watch ${name} video`}>
-            <PlayCircle aria-hidden="true" />
-          </Button>
+          <IconActionButton icon={PlayCircle} label={`Watch ${name} video`} hint="Watch video" />
         ) : (
-          <Button variant="link" size="xs" className="w-fit px-0 has-[>svg]:px-0">
+          <Button variant="link" size="inline">
             <PlayCircle aria-hidden="true" />
             Watch video
           </Button>

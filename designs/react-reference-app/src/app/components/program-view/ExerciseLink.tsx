@@ -1,5 +1,6 @@
 import type { Exercise } from '../../context/TrainingContext';
 import { clientExerciseUrl } from '../../utils/exerciseLinks';
+import { linkVariants } from '../ui/link';
 import { cn } from '../ui/utils';
 import { useExercisePageHref } from './exercisePageLinks';
 import { exerciseNameOf } from './programView';
@@ -13,7 +14,7 @@ export function ExerciseLink({ exerciseId, exercisesById, className }: ExerciseL
   return (
     <a
       href={clientExerciseUrl(exercise.id, window.location.origin)}
-      className={cn('underline decoration-divider decoration-1 underline-offset-2 hover:decoration-current print:no-underline', className)}
+      className={cn(linkVariants({ variant: 'inline' }), className)}
     >
       {exercise.name}
     </a>

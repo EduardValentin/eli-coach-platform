@@ -160,7 +160,7 @@ function DailyNutritionWidget({ primaryGoal }: { primaryGoal: string | null }) {
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
-                  <span className={LABEL_CLASS}>Daily Target</span>
+                  <span className={LABEL_CLASS}>Daily target</span>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>

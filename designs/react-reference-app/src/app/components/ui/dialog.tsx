@@ -115,7 +115,7 @@ function DialogContent({
     dismissal?: DialogDismissal;
     returnFocusTo?: React.RefObject<HTMLElement | null>;
   }) {
-  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
+  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener(returnFocusTo);
 
   const escapeUnlessLocked = (event: KeyboardEvent) => {
     onEscapeKeyDown?.(event);
@@ -135,15 +135,7 @@ function DialogContent({
   const closeWithFocusReturned = (event: Event) => {
     onCloseAutoFocus?.(event);
     if (event.defaultPrevented) return;
-
-    const target = returnFocusTo?.current;
-    if (!target?.isConnected) {
-      returnFocusToOpener(event);
-      return;
-    }
-
-    event.preventDefault();
-    target.focus();
+    returnFocusToOpener(event);
   };
 
   return (

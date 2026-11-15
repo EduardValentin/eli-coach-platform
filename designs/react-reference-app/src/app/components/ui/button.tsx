@@ -21,11 +21,16 @@ const buttonClasses = cva(
           "bg-destructive text-destructive-foreground not-aria-disabled:hover:bg-destructive/90",
         "destructive-outline":
           "border border-destructive/30 bg-surface-base text-destructive not-aria-disabled:hover:bg-destructive/10",
+        "destructive-link": "text-destructive underline-offset-4 not-aria-disabled:hover:underline",
+        disclosure:
+          "font-normal text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary data-[state=open]:text-text-primary [&>svg:last-child]:transition-transform motion-reduce:[&>svg:last-child]:transition-none data-[state=open]:[&>svg:last-child]:rotate-180",
+        add: "w-full border border-dashed border-control-border-soft bg-card text-text-secondary not-aria-disabled:hover:border-primary not-aria-disabled:hover:bg-primary-soft not-aria-disabled:hover:text-primary data-[drop=ready]:border-primary/40 data-[drop=ready]:bg-primary-soft data-[drop=over]:border-primary data-[drop=over]:bg-primary-soft data-[drop=over]:text-primary",
       },
       size: {
         xs: "h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5",
         sm: "h-(--size-control-sm) px-4 text-sm has-[>svg]:px-3",
         md: "h-(--size-control-md) px-6 text-base has-[>svg]:px-5",
+        inline: "h-auto w-fit whitespace-normal px-0 text-left text-sm has-[>svg]:px-0",
         "icon-xs": "size-(--size-control-xs) rounded-full",
         "icon-sm": "size-(--size-control-sm) rounded-full",
         "icon-md":
@@ -36,6 +41,7 @@ const buttonClasses = cva(
         card: "shadow-card",
       },
     },
+    compoundVariants: [{ variant: "add", size: "md", class: "text-sm" }],
     defaultVariants: {
       variant: "primary",
       size: "sm",

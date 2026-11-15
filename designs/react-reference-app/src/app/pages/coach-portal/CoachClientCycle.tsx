@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams } from 'react-router';
 import {
-  ArrowLeft,
   CalendarDays,
   Droplet,
   FileText,
   Heart,
   History,
 } from 'lucide-react';
+import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { PortalWidget } from '../../components/PortalWidget';
@@ -55,12 +55,7 @@ export function CoachClientCycle() {
 
   return (
     <div className="w-full">
-      <Link
-        to={`/coach/clients/${clientId}`}
-        className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary mb-8 transition-colors"
-      >
-        <ArrowLeft size={16} /> Back to {clientName}
-      </Link>
+      <PortalBackLink to={`/coach/clients/${clientId}`}>Back to {clientName}</PortalBackLink>
 
       <PortalPageHeader
         title={`${clientName}’s Cycle Log`}

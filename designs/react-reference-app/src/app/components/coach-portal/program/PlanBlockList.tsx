@@ -157,10 +157,10 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
             onChange={type => onChange(current => replaceAt(current, index, blockWithType(current[index], type)))}
           />
         )}
-        <label className="relative hit-area flex items-center gap-1.5 text-sm text-text-secondary">
-          <Input size="sm" className="w-16 tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
+        <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+          <Input size="sm" frameClassName="w-16" className="tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
           wk
-        </label>
+        </span>
         <span className="min-w-0 flex-1 basis-28 text-sm break-words text-text-label">
           {splitLabel(block)}
           {line && <span className="text-text-secondary">{` · ${line}`}</span>}
@@ -168,14 +168,14 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
         <Button
           variant="ghost"
           size="xs"
-          aria-label={`Open block ${position}, ${filledSessionsText(filled, total)}`}
+          aria-label={`Open block ${position}, ${typeLabel} · ${filledSessionsText(filled, total)}`}
           onClick={onOpen}
-          className={cn('h-auto min-h-8 text-left whitespace-normal tabular-nums', {
+          className={cn('tabular-nums', {
             'text-warning': filled < total,
             'text-text-secondary': filled === total,
           })}
         >
-          {filledSessionsText(filled, total)}
+          {`${filled}/${total}`}
           <ArrowRight aria-hidden="true" />
         </Button>
         {weeks.problem && (
@@ -270,14 +270,10 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, onCha
           </li>
         ))}
       </ol>
-      <button
-        type="button"
-        onClick={onAddBlock}
-        className="mt-1.5 flex min-h-12 w-full items-center justify-center gap-2 rounded-card border border-dashed border-control-border-soft text-sm font-medium text-text-secondary transition-colors hover:bg-surface-quiet hover:text-text-primary"
-      >
-        <Plus aria-hidden="true" size={16} />
+      <Button variant="add" size="md" className="mt-1.5" onClick={onAddBlock}>
+        <Plus aria-hidden="true" />
         Add block
-      </button>
+      </Button>
     </div>
   );
 }

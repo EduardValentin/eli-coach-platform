@@ -14,12 +14,12 @@ import {
 } from '../../domain/program';
 import { SEGMENT_KIND_LABELS } from '../../domain/programCardio';
 import { scheduledItems } from '../../domain/weekEditing';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { RoutineCard } from './DayParts';
 import { PositionBadge } from './PositionBadge';
-import { cardioSegmentText, cardioSummary, coolDownLines, exerciseNameOf, repsSuffix, restLabel, sessionAnchor, sessionSummary, warmUpLines } from './programView';
+import { cardioSegmentText, cardioSummary, coolDownLines, exerciseNameOf, hasCoolDown, repsSuffix, restLabel, sessionAnchor, sessionSummary, warmUpLines } from './programView';
 
 const ARTICLE_CLASS = 'scroll-mt-6 rounded-card border border-border bg-card shadow-card';
 
@@ -37,7 +37,7 @@ function CardHeader({ headingId, name, days, meta }: { headingId: string; name: 
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-b border-border-subtle px-4 py-3 sm:px-5">
       <div className="grid gap-1">
-        <p className={LABEL_CLASS}>{daysText(days)}</p>
+        <p className={EYEBROW_CLASS}>{daysText(days)}</p>
         <h3 id={headingId} className="font-serif text-xl text-text-primary">
           {name}
         </h3>
@@ -105,9 +105,7 @@ function SessionReadCard({ session, days, exercisesById }: { session: Session; d
             <ExerciseReadCard key={row.id} session={session} row={row} exercisesById={exercisesById} />
           ))}
         </div>
-        {session.coolDown.enabled && (
-          <RoutineCard title="Cool-down" listLabel="Cool-down stretches" note={session.coolDown.note} lines={coolDownLines(session, exercisesById)} />
-        )}
+        {hasCoolDown(session) && <RoutineCard title="Cool-down" listLabel="Cool-down stretches" lines={coolDownLines(session, exercisesById)} />}
       </div>
     </article>
   );
@@ -121,7 +119,7 @@ function CardioReadCard({ cardio, days, exercisesById }: { cardio: CardioSession
       <ol aria-label="Segments" className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
         {cardio.segments.map(segment => (
           <li key={segment.id} className="grid content-start gap-1 rounded-control border border-l-4 border-border border-l-training-recovery bg-card p-3">
-            <p className={LABEL_CLASS}>{SEGMENT_KIND_LABELS[segment.kind]}</p>
+            <p className={EYEBROW_CLASS}>{SEGMENT_KIND_LABELS[segment.kind]}</p>
             <p className="text-sm text-text-primary">{cardioSegmentText(segment, exercisesById)}</p>
           </li>
         ))}

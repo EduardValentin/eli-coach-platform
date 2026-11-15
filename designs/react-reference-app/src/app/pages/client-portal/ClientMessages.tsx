@@ -50,7 +50,7 @@ import { ELI_PORTRAIT_SMALL } from '../../utils/eliPortrait';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Textarea } from '../../components/ui/textarea';
-import { LABEL_CLASS } from '../../components/typography';
+import { EYEBROW_CLASS } from '../../components/typography';
 import { cn } from '../../components/ui/utils';
 
 const COACH_DEFAULT_PHOTO = ELI_PORTRAIT_SMALL;
@@ -197,7 +197,7 @@ export function ClientMessages() {
         </div>
 
         <div className="p-6">
-          <h3 className={cn(LABEL_CLASS, 'mb-4')}>Info</h3>
+          <h3 className={cn(EYEBROW_CLASS, 'mb-4')}>Info</h3>
           <p className="text-xs text-text-secondary leading-relaxed">
             Your coach reviews messages daily. Regular check-ins are scheduled
             for you automatically. To request an extra one, use{' '}
@@ -330,7 +330,7 @@ export function ClientMessages() {
               </span>
             </span>
             {nextCheckin.kind === 'recurring' && (
-              <span className={cn(LABEL_CLASS, 'shrink-0 text-primary')}>
+              <span className={cn(EYEBROW_CLASS, 'shrink-0 text-primary')}>
                 Weekly
               </span>
             )}

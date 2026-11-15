@@ -12,17 +12,18 @@ import { EditorAnnouncerProvider, useEditorAnnouncer } from '../../components/co
 import { EditorSkeleton } from '../../components/coach-portal/program/EditorSkeleton';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
-import { ProgramOutlineDrawer } from '../../components/coach-portal/program/ProgramOutlineDrawer';
+import { ProgramOutline } from '../../components/coach-portal/program/ProgramOutline';
 import { ProgramSetupNotReady, ProgramSetupSheet, ProgramSetupSkeleton } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { PublishDialog, type PublishDialogStart } from '../../components/coach-portal/program/PublishDialog';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
-import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { Button } from '../../components/ui/button';
+import { Sheet, SheetTrigger } from '../../components/ui/sheet';
 import { Tabs, TabsContent } from '../../components/ui/tabs';
 import { SkipLink } from '../../components/ui/skip-link';
+import { useIsDesktop } from '../../components/ui/use-desktop';
 import { usePrograms } from '../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, currentVersion, draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../domain/program';
@@ -46,7 +47,8 @@ type EditorProps = { journey: ClientJourney; program: Program; draft: ProgramVer
 function ProgramEditor(props: EditorProps) {
   const { journey, program, draft } = props;
   const editor = useEditorState(props);
-  const rail = useRailDrawer();
+  const [railOpen, setRailOpen] = useState(false);
+  const isDesktop = useIsDesktop();
   const panel = useLibraryPanel();
   const announce = useEditorAnnouncer();
   const { exercises } = useTraining();
@@ -79,6 +81,7 @@ function ProgramEditor(props: EditorProps) {
     openSessionId,
     onOpenSession: sessionId => setOpenSessions(current => ({ ...current, [block.id]: sessionId })),
     onOpenLibrary: panel.openFor,
+    libraryTarget: panel.panelTarget?.target ?? null,
   };
   useDocumentTitle(`${EDITOR_MODE_LABELS[editor.mode]} · ${placeTitle} · ${journeyClientName(journey)}`);
 
@@ -96,8 +99,12 @@ function ProgramEditor(props: EditorProps) {
     announce(`${BLOCK_TYPE_LABELS[type]} block added as block ${content.plan.blocks.length + 1}`);
   }
 
+  function hideRail() {
+    setRailOpen(false);
+  }
+
   function startAddingBlock() {
-    rail.hide();
+    hideRail();
     blockAdded.current = false;
     setAddingBlock(true);
   }
@@ -108,12 +115,12 @@ function ProgramEditor(props: EditorProps) {
 
   function selectFromRail(section: EditorSection) {
     editor.select(section);
-    rail.hide();
+    hideRail();
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle" data-parity-root="ProgramEditorPage">
-      <div className="contents" {...rail.behindProps}>
+    <Sheet open={railOpen && !isDesktop} onOpenChange={setRailOpen}>
+      <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle" data-parity-root="ProgramEditorPage">
         <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
         <EditorTopBar
           journey={journey}
@@ -125,9 +132,11 @@ function ProgramEditor(props: EditorProps) {
           onOpenChecks={setPublishing}
           library={block ? { open: panel.visible, onToggle: panel.toggle } : null}
           railToggle={
-            <Button ref={rail.openButton} onClick={rail.show} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
-              <ListTree size={20} />
-            </Button>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
+                <ListTree size={20} />
+              </Button>
+            </SheetTrigger>
           }
           onPreview={() => setPreviewing(true)}
           onPublish={() => setPublishing('top')}
@@ -136,80 +145,76 @@ function ProgramEditor(props: EditorProps) {
           problemsCount={editor.problems.length}
           warningsCount={editor.warnings.length}
         />
-      </div>
-      <Tabs value={editor.mode} activationMode="manual" variant="segmented" className="min-h-0 flex-1 flex-row gap-0">
-        <ProgramOutlineDrawer
-          rail={rail}
-          mode={editor.mode}
-          version={draft}
-          language={program.language}
-          dayOne={ruleContext.dayOne}
-          today={today}
-          selected={selected}
-          locationOf={editor.locationOf}
-          onSelect={selectFromRail}
-          onSwitchMode={rail.hide}
-          onAddBlock={startAddingBlock}
-        />
-        <main
-          ref={main}
-          id={EDITOR_ID}
-          tabIndex={-1}
-          aria-label="Program editor"
-          {...rail.behindProps}
-          className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
-        >
-          <TabsContent value={editor.mode} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-none">
-            <EditorSectionContent
-              section={selected}
-              journey={journey}
-              program={program}
-              draft={draft}
-              editor={editor}
-              openBlock={openBlock}
-              onAddBlock={startAddingBlock}
-            />
-          </TabsContent>
-        </main>
-        {block && panel.visible && (
-          <LibraryPanel
-            presentation={panel.isWide ? 'pane' : 'drawer'}
-            purpose={libraryPurpose(block, panel.panelTarget, exercises)}
-            library={exercises}
-            equipment={editor.equipment}
-            asideRef={panel.aside}
-            searchRef={panel.search}
-            onAdd={addFromLibrary}
-            onDismissPurpose={panel.dismissTarget}
-            onClose={panel.close}
+        <Tabs value={editor.mode} activationMode="manual" variant="segmented" className="min-h-0 flex-1 flex-row gap-0">
+          <ProgramOutline
+            mode={editor.mode}
+            version={draft}
+            language={program.language}
+            dayOne={ruleContext.dayOne}
+            today={today}
+            selected={selected}
+            locationOf={editor.locationOf}
+            onSelect={selectFromRail}
+            onSwitchMode={hideRail}
+            onAddBlock={startAddingBlock}
           />
-        )}
-      </Tabs>
-      <PublishDialog
-        open={publishing !== null}
-        onOpenChange={open => {
-          if (!open) setPublishing(null);
-        }}
-        startAt={publishing ?? 'top'}
-        version={draft}
-        problems={editor.problems}
-        warnings={editor.warnings}
-        onPublish={editor.publish}
-        onOpenBlock={blockId => editor.openInStructure({ kind: 'block', blockId })}
-      />
-      <ClientPreviewDialog
-        open={previewing}
-        onOpenChange={setPreviewing}
-        view={journeyProgramView({ journey, program, version: draft, exercises, today: new Date(), fallbackDayOne: new Date() })}
-      />
-      <AddBlockDialog
-        open={addingBlock}
-        onOpenChange={setAddingBlock}
-        lastBlock={content.plan.blocks.at(-1)}
-        returnFocusTo={focusAfterAdding}
-        onAdd={addBlock}
-      />
-    </div>
+          <main
+            ref={main}
+            id={EDITOR_ID}
+            tabIndex={-1}
+            aria-label="Program editor"
+            className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
+          >
+            <TabsContent value={editor.mode} tabIndex={-1} className="mx-auto w-full max-w-5xl flex-none">
+              <EditorSectionContent
+                section={selected}
+                journey={journey}
+                program={program}
+                draft={draft}
+                editor={editor}
+                openBlock={openBlock}
+                onAddBlock={startAddingBlock}
+              />
+            </TabsContent>
+          </main>
+          {block && panel.visible && (
+            <LibraryPanel
+              presentation={panel.isWide ? 'pane' : 'drawer'}
+              purpose={libraryPurpose(block, panel.panelTarget, exercises)}
+              library={exercises}
+              equipment={editor.equipment}
+              searchRef={panel.search}
+              onAdd={addFromLibrary}
+              onClose={panel.close}
+            />
+          )}
+        </Tabs>
+        <PublishDialog
+          open={publishing !== null}
+          onOpenChange={open => {
+            if (!open) setPublishing(null);
+          }}
+          startAt={publishing ?? 'top'}
+          version={draft}
+          problems={editor.problems}
+          warnings={editor.warnings}
+          onPublish={editor.publish}
+          onOpenBlock={blockId => editor.openInStructure({ kind: 'block', blockId })}
+        />
+        <ClientPreviewDialog
+          open={previewing}
+          onOpenChange={setPreviewing}
+          view={journeyProgramView({ journey, program, version: draft, exercises, today: new Date(), fallbackDayOne: new Date() })}
+        />
+        <AddBlockDialog
+          open={addingBlock}
+          onOpenChange={setAddingBlock}
+          lastBlock={content.plan.blocks.at(-1)}
+          returnFocusTo={focusAfterAdding}
+          onAdd={addBlock}
+        />
+      </div>
+    </Sheet>
   );
 }
 

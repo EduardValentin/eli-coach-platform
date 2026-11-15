@@ -16,7 +16,7 @@ import { AttentionDot } from '../AttentionDot';
 import { NavigationCount, NavigationCountLabel } from '../NavigationCount';
 import { NotificationBell } from '../NotificationBell';
 import { navigationLinkSlug } from '../navigation-link-slug';
-import { LABEL_CLASS } from '../typography';
+import { EYEBROW_CLASS } from '../typography';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { Button } from '../ui/button';
 import { useCloseMobileNavigationOnDesktop } from '../ui/use-close-mobile-navigation-on-desktop';
@@ -402,7 +402,7 @@ function MoreSheetNavigation({
               <span className="text-base font-medium flex-1 text-left">
                 {link.name}
               </span>
-              <span className={LABEL_CLASS}>Soon</span>
+              <span className={EYEBROW_CLASS}>Soon</span>
             </button>
           );
         }

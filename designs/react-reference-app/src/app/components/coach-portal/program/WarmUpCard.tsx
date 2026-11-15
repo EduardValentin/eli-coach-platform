@@ -4,8 +4,10 @@ import type { Exercise } from '../../../context/TrainingContext';
 import { formatRange, type Session, type WarmUpItem } from '../../../domain/program';
 import { WARM_UP_REPS, WARM_UP_SECONDS, type WarmUpEdits } from '../../../domain/warmUpEditing';
 import { exerciseNameOf } from '../../program-view/programView';
-import { Button } from '../../ui/button';
+import { IconActionButton } from '../../IconActionButton';
+import { cn } from '../../ui/utils';
 import { ExerciseItemList } from './ExerciseItemList';
+import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { CountField, RowTextField } from './RowTextField';
 import { parseRange, RANGE_PROBLEM } from './rowFields';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
@@ -44,15 +46,19 @@ function AmountField({ item, exercise, name, onChange }: { item: WarmUpItem; exe
 export function WarmUpCard({ session, library, edits, onChange, onPickExercise }: WarmUpCardProps) {
   const addButton = useRef<HTMLButtonElement>(null);
   const exerciseOf = (exerciseId: string) => library.find(other => other.id === exerciseId);
+  const filling = useIsLibraryTarget({ kind: 'warm-up', sessionId: session.id });
   return (
     <DropZone
       rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsLibraryExercise}
-      className="rounded-control border border-border-subtle bg-surface-subtle p-3"
+      className={cn('rounded-control border border-border-subtle bg-surface-subtle p-3', { [LIBRARY_TARGET_CLASS]: filling })}
       activeClassName="ring-2 ring-primary/40"
     >
       <section className="grid grid-cols-[minmax(0,1fr)] gap-2">
-        <h4 className="text-sm font-semibold text-text-primary">Warm-up</h4>
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="text-sm font-semibold text-text-primary">Warm-up</h4>
+          <IconActionButton ref={addButton} icon={Plus} label="Add exercise to warm-up" hint="Add exercise" onClick={onPickExercise} />
+        </div>
         <ExerciseItemList
           emptyFocus={addButton}
           label="Warm-up exercises"
@@ -71,11 +77,6 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
             </>
           )}
         </ExerciseItemList>
-        <Button ref={addButton} variant="ghost" size="xs" className="w-fit text-text-primary" onClick={onPickExercise}>
-          <Plus aria-hidden="true" />
-          Add exercise
-          <span className="sr-only">{' to warm-up'}</span>
-        </Button>
       </section>
     </DropZone>
   );

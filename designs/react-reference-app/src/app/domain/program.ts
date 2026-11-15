@@ -59,7 +59,7 @@ export type Row = {
 };
 export type WarmUpItem = { id: string; exerciseId: string; sets: number; reps?: Range; seconds?: number };
 export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
-export type CoolDown = { enabled: boolean; note: string; items: CoolDownItem[] };
+export type CoolDown = { enabled: boolean; items: CoolDownItem[] };
 export type SlotPatterns = Partial<Record<Slot, MovementPattern[]>>;
 export type Session = {
   id: string;
@@ -167,6 +167,15 @@ export function isWorkingSet(set: SetSpec): set is WorkingSet {
 
 export function workingSets(sets: readonly SetSpec[]): WorkingSet[] {
   return sets.filter(isWorkingSet);
+}
+
+const NEW_SET_REPS: Range = { min: 8, max: 8 };
+export const NEW_SET_RIR: Range = { min: 2, max: 2 };
+
+export function withSetAdded(sets: readonly SetSpec[]): SetSpec[] {
+  const last = sets.at(-1);
+  const added: SetSpec = last ? structuredClone(last) : { kind: 'working', reps: { ...NEW_SET_REPS }, rir: { ...NEW_SET_RIR } };
+  return [...sets, added];
 }
 
 export function setText(set: WorkingSet, repsSuffix = ''): string {

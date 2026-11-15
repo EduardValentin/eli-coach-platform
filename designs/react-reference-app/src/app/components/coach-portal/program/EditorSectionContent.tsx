@@ -20,6 +20,7 @@ export type OpenBlock = {
   openSessionId: string | undefined;
   onOpenSession: (sessionId: string) => void;
   onOpenLibrary: (target: LibraryTarget) => void;
+  libraryTarget: LibraryTarget | null;
 };
 
 type EditorSectionContentProps = {
@@ -54,6 +55,7 @@ function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSe
       onChange={editor.replaceBlock}
       onRemove={() => editor.removeBlock(block.id)}
       onOpenLibrary={openBlock.onOpenLibrary}
+      libraryTarget={openBlock.libraryTarget}
     />
   );
 }

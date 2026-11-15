@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Plus, Repeat, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
 import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, segmentMinutes, type CardioEdits } from '../../../domain/programCardio';
+import { IconActionButton } from '../../IconActionButton';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
@@ -17,6 +18,7 @@ import { CountField } from './RowTextField';
 import { parseWholeNumber } from './rowFields';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { useEditorAnnouncer } from './editorAnnouncer';
+import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
 type ItemMeasure = 'reps' | 'seconds';
@@ -94,7 +96,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   const { items } = segment;
   const addButton = useRef<HTMLButtonElement>(null);
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
       <fieldset className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
         <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
@@ -116,6 +118,10 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
         />
       </fieldset>
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <span className={LABEL_CLASS}>Exercises</span>
+        <IconActionButton ref={addButton} icon={Plus} label="Add exercise to the intervals" hint="Add exercise" onClick={onAddItem} />
+      </div>
       <ExerciseItemList
         emptyFocus={addButton}
         label="Interval exercises"
@@ -146,10 +152,6 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           );
         }}
       </ExerciseItemList>
-      <Button ref={addButton} variant="outline" size="xs" className="w-fit" onClick={onAddItem}>
-        <Plus aria-hidden="true" />
-        Add exercise
-      </Button>
     </div>
   );
 }
@@ -195,11 +197,14 @@ function SegmentTitle({ segment, kindLabel, headingId, exerciseName, onReplaceEx
         <Badge tone="training-recovery">{kindLabel}</Badge>
         <span className="min-w-0 text-sm font-medium text-text-primary">{exerciseName ?? 'No exercise yet'}</span>
       </h5>
-      <Button variant="outline" size="xs" onClick={onReplaceExercise}>
-        <Repeat aria-hidden="true" />
-        {exerciseName ? 'Replace' : 'Choose exercise'}
-        {exerciseName && <span className="sr-only">{` ${exerciseName}`}</span>}
-      </Button>
+      {exerciseName ? (
+        <IconActionButton icon={Repeat} label={`Replace ${exerciseName}`} hint="Replace exercise" onClick={onReplaceExercise} />
+      ) : (
+        <Button variant="outline" size="xs" onClick={onReplaceExercise}>
+          <Repeat aria-hidden="true" />
+          Choose exercise
+        </Button>
+      )}
     </div>
   );
 }
@@ -241,6 +246,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
     [cardioId, segment.id, isRounds, edits, onChange],
   );
   const targeted = isOver && canDrop;
+  const filling = useIsLibraryTarget({ kind: isRounds ? 'rounds-item' : 'cardio-exercise', sessionId: cardioId, segmentId: segment.id });
 
   function move(direction: 'up' | 'down') {
     onChange(direction === 'up' ? edits.moveUp(segment.id) : edits.moveDown(segment.id));
@@ -259,7 +265,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
       data-segment-id={segment.id}
-      className={cn(DRAGGABLE_CARD_CLASS, 'grid grid-cols-[minmax(0,1fr)] gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }))}
+      className={cn(DRAGGABLE_CARD_CLASS, 'grid grid-cols-[minmax(0,1fr)] gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }), { [LIBRARY_TARGET_CLASS]: filling })}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />

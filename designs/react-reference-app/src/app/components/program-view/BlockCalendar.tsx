@@ -5,6 +5,7 @@ import { DOCUMENT_HEAD_CLASS, DOCUMENT_NOTE_CLASS, DOCUMENT_SECTION_TITLE_CLASS 
 import { cn } from '../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from './blockColours';
 import { DocumentHeading } from './documentEditing';
+import { PositionBadge } from './PositionBadge';
 import { dayEntryLabel, type ProgramView } from './programView';
 
 type DayKind = 'session' | 'cardio' | 'rest';
@@ -21,7 +22,6 @@ const KIND_NAME: Record<DayKind, string> = {
 const CELL_CLASS =
   'relative border border-divider align-top max-sm:flex max-sm:items-baseline max-sm:gap-3 max-sm:border-0 max-sm:border-t max-sm:py-2 max-sm:pr-3 max-sm:pl-4 sm:h-14 sm:py-1 sm:pr-1 sm:pl-2 print:h-[12.5mm] print:pt-[0.2mm] print:pb-0';
 const TICK_BOX_CLASS = 'inline-block size-[4mm] shrink-0 rounded-checkbox border-[1pt] border-text-primary bg-surface-base';
-const CHECK_IN_DATE_CLASS = 'inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-check-in-marker px-1 text-surface-base print:h-[3.8mm] print:min-w-[3.8mm]';
 
 function weekRange(week: BlockWeek): string | null {
   const first = week.days[0].date;
@@ -36,12 +36,12 @@ function dayNumber(date: Date): string {
 }
 
 function DayDate({ date, checkIn }: { date: Date; checkIn: boolean }) {
+  const dateTime = format(date, 'yyyy-MM-dd');
+  if (!checkIn) return <time dateTime={dateTime}>{dayNumber(date)}</time>;
   return (
     <>
-      <time dateTime={format(date, 'yyyy-MM-dd')} className={cn({ [CHECK_IN_DATE_CLASS]: checkIn })}>
-        {dayNumber(date)}
-      </time>
-      {checkIn && <span className="sr-only">, check-in form due</span>}
+      <PositionBadge label={dayNumber(date)} size="xs" tone="check-in" dateTime={dateTime} />
+      <span className="sr-only">, check-in form due</span>
     </>
   );
 }

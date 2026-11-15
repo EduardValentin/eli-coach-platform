@@ -1,7 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { InlineProblem } from '../../InlineProblem';
 import { Input } from '../../ui/input';
-import { cn } from '../../ui/utils';
 import { COUNT_PROBLEM, parseCount } from './rowFields';
 
 type RowTextFieldProps<Value> = {
@@ -45,9 +44,10 @@ export function useRowTextField<Value>({ label, value, format, parse, problem, o
 
   return {
     field: (
-      <label className="relative hit-area flex items-center gap-1">
+      <span className="flex items-center gap-1">
         <Input
           size="xs"
+          frameClassName={className}
           type={type}
           min={type === 'number' ? 1 : undefined}
           inputMode={type === 'number' ? 'numeric' : undefined}
@@ -55,7 +55,7 @@ export function useRowTextField<Value>({ label, value, format, parse, problem, o
           placeholder={placeholder}
           aria-invalid={invalid ? true : undefined}
           aria-describedby={describedBy || undefined}
-          className={cn('tabular-nums', className)}
+          className="tabular-nums"
           value={text}
           onChange={event => change(event.target.value)}
           onBlur={() => setInvalid(parse(text) === null)}
@@ -65,7 +65,7 @@ export function useRowTextField<Value>({ label, value, format, parse, problem, o
             {suffix.trim()}
           </span>
         )}
-      </label>
+      </span>
     ),
     problem: invalid ? <InlineProblem id={problemId}>{problem}</InlineProblem> : null,
   };

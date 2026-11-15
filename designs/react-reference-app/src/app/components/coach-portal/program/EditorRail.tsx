@@ -7,7 +7,8 @@ import { sequenceProblems } from '../../../domain/programRules';
 import { blockTexts, programWideTexts, textProgress, type ProgramTextTarget } from '../../../domain/programTexts';
 import { counted } from '../../../utils/counted';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
-import { LABEL_CLASS } from '../../typography';
+import { EYEBROW_CLASS } from '../../typography';
+import { Button } from '../../ui/button';
 import { TabsList, TabsTrigger } from '../../ui/tabs';
 import { cn } from '../../ui/utils';
 import { EDITOR_MODE_LABELS, isSameSection, type EditorMode, type EditorSection } from './editorSection';
@@ -93,7 +94,7 @@ function RailGroup({ title, children }: { title: string; children: ReactNode }) 
   const titleId = useId();
   return (
     <div className="grid gap-2">
-      <p id={titleId} className={cn(LABEL_CLASS, 'px-3')}>
+      <p id={titleId} className={cn(EYEBROW_CLASS, 'px-3')}>
         {title}
       </p>
       <ul aria-labelledby={titleId} className="grid gap-2">
@@ -201,14 +202,10 @@ export function EditorRail(props: EditorRailProps) {
           })}
           {!writing && (
             <li>
-              <button
-                type="button"
-                onClick={onAddBlock}
-                className={cn(ENTRY_CLASS, 'relative hit-area flex min-h-12 items-center gap-2 border border-dashed border-control-border-soft px-3 py-2 text-primary hover:bg-surface-quiet')}
-              >
-                <Plus aria-hidden="true" size={16} />
+              <Button variant="add" size="md" onClick={onAddBlock}>
+                <Plus aria-hidden="true" />
                 Add block
-              </button>
+              </Button>
             </li>
           )}
         </RailGroup>

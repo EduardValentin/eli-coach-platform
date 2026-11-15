@@ -4,7 +4,7 @@ import { GripVertical, X } from 'lucide-react';
 import { useNutrition, TAG_FAMILIES } from '../../../context/NutritionContext';
 import type { Food, Tag } from '../../../context/NutritionContext';
 import { itemsWithStatus } from '../../../domain/libraryLifecycle';
-import { LABEL_CLASS } from '../../typography';
+import { EYEBROW_CLASS } from '../../typography';
 import { CATEGORY_SWATCH, TAG_FAMILY_LABELS } from './nutrition-constants';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
@@ -128,7 +128,7 @@ export function FoodTagBoard() {
       </p>
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
         <section aria-label="Foods" className="flex flex-col gap-2">
-          <h2 className={LABEL_CLASS}>Foods</h2>
+          <h2 className={EYEBROW_CLASS}>Foods</h2>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-start">
             {itemsWithStatus(foods, 'active').map((f) => (
               <FoodChip key={f.id} food={f} />
@@ -138,7 +138,7 @@ export function FoodTagBoard() {
         <section aria-label="Tags" className="flex flex-col gap-5">
           {TAG_FAMILIES.map((family) => (
             <div key={family}>
-              <h2 className={`mb-2 ${LABEL_CLASS}`}>
+              <h2 className={`mb-2 ${EYEBROW_CLASS}`}>
                 {TAG_FAMILY_LABELS[family]}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

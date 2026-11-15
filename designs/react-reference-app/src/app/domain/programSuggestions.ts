@@ -122,7 +122,7 @@ function emptySession(name: string): Session {
     originId: id,
     name,
     warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
+    coolDown: { enabled: false, items: [] },
     rows: [],
   };
 }

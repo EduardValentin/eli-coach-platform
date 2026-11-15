@@ -19,6 +19,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ResponsiveSheetDialog } from "./responsive-sheet-dialog";
 import { SheetDialogHeader } from "./sheet-dialog-parts";
+import { matchesNarrowerThan } from "~test-support/viewport";
 
 const PHONE_WIDTH = 390;
 const DESKTOP_WIDTH = 1280;
@@ -30,14 +31,6 @@ const viewport = {
   width: DESKTOP_WIDTH,
 };
 
-const PIXELS_PER_EM = 16;
-
-function narrowerThanOf(query: string): number {
-  const match = /width < ([\d.]+)em/.exec(query);
-
-  return match ? Number(match[1]) * PIXELS_PER_EM : Number.POSITIVE_INFINITY;
-}
-
 function viewportIs(width: number) {
   viewport.width = width;
   Object.defineProperty(window, "matchMedia", {
@@ -46,7 +39,7 @@ function viewportIs(width: number) {
       addEventListener: (_type: string, listener: ViewportListener) =>
         viewport.listeners.add(listener),
       get matches() {
-        return viewport.width < narrowerThanOf(query);
+        return matchesNarrowerThan(query, viewport.width);
       },
       media: query,
       removeEventListener: (_type: string, listener: ViewportListener) =>

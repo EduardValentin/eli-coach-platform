@@ -6,6 +6,7 @@ import { journeyClientName } from '../../../utils/journeyLabels';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { useReturnFocusToOpener } from '../../ui/use-return-focus-to-opener';
 
 function profileFacts(coaching: CoachingFacts | null): [string, string][] {
   if (!coaching) return [];
@@ -42,6 +43,7 @@ type ClientProfilePopoverProps = {
 export function ClientProfilePopover({ journey, open, onOpenChange, returnFocus, children }: ClientProfilePopoverProps) {
   const headingId = useId();
   const facts = profileFacts(journey.profile.coaching);
+  const { returnFocusToOpener } = useReturnFocusToOpener(returnFocus);
 
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
@@ -51,12 +53,7 @@ export function ClientProfilePopover({ journey, open, onOpenChange, returnFocus,
         sideOffset={8}
         collisionPadding={16}
         aria-labelledby={headingId}
-        onCloseAutoFocus={event => {
-          const target = returnFocus.current;
-          if (!target?.isConnected) return;
-          event.preventDefault();
-          target.focus();
-        }}
+        onCloseAutoFocus={returnFocusToOpener}
         className="grid w-80 gap-3 rounded-card"
       >
         <h2 id={headingId} className={WIDGET_TITLE_CLASS}>

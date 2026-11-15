@@ -10,6 +10,7 @@ import {
   filledSessionCount,
   hasExercises,
   mapCalendar,
+  withSetAdded,
   scheduledSessions,
   sessionOn,
   newId,
@@ -334,5 +335,33 @@ describe('hasExercises', () => {
 
     // assert
     expect(results).toEqual([false, false, true]);
+  });
+});
+
+describe('withSetAdded', () => {
+  it('adds a copy of the last set, keeping its kind and values', () => {
+    // arrange
+    const working: SetSpec = { kind: 'working', reps: { min: 6, max: 8 }, rir: { min: 1, max: 2 }, weightKg: 40 };
+    const warmUp: SetSpec = { kind: 'warm-up', reps: { min: 10, max: 10 }, weightKg: 20 };
+
+    // act
+    const afterWorking = withSetAdded([warmUp, working]);
+    const afterWarmUp = withSetAdded([warmUp]);
+
+    // assert
+    expect(afterWorking).toEqual([warmUp, working, working]);
+    expect(afterWorking[2]).not.toBe(working);
+    expect(afterWarmUp).toEqual([warmUp, warmUp]);
+  });
+
+  it('starts an empty list with a working set', () => {
+    // arrange
+    const sets: SetSpec[] = [];
+
+    // act
+    const added = withSetAdded(sets);
+
+    // assert
+    expect(added).toEqual([{ kind: 'working', reps: { min: 8, max: 8 }, rir: { min: 2, max: 2 } }]);
   });
 });

@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode, type Ref } from 'react';
+import { useId, type ReactNode, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, CornerDownRight, Link2, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
@@ -8,6 +8,7 @@ import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
@@ -113,7 +114,7 @@ function rowStats(row: Row, repsSuffix: string): Stat[] {
 
 function RowStats({ stats }: { stats: readonly Stat[] }) {
   return (
-    <dl className="flex basis-full flex-wrap items-baseline gap-y-1 pl-16.5 text-sm tabular-nums">
+    <dl className="mt-2 mb-0 flex flex-wrap items-baseline gap-y-1 pl-9.5 text-sm tabular-nums [grid-area:stats] sm:mb-3">
       {stats.map(stat => (
         <div key={stat.term} className="flex flex-wrap items-baseline gap-x-1.5 border-border-subtle pr-3 not-first:border-l not-first:pl-3">
           <dt className="text-text-secondary">{stat.term}</dt>
@@ -129,25 +130,34 @@ function dropHint(row: Row, itemType: string | symbol | null): string {
   return itemType === PLAN_ROW ? 'Swap' : 'Add to the next group';
 }
 
-type DisclosureProps = { label: string; name: string; open: boolean; controls: string; onToggle: () => void };
+const CARD_GRID_CLASS = cn(
+  'grid grid-cols-[auto_auto_auto_minmax(0,1fr)_auto] items-start gap-x-3 px-3',
+  '[grid-template-areas:"handle_info_info_info_menu"_"._stats_stats_stats_stats"_"._sets_details_._."_"setspanel_setspanel_setspanel_setspanel_setspanel"_"detailspanel_detailspanel_detailspanel_detailspanel_detailspanel"]',
+  'sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]',
+  'sm:[grid-template-areas:"handle_info_sets_details_menu"_"._stats_stats_stats_stats"_"setspanel_setspanel_setspanel_setspanel_setspanel"_"detailspanel_detailspanel_detailspanel_detailspanel_detailspanel"]',
+);
+const PANEL_CLASS = '-mx-3 border-t border-border-subtle px-3';
 
-function DisclosureButton({ label, name, open, controls, onToggle }: DisclosureProps) {
+type DisclosureProps = { label: string; name: string; area: string; panelClassName: string; children: ReactNode };
+
+function Disclosure({ label, name, area, panelClassName, children }: DisclosureProps) {
   return (
-    <Button variant="ghost" size="xs" aria-expanded={open} aria-controls={open ? controls : undefined} onClick={onToggle}>
-      {label}
-      <span className="sr-only">{` for ${name}`}</span>
-      <ChevronDown aria-hidden="true" className={cn('transition-transform motion-reduce:transition-none', { 'rotate-180': open })} />
-    </Button>
+    <Collapsible className="contents">
+      <CollapsibleTrigger asChild>
+        <Button variant="disclosure" size="xs" className={cn('mt-2 mb-3 sm:mt-3 sm:mb-0', area)}>
+          {label}
+          <span className="sr-only">{` for ${name}`}</span>
+          <ChevronDown aria-hidden="true" />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className={cn(PANEL_CLASS, panelClassName)}>{children}</CollapsibleContent>
+    </Collapsible>
   );
 }
 
 export function ExerciseCard({ session, row, exercise, library, edits, slots, focus, onChange, onAddSubstitution }: ExerciseCardProps) {
-  const [setsOpen, setSetsOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const announce = useEditorAnnouncer();
   const headingId = useId();
-  const setsId = useId();
-  const detailsId = useId();
   const position = positionLabel(session, row);
   const name = exerciseNameOf(exercise);
   const changeRow = (next: Row) => onChange(edits.replaceRow(next));
@@ -180,9 +190,9 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
       data-row-id={row.id}
       className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
-      <div className="flex flex-wrap items-start gap-x-3 gap-y-2 p-3">
-        <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-0.5" />
-        <div className="grid min-w-0 flex-1 basis-48 gap-1">
+      <div className={CARD_GRID_CLASS}>
+        <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
+        <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
           <h5 id={headingId} className="flex items-center gap-2.5">
             <PositionBadge label={position} size="sm" />{' '}
             <span className="min-w-0 text-sm font-medium text-text-primary">{name}</span>
@@ -199,20 +209,14 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
             </p>
           )}
         </div>
-        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
-          <DisclosureButton label="Sets" name={name} open={setsOpen} controls={setsId} onToggle={() => setSetsOpen(open => !open)} />
-          <DisclosureButton label="Details" name={name} open={detailsOpen} controls={detailsId} onToggle={() => setDetailsOpen(open => !open)} />
+        <div className="mt-3 [grid-area:menu]">
           <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />
         </div>
         <RowStats stats={rowStats(row, repsSuffix(exercise))} />
-      </div>
-      {setsOpen && (
-        <div id={setsId} className="border-t border-border-subtle px-3 py-3">
+        <Disclosure label="Sets" name={name} area="[grid-area:sets]" panelClassName="py-3 [grid-area:setspanel]">
           <SetGrid row={row} exerciseName={name} repsSuffix={repsSuffix(exercise)} onChange={changeRow} />
-        </div>
-      )}
-      {detailsOpen && (
-        <div id={detailsId} className="grid grid-cols-[minmax(0,1fr)] gap-4 border-t border-border-subtle px-3 py-4">
+        </Disclosure>
+        <Disclosure label="Details" name={name} area="[grid-area:details]" panelClassName="grid grid-cols-[minmax(0,1fr)] gap-4 py-4 [grid-area:detailspanel]">
           <ExerciseRowDetails
             row={row}
             exercise={exercise}
@@ -226,8 +230,8 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
             onRemoveSubstitution={exerciseId => onChange(edits.removeSubstitution(row.id, exerciseId))}
             onSuggestSubstitutions={() => onChange(edits.suggestSubstitutions(row.id))}
           />
-        </div>
-      )}
+        </Disclosure>
+      </div>
       {targeted && <DropOverlay>{dropHint(row, itemType)}</DropOverlay>}
     </article>
   );
