@@ -57,7 +57,7 @@ function DayCell({ block, day }: { block: Block; day: BlockDay }) {
       {kind !== 'rest' && (
         <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-[3px]', kind === 'session' ? BLOCK_SWATCH[block.type] : 'bg-training-recovery')} />
       )}
-      <span className={cn(DOCUMENT_NOTE_CLASS, 'block min-h-5 font-semibold whitespace-nowrap tabular-nums max-sm:w-16 max-sm:shrink-0 print:h-[3.8mm] print:min-h-0 print:leading-[3.8mm]')}>
+      <span className={cn(DOCUMENT_NOTE_CLASS, 'block min-h-5 font-semibold text-text-primary whitespace-nowrap tabular-nums max-sm:w-16 max-sm:shrink-0 print:h-[3.8mm] print:min-h-0 print:leading-[3.8mm]')}>
         <span aria-hidden="true" className="sm:hidden">{`${weekdayAbbreviation(day.weekday)} `}</span>
         {day.date && <DayDate date={day.date} checkIn={day.checkIn} />}
       </span>{' '}

@@ -36,6 +36,7 @@ const TERM_SEPARATOR = /\s*[,/]\s*/;
 const MARK_TERM = /^[A-D]\d?$/;
 const SHORT_DATE = 'd MMM';
 
+const COVER_LABEL_CLASS = cn(DOCUMENT_LABEL_CLASS, 'text-text-primary');
 const BOX_CLASS = 'rounded-field border border-divider p-document-gap';
 const TERM_ROW_CLASS = 'grid gap-x-4 gap-y-0.5 text-document-table sm:grid-cols-[10rem_minmax(0,1fr)]';
 const TERM_CLASS = 'font-semibold text-text-primary';
@@ -189,10 +190,10 @@ function Cover({ view }: { view: ProgramView }) {
       <DocumentTextSlot
         view={view}
         target={TITLE}
-        typography={{ body: DOCUMENT_LABEL_CLASS }}
-        unwritten={<p className={DOCUMENT_LABEL_CLASS}>{printedTitle(version.content)}</p>}
+        typography={{ body: COVER_LABEL_CLASS }}
+        unwritten={<p className={COVER_LABEL_CLASS}>{printedTitle(version.content)}</p>}
       >
-        {value => <p className={DOCUMENT_LABEL_CLASS}>{value}</p>}
+        {value => <p className={COVER_LABEL_CLASS}>{value}</p>}
       </DocumentTextSlot>
       <DocumentHeading level={1} className="mt-document-tight font-serif text-document-title font-semibold text-text-primary">
         {view.clientName}
