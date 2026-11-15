@@ -216,7 +216,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
         <Disclosure label="Sets" name={name} area="[grid-area:sets]" panelClassName="py-3 [grid-area:setspanel]">
           <SetGrid row={row} exerciseName={name} repsSuffix={repsSuffix(exercise)} onChange={changeRow} />
         </Disclosure>
-        <Disclosure label="Details" name={name} area="[grid-area:details]" panelClassName="grid grid-cols-[minmax(0,1fr)] gap-4 bg-surface-subtle py-4 [grid-area:detailspanel]">
+        <Disclosure label="Details" name={name} area="[grid-area:details]" panelClassName="grid grid-cols-[minmax(0,1fr)] gap-4 rounded-b-[calc(var(--radius-control)-1px)] bg-surface-subtle py-4 [grid-area:detailspanel]">
           <ExerciseRowDetails
             row={row}
             exercise={exercise}
