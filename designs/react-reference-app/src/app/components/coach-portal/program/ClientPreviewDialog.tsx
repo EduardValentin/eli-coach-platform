@@ -1,6 +1,6 @@
-import { ClientProgramBody } from '../../program-view/ClientProgramBody';
-import { WithoutExercisePageLinks } from '../../program-view/exercisePageLinks';
+import { ClientProgramView } from '../../client-portal/ClientProgramView';
 import type { ProgramView } from '../../program-view/programView';
+import { useLocalWeekSelection } from '../../program-view/weekSelection';
 import { PhoneFrame } from '../../PhoneFrame';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
 
@@ -15,6 +15,7 @@ function focusCloseButton(event: Event) {
 }
 
 export function ClientPreviewDialog({ open, onOpenChange, view }: ClientPreviewDialogProps) {
+  const selection = useLocalWeekSelection();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} onOpenAutoFocus={focusCloseButton}>
@@ -23,9 +24,7 @@ export function ClientPreviewDialog({ open, onOpenChange, view }: ClientPreviewD
         </DialogHeader>
         <PhoneFrame className="w-[390px] max-w-full mx-auto">
           <div className="max-h-[720px] overflow-y-auto px-4 pt-12 pb-4">
-            <WithoutExercisePageLinks>
-              <ClientProgramBody view={view} />
-            </WithoutExercisePageLinks>
+            <ClientProgramView view={view} selection={selection} />
           </div>
         </PhoneFrame>
       </DialogContent>

@@ -1,4 +1,5 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { XIcon } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -15,16 +16,18 @@ import {
   type DialogDismissal,
 } from './ui/dialog';
 import { BottomSheet } from './ui/bottom-sheet';
+import { Button } from './ui/button';
 import { useIsMobile } from './ui/use-mobile';
 import { cn } from './ui/utils';
 
-type SheetDialogWidth = 'full' | 'fit';
+type SheetDialogWidth = 'full' | 'fit' | 'media';
 
 type SheetDialogRule = 'subtle' | 'faint';
 
 const DIALOG_WIDTH_CLASS: Record<SheetDialogWidth, string> = {
   full: '',
   fit: 'sm:w-fit',
+  media: 'sm:max-w-4xl',
 };
 
 const RULE_COLOR_CLASS: Record<SheetDialogRule, string> = {
@@ -36,12 +39,17 @@ type ShownHeader = { description?: string };
 
 const ShownHeaderContext = createContext<(header: ShownHeader | null) => void>(() => {});
 
+type SheetClose = 'none' | 'shown';
+
+const SheetCloseContext = createContext<SheetClose>('none');
+
 interface ResponsiveSheetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
   width?: SheetDialogWidth;
+  sheetClose?: SheetClose;
   dismissal?: DialogDismissal;
   initialFocus?: RefObject<HTMLElement | null>;
   returnFocusTo?: RefObject<HTMLElement | null>;
@@ -54,6 +62,7 @@ export function ResponsiveSheetDialog({
   title,
   description,
   width = 'full',
+  sheetClose = 'none',
   dismissal = 'allowed',
   initialFocus,
   returnFocusTo,
@@ -83,7 +92,9 @@ export function ResponsiveSheetDialog({
         open={open}
         title={title}
       >
-        <ShownHeaderContext.Provider value={setShownHeader}>{children}</ShownHeaderContext.Provider>
+        <SheetCloseContext.Provider value={dismissal === 'allowed' ? sheetClose : 'none'}>
+          <ShownHeaderContext.Provider value={setShownHeader}>{children}</ShownHeaderContext.Provider>
+        </SheetCloseContext.Provider>
       </BottomSheet>
     );
   }
@@ -127,6 +138,7 @@ export function SheetDialogHeader({
   titleRef?: RefObject<HTMLHeadingElement>;
 }) {
   const announceHeader = useContext(ShownHeaderContext);
+  const close = useContext(SheetCloseContext);
 
   useLayoutEffect(() => {
     announceHeader({ description });
@@ -136,8 +148,15 @@ export function SheetDialogHeader({
   return (
     <div
       data-parity="sheet-header"
-      className={cn('shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8', RULE_COLOR_CLASS[rule])}
+      className={cn('relative shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8', RULE_COLOR_CLASS[rule])}
     >
+      {close === 'shown' && (
+        <DialogPrimitive.Close asChild>
+          <Button variant="ghost" size="icon-sm" aria-label="Close" className="absolute top-4 right-3">
+            <XIcon aria-hidden="true" />
+          </Button>
+        </DialogPrimitive.Close>
+      )}
       {eyebrow}
       <DialogPrimitive.Title
         ref={titleRef}

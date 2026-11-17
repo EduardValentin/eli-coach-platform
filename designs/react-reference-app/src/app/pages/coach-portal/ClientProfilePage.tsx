@@ -18,8 +18,7 @@ import {
 import { useMeasureUnits, type MeasureUnits } from '../../components/client-portal/measureUnits';
 import { asText } from '../../components/client-portal/onboarding/onboardingValues';
 import { IconHint } from '../../components/IconHint';
-import { PortalBackLink } from '../../components/PortalBackLink';
-import { PortalPageHeader } from '../../components/PortalPageHeader';
+import { ClientPageHeader } from '../../components/coach-portal/ClientPageHeader';
 import { SettingsBody, SettingsSection } from '../../components/SettingsSection';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import type { CoachingFacts } from '../../domain/clientProfile';
@@ -197,8 +196,7 @@ function CoachClientProfile({ journey }: { journey: ClientJourney }) {
 
   return (
     <div className="w-full max-w-3xl" data-parity-root="ClientProfilePage">
-      <PortalBackLink to={clientDetailPathForJourney(journey)}>Back to {name}</PortalBackLink>
-      <PortalPageHeader eyebrow={name} title="Profile" />
+      <ClientPageHeader client={{ name, path: clientDetailPathForJourney(journey) }} title="Profile" />
       <div className="space-y-6 sm:space-y-8">
         <AvatarField
           name={name}

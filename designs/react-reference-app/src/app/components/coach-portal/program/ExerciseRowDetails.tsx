@@ -1,13 +1,13 @@
 import { useId, type ReactNode } from 'react';
-import { Plus, RotateCcw, Sparkles } from 'lucide-react';
+import { Plus, RotateCcw, Sparkles, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { withField, type LastSetTechnique, type Row } from '../../../domain/program';
+import { LAST_SET_TECHNIQUE_LABELS, withField, type LastSetTechnique, type Row } from '../../../domain/program';
 import { MAX_SUBSTITUTIONS } from '../../../domain/substitutions';
+import { useOpenExerciseDetail, type ExerciseDetailContent } from '../../program-view/exerciseDetailContent';
 import { exerciseNameOf } from '../../program-view/programView';
+import { SwapRows } from '../../program-view/SwapList';
 import { IconActionButton } from '../../IconActionButton';
-import { RemovableChip } from '../../RemovableChip';
 import { LABEL_CLASS } from '../../typography';
-import { WatchVideoButton } from '../../WatchVideoButton';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
@@ -19,6 +19,7 @@ import { DropZone, LIBRARY_EXERCISE, type DraggedItem, type SessionDropRules } f
 type ExerciseRowDetailsProps = {
   row: Row;
   exercise: Exercise | undefined;
+  detail: ExerciseDetailContent | null;
   library: readonly Exercise[];
   substitutionDrop: SessionDropRules;
   onChange: (row: Row) => void;
@@ -26,8 +27,6 @@ type ExerciseRowDetailsProps = {
   onRemoveSubstitution: (exerciseId: string) => void;
   onSuggestSubstitutions: () => void;
 };
-
-const TECHNIQUE_LABELS: Record<LastSetTechnique, string> = { none: 'None', 'drop-set': 'Drop set', 'rest-pause': 'Rest-pause' };
 
 type DetailProps = { label: string; actions?: ReactNode; children: (labelId: string) => ReactNode };
 
@@ -56,8 +55,10 @@ function acceptsSubstitution(dragged: DraggedItem): boolean {
   return dragged.kind === LIBRARY_EXERCISE && dragged.item.exercise.type === 'resistance';
 }
 
-function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitution, onRemoveSubstitution, onSuggestSubstitutions }: ExerciseRowDetailsProps) {
-  const nameOf = (id: string) => exerciseNameOf(library.find(item => item.id === id));
+function Substitutions({ row, exercise, detail, library, substitutionDrop, onAddSubstitution, onRemoveSubstitution, onSuggestSubstitutions }: ExerciseRowDetailsProps) {
+  const openDetail = useOpenExerciseDetail();
+  const name = exerciseNameOf(exercise);
+  const swaps = row.substitutions.flatMap(id => library.find(item => item.id === id) ?? []);
   const room = row.substitutions.length < MAX_SUBSTITUTIONS;
   const filling = useIsLibraryTarget({ kind: 'substitution', sessionId: substitutionDrop.sessionId, rowId: row.id });
   return (
@@ -68,31 +69,25 @@ function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitu
     >
       <fieldset className="grid gap-1.5">
         <legend className={cn(LABEL_CLASS, 'mb-1.5')}>Substitutions</legend>
-        <div className="flex flex-wrap items-center gap-6">
-          {row.substitutions.length > 0 && (
-            <ul className="flex min-w-0 flex-wrap gap-x-2 gap-y-6">
-              {row.substitutions.map(id => (
-                <RemovableChip key={id} label={nameOf(id)} removeLabel={`Remove ${nameOf(id)}`} onRemove={() => onRemoveSubstitution(id)} />
-              ))}
-            </ul>
-          )}
-          {room && (
-            <div className="flex items-center gap-4">
-              <IconActionButton
-                icon={Plus}
-                label={`Add substitution for ${exerciseNameOf(exercise)}`}
-                hint="Add substitution"
-                onClick={onAddSubstitution}
-              />
-              {exercise && (
-                <Button variant="ghost" size="xs" onClick={onSuggestSubstitutions}>
-                  <Sparkles aria-hidden="true" />
-                  Suggest
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+        {swaps.length > 0 && (
+          <SwapRows
+            label={`Swaps for ${name}`}
+            swaps={swaps}
+            actionFor={swap => (detail ? { kind: 'open', onOpen: opener => openDetail(detail, opener, swap) } : { kind: 'static' })}
+            trailingFor={swap => <IconActionButton icon={X} label={`Remove ${swap.name}`} hint="Remove" onClick={() => onRemoveSubstitution(swap.id)} />}
+          />
+        )}
+        {room && (
+          <div className="flex items-center gap-4">
+            <IconActionButton icon={Plus} label={`Add substitution for ${name}`} hint="Add substitution" onClick={onAddSubstitution} />
+            {exercise && (
+              <Button variant="ghost" size="xs" onClick={onSuggestSubstitutions}>
+                <Sparkles aria-hidden="true" />
+                Suggest
+              </Button>
+            )}
+          </div>
+        )}
       </fieldset>
     </DropZone>
   );
@@ -119,20 +114,13 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
       <Detail
         label="Cues"
         actions={
-          <>
-            <IconActionButton
-              icon={RotateCcw}
-              label="Reset cues from library"
-              hint="Reset from library"
-              disabled={!exercise}
-              onClick={() => exercise && onChange(resetCues(row, exercise))}
-            />
-            {exercise?.videoUrl && (
-              <span className="ml-auto">
-                <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />
-              </span>
-            )}
-          </>
+          <IconActionButton
+            icon={RotateCcw}
+            label="Reset cues from library"
+            hint="Reset from library"
+            disabled={!exercise}
+            onClick={() => exercise && onChange(resetCues(row, exercise))}
+          />
         }
       >
         {labelId => <Textarea aria-labelledby={labelId} value={row.cues} onChange={event => onChange(withField(row, 'cues', event.target.value))} />}
@@ -145,7 +133,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(TECHNIQUE_LABELS).map(([value, label]) => (
+                {Object.entries(LAST_SET_TECHNIQUE_LABELS).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {label}
                   </SelectItem>

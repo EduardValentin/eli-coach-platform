@@ -11,6 +11,8 @@
   --primary: var(--brand);
   --primary-foreground: var(--brand-foreground);
   --primary-hover: var(--brand-hover);
+  /* A pressed toggle's fill: darker than --primary so its white 14px label reaches APCA Lc 90. */
+  --primary-pressed: #9E1755;
   --primary-soft: var(--brand-soft);
   --active-surface: var(--primary);
   --secondary: oklch(0.95 0.0058 264.53);
@@ -49,16 +51,29 @@
   --success-foreground: #ffffff;
   --success-soft: rgba(15, 122, 54, 0.1);
   --success-surface: #E8F6ED;
+  /* Ink of text set on the success tint, as brand-secondary-ink is for the teal tint. */
+  --success-ink: #073719;
   --warning: #583604;
-  --rir-failure: var(--destructive);
-  --rir-near: var(--tint-amber);
-  --rir-far: var(--success);
-  --rir-ink: var(--text-primary);
+  --effort-high: var(--destructive);
+  --effort-mid: var(--tint-amber);
+  --effort-low: var(--success);
+  --effort-ink: var(--text-primary);
+  /* The three steps of the effort scale, shared by RIR and cardio intensity: a low step
+     (RIR 3 or more, Easy) and a mid step (RIR 2, Moderate) as ink on a tint, and the
+     high step (RIR 0–1, Hard) as a fill under surface-base text. The amber tint takes 16%
+     where the green takes 12% so the two tints land at the same lightness on white. */
+  --effort-low-ink: color-mix(in oklch, var(--effort-ink) 75%, var(--effort-low));
+  --effort-low-soft: color-mix(in oklch, var(--effort-low) 12%, transparent);
+  --effort-mid-ink: color-mix(in oklch, var(--effort-ink) 75%, var(--effort-mid));
+  --effort-mid-soft: color-mix(in oklch, var(--effort-mid) 16%, transparent);
+  --effort-high-fill: color-mix(in oklch, var(--effort-ink) 30%, var(--effort-high));
   /* A check-in awaiting someone's action: pending counts, ad-hoc markers, and the
      request accent. Distinct from --metric-energy below, which shares the value but
      answers to measured effort rather than to workflow state. */
   --status-pending: #AC502C;
   --status-pending-soft: rgba(172, 80, 44, 0.1);
+  /* Ink of text set on the pending tint, as success-ink is for the success tint. */
+  --status-pending-ink: #4E2414;
   /* Energy and effort readings: calories, streaks, and the day's training focus.
      The focus badge is deliberately this one fixed accent even though it prints a
      day type — day-type-keyed colour is the training-* family's job, not this one. */
@@ -274,6 +289,7 @@
   --primary: #0C0C0C;
   --primary-foreground: #ffffff;
   --primary-hover: #2A2A2A;
+  --primary-pressed: var(--primary);
   --primary-soft: rgba(12, 12, 12, 0.08);
   --ring: #0C0C0C;
   --focus-ring: var(--primary);
@@ -288,6 +304,9 @@
   --z-index-sheet-overlay: 70;
   --z-index-sheet: 71;
   --z-index-floating-over-sheet: 72;
+
+  /* Below this width the week rail's seven touching cells wrap into rows of four. */
+  --container-rail-wrap: 19rem;
 }
 
 @theme inline {
@@ -300,6 +319,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
   --color-primary-soft: var(--primary-soft);
   --color-active-surface: var(--active-surface);
   --color-secondary: var(--secondary);
@@ -331,9 +351,11 @@
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
   --color-success-surface: var(--success-surface);
+  --color-success-ink: var(--success-ink);
   --color-warning: var(--warning);
   --color-status-pending: var(--status-pending);
   --color-status-pending-soft: var(--status-pending-soft);
+  --color-status-pending-ink: var(--status-pending-ink);
   --color-metric-energy: var(--metric-energy);
   --color-metric-energy-soft: var(--metric-energy-soft);
   --color-training-strength: var(--training-strength);
@@ -350,6 +372,11 @@
   --color-training-deload: var(--training-deload);
   --color-training-deload-soft: var(--training-deload-soft);
   --color-set-warm-up: var(--set-warm-up);
+  --color-effort-low-ink: var(--effort-low-ink);
+  --color-effort-low-soft: var(--effort-low-soft);
+  --color-effort-mid-ink: var(--effort-mid-ink);
+  --color-effort-mid-soft: var(--effort-mid-soft);
+  --color-effort-high-fill: var(--effort-high-fill);
   --color-check-in-marker: var(--check-in-marker);
   --color-surface-inverted: var(--surface-inverted);
   --color-surface-inverted-foreground: var(--surface-inverted-foreground);
@@ -732,6 +759,14 @@
     inset-block: min(0px, calc((100% - var(--size-hit-target)) / 2));
     inset-inline: min(0px, calc((100% - var(--size-hit-target)) / 2));
   }
+}
+
+/* The chosen cell of a row of cells: the week rail's selected day and the plan timeline's shown week. */
+@utility selected-cell {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+  color: var(--color-text-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
 }
 
 @layer components {

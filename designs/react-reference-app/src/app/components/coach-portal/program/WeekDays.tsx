@@ -4,10 +4,10 @@ import { Bed, Dumbbell, HeartPulse } from 'lucide-react';
 import { WEEKDAY_LABELS, WEEKDAYS, type Block, type Weekday } from '../../../domain/program';
 import { emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
-import { DAY_CARDS_CLASS, DayCard } from '../../program-view/dayCard';
+import { DayCell, dayCellVariants } from '../../program-view/DayCell';
+import { planOn, type DayPlan, type WeekDay } from '../../program-view/weekView';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
-import { cn } from '../../ui/utils';
 import { useResetConfirm } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; library: readonly Exercise[]; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
@@ -40,6 +40,11 @@ function DayMenu({ block, day, onChoose }: DayMenuProps) {
   );
 }
 
+function openableIdOf(plan: DayPlan): string | null {
+  if (plan.kind === 'session') return plan.session.id;
+  return plan.kind === 'cardio' ? plan.cardio.id : null;
+}
+
 function dayTitle(block: Block, day: Weekday, choice: DayChoice): string {
   const weekday = WEEKDAY_LABELS[day];
   if (choice.kind === 'rest') return `Make ${weekday} a rest day?`;
@@ -62,36 +67,39 @@ export function WeekDays({ block, library, onChange, onOpenSession }: WeekDaysPr
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
-      <ol className={cn(DAY_CARDS_CLASS, 'sm:grid-cols-7')}>
-        {WEEKDAYS.map(day => (
-          <DayCard
-            key={day}
-            block={block}
-            day={day}
-            exercisesById={exercisesById}
-            headingLevel="h4"
-            corner={
-              <DayMenu
-                block={block}
-                day={day}
-                onChoose={(choice, trigger) =>
-                  confirm.request({
-                    title: dayTitle(block, day, choice),
-                    confirmLabel: 'Change day',
-                    lines: lostByChoice(block, day, choice),
-                    apply: () => onChange(blockWithDay(block, day, choice)),
-                    returnFocus: trigger,
-                  })
-                }
-              />
-            }
-            renderChip={chip => (
-              <button type="button" onClick={() => onOpenSession(chip.id)} className={chip.className}>
-                {chip.label}
-              </button>
-            )}
-          />
-        ))}
+      <ol className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-4">
+        {WEEKDAYS.map(weekday => {
+          const day: WeekDay = { weekday, date: null, checkIn: false, isToday: false, plan: planOn(block, weekday) };
+          const openableId = openableIdOf(day.plan);
+          const face = <DayCell day={day} exercisesById={exercisesById} variant="card" />;
+          return (
+            <li key={weekday} className="relative grid">
+              <h4 className="sr-only">{WEEKDAY_LABELS[weekday]}</h4>
+              {openableId === null ? (
+                <div className={dayCellVariants({ variant: 'card', kind: day.plan.kind })}>{face}</div>
+              ) : (
+                <button type="button" onClick={() => onOpenSession(openableId)} className={dayCellVariants({ variant: 'card', kind: day.plan.kind })}>
+                  {face}
+                </button>
+              )}
+              <div className="absolute top-1 right-1">
+                <DayMenu
+                  block={block}
+                  day={weekday}
+                  onChoose={(choice, trigger) =>
+                    confirm.request({
+                      title: dayTitle(block, weekday, choice),
+                      confirmLabel: 'Change day',
+                      lines: lostByChoice(block, weekday, choice),
+                      apply: () => onChange(blockWithDay(block, weekday, choice)),
+                      returnFocus: trigger,
+                    })
+                  }
+                />
+              </div>
+            </li>
+          );
+        })}
       </ol>
       {confirm.dialog}
     </section>

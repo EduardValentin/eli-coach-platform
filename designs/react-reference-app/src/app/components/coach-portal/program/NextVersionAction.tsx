@@ -1,19 +1,25 @@
 import { Link, useNavigate } from 'react-router';
 import { usePrograms } from '../../../context/ProgramContext';
+import { deriveStatus } from '../../../domain/coachingSubscription';
 import type { ClientJourney } from '../../../domain/journey';
 import { draftOf, type Program } from '../../../domain/program';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { Button } from '../../ui/button';
-import { coachingHasEnded } from './ProgramSummary';
 
-export function NextVersionAction({ journey, program }: { journey: ClientJourney; program: Program }) {
+function coachingHasEnded(journey: ClientJourney, now: Date): boolean {
+  return journey.subscription ? deriveStatus(journey.subscription, now) === 'ended' : false;
+}
+
+type ActionSize = 'sm' | 'md';
+
+export function NextVersionAction({ journey, program, size = 'sm' }: { journey: ClientJourney; program: Program; size?: ActionSize }) {
   const { startDraft } = usePrograms();
   const navigate = useNavigate();
   const draftPath = `${clientDetailPathForJourney(journey)}/program/draft`;
 
   if (draftOf(program)) {
     return (
-      <Button variant="primary" asChild>
+      <Button variant="primary" size={size} asChild>
         <Link to={draftPath}>Continue draft</Link>
       </Button>
     );
@@ -22,6 +28,7 @@ export function NextVersionAction({ journey, program }: { journey: ClientJourney
   return (
     <Button
       variant="primary"
+      size={size}
       onClick={() => {
         startDraft(journey.callId);
         navigate(draftPath);

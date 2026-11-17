@@ -19,7 +19,9 @@ import { MultiSelect } from '../../MultiSelect';
 import { EmptyState } from '../../EmptyState';
 import { RemovableChip } from '../../RemovableChip';
 import { SearchField } from '../../SearchField';
-import { WatchVideoButton } from '../../WatchVideoButton';
+import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
+import { exerciseDetailOf } from '../../program-view/exerciseDetailContent';
+import { musclesAndEquipmentText } from '../../program-view/programView';
 import { Badge } from '../../ui/badge';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
@@ -118,6 +120,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
     () => ({ type: LIBRARY_EXERCISE, item: { exercise }, collect: monitor => ({ isDragging: monitor.isDragging() }) }),
     [exercise],
   );
+  const facts = musclesAndEquipmentText(exercise);
   return (
     <div
       ref={drag as unknown as Ref<HTMLDivElement>}
@@ -126,22 +129,12 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
         { 'border-primary opacity-50': isDragging, 'border-border': !isDragging },
       )}
     >
-      <p className="text-sm leading-tight font-medium break-words text-text-primary">{exercise.name}</p>
+      <ExerciseNameButton exercise={exercise} detail={exerciseDetailOf(exercise, { targets: [], cues: exercise.cues })} weight="medium" size="compact" />
       <span className="flex items-center gap-6">
-        {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} appearance="icon" />}
         <IconActionButton icon={Plus} label={`Add ${exercise.name}`} hint="Add exercise" onClick={() => onAdd(exercise)} />
         <GripVertical aria-hidden="true" size={16} className="text-text-secondary group-hover:text-primary" />
       </span>
-      {exercise.primaryMuscles.length > 0 && (
-        <span className="col-span-2 flex flex-wrap gap-1">
-          {exercise.primaryMuscles.map(muscle => (
-            <Badge key={muscle} tone="muted" className="max-w-full break-words whitespace-normal">
-              {muscle}
-            </Badge>
-          ))}
-        </span>
-      )}
-      {exercise.equipment.length > 0 && <span className="col-span-2 text-xs break-words text-text-secondary">{exercise.equipment.join(', ')}</span>}
+      {facts && <p className="col-span-2 text-sm break-words text-text-secondary">{facts}</p>}
     </div>
   );
 }

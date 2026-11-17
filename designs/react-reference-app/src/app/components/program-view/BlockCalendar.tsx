@@ -1,4 +1,4 @@
-import { format, getDate, isSameMonth } from 'date-fns';
+import { format, getDate } from 'date-fns';
 import { weekdayAbbreviation, type Block, type Weekday } from '../../domain/program';
 import { blockWeeks, type BlockDay, type BlockWeek } from '../../domain/programCalendar';
 import { DOCUMENT_HEAD_CLASS, DOCUMENT_NOTE_CLASS, DOCUMENT_SECTION_TITLE_CLASS } from '../typography';
@@ -6,7 +6,8 @@ import { cn } from '../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from './blockColours';
 import { DocumentHeading } from './documentEditing';
 import { PositionBadge } from './PositionBadge';
-import { dayEntryLabel, type ProgramView } from './programView';
+import { dateRangeText, dayEntryLabel, type ProgramView } from './programView';
+import { CheckInDot } from './CheckInDot';
 
 type DayKind = 'session' | 'cardio' | 'rest';
 
@@ -26,9 +27,7 @@ const TICK_BOX_CLASS = 'inline-block size-[4mm] shrink-0 rounded-checkbox border
 function weekRange(week: BlockWeek): string | null {
   const first = week.days[0].date;
   const last = week.days.at(-1)?.date;
-  if (!first || !last) return null;
-  if (isSameMonth(first, last)) return `${format(first, 'd')}–${format(last, 'd MMM')}`;
-  return `${format(first, 'd MMM')}–${format(last, 'd MMM')}`;
+  return first && last ? dateRangeText(first, last) : null;
 }
 
 function dayNumber(date: Date): string {
@@ -55,7 +54,7 @@ function DayCell({ block, day }: { block: Block; day: BlockDay }) {
   return (
     <td role="cell" className={cn(CELL_CLASS, { [BLOCK_SOFT[block.type]]: kind === 'session' })}>
       {kind !== 'rest' && (
-        <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-[3px]', kind === 'session' ? BLOCK_SWATCH[block.type] : 'bg-training-recovery')} />
+        <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-0.75', kind === 'session' ? BLOCK_SWATCH[block.type] : 'bg-training-recovery')} />
       )}
       <span className={cn(DOCUMENT_NOTE_CLASS, 'block min-h-5 font-semibold text-text-primary whitespace-nowrap tabular-nums max-sm:w-16 max-sm:shrink-0 print:h-[3.8mm] print:min-h-0 print:leading-[3.8mm]')}>
         <span aria-hidden="true" className="sm:hidden">{`${weekdayAbbreviation(day.weekday)} `}</span>
@@ -129,7 +128,7 @@ export function BlockCalendar({ view, block }: { view: ProgramView; block: Block
         </span>
         {checkIns.length > 0 && (
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden="true" className="size-2.5 rounded-full bg-check-in-marker" />
+            <CheckInDot size="md" />
             {`Check-in form due · ${checkIns.map(date => format(date, 'EEE d MMM')).join(', ')}`}
           </span>
         )}

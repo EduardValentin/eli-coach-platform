@@ -1,24 +1,20 @@
-import { addDays, startOfDay, startOfWeek } from 'date-fns';
+import { format, isSameMonth } from 'date-fns';
 import type { Exercise } from '../../context/TrainingContext';
 import {
   cardioOn,
   sessionOn,
-  WEEKDAYS,
-  warmUpItemText,
   type Block,
-  type CardioSegment,
   type CardioSession,
   type Program,
   type ProgramVersion,
   type Session,
   type Weekday,
 } from '../../domain/program';
-import { currentPosition, type PlanPosition } from '../../domain/programCalendar';
-import { cardioMinutes, CARDIO_INTENSITY_TEXT, roundsText } from '../../domain/programCardio';
+import { blockDates, currentPosition, planWeeks, type PlanPosition } from '../../domain/programCalendar';
+import { cardioMinutes } from '../../domain/programCardio';
 import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
 import { counted } from '../../utils/counted';
-
-const SECONDS_PER_MINUTE = 60;
+import { weekOfPlanText } from './weekView';
 
 export type ProgramView = {
   program: Program;
@@ -68,27 +64,24 @@ export function cardioSummary(cardio: CardioSession): string {
   return cardio.segments.length > 0 ? `Cardio · ${cardioMinutes(cardio)} min` : 'Cardio · no segments';
 }
 
-export function sessionAnchor(sessionId: string): string {
-  return `program-session-${sessionId}`;
-}
-
-export function weekStart(view: ProgramView): Date {
-  return startOfWeek(startOfDay(view.today), { weekStartsOn: 1 });
-}
-
-export function weekDates(view: ProgramView): Record<Weekday, Date> {
-  const start = weekStart(view);
-  return Object.fromEntries(WEEKDAYS.map((day, index) => [day, addDays(start, index)])) as Record<Weekday, Date>;
-}
-
-export function restLabel(seconds: number): string {
-  if (seconds % SECONDS_PER_MINUTE === 0) return `${seconds / SECONDS_PER_MINUTE} min`;
-  return `${seconds} s`;
+export function musclesAndEquipmentText(exercise: Exercise | undefined): string {
+  if (!exercise) return '';
+  return [exercise.primaryMuscles.join(', '), exercise.equipment.join(', ')].filter(Boolean).join(' · ');
 }
 
 export function repsSuffix(exercise: Exercise | undefined): string {
   if (exercise?.measuredIn === 'time') return ' s';
   return exercise?.perSide ? ' /side' : '';
+}
+
+export function repsHeading(exercise: Exercise | undefined): string {
+  const unit = exercise?.measuredIn === 'time' ? 'Seconds' : 'Reps';
+  return exercise?.perSide ? `${unit} per side` : unit;
+}
+
+export function dateRangeText(first: Date, last: Date): string {
+  if (isSameMonth(first, last)) return `${format(first, 'd')}–${format(last, 'd MMM')}`;
+  return `${format(first, 'd MMM')}–${format(last, 'd MMM')}`;
 }
 
 export function plainText(markdown: string): string {
@@ -103,20 +96,30 @@ export function exerciseName(exerciseId: string, exercisesById: ReadonlyMap<stri
   return exerciseNameOf(exercisesById.get(exerciseId));
 }
 
-export function cardioSegmentText(segment: CardioSegment, exercisesById: ReadonlyMap<string, Exercise>): string {
-  const nameOf = (id: string) => exerciseName(id, exercisesById);
-  if (segment.kind === 'rounds') return roundsText(segment, nameOf);
-  return `${nameOf(segment.exerciseId)} · ${segment.minutes} min · ${CARDIO_INTENSITY_TEXT[segment.intensity]}`;
-}
-
-export function warmUpLines(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string[] {
-  return session.warmUp.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${warmUpItemText(item)}`);
-}
-
 export function hasCoolDown(session: Session): boolean {
   return session.coolDown.enabled && session.coolDown.items.length > 0;
 }
 
-export function coolDownLines(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string[] {
-  return session.coolDown.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${item.seconds} s`);
+const LONG_DATE = 'd MMMM';
+
+function planEndDate(view: ProgramView): Date | null {
+  const { blocks } = view.version.content.plan;
+  return view.dayOne ? blockDates(blocks, blocks.length - 1, view.dayOne).end : null;
+}
+
+export function planStatusText(view: ProgramView): string | null {
+  const end = planEndDate(view);
+  if (view.position.status === 'ended' && end) return `Ended ${format(end, LONG_DATE)}`;
+  if (view.position.status === 'before' && view.dayOne) return `Starts ${format(view.dayOne, LONG_DATE)}`;
+  return null;
+}
+
+export function planReadingText(view: ProgramView): { value: string; detail: string | null } {
+  const end = planEndDate(view);
+  const value = view.position.status === 'in-plan' ? weekOfPlanText(view.position) : (planStatusText(view) ?? counted(planWeeks(view.version.content.plan.blocks), 'week'));
+  return { value, detail: end && view.position.status !== 'ended' ? `ends ${format(end, LONG_DATE)}` : null };
+}
+
+export function dailyStepsText(block: Block): string {
+  return block.dailySteps.toLocaleString('en-US');
 }

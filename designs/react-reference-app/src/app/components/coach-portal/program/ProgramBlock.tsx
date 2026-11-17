@@ -2,6 +2,7 @@ import { useId, type ReactNode } from 'react';
 import { CircleCheck, CircleDashed, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
 import { usePrograms } from '../../../context/ProgramContext';
+import { useTraining } from '../../../context/TrainingContext';
 import { isBeforeStage, type ClientJourney } from '../../../domain/journey';
 import {
   BLOCK_TYPE_LABELS,
@@ -9,11 +10,9 @@ import {
   draftOf,
   filledSessionCount,
   type Block,
-  type BlockType,
   type Program,
   type ProgramVersion,
 } from '../../../domain/program';
-import { currentPosition, dayOneOf } from '../../../domain/programCalendar';
 import { counted } from '../../../utils/counted';
 import { clientDetailPathForJourney, clientPronouns } from '../../../utils/journeyLabels';
 import { EmptyState } from '../../EmptyState';
@@ -21,10 +20,13 @@ import { SettingsBody, SettingsSection } from '../../SettingsSection';
 import { EYEBROW_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
-import { BLOCK_SOFT, BLOCK_SWATCH } from '../../program-view/blockColours';
+import { BlockNumber } from '../../program-view/BlockNumber';
 import { filledSessionsText } from './blockParts';
 import { NextVersionAction } from './NextVersionAction';
-import { ProgramSummary } from './ProgramSummary';
+import { journeyProgramView } from '../../program-view/journeyProgramView';
+import { ProgramPlanSummary } from '../../program-view/ProgramPlan';
+import { UpcomingBlockWarnings } from './UpcomingBlockWarnings';
+import { VersionReading } from './VersionReading';
 
 function missingFrom(version: ProgramVersion): string[] {
   const { content } = version;
@@ -37,15 +39,10 @@ function missingFrom(version: ProgramVersion): string[] {
   return missing;
 }
 
-function BlockChip({ block }: { block: Block }) {
+function BlockChip({ block, index }: { block: Block; index: number }) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium text-text-primary',
-        BLOCK_SOFT[block.type],
-      )}
-    >
-      <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', BLOCK_SWATCH[block.type])} />
+    <span className="inline-flex items-center gap-2 text-sm font-medium text-text-primary">
+      <BlockNumber block={block} index={index} size="xs" />
       {`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}
     </span>
   );
@@ -54,12 +51,12 @@ function BlockChip({ block }: { block: Block }) {
 function DraftBlocks({ blocks }: { blocks: readonly Block[] }) {
   return (
     <ul aria-label="Blocks" className="divide-y divide-border-subtle">
-      {blocks.map(block => {
+      {blocks.map((block, index) => {
         const filled = filledSessionCount(block);
         const total = block.sessions.length;
         return (
           <li key={block.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0">
-            <BlockChip block={block} />
+            <BlockChip block={block} index={index} />
             <span className={cn('text-sm tabular-nums', filled < total ? 'text-warning' : 'text-text-secondary')}>
               {filledSessionsText(filled, total)}
             </span>
@@ -111,22 +108,21 @@ function DraftSummary({ version }: { version: ProgramVersion }) {
   );
 }
 
-function currentBlockType(journey: ClientJourney, program: Program): BlockType | null {
-  const blocks = currentVersion(program)?.content.plan.blocks ?? [];
-  const position = currentPosition(blocks, dayOneOf(journey), new Date());
-  if (position.status === 'in-plan') return blocks[position.blockIndex].type;
-  return position.status === 'before' ? (blocks[0]?.type ?? null) : null;
-}
-
-function PublishedSummary({ journey, program }: { journey: ClientJourney; program: Program }) {
-  const type = currentBlockType(journey, program);
+function PublishedSummary({ journey, program, programPath }: { journey: ClientJourney; program: Program; programPath: string }) {
+  const { exercises } = useTraining();
+  const version = currentVersion(program);
+  if (!version) return null;
+  const view = journeyProgramView({ journey, program, version, exercises, today: new Date() });
   return (
-    <>
-      <span aria-hidden="true" className={cn('block h-1', type ? BLOCK_SWATCH[type] : 'bg-border')} />
-      <SettingsBody>
-        <ProgramSummary journey={journey} program={program} />
-      </SettingsBody>
-    </>
+    <SettingsBody>
+      <ProgramPlanSummary
+        view={view}
+        voice="coach"
+        reading={<VersionReading version={version} />}
+        weekAction={{ kind: 'link', label: 'Open in the program', hrefOf: week => `${programPath}?week=${week}` }}
+        notice={view.dayOne && <UpcomingBlockWarnings blocks={version.content.plan.blocks} dayOne={view.dayOne} today={view.today} />}
+      />
+    </SettingsBody>
   );
 }
 
@@ -160,7 +156,7 @@ export function ProgramBlock({ journey }: { journey: ClientJourney }) {
     body = draft && <DraftSummary version={draft} />;
     footer = <NextVersionAction journey={journey} program={program} />;
   } else {
-    body = <PublishedSummary journey={journey} program={program} />;
+    body = <PublishedSummary journey={journey} program={program} programPath={programPath} />;
     footer = (
       <>
         <Button variant="outline" asChild>

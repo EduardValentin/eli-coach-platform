@@ -184,7 +184,7 @@ describe('LibraryPanel', () => {
     const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
     expect(setStats(card)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3', 'Rest 1:15']);
     await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
-    expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByText('Barbell Back Squat')).toBeInTheDocument();
+    expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByRole('button', { name: /^Barbell Back Squat/ })).toBeInTheDocument();
   });
 
   it('hides archived exercises from the library but keeps an archived one on its card', async () => {
@@ -240,8 +240,8 @@ describe('LibraryPanel', () => {
     const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
     await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
     const substitutions = within(card).getByRole('group', { name: 'Substitutions' });
-    expect(within(substitutions).getByText('Squat Jump')).toBeInTheDocument();
-    expect(within(substitutions).queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    expect(within(substitutions).getByRole('button', { name: /^Squat Jump/ })).toBeInTheDocument();
+    expect(within(substitutions).queryByRole('button', { name: /^Barbell Back Squat/ })).not.toBeInTheDocument();
   });
 
   it('narrows the list by search', async () => {

@@ -16,6 +16,7 @@ const tabsListVariants = cva(
       variant: {
         default: "h-9 rounded-compact p-[3px]",
         segmented: `h-auto max-w-full flex-wrap gap-1 rounded-compact border border-control-border-soft p-[3px] ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
+        rail: "grid h-auto w-full items-stretch rounded-none bg-transparent p-0",
       },
     },
     defaultVariants: {
@@ -24,14 +25,17 @@ const tabsListVariants = cva(
   },
 );
 
+const ACTIVE_FILL_CLASS = "data-[state=active]:bg-active-surface data-[state=active]:text-primary-foreground";
+
 const tabsTriggerVariants = cva(
-  "data-[state=active]:bg-active-surface data-[state=active]:text-primary-foreground focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground hover:text-primary relative hit-area inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-field px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground hover:text-primary relative hit-area inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-field px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "",
+        default: ACTIVE_FILL_CLASS,
         segmented:
-          "h-auto flex-auto px-4 py-[11px] font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+          ACTIVE_FILL_CLASS + " h-auto flex-auto px-4 py-[11px] font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+        rail: "h-auto flex-auto justify-normal rounded-none font-normal whitespace-normal text-text-secondary hover:text-text-secondary data-[state=active]:z-10 data-[state=active]:selected-cell",
       },
     },
     defaultVariants: {
@@ -45,6 +49,7 @@ const tabsContentVariants = cva("flex-1 outline-none", {
     variant: {
       default: "",
       segmented: "rounded-card",
+      rail: "",
     },
   },
   defaultVariants: {

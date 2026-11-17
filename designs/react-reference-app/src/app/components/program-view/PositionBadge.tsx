@@ -8,6 +8,7 @@ const positionBadgeVariants = cva('inline-flex shrink-0 items-center justify-cen
       md: 'size-8 text-xs',
     },
     tone: {
+      quiet: 'bg-surface-neutral text-text-primary',
       inverted: 'bg-surface-inverted text-surface-inverted-foreground',
       'check-in': 'bg-check-in-marker text-surface-base print:h-[3.8mm] print:min-w-[3.8mm]',
     },

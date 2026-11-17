@@ -1,7 +1,6 @@
 import { BLOCK_TYPE_LABELS, BLOCK_TYPES, type Block, type BlockType } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
-import { BLOCK_SWATCH } from '../../program-view/blockColours';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { cn } from '../../ui/utils';
 
@@ -23,23 +22,6 @@ export function blockProgress(block: Block, status: BlockStatus): string | null 
 
 export function filledSessionsText(filled: number, total: number): string {
   return `${filled} of ${total} sessions`;
-}
-
-type BlockNumberProps = { block: Block; index: number; size: 'sm' | 'md' };
-
-export function BlockNumber({ block, index, size }: BlockNumberProps) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-tile font-semibold text-primary-foreground tabular-nums',
-        BLOCK_SWATCH[block.type],
-        { 'size-7 text-xs': size === 'sm', 'size-8 text-sm': size === 'md' },
-      )}
-    >
-      {index + 1}
-    </span>
-  );
 }
 
 type BlockTypeSelectProps = { value: BlockType; label: string; appearance: 'title' | 'field'; problemId?: string; onChange: (type: BlockType) => void };

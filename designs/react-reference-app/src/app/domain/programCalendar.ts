@@ -39,6 +39,14 @@ export function blockDates(blocks: readonly Block[], index: number, dayOne: Date
   };
 }
 
+export type WeekInPlan = { blockIndex: number; weekOfBlock: number; calibration: boolean };
+
+export function weekInPlan(blocks: readonly Block[], weekOfPlan: number): WeekInPlan {
+  const blockIndex = blocks.findIndex((_, index) => weekOfPlan <= blockSpan(blocks, index).endWeek);
+  const weekOfBlock = weekOfPlan - blockSpan(blocks, blockIndex).startWeek + 1;
+  return { blockIndex, weekOfBlock, calibration: weekOfBlock === 1 && blocks[blockIndex].calibrationWeek };
+}
+
 export function currentPosition(blocks: readonly Block[], dayOne: Date | null, today: Date): PlanPosition {
   if (!dayOne) return { status: 'before' };
   const dayIndex = differenceInCalendarDays(today, dayOne);
@@ -46,16 +54,7 @@ export function currentPosition(blocks: readonly Block[], dayOne: Date | null, t
   const totalWeeks = planWeeks(blocks);
   const weekOfPlan = Math.floor(dayIndex / DAYS_PER_WEEK) + 1;
   if (weekOfPlan > totalWeeks) return { status: 'ended' };
-  const blockIndex = blocks.findIndex((_, index) => weekOfPlan <= blockSpan(blocks, index).endWeek);
-  const weekOfBlock = weekOfPlan - blockSpan(blocks, blockIndex).startWeek + 1;
-  return {
-    status: 'in-plan',
-    blockIndex,
-    weekOfBlock,
-    weekOfPlan,
-    totalWeeks,
-    calibration: weekOfBlock === 1 && blocks[blockIndex].calibrationWeek,
-  };
+  return { status: 'in-plan', ...weekInPlan(blocks, weekOfPlan), weekOfPlan, totalWeeks };
 }
 
 export function weeklyRuleWeekdayOf(weekday: Weekday): number {
@@ -134,4 +133,16 @@ export function blockStatus({ blocks, dayOne, today }: PlanSchedule, index: numb
     return { kind: 'current', weekOfBlock: position.weekOfBlock, calibration: position.calibration };
   }
   return { kind: 'upcoming', start };
+}
+
+export type PlanWeek = WeekInPlan & { weekOfPlan: number; days: BlockDay[] };
+
+export function planWeek(schedule: BlockSchedule, weekOfPlan: number, checkInWeekday: Weekday): PlanWeek {
+  const week = weekInPlan(schedule.blocks, weekOfPlan);
+  return { weekOfPlan, ...week, days: blockWeeks(schedule, week.blockIndex, checkInWeekday)[week.weekOfBlock - 1].days };
+}
+
+export function shownWeekOfPlan(blocks: readonly Block[], position: PlanPosition): number {
+  if (position.status === 'in-plan') return position.weekOfPlan;
+  return position.status === 'ended' ? planWeeks(blocks) : 1;
 }

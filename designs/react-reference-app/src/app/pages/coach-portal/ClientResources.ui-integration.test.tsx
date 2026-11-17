@@ -145,7 +145,8 @@ describe('coach resources page', () => {
     await waitForResources();
 
     // assert
-    expect(screen.getByRole('heading', { level: 1, name: 'Jane’s resources' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Resources' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toBeInTheDocument();
     expect(shownTitles()).toEqual([
       'Plate portions guide',
       'Glute activation warm-up',
@@ -164,9 +165,7 @@ describe('coach resources page', () => {
     await waitForResources();
 
     // assert
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Andreea’s resources' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Resources' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to Andreea Popescu' })).toHaveAttribute(
       'href',
       `/coach/clients/${AWAITING_REVIEW_CALL_ID}`,
@@ -606,7 +605,7 @@ describe('coach resources page', () => {
       () => expect(shownTitles()).not.toContain('Hip thrust form checklist'),
       SERVICE_TIMEOUT,
     );
-    expect(screen.getByRole('heading', { level: 1, name: 'Jane’s resources' })).toHaveFocus();
+    expect(screen.getByRole('heading', { level: 1, name: 'Resources' })).toHaveFocus();
   });
 
   it('closes the viewer and moves focus to the page heading once a resource is deleted from it', async () => {
@@ -627,7 +626,7 @@ describe('coach resources page', () => {
       SERVICE_TIMEOUT,
     );
     expect(screen.queryByRole('dialog', { name: 'Weekly macro tracker' })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1, name: 'Jane’s resources' })).toHaveFocus();
+    expect(screen.getByRole('heading', { level: 1, name: 'Resources' })).toHaveFocus();
   });
 
   it('returns focus to the card menu when she keeps the resource', async () => {

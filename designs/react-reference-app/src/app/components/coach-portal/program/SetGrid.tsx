@@ -1,18 +1,19 @@
 import type { ReactNode } from 'react';
 import { Copy, Plus, X } from 'lucide-react';
-import { formatRange, isWorkingSet, NEW_SET_RIR, withField, withSetAdded, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
+import { formatRange, formatRest, isWorkingSet, NEW_SET_RIR, numberedSets, withField, withSetAdded, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
+import { SetMark } from '../../program-view/SetMark';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { RowTextField, useRowTextField } from './RowTextField';
-import { formatRest, parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM } from './rowFields';
+import { parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM } from './rowFields';
 import { Checkbox } from '../../ui/checkbox';
 
 type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChange: (row: Row) => void };
 type SetKind = SetSpec['kind'];
 
-const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.5rem_5rem_4rem_4rem_7.5rem_2.5rem]';
-const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.5rem_5rem_6.5rem_4rem_7.5rem_2.5rem]';
+const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.75rem_5rem_4rem_4rem_7.5rem_2.5rem]';
+const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.75rem_5rem_6.5rem_4rem_7.5rem_2.5rem]';
 const MINI_LABEL_CLASS = cn(LABEL_CLASS, '@min-[34rem]:hidden');
 const FIELD_WIDTH = 'w-full @min-[34rem]:w-16';
 const WEIGHT_WIDTH = 'w-full @min-[34rem]:w-20';
@@ -71,7 +72,7 @@ function NoRir({ label }: { label: string }) {
 
 type SetRowProps = {
   set: SetSpec;
-  index: number;
+  number: number;
   repsSuffix: string;
   removable: boolean;
   rirForNewWorking: Range;
@@ -79,9 +80,9 @@ type SetRowProps = {
   onRemove: () => void;
 };
 
-function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange, onRemove }: SetRowProps) {
-  const label = `Set ${index + 1}`;
+function SetRow({ set, number, repsSuffix, removable, rirForNewWorking, onChange, onRemove }: SetRowProps) {
   const working = isWorkingSet(set);
+  const label = working ? `Set ${number}` : `Warm-up set ${number}`;
   const reps = useRowTextField({
     className: FIELD_WIDTH,
     label: `${label} reps`,
@@ -118,13 +119,12 @@ function SetRow({ set, index, repsSuffix, removable, rirForNewWorking, onChange,
 
   return (
     <li className={cn('grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 py-2 @min-[34rem]:gap-y-2', wideColumns(repsSuffix))}>
-      <span className="text-sm font-medium text-text-secondary tabular-nums @min-[34rem]:flex @min-[34rem]:h-(--size-control-md) @min-[34rem]:items-center">
-        <span className="@min-[34rem]:sr-only">Set </span>
-        {index + 1}
+      <span className="flex h-(--size-control-md) items-center">
+        <SetMark kind={set.kind} number={number} />
       </span>
       <label className="flex h-(--size-control-md) cursor-pointer items-center gap-3 text-sm text-text-primary @min-[34rem]:justify-center">
         <Checkbox
-          aria-label={`${label} is a warm-up set`}
+          aria-label={`${label}, warm-up`}
           checked={!working}
           onCheckedChange={checked => onChange(asKind(set, checked === true ? 'warm-up' : 'working', rirForNewWorking))}
         />
@@ -171,11 +171,11 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           <span>Weight</span>
         </div>
         <ol aria-label={`Sets for ${exerciseName}`} className="grid grid-cols-[minmax(0,1fr)] divide-y divide-border-subtle @min-[34rem]:divide-y-0">
-          {sets.map((set, index) => (
+          {numberedSets(sets).map(({ set, number }, index) => (
             <SetRow
               key={index}
               set={set}
-              index={index}
+              number={number}
               repsSuffix={repsSuffix}
               removable={!(isWorkingSet(set) && working.length === 1)}
               rirForNewWorking={rirForNewWorking}

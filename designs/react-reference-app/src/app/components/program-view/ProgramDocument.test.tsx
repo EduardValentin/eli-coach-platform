@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
-import { BLOCK_TYPE_LABELS, currentVersion, positionLabel, warmUpItemText, WEEKDAYS, workingSets, type Weekday } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, currentVersion, formatRest, positionLabel, warmUpItemText, WEEKDAYS, workingSets, type Weekday } from '../../domain/program';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
@@ -346,7 +346,7 @@ describe('ProgramDocument', () => {
     const card = screen.getByRole('region', { name: cardio.name });
     const name = view.exercisesById.get(item.exerciseId)?.name;
     expect(within(card).getAllByRole('listitem').map(entry => entry.textContent)).toContain(
-      `${name} · ${rounds.rounds} × (${item.workSeconds} s ${rounds.intensity} / ${rounds.easySeconds} s easy)`,
+      `${name} · ${rounds.rounds} × (${item.workSeconds} s ${rounds.intensity} / ${formatRest(rounds.easySeconds)} easy)`,
     );
     expect(within(card).queryByText(/between rounds/)).not.toBeInTheDocument();
     const single = currentBlockOf(view).cardioSessions.find(candidate => candidate.segments.length === 1);

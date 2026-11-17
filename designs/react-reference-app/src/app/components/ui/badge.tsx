@@ -18,8 +18,8 @@ const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         pending:
-          "border-status-pending/20 bg-status-pending-soft text-status-pending",
-        success: "border-success/20 bg-success-soft text-success",
+          "border-status-pending/20 bg-status-pending-soft text-status-pending-ink",
+        success: "border-success/20 bg-success-soft text-success-ink",
         "brand-secondary":
           "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary-ink",
         muted: "border-border text-muted-foreground",
@@ -35,8 +35,6 @@ const badgeVariants = cva(
           "border-transparent bg-training-recovery-soft text-training-recovery-ink",
         count:
           "rounded-full border-transparent bg-current/10 px-1.5 min-w-5 justify-center text-xs font-medium tabular-nums",
-        "count-on-fill":
-          "rounded-full border-transparent bg-surface-base px-1.5 min-w-5 justify-center text-xs font-medium tabular-nums",
       },
     },
     defaultVariants: {

@@ -166,7 +166,7 @@ describe('ProgramEditorPage', () => {
     expect(await screen.findByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
   });
 
-  it('places dated check-in form chips on the timeline from day 1', async () => {
+  it('names the dated check-in forms on the timeline from day 1', async () => {
     // arrange
     const dayOne = subDays(new Date(), 1);
     const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
@@ -176,8 +176,8 @@ describe('ProgramEditorPage', () => {
 
     // assert
     const firstForm = firstCheckInFormAfter(dayOne);
-    const chips = within(screen.getByRole('list', { name: 'Check-in forms' })).getAllByRole('listitem');
-    expect(chips[0]).toHaveTextContent(format(firstForm, 'd MMM'));
+    const weeks = within(screen.getByRole('toolbar', { name: 'Plan weeks' })).getAllByRole('button');
+    expect(weeks.filter(week => week.getAttribute('aria-label')?.includes(`check-in form ${format(firstForm, 'EEE d MMM')}`))).toHaveLength(1);
   });
 
   it('opens the publish dialog on the warnings from the top bar', async () => {
@@ -278,7 +278,7 @@ describe('ProgramEditorPage', () => {
 
     // assert
     const dialog = screen.getByRole('dialog', { name: 'Preview as client' });
-    expect(within(dialog).getByRole('tablist', { name: 'This week' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('tablist', { name: /^Days of week \d+ of \d+$/ })).toBeInTheDocument();
   });
 
   it('offers a skip link to the editor before the top bar', () => {

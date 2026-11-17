@@ -36,7 +36,7 @@ export function PortalLayout() {
       <main
         id={PORTAL_MAIN_ID}
         tabIndex={-1}
-        className="lg:pl-64 pt-[calc(env(safe-area-inset-top)+4rem)] lg:pt-0 [--portal-tab-bar-clearance:calc(env(safe-area-inset-bottom)+5rem)] pb-(--portal-tab-bar-clearance) lg:pb-0 focus:outline-none"
+        className="lg:pl-64 pt-[calc(env(safe-area-inset-top)+4rem)] lg:pt-0 [--portal-top-bar-clearance:calc(env(safe-area-inset-top)+4.5rem)] lg:[--portal-top-bar-clearance:0px] [--portal-tab-bar-clearance:calc(env(safe-area-inset-bottom)+5rem)] pb-(--portal-tab-bar-clearance) lg:pb-0 focus:outline-none"
       >
         <div className="max-w-portal mx-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />

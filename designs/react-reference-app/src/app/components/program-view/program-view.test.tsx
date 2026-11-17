@@ -1,23 +1,37 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { currentBlockOf } from '../../../test/programFixtures';
 import type { Exercise } from '../../context/TrainingContext';
-import { currentVersion, type Session } from '../../domain/program';
+import { currentVersion, type Block, type ProgramVersion, type Session } from '../../domain/program';
 import { cardioPreset } from '../../domain/programCardio';
 import { programForSeed } from '../../services/programSamples';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
-import { DayContent } from './DayContent';
-import { WithoutExercisePageLinks } from './exercisePageLinks';
-import { FocusCard } from './FocusCard';
+import { ProgramViewer } from './ProgramViewer';
 import { SessionTable } from './SessionTable';
-import { WeekStrip } from './WeekStrip';
-import { WhatChangedBanner } from './WhatChangedBanner';
-import { viewOf, weekStart, type ProgramView } from './programView';
+import { ClientProgramView } from '../client-portal/ClientProgramView';
+import { viewOf, type ProgramView } from './programView';
+import { useLocalWeekSelection } from './weekSelection';
 
 const DAY_ONE = new Date(2026, 8, 16);
 const TODAY = new Date(2026, 8, 22);
+const SESSION_DAY = new Date(2026, 8, 21);
+
+beforeAll(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+});
 
 afterEach(() => {
   window.localStorage.clear();
@@ -35,47 +49,53 @@ function sessionWith(view: ProgramView, edit: (session: Session) => Session): Se
   return edit(currentBlockOf(view).sessions[0]);
 }
 
-describe('FocusCard', () => {
-  it('shows the block, week and next check-in', () => {
-    // arrange
-    const view = viewAt(TODAY);
+function withFirstBlock(view: ProgramView, edit: (block: Block) => Block): ProgramView {
+  const [first, ...rest] = view.version.content.plan.blocks;
+  const version: ProgramVersion = { ...view.version, content: { ...view.version.content, plan: { blocks: [edit(first), ...rest] } } };
+  return { ...view, version };
+}
 
-    // act
-    render(<FocusCard view={view} action={<button type="button">Download PDF</button>} />);
+function Viewer({ view }: { view: ProgramView }) {
+  const selection = useLocalWeekSelection();
+  return (
+    <ProgramViewer
+      view={view}
+      selection={selection}
+      planPlacement="after-week"
+      planVoice="client"
+      versions={view.program.versions}
+      versionStates="shown"
+      versionAction={version => <a href={`/document/${version.number}`}>{`Download PDF, version ${version.number}`}</a>}
+      unwrittenDescription={block => `${block.name} is not written.`}
+    />
+  );
+}
 
-    // assert
-    expect(screen.getByRole('heading', { level: 2, name: 'Foundation' })).toBeInTheDocument();
-    expect(screen.getByText('Week 1 of 11')).toBeInTheDocument();
-    expect(screen.getAllByRole('term')).toHaveLength(1);
-    expect(screen.getByText('Next check-in form')).toBeInTheDocument();
-    expect(screen.getByText('Monday, 5 October')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument();
-  });
+function renderViewer(view: ProgramView) {
+  return render(
+    <MemoryRouter>
+      <Viewer view={view} />
+    </MemoryRouter>,
+  );
+}
 
-  it('tells the client the plan has ended', () => {
-    // arrange
-    const view = viewAt(new Date(2026, 11, 10));
+function ClientViewer({ view }: { view: ProgramView }) {
+  const selection = useLocalWeekSelection();
+  return <ClientProgramView view={view} selection={selection} />;
+}
 
-    // act
-    render(<FocusCard view={view} />);
+function renderClientView(version: ProgramVersion) {
+  const view = viewAt(TODAY);
+  return render(
+    <MemoryRouter>
+      <ClientViewer view={{ ...view, version }} />
+    </MemoryRouter>,
+  );
+}
 
-    // assert
-    expect(screen.getByText('Your plan has ended, your coach is preparing the next version')).toBeInTheDocument();
-  });
+const WHAT_CHANGED = /What changed in version/;
 
-  it('tells the client the program has not started', () => {
-    // arrange
-    const view = { ...viewAt(TODAY), dayOne: null, position: { status: 'before' as const } };
-
-    // act
-    render(<FocusCard view={view} />);
-
-    // assert
-    expect(screen.getByText('Your program starts when version 1 is published')).toBeInTheDocument();
-  });
-});
-
-describe('WhatChangedBanner', () => {
+describe('What changed notice', () => {
   const version = { ...viewAt(TODAY).version, number: 2, whatChanged: 'Raised steps to 8,000.' };
 
   it('is hidden for the first version', () => {
@@ -83,10 +103,10 @@ describe('WhatChangedBanner', () => {
     const first = { ...version, number: 1 };
 
     // act
-    render(<WhatChangedBanner version={first} dismissedVersion={null} onDismiss={vi.fn()} />);
+    renderClientView(first);
 
     // assert
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.queryByText(WHAT_CHANGED)).not.toBeInTheDocument();
   });
 
   it('is left out when the coach wrote nothing about the change', () => {
@@ -94,322 +114,469 @@ describe('WhatChangedBanner', () => {
     const unwritten = { ...version, whatChanged: '' };
 
     // act
-    render(<WhatChangedBanner version={unwritten} dismissedVersion={null} onDismiss={vi.fn()} />);
+    renderClientView(unwritten);
 
     // assert
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.queryByText(WHAT_CHANGED)).not.toBeInTheDocument();
   });
 
   it('is hidden once that version was dismissed', () => {
-    // arrange / act
-    render(<WhatChangedBanner version={version} dismissedVersion={2} onDismiss={vi.fn()} />);
+    // arrange
+    window.localStorage.setItem('program-what-changed-dismissed', '2');
+
+    // act
+    renderClientView(version);
 
     // assert
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.queryByText(WHAT_CHANGED)).not.toBeInTheDocument();
   });
 
   it('remembers the dismissal', async () => {
     // arrange
     const user = userEvent.setup();
-    const onDismiss = vi.fn();
-    render(<WhatChangedBanner version={version} dismissedVersion={null} onDismiss={onDismiss} />);
-    const banner = screen.getByRole('complementary', { name: 'What changed in v2' });
-    expect(within(banner).getByText('Raised steps to 8,000.')).toBeInTheDocument();
+    renderClientView(version);
+    const notice = screen.getByText(WHAT_CHANGED).closest('[role="status"]') as HTMLElement;
+    expect(notice).toHaveTextContent('What changed in version 2. Raised steps to 8,000.');
 
     // act
-    await user.click(within(banner).getByRole('button', { name: 'Dismiss' }));
+    await user.click(within(notice).getByRole('button', { name: 'Dismiss' }));
 
     // assert
-    expect(onDismiss).toHaveBeenCalledOnce();
+    expect(screen.queryByText(WHAT_CHANGED)).not.toBeInTheDocument();
     expect(window.localStorage.getItem('program-what-changed-dismissed')).toBe('2');
   });
 });
 
-describe('WeekStrip', () => {
-  it('lists the week with its entries and marks today and the selection', async () => {
+describe('ProgramViewer week', () => {
+  it('heads the week with the plan week, its block and the split, and opens today', () => {
     // arrange
-    const user = userEvent.setup();
     const view = viewAt(TODAY);
-    const onSelect = vi.fn();
-    render(<WeekStrip block={currentBlockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
 
     // act
-    const tabs = within(screen.getByRole('tablist', { name: 'This week' })).getAllByRole('tab');
-    await user.click(screen.getByRole('tab', { name: /Sat/ }));
+    renderViewer(view);
 
     // assert
+    const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
+    expect(within(week).getByText('Foundation block, week 1 of 4')).toBeInTheDocument();
+    expect(within(week).queryByRole('button', { name: /^Foundation block/ })).not.toBeInTheDocument();
+    expect(within(week).getByRole('button', { name: 'Full Body' })).toHaveAttribute('aria-expanded', 'false');
+    const tabs = within(screen.getByRole('tablist', { name: 'Days of week 1 of 11' })).getAllByRole('tab');
     expect(tabs).toHaveLength(7);
-    expect(screen.getByRole('tab', { name: /Mon 21/ })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: /Tue 22/ })).toHaveAttribute('aria-current', 'date');
-    expect(screen.getByRole('tab', { name: /Sat 26/ })).toHaveTextContent('Rest');
-    expect(onSelect).toHaveBeenCalledWith('sat');
+    expect(tabs[0]).toHaveAccessibleName(/^Wednesday 16 September, /);
+    expect(tabs[6]).toHaveAccessibleName(/^Tuesday 22 September, .+, today$/);
+    expect(tabs[6]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[6]).toHaveAttribute('aria-current', 'date');
+    expect(tabs.filter(tab => tab.hasAttribute('aria-controls'))).toEqual([tabs[6]]);
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
   });
 
   it('moves between days with the arrow, Home and End keys', async () => {
     // arrange
     const user = userEvent.setup();
-    const view = viewAt(TODAY);
-    const onSelect = vi.fn();
-    render(<WeekStrip block={currentBlockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
-    screen.getByRole('tab', { name: /Mon 21/ }).focus();
+    renderViewer(viewAt(TODAY));
+    const tabs = screen.getAllByRole('tab');
+    tabs[6].focus();
 
     // act
+    await user.keyboard('{Home}');
+    const afterHome = tabs.findIndex(tab => tab.getAttribute('aria-selected') === 'true');
     await user.keyboard('{ArrowRight}');
-
-    // assert
-    expect(onSelect).toHaveBeenLastCalledWith('tue');
-    expect(screen.getByRole('tab', { name: /Tue 22/ })).toHaveFocus();
-
-    // act
+    const afterArrow = tabs.findIndex(tab => tab.getAttribute('aria-selected') === 'true');
     await user.keyboard('{End}');
 
     // assert
-    expect(onSelect).toHaveBeenLastCalledWith('sun');
-    expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveFocus();
+    expect(afterHome).toBe(0);
+    expect(afterArrow).toBe(1);
+    expect(tabs[6]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[6]).toHaveFocus();
   });
 
-  it('labels cardio days with their session name', () => {
+  it('steps through the plan weeks and offers the way back to this week', async () => {
     // arrange
-    const view = viewAt(TODAY);
-    const block = currentBlockOf(view);
-    const liss = { ...cardioPreset('liss', SAMPLE_EXERCISES), id: 'c1' };
-    const hiit = { ...cardioPreset('hiit', SAMPLE_EXERCISES), id: 'c2' };
-    const withCardio = {
-      ...block,
-      cardioSessions: [liss, hiit],
-      calendar: { ...block.calendar, sat: { kind: 'cardio' as const, cardioId: 'c1' }, sun: { kind: 'cardio' as const, cardioId: 'c2' } },
-    };
+    const user = userEvent.setup();
+    renderViewer(viewAt(TODAY));
+    expect(screen.getByRole('button', { name: 'Previous week' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'This week' })).not.toBeInTheDocument();
 
     // act
-    render(<WeekStrip block={withCardio} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: 'Next week' }));
 
     // assert
-    expect(screen.getByRole('tab', { name: /Sat 26/ })).toHaveTextContent('Easy cardio');
-    expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveTextContent('Intervals');
+    expect(screen.getByRole('heading', { level: 2, name: /^Week 2 of 11/ })).toBeInTheDocument();
+    expect(screen.getByText('Week 2 of 11, Foundation block, week 2 of 4')).toHaveAttribute('role', 'status');
+    expect(screen.getAllByRole('tab').every(tab => !tab.hasAttribute('aria-current'))).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'This week' }));
+    expect(screen.getByRole('heading', { level: 2, name: /^Week 1 of 11/ })).toBeInTheDocument();
+  });
+
+  it('shows all seven days and turns the rail into links when All days is pressed', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderViewer(viewAt(TODAY));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'All days' }));
+
+    // assert
+    expect(screen.getByRole('button', { name: 'All days' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    const rail = screen.getByRole('navigation', { name: 'Days of week 1 of 11' });
+    expect(within(rail).getAllByRole('link')).toHaveLength(7);
+    expect(screen.getAllByRole('heading', { level: 3 }).filter(heading => heading.id.startsWith('program-day-'))).toHaveLength(7);
+  });
+
+  it('says a block without exercises is not written yet', () => {
+    // arrange
+    const view = withFirstBlock(viewAt(TODAY), block => ({ ...block, sessions: block.sessions.map(session => ({ ...session, rows: [] })) }));
+
+    // act
+    renderViewer(view);
+
+    // assert
+    expect(screen.getByText("This block isn't written yet")).toBeInTheDocument();
+    expect(screen.getByText('Foundation is not written.')).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 });
 
-describe('DayContent', () => {
-  const squat = SAMPLE_EXERCISES.find(exercise => exercise.id === 'e1') as Exercise;
-  const deadlift = SAMPLE_EXERCISES.find(exercise => exercise.id === 'e2') as Exercise;
+describe('ProgramViewer day', () => {
+  function table(name: string): HTMLElement {
+    return screen.getByRole('table', { name: `Sets for ${name}` });
+  }
 
-  function withSession(view: ProgramView, edit: (session: Session) => Session) {
-    const block = currentBlockOf(view);
-    const session = edit(block.sessions[0]);
-    return {
+  function mainLift(view: ProgramView): { name: string; swaps: string[] } {
+    const row = currentBlockOf(view).sessions[0].rows[0];
+    const nameOf = (id: string) => view.exercisesById.get(id)?.name ?? '';
+    return { name: nameOf(row.exerciseId), swaps: row.substitutions.map(nameOf) };
+  }
+
+  it('lists every set as a table row with its mark, reps, RIR and weight', () => {
+    // arrange
+    const view = withFirstBlock(viewAt(SESSION_DAY), block => ({
       ...block,
-      sessions: [session, ...block.sessions.slice(1)],
-      calendar: { ...block.calendar, mon: { kind: 'session' as const, sessionId: session.id } },
-    };
-  }
-
-  function withCardio(view: ProgramView, kind: 'hiit' | 'finisher') {
-    const block = currentBlockOf(view);
-    const cardio = { ...cardioPreset(kind, SAMPLE_EXERCISES), id: 'c1' };
-    return { ...block, cardioSessions: [cardio], calendar: { ...block.calendar, sat: { kind: 'cardio' as const, cardioId: 'c1' } } };
-  }
-
-  const warmUp = { kind: 'warm-up' as const, reps: { min: 8, max: 8 }, weightKg: 20 };
-  const heavy = { kind: 'working' as const, reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 }, weightKg: 40 };
-  const byFeel = { kind: 'working' as const, reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 } };
-
-  function strengthDay(view: ProgramView) {
-    return withSession(view, session => ({
-      ...session,
-      name: 'Lower A',
-      coolDown: { enabled: true, items: [{ id: 'cd0', exerciseId: squat.id, seconds: 30 }] },
-      warmUp: { items: [{ id: 'w1', exerciseId: deadlift.id, sets: 2, reps: { min: 8, max: 8 } }] },
-      rows: [
-        { ...session.rows[0], slot: 'A', supersetGroup: undefined, exerciseId: squat.id, sets: [warmUp, heavy, byFeel], restSeconds: 120, cues: 'Brace before you descend', substitutions: [deadlift.id] },
-        { ...session.rows[1], slot: 'C', supersetGroup: 'g', exerciseId: deadlift.id, sets: [byFeel] },
-        { ...session.rows[1], id: 'paired', slot: 'C', supersetGroup: 'g', exerciseId: squat.id, sets: [byFeel] },
-      ],
-    }));
-  }
-
-  it('lists every set of an exercise with its reps, RIR and suggested weight', () => {
-    // arrange
-    const view = viewAt(TODAY);
-
-    // act
-    render(<DayContent view={view} block={strengthDay(view)} weekday="mon" />);
-
-    // assert
-    const card = screen.getByRole('article', { name: `A ${squat.name}` });
-    const sets = within(within(card).getByRole('list', { name: 'Sets' })).getAllByRole('listitem');
-    expect(sets.map(set => set.textContent)).toEqual([
-      'Set 1 · Warm-up · 8 reps · 20 kg',
-      'Set 2 · 6–10 reps · RIR 1–2 · 40 kg',
-      'Set 3 · 6–10 reps · RIR 1–2 · by RIR',
-    ]);
-    expect(within(card).getAllByText('Rest 2 min')).toHaveLength(1);
-    expect(within(card).getByText(squat.primaryMuscles[0])).toBeInTheDocument();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
-
-  it('heads the day with the session, its length, the warm-up and the cool-down', () => {
-    // arrange
-    const view = viewAt(TODAY);
-
-    // act
-    render(<DayContent view={view} block={strengthDay(view)} weekday="mon" />);
-
-    // assert
-    expect(screen.getByRole('heading', { level: 3, name: 'Lower A' })).toBeInTheDocument();
-    expect(screen.getByText(/^~\d+ min$/)).toBeInTheDocument();
-    expect(within(screen.getByRole('list', { name: 'Warm-up exercises' })).getByText(`${deadlift.name} · 2 × 8`)).toBeInTheDocument();
-    expect(screen.getByText('Cool-down')).toBeInTheDocument();
-    expect(screen.getByText(/Low-energy session/)).toBeInTheDocument();
-  });
-
-  it('lists the cool-down as its stretches with their seconds', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const block = withSession(view, session => ({
-      ...strengthDay(view).sessions[0],
-      coolDown: { enabled: true, items: [{ id: 'cd1', exerciseId: squat.id, seconds: 40 }] },
+      sessions: block.sessions.map(session => ({
+        ...session,
+        rows: session.rows.map(row => (row.slot === 'A' ? { ...row, sets: row.sets.map(set => (set.kind === 'working' ? { ...set, weightKg: 40 } : set)) } : row)),
+      })),
     }));
 
     // act
-    render(<DayContent view={view} block={block} weekday="mon" />);
+    renderViewer(view);
 
     // assert
-    const coolDown = screen.getByRole('region', { name: 'Cool-down' });
-    expect(within(within(coolDown).getByRole('list', { name: 'Cool-down stretches' })).getByRole('listitem')).toHaveTextContent(`${squat.name} · 40 s`);
-    expect(within(coolDown).queryByRole('paragraph')).not.toBeInTheDocument();
+    const sets = table(mainLift(view).name);
+    expect(within(sets).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR', 'Weight']);
+    const rows = within(sets).getAllByRole('row').slice(1);
+    expect(rows.map(row => within(row).getByRole('rowheader').textContent)).toEqual(['WWarm-up set 1', 'WWarm-up set 2', '1Set 1', '2Set 2', '3Set 3']);
+    expect(within(rows[0]).getAllByRole('cell').map(cell => cell.textContent)).toEqual(['8warm-up', '–none', 'lighter']);
+    expect(within(rows[2]).getAllByRole('cell').map(cell => cell.textContent)).toEqual(['12–15', '3', '40 kg']);
   });
 
-  it('leaves out a cool-down that is on without stretches', () => {
+  it('leaves the weight column out and says once that the weight is her choice', () => {
     // arrange
-    const view = viewAt(TODAY);
-    const block = withSession(view, () => ({ ...strengthDay(view).sessions[0], coolDown: { enabled: true, items: [] } }));
+    const view = viewAt(SESSION_DAY);
 
     // act
-    render(<DayContent view={view} block={block} weekday="mon" />);
+    renderViewer(view);
 
     // assert
-    expect(screen.queryByRole('region', { name: 'Cool-down' })).not.toBeInTheDocument();
+    const sets = table(mainLift(view).name);
+    expect(within(sets).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR']);
+    expect(within(sets).queryByText('by RIR')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your choice, by RIR')).not.toBeInTheDocument();
   });
 
-  it('groups a superset under one label', () => {
+  it('says in "How to read this" that the weight is her choice when none is listed', async () => {
     // arrange
-    const view = viewAt(TODAY);
+    const user = userEvent.setup();
+    renderViewer(viewAt(SESSION_DAY));
 
     // act
-    render(<DayContent view={view} block={strengthDay(view)} weekday="mon" />);
+    await user.click(screen.getByRole('button', { name: 'How to read this' }));
+
+    // assert
+    const panel = screen.getByRole('region', { name: 'How to read this' });
+    expect(within(panel).getByText('No weight listed')).toBeInTheDocument();
+    expect(within(panel).getByText('Pick one that lets you finish the set at the RIR shown.')).toBeInTheDocument();
+  });
+
+  it('groups a superset under one label with one rest', () => {
+    // arrange
+    const view = viewAt(SESSION_DAY);
+
+    // act
+    renderViewer(view);
 
     // assert
     const superset = screen.getByRole('list', { name: 'Superset' });
-    expect(within(superset).getAllByRole('article')).toHaveLength(2);
-    expect(within(superset).getByRole('article', { name: `C1 ${deadlift.name}` })).toBeInTheDocument();
-    expect(within(superset).getByRole('article', { name: `C2 ${squat.name}` })).toBeInTheDocument();
+    expect(within(superset).getAllByRole('table')).toHaveLength(2);
+    expect(within(superset).queryByText('Rest')).not.toBeInTheDocument();
+    expect(screen.getByText(/^Alternate C1 and C2\./)).toHaveTextContent('Alternate C1 and C2. Rest 1:15 after C2.');
   });
 
-  it('keeps cues, video and swaps collapsed until asked for', async () => {
+  it('opens the exercise detail from its name, with its targets and muscles, and returns focus on close', async () => {
     // arrange
     const user = userEvent.setup();
-    const view = viewAt(TODAY);
-    render(
-      <MemoryRouter>
-        <DayContent view={view} block={strengthDay(view)} weekday="mon" />
-      </MemoryRouter>,
-    );
-    const card = screen.getByRole('article', { name: `A ${squat.name}` });
-    expect(within(card).queryByText('Brace before you descend')).not.toBeInTheDocument();
+    const view = viewAt(SESSION_DAY);
+    const { name } = mainLift(view);
+    renderViewer(view);
+    expect(screen.queryByText('Muscles worked')).not.toBeInTheDocument();
+    const opener = screen.getByRole('button', { name: new RegExp(`^${name} ?: cues`) });
 
     // act
-    await user.click(within(card).getByRole('button', { name: 'Cues, video and swaps' }));
+    await user.click(opener);
 
     // assert
-    expect(within(card).getByText('Brace before you descend')).toBeInTheDocument();
-    expect(within(card).getByRole('button', { name: 'Watch video' })).toBeInTheDocument();
-    expect(within(card).getByText(/^Swap for:/)).toHaveTextContent(`Swap for: ${deadlift.name}`);
-    expect(within(card).getByText(/How to progress:/)).toBeInTheDocument();
+    const detail = screen.getByRole('dialog', { name });
+    expect(within(detail).getByRole('heading', { name: 'Targets' })).toBeInTheDocument();
+    expect(within(detail).getByRole('heading', { name: 'Muscles worked' })).toBeInTheDocument();
+    expect(within(detail).getByText('Primary')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
   });
 
-  it('links the exercise and each swap to their exercise pages, as the printed program does', async () => {
+  it('keeps the swaps behind a disclosure and opens each swap in its own detail', async () => {
     // arrange
     const user = userEvent.setup();
-    const view = viewAt(TODAY);
-    render(
-      <MemoryRouter>
-        <DayContent view={view} block={strengthDay(view)} weekday="mon" />
-      </MemoryRouter>,
-    );
-    const card = screen.getByRole('article', { name: `A ${squat.name}` });
+    const view = viewAt(SESSION_DAY);
+    const { name, swaps } = mainLift(view);
+    renderViewer(view);
+    expect(screen.queryByRole('list', { name: `Swaps for ${name}` })).not.toBeInTheDocument();
 
     // act
-    await user.click(within(card).getByRole('button', { name: 'Cues, video and swaps' }));
+    await user.click(screen.getByRole('button', { name: `${swaps.length} swaps for ${name}` }));
+    const list = screen.getByRole('list', { name: `Swaps for ${name}` });
+    await user.click(within(list).getByRole('button', { name: new RegExp(`^${swaps[0]}`) }));
 
     // assert
-    expect(within(card).getByRole('link', { name: 'Open exercise page' })).toHaveAttribute('href', `/portal/exercises/${squat.id}`);
-    expect(within(card).getByRole('link', { name: deadlift.name })).toHaveAttribute('href', `/portal/exercises/${deadlift.id}`);
+    expect(screen.getByText(`Same sets, reps and RIR as ${name}.`)).toBeInTheDocument();
+    const detail = screen.getByRole('dialog', { name: swaps[0] });
+    expect(within(detail).getByText(`Swap for A · ${name}`)).toBeInTheDocument();
+    expect(within(detail).getByRole('heading', { name: 'Do it instead, with the same targets' })).toBeInTheDocument();
+    await user.click(within(detail).getByRole('button', { name: `Back to ${name}` }));
+    expect(screen.getByRole('dialog', { name })).toBeInTheDocument();
   });
 
-  it('names the swaps without links in the coach preview', async () => {
+  it('opens the detail of a warm-up exercise and lists its amount', async () => {
     // arrange
     const user = userEvent.setup();
-    const view = viewAt(TODAY);
-    render(
-      <MemoryRouter>
-        <WithoutExercisePageLinks>
-          <DayContent view={view} block={strengthDay(view)} weekday="mon" />
-        </WithoutExercisePageLinks>
-      </MemoryRouter>,
-    );
-    const card = screen.getByRole('article', { name: `A ${squat.name}` });
+    const view = viewAt(SESSION_DAY);
+    const item = currentBlockOf(view).sessions[0].warmUp.items[0];
+    const name = view.exercisesById.get(item.exerciseId)?.name ?? '';
+    renderViewer(view);
+    const warmUp = screen.getByRole('region', { name: 'Warm-up' });
 
     // act
-    await user.click(within(card).getByRole('button', { name: 'Cues, video and swaps' }));
+    await user.click(within(warmUp).getByRole('button', { name: new RegExp(`^${name} ?: cues`) }));
 
     // assert
-    expect(within(card).getByText(`Swap for: ${deadlift.name}`)).toBeInTheDocument();
-    expect(within(card).queryByRole('link')).not.toBeInTheDocument();
+    const detail = screen.getByRole('dialog', { name });
+    expect(within(detail).queryByText(/^Warm-up · /)).not.toBeInTheDocument();
+    expect(within(detail).queryByRole('heading', { name: 'Swaps' })).not.toBeInTheDocument();
   });
 
-  it('renders a rest day', () => {
+  it('lists the cool-down as its stretches with their seconds and leaves an empty one out', () => {
     // arrange
-    const view = viewAt(TODAY);
+    const stretch = SAMPLE_EXERCISES.find(exercise => exercise.type === 'mobility');
+    if (!stretch) throw new Error('no mobility exercise');
+    const withCoolDown = withFirstBlock(viewAt(SESSION_DAY), block => ({
+      ...block,
+      sessions: block.sessions.map(session => ({ ...session, coolDown: { enabled: true, items: [{ id: 'cd', exerciseId: stretch.id, seconds: 30 }] } })),
+    }));
+    const withEmptyCoolDown = withFirstBlock(viewAt(SESSION_DAY), block => ({
+      ...block,
+      sessions: block.sessions.map(session => ({ ...session, coolDown: { enabled: true, items: [] } })),
+    }));
 
     // act
-    render(<DayContent view={view} block={currentBlockOf(view)} weekday="sat" />);
+    const { unmount } = renderViewer(withCoolDown);
+    const coolDown = within(screen.getByRole('region', { name: 'Cool-down' })).getByRole('listitem').textContent;
+    unmount();
+    renderViewer(withEmptyCoolDown);
 
     // assert
-    expect(screen.getByText('Rest day')).toBeInTheDocument();
-    expect(screen.queryByText(/A short walk still counts/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(coolDown).toMatch(new RegExp(`^${stretch.name}.*30 s`));
+    expect(screen.queryByRole('region', { name: 'Cool-down' })).not.toBeInTheDocument();
   });
 
-  it('renders a cardio day as its segments', () => {
+  it('designs the rest day and links to the next session', async () => {
     // arrange
-    const view = viewAt(TODAY);
+    const user = userEvent.setup();
+    const view = viewAt(SESSION_DAY);
+    renderViewer(view);
+    const restTab = screen.getAllByRole('tab').find(tab => /, Rest$/.test(tab.getAttribute('aria-label') ?? tab.textContent ?? ''));
+    if (!restTab) throw new Error('no rest day');
 
     // act
-    render(<DayContent view={view} block={withCardio(view, 'hiit')} weekday="sat" />);
+    await user.click(restTab);
 
     // assert
-    expect(screen.getByRole('heading', { level: 3, name: 'Intervals' })).toBeInTheDocument();
-    expect(screen.getByText('26 min')).toBeInTheDocument();
-    const segments = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
-    expect(segments.map(segment => segment.textContent)).toEqual([
-      'Stationary bike · 5 min · You can hold a conversation',
-      'Intervals · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
-      'Stationary bike · 5 min · You can hold a conversation',
-    ]);
-    expect(screen.queryByText(/Swap this for a 30-minute easy walk/)).not.toBeInTheDocument();
+    const panel = screen.getByRole('tabpanel');
+    expect(within(panel).getByRole('heading', { level: 3, name: 'Rest' })).toBeInTheDocument();
+    expect(within(panel).getByText(/Keep to your daily steps:/)).toBeInTheDocument();
+    expect(within(panel).queryByText(/No session and no cardio today/)).not.toBeInTheDocument();
+    await user.click(within(panel).getByRole('button', { name: /^Next: / }));
+    expect(within(screen.getByRole('tabpanel')).queryByRole('heading', { level: 3, name: 'Rest' })).not.toBeInTheDocument();
   });
 
-  it('renders rounds as the round count and its exercises', () => {
+  it('renders a cardio day as numbered segments whose steps run in order, with the effort key under the title and its hint on the Effort head', async () => {
     // arrange
-    const view = viewAt(TODAY);
-    const block = withCardio(view, 'finisher');
+    const user = userEvent.setup();
+    const view = withFirstBlock(viewAt(SESSION_DAY), block => {
+      const replaced = block.cardioSessions[0];
+      const intervals = { ...cardioPreset('hiit', SAMPLE_EXERCISES), id: replaced.id, originId: replaced.originId };
+      return { ...block, cardioSessions: block.cardioSessions.map(cardio => (cardio.id === replaced.id ? intervals : cardio)) };
+    });
+    renderViewer(view);
+    const cardioTab = screen.getAllByRole('tab').find(tab => /, Intervals$/.test(tab.textContent ?? ''));
+    if (!cardioTab) throw new Error('no intervals day');
 
     // act
-    render(<DayContent view={view} block={block} weekday="sat" />);
+    await user.click(cardioTab);
 
     // assert
-    const segment = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem')[0];
-    expect(segment).toHaveTextContent('Intervals · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · 60 s between rounds · Hard: only a few words at a time');
+    const panel = screen.getByRole('tabpanel');
+    expect(within(panel).getByRole('heading', { level: 3, name: 'Intervals' })).toBeInTheDocument();
+    expect(within(panel).getAllByRole('term').map(term => term.textContent)).toEqual(['Easy', 'Hard']);
+    expect(within(panel).getAllByText(/You can hold a conversation\.|Only a few words at a time\./)).toHaveLength(2);
+    const segments = within(panel).getAllByRole('article');
+    expect(segments).toHaveLength(3);
+    const rowsOf = (segment: HTMLElement) => within(within(segment).getByRole('table')).getAllByRole('row').slice(1).map(row => row.textContent);
+    expect(rowsOf(segments[0])).toEqual(['Steady5 minEasy']);
+    expect(within(segments[1]).getByRole('heading', { level: 4, name: 'Intervals' })).toBeInTheDocument();
+    expect(within(segments[1]).getByRole('table', { name: 'Segment 2, Intervals' })).toBeInTheDocument();
+    const [rounds, work, easy, ...rest] = rowsOf(segments[1]);
+    expect(rounds).toMatch(/^8 rounds\d+ min$/);
+    expect(work).toMatch(/30 sHard$/);
+    expect(easy).toBe('then1:30Easy');
+    expect(rest).toEqual([]);
+    expect(panel).not.toHaveTextContent('None');
+    expect(within(segments[1]).queryByRole('button', { name: 'What each effort means' })).not.toBeInTheDocument();
+
+    // act
+    await user.hover(within(segments[0]).getByRole('button', { name: 'What each effort means' }));
+
+    // assert
+    const hint = await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Hard: Only a few words at a time.');
+    expect(hint).toBeVisible();
+    expect(within(segments[0]).getByRole('button', { name: 'What each effort means' })).toHaveAccessibleDescription(/^Easy: You can hold a conversation\. ?Hard: Only a few words at a time\.$/);
+  });
+
+  it('marks a calibration week on the block line and explains it once at the top of the day', () => {
+    // arrange
+    const view = withFirstBlock(viewAt(SESSION_DAY), block => ({ ...block, calibrationWeek: true }));
+
+    // act
+    renderViewer(view);
+
+    // assert
+    expect(within(screen.getByRole('region', { name: /^Week 1 of 11/ })).getAllByText('Calibration week').length).toBeGreaterThan(0);
+    const panel = screen.getByRole('tabpanel');
+    expect(within(panel).getByText('Week 1 — finding your weights.').tagName).toBe('STRONG');
+    expect(within(panel).getAllByText(/finding your weights/)).toHaveLength(1);
+  });
+});
+
+describe('ProgramViewer texts and versions', () => {
+  it('opens the block, split and steps texts behind the split name, in that order, and closes them from it', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderViewer(viewAt(TODAY));
+    const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
+    const split = within(week).getByRole('button', { name: 'Full Body' });
+
+    // act
+    await user.click(split);
+
+    // assert
+    const texts = within(week).getByRole('region', { name: 'Full Body' });
+    const headings = within(texts).getAllByRole('heading', { level: 3 }).map(heading => heading.textContent ?? '');
+    expect(headings).toHaveLength(3);
+    expect(headings[0]).toMatch(/^Foundation block — building your base/);
+    expect(headings[1]).toMatch(/^Your split: Full Body/);
+    expect(headings[2]).toMatch(/^Daily steps: /);
+    expect(texts).toHaveTextContent(/If you miss a session/);
+    expect(within(texts).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+
+    // act
+    await user.click(split);
+
+    // assert
+    expect(within(week).queryByRole('region', { name: 'Full Body' })).not.toBeInTheDocument();
+    expect(split).toHaveAttribute('aria-expanded', 'false');
+    expect(split).toHaveFocus();
+  });
+
+  it('opens how to read the session and the low-energy option under the day title, and the warm-up text in its band', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderViewer(viewAt(SESSION_DAY));
+    const day = screen.getByRole('tabpanel');
+
+    // act
+    await user.click(within(day).getByRole('button', { name: 'How to read this' }));
+    await user.click(within(day).getByRole('button', { name: 'Low energy today?' }));
+
+    // assert
+    expect(within(day).getByRole('button', { name: 'How to read this' })).toHaveAttribute('aria-expanded', 'false');
+    expect(within(day).getByRole('region', { name: 'Low energy today?' })).toHaveTextContent(/Low-energy session/);
+
+    // act
+    await user.click(within(day).getByRole('button', { name: 'How to warm up' }));
+
+    // assert
+    const warmUp = within(day).getByRole('region', { name: 'How to warm up' });
+    expect(within(warmUp).getByRole('heading', { level: 4, name: /^Warm-up/ })).toBeInTheDocument();
+    expect(within(day).getByRole('region', { name: 'Low energy today?' })).toBeInTheDocument();
+  });
+
+  it('leads the plan with the focus and the note the coach wrote, and keeps nutrition and lifestyle in one small panel', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const content = {
+      ...view.version.content,
+      header: { ...view.version.content.header, focus: 'Quality over weight.', personalNote: 'So glad to start with you.' },
+      nutritionNotes: 'Protein at every meal.',
+      lifestyleNotes: 'Sleep eight hours.',
+    };
+
+    // act
+    renderViewer({ ...view, version: { ...view.version, content } });
+
+    // assert
+    const plan = screen.getByRole('region', { name: 'Plan' });
+    expect(within(plan).getAllByRole('term').map(term => term.textContent)).toEqual(['Your focus', 'A note from your coach', 'Plan', 'Next check-in form']);
+    expect(within(plan).getByText('Quality over weight.')).toBeInTheDocument();
+    expect(within(plan).getByText('So glad to start with you.')).toBeInTheDocument();
+    const topics = within(screen.getByRole('region', { name: 'Nutrition and lifestyle' })).getAllByRole('button');
+    expect(topics.map(topic => topic.textContent)).toEqual(['Nutrition', 'Lifestyle']);
+    expect(topics.every(topic => topic.getAttribute('aria-expanded') === 'false')).toBe(true);
+  });
+
+  it('leaves out the nutrition and lifestyle panel and every unwritten text', () => {
+    // arrange
+    const view = viewAt(SESSION_DAY);
+    const content = { ...view.version.content, guideTexts: { ...view.version.content.guideTexts, legend: ' ', noWeight: ' ' } };
+
+    // act
+    renderViewer({ ...view, version: { ...view.version, content } });
+
+    // assert
+    expect(screen.queryByRole('region', { name: /Nutrition|Lifestyle/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'How to read this' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Low energy today?' })).toBeInTheDocument();
+  });
+
+  it('lists the versions newest first with the action the page gives each', () => {
+    // arrange / act
+    renderViewer(viewAt(TODAY));
+
+    // assert
+    const versions = screen.getByRole('region', { name: 'Versions' });
+    expect(within(versions).getByText('Version 1')).toBeInTheDocument();
+    expect(within(versions).getByText('Published')).toBeInTheDocument();
+    expect(within(versions).getByRole('link', { name: 'Download PDF, version 1' })).toHaveAttribute('href', '/document/1');
   });
 });
 
@@ -456,7 +623,7 @@ describe('SessionTable', () => {
     expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
   });
 
-  it('prints a rest under 90 s in seconds and leaves the swaps out of the table', () => {
+  it('prints a rest from a minute as m:ss and leaves the swaps out of the table', () => {
     // arrange
     const view = viewAt(TODAY);
     const [, swap] = SAMPLE_EXERCISES;
@@ -466,7 +633,7 @@ describe('SessionTable', () => {
     renderSession(session);
 
     // assert
-    expect(exerciseHeaders()[0]).toHaveTextContent('Rest 75 s');
+    expect(exerciseHeaders()[0]).toHaveTextContent('Rest 1:15');
     expect(exerciseHeaders()[0]).not.toHaveTextContent(swap.name);
   });
 

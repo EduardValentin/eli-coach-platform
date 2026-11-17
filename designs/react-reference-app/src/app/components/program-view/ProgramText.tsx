@@ -1,10 +1,6 @@
-import { ChevronDown } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
-import { BLOCK_TYPE_LABELS, type Block } from '../../domain/program';
+import { useId } from 'react';
 import { guideText, isGuideTextKey, templateText, type TemplateKey } from '../../domain/programTemplates';
-import { isWritten } from '../../domain/programTexts';
-import { WIDGET_SUBHEADING_CLASS, EYEBROW_CLASS } from '../typography';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { WIDGET_SUBHEADING_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import type { ProgramView } from './programView';
 
@@ -120,54 +116,5 @@ export function ProgramText({ text }: { text: string }) {
       )}
       <TemplateBody paragraphs={paragraphs} />
     </article>
-  );
-}
-
-export type TextCard = { key: string; title: string; eyebrow?: string; content: ReactNode };
-
-export function blockIntroCards(view: ProgramView, block: Block, noteTitle: string): TextCard[] {
-  const calibration = view.position.status === 'in-plan' && view.position.calibration;
-  const calibrationText = calibration ? programTemplate(view, 'calibration') : '';
-  return [
-    ...writtenCard('intro', block.introText, `${BLOCK_TYPE_LABELS[block.type]} block`),
-    ...writtenCard('note', block.clientNote, noteTitle),
-    ...writtenCard('calibration', calibrationText, 'Calibration week'),
-    ...writtenCard('missed-day', block.missedDayNote, 'If you miss a session'),
-  ];
-}
-
-export function writtenCard(key: string, text: string, fallbackTitle: string): TextCard[] {
-  return isWritten(text) ? [templateCard(key, text, fallbackTitle)] : [];
-}
-
-export function templateCard(key: string, text: string, fallbackTitle: string): TextCard {
-  const { title, paragraphs } = parseTemplate(text);
-  return { key, title: title || fallbackTitle, content: <TemplateBody paragraphs={paragraphs} /> };
-}
-
-export function TextCardStack({ cards }: { cards: readonly TextCard[] }) {
-  const stackId = useId();
-  return (
-    <div className="grid gap-2">
-      {cards.map((card, index) => {
-        const headingId = `${stackId}-${card.key}`;
-        return (
-          <Collapsible key={card.key} asChild defaultOpen={index === 0}>
-            <article aria-labelledby={headingId} className="rounded-control border border-border bg-card">
-              <h3 id={headingId}>
-                <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-3 rounded-control px-4 py-3 text-left hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-                  <span className="grid min-w-0 gap-0.5">
-                    {card.eyebrow && <span className={EYEBROW_CLASS}>{card.eyebrow}</span>}
-                    <span className="text-sm font-semibold text-pretty text-text-primary">{card.title}</span>
-                  </span>
-                  <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-text-secondary transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
-                </CollapsibleTrigger>
-              </h3>
-              <CollapsibleContent className="border-t border-border-subtle px-4 pt-3 pb-4">{card.content}</CollapsibleContent>
-            </article>
-          </Collapsible>
-        );
-      })}
-    </div>
   );
 }

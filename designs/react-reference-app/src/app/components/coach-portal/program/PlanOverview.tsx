@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
-import { blockStatus } from '../../../domain/programCalendar';
+import { blockStatus, weekInPlan } from '../../../domain/programCalendar';
 import { blockingMessage, sequenceProblems, type BlockingCode, type RuleFinding } from '../../../domain/programRules';
 import { suggestedBlocks } from '../../../domain/programSuggestions';
 import { Button } from '../../ui/button';
@@ -61,7 +61,13 @@ export function PlanOverview({ content, dayOne, preferredWeekday, today, level, 
         <SuggestionBanner level={level} onUse={onUseSuggestion} />
       ) : (
         <>
-          <PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday={preferredWeekday} today={today} />
+          <PlanTimeline
+            blocks={blocks}
+            dayOne={dayOne}
+            preferredWeekday={preferredWeekday}
+            today={today}
+            weekAction={{ kind: 'select', label: 'Open its block', onSelect: week => onOpenBlock(blocks[weekInPlan(blocks, week).blockIndex].id) }}
+          />
           <PlanBlockList
             blocks={blocks}
             statuses={blocks.map((_, index) => blockStatus({ blocks, dayOne, today }, index))}

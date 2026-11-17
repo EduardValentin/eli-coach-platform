@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { Fragment, useId, type ReactNode } from 'react';
-import { BLOCK_TYPE_LABELS, positionLabel, warmUpItemText, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, formatRest, positionLabel, warmUpItemText, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
 import { blockDates, planWeeks } from '../../domain/programCalendar';
 import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
 import { fillTemplate, type GuideTextKey } from '../../domain/programTemplates';
@@ -26,7 +26,7 @@ import { PlanStrip } from './PlanTimeline';
 import { PositionBadge } from './PositionBadge';
 import { Emphasised, parseTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
-import { currentBlock, exerciseName, hasCoolDown, type ProgramView } from './programView';
+import { currentBlock, dailyStepsText, exerciseName, hasCoolDown, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_TEXT = "See your coach's disclaimer.";
@@ -520,11 +520,11 @@ function SessionCard({ view, block, session }: SessionCardProps) {
 }
 
 function RoundsLine({ view, segment }: { view: ProgramView; segment: RoundsSegment }) {
-  const restBetweenRounds = segment.restBetweenRoundsSeconds > 0 ? ` · ${segment.restBetweenRoundsSeconds} s rest between rounds` : '';
+  const restBetweenRounds = segment.restBetweenRoundsSeconds > 0 ? ` · ${formatRest(segment.restBetweenRoundsSeconds)} rest between rounds` : '';
   const [only] = segment.items;
   if (segment.items.length === 1) {
     const work = `${roundsItemAmount(only)} ${segment.intensity}`;
-    const round = segment.easySeconds > 0 ? `(${work} / ${segment.easySeconds} s easy)` : work;
+    const round = segment.easySeconds > 0 ? `(${work} / ${formatRest(segment.easySeconds)} easy)` : work;
     return (
       <>
         <ExerciseLink exerciseId={only.exerciseId} exercisesById={view.exercisesById} />
@@ -532,7 +532,7 @@ function RoundsLine({ view, segment }: { view: ProgramView; segment: RoundsSegme
       </>
     );
   }
-  const easy = segment.easySeconds > 0 ? ` · ${segment.easySeconds} s easy between exercises` : '';
+  const easy = segment.easySeconds > 0 ? ` · ${formatRest(segment.easySeconds)} easy after each exercise` : '';
   return (
     <>
       {`${segment.rounds} rounds: `}
@@ -594,7 +594,7 @@ function CardioSection({ view, block }: { view: ProgramView; block: Block }) {
 }
 
 function StepsSection({ view, block }: { view: ProgramView; block: Block }) {
-  const fill = (text: string) => fillTemplate(text, { steps: block.dailySteps.toLocaleString('en-US') });
+  const fill = (text: string) => fillTemplate(text, { steps: dailyStepsText(block) });
   return <TextSection view={view} target={guide('steps')} fallbackTitle="Daily steps" fill={fill} />;
 }
 
