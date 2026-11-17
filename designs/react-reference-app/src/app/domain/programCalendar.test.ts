@@ -14,6 +14,7 @@ import {
   nextCheckpoint,
   planWeeks,
   weekdayOf,
+  weekRangeOf,
 } from './programCalendar';
 
 const blockOf = (weeks: number, calibrationWeek: boolean) => ({ weeks, calibrationWeek }) as Block;
@@ -163,5 +164,19 @@ describe('blockStatus', () => {
     expect(blockStatus({ blocks, dayOne, today }, 0)).toEqual({ kind: 'ended', end: new Date(2026, 9, 13) });
     expect(blockStatus({ blocks, dayOne, today }, 1)).toEqual({ kind: 'current', weekOfBlock: 2, calibration: false });
     expect(blockStatus({ blocks, dayOne, today }, 2)).toEqual({ kind: 'upcoming', start: new Date(2026, 10, 25) });
+  });
+});
+
+describe('weekRangeOf', () => {
+  it('spans a week from its first day to its last, and has no range before day 1 is set', () => {
+    // arrange
+    const days = [{ date: new Date(2026, 8, 14) }, { date: new Date(2026, 8, 15) }, { date: new Date(2026, 8, 20) }];
+
+    // act
+    const range = weekRangeOf(days);
+
+    // assert
+    expect(range).toEqual({ start: new Date(2026, 8, 14), end: new Date(2026, 8, 20) });
+    expect(weekRangeOf(days.map(() => ({ date: null })))).toBeNull();
   });
 });

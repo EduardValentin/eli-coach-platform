@@ -14,23 +14,30 @@ import { roundsItemAmount, segmentMinutes } from '../../domain/programCardio';
 import { counted } from '../../utils/counted';
 import { exerciseDetailOf, type ExerciseDetailContent } from './exerciseDetailContent';
 import { IntensityValue } from './IntensityValue';
-import { repsSuffix } from './programView';
+import { perSideUnit, repsSuffix } from './programView';
 import { rowTargets } from './targets';
 
 type FindExercise = (exerciseId: string) => Exercise | undefined;
 
-export function perSideUnit(exercise: Exercise | undefined, unit: string): string {
-  return [unit, exercise?.perSide ? 'per side' : ''].filter(Boolean).join(' ');
+export type RoutineAmountText = { value: string; unit: string };
+
+function warmUpEach(item: WarmUpItem, exercise: Exercise | undefined): RoutineAmountText {
+  if (item.seconds !== undefined) return { value: String(item.seconds), unit: perSideUnit(exercise, 's') };
+  return { value: formatRange(item.reps ?? { min: 0, max: 0 }), unit: perSideUnit(exercise, '') };
 }
 
-export function warmUpAmount(item: WarmUpItem, exercise: Exercise | undefined): { each: string; unit: string } {
-  if (item.seconds !== undefined) return { each: String(item.seconds), unit: perSideUnit(exercise, 's') };
-  return { each: formatRange(item.reps ?? { min: 0, max: 0 }), unit: perSideUnit(exercise, '') };
+export function warmUpAmount(item: WarmUpItem, exercise: Exercise | undefined): RoutineAmountText {
+  const each = warmUpEach(item, exercise);
+  return { value: `${item.sets} × ${each.value}`, unit: each.unit };
+}
+
+export function coolDownAmount(item: CoolDownItem, exercise: Exercise | undefined): RoutineAmountText {
+  return { value: String(item.seconds), unit: perSideUnit(exercise, 's') };
 }
 
 type RowExerciseDetailInput = { session: Session; row: Row; progression: string; findExercise: FindExercise };
 
-function shownSwapsOf(row: Row, findExercise: FindExercise): Exercise[] {
+export function shownSwapsOf(row: Row, findExercise: FindExercise): Exercise[] {
   return row.substitutions.flatMap(id => {
     const swap = findExercise(id);
     return swap && swap.archivedAt === undefined ? [swap] : [];
@@ -49,15 +56,15 @@ export function rowExerciseDetail({ session, row, progression, findExercise }: R
 }
 
 export function warmUpExerciseDetail(item: WarmUpItem, exercise: Exercise | undefined): ExerciseDetailContent | null {
-  const { each, unit } = warmUpAmount(item, exercise);
+  const each = warmUpEach(item, exercise);
   return exerciseDetailOf(exercise, {
-    targets: [{ term: 'Warm-up', value: [`${counted(item.sets, 'set')} × ${each}`, unit].filter(Boolean).join(' ') }],
+    targets: [{ term: 'Warm-up', value: [`${counted(item.sets, 'set')} × ${each.value}`, each.unit].filter(Boolean).join(' ') }],
   });
 }
 
 export function coolDownExerciseDetail(item: CoolDownItem, exercise: Exercise | undefined): ExerciseDetailContent | null {
-  const unit = perSideUnit(exercise, 's');
-  return exerciseDetailOf(exercise, { targets: [{ term: 'Hold', value: `${item.seconds} ${unit}` }] });
+  const { value, unit } = coolDownAmount(item, exercise);
+  return exerciseDetailOf(exercise, { targets: [{ term: 'Hold', value: `${value} ${unit}` }] });
 }
 
 export function steadyExerciseDetail(segment: SteadySegment, exercise: Exercise | undefined): ExerciseDetailContent | null {

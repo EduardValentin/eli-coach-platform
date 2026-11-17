@@ -1,24 +1,30 @@
 import type { ReactNode } from 'react';
-import type { Exercise } from '../../context/TrainingContext';
 import { formatRest, type CardioSegment, type RoundsItem, type RoundsSegment } from '../../domain/program';
 import { roundsItemAmount, segmentMinutes } from '../../domain/programCardio';
+import type { LinkReach } from '../ui/link';
 import { cn } from '../ui/utils';
 import { ExerciseNameButton } from './ExerciseNameButton';
 import { PositionBadge } from './PositionBadge';
-import { exerciseNameOf } from './programView';
+import { exerciseNameOf, type ExerciseLibrary } from './programView';
 import { roundsItemExerciseDetail, steadyExerciseDetail } from './sessionExerciseDetails';
-import { SegmentTable, type EffortColumn, type SegmentHeads, type SegmentRow } from './SegmentTable';
+import { SegmentTable, type EffortColumn, type SegmentHeads, type SegmentRow, type SegmentSize } from './SegmentTable';
 import { TABLE_BESIDE_CLASS } from './tableLayout';
 
-type Library = ReadonlyMap<string, Exercise>;
+type SegmentHeadingLevel = 'h4' | 'h5';
 
-type SegmentHeadingProps = { level: 'h4' | 'h5'; number: number | null; id?: string; action?: ReactNode; children: ReactNode };
+const HEADING_CLASSES: Record<SegmentSize, { frame: string; text: string; badge: 'sm' | 'document' }> = {
+  viewer: { frame: '', text: 'text-base', badge: 'sm' },
+  document: { frame: 'min-h-document-row', text: 'text-document-table', badge: 'document' },
+};
 
-export function SegmentHeading({ level: Heading, number, id, action, children }: SegmentHeadingProps) {
+type SegmentHeadingProps = { level: SegmentHeadingLevel; size: SegmentSize; number: number | null; id?: string; action?: ReactNode; children: ReactNode };
+
+export function SegmentHeading({ level: Heading, size, number, id, action, children }: SegmentHeadingProps) {
+  const classes = HEADING_CLASSES[size];
   return (
-    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
-      {number !== null && <PositionBadge label={String(number)} size="sm" tone="quiet" />}
-      <Heading id={id} className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-base font-semibold text-text-primary">
+    <div className={cn('flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1', classes.frame)}>
+      {number !== null && <PositionBadge label={String(number)} size={classes.badge} />}
+      <Heading id={id} className={cn('flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-semibold text-text-primary', classes.text)}>
         {children}
       </Heading>
       {action}
@@ -26,8 +32,20 @@ export function SegmentHeading({ level: Heading, number, id, action, children }:
   );
 }
 
-function roundsRows(segment: RoundsSegment, exercisesById: Library, place: string | undefined): SegmentRow[] {
+/** How a printed session names an exercise, such as a link the first time it appears and plain text after. */
+export type SegmentExerciseName = (exerciseId: string, reach: LinkReach) => ReactNode;
+
+type SegmentBlockLayout = { size: 'viewer'; heads: SegmentHeads; effort: EffortColumn } | { size: 'document'; exerciseName: SegmentExerciseName };
+
+function namesOf(layout: SegmentBlockLayout): SegmentExerciseName | null {
+  return layout.size === 'document' ? layout.exerciseName : null;
+}
+
+type NameSource = { exercisesById: ExerciseLibrary; place: string | undefined; exerciseName: SegmentExerciseName | null };
+
+function roundsRows(segment: RoundsSegment, { exercisesById, place, exerciseName }: NameSource): SegmentRow[] {
   const nameOf = (item: RoundsItem) => {
+    if (exerciseName) return exerciseName(item.exerciseId, 'line');
     const exercise = exercisesById.get(item.exerciseId);
     return <ExerciseNameButton exercise={exercise} detail={roundsItemExerciseDetail(segment, item, exercise)} weight="medium" size="in-table" place={place} />;
   };
@@ -47,37 +65,67 @@ function roundsRows(segment: RoundsSegment, exercisesById: Library, place: strin
 
 type SegmentParts = { title: string; heading: ReactNode; rows: SegmentRow[] };
 
-function partsOf(segment: CardioSegment, exercisesById: Library, place: string | undefined): SegmentParts {
+function partsOf(segment: CardioSegment, names: NameSource): SegmentParts {
   if (segment.kind === 'rounds') {
-    return { title: 'Intervals', heading: <span className="inline-flex min-h-12 items-center">Intervals</span>, rows: roundsRows(segment, exercisesById, place) };
+    const title = 'Intervals';
+    return { title, heading: names.exerciseName ? title : <span className="inline-flex min-h-12 items-center">{title}</span>, rows: roundsRows(segment, names) };
   }
-  const exercise = exercisesById.get(segment.exerciseId);
+  const exercise = names.exercisesById.get(segment.exerciseId);
   return {
     title: exerciseNameOf(exercise),
-    heading: <ExerciseNameButton exercise={exercise} detail={steadyExerciseDetail(segment, exercise)} place={place} />,
+    heading: names.exerciseName ? (
+      names.exerciseName(segment.exerciseId, 'touch')
+    ) : (
+      <ExerciseNameButton exercise={exercise} detail={steadyExerciseDetail(segment, exercise)} place={names.place} />
+    ),
     rows: [{ kind: 'steady', key: 'steady', time: `${segmentMinutes(segment)} min`, intensity: segment.intensity }],
   };
 }
 
-type SegmentBlockProps = {
-  segment: CardioSegment;
-  number: number;
-  count: number;
-  exercisesById: Library;
-  layout: { heads: SegmentHeads; effort: EffortColumn };
-  effortHint?: ReactNode;
+const HEADING_LEVEL: Record<SegmentSize, SegmentHeadingLevel> = { viewer: 'h4', document: 'h5' };
+
+/** In the document a segment's name stands in the term column beside its table from `sm`, and above it on a phone. */
+const SIZE_CLASS: Record<SegmentSize, string> = {
+  viewer: cn('gap-x-8', TABLE_BESIDE_CLASS),
+  document: 'sm:grid-cols-[minmax(0,var(--document-term-column))_minmax(0,22em)] sm:gap-x-(--document-term-gap)',
 };
 
-export function SegmentBlock({ segment, number, count, exercisesById, layout, effortHint }: SegmentBlockProps) {
-  const several = count > 1;
-  const { title, heading, rows } = partsOf(segment, exercisesById, several ? `segment ${number}` : undefined);
+type SegmentBlockProps = { segment: CardioSegment; number: number; count: number; exercisesById: ExerciseLibrary; layout: SegmentBlockLayout };
 
+export function SegmentBlock({ segment, number, count, exercisesById, layout }: SegmentBlockProps) {
+  const { size } = layout;
+  const several = count > 1;
+  const { title, heading, rows } = partsOf(segment, { exercisesById, place: several ? `segment ${number}` : undefined, exerciseName: namesOf(layout) });
   return (
-    <article data-parity="segment" className={cn('grid items-start gap-x-8 gap-y-2', TABLE_BESIDE_CLASS)}>
-      <SegmentHeading level="h4" number={several ? number : null}>
+    <article data-parity="segment" className={cn('grid items-start gap-y-2', SIZE_CLASS[size])}>
+      <SegmentHeading level={HEADING_LEVEL[size]} size={size} number={several ? number : null}>
         {heading}
       </SegmentHeading>
-      <SegmentTable caption={`Segment ${number}, ${title}`} rows={rows} layout={layout} effortHint={effortHint} />
+      <SegmentTable caption={`Segment ${number}, ${title}`} rows={rows} layout={layout.size === 'document' ? { size: 'document' } : layout} />
     </article>
+  );
+}
+
+const SEGMENT_ITEM_CLASS: Record<SegmentSize, string> = {
+  viewer: 'p-4 @3xl:px-6 @3xl:py-5',
+  document: 'not-first:pt-document-paragraph not-last:pb-document-paragraph',
+};
+
+type SegmentListProps = {
+  segments: readonly CardioSegment[];
+  size: SegmentSize;
+  className?: string;
+  children: (segment: CardioSegment, index: number) => ReactNode;
+};
+
+export function SegmentList({ segments, size, className, children }: SegmentListProps) {
+  return (
+    <ol className={className}>
+      {segments.map((segment, index) => (
+        <li key={segment.id} className={cn('border-t border-border-subtle first:border-t-0', SEGMENT_ITEM_CLASS[size])}>
+          {children(segment, index)}
+        </li>
+      ))}
+    </ol>
   );
 }

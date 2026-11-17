@@ -1,8 +1,19 @@
 import { useId, type ReactNode } from 'react';
+import { formatRest } from '../../domain/program';
 import { EYEBROW_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 
 export const GROUP_BRACKET_CLASS = 'border-l-2 border-text-primary';
+
+export function SupersetDescription({ labels, restSeconds }: { labels: readonly string[]; restSeconds: number }) {
+  return (
+    <>
+      {`Alternate ${labels.join(' and ')}. `}
+      <strong className="font-semibold text-text-primary">{`Rest ${formatRest(restSeconds)}`}</strong>
+      {` after ${labels[labels.length - 1]}.`}
+    </>
+  );
+}
 
 type SupersetGroupProps = { description?: ReactNode; action?: ReactNode; children: ReactNode };
 

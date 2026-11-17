@@ -1,4 +1,4 @@
-import type { Block, ProgramContent, ProgramLanguage, ProgramVersion } from './program';
+import { planHasCoolDown, type Block, type ProgramContent, type ProgramLanguage, type ProgramVersion } from './program';
 import { fillTemplate, guideText, templateText, withGuideText, withoutGuideText, type GuideTextKey, type TemplateText } from './programTemplates';
 
 export type VersionTextKey = 'title' | 'focus' | 'personalNote' | 'whatChanged' | 'nutrition' | 'lifestyle';
@@ -11,7 +11,7 @@ export type ProgramTextTarget =
 
 export type TextFormatting = 'plain' | 'paragraphs' | 'titled';
 
-type TextDescription = { name: string; placeholder: string; formatting: TextFormatting; optional: boolean; hint?: string };
+type TextDescription = { name: string; placeholder: string; formatting: TextFormatting; optional: boolean };
 
 export type ProgramText = TextDescription & {
   value: string;
@@ -20,7 +20,7 @@ export type ProgramText = TextDescription & {
 };
 
 const VERSION_TEXTS: Record<VersionTextKey, TextDescription> = {
-  title: { name: 'Program title', placeholder: 'e.g. Program — weeks 1–4', formatting: 'plain', optional: true },
+  title: { name: 'Program title', placeholder: 'Her training program', formatting: 'plain', optional: true },
   focus: { name: 'Focus until the next check-in', placeholder: 'What she concentrates on until her next check-in form', formatting: 'plain', optional: true },
   personalNote: { name: 'Note from Eli', placeholder: 'A few words from you to open her program', formatting: 'paragraphs', optional: true },
   whatChanged: { name: 'What changed and why', placeholder: 'What you changed in this version, and why', formatting: 'paragraphs', optional: false },
@@ -43,13 +43,7 @@ const GUIDE_TEXTS: Record<GuideTextKey, TextDescription> = {
   noWeight: { name: 'No weight listed', placeholder: 'How she picks a weight when none is listed', formatting: 'plain', optional: false },
   lowEnergy: { name: 'Low-energy session', placeholder: 'What she does on a low-energy day', formatting: 'titled', optional: false },
   calibration: { name: 'Calibration week', placeholder: 'How the first week of a block works', formatting: 'paragraphs', optional: false },
-  steps: {
-    name: 'Daily steps',
-    placeholder: 'Why her daily steps matter',
-    formatting: 'titled',
-    optional: false,
-    hint: '[daily steps] prints as the daily steps target of the block.',
-  },
+  steps: { name: 'Daily steps', placeholder: 'Why her daily steps matter', formatting: 'titled', optional: false },
 };
 
 const VERSION_FIELDS: Record<Exclude<VersionTextKey, 'whatChanged'>, (content: ProgramContent) => string> = {
@@ -59,12 +53,6 @@ const VERSION_FIELDS: Record<Exclude<VersionTextKey, 'whatChanged'>, (content: P
   nutrition: content => content.nutritionNotes,
   lifestyle: content => content.lifestyleNotes,
 };
-
-const TITLE_FALLBACK = 'Training program';
-
-export function printedTitle(content: ProgramContent): string {
-  return content.header.title.trim() || TITLE_FALLBACK;
-}
 
 export function isWritten(text: string): boolean {
   return text.trim() !== '';
@@ -165,12 +153,17 @@ function guideTarget(key: GuideTextKey): ProgramTextTarget {
 
 export function programWideTexts(version: ProgramVersion): ProgramTextTarget[] {
   const whatChanged = version.number > 1 ? [versionText('whatChanged')] : [];
+  const anyCoolDown = planHasCoolDown(version.content.plan.blocks);
   return [
     versionText('title'),
     versionText('focus'),
     versionText('personalNote'),
     ...whatChanged,
     guideTarget('legend'),
+    guideTarget('noWeight'),
+    guideTarget('warmUp'),
+    guideTarget('progression'),
+    ...(anyCoolDown ? [guideTarget('coolDown')] : []),
     guideTarget('lowEnergy'),
     versionText('nutrition'),
     versionText('lifestyle'),
@@ -179,17 +172,12 @@ export function programWideTexts(version: ProgramVersion): ProgramTextTarget[] {
 
 export function blockTexts(block: Block): ProgramTextTarget[] {
   const own = (key: BlockTextKey): ProgramTextTarget => ({ kind: 'block', blockId: block.id, key });
-  const hasCoolDown = block.sessions.some(session => session.coolDown.enabled);
   return [
     own('intro'),
     own('note'),
     ...(block.calibrationWeek ? [guideTarget('calibration')] : []),
     own('split'),
-    guideTarget('warmUp'),
-    guideTarget('progression'),
-    ...(hasCoolDown ? [guideTarget('coolDown')] : []),
     own('missedDay'),
-    guideTarget('noWeight'),
     guideTarget('steps'),
   ];
 }

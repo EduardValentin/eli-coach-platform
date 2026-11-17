@@ -1,7 +1,7 @@
 import { Pencil } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
-import { BLOCK_TYPE_LABELS, type ProgramVersion, type Weekday } from '../../domain/program';
+import type { ProgramVersion, Weekday } from '../../domain/program';
 import { EmptyState } from '../EmptyState';
 import { cardVariants } from '../ui/card';
 import { Tabs, TabsContent } from '../ui/tabs';
@@ -16,7 +16,7 @@ import { WeekCard } from './WeekCard';
 import { WeekNav } from './WeekNav';
 import { WeekRailLinks, WeekRailTabs } from './WeekRail';
 import type { DaysMode, WeekSelection } from './weekSelection';
-import { clampedWeekOfPlan, currentWeekOfPlan, dayAnchor, defaultWeekday, weekOfBlockText, weekOfPlanText, weekViewAt, type WeekView } from './weekView';
+import { blockName, clampedWeekOfPlan, currentWeekOfPlan, dayAnchor, defaultWeekday, weekOfBlockText, weekOfPlanText, weekViewAt, type WeekView } from './weekView';
 
 export type UnwrittenBlock = { name: string; start: Date | null };
 
@@ -70,7 +70,7 @@ export function ProgramViewer({
   function changeWeek(weekOfPlan: number) {
     const next = weekViewAt(view, weekOfPlan);
     selection.choose({ week: weekOfPlan === currentWeekOfPlan(view) ? null : weekOfPlan, day: null });
-    setAnnouncement(`${weekOfPlanText(next)}, ${weekOfBlockText(next)}`);
+    setAnnouncement(`${weekOfPlanText(next)}, ${weekOfBlockText(next, 'long')}`);
   }
 
   function goToDay(target: Weekday) {
@@ -124,7 +124,7 @@ export function ProgramViewer({
                 <EmptyState
                   icon={Pencil}
                   title="This block isn't written yet"
-                  description={unwrittenDescription({ name: BLOCK_TYPE_LABELS[week.block.type], start: week.blockStart })}
+                  description={unwrittenDescription({ name: blockName(week.block), start: week.blockStart })}
                   action={unwrittenAction}
                 />
               </div>

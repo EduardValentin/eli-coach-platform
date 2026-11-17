@@ -1,9 +1,10 @@
 import { Languages, Pencil } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type FocusEvent, type ReactNode } from 'react';
-import { isCustomised, isWritten, programText, type ProgramText, type ProgramTextTarget, type TextFormatting } from '../../domain/programTexts';
+import { isCustomised, isWritten, type ProgramText, type ProgramTextTarget, type TextFormatting } from '../../domain/programTexts';
 import { showUndoToast } from '../../utils/showUndoToast';
 import { IconActionButton } from '../IconActionButton';
 import { IconHint } from '../IconHint';
+import { DOCUMENT_TERM_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { RichTextEditor, type RichTextEditorHandle, type RichTextTheme, type RichTextTool } from '../ui/rich-text-editor';
@@ -11,7 +12,7 @@ import { cn } from '../ui/utils';
 import { DocumentHeading, useDocumentEditing, useDocumentTypography, type DocumentEditing, type DocumentTypography, type HeadingLevel } from './documentEditing';
 import { TEMPLATE_TEXT_CLASSES } from './ProgramText';
 import { PROGRAM_TEXT_FORMAT } from './programTextFormat';
-import type { ProgramView } from './programView';
+import { viewText, type ProgramView } from './programView';
 
 export type SlotLabel = { text: string; level?: HeadingLevel; className?: string };
 
@@ -24,6 +25,7 @@ type TextSlotProps = {
   unwritten?: ReactNode;
   typography?: Partial<DocumentTypography>;
   leadSeparator?: string;
+  placeholder?: string;
   children: (value: string) => ReactNode;
 };
 
@@ -31,20 +33,15 @@ const SLOT_TOOLS_CLASS =
   'float-right ml-2 flex items-center gap-7 sm:absolute sm:right-[calc(8mm-1rem)] sm:ml-0 sm:flex-col';
 const PENDING_TEXT = 'Romanian text pending';
 const PENDING_HINT = 'Romanian text pending: this text still prints the English standard.';
-const EMPTY_LABEL_CLASS = 'text-document-body font-semibold text-text-primary';
 const TOOLS: Record<TextFormatting, readonly RichTextTool[]> = {
   plain: [],
   paragraphs: ['bold', 'italic', 'list'],
   titled: ['heading', 'bold', 'italic', 'list'],
 };
 
-function textOf(view: ProgramView, target: ProgramTextTarget): ProgramText {
-  return programText(view.version, target, view.program.language);
-}
-
 export function useShowsText(view: ProgramView, target: ProgramTextTarget): boolean {
   const editing = useDocumentEditing();
-  return editing !== null || isWritten(textOf(view, target).value);
+  return editing !== null || isWritten(viewText(view, target).value);
 }
 
 function OptionalSuffix() {
@@ -53,7 +50,7 @@ function OptionalSuffix() {
 
 export function OptionalMark({ view, target }: { view: ProgramView; target: ProgramTextTarget }) {
   const editing = useDocumentEditing();
-  const text = textOf(view, target);
+  const text = viewText(view, target);
   if (!editing || !text.optional || isWritten(text.value)) return null;
   return <OptionalSuffix />;
 }
@@ -88,13 +85,13 @@ function EmptyLabel({ id, label, optional }: EmptyLabelProps) {
   );
   if (label.level) {
     return (
-      <DocumentHeading id={id} tabIndex={-1} level={label.level} className={label.className}>
+      <DocumentHeading id={id} tabIndex={-1} level={label.level} className={label.className ?? DOCUMENT_TERM_CLASS}>
         {content}
       </DocumentHeading>
     );
   }
   return (
-    <p id={id} tabIndex={-1} className={label.className ?? EMPTY_LABEL_CLASS}>
+    <p id={id} tabIndex={-1} className={label.className ?? DOCUMENT_TERM_CLASS}>
       {content}
     </p>
   );
@@ -110,7 +107,7 @@ type EditableSlotProps = Omit<TextSlotProps, 'view' | 'unwritten'> & { editing: 
 
 type FocusTarget = 'editor' | 'edit' | 'label' | 'restore' | null;
 
-function EditableSlot({ editing, target, text, label, labelledBy, className, typography, leadSeparator, children }: EditableSlotProps) {
+function EditableSlot({ editing, target, text, label, labelledBy, className, typography, leadSeparator, placeholder, children }: EditableSlotProps) {
   const [open, setOpen] = useState(false);
   const [focusRequest, setFocusRequest] = useState(0);
   const editor = useRef<RichTextEditorHandle>(null);
@@ -119,7 +116,6 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
   const restoringFocus = useRef(false);
   const theme = useEditorTheme(typography);
   const ownLabelId = useId();
-  const hintId = useId();
   const pendingId = useId();
   const written = isWritten(text.value);
 
@@ -186,7 +182,6 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
   }
 
   const ownLabel = !written && !labelledBy;
-  const describedBy = [text.hint ? hintId : '', text.pending ? pendingId : ''].filter(Boolean).join(' ') || undefined;
 
   return (
     <div
@@ -199,14 +194,9 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
       }}
       onPointerDown={() => setOpen(true)}
     >
-      {(ownLabel || text.hint || text.pending) && (
+      {(ownLabel || text.pending) && (
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           {ownLabel && <EmptyLabel id={ownLabelId} label={label ?? { text: text.name }} optional={text.optional} />}
-          {text.hint && (
-            <p id={hintId} className="text-sm text-text-secondary">
-              {text.hint}
-            </p>
-          )}
           {text.pending && <PendingBadge id={pendingId} />}
         </div>
       )}
@@ -214,8 +204,8 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
         ref={editor}
         label={text.name}
         labelledBy={labelId}
-        describedBy={describedBy}
-        placeholder={text.placeholder}
+        describedBy={text.pending ? pendingId : undefined}
+        placeholder={placeholder ?? text.placeholder}
         value={text.value}
         format={PROGRAM_TEXT_FORMAT}
         theme={theme}
@@ -248,7 +238,7 @@ function EditableSlot({ editing, target, text, label, labelledBy, className, typ
 
 export function DocumentTextSlot({ view, target, unwritten, ...slot }: TextSlotProps) {
   const editing = useDocumentEditing();
-  const text = textOf(view, target);
+  const text = viewText(view, target);
   const { className, children } = slot;
   if (editing) {
     return (

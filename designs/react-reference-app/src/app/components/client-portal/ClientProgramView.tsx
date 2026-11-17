@@ -6,7 +6,7 @@ import type { ProgramVersion } from '../../domain/program';
 import { isWritten } from '../../domain/programTexts';
 import { DismissibleNotice } from '../DismissibleNotice';
 import { ProgramViewer, type UnwrittenBlock } from '../program-view/ProgramViewer';
-import type { ProgramView } from '../program-view/programView';
+import { WHAT_CHANGED_LEAD, type ProgramView } from '../program-view/programView';
 import type { WeekSelection } from '../program-view/weekSelection';
 import { Button } from '../ui/button';
 
@@ -49,7 +49,7 @@ function WhatChangedNotice({ version }: { version: ProgramVersion }) {
 
   return (
     <DismissibleNotice onDismiss={dismiss} data-parity="what-changed">
-      <strong className="font-semibold text-text-primary">{`What changed in version ${version.number}.`}</strong> {version.whatChanged}
+      <strong className="font-semibold text-text-primary">{WHAT_CHANGED_LEAD}</strong> {version.whatChanged}
     </DismissibleNotice>
   );
 }

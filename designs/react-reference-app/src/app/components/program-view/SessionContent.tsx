@@ -1,5 +1,5 @@
 import { Info } from 'lucide-react';
-import { formatRest, positionLabel, type CoolDownItem, type Row, type Session } from '../../domain/program';
+import { hasCoolDown, positionLabel, type Row, type Session } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
 import { Collapsible } from '../ui/collapsible';
 import { cn } from '../ui/utils';
@@ -7,11 +7,11 @@ import { ExerciseNameButton } from './ExerciseNameButton';
 import { useOpenExerciseDetail } from './exerciseDetailContent';
 import { PositionBadge } from './PositionBadge';
 import { Emphasised, parseTemplate, programTemplate, TemplateBody } from './ProgramText';
-import { hasCoolDown, plainText, repsHeading } from './programView';
-import { RoutineAmount, RoutineList, type RoutineItem } from './RoutineList';
+import { plainText, repsUnit } from './programView';
+import { RoutineList, routineItems, type RoutineItem } from './RoutineList';
 import { SetTable } from './SetTable';
-import { coolDownExerciseDetail, perSideUnit, rowExerciseDetail, warmUpAmount, warmUpExerciseDetail } from './sessionExerciseDetails';
-import { SupersetGroup } from './SupersetGroup';
+import { coolDownAmount, coolDownExerciseDetail, rowExerciseDetail, warmUpAmount, warmUpExerciseDetail } from './sessionExerciseDetails';
+import { SupersetDescription, SupersetGroup } from './SupersetGroup';
 import { SwapListPanel, SwapListTrigger } from './SwapList';
 import { TABLE_BESIDE_CLASS } from './tableLayout';
 import { rowRestAndTechnique, type RowPlace } from './targets';
@@ -61,7 +61,7 @@ function ExerciseBlock({ session, row, context, place }: ExerciseBlockProps) {
       <article data-parity="exercise" className={cn('grid grid-cols-1 gap-x-8 gap-y-1 @3xl:grid-rows-[auto_1fr]', TABLE_BESIDE_CLASS)}>
         <div className="@3xl:col-start-1 @3xl:row-start-1">
           <div className="flex items-center gap-2.5">
-            <PositionBadge label={positionLabel(session, row)} size="sm" tone="quiet" />
+            <PositionBadge label={positionLabel(session, row)} size="sm" />
             <h4 className="min-w-0">
               <ExerciseNameButton exercise={exercise} detail={detail} />
             </h4>
@@ -77,7 +77,7 @@ function ExerciseBlock({ session, row, context, place }: ExerciseBlockProps) {
           )}
         </div>
         <div className="self-start @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1">
-          <SetTable exerciseName={name} repsHeading={repsHeading(exercise)} sets={row.sets} />
+          <SetTable exerciseName={name} unit={repsUnit(exercise)} sets={row.sets} />
         </div>
         {detail && swaps.length > 0 && (
           <div className="@3xl:col-start-1 @3xl:row-start-2">
@@ -95,39 +95,22 @@ function ExerciseBlock({ session, row, context, place }: ExerciseBlockProps) {
 }
 
 function warmUpItems(session: Session, context: DayContext): RoutineItem[] {
-  return session.warmUp.items.map(item => {
-    const exercise = context.view.exercisesById.get(item.exerciseId);
-    const { each, unit } = warmUpAmount(item, exercise);
-    return {
-      key: item.id,
-      name: <ExerciseNameButton exercise={exercise} detail={warmUpExerciseDetail(item, exercise)} weight="medium" />,
-      amount: <RoutineAmount value={`${item.sets} × ${each}`} unit={unit} />,
-    };
+  return routineItems(session.warmUp.items, {
+    exercisesById: context.view.exercisesById,
+    nameOf: (item, exercise) => <ExerciseNameButton exercise={exercise} detail={warmUpExerciseDetail(item, exercise)} weight="medium" />,
+    amountOf: warmUpAmount,
+    size: 'viewer',
   });
 }
 
 function coolDownItems(session: Session, context: DayContext): RoutineItem[] {
   if (!hasCoolDown(session)) return [];
-  return session.coolDown.items.map((item: CoolDownItem) => {
-    const exercise = context.view.exercisesById.get(item.exerciseId);
-    return {
-      key: item.id,
-      name: <ExerciseNameButton exercise={exercise} detail={coolDownExerciseDetail(item, exercise)} weight="medium" />,
-      amount: <RoutineAmount value={String(item.seconds)} unit={perSideUnit(exercise, 's')} />,
-    };
+  return routineItems(session.coolDown.items, {
+    exercisesById: context.view.exercisesById,
+    nameOf: (item, exercise) => <ExerciseNameButton exercise={exercise} detail={coolDownExerciseDetail(item, exercise)} weight="medium" />,
+    amountOf: coolDownAmount,
+    size: 'viewer',
   });
-}
-
-function supersetDescription(session: Session, rows: readonly Row[]) {
-  const labels = rows.map(row => positionLabel(session, row));
-  const last = rows[rows.length - 1];
-  return (
-    <>
-      {`Alternate ${labels.join(' and ')}. `}
-      <strong className="font-semibold text-text-primary">{`Rest ${formatRest(last.restSeconds)}`}</strong>
-      {` after ${labels[labels.length - 1]}.`}
-    </>
-  );
 }
 
 const UNIT_CLASS = 'border-t border-border-subtle p-4 first:border-t-0 @3xl:px-6 @3xl:py-5';
@@ -152,7 +135,7 @@ export function SessionContent({ session, context }: { session: Session; context
           {units.map(({ key, rows }) => (
             <li key={key} className={UNIT_CLASS}>
               {rows.length > 1 ? (
-                <SupersetGroup description={supersetDescription(session, rows)}>
+                <SupersetGroup description={<SupersetDescription labels={rows.map(row => positionLabel(session, row))} restSeconds={rows[rows.length - 1].restSeconds} />}>
                   {rows.map(row => (
                     <li key={row.id}>
                       <ExerciseBlock session={session} row={row} context={context} place="in-superset" />

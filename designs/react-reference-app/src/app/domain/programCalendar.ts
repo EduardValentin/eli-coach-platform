@@ -4,6 +4,7 @@ import { WEEKDAYS, type Block, type Weekday } from './program';
 
 const DAYS_PER_WEEK = 7;
 const CHECKPOINT_INTERVAL_DAYS = 14;
+export const CHECK_IN_INTERVAL_WEEKS = CHECKPOINT_INTERVAL_DAYS / DAYS_PER_WEEK;
 const JS_DAY_TO_WEEKDAY: readonly Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const DEFAULT_CHECK_IN_WEEKDAY: Weekday = 'mon';
 
@@ -87,11 +88,11 @@ export function checkpointsWithin(dayOne: Date, preferred: Weekday, until: Date)
   return checkpoints;
 }
 
-export type BlockDay = { weekday: Weekday; date: Date | null; checkIn: boolean };
-export type BlockWeek = { week: number; days: BlockDay[] };
+type BlockDay = { weekday: Weekday; date: Date | null; checkIn: boolean };
+type BlockWeek = { week: number; days: BlockDay[] };
 type BlockSchedule = Pick<PlanSchedule, 'blocks' | 'dayOne'>;
 
-export function blockWeeks({ blocks, dayOne }: BlockSchedule, index: number, checkInWeekday: Weekday): BlockWeek[] {
+function blockWeeks({ blocks, dayOne }: BlockSchedule, index: number, checkInWeekday: Weekday): BlockWeek[] {
   const weekNumbers = Array.from({ length: blocks[index].weeks }, (_, offset) => offset + 1);
   if (!dayOne) {
     return weekNumbers.map(week => ({ week, days: WEEKDAYS.map(weekday => ({ weekday, date: null, checkIn: false })) }));
@@ -140,6 +141,14 @@ export type PlanWeek = WeekInPlan & { weekOfPlan: number; days: BlockDay[] };
 export function planWeek(schedule: BlockSchedule, weekOfPlan: number, checkInWeekday: Weekday): PlanWeek {
   const week = weekInPlan(schedule.blocks, weekOfPlan);
   return { weekOfPlan, ...week, days: blockWeeks(schedule, week.blockIndex, checkInWeekday)[week.weekOfBlock - 1].days };
+}
+
+export type DateRange = { start: Date; end: Date };
+
+export function weekRangeOf(days: readonly { date: Date | null }[]): DateRange | null {
+  const start = days[0]?.date;
+  const end = days.at(-1)?.date;
+  return start && end ? { start, end } : null;
 }
 
 export function shownWeekOfPlan(blocks: readonly Block[], position: PlanPosition): number {

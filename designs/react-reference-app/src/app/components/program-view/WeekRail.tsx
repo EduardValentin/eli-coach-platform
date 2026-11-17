@@ -1,14 +1,12 @@
 import type { MouseEvent } from 'react';
-import type { Exercise } from '../../context/TrainingContext';
 import type { Weekday } from '../../domain/program';
 import { TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '../ui/utils';
 import { DayCell, dayCellVariants } from './DayCell';
+import type { ExerciseLibrary } from './programView';
 import { dayAnchor, type WeekView } from './weekView';
 
-type Library = ReadonlyMap<string, Exercise>;
-
-type WeekRailProps = { label: string; week: WeekView; exercisesById: Library };
+type WeekRailProps = { label: string; week: WeekView; exercisesById: ExerciseLibrary };
 
 const TOUCHING_CELL_CLASS = cn(
   'not-first:-ml-px not-first:w-[calc(100%+1px)]',

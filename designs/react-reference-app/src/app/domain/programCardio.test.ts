@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
 import { exercise as fixtureExercise } from '../../test/programFixtures';
 import type { CardioSegment, CardioSession, RoundsSegment } from './program';
-import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasHardRounds, isLightCardio, roundsText, segmentMinutes } from './programCardio';
+import { cardioEdits, cardioIntensitiesOf, cardioMinutes, cardioPreset, emptyCardioSession, firstSegmentIndexOf, hasHardRounds, isLightCardio, roundsText, segmentMinutes } from './programCardio';
 
 function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
   return fixtureExercise(id, { type: 'cardio', measuredIn: 'time', ...overrides });
@@ -34,17 +34,6 @@ function withoutIds(segment: CardioSegment) {
   if (segment.kind === 'steady') return { ...segment, id: undefined };
   return { ...segment, id: undefined, items: segment.items.map(item => ({ ...item, id: undefined })) };
 }
-
-describe('CARDIO_INTENSITY_TEXT', () => {
-  it('describes each intensity with the talk test', () => {
-    // assert
-    expect(CARDIO_INTENSITY_TEXT).toEqual({
-      easy: 'You can hold a conversation',
-      moderate: 'You can talk, but not sing',
-      hard: 'Hard: only a few words at a time',
-    });
-  });
-});
 
 describe('cardioPreset', () => {
   it('builds easy cardio as thirty easy minutes on the first walk, bike or elliptical cardio exercise', () => {
@@ -321,5 +310,36 @@ describe('roundsText', () => {
 
     // assert
     expect(text).toBe('2 rounds · Burpee 10 reps');
+  });
+});
+
+describe('cardioIntensitiesOf', () => {
+  it("lists the efforts a set of sessions uses, easy, moderate then hard, an interval's easy steps included", () => {
+    // arrange
+    const steady: CardioSegment = { id: 's', kind: 'steady', exerciseId: 'rower', minutes: 10, intensity: 'moderate' };
+    const intervals = rounds({ items: [{ id: 'i', exerciseId: 'burpee', reps: 10 }], easySeconds: 30 });
+
+    // act
+    const intensities = cardioIntensitiesOf([session([intervals]), session([steady])]);
+
+    // assert
+    expect(intensities).toEqual(['easy', 'moderate', 'hard']);
+  });
+});
+
+describe('firstSegmentIndexOf', () => {
+  it('finds the first segment each exercise appears in, steady or in intervals', () => {
+    // arrange
+    const steady: CardioSegment = { id: 's', kind: 'steady', exerciseId: 'rower', minutes: 10, intensity: 'easy' };
+    const intervals = rounds({ items: [{ id: 'i1', exerciseId: 'burpee', reps: 10 }, { id: 'i2', exerciseId: 'rower', workSeconds: 30 }] });
+
+    // act
+    const first = firstSegmentIndexOf(session([steady, intervals]));
+
+    // assert
+    expect([...first]).toEqual([
+      ['rower', 0],
+      ['burpee', 1],
+    ]);
   });
 });

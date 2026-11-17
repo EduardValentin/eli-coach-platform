@@ -1,8 +1,8 @@
 import type { Block } from '../../domain/program';
-import { fillTemplate } from '../../domain/programTemplates';
 import { isWritten } from '../../domain/programTexts';
 import { parseTemplate, programTemplate, type TemplateParagraph } from './ProgramText';
-import { dailyStepsText, type ProgramView } from './programView';
+import type { ProgramView } from './programView';
+import { guideRows, readingGuide } from './readingGuide';
 
 export type TextPart = { heading: string | null; paragraphs: TemplateParagraph[] };
 
@@ -13,7 +13,6 @@ export type PlacedTexts = {
   lowEnergy: TextPart[];
   warmUp: TextPart[];
   coolDown: TemplateParagraph[];
-  restDay: TemplateParagraph[];
   nutrition: TextPart[];
   lifestyle: TextPart[];
 };
@@ -29,20 +28,17 @@ function paragraphsOf(text: string): TemplateParagraph[] {
   return isWritten(text) ? parseTemplate(text).paragraphs : [];
 }
 
-const NO_WEIGHT_TERM = 'No weight listed';
-const NO_WEIGHT_QUESTION = /^no weight listed\?\s*/i;
-
 function legendParts(view: ProgramView): TextPart[] {
-  const [legend] = part(programTemplate(view, 'legend'), null);
-  const noWeight = programTemplate(view, 'noWeight').replace(NO_WEIGHT_QUESTION, '').trim();
-  if (noWeight === '') return legend ? [legend] : [];
-  const entry: TemplateParagraph = { lead: NO_WEIGHT_TERM, body: noWeight };
-  return [{ heading: legend?.heading ?? null, paragraphs: [...(legend?.paragraphs ?? []), entry] }];
+  const legend = programTemplate(view, 'legend');
+  const noWeight = programTemplate(view, 'noWeight');
+  if (!isWritten(legend) && !isWritten(noWeight)) return [];
+  const guide = readingGuide({ legend, noWeight }, 'reading');
+  return [{ heading: guide.title || null, paragraphs: guideRows(guide) }];
 }
 
 export function programTextPlacement(view: ProgramView, block: Block): PlacedTexts {
   const { header, nutritionNotes, lifestyleNotes } = view.version.content;
-  const steps = fillTemplate(programTemplate(view, 'steps'), { steps: dailyStepsText(block) });
+  const steps = programTemplate(view, 'steps');
   return {
     plan: { focus: paragraphsOf(header.focus), note: paragraphsOf(header.personalNote) },
     blockAndSplit: [
@@ -56,7 +52,6 @@ export function programTextPlacement(view: ProgramView, block: Block): PlacedTex
     lowEnergy: part(programTemplate(view, 'lowEnergy'), null),
     warmUp: part(programTemplate(view, 'warmUp'), null),
     coolDown: paragraphsOf(programTemplate(view, 'coolDown')),
-    restDay: paragraphsOf(steps),
     nutrition: part(nutritionNotes, null),
     lifestyle: part(lifestyleNotes, null),
   };

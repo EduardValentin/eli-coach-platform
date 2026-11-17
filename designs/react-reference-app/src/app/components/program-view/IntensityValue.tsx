@@ -4,9 +4,13 @@ import { EffortPill, type EffortTone } from './EffortPill';
 
 const EFFORT_OF: Record<CardioIntensity, EffortTone> = { easy: 'low', moderate: 'mid', hard: 'high' };
 
-export function IntensityValue({ intensity }: { intensity: CardioIntensity }) {
+type IntensitySize = 'viewer' | 'document';
+
+const PILL_SIZE: Record<IntensitySize, 'word' | 'document'> = { viewer: 'word', document: 'document' };
+
+export function IntensityValue({ intensity, size = 'viewer' }: { intensity: CardioIntensity; size?: IntensitySize }) {
   return (
-    <EffortPill tone={EFFORT_OF[intensity]} size="word">
+    <EffortPill tone={EFFORT_OF[intensity]} size={PILL_SIZE[size]}>
       {CARDIO_INTENSITY_LABELS[intensity]}
     </EffortPill>
   );

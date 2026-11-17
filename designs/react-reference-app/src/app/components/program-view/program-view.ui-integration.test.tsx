@@ -2,16 +2,14 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { currentBlockOf } from '../../../test/programFixtures';
+import { currentBlockOf, seededProgramView } from '../../../test/programFixtures';
 import type { Exercise } from '../../context/TrainingContext';
-import { currentVersion, type Block, type ProgramVersion, type Session } from '../../domain/program';
+import type { Block, ProgramVersion } from '../../domain/program';
 import { cardioPreset } from '../../domain/programCardio';
-import { programForSeed } from '../../services/programSamples';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { ProgramViewer } from './ProgramViewer';
-import { SessionTable } from './SessionTable';
 import { ClientProgramView } from '../client-portal/ClientProgramView';
-import { viewOf, type ProgramView } from './programView';
+import { dailyStepsText, type ProgramView } from './programView';
 import { useLocalWeekSelection } from './weekSelection';
 
 const DAY_ONE = new Date(2026, 8, 16);
@@ -38,15 +36,7 @@ afterEach(() => {
 });
 
 function viewAt(today: Date, exercises: readonly Exercise[] = SAMPLE_EXERCISES): ProgramView {
-  const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: DAY_ONE, equipment: [] }, SAMPLE_EXERCISES);
-  if (!program) throw new Error('seed missing');
-  const version = currentVersion(program);
-  if (!version) throw new Error('version missing');
-  return viewOf({ program, version, dayOne: DAY_ONE, today, preferredWeekday: 'mon', exercises });
-}
-
-function sessionWith(view: ProgramView, edit: (session: Session) => Session): Session {
-  return edit(currentBlockOf(view).sessions[0]);
+  return seededProgramView({ seed: 'published', dayOne: DAY_ONE, today, exercises });
 }
 
 function withFirstBlock(view: ProgramView, edit: (block: Block) => Block): ProgramView {
@@ -93,7 +83,7 @@ function renderClientView(version: ProgramVersion) {
   );
 }
 
-const WHAT_CHANGED = /What changed in version/;
+const WHAT_CHANGED = /^What changed:/;
 
 describe('What changed notice', () => {
   const version = { ...viewAt(TODAY).version, number: 2, whatChanged: 'Raised steps to 8,000.' };
@@ -136,7 +126,7 @@ describe('What changed notice', () => {
     const user = userEvent.setup();
     renderClientView(version);
     const notice = screen.getByText(WHAT_CHANGED).closest('[role="status"]') as HTMLElement;
-    expect(notice).toHaveTextContent('What changed in version 2. Raised steps to 8,000.');
+    expect(notice).toHaveTextContent('What changed: Raised steps to 8,000.');
 
     // act
     await user.click(within(notice).getByRole('button', { name: 'Dismiss' }));
@@ -225,6 +215,39 @@ describe('ProgramViewer week', () => {
     expect(screen.getAllByRole('heading', { level: 3 }).filter(heading => heading.id.startsWith('program-day-'))).toHaveLength(7);
   });
 
+  it('states the daily steps once for the week and names each rail day without its length', () => {
+    // arrange
+    const view = viewAt(SESSION_DAY);
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
+    expect(within(week).getByText('Daily steps').nextElementSibling).toHaveTextContent(dailyStepsText(currentBlockOf(view)));
+    const tabs = within(week).getAllByRole('tab');
+    expect(tabs.some(tab => /min/.test(tab.textContent ?? ''))).toBe(false);
+    expect(within(screen.getByRole('tabpanel')).getByText(/^~\d+ min$/)).toBeInTheDocument();
+  });
+
+  it('marks the check-in form day on its rail day and tells her on that day what to send', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderViewer(viewAt(TODAY));
+    await user.click(screen.getByRole('button', { name: 'Next week' }));
+    await user.click(screen.getByRole('button', { name: 'Next week' }));
+    const checkInTab = screen.getAllByRole('tab').find(tab => tab.textContent?.endsWith(', check-in form day'));
+    if (!checkInTab) throw new Error('no check-in day in week 3');
+
+    // act
+    await user.click(checkInTab);
+
+    // assert
+    const panel = screen.getByRole('tabpanel');
+    expect(within(panel).getByText('Check-in form day.').parentElement).toHaveTextContent('Check-in form day. Send your form with photos of your log pages from weeks 1 and 2.');
+    expect(screen.queryByText(/Check-in form due/)).not.toBeInTheDocument();
+  });
+
   it('says a block without exercises is not written yet', () => {
     // arrange
     const view = withFirstBlock(viewAt(TODAY), block => ({ ...block, sessions: block.sessions.map(session => ({ ...session, rows: [] })) }));
@@ -272,7 +295,7 @@ describe('ProgramViewer day', () => {
     expect(within(rows[2]).getAllByRole('cell').map(cell => cell.textContent)).toEqual(['12–15', '3', '40 kg']);
   });
 
-  it('leaves the weight column out and says once that the weight is her choice', () => {
+  it('leaves the weight column out when no set suggests a weight', () => {
     // arrange
     const view = viewAt(SESSION_DAY);
 
@@ -283,10 +306,27 @@ describe('ProgramViewer day', () => {
     const sets = table(mainLift(view).name);
     expect(within(sets).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR']);
     expect(within(sets).queryByText('by RIR')).not.toBeInTheDocument();
-    expect(screen.queryByText('Your choice, by RIR')).not.toBeInTheDocument();
   });
 
-  it('says in "How to read this" that the weight is her choice when none is listed', async () => {
+  it('sets the unit of a per-side or timed exercise after every reps value under a Reps head', () => {
+    // arrange
+    const view = viewAt(SESSION_DAY);
+    const rows = currentBlockOf(view).sessions[0].rows;
+    const perSide = rows.find(row => view.exercisesById.get(row.exerciseId)?.perSide);
+    if (!perSide) throw new Error('no per-side exercise');
+    const name = view.exercisesById.get(perSide.exerciseId)?.name ?? '';
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const sets = table(name);
+    expect(within(sets).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR']);
+    const repsCells = within(sets).getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell')[0]);
+    expect(repsCells.every(cell => /per side$/.test(cell.textContent ?? ''))).toBe(true);
+  });
+
+  it('reads "How to read this" as the reference card does: reps, RIR closed by the no-weight text, and the warm-up set', async () => {
     // arrange
     const user = userEvent.setup();
     renderViewer(viewAt(SESSION_DAY));
@@ -296,8 +336,10 @@ describe('ProgramViewer day', () => {
 
     // assert
     const panel = screen.getByRole('region', { name: 'How to read this' });
-    expect(within(panel).getByText('No weight listed')).toBeInTheDocument();
-    expect(within(panel).getByText('Pick one that lets you finish the set at the RIR shown.')).toBeInTheDocument();
+    expect(within(panel).getAllByRole('term').map(term => term.textContent)).toEqual(['Reps 8–10', 'RIR 2', 'Warm-up set']);
+    const rir = within(panel).getByText('RIR 2').nextElementSibling;
+    expect(rir).toHaveTextContent(/RIR 0 means to failure, with good form\. No weight listed\? Pick one that lets you finish the set at the RIR shown\.$/);
+    expect(within(panel).queryByText('by RIR')).not.toBeInTheDocument();
   });
 
   it('groups a superset under one label with one rest', () => {
@@ -414,13 +456,13 @@ describe('ProgramViewer day', () => {
     // assert
     const panel = screen.getByRole('tabpanel');
     expect(within(panel).getByRole('heading', { level: 3, name: 'Rest' })).toBeInTheDocument();
-    expect(within(panel).getByText(/Keep to your daily steps:/)).toBeInTheDocument();
+    expect(panel).not.toHaveTextContent(/steps/i);
     expect(within(panel).queryByText(/No session and no cardio today/)).not.toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: /^Next: / }));
     expect(within(screen.getByRole('tabpanel')).queryByRole('heading', { level: 3, name: 'Rest' })).not.toBeInTheDocument();
   });
 
-  it('renders a cardio day as numbered segments whose steps run in order, with the effort key under the title and its hint on the Effort head', async () => {
+  it('renders a cardio day as numbered segments whose steps run in order, with the effort key once under the title', async () => {
     // arrange
     const user = userEvent.setup();
     const view = withFirstBlock(viewAt(SESSION_DAY), block => {
@@ -447,20 +489,12 @@ describe('ProgramViewer day', () => {
     expect(within(segments[1]).getByRole('heading', { level: 4, name: 'Intervals' })).toBeInTheDocument();
     expect(within(segments[1]).getByRole('table', { name: 'Segment 2, Intervals' })).toBeInTheDocument();
     const [rounds, work, easy, ...rest] = rowsOf(segments[1]);
-    expect(rounds).toMatch(/^8 rounds\d+ min$/);
+    expect(rounds).toMatch(/^8 rounds · \d+ min$/);
     expect(work).toMatch(/30 sHard$/);
     expect(easy).toBe('then1:30Easy');
     expect(rest).toEqual([]);
     expect(panel).not.toHaveTextContent('None');
-    expect(within(segments[1]).queryByRole('button', { name: 'What each effort means' })).not.toBeInTheDocument();
-
-    // act
-    await user.hover(within(segments[0]).getByRole('button', { name: 'What each effort means' }));
-
-    // assert
-    const hint = await screen.findByText((_, element) => element?.tagName === 'P' && element.textContent === 'Hard: Only a few words at a time.');
-    expect(hint).toBeVisible();
-    expect(within(segments[0]).getByRole('button', { name: 'What each effort means' })).toHaveAccessibleDescription(/^Easy: You can hold a conversation\. ?Hard: Only a few words at a time\.$/);
+    expect(within(panel).queryByRole('button', { name: 'What each effort means' })).not.toBeInTheDocument();
   });
 
   it('marks a calibration week on the block line and explains it once at the top of the day', () => {
@@ -493,9 +527,10 @@ describe('ProgramViewer texts and versions', () => {
     const texts = within(week).getByRole('region', { name: 'Full Body' });
     const headings = within(texts).getAllByRole('heading', { level: 3 }).map(heading => heading.textContent ?? '');
     expect(headings).toHaveLength(3);
-    expect(headings[0]).toMatch(/^Foundation block — building your base/);
+    expect(headings[0]).toMatch(/^Building your base/);
     expect(headings[1]).toMatch(/^Your split: Full Body/);
-    expect(headings[2]).toMatch(/^Daily steps: /);
+    expect(headings[2]).toBe('Daily steps');
+    expect(texts).not.toHaveTextContent(dailyStepsText(currentBlockOf(viewAt(TODAY))));
     expect(texts).toHaveTextContent(/If you miss a session/);
     expect(within(texts).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
 
@@ -577,174 +612,5 @@ describe('ProgramViewer texts and versions', () => {
     expect(within(versions).getByText('Version 1')).toBeInTheDocument();
     expect(within(versions).getByText('Published')).toBeInTheDocument();
     expect(within(versions).getByRole('link', { name: 'Download PDF, version 1' })).toHaveAttribute('href', '/document/1');
-  });
-});
-
-describe('SessionTable', () => {
-  const perSide = SAMPLE_EXERCISES.find(exercise => exercise.perSide && exercise.type === 'resistance');
-
-  function superset(view: ProgramView): Session {
-    if (!perSide) throw new Error('no per-side exercise');
-    return sessionWith(view, session => ({
-      ...session,
-      rows: session.rows.slice(0, 2).map((row, index) => ({
-        ...row,
-        slot: 'C',
-        supersetGroup: 'g',
-        exerciseId: perSide.id,
-        restSeconds: index === 0 ? 120 : 90,
-      })),
-    }));
-  }
-
-  const FOUR_WEEKS = { weeks: 4, calibrationWeek: false };
-
-  function renderSession(session: Session, block = FOUR_WEEKS) {
-    const exercises = new Map(SAMPLE_EXERCISES.map(exercise => [exercise.id, exercise]));
-    return render(<SessionTable session={session} block={block} exercisesById={exercises} />);
-  }
-
-  function exerciseHeaders(): HTMLElement[] {
-    return screen.getAllByRole('rowheader').filter(header => header.getAttribute('scope') === 'rowgroup');
-  }
-
-  it('prints a superset rest once, after its last exercise, in minutes from 90 s, and shows the unit', () => {
-    // arrange
-    const view = viewAt(TODAY);
-
-    // act
-    renderSession(superset(view));
-
-    // assert
-    const [first, second] = exerciseHeaders();
-    expect(first).toHaveTextContent(/^C1 /);
-    expect(first).not.toHaveTextContent(/Rest|Superset/);
-    expect(second).toHaveTextContent(/^C2 .+ Rest 1:30 after C2/);
-    expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
-  });
-
-  it('prints a rest from a minute as m:ss and leaves the swaps out of the table', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const [, swap] = SAMPLE_EXERCISES;
-    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], restSeconds: 75, substitutions: [swap.id] }] }));
-
-    // act
-    renderSession(session);
-
-    // assert
-    expect(exerciseHeaders()[0]).toHaveTextContent('Rest 1:15');
-    expect(exerciseHeaders()[0]).not.toHaveTextContent(swap.name);
-  });
-
-  it('links each exercise name to its exercise page', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const session = sessionWith(view, current => current);
-    const [row] = session.rows;
-    const name = SAMPLE_EXERCISES.find(exercise => exercise.id === row.exerciseId)?.name ?? '';
-
-    // act
-    renderSession(session);
-
-    // assert
-    expect(within(exerciseHeaders()[0]).getByRole('link', { name })).toHaveAttribute('href', `${window.location.origin}/portal/exercises/${row.exerciseId}`);
-  });
-
-  it('describes warm-up sets in a line under the name and gives each working set its reps, weight, RIR and a box per week', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const warmUp = { kind: 'warm-up' as const, reps: { min: 10, max: 10 } };
-    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 }, weightKg: 60 };
-    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [warmUp, warmUp, top, steady] }] }));
-
-    // act
-    renderSession(session);
-
-    // assert
-    const [, , , ...rows] = screen.getAllByRole('row', { hidden: true });
-    const setOf = (index: number) => within(rows[index]).getByRole('rowheader').textContent;
-    const cellsOf = (index: number) => within(rows[index]).getAllByRole('cell', { hidden: true }).map(cell => cell.textContent);
-    expect(exerciseHeaders()[0]).toHaveTextContent('Warm up first: 10, then 10 reps, lighter than your working sets. No need to log them.');
-    expect(rows).toHaveLength(2);
-    expect([setOf(0), setOf(1)]).toEqual(['1', '2']);
-    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'Weight', 'RIR']);
-    expect(cellsOf(0)).toEqual(['5', '60 kg', '2', '', '', '', '']);
-    expect(cellsOf(1)).toEqual(['8–10', '', '1–2', '', '', '', '']);
-    expect(screen.queryByText('—')).not.toBeInTheDocument();
-  });
-
-  it('leaves the weight column out when no set prescribes a weight', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [steady] }] }));
-
-    // act
-    renderSession(session);
-
-    // assert
-    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR']);
-  });
-
-  it('prints the cues the coach wrote for her and a custom progression under the exercise', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const [, swap] = SAMPLE_EXERCISES;
-    const session = sessionWith(view, original => ({
-      ...original,
-      rows: [
-        {
-          ...original.rows[0],
-          cues: 'Brace first',
-          touched: ['cues' as const],
-          substitutions: [swap.id],
-          progression: { kind: 'custom' as const, text: 'Add 2 kg weekly' },
-        },
-        { ...original.rows[1], cues: 'Library description', touched: [] },
-      ],
-    }));
-
-    // act
-    renderSession(session);
-
-    // assert
-    const [tailored, standard] = exerciseHeaders();
-    expect(tailored).toHaveTextContent('Brace first');
-    expect(tailored).toHaveTextContent('Add 2 kg weekly');
-    expect(standard).not.toHaveTextContent('Library description');
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
-  });
-
-  it('heads a log column for each week of the block, marking the calibration week', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const session = sessionWith(view, current => current);
-
-    // act
-    renderSession(session, { weeks: 6, calibrationWeek: true });
-
-    // assert
-    const logHeaders = screen.getAllByRole('columnheader', { hidden: true }).slice(3);
-    expect(logHeaders.map(header => header.textContent)).toEqual(['Log: kg × reps', 'Week 1 calibration', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6']);
-    expect(logHeaders.every(header => header.getAttribute('aria-hidden') === 'true')).toBe(true);
-  });
-
-  it('still names an archived exercise and flags a removed one', () => {
-    // arrange
-    const view = viewAt(TODAY);
-    const session = sessionWith(view, current => current);
-    const [first, second] = session.rows;
-    const archived = { ...(SAMPLE_EXERCISES.find(exercise => exercise.id === first.exerciseId) as Exercise), archivedAt: '2026-09-01T00:00:00.000Z' };
-    const exercises = new Map<string, Exercise>([[archived.id, archived]]);
-    const rows = [first, { ...second, exerciseId: 'gone' }];
-
-    // act
-    render(<SessionTable session={{ ...session, rows }} block={FOUR_WEEKS} exercisesById={exercises} />);
-
-    // assert
-    expect(screen.getByRole('rowheader', { name: new RegExp(`^${first.slot} ${archived.name}`) })).toBeInTheDocument();
-    expect(screen.getByText('Exercise removed')).toBeInTheDocument();
   });
 });

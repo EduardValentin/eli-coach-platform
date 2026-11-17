@@ -3,7 +3,7 @@ import { programForSeed } from '../services/programSamples';
 import { SAMPLE_EXERCISES } from '../services/exerciseSamples';
 import { currentVersion, type ProgramVersion } from './program';
 import { GUIDE_TEXT_KEYS, templateText } from './programTemplates';
-import { blockTexts, isCustomised, isWritten, printedTitle, programText, programWideTexts, textProgress, versionWithStandardText, versionWithText, type ProgramTextTarget } from './programTexts';
+import { blockTexts, isCustomised, isWritten, programText, programWideTexts, textProgress, versionWithStandardText, versionWithText, type ProgramTextTarget } from './programTexts';
 
 function publishedVersion(): ProgramVersion {
   const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: new Date(2026, 8, 16), equipment: [] }, SAMPLE_EXERCISES);
@@ -71,17 +71,6 @@ describe('omission', () => {
   it('counts only non-blank text as written', () => {
     expect(isWritten('  \n ')).toBe(false);
     expect(isWritten('Own the squat')).toBe(true);
-  });
-
-  it('prints a standard title when the coach leaves it blank', () => {
-    // arrange
-    const { content } = publishedVersion();
-
-    // act
-    const title = printedTitle({ ...content, header: { ...content.header, title: ' ' } });
-
-    // assert
-    expect(title).toBe('Training program');
   });
 });
 

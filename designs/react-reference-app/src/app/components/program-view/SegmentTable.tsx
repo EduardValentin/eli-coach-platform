@@ -4,8 +4,7 @@ import type { CardioIntensity } from '../../domain/program';
 import { counted } from '../../utils/counted';
 import { cn } from '../ui/utils';
 import { IntensityValue } from './IntensityValue';
-import { GROUP_BRACKET_CLASS } from './SupersetGroup';
-import { SEGMENT_EFFORT_COLUMN_CLASS, TABLE_CELL_CLASS, TABLE_HEAD_CLASS, TIME_COLUMN_CLASS } from './tableLayout';
+import { DOCUMENT_CELL_CLASS, SEGMENT_EFFORT_COLUMN_CLASS, TABLE_CELL_CLASS, TABLE_HEAD_CLASS, TIME_COLUMN_CLASS } from './tableLayout';
 
 export type SegmentRow =
   | { kind: 'steady'; key: string; time: ReactNode; intensity: CardioIntensity }
@@ -17,114 +16,171 @@ export type SegmentRow =
 
 export type SegmentHeads = 'shown' | 'hidden';
 export type EffortColumn = keyof typeof SEGMENT_EFFORT_COLUMN_CLASS;
+export type SegmentSize = 'viewer' | 'document';
 
-type SegmentTableProps = { caption: string; rows: readonly SegmentRow[]; layout: { heads: SegmentHeads; effort: EffortColumn }; effortHint?: ReactNode };
+/** The viewer chooses whether to show the column heads and how wide the effort column is; the printed table never shows its heads. */
+type SegmentTableLayout = { size: 'viewer'; heads: SegmentHeads; effort: EffortColumn } | { size: 'document' };
 
-const TIME_CLASS = 'text-base font-semibold whitespace-nowrap text-text-primary tabular-nums';
-const QUIET_CLASS = 'text-sm text-text-secondary';
-const IN_BRACKET_CLASS = cn(GROUP_BRACKET_CLASS, 'pl-3');
+type SegmentTableProps = { caption: string; rows: readonly SegmentRow[]; layout: SegmentTableLayout };
 
-function ThenLabel() {
+type SizeClasses = { table: string; cell: string; time: string; quiet: string; lead: string; rounds: string };
+
+const SIZE_CLASSES: Record<SegmentSize, SizeClasses> = {
+  viewer: {
+    table: '',
+    cell: TABLE_CELL_CLASS,
+    time: 'text-base',
+    quiet: 'text-sm',
+    lead: 'text-base',
+    rounds: 'text-base',
+  },
+  document: {
+    table: 'text-document-table',
+    cell: cn(DOCUMENT_CELL_CLASS, 'p-0'),
+    time: '',
+    quiet: '',
+    lead: '',
+    rounds: '',
+  },
+};
+
+type Columns = { time: string; effort: string };
+
+const DOCUMENT_COLUMNS: Columns = { time: 'pr-[0.6em] text-right sm:w-[5em] sm:pr-[0.9em]', effort: 'sm:w-[7em]' };
+
+const TIME_CLASS = 'font-semibold whitespace-nowrap text-text-primary tabular-nums';
+const QUIET_INK = 'text-text-secondary';
+const INNER_NAME_CLASS = 'text-left font-medium text-text-primary';
+const INNER_LEAD_CLASS = 'relative pl-[1.6em] before:absolute before:bottom-0 before:left-[0.55em] before:w-0.5 before:bg-text-primary';
+
+export function ThenLabel({ size = 'viewer' }: { size?: SegmentSize }) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5', QUIET_CLASS)}>
+    <span className={cn('inline-flex items-center gap-1.5', QUIET_INK, SIZE_CLASSES[size].quiet)}>
       <CornerDownRight aria-hidden="true" className="size-4" />
       then
     </span>
   );
 }
 
-type EasyStepLayout = 'table-row' | 'line';
+type InnerRow = Extract<SegmentRow, { kind: 'work' | 'easy' | 'empty' | 'rest' }>;
+type GroupEdge = { first: boolean; last: boolean };
+type CellPlace = 'lead' | 'middle' | 'end';
 
-export function EasyStep({ time, layout, effortClass = '' }: { time: ReactNode; layout: EasyStepLayout; effortClass?: string }) {
-  if (layout === 'line') {
+function isInner(row: SegmentRow): row is InnerRow {
+  return row.kind === 'work' || row.kind === 'easy' || row.kind === 'empty' || row.kind === 'rest';
+}
+
+function innerCellClass(edge: GroupEdge, place: CellPlace, size: SegmentSize): string {
+  return cn('bg-surface-subtle', {
+    'border-t border-border-subtle': !edge.first,
+    [cn(INNER_LEAD_CLASS, SIZE_CLASSES[size].lead)]: place === 'lead',
+    'before:top-0': place === 'lead' && edge.first,
+    'before:-top-px': place === 'lead' && !edge.first,
+    'rounded-tl-field': place === 'lead' && edge.first,
+    'rounded-bl-field': place === 'lead' && edge.last,
+    'rounded-tr-field': place === 'end' && edge.first,
+    'rounded-br-field': place === 'end' && edge.last,
+  });
+}
+
+type InnerParts = { head: ReactNode; headClass: string; time: ReactNode; effort: CardioIntensity | null };
+
+function innerPartsOf(row: Exclude<InnerRow, { kind: 'empty' }>, size: SegmentSize): InnerParts {
+  switch (row.kind) {
+    case 'work':
+      return { head: row.name, headClass: INNER_NAME_CLASS, time: row.time, effort: row.intensity };
+    case 'easy':
+      return { head: <ThenLabel size={size} />, headClass: 'text-left font-normal', time: row.time, effort: 'easy' };
+    case 'rest':
+      return { head: <span className={cn(QUIET_INK, SIZE_CLASSES[size].quiet)}>Rest between rounds</span>, headClass: 'text-left font-normal', time: row.time, effort: null };
+  }
+}
+
+type RowProps = { columns: Columns; size: SegmentSize };
+
+function InnerStep({ row, edge, columns, size }: RowProps & { row: InnerRow; edge: GroupEdge }) {
+  const classes = SIZE_CLASSES[size];
+  if (row.kind === 'empty') {
     return (
-      <p className="flex min-h-10 items-center gap-3">
-        <span className="flex-1">
-          <ThenLabel />
-        </span>
-        <span className="text-sm font-semibold text-text-primary tabular-nums">{time}</span>
-        <IntensityValue intensity="easy" />
-      </p>
+      <tr>
+        <td colSpan={3} className={cn(classes.cell, innerCellClass(edge, 'lead', size), innerCellClass(edge, 'end', size))}>
+          <span className={cn(QUIET_INK, classes.quiet)}>No exercises yet</span>
+        </td>
+      </tr>
     );
   }
+  const parts = innerPartsOf(row, size);
   return (
-    <tr data-parity="segment-row" className="border-t border-border-subtle">
-      <th scope="row" className={cn(TABLE_CELL_CLASS, IN_BRACKET_CLASS, 'text-left font-normal')}>
-        <ThenLabel />
+    <tr data-parity="segment-row">
+      <th scope="row" className={cn(classes.cell, parts.headClass, innerCellClass(edge, 'lead', size))}>
+        {parts.head}
       </th>
-      <td className={cn(TABLE_CELL_CLASS, TIME_COLUMN_CLASS, TIME_CLASS)}>{time}</td>
-      <td className={cn(TABLE_CELL_CLASS, effortClass)}>
-        <IntensityValue intensity="easy" />
+      <td className={cn(classes.cell, columns.time, TIME_CLASS, classes.time, innerCellClass(edge, 'middle', size))}>{parts.time}</td>
+      <td className={cn(classes.cell, columns.effort, innerCellClass(edge, 'end', size))}>{parts.effort && <IntensityValue intensity={parts.effort} size={size} />}</td>
+    </tr>
+  );
+}
+
+function RoundsRow({ rounds, total, size }: { rounds: number; total: string; size: SegmentSize }) {
+  const classes = SIZE_CLASSES[size];
+  return (
+    <tr data-parity="segment-row">
+      <th scope="rowgroup" colSpan={3} className={cn(classes.cell, 'text-left font-normal text-text-secondary tabular-nums', classes.rounds)}>
+        <span className="font-semibold text-text-primary">{counted(rounds, 'round')}</span>
+        {` · ${total}`}
+      </th>
+    </tr>
+  );
+}
+
+function SteadyRow({ time, intensity, columns, size }: RowProps & { time: ReactNode; intensity: CardioIntensity }) {
+  const classes = SIZE_CLASSES[size];
+  return (
+    <tr data-parity="segment-row">
+      <th scope="row" className={cn(classes.cell, 'text-left font-normal', QUIET_INK, classes.quiet)}>
+        Steady
+      </th>
+      <td className={cn(classes.cell, columns.time, TIME_CLASS, classes.time)}>{time}</td>
+      <td className={cn(classes.cell, columns.effort)}>
+        <IntensityValue intensity={intensity} size={size} />
       </td>
     </tr>
   );
 }
 
-type RowParts = { head: ReactNode; headClass: string; time: ReactNode; timeClass: string; effort: CardioIntensity | null; ruled: boolean };
-
-const STEP_HEAD_CLASS = cn('text-left font-normal', QUIET_CLASS);
-
-function partsOf(row: Exclude<SegmentRow, { kind: 'easy' } | { kind: 'empty' }>): RowParts {
-  switch (row.kind) {
-    case 'steady':
-      return { head: 'Steady', headClass: STEP_HEAD_CLASS, time: row.time, timeClass: TIME_CLASS, effort: row.intensity, ruled: false };
-    case 'rounds':
-      return { head: counted(row.rounds, 'round'), headClass: 'text-left text-base font-semibold text-text-primary', time: row.total, timeClass: cn(QUIET_CLASS, 'whitespace-nowrap tabular-nums'), effort: null, ruled: false };
-    case 'work':
-      return { head: row.name, headClass: cn(IN_BRACKET_CLASS, 'text-left font-normal'), time: row.time, timeClass: TIME_CLASS, effort: row.intensity, ruled: true };
-    case 'rest':
-      return { head: 'Rest between rounds', headClass: STEP_HEAD_CLASS, time: row.time, timeClass: TIME_CLASS, effort: null, ruled: true };
-  }
+function columnsOf(layout: SegmentTableLayout): Columns {
+  if (layout.size === 'document') return DOCUMENT_COLUMNS;
+  return { time: TIME_COLUMN_CLASS, effort: SEGMENT_EFFORT_COLUMN_CLASS[layout.effort] };
 }
 
-function Row({ row, effortClass }: { row: SegmentRow; effortClass: string }) {
-  if (row.kind === 'easy') return <EasyStep time={row.time} layout="table-row" effortClass={effortClass} />;
-  if (row.kind === 'empty') {
-    return (
-      <tr className="border-t border-border-subtle">
-        <td colSpan={3} className={cn(TABLE_CELL_CLASS, IN_BRACKET_CLASS, QUIET_CLASS)}>
-          No exercises yet
-        </td>
-      </tr>
-    );
-  }
-  const parts = partsOf(row);
+export function SegmentTable({ caption, rows, layout }: SegmentTableProps) {
+  const { size } = layout;
+  const columns = columnsOf(layout);
+  const headsHidden = layout.size === 'document' || layout.heads === 'hidden';
+  const inner = rows.filter(isInner);
   return (
-    <tr data-parity="segment-row" className={cn({ 'border-t border-border-subtle': parts.ruled })}>
-      <th scope="row" className={cn(TABLE_CELL_CLASS, parts.headClass)}>
-        {parts.head}
-      </th>
-      <td className={cn(TABLE_CELL_CLASS, TIME_COLUMN_CLASS, parts.timeClass)}>{parts.time}</td>
-      <td className={cn(TABLE_CELL_CLASS, effortClass)}>{parts.effort && <IntensityValue intensity={parts.effort} />}</td>
-    </tr>
-  );
-}
-
-export function SegmentTable({ caption, rows, layout, effortHint }: SegmentTableProps) {
-  const effortClass = SEGMENT_EFFORT_COLUMN_CLASS[layout.effort];
-  return (
-    <table className="w-full border-collapse">
+    <table className={cn('w-full border-separate border-spacing-0', SIZE_CLASSES[size].table)}>
       <caption className="sr-only">{caption}</caption>
-      <thead className={cn({ 'sr-only': layout.heads === 'hidden' })}>
-        <tr className="border-b border-border-subtle">
-          <th scope="col" className={cn(TABLE_HEAD_CLASS, 'text-left')}>
+      <thead className={cn({ 'sr-only': headsHidden })}>
+        <tr>
+          <th scope="col" className={cn(TABLE_HEAD_CLASS, 'border-b border-border-subtle text-left')}>
             <span className="sr-only">Step</span>
           </th>
-          <th scope="col" className={cn(TABLE_HEAD_CLASS, TIME_COLUMN_CLASS)}>
+          <th scope="col" className={cn(TABLE_HEAD_CLASS, 'border-b border-border-subtle', columns.time)}>
             Time
           </th>
-          <th scope="col" className={cn(TABLE_HEAD_CLASS, 'text-left', effortClass)}>
-            <span className="inline-flex items-center gap-1">
-              Effort
-              {effortHint}
-            </span>
+          <th scope="col" className={cn(TABLE_HEAD_CLASS, 'border-b border-border-subtle text-left', columns.effort)}>
+            Effort
           </th>
         </tr>
       </thead>
       <tbody>
-        {rows.map(row => (
-          <Row key={row.key} row={row} effortClass={effortClass} />
-        ))}
+        {rows.map(row => {
+          if (row.kind === 'steady') return <SteadyRow key={row.key} time={row.time} intensity={row.intensity} columns={columns} size={size} />;
+          if (row.kind === 'rounds') return <RoundsRow key={row.key} rounds={row.rounds} total={row.total} size={size} />;
+          const index = inner.indexOf(row);
+          return <InnerStep key={row.key} row={row} edge={{ first: index === 0, last: index === inner.length - 1 }} columns={columns} size={size} />;
+        })}
       </tbody>
     </table>
   );

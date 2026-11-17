@@ -115,6 +115,41 @@ describe('PlanTimeline', () => {
     expect(screen.getByRole('button', { name: /Week 5 of 11,/ })).toHaveFocus();
   });
 
+  it('lists the weeks as plain text without a toolbar, peeks or this week when the action is none', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday="mon" today={addDays(dayOne, 30)} weekAction={{ kind: 'none' }} />);
+
+    // act
+    await user.tab();
+
+    // assert
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(document.body).toHaveFocus();
+    const foundationWeeks = within(screen.getByRole('list', { name: 'Foundation weeks' })).getAllByRole('listitem');
+    expect(within(foundationWeeks[2]).getByText('Week 3 of 11, 21 Sep to 27 Sep, Foundation block, week 3 of 4, check-in form Mon 21 Sep')).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Plan blocks' })).queryAllByRole('listitem', { current: 'step' })).toEqual([]);
+    expect(screen.queryByText(/this week|Now/)).not.toBeInTheDocument();
+    expect(screen.getByText('4 weeks')).toBeInTheDocument();
+    expect(screen.getByText('7 Sep–4 Oct')).toBeInTheDocument();
+  });
+
+  it('dates every week of a static timeline by its start and names the check-in weekday in the key', () => {
+    // arrange
+    const today = addDays(dayOne, 30);
+
+    // act
+    render(<PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday="mon" today={today} weekAction={{ kind: 'none' }} />);
+
+    // assert
+    const foundationWeeks = within(screen.getByRole('list', { name: 'Foundation weeks' })).getAllByRole('listitem');
+    expect(within(foundationWeeks[0]).getByText('7 Sep')).toBeInTheDocument();
+    expect(within(foundationWeeks[2]).getByText('21 Sep')).toBeInTheDocument();
+    expect(within(foundationWeeks[2]).getByText('Week 3 of 11, 21 Sep to 27 Sep, Foundation block, week 3 of 4, check-in form Mon 21 Sep')).toBeInTheDocument();
+    expect(screen.getByText('Check-in form day, every two weeks, on Mondays')).toBeInTheDocument();
+  });
+
   it('links every week to its page when the action is a link', () => {
     // arrange
     const weekAction: TimelineWeekAction = { kind: 'link', label: 'Open in the program', hrefOf: week => `/program?week=${week}` };
@@ -128,5 +163,21 @@ describe('PlanTimeline', () => {
 
     // assert
     expect(screen.getByRole('link', { name: /^Open in the program: Week 7 of 11,/ })).toHaveAttribute('href', '/program?week=7');
+  });
+
+  it('jumps from a week to its place on the page in a static list, and leaves a week without one plain', () => {
+    // arrange
+    const weekAction: TimelineWeekAction = { kind: 'anchor', hrefOf: week => (week >= 5 ? `#week-${week}` : null) };
+
+    // act
+    render(<PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday="mon" today={addDays(dayOne, 30)} weekAction={weekAction} />);
+
+    // assert
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Week 5 of 11, 5 Oct to 11 Oct,/ })).toHaveAttribute('href', '#week-5');
+    expect(screen.getAllByRole('link')).toHaveLength(7);
+    expect(screen.queryByRole('link', { name: /^Week 4 of 11,/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/^Week 4 of 11,/)).toBeInTheDocument();
+    expect(screen.queryByText(/this week|Now/)).not.toBeInTheDocument();
   });
 });

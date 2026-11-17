@@ -8,14 +8,15 @@ import { NextVersionAction } from '../../components/coach-portal/program/NextVer
 import { UpcomingBlockWarnings } from '../../components/coach-portal/program/UpcomingBlockWarnings';
 import { publishedText } from '../../components/coach-portal/program/VersionReading';
 import { EmptyState } from '../../components/EmptyState';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { ProgramViewer, type UnwrittenBlock } from '../../components/program-view/ProgramViewer';
 import { ProgramLoadState } from '../../components/program-view/ProgramLoadState';
+import { blocksOf } from '../../components/program-view/programView';
+import { useProgramLookup } from '../../components/program-view/useProgramLookup';
 import { useUrlWeekSelection } from '../../components/program-view/weekSelection';
 import { Button } from '../../components/ui/button';
 import { cardVariants } from '../../components/ui/card';
-import { useAppState } from '../../context/AppContext';
-import { usePrograms } from '../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { currentVersion, draftOf, type ProgramVersion } from '../../domain/program';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
@@ -28,26 +29,25 @@ function unwrittenDescription({ name, start }: UnwrittenBlock): string {
 
 export function ClientProgramPage() {
   const { id = '' } = useParams();
-  const { appState, setAppState } = useAppState();
   const journey = useJourneyClient(id);
-  const { programFor } = usePrograms();
+  const lookup = useProgramLookup(journey?.callId ?? null);
   const { exercises } = useTraining();
   const selection = useUrlWeekSelection();
-  const program = journey ? programFor(journey.callId) : undefined;
-  if (!journey || !program) return <ClientNotFound />;
+  const client = journey && { name: journeyClientName(journey), path: clientDetailPathForJourney(journey) };
 
-  const client = { name: journeyClientName(journey), path: clientDetailPathForJourney(journey) };
-  const draftPath = `${client.path}/program/draft`;
-  const documentPath = (version: ProgramVersion) => `/coach/clients/${id}/program/document/${version.number}`;
-
-  if (appState.programLoad !== 'ready') {
+  if (lookup.status === 'pending') {
     return (
       <div className="w-full pb-12" data-parity-root="ClientProgramPage">
-        <ClientPageHeader client={client} title="Program" />
-        <ProgramLoadState load={appState.programLoad} onRetry={() => setAppState({ programLoad: 'ready' })} />
+        {client ? <ClientPageHeader client={client} title="Program" /> : <PortalPageHeader title="Program" />}
+        <ProgramLoadState load={lookup.load} onRetry={lookup.retry} />
       </div>
     );
   }
+  if (!journey || !client || lookup.status === 'missing') return <ClientNotFound />;
+
+  const { program } = lookup;
+  const draftPath = `${client.path}/program/draft`;
+  const documentPath = (version: ProgramVersion) => `/coach/clients/${id}/program/document/${version.number}`;
 
   const current = currentVersion(program);
   const draft = draftOf(program);
@@ -90,7 +90,7 @@ export function ClientProgramPage() {
           selection={selection}
           planPlacement="before-week"
           planVoice="coach"
-          planNotice={view.dayOne && <UpcomingBlockWarnings blocks={view.version.content.plan.blocks} dayOne={view.dayOne} today={view.today} />}
+          planNotice={view.dayOne && <UpcomingBlockWarnings blocks={blocksOf(view)} dayOne={view.dayOne} today={view.today} />}
           versions={program.versions}
           versionStates="shown"
           versionAction={version =>
