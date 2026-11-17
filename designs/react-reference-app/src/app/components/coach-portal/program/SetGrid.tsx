@@ -13,7 +13,7 @@ type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChan
 type SetKind = SetSpec['kind'];
 
 const WIDE_COLUMNS = '@min-[34rem]:grid-cols-[1.75rem_5rem_4rem_4rem_7.5rem_2.5rem]';
-const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.75rem_5rem_6.5rem_4rem_7.5rem_2.5rem]';
+const WIDE_COLUMNS_WITH_REPS_SUFFIX = '@min-[34rem]:grid-cols-[1.75rem_5rem_8rem_4rem_7.5rem_2.5rem]';
 const MINI_LABEL_CLASS = cn(LABEL_CLASS, '@min-[34rem]:hidden');
 const FIELD_WIDTH = 'w-full @min-[34rem]:w-16';
 const WEIGHT_WIDTH = 'w-full @min-[34rem]:w-20';

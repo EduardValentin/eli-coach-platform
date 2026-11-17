@@ -8,12 +8,6 @@ export const SEGMENT_KINDS: readonly SegmentKind[] = ['steady', 'rounds'];
 export const SEGMENT_KIND_LABELS: Record<SegmentKind, string> = { steady: 'Steady', rounds: 'Intervals' };
 export const CARDIO_INTENSITY_LABELS: Record<CardioIntensity, string> = { easy: 'Easy', moderate: 'Moderate', hard: 'Hard' };
 
-export const CARDIO_INTENSITY_TEXT: Record<CardioIntensity, string> = {
-  easy: 'You can hold a conversation',
-  moderate: 'You can talk, but not sing',
-  hard: 'Hard: only a few words at a time',
-};
-
 export const CARDIO_TALK_TEST: Record<CardioIntensity, string> = {
   easy: 'You can hold a conversation.',
   moderate: 'You can talk, but not sing.',
@@ -116,11 +110,23 @@ export function cardioMinutes(session: CardioSession): number {
   return Math.round(seconds / SECONDS_PER_MINUTE);
 }
 
-export function cardioIntensitiesOf(session: CardioSession): CardioIntensity[] {
+export function cardioIntensitiesOf(sessions: readonly CardioSession[]): CardioIntensity[] {
   const used = new Set(
-    session.segments.flatMap(segment => (segment.kind === 'rounds' && segment.items.length > 0 && segment.easySeconds > 0 ? [segment.intensity, 'easy' as const] : [segment.intensity])),
+    sessions
+      .flatMap(session => session.segments)
+      .flatMap(segment => (segment.kind === 'rounds' && segment.items.length > 0 && segment.easySeconds > 0 ? [segment.intensity, 'easy' as const] : [segment.intensity])),
   );
   return (['easy', 'moderate', 'hard'] as const).filter(intensity => used.has(intensity));
+}
+
+/** The first segment each exercise appears in, so a printed session links an exercise once. */
+export function firstSegmentIndexOf(session: CardioSession): ReadonlyMap<string, number> {
+  const first = new Map<string, number>();
+  session.segments.forEach((segment, index) => {
+    const ids = segment.kind === 'steady' ? [segment.exerciseId] : segment.items.map(item => item.exerciseId);
+    for (const id of ids) if (!first.has(id)) first.set(id, index);
+  });
+  return first;
 }
 
 export function roundsItemAmount(item: RoundsItem): string {

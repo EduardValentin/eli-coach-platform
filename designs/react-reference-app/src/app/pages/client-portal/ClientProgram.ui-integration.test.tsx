@@ -115,7 +115,7 @@ describe('the client Program page', () => {
     // arrange
     const user = userEvent.setup();
     renderProgram('two-versions');
-    const notice = await screen.findByText(/^What changed in version 2\./);
+    const notice = await screen.findByText(/^What changed:/);
 
     // act
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
@@ -129,13 +129,13 @@ describe('the client Program page', () => {
     const user = userEvent.setup();
     renderProgram('published');
     await screen.findByRole('heading', { level: 1, name: 'Program' });
-    expect(screen.queryByText(/Foundation block — building your base/)).toBeNull();
+    expect(screen.queryByText(/Building your base/)).toBeNull();
 
     // act
     await user.click(screen.getByRole('button', { name: 'Full Body' }));
 
     // assert
-    expect(screen.getByText(/Foundation block — building your base/)).toBeInTheDocument();
+    expect(screen.getByText(/Building your base/)).toBeInTheDocument();
   });
 
   it('shows the last week of the plan, without a today, once the plan has ended', async () => {

@@ -190,7 +190,7 @@ export function initialContent(setup: ProgramSetup, library: readonly Exercise[]
     blocks.push({ ...block, calibrationWeek: suggestion.calibrationWeek });
   }
   return {
-    header: { title: 'Program — weeks 1–2', focus: '', personalNote: '' },
+    header: { title: '', focus: '', personalNote: '' },
     plan: { blocks },
     nutritionNotes: '',
     lifestyleNotes: '',

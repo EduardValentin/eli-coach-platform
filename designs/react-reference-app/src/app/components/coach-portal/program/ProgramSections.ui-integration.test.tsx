@@ -133,7 +133,7 @@ describe('program structure sections', () => {
     // assert
     expect(document.title).toBe('Texts · Block 2 · Hypertrophy · Jane Doe · Evoa');
     expect(within(breadcrumb()).getByRole('heading', { level: 1, name: 'Block 2 · Hypertrophy' })).toBeInTheDocument();
-    expect(within(programDocument()).getByRole('heading', { name: /^Hypertrophy block/ })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { name: 'Building muscle' })).toBeInTheDocument();
     expect(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ })).toHaveAttribute('aria-current', 'true');
 
     // act
@@ -219,7 +219,7 @@ describe('texts page', () => {
     expect(screen.queryByRole('button', { name: 'Exercise library' })).not.toBeInTheDocument();
     expect(within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in (optional)' })).toHaveTextContent(/^$/);
     expect(within(programDocument()).getByRole('button', { name: 'Edit How to read your session' })).toBeInTheDocument();
-    expect(within(programDocument()).getByRole('region', { name: 'Nutrition' })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { name: 'Nutrition (optional)' })).toBeInTheDocument();
     expect(within(programDocument()).queryByRole('textbox', { name: /^A note from Eli/ })).toBeInTheDocument();
     expect(within(programDocument()).queryByRole('textbox', { name: 'Note for this block' })).not.toBeInTheDocument();
   });
@@ -229,16 +229,16 @@ describe('texts page', () => {
     const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
 
     // assert
-    expect(within(programDocument()).getByRole('heading', { level: 2, name: 'Jane Doe' })).toBeInTheDocument();
-    expect(within(programDocument()).getByRole('heading', { level: 3, name: 'How to read your session' })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { level: 2, name: 'Program title (optional)' })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { level: 3, name: 'How to read your sessions' })).toBeInTheDocument();
 
     // act
     await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
 
     // assert
-    expect(within(programDocument()).getByRole('heading', { level: 2, name: /^Foundation block/ })).toBeInTheDocument();
-    expect(within(programDocument()).getByRole('heading', { level: 2, name: 'Calendar' })).toBeInTheDocument();
-    expect(within(programDocument()).queryByRole('heading', { level: 3, name: 'Calendar' })).not.toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { level: 2, name: 'Foundation' })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { level: 3, name: 'Building your base' })).toBeInTheDocument();
+    expect(within(programDocument()).queryByRole('heading', { level: 3, name: 'Foundation' })).not.toBeInTheDocument();
   });
 
   it('labels an empty text with its printed heading and marks it optional', () => {
@@ -285,8 +285,7 @@ describe('texts page', () => {
     renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
 
     // assert
-    const nutrition = within(programDocument()).getByRole('region', { name: 'Nutrition' });
-    expect(within(nutrition).getByRole('heading', { name: 'Nutrition (optional)' })).toBeInTheDocument();
+    const nutrition = within(programDocument()).getByRole('heading', { name: 'Nutrition (optional)' }).closest('section') as HTMLElement;
     expect(within(nutrition).getByRole('textbox', { name: 'Nutrition (optional)' })).toBeInTheDocument();
     expect(within(nutrition).queryByRole('toolbar')).not.toBeInTheDocument();
     expect(within(nutrition).queryByRole('button')).not.toBeInTheDocument();
@@ -412,7 +411,7 @@ describe('texts page', () => {
     // assert
     const reset = within(programDocument()).getByRole('textbox', { name: 'How to read your session' });
     expect(reset).toHaveTextContent(/^How to read your session/);
-    expect(within(reset).getByText('A, B, C')).toBeInTheDocument();
+    expect(within(reset).getByText('Reps 8–10')).toBeInTheDocument();
     expect(reset).not.toHaveTextContent('**');
     expect(reset).toHaveFocus();
 
@@ -442,7 +441,7 @@ describe('texts page', () => {
     await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'A note from Eli (optional)' }), 'Time to add weight');
 
     // assert
-    expect(within(programDocument()).getByRole('heading', { name: /^Hypertrophy block/ })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { name: 'Building muscle' })).toBeInTheDocument();
     expect(within(programDocument()).queryByText('Program · Version 1 · Draft')).not.toBeInTheDocument();
     expect(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ })).toHaveTextContent('1 to write');
 
@@ -450,7 +449,7 @@ describe('texts page', () => {
     await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
 
     // assert
-    expect(within(programDocument()).getByRole('heading', { name: /^Foundation block/ })).toBeInTheDocument();
+    expect(within(programDocument()).getByRole('heading', { name: 'Building your base' })).toBeInTheDocument();
     expect(within(programDocument()).getByRole('textbox', { name: 'A note from Eli (optional)' })).toHaveTextContent(/^$/);
   });
 

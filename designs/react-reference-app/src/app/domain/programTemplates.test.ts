@@ -11,7 +11,7 @@ describe('templateText', () => {
   it('returns the English text as final', () => {
     const template = templateText('block.hypertrophy', 'en');
 
-    expect(template.text).toMatch(/^\*\*Hypertrophy block — building muscle/);
+    expect(template.text).toMatch(/^\*\*Building muscle/);
     expect(template.pending).toBe(false);
   });
 
@@ -27,20 +27,16 @@ describe('templateText', () => {
   });
 
   it('keeps the bold first line of a block text', () => {
-    expect(templateText('block.foundation', 'en').text).toMatch(/^\*\*Foundation block — building your base/);
+    expect(templateText('block.foundation', 'en').text).toMatch(/^\*\*Building your base/);
   });
 });
 
 describe('fillTemplate', () => {
-  it('replaces the steps placeholder', () => {
-    expect(fillTemplate('Daily steps: [daily steps]', { steps: '8,000' })).toBe('Daily steps: 8,000');
-  });
-
   it('replaces the frequency placeholder with a number', () => {
     expect(fillTemplate('Full Body, [2–3]x per week', { days: 3 })).toBe('Full Body, 3x per week');
   });
 
   it('keeps a placeholder with no value', () => {
-    expect(fillTemplate('Daily steps: [daily steps]', {})).toBe('Daily steps: [daily steps]');
+    expect(fillTemplate('Full Body, [2–3]x per week', {})).toBe('Full Body, [2–3]x per week');
   });
 });

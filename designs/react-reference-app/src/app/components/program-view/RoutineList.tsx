@@ -1,6 +1,9 @@
 import { useId, type ReactNode } from 'react';
+import type { Exercise } from '../../context/TrainingContext';
 import { EYEBROW_CLASS } from '../typography';
 import { cn } from '../ui/utils';
+import type { ExerciseLibrary } from './programView';
+import type { RoutineAmountText } from './sessionExerciseDetails';
 
 export type RoutineItem = { key: string; name: ReactNode; amount: ReactNode };
 
@@ -27,13 +30,36 @@ function RoutineSection({ title, frame, action, note, panel, children }: Routine
   );
 }
 
-export function RoutineAmount({ value, unit }: { value: string; unit: string }) {
+type RoutineSize = 'viewer' | 'document';
+
+const AMOUNT_CLASSES: Record<RoutineSize, { value: string; unit: string }> = {
+  viewer: { value: 'text-base', unit: 'text-sm' },
+  document: { value: '', unit: 'text-document-note' },
+};
+
+function RoutineAmount({ amount, size }: { amount: RoutineAmountText; size: RoutineSize }) {
+  const classes = AMOUNT_CLASSES[size];
   return (
-    <span className="text-base font-semibold whitespace-nowrap text-text-primary tabular-nums">
-      {value}
-      {unit && <span className="text-sm font-normal text-text-secondary">{` ${unit}`}</span>}
+    <span className={cn('font-semibold whitespace-nowrap text-text-primary tabular-nums', classes.value)}>
+      {amount.value}
+      {amount.unit && <span className={cn('font-normal text-text-secondary', classes.unit)}>{` ${amount.unit}`}</span>}
     </span>
   );
+}
+
+type RoutineSource<Item> = {
+  exercisesById: ExerciseLibrary;
+  nameOf: (item: Item, exercise: Exercise | undefined) => ReactNode;
+  amountOf: (item: Item, exercise: Exercise | undefined) => RoutineAmountText;
+  size: RoutineSize;
+};
+
+/** A warm-up's or cool-down's rows: each exercise's name as the caller renders it, beside its amount. */
+export function routineItems<Item extends { id: string; exerciseId: string }>(items: readonly Item[], source: RoutineSource<Item>): RoutineItem[] {
+  return items.map(item => {
+    const exercise = source.exercisesById.get(item.exerciseId);
+    return { key: item.id, name: source.nameOf(item, exercise), amount: <RoutineAmount amount={source.amountOf(item, exercise)} size={source.size} /> };
+  });
 }
 
 type RoutineListProps = { title: string; items: readonly RoutineItem[]; action?: ReactNode; note?: ReactNode; panel?: ReactNode };

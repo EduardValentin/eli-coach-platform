@@ -37,7 +37,7 @@ export function useDocumentTypography(): DocumentTypography {
 
 type DocumentHeadingProps = { level: HeadingLevel; id?: string; tabIndex?: number; className?: string; children: ReactNode };
 
-const HEADING_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5'] as const;
+const HEADING_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const;
 
 export function DocumentHeading({ level, id, tabIndex, className, children }: DocumentHeadingProps) {
   const { topLevel } = useContext(DocumentEditingContext);

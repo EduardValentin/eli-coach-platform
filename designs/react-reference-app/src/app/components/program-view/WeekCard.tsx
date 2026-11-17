@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { splitLabel } from '../../domain/splitTemplates';
+import { Reading } from '../Reading';
 import { LABEL_CLASS, VALUE_LG_CLASS } from '../typography';
 import { cardVariants } from '../ui/card';
 import { Toggle } from '../ui/toggle';
@@ -20,9 +21,6 @@ type WeekCardProps = {
 };
 
 const BLOCK_AND_SPLIT_TEXT = 'block-and-split';
-const MINI_CLASS = 'inline text-sm text-text-secondary @3xl:block @3xl:text-text-primary';
-const MINI_TERM_CLASS = cn(LABEL_CLASS, 'sr-only @3xl:not-sr-only');
-const MINI_VALUE_CLASS = 'inline @3xl:mt-0.5 @3xl:block @3xl:pb-1.5 @3xl:font-medium';
 
 export function WeekCard({ week, nav, rail, mode, texts, onModeChange }: WeekCardProps) {
   return (
@@ -45,10 +43,7 @@ export function WeekCard({ week, nav, rail, mode, texts, onModeChange }: WeekCar
                     )}
                   </dd>
                 </div>
-                <div className={MINI_CLASS}>
-                  <dt className={MINI_TERM_CLASS}>Daily target</dt>
-                  <dd className={cn(MINI_VALUE_CLASS, 'tabular-nums')}>{`${dailyStepsText(week.block)} steps a day`}</dd>
-                </div>
+                <Reading as="dl-item" label="Daily steps" value={dailyStepsText(week.block)} size="md" className="flex items-baseline gap-2.5 @3xl:block" />
               </dl>
               <Toggle variant="outline" size="lg" pressed={mode === 'all'} onPressedChange={pressed => onModeChange(pressed ? 'all' : 'focus')} className="shrink-0 px-3.5">
                 All days

@@ -6,31 +6,29 @@ import { ClientProgramView } from '../../components/client-portal/ClientProgramV
 import { SUPPORTING_LINES } from '../../components/client-portal/ProgramStatusCard';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { ProgramLoadState } from '../../components/program-view/ProgramLoadState';
+import { useProgramLookup } from '../../components/program-view/useProgramLookup';
 import { useUrlWeekSelection } from '../../components/program-view/weekSelection';
 import { Button } from '../../components/ui/button';
 import { cardVariants } from '../../components/ui/card';
-import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { usePrograms } from '../../context/ProgramContext';
 import { useTraining } from '../../context/TrainingContext';
 import { currentVersion } from '../../domain/program';
 
 const EMPTY_STATE_FALLBACK = 'Your coach is building it from your answers.';
 
 export function ClientProgram() {
-  const { appState, setAppState } = useAppState();
   const { demoJourney } = useClientJourneys();
-  const { programFor } = usePrograms();
+  const lookup = useProgramLookup(demoJourney.callId);
   const { exercises } = useTraining();
   const selection = useUrlWeekSelection();
-  const program = programFor(demoJourney.callId);
+  const program = lookup.status === 'found' ? lookup.program : undefined;
   const version = program && currentVersion(program);
 
-  if (appState.programLoad !== 'ready') {
+  if (lookup.status === 'pending') {
     return (
       <div data-parity-root="ClientProgram">
         <PortalPageHeader title="Program" />
-        <ProgramLoadState load={appState.programLoad} onRetry={() => setAppState({ programLoad: 'ready' })} />
+        <ProgramLoadState load={lookup.load} onRetry={lookup.retry} />
       </div>
     );
   }

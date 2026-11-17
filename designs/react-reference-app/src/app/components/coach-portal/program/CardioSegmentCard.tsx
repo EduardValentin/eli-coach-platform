@@ -14,7 +14,7 @@ import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
 import { roundsItemExerciseDetail, steadyExerciseDetail } from '../../program-view/sessionExerciseDetails';
 import { IntensityValue } from '../../program-view/IntensityValue';
 import { SegmentHeading } from '../../program-view/SegmentBlock';
-import { EasyStep } from '../../program-view/SegmentTable';
+import { ThenLabel } from '../../program-view/SegmentTable';
 import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
 import { ExerciseItemList } from './ExerciseItemList';
 import { CountField, RowTextField } from './RowTextField';
@@ -25,6 +25,18 @@ import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
 type ItemMeasure = 'reps' | 'seconds';
+
+function EasyStep({ time }: { time: string }) {
+  return (
+    <p className="flex min-h-10 items-center gap-3">
+      <span className="flex-1">
+        <ThenLabel />
+      </span>
+      <span className="text-sm font-semibold text-text-primary tabular-nums">{time}</span>
+      <IntensityValue intensity="easy" />
+    </p>
+  );
+}
 
 const EASY_LABEL = 'Easy after each exercise';
 
@@ -140,7 +152,7 @@ function RoundsFields({ segment, position, library, edits, onChange, onAddItem }
         library={library}
         detailFor={(item, exercise) => roundsItemExerciseDetail(segment, item, exercise)}
         place={`segment ${position}`}
-        after={() => segment.easySeconds > 0 && <EasyStep time={formatRest(segment.easySeconds)} layout="line" />}
+        after={() => segment.easySeconds > 0 && <EasyStep time={formatRest(segment.easySeconds)} />}
         actions={{
           onMoveUp: itemId => onChange(edits.moveRoundsItemUp(segment.id, itemId)),
           onMoveDown: itemId => onChange(edits.moveRoundsItemDown(segment.id, itemId)),
@@ -216,14 +228,14 @@ function ReplaceExercise({ exercise, onReplace }: { exercise: Exercise | undefin
 function SegmentTitle({ segment, position, kindLabel, headingId, exercise, onReplaceExercise }: SegmentTitleProps) {
   if (segment.kind === 'rounds') {
     return (
-      <SegmentHeading level="h5" number={position} id={headingId}>
+      <SegmentHeading level="h5" size="viewer" number={position} id={headingId}>
         <span className={KIND_CLASS}>{kindLabel}</span>
         <span className={DETAIL_CLASS}>{`${counted(segment.rounds, 'round')} · ${segmentMinutes(segment)} min`}</span>
       </SegmentHeading>
     );
   }
   return (
-    <SegmentHeading level="h5" number={position} id={headingId} action={<ReplaceExercise exercise={exercise} onReplace={onReplaceExercise} />}>
+    <SegmentHeading level="h5" size="viewer" number={position} id={headingId} action={<ReplaceExercise exercise={exercise} onReplace={onReplaceExercise} />}>
       <span className={KIND_CLASS}>{kindLabel}</span>
       {exercise ? (
         <ExerciseNameButton exercise={exercise} detail={steadyExerciseDetail(segment, exercise)} weight="medium" size="compact" place={`segment ${position}`} />

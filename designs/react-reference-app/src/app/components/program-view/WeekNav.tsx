@@ -4,8 +4,9 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
 import { BlockNumber } from './BlockNumber';
+import { weekRangeOf } from '../../domain/programCalendar';
 import { dateRangeText } from './programView';
-import { weekOfBlockShortText, weekOfBlockText, weekOfPlanText, type WeekView } from './weekView';
+import { weekOfBlockText, weekOfPlanText, type WeekView } from './weekView';
 
 type WeekNavProps = {
   week: WeekView;
@@ -16,17 +17,16 @@ type WeekNavProps = {
 };
 
 function rangeOf(week: WeekView): string | null {
-  const first = week.days[0].date;
-  const last = week.days[week.days.length - 1].date;
-  return first && last ? dateRangeText(first, last) : null;
+  const range = weekRangeOf(week.days);
+  return range && dateRangeText(range);
 }
 
 function BlockLine({ week }: { week: WeekView }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
       <BlockNumber block={week.block} index={week.blockIndex} size="xs" />
-      <span className="@max-3xl:hidden">{weekOfBlockText(week)}</span>
-      <span className="text-balance @3xl:hidden">{weekOfBlockShortText(week)}</span>
+      <span className="@max-3xl:hidden">{weekOfBlockText(week, 'long')}</span>
+      <span className="text-balance @3xl:hidden">{weekOfBlockText(week, 'short')}</span>
     </span>
   );
 }

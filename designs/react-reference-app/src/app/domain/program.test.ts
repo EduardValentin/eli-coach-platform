@@ -10,6 +10,7 @@ import {
   filledSessionCount,
   hasExercises,
   mapCalendar,
+  planHasCoolDown,
   withSetAdded,
   scheduledSessions,
   sessionOn,
@@ -24,6 +25,7 @@ import {
   type ProgramContent,
   type ProgramVersion,
   type Row,
+  type Block,
   type Session,
   type SetSpec,
   type VersionState,
@@ -363,5 +365,21 @@ describe('withSetAdded', () => {
 
     // assert
     expect(added).toEqual([{ kind: 'working', reps: { min: 8, max: 8 }, rir: { min: 2, max: 2 } }]);
+  });
+});
+
+describe('planHasCoolDown', () => {
+  it('finds a cool-down only where a session turns it on and gives it an exercise', () => {
+    // arrange
+    const on = fixtureSession({ coolDown: { enabled: true, items: [{ id: 'cd', exerciseId: 'stretch', seconds: 30 }] } });
+    const empty = fixtureSession({ coolDown: { enabled: true, items: [] } });
+    const blockWith = (sessions: Session[]) => ({ sessions }) as Block;
+
+    // act
+    const withOne = planHasCoolDown([blockWith([empty]), blockWith([on])]);
+
+    // assert
+    expect(withOne).toBe(true);
+    expect(planHasCoolDown([blockWith([empty, fixtureSession()])])).toBe(false);
   });
 });

@@ -278,6 +278,14 @@ export function cardioOn(block: Block, day: Weekday): CardioSession | undefined 
   return entry.kind === 'cardio' ? block.cardioSessions.find(cardio => cardio.id === entry.cardioId) : undefined;
 }
 
+export function hasCoolDown(session: Session): boolean {
+  return session.coolDown.enabled && session.coolDown.items.length > 0;
+}
+
+export function planHasCoolDown(blocks: readonly Block[]): boolean {
+  return blocks.some(block => block.sessions.some(hasCoolDown));
+}
+
 export function scheduledSessions(block: Block): Session[] {
   const ids = new Set(WEEKDAYS.flatMap(day => sessionOn(block, day)?.id ?? []));
   return block.sessions.filter(session => ids.has(session.id));

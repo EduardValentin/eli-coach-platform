@@ -1,19 +1,15 @@
-import type { Exercise } from '../../context/TrainingContext';
 import { clientExerciseUrl } from '../../utils/exerciseLinks';
-import { linkVariants } from '../ui/link';
+import { linkVariants, type LinkReach } from '../ui/link';
 import { cn } from '../ui/utils';
-import { exerciseNameOf } from './programView';
+import { exerciseNameOf, type ExerciseLibrary } from './programView';
 
-type ExerciseLinkProps = { exerciseId: string; exercisesById: ReadonlyMap<string, Exercise>; className?: string };
+type ExerciseLinkProps = { exerciseId: string; exercisesById: ExerciseLibrary; reach?: LinkReach; className?: string };
 
-export function ExerciseLink({ exerciseId, exercisesById, className }: ExerciseLinkProps) {
+export function ExerciseLink({ exerciseId, exercisesById, reach, className }: ExerciseLinkProps) {
   const exercise = exercisesById.get(exerciseId);
   if (!exercise) return <span className={className}>{exerciseNameOf(exercise)}</span>;
   return (
-    <a
-      href={clientExerciseUrl(exercise.id, window.location.origin)}
-      className={cn(linkVariants({ variant: 'inline' }), className)}
-    >
+    <a href={clientExerciseUrl(exercise.id, window.location.origin)} className={cn(linkVariants({ variant: 'inline', reach }), className)}>
       {exercise.name}
     </a>
   );

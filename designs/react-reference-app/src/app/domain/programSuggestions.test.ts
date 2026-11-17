@@ -209,7 +209,7 @@ describe('newBlock and initialContent', () => {
     expect(block).toMatchObject({ weeks: 4, targetMinutes: 45, dailySteps: 7000, calibrationWeek: false });
     expect(block.split.shape).toBe('full-body');
     expect(block.split.text).toContain('3x per week');
-    expect(block.introText).toContain('Foundation block');
+    expect(block.introText).toContain('Building your base');
     expect(block.missedDayNote).not.toBe('');
   });
 
@@ -218,7 +218,7 @@ describe('newBlock and initialContent', () => {
     const content = initialContent(SETUP, []);
 
     // assert
-    expect(content.header.title).toBe('Program — weeks 1–2');
+    expect(content.header.title).toBe('');
     expect(content.plan.blocks.map(b => b.type)).toEqual(['foundation', 'hypertrophy', 'deload']);
     expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
     expect(content.plan.blocks.every(b => b.sessions.every(s => s.rows.length === 0))).toBe(true);

@@ -95,7 +95,7 @@ describe('ClientProgramPage', () => {
     const plan = screen.getByRole('region', { name: 'Plan' });
     const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
     expect(follows(plan, week)).toBe(true);
-    expect(within(plan).getAllByRole('term').map(term => term.textContent)).toEqual(['Plan', 'Next check-in form']);
+    expect(within(plan).getAllByRole('term').map(term => term.textContent)).toEqual(['Focus', 'Personal note', 'Plan', 'Next check-in form']);
     expect(within(plan).getByText('Week 1 of 11')).toBeInTheDocument();
     expect(within(plan).getByRole('button', { name: /^Show in the week card: Week 1 of 11, .+, this week$/ })).toHaveAttribute('aria-current', 'true');
   });
@@ -194,5 +194,21 @@ describe('ClientProgramPage', () => {
 
     // assert
     expect(screen.getByText('Client not found')).toBeInTheDocument();
+  });
+
+  it('shows the loading state, and never says the client is not found, while a known client\'s program is still being read', () => {
+    // arrange
+    const shown: string[] = [];
+    const observer = new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => shown.push(node.textContent ?? ''))));
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // act
+    renderPage('c1', '&pseed=two-versions');
+
+    // assert
+    observer.takeRecords().forEach(record => record.addedNodes.forEach(node => shown.push(node.textContent ?? '')));
+    observer.disconnect();
+    expect(shown.join(' ')).not.toContain('Client not found');
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toBeInTheDocument();
   });
 });

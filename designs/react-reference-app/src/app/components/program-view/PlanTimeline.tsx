@@ -1,27 +1,34 @@
 import { format } from 'date-fns';
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router';
-import { BLOCK_TYPE_LABELS, isBlockWritten, type Block, type Weekday } from '../../domain/program';
-import { blockStatus, currentPosition, planWeek, planWeeks, type PlanSchedule, type PlanWeek } from '../../domain/programCalendar';
+import { isBlockWritten, WEEKDAY_LABELS, type Block, type Weekday } from '../../domain/program';
+import { blockStatus, currentPosition, planWeek, planWeeks, weekRangeOf, type DateRange, type PlanSchedule, type PlanWeek } from '../../domain/programCalendar';
 import { counted } from '../../utils/counted';
 import { WIDGET_TITLE_CLASS } from '../typography';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
 import { cn } from '../ui/utils';
 import { BLOCK_RULE, BLOCK_SOFT, BLOCK_SWATCH } from './blockColours';
 import { BlockNumber } from './BlockNumber';
+import { CHECK_IN_DAY_LABEL } from './CheckInDayNote';
 import { CheckInDot } from './CheckInDot';
-import { dateRangeText } from './programView';
-import { weekOfBlockShortText, weekOfBlockText, weekOfPlanText } from './weekView';
+import { dateRangeText, spokenRangeText } from './programView';
+import { blockName, weekOfBlockText, weekOfPlanText } from './weekView';
 
-const ROW_MIN_REM = 48;
 const ROW_CELL_MIN_REM = 3.5;
 const PEEK_DATE = 'EEE d MMM';
+const CELL_DATE = 'd MMM';
+const NO_DATE = '\u00a0';
 const PEEK_OPEN_DELAY_MS = 150;
 const PEEK_CLOSE_DELAY_MS = 200;
 
 export type TimelineWeekAction =
   | { kind: 'select'; label: string; onSelect: (weekOfPlan: number) => void }
-  | { kind: 'link'; label: string; hrefOf: (weekOfPlan: number) => string };
+  | { kind: 'link'; label: string; hrefOf: (weekOfPlan: number) => string }
+  | { kind: 'anchor'; hrefOf: (weekOfPlan: number) => string | null }
+  | { kind: 'none' };
+
+type InteractiveWeekAction = Extract<TimelineWeekAction, { kind: 'select' | 'link' }>;
+type StaticWeekAction = Extract<TimelineWeekAction, { kind: 'anchor' | 'none' }>;
 
 type PlanTimelineProps = PlanSchedule & {
   preferredWeekday: Weekday;
@@ -32,11 +39,15 @@ type PlanTimelineProps = PlanSchedule & {
 type TimelineWeek = PlanWeek & {
   totalWeeks: number;
   block: Block;
-  range: { start: Date; end: Date } | null;
+  range: DateRange | null;
   checkIn: Date | null;
 };
 
 type Layout = 'row' | 'stacked';
+type WeekDate = 'check-in' | 'start';
+/** A static timeline reads as a calendar, every week dated by its start; an interactive one dates only its check-in weeks. */
+type CellLook = { face: Layout; date: WeekDate };
+type HeadMeta = 'beside' | 'below';
 type WeekMark = 'now' | 'shown' | 'peeked';
 type CellFocus = 'tab-stop' | 'roving';
 
@@ -44,13 +55,11 @@ function timelineWeeks({ blocks, dayOne }: Pick<PlanSchedule, 'blocks' | 'dayOne
   const totalWeeks = planWeeks(blocks);
   const weeks = Array.from({ length: totalWeeks }, (_, offset): TimelineWeek => {
     const week = planWeek({ blocks, dayOne }, offset + 1, preferredWeekday);
-    const start = week.days[0].date;
-    const end = week.days[week.days.length - 1].date;
     return {
       ...week,
       totalWeeks,
       block: blocks[week.blockIndex],
-      range: start && end ? { start, end } : null,
+      range: weekRangeOf(week.days),
       checkIn: week.days.find(day => day.checkIn)?.date ?? null,
     };
   });
@@ -60,8 +69,8 @@ function timelineWeeks({ blocks, dayOne }: Pick<PlanSchedule, 'blocks' | 'dayOne
 function spokenWeek(week: TimelineWeek, marks: ReadonlySet<WeekMark>): string {
   return [
     weekOfPlanText(week),
-    ...(week.range ? [`${format(week.range.start, 'd MMM')} to ${format(week.range.end, 'd MMM')}`] : []),
-    weekOfBlockText(week),
+    ...(week.range ? [spokenRangeText(week.range)] : []),
+    weekOfBlockText(week, 'long'),
     ...(week.checkIn ? [`check-in form ${format(week.checkIn, PEEK_DATE)}`] : []),
     ...(marks.has('now') ? ['this week'] : []),
   ].join(', ');
@@ -83,7 +92,7 @@ function useTimelineLayout(weeks: number): { ref: RefObject<HTMLDivElement>; lay
     return () => observer.disconnect();
   }, []);
   const rem = typeof document === 'undefined' ? 16 : parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const fitsRow = width >= ROW_MIN_REM * rem && width / weeks >= ROW_CELL_MIN_REM * rem;
+  const fitsRow = width > 0 && width / weeks >= ROW_CELL_MIN_REM * rem;
   return { ref, layout: fitsRow ? 'row' : 'stacked' };
 }
 
@@ -92,11 +101,11 @@ function TimelineWeekPeek({ week, marks }: { week: TimelineWeek; marks: Readonly
     <div className="grid gap-2 text-sm text-text-primary">
       <p className="flex items-baseline justify-between gap-3">
         <span className={WIDGET_TITLE_CLASS}>{weekOfPlanText(week)}</span>
-        {week.range && <span className="text-text-secondary tabular-nums">{dateRangeText(week.range.start, week.range.end)}</span>}
+        {week.range && <span className="text-text-secondary tabular-nums">{dateRangeText(week.range)}</span>}
       </p>
       <p className="flex items-center gap-2">
         <BlockNumber block={week.block} index={week.blockIndex} size="xs" />
-        {weekOfBlockShortText(week)}
+        {weekOfBlockText(week, 'short')}
       </p>
       {week.checkIn && (
         <p className="flex items-center gap-2">
@@ -110,18 +119,88 @@ function TimelineWeekPeek({ week, marks }: { week: TimelineWeek; marks: Readonly
   );
 }
 
+function weekCellClass(week: TimelineWeek, { face }: CellLook, marks: ReadonlySet<WeekMark>): string {
+  const now = marks.has('now');
+  return cn('relative flex w-full rounded-field border border-control-border-soft text-text-primary tabular-nums', BLOCK_SOFT[week.block.type], {
+    'min-h-13 flex-col justify-between px-1.5 py-2 text-left': face === 'row',
+    'min-h-12 flex-col items-center justify-center gap-1': face === 'stacked',
+    'border-surface-inverted bg-surface-inverted text-surface-inverted-foreground': now,
+    'aria-[current=true]:selected-cell': !now,
+    'border-dashed border-text-primary': marks.has('peeked') && !now,
+  });
+}
+
+function datedOn(week: TimelineWeek, date: WeekDate): Date | null {
+  return date === 'start' ? (week.range?.start ?? null) : week.checkIn;
+}
+
+/** Every row cell keeps its date line, blank or not, so the cells of a row stay one height. */
+function WeekCorner({ week, date }: { week: TimelineWeek; date: WeekDate }) {
+  const shown = datedOn(week, date);
+  return (
+    <>
+      {week.checkIn && <CheckInDot className="absolute top-2 right-1.5" />}
+      <span aria-hidden="true" className="text-caption font-medium whitespace-nowrap">
+        {shown ? format(shown, CELL_DATE) : NO_DATE}
+      </span>
+    </>
+  );
+}
+
+function WeekFace({ week, look, marks }: { week: TimelineWeek; look: CellLook; marks: ReadonlySet<WeekMark> }) {
+  const now = marks.has('now');
+  const layout = look.face;
+  return (
+    <>
+      <span aria-hidden="true" className={cn('flex items-baseline font-medium', { 'gap-1.5 text-base': layout === 'row', 'flex-col items-center text-sm leading-none': layout === 'stacked' })}>
+        {week.weekOfPlan}
+        {now && <span className={cn('text-xs', { 'mt-1': layout === 'stacked' })}>Now</span>}
+      </span>
+      {week.checkIn && layout === 'stacked' && (
+        <span aria-hidden="true" className="flex items-center">
+          <CheckInDot />
+        </span>
+      )}
+      {layout === 'row' && <WeekCorner week={week} date={look.date} />}
+    </>
+  );
+}
+
+const NO_MARKS: ReadonlySet<WeekMark> = new Set();
+
+function StaticWeekCell({ week, look, action }: { week: TimelineWeek; look: CellLook; action: StaticWeekAction }) {
+  const href = action.kind === 'anchor' ? action.hrefOf(week.weekOfPlan) : null;
+  const content = (
+    <>
+      <WeekFace week={week} look={look} marks={NO_MARKS} />
+      <span className="sr-only">{spokenWeek(week, NO_MARKS)}</span>
+    </>
+  );
+  if (href) {
+    return (
+      <a href={href} data-parity="plan-week" className={cn('hit-area hover:border-text-primary', weekCellClass(week, look, NO_MARKS))}>
+        {content}
+      </a>
+    );
+  }
+  return (
+    <div data-parity="plan-week" className={cn(weekCellClass(week, look, NO_MARKS), { 'bg-surface-subtle text-text-secondary': action.kind === 'anchor' })}>
+      {content}
+    </div>
+  );
+}
+
 type WeekCellProps = {
   week: TimelineWeek;
-  layout: Layout;
+  look: CellLook;
   marks: ReadonlySet<WeekMark>;
   focus: CellFocus;
-  action: TimelineWeekAction;
+  action: InteractiveWeekAction;
   cellRef: (element: HTMLElement | null) => void;
   onFocus: () => void;
 };
 
-function WeekCell({ week, layout, marks, focus, action, cellRef, onFocus }: WeekCellProps) {
-  const now = marks.has('now');
+function WeekCell({ week, look, marks, focus, action, cellRef, onFocus }: WeekCellProps) {
   const cellProps = {
     'data-week': week.weekOfPlan,
     'data-parity': 'plan-week',
@@ -129,28 +208,9 @@ function WeekCell({ week, layout, marks, focus, action, cellRef, onFocus }: Week
     'aria-label': `${action.label}: ${spokenWeek(week, marks)}`,
     'aria-current': marks.has('shown') ? ('true' as const) : undefined,
     onFocus,
-    className: cn('relative hit-area flex w-full rounded-field border border-control-border-soft text-text-primary tabular-nums', BLOCK_SOFT[week.block.type], {
-      'h-13 flex-col justify-between p-2 text-left': layout === 'row',
-      'h-12 flex-col items-center justify-center gap-1': layout === 'stacked',
-      'border-surface-inverted bg-surface-inverted text-surface-inverted-foreground': now,
-      'aria-[current=true]:selected-cell': !now,
-      'border-dashed border-text-primary': marks.has('peeked') && !now,
-    }),
+    className: cn('hit-area', weekCellClass(week, look, marks)),
   };
-  const face: ReactNode = (
-    <>
-      <span aria-hidden="true" className={cn('flex items-baseline font-medium', { 'gap-1.5 text-base': layout === 'row', 'flex-col items-center text-sm leading-none': layout === 'stacked' })}>
-        {week.weekOfPlan}
-        {now && <span className={cn('text-xs', { 'mt-1': layout === 'stacked' })}>Now</span>}
-      </span>
-      {week.checkIn && (
-        <span aria-hidden="true" className="flex items-center gap-1 text-xs font-medium">
-          <CheckInDot />
-          {layout === 'row' && format(week.checkIn, 'd MMM')}
-        </span>
-      )}
-    </>
-  );
+  const face = <WeekFace week={week} look={look} marks={marks} />;
   if (action.kind === 'link') {
     return (
       <HoverCardTrigger asChild>
@@ -169,16 +229,26 @@ function WeekCell({ week, layout, marks, focus, action, cellRef, onFocus }: Week
   );
 }
 
-function BlockHead({ block, index, weeks, layout }: { block: Block; index: number; weeks: readonly TimelineWeek[]; layout: Layout }) {
+type BlockHeadProps = { block: Block; index: number; weeks: readonly TimelineWeek[]; layout: Layout; meta: HeadMeta };
+
+function BlockHead({ block, index, weeks, layout, meta }: BlockHeadProps) {
   const first = weeks[0].range;
   const last = weeks[weeks.length - 1].range;
+  const range = first && last ? dateRangeText({ start: first.start, end: last.end }) : null;
   return (
-    <div className={cn('@container flex items-center gap-2 pb-2', { [cn('border-t-3 pt-2', BLOCK_RULE[block.type])]: layout === 'row' })}>
-      <BlockNumber block={block} index={index} size="xs" />
-      <span className={cn('min-w-0 font-semibold text-text-primary', { 'text-sm': layout === 'row', 'text-base': layout === 'stacked' })}>{BLOCK_TYPE_LABELS[block.type]}</span>
-      <span className="ml-auto text-right text-sm whitespace-nowrap text-text-secondary tabular-nums">
-        <span className="@max-[9rem]:hidden">{counted(block.weeks, 'week')}</span>
-        {first && last && <span className="@max-[15rem]:hidden">{` · ${dateRangeText(first.start, last.end)}`}</span>}
+    <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 pb-2', { [cn('border-t-3 pt-2', BLOCK_RULE[block.type])]: layout === 'row' })}>
+      <span className="flex min-w-0 items-center gap-2 whitespace-nowrap">
+        <BlockNumber block={block} index={index} size="xs" />
+        <span className={cn('min-w-0 font-semibold text-text-primary', { 'text-sm': layout === 'row', 'text-base': layout === 'stacked' })}>{blockName(block)}</span>
+      </span>
+      <span className={cn('text-sm text-text-secondary tabular-nums', { 'basis-full': meta === 'below', 'ml-auto text-right': meta === 'beside' })}>
+        <span className="whitespace-nowrap">{counted(block.weeks, 'week')}</span>
+        {range && (
+          <>
+            {' · '}
+            <span className="whitespace-nowrap">{range}</span>
+          </>
+        )}
       </span>
     </div>
   );
@@ -199,12 +269,98 @@ function marksOf(weekOfPlan: number, current: { now: number | null; shown?: numb
   return marks;
 }
 
-export function PlanTimeline({ blocks, dayOne, preferredWeekday, today, shownWeek, weekAction }: PlanTimelineProps) {
+type TimelineBlocksProps = {
+  blocks: readonly Block[];
+  byBlock: readonly TimelineWeek[][];
+  layout: Layout;
+  look: CellLook;
+  currentBlock: number | null;
+  renderWeek: (week: TimelineWeek) => ReactNode;
+};
+
+function TimelineBlocks({ blocks, byBlock, layout, look, currentBlock, renderWeek }: TimelineBlocksProps) {
+  const meta: HeadMeta = layout === 'row' || look.date === 'start' ? 'below' : 'beside';
+  return (
+    <ol aria-label="Plan blocks" className={cn({ 'flex gap-1': layout === 'row', 'grid gap-4': layout === 'stacked' })}>
+      {byBlock.map((weeks, index) => {
+        const block = blocks[index];
+        return (
+          <li
+            key={block.id}
+            data-parity="plan-block"
+            aria-current={currentBlock === index ? 'step' : undefined}
+            className={cn({ 'min-w-0': meta === 'beside', 'flex flex-col': layout === 'row' })}
+            style={layout === 'row' ? { flexGrow: block.weeks, flexBasis: 0 } : undefined}
+          >
+            <BlockHead block={block} index={index} weeks={weeks} layout={layout} meta={meta} />
+            <ol
+              aria-label={`${blockName(block)} weeks`}
+              className={cn('grid gap-1', {
+                'grid-cols-[repeat(auto-fill,minmax(3rem,1fr))]': layout === 'stacked' && look.face === 'stacked',
+                'grid-cols-[repeat(auto-fill,minmax(3.5rem,1fr))] gap-1.5': layout === 'stacked' && look.face === 'row',
+                'mt-auto': layout === 'row',
+              })}
+              style={layout === 'row' ? { gridTemplateColumns: `repeat(${block.weeks}, minmax(0, 1fr))` } : undefined}
+            >
+              {weeks.map(week => (
+                <li key={week.weekOfPlan} className="grid">
+                  {renderWeek(week)}
+                </li>
+              ))}
+            </ol>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function CheckInKey({ weekday }: { weekday: Weekday | null }) {
+  const cadence = `${CHECK_IN_DAY_LABEL}, every two weeks`;
+  return (
+    <p className="flex items-center gap-2 text-sm text-text-secondary">
+      <CheckInDot />
+      {weekday ? `${cadence}, on ${WEEKDAY_LABELS[weekday]}s` : cadence}
+    </p>
+  );
+}
+
+export function PlanTimeline(props: PlanTimelineProps) {
+  const { blocks, dayOne, preferredWeekday, weekAction } = props;
   const byBlock = timelineWeeks({ blocks, dayOne }, preferredWeekday);
+  const { ref, layout } = useTimelineLayout(planWeeks(blocks));
+  if (weekAction.kind === 'none' || weekAction.kind === 'anchor') {
+    const look: CellLook = { face: 'row', date: 'start' };
+    return (
+      <div ref={ref} data-parity="plan-timeline" className="grid gap-3">
+        <TimelineBlocks
+          blocks={blocks}
+          byBlock={byBlock}
+          layout={layout}
+          look={look}
+          currentBlock={null}
+          renderWeek={week => <StaticWeekCell week={week} look={look} action={weekAction} />}
+        />
+        {dayOne && <CheckInKey weekday={preferredWeekday} />}
+      </div>
+    );
+  }
+  return <InteractiveTimeline {...props} weekAction={weekAction} byBlock={byBlock} layout={layout} timelineRef={ref} />;
+}
+
+type InteractiveTimelineProps = PlanTimelineProps & {
+  weekAction: InteractiveWeekAction;
+  byBlock: readonly TimelineWeek[][];
+  layout: Layout;
+  timelineRef: RefObject<HTMLDivElement>;
+};
+
+function InteractiveTimeline({ blocks, dayOne, today, shownWeek, weekAction, byBlock, layout, timelineRef }: InteractiveTimelineProps) {
+  const look: CellLook = { face: layout, date: 'check-in' };
   const totalWeeks = planWeeks(blocks);
   const position = currentPosition(blocks, dayOne, today);
   const nowWeek = position.status === 'in-plan' ? position.weekOfPlan : null;
-  const { ref, layout } = useTimelineLayout(totalWeeks);
+  const currentBlock = blocks.findIndex((_, index) => blockStatus({ blocks, dayOne, today }, index).kind === 'current');
   const [peekWeek, setPeekWeek] = useState<number | null>(null);
   const [tabWeek, setTabWeek] = useState(shownWeek ?? nowWeek ?? 1);
   const cells = useRef(new Map<number, HTMLElement>());
@@ -218,96 +374,57 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today, shownWee
     cells.current.get(next)?.focus();
   }
 
+  function renderWeek(week: TimelineWeek) {
+    const marks = marksOf(week.weekOfPlan, { now: nowWeek, shown: shownWeek, peeked: peekWeek });
+    return (
+      <HoverCard
+        open={marks.has('peeked')}
+        openDelay={PEEK_OPEN_DELAY_MS}
+        closeDelay={PEEK_CLOSE_DELAY_MS}
+        onOpenChange={open => setPeekWeek(current => peekAfter(current, week.weekOfPlan, open))}
+      >
+        <WeekCell
+          week={week}
+          look={look}
+          marks={marks}
+          focus={tabWeek === week.weekOfPlan ? 'tab-stop' : 'roving'}
+          action={weekAction}
+          cellRef={element => {
+            if (element) cells.current.set(week.weekOfPlan, element);
+            else cells.current.delete(week.weekOfPlan);
+          }}
+          onFocus={() => setTabWeek(week.weekOfPlan)}
+        />
+        <HoverCardContent
+          side="bottom"
+          align="center"
+          collisionPadding={16}
+          aria-hidden="true"
+          data-parity="plan-week-peek"
+          className="w-62 rounded-card p-4 motion-reduce:animate-none"
+        >
+          <TimelineWeekPeek week={week} marks={marks} />
+        </HoverCardContent>
+      </HoverCard>
+    );
+  }
+
   return (
-    <div ref={ref} data-parity="plan-timeline" className="grid gap-3">
+    <div ref={timelineRef} data-parity="plan-timeline" className="grid gap-3">
       <div role="toolbar" aria-label="Plan weeks" onKeyDown={onKeyDown}>
-        <ol aria-label="Plan blocks" className={cn({ 'flex gap-1': layout === 'row', 'grid gap-4': layout === 'stacked' })}>
-          {byBlock.map((weeks, index) => {
-            const block = blocks[index];
-            return (
-              <li
-                key={block.id}
-                data-parity="plan-block"
-                aria-current={blockStatus({ blocks, dayOne, today }, index).kind === 'current' ? 'step' : undefined}
-                className="min-w-0"
-                style={layout === 'row' ? { flexGrow: block.weeks, flexBasis: 0 } : undefined}
-              >
-                <BlockHead block={block} index={index} weeks={weeks} layout={layout} />
-                <ol
-                  aria-label={`${BLOCK_TYPE_LABELS[block.type]} weeks`}
-                  className={cn('grid gap-1', { 'grid-cols-[repeat(auto-fill,minmax(3rem,1fr))]': layout === 'stacked' })}
-                  style={layout === 'row' ? { gridTemplateColumns: `repeat(${block.weeks}, minmax(0, 1fr))` } : undefined}
-                >
-                  {weeks.map(week => {
-                    const marks = marksOf(week.weekOfPlan, { now: nowWeek, shown: shownWeek, peeked: peekWeek });
-                    return (
-                      <li key={week.weekOfPlan}>
-                        <HoverCard
-                          open={marks.has('peeked')}
-                          openDelay={PEEK_OPEN_DELAY_MS}
-                          closeDelay={PEEK_CLOSE_DELAY_MS}
-                          onOpenChange={open => setPeekWeek(current => peekAfter(current, week.weekOfPlan, open))}
-                        >
-                          <WeekCell
-                            week={week}
-                            layout={layout}
-                            marks={marks}
-                            focus={tabWeek === week.weekOfPlan ? 'tab-stop' : 'roving'}
-                            action={weekAction}
-                            cellRef={element => {
-                              if (element) cells.current.set(week.weekOfPlan, element);
-                              else cells.current.delete(week.weekOfPlan);
-                            }}
-                            onFocus={() => setTabWeek(week.weekOfPlan)}
-                          />
-                          <HoverCardContent
-                            side="bottom"
-                            align="center"
-                            collisionPadding={16}
-                            aria-hidden="true"
-                            data-parity="plan-week-peek"
-                            className="w-62 rounded-card p-4 motion-reduce:animate-none"
-                          >
-                            <TimelineWeekPeek week={week} marks={marks} />
-                          </HoverCardContent>
-                        </HoverCard>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </li>
-            );
-          })}
-        </ol>
+        <TimelineBlocks blocks={blocks} byBlock={byBlock} layout={layout} look={look} currentBlock={currentBlock === -1 ? null : currentBlock} renderWeek={renderWeek} />
       </div>
-      {dayOne && (
-        <p className="flex items-center gap-2 text-sm text-text-secondary">
-          <CheckInDot />
-          Check-in form day, every two weeks
-        </p>
-      )}
+      {dayOne && <CheckInKey weekday={null} />}
     </div>
   );
 }
 
-type PlanStripGap = 'tight' | 'wide';
+type PlanStripProps = { blocks: readonly Block[]; dayOne: Date | null; today?: Date };
 
-type PlanStripProps = {
-  blocks: readonly Block[];
-  dayOne: Date | null;
-  today?: Date;
-  gap?: PlanStripGap;
-};
-
-const PLAN_STRIP_GAP_CLASS: Record<PlanStripGap, string> = {
-  tight: 'gap-0.5',
-  wide: 'gap-1',
-};
-
-export function PlanStrip({ blocks, dayOne, today, gap = 'tight' }: PlanStripProps) {
+export function PlanStrip({ blocks, dayOne, today }: PlanStripProps) {
   const schedule = today ? { blocks, dayOne, today } : null;
   return (
-    <span aria-hidden="true" className={cn('flex h-1.5', PLAN_STRIP_GAP_CLASS[gap])}>
+    <span aria-hidden="true" className="flex h-1.5 gap-0.5">
       {blocks.map((block, index) => (
         <span
           key={block.id}

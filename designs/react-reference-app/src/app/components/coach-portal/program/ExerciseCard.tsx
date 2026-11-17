@@ -175,7 +175,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
         <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
           <h5 className="flex items-center gap-2.5">
-            <PositionBadge label={position} size="sm" tone="quiet" />{' '}
+            <PositionBadge label={position} size="sm" />{' '}
             <ExerciseNameButton exercise={exercise} detail={detail} weight="medium" size="compact" />
           </h5>
           {facts && <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>}

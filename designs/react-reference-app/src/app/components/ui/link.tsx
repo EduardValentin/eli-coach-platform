@@ -14,14 +14,24 @@ const linkClasses = cva(
         inline:
           'underline decoration-divider decoration-1 underline-offset-2 hover:decoration-current print:no-underline',
       },
+      reach: {
+        line: '',
+        touch: 'inline-flex min-h-12 items-center print:min-h-0',
+      },
     },
+    compoundVariants: [
+      { variant: 'inline', reach: 'line', class: 'py-1 -my-1' },
+    ],
     defaultVariants: {
       variant: 'in-text',
+      reach: 'line',
     },
   },
 );
 
 type LinkVariantProps = VariantProps<typeof linkClasses>;
+
+export type LinkReach = NonNullable<LinkVariantProps['reach']>;
 
 function linkVariants(options?: LinkVariantProps): string {
   return cn(linkClasses(options));
@@ -30,8 +40,8 @@ function linkVariants(options?: LinkVariantProps): string {
 type LinkProps = RouterLinkProps & LinkVariantProps;
 
 const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
-  ({ className, variant, ...props }, ref) => (
-    <RouterLink ref={ref} className={cn(linkClasses({ variant }), className)} {...props} />
+  ({ className, variant, reach, ...props }, ref) => (
+    <RouterLink ref={ref} className={cn(linkClasses({ variant, reach }), className)} {...props} />
   ),
 );
 

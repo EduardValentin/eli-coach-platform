@@ -37,6 +37,9 @@ export function seedRequiresProgramReady(seed: ProgramSeed): boolean {
   return seed !== 'none' && seed !== 'draft';
 }
 
+const TWO_VERSIONS_FOCUS = 'Build a strong base you can keep for life: good technique first, then weight.';
+const TWO_VERSIONS_NOTE = "You've settled in well. This version adds a second lower day and more steps. Take the first week to find your weights.";
+
 const TWO_VERSIONS_WHAT_CHANGED =
   'Added a second lower day and raised steps to 8,000, because your technique is stable and energy is good.';
 
@@ -132,6 +135,7 @@ function twoVersions(client: SeedClient, publishedAt: Date, content: ProgramCont
   const [first, ...rest] = content.plan.blocks;
   const raised: ProgramContent = {
     ...content,
+    header: { ...content.header, focus: TWO_VERSIONS_FOCUS, personalNote: TWO_VERSIONS_NOTE },
     plan: { blocks: [withSuggestedMainLiftWeights({ ...first, dailySteps: 8000 }), ...rest] },
   };
   return programOf(client, [
