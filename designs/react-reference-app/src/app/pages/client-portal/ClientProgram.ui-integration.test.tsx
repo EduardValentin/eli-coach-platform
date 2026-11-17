@@ -45,120 +45,100 @@ function programTree(url: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
-            <UnitPreferencesProvider>
-              <AssessmentCallProvider>
-                <ClientJourneyProvider>
-                  <ProgramProvider>
-                    <Routes>
-                      <Route element={<ClientProgram />} path="/portal/program" />
-                      <Route element={<p>document page</p>} path="/portal/program/document" />
-                    </Routes>
-                  </ProgramProvider>
-                </ClientJourneyProvider>
-              </AssessmentCallProvider>
-            </UnitPreferencesProvider>
+          <UnitPreferencesProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <ProgramProvider>
+                  <Routes>
+                    <Route element={<ClientProgram />} path="/portal/program" />
+                    <Route element={<p>document page</p>} path="/portal/program/document" />
+                  </Routes>
+                </ProgramProvider>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </UnitPreferencesProvider>
         </TrainingProvider>
       </AppProvider>
     </MemoryRouter>
   );
 }
 
-function renderProgram(seed: string) {
-  const url = `/portal/program?session=client&pseed=${seed}&jstage=program-ready`;
+function renderProgram(seed: string, extra = '') {
+  const url = `/portal/program?session=client&pseed=${seed}&jstage=program-ready${extra}`;
   window.history.replaceState({}, '', url);
   const { rerender } = render(programTree(url));
   return { rerender: () => rerender(programTree(url)) };
 }
 
+function follows(earlier: HTMLElement, later: HTMLElement): boolean {
+  return Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
 describe('the client Program page', () => {
-  it('answers what to do today on the first screen', async () => {
+  it('answers what to do today on the first screen, with the plan after the week', async () => {
     // arrange
     renderProgram('published');
 
     // act
     const heading = await screen.findByRole('heading', { level: 1, name: 'Program' });
-    const tabs = screen.getByRole('tablist', { name: 'This week' });
-    const today = within(tabs).getByRole('tab', { selected: true });
-    const panel = screen.getByRole('tabpanel');
 
     // assert
     expect(heading).toBeInTheDocument();
-    expect(screen.getByText('Week 1 of 11')).toBeInTheDocument();
+    const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
+    const today = within(week).getByRole('tab', { selected: true });
     expect(today).toHaveAttribute('aria-current', 'date');
-    expect(today).toHaveTextContent('Wed 23');
-    expect(within(tabs).getAllByRole('tab')).toHaveLength(7);
-    expect(within(panel).queryByRole('table')).toBeNull();
-    expect(within(panel).getAllByRole('article').length).toBeGreaterThan(0);
-    expect(within(within(panel).getAllByRole('list', { name: 'Sets' })[0]).getAllByRole('listitem')[0]).toHaveTextContent(/^Set 1 · /);
-    expect(within(panel).getAllByRole('heading', { level: 3 })).toHaveLength(1);
-    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAttribute('href', '/portal/program/document');
-    expect(screen.queryByRole('heading', { name: 'About this block' })).toBeInTheDocument();
-    expect(screen.queryByText(/Foundation block/)).toBeNull();
+    expect(today).toHaveAccessibleName(/^Wednesday 23 September, .+, today/);
+    expect(within(week).getAllByRole('tab')).toHaveLength(7);
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
+    expect(follows(week, screen.getByRole('region', { name: 'Plan' }))).toBe(true);
+    expect(screen.getByRole('link', { name: /^PDF ?: download version 1$/ })).toHaveAttribute('href', '/portal/program/document');
   });
 
   it('renders only the selected day', async () => {
     // arrange
+    const user = userEvent.setup();
     renderProgram('published');
-    const tabs = await screen.findByRole('tablist', { name: 'This week' });
-    const monday = within(tabs).getByRole('tab', { name: /^Mon 21/ });
-    const thursday = within(tabs).getByRole('tab', { name: /^Thu 24/ });
-    await userEvent.click(monday);
-    const mondayPanel = screen.getByRole('tabpanel').textContent;
+    const tabs = await screen.findAllByRole('tab');
+    const other = tabs.find(tab => tab.getAttribute('aria-selected') === 'false' && !/, Rest/.test(tab.textContent ?? ''));
+    if (!other) throw new Error('no other training day');
 
     // act
-    await userEvent.click(thursday);
+    await user.click(other);
 
     // assert
-    expect(thursday).toHaveAttribute('aria-selected', 'true');
+    expect(other).toHaveAttribute('aria-selected', 'true');
     expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
-    expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'program-day-panel-thu');
-    expect(screen.getByRole('tabpanel').textContent).not.toBe(mondayPanel);
+    expect(within(screen.getByRole('tabpanel')).getAllByRole('heading', { level: 3 })).toHaveLength(1);
   });
 
-  it('lists the warm-up exercises of a strength day and spells out an intervals segment', async () => {
+  it('tells her what changed in the new version until she dismisses it', async () => {
     // arrange
+    const user = userEvent.setup();
     renderProgram('two-versions');
-    const tabs = await screen.findByRole('tablist', { name: 'This week' });
-    await userEvent.click(within(tabs).getByRole('tab', { name: /^Mon 21/ }));
-    const warmUp = within(screen.getByRole('tabpanel')).getByRole('list', { name: 'Warm-up exercises' });
-    expect(within(warmUp).getAllByRole('listitem')[0]).toHaveTextContent(/^.+ · \d+ × \d+( s)?/);
+    const notice = await screen.findByText(/^What changed in version 2\./);
 
     // act
-    await userEvent.click(within(tabs).getByRole('tab', { name: /Intervals/ }));
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
 
     // assert
-    const segments = within(within(screen.getByRole('tabpanel')).getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
-    expect(segments.map(segment => segment.textContent)).toContainEqual(expect.stringMatching(/^Intervals · \d+ rounds · .+ \d+ s · \d+ s easy between/));
+    expect(notice).not.toBeInTheDocument();
   });
 
-  it('loads a collapsed section only once it is opened', async () => {
+  it('loads the block text only once the split name is opened', async () => {
     // arrange
+    const user = userEvent.setup();
     renderProgram('published');
     await screen.findByRole('heading', { level: 1, name: 'Program' });
     expect(screen.queryByText(/Foundation block — building your base/)).toBeNull();
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: /About this block/ }));
+    await user.click(screen.getByRole('button', { name: 'Full Body' }));
 
     // assert
     expect(screen.getByText(/Foundation block — building your base/)).toBeInTheDocument();
   });
 
-  it('shows the plan timeline with today under Your plan', async () => {
-    // arrange
-    renderProgram('published');
-    await screen.findByRole('heading', { level: 1, name: 'Program' });
-
-    // act
-    await userEvent.click(screen.getByRole('button', { name: /Your plan/ }));
-
-    // assert
-    const timeline = screen.getByRole('group', { name: 'Plan timeline' });
-    expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
-    expect(within(timeline).getByRole('listitem', { current: 'step' })).toHaveTextContent(/Foundation/);
-  });
-
-  it('shows the ended state after the plan', async () => {
+  it('shows the last week of the plan, without a today, once the plan has ended', async () => {
     // arrange
     const { rerender } = renderProgram('two-versions');
     await screen.findByRole('heading', { level: 1, name: 'Program' });
@@ -168,9 +148,9 @@ describe('the client Program page', () => {
     rerender();
 
     // assert
-    const tabs = screen.getByRole('tablist', { name: 'This week' });
-    expect(screen.getByText('Your plan has ended, your coach is preparing the next version')).toBeInTheDocument();
-    expect(within(tabs).getByRole('tab', { selected: true })).toHaveTextContent('Mon');
+    const week = screen.getByRole('region', { name: /^Week 11 of 11/ });
+    expect(within(week).getByText(/^Ended \d+ \w+$/)).toBeInTheDocument();
+    expect(within(week).getAllByRole('tab').some(tab => tab.hasAttribute('aria-current'))).toBe(false);
     expect(screen.getByRole('tabpanel')).toBeInTheDocument();
   });
 
@@ -188,19 +168,32 @@ describe('the client Program page', () => {
     expect(screen.queryByRole('tablist')).toBeNull();
   });
 
-  it('keeps the previous version under Previous versions', async () => {
+  it('lists her published versions with their PDFs and leaves the coach’s draft out', async () => {
     // arrange
     renderProgram('two-versions');
-    await screen.findByRole('heading', { level: 1, name: 'Program' });
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: /Previous versions/ }));
+    const versions = within(await screen.findByRole('region', { name: 'Versions' })).getAllByRole('listitem');
 
     // assert
-    expect(screen.getByText(/^Version 1 · /)).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Download PDF' }).map(link => link.getAttribute('href'))).toContain(
-      '/portal/program/document/1',
-    );
-    expect(screen.getByText(/What changed in v2/)).toBeInTheDocument();
+    expect(versions).toHaveLength(2);
+    expect(versions[0]).toHaveTextContent(/^Version 2/);
+    expect(screen.queryByText('Published')).not.toBeInTheDocument();
+    expect(screen.queryByText('Superseded')).not.toBeInTheDocument();
+    expect(within(versions[1]).getByRole('link', { name: /^Download PDF ?, version 1$/ })).toHaveAttribute('href', '/portal/program/document/1');
+    expect(screen.queryByText('Draft')).not.toBeInTheDocument();
+  });
+
+  it('says the program could not be loaded and loads it again on Try again', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderProgram('published', '&pload=failed');
+    await screen.findByText("The program couldn't be loaded");
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    // assert
+    expect(screen.getByRole('region', { name: /^Week 1 of 11/ })).toBeInTheDocument();
   });
 });

@@ -1,82 +1,56 @@
 import type { ReactNode, RefObject } from 'react';
-import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
-import { RowActionsMenu } from '../../RowActionsMenu';
-import { useEditorAnnouncer } from './editorAnnouncer';
-import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
+import type { Exercise } from '../../../context/TrainingContext';
+import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
+import type { ExerciseDetailContent } from '../../program-view/exerciseDetailContent';
+import { exerciseNameOf } from '../../program-view/programView';
+import { GROUP_BRACKET_CLASS } from '../../program-view/SupersetGroup';
+import { cn } from '../../ui/utils';
+import { useItemEditing, type ItemListActions, type ListedExercise } from './itemEditing';
 
-type ListedExercise = { id: string; exerciseId: string };
-export type ItemListActions = { onMoveUp: (itemId: string) => void; onMoveDown: (itemId: string) => void; onRemove: (itemId: string) => void };
+type ItemListFrame = 'plain' | 'bracket';
 
-type ExerciseItemListProps<Item extends ListedExercise> = {
-  label: string;
-  items: readonly Item[];
-  nameOf: (exerciseId: string) => string;
-  actions: ItemListActions;
-  emptyFocus: RefObject<HTMLElement>;
-  children: (item: Item, name: string) => ReactNode;
+const LIST_CLASS: Record<ItemListFrame, string> = {
+  plain: '',
+  bracket: cn('grid bg-surface-base', GROUP_BRACKET_CLASS),
 };
 
-type ExerciseItemRowProps = { itemId: string; name: string; position: number; count: number; onMoveUp: () => void; onMoveDown: () => void; onRemove: () => void; children: ReactNode };
+const ROW_CLASS: Record<ItemListFrame, string> = { plain: 'py-1', bracket: 'px-3 py-2' };
 
-function ExerciseItemRow({ itemId, name, position, count, onMoveUp, onMoveDown, onRemove, children }: ExerciseItemRowProps) {
-  return (
-    <li data-item-id={itemId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-3 py-2 @lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-      <span className="text-sm font-medium text-text-primary">{name}</span>
-      <div className="col-span-full row-start-2 flex flex-wrap items-start gap-2 @lg:col-span-1 @lg:col-start-2 @lg:row-start-1">{children}</div>
-      <div className="col-start-2 row-start-1 flex @lg:col-start-3">
-        <RowActionsMenu
-          label={`${name} actions`}
-          size="xs"
-          actions={[
-            { name: 'up', label: 'Move up', icon: ArrowUp, disabled: position === 1, onSelect: onMoveUp },
-            { name: 'down', label: 'Move down', icon: ArrowDown, disabled: position === count, onSelect: onMoveDown },
-            { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: onRemove },
-          ]}
-        />
-      </div>
-    </li>
-  );
-}
+type ExerciseItemListProps<Item extends ListedExercise> = {
+  label?: string;
+  frame: ItemListFrame;
+  items: readonly Item[];
+  library: readonly Exercise[];
+  detailFor: (item: Item, exercise: Exercise | undefined) => ExerciseDetailContent | null;
+  place?: string;
+  actions: ItemListActions;
+  emptyFocus: RefObject<HTMLElement>;
+  after?: (item: Item) => ReactNode;
+  children: (item: Item, name: string, exercise: Exercise | undefined) => ReactNode;
+};
 
-export function ExerciseItemList<Item extends ListedExercise>({ label, items, nameOf, actions, emptyFocus, children }: ExerciseItemListProps<Item>) {
-  const announce = useEditorAnnouncer();
-  const focusLater = usePendingFocus();
-  const focusItem = (itemId: string) => focusLater(() => actionsTriggerIn(`[data-item-id="${itemId}"]`));
-
-  function remove(index: number, name: string) {
-    const neighbour = items[index + 1] ?? items[index - 1];
-    actions.onRemove(items[index].id);
-    if (neighbour) focusItem(neighbour.id);
-    else focusLater(() => emptyFocus.current);
-    announce(`${name} removed`);
-  }
+export function ExerciseItemList<Item extends ListedExercise>({ label, frame, items, library, detailFor, place, actions, emptyFocus, after, children }: ExerciseItemListProps<Item>) {
+  const exerciseOf = (item: Item) => library.find(other => other.id === item.exerciseId);
+  const nameOf = (item: Item) => exerciseNameOf(exerciseOf(item));
+  const menuFor = useItemEditing({ items, actions, emptyFocus, nameOf });
 
   if (items.length === 0) return null;
   return (
-    <ol aria-label={label} className="@container grid divide-y divide-border-subtle rounded-field border border-border-subtle bg-surface-base">
+    <ol aria-label={label} className={cn('@container divide-y divide-border-subtle', LIST_CLASS[frame])}>
       {items.map((item, index) => {
-        const name = nameOf(item.exerciseId);
+        const exercise = exerciseOf(item);
+        const detail = after?.(item);
         return (
-          <ExerciseItemRow
+          <li
             key={item.id}
-            itemId={item.id}
-            name={name}
-            position={index + 1}
-            count={items.length}
-            onMoveUp={() => {
-              actions.onMoveUp(item.id);
-              focusItem(item.id);
-              announce(`${name} moved up`);
-            }}
-            onMoveDown={() => {
-              actions.onMoveDown(item.id);
-              focusItem(item.id);
-              announce(`${name} moved down`);
-            }}
-            onRemove={() => remove(index, name)}
+            data-item-id={item.id}
+            className={cn('grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 @lg:grid-cols-[minmax(0,1fr)_auto_auto]', ROW_CLASS[frame])}
           >
-            {children(item, name)}
-          </ExerciseItemRow>
+            <ExerciseNameButton exercise={exercise} detail={detailFor(item, exercise)} weight="medium" size="compact" place={place} />
+            <div className="col-span-full row-start-2 flex flex-wrap items-start gap-2 @lg:col-span-1 @lg:col-start-2 @lg:row-start-1">{children(item, nameOf(item), exercise)}</div>
+            <div className="col-start-2 row-start-1 flex @lg:col-start-3">{menuFor(index)}</div>
+            {detail && <div className="col-span-full border-t border-border-subtle pt-2">{detail}</div>}
+          </li>
         );
       })}
     </ol>

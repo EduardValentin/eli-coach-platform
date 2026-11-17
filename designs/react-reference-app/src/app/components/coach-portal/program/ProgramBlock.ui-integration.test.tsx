@@ -129,9 +129,9 @@ describe('ProgramBlock', () => {
     expect(within(section).getByText('Version 1 · draft')).toBeInTheDocument();
     const blocks = within(within(section).getByRole('list', { name: 'Blocks' })).getAllByRole('listitem');
     expect(blocks.map(block => block.textContent)).toEqual([
-      'Foundation · 4 wk3 of 3 sessions',
-      'Hypertrophy · 6 wk3 of 3 sessions',
-      'Deload · 1 wk3 of 3 sessions',
+      '1Foundation · 4 wk3 of 3 sessions',
+      '2Hypertrophy · 6 wk3 of 3 sessions',
+      '3Deload · 1 wk3 of 3 sessions',
     ]);
     expect(within(section).queryByRole('list', { name: 'Still missing' })).not.toBeInTheDocument();
     expect(within(section).getByText('Ready to publish')).toBeInTheDocument();
@@ -165,16 +165,13 @@ describe('ProgramBlock', () => {
     // assert
     const section = programSection();
     const terms = within(section).getAllByRole('term').map(term => term.textContent);
-    const definitions = within(section).getAllByRole('definition').map(definition => definition.textContent ?? '');
-    expect(terms).toEqual(['Now', 'Next check-in form', 'Published']);
-    expect(definitions[0]).toBe('Foundation · week 1 of 11');
-    expect(definitions[1]).toMatch(/^\d+ \w+$/);
-    expect(definitions[2]).toMatch(/^Version 1 · \d+ \w+$/);
-    const timeline = within(section).getByRole('group', { name: 'Plan timeline' });
-    const plan = within(within(timeline).getByRole('list', { name: 'Plan blocks' })).getAllByRole('listitem');
-    expect(plan).toHaveLength(3);
-    expect(plan[0]).toHaveAttribute('aria-current', 'step');
-    expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
+    expect(terms).toEqual(['Plan', 'Next check-in form', 'Version']);
+    expect(within(section).getByText('Week 1 of 11')).toBeInTheDocument();
+    expect(within(section).getByText('Version 1')).toBeInTheDocument();
+    expect(within(section).getByRole('link', { name: /^Open in the program: Week 1 of 11, .+, this week$/ })).toBeInTheDocument();
+    const plan = within(section).getByRole('list', { name: 'Plan blocks' });
+    expect(within(plan).getAllByRole('list', { name: / weeks$/ })).toHaveLength(3);
+    expect(within(within(plan).getByRole('listitem', { current: 'step' })).getByRole('list', { name: 'Foundation weeks' })).toBeInTheDocument();
     expect(within(section).queryByRole('table')).not.toBeInTheDocument();
     expect(within(section).getByRole('link', { name: 'View program' })).toHaveAttribute(
       'href',

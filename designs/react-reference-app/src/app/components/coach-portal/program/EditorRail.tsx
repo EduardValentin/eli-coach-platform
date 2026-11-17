@@ -12,7 +12,7 @@ import { Button } from '../../ui/button';
 import { TabsList, TabsTrigger } from '../../ui/tabs';
 import { cn } from '../../ui/utils';
 import { EDITOR_MODE_LABELS, isSameSection, type EditorMode, type EditorSection } from './editorSection';
-import { BLOCK_SWATCH } from '../../program-view/blockColours';
+import { BlockNumber } from '../../program-view/BlockNumber';
 import { PlanStrip } from '../../program-view/PlanTimeline';
 import { currentWeekText, endedText } from './blockParts';
 
@@ -122,13 +122,14 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         onClick={onClick}
         className={cn(
           ENTRY_CLASS,
-          'relative grid gap-0.5 overflow-hidden border border-control-border-soft bg-surface-base py-2 pr-3 pl-4 hover:bg-surface-quiet',
+          'grid gap-0.5 border border-control-border-soft bg-surface-base px-3 py-2 hover:bg-surface-quiet',
           { 'border-text-primary bg-surface-quiet shadow-card': current },
         )}
       >
-        <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', BLOCK_SWATCH[block.type])} />
-        <span className="flex items-center justify-between gap-2 font-medium text-text-primary">
-          {`${index + 1} ${BLOCK_TYPE_LABELS[block.type]}`}
+        <span className="flex items-center gap-2 font-medium text-text-primary">
+          <BlockNumber block={block} index={index} size="xs" />
+          <span className="sr-only">{`${index + 1} `}</span>
+          {BLOCK_TYPE_LABELS[block.type]}
           {problem && <ProblemMark />}
         </span>
         {details.map(detail => (

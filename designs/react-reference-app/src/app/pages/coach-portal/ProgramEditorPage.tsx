@@ -4,6 +4,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { ListTree } from 'lucide-react';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
+import { ExerciseLibraryLink } from '../../components/coach-portal/ExerciseLibraryLink';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
 import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
@@ -19,6 +20,7 @@ import { PublishDialog, type PublishDialogStart } from '../../components/coach-p
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
+import { ExerciseDetailProvider } from '../../components/program-view/ExerciseDetail';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetTrigger } from '../../components/ui/sheet';
@@ -261,7 +263,9 @@ export function ProgramEditorPage() {
   return (
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <EditorAnnouncerProvider>
-        <ProgramEditor journey={journey} program={program} draft={draft} programPath={programPath} />
+        <ExerciseDetailProvider footer={exercise => <ExerciseLibraryLink exercise={exercise} />}>
+          <ProgramEditor journey={journey} program={program} draft={draft} programPath={programPath} />
+        </ExerciseDetailProvider>
       </EditorAnnouncerProvider>
     </DndProvider>
   );

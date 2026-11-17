@@ -7,16 +7,21 @@ type PortalBackLinkProps = {
   to: LinkProps['to'];
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
   navigationLabel?: string;
+  gap?: BackLinkGap;
   children: ReactNode;
 };
 
-const GAP_TO_PAGE_CLASS = 'mb-8';
+type BackLinkGap = 'page' | 'title';
 
-export function PortalBackLink({ to, onClick, navigationLabel, children }: PortalBackLinkProps) {
+const GAP_CLASS: Record<BackLinkGap, string> = { page: 'mb-8', title: 'mb-1' };
+
+export const BACK_LINK_CLASS = 'relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary';
+
+export function PortalBackLink({ to, onClick, navigationLabel, gap = 'page', children }: PortalBackLinkProps) {
   const link = (
     <Link
-      className={cn('relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary', {
-        [GAP_TO_PAGE_CLASS]: navigationLabel === undefined,
+      className={cn(BACK_LINK_CLASS, {
+        [GAP_CLASS[gap]]: navigationLabel === undefined,
       })}
       to={to}
       onClick={onClick}
@@ -26,7 +31,7 @@ export function PortalBackLink({ to, onClick, navigationLabel, children }: Porta
   );
   if (navigationLabel === undefined) return link;
   return (
-    <nav aria-label={navigationLabel} className={GAP_TO_PAGE_CLASS}>
+    <nav aria-label={navigationLabel} className={GAP_CLASS[gap]}>
       {link}
     </nav>
   );

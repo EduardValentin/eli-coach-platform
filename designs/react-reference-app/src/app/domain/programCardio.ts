@@ -14,6 +14,12 @@ export const CARDIO_INTENSITY_TEXT: Record<CardioIntensity, string> = {
   hard: 'Hard: only a few words at a time',
 };
 
+export const CARDIO_TALK_TEST: Record<CardioIntensity, string> = {
+  easy: 'You can hold a conversation.',
+  moderate: 'You can talk, but not sing.',
+  hard: 'Only a few words at a time.',
+};
+
 const STEADY_NAME_PATTERN = /walk|bike|cycling|ellip/i;
 const SECONDS_PER_REP = 3;
 const SECONDS_PER_MINUTE = 60;
@@ -108,6 +114,13 @@ export function segmentMinutes(segment: CardioSegment): number {
 export function cardioMinutes(session: CardioSession): number {
   const seconds = session.segments.reduce((total, segment) => total + segmentSeconds(segment), 0);
   return Math.round(seconds / SECONDS_PER_MINUTE);
+}
+
+export function cardioIntensitiesOf(session: CardioSession): CardioIntensity[] {
+  const used = new Set(
+    session.segments.flatMap(segment => (segment.kind === 'rounds' && segment.items.length > 0 && segment.easySeconds > 0 ? [segment.intensity, 'easy' as const] : [segment.intensity])),
+  );
+  return (['easy', 'moderate', 'hard'] as const).filter(intensity => used.has(intensity));
 }
 
 export function roundsItemAmount(item: RoundsItem): string {

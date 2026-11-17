@@ -12,7 +12,7 @@ export function CoachLayout() {
     <div className="flex min-h-screen bg-surface-page">
       <SkipLink targetId={COACH_MAIN_ID} />
       <CoachSidebar />
-      <main id={COACH_MAIN_ID} tabIndex={-1} className="flex-1 min-w-0 lg:pl-64 pt-16 lg:pt-0 focus:outline-none">
+      <main id={COACH_MAIN_ID} tabIndex={-1} className="flex-1 min-w-0 lg:pl-64 pt-16 lg:pt-0 [--portal-top-bar-clearance:4.5rem] lg:[--portal-top-bar-clearance:0px] focus:outline-none">
         <div className="max-w-portal mx-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />
         </div>

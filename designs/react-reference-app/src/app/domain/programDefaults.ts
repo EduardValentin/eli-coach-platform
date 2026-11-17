@@ -26,26 +26,26 @@ export const DAILY_STEP_TARGETS: readonly number[] = Array.from(
 );
 export const TARGET_MINUTES = [30, 45, 60] as const;
 
-type Prescription = { setCount: number; reps: Range; rir: Range; restSeconds: number };
+type TargetDefaults = { setCount: number; reps: Range; rir: Range; restSeconds: number };
 
-const FOUNDATION: Prescription = { setCount: 3, reps: { min: 12, max: 15 }, rir: { min: 3, max: 3 }, restSeconds: 75 };
-const SECONDARY: Prescription = { setCount: 3, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 }, restSeconds: 105 };
-const ISOLATION: Prescription = { setCount: 3, reps: { min: 10, max: 20 }, rir: { min: 0, max: 2 }, restSeconds: 75 };
-const HYPERTROPHY_MAIN: Prescription = { setCount: 4, reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 }, restSeconds: 150 };
-const STRENGTH_MAIN: Prescription = { setCount: 4, reps: { min: 3, max: 6 }, rir: { min: 1, max: 3 }, restSeconds: 150 };
+const FOUNDATION: TargetDefaults = { setCount: 3, reps: { min: 12, max: 15 }, rir: { min: 3, max: 3 }, restSeconds: 75 };
+const SECONDARY: TargetDefaults = { setCount: 3, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 }, restSeconds: 105 };
+const ISOLATION: TargetDefaults = { setCount: 3, reps: { min: 10, max: 20 }, rir: { min: 0, max: 2 }, restSeconds: 75 };
+const HYPERTROPHY_MAIN: TargetDefaults = { setCount: 4, reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 }, restSeconds: 150 };
+const STRENGTH_MAIN: TargetDefaults = { setCount: 4, reps: { min: 3, max: 6 }, rir: { min: 1, max: 3 }, restSeconds: 150 };
 
 const DELOAD_RIR: Range = { min: 4, max: 4 };
 const DELOAD_WEIGHT_FACTOR = 0.85;
 const WEIGHT_STEPS_PER_KG = 2;
 
-function loadedPrescription(type: Exclude<BlockType, 'deload'>, role: ExerciseRole): Prescription {
+function loadedTargets(type: Exclude<BlockType, 'deload'>, role: ExerciseRole): TargetDefaults {
   if (type === 'foundation') return FOUNDATION;
   if (role === 'isolation') return ISOLATION;
   if (role === 'secondary-compound') return SECONDARY;
   return type === 'strength' ? STRENGTH_MAIN : HYPERTROPHY_MAIN;
 }
 
-function defaultsOf({ setCount, reps, rir, restSeconds }: Prescription): RowDefaults {
+function defaultsOf({ setCount, reps, rir, restSeconds }: TargetDefaults): RowDefaults {
   const sets = Array.from({ length: setCount }, (): SetSpec => ({ kind: 'working', reps: { ...reps }, rir: { ...rir } }));
   return { sets, restSeconds };
 }
@@ -70,8 +70,8 @@ function deloadSets(sets: SetSpec[]): SetSpec[] {
 }
 
 export function rowDefaults(type: BlockType, role: ExerciseRole, previous?: RowDefaults): RowDefaults {
-  if (type !== 'deload') return defaultsOf(loadedPrescription(type, role));
-  const source = previous ?? defaultsOf(loadedPrescription('hypertrophy', role));
+  if (type !== 'deload') return defaultsOf(loadedTargets(type, role));
+  const source = previous ?? defaultsOf(loadedTargets('hypertrophy', role));
   return { sets: deloadSets(source.sets), restSeconds: source.restSeconds };
 }
 

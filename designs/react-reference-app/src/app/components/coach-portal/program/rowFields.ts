@@ -28,12 +28,6 @@ export function parseRange(text: string): Range | null {
   return min <= max ? { min, max } : null;
 }
 
-export function formatRest(seconds: number): string {
-  if (seconds < SECONDS_PER_MINUTE) return `${seconds} s`;
-  const rest = seconds % SECONDS_PER_MINUTE;
-  return `${Math.floor(seconds / SECONDS_PER_MINUTE)}:${String(rest).padStart(2, '0')}`;
-}
-
 export function parseRest(text: string): number | null {
   const trimmed = text.trim();
   const minutes = MINUTES_PATTERN.exec(trimmed);

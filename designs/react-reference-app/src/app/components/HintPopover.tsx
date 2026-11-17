@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 interface HintPopoverProps {
   hint: ReactNode;
   children: ReactElement;
-  side?: 'top' | 'bottom';
+  side?: HintSide;
   align?: 'start' | 'center' | 'end';
   contentParity?: string;
   contentParityRoot?: string;
@@ -49,6 +49,8 @@ function useHintTrigger() {
     },
   };
 }
+
+export type HintSide = 'top' | 'bottom';
 
 export function HintPopover({
   hint,

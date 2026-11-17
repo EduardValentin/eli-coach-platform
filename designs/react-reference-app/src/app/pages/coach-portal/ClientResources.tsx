@@ -4,8 +4,7 @@ import { FolderOpen, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { EmptyState } from '../../components/EmptyState';
-import { PortalBackLink } from '../../components/PortalBackLink';
-import { PortalPageHeader } from '../../components/PortalPageHeader';
+import { ClientBackLink, ClientPageHeader } from '../../components/coach-portal/ClientPageHeader';
 import { ResourceActionsMenu, type ResourceManagement } from '../../components/resources/ResourceActionsMenu';
 import {
   ResourceCollection,
@@ -23,7 +22,6 @@ import type { Resource } from '../../domain/resources';
 import { useClientResources, useResourceTags } from '../../hooks/useClientResources';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 import { journeyClientName } from '../../utils/journeyLabels';
-import { possessive } from '../../utils/resourceLabels';
 import { saveDownload } from '../../utils/saveDownload';
 
 type ClientNames = { first: string; full: string };
@@ -86,12 +84,14 @@ function CoachResourceLibrary({
     saveDownload(await resources.download(resource.id));
   };
 
+  const client = { name: names.full, path: `/coach/clients/${routeId}` };
+
   return (
     <div className="w-full" data-parity-root="CoachResourceLibrary">
-      <PortalBackLink to={`/coach/clients/${routeId}`}>Back to {names.full}</PortalBackLink>
-
+      {listing.status === 'failed' && <ClientBackLink client={client} gap="page" />}
       {listing.status !== 'failed' && (
-        <PortalPageHeader
+        <ClientPageHeader
+          client={client}
           actions={
             offersHeaderAdd && (
               <Button onClick={startAdding} size="md" type="button" variant="primary">
@@ -101,7 +101,7 @@ function CoachResourceLibrary({
             )
           }
           headingRef={heading}
-          title={`${possessive(names.first)} resources`}
+          title="Resources"
         />
       )}
 

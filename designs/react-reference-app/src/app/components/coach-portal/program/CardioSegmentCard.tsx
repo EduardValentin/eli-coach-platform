@@ -2,26 +2,31 @@ import { useId, useRef, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { ArrowDown, ArrowUp, Plus, Repeat, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
+import { formatRest, type CardioIntensity, type CardioSegment, type CardioSession, type RoundsItem, type RoundsSegment } from '../../../domain/program';
 import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, segmentMinutes, type CardioEdits } from '../../../domain/programCardio';
 import { IconActionButton } from '../../IconActionButton';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
-import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { counted } from '../../../utils/counted';
-import { exerciseNameOf } from '../../program-view/programView';
+import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
+import { roundsItemExerciseDetail, steadyExerciseDetail } from '../../program-view/sessionExerciseDetails';
+import { IntensityValue } from '../../program-view/IntensityValue';
+import { SegmentHeading } from '../../program-view/SegmentBlock';
+import { EasyStep } from '../../program-view/SegmentTable';
 import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
 import { ExerciseItemList } from './ExerciseItemList';
-import { CountField } from './RowTextField';
-import { parseWholeNumber } from './rowFields';
+import { CountField, RowTextField } from './RowTextField';
+import { parseRest, REST_PROBLEM } from './rowFields';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
 type ItemMeasure = 'reps' | 'seconds';
+
+const EASY_LABEL = 'Easy after each exercise';
 
 type CardioSegmentCardProps = {
   cardioId: string;
@@ -43,15 +48,28 @@ const MEASURE_OPTIONS: { value: ItemMeasure; label: string }[] = [
   { value: 'reps', label: 'Reps' },
   { value: 'seconds', label: 'Sec' },
 ];
-type NumberFieldProps = { label: string; unit?: string; value: number; parse?: (text: string) => number | null; onCommit: (value: number) => void };
+type NumberFieldProps = { label: string; value: number; onCommit: (value: number) => void };
 
-function NumberField({ label, unit, value, parse, onCommit }: NumberFieldProps) {
+function NumberField({ label, value, onCommit }: NumberFieldProps) {
   return (
     <div className="grid content-start gap-1">
       <span aria-hidden="true" className={LABEL_CLASS}>
         {label}
       </span>
-      <CountField className="w-20" label={label} value={value} parse={parse} suffix={unit} onCommit={onCommit} />
+      <CountField className="w-20" label={label} value={value} onCommit={onCommit} />
+    </div>
+  );
+}
+
+type RestFieldProps = { label: string; seconds: number; onCommit: (seconds: number) => void };
+
+function RestField({ label, seconds, onCommit }: RestFieldProps) {
+  return (
+    <div className="grid content-start gap-1">
+      <span aria-hidden="true" className={LABEL_CLASS}>
+        {label}
+      </span>
+      <RowTextField className="w-20" label={label} value={seconds} format={formatRest} parse={parseRest} problem={REST_PROBLEM} onCommit={onCommit} />
     </div>
   );
 }
@@ -83,14 +101,14 @@ function measuredItem(item: RoundsItem, measure: ItemMeasure, amount: number): R
 
 type RoundsFieldsProps = {
   segment: RoundsSegment;
+  position: number;
   library: readonly Exercise[];
   edits: CardioEdits;
   onChange: (cardio: CardioSession) => void;
   onAddItem: () => void;
 };
 
-function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFieldsProps) {
-  const nameOf = (id: string) => exerciseNameOf(library.find(item => item.id === id));
+function RoundsFields({ segment, position, library, edits, onChange, onAddItem }: RoundsFieldsProps) {
   const onSegment = (next: RoundsSegment) => onChange(edits.changeSegment(next));
   const onItem = (item: RoundsItem) => onChange(edits.changeRoundsItem(segment.id, item));
   const { items } = segment;
@@ -101,20 +119,12 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         <legend className="sr-only">Interval settings</legend>
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
         <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
-        {items.length > 1 && (
-          <NumberField
-            label="Easy between exercises"
-            unit="s"
-            value={segment.easySeconds}
-            parse={parseWholeNumber}
-            onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
-          />
+        {items.length > 0 && (
+          <RestField label={EASY_LABEL} seconds={segment.easySeconds} onCommit={easySeconds => onSegment({ ...segment, easySeconds })} />
         )}
-        <NumberField
+        <RestField
           label="Rest between rounds"
-          unit="s"
-          value={segment.restBetweenRoundsSeconds}
-          parse={parseWholeNumber}
+          seconds={segment.restBetweenRoundsSeconds}
           onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
         />
       </fieldset>
@@ -123,10 +133,14 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         <IconActionButton ref={addButton} icon={Plus} label="Add exercise to the intervals" hint="Add exercise" onClick={onAddItem} />
       </div>
       <ExerciseItemList
+        frame="bracket"
         emptyFocus={addButton}
         label="Interval exercises"
         items={items}
-        nameOf={nameOf}
+        library={library}
+        detailFor={(item, exercise) => roundsItemExerciseDetail(segment, item, exercise)}
+        place={`segment ${position}`}
+        after={() => segment.easySeconds > 0 && <EasyStep time={formatRest(segment.easySeconds)} layout="line" />}
         actions={{
           onMoveUp: itemId => onChange(edits.moveRoundsItemUp(segment.id, itemId)),
           onMoveDown: itemId => onChange(edits.moveRoundsItemDown(segment.id, itemId)),
@@ -148,6 +162,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
                   ))}
                 </ChoiceGroup>
               </div>
+              <span className="self-center"><IntensityValue intensity={segment.intensity} /></span>
             </>
           );
         }}
@@ -156,7 +171,7 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
   );
 }
 
-function SegmentFields({ segment, library, edits, onChange, onAddRoundsItem }: Pick<CardioSegmentCardProps, 'segment' | 'library' | 'edits' | 'onChange' | 'onAddRoundsItem'>) {
+function SegmentFields({ segment, position, library, edits, onChange, onAddRoundsItem }: Pick<CardioSegmentCardProps, 'segment' | 'position' | 'library' | 'edits' | 'onChange' | 'onAddRoundsItem'>) {
   const changeSegment = (next: CardioSegment) => onChange(edits.changeSegment(next));
   if (segment.kind === 'steady') {
     return (
@@ -166,7 +181,7 @@ function SegmentFields({ segment, library, edits, onChange, onAddRoundsItem }: P
       </div>
     );
   }
-  return <RoundsFields segment={segment} library={library} edits={edits} onChange={onChange} onAddItem={onAddRoundsItem} />;
+  return <RoundsFields segment={segment} position={position} library={library} edits={edits} onChange={onChange} onAddItem={onAddRoundsItem} />;
 }
 
 type DropState = { isOver: boolean; canDrop: boolean; itemType: string | symbol | null };
@@ -176,36 +191,46 @@ function dropHint(itemType: string | symbol | null, segment: CardioSegment): str
   return segment.kind === 'rounds' ? 'Add to the intervals' : 'Replace';
 }
 
-function itemCount(segment: RoundsSegment): string {
-  return counted(segment.items.length, 'exercise');
+type SegmentTitleProps = {
+  segment: CardioSegment;
+  position: number;
+  kindLabel: string;
+  headingId: string;
+  exercise: Exercise | undefined;
+  onReplaceExercise: () => void;
+};
+
+const KIND_CLASS = 'text-sm font-semibold text-text-primary';
+const DETAIL_CLASS = 'min-w-0 text-sm font-normal text-text-secondary tabular-nums';
+
+function ReplaceExercise({ exercise, onReplace }: { exercise: Exercise | undefined; onReplace: () => void }) {
+  if (exercise) return <IconActionButton icon={Repeat} label={`Replace ${exercise.name}`} hint="Replace exercise" onClick={onReplace} />;
+  return (
+    <Button variant="outline" size="xs" onClick={onReplace}>
+      <Repeat aria-hidden="true" />
+      Choose exercise
+    </Button>
+  );
 }
 
-type SegmentTitleProps = { segment: CardioSegment; kindLabel: string; headingId: string; exerciseName: string | null; onReplaceExercise: () => void };
-
-function SegmentTitle({ segment, kindLabel, headingId, exerciseName, onReplaceExercise }: SegmentTitleProps) {
+function SegmentTitle({ segment, position, kindLabel, headingId, exercise, onReplaceExercise }: SegmentTitleProps) {
   if (segment.kind === 'rounds') {
     return (
-      <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
-        <Badge tone="training-recovery">{kindLabel}</Badge>
-        <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
-      </h5>
+      <SegmentHeading level="h5" number={position} id={headingId}>
+        <span className={KIND_CLASS}>{kindLabel}</span>
+        <span className={DETAIL_CLASS}>{`${counted(segment.rounds, 'round')} · ${segmentMinutes(segment)} min`}</span>
+      </SegmentHeading>
     );
   }
   return (
-    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
-      <h5 id={headingId} className="flex min-w-0 items-center gap-2.5">
-        <Badge tone="training-recovery">{kindLabel}</Badge>
-        <span className="min-w-0 text-sm font-medium text-text-primary">{exerciseName ?? 'No exercise yet'}</span>
-      </h5>
-      {exerciseName ? (
-        <IconActionButton icon={Repeat} label={`Replace ${exerciseName}`} hint="Replace exercise" onClick={onReplaceExercise} />
+    <SegmentHeading level="h5" number={position} id={headingId} action={<ReplaceExercise exercise={exercise} onReplace={onReplaceExercise} />}>
+      <span className={KIND_CLASS}>{kindLabel}</span>
+      {exercise ? (
+        <ExerciseNameButton exercise={exercise} detail={steadyExerciseDetail(segment, exercise)} weight="medium" size="compact" place={`segment ${position}`} />
       ) : (
-        <Button variant="outline" size="xs" onClick={onReplaceExercise}>
-          <Repeat aria-hidden="true" />
-          Choose exercise
-        </Button>
+        <span className={cn(DETAIL_CLASS, 'font-medium text-text-primary')}>No exercise yet</span>
       )}
-    </div>
+    </SegmentHeading>
   );
 }
 
@@ -215,7 +240,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
   const announce = useEditorAnnouncer();
   const kindLabel = SEGMENT_KIND_LABELS[segment.kind];
   const steadyExerciseId = segment.kind === 'steady' ? segment.exerciseId : '';
-  const exerciseName = library.find(item => item.id === steadyExerciseId)?.name ?? null;
+  const steadyExercise = library.find(item => item.id === steadyExerciseId);
   const isRounds = segment.kind === 'rounds';
   const label = `${position}. ${kindLabel}`;
 
@@ -269,8 +294,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />
-        <SegmentTitle segment={segment} kindLabel={kindLabel} headingId={headingId} exerciseName={exerciseName} onReplaceExercise={onReplaceExercise} />
-        {segment.kind === 'rounds' && <p className="text-sm font-medium text-text-primary tabular-nums">{`${segmentMinutes(segment)} min`}</p>}
+        <SegmentTitle segment={segment} position={position} kindLabel={kindLabel} headingId={headingId} exercise={steadyExercise} onReplaceExercise={onReplaceExercise} />
         <RowActionsMenu
           label={`${label} actions`}
           size="xs"
@@ -282,7 +306,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
         />
       </div>
       <div className="pl-9.5">
-        <SegmentFields segment={segment} library={library} edits={edits} onChange={onChange} onAddRoundsItem={onAddRoundsItem} />
+        <SegmentFields segment={segment} position={position} library={library} edits={edits} onChange={onChange} onAddRoundsItem={onAddRoundsItem} />
       </div>
       {targeted && <DropOverlay>{dropHint(itemType, segment)}</DropOverlay>}
     </article>

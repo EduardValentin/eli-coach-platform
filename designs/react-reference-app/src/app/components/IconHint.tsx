@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { HintPopover } from './HintPopover';
+import { HintPopover, type HintSide } from './HintPopover';
 import { cn } from './ui/utils';
 
 type IconHintSize = 'default' | 'compact';
@@ -23,6 +23,7 @@ interface IconHintProps {
   children: ReactNode;
   size?: IconHintSize;
   tone?: IconHintTone;
+  side?: HintSide;
   className?: string;
   parity?: string;
   contentParityRoot?: string;
@@ -34,12 +35,13 @@ export function IconHint({
   children,
   size = 'default',
   tone = 'neutral',
+  side = 'bottom',
   className,
   parity,
   contentParityRoot,
 }: IconHintProps) {
   return (
-    <HintPopover hint={children} contentParityRoot={contentParityRoot}>
+    <HintPopover hint={children} side={side} contentParityRoot={contentParityRoot}>
       <button
         type="button"
         aria-label={label}

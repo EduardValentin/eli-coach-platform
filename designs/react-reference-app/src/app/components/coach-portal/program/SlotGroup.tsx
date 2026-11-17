@@ -6,7 +6,7 @@ import { positionLabel, type Row, type Session, type Slot } from '../../../domai
 import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
 import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
 import { IconActionButton } from '../../IconActionButton';
-import { EYEBROW_CLASS } from '../../typography';
+import { SupersetGroup } from '../../program-view/SupersetGroup';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
@@ -29,18 +29,13 @@ type SlotGroupProps = {
 type SupersetUnitProps = { positions: readonly string[]; onUngroup: () => void; children: ReactNode };
 
 function SupersetUnit({ positions, onUngroup, children }: SupersetUnitProps) {
-  return (
-    <div className="rounded-control border-l-2 border-brand-secondary bg-brand-secondary-soft">
-      <div className="flex flex-wrap items-center justify-between gap-2 py-2 pr-1 pl-3">
-        <span className={cn(EYEBROW_CLASS, 'text-brand-secondary-ink')}>Superset</span>
-        <Button variant="ghost" size="xs" className="text-brand-secondary-ink" onClick={onUngroup}>
-          Ungroup
-          <span className="sr-only">{` ${positions.join(' and ')}`}</span>
-        </Button>
-      </div>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-2 px-2 pb-2">{children}</div>
-    </div>
+  const ungroup = (
+    <Button variant="ghost" size="xs" onClick={onUngroup}>
+      Ungroup
+      <span className="sr-only">{` ${positions.join(' and ')}`}</span>
+    </Button>
   );
+  return <SupersetGroup action={ungroup}>{children}</SupersetGroup>;
 }
 
 function PatternText({ patterns }: { patterns: readonly MovementPattern[] }) {
@@ -122,7 +117,9 @@ export function SlotGroup({ session, plan, library, edits, slots, onChange, onAd
                     card(unit.rows[0].id)
                   ) : (
                     <SupersetUnit positions={unit.rows.map(row => positionLabel(session, row))} onUngroup={() => ungroup(group, unit.rows)}>
-                      {unit.rows.map(row => card(row.id))}
+                      {unit.rows.map(row => (
+                        <li key={row.id}>{card(row.id)}</li>
+                      ))}
                     </SupersetUnit>
                   )}
                   {several && <DropSeparator rules={rulesAt({ slot, beforeRowId: next?.rows[0].id })} />}

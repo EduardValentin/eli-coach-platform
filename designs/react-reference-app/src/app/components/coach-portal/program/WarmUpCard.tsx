@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { formatRange, type Session, type WarmUpItem } from '../../../domain/program';
 import { WARM_UP_REPS, WARM_UP_SECONDS, type WarmUpEdits } from '../../../domain/warmUpEditing';
-import { exerciseNameOf } from '../../program-view/programView';
+import { EditableRoutine } from '../../program-view/RoutineList';
+import { warmUpExerciseDetail } from '../../program-view/sessionExerciseDetails';
 import { IconActionButton } from '../../IconActionButton';
 import { cn } from '../../ui/utils';
 import { ExerciseItemList } from './ExerciseItemList';
@@ -45,7 +46,6 @@ function AmountField({ item, exercise, name, onChange }: { item: WarmUpItem; exe
 
 export function WarmUpCard({ session, library, edits, onChange, onPickExercise }: WarmUpCardProps) {
   const addButton = useRef<HTMLButtonElement>(null);
-  const exerciseOf = (exerciseId: string) => library.find(other => other.id === exerciseId);
   const filling = useIsLibraryTarget({ kind: 'warm-up', sessionId: session.id });
   return (
     <DropZone
@@ -53,30 +53,27 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
       accepts={acceptsLibraryExercise}
       className={cn('rounded-control border border-border-subtle bg-surface-subtle p-3', { [LIBRARY_TARGET_CLASS]: filling })}
     >
-      <section className="grid grid-cols-[minmax(0,1fr)] gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <h4 className="text-sm font-semibold text-text-primary">Warm-up</h4>
-          <IconActionButton ref={addButton} icon={Plus} label="Add exercise to warm-up" hint="Add exercise" onClick={onPickExercise} />
-        </div>
+      <EditableRoutine title="Warm-up" action={<IconActionButton ref={addButton} icon={Plus} label="Add exercise to warm-up" hint="Add exercise" onClick={onPickExercise} />}>
         <ExerciseItemList
-          emptyFocus={addButton}
-          label="Warm-up exercises"
+          frame="plain"
           items={session.warmUp.items}
-          nameOf={exerciseId => exerciseNameOf(exerciseOf(exerciseId))}
+          library={library}
+          detailFor={warmUpExerciseDetail}
+          emptyFocus={addButton}
           actions={{
             onMoveUp: itemId => onChange(edits.moveUp(itemId)),
             onMoveDown: itemId => onChange(edits.moveDown(itemId)),
             onRemove: itemId => onChange(edits.remove(itemId)),
           }}
         >
-          {(item, name) => (
+          {(item, name, exercise) => (
             <>
               <CountField className="w-14" label={`${name} sets`} value={item.sets} suffix={item.sets === 1 ? 'set ×' : 'sets ×'} onCommit={sets => onChange(edits.changeItem({ ...item, sets }))} />
-              <AmountField item={item} exercise={exerciseOf(item.exerciseId)} name={name} onChange={next => onChange(edits.changeItem(next))} />
+              <AmountField item={item} exercise={exercise} name={name} onChange={next => onChange(edits.changeItem(next))} />
             </>
           )}
         </ExerciseItemList>
-      </section>
+      </EditableRoutine>
     </DropZone>
   );
 }

@@ -4,12 +4,14 @@ import {
   LABEL_CLASS,
   VALUE_CLASS as BASE_VALUE_CLASS,
   VALUE_LG_CLASS,
+  WIDGET_TITLE_CLASS,
 } from './typography';
 
-type ReadingSize = 'default' | 'lg';
+type ReadingSize = 'default' | 'md' | 'lg';
 
 const VALUE_CLASS: Record<ReadingSize, string> = {
   default: BASE_VALUE_CLASS,
+  md: WIDGET_TITLE_CLASS,
   lg: cn(VALUE_LG_CLASS, 'tabular-nums'),
 };
 
@@ -64,7 +66,7 @@ export function Reading({
       </ValueTag>
       {detail != null && (
         <ValueTag
-          className="mt-1 text-xs text-text-secondary"
+          className={cn('text-text-secondary', { 'mt-1 text-xs': size !== 'md', 'mt-0.5 text-sm tabular-nums': size === 'md' })}
           data-parity={detailParity}
         >
           {detail}

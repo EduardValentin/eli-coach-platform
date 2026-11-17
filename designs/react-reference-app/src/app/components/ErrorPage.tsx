@@ -30,10 +30,13 @@ export function DeadEndLink({ to, direction, className, children }: DeadEndLinkP
 export const FULL_PAGE_MESSAGE_SHELL_CLASS =
   'w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center';
 
+type DeadEndHeadingLevel = 'h1' | 'h2';
+
 export function DeadEndContent({
   icon: Icon,
   eyebrow,
   title,
+  headingLevel: Heading = 'h1',
   description,
   detail,
   children,
@@ -41,6 +44,7 @@ export function DeadEndContent({
   icon: LucideIcon;
   eyebrow?: string;
   title: string;
+  headingLevel?: DeadEndHeadingLevel;
   description: ReactNode;
   detail?: ReactNode;
   children?: ReactNode;
@@ -54,9 +58,9 @@ export function DeadEndContent({
         <Icon size={36} aria-hidden="true" />
       </div>
       {eyebrow ? <SectionEyebrow variant="muted">{eyebrow}</SectionEyebrow> : null}
-      <h1 className="font-serif text-display-md text-text-primary tracking-tight">
+      <Heading className="font-serif text-display-md text-text-primary tracking-tight">
         {title}
-      </h1>
+      </Heading>
       <p className="mt-4 max-w-md text-lg text-text-secondary leading-relaxed">
         {description}
       </p>
@@ -83,12 +87,14 @@ const ANNOUNCEMENT_ROLE: Record<DeadEndAnnouncement, 'alert' | undefined> = {
 export function DeadEndPanel({
   icon,
   title,
+  headingLevel = 'h1',
   description,
   action,
   announcement = 'alert',
 }: {
   icon: LucideIcon;
   title: string;
+  headingLevel?: DeadEndHeadingLevel;
   description: ReactNode;
   action?: ReactNode;
   announcement?: DeadEndAnnouncement;
@@ -98,7 +104,7 @@ export function DeadEndPanel({
       role={ANNOUNCEMENT_ROLE[announcement]}
       className="bg-surface-base rounded-panel shadow-soft border border-border-default/50 flex flex-col items-center px-6 py-16 text-center"
     >
-      <DeadEndContent icon={icon} title={title} description={description}>
+      <DeadEndContent icon={icon} title={title} headingLevel={headingLevel} description={description}>
         {action}
       </DeadEndContent>
     </div>

@@ -380,9 +380,10 @@ describe('texts page', () => {
 
     // act
     await user.click(screen.getByRole('button', { name: 'Preview as client' }));
+    const preview = screen.getByRole('dialog', { name: 'Preview as client' });
 
     // assert
-    expect(within(screen.getByRole('dialog', { name: 'Preview as client' })).getByText('So glad to start with you')).toBeInTheDocument();
+    expect(within(within(preview).getByRole('region', { name: 'Plan' })).getByText('So glad to start with you')).toBeInTheDocument();
   });
 
   it("shows the coach's edited guide text to the client, resets it to the standard text and undoes the reset", async () => {
@@ -397,7 +398,8 @@ describe('texts page', () => {
     await writeRichText(user, legend, 'Do the exercises in order, A first.');
     await user.click(screen.getByRole('button', { name: 'Preview as client' }));
     const preview = screen.getByRole('dialog', { name: 'Preview as client' });
-    await user.click(within(preview).getByRole('button', { name: 'How to read your session' }));
+    await user.click(within(preview).getAllByRole('tab', { name: /Full Body/ })[0]);
+    await user.click(within(preview).getByRole('button', { name: 'How to read this' }));
 
     // assert
     expect(within(preview).getByText('Do the exercises in order, A first.')).toBeInTheDocument();
@@ -484,7 +486,7 @@ describe('texts page', () => {
     await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
 
     // assert
-    expect(within(rail()).getByRole('button', { name: /^1 Foundation/ })).toHaveTextContent(/^1 Foundation \d+ need Romanian$/);
+    expect(within(rail()).getByRole('button', { name: /^1 Foundation/ })).toHaveTextContent(/Foundation \d+ need Romanian$/);
     const edit = within(programDocument()).getByRole('button', { name: 'Edit Block intro' });
     expect(within(edit.parentElement as HTMLElement).getByRole('button', { name: 'Romanian text pending' })).toBeInTheDocument();
 

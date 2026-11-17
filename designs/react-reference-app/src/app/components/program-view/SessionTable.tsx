@@ -1,5 +1,5 @@
 import type { Exercise } from '../../context/TrainingContext';
-import { formatRange, isWorkingSet, positionLabel, workingSets, type Block, type Row, type Session, type SetSpec, type WorkingSet } from '../../domain/program';
+import { formatRange, formatRest, isWorkingSet, positionLabel, workingSets, type Block, type Row, type Session, type SetSpec, type WorkingSet } from '../../domain/program';
 import { DOCUMENT_HEAD_CLASS, DOCUMENT_NOTE_CLASS, DOCUMENT_VALUE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { ExerciseLink } from './ExerciseLink';
@@ -9,8 +9,6 @@ import { repsSuffix } from './programView';
 
 type SessionTableProps = { session: Session; block: Pick<Block, 'weeks' | 'calibrationWeek'>; exercisesById: ReadonlyMap<string, Exercise> };
 
-const SECONDS_PER_MINUTE = 60;
-const CLOCK_REST_FROM_SECONDS = 90;
 const LOG_COLUMN_CLASS = 'max-sm:hidden';
 const ALIGN_CLASS = 'px-1.5 text-left';
 const HEAD_CLASS = cn(DOCUMENT_HEAD_CLASS, ALIGN_CLASS, 'py-1 align-bottom whitespace-nowrap');
@@ -19,13 +17,6 @@ const SET_INDENT_CLASS = 'pl-7 print:pl-1.5';
 const RIR_INDENT_CLASS = 'pl-3';
 const BRACKET_CLASS = 'border-l-2';
 const NOTE_LINE_CLASS = cn(DOCUMENT_NOTE_CLASS, 'block');
-
-function restText(seconds: number): string {
-  if (seconds < CLOCK_REST_FROM_SECONDS) return `${seconds} s`;
-  const minutes = Math.floor(seconds / SECONDS_PER_MINUTE);
-  const rest = String(seconds % SECONDS_PER_MINUTE).padStart(2, '0');
-  return `${minutes}:${rest}`;
-}
 
 function supersetOf(session: Session, row: Row): Row[] {
   if (positionLabel(session, row) === row.slot) return [];
@@ -40,7 +31,7 @@ type RestNote = { value: string; after: string };
 
 function restNote(session: Session, row: Row): RestNote | null {
   const superset = supersetOf(session, row);
-  const value = restText(row.restSeconds);
+  const value = formatRest(row.restSeconds);
   if (superset.length === 0) return { value, after: '' };
   if (superset.at(-1)?.id !== row.id) return null;
   return { value, after: ` after ${positionLabel(session, row)}` };

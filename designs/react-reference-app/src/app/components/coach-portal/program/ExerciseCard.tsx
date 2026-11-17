@@ -1,22 +1,22 @@
-import { useId, type ReactNode, type Ref } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, CornerDownRight, Link2, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { positionLabel, setsBreakdown, type Row, type Session, type Slot } from '../../../domain/program';
-import { counted } from '../../../utils/counted';
+import { positionLabel, type Row, type Session, type Slot } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
-import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
+import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
+import { rowExerciseDetail } from '../../program-view/sessionExerciseDetails';
 import { PositionBadge } from '../../program-view/PositionBadge';
-import { RirValue } from '../../program-view/RirValue';
-import { exerciseNameOf, repsSuffix } from '../../program-view/programView';
+import { exerciseNameOf, musclesAndEquipmentText, repsSuffix } from '../../program-view/programView';
+import { rowTargets } from '../../program-view/targets';
+import { TargetsSummary } from '../../program-view/TargetsSummary';
 import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
-import { formatRest } from './rowFields';
 import { acceptsIntoSession, LIBRARY_EXERCISE, PLAN_ROW, useSessionDrop, type DraggedItem, type PlanRowItem } from './sessionDnd';
 import { SetGrid } from './SetGrid';
 
@@ -99,32 +99,6 @@ function menuActions(context: MenuContext): RowMenuAction[] {
   ];
 }
 
-type Stat = { term: string; value: ReactNode };
-
-function rowStats(row: Row, repsSuffix: string): Stat[] {
-  const { warmUp, working, reps, rir } = setsBreakdown(row.sets, repsSuffix);
-  if (warmUp + working === 0) return [{ term: 'Sets', value: 'None yet' }];
-  return [
-    ...(warmUp > 0 ? [{ term: 'Warm-up', value: counted(warmUp, 'set') }] : []),
-    ...(working > 0 ? [{ term: 'Working', value: reps ? `${counted(working, 'set')} × ${reps}` : `${counted(working, 'set')}, varied` }] : []),
-    ...(rir ? [{ term: 'RIR', value: <RirValue rir={rir} /> }] : []),
-    { term: 'Rest', value: formatRest(row.restSeconds) },
-  ];
-}
-
-function RowStats({ stats }: { stats: readonly Stat[] }) {
-  return (
-    <dl className="mt-2 mb-0 flex flex-wrap items-baseline gap-y-1 pl-9.5 text-sm tabular-nums [grid-area:stats] sm:mb-3">
-      {stats.map(stat => (
-        <div key={stat.term} className="flex flex-wrap items-baseline gap-x-1.5 border-border-subtle pr-3 not-first:border-l not-first:pl-3">
-          <dt className="text-text-secondary">{stat.term}</dt>
-          <dd className="font-semibold text-text-primary">{stat.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 function dropHint(row: Row, itemType: string | symbol | null): string {
   if (!SINGLE_CARD_SLOTS.includes(row.slot)) return 'Superset';
   return itemType === PLAN_ROW ? 'Swap' : 'Add to the next group';
@@ -138,11 +112,11 @@ const CARD_GRID_CLASS = cn(
 );
 const PANEL_CLASS = '-mx-3 border-t border-border-subtle px-3';
 
-type DisclosureProps = { label: string; name: string; area: string; panelClassName: string; children: ReactNode };
+type DisclosureProps = { label: string; name: string; area: string; panelClassName: string; onOpenChange?: (open: boolean) => void; children: ReactNode };
 
-function Disclosure({ label, name, area, panelClassName, children }: DisclosureProps) {
+function Disclosure({ label, name, area, panelClassName, onOpenChange, children }: DisclosureProps) {
   return (
-    <Collapsible className="contents">
+    <Collapsible className="contents" onOpenChange={onOpenChange}>
       <CollapsibleTrigger asChild>
         <Button variant="disclosure" size="xs" className={cn('mt-2 mb-3 sm:mt-3 sm:mb-0', area)}>
           {label}
@@ -157,10 +131,17 @@ function Disclosure({ label, name, area, panelClassName, children }: DisclosureP
 
 export function ExerciseCard({ session, row, exercise, library, edits, slots, focus, onChange, onAddSubstitution }: ExerciseCardProps) {
   const announce = useEditorAnnouncer();
-  const headingId = useId();
+  const [setsOpen, setSetsOpen] = useState(false);
   const position = positionLabel(session, row);
   const name = exerciseNameOf(exercise);
+  const facts = musclesAndEquipmentText(exercise);
   const changeRow = (next: Row) => onChange(edits.replaceRow(next));
+  const detail = rowExerciseDetail({
+    session,
+    row,
+    progression: row.progression.kind === 'custom' ? row.progression.text : '',
+    findExercise: id => library.find(item => item.id === id),
+  });
 
   const [{ isDragging }, drag] = useDrag<PlanRowItem, void, { isDragging: boolean }>(
     () => ({
@@ -186,40 +167,31 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
   return (
     <article
       ref={drop as unknown as Ref<HTMLElement>}
-      aria-labelledby={headingId}
+      aria-label={`${position} ${name}`}
       data-row-id={row.id}
       className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className={CARD_GRID_CLASS}>
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
         <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
-          <h5 id={headingId} className="flex items-center gap-2.5">
-            <PositionBadge label={position} size="sm" />{' '}
-            <span className="min-w-0 text-sm font-medium text-text-primary">{name}</span>
-            {exercise?.archivedAt && <Badge tone="muted">archived</Badge>}
+          <h5 className="flex items-center gap-2.5">
+            <PositionBadge label={position} size="sm" tone="quiet" />{' '}
+            <ExerciseNameButton exercise={exercise} detail={detail} weight="medium" size="compact" />
           </h5>
-          {exercise && (exercise.primaryMuscles.length > 0 || exercise.equipment.length > 0) && (
-            <p className="flex flex-wrap items-center gap-1 pl-9.5">
-              {exercise.primaryMuscles.map(muscle => (
-                <Badge key={muscle} tone="muted">
-                  {muscle}
-                </Badge>
-              ))}
-              {exercise.equipment.length > 0 && <span className="text-xs text-text-secondary">{exercise.equipment.join(', ')}</span>}
-            </p>
-          )}
+          {facts && <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
         </div>
         <div className="mt-3 [grid-area:menu]">
           <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />
         </div>
-        <RowStats stats={rowStats(row, repsSuffix(exercise))} />
-        <Disclosure label="Sets" name={name} area="[grid-area:sets]" panelClassName="py-3 [grid-area:setspanel]">
+        {!setsOpen && <TargetsSummary size="sm" items={rowTargets(row, repsSuffix(exercise))} className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3" />}
+        <Disclosure label="Sets" name={name} area="[grid-area:sets]" onOpenChange={setSetsOpen} panelClassName="py-3 [grid-area:setspanel]">
           <SetGrid row={row} exerciseName={name} repsSuffix={repsSuffix(exercise)} onChange={changeRow} />
         </Disclosure>
         <Disclosure label="Details" name={name} area="[grid-area:details]" panelClassName="grid grid-cols-[minmax(0,1fr)] gap-4 rounded-b-[calc(var(--radius-control)-1px)] bg-surface-subtle py-4 [grid-area:detailspanel]">
           <ExerciseRowDetails
             row={row}
             exercise={exercise}
+            detail={detail}
             library={library}
             substitutionDrop={{
               sessionId: session.id,

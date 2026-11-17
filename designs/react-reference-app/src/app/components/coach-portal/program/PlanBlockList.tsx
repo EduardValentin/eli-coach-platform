@@ -12,7 +12,8 @@ import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
 import { DragPreview, InsertionLine } from './dndParts';
 import { useEditorAnnouncer } from './editorAnnouncer';
-import { BlockNumber, blockProgress, BlockTypeSelect, filledSessionsText, STARTED_BLOCK_REASON } from './blockParts';
+import { blockProgress, BlockTypeSelect, filledSessionsText, STARTED_BLOCK_REASON } from './blockParts';
+import { BlockNumber } from '../../program-view/BlockNumber';
 import { useWeeksField } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];

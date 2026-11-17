@@ -7,8 +7,7 @@ import {
   Heart,
   History,
 } from 'lucide-react';
-import { PortalBackLink } from '../../components/PortalBackLink';
-import { PortalPageHeader } from '../../components/PortalPageHeader';
+import { ClientPageHeader } from '../../components/coach-portal/ClientPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { PortalWidget } from '../../components/PortalWidget';
 import { Badge } from '../../components/ui/badge';
@@ -55,11 +54,9 @@ export function CoachClientCycle() {
 
   return (
     <div className="w-full">
-      <PortalBackLink to={`/coach/clients/${clientId}`}>Back to {clientName}</PortalBackLink>
-
-      <PortalPageHeader
-        title={`${clientName}’s Cycle Log`}
-        subtitle="View cycle history, current phase, and menstrual health profile."
+      <ClientPageHeader
+        client={{ name: clientName, path: `/coach/clients/${clientId}` }}
+        title="Cycle log"
       />
 
       {/* Top cards row */}

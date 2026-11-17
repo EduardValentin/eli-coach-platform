@@ -1,6 +1,5 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { format } from 'date-fns';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ClientProgramPage } from './ClientProgramPage';
@@ -37,24 +36,28 @@ function renderPage(clientId: string, query: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-          <TrainingProvider>
-            <AssessmentCallProvider>
-              <ClientJourneyProvider>
-                <ProgramProvider>
-                  <Routes>
-                    <Route path="/coach/clients/:id/program" element={<ClientProgramPage />} />
-                  </Routes>
-                </ProgramProvider>
-              </ClientJourneyProvider>
-            </AssessmentCallProvider>
-          </TrainingProvider>
+        <TrainingProvider>
+          <AssessmentCallProvider>
+            <ClientJourneyProvider>
+              <ProgramProvider>
+                <Routes>
+                  <Route path="/coach/clients/:id/program" element={<ClientProgramPage />} />
+                </Routes>
+              </ProgramProvider>
+            </ClientJourneyProvider>
+          </AssessmentCallProvider>
+        </TrainingProvider>
       </AppProvider>
     </MemoryRouter>,
   );
 }
 
+function follows(earlier: HTMLElement, later: HTMLElement): boolean {
+  return Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
 describe('ClientProgramPage', () => {
-  it('summarises where she is in the published version', () => {
+  it('heads the page with the way back to her record and the published version, without repeating her name', () => {
     // arrange
     const query = '&pseed=two-versions';
 
@@ -62,167 +65,10 @@ describe('ClientProgramPage', () => {
     renderPage('c1', query);
 
     // assert
-    expect(screen.getByRole('heading', { level: 1, name: 'Program' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^Back to / })).toHaveAttribute('href', '/coach/clients/c1');
-    const summary = screen.getByRole('region', { name: 'Plan' });
-    expect(within(summary).getAllByRole('term').map(term => term.textContent)).toEqual(['Now', 'Next check-in form', 'Published']);
-    const definitions = within(summary).getAllByRole('definition').map(definition => definition.textContent ?? '');
-    expect(definitions[0]).toBe('Foundation · week 1 of 11');
-    expect(definitions[1]).toMatch(/^\d+ \w+$/);
-    expect(definitions[2]).toMatch(/^Version 2 · \d+ \w+$/);
-  });
-
-  it('marks today on the plan timeline', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const timeline = screen.getByRole('group', { name: 'Plan timeline' });
-    expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
-  });
-
-  it('names the exact date on the today marker and shows it as a hint on focus', async () => {
-    // arrange
-    const user = userEvent.setup();
-    const exact = `${format(new Date(), 'd MMMM yyyy')} · week 1`;
-    renderPage('c1', '&pseed=two-versions');
-    const timeline = screen.getByRole('group', { name: 'Plan timeline' });
-    const marker = within(timeline).getByRole('button', { name: new RegExp(exact) });
-
-    // act
-    await user.tab();
-    while (document.activeElement !== marker) await user.tab();
-
-    // assert
-    expect(marker).toHaveFocus();
-    await waitFor(() => expect(marker).toHaveAccessibleDescription(exact));
-  });
-
-  it('stacks each text the client reads as its own card under its own title, the first one open', async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderPage('c1', '&pseed=two-versions');
-
-    // act
-    await user.click(screen.getByRole('button', { name: 'Texts' }));
-
-    // assert
-    const [texts] = screen.getAllByRole('region', { name: 'Texts' });
-    const titles = within(texts).getAllByRole('heading', { level: 3 }).map(heading => heading.textContent);
-    expect(titles[0]).toMatch(/^Foundation block — building your base/);
-    expect(titles).toEqual(expect.arrayContaining([expect.stringMatching(/^Your split: /), 'Low-energy session']));
-    const [first, second] = within(texts).getAllByRole('article');
-    expect(within(first).getByRole('button', { expanded: true })).toBeInTheDocument();
-    expect(within(first).getByText('How it should feel:')).toBeInTheDocument();
-    expect(within(second).getByRole('button', { expanded: false })).toBeInTheDocument();
-  });
-
-  it('shows the seven days of this week without editing menus', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const week = screen.getByRole('region', { name: 'This week' });
-    const days = within(week).getAllByRole('listitem');
-    expect(days).toHaveLength(7);
-    expect(within(days[0]).getByRole('heading', { name: /Monday/ })).toBeInTheDocument();
-    expect(within(week).getAllByText('Rest').length).toBeGreaterThan(0);
-    expect(within(week).queryByRole('button', { name: /options$/ })).not.toBeInTheDocument();
-  });
-
-  it('shows the length of every training day under its chip', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const days = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem');
-    expect(within(days[0]).getByText(/^~\d+ min$/)).toBeInTheDocument();
-    expect(within(days[1]).getByText('30 min')).toBeInTheDocument();
-    expect(within(days[5]).queryByText(/min$/)).not.toBeInTheDocument();
-  });
-
-  it('heads every day card with its weekday and date and links a training chip to its session', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const days = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem');
-    const monday = days[0];
-    expect(within(monday).getByRole('heading', { name: 'Monday' })).toBeInTheDocument();
-    expect(within(monday).getByText(/^\d{1,2}$/)).toBeInTheDocument();
-    const chip = within(monday).getByRole('link', { name: 'Full Body A' });
-    expect(chip.getAttribute('href')).toMatch(/^#program-session-/);
-    expect(document.getElementById(chip.getAttribute('href')!.slice(1))).toBeInTheDocument();
-  });
-
-  it('shows a rest day as a Rest chip that links nowhere and has no length', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const saturday = within(screen.getByRole('region', { name: 'This week' })).getAllByRole('listitem')[5];
-    expect(within(saturday).getByRole('heading', { name: 'Saturday' })).toBeInTheDocument();
-    expect(within(saturday).getByText('Rest')).toBeInTheDocument();
-    expect(within(saturday).queryByRole('link')).not.toBeInTheDocument();
-    expect(within(saturday).queryByText(/min$/)).not.toBeInTheDocument();
-  });
-
-  it('lists every set of each exercise in the current block', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const sessions = screen.getByRole('region', { name: 'Foundation block sessions' });
-    const [firstSession] = within(sessions).getAllByRole('article');
-    const [mainLift] = within(firstSession).getAllByRole('article', { name: /^A / });
-    const sets = within(within(mainLift).getByRole('list', { name: 'Sets' })).getAllByRole('listitem');
-    expect(sets.map(set => set.textContent)).toEqual([
-      'Set 1 · Warm-up · 8 reps',
-      'Set 2 · Warm-up · 5 reps',
-      'Set 3 · 12–15 · RIR 3 · 40 kg',
-      'Set 4 · 12–15 · RIR 3 · 40 kg',
-      'Set 5 · 12–15 · RIR 3 · 40 kg',
-    ]);
-    expect(within(sessions).getByRole('heading', { name: 'Intervals' })).toBeInTheDocument();
-  });
-
-  it('lists every version with its state, what changed and its document', () => {
-    // arrange
-    const query = '&pseed=two-versions';
-
-    // act
-    renderPage('c1', query);
-
-    // assert
-    const versions = within(screen.getByRole('region', { name: 'Versions' })).getAllByRole('listitem');
-    expect(versions).toHaveLength(3);
-    expect(within(versions[0]).getByText('Version 3')).toBeInTheDocument();
-    expect(within(versions[0]).getByText('Draft')).toBeInTheDocument();
-    expect(within(versions[1]).getByText('Published')).toBeInTheDocument();
-    expect(within(versions[1]).getByText(/^Added a second lower day/)).toBeInTheDocument();
-    expect(within(versions[2]).getByText('Superseded')).toBeInTheDocument();
-    expect(within(versions[0]).getByRole('link', { name: 'Open document' })).toHaveAttribute(
-      'href',
-      '/coach/clients/c1/program/document/3',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Program$/);
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
+    expect(screen.getByText(/^Version 2 · published \d+ \w+$/)).toBeInTheDocument();
+    expect(screen.getAllByText('Jane Doe')).toHaveLength(1);
   });
 
   it('opens the current document and continues the draft from the header', () => {
@@ -236,7 +82,107 @@ describe('ClientProgramPage', () => {
     const header = screen.getByRole('banner');
     expect(within(header).getByRole('link', { name: 'Open document' })).toHaveAttribute('href', '/coach/clients/c1/program/document/2');
     expect(within(header).getByRole('link', { name: 'Continue draft' })).toHaveAttribute('href', '/coach/clients/c1/program/draft');
-    expect(screen.queryByRole('heading', { name: 'What changed in v2' })).not.toBeInTheDocument();
+  });
+
+  it('puts the plan, with the plan week, the next check-in form and the weeks of each block, before the week', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const plan = screen.getByRole('region', { name: 'Plan' });
+    const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
+    expect(follows(plan, week)).toBe(true);
+    expect(within(plan).getAllByRole('term').map(term => term.textContent)).toEqual(['Plan', 'Next check-in form']);
+    expect(within(plan).getByText('Week 1 of 11')).toBeInTheDocument();
+    expect(within(plan).getByRole('button', { name: /^Show in the week card: Week 1 of 11, .+, this week$/ })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('opens the week named in the address', () => {
+    // arrange
+    const query = '&pseed=two-versions&week=5';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const week = screen.getByRole('region', { name: /^Week 5 of 11/ });
+    expect(week).toHaveTextContent('Hypertrophy block, week 1 of 6');
+    expect(within(week).getByRole('button', { name: 'This week' })).toBeInTheDocument();
+  });
+
+  it('offers the exercise library from the detail of an exercise', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPage('c1', '&pseed=two-versions');
+    const [name] = within(screen.getByRole('tabpanel')).getAllByRole('button', { name: /: cues/ });
+
+    // act
+    await user.click(name);
+
+    // assert
+    const detail = screen.getByRole('dialog');
+    expect(within(detail).getByRole('link', { name: 'Edit in exercise library' }).getAttribute('href')).toMatch(/^\/coach\/training\/exercises\/.+/);
+  });
+
+  it('lists every version with its state, what changed and the action the coach can take on it', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    const versions = within(screen.getByRole('region', { name: 'Versions' })).getAllByRole('listitem');
+    expect(versions).toHaveLength(3);
+    expect(within(versions[0]).getByText('Draft')).toBeInTheDocument();
+    expect(within(versions[0]).getByRole('link', { name: 'Continue draft' })).toHaveAttribute('href', '/coach/clients/c1/program/draft');
+    expect(within(versions[1]).getByText('Published')).toBeInTheDocument();
+    expect(within(versions[1]).getByText(/^Added a second lower day/)).toBeInTheDocument();
+    expect(within(versions[1]).getByRole('link', { name: /^Open document ?, version 2$/ })).toHaveAttribute('href', '/coach/clients/c1/program/document/2');
+    expect(within(versions[2]).getByText('Superseded')).toBeInTheDocument();
+  });
+
+  it('keeps the shape of the program while it loads', () => {
+    // arrange
+    const query = '&pseed=two-versions&pload=loading';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    expect(screen.getByRole('region', { name: 'Loading program' })).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading program');
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toBeInTheDocument();
+  });
+
+  it('says the program could not be loaded and loads it again on Try again', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPage('c1', '&pseed=two-versions&pload=failed');
+    expect(screen.getByText("The program couldn't be loaded")).toBeInTheDocument();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    // assert
+    expect(screen.getByRole('region', { name: /^Week 1 of 11/ })).toBeInTheDocument();
+  });
+
+  it('points to the draft while no version is published', () => {
+    // arrange
+    const query = '&pseed=draft';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    expect(screen.getByText('No published version yet')).toBeInTheDocument();
+    expect(screen.getByText('Version 1 is a draft. Jane sees her program once you publish it.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Continue draft' })).toHaveAttribute('href', '/coach/clients/c1/program/draft');
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 
   it('says the client was not found when there is no program', () => {

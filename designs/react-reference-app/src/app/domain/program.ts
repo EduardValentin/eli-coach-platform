@@ -31,6 +31,7 @@ export type Slot = 'A' | 'B' | 'C' | 'D';
 export const SLOTS: readonly Slot[] = ['A', 'B', 'C', 'D'];
 export type Range = { min: number; max: number };
 export type LastSetTechnique = 'none' | 'drop-set' | 'rest-pause';
+export const LAST_SET_TECHNIQUE_LABELS: Record<LastSetTechnique, string> = { none: 'None', 'drop-set': 'Drop set', 'rest-pause': 'Rest-pause' };
 export type Progression = { kind: 'double' } | { kind: 'custom'; text: string };
 export type WarmUpSet = { kind: 'warm-up'; reps: Range; weightKg?: number };
 export type WorkingSet = { kind: 'working'; reps: Range; rir: Range; weightKg?: number };
@@ -155,6 +156,14 @@ export function formatRange({ min, max }: Range): string {
   return min === max ? String(min) : `${min}–${max}`;
 }
 
+const SECONDS_PER_MINUTE = 60;
+
+export function formatRest(seconds: number): string {
+  if (seconds < SECONDS_PER_MINUTE) return `${seconds} s`;
+  const rest = seconds % SECONDS_PER_MINUTE;
+  return `${Math.floor(seconds / SECONDS_PER_MINUTE)}:${String(rest).padStart(2, '0')}`;
+}
+
 function sameRange(left: Range, right: Range): boolean {
   return left.min === right.min && left.max === right.max;
 }
@@ -165,6 +174,16 @@ export function isWorkingSet(set: SetSpec): set is WorkingSet {
 
 export function workingSets(sets: readonly SetSpec[]): WorkingSet[] {
   return sets.filter(isWorkingSet);
+}
+
+export type NumberedSet = { set: SetSpec; number: number };
+
+export function numberedSets(sets: readonly SetSpec[]): NumberedSet[] {
+  const counts = { working: 0, 'warm-up': 0 };
+  return sets.map(set => {
+    counts[set.kind] += 1;
+    return { set, number: counts[set.kind] };
+  });
 }
 
 const NEW_SET_REPS: Range = { min: 8, max: 8 };
@@ -268,6 +287,10 @@ export function hasExercises(session: Session): boolean {
   return session.rows.some(row => row.exerciseId !== '');
 }
 
+export function isBlockWritten(block: Block): boolean {
+  return scheduledSessions(block).some(hasExercises);
+}
+
 export function filledSessionCount(block: Block): number {
   return block.sessions.filter(hasExercises).length;
 }
@@ -342,7 +365,3 @@ export function programExerciseIds(program: Program): string[] {
   return [...new Set(ids.filter(id => id !== ''))];
 }
 
-export function weekCounts(block: Block): { sessions: number; cardio: number } {
-  const entries = Object.values(block.calendar);
-  return { sessions: entries.filter(entry => entry.kind === 'session').length, cardio: entries.filter(entry => entry.kind === 'cardio').length };
-}
