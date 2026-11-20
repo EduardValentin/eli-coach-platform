@@ -1,18 +1,26 @@
-import { ChevronLeft, ChevronRight, Undo2 } from 'lucide-react';
-import { WIDGET_TITLE_CLASS } from '../typography';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { splitLabel } from '../../domain/splitTemplates';
+import { weekRangeOf } from '../../domain/programCalendar';
+import { SUPPORTING_TEXT_CLASS, WIDGET_TITLE_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
 import { BlockNumber } from './BlockNumber';
-import { weekRangeOf } from '../../domain/programCalendar';
-import { dateRangeText } from './programView';
+import { InlineTextButton } from './InlineTextButton';
+import type { TextPart } from './programTextPlacement';
+import { dailyStepsText, dateRangeText } from './programView';
+import { TargetsSummary } from './TargetsSummary';
+import { TextDisclosureTrigger } from './TextDisclosure';
 import { weekOfBlockText, weekOfPlanText, type WeekView } from './weekView';
+
+export const WEEK_TEXTS = 'block-and-split';
 
 type WeekNavProps = {
   week: WeekView;
   currentWeekOfPlan: number;
   headingId: string;
   note: string | null;
+  texts: readonly TextPart[];
   onChange: (weekOfPlan: number) => void;
 };
 
@@ -21,18 +29,27 @@ function rangeOf(week: WeekView): string | null {
   return range && dateRangeText(range);
 }
 
+function SplitName({ week, texts }: { week: WeekView; texts: readonly TextPart[] }) {
+  if (texts.length === 0) return <span className="text-sm text-text-primary">{splitLabel(week.block)}</span>;
+  return <TextDisclosureTrigger value={WEEK_TEXTS}>{splitLabel(week.block)}</TextDisclosureTrigger>;
+}
+
 function BlockLine({ week }: { week: WeekView }) {
   return (
-    <span className="inline-flex min-w-0 items-center gap-2">
-      <BlockNumber block={week.block} index={week.blockIndex} size="xs" />
-      <span className="@max-3xl:hidden">{weekOfBlockText(week, 'long')}</span>
-      <span className="text-balance @3xl:hidden">{weekOfBlockText(week, 'short')}</span>
-    </span>
+    <p className={cn(SUPPORTING_TEXT_CLASS, 'flex flex-wrap items-center gap-x-3 gap-y-2')}>
+      <span className="flex items-center gap-2">
+        <BlockNumber block={week.block} index={week.blockIndex} size="xs" />
+        <span className="@max-3xl:hidden">{weekOfBlockText(week, 'long')}</span>
+        <span className="@3xl:hidden">{weekOfBlockText(week, 'short')}</span>
+      </span>
+      {week.calibration && <Badge tone="muted">Calibration week</Badge>}
+    </p>
   );
 }
 
-export function WeekNav({ week, currentWeekOfPlan, headingId, note, onChange }: WeekNavProps) {
+export function WeekNav({ week, currentWeekOfPlan, headingId, note, texts, onChange }: WeekNavProps) {
   const range = rangeOf(week);
+  const awayFromCurrentWeek = week.weekOfPlan !== currentWeekOfPlan;
 
   function returnToCurrentWeek() {
     onChange(currentWeekOfPlan);
@@ -40,44 +57,42 @@ export function WeekNav({ week, currentWeekOfPlan, headingId, note, onChange }: 
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-sm grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 @3xl:mx-0 @3xl:flex @3xl:max-w-none @3xl:gap-x-4">
-      <div className="col-start-2 row-start-1 min-w-0 text-center @3xl:mr-2 @3xl:flex-1 @3xl:text-left">
-        <h2 id={headingId} tabIndex={-1} className={cn(WIDGET_TITLE_CLASS, 'scroll-mt-(--portal-top-bar-clearance) outline-none')}>
-          <span className="whitespace-nowrap">{weekOfPlanText(week)}</span>
-          {range && <span className="text-sm font-normal whitespace-nowrap text-text-secondary tabular-nums">{` · ${range}`}</span>}
-        </h2>
-        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-text-secondary @3xl:justify-start">
-          <BlockLine week={week} />
-          {week.calibration && <Badge tone="muted">Calibration week</Badge>}
+    <div className="grid gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3">
+        <div className="grid gap-0.5">
+          <h2 id={headingId} tabIndex={-1} className={cn(WIDGET_TITLE_CLASS, 'scroll-mt-(--portal-top-bar-clearance) outline-none')}>
+            {weekOfPlanText(week)}
+          </h2>
+          {(range || awayFromCurrentWeek) && (
+            <div className={cn(SUPPORTING_TEXT_CLASS, 'flex flex-wrap items-center gap-x-4 gap-y-3')}>
+              {range && <p className="tabular-nums">{range}</p>}
+              {awayFromCurrentWeek && (
+                <InlineTextButton leading="return" onClick={returnToCurrentWeek}>
+                  This week
+                </InlineTextButton>
+              )}
+            </div>
+          )}
         </div>
-        {note && <p className="text-sm text-text-secondary">{note}</p>}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon-sm" aria-label="Previous week" disabled={week.weekOfPlan === 1} onClick={() => onChange(week.weekOfPlan - 1)}>
+            <ChevronLeft aria-hidden="true" className="size-5" />
+          </Button>
+          <Button variant="ghost" size="icon-sm" aria-label="Next week" disabled={week.weekOfPlan === week.totalWeeks} onClick={() => onChange(week.weekOfPlan + 1)}>
+            <ChevronRight aria-hidden="true" className="size-5" />
+          </Button>
+        </div>
       </div>
-      {week.weekOfPlan !== currentWeekOfPlan && (
-        <Button variant="ghost" size="xs" className="col-span-3 row-start-2 mb-3 justify-self-center @3xl:mr-1 @3xl:mb-0" onClick={returnToCurrentWeek}>
-          <Undo2 aria-hidden="true" />
-          This week
-        </Button>
-      )}
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="col-start-1 row-start-1"
-        aria-label="Previous week"
-        disabled={week.weekOfPlan === 1}
-        onClick={() => onChange(week.weekOfPlan - 1)}
-      >
-        <ChevronLeft aria-hidden="true" className="size-5" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="col-start-3 row-start-1 @3xl:-mr-2.5"
-        aria-label="Next week"
-        disabled={week.weekOfPlan === week.totalWeeks}
-        onClick={() => onChange(week.weekOfPlan + 1)}
-      >
-        <ChevronRight aria-hidden="true" className="size-5" />
-      </Button>
+      <div className="grid gap-2">
+        <BlockLine week={week} />
+        {week.isWritten && (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <SplitName week={week} texts={texts} />
+            <TargetsSummary items={[{ term: 'Daily steps', value: dailyStepsText(week.block) }]} size="sm" />
+          </div>
+        )}
+        {note && <p className={SUPPORTING_TEXT_CLASS}>{note}</p>}
+      </div>
     </div>
   );
 }

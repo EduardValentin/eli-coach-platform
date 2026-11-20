@@ -5,7 +5,7 @@ import type { ProgramVersion, Weekday } from '../../domain/program';
 import { EmptyState } from '../EmptyState';
 import { cardVariants } from '../ui/card';
 import { Tabs, TabsContent } from '../ui/tabs';
-import { DayPanel, dayHeadingId, WeekDayAids } from './DayPanel';
+import { DayPanel } from './DayPanel';
 import { ExerciseDetailProvider } from './ExerciseDetail';
 import { NutritionLifestyle } from './NutritionLifestyle';
 import { ProgramPlan, type PlanVoice } from './ProgramPlan';
@@ -14,9 +14,9 @@ import { ProgramVersions, type VersionStates } from './ProgramVersions';
 import { planStatusText, type ProgramView } from './programView';
 import { WeekCard } from './WeekCard';
 import { WeekNav } from './WeekNav';
-import { WeekRailLinks, WeekRailTabs } from './WeekRail';
-import type { DaysMode, WeekSelection } from './weekSelection';
-import { blockName, clampedWeekOfPlan, currentWeekOfPlan, dayAnchor, defaultWeekday, weekOfBlockText, weekOfPlanText, weekViewAt, type WeekView } from './weekView';
+import { WeekRailTabs } from './WeekRail';
+import type { WeekSelection } from './weekSelection';
+import { blockName, clampedWeekOfPlan, currentWeekOfPlan, defaultWeekday, weekOfBlockText, weekOfPlanText, weekViewAt, type WeekDay, type WeekView } from './weekView';
 
 export type UnwrittenBlock = { name: string; start: Date | null };
 
@@ -43,8 +43,10 @@ function scrollToAndFocus(anchorId: string, focusTarget: (anchor: HTMLElement) =
   focusTarget(anchor)?.focus({ preventScroll: true });
 }
 
-function chosenDay(week: WeekView, requested: Weekday | null): Weekday {
-  return week.days.some(day => day.weekday === requested) && requested ? requested : defaultWeekday(week);
+/** A rest day shows nothing, so a requested rest day falls back to the default day too. */
+function shownDayOf(week: WeekView, requested: Weekday | null): WeekDay | undefined {
+  const chosen = week.days.find(day => day.weekday === requested && day.plan.kind !== 'rest');
+  return chosen ?? week.days.find(day => day.weekday === defaultWeekday(week));
 }
 
 export function ProgramViewer({
@@ -62,7 +64,7 @@ export function ProgramViewer({
 }: ProgramViewerProps) {
   const [announcement, setAnnouncement] = useState('');
   const week = weekViewAt(view, clampedWeekOfPlan(view, selection.week));
-  const weekday = chosenDay(week, selection.day);
+  const shownDay = shownDayOf(week, selection.day);
   const texts = programTextPlacement(view, week.block);
   const context = { view, week, texts };
   const railLabel = `Days of ${weekOfPlanText(week).toLowerCase()}`;
@@ -71,15 +73,6 @@ export function ProgramViewer({
     const next = weekViewAt(view, weekOfPlan);
     selection.choose({ week: weekOfPlan === currentWeekOfPlan(view) ? null : weekOfPlan, day: null });
     setAnnouncement(`${weekOfPlanText(next)}, ${weekOfBlockText(next, 'long')}`);
-  }
-
-  function goToDay(target: Weekday) {
-    scrollToAndFocus(dayAnchor(target), () => document.getElementById(dayHeadingId(target)));
-  }
-
-  function openDay(target: Weekday) {
-    if (selection.mode === 'all') goToDay(target);
-    else selection.choose({ day: target });
   }
 
   function showWeek(weekOfPlan: number) {
@@ -96,15 +89,14 @@ export function ProgramViewer({
   const card = (rail: ReactNode) => (
     <WeekCard
       week={week}
-      mode={selection.mode}
       texts={texts}
-      onModeChange={(mode: DaysMode) => selection.choose({ mode })}
       nav={
         <WeekNav
           week={week}
           currentWeekOfPlan={currentWeekOfPlan(view)}
           headingId={WEEK_HEADING_ID}
           note={planStatusText(view)}
+          texts={texts.blockAndSplit}
           onChange={changeWeek}
         />
       }
@@ -117,7 +109,14 @@ export function ProgramViewer({
       <div className="@container grid grid-cols-1 gap-6 lg:gap-8">
         {planPlacement === 'before-week' && plan}
         <section aria-labelledby={WEEK_HEADING_ID} className="grid grid-cols-1 gap-3">
-          {!week.isWritten && (
+          {week.isWritten && shownDay ? (
+            <Tabs variant="rail" value={shownDay.weekday} onValueChange={day => selection.choose({ day: day as Weekday })} className="gap-3">
+              {card(<WeekRailTabs label={railLabel} week={week} restDays="inert" />)}
+              <TabsContent value={shownDay.weekday}>
+                <DayPanel key={`${week.weekOfPlan}-${shownDay.weekday}`} day={shownDay} context={context} />
+              </TabsContent>
+            </Tabs>
+          ) : (
             <>
               {card(null)}
               <div className={cardVariants({ variant: 'panel' })}>
@@ -128,23 +127,6 @@ export function ProgramViewer({
                   action={unwrittenAction}
                 />
               </div>
-            </>
-          )}
-          {week.isWritten && selection.mode === 'focus' && (
-            <Tabs variant="rail" value={weekday} onValueChange={day => selection.choose({ day: day as Weekday })} className="gap-3">
-              {card(<WeekRailTabs label={railLabel} week={week} selected={weekday} exercisesById={view.exercisesById} />)}
-              <TabsContent value={weekday}>
-                <DayPanel key={`${week.weekOfPlan}-${weekday}`} day={week.days.find(day => day.weekday === weekday) ?? week.days[0]} context={context} detail="full" onOpenDay={openDay} />
-              </TabsContent>
-            </Tabs>
-          )}
-          {week.isWritten && selection.mode === 'all' && (
-            <>
-              {card(<WeekRailLinks label={railLabel} week={week} exercisesById={view.exercisesById} onFollow={goToDay} />)}
-              <WeekDayAids week={week} texts={texts} />
-              {week.days.map(day => (
-                <DayPanel key={day.weekday} day={day} context={context} detail="compact" onOpenDay={openDay} />
-              ))}
             </>
           )}
           <p role="status" className="sr-only">

@@ -24,7 +24,7 @@ import { formatJourneyDate } from '../../utils/journeyLabels';
 import { Button, buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-import { InlineProblem } from '../InlineProblem';
+import { InlineProblem } from '../ui/inline-problem';
 import { ClientWidget } from './ClientWidget';
 
 function eyebrowFor(stage: JourneyStage): string {

@@ -1,6 +1,6 @@
 import type { CoachingSubscription } from '../../domain/coachingSubscription';
 import { PAYMENT_PROBLEM_LINE } from '../../utils/subscriptionCopy';
-import { InlineProblem } from '../InlineProblem';
+import { InlineProblem } from '../ui/inline-problem';
 
 type ProblemLineAttributes = { id?: string };
 

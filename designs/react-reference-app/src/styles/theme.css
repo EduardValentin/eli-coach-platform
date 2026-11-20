@@ -14,6 +14,7 @@
   /* A pressed toggle's fill: darker than --primary so its white 14px label reaches APCA Lc 90. */
   --primary-pressed: #9E1755;
   --primary-soft: var(--brand-soft);
+  --selected-cell-surface: var(--primary-soft);
   --active-surface: var(--primary);
   --secondary: oklch(0.95 0.0058 264.53);
   --secondary-foreground: #030213;
@@ -68,7 +69,8 @@
      where the green takes 12% so the two tints land at the same lightness on white. */
   --effort-low-ink: color-mix(in oklch, var(--effort-ink) 75%, var(--effort-low));
   --effort-low-soft: color-mix(in oklch, var(--effort-low) 12%, transparent);
-  --effort-mid-ink: color-mix(in oklch, var(--effort-ink) 75%, var(--effort-mid));
+  /* Darker than the 75% mix the other inks use, so a 14px semibold RIR 2 reaches APCA Lc 90 on its tint. */
+  --effort-mid-ink: #342416;
   --effort-mid-soft: color-mix(in oklch, var(--effort-mid) 16%, transparent);
   --effort-high-fill: color-mix(in oklch, var(--effort-ink) 30%, var(--effort-high));
   /* A check-in awaiting someone's action: pending counts, ad-hoc markers, and the
@@ -89,7 +91,7 @@
   --training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
   --training-recovery: #00796b;
   --training-recovery-soft: rgba(0, 121, 107, 0.1);
-  --training-recovery-ink: #003630;
+  --training-recovery-ink: #002925;
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
   --training-foundation: #2563eb;
@@ -126,6 +128,8 @@
   --surface-muted-hover: oklch(0.922 0 0);
   --surface-strong: oklch(0.269 0 0);
   --surface-neutral: #ececf0;
+  /* Ink of text on the neutral surface, such as a rest day: APCA Lc 90 at 14px. */
+  --neutral-ink: #292931;
   /* Fine-neutral text & borders */
   --copy-muted: oklch(0.439 0 0);
   --link-muted: oklch(0.46 0 0);
@@ -285,6 +289,8 @@
   --primary-hover: #2A2A2A;
   --primary-pressed: var(--primary);
   --primary-soft: rgba(12, 12, 12, 0.08);
+  /* The coach's grey primary-soft would match a rest day's neutral fill, so a chosen cell keeps the base surface and its ring. */
+  --selected-cell-surface: var(--surface-base);
   --ring: #0C0C0C;
   --focus-ring: var(--primary);
   --portal-accent: var(--text-secondary);
@@ -347,6 +353,8 @@
 
   /* Below this width the week rail's seven touching cells wrap into rows of four. */
   --container-rail-wrap: 19rem;
+  /* From this width a set in the builder's Sets panel reads as one table line; below it, its fields stack under its title. */
+  --container-set-line: 34rem;
 }
 
 @theme inline {
@@ -431,6 +439,8 @@
   --color-surface-muted-hover: var(--surface-muted-hover);
   --color-surface-strong: var(--surface-strong);
   --color-surface-neutral: var(--surface-neutral);
+  --color-neutral-ink: var(--neutral-ink);
+  --color-selected-cell-surface: var(--selected-cell-surface);
   --color-copy-muted: var(--copy-muted);
   --color-link-muted: var(--link-muted);
   --color-text-label: var(--label-foreground);
@@ -814,7 +824,7 @@
 /* The chosen cell of a row of cells: the week rail's selected day and the plan timeline's shown week. */
 @utility selected-cell {
   border-color: var(--color-primary);
-  background-color: var(--color-primary-soft);
+  background-color: var(--color-selected-cell-surface);
   color: var(--color-text-primary);
   box-shadow: inset 0 0 0 1px var(--color-primary);
 }

@@ -3,18 +3,21 @@ import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { ArrowRight, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, filledSessionCount, type Block } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
+import type { DeloadSource } from '../../../domain/programDefaults';
 import { blockWithType } from '../../../domain/programEditing';
 import { splitLabel } from '../../../domain/splitTemplates';
-import { InlineProblem } from '../../InlineProblem';
-import { RowActionsMenu } from '../../RowActionsMenu';
+import { InlineProblem } from '../../ui/inline-problem';
+import { IconActionButton } from '../../IconActionButton';
+import { counted } from '../../../utils/counted';
+import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
 import { DragPreview, InsertionLine } from './dndParts';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { blockProgress, BlockTypeSelect, filledSessionsText, STARTED_BLOCK_REASON } from './blockParts';
 import { BlockNumber } from '../../program-view/BlockNumber';
-import { useWeeksField } from './weeksField';
+import { useDestructiveConfirm, removeBlockRequest } from './DestructiveConfirm';
+import { useWeeksField, WeeksField, WeeksFieldNotes } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
 
@@ -24,6 +27,7 @@ type PlanBlockListProps = {
   dayOne: Date | null;
   today: Date;
   problems: ReadonlyMap<string, readonly string[]>;
+  deload: DeloadSource;
   onChange: (update: BlocksUpdate) => void;
   onOpenBlock: (blockId: string) => void;
   onAddBlock: () => void;
@@ -82,13 +86,16 @@ type BlockRowProps = {
   today: Date;
   instructionsId: string;
   problems: readonly string[] | undefined;
+  deload: DeloadSource;
   handleRef: (element: HTMLButtonElement | null) => void;
+  openRef: (element: HTMLButtonElement | null) => void;
   onHandleKey: (event: KeyboardEvent<HTMLButtonElement>) => void;
   onChange: (update: BlocksUpdate) => void;
   onOpen: () => void;
+  onRemove: (trigger: HTMLElement) => void;
 };
 
-function BlockRow({ blocks, index, status, dayOne, today, instructionsId, problems, handleRef, onHandleKey, onChange, onOpen }: BlockRowProps) {
+function BlockRow({ blocks, index, status, dayOne, today, instructionsId, problems, deload, handleRef, openRef, onHandleKey, onChange, onOpen, onRemove }: BlockRowProps) {
   const block = blocks[index];
   const problemId = useId();
   const position = index + 1;
@@ -97,6 +104,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
   const filled = filledSessionCount(block);
   const total = block.sessions.length;
   const line = blockProgress(block, status);
+  const removeLabel = `Remove block ${position}, ${typeLabel}`;
   const weeks = useWeeksField({
     blocks,
     index,
@@ -111,7 +119,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
       item: {
         id: block.id,
         index,
-        label: `${position} ${typeLabel} · ${block.weeks} wk`,
+        label: `${position} ${typeLabel} · ${counted(block.weeks, 'week')}`,
       },
       canDrag: movable,
       collect: monitor => ({ isDragging: monitor.isDragging() }),
@@ -122,98 +130,94 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
   return (
     <div
       className={cn(
-        'flex flex-wrap items-start gap-2 rounded-card border border-border bg-surface-base py-2.5 pr-2 pl-1.5 shadow-card transition-opacity motion-reduce:transition-none sm:gap-3',
+        'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 rounded-card border border-border bg-surface-base p-2.5 shadow-card transition-opacity [grid-template-areas:"lead_open_remove"_"fields_fields_fields"] motion-reduce:transition-none @3xl:grid-cols-[auto_auto_minmax(0,1fr)_auto] @3xl:[grid-template-areas:"lead_fields_open_remove"]',
         {
           'opacity-40': isDragging,
           'bg-surface-subtle': status.kind === 'ended',
         },
       )}
     >
-      {movable ? (
-        <button
-          ref={element => {
-            drag(element);
-            handleRef(element);
-          }}
-          type="button"
-          aria-label={`Reorder ${typeLabel} block`}
-          aria-describedby={instructionsId}
-          onKeyDown={onHandleKey}
-          className="relative hit-area flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary active:cursor-grabbing"
-        >
-          <GripVertical aria-hidden="true" size={18} />
-        </button>
-      ) : (
-        <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
-      )}
-      <div className="flex min-w-0 flex-1 basis-48 flex-wrap items-center gap-x-3 gap-y-4">
+      <div className="flex items-center gap-2 [grid-area:lead]">
+        {movable ? (
+          <button
+            ref={element => {
+              drag(element);
+              handleRef(element);
+            }}
+            type="button"
+            aria-label={`Reorder ${typeLabel} block`}
+            aria-describedby={instructionsId}
+            onKeyDown={onHandleKey}
+            className="relative hit-area flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary active:cursor-grabbing"
+          >
+            <GripVertical aria-hidden="true" size={18} />
+          </button>
+        ) : (
+          <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
+        )}
         <BlockNumber block={block} index={index} size="sm" />
+      </div>
+      <div className="grid grid-cols-[minmax(0,16rem)_auto] items-center justify-start gap-x-3 [grid-area:fields] @3xl:flex @3xl:flex-wrap @3xl:gap-y-2">
         {status.kind === 'ended' ? (
-          <span className="text-sm font-medium text-text-primary sm:min-w-40">{typeLabel}</span>
+          <span className="text-sm font-medium text-text-primary @3xl:min-w-40">{typeLabel}</span>
         ) : (
           <BlockTypeSelect
             value={block.type}
             label={`Type of block ${position}`}
             appearance="field"
             problemId={problems ? problemId : undefined}
-            onChange={type => onChange(current => replaceAt(current, index, blockWithType(current[index], type)))}
+            onChange={type => onChange(current => replaceAt(current, index, blockWithType(current[index], type, { ...deload, previous: current[index - 1] })))}
           />
         )}
-        <span className="flex items-center gap-1.5 text-sm text-text-secondary">
-          <Input className="w-16 tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
-          wk
-        </span>
-        <span className="min-w-0 flex-1 basis-28 text-sm break-words text-text-label">
-          {splitLabel(block)}
-          {line && <span className="text-text-secondary">{` · ${line}`}</span>}
-        </span>
-        <Button
-          variant="ghost"
-          size="xs"
-          aria-label={`Open block ${position}, ${typeLabel} · ${filledSessionsText(filled, total)}`}
-          onClick={onOpen}
-          className={cn('tabular-nums', {
-            'text-warning': filled < total,
-            'text-text-secondary': filled === total,
-          })}
-        >
-          {`${filled}/${total}`}
-          <ArrowRight aria-hidden="true" />
-        </Button>
-        {weeks.problem && (
-          <div className="basis-full">
-            <InlineProblem id={weeks.problemId}>{weeks.problem}</InlineProblem>
-          </div>
-        )}
-        {problems && (
-          <div id={problemId} className="grid basis-full gap-1">
-            {problems.map(problem => (
-              <InlineProblem key={problem}>{problem}</InlineProblem>
-            ))}
-          </div>
-        )}
+        <WeeksField field={weeks} name={{ label: `Weeks of block ${position}` }} />
       </div>
-      <RowActionsMenu
-        label={`Block ${position} actions`}
-        actions={[
-          {
-            name: 'remove',
-            label: 'Remove',
-            icon: Trash2,
-            tone: 'destructive',
-            disabledReason: movable ? undefined : STARTED_BLOCK_REASON,
-            onSelect: () => onChange(current => current.filter(other => other.id !== block.id)),
-          },
-        ]}
-      />
+      <button
+        ref={openRef}
+        type="button"
+        onClick={onOpen}
+        className="group/open flex min-h-(--size-hit-target) min-w-0 items-center gap-x-3 gap-y-1 rounded-field px-2 py-1 text-left [grid-area:open] hover:bg-surface-quiet"
+      >
+        <span className="grid min-w-0 flex-1 justify-items-start gap-1 @3xl:flex @3xl:flex-wrap @3xl:items-center @3xl:gap-x-3">
+          <span className="text-sm break-words text-text-label">
+            <span className="sr-only">{`Open block ${position}, ${typeLabel}: `}</span>
+            {splitLabel(block)}
+            {line && <span className="text-text-secondary">{` · ${line}`}</span>}
+            <span className="sr-only">,</span>
+          </span>
+          <Badge tone={filled < total ? 'pending' : 'muted'} className="tabular-nums">
+            {filledSessionsText(filled, total)}
+          </Badge>
+        </span>
+        <ArrowRight aria-hidden="true" size={16} className="shrink-0 text-text-secondary group-hover/open:text-text-primary" />
+      </button>
+      <div className="ml-1 [grid-area:remove]">
+        <IconActionButton
+          icon={Trash2}
+          label={removeLabel}
+          hint="Remove block"
+          disabledReason={movable ? undefined : STARTED_BLOCK_REASON}
+          onClick={event => onRemove(event.currentTarget)}
+        />
+      </div>
+      <WeeksFieldNotes field={weeks} className="col-span-full -mt-2 @3xl:col-start-2" />
+      {problems && (
+        <div id={problemId} className="col-span-full grid gap-1">
+          {problems.map(problem => (
+            <InlineProblem key={problem}>{problem}</InlineProblem>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-export function PlanBlockList({ blocks, statuses, dayOne, today, problems, onChange, onOpenBlock, onAddBlock }: PlanBlockListProps) {
+export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deload, onChange, onOpenBlock, onAddBlock }: PlanBlockListProps) {
   const instructionsId = useId();
   const announce = useEditorAnnouncer();
   const handles = useRef(new Map<string, HTMLButtonElement>());
+  const openers = useRef(new Map<string, HTMLButtonElement>());
+  const addButton = useRef<HTMLButtonElement>(null);
+  const confirm = useDestructiveConfirm();
   const focusAfterMove = useRef<string | null>(null);
   const firstMovable = statuses.reduce((first, status, index) => (status.kind === 'upcoming' ? first : index + 1), 0);
 
@@ -228,6 +232,16 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, onCha
     focusAfterMove.current = block.id;
     onChange(current => moved(current, from, to));
     announce(`${BLOCK_TYPE_LABELS[block.type]} block moved to position ${to + 1} of ${blocks.length}`);
+  }
+
+  function remove(index: number, trigger: HTMLElement) {
+    const block = blocks[index];
+    const neighbour = blocks[index + 1] ?? blocks[index - 1];
+    confirm.request({
+      ...removeBlockRequest(block, index, () => onChange(current => current.filter(other => other.id !== block.id))),
+      returnFocus: trigger,
+      focusAfterApply: (neighbour && openers.current.get(neighbour.id)) ?? addButton.current,
+    });
   }
 
   function dropAt(item: DraggedBlock, index: number) {
@@ -247,7 +261,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, onCha
       <p id={instructionsId} className="sr-only">
         Press arrow up or arrow down to move the block.
       </p>
-      <ol aria-label="Blocks">
+      <ol aria-label="Blocks" className="@container">
         {blocks.map((block, index) => (
           <li key={block.id}>
             <DropLine index={index} firstMovable={firstMovable} onDrop={dropAt} />
@@ -260,22 +274,29 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, onCha
               today={today}
               instructionsId={instructionsId}
               problems={problems.get(block.id)}
+              deload={deload}
               handleRef={element => {
                 if (element) handles.current.set(block.id, element);
                 else handles.current.delete(block.id);
               }}
+              openRef={element => {
+                if (element) openers.current.set(block.id, element);
+                else openers.current.delete(block.id);
+              }}
               onHandleKey={event => handleKey(index, event)}
               onChange={onChange}
               onOpen={() => onOpenBlock(block.id)}
+              onRemove={trigger => remove(index, trigger)}
             />
             {index === blocks.length - 1 && <DropLine index={blocks.length} firstMovable={firstMovable} onDrop={dropAt} />}
           </li>
         ))}
       </ol>
-      <Button variant="ghost" className="mt-2" onClick={onAddBlock}>
+      <Button ref={addButton} variant="ghost" className="mt-2" onClick={onAddBlock}>
         <Plus aria-hidden="true" />
         Add block
       </Button>
+      {confirm.dialog}
     </div>
   );
 }

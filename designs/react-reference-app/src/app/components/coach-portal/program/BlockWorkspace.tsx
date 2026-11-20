@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
 import type { ClientJourney } from '../../../domain/journey';
-import type { Block, Program, ProgramLanguage } from '../../../domain/program';
+import type { Block, LevelHint, Program, ProgramLanguage } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
 import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
 import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
@@ -22,6 +22,7 @@ type BlockWorkspaceProps = {
   language: ProgramLanguage;
   dayOne: Date | null;
   today: Date;
+  level: LevelHint;
   library: readonly Exercise[];
   equipment: readonly Equipment[];
   otherPrograms: Program[];
@@ -35,13 +36,14 @@ type BlockWorkspaceProps = {
 };
 
 export function BlockWorkspace(props: BlockWorkspaceProps) {
-  const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary, libraryTarget } = props;
+  const { block, blockIndex, blocks, language, dayOne, today, level, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary, libraryTarget } = props;
   const header = useMeasuredHeight();
   const reducedMotion = useReducedMotion() === true;
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const planned = plannedSessions(block);
   const context = { blockType: block.type, library, equipment };
+  const schedule = { blocks, blockIndex, dayOne, level };
 
   useEffect(() => {
     if (!scrollTarget) return;
@@ -71,13 +73,14 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
         dayOne={dayOne}
         today={today}
         language={language}
+        deload={{ level, library }}
         otherPrograms={otherPrograms}
         journeys={journeys}
         onChange={onChange}
         onRemove={onRemove}
         measureRef={header.measureRef}
       />
-      <WeekDays block={block} library={library} onChange={onChange} onOpenSession={openFromWeek} />
+      <WeekDays block={block} level={level} library={library} onChange={onChange} onOpenSession={openFromWeek} />
       <LibraryTargetContext.Provider value={libraryTarget}>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
           {planned.map(entry =>
@@ -101,6 +104,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
                 articleRef={articleRefFor(entry.session.id)}
                 library={library}
                 context={context}
+                schedule={schedule}
                 onExpand={() => onOpenSession(entry.session.id)}
                 onChange={next => onChange(blockWithSession(block, next))}
                 onOpenLibrary={onOpenLibrary}

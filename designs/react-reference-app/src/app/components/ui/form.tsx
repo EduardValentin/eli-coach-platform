@@ -12,7 +12,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
-import { FIELD_ERROR_CLASS } from "../../utils/formFieldStyles";
+import { InlineProblem } from "./inline-problem";
 import { cn } from "./utils";
 import { Label, type LabelProps } from "./label";
 
@@ -151,24 +151,18 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
-function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+function FormMessage({ className, ...props }: Omit<React.ComponentProps<"p">, "children">) {
   const { error, formMessageId } = useFormField();
-  const body = error ? String(error?.message ?? "") : props.children;
+  const message = error?.message ? String(error.message) : "";
 
-  if (!body) {
+  if (!message) {
     return null;
   }
 
   return (
-    <p
-      data-slot="form-message"
-      id={formMessageId}
-      role={error ? "alert" : undefined}
-      className={cn(FIELD_ERROR_CLASS, className)}
-      {...props}
-    >
-      {body}
-    </p>
+    <InlineProblem data-slot="form-message" id={formMessageId} role="alert" className={className} {...props}>
+      {message}
+    </InlineProblem>
   );
 }
 

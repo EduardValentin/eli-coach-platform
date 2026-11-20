@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import { hasCoolDown, positionLabel, type Row, type Session } from '../../domain/program';
+import { hasCoolDown, positionLabel, type WeekRow, type WeekSession } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
 import { DOCUMENT_EYEBROW_CLASS, DOCUMENT_HEAD_CLASS, DOCUMENT_NOTE_CLASS, DOCUMENT_TERM_CLASS, DOCUMENT_VALUE_CLASS } from '../typography';
 import { linkVariants } from '../ui/link';
@@ -7,6 +7,7 @@ import { cn } from '../ui/utils';
 import { DayPage } from './DayPage';
 import { dayPageAnchor, loggedRows, type SessionDay } from './documentWeeks';
 import { ExerciseLink } from './ExerciseLink';
+import { CUSTOM_PROGRESSION_LEAD } from './leadIns';
 import { PositionBadge } from './PositionBadge';
 import { exerciseNameOf, repsUnit, type ProgramView } from './programView';
 import { routineItems, type RoutineItem } from './RoutineList';
@@ -43,20 +44,20 @@ function exerciseLinkOf(view: ProgramView) {
   return (item: { exerciseId: string }) => <ExerciseLink exerciseId={item.exerciseId} exercisesById={view.exercisesById} />;
 }
 
-function warmUpItems(view: ProgramView, session: Session): RoutineItem[] {
+function warmUpItems(view: ProgramView, session: WeekSession): RoutineItem[] {
   return routineItems(session.warmUp.items, { exercisesById: view.exercisesById, nameOf: exerciseLinkOf(view), amountOf: warmUpAmount, size: 'document' });
 }
 
-function coolDownItems(view: ProgramView, session: Session): RoutineItem[] {
+function coolDownItems(view: ProgramView, session: WeekSession): RoutineItem[] {
   if (!hasCoolDown(session)) return [];
   return routineItems(session.coolDown.items, { exercisesById: view.exercisesById, nameOf: exerciseLinkOf(view), amountOf: coolDownAmount, size: 'document' });
 }
 
-function tailoredCue(row: Row): string {
+function tailoredCue(row: WeekRow): string {
   return row.touched.includes('cues') ? row.cues.trim() : '';
 }
 
-function ExerciseNote({ view, row, place }: { view: ProgramView; row: Row; place: RowPlace }) {
+function ExerciseNote({ view, row, place }: { view: ProgramView; row: WeekRow; place: RowPlace }) {
   const swaps = shownSwapsOf(row, id => view.exercisesById.get(id)).map(swap => swap.id);
   const parts: ReactNode[] = [
     ...rowRestAndTechnique(row, place).map(target => (
@@ -92,7 +93,7 @@ function ExerciseNote({ view, row, place }: { view: ProgramView; row: Row; place
   );
 }
 
-type ExerciseRowProps = { view: ProgramView; session: Session; row: Row; place: RowPlace; span: number };
+type ExerciseRowProps = { view: ProgramView; session: WeekSession; row: WeekRow; place: RowPlace; span: number };
 
 function ExerciseRow({ view, session, row, place, span }: ExerciseRowProps) {
   const cue = tailoredCue(row);
@@ -116,7 +117,11 @@ function ExerciseRow({ view, session, row, place, span }: ExerciseRowProps) {
         {(cue || custom) && (
           <span className={cn(DOCUMENT_NOTE_CLASS, 'mt-0.5 block max-w-measure pl-[2.2em]')}>
             {cue && <span className="block">{cue}</span>}
-            {custom && <span className="block">{custom}</span>}
+            {custom && (
+              <span className="block">
+                <strong className="font-semibold">{CUSTOM_PROGRESSION_LEAD}</strong> {custom}
+              </span>
+            )}
           </span>
         )}
       </th>
@@ -133,7 +138,7 @@ const LOG_CELLS = (
 
 type LogColumns = { weight: 'shown' | 'none'; span: number };
 
-type ExerciseUnitProps = { view: ProgramView; session: Session; rows: readonly Row[]; columns: LogColumns };
+type ExerciseUnitProps = { view: ProgramView; session: WeekSession; rows: readonly WeekRow[]; columns: LogColumns };
 
 function ExerciseUnit({ view, session, rows, columns }: ExerciseUnitProps) {
   const place: RowPlace = rows.length > 1 ? 'in-superset' : 'alone';
@@ -173,7 +178,7 @@ type LogKind = 'finding-weights' | 'weight-reps';
 
 const LOG_HEADS: Record<LogKind, string> = { 'finding-weights': 'Your log · finding your weights', 'weight-reps': 'Your log · weight × reps' };
 
-type SessionLogProps = { view: ProgramView; session: Session; log: LogKind };
+type SessionLogProps = { view: ProgramView; session: WeekSession; log: LogKind };
 
 function SessionLog({ view, session, log }: SessionLogProps) {
   const rows = loggedRows(session);

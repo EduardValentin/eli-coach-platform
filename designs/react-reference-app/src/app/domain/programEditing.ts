@@ -1,8 +1,9 @@
 import type { Exercise } from '../context/TrainingContext';
-import { copiedSessions, mapCalendar, type Block, type BlockType, type CardioSession, type Session, type Slot } from './program';
+import { mapCalendar, type Block, type BlockType, type CardioSession, type Session, type Slot } from './program';
 import { cardioEdits } from './programCardio';
 import { coolDownEdits } from './coolDownEditing';
-import { reDefaultedBlock } from './programDefaults';
+import { blockSwitchedToDeload, reDefaultedBlock, type DeloadSwitch } from './programDefaults';
+import { sessionsCopiedFromFirstWeek } from './programProgression';
 import { spreadCalendar, type RowContext } from './programSuggestions';
 import { quickAddSlot, rowEdits } from './sessionEditing';
 import { warmUpEdits } from './warmUpEditing';
@@ -54,8 +55,8 @@ export function blockWithSession(block: Block, session: Session): Block {
   return { ...block, sessions: block.sessions.map(other => (other.id === session.id ? session : other)) };
 }
 
-export function blockWithType(block: Block, type: BlockType): Block {
-  return { ...reDefaultedBlock(block, type), weeks: type === 'deload' ? 1 : block.weeks };
+export function blockWithType(block: Block, type: BlockType, deload: DeloadSwitch): Block {
+  return type === 'deload' ? blockSwitchedToDeload(block, deload) : reDefaultedBlock(block, type);
 }
 
 function calendarByPosition(block: Block, sessions: Session[]): Block['calendar'] {
@@ -69,7 +70,7 @@ function calendarByPosition(block: Block, sessions: Session[]): Block['calendar'
 }
 
 export function blockWithSessionsFrom(block: Block, source: Session[]): Block {
-  const sessions = copiedSessions(source);
+  const sessions = sessionsCopiedFromFirstWeek(source);
   const calendar =
     sessions.length === block.sessions.length
       ? calendarByPosition(block, sessions)

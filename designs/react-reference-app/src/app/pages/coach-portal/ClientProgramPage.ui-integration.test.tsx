@@ -117,7 +117,7 @@ describe('ClientProgramPage', () => {
     // arrange
     const user = userEvent.setup();
     renderPage('c1', '&pseed=two-versions');
-    const [name] = within(screen.getByRole('tabpanel')).getAllByRole('button', { name: /: cues/ });
+    const [name] = within(screen.getByRole('tabpanel')).getAllByRole('button', { description: /^cues/ });
 
     // act
     await user.click(name);

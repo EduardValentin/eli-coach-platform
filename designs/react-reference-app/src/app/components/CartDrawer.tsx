@@ -25,7 +25,7 @@ import { DisabledActionHint } from "./DisabledActionHint";
 import { DismissibleNotice } from "./DismissibleNotice";
 import { FreeTag } from "./FreeTag";
 import { Price } from "./Price";
-import { InlineProblem } from "./InlineProblem";
+import { InlineProblem } from "./ui/inline-problem";
 import { StoreOrderSummary } from "./StoreOrderSummary";
 import { Button } from "./ThemeButton";
 import { Alert } from "./ui/alert";

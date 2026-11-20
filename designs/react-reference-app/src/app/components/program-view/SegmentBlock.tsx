@@ -53,11 +53,11 @@ function roundsRows(segment: RoundsSegment, { exercisesById, place, exerciseName
     segment.items.length === 0
       ? [{ kind: 'empty', key: 'empty' }]
       : segment.items.flatMap(item => [
-          { kind: 'work' as const, key: item.id, name: nameOf(item), time: roundsItemAmount(item), intensity: segment.intensity },
+          { kind: 'work' as const, key: item.id, name: nameOf(item), time: roundsItemAmount(item) },
           ...(segment.easySeconds > 0 ? [{ kind: 'easy' as const, key: `${item.id}-easy`, time: formatRest(segment.easySeconds) }] : []),
         ]);
   return [
-    { kind: 'rounds', key: 'rounds', rounds: segment.rounds, total: `${segmentMinutes(segment)} min` },
+    { kind: 'rounds', key: 'rounds', rounds: segment.rounds, total: `${segmentMinutes(segment)} min`, intensity: segment.intensity },
     ...steps,
     ...(segment.restBetweenRoundsSeconds > 0 ? [{ kind: 'rest' as const, key: 'rest', time: formatRest(segment.restBetweenRoundsSeconds) }] : []),
   ];

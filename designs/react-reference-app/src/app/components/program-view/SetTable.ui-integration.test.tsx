@@ -6,8 +6,8 @@ import { WriteInCell } from './WriteInCell';
 
 const SETS: SetSpec[] = [
   { kind: 'warm-up', reps: { min: 8, max: 8 } },
-  { kind: 'working', reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 } },
-  { kind: 'working', reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 }, weightKg: 40 },
+  { kind: 'working', reps: { min: 6, max: 10 }, rir: 2 },
+  { kind: 'working', reps: { min: 6, max: 10 }, rir: 2, weightKg: 40 },
 ];
 
 describe('SetTable', () => {

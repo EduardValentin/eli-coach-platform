@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { ListTree } from 'lucide-react';
-import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
+import { ArrowRight, ListTree, Pencil } from 'lucide-react';
+import { DeadEndPanel } from '../../components/ErrorPage';
+import { PortalBackLink } from '../../components/PortalBackLink';
 import { ExerciseLibraryLink } from '../../components/coach-portal/ExerciseLibraryLink';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
@@ -16,18 +17,20 @@ import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutline } from '../../components/coach-portal/program/ProgramOutline';
 import { ProgramSetupNotReady, ProgramSetupSheet, ProgramSetupSkeleton } from '../../components/coach-portal/program/ProgramSetupSheet';
-import { PublishDialog, type PublishDialogStart } from '../../components/coach-portal/program/PublishDialog';
+import type { FindingTarget } from '../../components/coach-portal/program/ProgramFindings';
+import { PublishDialog } from '../../components/coach-portal/program/PublishDialog';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { ExerciseDetailProvider } from '../../components/program-view/ExerciseDetail';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
+import { ProgramLoadState } from '../../components/program-view/ProgramLoadState';
+import { useProgramLookup } from '../../components/program-view/useProgramLookup';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetTrigger } from '../../components/ui/sheet';
 import { Tabs, TabsContent } from '../../components/ui/tabs';
 import { SkipLink } from '../../components/ui/skip-link';
 import { useIsDesktop } from '../../components/ui/use-desktop';
-import { usePrograms } from '../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, currentVersion, draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../domain/program';
 import { isBeforeStage, type ClientJourney } from '../../domain/journey';
@@ -56,7 +59,7 @@ function ProgramEditor(props: EditorProps) {
   const announce = useEditorAnnouncer();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
-  const [publishing, setPublishing] = useState<PublishDialogStart | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [openSessions, setOpenSessions] = useState<Record<string, string>>({});
   const { content } = draft;
@@ -116,6 +119,11 @@ function ProgramEditor(props: EditorProps) {
     if (main.current) main.current.scrollTop = 0;
   }, [placeKey]);
 
+  function openFinding({ blockId, sessionId }: FindingTarget) {
+    if (sessionId) setOpenSessions(current => ({ ...current, [blockId]: sessionId }));
+    editor.openInStructure({ kind: 'block', blockId });
+  }
+
   function selectFromRail(section: EditorSection) {
     editor.select(section);
     hideRail();
@@ -132,7 +140,7 @@ function ProgramEditor(props: EditorProps) {
           placeTitle={placeTitle}
           placeHeading={placeHeading}
           onOverview={selected.kind === 'plan' ? null : () => editor.select({ kind: 'plan' })}
-          onOpenChecks={setPublishing}
+          onOpenFinding={openFinding}
           library={block ? { open: panel.visible, onToggle: panel.toggle } : null}
           railToggle={
             <SheetTrigger asChild>
@@ -142,11 +150,11 @@ function ProgramEditor(props: EditorProps) {
             </SheetTrigger>
           }
           onPreview={() => setPreviewing(true)}
-          onPublish={() => setPublishing('top')}
+          onPublish={() => setPublishing(true)}
           onDiscard={editor.discard}
           opensOn={editor.opensOn}
-          problemsCount={editor.problems.length}
-          warningsCount={editor.warnings.length}
+          problems={editor.problems}
+          warnings={editor.warnings}
         />
         <Tabs value={editor.mode} activationMode="manual" variant="segmented" className="min-h-0 flex-1 flex-row gap-0">
           <ProgramOutline
@@ -193,16 +201,13 @@ function ProgramEditor(props: EditorProps) {
           )}
         </Tabs>
         <PublishDialog
-          open={publishing !== null}
-          onOpenChange={open => {
-            if (!open) setPublishing(null);
-          }}
-          startAt={publishing ?? 'top'}
+          open={publishing}
+          onOpenChange={setPublishing}
           version={draft}
           problems={editor.problems}
           warnings={editor.warnings}
           onPublish={editor.publish}
-          onOpenBlock={blockId => editor.openInStructure({ kind: 'block', blockId })}
+          onOpenFinding={openFinding}
         />
         <ClientPreviewDialog
           open={previewing}
@@ -234,29 +239,74 @@ function SetupPage({ journey, draftPath }: { journey: ClientJourney; draftPath: 
   );
 }
 
+type ClientBack = { path: string; name: string };
+
+/** A state of the editor without a program to edit: a way back to the client above the page's one panel. */
+function EditorDeadEnd({ client, children }: { client: ClientBack; children: ReactNode }) {
+  return (
+    <main aria-label="Program editor" className={SETUP_PAGE_CLASS}>
+      <div className="mx-auto w-full max-w-xl">
+        <PortalBackLink to={client.path} navigationLabel="Back to the client">
+          Back to {client.name}
+        </PortalBackLink>
+        {children}
+      </div>
+    </main>
+  );
+}
+
+function NoProgramYet({ setupPath, client }: { setupPath: string; client: ClientBack }) {
+  return (
+    <EditorDeadEnd client={client}>
+      <DeadEndPanel
+        icon={Pencil}
+        title="No program yet"
+        announcement="none"
+        description="There is no draft to edit yet. Set up the program to start its first version."
+        action={
+          <Button asChild size="md">
+            <Link to={setupPath}>
+              Set up program
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </Button>
+        }
+      />
+    </EditorDeadEnd>
+  );
+}
+
 export function ProgramEditorPage() {
   useCoachPortalScope();
   const { id = '' } = useParams();
   const journey = useJourneyClient(id);
-  const { hydrated, programFor } = usePrograms();
+  const lookup = useProgramLookup(journey?.callId ?? null);
   const isSetup = useLocation().pathname.endsWith('/new');
   const programPath = `/coach/clients/${id}/program`;
   const draftPath = `${programPath}/draft`;
+  const client: ClientBack = { path: `/coach/clients/${id}`, name: journey ? journeyClientName(journey) : 'the client' };
 
-  if (!hydrated) {
+  if (lookup.status === 'pending' && lookup.load === 'loading') {
     return isSetup ? (
       <main className={SETUP_PAGE_CLASS}>
         <ProgramSetupSkeleton />
       </main>
     ) : (
-      <EditorSkeleton />
+      <EditorSkeleton clientPath={client.path} clientName={client.name} />
+    );
+  }
+  if (lookup.status === 'pending') {
+    return (
+      <EditorDeadEnd client={client}>
+        <ProgramLoadState load={lookup.load} onRetry={lookup.retry} headingLevel="h1" />
+      </EditorDeadEnd>
     );
   }
   if (!journey) return <Navigate to="/coach/clients" replace />;
-  const program = programFor(journey.callId);
+  const program = lookup.status === 'found' ? lookup.program : undefined;
   if (isSetup && program) return <Navigate to={draftPath} replace />;
   if (isSetup) return <SetupPage journey={journey} draftPath={draftPath} />;
-  if (!program) return <ClientNotFound />;
+  if (!program) return <NoProgramYet setupPath={`${programPath}/new`} client={client} />;
   const draft = draftOf(program);
   if (!draft) return <Navigate to={programPath} replace />;
 

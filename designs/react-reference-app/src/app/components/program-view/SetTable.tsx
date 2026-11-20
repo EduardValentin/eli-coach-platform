@@ -6,6 +6,9 @@ import { SetMark } from './SetMark';
 import { GROUP_BRACKET_CLASS } from './SupersetGroup';
 import { DOCUMENT_CELL_CLASS, EFFORT_COLUMN_CLASS, PAIRED_RIR_COLUMN_CLASS, TABLE_CELL_CLASS, TABLE_HEAD_CLASS, VALUE_COLUMN_CLASS } from './tableLayout';
 
+/** What a warm-up set shows for RIR, which it does not have. */
+export const WARM_UP_RIR_MARK = '–';
+
 type SetTableProps = { exerciseName: string; unit: string; sets: readonly SetSpec[] };
 
 type SetRowsSize = 'viewer' | 'document';
@@ -100,7 +103,12 @@ export function SetRows({ sets, weight, size = 'viewer', group = 'single', exerc
             <td className={cn(cell, classes.repsCell, { 'font-semibold text-text-primary': working, 'font-medium text-set-warm-up': !working })}>
               {formatRange(set.reps)}
               {unit && <span className={classes.unit}>{unit}</span>}
-              {!working && <span className={classes.warmUpNote}>warm-up</span>}
+              {!working && (
+                <>
+                  <span className="sr-only">, </span>
+                  <span className={classes.warmUpNote}>warm-up</span>
+                </>
+              )}
             </td>
             <td className={cn(cell, classes.rirCell(weight))}>
               {working ? (
@@ -108,7 +116,7 @@ export function SetRows({ sets, weight, size = 'viewer', group = 'single', exerc
               ) : (
                 <>
                   <span aria-hidden="true" className="text-text-secondary">
-                    –
+                    {WARM_UP_RIR_MARK}
                   </span>
                   <span className="sr-only">none</span>
                 </>

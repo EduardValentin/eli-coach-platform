@@ -42,7 +42,7 @@ import {
   videoTooLargeMessage,
 } from '../../utils/exerciseVideo';
 import { libraryReturnPath, toggled } from '../../utils/libraryListing';
-import { InlineProblem } from '../../components/InlineProblem';
+import { InlineProblem } from '../../components/ui/inline-problem';
 import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
 import { FileDropzone } from '../../components/FileDropzone';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';

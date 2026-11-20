@@ -3,10 +3,10 @@ import {
   formatRange,
   positionLabel,
   type CoolDownItem,
+  type PlacedRow,
   type RoundsItem,
   type RoundsSegment,
-  type Row,
-  type Session,
+  type WeekRow,
   type SteadySegment,
   type WarmUpItem,
 } from '../../domain/program';
@@ -35,9 +35,9 @@ export function coolDownAmount(item: CoolDownItem, exercise: Exercise | undefine
   return { value: String(item.seconds), unit: perSideUnit(exercise, 's') };
 }
 
-type RowExerciseDetailInput = { session: Session; row: Row; progression: string; findExercise: FindExercise };
+type RowExerciseDetailInput = { session: { rows: readonly PlacedRow[] }; row: WeekRow; progression: string; findExercise: FindExercise };
 
-export function shownSwapsOf(row: Row, findExercise: FindExercise): Exercise[] {
+export function shownSwapsOf(row: WeekRow, findExercise: FindExercise): Exercise[] {
   return row.substitutions.flatMap(id => {
     const swap = findExercise(id);
     return swap && swap.archivedAt === undefined ? [swap] : [];

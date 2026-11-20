@@ -6,14 +6,6 @@ import { renderProgramEditor, stubEditorBrowserApis } from '../../../../test/ren
 type User = ReturnType<typeof userEvent.setup>;
 
 
-async function setStatsWhileClosed(user: User, container: HTMLElement): Promise<string[]> {
-  const toggle = within(container).getByRole('button', { name: /^Sets for / });
-  await user.click(toggle);
-  const stats = setStats(container);
-  await user.click(toggle);
-  return stats;
-}
-
 function setStats(container: HTMLElement): string[] {
   const terms = within(container).getAllByRole('term');
   const values = within(container).getAllByRole('definition');
@@ -74,7 +66,7 @@ async function chooseInDayMenu(user: User, weekday: string, item: string) {
 async function clearFirstSession(user: User) {
   await user.click(within(session('Full Body A')).getByRole('button', { name: 'Full Body A actions' }));
   await user.click(await screen.findByRole('menuitem', { name: 'Clear session' }));
-  await user.click(within(screen.getByRole('dialog', { name: 'Clear Full Body A?' })).getByRole('button', { name: 'Clear session' }));
+  await user.click(within(screen.getByRole('alertdialog', { name: 'Clear Full Body A?' })).getByRole('button', { name: 'Clear session' }));
 }
 
 const LIBRARY_COUNT_ANNOUNCEMENT = /^(\d+ exercises?|No exercises match)$/;
@@ -95,6 +87,25 @@ async function addFromLibrary(user: User, name: string) {
 
 function pointAt(element: HTMLElement) {
   Object.assign(document, { elementFromPoint: () => element, elementsFromPoint: () => [element] });
+}
+
+function weekField(container: HTMLElement, name: string): HTMLElement {
+  return within(container).getByRole('textbox', { name });
+}
+
+function weekToggle(container: HTMLElement, week: number): HTMLElement {
+  return within(container).getByRole('button', { name: new RegExp(`^Week ${week}\\b`) });
+}
+
+function weekItems(container: HTMLElement, week: number): string[] {
+  const row = weekToggle(container, week).closest('li') as HTMLElement;
+  const terms = within(row).getAllByRole('term', { hidden: true });
+  const values = within(row).getAllByRole('definition', { hidden: true });
+  return terms.map((term, index) => `${term.textContent} ${values[index].textContent}`);
+}
+
+async function openWeeks(user: User, container: HTMLElement, weeks: readonly number[]) {
+  for (const week of weeks) await user.click(weekToggle(container, week));
 }
 
 async function retype(user: User, field: HTMLElement, text: string) {
@@ -282,94 +293,359 @@ describe('BlockWorkspace', () => {
     expect(within(slotGroup('A · Main lift')).queryByText('Squat')).not.toBeInTheDocument();
   });
 
-  it('edits one set on its own and applies the first working set to all working sets', async () => {
+  it('lists every week of the block as one line of its sets, week 1 included, and opens weeks into their sets', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
-    expect(within(main).getAllByRole('term').length).toBeGreaterThan(0);
+
+    // act
     await user.click(within(main).getByRole('button', { name: /^Sets for / }));
-    expect(within(main).queryByRole('term')).not.toBeInTheDocument();
-
-    // act
-    await retype(user, within(main).getByRole('textbox', { name: 'Set 2 reps' }), '6–8');
 
     // assert
-    expect(within(main).getByRole('textbox', { name: 'Set 1 reps' })).toHaveValue('12–15');
-    expect(await setStatsWhileClosed(user, main)).toEqual(expect.arrayContaining(['Warm-up 2 sets', 'Working 3 sets, varied']));
+    const weeks = within(main).getByRole('list', { name: /^Sets for .+, week by week$/ });
+    expect(within(weeks).getAllByRole('listitem')).toHaveLength(4);
+    expect(weekToggle(main, 1)).toHaveAttribute('aria-expanded', 'false');
+    expect(weekToggle(main, 1)).toHaveAccessibleName(/^Week 1\b.*: 2 warm-up sets; 3 sets of 12–15, RIR 3\.$/);
+    expect(weekItems(main, 2)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 13–15', 'RIR 3', 'Weight by RIR']);
+    expect(within(main).queryByRole('textbox', { name: /^Week 2 / })).not.toBeInTheDocument();
 
     // act
-    await user.type(within(main).getByRole('spinbutton', { name: 'Set 1 weight' }), '20');
-    await user.click(within(main).getByRole('button', { name: 'Apply to all working sets' }));
+    await openWeeks(user, main, [2, 1]);
 
     // assert
-    expect(within(main).getByRole('textbox', { name: 'Set 2 reps' })).toHaveValue('12–15');
-    expect(within(main).getByRole('spinbutton', { name: 'Set 3 weight' })).toHaveValue(20);
-    expect(within(main).getByRole('textbox', { name: 'Warm-up set 1 reps' })).toHaveValue('8');
-    expect(await setStatsWhileClosed(user, main)).toEqual(expect.arrayContaining(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3']));
+    expect(weekToggle(main, 2)).toHaveAttribute('aria-expanded', 'true');
+    const sets = within(main).getByRole('table', { name: 'Week 2 sets' });
+    expect(within(sets).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Warm-up', 'Reps 8 or 8–10', 'RIR', 'kgWeight kg', 'Remove']);
+    expect(within(sets).getAllByRole('rowheader').map(header => header.textContent)).toEqual(['WWarm-up set 1', 'WWarm-up set 2', '1Set 1', '2Set 2', '3Set 3']);
+    expect(weekField(main, 'Week 1 set 1 reps')).toHaveAccessibleDescription('Block default.');
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveValue('13–15');
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveAccessibleDescription('Suggested.');
+    expect(weekField(main, 'Week 2 warm-up set 1 reps')).toHaveAccessibleDescription('Same as week 1.');
+    expect(within(main).getByText('Week 2 warm-up set 1 RIR: none on a warm-up set')).toBeInTheDocument();
+    expect(within(main).getByText('Set by you. Later weeks follow week 1 and keep their own changes.')).toBeInTheDocument();
   });
 
-  it('turns a working set into a warm-up set and blanks its RIR', async () => {
+  it('keeps a value typed in a later week to that week and gives it back when cleared', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
     await user.click(within(main).getByRole('button', { name: /^Sets for / }));
-    const warmUp = within(main).getByRole('checkbox', { name: 'Set 1, warm-up' });
-    expect(warmUp).not.toBeChecked();
+    await openWeeks(user, main, [2, 3]);
+    const weekThree = (weekField(main, 'Week 3 set 1 reps') as HTMLInputElement).value;
 
     // act
-    await user.click(warmUp);
+    await retype(user, weekField(main, 'Week 2 set 1 reps'), '15');
+    await user.keyboard('{Enter}');
 
     // assert
-    expect(within(main).queryByRole('textbox', { name: 'Warm-up set 3 RIR' })).not.toBeInTheDocument();
-    expect(within(main).getByText('Warm-up set 3 RIR: none on a warm-up set')).toBeInTheDocument();
-    expect(await setStatsWhileClosed(user, main)).toEqual(expect.arrayContaining(['Warm-up 3 sets', 'Working 2 sets × 12–15', 'RIR 3']));
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveFocus();
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveValue('15');
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveAccessibleDescription('Set by you.');
+    expect(weekField(main, 'Week 2 set 2 reps')).toHaveValue('13–15');
+    expect(weekField(main, 'Week 3 set 1 reps')).toHaveValue(weekThree);
+    expect(await screen.findByText('Week 2 set 1 reps 15.')).toBeInTheDocument();
+    expect(weekToggle(main, 2)).toHaveAccessibleName(/Changed by you\.$/);
+    expect(within(main).getByRole('button', { name: 'Reset week 2' })).toBeInTheDocument();
+
+    // act
+    await user.clear(weekField(main, 'Week 2 set 1 reps'));
+    await user.tab();
+
+    // assert
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveValue('13–15');
+    expect(weekField(main, 'Week 2 set 1 reps')).toHaveAccessibleDescription('Suggested.');
+    expect(within(main).queryByRole('button', { name: 'Reset week 2' })).not.toBeInTheDocument();
   });
 
-  it('leaves the weight empty to pick it by RIR', async () => {
+  it('leaves the weight empty to pick it by RIR and lets a decimal weight typed in week 1 flow to later weeks', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
-
-    // act
     await user.click(within(main).getByRole('button', { name: /^Sets for / }));
-
-    // assert
-    const weight = within(main).getByRole('spinbutton', { name: 'Set 1 weight' });
-    expect(weight).toHaveValue(null);
+    await openWeeks(user, main, [1, 2]);
+    const weight = weekField(main, 'Week 1 set 1 weight in kg');
+    expect(weight).toHaveValue('');
     expect(weight).toHaveAttribute('placeholder', 'by RIR');
+    expect(weight).toHaveAccessibleDescription('Block default. No weight: the client finds it by RIR.');
+    expect(weight).toHaveAttribute('inputmode', 'decimal');
+
+    // act
+    await user.type(weight, '22,5');
+    await user.tab();
+
+    // assert
+    expect(weight).toHaveValue('22.5');
+    expect(weekField(main, 'Week 2 set 1 weight in kg')).toHaveValue('22.5');
+    expect(weekField(main, 'Week 2 set 1 weight in kg')).toHaveAccessibleDescription('Suggested.');
+    expect(weekField(main, 'Week 2 set 2 weight in kg')).toHaveValue('');
+    expect(await screen.findByText('Week 1 set 1 weight 22.5 kg. Later weeks updated.')).toBeInTheDocument();
   });
 
-  it('adds a set like the last one, lets the coach switch its kind and removes one', async () => {
+  it('adds a set that copies the last working set, to that week only, with focus on its warm-up checkbox', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
     await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [3]);
+    await retype(user, weekField(main, 'Week 3 set 3 reps'), '10');
+    await user.tab();
 
     // act
-    await user.click(within(main).getByRole('button', { name: 'Add set' }));
+    await user.click(within(main).getByRole('button', { name: 'Add a set to week 3' }));
 
     // assert
-    const added = 'Set 4';
-    expect(within(main).getByRole('checkbox', { name: `${added}, warm-up` })).not.toBeChecked();
-    expect(await setStatsWhileClosed(user, main)).toEqual(expect.arrayContaining(['Warm-up 2 sets', 'Working 4 sets × 12–15']));
+    expect(within(main).queryByRole('button', { name: /Warm-up set to week 3/ })).not.toBeInTheDocument();
+    expect(within(main).getByRole('checkbox', { name: 'Week 3 set 4 is a warm-up set' })).toHaveFocus();
+    expect(weekField(main, 'Week 3 set 4 reps')).toHaveValue('10');
+    expect(weekField(main, 'Week 3 set 4 reps')).toHaveAccessibleDescription('Set by you.');
+    expect(await screen.findByText('Set added to week 3, 4 working sets.')).toBeInTheDocument();
+    expect(weekToggle(main, 3)).toHaveAccessibleName(/: 2 warm-up sets; 2 sets of 14–15; 2 sets of 10; RIR 3\. Changed by you\.$/);
+    expect(weekItems(main, 3)).toEqual(['Warm-up 2 sets', 'Working 2 sets × 14–152 sets × 10', 'RIR 33', 'Weight by RIRby RIR']);
+    expect(weekToggle(main, 4)).toHaveAccessibleName(/3 sets of/);
+    expect(setStats(main)).toContainEqual(expect.stringMatching(/^Progression .*week 3 differs/));
 
     // act
-    await user.click(within(main).getByRole('checkbox', { name: `${added}, warm-up` }));
-    await user.click(within(main).getByRole('button', { name: 'Add set' }));
+    await user.keyboard(' ');
 
     // assert
-    expect(within(main).getByRole('checkbox', { name: 'Warm-up set 4, warm-up' })).toBeChecked();
-    expect(await setStatsWhileClosed(user, main)).toEqual(expect.arrayContaining(['Warm-up 4 sets', 'Working 3 sets × 12–15']));
+    expect(within(main).getByRole('checkbox', { name: 'Week 3 warm-up set 3 is a warm-up set' })).toHaveFocus();
+    expect(within(main).getByRole('checkbox', { name: 'Week 3 warm-up set 3 is a warm-up set' })).toBeChecked();
+    expect(weekItems(main, 3)).toEqual(['Warm-up 3 sets', 'Working 2 sets × 14–151 set × 10', 'RIR 33', 'Weight by RIRby RIR']);
 
     // act
-    await user.click(within(main).getByRole('button', { name: 'Remove warm-up set 4' }));
+    await user.tab();
 
     // assert
-    expect(await setStatsWhileClosed(user, main)).toEqual(expect.arrayContaining(['Warm-up 3 sets', 'Working 3 sets × 12–15']));
-    expect(within(main).queryByRole('button', { name: 'Add warm-up set' })).not.toBeInTheDocument();
+    expect(weekField(main, 'Week 3 warm-up set 3 reps')).toHaveFocus();
   });
 
-  it('keeps rest beside the sets, apart from the set actions', async () => {
+  it('gives a week without warm-up sets its first one through Set and the warm-up checkbox', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [2]);
+    await user.click(within(main).getByRole('button', { name: 'Remove week 2 warm-up set 1' }));
+    await user.click(within(main).getByRole('button', { name: 'Remove week 2 warm-up set 1' }));
+    expect(weekItems(main, 2)).toContain('Warm-up None');
+
+    // act
+    await user.click(within(main).getByRole('button', { name: 'Add a set to week 2' }));
+    await user.click(within(main).getByRole('checkbox', { name: 'Week 2 set 4 is a warm-up set' }));
+
+    // assert
+    const sets = within(main).getByRole('table', { name: 'Week 2 sets' });
+    expect(within(sets).getAllByRole('rowheader').map(header => header.textContent)).toEqual(['WWarm-up set 1', '1Set 1', '2Set 2', '3Set 3']);
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 warm-up set 1 is a warm-up set' })).toHaveFocus();
+    expect(weekItems(main, 2)[0]).toBe('Warm-up 1 set');
+  });
+
+  it('switches a set between warm-up and working with its checkbox, and focus follows the set', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [2]);
+    const rowHeaders = () => within(within(main).getByRole('table', { name: 'Week 2 sets' })).getAllByRole('rowheader').map(header => header.textContent);
+
+    // act
+    await user.click(within(main).getByRole('checkbox', { name: 'Week 2 set 3 is a warm-up set' }));
+
+    // assert
+    expect(rowHeaders()).toEqual(['WWarm-up set 1', 'WWarm-up set 2', 'WWarm-up set 3', '1Set 1', '2Set 2']);
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 warm-up set 3 is a warm-up set' })).toHaveFocus();
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 warm-up set 3 is a warm-up set' })).toBeChecked();
+    expect(await screen.findByText('Week 2 set 3 is now a warm-up set.')).toBeInTheDocument();
+    expect(weekToggle(main, 3)).toHaveAccessibleName(/2 warm-up sets; 3 sets of/);
+
+    // act
+    await user.click(within(main).getByRole('checkbox', { name: 'Week 2 warm-up set 1 is a warm-up set' }));
+
+    // assert
+    expect(rowHeaders()).toEqual(['WWarm-up set 1', 'WWarm-up set 2', '1Set 1', '2Set 2', '3Set 3']);
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 set 1 is a warm-up set' })).toHaveFocus();
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 set 1 is a warm-up set' })).not.toBeChecked();
+  });
+
+  it('removes a set from that week only, hands focus to the next set and always keeps one working set', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [2]);
+
+    // act
+    await user.click(within(main).getByRole('button', { name: 'Remove week 2 set 2' }));
+
+    // assert
+    expect(within(main).queryByRole('textbox', { name: 'Week 2 set 3 reps' })).not.toBeInTheDocument();
+    expect(within(main).getByRole('button', { name: 'Remove week 2 set 2' })).toHaveFocus();
+    expect(await screen.findByText('Set 2 removed from week 2.')).toBeInTheDocument();
+    expect(weekToggle(main, 3)).toHaveAccessibleName(/3 sets of/);
+
+    // act
+    await user.click(within(main).getByRole('button', { name: 'Remove week 2 set 2' }));
+
+    // assert
+    expect(within(main).queryByRole('button', { name: 'Remove week 2 set 1' })).not.toBeInTheDocument();
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 set 1 is a warm-up set' })).toBeDisabled();
+  });
+
+  it('reads working sets that differ only in RIR as one kind of set, with their RIR from lowest to highest', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [2]);
+
+    // act
+    await retype(user, weekField(main, 'Week 2 set 3 RIR'), '2');
+    await user.tab();
+
+    // assert
+    expect(weekField(main, 'Week 2 set 3 RIR')).toHaveAccessibleDescription('Set by you.');
+    expect(weekToggle(main, 2)).toHaveAccessibleName(/: 2 warm-up sets; 3 sets of [^;]+, RIR 2–3[,.]/);
+    expect(weekItems(main, 2)[2]).toBe('RIR 2–3');
+    expect(within(main).queryByRole('button', { name: 'Apply to all working sets of week 2' })).not.toBeInTheDocument();
+    expect(setStats(main)).not.toContainEqual(expect.stringMatching(/week 2 differs/));
+  });
+
+  it('reads working sets that differ only in weight as different sets on the card and on the week alike', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [1]);
+
+    // act
+    await user.type(weekField(main, 'Week 1 set 1 weight in kg'), '30');
+    await user.tab();
+
+    // assert
+    expect(setStats(main)).toContain('Working 3 sets, varied');
+    expect(weekItems(main, 1)).toContain('Working 1 set × 12–152 sets × 12–15');
+    expect(weekItems(main, 1)).toContain('Weight 30 kgby RIR');
+  });
+
+  it('gives every working set of a week the first one’s reps and weight with Apply to all working sets, and leaves each RIR', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [2]);
+    expect(within(main).queryByRole('button', { name: 'Apply to all working sets of week 2' })).not.toBeInTheDocument();
+    await retype(user, weekField(main, 'Week 2 set 3 RIR'), '2');
+    await retype(user, weekField(main, 'Week 2 set 1 weight in kg'), '30');
+    await user.tab();
+
+    // act
+    await user.click(within(main).getByRole('button', { name: 'Apply to all working sets of week 2' }));
+
+    // assert
+    expect(weekField(main, 'Week 2 set 3 weight in kg')).toHaveValue('30');
+    expect(weekField(main, 'Week 2 set 3 weight in kg')).toHaveAccessibleDescription('Set by you.');
+    expect(weekField(main, 'Week 2 set 3 RIR')).toHaveValue('2');
+    expect(weekField(main, 'Week 2 set 2 RIR')).toHaveValue('3');
+    expect(within(main).queryByRole('button', { name: 'Apply to all working sets of week 2' })).not.toBeInTheDocument();
+    expect(within(main).getByRole('button', { name: 'Add a set to week 2' })).toHaveFocus();
+  });
+
+  it('gives a week back to its suggestions with one reset', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [3]);
+    await user.click(within(main).getByRole('button', { name: 'Add a set to week 3' }));
+    await retype(user, weekField(main, 'Week 3 set 1 RIR'), '1');
+    await user.tab();
+
+    // act
+    await user.click(within(main).getByRole('button', { name: 'Reset week 3' }));
+
+    // assert
+    expect(within(main).queryByRole('textbox', { name: 'Week 3 set 4 reps' })).not.toBeInTheDocument();
+    expect(weekField(main, 'Week 3 set 1 RIR')).toHaveValue('3');
+    expect(weekToggle(main, 3)).toHaveFocus();
+    expect(await screen.findByText('Week 3 back to suggested.')).toBeInTheDocument();
+  });
+
+  it('commits on blur, restores with Escape and flags text it cannot read', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [4]);
+    const rir = weekField(main, 'Week 4 set 1 RIR');
+
+    // act
+    await retype(user, rir, '1');
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(rir).toHaveValue('3');
+
+    // act
+    await retype(user, rir, 'soon');
+    await user.tab();
+
+    // assert
+    expect(rir).toHaveAccessibleDescription('Suggested. Use one whole number, like 2');
+    expect(within(main).queryByRole('button', { name: 'Reset week 4' })).not.toBeInTheDocument();
+
+    // act
+    await retype(user, rir, '2–3');
+    await user.tab();
+
+    // assert
+    expect(rir).toHaveAccessibleDescription('Suggested. Use one whole number, like 2');
+    expect(rir).toHaveAttribute('inputmode', 'numeric');
+  });
+
+  it('moves to the same column of the set above or below with Arrow Up and Arrow Down, across open weeks', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [1, 2]);
+    weekField(main, 'Week 2 set 1 RIR').focus();
+
+    // act
+    await user.keyboard('{ArrowUp}');
+
+    // assert
+    expect(weekField(main, 'Week 1 set 3 RIR')).toHaveFocus();
+
+    // act
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+
+    // assert
+    expect(weekField(main, 'Week 2 set 2 RIR')).toHaveFocus();
+    expect(within(main).getByRole('table', { name: 'Week 2 sets' })).toHaveAccessibleDescription('Arrow Up and Arrow Down move to the same field of the set above or below.');
+  });
+
+  it('moves between the warm-up switches with the arrows too, and leaves an arrow with a modifier key to the browser', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [2]);
+    within(main).getByRole('checkbox', { name: 'Week 2 set 2 is a warm-up set' }).focus();
+
+    // act
+    await user.keyboard('{ArrowUp}');
+
+    // assert
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 set 1 is a warm-up set' })).toHaveFocus();
+
+    // act
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}');
+
+    // assert
+    expect(within(main).getByRole('checkbox', { name: 'Week 2 set 1 is a warm-up set' })).toHaveFocus();
+  });
+
+  it('keeps rest beside the weeks, apart from the set actions', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
@@ -383,15 +659,51 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(rest).toHaveAccessibleDescription('Use seconds or m:ss like 1:30');
-    expect(within(main).getByRole('button', { name: 'Add set' })).toBeEnabled();
+    expect(within(main).queryByRole('button', { name: /^Reset week/ })).not.toBeInTheDocument();
+  });
+
+  it('sets the progression rule in Details, where Custom makes every week repeat the first', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Details for / }));
+
+    // act
+    await user.click(within(main).getByRole('combobox', { name: 'Progression' }));
+    await user.click(await screen.findByRole('option', { name: 'Custom' }));
+    await user.click(within(main).getByRole('button', { name: /^Sets for / }));
+    await openWeeks(user, main, [3]);
+
+    // assert
+    expect(weekField(main, 'Week 3 set 1 reps')).toHaveValue('12–15');
+    expect(weekField(main, 'Week 3 set 1 reps')).toHaveAccessibleDescription('Same as week 1.');
+    expect(within(main).getByText('Set by you. Later weeks repeat week 1 and keep their own changes.')).toBeInTheDocument();
+  });
+
+  it('opens one panel of a card at a time', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    const sets = within(main).getByRole('button', { name: /^Sets for / });
+    const details = within(main).getByRole('button', { name: /^Details for / });
+    await user.click(sets);
+
+    // act
+    await user.click(details);
+
+    // assert
+    expect(sets).toHaveAttribute('aria-expanded', 'false');
+    expect(details).toHaveAttribute('aria-expanded', 'true');
+    expect(within(main).queryByRole('textbox', { name: 'Rest between sets' })).not.toBeInTheDocument();
+    expect(within(main).getByRole('group', { name: 'Substitutions' })).toBeInTheDocument();
   });
 
   it('plays the exercise video in a dialog from the exercise name', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
-    const trigger = within(main).getByRole('button', { name: /cues and video$/ });
-    const exerciseName = within(main).getByRole('heading', { level: 5 }).textContent?.replace(/^A /, '').replace(/: cues and video$/, '') ?? '';
+    const trigger = within(main).getByRole('button', { description: /cues and video/ });
+    const exerciseName = trigger.textContent ?? '';
 
     // act
     await user.click(trigger);
@@ -406,6 +718,7 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(trigger).toHaveFocus();
+    expect(within(main).getByRole('heading', { level: 5 })).toHaveAccessibleName(`A ${exerciseName}`);
   });
 
   it('builds a cardio day from the intervals preset', async () => {
@@ -570,7 +883,7 @@ describe('BlockWorkspace', () => {
   it('keeps Move up and down inside the slot and moves a card to another slot from its menu', async () => {
     // arrange
     const user = await openFirstBlock();
-    const [mainName] = within(card(/^A /)).getAllByRole('heading', { level: 5 }).map(heading => (heading.textContent ?? '').replace(/^A /, '').replace(/: cues( and video)?$/, ''));
+    const [mainName] = within(card(/^A /)).getAllByRole('heading', { level: 5 }).map(heading => within(heading).getByRole('button').textContent ?? '');
     await user.click(within(card(/^A /)).getByRole('button', { name: /actions$/ }));
     expect(await screen.findByRole('menuitem', { name: 'Move down' })).toHaveAttribute('data-disabled');
     expect(screen.queryByRole('menuitem', { name: /^Move to B / })).not.toBeInTheDocument();
@@ -593,14 +906,14 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('option', { name: 'Hypertrophy' }));
 
     // assert
-    expect(setStats(card(/^A /))).toEqual(['Warm-up 2 sets', 'Working 4 sets × 6–10', 'RIR 1–2', 'Rest 2:30']);
+    expect(setStats(card(/^A /))).toEqual(['Warm-up 2 sets', 'Working 4 sets × 6–10', 'RIR 2–3', 'Rest 2:30', 'Progression 6 → 9 reps6 to 9 reps']);
   });
 
-  it('estimates the session minutes from what it contains, against the target', async () => {
+  it('estimates the session minutes from what its longest week contains, against the target', async () => {
     // arrange
     const user = await openFirstBlock();
     const estimate = () => within(session('Full Body A')).getByText(/of 60 min$/).textContent;
-    expect(estimate()).toBe('~34 of 60 min');
+    expect(estimate()).toBe('~35 of 60 min');
 
     // act
     await clearFirstSession(user);
@@ -616,7 +929,7 @@ describe('BlockWorkspace', () => {
     // act
     await user.click(screen.getByRole('combobox', { name: 'Split' }));
     await user.click(screen.getByRole('option', { name: 'Upper / Lower' }));
-    const confirm = screen.getByRole('dialog', { name: 'Change the split?' });
+    const confirm = screen.getByRole('alertdialog', { name: 'Change the split?' });
     expect(within(confirm).getByText(/^Full Body A · \d+ exercises$/)).toBeInTheDocument();
     await user.click(within(confirm).getByRole('button', { name: 'Rebuild sessions' }));
 
@@ -634,7 +947,7 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('option', { name: '2 days' }));
 
     // assert
-    const confirm = screen.getByRole('dialog', { name: 'Change training days?' });
+    const confirm = screen.getByRole('alertdialog', { name: 'Change training days?' });
     expect(within(confirm).getByText(/^Full Body C · \d+ exercises$/)).toBeInTheDocument();
 
     // act
@@ -658,7 +971,7 @@ describe('BlockWorkspace', () => {
     await chooseInDayMenu(user, 'Saturday', 'Rest');
 
     // assert
-    const confirm = screen.getByRole('dialog', { name: 'Make Saturday a rest day?' });
+    const confirm = screen.getByRole('alertdialog', { name: 'Make Saturday a rest day?' });
     expect(within(confirm).getByText('Easy cardio · 1 segment')).toBeInTheDocument();
 
     // act
@@ -676,7 +989,7 @@ describe('BlockWorkspace', () => {
     await chooseInDayMenu(user, 'Monday', 'Rest');
 
     // assert
-    const confirm = screen.getByRole('dialog', { name: 'Make Monday a rest day?' });
+    const confirm = screen.getByRole('alertdialog', { name: 'Make Monday a rest day?' });
     expect(within(confirm).getByText(/^Full Body A · \d+ exercises$/)).toBeInTheDocument();
 
     // act
@@ -797,7 +1110,7 @@ describe('BlockWorkspace keyboard and screen reader support', () => {
     // arrange
     const user = await openFirstBlock();
     await chooseInDayMenu(user, 'Monday', 'Rest');
-    const confirm = screen.getByRole('dialog', { name: 'Make Monday a rest day?' });
+    const confirm = screen.getByRole('alertdialog', { name: 'Make Monday a rest day?' });
 
     // act
     await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
@@ -811,7 +1124,7 @@ describe('BlockWorkspace keyboard and screen reader support', () => {
     const user = await openFirstBlock();
     await user.click(screen.getByRole('combobox', { name: 'Training days' }));
     await user.click(screen.getByRole('option', { name: '2 days' }));
-    expect(screen.getByRole('dialog', { name: 'Change training days?' })).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog', { name: 'Change training days?' })).toBeInTheDocument();
 
     // act
     await user.keyboard('{Escape}');
@@ -890,7 +1203,8 @@ describe('BlockWorkspace keyboard and screen reader support', () => {
     expect(within(rounds()).getByRole('heading', { level: 5 })).toHaveTextContent('Intervals4 rounds · 7 min');
     expect(within(rounds()).getByRole('textbox', { name: 'Rest between rounds' })).toHaveValue('1:00');
     const steps = within(within(rounds()).getByRole('list', { name: 'Interval exercises' })).getByRole('listitem');
-    expect(steps).toHaveTextContent(/Burpee.*Hard.*then30 sEasy$/);
+    expect(steps).toHaveTextContent(/Burpee.*then30 s easy$/);
+    expect(steps).not.toHaveTextContent('Hard');
   });
 
   it('clears a cardio session from its header menu after confirmation', async () => {
@@ -903,7 +1217,7 @@ describe('BlockWorkspace keyboard and screen reader support', () => {
     // act
     await user.click(within(cardio).getByRole('button', { name: 'Easy cardio actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Clear segments' }));
-    await user.click(within(screen.getByRole('dialog', { name: 'Clear Easy cardio?' })).getByRole('button', { name: 'Clear segments' }));
+    await user.click(within(screen.getByRole('alertdialog', { name: 'Clear Easy cardio?' })).getByRole('button', { name: 'Clear segments' }));
 
     // assert
     expect(within(cardio).getByRole('group', { name: 'Start from' })).toBeInTheDocument();
@@ -982,5 +1296,82 @@ describe('BlockWorkspace icon actions', () => {
     // assert
     expect(warmUpAdd).toHaveFocus();
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Add exercise');
+  });
+});
+
+describe('BlockWorkspace weeks of a Hypertrophy block', () => {
+  async function openHypertrophySquat() {
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^2 Hypertrophy\b/ }));
+    const squat = card(/^A /);
+    await user.click(within(squat).getByRole('button', { name: 'Sets for Barbell Back Squat' }));
+    return { user, squat };
+  }
+
+  it('numbers the weeks by the plan and suggests later weeks from a weight typed in the first week', async () => {
+    // arrange
+    const { user, squat } = await openHypertrophySquat();
+    await openWeeks(user, squat, [5, 6]);
+
+    // act
+    await user.type(weekField(squat, 'Week 5 set 1 weight in kg'), '60');
+    await user.tab();
+
+    // assert
+    expect(weekField(squat, 'Week 5 set 1 weight in kg')).toHaveAccessibleDescription('Set by you.');
+    expect(weekField(squat, 'Week 6 set 1 weight in kg')).toHaveValue('60');
+    expect(weekField(squat, 'Week 6 set 1 weight in kg')).toHaveAccessibleDescription('Suggested.');
+    expect(setStats(squat).some(stat => stat.startsWith('Progression '))).toBe(true);
+  });
+
+  it('shows the calibration week like any other week, with its weight found by RIR and weights led by the week after it', async () => {
+    // arrange
+    const { user, squat } = await openHypertrophySquat();
+
+    // act
+    await user.click(screen.getByRole('switch', { name: /Calibration week/ }));
+    await openWeeks(user, squat, [5, 6]);
+
+    // assert
+    expect(within(squat).queryByRole('textbox', { name: 'Week 5 set 1 weight in kg' })).not.toBeInTheDocument();
+    expect(within(squat).getByText('Week 5 set 1 weight: none, the client finds it by RIR in the calibration week')).toBeInTheDocument();
+    expect(within(squat).getByText('Calibration')).toBeInTheDocument();
+    expect(weekField(squat, 'Week 5 set 1 reps')).toBeInTheDocument();
+    expect(weekField(squat, 'Week 6 set 1 weight in kg')).toHaveAttribute('placeholder', 'by RIR');
+    expect(within(squat).getByText('Set by you. Later weeks follow week 5 (weights: week 6) and keep their own changes.')).toBeInTheDocument();
+  });
+
+  it('clears everything the coach did in every week with Reset to block defaults', async () => {
+    // arrange
+    const { user, squat } = await openHypertrophySquat();
+    await openWeeks(user, squat, [7, 8]);
+    await retype(user, weekField(squat, 'Week 7 set 1 reps'), '8');
+    await user.tab();
+    await user.click(within(squat).getByRole('button', { name: 'Add a set to week 8' }));
+
+    // act
+    await user.click(within(squat).getByRole('button', { name: 'Barbell Back Squat actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Reset to block defaults' }));
+
+    // assert
+    expect(weekField(squat, 'Week 7 set 1 reps')).toHaveAccessibleDescription('Suggested.');
+    expect(within(squat).queryByRole('textbox', { name: 'Week 8 set 5 reps' })).not.toBeInTheDocument();
+    expect(within(squat).queryByRole('button', { name: /^Reset week/ })).not.toBeInTheDocument();
+  });
+
+  it('shows a Deload block as the same list with its one week', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^3 Deload\b/ }));
+    const squat = card(/^A /);
+
+    // act
+    await user.click(within(squat).getByRole('button', { name: 'Sets for Barbell Back Squat' }));
+    await openWeeks(user, squat, [11]);
+
+    // assert
+    expect(within(within(squat).getByRole('list', { name: 'Sets for Barbell Back Squat, week by week' })).getAllByRole('listitem')).toHaveLength(1);
+    expect(weekField(squat, 'Week 11 set 1 RIR')).toHaveValue('4');
+    expect(within(squat).getByText('Set by you.')).toBeInTheDocument();
   });
 });

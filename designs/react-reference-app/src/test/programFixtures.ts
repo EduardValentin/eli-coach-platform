@@ -1,7 +1,7 @@
 import type { Exercise } from '../app/context/TrainingContext';
 import { currentBlock, viewOf, type ProgramView } from '../app/components/program-view/programView';
 import type { Equipment } from '../app/domain/exercises';
-import { currentVersion, type Block, type Row, type Session, type SetSpec } from '../app/domain/program';
+import { currentVersion, workingStarts, type Block, type PlannedSet, type Row, type Session, type SetSpec, type SetTargets, type WorkingTargets } from '../app/domain/program';
 import { SAMPLE_EXERCISES } from '../app/services/exerciseSamples';
 import { programForSeed, type ProgramSeed } from '../app/services/programSamples';
 
@@ -27,7 +27,17 @@ export function equippedExercise(id: string, equipment: Equipment[], overrides: 
 }
 
 export function workingSets(count: number): SetSpec[] {
-  return Array.from({ length: count }, () => ({ kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
+  return Array.from({ length: count }, () => ({ kind: 'working', reps: { min: 8, max: 12 }, rir: 2 }));
+}
+
+const FIXTURE_TARGETS: WorkingTargets = { count: 3, reps: { min: 8, max: 12 }, rir: 2 };
+
+/** The first week's sets with nothing typed: the warm-up sets `warm-up-1`… then `count` working sets `set-1`… */
+export function startSets(start: Partial<WorkingTargets> = {}, warmUps: readonly SetTargets[] = []): PlannedSet[] {
+  return [
+    ...warmUps.map((warmUp, index): PlannedSet => ({ id: `warm-up-${index + 1}`, kind: 'warm-up', start: structuredClone(warmUp) })),
+    ...workingStarts({ ...structuredClone(FIXTURE_TARGETS), ...start }).map((target, index): PlannedSet => ({ id: `set-${index + 1}`, kind: 'working', start: target })),
+  ];
 }
 
 export function row(overrides: Partial<Row> = {}): Row {
@@ -35,7 +45,7 @@ export function row(overrides: Partial<Row> = {}): Row {
     id: 'r',
     exerciseId: 'e',
     slot: 'A',
-    sets: workingSets(3),
+    startSets: startSets(),
     restSeconds: 60,
     lastSetTechnique: 'none',
     substitutions: [],

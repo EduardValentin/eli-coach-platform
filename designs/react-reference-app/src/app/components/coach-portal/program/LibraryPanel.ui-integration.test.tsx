@@ -137,7 +137,7 @@ async function showAllEquipment(user: ReturnType<typeof userEvent.setup>) {
 async function clearFirstSession(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(firstSession()).getByRole('button', { name: 'Full Body A actions' }));
   await user.click(await screen.findByRole('menuitem', { name: 'Clear session' }));
-  await user.click(within(screen.getByRole('dialog', { name: 'Clear Full Body A?' })).getByRole('button', { name: 'Clear session' }));
+  await user.click(within(screen.getByRole('alertdialog', { name: 'Clear Full Body A?' })).getByRole('button', { name: 'Clear session' }));
 }
 
 describe('LibraryPanel', () => {
@@ -182,7 +182,7 @@ describe('LibraryPanel', () => {
 
     // assert
     const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
-    expect(setStats(card)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3', 'Rest 1:15']);
+    expect(setStats(card)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3', 'Rest 1:15', 'Progression 12 → 15 reps12 to 15 reps']);
     await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
     expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByRole('button', { name: /^Barbell Back Squat/ })).toBeInTheDocument();
   });
@@ -425,7 +425,7 @@ describe('CopyBlockDialog', () => {
 
     // act
     await user.click(within(dialog).getByRole('button', { name: 'Copy sessions' }));
-    await user.click(within(screen.getByRole('dialog', { name: "Replace this block's sessions?" })).getByRole('button', { name: 'Replace sessions' }));
+    await user.click(within(screen.getByRole('alertdialog', { name: "Replace this block's sessions?" })).getByRole('button', { name: 'Replace sessions' }));
 
     // assert
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

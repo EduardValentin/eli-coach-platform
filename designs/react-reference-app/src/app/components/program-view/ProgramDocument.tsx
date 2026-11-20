@@ -9,7 +9,7 @@ import { DocumentEditingProvider, DocumentHeading, useDocumentEditing, type Docu
 import { TitledProse } from './documentProse';
 import { DocumentReadingGuide } from './DocumentReadingGuide';
 import { DocumentTextSlot, useShowsText } from './DocumentTextSlot';
-import { firstWeekOfBlock, GLANCE_ANCHOR, isCardioDay, publicationWeek, strengthDayOf, trainingDays, weekAnchor, weeksOfBlock } from './documentWeeks';
+import { firstWeekOfBlock, GLANCE_ANCHOR, isCardioDay, printsSamePages, publicationWeek, samePrintedDay, trainingDays, weekAnchor, weeksOfBlock } from './documentWeeks';
 import { PlanTimeline, type TimelineWeekAction } from './PlanTimeline';
 import { parseTemplate } from './ProgramText';
 import { blocksOf, currentBlock, type ProgramView } from './programView';
@@ -41,38 +41,61 @@ function chaptersOf(view: ProgramView, part: DocumentPart): Chapter[] {
   return blocks.map((_, index) => ({ index, weeks: weeksOfBlock(view, index, from) })).filter(chapter => chapter.weeks.length > 0);
 }
 
-type WeekPagesProps = { view: ProgramView; week: WeekView; blockFirst: WeekView };
+type WeekPagesProps = { view: ProgramView; week: WeekView; earlier: readonly WeekView[] };
 
-function WeekPages({ view, week, blockFirst }: WeekPagesProps) {
-  const repeat = blockFirst.weekOfPlan !== week.weekOfPlan;
+function WeekPages({ view, week, earlier }: WeekPagesProps) {
   return (
     <div className="space-y-document-section">
       <WeekOverviewPage view={view} week={week} />
       {trainingDays(week).map(day => {
         if (isCardioDay(day)) return <CardioDayPage key={day.weekday} view={view} week={week} day={day} />;
-        const first = repeat ? strengthDayOf(blockFirst, day.weekday) : undefined;
-        return <StrengthDayPage key={day.weekday} view={view} week={week} day={day} sameSetsAs={first ? { week: blockFirst, day: first } : null} />;
+        return <StrengthDayPage key={day.weekday} view={view} week={week} day={day} sameSetsAs={samePrintedDay(earlier, { week, day })} />;
       })}
     </div>
   );
 }
 
+type WeekRun = { start: number; end: number };
+
+function weekListText(weeks: readonly number[]): string {
+  const runs: WeekRun[] = [];
+  for (const week of weeks) {
+    const last = runs.at(-1);
+    if (last && last.end === week - 1) last.end = week;
+    else runs.push({ start: week, end: week });
+  }
+  if (runs.length === 1) return weekSpanText(runs[0].start, runs[0].end);
+  return `Weeks ${runs.map(({ start, end }) => (start === end ? String(start) : `${start}–${end}`)).join(', ')}`;
+}
+
+const REPEATED_WEEKS: Record<'pages' | 'sessions', { one: string; many: string }> = {
+  pages: { one: 'prints the same pages with its own dates.', many: 'print the same pages with their own dates.' },
+  sessions: { one: 'prints the same sessions with its own dates and targets.', many: 'print the same sessions with their own dates and targets.' },
+};
+
+function repeatedWeeksSentence(weeks: readonly number[], repeats: keyof typeof REPEATED_WEEKS): string {
+  if (weeks.length === 0) return '';
+  return `${weekListText(weeks)} ${REPEATED_WEEKS[repeats][weeks.length === 1 ? 'one' : 'many']}`;
+}
+
 function RepeatedWeeksNote({ view, index }: { view: ProgramView; index: number }) {
   const { startWeek, endWeek } = blockSpan(blocksOf(view), index);
   if (endWeek === startWeek) return null;
-  const repeated = weekSpanText(startWeek + 1, endWeek);
-  const text = endWeek === startWeek + 1 ? `${repeated} prints the same pages with its own dates.` : `${repeated} print the same pages with their own dates.`;
+  const first = firstWeekOfBlock(view, index);
+  const later = weeksOfBlock(view, index, startWeek + 1);
+  const same = later.filter(week => printsSamePages(week, first)).map(week => week.weekOfPlan);
+  const own = later.map(week => week.weekOfPlan).filter(week => !same.includes(week));
+  const text = [repeatedWeeksSentence(same, 'pages'), repeatedWeeksSentence(own, 'sessions')].filter(Boolean).join(' ');
   return <p className={cn(DOCUMENT_NOTE_CLASS, 'border-t border-border-subtle pt-document-gap')}>{text}</p>;
 }
 
 function BlockChapter({ view, chapter }: { view: ProgramView; chapter: Chapter }) {
   const editing = useDocumentEditing();
-  const [blockFirst] = chapter.weeks;
   return (
     <div className="space-y-document-section">
       <BlockOpener view={view} index={chapter.index} />
-      {chapter.weeks.map(week => (
-        <WeekPages key={week.weekOfPlan} view={view} week={week} blockFirst={blockFirst} />
+      {chapter.weeks.map((week, position) => (
+        <WeekPages key={week.weekOfPlan} view={view} week={week} earlier={chapter.weeks.slice(0, position)} />
       ))}
       {editing && <RepeatedWeeksNote view={view} index={chapter.index} />}
     </div>

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { seededProgramView } from '../../../test/programFixtures';
 import type { Exercise } from '../../context/TrainingContext';
-import { BLOCK_TYPE_LABELS, cardioOn, formatRest, positionLabel, sessionOn, WEEKDAYS, type Block, type Row, type Session, type Weekday } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, cardioOn, formatRest, positionLabel, sessionOn, WEEKDAYS, type Block, type PlannedSet, type Row, type Session, type Weekday } from '../../domain/program';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { ProgramDocument } from './ProgramDocument';
 import { parseTemplate, programTemplate } from './ProgramText';
@@ -85,6 +85,13 @@ function withFirstSession(view: ProgramView, edit: (session: Session) => Session
   const index = block.sessions.indexOf(firstSession(block));
   block.sessions[index] = edit(block.sessions[index]);
   return block.sessions[index];
+}
+
+function withCustomProgression(block: Block): void {
+  block.sessions = block.sessions.map(session => ({
+    ...session,
+    rows: session.rows.map(row => ({ ...row, progression: { kind: 'custom', text: 'Same targets every week.' } })),
+  }));
 }
 
 describe('ProgramDocument cover', () => {
@@ -403,7 +410,7 @@ describe('ProgramDocument strength days', () => {
     const session = firstSession(block);
     const rows = session.rows.filter(row => row.exerciseId !== '');
     const [main] = rows;
-    const sets = rows.reduce((total, row) => total + row.sets.length, 0);
+    const sets = rows.reduce((total, row) => total + row.startSets.length, 0);
     const supersets = new Set(rows.filter(row => positionLabel(session, row) !== row.slot).map(row => row.supersetGroup)).size;
 
     // act
@@ -434,10 +441,12 @@ describe('ProgramDocument strength days', () => {
     expect(head).not.toHaveTextContent(/Week 1|Foundation|min|Last week/);
   });
 
-  it('sends a phone from a repeated week to the same day of the first week of its block', () => {
+  it('sends a phone from a week at the same targets to the same day of the earliest such week of its block', () => {
     // arrange
     const view = viewFor();
-    const weekday = firstSessionWeekday(blocksOf(view)[0]);
+    const [block] = blocksOf(view);
+    withCustomProgression(block);
+    const weekday = firstSessionWeekday(block);
 
     // act
     render(<ProgramDocument view={view} />);
@@ -446,6 +455,23 @@ describe('ProgramDocument strength days', () => {
     expect(within(dayPage(1, weekday)).queryByText(/^Same sets as/)).not.toBeInTheDocument();
     const link = within(dayPage(3, weekday)).getByRole('link', { name: 'Monday 14 September' });
     expect(link).toHaveAttribute('href', `#${dayPage(1, weekday).id}`);
+  });
+
+  it("prints a later week at its own targets in full, with no pointer back to the first week", () => {
+    // arrange
+    const view = viewFor();
+    const [block] = blocksOf(view);
+    const weekday = firstSessionWeekday(block);
+    const main = firstSession(block).rows[0];
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(within(dayPage(2, weekday)).queryByText(/^Same sets as/)).not.toBeInTheDocument();
+    const repsOf = (week: number) =>
+      within(within(dayTable(week, weekday)).getByRole('rowheader', { name: `${nameOf(view, main.exerciseId)}, Set 1` }).closest('tr')!).getAllByRole('cell')[0].textContent;
+    expect([repsOf(1), repsOf(2)]).toEqual(['12–15', '13–15']);
   });
 
   it('names the exercise, its rest and every swap as a link on its note line, with no swaps section', () => {
@@ -490,10 +516,12 @@ describe('ProgramDocument strength days', () => {
   it('shows a weight column only when a set prescribes one, with warm-up sets lighter and an empty weight where none is suggested', () => {
     // arrange
     const view = viewFor();
-    const warmUp = { kind: 'warm-up' as const, reps: { min: 10, max: 10 } };
-    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 }, weightKg: 60 };
-    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-    withFirstSession(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [warmUp, top, steady] }] }));
+    const startSets: PlannedSet[] = [
+      { id: 'warm-up', kind: 'warm-up', start: { reps: { min: 10, max: 10 }, rir: 2 } },
+      { id: 'top', kind: 'working', start: { reps: { min: 5, max: 5 }, rir: 2, weightKg: 60 } },
+      { id: 'steady', kind: 'working', start: { reps: { min: 8, max: 10 }, rir: 2 } },
+    ];
+    withFirstSession(view, original => ({ ...original, rows: [{ ...original.rows[0], startSets }] }));
 
     // act
     renderFirstWeek(view);
@@ -503,9 +531,9 @@ describe('ProgramDocument strength days', () => {
     expect(within(table).getAllByRole('columnheader').map(head => head.textContent)).toContain('Weight');
     const [, , ...sets] = within(table).getAllByRole('row');
     expect(sets.map(set => within(set).getAllByRole('cell').map(cell => cell.textContent))).toEqual([
-      ['10warm-up', '–none', 'lighter'],
+      ['10, warm-up', '–none', 'lighter'],
       ['5', '2', '60 kg'],
-      ['8–10', '1–2', ''],
+      ['8–10', '2', ''],
     ]);
   });
 
@@ -525,7 +553,9 @@ describe('ProgramDocument strength days', () => {
     const table = dayTable(1, firstSessionWeekday(block));
     expect(within(table).getByRole('rowheader', { name: new RegExp(`^${positionLabel(session, perSide)} ${nameOf(view, perSide.exerciseId)}`) })).not.toHaveTextContent(/per side/i);
     const perSideSets = within(table).getAllByRole('rowheader', { name: new RegExp(`^${nameOf(view, perSide.exerciseId)}, Set`) });
-    expect(perSideSets.map(set => set.nextElementSibling?.textContent)).toEqual(perSide.sets.map(set => `${set.reps.min}–${set.reps.max}per side`));
+    expect(perSideSets.map(set => set.nextElementSibling?.textContent)).toEqual(
+      perSide.startSets.filter(set => set.kind === 'working').map(({ start }) => `${start.reps.min}–${start.reps.max}per side`),
+    );
     const timedSets = within(table).getAllByRole('rowheader', { name: new RegExp(`^${nameOf(view, timed.exerciseId)}, Set`) });
     expect(timedSets[0].nextElementSibling).toHaveTextContent(/^\d+(–\d+)?s/);
   });
@@ -566,7 +596,7 @@ describe('ProgramDocument strength days', () => {
     // assert
     const table = dayTable(1, firstSessionWeekday(blocksOf(view)[0]));
     expect(table).toHaveTextContent('Brace first');
-    expect(table).toHaveTextContent('Add 2 kg weekly');
+    expect(table).toHaveTextContent('How to progress. Add 2 kg weekly');
     expect(table).not.toHaveTextContent('Library description');
   });
 
@@ -740,6 +770,24 @@ describe('ProgramDocument closing and editing', () => {
     }
     expect(screen.getByRole('textbox', { name: 'A note from Eli (optional)' })).toBeInTheDocument();
     expect(within(weekPage(1)).getByRole('button', { name: 'Edit Calibration week' })).toBeInTheDocument();
-    expect(screen.getByText('Weeks 2–4 print the same pages with their own dates.')).toBeInTheDocument();
+    expect(screen.getByText('Weeks 2–4 print the same sessions with their own dates and targets.')).toBeInTheDocument();
+  });
+
+  it("tells the coach in editing mode which later weeks print the block's first pages and which their own targets", () => {
+    // arrange
+    const editing = { write: vi.fn(), reset: vi.fn() };
+    const held = viewFor();
+    withCustomProgression(blocksOf(held)[0]);
+    const progressing = viewFor();
+
+    // act
+    const { unmount } = render(<ProgramDocument view={held} editing={editing} part="block" />);
+    const heldNote = screen.getByText(/^Weeks 2–4 print/).textContent;
+    unmount();
+    render(<ProgramDocument view={progressing} editing={editing} part="block" />);
+
+    // assert
+    expect(heldNote).toBe('Weeks 2–4 print the same pages with their own dates.');
+    expect(screen.getByText(/^Weeks 2–4 print/)).toHaveTextContent('Weeks 2–4 print the same sessions with their own dates and targets.');
   });
 });

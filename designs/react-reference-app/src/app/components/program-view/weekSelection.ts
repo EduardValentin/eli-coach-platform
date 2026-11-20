@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { WEEKDAYS, type Weekday } from '../../domain/program';
-export type DaysMode = 'focus' | 'all';
 
-type WeekChoice = { week: number | null; day: Weekday | null; mode: DaysMode };
+type WeekChoice = { week: number | null; day: Weekday | null };
 
 export type WeekSelection = WeekChoice & { choose: (change: Partial<WeekChoice>) => void };
 
 const WEEK_PARAM = 'week';
 const DAY_PARAM = 'day';
-const MODE_PARAM = 'days';
-const NO_CHOICE: WeekChoice = { week: null, day: null, mode: 'focus' };
+const NO_CHOICE: WeekChoice = { week: null, day: null };
 
 function weekdayOf(value: string | null): Weekday | null {
   return WEEKDAYS.find(weekday => weekday === value) ?? null;
@@ -31,7 +29,6 @@ export function useUrlWeekSelection(): WeekSelection {
   const choice: WeekChoice = {
     week: weekOf(searchParams.get(WEEK_PARAM)),
     day: weekdayOf(searchParams.get(DAY_PARAM)),
-    mode: searchParams.get(MODE_PARAM) === 'all' ? 'all' : 'focus',
   };
 
   function choose(change: Partial<WeekChoice>) {
@@ -39,7 +36,6 @@ export function useUrlWeekSelection(): WeekSelection {
     const params = new URLSearchParams(searchParams);
     withParam(params, WEEK_PARAM, next.week === null ? null : String(next.week));
     withParam(params, DAY_PARAM, next.day);
-    withParam(params, MODE_PARAM, next.mode === 'all' ? 'all' : null);
     setSearchParams(params, { replace: true });
   }
 

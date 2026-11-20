@@ -31,7 +31,7 @@ import {
 } from '../../utils/subscriptionCopy';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-import { InlineProblem } from '../InlineProblem';
+import { InlineProblem } from '../ui/inline-problem';
 import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
 import { CardOnFileReading } from './CardOnFileReading';
 import { PaymentMethodProblems } from './PaymentMethodProblems';

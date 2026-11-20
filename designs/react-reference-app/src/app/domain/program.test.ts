@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { row as fixtureRow, session as fixtureSession } from '../../test/programFixtures';
+import { row as fixtureRow, session as fixtureSession, startSets } from '../../test/programFixtures';
 import type { ProgramSetup } from './programOnboarding';
 import { initialContent } from './programSuggestions';
 import {
@@ -11,16 +11,15 @@ import {
   hasExercises,
   mapCalendar,
   planHasCoolDown,
-  withSetAdded,
+  plannedSets,
   scheduledSessions,
   sessionOn,
   newId,
   positionLabel,
   roleForSlot,
   isWorkingSet,
-  setsSummary,
+  setsBreakdown,
   warmUpItemText,
-  workingSets,
   type Program,
   type ProgramContent,
   type ProgramVersion,
@@ -31,10 +30,8 @@ import {
   type VersionState,
 } from './program';
 
-const STEADY_SET = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-
 function row(slot: Row['slot'], supersetGroup?: string): Row {
-  return fixtureRow({ id: newId(), exerciseId: 'exercise-1', slot, supersetGroup, sets: [STEADY_SET, STEADY_SET, STEADY_SET], restSeconds: 90 });
+  return fixtureRow({ id: newId(), exerciseId: 'exercise-1', slot, supersetGroup, startSets: startSets({ count: 3, reps: { min: 8, max: 10 }, rir: 2 }), restSeconds: 90 });
 }
 
 function sessionOf(rows: Row[]): Session {
@@ -194,80 +191,47 @@ describe('filledSessionCount', () => {
   });
 });
 
-describe('setsSummary', () => {
-  const set = (reps: [number, number], rir: [number, number]): SetSpec => ({
+describe('setsBreakdown', () => {
+  const set = (reps: [number, number], rir: number, weightKg?: number): SetSpec => ({
     kind: 'working',
     reps: { min: reps[0], max: reps[1] },
-    rir: { min: rir[0], max: rir[1] },
+    rir,
+    ...(weightKg === undefined ? {} : { weightKg }),
   });
 
-  it('summarises identical sets by count, reps and RIR range', () => {
+  it('reads sets that differ only in RIR as one kind of set, with the lowest to highest RIR', () => {
     // arrange
-    const sets = Array.from({ length: 4 }, () => set([6, 10], [1, 2]));
+    const warmUp: SetSpec = { kind: 'warm-up', reps: { min: 8, max: 8 } };
+    const sets = [warmUp, set([6, 10], 2), set([6, 10], 2), set([6, 10], 1)];
 
     // act
-    const summary = setsSummary(sets);
+    const breakdown = setsBreakdown(sets, ' s');
 
     // assert
-    expect(summary).toBe('4 working sets × 6–10 · RIR 1–2');
+    expect(breakdown).toEqual({ warmUp: 1, working: 3, reps: '6–10 s', rir: { min: 1, max: 2 } });
   });
 
-  it('shows a single RIR when its range is one value', () => {
+  it('gives no reps for working sets that differ in reps or in weight', () => {
     // arrange
-    const sets = [set([8, 8], [2, 2]), set([8, 8], [2, 2]), set([8, 8], [2, 2])];
+    const byReps = [set([5, 5], 2), set([8, 10], 2)];
+    const byWeight = [set([8, 10], 2, 60), set([8, 10], 2, 50)];
 
     // act
-    const summary = setsSummary(sets);
+    const breakdowns = [setsBreakdown(byReps), setsBreakdown(byWeight)];
 
     // assert
-    expect(summary).toBe('3 working sets × 8 · RIR 2');
+    expect(breakdowns.map(breakdown => breakdown.reps)).toEqual([null, null]);
   });
 
-  it('counts sets when they differ', () => {
-    // arrange
-    const sets = [set([5, 5], [2, 2]), set([8, 10], [1, 2]), set([8, 10], [1, 2]), set([8, 10], [1, 2])];
-
-    // act
-    const summary = setsSummary(sets);
-
-    // assert
-    expect(summary).toBe('4 working sets');
-  });
-
-  it('leads with the warm-up count and summarises the working sets', () => {
-    // arrange
-    const warmUp = (reps: number): SetSpec => ({ kind: 'warm-up', reps: { min: reps, max: reps } });
-    const sets = [warmUp(8), warmUp(5), ...Array.from({ length: 4 }, () => set([6, 10], [1, 2]))];
-
-    // act
-    const summary = setsSummary(sets);
-
-    // assert
-    expect(summary).toBe('2 warm-up sets · 4 working sets × 6–10 · RIR 1–2');
-  });
-
-  it('says there are no sets for an empty list', () => {
-    // act
-    const summary = setsSummary([]);
-
-    // assert
-    expect(summary).toBe('No sets');
-  });
-});
-
-describe('workingSets', () => {
-  it('keeps only the working sets, in order', () => {
+  it('tells a working set from a warm-up set', () => {
     // arrange
     const warmUp: SetSpec = { kind: 'warm-up', reps: { min: 8, max: 8 }, weightKg: 20 };
-    const first: SetSpec = { kind: 'working', reps: { min: 6, max: 8 }, rir: { min: 2, max: 2 }, weightKg: 40 };
-    const second: SetSpec = { kind: 'working', reps: { min: 6, max: 8 }, rir: { min: 1, max: 1 } };
 
     // act
-    const working = workingSets([warmUp, first, second]);
+    const answers = [warmUp, set([6, 8], 2)].map(isWorkingSet);
 
     // assert
-    expect(working).toEqual([first, second]);
-    expect([warmUp, first].map(isWorkingSet)).toEqual([false, true]);
+    expect(answers).toEqual([false, true]);
   });
 });
 
@@ -340,31 +304,27 @@ describe('hasExercises', () => {
   });
 });
 
-describe('withSetAdded', () => {
-  it('adds a copy of the last set, keeping its kind and values', () => {
-    // arrange
-    const working: SetSpec = { kind: 'working', reps: { min: 6, max: 8 }, rir: { min: 1, max: 2 }, weightKg: 40 };
-    const warmUp: SetSpec = { kind: 'warm-up', reps: { min: 10, max: 10 }, weightKg: 20 };
-
+describe('plannedSets', () => {
+  it('plans the warm-up sets first, then one working set per counted set, each with its own id and the last at its own RIR', () => {
     // act
-    const afterWorking = withSetAdded([warmUp, working]);
-    const afterWarmUp = withSetAdded([warmUp]);
+    const sets = plannedSets([{ reps: { min: 8, max: 8 }, rir: 3 }], { count: 3, reps: { min: 6, max: 10 }, rir: 3, lastSetRir: 2 });
 
     // assert
-    expect(afterWorking).toEqual([warmUp, working, working]);
-    expect(afterWorking[2]).not.toBe(working);
-    expect(afterWarmUp).toEqual([warmUp, warmUp]);
+    expect(sets.map(set => [set.kind, set.start.reps.min, set.start.rir])).toEqual([
+      ['warm-up', 8, 3],
+      ['working', 6, 3],
+      ['working', 6, 3],
+      ['working', 6, 2],
+    ]);
+    expect(new Set(sets.map(set => set.id)).size).toBe(4);
   });
 
-  it('starts an empty list with a working set', () => {
-    // arrange
-    const sets: SetSpec[] = [];
-
+  it('starts a single working set at the last set’s RIR', () => {
     // act
-    const added = withSetAdded(sets);
+    const sets = plannedSets([], { count: 1, reps: { min: 6, max: 10 }, rir: 3, lastSetRir: 2 });
 
     // assert
-    expect(added).toEqual([{ kind: 'working', reps: { min: 8, max: 8 }, rir: { min: 2, max: 2 } }]);
+    expect(sets.map(set => set.start.rir)).toEqual([2]);
   });
 });
 

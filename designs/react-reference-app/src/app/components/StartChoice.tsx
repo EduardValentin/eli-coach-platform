@@ -1,6 +1,6 @@
 import { useId, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
-import { InlineProblem } from './InlineProblem';
+import { InlineProblem } from './ui/inline-problem';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import {
   withdrawalDeadline,

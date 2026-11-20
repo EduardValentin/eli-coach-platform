@@ -44,6 +44,19 @@ describe('PlanTimeline', () => {
     expect(screen.getByText('Check-in form day, every two weeks')).toBeInTheDocument();
   });
 
+  it('heads each block with its number of weeks and its dates, and a one-week block with its dates alone', () => {
+    // arrange
+    const today = addDays(dayOne, 30);
+
+    // act
+    render(<PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday="mon" today={today} weekAction={showIn()} />);
+
+    // assert
+    expect(screen.getByText('4 weeks').parentElement).toHaveTextContent(/^4 weeks · 7 Sep–4 Oct$/);
+    expect(screen.getByText('16–22 Nov').parentElement).toHaveTextContent(/^16–22 Nov$/);
+    expect(screen.queryByText('1 week')).not.toBeInTheDocument();
+  });
+
   it('names the weeks without dates, check-in forms or this week before day 1 is set', () => {
     // arrange
     const today = dayOne;
@@ -54,6 +67,39 @@ describe('PlanTimeline', () => {
     // assert
     expect(weekNames()[0]).toBe('Show in the week card: Week 1 of 11, Foundation block, week 1 of 4');
     expect(screen.queryByText('Check-in form day, every two weeks')).not.toBeInTheDocument();
+  });
+
+  it('names a one-week block without a week of block, whichever way the cell leads', () => {
+    // arrange
+    const today = addDays(dayOne, 30);
+
+    // act
+    const { unmount } = render(<PlanTimeline blocks={blocks} dayOne={null} preferredWeekday="mon" today={today} weekAction={showIn()} />);
+    const actionFirst = weekNames()[10];
+    unmount();
+    render(<PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday="mon" today={today} weekAction={{ kind: 'open-block', onOpen: vi.fn() }} />);
+
+    // assert
+    expect(actionFirst).toBe('Show in the week card: Week 11 of 11, Deload block');
+    expect(weekNames()[10]).toMatch(/^Week 11 of 11, 16 Nov to 22 Nov, Deload, /);
+    expect(weekNames()[0]).toBe('Week 1 of 11, 7 Sep to 13 Sep, Foundation week 1 of 4, open block');
+  });
+
+  it('dates the weeks of a timeline that opens blocks from today until day 1 is set, marking no week as this week', async () => {
+    // arrange
+    const onOpen = vi.fn();
+    const user = userEvent.setup();
+    render(<PlanTimeline blocks={blocks} dayOne={null} preferredWeekday="mon" today={dayOne} weekAction={{ kind: 'open-block', onOpen }} />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: /^Week 6 of 11, / }));
+
+    // assert
+    expect(weekNames()[0]).toBe('Week 1 of 11, 7 Sep to 13 Sep, Foundation week 1 of 4, open block');
+    expect(weekNames().filter(name => name.includes('this week'))).toEqual([]);
+    expect(within(screen.getByRole('list', { name: 'Plan blocks' })).queryAllByRole('listitem', { current: 'step' })).toEqual([]);
+    expect(screen.getByText('Check-in form day, every two weeks, on Mondays')).toBeInTheDocument();
+    expect(onOpen).toHaveBeenCalledWith(1);
   });
 
   it('marks no week as this week once the plan has ended', () => {

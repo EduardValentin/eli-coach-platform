@@ -4,7 +4,7 @@ import type { Block, CardioSession, Program, ProgramVersion, Session, Weekday } 
 import { blockDates, currentPosition, planWeeks, type DateRange, type PlanPosition } from '../../domain/programCalendar';
 import { cardioMinutes } from '../../domain/programCardio';
 import { programText, type ProgramText, type ProgramTextTarget } from '../../domain/programTexts';
-import { estimatedDuration, estimatedMinutes } from '../../domain/sessionTiming';
+import { estimatedDuration } from '../../domain/sessionTiming';
 import { counted } from '../../utils/counted';
 import { weekOfPlanText } from './weekView';
 
@@ -49,9 +49,8 @@ export function currentBlock(view: ProgramView): Block | null {
   return (view.position.status === 'ended' ? blocks.at(-1) : blocks[0]) ?? null;
 }
 
-export function sessionSummary(session: Session, exercisesById: ExerciseLibrary): string {
+export function sessionSummary(session: Session, minutes: number): string {
   const exercises = counted(session.rows.length, 'exercise');
-  const minutes = estimatedMinutes(session, exercisesById);
   return minutes === 0 ? exercises : `${exercises} · ${estimatedDuration(minutes)}`;
 }
 
@@ -68,13 +67,35 @@ export function perSideUnit(exercise: Exercise | undefined, unit: string): strin
   return [unit, exercise?.perSide ? 'per side' : ''].filter(Boolean).join(' ');
 }
 
-export function repsUnit(exercise: Exercise | undefined): string {
-  return perSideUnit(exercise, exercise?.measuredIn === 'time' ? 's' : '');
+/** How the reps unit reads: `implied` after a number where reps go without saying, `spelled` after a number, `column` as a column name. */
+type RepsWording = 'implied' | 'spelled' | 'column';
+
+const REPS_WORDS: Record<RepsWording, { reps: string; time: string }> = {
+  implied: { reps: '', time: 's' },
+  spelled: { reps: 'reps', time: 's' },
+  column: { reps: 'Reps', time: 'Seconds' },
+};
+
+export function repsUnit(exercise: Exercise | undefined, wording: RepsWording = 'implied'): string {
+  const words = REPS_WORDS[wording];
+  return perSideUnit(exercise, exercise?.measuredIn === 'time' ? words.time : words.reps);
 }
 
 export function repsSuffix(exercise: Exercise | undefined): string {
   const unit = repsUnit(exercise);
   return unit && ` ${unit}`;
+}
+
+const SHORTEST_WEEK_RANGE = 3;
+
+/** Week numbers with a run of three or more neighbouring weeks as a range, "2, 3, 5–8", since a range of two saves nothing. */
+export function weekRunsText(weeks: readonly number[]): string {
+  const runs = weeks.reduce<number[][]>((found, week) => {
+    const last = found.at(-1);
+    if (last && last.at(-1) === week - 1) return [...found.slice(0, -1), [...last, week]];
+    return [...found, [week]];
+  }, []);
+  return runs.flatMap(run => (run.length >= SHORTEST_WEEK_RANGE ? [`${run[0]}–${run.at(-1)}`] : run.map(String))).join(', ');
 }
 
 export const WHAT_CHANGED_LEAD = 'What changed:';

@@ -1,12 +1,16 @@
-import { createContext, useContext, useId, useState, type ReactNode } from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { createContext, useContext, useId, useState, type ReactElement, type ReactNode } from 'react';
 import { WIDGET_TITLE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { InlineTextButton } from './InlineTextButton';
 import { Emphasised, TemplateBody, type TemplateParagraph } from './ProgramText';
 import type { TextPart } from './programTextPlacement';
 
+/** `single` keeps one panel of the group open at a time; `multiple` lets each open on its own. */
+type DisclosureType = 'single' | 'multiple';
+
 type GroupState = {
-  openValue: string | null;
+  isOpen: (value: string) => boolean;
   idOf: (value: string, part: 'trigger' | 'panel') => string;
   toggle: (value: string) => void;
 };
@@ -15,40 +19,64 @@ const GroupContext = createContext<GroupState | null>(null);
 
 function useGroup(): GroupState {
   const group = useContext(GroupContext);
-  if (!group) throw new Error('A text disclosure needs a TextDisclosureGroup around it.');
+  if (!group) throw new Error('A disclosure needs a TextDisclosureGroup around it.');
   return group;
 }
 
-export function TextDisclosureGroup({ children }: { children: ReactNode }) {
-  const [openValue, setOpenValue] = useState<string | null>(null);
+function toggled(open: ReadonlySet<string>, value: string, type: DisclosureType): ReadonlySet<string> {
+  if (open.has(value)) return new Set([...open].filter(other => other !== value));
+  return type === 'single' ? new Set([value]) : new Set([...open, value]);
+}
+
+type TextDisclosureGroupProps = { type?: DisclosureType; children: ReactNode };
+
+export function TextDisclosureGroup({ type = 'single', children }: TextDisclosureGroupProps) {
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const baseId = useId();
 
   const group: GroupState = {
-    openValue,
+    isOpen: value => open.has(value),
     idOf: (value, part) => `${baseId}-${value}-${part}`,
-    toggle: value => setOpenValue(current => (current === value ? null : value)),
+    toggle: value => setOpen(current => toggled(current, value, type)),
   };
   return <GroupContext.Provider value={group}>{children}</GroupContext.Provider>;
 }
 
-type TriggerSize = 'sm' | 'lg';
+export function useDisclosureOpen(value: string): boolean {
+  return useGroup().isOpen(value);
+}
 
-type TextDisclosureTriggerProps = { value: string; size?: TriggerSize; children: ReactNode };
+type DisclosurePartProps = { value: string; children: ReactElement };
 
-export function TextDisclosureTrigger({ value, size = 'sm', children }: TextDisclosureTriggerProps) {
+/** Gives the caller's button the trigger's id, state and toggle. */
+export function DisclosureTrigger({ value, children }: DisclosurePartProps) {
   const group = useGroup();
-  const open = group.openValue === value;
+  const open = group.isOpen(value);
   return (
-    <InlineTextButton
+    <Slot
       id={group.idOf(value, 'trigger')}
       aria-expanded={open}
       aria-controls={open ? group.idOf(value, 'panel') : undefined}
-      size={size}
-      trailing="disclosure"
+      data-state={open ? 'open' : 'closed'}
       onClick={() => group.toggle(value)}
     >
       {children}
-    </InlineTextButton>
+    </Slot>
+  );
+}
+
+/** The caller's element as the panel its trigger controls, rendered only while open. */
+export function DisclosureContent({ value, children }: DisclosurePartProps) {
+  const group = useGroup();
+  if (!group.isOpen(value)) return null;
+  return <Slot id={group.idOf(value, 'panel')}>{children}</Slot>;
+}
+
+export function TextDisclosureTrigger({ value, children }: { value: string; children: ReactNode }) {
+  return (
+    <DisclosureTrigger value={value}>
+      <InlineTextButton trailing="disclosure">{children}</InlineTextButton>
+    </DisclosureTrigger>
   );
 }
 
@@ -93,19 +121,30 @@ type PanelHost = 'base' | 'subtle';
 
 const PANEL_SURFACE_CLASS: Record<PanelHost, string> = { base: 'bg-surface-subtle', subtle: 'bg-surface-base' };
 
+type DisclosurePanelProps = { value: string; host?: PanelHost; children: ReactNode };
+
+export function DisclosurePanel({ value, host = 'base', children }: DisclosurePanelProps) {
+  const group = useGroup();
+  return (
+    <DisclosureContent value={value}>
+      <section
+        aria-labelledby={group.idOf(value, 'trigger')}
+        data-parity="text-panel"
+        className={cn('border-y border-border-subtle p-4 @3xl:px-6 @3xl:py-5', PANEL_SURFACE_CLASS[host])}
+      >
+        {children}
+      </section>
+    </DisclosureContent>
+  );
+}
+
 type TextDisclosurePanelProps = { value: string; parts: readonly TextPart[]; headingLevel: HeadingLevel; host?: PanelHost };
 
-export function TextDisclosurePanel({ value, parts, headingLevel, host = 'base' }: TextDisclosurePanelProps) {
-  const group = useGroup();
-  if (group.openValue !== value || parts.length === 0) return null;
+export function TextDisclosurePanel({ value, parts, headingLevel, host }: TextDisclosurePanelProps) {
+  if (parts.length === 0) return null;
   return (
-    <section
-      id={group.idOf(value, 'panel')}
-      aria-labelledby={group.idOf(value, 'trigger')}
-      data-parity="text-panel"
-      className={cn('border-y border-border-subtle p-4 @3xl:px-6 @3xl:py-5', PANEL_SURFACE_CLASS[host])}
-    >
+    <DisclosurePanel value={value} host={host}>
       <TextParts parts={parts} headingLevel={headingLevel} />
-    </section>
+    </DisclosurePanel>
   );
 }

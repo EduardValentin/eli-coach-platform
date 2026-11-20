@@ -60,6 +60,7 @@ describe('ProgramEditorPage', () => {
     expect(within(rows[0]).getByRole('combobox', { name: 'Type of block 1' })).toHaveTextContent('Foundation');
     expect(within(rows[1]).getByRole('combobox', { name: 'Type of block 2' })).toHaveTextContent('Hypertrophy');
     expect(within(rows[2]).getByRole('combobox', { name: 'Type of block 3' })).toHaveTextContent('Deload');
+    expect(within(rows[2]).getByRole('spinbutton', { name: 'Weeks of block 3' })).toHaveAccessibleDescription('A deload is always 1 week');
     expect(within(rail()).getByRole('button', { name: '1 Foundation weeks 1–4' })).toBeInTheDocument();
   });
 
@@ -122,7 +123,7 @@ describe('ProgramEditorPage', () => {
     await user.click(within(rail()).getByRole('button', { name: /^Overview/ }));
     const rows = blockRows();
     expect(rows).toHaveLength(4);
-    expect(within(rows[3]).getByRole('button', { name: 'Open block 4, Hypertrophy · 3 of 3 sessions' })).toHaveTextContent('3/3');
+    expect(within(rows[3]).getByRole('button', { name: /^Open block 4, Hypertrophy: Full Body\b.*3 of 3 sessions$/ })).toHaveTextContent('3 of 3 sessions');
   });
 
   it('moves a block up with the arrow key on its reorder handle', async () => {
@@ -143,24 +144,58 @@ describe('ProgramEditorPage', () => {
     expect(within(rail()).getByRole('button', { name: /^1 Hypertrophy/ })).toBeInTheDocument();
   });
 
-  it('removes an upcoming block from its row actions', async () => {
+  it('removes an upcoming block with its row remove button once she confirms', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
 
     // act
-    await user.click(within(blockRows()[2]).getByRole('button', { name: 'Block 3 actions' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Remove' }));
+    await user.click(within(blockRows()[2]).getByRole('button', { name: 'Remove block 3, Deload' }));
+    await user.click(within(await screen.findByRole('alertdialog', { name: 'Remove block 3?' })).getByRole('button', { name: 'Remove block' }));
 
     // assert
     expect(blockRows()).toHaveLength(2);
   });
 
-  it('opens a block from its sessions count', async () => {
+  it('lists what a block row removal would lose and keeps the block when she cancels', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    const remove = within(blockRows()[0]).getByRole('button', { name: /^Remove block 1, / });
+
+    // act
+    await user.click(remove);
+    const dialog = await screen.findByRole('alertdialog', { name: 'Remove block 1?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    // assert
+    expect(blockRows()).toHaveLength(3);
+    await waitFor(() => expect(remove).toHaveFocus());
+  });
+
+  it('moves focus to the next block row after a confirmed removal, else the previous one', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
 
     // act
-    await user.click(within(blockRows()[1]).getByRole('button', { name: 'Open block 2, Hypertrophy · 3 of 3 sessions' }));
+    await user.click(within(blockRows()[1]).getByRole('button', { name: /^Remove block 2, / }));
+    await user.click(within(await screen.findByRole('alertdialog', { name: 'Remove block 2?' })).getByRole('button', { name: 'Remove block' }));
+
+    // assert
+    await waitFor(() => expect(within(blockRows()[1]).getByRole('button', { name: /^Open block 2, / })).toHaveFocus());
+
+    // act
+    await user.click(within(blockRows()[1]).getByRole('button', { name: /^Remove block 2, / }));
+    await user.click(within(await screen.findByRole('alertdialog', { name: 'Remove block 2?' })).getByRole('button', { name: 'Remove block' }));
+
+    // assert
+    await waitFor(() => expect(within(blockRows()[0]).getByRole('button', { name: /^Open block 1, / })).toHaveFocus());
+  });
+
+  it('opens a block from its row', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+
+    // act
+    await user.click(within(blockRows()[1]).getByRole('button', { name: /^Open block 2, Hypertrophy: Full Body\b.*3 of 3 sessions$/ }));
 
     // assert
     expect(await screen.findByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
@@ -180,7 +215,7 @@ describe('ProgramEditorPage', () => {
     expect(weeks.filter(week => week.getAttribute('aria-label')?.includes(`check-in form ${format(firstForm, 'EEE d MMM')}`))).toHaveLength(1);
   });
 
-  it('opens the publish dialog on the warnings from the top bar', async () => {
+  it('reviews the warnings from the top bar without opening the publish dialog', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
 
@@ -188,8 +223,22 @@ describe('ProgramEditorPage', () => {
     await user.click(screen.getByRole('button', { name: /^\d+ things? worth a look$/ }));
 
     // assert
-    const sheet = screen.getByRole('dialog', { name: 'Publish version 1' });
-    expect(within(sheet).getByRole('heading', { name: 'Worth a look' })).toBeInTheDocument();
+    const review = screen.getByRole('dialog', { name: 'Review the draft' });
+    expect(within(review).getByRole('heading', { name: 'Worth a look' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Publish version 1' })).not.toBeInTheDocument();
+  });
+
+  it('opens the block a reviewed warning concerns', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    await user.click(screen.getByRole('button', { name: /^\d+ things? worth a look$/ }));
+
+    // act
+    await user.click(within(screen.getByRole('dialog', { name: 'Review the draft' })).getByRole('button', { name: /is trained on fewer than 2 days$/ }));
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: 'Review the draft' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /^Block \d · / })).toBeInTheDocument();
   });
 
   it('shows the block header with a calibration switch and the block actions', async () => {
@@ -219,7 +268,7 @@ describe('ProgramEditorPage', () => {
     // act
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
     await user.click(screen.getByRole('menuitem', { name: 'Remove block' }));
-    const confirm = screen.getByRole('dialog', { name: 'Remove block 3?' });
+    const confirm = screen.getByRole('alertdialog', { name: 'Remove block 3?' });
     expect(within(confirm).getAllByText(/ · \d+ exercises?$/).length).toBeGreaterThan(0);
     await user.click(within(confirm).getByRole('button', { name: 'Remove block' }));
 
@@ -316,7 +365,7 @@ describe('ProgramEditorPage', () => {
     // act
     await user.click(screen.getByRole('combobox', { name: 'Split' }));
     await user.click(screen.getByRole('option', { name: 'Upper / Lower' }));
-    await user.click(within(screen.getByRole('dialog', { name: 'Change the split?' })).getByRole('button', { name: 'Rebuild sessions' }));
+    await user.click(within(screen.getByRole('alertdialog', { name: 'Change the split?' })).getByRole('button', { name: 'Rebuild sessions' }));
 
     // assert
     expect(within(rail()).getByRole('button', { name: /^1 Foundation weeks 1–4 \d+ sessions? empty$/ })).toBeInTheDocument();
@@ -338,7 +387,7 @@ describe('ProgramEditorPage', () => {
     expect(within(rail()).getByRole('button', { name: /^2 Foundation has a problem/ })).toBeInTheDocument();
   });
 
-  it('counts blocking problems in the top bar and opens the publish dialog at them', async () => {
+  it('counts blocking problems in the top bar and lists them in the review', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
     await user.click(within(blockRows()[1]).getByRole('combobox', { name: 'Type of block 2' }));
@@ -348,9 +397,48 @@ describe('ProgramEditorPage', () => {
     await user.click(screen.getByRole('button', { name: '1 problem to fix before publishing' }));
 
     // assert
-    const sheet = screen.getByRole('dialog', { name: 'Publish version 1' });
-    expect(within(sheet).getByRole('heading', { name: 'Before you can publish' })).toBeInTheDocument();
-    expect(within(sheet).getByRole('button', { name: 'Keep editing' })).toHaveFocus();
+    const review = screen.getByRole('dialog', { name: 'Review the draft' });
+    expect(within(review).getByRole('heading', { name: 'Before you can publish' })).toBeInTheDocument();
+    expect(within(review).getByRole('button', { name: 'Foundation must be the first block' })).toBeInTheDocument();
+  });
+
+  it('shows the editor skeleton while the program loads', () => {
+    // arrange
+    const search = '&pseed=draft&jstage=approved&pload=loading';
+
+    // act
+    renderProgramEditor(search);
+
+    // assert
+    expect(screen.getByRole('status')).toHaveTextContent('Loading the program editor');
+    expect(screen.getByRole('main', { name: 'Program editor' })).toContainElement(screen.getByRole('heading', { level: 1, name: 'Program editor' }));
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
+  });
+
+  it('offers a retry when the program could not be loaded', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&pload=failed');
+    expect(screen.getByRole('main', { name: 'Program editor' })).toContainElement(screen.getByRole('heading', { level: 1, name: "The program couldn't be loaded" }));
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    // assert
+    expect(await screen.findByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument();
+  });
+
+  it('leads to the program setup when the client has no program yet', () => {
+    // arrange
+    const search = '&pseed=none&jstage=approved';
+
+    // act
+    renderProgramEditor(search);
+
+    // assert
+    expect(screen.getByRole('main', { name: 'Program editor' })).toContainElement(screen.getByRole('heading', { level: 1, name: 'No program yet' }));
+    expect(screen.getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
+    expect(screen.getByRole('link', { name: 'Set up program' })).toHaveAttribute('href', '/coach/clients/c1/program/new');
   });
 
   it('says why the language is fixed once a version is published', async () => {

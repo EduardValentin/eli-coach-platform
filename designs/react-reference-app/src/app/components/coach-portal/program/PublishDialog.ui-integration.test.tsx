@@ -28,7 +28,7 @@ async function choose(user: User, combobox: HTMLElement, option: string) {
 async function emptyFirstBlock(user: User) {
   await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
   await choose(user, screen.getByRole('combobox', { name: 'Split' }), 'Upper / Lower');
-  await user.click(within(screen.getByRole('dialog', { name: 'Change the split?' })).getByRole('button', { name: 'Rebuild sessions' }));
+  await user.click(within(screen.getByRole('alertdialog', { name: 'Change the split?' })).getByRole('button', { name: 'Rebuild sessions' }));
 }
 
 describe('PublishDialog', () => {

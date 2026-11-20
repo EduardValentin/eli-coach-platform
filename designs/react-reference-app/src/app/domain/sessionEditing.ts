@@ -1,12 +1,12 @@
 import type { Exercise } from '../context/TrainingContext';
-import { newId, SLOTS, withField, type Block, type Row, type Session, type Slot } from './program';
+import { newId, SLOTS, withField, type Block, type PlacedRow, type Row, type Session, type Slot } from './program';
 import { resetRowDefaults } from './programDefaults';
 import { filledRow, type RowContext } from './programSuggestions';
 import { slotPlanFor } from './splitTemplates';
 import { MAX_SUBSTITUTIONS, substitutionsFor } from './substitutions';
 
 export type Placement = { slot: Slot; beforeRowId?: string };
-export type SlotUnit = { key: string; group?: string; rows: Row[] };
+export type SlotUnit<Unit extends PlacedRow = Row> = { key: string; group?: string; rows: Unit[] };
 
 export const SINGLE_CARD_SLOTS: readonly Slot[] = ['A', 'B'];
 
@@ -53,8 +53,8 @@ function insertedAfter(rows: Row[], row: Row, afterRowId: string): Row[] {
   return [...rows.slice(0, after + 1), row, ...rows.slice(after + 1)];
 }
 
-function unitsOf(rows: readonly Row[]): SlotUnit[] {
-  const units: SlotUnit[] = [];
+function unitsOf<Unit extends PlacedRow>(rows: readonly Unit[]): SlotUnit<Unit>[] {
+  const units: SlotUnit<Unit>[] = [];
   for (const row of rows) {
     const last = units.at(-1);
     const joinsLast = row.supersetGroup !== undefined && last?.group === row.supersetGroup && last.rows[0].slot === row.slot;
@@ -68,7 +68,7 @@ export function slotUnits(session: Session, slot: Slot): SlotUnit[] {
   return unitsOf(session.rows.filter(row => row.slot === slot));
 }
 
-export function sessionUnits(session: Session): SlotUnit[] {
+export function sessionUnits<Unit extends PlacedRow>(session: { rows: readonly Unit[] }): SlotUnit<Unit>[] {
   return unitsOf(session.rows);
 }
 

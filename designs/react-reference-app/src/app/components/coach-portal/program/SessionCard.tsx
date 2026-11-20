@@ -5,8 +5,9 @@ import { coolDownEdits } from '../../../domain/coolDownEditing';
 import { SLOTS, type Block, type Session } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import type { RowContext } from '../../../domain/programSuggestions';
+import type { ProgressionSchedule } from '../../../domain/programProgression';
 import { rowEdits } from '../../../domain/sessionEditing';
-import { estimatedMinutes, isOverTarget } from '../../../domain/sessionTiming';
+import { isOverTarget, longestWeekMinutes } from '../../../domain/sessionTiming';
 import { slotPlanOrFallback } from '../../../domain/splitTemplates';
 import { warmUpEdits } from '../../../domain/warmUpEditing';
 import { describeLoss } from '../../../domain/weekEditing';
@@ -15,7 +16,7 @@ import { cn } from '../../ui/utils';
 import { sessionSummary } from '../../program-view/programView';
 import { CoolDownCard } from './CoolDownCard';
 import { useEditorAnnouncer } from './editorAnnouncer';
-import { useResetConfirm } from './ResetConfirm';
+import { useDestructiveConfirm } from './DestructiveConfirm';
 import {
   CollapsedSessionHeader,
   EXPANDED_SESSION_CLASS,
@@ -36,6 +37,7 @@ type SessionCardProps = {
   articleRef: Ref<HTMLElement>;
   library: readonly Exercise[];
   context: RowContext;
+  schedule: ProgressionSchedule;
   onExpand: () => void;
   onChange: (session: Session) => void;
   onOpenLibrary: (target: LibraryTarget) => void;
@@ -45,7 +47,7 @@ function durationAgainstTarget(minutes: number, targetMinutes: number): string {
   return minutes === 0 ? `0 of ${targetMinutes} min` : `~${minutes} of ${targetMinutes} min`;
 }
 
-export function SessionCard({ session, block, expanded, articleRef, library, context, onExpand, onChange, onOpenLibrary }: SessionCardProps) {
+export function SessionCard({ session, block, expanded, articleRef, library, context, schedule, onExpand, onChange, onOpenLibrary }: SessionCardProps) {
   const headingId = useId();
   const nameField = useRef<HTMLInputElement>(null);
   const focusLater = usePendingFocus();
@@ -54,12 +56,13 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
     onExpand();
   };
   const header = useMeasuredHeight();
-  const confirm = useResetConfirm();
+  const confirm = useDestructiveConfirm();
   const announce = useEditorAnnouncer();
   const edits = rowEdits(session, context);
   const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
-  const minutes = estimatedMinutes(session, exercisesById);
-  const overTarget = isOverTarget(session, block, exercisesById);
+  const timing = { block, level: schedule.level, exercises: exercisesById };
+  const minutes = longestWeekMinutes(session, timing);
+  const overTarget = isOverTarget(session, timing);
   const slotTargets = SLOTS.map(slot => ({ slot, label: slotPlanOrFallback(block, session, slot).label }));
 
   function clear() {
@@ -77,14 +80,14 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
   if (!expanded) {
     return (
       <article ref={articleRef} aria-labelledby={headingId} className={SESSION_ARTICLE_CLASS}>
-        <CollapsedSessionHeader headingId={headingId} name={session.name} summary={sessionSummary(session, exercisesById)} onExpand={expand} />
+        <CollapsedSessionHeader headingId={headingId} name={session.name} summary={sessionSummary(session, minutes)} onExpand={expand} />
       </article>
     );
   }
 
   return (
     <article ref={articleRef} aria-labelledby={headingId} className={cn(SESSION_ARTICLE_CLASS, EXPANDED_SESSION_CLASS)} style={sessionHeaderHeightStyle(header.height)}>
-      <header ref={header.measureRef} className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card/95 px-3 py-2 backdrop-blur-sm lg:top-[calc(var(--block-header-height)-1.5rem)]">
+      <header ref={header.measureRef} className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card px-3 py-2 lg:top-[calc(var(--block-header-height)-1.5rem)]">
         <h3 id={headingId} className="sr-only">
           {session.name}
         </h3>
@@ -118,6 +121,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
             library={library}
             edits={edits}
             slots={slotTargets}
+            schedule={schedule}
             onChange={onChange}
             onAdd={target => onOpenLibrary({ kind: 'slot', sessionId: session.id, slot: target })}
             onAddSubstitution={rowId => onOpenLibrary({ kind: 'substitution', sessionId: session.id, rowId })}

@@ -48,10 +48,8 @@ const context = (overrides: Partial<RuleContext> = {}): RuleContext => ({
   ...overrides,
 });
 
-const THREE_SETS = Array.from({ length: 3 }, () => ({ kind: 'working' as const, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
-
 const row = (exerciseId: string, slot: Slot = 'A', supersetGroup?: string): Row =>
-  fixtureRow({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: THREE_SETS, restSeconds: 90 });
+  fixtureRow({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, restSeconds: 90 });
 
 const session = (id: string, rows: Row[] = [row('bench')], name = id): Session => fixtureSession({ id, name, rows });
 
@@ -265,6 +263,55 @@ describe('blockShorterThanElapsed', () => {
       context({ dayOne, publishedBlocks: published }),
     );
     expect(codes(found)).toContain('block-shorter-than-elapsed');
+  });
+});
+
+describe('loading weeks without a Deload', () => {
+  it.each([
+    ['beginner', 10],
+    ['intermediate', 6],
+    ['advanced', 5],
+  ] as const)('warns a %s plan once loading weeks run past %s', (level, limit) => {
+    // arrange
+    const atLimit = blocks({ type: 'hypertrophy', weeks: limit - 1 }, { type: 'strength', weeks: 1 });
+    const pastLimit = blocks({ type: 'hypertrophy', weeks: limit - 1 }, { type: 'strength', weeks: 2 });
+
+    // act
+    const [passed, found] = [warnings(content(atLimit), context({ level })), warnings(content(pastLimit), context({ level }))];
+
+    // assert
+    expect(codes(passed)).not.toContain('loading-weeks-without-deload');
+    expect(found).toContainEqual({ code: 'loading-weeks-without-deload', blockId: 'b2', detail: String(limit) });
+    expect(warningMessage(found.find(finding => finding.code === 'loading-weeks-without-deload')!)).toBe(
+      `More than ${limit} loading weeks without a Deload`,
+    );
+  });
+
+  it('does not count Foundation weeks and starts over after a Deload', () => {
+    // arrange
+    const planBlocks = blocks(
+      { type: 'foundation', weeks: 4 },
+      { type: 'hypertrophy', weeks: 6 },
+      { type: 'deload', weeks: 1 },
+      { type: 'hypertrophy', weeks: 6 },
+    );
+
+    // act
+    const found = warnings(content(planBlocks), context({ level: 'intermediate' }));
+
+    // assert
+    expect(codes(found)).not.toContain('loading-weeks-without-deload');
+  });
+
+  it('does not let a Foundation block between two loading blocks reset the run', () => {
+    // arrange
+    const planBlocks = blocks({ type: 'hypertrophy', weeks: 4 }, { type: 'foundation', weeks: 2 }, { type: 'hypertrophy', weeks: 3 });
+
+    // act
+    const found = warnings(content(planBlocks), context({ level: 'intermediate' }));
+
+    // assert
+    expect(found).toContainEqual({ code: 'loading-weeks-without-deload', blockId: 'b3', detail: '6' });
   });
 });
 

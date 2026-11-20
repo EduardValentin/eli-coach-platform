@@ -56,7 +56,7 @@ describe('rowEdits', () => {
     // assert
     const [row] = next.rows;
     expect(row).toMatchObject({ slot: 'C', exerciseId: 'curl', cues: 'curl cues', restSeconds: 75 });
-    expect(row.sets).toHaveLength(3);
+    expect(row.startSets.filter(set => set.kind === 'working')).toHaveLength(3);
     expect(row.substitutions).toEqual(['raise', 'kickback']);
   });
 
@@ -121,7 +121,7 @@ describe('rowEdits', () => {
 
     // assert
     expect(layout(next)).toEqual(['A:hinge', 'B:squat']);
-    expect(rowOf(next, 'hinge').sets).toHaveLength(3);
+    expect(rowOf(next, 'hinge').startSets.filter(set => set.kind === 'working')).toHaveLength(3);
   });
 
   it('moves a card out of a superset and dissolves a group of one', () => {
@@ -188,12 +188,13 @@ describe('rowEdits', () => {
     // arrange
     const deload: RowContext = { ...CONTEXT, blockType: 'deload' };
     const added = rowEdits(emptySession(), deload).add(byId('curl'), { slot: 'C' });
-    const sets: Row['sets'] = [
-      { kind: 'warm-up', reps: { min: 8, max: 8 } },
-      { kind: 'working', reps: { min: 10, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 17 },
-      { kind: 'working', reps: { min: 10, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 17 },
-    ];
-    const session = rowEdits(added, deload).replaceRow({ ...added.rows[0], sets });
+    const sets: Pick<Row, 'startSets'> = {
+      startSets: [
+        { id: 'warm-up', kind: 'warm-up', start: { reps: { min: 8, max: 8 }, rir: 4 } },
+        { id: 'working', kind: 'working', start: { reps: { min: 10, max: 12 }, rir: 4, weightKg: 17 } },
+      ],
+    };
+    const session = rowEdits(added, deload).replaceRow({ ...added.rows[0], ...sets });
 
     // act
     const moved = rowEdits(session, deload).move(session.rows[0].id, { slot: 'D' });
@@ -201,9 +202,9 @@ describe('rowEdits', () => {
 
     // assert
     expect(layout(moved)).toEqual(['D:curl']);
-    expect(rowOf(moved, 'curl').sets).toEqual(sets);
+    expect(rowOf(moved, 'curl')).toMatchObject(sets);
     expect(rowOf(swapped, 'curl').slot).toBe('A');
-    expect(rowOf(swapped, 'curl').sets).toEqual(sets);
+    expect(rowOf(swapped, 'curl')).toMatchObject(sets);
   });
 
   it('removes a substitution and marks the substitutions as touched', () => {

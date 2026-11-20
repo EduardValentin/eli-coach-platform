@@ -47,6 +47,7 @@ function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSe
       equipment={editor.equipment}
       dayOne={editor.ruleContext.dayOne}
       today={editor.today}
+      level={program.level}
       library={exercises}
       otherPrograms={programs().filter(other => other.callId !== program.callId)}
       journeys={journeys}
@@ -75,6 +76,7 @@ function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState>
 
 function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor' | 'onAddBlock'>) {
   const { updateSetup } = usePrograms();
+  const { exercises } = useTraining();
   return (
     <PlanOverview
       content={draft.content}
@@ -82,6 +84,7 @@ function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSe
       preferredWeekday={editor.ruleContext.preferredWeekday}
       today={editor.today}
       level={program.level}
+      library={exercises}
       onChange={editor.updateBlocks}
       onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
       onAddBlock={onAddBlock}

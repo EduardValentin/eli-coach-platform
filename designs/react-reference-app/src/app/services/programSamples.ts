@@ -10,9 +10,11 @@ import {
   type ProgramContent,
   type Row,
   type Session,
+  type TypedTargets,
 } from '../domain/program';
 import type { ProgramSetup } from '../domain/programOnboarding';
 import { cardioPreset } from '../domain/programCardio';
+import { resolvedWeek, withSetAdded, withSetSwitched, withTypedTargets, type ProgressionContext } from '../domain/programProgression';
 import { filledRow, initialContent } from '../domain/programSuggestions';
 import { SPLIT_TEMPLATES, type SlotPlan } from '../domain/splitTemplates';
 import { warmUpItem } from '../domain/warmUpEditing';
@@ -124,11 +126,82 @@ function withIntervalsDay(content: ProgramContent, library: readonly Exercise[])
 }
 
 const SUGGESTED_MAIN_LIFT_KG = 40;
+const HYPERTROPHY_MAIN_LIFT_KG = 60;
+const HYPERTROPHY_TYPED_WEEK = 4;
+const HYPERTROPHY_TYPED_KG = 65;
+const HYPERTROPHY_WARM_UP_KG: readonly number[] = [30, 45];
+const HYPERTROPHY_TOP_SET_WEEK = 5;
+const HYPERTROPHY_TOP_SET: TypedTargets = { reps: { min: 4, max: 6 }, rir: 2, weightKg: 75 };
+const HYPERTROPHY_TOP_SET_WARM_UP = { reps: { min: 3, max: 3 }, rir: 3, weightKg: 60 };
 
-function withSuggestedMainLiftWeights(block: Block): Block {
-  const weighted = (row: Row): Row =>
-    row.slot === 'A' ? { ...row, sets: row.sets.map(set => (set.kind === 'working' ? { ...set, weightKg: SUGGESTED_MAIN_LIFT_KG } : set)) } : row;
-  return { ...block, sessions: block.sessions.map(session => ({ ...session, rows: session.rows.map(weighted) })) };
+function withMainLifts(block: Block, edit: (row: Row) => Row): Block {
+  const edited = (row: Row): Row => (row.slot === 'A' ? edit(row) : row);
+  return { ...block, sessions: block.sessions.map(session => ({ ...session, rows: session.rows.map(edited) })) };
+}
+
+function withSuggestedMainLiftWeights(block: Block, weightKg: number): Block {
+  return withMainLifts(block, row => ({
+    ...row,
+    startSets: row.startSets.map(set => (set.kind === 'working' ? { ...set, start: { ...set.start, weightKg } } : set)),
+  }));
+}
+
+function withWarmUpWeights(row: Row): Row {
+  const warmUps = row.startSets.filter(set => set.kind === 'warm-up');
+  const startSets = row.startSets.map(set => {
+    const weightKg = HYPERTROPHY_WARM_UP_KG.at(warmUps.indexOf(set));
+    return set.kind === 'warm-up' && weightKg !== undefined ? { ...set, start: { ...set.start, weightKg } } : set;
+  });
+  return { ...row, startSets };
+}
+
+function withTypedWeekWeight(row: Row): Row {
+  return row.startSets
+    .filter(set => set.kind === 'working')
+    .reduce((typed, set) => withTypedTargets(typed, { week: HYPERTROPHY_TYPED_WEEK, setId: set.id }, { weightKg: HYPERTROPHY_TYPED_KG }), row);
+}
+
+/** In week 5 the first working set is a heavier top set, with one more warm-up set before it; the other weeks stay as suggested. */
+function withTopSet(row: Row, context: ProgressionContext): Row {
+  const [top] = row.startSets.filter(set => set.kind === 'working');
+  const typed = withTypedTargets(row, { week: HYPERTROPHY_TOP_SET_WEEK, setId: top.id }, HYPERTROPHY_TOP_SET);
+  const added = withSetAdded(typed, HYPERTROPHY_TOP_SET_WEEK, context);
+  const extra = resolvedWeek(added, HYPERTROPHY_TOP_SET_WEEK, context).sets.at(-1);
+  if (!extra) return typed;
+  const at = { week: HYPERTROPHY_TOP_SET_WEEK, setId: extra.setId };
+  return withTypedTargets(withSetSwitched(added, at), at, HYPERTROPHY_TOP_SET_WARM_UP);
+}
+
+/** Only the first and last rows carry words of their own; the rest hold their targets on the same custom rule without repeating them. */
+const HELD_FIRST_ROW_RULE = 'Same weight every week while you learn the lift; add 2.5 kg once all your sets move cleanly at the RIR shown.';
+const HELD_LAST_ROW_RULE = 'Once the last set feels easy, choose a harder version before adding time or reps.';
+
+function heldRuleText(index: number, count: number): string {
+  if (index === 0) return HELD_FIRST_ROW_RULE;
+  return index === count - 1 ? HELD_LAST_ROW_RULE : '';
+}
+
+function heldRow(row: Row, index: number, rows: readonly Row[]): Row {
+  return { ...row, progression: { kind: 'custom', text: heldRuleText(index, rows.length) } };
+}
+
+function withLastSessionHeld(block: Block): Block {
+  const held = block.sessions.at(-1);
+  const sessions = block.sessions.map(session => (session === held ? { ...session, rows: session.rows.map(heldRow) } : session));
+  return { ...block, sessions };
+}
+
+function publishedSeedBlock(block: Block): Block {
+  if (block.type === 'foundation') return withLastSessionHeld(block);
+  if (block.type !== 'hypertrophy') return block;
+  const context = { block, level: SEED_SETUP.level };
+  const typed = withMainLifts(withSuggestedMainLiftWeights(block, HYPERTROPHY_MAIN_LIFT_KG), row => withTopSet(withTypedWeekWeight(withWarmUpWeights(row)), context));
+  return { ...typed, calibrationWeek: true };
+}
+
+/** Weekly targets of every kind for the published seed: rising, typed, held by a custom rule, found in a calibration week, and one week with a top set and its own extra warm-up set. */
+function withWeeklyTargets(content: ProgramContent): ProgramContent {
+  return { ...content, plan: { blocks: content.plan.blocks.map(publishedSeedBlock) } };
 }
 
 function twoVersions(client: SeedClient, publishedAt: Date, content: ProgramContent): Program {
@@ -136,7 +209,7 @@ function twoVersions(client: SeedClient, publishedAt: Date, content: ProgramCont
   const raised: ProgramContent = {
     ...content,
     header: { ...content.header, focus: TWO_VERSIONS_FOCUS, personalNote: TWO_VERSIONS_NOTE },
-    plan: { blocks: [withSuggestedMainLiftWeights({ ...first, dailySteps: 8000 }), ...rest] },
+    plan: { blocks: [withSuggestedMainLiftWeights({ ...first, dailySteps: 8000 }, SUGGESTED_MAIN_LIFT_KG), ...rest] },
   };
   return programOf(client, [
     { number: 1, state: 'superseded', publishedAt, whatChanged: '', content },
@@ -153,7 +226,7 @@ export function programForSeed(seed: ProgramSeed, client: SeedClient, library: r
     return programOf(client, [{ number: 1, state: 'draft', publishedAt: null, whatChanged: '', content }]);
   }
   if (seed === 'published') {
-    return programOf(client, [{ number: 1, state: 'published', publishedAt, whatChanged: '', content }]);
+    return programOf(client, [{ number: 1, state: 'published', publishedAt, whatChanged: '', content: withWeeklyTargets(content) }]);
   }
   return twoVersions(client, publishedAt, withIntervalsDay(content, library));
 }

@@ -1,5 +1,8 @@
 import type { TemplateParagraph } from './ProgramText';
 
+/** The lead-in of a coach's own progression rule, wherever the rule is printed. */
+export const CUSTOM_PROGRESSION_LEAD = 'How to progress.';
+
 const OPENING_LEAD_IN = /^([^:?,.]{3,40}[:?,])\s+(.+)$/;
 const SENTENCE_END = /[.:?!]$/;
 const LEAD_IN_END = /[:,]$/;

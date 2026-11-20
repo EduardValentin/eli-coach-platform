@@ -4,17 +4,17 @@ import type { Block, SplitShape, TrainingDays } from '../../../domain/program';
 import { DAILY_STEP_TARGETS, TARGET_MINUTES } from '../../../domain/programDefaults';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { IconHint } from '../../IconHint';
-import { InlineProblem } from '../../InlineProblem';
 import { LABEL_CLASS } from '../../typography';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Switch } from '../../ui/switch';
+import { cn } from '../../ui/utils';
 import { OptionSelect, type Option } from './OptionSelect';
-import type { useWeeksField } from './weeksField';
+import { WeeksField, WeeksFieldNotes, type WeeksFieldState } from './weeksField';
 
 type BlockSettingsProps = {
   block: Block;
-  weeks: ReturnType<typeof useWeeksField>;
+  weeks: WeeksFieldState;
   onChange: (block: Block) => void;
   onChangeShape: (shape: SplitShape, trigger: HTMLElement | null) => void;
   onChangeTrainingDays: (days: TrainingDays, trigger: HTMLElement | null) => void;
@@ -43,22 +43,19 @@ function Setting({ label, children }: { label: string; children: (labelId: strin
 
 function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'block' | 'weeks' | 'onChange'>) {
   return (
-    <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
+    <>
       <Setting label="Weeks">
         {labelId => (
           <>
-            <span className="flex items-center gap-1.5 text-sm text-text-secondary">
-              <Input className="w-16 tabular-nums" aria-labelledby={labelId} {...weeks.inputProps} />
-              wk
-            </span>
-            {weeks.problem && <InlineProblem id={weeks.problemId}>{weeks.problem}</InlineProblem>}
+            <WeeksField field={weeks} name={{ labelledBy: labelId }} />
+            <WeeksFieldNotes field={weeks} />
           </>
         )}
       </Setting>
       {block.type !== 'deload' && (
         <Setting label="Calibration">
           {labelId => (
-            <span role="group" aria-labelledby={labelId} className="flex min-h-(--size-control-sm) items-center gap-1">
+            <span role="group" aria-labelledby={labelId} className="flex min-h-(--size-control-md) items-center gap-1">
               <label className="flex items-center gap-2 text-sm text-text-primary">
                 <Switch checked={block.calibrationWeek} onCheckedChange={checked => onChange({ ...block, calibrationWeek: checked })} />
                 Calibration week
@@ -70,7 +67,7 @@ function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'bl
           )}
         </Setting>
       )}
-    </div>
+    </>
   );
 }
 
@@ -78,7 +75,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
   const splitTrigger = useRef<HTMLButtonElement>(null);
   const daysTrigger = useRef<HTMLButtonElement>(null);
   return (
-    <div className="flex flex-wrap items-start gap-x-4 gap-y-4">
+    <>
       <Setting label="Split">
         {labelId => (
           <Select value={block.split.shape} onValueChange={value => onChangeShape(value as SplitShape, splitTrigger.current)}>
@@ -143,15 +140,25 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
           />
         )}
       </Setting>
-    </div>
+    </>
   );
 }
 
+/** Fields wrap freely on a phone, sit in four aligned columns once the card has room, and share one row when all seven fit. */
+const SETTINGS_LAYOUT_CLASS = cn(
+  'flex flex-wrap items-start gap-4',
+  '@min-[40rem]:grid @min-[40rem]:grid-cols-[repeat(4,max-content)] @min-[40rem]:justify-between @min-[40rem]:gap-x-6',
+  // 61.25rem: the seven fields' widest content, 55.25rem as measured in the browser, plus six 1rem gaps.
+  '@min-[61.25rem]:grid-flow-col @min-[61.25rem]:grid-cols-none @min-[61.25rem]:auto-cols-max @min-[61.25rem]:gap-x-4',
+);
+
 export function BlockSettings(props: BlockSettingsProps) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 px-4 py-3">
-      <LengthSettings block={props.block} weeks={props.weeks} onChange={props.onChange} />
-      <ScheduleSettings block={props.block} onChange={props.onChange} onChangeShape={props.onChangeShape} onChangeTrainingDays={props.onChangeTrainingDays} />
+    <div className="@container px-4 py-3">
+      <div className={SETTINGS_LAYOUT_CLASS}>
+        <LengthSettings block={props.block} weeks={props.weeks} onChange={props.onChange} />
+        <ScheduleSettings block={props.block} onChange={props.onChange} onChangeShape={props.onChangeShape} onChangeTrainingDays={props.onChangeTrainingDays} />
+      </div>
     </div>
   );
 }

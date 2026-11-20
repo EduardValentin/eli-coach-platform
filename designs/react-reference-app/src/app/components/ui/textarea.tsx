@@ -12,7 +12,7 @@ const Textarea = React.forwardRef<
       data-slot="textarea"
       className={cn(
         fieldSurfaceClass,
-        "resize-none placeholder:text-muted-foreground field-sizing-content min-h-16 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "resize-none field-sizing-content min-h-16 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50",
         fieldStateClass,
         className,
       )}

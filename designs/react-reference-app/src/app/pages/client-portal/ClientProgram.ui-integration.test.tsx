@@ -88,7 +88,8 @@ describe('the client Program page', () => {
     const today = within(week).getByRole('tab', { selected: true });
     expect(today).toHaveAttribute('aria-current', 'date');
     expect(today).toHaveAccessibleName(/^Wednesday 23 September, .+, today/);
-    expect(within(week).getAllByRole('tab')).toHaveLength(7);
+    const rail = within(week).getByRole('tablist');
+    expect(within(rail).getAllByRole('tab')).toHaveLength(7);
     expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
     expect(follows(week, screen.getByRole('region', { name: 'Plan' }))).toBe(true);
     expect(screen.getByRole('link', { name: /^PDF ?: download version 1$/ })).toHaveAttribute('href', '/portal/program/document');

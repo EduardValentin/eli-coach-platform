@@ -125,7 +125,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
     <div
       ref={drag as unknown as Ref<HTMLDivElement>}
       className={cn(
-        'group grid cursor-grab touch-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1.5 rounded-control border bg-card p-3 select-none transition-shadow hover:shadow-card active:cursor-grabbing motion-reduce:transition-none',
+        'group grid cursor-grab touch-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-control border bg-card p-3 select-none transition-shadow hover:shadow-card active:cursor-grabbing motion-reduce:transition-none',
         { 'border-primary opacity-50': isDragging, 'border-border': !isDragging },
       )}
     >
