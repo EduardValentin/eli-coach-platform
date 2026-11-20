@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import type {
   ClientIdentitiesPort,
   ClientReachPort,
@@ -6,6 +7,7 @@ import type {
   OnboardingSubmissionRecorderPort,
   ReviewStampRecorderPort,
 } from "~/bounded-contexts/clients/clients/public";
+import type { ClientCoachingFacade } from "~/bounded-contexts/clients/public/client-coaching-facade";
 import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile-facade";
 import {
   AttachProgressPhotosUseCase,
@@ -41,6 +43,10 @@ import type {
   MeasurementIdsPort,
 } from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import type { ClockPort } from "~/bounded-contexts/clients/client-profile/domain/clock-port";
+import {
+  ReadClientCoachingUseCase,
+  SaveClientEquipmentUseCase,
+} from "~/bounded-contexts/clients/client-profile/domain/client-coaching";
 import { ClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/avatar/client-avatar-controller.server";
 import { ClientSettingsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-settings-controller.server";
 import { ClientMeasurementsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-measurements-controller.server";
@@ -62,6 +68,7 @@ import { RandomProgressPhotoIdsAdapter } from "~/bounded-contexts/clients/client
 import { PostgresClientProfileOpeningsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/postgres-client-profile-openings-repository.server";
 import { seedCoaching } from "./adapters/outbound/persistence/profiles/client-profile-writers.server";
 import { recordPhotoConsent } from "./adapters/outbound/persistence/profiles/client-profile-writers.server";
+import { ClientCoachingFacadeAdapter } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-coaching-facade-adapter.server";
 import { ClientProfileFacadeAdapter } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-profile-facade-adapter.server";
 import { ClientsClientIdentitiesAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-identities-adapter.server";
 import { ClientsClientReachAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-reach-adapter.server";
@@ -435,6 +442,57 @@ export function composeClientOnboardingFeature(
         detailRequestIdsPort: new RandomDetailRequestIdsAdapter(),
       }),
     }),
+  };
+}
+
+type ClientCoachingHandles = {
+  clientIdentitiesPort: ClientIdentitiesPort;
+  clockPort: ClockPort;
+  database: DatabaseClient;
+  onboardingStandingsPort: OnboardingStandingsPort;
+  reviewStampRecorderPort: ReviewStampRecorderPort;
+};
+
+type ClientCoachingComposition = {
+  facades: { clientCoachingFacade: ClientCoachingFacade };
+};
+
+export function composeClientCoaching(
+  handles: ClientCoachingHandles,
+): ClientCoachingComposition {
+  const { database } = handles;
+  const postgresClientProfilesRepository = new PostgresClientProfilesRepository(
+    database,
+  );
+
+  return {
+    facades: {
+      clientCoachingFacade: new ClientCoachingFacadeAdapter({
+        readClientCoachingUseCase: new ReadClientCoachingUseCase({
+          participants: new OnboardingParticipants({
+            onboardingClientsPort: new ClientsOnboardingClientsAdapter(
+              handles.onboardingStandingsPort,
+            ),
+            clientIdentitiesPort: new ClientsClientIdentitiesAdapter(
+              handles.clientIdentitiesPort,
+            ),
+          }),
+          onboardingReviewsPort: new PostgresOnboardingReviewsRepository({
+            database,
+            onboardingReviewStampsPort: new ClientsReviewStampsAdapter(
+              handles.reviewStampRecorderPort,
+            ),
+            coachingSeedWriter: (seeding) => seedCoaching(database, seeding),
+          }),
+          clientProfilesPort: postgresClientProfilesRepository,
+        }),
+        saveClientEquipmentUseCase: new SaveClientEquipmentUseCase({
+          clientProfilesPort: postgresClientProfilesRepository,
+          clockPort: handles.clockPort,
+        }),
+        unitOfWork: createUnitOfWork(database),
+      }),
+    },
   };
 }
 

@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import {
   ArchiveExerciseUseCase,
   CreateExerciseUseCase,
@@ -6,6 +7,7 @@ import {
   EditExerciseUseCase,
   ExerciseVideoCleanup,
   FindExerciseUseCase,
+  ListCardioExercisesUseCase,
   ListExercisesUseCase,
   OpenExerciseVideoUseCase,
   RestoreExerciseUseCase,
@@ -25,10 +27,16 @@ import { ExerciseLibraryIncidentsAdapter } from "~/bounded-contexts/programs/exe
 import { createExerciseVideoFormatDetectorAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/create-exercise-video-format-detector-adapter.server";
 import { createExerciseVideoStoreAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/create-exercise-video-store-adapter.server";
 import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
+import { CardioExercisesFacadeAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/facades/cardio-exercises-facade-adapter.server";
+import type { CardioExercisesFacade } from "~/bounded-contexts/programs/exercise-library/public/cardio-exercises-facade";
 
 type ExerciseVideoFiles = {
   exerciseVideoFormatDetectorPort: ExerciseVideoFormatDetectorPort;
   exerciseVideoStorePort: ExerciseVideoStorePort;
+};
+
+type CardioExercisesComposition = {
+  handles: { cardioExercisesFacade: CardioExercisesFacade };
 };
 
 type ExerciseLibraryFeatureHandles = ExerciseVideoFiles & {
@@ -92,6 +100,23 @@ export function composeExerciseLibraryFeature(
         }),
       }),
     }),
+  };
+}
+
+export function composeCardioExercises(handles: {
+  database: DatabaseClient;
+}): CardioExercisesComposition {
+  return {
+    handles: {
+      cardioExercisesFacade: new CardioExercisesFacadeAdapter({
+        listCardioExercisesUseCase: new ListCardioExercisesUseCase({
+          exerciseLibraryPort: new PostgresExerciseLibraryRepository(
+            handles.database,
+          ),
+        }),
+        unitOfWork: createUnitOfWork(handles.database),
+      }),
+    },
   };
 }
 

@@ -1,5 +1,6 @@
 import {
   CoachingFacts,
+  type ClientEquipment,
   type CoachingFactsEntry,
   type CoachingFactsProblems,
   type CoachingFactsResult,
@@ -32,6 +33,8 @@ export type ClientProfileEditResult =
   | { status: "edited"; profile: ClientProfile }
   | { status: "not-seeded" }
   | { status: "invalid"; problems: ClientProfileProblems };
+
+type EquipmentEditResult = ClientProfileEditResult | { status: "unchanged" };
 
 type OpenedClientProfileInput = {
   clientId: string;
@@ -92,6 +95,27 @@ export class ClientProfile {
     });
   }
 
+  editEquipment(
+    equipment: readonly ClientEquipment[],
+    now: Date,
+  ): EquipmentEditResult {
+    const { coaching, coachNotes } = this.snapshot;
+
+    if (!coaching) {
+      return { status: "not-seeded" };
+    }
+
+    if (this.holdsEquipment(coaching.equipment, equipment)) {
+      return { status: "unchanged" };
+    }
+
+    return this.editedWith({
+      factsResult: CoachingFacts.of({ ...coaching, equipment: [...equipment] }),
+      coachNotes,
+      now,
+    });
+  }
+
   hasPhotoConsent(): boolean {
     return this.snapshot.progressPhotosConsentedAt !== null;
   }
@@ -103,6 +127,18 @@ export class ClientProfile {
       ...this.snapshot,
       coaching: coaching && { ...coaching, equipment: [...coaching.equipment] },
     };
+  }
+
+  private holdsEquipment(
+    held: readonly ClientEquipment[],
+    equipment: readonly ClientEquipment[],
+  ): boolean {
+    const chosen = new Set(equipment);
+
+    return (
+      chosen.size === new Set(held).size &&
+      held.every((item) => chosen.has(item))
+    );
   }
 
   private editedWith(change: ProfileChange): ClientProfileEditResult {

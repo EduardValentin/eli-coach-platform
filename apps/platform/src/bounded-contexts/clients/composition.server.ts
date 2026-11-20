@@ -11,6 +11,7 @@ import {
   clientProfileContext,
 } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import {
+  composeClientCoaching,
   composeClientMedia,
   composeClientOnboardingFeature,
   composeClientProfileFeature,
@@ -38,6 +39,9 @@ type ClientProfileComponentHandles = ReturnType<
 >["handles"];
 type ClientProfileFacades = ReturnType<
   typeof composeClientProfileFeature
+>["facades"];
+type ClientCoachingFacades = ReturnType<
+  typeof composeClientCoaching
 >["facades"];
 type CheckInsFacades = ReturnType<typeof composeCheckInsFeature>["facades"];
 
@@ -73,7 +77,10 @@ type ClientsHandles = Omit<ComponentHandles, ConstructedHere> & {
 };
 
 export type ClientsComposition = {
-  facades: ClientsFacades & ClientProfileFacades & CheckInsFacades;
+  facades: ClientsFacades &
+    ClientProfileFacades &
+    ClientCoachingFacades &
+    CheckInsFacades;
   middleware: MiddlewareFunction<Response>;
   portalStandingMiddleware: MiddlewareFunction<Response>;
 };
@@ -89,6 +96,10 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
     ...handles,
     ...clients.handles,
     ...clientProfile.handles,
+  });
+  const clientCoaching = composeClientCoaching({
+    ...handles,
+    ...clients.handles,
   });
   const clientResources = composeClientResourcesFeature({
     ...handles,
@@ -114,6 +125,7 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
     facades: {
       ...clients.facades,
       ...clientProfile.facades,
+      ...clientCoaching.facades,
       ...checkIns.facades,
     },
     middleware: ({ context }, next) => {
