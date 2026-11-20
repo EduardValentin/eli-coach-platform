@@ -11,8 +11,15 @@ import {
 import { useProgramLookup } from '../../components/program-view/useProgramLookup';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { useTraining } from '../../context/TrainingContext';
+import { coachingHasEnded, type ClientJourney } from '../../domain/journey';
+import type { ProgramVersion } from '../../domain/program';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 import '../../../styles/print.css';
+
+function draftDocumentDescription(journey: ClientJourney, version: ProgramVersion): string {
+  const draft = `Version ${version.number} is still a draft.`;
+  return coachingHasEnded(journey, new Date()) ? draft : `${draft} Publish it and its document is ready to print.`;
+}
 
 export function ClientProgramDocument() {
   useCoachPortalScope();
@@ -54,7 +61,7 @@ export function ClientProgramDocument() {
         {...back}
         icon={FilePen}
         title="A draft gets its document when you publish it"
-        description={`Version ${version.number} is still a draft. Publish it and its document is ready to print.`}
+        description={draftDocumentDescription(journey, version)}
         way={{ to: programPath, label: back.backLabel }}
       />
     );

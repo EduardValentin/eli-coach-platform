@@ -25,6 +25,7 @@ import { filledSessionsText } from './blockParts';
 import { NextVersionAction } from './NextVersionAction';
 import { journeyProgramView } from '../../program-view/journeyProgramView';
 import { ProgramPlanSummary } from '../../program-view/ProgramPlan';
+import { unpublishableDraftReason } from './unpublishableDraft';
 import { UpcomingBlockWarnings } from './UpcomingBlockWarnings';
 import { VersionReading } from './VersionReading';
 
@@ -67,8 +68,9 @@ function DraftBlocks({ blocks }: { blocks: readonly Block[] }) {
   );
 }
 
-function DraftReadiness({ missing }: { missing: readonly string[] }) {
+function DraftReadiness({ missing, unpublishableReason }: { missing: readonly string[]; unpublishableReason: string | null }) {
   const titleId = useId();
+  if (unpublishableReason) return <p className="text-sm text-text-secondary">{unpublishableReason}</p>;
   if (missing.length === 0) {
     return (
       <p className="flex items-center gap-2 text-sm font-medium text-success">
@@ -94,14 +96,14 @@ function DraftReadiness({ missing }: { missing: readonly string[] }) {
   );
 }
 
-function DraftSummary({ version }: { version: ProgramVersion }) {
+function DraftSummary({ journey, version }: { journey: ClientJourney; version: ProgramVersion }) {
   return (
     <SettingsBody className="grid gap-4">
       <p className={EYEBROW_CLASS}>{`Version ${version.number} · draft`}</p>
       <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8">
         <DraftBlocks blocks={version.content.plan.blocks} />
         <div className="self-start rounded-field bg-surface-quiet p-4">
-          <DraftReadiness missing={missingFrom(version)} />
+          <DraftReadiness missing={missingFrom(version)} unpublishableReason={unpublishableDraftReason(journey, new Date())} />
         </div>
       </div>
     </SettingsBody>
@@ -166,7 +168,7 @@ export function ProgramBlock({ journey }: { journey: ClientJourney }) {
   if (!program) {
     body = <NoProgram journey={journey} programPath={programPath} />;
   } else if (!published) {
-    body = draft && <DraftSummary version={draft} />;
+    body = draft && <DraftSummary journey={journey} version={draft} />;
     footer = <NextVersionAction journey={journey} program={program} />;
   } else {
     body = <PublishedSummary journey={journey} program={program} programPath={programPath} />;

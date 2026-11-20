@@ -33,6 +33,7 @@ type EditorTopBarProps = {
   onPublish: () => void;
   onDiscard: () => WriteResult;
   opensOn: Date | null;
+  unpublishableReason: string | null;
   problems: readonly RuleFinding<BlockingCode>[];
   warnings: readonly RuleFinding<WarningCode>[];
 };
@@ -77,13 +78,17 @@ function Place({ placeTitle, placeHeading, onOverview }: PlaceProps) {
   );
 }
 
-type ChecksButtonProps = Pick<EditorTopBarProps, 'problems' | 'warnings' | 'onOpenFinding'>;
+type ChecksButtonProps = Pick<EditorTopBarProps, 'problems' | 'warnings' | 'onOpenFinding' | 'unpublishableReason'>;
 
-function ChecksButton({ problems, warnings, onOpenFinding }: ChecksButtonProps) {
+function problemsLabel(count: number, unpublishableReason: string | null): string {
+  return unpublishableReason ? `${counted(count, 'problem')} in the draft` : `${counted(count, 'problem')} to fix before publishing`;
+}
+
+function ChecksButton({ problems, warnings, onOpenFinding, unpublishableReason }: ChecksButtonProps) {
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const blocked = problems.length > 0;
-  const label = blocked ? `${counted(problems.length, 'problem')} to fix before publishing` : `${counted(warnings.length, 'thing')} worth a look`;
+  const label = blocked ? problemsLabel(problems.length, unpublishableReason) : `${counted(warnings.length, 'thing')} worth a look`;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -97,6 +102,7 @@ function ChecksButton({ problems, warnings, onOpenFinding }: ChecksButtonProps) 
           Review the draft
         </h2>
         <ProgramFindings
+          problemsHeading={unpublishableReason ? 'Problems in the draft' : undefined}
           problems={problems}
           warnings={warnings}
           onOpen={target => {
@@ -109,15 +115,21 @@ function ChecksButton({ problems, warnings, onOpenFinding }: ChecksButtonProps) 
   );
 }
 
-function PublishButton({ opensOn, onPublish }: Pick<EditorTopBarProps, 'opensOn' | 'onPublish'>) {
+function publishUnavailableReason({ opensOn, unpublishableReason }: Pick<EditorTopBarProps, 'opensOn' | 'unpublishableReason'>): string | null {
+  if (unpublishableReason) return unpublishableReason;
+  return opensOn && `Publishing opens on ${formatJourneyDate(opensOn)}`;
+}
+
+function PublishButton({ opensOn, unpublishableReason, onPublish }: Pick<EditorTopBarProps, 'opensOn' | 'unpublishableReason' | 'onPublish'>) {
   const button = (
     <Button onClick={onPublish}>
       <Send aria-hidden="true" />
       <span className="@max-[20em]:sr-only">Publish</span>
     </Button>
   );
-  if (!opensOn) return button;
-  return <DisabledActionHint reason={`Publishing opens on ${formatJourneyDate(opensOn)}`}>{button}</DisabledActionHint>;
+  const reason = publishUnavailableReason({ opensOn, unpublishableReason });
+  if (!reason) return button;
+  return <DisabledActionHint reason={reason}>{button}</DisabledActionHint>;
 }
 
 function DiscardDialog({ open, onOpenChange, version, onDiscard }: { open: boolean; onOpenChange: (open: boolean) => void; version: ProgramVersion; onDiscard: () => WriteResult }) {
@@ -155,6 +167,7 @@ export function EditorTopBar({
   onPublish,
   onDiscard,
   opensOn,
+  unpublishableReason,
   problems,
   warnings,
 }: EditorTopBarProps) {
@@ -190,7 +203,7 @@ export function EditorTopBar({
           {railToggle}
         </nav>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
-          <p className="text-xs break-words text-text-secondary">{draftLine(name, version, basedOn)}</p>
+          <p className="text-xs break-words text-text-secondary">{[draftLine(name, version, basedOn), unpublishableReason && 'coaching ended'].filter(Boolean).join(' · ')}</p>
           <Place placeTitle={placeTitle} placeHeading={placeHeading} onOverview={onOverview} />
         </div>
         <ClientProfilePopover
@@ -203,7 +216,7 @@ export function EditorTopBar({
           returnFocus={profileReturnFocus}
         >
           <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-4 sm:flex-wrap">
-            {(problems.length > 0 || warnings.length > 0) && <ChecksButton problems={problems} warnings={warnings} onOpenFinding={onOpenFinding} />}
+            {(problems.length > 0 || warnings.length > 0) && <ChecksButton problems={problems} warnings={warnings} onOpenFinding={onOpenFinding} unpublishableReason={unpublishableReason} />}
             {showsToolbarIcons && <ClientProfileTrigger />}
             {showsToolbarIcons && library && (
               <Button onClick={library.onToggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={library.open}>
@@ -214,7 +227,7 @@ export function EditorTopBar({
               <Eye aria-hidden="true" />
               <span className="hidden lg:inline">Preview as client</span>
             </Button>
-            <PublishButton opensOn={opensOn} onPublish={onPublish} />
+            <PublishButton opensOn={opensOn} unpublishableReason={unpublishableReason} onPublish={onPublish} />
             <span ref={draftActions} className="contents">
               <RowActionsMenu
                 label="Draft actions"

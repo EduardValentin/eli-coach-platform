@@ -45,6 +45,18 @@ describe("the coach's view of a client's program document", () => {
     expect(title).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: "Back to Jane's program" })).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Print or save as PDF' })).toBeNull();
+    expect(screen.getByText('Version 3 is still a draft. Publish it and its document is ready to print.')).toBeInTheDocument();
+  });
+
+  it('promises no publishing for a draft once her coaching has ended', async () => {
+    // arrange
+    renderDocument('/coach/clients/c1/program/document/3', '&jsub=ended');
+
+    // act
+    const description = await screen.findByText(/^Version 3 is still a draft\./);
+
+    // assert
+    expect(description).toHaveTextContent(/^Version 3 is still a draft\.$/);
   });
 
   it('says a version that does not exist is not available instead of redirecting', async () => {
