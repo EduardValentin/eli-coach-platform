@@ -1,4 +1,4 @@
-import type { CoachingSubscription } from './coachingSubscription';
+import { deriveStatus, type CoachingSubscription } from './coachingSubscription';
 import type { ClientProfile, ClientSettings } from './clientProfile';
 import type { VisitorPrimaryGoal } from '../services/visitorProfile';
 
@@ -289,6 +289,10 @@ export function isBeforeStage(
   boundary: JourneyStage,
 ): boolean {
   return JOURNEY_STAGES.indexOf(stage) < JOURNEY_STAGES.indexOf(boundary);
+}
+
+export function coachingHasEnded(journey: ClientJourney, now: Date): boolean {
+  return journey.subscription ? deriveStatus(journey.subscription, now) === 'ended' : false;
 }
 
 export function emptyOnboardingDraft(): OnboardingDraft {

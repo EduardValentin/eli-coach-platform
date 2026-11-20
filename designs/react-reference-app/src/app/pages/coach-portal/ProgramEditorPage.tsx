@@ -33,7 +33,7 @@ import { SkipLink } from '../../components/ui/skip-link';
 import { useIsDesktop } from '../../components/ui/use-desktop';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, currentVersion, draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../domain/program';
-import { isBeforeStage, type ClientJourney } from '../../domain/journey';
+import { coachingHasEnded, isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { blockWithLibraryPick } from '../../domain/programEditing';
 import { plannedId, plannedSessions } from '../../domain/weekEditing';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -305,6 +305,7 @@ export function ProgramEditorPage() {
   if (!journey) return <Navigate to="/coach/clients" replace />;
   const program = lookup.status === 'found' ? lookup.program : undefined;
   if (isSetup && program) return <Navigate to={draftPath} replace />;
+  if (isSetup && coachingHasEnded(journey, new Date())) return <Navigate to={client.path} replace />;
   if (isSetup) return <SetupPage journey={journey} draftPath={draftPath} />;
   if (!program) return <NoProgramYet setupPath={`${programPath}/new`} client={client} />;
   const draft = draftOf(program);

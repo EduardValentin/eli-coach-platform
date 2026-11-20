@@ -410,6 +410,15 @@ describe('ProgramSetupSheet', () => {
     expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
   });
 
+  it('returns to the client page once her coaching has ended', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved&jsub=ended');
+
+    // assert
+    expect(screen.getByText('Client page')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
+  });
+
   it('opens the existing draft instead of setting up again', () => {
     // arrange / act
     renderSheet('&pseed=draft&jstage=approved');

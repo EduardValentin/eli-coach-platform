@@ -1,14 +1,9 @@
 import { Link, useNavigate } from 'react-router';
 import { usePrograms } from '../../../context/ProgramContext';
-import { deriveStatus } from '../../../domain/coachingSubscription';
-import type { ClientJourney } from '../../../domain/journey';
+import { coachingHasEnded, type ClientJourney } from '../../../domain/journey';
 import { draftOf, type Program } from '../../../domain/program';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { Button } from '../../ui/button';
-
-function coachingHasEnded(journey: ClientJourney, now: Date): boolean {
-  return journey.subscription ? deriveStatus(journey.subscription, now) === 'ended' : false;
-}
 
 type ActionSize = 'sm' | 'md';
 

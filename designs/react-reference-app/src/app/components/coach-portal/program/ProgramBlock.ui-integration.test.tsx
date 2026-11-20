@@ -117,6 +117,50 @@ describe('ProgramBlock', () => {
     expect(within(section).queryByRole('link', { name: 'Build program' })).not.toBeInTheDocument();
   });
 
+  it.each(['approved', 'submitted'])('says there is no program once her coaching has ended (%s)', (stage) => {
+    // arrange
+    const query = `&pseed=none&jstage=${stage}&jsub=ended`;
+
+    // act
+    renderBlock(query);
+
+    // assert
+    const section = programSection();
+    expect(within(section).getByText('No program')).toBeInTheDocument();
+    expect(within(section).getByText('Her coaching has ended.')).toBeInTheDocument();
+    expect(within(section).queryByText('No program yet')).not.toBeInTheDocument();
+    expect(within(section).queryByRole('link')).not.toBeInTheDocument();
+    expect(within(section).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('names his coaching as ended', () => {
+    // arrange
+    const query = '&pseed=none&jstage=approved&jsub=ended&jgender=male';
+
+    // act
+    renderBlock(query);
+
+    // assert
+    expect(within(programSection()).getByText('His coaching has ended.')).toBeInTheDocument();
+  });
+
+  it('still shows her draft after her coaching has ended', () => {
+    // arrange
+    const query = '&pseed=draft&jstage=approved&jsub=ended';
+
+    // act
+    renderBlock(query);
+
+    // assert
+    const section = programSection();
+    expect(within(section).getByText('Version 1 · draft')).toBeInTheDocument();
+    expect(within(section).queryByText('No program')).not.toBeInTheDocument();
+    expect(within(section).getByRole('link', { name: 'Continue draft' })).toHaveAttribute(
+      'href',
+      '/coach/clients/c1/program/draft',
+    );
+  });
+
   it('lists the draft blocks and says it is ready to publish', () => {
     // arrange
     const query = '&pseed=draft&jstage=approved';

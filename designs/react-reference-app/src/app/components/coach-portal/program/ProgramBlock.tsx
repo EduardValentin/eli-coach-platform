@@ -3,7 +3,7 @@ import { CircleCheck, CircleDashed, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
-import { isBeforeStage, type ClientJourney } from '../../../domain/journey';
+import { coachingHasEnded, isBeforeStage, type ClientJourney } from '../../../domain/journey';
 import {
   BLOCK_TYPE_LABELS,
   currentVersion,
@@ -126,32 +126,45 @@ function PublishedSummary({ journey, program, programPath }: { journey: ClientJo
   );
 }
 
+function NoProgram({ journey, programPath }: { journey: ClientJourney; programPath: string }) {
+  const possessive = clientPronouns(journey.profile.identity.gender).possessive;
+  if (coachingHasEnded(journey, new Date())) {
+    return <EmptyState icon={ClipboardList} title="No program" description={`${possessive.capitalised} coaching has ended.`} />;
+  }
+  if (isBeforeStage(journey.stage, 'approved')) {
+    return (
+      <EmptyState
+        icon={ClipboardList}
+        title="No program yet"
+        description={`The program opens once ${possessive.lower} answers are approved.`}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      icon={ClipboardList}
+      title="No program yet"
+      description={`Build it from ${possessive.lower} profile.`}
+      action={
+        <Button variant="primary" asChild>
+          <Link to={`${programPath}/new`}>Build program</Link>
+        </Button>
+      }
+    />
+  );
+}
+
 export function ProgramBlock({ journey }: { journey: ClientJourney }) {
   const { programFor } = usePrograms();
   const program = programFor(journey.callId);
   const programPath = `${clientDetailPathForJourney(journey)}/program`;
   const draft = program && draftOf(program);
   const published = program?.versions.some(version => version.state === 'published');
-  const possessive = clientPronouns(journey.profile.identity.gender).possessive.lower;
 
   let body: ReactNode;
   let footer: ReactNode = null;
   if (!program) {
-    const waiting = isBeforeStage(journey.stage, 'approved');
-    body = (
-      <EmptyState
-        icon={ClipboardList}
-        title="No program yet"
-        description={waiting ? `The program opens once ${possessive} answers are approved.` : `Build it from ${possessive} profile.`}
-        action={
-          !waiting && (
-            <Button variant="primary" asChild>
-              <Link to={`${programPath}/new`}>Build program</Link>
-            </Button>
-          )
-        }
-      />
-    );
+    body = <NoProgram journey={journey} programPath={programPath} />;
   } else if (!published) {
     body = draft && <DraftSummary version={draft} />;
     footer = <NextVersionAction journey={journey} program={program} />;
