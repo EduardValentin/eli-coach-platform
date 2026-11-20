@@ -19,6 +19,9 @@ import { ReadClientCoachingUseCase } from "./read-client-coaching-use-case";
 
 const SEEDED_AT = new Date("2026-09-30T10:00:00.000Z");
 const APPROVED_AT = new Date("2026-09-30T10:00:00.000Z");
+const NOW = new Date("2026-11-21T12:00:00.000Z");
+const BEFORE_NOW = new Date("2026-11-21T11:59:59.000Z");
+const AFTER_NOW = new Date("2026-11-21T12:00:01.000Z");
 
 const IDENTITY: ClientIdentity = {
   clientId: "client-1",
@@ -106,6 +109,7 @@ function readClientCoachingUseCaseOver(stored: StoredClient = {}) {
   };
 
   return new ReadClientCoachingUseCase({
+    clockPort: { now: () => NOW },
     participants: new OnboardingParticipants({
       onboardingClientsPort: {
         findByAuthSubjectId: async () => null,
@@ -189,23 +193,50 @@ describe("ReadClientCoachingUseCase", () => {
     expect(coaching?.answersApproved).toBe(false);
   });
 
-  it.each<CoachingStatus>(["cancelled", "ended"])(
-    "reports her coaching ended from a %s standing, while her access lasts too",
-    async (status) => {
-      // arrange
-      const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-        status,
-        accessEndsAt: new Date("2099-01-01T00:00:00.000Z"),
-        approvedAt: APPROVED_AT,
-      });
+  it("reports her coaching ongoing while a cancelled standing still gives her access", async () => {
+    // arrange
+    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
+      status: "cancelled",
+      accessEndsAt: AFTER_NOW,
+      approvedAt: APPROVED_AT,
+    });
 
-      // act
-      const coaching = await readClientCoachingUseCase.execute("client-1");
+    // act
+    const coaching = await readClientCoachingUseCase.execute("client-1");
 
-      // assert
-      expect(coaching?.coachingEnded).toBe(true);
-    },
-  );
+    // assert
+    expect(coaching?.coachingEnded).toBe(false);
+  });
+
+  it("reports her coaching ended once a cancelled standing's access is over", async () => {
+    // arrange
+    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
+      status: "cancelled",
+      accessEndsAt: BEFORE_NOW,
+      approvedAt: APPROVED_AT,
+    });
+
+    // act
+    const coaching = await readClientCoachingUseCase.execute("client-1");
+
+    // assert
+    expect(coaching?.coachingEnded).toBe(true);
+  });
+
+  it("reports her coaching ended from an ended standing", async () => {
+    // arrange
+    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
+      status: "ended",
+      accessEndsAt: AFTER_NOW,
+      approvedAt: APPROVED_AT,
+    });
+
+    // act
+    const coaching = await readClientCoachingUseCase.execute("client-1");
+
+    // assert
+    expect(coaching?.coachingEnded).toBe(true);
+  });
 
   it.each<CoachingStatus>(["not-started", "active"])(
     "reports her coaching ongoing from a %s standing",

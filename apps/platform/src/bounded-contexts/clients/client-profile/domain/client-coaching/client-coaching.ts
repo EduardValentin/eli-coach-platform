@@ -24,6 +24,7 @@ type ClientCoachingSources = {
   client: OnboardingClient;
   answersApprovedAt: Date | null;
   profile: ClientProfile | null;
+  now: Date;
 };
 
 type ClientCoachingFields = {
@@ -60,7 +61,7 @@ export class ClientCoaching {
   }
 
   static of(sources: ClientCoachingSources): ClientCoaching {
-    const { identity, client, answersApprovedAt, profile } = sources;
+    const { identity, client, answersApprovedAt, profile, now } = sources;
 
     return new ClientCoaching({
       clientId: identity.clientId,
@@ -68,7 +69,7 @@ export class ClientCoaching {
       lastName: identity.lastName,
       gender: identity.gender,
       answersApproved: answersApprovedAt !== null,
-      coachingEnded: client.standing.isCancelledOrEnded(),
+      coachingEnded: !client.standing.hasPortalAccessAt(now),
       facts: ClientCoaching.factsOf(profile),
     });
   }

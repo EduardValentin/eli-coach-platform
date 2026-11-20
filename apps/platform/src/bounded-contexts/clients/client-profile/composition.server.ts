@@ -469,6 +469,7 @@ export function composeClientCoaching(
     facades: {
       clientCoachingFacade: new ClientCoachingFacadeAdapter({
         readClientCoachingUseCase: new ReadClientCoachingUseCase({
+          clockPort: handles.clockPort,
           participants: new OnboardingParticipants({
             onboardingClientsPort: new ClientsOnboardingClientsAdapter(
               handles.onboardingStandingsPort,

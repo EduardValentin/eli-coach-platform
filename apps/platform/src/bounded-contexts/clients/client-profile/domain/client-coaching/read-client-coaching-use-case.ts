@@ -1,3 +1,4 @@
+import type { ClockPort } from "../clock-port";
 import type {
   OnboardingParticipants,
   OnboardingReviewsPort,
@@ -7,6 +8,7 @@ import type { ClientProfilesPort } from "../client-profile";
 import { ClientCoaching } from "./client-coaching";
 
 type ReadClientCoachingUseCaseOptions = {
+  clockPort: ClockPort;
   participants: OnboardingParticipants;
   onboardingReviewsPort: Pick<OnboardingReviewsPort, "findByClientId">;
   clientProfilesPort: Pick<ClientProfilesPort, "findByClientId">;
@@ -31,6 +33,7 @@ export class ReadClientCoachingUseCase {
       ...participant,
       answersApprovedAt: review.approvedAt,
       profile,
+      now: this.options.clockPort.now(),
     });
   }
 }
