@@ -24,7 +24,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 ## Cohesion groups
 
-The groups themselves are recorded in `model/boundaries.json` and kept current with `model
+The groups themselves are recorded in `architecture.json` and kept current with `model
 add-group` and `model remove-group`; read them with `query groups`. This section holds, per
 group, one paragraph on why it exists: the kind of change it absorbs and why its components
 belong together.

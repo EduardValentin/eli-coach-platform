@@ -12,5 +12,5 @@ designs
 .parity
 .claude
 *.md
-docs/architecture/model
+docs/architecture/architecture.json
 .architecture
