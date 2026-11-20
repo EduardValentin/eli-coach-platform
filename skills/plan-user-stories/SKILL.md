@@ -16,7 +16,6 @@ story at a time.
 
 - Use `feature-work-planning` throughout.
 - Use `prototype-backed-workflow` during prototype and production discovery.
-- Use `software-architecture-principles` while evaluating boundaries.
 - Use `writing-in-owner-voice` and `ticket-writing` only after one story's
   technical plan is settled.
 
