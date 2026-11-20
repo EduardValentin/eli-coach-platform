@@ -3,6 +3,7 @@ import type { ClientGender, OnboardingClient } from "../client-onboarding";
 import {
   BODYWEIGHT_ONLY,
   CLIENT_EQUIPMENT,
+  PRIMARY_GOALS,
   type ClientEquipment,
   type ClientProfile,
   type CoachingFactsSnapshot,
@@ -46,6 +47,7 @@ export class ClientCoaching {
   readonly equipmentOptions: readonly EquipmentOption[] = CLIENT_EQUIPMENT.map(
     (equipment) => ({ equipment, exclusive: equipment === BODYWEIGHT_ONLY }),
   );
+  readonly primaryGoalOptions = PRIMARY_GOALS;
 
   private constructor(fields: ClientCoachingFields) {
     this.clientId = fields.clientId;

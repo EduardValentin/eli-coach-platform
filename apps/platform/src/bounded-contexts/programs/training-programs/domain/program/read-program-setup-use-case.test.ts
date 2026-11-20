@@ -27,6 +27,7 @@ const ANA: ClientCoaching = {
     { value: "Dumbbells", exclusive: false },
     { value: "Bodyweight only", exclusive: true },
   ],
+  goalOptions: ["Lose fat", "Build muscle"],
 };
 
 const ANAS_PROGRAM = Program.reconstitute({
@@ -54,7 +55,7 @@ function readSetup(clients: ClientCoaching[], programs: Program[] = []) {
 }
 
 describe("ReadProgramSetupUseCase", () => {
-  it("prefills the setup from her coaching facts, with her equipment options and the split for each training-day count", async () => {
+  it("prefills the setup from her coaching facts, with her goal and equipment options and the split for each training-day count", async () => {
     // arrange
     const readProgramSetupUseCase = readSetup([ANA]);
 
@@ -82,6 +83,7 @@ describe("ReadProgramSetupUseCase", () => {
         splitShape: "upper-lower",
         equipment: ["Dumbbells"],
       },
+      goalOptions: ["Lose fat", "Build muscle"],
       equipmentOptions: ANA.equipmentOptions,
       splitShapeByTrainingDays: {
         2: "full-body",

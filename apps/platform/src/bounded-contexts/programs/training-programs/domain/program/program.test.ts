@@ -35,6 +35,7 @@ const CLIENT: ClientCoaching = {
   coachingEnded: false,
   answers: { status: "approved", coachingFacts: FACTS },
   equipmentOptions: [{ value: "Dumbbells", exclusive: false }],
+  goalOptions: ["Lose fat", "Build muscle"],
 };
 
 function version(
@@ -79,7 +80,7 @@ describe("Program.started", () => {
         splitShape: "full-body",
         equipment: ["Dumbbells"],
       },
-      CLIENT.equipmentOptions,
+      CLIENT,
     );
     if (result.status === "invalid") throw new Error("expected a valid setup");
 

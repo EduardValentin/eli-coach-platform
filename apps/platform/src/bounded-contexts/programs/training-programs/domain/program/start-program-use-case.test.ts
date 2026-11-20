@@ -42,6 +42,7 @@ const ANA: ClientCoaching = {
     { value: "Resistance bands", exclusive: false },
     { value: "Bodyweight only", exclusive: true },
   ],
+  goalOptions: ["Lose fat", "Build muscle"],
 };
 
 const SETUP: ProgramSetupValues = {
@@ -370,7 +371,7 @@ describe("StartProgramUseCase", () => {
       await startProgramUseCase.execute({
         coachAccountId: COACH_ACCOUNT_ID,
         clientId: CLIENT_ID,
-        setup: { ...SETUP, goal: "" },
+        setup: { ...SETUP, goal: "  " },
       }),
       await startProgramUseCase.execute({
         coachAccountId: COACH_ACCOUNT_ID,
@@ -384,6 +385,27 @@ describe("StartProgramUseCase", () => {
       { status: "invalid", problems: { goal: "missing" } },
       { status: "invalid", problems: { equipment: "missing" } },
     ]);
+    expect(programStorePort.added).toEqual([]);
+    expect(clientCoachingPort.savedEquipment).toEqual([]);
+  });
+
+  it("refuses a goal that is not among her goal options and writes nothing", async () => {
+    // arrange
+    const { startProgramUseCase, programStorePort, clientCoachingPort } =
+      startProgram();
+
+    // act
+    const result = await startProgramUseCase.execute({
+      coachAccountId: COACH_ACCOUNT_ID,
+      clientId: CLIENT_ID,
+      setup: { ...SETUP, goal: "Run a marathon", equipment: ["Full gym"] },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { goal: "unknown" },
+    });
     expect(programStorePort.added).toEqual([]);
     expect(clientCoachingPort.savedEquipment).toEqual([]);
   });

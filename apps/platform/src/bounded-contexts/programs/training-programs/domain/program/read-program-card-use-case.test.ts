@@ -25,6 +25,7 @@ const ANA: ClientCoaching = {
     },
   },
   equipmentOptions: [{ value: "Dumbbells", exclusive: false }],
+  goalOptions: ["Build muscle"],
 };
 
 const CONTENT: ProgramContent = {

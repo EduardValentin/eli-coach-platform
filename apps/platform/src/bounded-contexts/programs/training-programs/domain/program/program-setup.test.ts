@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type {
+  ClientCoaching,
   ClientCoachingFacts,
-  EquipmentOption,
 } from "./client-coaching-port";
 import { ProgramSetup, type ProgramSetupValues } from "./program-setup";
 
@@ -14,12 +14,15 @@ const FACTS: ClientCoachingFacts = {
   equipment: ["Dumbbells", "Resistance bands"],
 };
 
-const EQUIPMENT_OPTIONS: EquipmentOption[] = [
-  { value: "Full gym", exclusive: false },
-  { value: "Dumbbells", exclusive: false },
-  { value: "Resistance bands", exclusive: false },
-  { value: "Bodyweight only", exclusive: true },
-];
+const CHOICES: Pick<ClientCoaching, "goalOptions" | "equipmentOptions"> = {
+  goalOptions: ["Lose fat", "Build muscle"],
+  equipmentOptions: [
+    { value: "Full gym", exclusive: false },
+    { value: "Dumbbells", exclusive: false },
+    { value: "Resistance bands", exclusive: false },
+    { value: "Bodyweight only", exclusive: true },
+  ],
+};
 
 const VALUES: ProgramSetupValues = {
   goal: "Lose fat",
@@ -33,7 +36,7 @@ const VALUES: ProgramSetupValues = {
 };
 
 function validSetup(values: ProgramSetupValues): ProgramSetup {
-  const result = ProgramSetup.from(values, EQUIPMENT_OPTIONS);
+  const result = ProgramSetup.from(values, CHOICES);
   if (result.status === "invalid") throw new Error("expected a valid setup");
 
   return result.setup;
@@ -87,7 +90,7 @@ describe("ProgramSetup.from", () => {
     // act
     const result = ProgramSetup.from(
       { ...VALUES, goal: "  Build muscle " },
-      EQUIPMENT_OPTIONS,
+      CHOICES,
     );
 
     // assert
@@ -101,7 +104,7 @@ describe("ProgramSetup.from", () => {
     // act
     const result = ProgramSetup.from(
       { ...VALUES, goal: "   ", equipment: [] },
-      EQUIPMENT_OPTIONS,
+      CHOICES,
     );
 
     // assert
@@ -111,11 +114,25 @@ describe("ProgramSetup.from", () => {
     });
   });
 
+  it("refuses a goal that is not among her goal options", () => {
+    // act
+    const result = ProgramSetup.from(
+      { ...VALUES, goal: "Run a marathon" },
+      CHOICES,
+    );
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { goal: "unknown" },
+    });
+  });
+
   it("refuses the exclusive equipment together with another choice", () => {
     // act
     const result = ProgramSetup.from(
       { ...VALUES, equipment: ["Bodyweight only", "Dumbbells"] },
-      EQUIPMENT_OPTIONS,
+      CHOICES,
     );
 
     // assert
@@ -129,7 +146,7 @@ describe("ProgramSetup.from", () => {
     // act
     const result = ProgramSetup.from(
       { ...VALUES, equipment: ["Bodyweight only"] },
-      EQUIPMENT_OPTIONS,
+      CHOICES,
     );
 
     // assert
@@ -140,7 +157,7 @@ describe("ProgramSetup.from", () => {
     // act
     const result = ProgramSetup.from(
       { ...VALUES, equipment: ["Dumbbells", "Trampoline"] },
-      EQUIPMENT_OPTIONS,
+      CHOICES,
     );
 
     // assert

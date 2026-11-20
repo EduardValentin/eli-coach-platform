@@ -30,6 +30,7 @@ export type ProgramSetupReading =
       status: "ready";
       client: ProgramClient;
       startingValues: ProgramSetupValues;
+      goalOptions: string[];
       equipmentOptions: EquipmentOption[];
       splitShapeByTrainingDays: Record<TrainingDays, SplitShape>;
     };
@@ -70,6 +71,7 @@ export class ReadProgramSetupUseCase {
           startingValues: ProgramSetup.startingValues(
             eligibility.coachingFacts,
           ),
+          goalOptions: eligibility.clientCoaching.goalOptions,
           equipmentOptions: eligibility.clientCoaching.equipmentOptions,
           splitShapeByTrainingDays: this.splitShapeByTrainingDays(),
         };

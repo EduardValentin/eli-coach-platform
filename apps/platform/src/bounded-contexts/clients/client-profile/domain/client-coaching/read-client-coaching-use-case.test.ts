@@ -156,6 +156,26 @@ describe("ReadClientCoachingUseCase", () => {
     ]);
   });
 
+  it("answers the primary goals her goal may be chosen from", async () => {
+    // arrange
+    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
+      approvedAt: APPROVED_AT,
+    });
+
+    // act
+    const coaching = await readClientCoachingUseCase.execute("client-1");
+
+    // assert
+    expect(coaching?.primaryGoalOptions).toEqual([
+      "Lose fat",
+      "Build muscle",
+      "Maintain a healthy weight",
+      "Learn to balance activity and nutrition",
+      "Improve overall health",
+      "Work with my menstrual cycle",
+    ]);
+  });
+
   it("reports her answers unapproved while her review has no approval", async () => {
     // arrange
     const readClientCoachingUseCase = readClientCoachingUseCaseOver({

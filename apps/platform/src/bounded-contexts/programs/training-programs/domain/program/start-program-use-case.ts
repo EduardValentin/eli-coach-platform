@@ -58,10 +58,7 @@ export class StartProgramUseCase {
       return { status: eligibility.status };
     }
 
-    const setup = ProgramSetup.from(
-      command.setup,
-      eligibility.clientCoaching.equipmentOptions,
-    );
+    const setup = ProgramSetup.from(command.setup, eligibility.clientCoaching);
 
     if (setup.status === "invalid") {
       return setup;

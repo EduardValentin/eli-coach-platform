@@ -22,6 +22,7 @@ export type ClientCoaching = {
     | { status: "approved"; coachingFacts: ClientCoachingFacts }
     | { status: "not-approved" };
   equipmentOptions: EquipmentOption[];
+  goalOptions: string[];
 };
 
 export type EquipmentUpdate = {

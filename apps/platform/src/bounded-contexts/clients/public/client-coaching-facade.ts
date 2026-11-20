@@ -20,6 +20,7 @@ export type ClientCoachingDto = {
   coachingEnded: boolean;
   coachingFacts: ClientCoachingFactsDto | null;
   equipmentOptions: EquipmentOptionDto[];
+  primaryGoalOptions: string[];
 };
 
 export type ClientEquipmentSaveDto = {

@@ -60,6 +60,7 @@ export class ClientCoachingFacadeAdapter implements ClientCoachingFacade {
         equipment: option.equipment,
         exclusive: option.exclusive,
       })),
+      primaryGoalOptions: [...coaching.primaryGoalOptions],
     };
   }
 }

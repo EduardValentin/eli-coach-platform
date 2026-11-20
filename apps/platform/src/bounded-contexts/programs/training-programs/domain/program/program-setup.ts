@@ -1,4 +1,5 @@
 import type {
+  ClientCoaching,
   ClientCoachingFacts,
   EquipmentOption,
 } from "./client-coaching-port";
@@ -24,9 +25,14 @@ export type ProgramSetupValues = {
 };
 
 export type ProgramSetupProblems = {
-  goal?: "missing";
+  goal?: "missing" | "unknown";
   equipment?: "missing" | "exclusive" | "unknown";
 };
+
+type ProgramSetupChoices = Pick<
+  ClientCoaching,
+  "goalOptions" | "equipmentOptions"
+>;
 
 export type ProgramSetupResult =
   | { status: "valid"; setup: ProgramSetup }
@@ -53,15 +59,16 @@ export class ProgramSetup {
 
   static from(
     entered: ProgramSetupValues,
-    equipmentOptions: readonly EquipmentOption[],
+    choices: ProgramSetupChoices,
   ): ProgramSetupResult {
     const goal = entered.goal.trim();
+    const goalProblem = ProgramSetup.goalProblem(goal, choices.goalOptions);
     const equipment = ProgramSetup.equipmentProblem(
       entered.equipment,
-      equipmentOptions,
+      choices.equipmentOptions,
     );
     const problems: ProgramSetupProblems = {
-      ...(goal === "" && { goal: "missing" }),
+      ...(goalProblem && { goal: goalProblem }),
       ...(equipment && { equipment }),
     };
 
@@ -84,6 +91,16 @@ export class ProgramSetup {
       chosen.length === current.length &&
       chosen.every((item) => current.includes(item))
     );
+  }
+
+  private static goalProblem(
+    goal: string,
+    options: readonly string[],
+  ): ProgramSetupProblems["goal"] {
+    if (goal === "") return "missing";
+    if (!options.includes(goal)) return "unknown";
+
+    return undefined;
   }
 
   private static equipmentProblem(
