@@ -61,7 +61,7 @@ const COMPONENT_ORDER = {
     "notifications",
     "check-ins",
   ],
-  programs: ["exercise-library", "nutrition-library"],
+  programs: ["exercise-library", "nutrition-library", "training-programs"],
   sales: ["store", "waitlist", "subscriptions"],
 };
 
