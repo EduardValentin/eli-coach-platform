@@ -11,7 +11,7 @@ export function endedText(status: Extract<BlockStatus, { kind: 'ended' }>): stri
 }
 
 export function currentWeekText(block: Block, status: Extract<BlockStatus, { kind: 'current' }>): string {
-  return `week ${status.weekOfBlock} of ${block.weeks}`;
+  return block.weeks === 1 ? 'this week' : `week ${status.weekOfBlock} of ${block.weeks}`;
 }
 
 export function blockProgress(block: Block, status: BlockStatus): string | null {
@@ -35,7 +35,7 @@ export function BlockTypeSelect({ value, label, appearance, problemId, onChange 
         aria-invalid={problemId ? true : undefined}
         className={cn({
           'w-auto min-w-0 bg-transparent px-2 text-left text-lg font-semibold whitespace-normal text-text-primary shadow-none hover:bg-surface-quiet md:text-lg *:data-[slot=select-value]:line-clamp-2': appearance === 'title',
-          'w-auto max-w-full min-w-0 sm:min-w-40': appearance === 'field',
+          'w-full min-w-0 @3xl:w-auto @3xl:min-w-40': appearance === 'field',
         })}
       >
         <SelectValue />

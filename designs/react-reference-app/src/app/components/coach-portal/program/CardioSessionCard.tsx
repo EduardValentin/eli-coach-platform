@@ -14,7 +14,7 @@ import type { LibraryTarget } from '../../../domain/programEditing';
 import { counted } from '../../../utils/counted';
 import { IconActionButton } from '../../IconActionButton';
 import { RowActionsMenu } from '../../RowActionsMenu';
-import { LABEL_CLASS } from '../../typography';
+import { EYEBROW_CLASS, LABEL_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../ui/dropdown-menu';
@@ -22,7 +22,7 @@ import { cn } from '../../ui/utils';
 import { cardioSummary } from '../../program-view/programView';
 import { CardioSegmentCard, type SegmentFocus } from './CardioSegmentCard';
 import { useEditorAnnouncer } from './editorAnnouncer';
-import { useResetConfirm } from './ResetConfirm';
+import { useDestructiveConfirm } from './DestructiveConfirm';
 import {
   CollapsedSessionHeader,
   EXPANDED_SESSION_CLASS,
@@ -95,7 +95,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
     onExpand();
   };
   const header = useMeasuredHeight();
-  const confirm = useResetConfirm();
+  const confirm = useDestructiveConfirm();
   const announce = useEditorAnnouncer();
   const edits = cardioEdits(cardio, library);
   const { segments } = cardio;
@@ -156,7 +156,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
         tone="inset"
       >
         <div className="flex items-center justify-between gap-3">
-          <h4 className="text-sm font-semibold text-text-primary">Segments</h4>
+          <h4 className={EYEBROW_CLASS}>Segments</h4>
           <AddSegmentMenu sessionName={cardio.name} triggerRef={addSegment} onAdd={kind => onChange(edits.addSegment(kind))} />
         </div>
         {segments.length === 0 && <PresetRow onChoose={kind => onChange(edits.applyPreset(kind))} />}

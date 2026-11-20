@@ -1,6 +1,5 @@
 import type { ExerciseRole, MovementPattern } from './exercises';
 import type { GuideTexts } from './programTemplates';
-import { counted } from '../utils/counted';
 
 export type ProgramLanguage = 'en' | 'ro';
 export type LevelHint = 'beginner' | 'intermediate' | 'advanced';
@@ -33,11 +32,28 @@ export type Range = { min: number; max: number };
 export type LastSetTechnique = 'none' | 'drop-set' | 'rest-pause';
 export const LAST_SET_TECHNIQUE_LABELS: Record<LastSetTechnique, string> = { none: 'None', 'drop-set': 'Drop set', 'rest-pause': 'Rest-pause' };
 export type Progression = { kind: 'double' } | { kind: 'custom'; text: string };
+export type SetKind = 'warm-up' | 'working';
 export type WarmUpSet = { kind: 'warm-up'; reps: Range; weightKg?: number };
-export type WorkingSet = { kind: 'working'; reps: Range; rir: Range; weightKg?: number };
+type WorkingSet = { kind: 'working'; reps: Range; rir: number; weightKg?: number };
+/** One set as the client reads it in a week: the flat list a resolved week expands to. */
 export type SetSpec = WarmUpSet | WorkingSet;
+/** The block's defaults for a row's working sets, before they become one planned set each; `lastSetRir` is the last set's RIR when it differs. */
+export type WorkingTargets = { count: number; reps: Range; rir: number; lastSetRir?: number; weightKg?: number };
+/** What one set asks for. A warm-up set keeps an RIR it does not show, so switching it to a working set has one. */
+export type SetTargets = { reps: Range; rir: number; weightKg?: number };
+export type SetTarget = keyof SetTargets;
+export type TypedTargets = Partial<SetTargets>;
+/** One set of the first week, or one added in a later week, with the targets it starts from before the coach types. */
+export type PlannedSet = { id: string; kind: SetKind; start: SetTargets };
+/** What the coach did in one week, by set id: only that week reads it. */
+export type WeekChanges = {
+  typed?: Partial<Record<string, TypedTargets>>;
+  added?: PlannedSet[];
+  removed?: string[];
+  /** In the order the coach switched them, which places them at the end of the warm-up sets or the start of the working sets. */
+  switched?: string[];
+};
 export type RowField =
-  | 'sets'
   | 'restSeconds'
   | 'tempo'
   | 'lastSetTechnique'
@@ -49,7 +65,10 @@ export type Row = {
   exerciseId: string;
   slot: Slot;
   supersetGroup?: string;
-  sets: SetSpec[];
+  /** The block's first week as its defaults or the previous block leave it; the weeks after it are suggested from it. */
+  startSets: PlannedSet[];
+  /** Sparse, by week of the block, so a week the coach never touched keeps following the first week. */
+  weekChanges?: Partial<Record<number, WeekChanges>>;
   restSeconds: number;
   tempo?: string;
   lastSetTechnique: LastSetTechnique;
@@ -58,6 +77,8 @@ export type Row = {
   cues: string;
   touched: RowField[];
 };
+/** A row as it reads in one week of its block, with that week's sets in order. */
+export type WeekRow = Omit<Row, 'startSets' | 'weekChanges'> & { sets: SetSpec[] };
 export type WarmUpItem = { id: string; exerciseId: string; sets: number; reps?: Range; seconds?: number };
 export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
 export type CoolDown = { enabled: boolean; items: CoolDownItem[] };
@@ -69,6 +90,7 @@ export type Session = {
   coolDown: CoolDown;
   rows: Row[];
 };
+export type WeekSession = Omit<Session, 'rows'> & { rows: WeekRow[] };
 export type CardioIntensity = 'easy' | 'moderate' | 'hard';
 export type RoundsItem = { id: string; exerciseId: string; workSeconds?: number; reps?: number };
 export type SteadySegment = { id: string; kind: 'steady'; exerciseId: string; minutes: number; intensity: CardioIntensity };
@@ -156,6 +178,11 @@ export function formatRange({ min, max }: Range): string {
   return min === max ? String(min) : `${min}–${max}`;
 }
 
+/** The lowest to the highest RIR of several sets, one number when they agree. */
+export function rirSpan(rirs: readonly number[]): Range {
+  return { min: Math.min(...rirs), max: Math.max(...rirs) };
+}
+
 const SECONDS_PER_MINUTE = 60;
 
 export function formatRest(seconds: number): string {
@@ -168,17 +195,29 @@ function sameRange(left: Range, right: Range): boolean {
   return left.min === right.min && left.max === right.max;
 }
 
+/** What makes two working sets different kinds of set; RIR steps down across a week's sets by design. */
+export const SET_KIND_TARGETS = ['reps', 'weightKg'] as const;
+type SetKindTargets = Pick<SetTargets, (typeof SET_KIND_TARGETS)[number]>;
+
+export function hasSameTarget(target: (typeof SET_KIND_TARGETS)[number], left: SetKindTargets, right: SetKindTargets): boolean {
+  if (target === 'reps') return sameRange(left.reps, right.reps);
+  return left[target] === right[target];
+}
+
+export function isSameKindOfSet(left: SetKindTargets, right: SetKindTargets): boolean {
+  return SET_KIND_TARGETS.every(target => hasSameTarget(target, left, right));
+}
+
 export function isWorkingSet(set: SetSpec): set is WorkingSet {
   return set.kind === 'working';
 }
 
-export function workingSets(sets: readonly SetSpec[]): WorkingSet[] {
+function workingSets(sets: readonly SetSpec[]): WorkingSet[] {
   return sets.filter(isWorkingSet);
 }
 
-export type NumberedSet = { set: SetSpec; number: number };
-
-export function numberedSets(sets: readonly SetSpec[]): NumberedSet[] {
+/** Each set with its number among the sets of its kind: warm-up sets and working sets count apart. */
+export function numberedSets<Set extends { kind: SetKind }>(sets: readonly Set[]): { set: Set; number: number }[] {
   const counts = { working: 0, 'warm-up': 0 };
   return sets.map(set => {
     counts[set.kind] += 1;
@@ -186,55 +225,34 @@ export function numberedSets(sets: readonly SetSpec[]): NumberedSet[] {
   });
 }
 
-const NEW_SET_REPS: Range = { min: 8, max: 8 };
-export const NEW_SET_RIR: Range = { min: 2, max: 2 };
-
-export function withSetAdded(sets: readonly SetSpec[]): SetSpec[] {
-  const last = sets.at(-1);
-  const added: SetSpec = last ? structuredClone(last) : { kind: 'working', reps: { ...NEW_SET_REPS }, rir: { ...NEW_SET_RIR } };
-  return [...sets, added];
+export function plannedSet(kind: SetKind, start: SetTargets): PlannedSet {
+  return { id: newId(), kind, start: structuredClone(start) };
 }
 
-export function setText(set: WorkingSet, repsSuffix = ''): string {
-  return `${formatRange(set.reps)}${repsSuffix} · RIR ${formatRange(set.rir)}`;
+/** The targets of each of `count` working sets: every set at the default RIR, the last at `lastSetRir`. */
+export function workingStarts(working: WorkingTargets): SetTargets[] {
+  const { count, rir, lastSetRir = rir, ...targets } = working;
+  return Array.from({ length: count }, (_, index) => ({ ...structuredClone(targets), rir: index === count - 1 ? lastSetRir : rir }));
 }
 
-export function hasUniformSets(sets: readonly SetSpec[]): boolean {
-  const working = workingSets(sets);
-  const [first] = working;
-  return working.every(set => sameRange(set.reps, first.reps) && sameRange(set.rir, first.rir));
-}
-
-function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
-  const [first] = sets;
-  const count = counted(sets.length, 'working set');
-  if (!hasUniformSets(sets)) return count;
-  return `${count} × ${setText(first, repsSuffix)}`;
+/** One planned set per working set the defaults count, after the warm-up sets. */
+export function plannedSets(warmUps: readonly SetTargets[], working: WorkingTargets): PlannedSet[] {
+  return [...warmUps.map(start => plannedSet('warm-up', start)), ...workingStarts(working).map(start => plannedSet('working', start))];
 }
 
 export type SetsBreakdown = { warmUp: number; working: number; reps: string | null; rir: Range | null };
 
+/** `reps` only when every working set is the same kind of set, so the reps speak for all of them. */
 export function setsBreakdown(sets: readonly SetSpec[], repsSuffix = ''): SetsBreakdown {
   const working = workingSets(sets);
   const [first] = working;
-  const uniform = first !== undefined && hasUniformSets(sets);
+  const uniform = first !== undefined && working.every(set => isSameKindOfSet(first, set));
   return {
     warmUp: sets.length - working.length,
     working: working.length,
     reps: uniform ? `${formatRange(first.reps)}${repsSuffix}` : null,
-    rir: uniform ? first.rir : null,
+    rir: first === undefined ? null : rirSpan(working.map(set => set.rir)),
   };
-}
-
-export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
-  if (sets.length === 0) return 'No sets';
-  const working = workingSets(sets);
-  const warmUpCount = sets.length - working.length;
-  const parts = [
-    ...(warmUpCount > 0 ? [counted(warmUpCount, 'warm-up set')] : []),
-    ...(working.length > 0 ? [workingSummary(working, repsSuffix)] : []),
-  ];
-  return parts.join(' · ');
 }
 
 export function warmUpItemText(item: WarmUpItem): string {
@@ -242,7 +260,9 @@ export function warmUpItemText(item: WarmUpItem): string {
   return `${item.sets} × ${amount}`;
 }
 
-export function positionLabel(session: Session, row: Row): string {
+export type PlacedRow = Pick<Row, 'id' | 'slot' | 'supersetGroup'>;
+
+export function positionLabel(session: { rows: readonly PlacedRow[] }, row: PlacedRow): string {
   if (row.supersetGroup === undefined) return row.slot;
   const group = session.rows.filter(
     other => other.slot === row.slot && other.supersetGroup === row.supersetGroup,
@@ -278,7 +298,7 @@ export function cardioOn(block: Block, day: Weekday): CardioSession | undefined 
   return entry.kind === 'cardio' ? block.cardioSessions.find(cardio => cardio.id === entry.cardioId) : undefined;
 }
 
-export function hasCoolDown(session: Session): boolean {
+export function hasCoolDown(session: Pick<Session, 'coolDown'>): boolean {
   return session.coolDown.enabled && session.coolDown.items.length > 0;
 }
 

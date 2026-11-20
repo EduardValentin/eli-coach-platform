@@ -11,7 +11,7 @@ const TONE_CLASS: Record<EffortTone, string> = {
 };
 
 const SIZE_CLASS: Record<EffortSize, string> = {
-  inline: 'px-1.5',
+  inline: 'min-w-[1lh] px-1.5',
   numeral: 'h-7 min-w-9 px-2.5 text-base',
   word: 'h-7 px-2.5 text-sm',
   document: 'h-[1.6em] px-2.5 text-document-note',

@@ -1,12 +1,14 @@
-import { useState, type ReactNode, type Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, CornerDownRight, Link2, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { positionLabel, type Row, type Session, type Slot } from '../../../domain/program';
+import { formatRest, positionLabel, withField, type Row, type Session, type Slot } from '../../../domain/program';
+import { blockSpan } from '../../../domain/programCalendar';
+import { progressionContextOf, rowAtWeek, type ProgressionSchedule } from '../../../domain/programProgression';
 import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { Button } from '../../ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
+import { LABEL_CLASS } from '../../typography';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
@@ -14,10 +16,13 @@ import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
 import { rowExerciseDetail } from '../../program-view/sessionExerciseDetails';
 import { PositionBadge } from '../../program-view/PositionBadge';
 import { exerciseNameOf, musclesAndEquipmentText, repsSuffix } from '../../program-view/programView';
-import { rowTargets } from '../../program-view/targets';
+import { rowTargets, weekRangeTargets } from '../../program-view/targets';
+import { DisclosureContent, DisclosureTrigger, TextDisclosureGroup } from '../../program-view/TextDisclosure';
 import { TargetsSummary } from '../../program-view/TargetsSummary';
 import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
 import { acceptsIntoSession, LIBRARY_EXERCISE, PLAN_ROW, useSessionDrop, type DraggedItem, type PlanRowItem } from './sessionDnd';
+import { RowTextField } from './RowTextField';
+import { parseRest, REST_PROBLEM } from './rowFields';
 import { SetGrid } from './SetGrid';
 
 export type SlotTarget = { slot: Slot; label: string };
@@ -31,6 +36,7 @@ type ExerciseCardProps = {
   edits: RowEdits;
   slots: readonly SlotTarget[];
   focus: RowFocus;
+  schedule: ProgressionSchedule;
   onChange: (session: Session) => void;
   onAddSubstitution: (rowId: string) => void;
 };
@@ -105,40 +111,75 @@ function dropHint(row: Row, itemType: string | symbol | null): string {
 }
 
 const CARD_GRID_CLASS = cn(
-  'grid grid-cols-[auto_auto_auto_minmax(0,1fr)_auto] items-start gap-x-4 px-3',
-  '[grid-template-areas:"handle_info_info_info_menu"_"._stats_stats_stats_stats"_"._sets_details_._."_"setspanel_setspanel_setspanel_setspanel_setspanel"_"detailspanel_detailspanel_detailspanel_detailspanel_detailspanel"]',
-  'sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]',
-  'sm:[grid-template-areas:"handle_info_sets_details_menu"_"._stats_stats_stats_stats"_"setspanel_setspanel_setspanel_setspanel_setspanel"_"detailspanel_detailspanel_detailspanel_detailspanel_detailspanel"]',
+  'grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-4 px-3',
+  '[grid-template-areas:"handle_info_menu"_"._stats_stats"_"._toggles_toggles"_"panel_panel_panel"]',
+  'sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]',
+  'sm:[grid-template-areas:"handle_info_toggles_menu"_"._stats_stats_stats"_"panel_panel_panel_panel"]',
 );
-const PANEL_CLASS = '-mx-3 border-t border-border-subtle px-3';
 
-type DisclosureProps = { label: string; name: string; area: string; panelClassName: string; onOpenChange?: (open: boolean) => void; children: ReactNode };
+type PanelName = 'sets' | 'details';
+type CardPanel = { name: PanelName; label: string; content: ReactNode };
+type PanelTriggersProps = { panels: readonly CardPanel[]; exerciseName: string };
 
-function Disclosure({ label, name, area, panelClassName, onOpenChange, children }: DisclosureProps) {
+function PanelTriggers({ panels, exerciseName }: PanelTriggersProps) {
   return (
-    <Collapsible className="contents" onOpenChange={onOpenChange}>
-      <CollapsibleTrigger asChild>
-        <Button variant="disclosure" size="xs" className={cn('mt-2 mb-3 sm:mt-3 sm:mb-0', area)}>
-          {label}
-          <span className="sr-only">{` for ${name}`}</span>
-          <ChevronDown aria-hidden="true" />
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className={cn(PANEL_CLASS, panelClassName)}>{children}</CollapsibleContent>
-    </Collapsible>
+    <div className="mt-2 mb-3 flex flex-wrap gap-x-1 gap-y-4 [grid-area:toggles] sm:mt-3 sm:mb-0">
+      {panels.map(panel => (
+        <DisclosureTrigger key={panel.name} value={panel.name}>
+          <Button variant="disclosure" size="xs" data-panel-trigger={panel.name}>
+            {panel.label}
+            <span className="sr-only">{` for ${exerciseName}`}</span>
+            <ChevronDown aria-hidden="true" />
+          </Button>
+        </DisclosureTrigger>
+      ))}
+    </div>
   );
 }
 
-export function ExerciseCard({ session, row, exercise, library, edits, slots, focus, onChange, onAddSubstitution }: ExerciseCardProps) {
+function OpenPanel({ panels }: Pick<PanelTriggersProps, 'panels'>) {
+  return panels.map(panel => (
+    <DisclosureContent key={panel.name} value={panel.name}>
+      <div
+        data-panel={panel.name}
+        className="-mx-3 grid grid-cols-[minmax(0,1fr)] gap-4 rounded-b-[calc(var(--radius-control)-1px)] border-t border-border-subtle bg-surface-subtle px-3 py-4 [grid-area:panel]"
+      >
+        {panel.content}
+      </div>
+    </DisclosureContent>
+  ));
+}
+
+function RestField({ row, onChange }: { row: Row; onChange: (row: Row) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-subtle pt-3">
+      <span aria-hidden="true" className={cn(LABEL_CLASS, 'flex h-(--size-control-md) items-center')}>
+        Rest between sets
+      </span>
+      <RowTextField
+        className="w-20"
+        label="Rest between sets"
+        value={row.restSeconds}
+        format={formatRest}
+        parse={parseRest}
+        problem={REST_PROBLEM}
+        onCommit={seconds => onChange(withField(row, 'restSeconds', seconds))}
+      />
+    </div>
+  );
+}
+
+export function ExerciseCard({ session, row, exercise, library, edits, slots, focus, schedule, onChange, onAddSubstitution }: ExerciseCardProps) {
   const announce = useEditorAnnouncer();
-  const [setsOpen, setSetsOpen] = useState(false);
+  const progression = progressionContextOf(schedule, exercise);
+  const firstWeek = rowAtWeek(row, 1, progression);
   const position = positionLabel(session, row);
   const name = exerciseNameOf(exercise);
   const facts = musclesAndEquipmentText(exercise);
   const changeRow = (next: Row) => onChange(edits.replaceRow(next));
   const detail = rowExerciseDetail({
     session,
-    row,
+    row: firstWeek,
     progression: row.progression.kind === 'custom' ? row.progression.text : '',
     findExercise: id => library.find(item => item.id === id),
   });
@@ -163,6 +204,38 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
     (dragged: DraggedItem, sessionId: string) => acceptsIntoSession(dragged, sessionId) && !(dragged.kind === PLAN_ROW && dragged.item.rowId === row.id),
   );
   const targeted = isOver && canDrop;
+  const panels: CardPanel[] = [
+    {
+      name: 'sets',
+      label: 'Sets',
+      content: (
+        <>
+          <SetGrid row={row} exercise={exercise} schedule={schedule} exerciseName={name} onChange={changeRow} />
+          <RestField row={row} onChange={changeRow} />
+        </>
+      ),
+    },
+    {
+      name: 'details',
+      label: 'Details',
+      content: (
+        <ExerciseRowDetails
+          row={row}
+          exercise={exercise}
+          detail={detail}
+          library={library}
+          substitutionDrop={{
+            sessionId: session.id,
+            onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addSubstitution(row.id, dragged.item.exercise.id)),
+          }}
+          onChange={changeRow}
+          onAddSubstitution={() => onAddSubstitution(row.id)}
+          onRemoveSubstitution={exerciseId => onChange(edits.removeSubstitution(row.id, exerciseId))}
+          onSuggestSubstitutions={() => onChange(edits.suggestSubstitutions(row.id))}
+        />
+      ),
+    },
+  ];
 
   return (
     <article
@@ -171,39 +244,24 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
       data-row-id={row.id}
       className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
-      <div className={CARD_GRID_CLASS}>
-        <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
-        <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
-          <h5 className="flex items-center gap-2.5">
-            <PositionBadge label={position} size="sm" />{' '}
-            <ExerciseNameButton exercise={exercise} detail={detail} weight="medium" size="compact" />
-          </h5>
-          {facts && <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
+      <TextDisclosureGroup>
+        <div className={CARD_GRID_CLASS}>
+          <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
+          <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
+            <h5 className="flex items-center gap-2.5">
+              <PositionBadge label={position} size="sm" />{' '}
+              <ExerciseNameButton exercise={exercise} detail={detail} weight="medium" size="compact" />
+            </h5>
+            {facts && <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
+          </div>
+          <TargetsSummary size="sm" items={[...rowTargets(firstWeek, repsSuffix(exercise)), ...weekRangeTargets(row, progression, blockSpan(schedule.blocks, schedule.blockIndex).startWeek)]} className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3" />
+          <PanelTriggers panels={panels} exerciseName={name} />
+          <div className="mt-3 [grid-area:menu]">
+            <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />
+          </div>
+          <OpenPanel panels={panels} />
         </div>
-        <div className="mt-3 [grid-area:menu]">
-          <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />
-        </div>
-        {!setsOpen && <TargetsSummary size="sm" items={rowTargets(row, repsSuffix(exercise))} className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3" />}
-        <Disclosure label="Sets" name={name} area="[grid-area:sets]" onOpenChange={setSetsOpen} panelClassName="py-3 [grid-area:setspanel]">
-          <SetGrid row={row} exerciseName={name} repsSuffix={repsSuffix(exercise)} onChange={changeRow} />
-        </Disclosure>
-        <Disclosure label="Details" name={name} area="[grid-area:details]" panelClassName="grid grid-cols-[minmax(0,1fr)] gap-4 rounded-b-[calc(var(--radius-control)-1px)] bg-surface-subtle py-4 [grid-area:detailspanel]">
-          <ExerciseRowDetails
-            row={row}
-            exercise={exercise}
-            detail={detail}
-            library={library}
-            substitutionDrop={{
-              sessionId: session.id,
-              onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addSubstitution(row.id, dragged.item.exercise.id)),
-            }}
-            onChange={changeRow}
-            onAddSubstitution={() => onAddSubstitution(row.id)}
-            onRemoveSubstitution={exerciseId => onChange(edits.removeSubstitution(row.id, exerciseId))}
-            onSuggestSubstitutions={() => onChange(edits.suggestSubstitutions(row.id))}
-          />
-        </Disclosure>
-      </div>
+      </TextDisclosureGroup>
       {targeted && <DropOverlay>{dropHint(row, itemType)}</DropOverlay>}
     </article>
   );

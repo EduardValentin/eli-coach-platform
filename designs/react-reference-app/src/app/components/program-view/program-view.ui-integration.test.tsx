@@ -1,10 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { addDays } from 'date-fns';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { currentBlockOf, seededProgramView } from '../../../test/programFixtures';
 import type { Exercise } from '../../context/TrainingContext';
-import type { Block, ProgramVersion } from '../../domain/program';
+import type { Block, ProgramVersion, Weekday } from '../../domain/program';
 import { cardioPreset } from '../../domain/programCardio';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { ProgramViewer } from './ProgramViewer';
@@ -43,6 +44,10 @@ function withFirstBlock(view: ProgramView, edit: (block: Block) => Block): Progr
   const [first, ...rest] = view.version.content.plan.blocks;
   const version: ProgramVersion = { ...view.version, content: { ...view.version.content, plan: { blocks: [edit(first), ...rest] } } };
   return { ...view, version };
+}
+
+function restingOn(view: ProgramView, weekdays: readonly Weekday[]): ProgramView {
+  return withFirstBlock(view, block => ({ ...block, calendar: { ...block.calendar, ...Object.fromEntries(weekdays.map(weekday => [weekday, { kind: 'rest' }])) } }));
 }
 
 function Viewer({ view }: { view: ProgramView }) {
@@ -150,13 +155,14 @@ describe('ProgramViewer week', () => {
     expect(within(week).getByText('Foundation block, week 1 of 4')).toBeInTheDocument();
     expect(within(week).queryByRole('button', { name: /^Foundation block/ })).not.toBeInTheDocument();
     expect(within(week).getByRole('button', { name: 'Full Body' })).toHaveAttribute('aria-expanded', 'false');
-    const tabs = within(screen.getByRole('tablist', { name: 'Days of week 1 of 11' })).getAllByRole('tab');
-    expect(tabs).toHaveLength(7);
+    const rail = screen.getByRole('tablist', { name: 'Days of week 1 of 11' });
+    const tabs = within(rail).getAllByRole('tab');
     expect(tabs[0]).toHaveAccessibleName(/^Wednesday 16 September, /);
-    expect(tabs[6]).toHaveAccessibleName(/^Tuesday 22 September, .+, today$/);
-    expect(tabs[6]).toHaveAttribute('aria-selected', 'true');
-    expect(tabs[6]).toHaveAttribute('aria-current', 'date');
-    expect(tabs.filter(tab => tab.hasAttribute('aria-controls'))).toEqual([tabs[6]]);
+    const today = tabs[tabs.length - 1];
+    expect(today).toHaveAccessibleName(/^Tuesday 22 September, .+, today$/);
+    expect(today).toHaveAttribute('aria-selected', 'true');
+    expect(today).toHaveAttribute('aria-current', 'date');
+    expect(tabs.filter(tab => tab.hasAttribute('aria-controls'))).toEqual([today]);
     expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
   });
 
@@ -165,7 +171,8 @@ describe('ProgramViewer week', () => {
     const user = userEvent.setup();
     renderViewer(viewAt(TODAY));
     const tabs = screen.getAllByRole('tab');
-    tabs[6].focus();
+    const last = tabs[tabs.length - 1];
+    last.focus();
 
     // act
     await user.keyboard('{Home}');
@@ -177,8 +184,55 @@ describe('ProgramViewer week', () => {
     // assert
     expect(afterHome).toBe(0);
     expect(afterArrow).toBe(1);
-    expect(tabs[6]).toHaveAttribute('aria-selected', 'true');
-    expect(tabs[6]).toHaveFocus();
+    expect(last).toHaveAttribute('aria-selected', 'true');
+    expect(last).toHaveFocus();
+  });
+
+  it('keeps the rest days in the rail as disabled tabs that the arrow keys step over', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderViewer(restingOn(viewAt(TODAY), ['sat', 'sun']));
+    const rail = screen.getByRole('tablist', { name: 'Days of week 1 of 11' });
+    await user.click(within(rail).getByRole('tab', { name: /^Friday 18 September, / }));
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    const monday = within(rail).getByRole('tab', { name: /^Monday 21 September, / });
+    expect(monday).toHaveFocus();
+    expect(monday).toHaveAttribute('aria-selected', 'true');
+    expect(within(rail).getAllByRole('tab')).toHaveLength(7);
+    expect(within(rail).getByRole('tab', { name: 'Saturday 19 September, Rest' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(rail).getByRole('tab', { name: 'Sunday 20 September, Rest' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(rail).getByRole('tab', { name: 'Sunday 20 September, Rest' })).not.toHaveAttribute('aria-controls');
+  });
+
+  it('opens the next training day when she rests today, and keeps today marked on its rest day', () => {
+    // arrange
+    const view = restingOn(viewAt(new Date(2026, 8, 19)), ['sat', 'sun']);
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const rail = screen.getByRole('tablist', { name: 'Days of week 1 of 11' });
+    expect(within(rail).getByRole('tab', { name: 'Saturday 19 September, Rest, today' })).toHaveAttribute('aria-current', 'date');
+    expect(within(rail).getByRole('tab', { selected: true })).toHaveAccessibleName(/^Monday 21 September, /);
+    expect(within(screen.getByRole('tabpanel')).queryByRole('heading', { level: 3, name: 'Rest' })).not.toBeInTheDocument();
+  });
+
+  it('opens the latest earlier training day when she rests today and the week holds no more training', () => {
+    // arrange
+    const view = restingOn(viewAt(TODAY), ['tue']);
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const rail = screen.getByRole('tablist', { name: 'Days of week 1 of 11' });
+    expect(within(rail).getByRole('tab', { name: 'Tuesday 22 September, Rest, today' })).toHaveAttribute('aria-current', 'date');
+    expect(within(rail).getByRole('tab', { selected: true })).toHaveAccessibleName(/^Monday 21 September, /);
   });
 
   it('steps through the plan weeks and offers the way back to this week', async () => {
@@ -199,20 +253,18 @@ describe('ProgramViewer week', () => {
     expect(screen.getByRole('heading', { level: 2, name: /^Week 1 of 11/ })).toBeInTheDocument();
   });
 
-  it('shows all seven days and turns the rail into links when All days is pressed', async () => {
+  it('names a one-week block without a week of block', () => {
     // arrange
-    const user = userEvent.setup();
-    renderViewer(viewAt(TODAY));
+    const lastWeek = addDays(TODAY, 70);
 
     // act
-    await user.click(screen.getByRole('button', { name: 'All days' }));
+    renderViewer(viewAt(lastWeek));
 
     // assert
-    expect(screen.getByRole('button', { name: 'All days' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
-    const rail = screen.getByRole('navigation', { name: 'Days of week 1 of 11' });
-    expect(within(rail).getAllByRole('link')).toHaveLength(7);
-    expect(screen.getAllByRole('heading', { level: 3 }).filter(heading => heading.id.startsWith('program-day-'))).toHaveLength(7);
+    const week = screen.getByRole('region', { name: /^Week 11 of 11/ });
+    expect(within(week).getByText('Deload block')).toBeInTheDocument();
+    expect(within(week).getByText('Deload')).toBeInTheDocument();
+    expect(week).not.toHaveTextContent('week 1 of 1');
   });
 
   it('states the daily steps once for the week and names each rail day without its length', () => {
@@ -224,7 +276,9 @@ describe('ProgramViewer week', () => {
 
     // assert
     const week = screen.getByRole('region', { name: /^Week 1 of 11/ });
-    expect(within(week).getByText('Daily steps').nextElementSibling).toHaveTextContent(dailyStepsText(currentBlockOf(view)));
+    const steps = dailyStepsText(currentBlockOf(view));
+    expect(within(week).getByText('Daily steps').nextElementSibling).toHaveTextContent(steps);
+    expect(within(week).getAllByText(steps)).toHaveLength(1);
     const tabs = within(week).getAllByRole('tab');
     expect(tabs.some(tab => /min/.test(tab.textContent ?? ''))).toBe(false);
     expect(within(screen.getByRole('tabpanel')).getByText(/^~\d+ min$/)).toBeInTheDocument();
@@ -279,7 +333,7 @@ describe('ProgramViewer day', () => {
       ...block,
       sessions: block.sessions.map(session => ({
         ...session,
-        rows: session.rows.map(row => (row.slot === 'A' ? { ...row, sets: row.sets.map(set => (set.kind === 'working' ? { ...set, weightKg: 40 } : set)) } : row)),
+        rows: session.rows.map(row => (row.slot === 'A' ? { ...row, startSets: row.startSets.map(set => (set.kind === 'working' ? { ...set, start: { ...set.start, weightKg: 40 } } : set)) } : row)),
       })),
     }));
 
@@ -291,7 +345,7 @@ describe('ProgramViewer day', () => {
     expect(within(sets).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Set', 'Reps', 'RIR', 'Weight']);
     const rows = within(sets).getAllByRole('row').slice(1);
     expect(rows.map(row => within(row).getByRole('rowheader').textContent)).toEqual(['WWarm-up set 1', 'WWarm-up set 2', '1Set 1', '2Set 2', '3Set 3']);
-    expect(within(rows[0]).getAllByRole('cell').map(cell => cell.textContent)).toEqual(['8warm-up', '–none', 'lighter']);
+    expect(within(rows[0]).getAllByRole('cell').map(cell => cell.textContent)).toEqual(['8, warm-up', '–none', 'lighter']);
     expect(within(rows[2]).getAllByRole('cell').map(cell => cell.textContent)).toEqual(['12–15', '3', '40 kg']);
   });
 
@@ -363,7 +417,7 @@ describe('ProgramViewer day', () => {
     const { name } = mainLift(view);
     renderViewer(view);
     expect(screen.queryByText('Muscles worked')).not.toBeInTheDocument();
-    const opener = screen.getByRole('button', { name: new RegExp(`^${name} ?: cues`) });
+    const opener = screen.getByRole('button', { name: new RegExp(`^${name}$`), description: /^cues/ });
 
     // act
     await user.click(opener);
@@ -376,6 +430,25 @@ describe('ProgramViewer day', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
+  });
+
+  it("notes a custom progression rule only under the exercises whose rule has words of the coach's own", () => {
+    // arrange
+    const rule = 'Add 2.5 kg once every set moves cleanly.';
+    const view = withFirstBlock(viewAt(SESSION_DAY), block => ({
+      ...block,
+      sessions: block.sessions.map(session => ({
+        ...session,
+        rows: session.rows.map((row, index) => ({ ...row, progression: { kind: 'custom' as const, text: index === 0 ? rule : '' } })),
+      })),
+    }));
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const notes = screen.getAllByText('How to progress.').map(label => label.parentElement?.textContent);
+    expect(notes).toEqual([`How to progress. ${rule}`]);
   });
 
   it('keeps the swaps behind a disclosure and opens each swap in its own detail', async () => {
@@ -410,7 +483,7 @@ describe('ProgramViewer day', () => {
     const warmUp = screen.getByRole('region', { name: 'Warm-up' });
 
     // act
-    await user.click(within(warmUp).getByRole('button', { name: new RegExp(`^${name} ?: cues`) }));
+    await user.click(within(warmUp).getByRole('button', { name: new RegExp(`^${name}$`), description: /^cues/ }));
 
     // assert
     const detail = screen.getByRole('dialog', { name });
@@ -442,27 +515,7 @@ describe('ProgramViewer day', () => {
     expect(screen.queryByRole('region', { name: 'Cool-down' })).not.toBeInTheDocument();
   });
 
-  it('designs the rest day and links to the next session', async () => {
-    // arrange
-    const user = userEvent.setup();
-    const view = viewAt(SESSION_DAY);
-    renderViewer(view);
-    const restTab = screen.getAllByRole('tab').find(tab => /, Rest$/.test(tab.getAttribute('aria-label') ?? tab.textContent ?? ''));
-    if (!restTab) throw new Error('no rest day');
-
-    // act
-    await user.click(restTab);
-
-    // assert
-    const panel = screen.getByRole('tabpanel');
-    expect(within(panel).getByRole('heading', { level: 3, name: 'Rest' })).toBeInTheDocument();
-    expect(panel).not.toHaveTextContent(/steps/i);
-    expect(within(panel).queryByText(/No session and no cardio today/)).not.toBeInTheDocument();
-    await user.click(within(panel).getByRole('button', { name: /^Next: / }));
-    expect(within(screen.getByRole('tabpanel')).queryByRole('heading', { level: 3, name: 'Rest' })).not.toBeInTheDocument();
-  });
-
-  it('renders a cardio day as numbered segments whose steps run in order, with the effort key once under the title', async () => {
+  it('renders a cardio day as numbered segments whose steps run in order, and explains its efforts only on request', async () => {
     // arrange
     const user = userEvent.setup();
     const view = withFirstBlock(viewAt(SESSION_DAY), block => {
@@ -480,8 +533,7 @@ describe('ProgramViewer day', () => {
     // assert
     const panel = screen.getByRole('tabpanel');
     expect(within(panel).getByRole('heading', { level: 3, name: 'Intervals' })).toBeInTheDocument();
-    expect(within(panel).getAllByRole('term').map(term => term.textContent)).toEqual(['Easy', 'Hard']);
-    expect(within(panel).getAllByText(/You can hold a conversation\.|Only a few words at a time\./)).toHaveLength(2);
+    expect(within(panel).queryByText(/You can hold a conversation\./)).not.toBeInTheDocument();
     const segments = within(panel).getAllByRole('article');
     expect(segments).toHaveLength(3);
     const rowsOf = (segment: HTMLElement) => within(within(segment).getByRole('table')).getAllByRole('row').slice(1).map(row => row.textContent);
@@ -489,12 +541,121 @@ describe('ProgramViewer day', () => {
     expect(within(segments[1]).getByRole('heading', { level: 4, name: 'Intervals' })).toBeInTheDocument();
     expect(within(segments[1]).getByRole('table', { name: 'Segment 2, Intervals' })).toBeInTheDocument();
     const [rounds, work, easy, ...rest] = rowsOf(segments[1]);
-    expect(rounds).toMatch(/^8 rounds · \d+ min$/);
-    expect(work).toMatch(/30 sHard$/);
-    expect(easy).toBe('then1:30Easy');
+    expect(rounds).toMatch(/^8 rounds · \d+ min, intensity Hard$/);
+    expect(within(within(segments[1]).getByRole('table')).getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Step', 'Time']);
+    expect(within(segments[1]).getAllByText('Hard')).toHaveLength(1);
+    expect(work).toMatch(/30 s$/);
+    expect(easy).toBe('then1:30 easy');
     expect(rest).toEqual([]);
     expect(panel).not.toHaveTextContent('None');
-    expect(within(panel).queryByRole('button', { name: 'What each effort means' })).not.toBeInTheDocument();
+  });
+
+  it('opens the meaning of each effort on a cardio day from one closed question under the title', async () => {
+    // arrange
+    const user = userEvent.setup();
+    const view = withFirstBlock(viewAt(SESSION_DAY), block => {
+      const replaced = block.cardioSessions[0];
+      const intervals = { ...cardioPreset('hiit', SAMPLE_EXERCISES), id: replaced.id, originId: replaced.originId };
+      return { ...block, cardioSessions: block.cardioSessions.map(cardio => (cardio.id === replaced.id ? intervals : cardio)) };
+    });
+    renderViewer(view);
+    const cardioTab = screen.getAllByRole('tab').find(tab => /, Intervals$/.test(tab.textContent ?? ''));
+    if (!cardioTab) throw new Error('no intervals day');
+    await user.click(cardioTab);
+    const question = within(screen.getByRole('tabpanel')).getByRole('button', { name: 'Effort levels' });
+    expect(question).toHaveAttribute('aria-expanded', 'false');
+
+    // act
+    await user.click(question);
+
+    // assert
+    expect(question).toHaveAttribute('aria-expanded', 'true');
+    const meanings = screen.getByRole('region', { name: 'Effort levels' });
+    expect(within(meanings).getAllByRole('term').map(term => term.textContent)).toEqual(['Easy', 'Hard']);
+    expect(within(meanings).getAllByRole('definition').map(definition => definition.textContent)).toEqual(['You can hold a conversation.', 'Only a few words at a time.']);
+  });
+
+  it("reads each week of a block at that week's targets: a calibration week without weights, then rising reps and a typed weight", () => {
+    // arrange
+    const weeks = [5, 6, 7, 8];
+    const firstSetOf = (week: number) => {
+      const view = viewAt(addDays(SESSION_DAY, (week - 1) * 7));
+      const { unmount } = renderViewer(view);
+      const firstWorking = within(table(mainLift(view).name)).getByRole('rowheader', { name: 'Set 1' }).closest('tr') as HTMLElement;
+      const cells = within(firstWorking).getAllByRole('cell').map(cell => cell.textContent);
+      unmount();
+      return cells;
+    };
+
+    // act
+    const firstSets = weeks.map(firstSetOf);
+
+    // assert
+    expect(firstSets).toEqual([
+      ['6–10', '3'],
+      ['6–10', '3', '60 kg'],
+      ['7–10', '3', '60 kg'],
+      ['8–10', '3', '65 kg'],
+    ]);
+  });
+
+  it('reads each working set at its own RIR, the last one closer to failure', () => {
+    // arrange
+    const view = viewAt(addDays(SESSION_DAY, 6 * 7));
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const sets = table(mainLift(view).name);
+    const working = within(sets).getAllByRole('rowheader', { name: /^Set \d$/ }).map(header => header.closest('tr') as HTMLElement);
+    expect(working.map(row => within(row).getAllByRole('cell')[1].textContent)).toEqual(['3', '3', '3', '2']);
+  });
+
+  it("gives the exercise detail the targets of the week being read, with nothing marking them suggested or typed", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const view = viewAt(addDays(SESSION_DAY, 6 * 7));
+    const { name } = mainLift(view);
+    renderViewer(view);
+
+    // act
+    await user.click(screen.getByRole('button', { name: new RegExp(`^${name}$`), description: /^cues/ }));
+
+    // assert
+    const detail = screen.getByRole('dialog', { name });
+    expect(within(detail).getByText('Working').nextElementSibling).toHaveTextContent(/^4 sets × \d+–10$/);
+    expect(screen.queryByText(/suggested|typed|edited|step too large/i)).not.toBeInTheDocument();
+  });
+
+  it('reads a week with a heavier top set and its own extra warm-up set as each of its sets', () => {
+    // arrange
+    const view = viewAt(addDays(SESSION_DAY, 8 * 7));
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const sets = table(mainLift(view).name);
+    const working = within(sets).getAllByRole('rowheader', { name: /^Set \d$/ }).map(header => header.closest('tr') as HTMLElement);
+    const cells = working.map(row => within(row).getAllByRole('cell').map(cell => cell.textContent));
+    expect(cells).toHaveLength(4);
+    expect(cells[0]).toEqual(['4–6', '2', '75 kg']);
+    expect(cells.slice(1).every(cell => cell[2] === '60 kg')).toBe(true);
+    expect(within(sets).getAllByRole('rowheader', { name: /^Warm-up set \d$/ })).toHaveLength(3);
+  });
+
+  it('reads a Deload week at its own halved sets and RIR 4', () => {
+    // arrange
+    const view = viewAt(addDays(SESSION_DAY, 10 * 7));
+
+    // act
+    renderViewer(view);
+
+    // assert
+    const sets = table(mainLift(view).name);
+    const working = within(sets).getAllByRole('rowheader', { name: /^Set \d$/ }).map(header => header.closest('tr') as HTMLElement);
+    expect(working.map(row => within(row).getAllByRole('cell')[1].textContent)).toEqual(['4', '4']);
   });
 
   it('marks a calibration week on the block line and explains it once at the top of the day', () => {

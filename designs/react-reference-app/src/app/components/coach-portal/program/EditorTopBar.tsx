@@ -1,21 +1,22 @@
-import { useRef, useState, type ReactNode, type Ref } from 'react';
+import { useId, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
 import { AlertCircle, AlertTriangle, ArrowLeft, ChevronRight, Eye, Library, Send, Trash2, UserRound } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
 import type { ProgramVersion } from '../../../domain/program';
+import type { BlockingCode, RuleFinding, WarningCode } from '../../../domain/programRules';
 import { counted } from '../../../utils/counted';
 import { clientDetailPathForJourney, formatJourneyDate, journeyClientName } from '../../../utils/journeyLabels';
 import { DisabledActionHint } from '../../DisabledActionHint';
-import { HintPopover } from '../../HintPopover';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Alert } from '../../ui/alert';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
-import { useMediaQuery } from '../../ui/use-desktop';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { useIsDesktop, useMediaQuery } from '../../ui/use-desktop';
 import { cn } from '../../ui/utils';
 import { ClientProfilePopover, ClientProfileTrigger } from './ClientProfilePopover';
-import type { PublishDialogStart } from './PublishDialog';
+import { ProgramFindings, type FindingTarget } from './ProgramFindings';
 import type { WriteResult } from './useEditorState';
 
 type EditorTopBarProps = {
@@ -27,17 +28,17 @@ type EditorTopBarProps = {
   placeTitle: string;
   placeHeading: Ref<HTMLHeadingElement>;
   onOverview: (() => void) | null;
-  onOpenChecks: (start: PublishDialogStart) => void;
+  onOpenFinding: (target: FindingTarget) => void;
   onPreview: () => void;
   onPublish: () => void;
   onDiscard: () => WriteResult;
   opensOn: Date | null;
-  problemsCount: number;
-  warningsCount: number;
+  problems: readonly RuleFinding<BlockingCode>[];
+  warnings: readonly RuleFinding<WarningCode>[];
 };
 
 const SM_QUERY = '(min-width: 40em)';
-const PLACE_TITLE_CLASS = cn(WIDGET_TITLE_CLASS, 'truncate outline-none');
+const PLACE_TITLE_CLASS = cn(WIDGET_TITLE_CLASS, 'break-words outline-none');
 
 function discardDescription(version: ProgramVersion): string {
   return version.number > 1
@@ -76,23 +77,35 @@ function Place({ placeTitle, placeHeading, onOverview }: PlaceProps) {
   );
 }
 
-type ChecksButtonProps = { problems: number; warnings: number; onOpen: (start: PublishDialogStart) => void };
+type ChecksButtonProps = Pick<EditorTopBarProps, 'problems' | 'warnings' | 'onOpenFinding'>;
 
-function ChecksButton({ problems, warnings, onOpen }: ChecksButtonProps) {
-  const blocked = problems > 0;
-  const label = blocked ? `${counted(problems, 'problem')} to fix before publishing` : `${counted(warnings, 'thing')} worth a look`;
+function ChecksButton({ problems, warnings, onOpenFinding }: ChecksButtonProps) {
+  const [open, setOpen] = useState(false);
+  const headingId = useId();
+  const blocked = problems.length > 0;
+  const label = blocked ? `${counted(problems.length, 'problem')} to fix before publishing` : `${counted(warnings.length, 'thing')} worth a look`;
   return (
-    <HintPopover hint={label} align="end">
-      <Button
-        variant="ghost"
-        aria-label={label}
-        onClick={() => onOpen(blocked ? 'top' : 'warnings')}
-        className={cn('tabular-nums', { 'text-destructive': blocked, 'text-warning': !blocked })}
-      >
-        {blocked ? <AlertCircle aria-hidden="true" /> : <AlertTriangle aria-hidden="true" />}
-        {blocked ? problems : warnings}
-      </Button>
-    </HintPopover>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" aria-label={label} className={cn('tabular-nums', { 'text-destructive': blocked, 'text-warning': !blocked })}>
+          {blocked ? <AlertCircle aria-hidden="true" /> : <AlertTriangle aria-hidden="true" />}
+          {blocked ? problems.length : warnings.length}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} collisionPadding={16} aria-labelledby={headingId} className="grid w-80 max-w-[calc(100vw-2rem)] gap-4 rounded-card">
+        <h2 id={headingId} className={WIDGET_TITLE_CLASS}>
+          Review the draft
+        </h2>
+        <ProgramFindings
+          problems={problems}
+          warnings={warnings}
+          onOpen={target => {
+            setOpen(false);
+            onOpenFinding(target);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -137,35 +150,33 @@ export function EditorTopBar({
   placeTitle,
   placeHeading,
   onOverview,
-  onOpenChecks,
+  onOpenFinding,
   onPreview,
   onPublish,
   onDiscard,
   opensOn,
-  problemsCount,
-  warningsCount,
+  problems,
+  warnings,
 }: EditorTopBarProps) {
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileReturnFocus = useRef<HTMLElement | null>(null);
   const draftActions = useRef<HTMLSpanElement>(null);
-  const small = !useMediaQuery(SM_QUERY);
+  const showsPreviewInMenu = !useMediaQuery(SM_QUERY);
+  const showsToolbarIcons = useIsDesktop();
   const name = journeyClientName(journey);
-  const smallScreenActions: RowMenuAction[] = small
-    ? [
-        ...(library ? [{ name: 'library', label: library.open ? 'Close exercise library' : 'Exercise library', icon: Library, onSelect: library.onToggle }] : []),
-        { name: 'preview', label: 'Preview as client', icon: Eye, onSelect: onPreview },
-        {
-          name: 'profile',
-          label: 'Client profile',
-          icon: UserRound,
-          onSelect: () => {
-            profileReturnFocus.current = draftActions.current?.querySelector('button') ?? null;
-            setProfileOpen(true);
-          },
-        },
-      ]
-    : [];
+  const libraryAction: RowMenuAction[] = library ? [{ name: 'library', label: library.open ? 'Close exercise library' : 'Exercise library', icon: Library, onSelect: library.onToggle }] : [];
+  const previewAction: RowMenuAction[] = showsPreviewInMenu ? [{ name: 'preview', label: 'Preview as client', icon: Eye, onSelect: onPreview }] : [];
+  const profileAction: RowMenuAction = {
+    name: 'profile',
+    label: 'Client profile',
+    icon: UserRound,
+    onSelect: () => {
+      profileReturnFocus.current = draftActions.current?.querySelector('button') ?? null;
+      setProfileOpen(true);
+    },
+  };
+  const narrowScreenActions: RowMenuAction[] = showsToolbarIcons ? [] : [...libraryAction, ...previewAction, profileAction];
 
   return (
     <>
@@ -192,10 +203,10 @@ export function EditorTopBar({
           returnFocus={profileReturnFocus}
         >
           <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-4 sm:flex-wrap">
-            {(problemsCount > 0 || warningsCount > 0) && <ChecksButton problems={problemsCount} warnings={warningsCount} onOpen={onOpenChecks} />}
-            <ClientProfileTrigger />
-            {library && (
-              <Button onClick={library.onToggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={library.open} className="max-sm:hidden">
+            {(problems.length > 0 || warnings.length > 0) && <ChecksButton problems={problems} warnings={warnings} onOpenFinding={onOpenFinding} />}
+            {showsToolbarIcons && <ClientProfileTrigger />}
+            {showsToolbarIcons && library && (
+              <Button onClick={library.onToggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={library.open}>
                 <Library size={20} />
               </Button>
             )}
@@ -209,7 +220,7 @@ export function EditorTopBar({
                 label="Draft actions"
                 parityRoot="DraftActionsMenu"
                 actions={[
-                  ...smallScreenActions,
+                  ...narrowScreenActions,
                   {
                     name: 'discard',
                     label: 'Discard draft',

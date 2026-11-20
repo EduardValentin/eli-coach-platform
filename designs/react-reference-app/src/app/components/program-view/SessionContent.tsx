@@ -1,11 +1,12 @@
 import { Info } from 'lucide-react';
-import { hasCoolDown, positionLabel, type Row, type Session } from '../../domain/program';
+import { hasCoolDown, positionLabel, type WeekRow, type WeekSession } from '../../domain/program';
 import { sessionUnits } from '../../domain/sessionEditing';
 import { Collapsible } from '../ui/collapsible';
 import { cn } from '../ui/utils';
 import { ExerciseNameButton } from './ExerciseNameButton';
 import { useOpenExerciseDetail } from './exerciseDetailContent';
 import { PositionBadge } from './PositionBadge';
+import { CUSTOM_PROGRESSION_LEAD } from './leadIns';
 import { Emphasised, parseTemplate, programTemplate, TemplateBody } from './ProgramText';
 import { plainText, repsUnit } from './programView';
 import { RoutineList, routineItems, type RoutineItem } from './RoutineList';
@@ -21,7 +22,7 @@ import type { DayContext } from './weekView';
 
 const WARM_UP_TEXT = 'warm-up';
 
-function WarmUp({ session, context }: { session: Session; context: DayContext }) {
+function WarmUp({ session, context }: { session: WeekSession; context: DayContext }) {
   const { warmUp } = context.texts;
   const hasText = warmUp.length > 0;
   return (
@@ -42,7 +43,7 @@ function progressionGuide(context: DayContext): string {
     .join(' ');
 }
 
-type ExerciseBlockProps = { session: Session; row: Row; context: DayContext; place: RowPlace };
+type ExerciseBlockProps = { session: WeekSession; row: WeekRow; context: DayContext; place: RowPlace };
 
 function ExerciseBlock({ session, row, context, place }: ExerciseBlockProps) {
   const openDetail = useOpenExerciseDetail();
@@ -70,9 +71,9 @@ function ExerciseBlock({ session, row, context, place }: ExerciseBlockProps) {
             <TargetsSummary items={rowRestAndTechnique(row, place)} size="sm" />
             {swaps.length > 0 && <SwapListTrigger exerciseName={name} count={swaps.length} />}
           </div>
-          {row.progression.kind === 'custom' && (
+          {row.progression.kind === 'custom' && row.progression.text && (
             <p className="mt-1.5 max-w-prose text-base text-text-secondary">
-              <strong className="font-semibold text-text-primary">Coach note.</strong> {row.progression.text}
+              <strong className="font-semibold text-text-primary">{CUSTOM_PROGRESSION_LEAD}</strong> {row.progression.text}
             </p>
           )}
         </div>
@@ -94,7 +95,7 @@ function ExerciseBlock({ session, row, context, place }: ExerciseBlockProps) {
   );
 }
 
-function warmUpItems(session: Session, context: DayContext): RoutineItem[] {
+function warmUpItems(session: WeekSession, context: DayContext): RoutineItem[] {
   return routineItems(session.warmUp.items, {
     exercisesById: context.view.exercisesById,
     nameOf: (item, exercise) => <ExerciseNameButton exercise={exercise} detail={warmUpExerciseDetail(item, exercise)} weight="medium" />,
@@ -103,7 +104,7 @@ function warmUpItems(session: Session, context: DayContext): RoutineItem[] {
   });
 }
 
-function coolDownItems(session: Session, context: DayContext): RoutineItem[] {
+function coolDownItems(session: WeekSession, context: DayContext): RoutineItem[] {
   if (!hasCoolDown(session)) return [];
   return routineItems(session.coolDown.items, {
     exercisesById: context.view.exercisesById,
@@ -115,7 +116,7 @@ function coolDownItems(session: Session, context: DayContext): RoutineItem[] {
 
 const UNIT_CLASS = 'border-t border-border-subtle p-4 first:border-t-0 @3xl:px-6 @3xl:py-5';
 
-export function SessionContent({ session, context }: { session: Session; context: DayContext }) {
+export function SessionContent({ session, context }: { session: WeekSession; context: DayContext }) {
   const units = sessionUnits(session);
   const calibrationText = context.week.calibration ? programTemplate(context.view, 'calibration') : '';
 

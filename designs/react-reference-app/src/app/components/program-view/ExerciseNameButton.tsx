@@ -1,4 +1,5 @@
 import { CirclePlay } from 'lucide-react';
+import { useId } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
 import { Badge } from '../ui/badge';
 import { linkVariants } from '../ui/link';
@@ -38,8 +39,8 @@ export function ExerciseNameMark({ exercise }: { exercise: Exercise }) {
   );
 }
 
-function spokenName(exercise: Exercise, place: string | undefined): string {
-  return [exercise.name, ': ', exercise.videoUrl ? 'cues and video' : 'cues', place ? `, ${place}` : ''].join('');
+function spokenOpens(exercise: Exercise, place: string | undefined): string {
+  return [exercise.videoUrl ? 'cues and video' : 'cues', place ? `, ${place}` : ''].join('');
 }
 
 type ExerciseNameButtonProps = {
@@ -52,6 +53,7 @@ type ExerciseNameButtonProps = {
 
 export function ExerciseNameButton({ exercise, detail, weight = 'semibold', size = 'base', place }: ExerciseNameButtonProps) {
   const openDetail = useOpenExerciseDetail();
+  const opensId = useId();
 
   if (!detail) {
     return (
@@ -62,15 +64,20 @@ export function ExerciseNameButton({ exercise, detail, weight = 'semibold', size
     );
   }
   return (
-    <InlineTextButton
-      aria-haspopup="dialog"
-      aria-label={spokenName(detail.exercise, place)}
-      size={TEXT_SIZE[size]}
-      weight={weight}
-      className={cn('leading-snug', ROW_CLASS[size])}
-      onClick={event => openDetail(detail, event.currentTarget)}
-    >
-      <ExerciseNameWords exercise={detail.exercise} />
-    </InlineTextButton>
+    <>
+      <InlineTextButton
+        aria-haspopup="dialog"
+        aria-describedby={opensId}
+        size={TEXT_SIZE[size]}
+        weight={weight}
+        className={cn('leading-snug', ROW_CLASS[size])}
+        onClick={event => openDetail(detail, event.currentTarget)}
+      >
+        <ExerciseNameWords exercise={detail.exercise} />
+      </InlineTextButton>
+      <span id={opensId} aria-hidden="true" className="sr-only">
+        {spokenOpens(detail.exercise, place)}
+      </span>
+    </>
   );
 }

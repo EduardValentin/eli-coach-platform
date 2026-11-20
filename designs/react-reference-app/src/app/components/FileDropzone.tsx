@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { Upload, type LucideIcon } from 'lucide-react';
 import { buttonVariants } from './ui/button';
+import { describedBy } from '../utils/describedBy';
 import { cn } from './ui/utils';
 
 type FilePickerProps = {
@@ -31,17 +32,11 @@ function takeChosenFile(event: ChangeEvent<HTMLInputElement>): File | undefined 
   return file;
 }
 
-function joinedIds(ids: readonly (string | undefined)[]): string | undefined {
-  const present = ids.filter((id): id is string => Boolean(id));
-
-  return present.length > 0 ? present.join(' ') : undefined;
-}
-
 function HiddenFileInput(props: NamedFileInputProps) {
   return (
     <input
       accept={props.accept}
-      aria-describedby={joinedIds(props.describedBy)}
+      aria-describedby={describedBy(props.describedBy)}
       aria-invalid={props['aria-invalid']}
       aria-label={props.label}
       aria-labelledby={props.labelledBy}

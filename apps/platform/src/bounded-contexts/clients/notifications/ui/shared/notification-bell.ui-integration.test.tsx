@@ -51,6 +51,7 @@ import {
 import { useNotificationBell } from "./notification-bell";
 
 const MINUTE_MS = 60_000;
+const TOAST_REMOVAL_MS = 250;
 const LOADED_AT = "2026-10-15T12:00:00.000Z";
 const CHECKED_AT = "2026-10-15T12:01:00.000Z";
 
@@ -187,7 +188,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-afterAll(() => {
+afterAll(async () => {
+  // A dismissed toast removes itself on a timer that unmounting does not
+  // clear; it must fire before the test environment and its window go away.
+  await new Promise((resolve) => setTimeout(resolve, TOAST_REMOVAL_MS));
   server.close();
   vi.unstubAllGlobals();
 });

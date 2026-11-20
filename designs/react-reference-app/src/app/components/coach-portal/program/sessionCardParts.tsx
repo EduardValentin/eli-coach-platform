@@ -1,4 +1,5 @@
 import type { CSSProperties, Ref } from 'react';
+import { SCREEN_CARD_TITLE_CLASS } from '../../typography';
 import { Input } from '../../ui/input';
 
 export const SESSION_ARTICLE_CLASS = 'rounded-card border border-border bg-card shadow-card';
@@ -21,7 +22,7 @@ export function CollapsedSessionHeader({ headingId, name, summary, onExpand }: C
         onClick={onExpand}
         className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-card px-4 py-3 text-left outline-none hover:bg-surface-quiet"
       >
-        <span id={headingId} className="font-serif text-lg text-text-primary">
+        <span id={headingId} className={SCREEN_CARD_TITLE_CLASS}>
           {name}
         </span>
         <span className="text-sm text-text-secondary tabular-nums">{summary}</span>

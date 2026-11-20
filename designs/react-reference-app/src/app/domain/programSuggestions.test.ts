@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { equippedExercise, row, workingSets } from '../../test/programFixtures';
-import type { Block, CardioSession, SetSpec } from './program';
+import { equippedExercise, row } from '../../test/programFixtures';
+import type { Block, CardioSession, PlannedSet } from './program';
 import type { ProgramSetup } from './programOnboarding';
+import { warnings, type RuleContext } from './programRules';
+import { withSetAdded, withTypedTargets } from './programProgression';
 import {
   emptyRow,
   emptySessionsFor,
@@ -45,10 +47,32 @@ describe('suggested structure', () => {
       ],
       [
         { type: 'hypertrophy', weeks: 5, calibrationWeek: true },
-        { type: 'strength', weeks: 5, calibrationWeek: false },
+        { type: 'deload', weeks: 1, calibrationWeek: false },
+        { type: 'strength', weeks: 4, calibrationWeek: false },
         { type: 'deload', weeks: 1, calibrationWeek: false },
       ],
     ]);
+  });
+
+  it.each(['beginner', 'intermediate', 'advanced'] as const)('suggests a %s plan that stays within its loading weeks without a Deload', level => {
+    // arrange
+    const content = initialContent({ ...SETUP, level }, []);
+    const context: RuleContext = {
+      publishDay: new Date(2026, 0, 5),
+      dayOne: null,
+      preferredWeekday: 'mon',
+      level,
+      startDate: null,
+      detailsPending: false,
+      publishedBlocks: null,
+      exercisesById: new Map(),
+    };
+
+    // act
+    const found = warnings(content, context);
+
+    // assert
+    expect(found.map(finding => finding.code)).not.toContain('loading-weeks-without-deload');
   });
 
   it('picks the split shape from the days', () => {
@@ -125,22 +149,26 @@ describe('emptySessionsFor', () => {
 describe('emptyRow', () => {
   it('puts two warm-up sets before the working sets of a main compound row', () => {
     // act
-    const { sets } = emptyRow('hypertrophy', 'A');
+    const { startSets } = emptyRow('hypertrophy', 'A');
 
     // assert
-    expect(sets.slice(0, 2)).toEqual([
-      { kind: 'warm-up', reps: { min: 8, max: 8 } },
-      { kind: 'warm-up', reps: { min: 5, max: 5 } },
+    const working = { kind: 'working', start: { reps: { min: 6, max: 10 }, rir: 3 } };
+    expect(startSets.map(({ kind, start }) => ({ kind, start }))).toEqual([
+      { kind: 'warm-up', start: { reps: { min: 8, max: 8 }, rir: 3 } },
+      { kind: 'warm-up', start: { reps: { min: 5, max: 5 }, rir: 3 } },
+      working,
+      working,
+      working,
+      { kind: 'working', start: { reps: { min: 6, max: 10 }, rir: 2 } },
     ]);
-    expect(sets.slice(2)).toEqual(Array.from({ length: 4 }, () => ({ kind: 'working', reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 } })));
   });
 
   it('gives other rows working sets only', () => {
     // act
-    const { sets } = emptyRow('hypertrophy', 'B');
+    const { startSets } = emptyRow('hypertrophy', 'B');
 
     // assert
-    expect(sets.every(set => set.kind === 'working')).toBe(true);
+    expect(startSets.map(set => set.kind)).toEqual(['working', 'working', 'working']);
   });
 });
 
@@ -150,14 +178,16 @@ describe('newBlock and initialContent', () => {
   function previousBlock() {
     const built = newBlock('hypertrophy', 6, { setup: SETUP, library });
     const [first, ...others] = built.sessions;
-    const sets: SetSpec[] = [
-      { kind: 'warm-up', reps: { min: 8, max: 8 } },
-      ...workingSets(4).map((set, index) => ({ ...set, ...(index === 0 ? { weightKg: 50 } : {}) })),
+    const targets = { reps: { min: 8, max: 12 }, rir: 2 };
+    const startSets: PlannedSet[] = [
+      { id: 'warm-up', kind: 'warm-up', start: { reps: { min: 8, max: 8 }, rir: 2 } },
+      { id: 'top', kind: 'working', start: { ...targets, weightKg: 50 } },
+      ...['back-off-1', 'back-off-2', 'back-off-3'].map((id): PlannedSet => ({ id, kind: 'working', start: targets })),
     ];
-    return { ...built, sessions: [{ ...first, rows: [row({ sets })] }, ...others] };
+    return { ...built, sessions: [{ ...first, rows: [row({ startSets })] }, ...others] };
   }
 
-  it('prefills a deload from the previous block with half the working sets at RIR 4 and lighter weights', () => {
+  it('prefills a deload from the last week of the previous block with its warm-up sets and half its working sets at RIR 4 and lighter weights', () => {
     // arrange
     const previous = previousBlock();
 
@@ -165,15 +195,32 @@ describe('newBlock and initialContent', () => {
     const deload = newBlock('deload', 1, { setup: SETUP, library, previous });
 
     // assert
-    expect(deload.sessions[0].rows[0].sets).toEqual([
-      { kind: 'warm-up', reps: { min: 8, max: 8 } },
-      { kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 42.5 },
-      { kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 } },
+    const [deloaded] = deload.sessions[0].rows;
+    expect(deloaded.startSets.map(({ kind, start }) => ({ kind, start }))).toEqual([
+      { kind: 'warm-up', start: { reps: { min: 8, max: 8 }, rir: 2 } },
+      { kind: 'working', start: { reps: { min: 11, max: 12 }, rir: 4, weightKg: 45 } },
+      { kind: 'working', start: { reps: { min: 12, max: 12 }, rir: 4 } },
     ]);
     expect(deload.sessions[0].id).not.toBe(previous.sessions[0].id);
     expect(deload.sessions[0].originId).toBe(previous.sessions[0].originId);
     expect(deload.originId).not.toBe(previous.originId);
     expect(deload.split).toEqual(previous.split);
+  });
+
+  it('starts a new loading block from the first week of the previous one, without its later weeks', () => {
+    // arrange
+    const built = previousBlock();
+    const [first, ...others] = built.sessions;
+    const context = { block: built, level: SETUP.level };
+    const typed = withTypedTargets(withSetAdded(first.rows[0], 4, context), { week: 3, setId: 'top' }, { weightKg: 60 });
+    const previous = { ...built, sessions: [{ ...first, rows: [typed] }, ...others] };
+
+    // act
+    const next = newBlock('strength', 4, { setup: SETUP, library, previous });
+
+    // assert
+    expect(next.sessions[0].rows[0].startSets.map(set => set.id)).toEqual(['warm-up', 'top', 'back-off-1', 'back-off-2', 'back-off-3']);
+    expect(next.sessions[0].rows[0]).not.toHaveProperty('weekChanges');
   });
 
   it('keeps the calendar and cardio of the previous block in a deload, under new ids', () => {

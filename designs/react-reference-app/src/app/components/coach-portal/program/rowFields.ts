@@ -3,6 +3,7 @@ import type { Range } from '../../../domain/program';
 export const RANGE_PROBLEM = 'Use a number or a range like 8–12';
 export const REST_PROBLEM = 'Use seconds or m:ss like 1:30';
 export const COUNT_PROBLEM = 'Use a whole number';
+export const RIR_PROBLEM = 'Use one whole number, like 2';
 
 const RANGE_PATTERN = /^(\d+)(?:\s*[-–]\s*(\d+))?$/;
 const MINUTES_PATTERN = /^(\d+):([0-5]\d)$/;

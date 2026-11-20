@@ -63,12 +63,16 @@ type TabsContextValue = {
   variant: TabsVariant;
   hasMountedList: boolean;
   mountList: () => () => void;
+  mountedPanels: ReadonlySet<string>;
+  registerPanel: (value: string) => () => void;
 };
 
 const TabsContext = React.createContext<TabsContextValue>({
   variant: "default",
   hasMountedList: true,
   mountList: () => () => {},
+  mountedPanels: new Set(),
+  registerPanel: () => () => {},
 });
 
 function Tabs({
@@ -83,9 +87,19 @@ function Tabs({
     setMountedLists((count) => count + 1);
     return () => setMountedLists((count) => count - 1);
   }, []);
+  const [mountedPanels, setMountedPanels] = React.useState<ReadonlySet<string>>(new Set());
+  const registerPanel = React.useCallback((value: string) => {
+    setMountedPanels((panels) => new Set(panels).add(value));
+    return () =>
+      setMountedPanels((panels) => {
+        const remaining = new Set(panels);
+        remaining.delete(value);
+        return remaining;
+      });
+  }, []);
   const context = React.useMemo(
-    () => ({ variant, hasMountedList: mountedLists > 0, mountList }),
-    [variant, mountedLists, mountList],
+    () => ({ variant, hasMountedList: mountedLists > 0, mountList, mountedPanels, registerPanel }),
+    [variant, mountedLists, mountList, mountedPanels, registerPanel],
   );
 
   return (
@@ -119,7 +133,8 @@ const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, ...props }, ref) => {
-  const { variant } = React.useContext(TabsContext);
+  const { variant, mountedPanels } = React.useContext(TabsContext);
+  const withoutDanglingPanel = mountedPanels.has(props.value) ? {} : { "aria-controls": undefined };
 
   return (
     <TabsPrimitive.Trigger
@@ -127,6 +142,7 @@ const TabsTrigger = React.forwardRef<
       data-slot="tabs-trigger"
       className={cn(tabsTriggerVariants({ variant }), className)}
       {...props}
+      {...withoutDanglingPanel}
     />
   );
 });
@@ -139,11 +155,20 @@ function TabsContent({
 }: React.ComponentProps<typeof TabsPrimitive.Content> & {
   labelWithoutTabs?: string;
 }) {
-  const { variant, hasMountedList } = React.useContext(TabsContext);
+  const { variant, hasMountedList, registerPanel } = React.useContext(TabsContext);
+  const registeredWhileMounted = React.useRef<(() => void) | null>(null);
+  const trackPanel = React.useCallback(
+    (panel: HTMLDivElement | null) => {
+      registeredWhileMounted.current?.();
+      registeredWhileMounted.current = panel ? registerPanel(props.value) : null;
+    },
+    [registerPanel, props.value],
+  );
   const nameWithoutTabs = hasMountedList || labelWithoutTabs === undefined ? {} : { "aria-labelledby": undefined, "aria-label": labelWithoutTabs };
 
   return (
     <TabsPrimitive.Content
+      ref={trackPanel}
       data-slot="tabs-content"
       className={cn(tabsContentVariants({ variant }), className)}
       {...nameWithoutTabs}

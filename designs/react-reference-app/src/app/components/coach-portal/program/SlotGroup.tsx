@@ -7,10 +7,12 @@ import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../
 import { slotExercisePatterns, type SlotPlan } from '../../../domain/splitTemplates';
 import { IconActionButton } from '../../IconActionButton';
 import { SupersetGroup } from '../../program-view/SupersetGroup';
+import { EYEBROW_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { useEditorAnnouncer } from './editorAnnouncer';
 import { ExerciseCard, type RowFocus, type SlotTarget } from './ExerciseCard';
+import type { ProgressionSchedule } from '../../../domain/programProgression';
 import { LIBRARY_TARGET_CLASS, useIsLibraryTarget } from './libraryTarget';
 import { actionsTriggerIn, usePendingFocus } from './usePendingFocus';
 import { DropSeparator, DropZone, EmptyDropTarget, PLAN_ROW, type DraggedItem, type SessionDropRules } from './sessionDnd';
@@ -21,6 +23,7 @@ type SlotGroupProps = {
   library: readonly Exercise[];
   edits: RowEdits;
   slots: readonly SlotTarget[];
+  schedule: ProgressionSchedule;
   onChange: (session: Session) => void;
   onAdd: (slot: Slot) => void;
   onAddSubstitution: (rowId: string) => void;
@@ -48,7 +51,7 @@ function PatternText({ patterns }: { patterns: readonly MovementPattern[] }) {
   );
 }
 
-export function SlotGroup({ session, plan, library, edits, slots, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
+export function SlotGroup({ session, plan, library, edits, slots, schedule, onChange, onAdd, onAddSubstitution }: SlotGroupProps) {
   const announce = useEditorAnnouncer();
   const section = useRef<HTMLElement>(null);
   const focusLater = usePendingFocus();
@@ -85,6 +88,7 @@ export function SlotGroup({ session, plan, library, edits, slots, onChange, onAd
         edits={edits}
         slots={slots}
         focus={focus}
+        schedule={schedule}
         onChange={onChange}
         onAddSubstitution={onAddSubstitution}
       />
@@ -95,7 +99,7 @@ export function SlotGroup({ session, plan, library, edits, slots, onChange, onAd
     <section ref={section} className={cn('grid grid-cols-[minmax(0,1fr)] gap-2 rounded-control', { [LIBRARY_TARGET_CLASS]: filling })}>
       <header className="flex items-start gap-3">
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
-          <h4 className="text-sm font-semibold text-text-primary">{heading}</h4>
+          <h4 className={EYEBROW_CLASS}>{heading}</h4>
           <PatternText patterns={slotExercisePatterns(session, slot, library)} />
         </div>
         {several && units.length > 0 && (

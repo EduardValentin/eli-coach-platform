@@ -345,7 +345,7 @@ const FRAME_CLASS = {
 } as const;
 const LINES_CLASS = { one: "min-h-8", many: "min-h-12" } as const;
 const CONTROLS_ROW_CLASS =
-  "sticky bottom-0 z-10 mt-3 flex flex-wrap items-center gap-4 rounded-field border border-border bg-surface-base px-1 py-1";
+  "sticky bottom-0 z-10 mt-3 flex flex-wrap items-center justify-end gap-x-8 gap-y-2 rounded-field border border-border bg-surface-base px-1 py-1";
 function runTool(editor: LexicalEditor, tool: RichTextTool) {
   if (tool === "heading") editor.update($toggleHeadingLine);
   if (tool === "bold" || tool === "italic") editor.dispatchCommand(FORMAT_TEXT_COMMAND, tool);
@@ -495,14 +495,14 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         className={cn(entryClass, theme.root)}
       />
       {empty && placeholder && (
-        <p aria-hidden="true" className={cn(entryClass, theme.root, "pointer-events-none border-transparent bg-transparent text-muted-foreground outline-transparent")}>
+        <p aria-hidden="true" className={cn(entryClass, theme.root, "pointer-events-none border-transparent bg-transparent text-placeholder-soft outline-transparent")}>
           {placeholder}
         </p>
       )}
       {shown && (
         <div ref={row} className={CONTROLS_ROW_CLASS}>
           {tools.length > 0 && <Toolbar editor={editor} label={label} tools={tools} state={toolbar} />}
-          {actions && <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-4">{actions}</div>}
+          {actions && <div className="flex min-w-0 flex-wrap items-center justify-end gap-4">{actions}</div>}
         </div>
       )}
     </div>

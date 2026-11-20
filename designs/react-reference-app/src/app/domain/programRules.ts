@@ -23,7 +23,7 @@ import {
 } from './program';
 import { blockDates, checkInWeekdayOf, currentPosition, dayOneOf, nextCheckpoint } from './programCalendar';
 import { hasHardRounds, isLightCardio } from './programCardio';
-import { estimatedMinutes, isOverTarget } from './sessionTiming';
+import { isOverTarget, longestWeekMinutes, type TimingContext } from './sessionTiming';
 
 export type BlockingCode =
   | 'foundation-not-first'
@@ -36,7 +36,7 @@ export type BlockingCode =
   | 'block-shorter-than-elapsed';
 
 export type WarningCode =
-  | 'no-deload-8-weeks'
+  | 'loading-weeks-without-deload'
   | 'strength-for-beginner'
   | 'muscle-under-twice'
   | 'hard-days-in-a-row'
@@ -71,7 +71,7 @@ type ElapsedInput = { draftBlocks: readonly Block[]; publishedBlocks: readonly B
 type SessionPlace = { block: Block; session: Session };
 type PublishSchedule = { publishDay: Date; dayOne: Date | null; preferredWeekday: Weekday };
 type PublishWindow = { from: Date; to: Date };
-const MAX_WEEKS_WITHOUT_DELOAD = 8;
+const MAX_LOADING_WEEKS_WITHOUT_DELOAD: Record<LevelHint, number> = { beginner: 10, intermediate: 6, advanced: 5 };
 const MAX_HIIT_SESSIONS = 2;
 
 const LARGE_MUSCLE_GROUPS: readonly Muscle[][] = [
@@ -97,7 +97,7 @@ const BLOCKING_MESSAGES: Record<BlockingCode, string> = {
 };
 
 const WARNING_MESSAGES: Record<WarningCode, string> = {
-  'no-deload-8-weeks': 'More than 8 weeks without a Deload',
+  'loading-weeks-without-deload': 'More than {detail} loading weeks without a Deload',
   'strength-for-beginner': 'Strength for a client whose level is beginner',
   'muscle-under-twice': '{detail} is trained on fewer than 2 days',
   'hard-days-in-a-row': 'Two hard days in a row without rest or easy cardio ({detail})',
@@ -218,20 +218,21 @@ function nextDay(day: Weekday): Weekday {
   return WEEKDAYS[(WEEKDAYS.indexOf(day) + 1) % WEEKDAYS.length];
 }
 
-function runsOfNonDeloadWeeks(blocks: readonly Block[]): number[] {
-  const runs: number[] = [0];
+function firstBlockPastLoadingLimit(blocks: readonly Block[], limit: number): Block | undefined {
+  let loadingWeeks = 0;
   for (const block of blocks) {
-    if (block.type === 'deload') runs.push(0);
-    else runs[runs.length - 1] += block.weeks;
+    if (block.type === 'deload') loadingWeeks = 0;
+    if (block.type === 'hypertrophy' || block.type === 'strength') loadingWeeks += block.weeks;
+    if (loadingWeeks > limit) return block;
   }
-  return runs;
+  return undefined;
 }
 
 function planWarnings(blocks: readonly Block[], ctx: RuleContext): RuleFinding<WarningCode>[] {
   const findings: RuleFinding<WarningCode>[] = [];
-  if (runsOfNonDeloadWeeks(blocks).some(weeks => weeks > MAX_WEEKS_WITHOUT_DELOAD)) {
-    findings.push({ code: 'no-deload-8-weeks' });
-  }
+  const limit = MAX_LOADING_WEEKS_WITHOUT_DELOAD[ctx.level];
+  const pastLimit = firstBlockPastLoadingLimit(blocks, limit);
+  if (pastLimit) findings.push({ code: 'loading-weeks-without-deload', blockId: pastLimit.id, detail: String(limit) });
   if (ctx.level === 'beginner' && blocks.some(block => block.type === 'strength')) {
     findings.push({ code: 'strength-for-beginner' });
   }
@@ -294,16 +295,17 @@ function supersetMuscleWarning({ block, session }: SessionPlace, index: number, 
   return [{ code: 'superset-same-muscle', blockId: block.id, sessionId: session.id, detail: session.name }];
 }
 
-function overTargetWarning({ block, session }: SessionPlace, exercises: Exercises): RuleFinding<WarningCode>[] {
-  if (!isOverTarget(session, block, exercises)) return [];
-  return [{ code: 'session-over-target', blockId: block.id, sessionId: session.id, detail: `${session.name}, ${estimatedMinutes(session, exercises)} min` }];
+function overTargetWarning(session: Session, timing: TimingContext): RuleFinding<WarningCode>[] {
+  if (!isOverTarget(session, timing)) return [];
+  return [{ code: 'session-over-target', blockId: timing.block.id, sessionId: session.id, detail: `${session.name}, ${longestWeekMinutes(session, timing)} min` }];
 }
 
-function sessionWarnings(block: Block, exercises: Exercises): RuleFinding<WarningCode>[] {
+function sessionWarnings(block: Block, ctx: RuleContext): RuleFinding<WarningCode>[] {
+  const exercises = ctx.exercisesById;
   return block.sessions.flatMap(session => {
     const place = { block, session };
     const rowFindings = session.rows.flatMap((_, index) => supersetMuscleWarning(place, index, exercises));
-    return [...rowFindings, ...overTargetWarning(place, exercises)];
+    return [...rowFindings, ...overTargetWarning(session, { block, level: ctx.level, exercises })];
   });
 }
 
@@ -324,7 +326,7 @@ export function warnings(content: ProgramContent, ctx: RuleContext): RuleFinding
     ...blocks.flatMap(block => [
       ...muscleFrequencyWarnings(block, ctx.exercisesById),
       ...scheduleWarnings(block, ctx.exercisesById),
-      ...sessionWarnings(block, ctx.exercisesById),
+      ...sessionWarnings(block, ctx),
     ]),
   ]);
 }

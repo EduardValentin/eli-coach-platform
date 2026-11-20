@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import type { Exercise } from '../../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
-import { blockStatus, weekInPlan } from '../../../domain/programCalendar';
+import { blockStatus } from '../../../domain/programCalendar';
 import { blockingMessage, sequenceProblems, type BlockingCode, type RuleFinding } from '../../../domain/programRules';
 import { suggestedBlocks } from '../../../domain/programSuggestions';
+import { counted } from '../../../utils/counted';
 import { Button } from '../../ui/button';
 import { PlanBlockList, type BlocksUpdate } from './PlanBlockList';
 import { PlanTimeline } from '../../program-view/PlanTimeline';
@@ -13,6 +15,7 @@ type PlanOverviewProps = {
   preferredWeekday: Weekday;
   today: Date;
   level: LevelHint;
+  library: readonly Exercise[];
   onChange: (update: BlocksUpdate) => void;
   onOpenBlock: (blockId: string) => void;
   onAddBlock: () => void;
@@ -28,7 +31,7 @@ const LEVEL_LABELS: Record<LevelHint, string> = {
 
 function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => void }) {
   const plan = suggestedBlocks(level)
-    .map(block => `${BLOCK_TYPE_LABELS[block.type]} ${block.weeks} wk`)
+    .map(block => `${BLOCK_TYPE_LABELS[block.type]} ${counted(block.weeks, 'week')}`)
     .join(' → ');
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-base p-4">
@@ -48,7 +51,7 @@ function problemsByBlock(problems: readonly RuleFinding<BlockingCode>[]): Map<st
   return byBlock;
 }
 
-export function PlanOverview({ content, dayOne, preferredWeekday, today, level, onChange, onOpenBlock, onAddBlock, onUseSuggestion, settings }: PlanOverviewProps) {
+export function PlanOverview({ content, dayOne, preferredWeekday, today, level, library, onChange, onOpenBlock, onAddBlock, onUseSuggestion, settings }: PlanOverviewProps) {
   const { blocks } = content.plan;
 
   return (
@@ -66,7 +69,7 @@ export function PlanOverview({ content, dayOne, preferredWeekday, today, level, 
             dayOne={dayOne}
             preferredWeekday={preferredWeekday}
             today={today}
-            weekAction={{ kind: 'select', label: 'Open its block', onSelect: week => onOpenBlock(blocks[weekInPlan(blocks, week).blockIndex].id) }}
+            weekAction={{ kind: 'open-block', onOpen: blockIndex => onOpenBlock(blocks[blockIndex].id) }}
           />
           <PlanBlockList
             blocks={blocks}
@@ -74,6 +77,7 @@ export function PlanOverview({ content, dayOne, preferredWeekday, today, level, 
             dayOne={dayOne}
             today={today}
             problems={problemsByBlock(sequenceProblems(blocks))}
+            deload={{ level, library }}
             onChange={onChange}
             onOpenBlock={onOpenBlock}
             onAddBlock={onAddBlock}

@@ -1,5 +1,6 @@
 import { useId, type KeyboardEvent, type ReactNode } from 'react';
 import { Link, type To } from 'react-router';
+import { cva } from 'class-variance-authority';
 import { AlertCircle, GanttChart, Plus } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type ProgramLanguage, type ProgramVersion } from '../../../domain/program';
 import { blockSpan, blockStatus, type PlanSchedule } from '../../../domain/programCalendar';
@@ -31,7 +32,14 @@ type EditorRailProps = {
 
 type Detail = { text: string; tone: 'muted' | 'warning' | 'default' };
 
-const ENTRY_CLASS = 'w-full rounded-field text-left text-sm transition-colors';
+const railEntryVariants = cva('w-full rounded-card border text-left text-sm transition-colors', {
+  variants: {
+    state: {
+      idle: 'border-control-border-soft bg-surface-base hover:bg-surface-quiet',
+      current: 'border-text-primary bg-surface-quiet shadow-card',
+    },
+  },
+});
 const MODES: readonly EditorMode[] = ['structure', 'texts'];
 const OVERVIEW: EditorSection = { kind: 'plan' };
 
@@ -120,13 +128,9 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         type="button"
         aria-current={current ? 'true' : undefined}
         onClick={onClick}
-        className={cn(
-          ENTRY_CLASS,
-          'grid gap-0.5 border border-control-border-soft bg-surface-base px-3 py-2 hover:bg-surface-quiet',
-          { 'border-text-primary bg-surface-quiet shadow-card': current },
-        )}
+        className={cn(railEntryVariants({ state: current ? 'current' : 'idle' }), 'grid gap-0.5 px-3 py-2')}
       >
-        <span className="flex items-center gap-2 font-medium text-text-primary">
+        <span className={cn('flex items-center gap-2 text-text-primary', { 'font-medium': current })}>
           <BlockNumber block={block} index={index} size="xs" />
           <span className="sr-only">{`${index + 1} `}</span>
           {BLOCK_TYPE_LABELS[block.type]}
@@ -175,11 +179,9 @@ export function EditorRail(props: EditorRailProps) {
           type="button"
           aria-current={overviewCurrent ? 'true' : undefined}
           onClick={() => onSelect(OVERVIEW)}
-          className={cn(ENTRY_CLASS, 'grid gap-2.5 border border-control-border-soft bg-surface-base p-3 hover:bg-surface-quiet', {
-            'border-text-primary bg-surface-quiet shadow-card': overviewCurrent,
-          })}
+          className={cn(railEntryVariants({ state: overviewCurrent ? 'current' : 'idle' }), 'grid gap-2.5 p-3')}
         >
-          <span className="flex items-center gap-2 font-semibold text-text-primary">
+          <span className={cn('flex items-center gap-2 text-text-primary', { 'font-semibold': overviewCurrent, 'font-medium': !overviewCurrent })}>
             <GanttChart aria-hidden="true" size={18} />
             Overview
           </span>

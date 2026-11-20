@@ -12,9 +12,8 @@ import { cn } from '../../ui/utils';
 import { counted } from '../../../utils/counted';
 import { ExerciseNameButton } from '../../program-view/ExerciseNameButton';
 import { roundsItemExerciseDetail, steadyExerciseDetail } from '../../program-view/sessionExerciseDetails';
-import { IntensityValue } from '../../program-view/IntensityValue';
 import { SegmentHeading } from '../../program-view/SegmentBlock';
-import { ThenLabel } from '../../program-view/SegmentTable';
+import { EasyTime, ThenLabel } from '../../program-view/SegmentTable';
 import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
 import { ExerciseItemList } from './ExerciseItemList';
 import { CountField, RowTextField } from './RowTextField';
@@ -32,8 +31,9 @@ function EasyStep({ time }: { time: string }) {
       <span className="flex-1">
         <ThenLabel />
       </span>
-      <span className="text-sm font-semibold text-text-primary tabular-nums">{time}</span>
-      <IntensityValue intensity="easy" />
+      <span className="text-sm font-semibold text-text-primary tabular-nums">
+        <EasyTime time={time} />
+      </span>
     </p>
   );
 }
@@ -174,7 +174,6 @@ function RoundsFields({ segment, position, library, edits, onChange, onAddItem }
                   ))}
                 </ChoiceGroup>
               </div>
-              <span className="self-center"><IntensityValue intensity={segment.intensity} /></span>
             </>
           );
         }}

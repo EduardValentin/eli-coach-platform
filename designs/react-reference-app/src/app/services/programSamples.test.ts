@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PROGRAM_SEEDS, programForSeed, seededPrograms, seedRequiresProgramReady, type SeedClient } from './programSamples';
 import { SAMPLE_EXERCISES } from './exerciseSamples';
 import { currentVersion, draftOf, roleForSlot } from '../domain/program';
+import { rowAtWeek } from '../domain/programProgression';
 import { slotPlanFor } from '../domain/splitTemplates';
 
 const DAY_ONE = new Date(2026, 8, 1);
@@ -34,6 +35,29 @@ describe('programForSeed', () => {
 
     expect(program?.versions).toHaveLength(1);
     expect(currentVersion(program!)).toMatchObject({ number: 1, publishedAt: DAY_ONE });
+  });
+
+  it('seeds the published Hypertrophy block with a calibration week, starting main-lift weights, a typed week and a week with a top set and an extra warm-up set, and holds the last Foundation session by a custom rule', () => {
+    // act
+    const program = programForSeed('published', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const [foundation, hypertrophy] = currentVersion(program!)!.content.plan.blocks;
+    expect(hypertrophy.calibrationWeek).toBe(true);
+    const mainLift = hypertrophy.sessions[0].rows.find(row => row.slot === 'A')!;
+    const working = mainLift.startSets.filter(set => set.kind === 'working');
+    expect(mainLift.startSets.filter(set => set.kind === 'warm-up').map(set => set.start.weightKg)).toEqual([30, 45]);
+    expect(working.map(set => set.start.weightKg)).toEqual([60, 60, 60, 60]);
+    expect(Object.keys(mainLift.weekChanges ?? {})).toEqual(['4', '5']);
+    expect(Object.values(mainLift.weekChanges?.[4]?.typed ?? {})).toEqual(working.map(() => ({ weightKg: 65 })));
+    const weekFive = rowAtWeek(mainLift, 5, { block: hypertrophy, level: 'beginner' }).sets;
+    expect(weekFive.filter(set => set.kind === 'warm-up')).toHaveLength(3);
+    expect(weekFive.filter(set => set.kind === 'warm-up').at(-1)).toEqual({ kind: 'warm-up', reps: { min: 3, max: 3 }, weightKg: 60 });
+    expect(weekFive.find(set => set.kind === 'working')).toEqual({ kind: 'working', reps: { min: 4, max: 6 }, rir: 2, weightKg: 75 });
+    const heldRows = foundation.sessions.at(-1)!.rows;
+    expect(heldRows.every(row => row.progression.kind === 'custom')).toBe(true);
+    expect(heldRows.filter(row => row.progression.kind === 'custom' && row.progression.text !== '')).toHaveLength(2);
+    expect(foundation.sessions[0].rows.every(row => row.progression.kind === 'double')).toBe(true);
   });
 
   it('seeds a superseded version 1, a published version 2 and a version 3 draft', () => {
@@ -147,11 +171,8 @@ describe('programForSeed', () => {
     // assert
     const [session] = program!.versions[0].content.plan.blocks[0].sessions;
     const main = session.rows.find(row => row.slot === 'A');
-    expect(main!.sets.slice(0, 2).map(set => [set.kind, set.reps.min])).toEqual([
-      ['warm-up', 8],
-      ['warm-up', 5],
-    ]);
-    expect(main!.sets.slice(2).every(set => set.kind === 'working')).toBe(true);
+    expect(main!.startSets.filter(set => set.kind === 'warm-up').map(set => set.start.reps.min)).toEqual([8, 5]);
+    expect(main!.startSets.slice(0, 2).map(set => set.kind)).toEqual(['warm-up', 'warm-up']);
   });
 
   it('seeds easy cardio on a library cardio exercise', () => {

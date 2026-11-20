@@ -1,7 +1,6 @@
 import type { Equipment } from './exercises';
 import {
   blockWithFreshIds,
-  copiedSessions,
   mapCalendar,
   newId,
   roleForSlot,
@@ -15,13 +14,13 @@ import {
   type ProgramLanguage,
   type Row,
   type Session,
-  type SetSpec,
   type Slot,
   type SplitShape,
   type Weekday,
 } from './program';
 import type { ProgramSetup } from './programOnboarding';
-import { cardioDefaults, reDefaultedBlock, rowDefaults } from './programDefaults';
+import { cardioDefaults, defaultSets, deloadedBlock, reDefaultedBlock, rowDefaults } from './programDefaults';
+import { sessionsCopiedFromFirstWeek } from './programProgression';
 import { fillTemplate, templateText } from './programTemplates';
 import { SPLIT_TEMPLATES } from './splitTemplates';
 import { substitutionsFor } from './substitutions';
@@ -43,15 +42,11 @@ const SUGGESTED_BLOCKS: Record<LevelHint, SuggestedBlock[]> = {
   ],
   advanced: [
     { type: 'hypertrophy', weeks: 5, calibrationWeek: true },
-    { type: 'strength', weeks: 5, calibrationWeek: false },
+    { type: 'deload', weeks: 1, calibrationWeek: false },
+    { type: 'strength', weeks: 4, calibrationWeek: false },
     { type: 'deload', weeks: 1, calibrationWeek: false },
   ],
 };
-
-const MAIN_COMPOUND_WARM_UPS: readonly SetSpec[] = [
-  { kind: 'warm-up', reps: { min: 8, max: 8 } },
-  { kind: 'warm-up', reps: { min: 5, max: 5 } },
-];
 
 export function suggestedBlocks(level: LevelHint): SuggestedBlock[] {
   return SUGGESTED_BLOCKS[level].map(block => ({ ...block }));
@@ -78,10 +73,6 @@ export function spreadCalendar(
   return calendar;
 }
 
-function warmUpsFor(slot: Slot): SetSpec[] {
-  return roleForSlot(slot) === 'main-compound' ? MAIN_COMPOUND_WARM_UPS.map(set => structuredClone(set)) : [];
-}
-
 export type RowContext = { blockType: BlockType; library: readonly Exercise[]; equipment: readonly Equipment[] };
 export type RowPlacement = { slot: Slot; supersetGroup?: string };
 
@@ -92,7 +83,7 @@ export function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): R
     exerciseId: '',
     slot,
     ...(supersetGroup === undefined ? {} : { supersetGroup }),
-    sets: [...warmUpsFor(slot), ...defaults.sets],
+    startSets: defaultSets(type, slot),
     restSeconds: defaults.restSeconds,
     lastSetTechnique: 'none',
     substitutions: [],
@@ -138,27 +129,24 @@ function blockTexts(type: BlockType, setup: ProgramSetup): Pick<Block, 'introTex
   };
 }
 
-function deloadAfter(previous: Block, weeks: number, setup: ProgramSetup): Block {
-  const copy = blockWithFreshIds(previous);
-  return reDefaultedBlock(
-    {
-      ...copy,
-      ...blockTexts('deload', setup),
-      originId: newId(),
-      weeks,
-      calibrationWeek: false,
-      clientNote: '',
-      targetMinutes: setup.sessionMinutes,
-      dailySteps: setup.dailySteps,
-    },
-    'deload',
-  );
+function deloadAfter(previous: Block, weeks: number, { setup, library }: BlockContext): Block {
+  const deload = deloadedBlock(blockWithFreshIds(previous), { level: setup.level, library });
+  return {
+    ...deload,
+    ...blockTexts('deload', setup),
+    originId: newId(),
+    weeks,
+    calibrationWeek: false,
+    clientNote: '',
+    targetMinutes: setup.sessionMinutes,
+    dailySteps: setup.dailySteps,
+  };
 }
 
 export function newBlock(type: BlockType, weeks: number, { setup, library, previous }: BlockContext): Block {
-  if (type === 'deload' && previous) return deloadAfter(previous, weeks, setup);
+  if (type === 'deload' && previous) return deloadAfter(previous, weeks, { setup, library });
   const shape = setup.splitShape;
-  const sessions = previous ? copiedSessions(previous.sessions) : emptySessionsFor(shape, setup.trainingDays);
+  const sessions = previous ? sessionsCopiedFromFirstWeek(previous.sessions) : emptySessionsFor(shape, setup.trainingDays);
   const cardioSessions = cardioDefaults(type, library);
   const block: Block = {
     id: newId(),

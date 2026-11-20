@@ -1,8 +1,9 @@
 import { format } from 'date-fns';
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { Fragment, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { isBlockWritten, WEEKDAY_LABELS, type Block, type Weekday } from '../../domain/program';
 import { blockStatus, currentPosition, planWeek, planWeeks, weekRangeOf, type DateRange, type PlanSchedule, type PlanWeek } from '../../domain/programCalendar';
+import { useContainerWidthRem } from '../../hooks/useContainerWidthRem';
 import { counted } from '../../utils/counted';
 import { WIDGET_TITLE_CLASS } from '../typography';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
@@ -21,13 +22,18 @@ const NO_DATE = '\u00a0';
 const PEEK_OPEN_DELAY_MS = 150;
 const PEEK_CLOSE_DELAY_MS = 200;
 
+/**
+ * `open-block` is the builder's plan: every week is dated by its start, from today until day 1 is set, and named week first
+ * ("Week 1 of 11, Foundation week 1 of 4, …, open block"); the other interactive kinds lead with their label.
+ */
 export type TimelineWeekAction =
   | { kind: 'select'; label: string; onSelect: (weekOfPlan: number) => void }
   | { kind: 'link'; label: string; hrefOf: (weekOfPlan: number) => string }
+  | { kind: 'open-block'; onOpen: (blockIndex: number) => void }
   | { kind: 'anchor'; hrefOf: (weekOfPlan: number) => string | null }
   | { kind: 'none' };
 
-type InteractiveWeekAction = Extract<TimelineWeekAction, { kind: 'select' | 'link' }>;
+type InteractiveWeekAction = Extract<TimelineWeekAction, { kind: 'select' | 'link' | 'open-block' }>;
 type StaticWeekAction = Extract<TimelineWeekAction, { kind: 'anchor' | 'none' }>;
 
 type PlanTimelineProps = PlanSchedule & {
@@ -66,11 +72,19 @@ function timelineWeeks({ blocks, dayOne }: Pick<PlanSchedule, 'blocks' | 'dayOne
   return blocks.map((_, blockIndex) => weeks.filter(week => week.blockIndex === blockIndex));
 }
 
-function spokenWeek(week: TimelineWeek, marks: ReadonlySet<WeekMark>): string {
+function weekFirstBlockText(week: TimelineWeek): string {
+  const name = blockName(week.block);
+  return week.block.weeks === 1 ? name : `${name} week ${week.weekOfBlock} of ${week.block.weeks}`;
+}
+
+type WeekNaming = 'action-first' | 'week-first';
+
+function spokenWeek(week: TimelineWeek, marks: ReadonlySet<WeekMark>, naming: WeekNaming = 'action-first'): string {
+  const ofBlock = naming === 'week-first' ? weekFirstBlockText(week) : weekOfBlockText(week, 'long');
   return [
     weekOfPlanText(week),
     ...(week.range ? [spokenRangeText(week.range)] : []),
-    weekOfBlockText(week, 'long'),
+    ofBlock,
     ...(week.checkIn ? [`check-in form ${format(week.checkIn, PEEK_DATE)}`] : []),
     ...(marks.has('now') ? ['this week'] : []),
   ].join(', ');
@@ -82,17 +96,8 @@ function peekAfter(current: number | null, week: number, open: boolean): number 
 }
 
 function useTimelineLayout(weeks: number): { ref: RefObject<HTMLDivElement>; layout: Layout } {
-  const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  const rem = typeof document === 'undefined' ? 16 : parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const fitsRow = width > 0 && width / weeks >= ROW_CELL_MIN_REM * rem;
+  const { ref, widthRem } = useContainerWidthRem<HTMLDivElement>();
+  const fitsRow = widthRem > 0 && widthRem / weeks >= ROW_CELL_MIN_REM;
   return { ref, layout: fitsRow ? 'row' : 'stacked' };
 }
 
@@ -200,12 +205,22 @@ type WeekCellProps = {
   onFocus: () => void;
 };
 
+function weekCellName(week: TimelineWeek, marks: ReadonlySet<WeekMark>, action: InteractiveWeekAction): string {
+  if (action.kind === 'open-block') return `${spokenWeek(week, marks, 'week-first')}, open block`;
+  return `${action.label}: ${spokenWeek(week, marks)}`;
+}
+
+function chooseWeek(week: TimelineWeek, action: Exclude<InteractiveWeekAction, { kind: 'link' }>) {
+  if (action.kind === 'open-block') action.onOpen(week.blockIndex);
+  else action.onSelect(week.weekOfPlan);
+}
+
 function WeekCell({ week, look, marks, focus, action, cellRef, onFocus }: WeekCellProps) {
   const cellProps = {
     'data-week': week.weekOfPlan,
     'data-parity': 'plan-week',
     tabIndex: focus === 'tab-stop' ? 0 : -1,
-    'aria-label': `${action.label}: ${spokenWeek(week, marks)}`,
+    'aria-label': weekCellName(week, marks, action),
     'aria-current': marks.has('shown') ? ('true' as const) : undefined,
     onFocus,
     className: cn('hit-area', weekCellClass(week, look, marks)),
@@ -222,7 +237,7 @@ function WeekCell({ week, look, marks, focus, action, cellRef, onFocus }: WeekCe
   }
   return (
     <HoverCardTrigger asChild>
-      <button ref={cellRef} type="button" onClick={() => action.onSelect(week.weekOfPlan)} {...cellProps}>
+      <button ref={cellRef} type="button" onClick={() => chooseWeek(week, action)} {...cellProps}>
         {face}
       </button>
     </HoverCardTrigger>
@@ -235,21 +250,23 @@ function BlockHead({ block, index, weeks, layout, meta }: BlockHeadProps) {
   const first = weeks[0].range;
   const last = weeks[weeks.length - 1].range;
   const range = first && last ? dateRangeText({ start: first.start, end: last.end }) : null;
+  const span = [...(block.weeks > 1 ? [counted(block.weeks, 'week')] : []), ...(range ? [range] : [])];
   return (
     <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 pb-2', { [cn('border-t-3 pt-2', BLOCK_RULE[block.type])]: layout === 'row' })}>
       <span className="flex min-w-0 items-center gap-2 whitespace-nowrap">
         <BlockNumber block={block} index={index} size="xs" />
         <span className={cn('min-w-0 font-semibold text-text-primary', { 'text-sm': layout === 'row', 'text-base': layout === 'stacked' })}>{blockName(block)}</span>
       </span>
-      <span className={cn('text-sm text-text-secondary tabular-nums', { 'basis-full': meta === 'below', 'ml-auto text-right': meta === 'beside' })}>
-        <span className="whitespace-nowrap">{counted(block.weeks, 'week')}</span>
-        {range && (
-          <>
-            {' · '}
-            <span className="whitespace-nowrap">{range}</span>
-          </>
-        )}
-      </span>
+      {span.length > 0 && (
+        <span className={cn('text-sm text-text-secondary tabular-nums', { 'basis-full': meta === 'below', 'ml-auto text-right': meta === 'beside' })}>
+          {span.map((part, partIndex) => (
+            <Fragment key={part}>
+              {partIndex > 0 && ' · '}
+              <span className="whitespace-nowrap">{part}</span>
+            </Fragment>
+          ))}
+        </span>
+      )}
     </div>
   );
 }
@@ -325,12 +342,19 @@ function CheckInKey({ weekday }: { weekday: Weekday | null }) {
   );
 }
 
+const DATED_LOOK: CellLook = { face: 'row', date: 'start' };
+
+/** The builder's plan dates its weeks from today until day 1 is set, without marking any week as now. */
+function datedFrom({ dayOne, today, weekAction }: Pick<PlanTimelineProps, 'dayOne' | 'today' | 'weekAction'>): Date | null {
+  return weekAction.kind === 'open-block' ? (dayOne ?? today) : dayOne;
+}
+
 export function PlanTimeline(props: PlanTimelineProps) {
-  const { blocks, dayOne, preferredWeekday, weekAction } = props;
-  const byBlock = timelineWeeks({ blocks, dayOne }, preferredWeekday);
+  const { blocks, preferredWeekday, weekAction } = props;
+  const byBlock = timelineWeeks({ blocks, dayOne: datedFrom(props) }, preferredWeekday);
   const { ref, layout } = useTimelineLayout(planWeeks(blocks));
   if (weekAction.kind === 'none' || weekAction.kind === 'anchor') {
-    const look: CellLook = { face: 'row', date: 'start' };
+    const look = DATED_LOOK;
     return (
       <div ref={ref} data-parity="plan-timeline" className="grid gap-3">
         <TimelineBlocks
@@ -341,7 +365,7 @@ export function PlanTimeline(props: PlanTimelineProps) {
           currentBlock={null}
           renderWeek={week => <StaticWeekCell week={week} look={look} action={weekAction} />}
         />
-        {dayOne && <CheckInKey weekday={preferredWeekday} />}
+        {props.dayOne && <CheckInKey weekday={preferredWeekday} />}
       </div>
     );
   }
@@ -355,8 +379,9 @@ type InteractiveTimelineProps = PlanTimelineProps & {
   timelineRef: RefObject<HTMLDivElement>;
 };
 
-function InteractiveTimeline({ blocks, dayOne, today, shownWeek, weekAction, byBlock, layout, timelineRef }: InteractiveTimelineProps) {
-  const look: CellLook = { face: layout, date: 'check-in' };
+function InteractiveTimeline({ blocks, dayOne, today, preferredWeekday, shownWeek, weekAction, byBlock, layout, timelineRef }: InteractiveTimelineProps) {
+  const opensBlocks = weekAction.kind === 'open-block';
+  const look: CellLook = opensBlocks ? DATED_LOOK : { face: layout, date: 'check-in' };
   const totalWeeks = planWeeks(blocks);
   const position = currentPosition(blocks, dayOne, today);
   const nowWeek = position.status === 'in-plan' ? position.weekOfPlan : null;
@@ -414,7 +439,7 @@ function InteractiveTimeline({ blocks, dayOne, today, shownWeek, weekAction, byB
       <div role="toolbar" aria-label="Plan weeks" onKeyDown={onKeyDown}>
         <TimelineBlocks blocks={blocks} byBlock={byBlock} layout={layout} look={look} currentBlock={currentBlock === -1 ? null : currentBlock} renderWeek={renderWeek} />
       </div>
-      {dayOne && <CheckInKey weekday={null} />}
+      {datedFrom({ dayOne, today, weekAction }) && <CheckInKey weekday={opensBlocks ? preferredWeekday : null} />}
     </div>
   );
 }

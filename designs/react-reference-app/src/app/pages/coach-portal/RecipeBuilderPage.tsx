@@ -77,7 +77,7 @@ import { RECIPE_ICONS } from '../../components/coach-portal/nutrition/recipe-ico
 import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-icons';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
-import { InlineProblem } from '../../components/InlineProblem';
+import { InlineProblem } from '../../components/ui/inline-problem';
 import { Alert, AlertAction } from '../../components/ui/alert';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { useIsDesktop } from '../../components/ui/use-desktop';

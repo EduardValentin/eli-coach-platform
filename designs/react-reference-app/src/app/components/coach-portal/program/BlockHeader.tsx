@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
 import { ChevronDown, Copy, RotateCcw, Trash2 } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
-import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramLanguage, type Session, type SplitShape, type TrainingDays } from '../../../domain/program';
+import { BLOCK_TYPE_LABELS, type Block, type BlockType, type Program, type ProgramLanguage, type Session, type SplitShape, type TrainingDays } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
+import type { DeloadSource } from '../../../domain/programDefaults';
 import { blockWithSessionsFrom, blockWithType } from '../../../domain/programEditing';
 import { blockWithSplit, describeLoss, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
@@ -15,7 +16,7 @@ import { blockProgress, BlockTypeSelect, STARTED_BLOCK_REASON } from './blockPar
 import { BlockNumber } from '../../program-view/BlockNumber';
 import { BlockSettings } from './BlockSettings';
 import { CopyBlockDialog } from './CopyBlockDialog';
-import { useResetConfirm } from './ResetConfirm';
+import { removeBlockRequest, useDestructiveConfirm } from './DestructiveConfirm';
 import { useWeeksField } from './weeksField';
 
 type BlockHeaderProps = {
@@ -27,6 +28,7 @@ type BlockHeaderProps = {
   language: ProgramLanguage;
   otherPrograms: Program[];
   journeys: Record<string, ClientJourney>;
+  deload: DeloadSource;
   onChange: (block: Block) => void;
   onRemove: () => void;
   measureRef: (header: HTMLElement | null) => void;
@@ -110,12 +112,12 @@ function CollapsedBlockBar({ block, index, status, toggle }: BarProps & { toggle
 
 type BlockActions = { onCopy: () => void; onReset: () => void; onRemove: () => void };
 
-function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: BarProps & { toggle: SettingsToggleProps | null; actions: BlockActions; onChangeType: (block: Block) => void }) {
+function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: BarProps & { toggle: SettingsToggleProps | null; actions: BlockActions; onChangeType: (type: BlockType) => void }) {
   const line = statusLine(block, status);
   return (
     <div className="flex min-w-0 items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
       <BlockNumber block={block} index={index} size="md" />
-      <BlockTypeSelect value={block.type} label="Block type" appearance="title" onChange={type => onChangeType(blockWithType(block, type))} />
+      <BlockTypeSelect value={block.type} label="Block type" appearance="title" onChange={onChangeType} />
       {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
       <div className="ml-auto flex items-center gap-1">
         {toggle && <SettingsToggle {...toggle} />}
@@ -141,10 +143,10 @@ function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: 
   );
 }
 
-export function BlockHeader({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, onChange, onRemove, measureRef }: BlockHeaderProps) {
+export function BlockHeader({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, deload, onChange, onRemove, measureRef }: BlockHeaderProps) {
   const block = blocks[index];
   const [copying, setCopying] = useState(false);
-  const confirm = useResetConfirm();
+  const confirm = useDestructiveConfirm();
   const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit: value => onChange({ ...block, weeks: value }) });
   const settings = useCollapsingSettings();
 
@@ -165,8 +167,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   const actions: BlockActions = {
     onCopy: () => setCopying(true),
     onReset: () => rebuild('Reset to the split?', blockWithSplit(block, block.split.shape, language), describeLoss(block, { kind: 'reset' })),
-    onRemove: () =>
-      confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeLoss(block, { kind: 'remove-block' }), apply: onRemove }),
+    onRemove: () => confirm.request(removeBlockRequest(block, index, onRemove)),
   };
   const { headerRef: scrollRef } = settings;
   const headerRef = useCallback(
@@ -188,7 +189,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
         <CollapsedBlockBar block={block} index={index} status={status} toggle={{ ...toggleControl, expanded: false }} />
       ) : (
         <>
-          <BlockTitleBar block={block} index={index} status={status} toggle={settings.collapsible ? { ...toggleControl, expanded: true } : null} actions={actions} onChangeType={onChange} />
+          <BlockTitleBar block={block} index={index} status={status} toggle={settings.collapsible ? { ...toggleControl, expanded: true } : null} actions={actions} onChangeType={type => onChange(blockWithType(block, type, { ...deload, previous: blocks[index - 1] }))} />
           <BlockSettings block={block} weeks={weeks} onChange={onChange} onChangeShape={changeShape} onChangeTrainingDays={changeTrainingDays} />
         </>
       )}

@@ -16,7 +16,7 @@ import { FOOD_ICONS, TAG_FAMILY_ICON } from '../../components/coach-portal/nutri
 import { CATEGORY_LABELS, TAG_FAMILY_LABELS } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { CheckboxChip } from '../../components/CheckboxChip';
 import { IconChoiceGrid } from '../../components/IconChoiceGrid';
-import { InlineProblem } from '../../components/InlineProblem';
+import { InlineProblem } from '../../components/ui/inline-problem';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsBody, SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
