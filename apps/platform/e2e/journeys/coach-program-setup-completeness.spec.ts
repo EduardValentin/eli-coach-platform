@@ -1,4 +1,4 @@
-import type { Page, TestInfo } from "@playwright/test";
+import type { Page, Route, TestInfo } from "@playwright/test";
 
 import { expect, test } from "../support/fixtures";
 import { recordAnswersApproved } from "../support/submitted-clients";
@@ -488,52 +488,60 @@ test(
   },
 );
 
-test(
-  "a failed create request leaves the coach on the setup with her choices and a notice",
-  { tag: "@completeness" },
-  async ({
-    coachClient,
-    page,
-    programSetup,
-    provisionClientInState,
-    provisionCoach,
-    signInAsCoach,
-  }) => {
-    test.setTimeout(JOURNEY_TIMEOUT_MS);
+for (const [name, fail] of [
+  ["that is dropped", (route: Route) => route.abort("failed")],
+  [
+    "answered with a 500",
+    (route: Route) => route.fulfill({ status: 500, body: "The store is down" }),
+  ],
+] as const) {
+  test(
+    `a create request ${name} leaves the coach on the setup with her choices and a notice`,
+    { tag: "@completeness" },
+    async ({
+      coachClient,
+      page,
+      programSetup,
+      provisionClientInState,
+      provisionCoach,
+      signInAsCoach,
+    }) => {
+      test.setTimeout(JOURNEY_TIMEOUT_MS);
 
-    // arrange
-    await provisionCoach();
-    const client = await provisionClientInState("approved");
-    let dropped = false;
-    await page.goto("/store");
-    await signInAsCoach();
-    await coachClient.open(client.clientId);
-    await coachClient.buildProgram();
-    await programSetup.expectOpenFor(client.firstName, client.clientId);
-    await page.route(
-      new RegExp(`/coach/clients/${client.clientId}/program/new`),
-      async (route) => {
-        if (route.request().method() !== "POST" || dropped) {
-          return route.fallback();
-        }
-        dropped = true;
-        return route.abort("failed");
-      },
-    );
-    await programSetup.chooseTrainingDays("4 days");
+      // arrange
+      await provisionCoach();
+      const client = await provisionClientInState("approved");
+      let dropped = false;
+      await page.goto("/store");
+      await signInAsCoach();
+      await coachClient.open(client.clientId);
+      await coachClient.buildProgram();
+      await programSetup.expectOpenFor(client.firstName, client.clientId);
+      await page.route(
+        new RegExp(`/coach/clients/${client.clientId}/program/new`),
+        async (route) => {
+          if (route.request().method() !== "POST" || dropped) {
+            return route.fallback();
+          }
+          dropped = true;
+          return fail(route);
+        },
+      );
+      await programSetup.chooseTrainingDays("4 days");
 
-    // act
-    await programSetup.create();
+      // act
+      await programSetup.create();
 
-    // assert
-    await programSetup.expectSaveFailedNotice();
-    await programSetup.expectChoices({
-      ...PREFILLED_FROM_HER_PROFILE,
-      trainingDays: "4 days",
-      split: "Upper / Lower",
-    });
-  },
-);
+      // assert
+      await programSetup.expectSaveFailedNotice();
+      await programSetup.expectChoices({
+        ...PREFILLED_FROM_HER_PROFILE,
+        trainingDays: "4 days",
+        split: "Upper / Lower",
+      });
+    },
+  );
+}
 
 const ENDED_BLOCKS = BEGINNER_BLOCKS;
 const DAYS_INSIDE_WITHDRAWAL = 3;
