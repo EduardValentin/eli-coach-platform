@@ -25,7 +25,7 @@ import { filledSessionsText } from './blockParts';
 import { NextVersionAction } from './NextVersionAction';
 import { journeyProgramView } from '../../program-view/journeyProgramView';
 import { ProgramPlanSummary } from '../../program-view/ProgramPlan';
-import { unpublishableDraftReason } from './unpublishableDraft';
+import { coachingEndedDraftReason, draftStateOf } from './unpublishableDraft';
 import { UpcomingBlockWarnings } from './UpcomingBlockWarnings';
 import { VersionReading } from './VersionReading';
 
@@ -68,9 +68,8 @@ function DraftBlocks({ blocks }: { blocks: readonly Block[] }) {
   );
 }
 
-function DraftReadiness({ missing, unpublishableReason }: { missing: readonly string[]; unpublishableReason: string | null }) {
+function DraftReadiness({ missing }: { missing: readonly string[] }) {
   const titleId = useId();
-  if (unpublishableReason) return <p className="text-sm text-text-secondary">{unpublishableReason}</p>;
   if (missing.length === 0) {
     return (
       <p className="flex items-center gap-2 text-sm font-medium text-success">
@@ -103,7 +102,11 @@ function DraftSummary({ journey, version }: { journey: ClientJourney; version: P
       <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8" data-parity="draft-columns">
         <DraftBlocks blocks={version.content.plan.blocks} />
         <div className="self-start rounded-field bg-surface-quiet p-4" data-parity="draft-readiness">
-          <DraftReadiness missing={missingFrom(version)} unpublishableReason={unpublishableDraftReason(journey, new Date())} />
+          {draftStateOf(journey, new Date()) === 'coaching-ended' ? (
+            <p className="text-sm text-text-secondary">{coachingEndedDraftReason(journey)}</p>
+          ) : (
+            <DraftReadiness missing={missingFrom(version)} />
+          )}
         </div>
       </div>
     </SettingsBody>

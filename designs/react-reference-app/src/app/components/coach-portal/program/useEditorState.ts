@@ -16,7 +16,7 @@ import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import type { DocumentEditing } from '../../program-view/documentEditing';
 import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
-import { unpublishableDraftReason } from './unpublishableDraft';
+import { draftStateOf } from './unpublishableDraft';
 
 export type WriteResult = 'written' | 'failed';
 
@@ -122,7 +122,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     problems: blockingProblems(content, ruleContext),
     warnings: warnings(content, ruleContext),
     opensOn: ruleContext.startDate && isAfter(startOfDay(ruleContext.startDate), startOfDay(today)) ? ruleContext.startDate : null,
-    unpublishableReason: unpublishableDraftReason(journey, today),
+    draftState: draftStateOf(journey, today),
     select,
     openInStructure,
     updateBlocks,

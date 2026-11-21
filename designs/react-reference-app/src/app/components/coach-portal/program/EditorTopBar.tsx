@@ -17,6 +17,7 @@ import { useIsDesktop, useMediaQuery } from '../../ui/use-desktop';
 import { cn } from '../../ui/utils';
 import { ClientProfilePopover, ClientProfileTrigger } from './ClientProfilePopover';
 import { ProgramFindings, type FindingTarget } from './ProgramFindings';
+import { coachingEndedDraftReason, type DraftState } from './unpublishableDraft';
 import type { WriteResult } from './useEditorState';
 
 type EditorTopBarProps = {
@@ -33,7 +34,7 @@ type EditorTopBarProps = {
   onPublish: () => void;
   onDiscard: () => WriteResult;
   opensOn: Date | null;
-  unpublishableReason: string | null;
+  draftState: DraftState;
   problems: readonly RuleFinding<BlockingCode>[];
   warnings: readonly RuleFinding<WarningCode>[];
 };
@@ -78,17 +79,36 @@ function Place({ placeTitle, placeHeading, onOverview }: PlaceProps) {
   );
 }
 
-type ChecksButtonProps = Pick<EditorTopBarProps, 'problems' | 'warnings' | 'onOpenFinding' | 'unpublishableReason'>;
+type ChecksButtonProps = Pick<EditorTopBarProps, 'problems' | 'warnings' | 'onOpenFinding' | 'draftState'>;
 
-function problemsLabel(count: number, unpublishableReason: string | null): string {
-  return unpublishableReason ? `${counted(count, 'problem')} in the draft` : `${counted(count, 'problem')} to fix before publishing`;
+function problemsBeforePublishingLabel(count: number): string {
+  return `${counted(count, 'problem')} to fix before publishing`;
 }
 
-function ChecksButton({ problems, warnings, onOpenFinding, unpublishableReason }: ChecksButtonProps) {
+function problemsInDraftLabel(count: number): string {
+  return `${counted(count, 'problem')} in the draft`;
+}
+
+const PROBLEMS_LABEL: Record<DraftState, (count: number) => string> = {
+  publishable: problemsBeforePublishingLabel,
+  'coaching-ended': problemsInDraftLabel,
+};
+
+const PROBLEMS_HEADING: Record<DraftState, string> = {
+  publishable: 'Before you can publish',
+  'coaching-ended': 'Problems in the draft',
+};
+
+const DRAFT_STATE_NOTE: Record<DraftState, string | null> = {
+  publishable: null,
+  'coaching-ended': 'coaching ended',
+};
+
+function ChecksButton({ problems, warnings, onOpenFinding, draftState }: ChecksButtonProps) {
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const blocked = problems.length > 0;
-  const label = blocked ? problemsLabel(problems.length, unpublishableReason) : `${counted(warnings.length, 'thing')} worth a look`;
+  const label = blocked ? PROBLEMS_LABEL[draftState](problems.length) : `${counted(warnings.length, 'thing')} worth a look`;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -102,7 +122,7 @@ function ChecksButton({ problems, warnings, onOpenFinding, unpublishableReason }
           Review the draft
         </h2>
         <ProgramFindings
-          problemsHeading={unpublishableReason ? 'Problems in the draft' : undefined}
+          problemsHeading={PROBLEMS_HEADING[draftState]}
           problems={problems}
           warnings={warnings}
           onOpen={target => {
@@ -115,19 +135,19 @@ function ChecksButton({ problems, warnings, onOpenFinding, unpublishableReason }
   );
 }
 
-function publishUnavailableReason({ opensOn, unpublishableReason }: Pick<EditorTopBarProps, 'opensOn' | 'unpublishableReason'>): string | null {
-  if (unpublishableReason) return unpublishableReason;
+function publishUnavailableReason({ journey, opensOn, draftState }: Pick<EditorTopBarProps, 'journey' | 'opensOn' | 'draftState'>): string | null {
+  if (draftState === 'coaching-ended') return coachingEndedDraftReason(journey);
   return opensOn && `Publishing opens on ${formatJourneyDate(opensOn)}`;
 }
 
-function PublishButton({ opensOn, unpublishableReason, onPublish }: Pick<EditorTopBarProps, 'opensOn' | 'unpublishableReason' | 'onPublish'>) {
+function PublishButton({ journey, opensOn, draftState, onPublish }: Pick<EditorTopBarProps, 'journey' | 'opensOn' | 'draftState' | 'onPublish'>) {
   const button = (
     <Button onClick={onPublish}>
       <Send aria-hidden="true" />
       <span className="@max-[20em]:sr-only">Publish</span>
     </Button>
   );
-  const reason = publishUnavailableReason({ opensOn, unpublishableReason });
+  const reason = publishUnavailableReason({ journey, opensOn, draftState });
   if (!reason) return button;
   return <DisabledActionHint reason={reason}>{button}</DisabledActionHint>;
 }
@@ -167,7 +187,7 @@ export function EditorTopBar({
   onPublish,
   onDiscard,
   opensOn,
-  unpublishableReason,
+  draftState,
   problems,
   warnings,
 }: EditorTopBarProps) {
@@ -203,7 +223,7 @@ export function EditorTopBar({
           {railToggle}
         </nav>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
-          <p className="text-xs break-words text-text-secondary">{[draftLine(name, version, basedOn), unpublishableReason && 'coaching ended'].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs break-words text-text-secondary">{[draftLine(name, version, basedOn), DRAFT_STATE_NOTE[draftState]].filter(Boolean).join(' · ')}</p>
           <Place placeTitle={placeTitle} placeHeading={placeHeading} onOverview={onOverview} />
         </div>
         <ClientProfilePopover
@@ -216,7 +236,7 @@ export function EditorTopBar({
           returnFocus={profileReturnFocus}
         >
           <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-4 sm:flex-wrap">
-            {(problems.length > 0 || warnings.length > 0) && <ChecksButton problems={problems} warnings={warnings} onOpenFinding={onOpenFinding} unpublishableReason={unpublishableReason} />}
+            {(problems.length > 0 || warnings.length > 0) && <ChecksButton problems={problems} warnings={warnings} onOpenFinding={onOpenFinding} draftState={draftState} />}
             {showsToolbarIcons && <ClientProfileTrigger />}
             {showsToolbarIcons && library && (
               <Button onClick={library.onToggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={library.open}>
@@ -227,7 +247,7 @@ export function EditorTopBar({
               <Eye aria-hidden="true" />
               <span className="hidden lg:inline">Preview as client</span>
             </Button>
-            <PublishButton opensOn={opensOn} unpublishableReason={unpublishableReason} onPublish={onPublish} />
+            <PublishButton journey={journey} opensOn={opensOn} draftState={draftState} onPublish={onPublish} />
             <span ref={draftActions} className="contents">
               <RowActionsMenu
                 label="Draft actions"

@@ -153,7 +153,7 @@ function ProgramEditor(props: EditorProps) {
           onPublish={() => setPublishing(true)}
           onDiscard={editor.discard}
           opensOn={editor.opensOn}
-          unpublishableReason={editor.unpublishableReason}
+          draftState={editor.draftState}
           problems={editor.problems}
           warnings={editor.warnings}
         />
