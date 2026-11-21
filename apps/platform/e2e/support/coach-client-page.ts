@@ -987,4 +987,80 @@ export class CoachClientPage {
     ).toHaveText([...draft.stillMissing]);
     await expect(this.buildProgramLink).toHaveCount(0);
   }
+
+  async expectProgramWaitingOnApproval(gender: VisitorGender): Promise<void> {
+    const her = clientPronouns(gender).possessive;
+
+    await expect(
+      this.programCard.getByText("No program yet", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.programCard.getByText(
+        `The program opens once ${her} answers are approved.`,
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await this.expectProgramCardOffersNoAction();
+  }
+
+  async expectProgramReadyToBuild(gender: VisitorGender): Promise<void> {
+    const her = clientPronouns(gender).possessive;
+
+    await expect(
+      this.programCard.getByText(`Build it from ${her} profile.`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(this.buildProgramLink).toBeVisible();
+  }
+
+  async expectProgramEndedWithoutDraft(gender: VisitorGender): Promise<void> {
+    const her = clientPronouns(gender).possessiveCapitalised;
+
+    await expect(
+      this.programCard.getByText("No program", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.programCard.getByText(`${her} coaching has ended.`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await this.expectProgramCardOffersNoAction();
+  }
+
+  async expectEndedDraftProgram(
+    gender: VisitorGender,
+    draft: Omit<DraftProgramCard, "stillMissing">,
+  ): Promise<void> {
+    const her = clientPronouns(gender).possessiveCapitalised;
+    const blocks = this.programCard
+      .getByRole("list", { name: "Blocks", exact: true })
+      .getByRole("listitem");
+
+    await expect(
+      this.programCard.getByText(`Version ${draft.version} · draft`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(blocks).toHaveCount(draft.blocks.length);
+
+    for (const [index, block] of draft.blocks.entries()) {
+      await expect(blocks.nth(index)).toContainText(block.label);
+      await expect(blocks.nth(index)).toContainText(block.sessions);
+    }
+
+    await expect(
+      this.programCard.getByText(
+        `${her} coaching has ended, so this draft can’t be published.`,
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(this.programCard.getByText("Still missing")).toHaveCount(0);
+    await this.expectProgramCardOffersNoAction();
+  }
+
+  async expectProgramCardOffersNoAction(): Promise<void> {
+    await expect(this.programCard.getByRole("link")).toHaveCount(0);
+    await expect(this.programCard.getByRole("button")).toHaveCount(0);
+  }
 }
