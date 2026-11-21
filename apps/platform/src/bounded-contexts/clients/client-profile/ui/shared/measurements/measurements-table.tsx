@@ -165,12 +165,15 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {history.map((row) => {
+              {history.map((row, index) => {
                 const recordedOn = formatDayMonth(row.recordedAt, timeZone);
 
                 return (
                   <TableRow key={row.id}>
-                    <TableCell className={VALUE_CELL_CLASS}>
+                    <TableCell
+                      className={VALUE_CELL_CLASS}
+                      data-parity={`recorded-on-${index + 1}`}
+                    >
                       {recordedOn}
                     </TableCell>
                     <TableCell className={VALUE_CELL_CLASS}>

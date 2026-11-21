@@ -123,12 +123,14 @@ function setupTitle(journey: ClientJourney): string {
   return `Build ${possessive(journey.profile.identity.firstName)} program`;
 }
 
-type SetupFrameProps = { journey: ClientJourney; title: string; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
+type SetupParityRoot = 'ProgramSetupSheet' | 'ProgramSetupNotReady';
 
-function SetupFrame({ journey, title, onLeave, children }: SetupFrameProps) {
+type SetupFrameProps = { journey: ClientJourney; title: string; parityRoot: SetupParityRoot; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
+
+function SetupFrame({ journey, title, parityRoot, onLeave, children }: SetupFrameProps) {
   useDocumentTitle(title);
   return (
-    <div className="mx-auto w-full max-w-xl">
+    <div className="mx-auto w-full max-w-xl" data-parity-root={parityRoot}>
       <PortalBackLink to={clientDetailPathForJourney(journey)} onClick={onLeave} navigationLabel="Back to the client">
         Back to {journeyClientName(journey)}
       </PortalBackLink>
@@ -142,7 +144,7 @@ const NOT_READY_TITLE = 'Program not ready yet';
 export function ProgramSetupNotReady({ journey }: { journey: ClientJourney }) {
   const her = clientPronouns(journey.profile.identity.gender).possessive.lower;
   return (
-    <SetupFrame journey={journey} title={NOT_READY_TITLE}>
+    <SetupFrame journey={journey} title={NOT_READY_TITLE} parityRoot="ProgramSetupNotReady">
       <DeadEndPanel
         icon={ClipboardList}
         title={NOT_READY_TITLE}
@@ -223,7 +225,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   }
 
   return (
-    <SetupFrame journey={journey} title={setupTitle(journey)} onLeave={cancel}>
+    <SetupFrame journey={journey} title={setupTitle(journey)} parityRoot="ProgramSetupSheet" onLeave={cancel}>
       <PortalPageHeader headingId={headingId} title={setupTitle(journey)} />
       <Form {...form}>
         <form noValidate onSubmit={create}>

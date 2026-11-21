@@ -83,7 +83,7 @@ function SetupSelect({
       data-parity={`field-${name}`}
       error={fieldState.error?.message}
       errorParity={`field-${name}-error`}
-      label={label}
+      label={<span>{label}</span>}
       required={required}
     >
       {(controlAttributes) => (
@@ -135,7 +135,9 @@ function SetupChoice<Option extends SetupOption>({
   return (
     <div className="grid gap-2" data-parity={`field-${name}`}>
       <fieldset>
-        <Legend id={legendId}>{label}</Legend>
+        <Legend id={legendId}>
+          <span>{label}</span>
+        </Legend>
         <ChoiceGroup
           aria-labelledby={legendId}
           className="mt-2"
@@ -180,7 +182,9 @@ function EquipmentField({ control, options }: EquipmentFieldProps) {
   return (
     <div className="grid gap-2" data-parity="field-equipment">
       <fieldset aria-describedby={problem ? messageId : undefined}>
-        <Legend required>Equipment</Legend>
+        <Legend required>
+          <span>Equipment</span>
+        </Legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {options.map((option, index) => (
             <CheckboxChip

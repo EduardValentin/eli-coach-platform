@@ -161,6 +161,7 @@
   --color-feedback-info-soft: rgba(37, 99, 235, 0.1);
   --color-status-pending: #ac502c;
   --color-status-pending-soft: rgba(172, 80, 44, 0.1);
+  --color-status-pending-ink: #4e2414;
 
   --color-training-strength: #c81d6b;
   --color-training-strength-soft: rgba(200, 29, 107, 0.1);
@@ -413,6 +414,7 @@
   --color-feedback-info-soft: var(--color-feedback-info-soft);
   --color-status-pending: var(--color-status-pending);
   --color-status-pending-soft: var(--color-status-pending-soft);
+  --color-status-pending-ink: var(--color-status-pending-ink);
 
   --color-training-strength: var(--color-training-strength);
   --color-training-strength-soft: var(--color-training-strength-soft);
