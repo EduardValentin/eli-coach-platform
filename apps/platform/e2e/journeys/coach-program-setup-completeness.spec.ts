@@ -543,6 +543,48 @@ for (const [name, fail] of [
   );
 }
 
+test(
+  "a create request answered with not found shows the not-found page and no failed-save notice",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    page,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.expectOpenFor(client.firstName, client.clientId);
+    await page.route(
+      new RegExp(`/coach/clients/${client.clientId}/program/new`),
+      async (route) => {
+        if (route.request().method() !== "POST") return route.fallback();
+        return route.fulfill({ status: 404, body: "Not Found" });
+      },
+    );
+
+    // act
+    await programSetup.create();
+
+    // assert
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Page not found" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("The program wasn’t created.", { exact: false }),
+    ).toHaveCount(0);
+  },
+);
+
 const ENDED_BLOCKS = BEGINNER_BLOCKS;
 const DAYS_INSIDE_WITHDRAWAL = 3;
 const DAYS_PAST_WITHDRAWAL = 20;
