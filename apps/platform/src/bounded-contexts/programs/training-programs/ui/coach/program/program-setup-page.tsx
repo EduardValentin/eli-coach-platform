@@ -1,4 +1,5 @@
 import {
+  isRouteErrorResponse,
   useLoaderData,
   type ActionFunctionArgs,
   type ClientActionFunctionArgs,
@@ -24,27 +25,34 @@ export function action(args: ActionFunctionArgs) {
     .coachProgramController.create(args, args.params.clientId);
 }
 
-const FIRST_REDIRECT_STATUS = 300;
+const FIRST_SERVER_ERROR_STATUS = 500;
 
-const FIRST_ERROR_STATUS = 400;
+// The server's refusals reach the browser as route error responses; a
+// request that got no answer carries no status at all.
+function answeredStatusOf(thrown: unknown): number | null {
+  if (thrown instanceof Response || isRouteErrorResponse(thrown)) {
+    return thrown.status;
+  }
 
-function isRedirect(thrown: unknown): boolean {
-  return (
-    thrown instanceof Response &&
-    thrown.status >= FIRST_REDIRECT_STATUS &&
-    thrown.status < FIRST_ERROR_STATUS
-  );
+  return null;
 }
 
-// A create that never reached the server, or failed there, comes back as the
-// same failed outcome the controller answers, so the form keeps her choices.
+function isFailedWrite(thrown: unknown): boolean {
+  const status = answeredStatusOf(thrown);
+
+  return status === null || status >= FIRST_SERVER_ERROR_STATUS;
+}
+
+// A create that never got an answer, or failed on the server, comes back as
+// the same failed outcome the controller answers, so the form keeps her
+// choices. A redirect or a refusal (not found, bad request) still throws.
 export async function clientAction({
   serverAction,
 }: ClientActionFunctionArgs): Promise<ProgramCreateOutcome> {
   try {
     return await serverAction<typeof action>();
   } catch (thrown) {
-    if (isRedirect(thrown)) throw thrown;
+    if (!isFailedWrite(thrown)) throw thrown;
 
     return { status: "failed" };
   }

@@ -14,7 +14,10 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
   createMemoryRouter,
+  isRouteErrorResponse,
   RouterProvider,
+  useRouteError,
+  UNSAFE_ErrorResponseImpl as ErrorResponseImpl,
   type ActionFunctionArgs,
   type ClientActionFunctionArgs,
 } from "react-router";
@@ -501,6 +504,36 @@ describe("the program setup", () => {
   });
 
   it.each([
+    ["the client is not found", 404, "Not Found"],
+    ["the setup cannot be read", 400, "The program setup could not be read."],
+  ])(
+    "leaves the page to the error page, not the failed-save notice, when %s",
+    async (_refusal, status, body) => {
+      // arrange
+      server.use(
+        http.post(SETUP_REQUESTS, () => new HttpResponse(body, { status })),
+      );
+      const user = await renderSetup(READY);
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Create program" }));
+
+      // assert
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: `Error page: ${status}`,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          "The program wasn’t created. Your choices are still here, so try again.",
+        ),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([
     ["never reaches the server", () => HttpResponse.error()],
     [
       "fails on the server",
@@ -714,11 +747,19 @@ function holdCreate() {
 }
 
 // Stands in for React Router's serverAction: it answers the server's data,
-// throws a redirect or a failed answer, and rejects when the request fails.
+// throws a redirect as a response and a refusal as a route error response,
+// and rejects when the request gets no answer.
 async function serverAnswer(request: Request): Promise<unknown> {
   const response = await fetch(request, { redirect: "manual" });
 
-  if (response.headers.has("Location") || !response.ok) throw response;
+  if (response.headers.has("Location")) throw response;
+  if (!response.ok) {
+    throw new ErrorResponseImpl(
+      response.status,
+      response.statusText,
+      await response.text(),
+    );
+  }
 
   return response.json();
 }
@@ -730,6 +771,14 @@ function setupAction(args: ActionFunctionArgs) {
   } as ClientActionFunctionArgs);
 }
 
+function ErrorPage() {
+  const error = useRouteError();
+
+  return (
+    <h1>{`Error page: ${isRouteErrorResponse(error) ? error.status : "unknown"}`}</h1>
+  );
+}
+
 async function renderSetup(view: ProgramSetupView) {
   const user = userEvent.setup();
   const router = createMemoryRouter(
@@ -737,6 +786,7 @@ async function renderSetup(view: ProgramSetupView) {
       {
         action: setupAction,
         Component: ProgramSetupRoute,
+        ErrorBoundary: ErrorPage,
         loader: () => view,
         path: `/coach/${PROGRAM_SETUP_ROUTE_SEGMENT}`,
       },
