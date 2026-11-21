@@ -28,7 +28,39 @@ describe("FieldError", () => {
     expect(
       screen.getByRole("textbox", { name: "Email" }),
     ).toHaveAccessibleDescription("Enter your email.");
-    expect(screen.getByText("Enter your email.")).toHaveClass(
+  });
+
+  it("leads with an alert icon hidden from assistive technology", () => {
+    // arrange
+    const message = "Enter your email.";
+
+    // act
+    render(<FieldError id="email-error" message={message} />);
+
+    // assert
+    const alert = screen.getByRole("alert");
+    const icon = alert.querySelector("svg");
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(icon).toHaveClass("mt-0.5", "shrink-0");
+    expect(alert.firstElementChild).toBe(icon);
+    expect(alert).toHaveTextContent(message);
+  });
+
+  it("lays the icon and message out as a danger row", () => {
+    // arrange
+    const message = "Enter your email.";
+
+    // act
+    render(<FieldError id="email-error" message={message} />);
+
+    // assert
+    expect(screen.getByRole("alert")).toHaveClass(
+      "flex",
+      "items-start",
+      "gap-1.5",
+      "text-sm",
+      "leading-snug",
+      "font-medium",
       "text-feedback-danger",
     );
   });
