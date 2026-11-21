@@ -27,6 +27,14 @@ export type ReducedPriceAnswer = "Yes" | "No";
 
 export type ReviewAction = "Review answers" | "Continue review";
 
+export type ProgramCardBlock = { label: string; sessions: string };
+
+export type DraftProgramCard = {
+  version: number;
+  blocks: readonly ProgramCardBlock[];
+  stillMissing: readonly string[];
+};
+
 export type AnsweredQuestion = {
   form: string;
   question: string;
@@ -72,6 +80,8 @@ const CANCELLED_OR_ENDED_ACTIONS = [
 const PROFILE_TERMS = ["Age", "Gender", "Country", "Phone", "Email"] as const;
 
 const VIEW_PROFILE = "View profile";
+
+const BUILD_PROGRAM = "Build program";
 
 export class CoachClientPage {
   private readonly measurementsHistory: MeasurementsHistory;
@@ -309,6 +319,17 @@ export class CoachClientPage {
       await trigger.click();
       await expect(dialog).toBeVisible({ timeout: HYDRATION_RETRY_TIMEOUT_MS });
     }).toPass();
+  }
+
+  private get programCard() {
+    return this.block("Program");
+  }
+
+  private get buildProgramLink() {
+    return this.programCard.getByRole("link", {
+      name: BUILD_PROGRAM,
+      exact: true,
+    });
   }
 
   async open(clientId: string): Promise<void> {
@@ -936,5 +957,34 @@ export class CoachClientPage {
   async openAllCheckIns(): Promise<void> {
     await this.viewAllCheckInsLink.click();
     await expect(this.page).toHaveURL(CHECK_INS_PATH);
+  }
+
+  async buildProgram(): Promise<void> {
+    await this.buildProgramLink.click();
+  }
+
+  async expectDraftProgram(draft: DraftProgramCard): Promise<void> {
+    const blocks = this.programCard
+      .getByRole("list", { name: "Blocks", exact: true })
+      .getByRole("listitem");
+
+    await expect(
+      this.programCard.getByText(`Version ${draft.version} · draft`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(blocks).toHaveCount(draft.blocks.length);
+
+    for (const [index, block] of draft.blocks.entries()) {
+      await expect(blocks.nth(index)).toContainText(block.label);
+      await expect(blocks.nth(index)).toContainText(block.sessions);
+    }
+
+    await expect(
+      this.programCard
+        .getByRole("list", { name: "Still missing", exact: true })
+        .getByRole("listitem"),
+    ).toHaveText([...draft.stillMissing]);
+    await expect(this.buildProgramLink).toHaveCount(0);
   }
 }
