@@ -569,6 +569,27 @@ describe("the program setup", () => {
     },
   );
 
+  it("announces the saving state through a status that is empty at rest and again once the create has failed", async () => {
+    // arrange
+    const held = holdCreate(FAILED);
+    const user = await renderSetup(READY);
+    const status = screen.getByRole("status");
+    expect(status).toBeEmptyDOMElement();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Create program" }));
+
+    // assert
+    await waitFor(() =>
+      expect(status).toHaveTextContent("Creating the program…"),
+    );
+    held.release();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The program wasn’t created. Your choices are still here, so try again.",
+    );
+    expect(status).toBeEmptyDOMElement();
+  });
+
   it("reads Creating… and takes no second submit while the program is being created", async () => {
     // arrange
     const held = holdCreate();
@@ -725,7 +746,7 @@ function answerOutcome(outcome: ProgramCreateOutcome) {
   server.use(http.post(SETUP_REQUESTS, () => HttpResponse.json(outcome)));
 }
 
-function holdCreate() {
+function holdCreate(outcome?: ProgramCreateOutcome) {
   let release = () => {};
   let requests = 0;
   const held = new Promise<void>((resolve) => {
@@ -735,6 +756,8 @@ function holdCreate() {
     http.post(SETUP_REQUESTS, async () => {
       requests += 1;
       await held;
+
+      if (outcome) return HttpResponse.json(outcome);
 
       return new HttpResponse(null, {
         headers: { Location: coachClientPath(CLIENT_ID) },

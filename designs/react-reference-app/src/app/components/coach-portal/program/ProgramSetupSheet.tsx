@@ -38,6 +38,7 @@ import { Skeleton } from '../../ui/skeleton';
 
 const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
 const NOT_CREATED_MESSAGE = 'The program wasn’t created. Your choices are still here, so try again.';
+const SAVING_MESSAGE = 'Creating the program…';
 const SKELETON_FIELDS = 8;
 
 const COACH_GOAL_LABELS: Record<string, string> = {
@@ -246,6 +247,9 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
               {failed && <Alert>{NOT_CREATED_MESSAGE}</Alert>}
             </div>
           </SettingsSection>
+          <p role="status" className="sr-only" data-parity="saving-status">
+            {isSubmitting ? SAVING_MESSAGE : ''}
+          </p>
         </form>
       </Form>
       <ConfirmDialog

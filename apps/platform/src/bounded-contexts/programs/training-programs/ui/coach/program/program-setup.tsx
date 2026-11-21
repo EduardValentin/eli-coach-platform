@@ -48,6 +48,8 @@ const NOT_READY_TITLE = "Program not ready yet";
 const NOT_CREATED_MESSAGE =
   "The program wasn’t created. Your choices are still here, so try again.";
 
+const SAVING_MESSAGE = "Creating the program…";
+
 const GOAL_PROBLEM = "Choose a goal.";
 
 const EQUIPMENT_PROBLEM = "Choose at least one equipment option.";
@@ -178,6 +180,9 @@ function ProgramSetupSheet({ setup }: { setup: ReadySetup }) {
             {failed && <Alert>{NOT_CREATED_MESSAGE}</Alert>}
           </div>
         </SettingsSection>
+        <p className="sr-only" data-parity="saving-status" role="status">
+          {isSubmitting ? SAVING_MESSAGE : ""}
+        </p>
       </form>
       <ConfirmDialog
         cancelLabel="Keep editing"

@@ -340,6 +340,34 @@ describe('ProgramSetupSheet', () => {
     expect(within(coaching).getByRole('checkbox', { name: 'Full gym' })).not.toBeChecked();
   });
 
+  it('announces the saving state through a status that is empty at rest', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+    const status = screen.getByRole('status');
+    expect(status).toBeEmptyDOMElement();
+    await user.click(within(equipment()).getByRole('checkbox', { name: 'Bodyweight only' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+    // assert
+    expect(status).toHaveTextContent('Creating the program…');
+    expect(screen.getByRole('button', { name: 'Creating…' })).toBeDisabled();
+    await screen.findByText('Editor', {}, { timeout: 3000 });
+  });
+
+  it('leaves the saving status empty again once a create has failed', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved&pwrite=fails');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+    // assert
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
   it('keeps the choices and says so when the program cannot be created', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved&pwrite=fails');
