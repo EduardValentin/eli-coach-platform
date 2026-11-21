@@ -499,10 +499,6 @@ test(
     provisionCoach,
     signInAsCoach,
   }) => {
-    test.fail(
-      true,
-      "GEN-238 B1: a dropped create request lands on the generic error page and the choices are lost",
-    );
     test.setTimeout(JOURNEY_TIMEOUT_MS);
 
     // arrange

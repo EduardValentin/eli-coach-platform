@@ -12,7 +12,12 @@ import {
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import {
+  createMemoryRouter,
+  RouterProvider,
+  type ActionFunctionArgs,
+  type ClientActionFunctionArgs,
+} from "react-router";
 import {
   afterAll,
   afterEach,
@@ -34,7 +39,7 @@ import {
   type ProgramSetupView,
 } from "~/bounded-contexts/programs/training-programs/public/program-setup";
 
-import ProgramSetupRoute from "./program-setup-page";
+import ProgramSetupRoute, { clientAction } from "./program-setup-page";
 
 const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 
@@ -495,6 +500,42 @@ describe("the program setup", () => {
     ).not.toBeInTheDocument();
   });
 
+  it.each([
+    ["never reaches the server", () => HttpResponse.error()],
+    [
+      "fails on the server",
+      () => new HttpResponse("Internal Server Error", { status: 500 }),
+    ],
+  ])(
+    "keeps every choice, says so and creates on the next try when the request %s",
+    async (_failure, failedAnswer) => {
+      // arrange
+      server.use(http.post(SETUP_REQUESTS, failedAnswer, { once: true }));
+      const user = await renderSetup(READY);
+      await user.click(screen.getByRole("radio", { name: "4 days" }));
+      await user.click(screen.getByRole("button", { name: "Create program" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "The program wasn’t created. Your choices are still here, so try again.",
+      );
+      expect(screen.getByRole("radio", { name: "4 days" })).toBeChecked();
+      expect(
+        screen.getByRole("radio", { name: "Upper / Lower" }),
+      ).toBeChecked();
+      const sent = answerCreated();
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Create program" }));
+
+      // assert
+      expect(
+        await screen.findByRole("heading", { level: 1, name: "Client page" }),
+      ).toBeInTheDocument();
+      expect(sent).toEqual([
+        { ...STARTING_VALUES, trainingDays: 4, splitShape: "upper-lower" },
+      ]);
+    },
+  );
+
   it("reads Creating… and takes no second submit while the program is being created", async () => {
     // arrange
     const held = holdCreate();
@@ -672,13 +713,29 @@ function holdCreate() {
   return { release: () => release(), requests: () => requests };
 }
 
+// Stands in for React Router's serverAction: it answers the server's data,
+// throws a redirect or a failed answer, and rejects when the request fails.
+async function serverAnswer(request: Request): Promise<unknown> {
+  const response = await fetch(request, { redirect: "manual" });
+
+  if (response.headers.has("Location") || !response.ok) throw response;
+
+  return response.json();
+}
+
+function setupAction(args: ActionFunctionArgs) {
+  return clientAction({
+    ...args,
+    serverAction: () => serverAnswer(args.request),
+  } as ClientActionFunctionArgs);
+}
+
 async function renderSetup(view: ProgramSetupView) {
   const user = userEvent.setup();
   const router = createMemoryRouter(
     [
       {
-        action: ({ request }: { request: Request }) =>
-          fetch(request, { redirect: "manual" }),
+        action: setupAction,
         Component: ProgramSetupRoute,
         loader: () => view,
         path: `/coach/${PROGRAM_SETUP_ROUTE_SEGMENT}`,
