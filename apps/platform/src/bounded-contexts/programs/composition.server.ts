@@ -2,6 +2,7 @@ import type { MiddlewareFunction } from "react-router";
 
 import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 import {
+  composeCardioExercises,
   composeExerciseLibraryFeature,
   composeExerciseVideoFiles,
 } from "~/bounded-contexts/programs/exercise-library/composition.server";
@@ -12,6 +13,9 @@ import {
   composeRecipePhotoFiles,
 } from "~/bounded-contexts/programs/nutrition-library/composition.server";
 import type { RecipePhotosConfig } from "~/bounded-contexts/programs/nutrition-library/config.server";
+import { trainingProgramsContext } from "~/bounded-contexts/programs/training-programs/adapters/inbound/http/context.server";
+import { composeTrainingProgramsFeature } from "~/bounded-contexts/programs/training-programs/composition.server";
+import type { ClientCoachingFacade } from "~/bounded-contexts/clients/public/client-coaching-facade";
 
 type ProgramsHandles = Omit<
   Parameters<typeof composeExerciseLibraryFeature>[0] &
@@ -19,6 +23,7 @@ type ProgramsHandles = Omit<
   | keyof ReturnType<typeof composeExerciseVideoFiles>
   | keyof ReturnType<typeof composeRecipePhotoFiles>
 > & {
+  clientCoachingFacade: ClientCoachingFacade;
   exerciseVideosConfig: ExerciseVideosConfig;
   recipePhotosConfig: RecipePhotosConfig;
 };
@@ -36,11 +41,16 @@ export function composePrograms(handles: ProgramsHandles): ProgramsComposition {
     ...handles,
     ...composeRecipePhotoFiles(handles.recipePhotosConfig),
   });
+  const trainingPrograms = composeTrainingProgramsFeature({
+    ...handles,
+    ...composeCardioExercises({ database: handles.database }).handles,
+  });
 
   return {
     middleware: ({ context }, next) => {
       context.set(exerciseLibraryContext, exerciseLibrary);
       context.set(nutritionLibraryContext, nutritionLibrary);
+      context.set(trainingProgramsContext, trainingPrograms);
       return next();
     },
   };

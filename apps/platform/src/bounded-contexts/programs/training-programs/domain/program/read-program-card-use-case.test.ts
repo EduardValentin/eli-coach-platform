@@ -68,7 +68,25 @@ function readCard(clients: ClientCoaching[], programs: Program[] = []) {
 }
 
 describe("ReadProgramCardUseCase", () => {
-  it("summarises her draft, even once her coaching has ended", async () => {
+  it("summarises her draft while she is in coaching", async () => {
+    // arrange
+    const readProgramCardUseCase = readCard([ANA], [ANAS_PROGRAM]);
+
+    // act
+    const reading = await readProgramCardUseCase.execute({
+      clientId: CLIENT_ID,
+    });
+
+    // assert
+    expect(reading).toEqual({
+      status: "program",
+      gender: "female",
+      coachingEnded: false,
+      draft: { versionNumber: 1, blocks: [], stillMissing: [] },
+    });
+  });
+
+  it("summarises her draft once her coaching has ended, and says it has ended", async () => {
     // arrange
     const readProgramCardUseCase = readCard(
       [{ ...ANA, coachingEnded: true }],
@@ -84,6 +102,7 @@ describe("ReadProgramCardUseCase", () => {
     expect(reading).toEqual({
       status: "program",
       gender: "female",
+      coachingEnded: true,
       draft: { versionNumber: 1, blocks: [], stillMissing: [] },
     });
   });

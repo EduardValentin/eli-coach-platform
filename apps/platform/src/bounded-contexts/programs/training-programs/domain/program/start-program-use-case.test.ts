@@ -489,6 +489,29 @@ describe("StartProgramUseCase", () => {
     });
   });
 
+  it("records an incident and fails whole when her coaching cannot be read", async () => {
+    // arrange
+    const failure = new Error("clients unreachable");
+    const { startProgramUseCase, clientCoachingPort, programIncidentsPort } =
+      startProgram();
+    vi.spyOn(clientCoachingPort, "find").mockRejectedValue(failure);
+
+    // act
+    const started = startProgramUseCase.execute({
+      coachAccountId: COACH_ACCOUNT_ID,
+      clientId: CLIENT_ID,
+      setup: SETUP,
+    });
+
+    // assert
+    await expect(started).rejects.toBe(failure);
+    expect(programIncidentsPort.programStartFailed).toHaveBeenCalledOnce();
+    expect(programIncidentsPort.programStartFailed).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      error: failure,
+    });
+  });
+
   it("records an incident and fails whole when the program cannot be saved", async () => {
     // arrange
     const failure = new Error("program write failed");

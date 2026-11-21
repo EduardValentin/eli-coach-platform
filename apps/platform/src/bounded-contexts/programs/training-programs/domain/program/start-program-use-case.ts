@@ -45,6 +45,21 @@ export class StartProgramUseCase {
   constructor(private readonly options: StartProgramUseCaseOptions) {}
 
   async execute(command: StartProgramCommand): Promise<StartProgramResult> {
+    try {
+      return await this.startIfEligible(command);
+    } catch (error) {
+      this.options.programIncidentsPort.programStartFailed({
+        clientId: command.clientId,
+        error,
+      });
+
+      throw error;
+    }
+  }
+
+  private async startIfEligible(
+    command: StartProgramCommand,
+  ): Promise<StartProgramResult> {
     const { clientCoachingPort, programStorePort } = this.options;
     const clientCoaching = await clientCoachingPort.find(command.clientId);
     const eligibility = Program.eligibilityFor({
@@ -64,20 +79,11 @@ export class StartProgramUseCase {
       return setup;
     }
 
-    try {
-      return await this.start({
-        command,
-        setup: setup.setup,
-        currentEquipment: eligibility.coachingFacts.equipment,
-      });
-    } catch (error) {
-      this.options.programIncidentsPort.programStartFailed({
-        clientId: command.clientId,
-        error,
-      });
-
-      throw error;
-    }
+    return this.start({
+      command,
+      setup: setup.setup,
+      currentEquipment: eligibility.coachingFacts.equipment,
+    });
   }
 
   private async start({

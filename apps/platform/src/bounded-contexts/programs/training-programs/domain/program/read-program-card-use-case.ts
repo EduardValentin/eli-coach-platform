@@ -11,7 +11,12 @@ export type ProgramCardReading =
       status: "waiting" | "ready-to-build" | "coaching-ended";
       gender: ClientGender;
     }
-  | { status: "program"; gender: ClientGender; draft: DraftSummary | null };
+  | {
+      status: "program";
+      gender: ClientGender;
+      coachingEnded: boolean;
+      draft: DraftSummary | null;
+    };
 
 type ReadProgramCardUseCaseOptions = {
   clientCoachingPort: Pick<ClientCoachingPort, "find">;
@@ -36,13 +41,14 @@ export class ReadProgramCardUseCase {
       return { status: "unknown-client" };
     }
 
-    const { gender } = eligibility.clientCoaching;
+    const { gender, coachingEnded } = eligibility.clientCoaching;
 
     switch (eligibility.status) {
       case "has-program":
         return {
           status: "program",
           gender,
+          coachingEnded,
           draft: eligibility.program.draftSummary(),
         };
       case "coaching-ended":

@@ -137,6 +137,7 @@ export function createPlatformContainer(options: {
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const programs = composePrograms({
+    clientCoachingFacade: clients.facades.clientCoachingFacade,
     clockPort: systemClockAdapter,
     database: database.client,
     exerciseVideosConfig: environment,

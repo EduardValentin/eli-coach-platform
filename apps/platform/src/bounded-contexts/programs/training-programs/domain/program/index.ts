@@ -10,26 +10,11 @@ export {
   type EquipmentOption,
   type EquipmentUpdate,
 } from "./client-coaching-port";
-export {
-  Program,
-  type ProgramEligibility,
-  type ProgramSnapshot,
-} from "./program";
-export {
-  type Block,
-  type CalendarEntry,
-  type CardioIntensity,
-  type CardioSegment,
-  type CardioSession,
-  type ExerciseRow,
-  type ProgramContent,
-  type Session,
-  type WeeklyCalendar,
-} from "./program-content";
+export { Program } from "./program";
+export { type ProgramContent } from "./program-content";
 export { type ProgramIdsPort } from "./program-ids-port";
 export { type ProgramIncidentsPort } from "./program-incidents-port";
 export {
-  ProgramSetup,
   type ProgramSetupProblems,
   type ProgramSetupValues,
 } from "./program-setup";
@@ -59,7 +44,6 @@ export {
   BLOCK_TYPES,
   CLIENT_LEVELS,
   DAILY_STEP_TARGETS,
-  DEFAULT_DAILY_STEPS,
   PROGRAM_LANGUAGES,
   SESSION_MINUTE_OPTIONS,
   SPLIT_SHAPES,
@@ -72,6 +56,5 @@ export {
   type SessionMinutes,
   type SplitShape,
   type TrainingDays,
-  type VersionStatus,
   type Weekday,
 } from "./vocabulary";
