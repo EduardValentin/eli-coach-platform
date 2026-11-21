@@ -11,7 +11,7 @@ import { PanelTitleIcon } from "./panel-title-icon";
 type SettingsSectionProps = DataAttributes & {
   headingId: string;
   headingRef?: Ref<HTMLHeadingElement>;
-  title: ReactNode;
+  title?: ReactNode;
   icon?: LucideIcon;
   description?: ReactNode;
   footer?: ReactNode;
@@ -40,23 +40,25 @@ export function SettingsSection({
         className,
       )}
     >
-      <div className="border-b border-border-subtle px-5 py-4 sm:px-6">
-        <h2
-          id={headingId}
-          ref={headingRef}
-          tabIndex={headingRef ? -1 : undefined}
-          className={cn(
-            "flex items-center gap-2 focus:outline-none",
-            WIDGET_TITLE_CLASS,
+      {title && (
+        <div className="border-b border-border-subtle px-5 py-4 sm:px-6">
+          <h2
+            id={headingId}
+            ref={headingRef}
+            tabIndex={headingRef ? -1 : undefined}
+            className={cn(
+              "flex items-center gap-2 focus:outline-none",
+              WIDGET_TITLE_CLASS,
+            )}
+          >
+            {icon && <PanelTitleIcon icon={icon} />}
+            {title}
+          </h2>
+          {description && (
+            <p className="mt-1 text-sm text-text-secondary">{description}</p>
           )}
-        >
-          {icon && <PanelTitleIcon icon={icon} />}
-          {title}
-        </h2>
-        {description && (
-          <p className="mt-1 text-sm text-text-secondary">{description}</p>
-        )}
-      </div>
+        </div>
+      )}
 
       {children}
 

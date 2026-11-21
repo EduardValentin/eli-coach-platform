@@ -15,6 +15,11 @@ import type { OnboardingReviewView } from "~/bounded-contexts/clients/client-pro
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import type { MeasurementRow } from "~/bounded-contexts/clients/client-profile/public/measurements";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
+import {
+  trainingProgramsContext,
+  type TrainingProgramsFeature,
+} from "~/bounded-contexts/programs/public/request-context";
+import type { ProgramCardView } from "~/bounded-contexts/programs/training-programs/public/program-card";
 import type { ClientSubscription } from "~/bounded-contexts/sales/subscriptions/public/client-subscription";
 import {
   subscriptionsContext,
@@ -126,11 +131,14 @@ const PROFILE: ClientProfileView = {
   currentWeightKg: 64.5,
 };
 
+const PROGRAM: ProgramCardView = { state: "waiting", gender: "female" };
+
 describe("coach client page loader", () => {
-  it("reads her record, her subscription, her onboarding review, her profile, her measurements, whether a check-in can be scheduled and her weekly check-in for this request, side by side", async () => {
+  it("reads her record, her subscription, her onboarding review, her profile, her measurements, whether a check-in can be scheduled, her weekly check-in and her program for this request, side by side", async () => {
     // arrange
     const {
       args,
+      loadCard,
       loadClient,
       loadClientScheduling,
       loadClientSeries,
@@ -152,7 +160,9 @@ describe("coach client page loader", () => {
       measurements: MEASUREMENTS,
       scheduling: "awaiting_onboarding",
       weekly: WEEKLY,
+      program: PROGRAM,
     });
+    expect(loadCard).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClientSeries).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClientSubscription).toHaveBeenCalledWith(args, CLIENT_ID);
@@ -217,6 +227,7 @@ describe("coach client page meta", () => {
       measurements: MEASUREMENTS,
       scheduling: "awaiting_onboarding" as const,
       weekly: WEEKLY,
+      program: PROGRAM,
     };
 
     // act
@@ -237,6 +248,7 @@ function routeArguments() {
   const loadMeasurements = vi.fn().mockResolvedValue(MEASUREMENTS);
   const loadClientScheduling = vi.fn().mockResolvedValue("awaiting_onboarding");
   const loadClientSeries = vi.fn().mockResolvedValue(WEEKLY);
+  const loadCard = vi.fn().mockResolvedValue(PROGRAM);
   const args = createRequestArgs({
     contexts: [
       contextEntry(clientsContext, {
@@ -255,6 +267,9 @@ function routeArguments() {
         coachCheckInsController: { loadClientScheduling },
         coachCheckInSeriesController: { loadClientSeries },
       } as unknown as CheckInsFeature),
+      contextEntry(trainingProgramsContext, {
+        coachProgramController: { loadCard },
+      } as unknown as TrainingProgramsFeature),
     ],
     params: { clientId: CLIENT_ID },
     request: new Request(`http://localhost/coach/clients/${CLIENT_ID}`),
@@ -262,6 +277,7 @@ function routeArguments() {
 
   return {
     args,
+    loadCard,
     loadClient,
     loadClientScheduling,
     loadClientSeries,

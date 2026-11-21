@@ -42,7 +42,7 @@ function missingFrom(version: ProgramVersion): string[] {
 
 function BlockChip({ block, index }: { block: Block; index: number }) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm font-medium text-text-primary">
+    <span className="inline-flex items-center gap-2 text-sm font-medium text-text-primary" data-parity={`block-${index + 1}-chip`}>
       <BlockNumber block={block} index={index} size="xs" />
       {`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}
     </span>
@@ -56,9 +56,9 @@ function DraftBlocks({ blocks }: { blocks: readonly Block[] }) {
         const filled = filledSessionCount(block);
         const total = block.sessions.length;
         return (
-          <li key={block.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0">
+          <li key={block.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0" data-parity={`block-${index + 1}`}>
             <BlockChip block={block} index={index} />
-            <span className={cn('text-sm tabular-nums', filled < total ? 'text-warning' : 'text-text-secondary')}>
+            <span className={cn('text-sm tabular-nums', filled < total ? 'text-warning' : 'text-text-secondary')} data-parity={`block-${index + 1}-sessions`}>
               {filledSessionsText(filled, total)}
             </span>
           </li>
@@ -98,11 +98,11 @@ function DraftReadiness({ missing, unpublishableReason }: { missing: readonly st
 
 function DraftSummary({ journey, version }: { journey: ClientJourney; version: ProgramVersion }) {
   return (
-    <SettingsBody className="grid gap-4">
+    <SettingsBody className="grid gap-4" parity="draft-summary">
       <p className={EYEBROW_CLASS}>{`Version ${version.number} · draft`}</p>
-      <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8" data-parity="draft-columns">
         <DraftBlocks blocks={version.content.plan.blocks} />
-        <div className="self-start rounded-field bg-surface-quiet p-4">
+        <div className="self-start rounded-field bg-surface-quiet p-4" data-parity="draft-readiness">
           <DraftReadiness missing={missingFrom(version)} unpublishableReason={unpublishableDraftReason(journey, new Date())} />
         </div>
       </div>

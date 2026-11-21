@@ -33,6 +33,8 @@ import { AssessmentCallBlock } from "~/bounded-contexts/clients/clients/ui/coach
 import { ClientStatusBadge } from "~/bounded-contexts/clients/clients/ui/coach/clients/client-status-badge";
 import { InvitationBlock } from "~/bounded-contexts/clients/clients/ui/coach/clients/invitation-block";
 import { NeedsRefundBadge } from "~/bounded-contexts/clients/clients/ui/shared/needs-refund-badge";
+import { trainingProgramsContext } from "~/bounded-contexts/programs/public/request-context";
+import { ProgramCard } from "~/bounded-contexts/programs/training-programs/ui/coach/program/program-card";
 import { subscriptionsContext } from "~/bounded-contexts/sales/public/request-context";
 import { SubscriptionSummary } from "~/bounded-contexts/sales/subscriptions/ui/coach/clients/subscription-summary";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
@@ -57,6 +59,7 @@ export async function loader(args: LoaderFunctionArgs) {
     measurements,
     scheduling,
     weekly,
+    program,
   ] = await Promise.all([
     args.context
       .get(clientsContext)
@@ -71,6 +74,9 @@ export async function loader(args: LoaderFunctionArgs) {
     clientProfileController.loadMeasurements(args, clientId),
     coachCheckInsController.loadClientScheduling(args, clientId),
     coachCheckInSeriesController.loadClientSeries(args, clientId),
+    args.context
+      .get(trainingProgramsContext)
+      .coachProgramController.loadCard(args, clientId),
   ]);
 
   return {
@@ -81,6 +87,7 @@ export async function loader(args: LoaderFunctionArgs) {
     measurements,
     scheduling,
     weekly,
+    program,
   };
 }
 
@@ -111,6 +118,7 @@ export default function CoachClientRoute() {
     measurements,
     scheduling,
     weekly,
+    program,
   } = useLoaderData<typeof loader>();
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
@@ -165,6 +173,7 @@ export default function CoachClientRoute() {
         <InvitationBlock client={client} invitation={client.invitation} />
       )}
       {!answersApproved && onboarding}
+      <ProgramCard card={program} clientId={client.clientId} />
       {subscription && (
         <>
           <SubscriptionSummary

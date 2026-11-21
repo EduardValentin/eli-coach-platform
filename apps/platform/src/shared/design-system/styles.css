@@ -170,6 +170,8 @@
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
   --color-training-hypertrophy: #7a42e8;
   --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
+  --color-training-foundation: #2563eb;
+  --color-training-deload: #616161;
 
   --color-cycle-menstrual: #c13852;
   --color-cycle-follicular: #4a90e2;
@@ -420,6 +422,8 @@
   --color-training-rest-soft: var(--color-training-rest-soft);
   --color-training-hypertrophy: var(--color-training-hypertrophy);
   --color-training-hypertrophy-soft: var(--color-training-hypertrophy-soft);
+  --color-training-foundation: var(--color-training-foundation);
+  --color-training-deload: var(--color-training-deload);
 
   --color-cycle-menstrual: var(--color-cycle-menstrual);
   --color-cycle-follicular: var(--color-cycle-follicular);

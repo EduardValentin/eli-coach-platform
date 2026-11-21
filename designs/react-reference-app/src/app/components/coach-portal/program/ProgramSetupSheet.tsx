@@ -239,7 +239,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
               </>
             }
           >
-            <div className="grid gap-6 px-5 py-6 sm:px-6">
+            <div className="grid gap-6 px-5 py-6 sm:px-6" data-parity="setup-fields">
               {setupFields().map(definition => (
                 <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
               ))}

@@ -100,6 +100,24 @@ describe("SettingsSection", () => {
       screen.getByRole("region", { name: "Assessment calls" }).lastElementChild,
     ).toHaveTextContent("Rows");
   });
+
+  it("takes its name from a heading outside it and draws no header of its own without a title", () => {
+    // arrange
+    // act
+    render(
+      <>
+        <h1 id="page-heading">Build Ana’s program</h1>
+        <SettingsSection headingId="page-heading">
+          <p>Rows</p>
+        </SettingsSection>
+      </>,
+    );
+
+    // assert
+    const region = screen.getByRole("region", { name: "Build Ana’s program" });
+    expect(region.firstElementChild).toHaveTextContent("Rows");
+    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
+  });
 });
 
 describe("SettingsSection heading focus", () => {

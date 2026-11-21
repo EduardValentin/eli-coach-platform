@@ -41,6 +41,8 @@ import {
   COACH_CLIENTS_PATH,
   coachClientPath,
 } from "~/bounded-contexts/clients/clients/public/paths";
+import { programSetupPath } from "~/bounded-contexts/programs/training-programs/public/paths";
+import type { ProgramCardView } from "~/bounded-contexts/programs/training-programs/public/program-card";
 import type { ClientSubscription } from "~/bounded-contexts/sales/subscriptions/public/client-subscription";
 import { frameworkModeLoader } from "~/composition-root/test-support/framework-mode-action";
 
@@ -48,6 +50,11 @@ import CoachClientRoute, { ErrorBoundary } from "./client";
 
 const COACH_TIME_ZONE = "Europe/Bucharest";
 const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
+
+const WAITING_PROGRAM: ProgramCardView = {
+  state: "waiting",
+  gender: "female",
+};
 
 const INVITED: CoachClient = {
   clientId: CLIENT_ID,
@@ -354,7 +361,7 @@ describe("the coach's client page", () => {
     expect(screen.getByRole("link", { name: "Resources" })).toBeInTheDocument();
   });
 
-  it("lays out her profile, invitation, onboarding, subscription, weekly check-in, measurements and assessment call in that order", async () => {
+  it("lays out her profile, invitation, onboarding, program, subscription, weekly check-in, measurements and assessment call in that order", async () => {
     // arrange, act
     await renderClientPage();
 
@@ -367,6 +374,7 @@ describe("the coach's client page", () => {
       "Profile",
       "Invitation",
       "Onboarding",
+      "Program",
       "Subscription",
       "Weekly check-in",
       "Measurements",
@@ -393,6 +401,7 @@ describe("the coach's client page", () => {
         .map((heading) => heading.textContent),
     ).toEqual([
       "Profile",
+      "Program",
       "Subscription",
       "Weekly check-in",
       "Measurements",
@@ -403,6 +412,58 @@ describe("the coach's client page", () => {
       "aria-expanded",
       "false",
     );
+  });
+
+  it("offers to build her program from her Program card once her answers are approved", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: {
+        ...SUBMITTED_REVIEW,
+        submitted: { ...SUBMITTED, stage: "approved" },
+      },
+      profile: PROFILE,
+      program: { state: "ready-to-build", gender: "female" },
+    });
+
+    // assert
+    const program = screen.getByRole("region", { name: "Program" });
+    expect(
+      within(program).getByText("Build it from her profile."),
+    ).toBeInTheDocument();
+    expect(
+      within(program).getByRole("link", { name: "Build program" }),
+    ).toHaveAttribute("href", programSetupPath(CLIENT_ID));
+  });
+
+  it("shows her draft on her Program card", async () => {
+    // arrange, act
+    await renderClientPage({
+      program: {
+        state: "draft",
+        gender: "female",
+        draft: {
+          versionNumber: 1,
+          blocks: [
+            {
+              type: "foundation",
+              typeLabel: "Foundation",
+              weeks: 4,
+              filledSessions: 0,
+              sessions: 3,
+            },
+          ],
+        },
+        stillMissing: ["3 sessions without exercises"],
+      },
+    });
+
+    // assert
+    const program = screen.getByRole("region", { name: "Program" });
+    expect(within(program).getByText("Version 1 · draft")).toBeInTheDocument();
+    expect(
+      within(program).getByText("3 sessions without exercises"),
+    ).toBeInTheDocument();
   });
 
   it("shows her picture in the header when her profile has one", async () => {
@@ -478,6 +539,7 @@ describe("the coach's client page", () => {
       measurements: SUBMITTED_MEASUREMENTS,
       scheduling: "allowed",
       weekly: NO_WEEKLY,
+      program: WAITING_PROGRAM,
     }));
 
     // act
@@ -857,6 +919,7 @@ type ClientPageData = {
   measurements: MeasurementRow[];
   scheduling: CheckInScheduling;
   weekly: CoachClientSeriesPanel;
+  program: ProgramCardView;
 };
 
 function clientNotFound(): never {
@@ -872,6 +935,7 @@ async function renderClientRouter(
     measurements: [],
     scheduling: "awaiting_onboarding",
     weekly: NO_WEEKLY,
+    program: WAITING_PROGRAM,
   }),
 ) {
   const user = userEvent.setup();
@@ -927,6 +991,7 @@ async function renderClientPage(options: Partial<ClientPageData> = {}) {
     measurements: options.measurements ?? [],
     scheduling: options.scheduling ?? "awaiting_onboarding",
     weekly: options.weekly ?? NO_WEEKLY,
+    program: options.program ?? WAITING_PROGRAM,
   }));
 
   return user;

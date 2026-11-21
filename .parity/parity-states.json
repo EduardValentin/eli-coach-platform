@@ -6565,5 +6565,97 @@
         "waitFor": "[data-parity-root=\"DownloadPage\"] [data-parity=\"download-resources\"]"
       }
     ]
-  }
+  },
+  "program-card-waiting": {
+    "prototype": [],
+    "real": []
+  },
+  "program-card-ready-to-build": {
+    "prototype": [],
+    "real": []
+  },
+  "program-card-coaching-ended": {
+    "prototype": [],
+    "real": []
+  },
+  "program-card-built": {
+    "prototype": [
+      {
+        "click": "role=link[name=\"Build program\"]"
+      },
+      {
+        "click": "role=button[name=\"Create program\"]"
+      },
+      {
+        "click": "role=link[name=\"Back to Jane Doe\"]"
+      },
+      {
+        "waitFor": "role=list[name=\"Blocks\"]"
+      }
+    ],
+    "real": []
+  },
+  "program-card-draft": {
+    "prototype": [
+      {
+        "use": "program-card-built"
+      }
+    ],
+    "real": []
+  },
+  "program-card-draft-coaching-ended": {
+    "prototype": [
+      {
+        "use": "program-card-built"
+      },
+      {
+        "use": "client-ended"
+      }
+    ],
+    "real": []
+  },
+  "program-setup-default": {
+    "prototype": [],
+    "real": []
+  },
+  "program-setup-equipment-problem": [
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Full gym\"]"
+    },
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Dumbbells\"]"
+    },
+    {
+      "click": "role=button[name=\"Create program\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"field-equipment-error\"]"
+    }
+  ],
+  "program-setup-failed-save": [
+    {
+      "click": "role=radio[name=\"4 days\"]"
+    },
+    {
+      "click": "role=button[name=\"Create program\"]"
+    },
+    {
+      "waitFor": "role=alert >> text=The program wasn’t created"
+    }
+  ],
+  "program-setup-not-ready": {
+    "prototype": [],
+    "real": []
+  },
+  "program-setup-leave-confirm": [
+    {
+      "click": "role=radio[name=\"4 days\"]"
+    },
+    {
+      "click": "role=link[name=\"Cancel\"]"
+    },
+    {
+      "waitFor": "role=dialog[name=\"Unsaved changes\"]"
+    }
+  ]
 }
