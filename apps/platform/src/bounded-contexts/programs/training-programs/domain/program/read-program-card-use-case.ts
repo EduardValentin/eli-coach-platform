@@ -31,15 +31,13 @@ export class ReadProgramCardUseCase {
   }: ReadProgramCardCommand): Promise<ProgramCardReading> {
     const { clientCoachingPort, programStorePort } = this.options;
     const clientCoaching = await clientCoachingPort.find(clientId);
-    const eligibility = Program.eligibilityFor({
-      clientCoaching,
-      program:
-        clientCoaching && (await programStorePort.findByClientId(clientId)),
-    });
 
-    if (eligibility.status === "unknown-client") {
+    if (!clientCoaching) {
       return { status: "unknown-client" };
     }
+
+    const program = await programStorePort.findByClientId(clientId);
+    const eligibility = Program.eligibilityFor({ clientCoaching, program });
 
     const { gender, coachingEnded } = eligibility.clientCoaching;
 

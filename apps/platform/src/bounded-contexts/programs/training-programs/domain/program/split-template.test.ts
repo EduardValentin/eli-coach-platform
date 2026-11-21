@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CardioSession } from "./program-content";
 import { SplitTemplate } from "./split-template";
+import { WEEKDAYS, type SplitShape } from "./vocabulary";
 
 function cardio(id: string): CardioSession {
   return { id, originId: id, name: "Easy cardio", segments: [] };
@@ -74,12 +75,12 @@ describe("SplitTemplate", () => {
   it("lays the sessions out across the week", () => {
     // act
     const layouts = [
-      SplitTemplate.of("full-body").layout(2),
-      SplitTemplate.of("full-body").layout(3),
-      SplitTemplate.of("upper-lower").layout(4),
-      SplitTemplate.of("upper-lower").layout(5),
-      SplitTemplate.of("full-body").layout(4),
-      SplitTemplate.of("upper-lower").layout(2),
+      sessionDaysOf("full-body", 2),
+      sessionDaysOf("full-body", 3),
+      sessionDaysOf("upper-lower", 4),
+      sessionDaysOf("upper-lower", 5),
+      sessionDaysOf("full-body", 4),
+      sessionDaysOf("upper-lower", 2),
     ];
 
     // assert
@@ -152,3 +153,12 @@ describe("SplitTemplate weekly calendar", () => {
     });
   });
 });
+
+function sessionDaysOf(shape: SplitShape, sessionCount: number) {
+  const calendar = SplitTemplate.of(shape).weeklyCalendar(
+    Array.from({ length: sessionCount }, (_, index) => `s${index}`),
+    [],
+  );
+
+  return WEEKDAYS.filter((day) => calendar[day].kind === "session");
+}

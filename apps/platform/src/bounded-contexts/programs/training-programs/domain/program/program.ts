@@ -33,12 +33,11 @@ type StartedProgramInput = {
 type ProgramFields = Omit<ProgramSnapshot, "versions">;
 
 type EligibilityInput = {
-  clientCoaching: ClientCoaching | null;
+  clientCoaching: ClientCoaching;
   program: Program | null;
 };
 
 export type ProgramEligibility =
-  | { status: "unknown-client" }
   | { status: "has-program"; clientCoaching: ClientCoaching; program: Program }
   | {
       status: "coaching-ended" | "not-approved";
@@ -82,7 +81,6 @@ export class Program {
     clientCoaching,
     program,
   }: EligibilityInput): ProgramEligibility {
-    if (!clientCoaching) return { status: "unknown-client" };
     if (program) return { status: "has-program", clientCoaching, program };
     if (clientCoaching.coachingEnded) {
       return { status: "coaching-ended", clientCoaching };

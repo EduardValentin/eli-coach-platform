@@ -144,35 +144,17 @@ export class CoachProgramController {
   private async startInUnitOfWork(
     command: StartCommand,
   ): Promise<StartProgramResult | { status: "failed" }> {
-    const start = { recordedItsFailure: false };
-
     try {
       return await this.options.unitOfWork(() =>
-        this.startRecordingFailure(command, start),
+        this.options.startProgramUseCase.execute(command),
       );
     } catch (error) {
-      if (!start.recordedItsFailure) {
-        this.options.programIncidentsPort.programStartFailed({
-          clientId: command.clientId,
-          error,
-        });
-      }
+      this.options.programIncidentsPort.programStartFailed({
+        clientId: command.clientId,
+        error,
+      });
 
       return { status: "failed" };
-    }
-  }
-
-  // The start records its own failure, so only a unit of work that fails
-  // around it (to begin or to commit) is recorded here.
-  private async startRecordingFailure(
-    command: StartCommand,
-    start: { recordedItsFailure: boolean },
-  ): Promise<StartProgramResult> {
-    try {
-      return await this.options.startProgramUseCase.execute(command);
-    } catch (error) {
-      start.recordedItsFailure = true;
-      throw error;
     }
   }
 

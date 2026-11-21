@@ -456,13 +456,14 @@ describe("CoachProgramController create", () => {
     },
   );
 
-  it("answers a failed save as data when the start throws, leaving its incident to the start", async () => {
+  it("answers a failed save as data and records one incident when the start throws", async () => {
     // arrange
+    const failure = new Error(
+      "The client's equipment was not saved: changed-meanwhile.",
+    );
     const { coachProgramController, startProgram, programStartFailed } =
       createController();
-    startProgram.mockRejectedValue(
-      new Error("The client's equipment was not saved: changed-meanwhile."),
-    );
+    startProgram.mockRejectedValue(failure);
 
     // act
     const outcome = await coachProgramController.create(
@@ -472,7 +473,11 @@ describe("CoachProgramController create", () => {
 
     // assert
     expect(outcome).toEqual({ status: "failed" });
-    expect(programStartFailed).not.toHaveBeenCalled();
+    expect(programStartFailed).toHaveBeenCalledOnce();
+    expect(programStartFailed).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      error: failure,
+    });
   });
 
   it("answers a failed save as data and records one incident when the unit of work cannot commit the start", async () => {

@@ -136,17 +136,6 @@ describe("Program draft summary", () => {
 });
 
 describe("Program.eligibilityFor", () => {
-  it("knows no client it cannot find", () => {
-    // act
-    const eligibility = Program.eligibilityFor({
-      clientCoaching: null,
-      program: null,
-    });
-
-    // assert
-    expect(eligibility).toEqual({ status: "unknown-client" });
-  });
-
   it("finds her program first, even once her coaching has ended", () => {
     // arrange
     const program = programWith([version(1, "draft")]);

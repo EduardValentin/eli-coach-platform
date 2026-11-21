@@ -3,7 +3,6 @@ import type { CardioExercisesPort } from "./cardio-exercises-port";
 import type { ClientCoachingPort } from "./client-coaching-port";
 import { Program } from "./program";
 import type { ProgramIdsPort } from "./program-ids-port";
-import type { ProgramIncidentsPort } from "./program-incidents-port";
 import {
   ProgramSetup,
   type ProgramSetupProblems,
@@ -29,7 +28,6 @@ export type StartProgramResult =
 type ProgramStart = {
   command: StartProgramCommand;
   setup: ProgramSetup;
-  currentEquipment: readonly string[];
 };
 
 type StartProgramUseCaseOptions = {
@@ -38,36 +36,21 @@ type StartProgramUseCaseOptions = {
   cardioExercisesPort: CardioExercisesPort;
   programIdsPort: ProgramIdsPort;
   clockPort: ClockPort;
-  programIncidentsPort: ProgramIncidentsPort;
 };
 
 export class StartProgramUseCase {
   constructor(private readonly options: StartProgramUseCaseOptions) {}
 
   async execute(command: StartProgramCommand): Promise<StartProgramResult> {
-    try {
-      return await this.startIfEligible(command);
-    } catch (error) {
-      this.options.programIncidentsPort.programStartFailed({
-        clientId: command.clientId,
-        error,
-      });
-
-      throw error;
-    }
-  }
-
-  private async startIfEligible(
-    command: StartProgramCommand,
-  ): Promise<StartProgramResult> {
     const { clientCoachingPort, programStorePort } = this.options;
     const clientCoaching = await clientCoachingPort.find(command.clientId);
-    const eligibility = Program.eligibilityFor({
-      clientCoaching,
-      program:
-        clientCoaching &&
-        (await programStorePort.findByClientId(command.clientId)),
-    });
+
+    if (!clientCoaching) {
+      return { status: "unknown-client" };
+    }
+
+    const program = await programStorePort.findByClientId(command.clientId);
+    const eligibility = Program.eligibilityFor({ clientCoaching, program });
 
     if (eligibility.status !== "eligible") {
       return { status: eligibility.status };
@@ -79,17 +62,12 @@ export class StartProgramUseCase {
       return setup;
     }
 
-    return this.start({
-      command,
-      setup: setup.setup,
-      currentEquipment: eligibility.coachingFacts.equipment,
-    });
+    return this.start({ command, setup: setup.setup });
   }
 
   private async start({
     command,
     setup,
-    currentEquipment,
   }: ProgramStart): Promise<StartProgramResult> {
     const {
       programStorePort,
@@ -116,12 +94,10 @@ export class StartProgramUseCase {
       return { status: "has-program" };
     }
 
-    if (setup.changesEquipment(currentEquipment)) {
-      await clientCoachingPort.saveEquipment({
-        clientId: command.clientId,
-        equipment: setup.values.equipment,
-      });
-    }
+    await clientCoachingPort.saveEquipment({
+      clientId: command.clientId,
+      equipment: setup.values.equipment,
+    });
 
     return { status: "started" };
   }

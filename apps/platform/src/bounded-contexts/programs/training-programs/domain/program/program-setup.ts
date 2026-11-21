@@ -63,13 +63,13 @@ export class ProgramSetup {
   ): ProgramSetupResult {
     const goal = entered.goal.trim();
     const goalProblem = ProgramSetup.goalProblem(goal, choices.goalOptions);
-    const equipment = ProgramSetup.equipmentProblem(
+    const equipmentProblem = ProgramSetup.equipmentProblem(
       entered.equipment,
       choices.equipmentOptions,
     );
     const problems: ProgramSetupProblems = {
       ...(goalProblem && { goal: goalProblem }),
-      ...(equipment && { equipment }),
+      ...(equipmentProblem && { equipment: equipmentProblem }),
     };
 
     return Object.keys(problems).length > 0
@@ -82,15 +82,6 @@ export class ProgramSetup {
             equipment: [...entered.equipment],
           }),
         };
-  }
-
-  changesEquipment(current: readonly string[]): boolean {
-    const chosen = this.values.equipment;
-
-    return !(
-      chosen.length === current.length &&
-      chosen.every((item) => current.includes(item))
-    );
   }
 
   private static goalProblem(

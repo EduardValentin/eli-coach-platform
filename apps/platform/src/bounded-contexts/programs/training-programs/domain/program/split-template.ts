@@ -55,16 +55,12 @@ export class SplitTemplate {
     );
   }
 
-  layout(sessionCount: number): Weekday[] {
-    return [...(LAYOUTS[sessionCount] ?? WEEKDAYS.slice(0, sessionCount))];
-  }
-
   weeklyCalendar(
     sessionIds: readonly string[],
     cardioSessions: readonly CardioSession[],
   ): WeeklyCalendar {
     const calendar = mapCalendar((): CalendarEntry => ({ kind: "rest" }));
-    const sessionDays = this.layout(sessionIds.length);
+    const sessionDays = this.trainingWeekdays(sessionIds.length);
     sessionIds.forEach((sessionId, index) => {
       calendar[sessionDays[index]] = { kind: "session", sessionId };
     });
@@ -76,5 +72,9 @@ export class SplitTemplate {
     });
 
     return calendar;
+  }
+
+  private trainingWeekdays(sessionCount: number): Weekday[] {
+    return [...(LAYOUTS[sessionCount] ?? WEEKDAYS.slice(0, sessionCount))];
   }
 }

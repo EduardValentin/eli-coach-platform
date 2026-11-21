@@ -21,7 +21,7 @@ type ProgramCardBlock = ProgramCardDraft["blocks"][number];
 
 type ProgramCardProps = { card: ProgramCardView; clientId: string };
 
-const BLOCK_RULE: Record<ProgramCardBlock["type"], string> = {
+const BLOCK_BORDER_CLASS: Record<ProgramCardBlock["type"], string> = {
   foundation: "border-training-foundation",
   hypertrophy: "border-training-hypertrophy",
   strength: "border-training-strength",
@@ -44,7 +44,7 @@ function BlockChip({
         aria-hidden="true"
         className={cn(
           "inline-flex size-5.5 shrink-0 items-center justify-center rounded-tile border-2 bg-surface-base text-xs leading-none font-semibold text-text-primary tabular-nums",
-          BLOCK_RULE[block.type],
+          BLOCK_BORDER_CLASS[block.type],
         )}
       >
         {number}
@@ -120,7 +120,7 @@ function DraftReadiness({ stillMissing }: { stillMissing: readonly string[] }) {
   );
 }
 
-function DraftSummary({
+function DraftSummaryPanel({
   draft,
   readiness,
 }: {
@@ -186,14 +186,14 @@ function ProgramCardBody({ card, clientId }: ProgramCardProps) {
       );
     case "draft":
       return (
-        <DraftSummary
+        <DraftSummaryPanel
           draft={card.draft}
           readiness={<DraftReadiness stillMissing={card.stillMissing} />}
         />
       );
     case "draft-coaching-ended":
       return (
-        <DraftSummary
+        <DraftSummaryPanel
           draft={card.draft}
           readiness={
             <p className="text-sm text-text-secondary">

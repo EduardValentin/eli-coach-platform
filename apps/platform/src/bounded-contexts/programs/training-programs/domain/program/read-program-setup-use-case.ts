@@ -48,14 +48,15 @@ export class ReadProgramSetupUseCase {
   }: ReadProgramSetupCommand): Promise<ProgramSetupReading> {
     const { clientCoachingPort, programStorePort } = this.options;
     const clientCoaching = await clientCoachingPort.find(clientId);
-    const eligibility = Program.eligibilityFor({
-      clientCoaching,
-      program:
-        clientCoaching && (await programStorePort.findByClientId(clientId)),
-    });
+
+    if (!clientCoaching) {
+      return { status: "unknown-client" };
+    }
+
+    const program = await programStorePort.findByClientId(clientId);
+    const eligibility = Program.eligibilityFor({ clientCoaching, program });
 
     switch (eligibility.status) {
-      case "unknown-client":
       case "has-program":
       case "coaching-ended":
         return { status: eligibility.status };

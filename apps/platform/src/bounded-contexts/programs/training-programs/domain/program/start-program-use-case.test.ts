@@ -7,7 +7,6 @@ import type {
   EquipmentUpdate,
 } from "./client-coaching-port";
 import { Program } from "./program";
-import type { ProgramIncidentsPort } from "./program-incidents-port";
 import type { ProgramSetupValues } from "./program-setup";
 import type { ProgramAddition, ProgramStorePort } from "./program-store-port";
 import {
@@ -110,16 +109,12 @@ function startProgram({
   const programStorePort = new InMemoryProgramStoreAdapter(programs);
   const clientCoachingPort = new InMemoryClientCoachingAdapter(clients);
   const cardioExercisesPort = { listFor: vi.fn(async () => cardioExercises) };
-  const programIncidentsPort = {
-    programStartFailed: vi.fn(),
-  } satisfies ProgramIncidentsPort;
   const startProgramUseCase = new StartProgramUseCase({
     programStorePort,
     clientCoachingPort,
     cardioExercisesPort,
     programIdsPort: { generate: () => `id-${(next += 1)}` },
     clockPort: { now: () => NOW },
-    programIncidentsPort,
   });
 
   return {
@@ -127,7 +122,6 @@ function startProgram({
     programStorePort,
     clientCoachingPort,
     cardioExercisesPort,
-    programIncidentsPort,
   };
 }
 
@@ -427,7 +421,7 @@ describe("StartProgramUseCase", () => {
     ]);
   });
 
-  it("leaves her profile alone when the equipment is unchanged", async () => {
+  it("hands her equipment to her profile even when it is unchanged, which decides whether anything changes", async () => {
     // arrange
     const { startProgramUseCase, programStorePort, clientCoachingPort } =
       startProgram();
@@ -441,7 +435,9 @@ describe("StartProgramUseCase", () => {
 
     // assert
     expect(programStorePort.added).toHaveLength(1);
-    expect(clientCoachingPort.savedEquipment).toEqual([]);
+    expect(clientCoachingPort.savedEquipment).toEqual([
+      { clientId: CLIENT_ID, equipment: ["Resistance bands", "Dumbbells"] },
+    ]);
   });
 
   it("refuses with has-program and saves no equipment when another program for her lands first", async () => {
@@ -465,12 +461,8 @@ describe("StartProgramUseCase", () => {
   it("writes the program and her equipment in one call, failing it whole when the equipment save fails so the unit of work rolls both back", async () => {
     // arrange
     const failure = new Error("profile write failed");
-    const {
-      startProgramUseCase,
-      programStorePort,
-      clientCoachingPort,
-      programIncidentsPort,
-    } = startProgram();
+    const { startProgramUseCase, programStorePort, clientCoachingPort } =
+      startProgram();
     vi.spyOn(clientCoachingPort, "saveEquipment").mockRejectedValue(failure);
 
     // act
@@ -483,17 +475,12 @@ describe("StartProgramUseCase", () => {
     // assert
     await expect(started).rejects.toBe(failure);
     expect(programStorePort.added).toHaveLength(1);
-    expect(programIncidentsPort.programStartFailed).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
-      error: failure,
-    });
   });
 
-  it("records an incident and fails whole when her coaching cannot be read", async () => {
+  it("fails whole when her coaching cannot be read", async () => {
     // arrange
     const failure = new Error("clients unreachable");
-    const { startProgramUseCase, clientCoachingPort, programIncidentsPort } =
-      startProgram();
+    const { startProgramUseCase, clientCoachingPort } = startProgram();
     vi.spyOn(clientCoachingPort, "find").mockRejectedValue(failure);
 
     // act
@@ -505,18 +492,12 @@ describe("StartProgramUseCase", () => {
 
     // assert
     await expect(started).rejects.toBe(failure);
-    expect(programIncidentsPort.programStartFailed).toHaveBeenCalledOnce();
-    expect(programIncidentsPort.programStartFailed).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
-      error: failure,
-    });
   });
 
-  it("records an incident and fails whole when the program cannot be saved", async () => {
+  it("fails whole when the program cannot be saved", async () => {
     // arrange
     const failure = new Error("program write failed");
-    const { startProgramUseCase, programStorePort, programIncidentsPort } =
-      startProgram();
+    const { startProgramUseCase, programStorePort } = startProgram();
     vi.spyOn(programStorePort, "add").mockRejectedValue(failure);
 
     // act
@@ -528,9 +509,5 @@ describe("StartProgramUseCase", () => {
 
     // assert
     await expect(started).rejects.toBe(failure);
-    expect(programIncidentsPort.programStartFailed).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
-      error: failure,
-    });
   });
 });

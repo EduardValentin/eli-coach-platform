@@ -167,34 +167,3 @@ describe("ProgramSetup.from", () => {
     });
   });
 });
-
-describe("ProgramSetup.changesEquipment", () => {
-  it("keeps the same choices in another order", () => {
-    // arrange
-    const setup = validSetup({
-      ...VALUES,
-      equipment: ["Resistance bands", "Dumbbells"],
-    });
-
-    // act
-    const changes = setup.changesEquipment(["Dumbbells", "Resistance bands"]);
-
-    // assert
-    expect(changes).toBe(false);
-  });
-
-  it("changes when a choice is added or removed", () => {
-    // arrange
-    const setup = validSetup({ ...VALUES, equipment: ["Dumbbells"] });
-
-    // act
-    const changes = [
-      setup.changesEquipment(["Dumbbells", "Resistance bands"]),
-      setup.changesEquipment([]),
-      setup.changesEquipment(["Full gym"]),
-    ];
-
-    // assert
-    expect(changes).toEqual([true, true, true]);
-  });
-});

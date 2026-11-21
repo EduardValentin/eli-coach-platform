@@ -35,9 +35,6 @@ export function composeTrainingProgramsFeature(
   const clientsClientCoachingAdapter = new ClientsClientCoachingAdapter(
     handles.clientCoachingFacade,
   );
-  const programIncidentsAdapter = new ProgramIncidentsAdapter(
-    handles.loggerPort,
-  );
   const programReads = {
     clientCoachingPort: clientsClientCoachingAdapter,
     programStorePort: postgresProgramStoreRepository,
@@ -54,10 +51,9 @@ export function composeTrainingProgramsFeature(
         ),
         programIdsPort: new RandomProgramIdsAdapter(),
         clockPort: handles.clockPort,
-        programIncidentsPort: programIncidentsAdapter,
       }),
       unitOfWork: createUnitOfWork(handles.database),
-      programIncidentsPort: programIncidentsAdapter,
+      programIncidentsPort: new ProgramIncidentsAdapter(handles.loggerPort),
     }),
   };
 }

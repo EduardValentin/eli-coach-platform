@@ -65,8 +65,7 @@ export class ProgramSuggestions {
   initialContent(setup: ProgramSetupValues): ProgramContent {
     const blocks: Block[] = [];
     for (const suggestion of SUGGESTED_BLOCKS[setup.level]) {
-      const block = this.newBlock(suggestion, setup, blocks.at(-1));
-      blocks.push({ ...block, calibrationWeek: suggestion.calibrationWeek });
+      blocks.push(this.newBlock(suggestion, setup, blocks.at(-1)));
     }
 
     return {
@@ -78,12 +77,14 @@ export class ProgramSuggestions {
   }
 
   private newBlock(
-    { type, weeks }: SuggestedBlock,
+    suggestion: SuggestedBlock,
     setup: ProgramSetupValues,
     previous: Block | undefined,
   ): Block {
+    const { type, weeks, calibrationWeek } = suggestion;
+
     if (type === "deload" && previous) {
-      return this.deloadAfter(previous, weeks, setup);
+      return this.deloadAfter(previous, suggestion, setup);
     }
     const { newId } = this.options;
     const shape = setup.splitShape;
@@ -98,7 +99,7 @@ export class ProgramSuggestions {
       type,
       weeks,
       trainingDays: previous?.trainingDays ?? setup.trainingDays,
-      calibrationWeek: false,
+      calibrationWeek,
       ...this.blockTexts(type, setup.language),
       clientNote: "",
       split: previous
@@ -123,7 +124,7 @@ export class ProgramSuggestions {
 
   private deloadAfter(
     previous: Block,
-    weeks: number,
+    { weeks, calibrationWeek }: SuggestedBlock,
     setup: ProgramSetupValues,
   ): Block {
     return {
@@ -132,7 +133,7 @@ export class ProgramSuggestions {
       ...this.blockTexts("deload", setup.language),
       originId: this.options.newId(),
       weeks,
-      calibrationWeek: false,
+      calibrationWeek,
       clientNote: "",
       targetMinutes: setup.sessionMinutes,
       dailySteps: setup.dailySteps,

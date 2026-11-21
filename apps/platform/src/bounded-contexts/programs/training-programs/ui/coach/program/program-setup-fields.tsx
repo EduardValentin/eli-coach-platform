@@ -211,15 +211,15 @@ function EquipmentField({ control, options }: EquipmentFieldProps) {
 }
 
 function useSplitFollowingDays(form: UseFormReturn<SetupValues>) {
-  const splitChosen = useRef(false);
+  const coachPickedSplit = useRef(false);
 
   return {
-    daysChosen(splitShape: SetupValues["splitShape"]) {
-      if (splitChosen.current) return;
+    followTrainingDays(splitShape: SetupValues["splitShape"]) {
+      if (coachPickedSplit.current) return;
       form.setValue("splitShape", splitShape, { shouldDirty: true });
     },
-    splitChosen() {
-      splitChosen.current = true;
+    keepChosenSplit() {
+      coachPickedSplit.current = true;
     },
   };
 }
@@ -247,14 +247,14 @@ export function ProgramSetupFields({ form, choices }: ProgramSetupFieldsProps) {
         control={control}
         label="Training days"
         name="trainingDays"
-        onChoose={(option) => split.daysChosen(option.splitShape)}
+        onChoose={(option) => split.followTrainingDays(option.splitShape)}
         options={choices.trainingDays}
       />
       <SetupChoice
         control={control}
         label="Split"
         name="splitShape"
-        onChoose={split.splitChosen}
+        onChoose={split.keepChosenSplit}
         options={choices.splitShapes}
       />
       <SetupChoice
