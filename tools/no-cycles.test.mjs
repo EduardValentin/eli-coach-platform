@@ -24,6 +24,16 @@ describe("no cycles between bounded contexts or components", () => {
       "component-one-way",
       [],
     ],
+    [
+      "reports two components that call each other through facades their bounded context publishes, with no import between them",
+      "component-cycle-through-facade",
+      ["component cycle: alpha/gadgets -> alpha/widgets -> alpha/gadgets"],
+    ],
+    [
+      "accepts a component that calls a sibling through a facade the bounded context publishes",
+      "component-one-way-through-facade",
+      [],
+    ],
   ])("%s", (_defect, fixture, expected) => {
     // arrange
     const root = resolve(fixturesRoot, fixture);

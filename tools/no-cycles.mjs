@@ -7,6 +7,10 @@ const IN_BOUNDED_CONTEXT = new RegExp(
   `^${PRODUCTION_ROOT}/bounded-contexts/([^/]+)/(.+)$`,
 );
 const NOT_COMPONENT_FOLDERS = new Set(["public", "shared"]);
+const BOUNDED_CONTEXT_PUBLIC = new RegExp(
+  `^${PRODUCTION_ROOT}/bounded-contexts/[^/]+/public/`,
+);
+const FACADE_ADAPTER = /\/adapters\/inbound\/facades\//;
 
 function cruiseProductionModules(cwd) {
   let stdout;
@@ -50,15 +54,58 @@ function componentOf(path) {
   return isComponentFolder ? `${boundedContext}/${folder}` : undefined;
 }
 
-function dependencyGraph(modules, unitOf) {
+function addDependency(graph, from, to) {
+  if (from === to) return;
+  graph.set(from, (graph.get(from) ?? new Set()).add(to));
+}
+
+function boundedContextGraph(modules) {
   const graph = new Map();
   for (const module of modules) {
-    const from = unitOf(module.source);
+    const from = boundedContextOf(module.source);
     if (!from) continue;
     for (const dependency of module.dependencies) {
-      const to = unitOf(dependency.resolved);
-      if (!to || to === from) continue;
-      graph.set(from, (graph.get(from) ?? new Set()).add(to));
+      const to = boundedContextOf(dependency.resolved);
+      if (to) addDependency(graph, from, to);
+    }
+  }
+  return graph;
+}
+
+// A component provides a file of a bounded context's public/ when one of its
+// facade adapters imports it.
+function facadeProviders(modules) {
+  const providers = new Map();
+  for (const module of modules) {
+    const provider = componentOf(module.source);
+    if (!provider || !FACADE_ADAPTER.test(module.source)) continue;
+    for (const { resolved } of module.dependencies) {
+      if (!BOUNDED_CONTEXT_PUBLIC.test(resolved)) continue;
+      providers.set(
+        resolved,
+        (providers.get(resolved) ?? new Set()).add(provider),
+      );
+    }
+  }
+  return providers;
+}
+
+// A component depends on the components it imports and on the components that
+// provide the facades it calls, which it reaches with no import between them.
+function componentGraph(modules) {
+  const providers = facadeProviders(modules);
+  const graph = new Map();
+  for (const module of modules) {
+    const from = componentOf(module.source);
+    if (!from) continue;
+    const callsFacades = !FACADE_ADAPTER.test(module.source);
+    for (const { resolved } of module.dependencies) {
+      const imported = componentOf(resolved);
+      if (imported) addDependency(graph, from, imported);
+      if (!callsFacades) continue;
+      for (const provider of providers.get(resolved) ?? []) {
+        addDependency(graph, from, provider);
+      }
     }
   }
   return graph;
@@ -87,17 +134,15 @@ function cyclesOf(graph) {
   return cycles;
 }
 
-function cycleProblems(modules, kind, unitOf) {
-  return cyclesOf(dependencyGraph(modules, unitOf)).map(
-    (cycle) => `${kind} cycle: ${cycle.join(" -> ")}`,
-  );
+function cycleProblems(kind, graph) {
+  return cyclesOf(graph).map((cycle) => `${kind} cycle: ${cycle.join(" -> ")}`);
 }
 
 export function auditNoCycles(cwd) {
   const modules = cruiseProductionModules(cwd);
   return [
-    ...cycleProblems(modules, "bounded context", boundedContextOf),
-    ...cycleProblems(modules, "component", componentOf),
+    ...cycleProblems("bounded context", boundedContextGraph(modules)),
+    ...cycleProblems("component", componentGraph(modules)),
   ];
 }
 
