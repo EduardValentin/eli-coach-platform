@@ -126,6 +126,35 @@ describe("ConfirmDialog", () => {
     ).toBeInTheDocument();
   });
 
+  it("announces a description made of markup as the dialog's description", async () => {
+    // arrange
+    render(
+      <ConfirmDialog
+        confirmLabel="Save"
+        description={
+          <>
+            Saves the change.
+            <span className="block">Adding: Dumbbells.</span>
+          </>
+        }
+        onConfirm={() => {}}
+        onOpenChange={() => {}}
+        open
+        title="This updates her profile"
+      />,
+    );
+
+    // act
+    const dialog = screen.getByRole("dialog", {
+      name: "This updates her profile",
+    });
+
+    // assert
+    expect(dialog).toHaveAccessibleDescription(
+      "Saves the change.Adding: Dumbbells.",
+    );
+  });
+
   it("confirms through its confirm button", async () => {
     // arrange
     const { onConfirm, user } = await openConfirmation();

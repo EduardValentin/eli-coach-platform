@@ -107,6 +107,13 @@ export class ProgramSetupPage {
     });
   }
 
+  private profileChangeDialog(firstName: string): Locator {
+    return this.page.getByRole("dialog", {
+      name: `This updates ${firstName}’s profile`,
+      exact: true,
+    });
+  }
+
   private get problemAlerts(): Locator {
     return this.page.getByRole("alert");
   }
@@ -474,6 +481,59 @@ export class ProgramSetupPage {
     );
     await this.page.keyboard.press("Enter");
     await expect(this.leaveDialog).toBeHidden();
+  }
+
+  async expectProfileChangeAsked(
+    firstName: string,
+    description: string,
+  ): Promise<void> {
+    const dialog = this.profileChangeDialog(firstName);
+
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAccessibleDescription(description);
+    await expect(
+      dialog.getByRole("button", { name: "Keep editing", exact: true }),
+    ).toBeFocused();
+  }
+
+  async confirmProfileChange(firstName: string): Promise<void> {
+    await this.profileChangeDialog(firstName)
+      .getByRole("button", { name: "Create program", exact: true })
+      .click();
+    await expect(this.profileChangeDialog(firstName)).toBeHidden();
+  }
+
+  async createConfirmingProfileChange(firstName: string): Promise<void> {
+    await this.create();
+    await this.confirmProfileChange(firstName);
+  }
+
+  async keepEditingProfileChange(firstName: string): Promise<void> {
+    await this.profileChangeDialog(firstName)
+      .getByRole("button", { name: "Keep editing", exact: true })
+      .click();
+    await expect(this.profileChangeDialog(firstName)).toBeHidden();
+  }
+
+  async expectNoProfileChangeQuestion(firstName: string): Promise<void> {
+    await expect(this.profileChangeDialog(firstName)).toHaveCount(0);
+  }
+
+  async expectCreateFocused(): Promise<void> {
+    await expect(
+      this.page.getByRole("button", { name: "Create program", exact: true }),
+    ).toBeFocused();
+  }
+
+  async confirmProfileChangeWithKeyboard(firstName: string): Promise<void> {
+    const dialog = this.profileChangeDialog(firstName);
+
+    await tabTo(
+      this.page,
+      dialog.getByRole("button", { name: "Create program", exact: true }),
+    );
+    await this.page.keyboard.press("Enter");
+    await expect(dialog).toBeHidden();
   }
 
   async createWithKeyboard(): Promise<void> {

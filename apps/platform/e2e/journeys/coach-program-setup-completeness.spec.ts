@@ -5,6 +5,7 @@ import { recordAnswersApproved } from "../support/submitted-clients";
 import { clearGoalOnProfile } from "../support/program-setup-arrangements";
 import { expectOneH1AndNoSkippedLevels } from "../support/heading-outline";
 import { expectLayoutFits } from "../support/layout-fit";
+import { clientPronouns } from "../support/client-pronouns";
 import { setDesktopViewport, setPhoneViewport } from "../support/viewport";
 import type { ProgramSetupChoices } from "../support/program-setup-page";
 
@@ -310,7 +311,7 @@ test(
 
     // act
     await programSetup.toggleEquipment("Barbell");
-    await programSetup.create();
+    await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
     await coachClient.expectOpen(client.clientId);
@@ -372,7 +373,7 @@ test(
     await programSetup.expectEquipmentChecked(["Full gym", "Kettlebells"]);
 
     // act
-    await programSetup.create();
+    await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
     await programSetup.expectCreating();
@@ -407,6 +408,71 @@ test(
     // assert
     await coachClient.expectOpen(client.clientId);
     await expectOneH1AndNoSkippedLevels(page);
+  },
+);
+
+test(
+  "going back from the profile confirmation keeps every choice and creates nothing, and unchanged equipment is created without a question",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    page,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    const created: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST") created.push(request.url());
+    });
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.expectOpenFor(client.firstName, client.clientId);
+    await programSetup.chooseTrainingDays("4 days");
+    await programSetup.toggleEquipment("Kettlebells");
+    await programSetup.toggleEquipment("Full gym");
+
+    // act
+    await programSetup.create();
+
+    // assert
+    await programSetup.expectProfileChangeAsked(
+      client.firstName,
+      `Creating the program saves the equipment you chose here to ${clientPronouns(client.gender).possessive} profile. Adding: Kettlebells. Removing: Full gym.`,
+    );
+
+    // act
+    await programSetup.keepEditingProfileChange(client.firstName);
+
+    // assert
+    await programSetup.expectOpenFor(client.firstName, client.clientId);
+    await programSetup.expectChoices({
+      ...PREFILLED_FROM_HER_PROFILE,
+      trainingDays: "4 days",
+      split: "Upper / Lower",
+      equipment: ["Dumbbells", "Kettlebells"],
+    });
+    await programSetup.expectCreateFocused();
+    expect(
+      created.filter((url) => url.includes(`${client.clientId}/program/new`)),
+    ).toHaveLength(0);
+
+    // act
+    await programSetup.toggleEquipment("Kettlebells");
+    await programSetup.toggleEquipment("Full gym");
+    await programSetup.create();
+
+    // assert
+    await programSetup.expectNoProfileChangeQuestion(client.firstName);
+    await coachClient.expectOpen(client.clientId);
   },
 );
 
@@ -457,7 +523,7 @@ test(
     await programSetup.toggleEquipment("Barbell");
 
     // act
-    await programSetup.create();
+    await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
     await programSetup.expectSaveFailedNotice();
@@ -472,7 +538,7 @@ test(
     await attachScreenshot(page, testInfo, "setup-save-failed");
 
     // act
-    await programSetup.create();
+    await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
     await coachClient.expectOpen(client.clientId);
@@ -976,6 +1042,11 @@ test(
 
     // act
     await programSetup.createWithKeyboard();
+    await programSetup.expectProfileChangeAsked(
+      client.firstName,
+      `Creating the program saves the equipment you chose here to ${clientPronouns(client.gender).possessive} profile. Adding: Barbell. Removing: Dumbbells.`,
+    );
+    await programSetup.confirmProfileChangeWithKeyboard(client.firstName);
 
     // assert
     await coachClient.expectOpen(client.clientId);
@@ -1043,7 +1114,7 @@ test(
     // act
     await programSetup.chooseFromSelect("Goal", "Muscle gain");
     await programSetup.toggleEquipment("Barbell");
-    await programSetup.create();
+    await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
     await coachClient.expectOpen(client.clientId);
@@ -1103,7 +1174,7 @@ test(
     // act
     await programSetup.chooseFromSelect("Goal", "Muscle gain");
     await programSetup.toggleEquipment("Barbell");
-    await programSetup.create();
+    await programSetup.createConfirmingProfileChange(client.firstName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,

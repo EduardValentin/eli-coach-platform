@@ -1,4 +1,5 @@
 import { DeadEndPanel } from "~/shared/design-system/layout";
+import { cn } from "~/shared/design-system/lib";
 import { ConfirmDialog } from "~/shared/design-system/overlays";
 import {
   PortalBackLink,
@@ -12,8 +13,10 @@ import {
 } from "~/shared/design-system/primitives";
 import { ClipboardList } from "lucide-react";
 import {
+  Fragment,
   useEffect,
   useId,
+  useRef,
   useState,
   type MouseEvent,
   type ReactNode,
@@ -22,6 +25,11 @@ import { useForm, type UseFormReturn } from "react-hook-form";
 import { Link, useActionData, useNavigate, useSubmit } from "react-router";
 
 import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
+import { possessive } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-copy";
+import {
+  equipmentChangeLines,
+  type EquipmentChangeLine,
+} from "~/bounded-contexts/programs/training-programs/public/equipment-change";
 import type {
   ProgramCreateOutcome,
   ProgramSetupView,
@@ -56,7 +64,7 @@ const EQUIPMENT_PROBLEM = "Choose at least one equipment option.";
 
 export function programSetupTitle(view: ProgramSetupView): string {
   return view.state === "ready"
-    ? `Build ${view.client.firstName}’s program`
+    ? `Build ${possessive(view.client.firstName)} program`
     : NOT_READY_TITLE;
 }
 
@@ -117,6 +125,30 @@ function ProgramSetupNotReady({ client }: { client: SetupClient }) {
   );
 }
 
+function ProfileChangeDescription({
+  pronoun,
+  lines,
+}: {
+  pronoun: string;
+  lines: EquipmentChangeLine[];
+}) {
+  return (
+    <>
+      Creating the program saves the equipment you chose here to {pronoun}{" "}
+      profile.
+      {lines.map(({ label, names }, index) => (
+        <Fragment key={label}>
+          {" "}
+          <span className={cn("block", index === 0 ? "mt-3" : "mt-1")}>
+            <span className="font-medium">{label}:</span>{" "}
+            <span className="text-text-primary">{names.join(", ")}.</span>
+          </span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 function ProgramSetupSheet({ setup }: { setup: ReadySetup }) {
   const form = useForm<SetupValues>({ defaultValues: setup.startingValues });
   const submit = useSubmit();
@@ -124,14 +156,38 @@ function ProgramSetupSheet({ setup }: { setup: ReadySetup }) {
   const outcome = useActionData<ProgramCreateOutcome | undefined>();
   const headingId = useId();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [confirmingProfileChange, setConfirmingProfileChange] = useState(false);
+  const createButton = useRef<HTMLButtonElement>(null);
   const { isDirty, isSubmitting } = form.formState;
   const clientPath = coachClientPath(setup.client.clientId);
   const failed = outcome?.status === "failed" && !isSubmitting;
   useProblemsAtTheirFields(form, outcome);
 
-  const create = form.handleSubmit((values) =>
-    submit(values, { method: "post", encType: "application/json" }),
+  const profileChange = equipmentChangeLines(
+    setup.choices.equipment,
+    setup.startingValues.equipment,
+    form.watch("equipment"),
   );
+
+  function save(values: SetupValues) {
+    return submit(values, { method: "post", encType: "application/json" });
+  }
+
+  // The server validates; a form that is visibly incomplete goes straight to
+  // it so the problems show before any confirmation.
+  const create = form.handleSubmit((values) => {
+    const incomplete =
+      values.goal.trim() === "" || values.equipment.length === 0;
+
+    if (incomplete || profileChange.length === 0) return save(values);
+    setConfirmingProfileChange(true);
+  });
+
+  const confirmProfileChange = form.handleSubmit((values) => {
+    setConfirmingProfileChange(false);
+
+    return save(values);
+  });
 
   function leave(event: MouseEvent<HTMLAnchorElement>) {
     if (!isDirty) return;
@@ -161,6 +217,7 @@ function ProgramSetupSheet({ setup }: { setup: ReadySetup }) {
                 Cancel
               </Link>
               <Button
+                ref={createButton}
                 aria-busy={isSubmitting || undefined}
                 disabled={isSubmitting}
                 size="md"
@@ -184,6 +241,21 @@ function ProgramSetupSheet({ setup }: { setup: ReadySetup }) {
           {isSubmitting ? SAVING_MESSAGE : ""}
         </p>
       </form>
+      <ConfirmDialog
+        cancelLabel="Keep editing"
+        confirmLabel="Create program"
+        description={
+          <ProfileChangeDescription
+            lines={profileChange}
+            pronoun={possessivePronoun(setup.client.gender).lower}
+          />
+        }
+        onConfirm={confirmProfileChange}
+        onOpenChange={setConfirmingProfileChange}
+        open={confirmingProfileChange}
+        returnFocusTo={createButton}
+        title={`This updates ${possessive(setup.client.firstName)} profile`}
+      />
       <ConfirmDialog
         cancelLabel="Keep editing"
         confirmLabel="Discard"

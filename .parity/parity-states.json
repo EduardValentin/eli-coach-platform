@@ -6657,5 +6657,19 @@
     {
       "waitFor": "role=dialog[name=\"Unsaved changes\"]"
     }
+  ],
+  "program-setup-profile-confirm": [
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Kettlebells\"]"
+    },
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Full gym\"]"
+    },
+    {
+      "click": "role=button[name=\"Create program\"]"
+    },
+    {
+      "waitFor": "role=dialog[name=\"This updates Jane’s profile\"]"
+    }
   ]
 }
