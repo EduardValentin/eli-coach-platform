@@ -5,8 +5,8 @@ This file is rewritten by `arch collect` and is never edited by hand.
 ## Counts
 
 - Components: 52
-- Units: 1698
-- Edges: 6095
+- Units: 1706
+- Edges: 6129
 - Module cycles: 0
 - Component cycles: 0
 - Uncovered units: 0
@@ -27,9 +27,9 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform | 6 | 0 | 4 | 1 | 0 | 0 | none |
 | apps/platform/test-support | 0 | 0 | 0 | not defined | not defined | not defined | none |
 | apps/platform/src/bounded-contexts/scheduling/assessment-calls | 76 | 24 | 44 | 0.65 | 0.3 | 0.05 | none |
-| apps/platform/src/bounded-contexts/sales/subscriptions | 158 | 10 | 67 | 0.87 | 0.28 | 0.15 | none |
+| apps/platform/src/bounded-contexts/sales/subscriptions | 160 | 10 | 68 | 0.87 | 0.28 | 0.15 | none |
 | apps/platform/src/bounded-contexts/clients/client-profile | 242 | 12 | 101 | 0.89 | 0.29 | 0.18 | none |
-| apps/platform/src/bounded-contexts/clients/client-resources | 83 | 7 | 38 | 0.84 | 0.31 | 0.15 | none |
+| apps/platform/src/bounded-contexts/clients/client-resources | 83 | 8 | 38 | 0.83 | 0.31 | 0.13 | none |
 | apps/platform/src/bounded-contexts/clients/check-ins | 134 | 9 | 61 | 0.87 | 0.33 | 0.2 | none |
 | apps/platform/src/bounded-contexts/scheduling/coach-schedule | 41 | 12 | 15 | 0.56 | 0.28 | 0.17 | none |
 | apps/platform/src/bounded-contexts/clients/clients | 94 | 42 | 38 | 0.48 | 0.32 | 0.21 | none |
@@ -42,7 +42,6 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/bounded-contexts/legal/public | 6 | 11 | 1 | 0.08 | 0.23 | 0.68 | none |
 | apps/platform/src/bounded-contexts/access/public | 4 | 78 | 0 | 0 | 0.46 | 0.54 | none |
 | apps/platform/src/bounded-contexts/scheduling/public | 7 | 27 | 0 | 0 | 0.92 | 0.08 | none |
-| apps/platform/src/bounded-contexts/sales/public | 1 | 12 | 0 | 0 | 0 | 1 | pain |
 | apps/platform/src/bounded-contexts/operations | 3 | 2 | 3 | 0.6 | 0.33 | 0.07 | none |
 | apps/platform/src/bounded-contexts/legal | 2 | 2 | 2 | 0.5 | 0.33 | 0.17 | none |
 | apps/platform/src/bounded-contexts/access | 3 | 2 | 3 | 0.6 | 0.33 | 0.07 | none |
@@ -56,7 +55,7 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/shared/contact | 2 | 10 | 0 | 0 | 0.25 | 0.75 | none |
 | apps/platform/src/shared/documents | 12 | 6 | 0 | 0 | 0.45 | 0.55 | none |
 | apps/platform/src/shared/email | 11 | 38 | 1 | 0.03 | 0.07 | 0.9 | pain |
-| apps/platform/src/shared/http | 16 | 161 | 0 | 0 | 0.11 | 0.89 | pain |
+| apps/platform/src/shared/http | 16 | 162 | 0 | 0 | 0.11 | 0.89 | pain |
 | apps/platform/src/shared/images | 1 | 4 | 0 | 0 | 0.33 | 0.67 | none |
 | apps/platform/src/shared/logging | 3 | 29 | 0 | 0 | 0.25 | 0.75 | none |
 | apps/platform/src/shared/private-files | 5 | 10 | 0 | 0 | 0 | 1 | pain |
@@ -65,8 +64,9 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/shared/submission-checks | 20 | 24 | 1 | 0.04 | 0.23 | 0.73 | none |
 | apps/platform/src/shared/time-format | 2 | 18 | 0 | 0 | 0 | 1 | pain |
 | apps/platform/src/shared/tokens | 6 | 1 | 2 | 0.67 | 0.33 | 0 | none |
-| apps/platform/src/bounded-contexts/programs/training-programs | 36 | 4 | 11 | 0.73 | 0.48 | 0.21 | none |
-| apps/platform/src/bounded-contexts/clients/public | 7 | 20 | 0 | 0 | 0.94 | 0.06 | none |
+| apps/platform/src/bounded-contexts/programs/training-programs | 41 | 4 | 13 | 0.76 | 0.48 | 0.25 | none |
+| apps/platform/src/bounded-contexts/clients/public | 7 | 21 | 0 | 0 | 0.94 | 0.06 | none |
+| apps/platform/src/bounded-contexts/sales/public | 2 | 18 | 0 | 0 | 0.5 | 0.5 | none |
 
 ## Component graph
 
@@ -175,6 +175,7 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/bounded-contexts/programs | apps/platform/src/bounded-contexts/programs/exercise-library | 3 |
 | apps/platform/src/bounded-contexts/programs | apps/platform/src/bounded-contexts/programs/nutrition-library | 3 |
 | apps/platform/src/bounded-contexts/programs | apps/platform/src/bounded-contexts/programs/training-programs | 3 |
+| apps/platform/src/bounded-contexts/programs | apps/platform/src/bounded-contexts/sales/public | 1 |
 | apps/platform/src/bounded-contexts/programs/exercise-library | apps/platform/src/bounded-contexts/access/accounts | 1 |
 | apps/platform/src/bounded-contexts/programs/exercise-library | apps/platform/src/bounded-contexts/access/public | 2 |
 | apps/platform/src/bounded-contexts/programs/exercise-library | apps/platform/src/shared/database | 3 |
@@ -195,16 +196,18 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/bounded-contexts/programs/nutrition-library | apps/platform/src/shared/runtime | 1 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/access/public | 2 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/clients | 3 |
+| apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/clients/client-resources | 1 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/clients/clients | 1 |
-| apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/clients/public | 2 |
+| apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/clients/public | 3 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/programs/exercise-library | 2 |
+| apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/sales/public | 2 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/bounded-contexts/scheduling/assessment-calls | 2 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/shared/database | 3 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/shared/design-system | 3 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/shared/http | 1 |
 | apps/platform/src/bounded-contexts/programs/training-programs | apps/platform/src/shared/logging | 2 |
 | apps/platform/src/bounded-contexts/sales | apps/platform/src/bounded-contexts/access/public | 1 |
-| apps/platform/src/bounded-contexts/sales | apps/platform/src/bounded-contexts/sales/public | 1 |
+| apps/platform/src/bounded-contexts/sales | apps/platform/src/bounded-contexts/sales/public | 2 |
 | apps/platform/src/bounded-contexts/sales | apps/platform/src/bounded-contexts/sales/shared/payments | 1 |
 | apps/platform/src/bounded-contexts/sales | apps/platform/src/bounded-contexts/sales/store | 3 |
 | apps/platform/src/bounded-contexts/sales | apps/platform/src/bounded-contexts/sales/subscriptions | 3 |
@@ -230,6 +233,7 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/clients/clients | 1 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/clients/public | 7 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/operations/public | 2 |
+| apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/sales/public | 2 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/sales/shared/payments | 10 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/sales/waitlist | 2 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/bounded-contexts/scheduling | 2 |
@@ -238,7 +242,7 @@ This file is rewritten by `arch collect` and is never edited by hand.
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/shared/database | 6 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/shared/design-system | 24 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/shared/email | 8 |
-| apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/shared/http | 14 |
+| apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/shared/http | 15 |
 | apps/platform/src/bounded-contexts/sales/subscriptions | apps/platform/src/shared/logging | 2 |
 | apps/platform/src/bounded-contexts/sales/waitlist | apps/platform/src/bounded-contexts/legal/public | 2 |
 | apps/platform/src/bounded-contexts/sales/waitlist | apps/platform/src/bounded-contexts/operations/public | 2 |
@@ -350,7 +354,6 @@ This file is rewritten by `arch collect` and is never edited by hand.
 ## Threshold breaches
 
 - apps/platform/src/shared/design-system: zone of pain
-- apps/platform/src/bounded-contexts/sales/public: zone of pain
 - apps/platform/src/bounded-contexts/clients: zone of pain
 - apps/platform/src/shared/brand: zone of pain
 - apps/platform/src/shared/clock: zone of pain
@@ -361,7 +364,7 @@ This file is rewritten by `arch collect` and is never edited by hand.
 - apps/platform/src/shared/time-format: zone of pain
 - apps/platform/src/shared/database: distance 0.77 beyond the project threshold
 - apps/platform/src/shared/design-system: distance 0.91 beyond the project threshold
-- apps/platform/src/bounded-contexts/sales/public: distance 1 beyond the project threshold
+- apps/platform/src/bounded-contexts/clients: distance 0.74 beyond the project threshold
 - apps/platform/src/shared/brand: distance 1 beyond the project threshold
 - apps/platform/src/shared/clock: distance 1 beyond the project threshold
 - apps/platform/src/shared/contact: distance 0.75 beyond the project threshold
@@ -370,4 +373,5 @@ This file is rewritten by `arch collect` and is never edited by hand.
 - apps/platform/src/shared/logging: distance 0.75 beyond the project threshold
 - apps/platform/src/shared/private-files: distance 1 beyond the project threshold
 - apps/platform/src/shared/pwa: distance 0.88 beyond the project threshold
+- apps/platform/src/shared/submission-checks: distance 0.73 beyond the project threshold
 - apps/platform/src/shared/time-format: distance 1 beyond the project threshold
