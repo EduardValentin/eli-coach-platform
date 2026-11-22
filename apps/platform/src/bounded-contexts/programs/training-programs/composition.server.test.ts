@@ -15,13 +15,17 @@ const COACH: SessionAccount = {
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
-const ANA: ClientCoachingDto = {
+const ANA_IDENTITY = {
   clientId: CLIENT_ID,
   firstName: "Ana",
   lastName: "Popescu",
+  email: "ana@example.com",
   gender: "female",
+};
+
+const ANA: ClientCoachingDto = {
+  clientId: CLIENT_ID,
   answersApproved: true,
-  coachingEnded: false,
   coachingFacts: {
     primaryGoal: "Build muscle",
     level: "beginner",
@@ -48,7 +52,7 @@ const SETUP = {
 };
 
 describe("composeTrainingProgramsFeature", () => {
-  it("reads the card from the client's coaching and the programs table", async () => {
+  it("reads the card from the client's identity, her coaching standing, her coaching and the programs table, asking each owner", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeTrainingProgramsFeature(handles);
@@ -61,9 +65,34 @@ describe("composeTrainingProgramsFeature", () => {
 
     // assert
     expect(card).toEqual({ state: "ready-to-build", gender: "female" });
+    expect(handles.clientLookupFacade.identityOf).toHaveBeenCalledWith(
+      CLIENT_ID,
+    );
+    expect(handles.coachingEndedFacade.coachingEndedOf).toHaveBeenCalledWith(
+      CLIENT_ID,
+    );
     expect(handles.clientCoachingFacade.coachingOf).toHaveBeenCalledWith(
       CLIENT_ID,
     );
+  });
+
+  it("reads her coaching as ended from the sales facade", async () => {
+    // arrange
+    const handles = createHandles();
+    handles.coachingEndedFacade.coachingEndedOf.mockResolvedValue({
+      clientId: CLIENT_ID,
+      coachingEnded: true,
+    });
+    const feature = composeTrainingProgramsFeature(handles);
+
+    // act
+    const card = await feature.coachProgramController.loadCard(
+      coachArgs(),
+      CLIENT_ID,
+    );
+
+    // assert
+    expect(card).toEqual({ state: "coaching-ended", gender: "female" });
   });
 
   it("reads the setup with the choices the client's coaching offers", async () => {
@@ -132,6 +161,14 @@ function createHandles() {
     clientCoachingFacade: {
       coachingOf: vi.fn().mockResolvedValue(ANA),
       saveEquipment: vi.fn().mockResolvedValue({ status: "saved" }),
+    },
+    clientLookupFacade: {
+      identityOf: vi.fn().mockResolvedValue(ANA_IDENTITY),
+    },
+    coachingEndedFacade: {
+      coachingEndedOf: vi
+        .fn()
+        .mockResolvedValue({ clientId: CLIENT_ID, coachingEnded: false }),
     },
     clockPort: { now: () => new Date("2026-11-20T09:00:00.000Z") },
     database: createDatabaseWithoutProgramsThatRefusesWrites(),

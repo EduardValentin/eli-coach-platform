@@ -5,6 +5,7 @@ type ClientIdentityDto = {
   firstName: string;
   lastName: string;
   email: string;
+  gender: "female" | "male" | "prefer_not_to_say";
 };
 
 export type ClientReachDto = {

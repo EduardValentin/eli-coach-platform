@@ -1,38 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  CoachingStanding,
-  type CoachingStatus,
-} from "~/bounded-contexts/clients/clients/domain/client";
-import type {
-  ClientIdentitiesPort,
-  ClientIdentity,
-} from "../client-identities-port";
-import {
-  OnboardingParticipants,
-  type OnboardingClient,
-  type OnboardingReviewsPort,
-} from "../client-onboarding";
+import type { OnboardingReviewsPort } from "../client-onboarding";
 import { ClientProfile, type ClientProfilesPort } from "../client-profile";
 
 import { ReadClientCoachingUseCase } from "./read-client-coaching-use-case";
 
 const SEEDED_AT = new Date("2026-09-30T10:00:00.000Z");
 const APPROVED_AT = new Date("2026-09-30T10:00:00.000Z");
-const NOW = new Date("2026-11-21T12:00:00.000Z");
-const BEFORE_NOW = new Date("2026-11-21T11:59:59.000Z");
-const AFTER_NOW = new Date("2026-11-21T12:00:01.000Z");
-
-const IDENTITY: ClientIdentity = {
-  clientId: "client-1",
-  firstName: "Ana",
-  lastName: "Popescu",
-  email: "ana@example.com",
-  dateOfBirth: "1994-03-14",
-  gender: "female",
-  country: "RO",
-  phone: null,
-};
 
 const PROFILE = ClientProfile.reconstitute({
   clientId: "client-1",
@@ -58,44 +32,12 @@ const PROFILE = ClientProfile.reconstitute({
 });
 
 type StoredClient = {
-  status?: CoachingStatus;
-  accessEndsAt?: Date | null;
   approvedAt?: Date | null;
-  identity?: ClientIdentity | null;
-  onboarding?: "known" | "unknown";
   profile?: ClientProfile | null;
 };
 
-function onboardingClientOf(stored: StoredClient): OnboardingClient {
-  return {
-    clientId: "client-1",
-    submittedAt: SEEDED_AT,
-    reviewStamps: {
-      reviewOpenedAt: null,
-      detailsRequestedAt: null,
-      detailsAnsweredAt: null,
-      answersApprovedAt: null,
-    },
-    standing: CoachingStanding.of({
-      status: stored.status ?? "active",
-      accessEndsAt: stored.accessEndsAt ?? null,
-      refundDue: false,
-      bundleMonths: null,
-      programStartsAt: null,
-      paidThrough: null,
-    }),
-  };
-}
-
 function readClientCoachingUseCaseOver(stored: StoredClient = {}) {
-  const onboardingClient =
-    stored.onboarding === "unknown" ? null : onboardingClientOf(stored);
-  const identity = stored.identity === undefined ? IDENTITY : stored.identity;
   const profile = stored.profile === undefined ? PROFILE : stored.profile;
-  const clientIdentitiesPort: Pick<ClientIdentitiesPort, "findByClientId"> = {
-    findByClientId: async (clientId) =>
-      identity?.clientId === clientId ? identity : null,
-  };
   const onboardingReviewsPort: Pick<OnboardingReviewsPort, "findByClientId"> = {
     findByClientId: async () => ({
       openedAt: SEEDED_AT,
@@ -109,22 +51,13 @@ function readClientCoachingUseCaseOver(stored: StoredClient = {}) {
   };
 
   return new ReadClientCoachingUseCase({
-    clockPort: { now: () => NOW },
-    participants: new OnboardingParticipants({
-      onboardingClientsPort: {
-        findByAuthSubjectId: async () => null,
-        findByClientId: async (clientId) =>
-          onboardingClient?.clientId === clientId ? onboardingClient : null,
-      },
-      clientIdentitiesPort,
-    }),
     onboardingReviewsPort,
     clientProfilesPort,
   });
 }
 
 describe("ReadClientCoachingUseCase", () => {
-  it("answers who she is, her coaching facts and the equipment she may choose from", async () => {
+  it("answers whether her answers are approved, her coaching facts and the equipment she may choose from", async () => {
     // arrange
     const readClientCoachingUseCase = readClientCoachingUseCaseOver({
       approvedAt: APPROVED_AT,
@@ -136,11 +69,7 @@ describe("ReadClientCoachingUseCase", () => {
     // assert
     expect(coaching).toMatchObject({
       clientId: "client-1",
-      firstName: "Ana",
-      lastName: "Popescu",
-      gender: "female",
       answersApproved: true,
-      coachingEnded: false,
       facts: {
         primaryGoal: "Build muscle",
         level: "beginner",
@@ -149,7 +78,7 @@ describe("ReadClientCoachingUseCase", () => {
         equipment: ["Dumbbells", "Resistance bands"],
       },
     });
-    expect(coaching?.equipmentOptions).toEqual([
+    expect(coaching.equipmentOptions).toEqual([
       { equipment: "Full gym", exclusive: false },
       { equipment: "Machines", exclusive: false },
       { equipment: "Barbell", exclusive: false },
@@ -170,7 +99,7 @@ describe("ReadClientCoachingUseCase", () => {
     const coaching = await readClientCoachingUseCase.execute("client-1");
 
     // assert
-    expect(coaching?.primaryGoalOptions).toEqual([
+    expect(coaching.primaryGoalOptions).toEqual([
       "Lose fat",
       "Build muscle",
       "Maintain a healthy weight",
@@ -190,70 +119,8 @@ describe("ReadClientCoachingUseCase", () => {
     const coaching = await readClientCoachingUseCase.execute("client-1");
 
     // assert
-    expect(coaching?.answersApproved).toBe(false);
+    expect(coaching.answersApproved).toBe(false);
   });
-
-  it("reports her coaching ongoing while a cancelled standing still gives her access", async () => {
-    // arrange
-    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-      status: "cancelled",
-      accessEndsAt: AFTER_NOW,
-      approvedAt: APPROVED_AT,
-    });
-
-    // act
-    const coaching = await readClientCoachingUseCase.execute("client-1");
-
-    // assert
-    expect(coaching?.coachingEnded).toBe(false);
-  });
-
-  it("reports her coaching ended once a cancelled standing's access is over", async () => {
-    // arrange
-    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-      status: "cancelled",
-      accessEndsAt: BEFORE_NOW,
-      approvedAt: APPROVED_AT,
-    });
-
-    // act
-    const coaching = await readClientCoachingUseCase.execute("client-1");
-
-    // assert
-    expect(coaching?.coachingEnded).toBe(true);
-  });
-
-  it("reports her coaching ended from an ended standing", async () => {
-    // arrange
-    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-      status: "ended",
-      accessEndsAt: AFTER_NOW,
-      approvedAt: APPROVED_AT,
-    });
-
-    // act
-    const coaching = await readClientCoachingUseCase.execute("client-1");
-
-    // assert
-    expect(coaching?.coachingEnded).toBe(true);
-  });
-
-  it.each<CoachingStatus>(["not-started", "active"])(
-    "reports her coaching ongoing from a %s standing",
-    async (status) => {
-      // arrange
-      const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-        status,
-        approvedAt: APPROVED_AT,
-      });
-
-      // act
-      const coaching = await readClientCoachingUseCase.execute("client-1");
-
-      // assert
-      expect(coaching?.coachingEnded).toBe(false);
-    },
-  );
 
   it("answers no coaching facts for a client whose profile was never seeded", async () => {
     // arrange
@@ -265,32 +132,26 @@ describe("ReadClientCoachingUseCase", () => {
     const coaching = await readClientCoachingUseCase.execute("client-1");
 
     // assert
-    expect(coaching?.facts).toBeNull();
+    expect(coaching.facts).toBeNull();
   });
 
-  it("answers nothing for a client no one knows", async () => {
+  it("answers unapproved answers, no facts and the options for a client it holds no rows for, leaving whether she exists to clients", async () => {
     // arrange
     const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-      onboarding: "unknown",
+      approvedAt: null,
+      profile: null,
     });
 
     // act
-    const coaching = await readClientCoachingUseCase.execute("client-1");
+    const coaching = await readClientCoachingUseCase.execute("client-9");
 
     // assert
-    expect(coaching).toBeNull();
-  });
-
-  it("answers nothing for a client without an identity", async () => {
-    // arrange
-    const readClientCoachingUseCase = readClientCoachingUseCaseOver({
-      identity: null,
+    expect(coaching).toMatchObject({
+      clientId: "client-9",
+      answersApproved: false,
+      facts: null,
     });
-
-    // act
-    const coaching = await readClientCoachingUseCase.execute("client-1");
-
-    // assert
-    expect(coaching).toBeNull();
+    expect(coaching.equipmentOptions).toHaveLength(7);
+    expect(coaching.primaryGoalOptions).toHaveLength(6);
   });
 });

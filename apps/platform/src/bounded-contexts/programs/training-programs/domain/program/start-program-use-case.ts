@@ -1,6 +1,8 @@
 import type { ClockPort } from "../clock-port";
 import type { CardioExercisesPort } from "./cardio-exercises-port";
 import type { ClientCoachingPort } from "./client-coaching-port";
+import type { ClientIdentityPort } from "./client-identity-port";
+import type { CoachingEndedPort } from "./coaching-ended-port";
 import { Program } from "./program";
 import type { ProgramIdsPort } from "./program-ids-port";
 import {
@@ -32,6 +34,8 @@ type ProgramStart = {
 
 type StartProgramUseCaseOptions = {
   programStorePort: ProgramStorePort;
+  clientIdentityPort: ClientIdentityPort;
+  coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: ClientCoachingPort;
   cardioExercisesPort: CardioExercisesPort;
   programIdsPort: ProgramIdsPort;
@@ -42,15 +46,27 @@ export class StartProgramUseCase {
   constructor(private readonly options: StartProgramUseCaseOptions) {}
 
   async execute(command: StartProgramCommand): Promise<StartProgramResult> {
-    const { clientCoachingPort, programStorePort } = this.options;
-    const clientCoaching = await clientCoachingPort.find(command.clientId);
+    const {
+      clientIdentityPort,
+      coachingEndedPort,
+      clientCoachingPort,
+      programStorePort,
+    } = this.options;
+    const client = await clientIdentityPort.find(command.clientId);
 
-    if (!clientCoaching) {
+    if (!client) {
       return { status: "unknown-client" };
     }
 
+    const coachingEnded = await coachingEndedPort.hasEnded(command.clientId);
+    const clientCoaching = await clientCoachingPort.find(command.clientId);
     const program = await programStorePort.findByClientId(command.clientId);
-    const eligibility = Program.eligibilityFor({ clientCoaching, program });
+    const eligibility = Program.eligibilityFor({
+      client,
+      coachingEnded,
+      clientCoaching,
+      program,
+    });
 
     if (eligibility.status !== "eligible") {
       return { status: eligibility.status };

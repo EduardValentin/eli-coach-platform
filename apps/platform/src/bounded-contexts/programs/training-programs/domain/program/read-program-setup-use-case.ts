@@ -1,9 +1,12 @@
 import type {
-  ClientCoaching,
   ClientCoachingPort,
-  ClientGender,
   EquipmentOption,
 } from "./client-coaching-port";
+import type {
+  ClientIdentity,
+  ClientIdentityPort,
+} from "./client-identity-port";
+import type { CoachingEndedPort } from "./coaching-ended-port";
 import { Program } from "./program";
 import { ProgramSetup, type ProgramSetupValues } from "./program-setup";
 import type { ProgramStorePort } from "./program-store-port";
@@ -16,19 +19,12 @@ import {
 
 type ReadProgramSetupCommand = { clientId: string };
 
-type ProgramClient = {
-  clientId: string;
-  firstName: string;
-  lastName: string;
-  gender: ClientGender;
-};
-
 export type ProgramSetupReading =
   | { status: "unknown-client" | "has-program" | "coaching-ended" }
-  | { status: "not-approved"; client: ProgramClient }
+  | { status: "not-approved"; client: ClientIdentity }
   | {
       status: "ready";
-      client: ProgramClient;
+      client: ClientIdentity;
       startingValues: ProgramSetupValues;
       goalOptions: string[];
       equipmentOptions: EquipmentOption[];
@@ -36,6 +32,8 @@ export type ProgramSetupReading =
     };
 
 type ReadProgramSetupUseCaseOptions = {
+  clientIdentityPort: ClientIdentityPort;
+  coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: Pick<ClientCoachingPort, "find">;
   programStorePort: Pick<ProgramStorePort, "findByClientId">;
 };
@@ -46,29 +44,38 @@ export class ReadProgramSetupUseCase {
   async execute({
     clientId,
   }: ReadProgramSetupCommand): Promise<ProgramSetupReading> {
-    const { clientCoachingPort, programStorePort } = this.options;
-    const clientCoaching = await clientCoachingPort.find(clientId);
+    const {
+      clientIdentityPort,
+      coachingEndedPort,
+      clientCoachingPort,
+      programStorePort,
+    } = this.options;
+    const client = await clientIdentityPort.find(clientId);
 
-    if (!clientCoaching) {
+    if (!client) {
       return { status: "unknown-client" };
     }
 
+    const coachingEnded = await coachingEndedPort.hasEnded(clientId);
+    const clientCoaching = await clientCoachingPort.find(clientId);
     const program = await programStorePort.findByClientId(clientId);
-    const eligibility = Program.eligibilityFor({ clientCoaching, program });
+    const eligibility = Program.eligibilityFor({
+      client,
+      coachingEnded,
+      clientCoaching,
+      program,
+    });
 
     switch (eligibility.status) {
       case "has-program":
       case "coaching-ended":
         return { status: eligibility.status };
       case "not-approved":
-        return {
-          status: "not-approved",
-          client: this.clientOf(eligibility.clientCoaching),
-        };
+        return { status: "not-approved", client: eligibility.client };
       case "eligible":
         return {
           status: "ready",
-          client: this.clientOf(eligibility.clientCoaching),
+          client: eligibility.client,
           startingValues: ProgramSetup.startingValues(
             eligibility.coachingFacts,
           ),
@@ -77,15 +84,6 @@ export class ReadProgramSetupUseCase {
           splitShapeByTrainingDays: this.splitShapeByTrainingDays(),
         };
     }
-  }
-
-  private clientOf({
-    clientId,
-    firstName,
-    lastName,
-    gender,
-  }: ClientCoaching): ProgramClient {
-    return { clientId, firstName, lastName, gender };
   }
 
   private splitShapeByTrainingDays(): Record<TrainingDays, SplitShape> {

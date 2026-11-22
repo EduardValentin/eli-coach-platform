@@ -1,4 +1,6 @@
-import type { ClientCoachingPort, ClientGender } from "./client-coaching-port";
+import type { ClientCoachingPort } from "./client-coaching-port";
+import type { ClientGender, ClientIdentityPort } from "./client-identity-port";
+import type { CoachingEndedPort } from "./coaching-ended-port";
 import { Program } from "./program";
 import type { ProgramStorePort } from "./program-store-port";
 import type { DraftSummary } from "./program-version";
@@ -19,6 +21,8 @@ export type ProgramCardReading =
     };
 
 type ReadProgramCardUseCaseOptions = {
+  clientIdentityPort: ClientIdentityPort;
+  coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: Pick<ClientCoachingPort, "find">;
   programStorePort: Pick<ProgramStorePort, "findByClientId">;
 };
@@ -29,24 +33,36 @@ export class ReadProgramCardUseCase {
   async execute({
     clientId,
   }: ReadProgramCardCommand): Promise<ProgramCardReading> {
-    const { clientCoachingPort, programStorePort } = this.options;
-    const clientCoaching = await clientCoachingPort.find(clientId);
+    const {
+      clientIdentityPort,
+      coachingEndedPort,
+      clientCoachingPort,
+      programStorePort,
+    } = this.options;
+    const client = await clientIdentityPort.find(clientId);
 
-    if (!clientCoaching) {
+    if (!client) {
       return { status: "unknown-client" };
     }
 
+    const coachingEnded = await coachingEndedPort.hasEnded(clientId);
+    const clientCoaching = await clientCoachingPort.find(clientId);
     const program = await programStorePort.findByClientId(clientId);
-    const eligibility = Program.eligibilityFor({ clientCoaching, program });
+    const eligibility = Program.eligibilityFor({
+      client,
+      coachingEnded,
+      clientCoaching,
+      program,
+    });
 
-    const { gender, coachingEnded } = eligibility.clientCoaching;
+    const { gender } = eligibility.client;
 
     switch (eligibility.status) {
       case "has-program":
         return {
           status: "program",
           gender,
-          coachingEnded,
+          coachingEnded: eligibility.coachingEnded,
           draft: eligibility.program.draftSummary(),
         };
       case "coaching-ended":

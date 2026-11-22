@@ -6,6 +6,11 @@ import type {
   ClientCoachingPort,
   EquipmentUpdate,
 } from "./client-coaching-port";
+import type {
+  ClientIdentity,
+  ClientIdentityPort,
+} from "./client-identity-port";
+import type { CoachingEndedPort } from "./coaching-ended-port";
 import { Program } from "./program";
 import type { ProgramSetupValues } from "./program-setup";
 import type { ProgramAddition, ProgramStorePort } from "./program-store-port";
@@ -19,12 +24,14 @@ const NOW = new Date("2026-11-20T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "coach-account-1";
 const CLIENT_ID = "client-1";
 
-const ANA: ClientCoaching = {
+const ANA: ClientIdentity = {
   clientId: CLIENT_ID,
   firstName: "Ana",
   lastName: "Popescu",
   gender: "female",
-  coachingEnded: false,
+};
+
+const ANAS_COACHING: ClientCoaching = {
   answers: {
     status: "approved",
     coachingFacts: {
@@ -80,13 +87,29 @@ class InMemoryProgramStoreAdapter implements ProgramStorePort {
   }
 }
 
+class InMemoryClientIdentityAdapter implements ClientIdentityPort {
+  constructor(private readonly clients: ClientIdentity[]) {}
+
+  async find(clientId: string): Promise<ClientIdentity | null> {
+    return this.clients.find((client) => client.clientId === clientId) ?? null;
+  }
+}
+
+class InMemoryCoachingEndedAdapter implements CoachingEndedPort {
+  constructor(private readonly coachingEnded: boolean) {}
+
+  async hasEnded(): Promise<boolean> {
+    return this.coachingEnded;
+  }
+}
+
 class InMemoryClientCoachingAdapter implements ClientCoachingPort {
   readonly savedEquipment: EquipmentUpdate[] = [];
 
-  constructor(private readonly clients: ClientCoaching[]) {}
+  constructor(private readonly clientCoaching: ClientCoaching) {}
 
-  async find(clientId: string): Promise<ClientCoaching | null> {
-    return this.clients.find((client) => client.clientId === clientId) ?? null;
+  async find(): Promise<ClientCoaching> {
+    return this.clientCoaching;
   }
 
   async saveEquipment(update: EquipmentUpdate): Promise<void> {
@@ -95,22 +118,30 @@ class InMemoryClientCoachingAdapter implements ClientCoachingPort {
 }
 
 type Arrangement = {
-  clients?: ClientCoaching[];
+  clients?: ClientIdentity[];
+  coachingEnded?: boolean;
+  clientCoaching?: ClientCoaching;
   programs?: Program[];
   cardioExercises?: CardioExercise[];
 };
 
 function startProgram({
   clients = [ANA],
+  coachingEnded = false,
+  clientCoaching = ANAS_COACHING,
   programs = [],
   cardioExercises = [],
 }: Arrangement = {}) {
   let next = 0;
   const programStorePort = new InMemoryProgramStoreAdapter(programs);
-  const clientCoachingPort = new InMemoryClientCoachingAdapter(clients);
+  const clientIdentityPort = new InMemoryClientIdentityAdapter(clients);
+  const coachingEndedPort = new InMemoryCoachingEndedAdapter(coachingEnded);
+  const clientCoachingPort = new InMemoryClientCoachingAdapter(clientCoaching);
   const cardioExercisesPort = { listFor: vi.fn(async () => cardioExercises) };
   const startProgramUseCase = new StartProgramUseCase({
     programStorePort,
+    clientIdentityPort,
+    coachingEndedPort,
     clientCoachingPort,
     cardioExercisesPort,
     programIdsPort: { generate: () => `id-${(next += 1)}` },
@@ -120,6 +151,8 @@ function startProgram({
   return {
     startProgramUseCase,
     programStorePort,
+    clientIdentityPort,
+    coachingEndedPort,
     clientCoachingPort,
     cardioExercisesPort,
   };
@@ -333,9 +366,14 @@ describe("StartProgramUseCase", () => {
     ["unknown-client", { clients: [] }],
     [
       "not-approved",
-      { clients: [{ ...ANA, answers: { status: "not-approved" } }] },
+      {
+        clientCoaching: {
+          ...ANAS_COACHING,
+          answers: { status: "not-approved" },
+        },
+      },
     ],
-    ["coaching-ended", { clients: [{ ...ANA, coachingEnded: true }] }],
+    ["coaching-ended", { coachingEnded: true }],
     ["has-program", { programs: [existingProgram()] }],
   ])("refuses with %s and writes nothing", async (status, arrangement) => {
     // arrange
@@ -477,21 +515,59 @@ describe("StartProgramUseCase", () => {
     expect(programStorePort.added).toHaveLength(1);
   });
 
-  it("fails whole when her coaching cannot be read", async () => {
+  it.each(["clients", "sales", "client profile", "programs"] as const)(
+    "fails whole when %s cannot be read, writing nothing",
+    async (owner) => {
+      // arrange
+      const failure = new Error(`${owner} unreachable`);
+      const ports = startProgram();
+      const makeUnreadable = {
+        clients: () =>
+          vi.spyOn(ports.clientIdentityPort, "find").mockRejectedValue(failure),
+        sales: () =>
+          vi
+            .spyOn(ports.coachingEndedPort, "hasEnded")
+            .mockRejectedValue(failure),
+        "client profile": () =>
+          vi.spyOn(ports.clientCoachingPort, "find").mockRejectedValue(failure),
+        programs: () =>
+          vi
+            .spyOn(ports.programStorePort, "findByClientId")
+            .mockRejectedValue(failure),
+      };
+      makeUnreadable[owner]();
+
+      // act
+      const started = ports.startProgramUseCase.execute({
+        coachAccountId: COACH_ACCOUNT_ID,
+        clientId: CLIENT_ID,
+        setup: SETUP,
+      });
+
+      // assert
+      await expect(started).rejects.toBe(failure);
+      expect(ports.programStorePort.added).toEqual([]);
+      expect(ports.clientCoachingPort.savedEquipment).toEqual([]);
+    },
+  );
+
+  it("asks neither sales nor client profile about a client clients does not know", async () => {
     // arrange
-    const failure = new Error("clients unreachable");
-    const { startProgramUseCase, clientCoachingPort } = startProgram();
-    vi.spyOn(clientCoachingPort, "find").mockRejectedValue(failure);
+    const { startProgramUseCase, coachingEndedPort, clientCoachingPort } =
+      startProgram({ clients: [] });
+    const askedSales = vi.spyOn(coachingEndedPort, "hasEnded");
+    const askedClientProfile = vi.spyOn(clientCoachingPort, "find");
 
     // act
-    const started = startProgramUseCase.execute({
+    await startProgramUseCase.execute({
       coachAccountId: COACH_ACCOUNT_ID,
       clientId: CLIENT_ID,
       setup: SETUP,
     });
 
     // assert
-    await expect(started).rejects.toBe(failure);
+    expect(askedSales).not.toHaveBeenCalled();
+    expect(askedClientProfile).not.toHaveBeenCalled();
   });
 
   it("fails whole when the program cannot be saved", async () => {

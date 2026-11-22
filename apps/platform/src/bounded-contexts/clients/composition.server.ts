@@ -99,7 +99,8 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
   });
   const clientCoaching = composeClientCoaching({
     ...handles,
-    ...clients.handles,
+    ...clientProfile.handles,
+    ...clientOnboarding.handles,
   });
   const clientResources = composeClientResourcesFeature({
     ...handles,
@@ -131,7 +132,7 @@ export function composeClients(handles: ClientsHandles): ClientsComposition {
     middleware: ({ context }, next) => {
       context.set(clientsContext, clients.feature);
       context.set(clientProfileContext, clientProfile.feature);
-      context.set(clientOnboardingContext, clientOnboarding);
+      context.set(clientOnboardingContext, clientOnboarding.feature);
       context.set(clientResourcesContext, clientResources);
       context.set(notificationsContext, notifications);
       context.set(checkInsContext, checkIns.feature);

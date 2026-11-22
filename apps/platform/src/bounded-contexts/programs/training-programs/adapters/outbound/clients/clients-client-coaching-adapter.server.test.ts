@@ -21,11 +21,7 @@ const ANAS_FACTS: NonNullable<ClientCoachingDto["coachingFacts"]> = {
 
 const ANA: ClientCoachingDto = {
   clientId: "client-1",
-  firstName: "Ana",
-  lastName: "Popescu",
-  gender: "female",
   answersApproved: true,
-  coachingEnded: false,
   coachingFacts: ANAS_FACTS,
   equipmentOptions: [
     { equipment: "Dumbbells", exclusive: false },
@@ -38,13 +34,17 @@ const ANA: ClientCoachingDto = {
 class ClientCoachingFacadeDouble implements ClientCoachingFacade {
   readonly saves: ClientEquipmentSaveDto[] = [];
 
+  readonly asked: string[] = [];
+
   constructor(
-    private readonly coaching: ClientCoachingDto | null = ANA,
+    private readonly coaching: ClientCoachingDto = ANA,
     private readonly saveStatus: SaveStatus = "saved",
   ) {}
 
-  async coachingOf(clientId: string): Promise<ClientCoachingDto | null> {
-    return this.coaching?.clientId === clientId ? this.coaching : null;
+  async coachingOf(clientId: string): Promise<ClientCoachingDto> {
+    this.asked.push(clientId);
+
+    return this.coaching;
   }
 
   async saveEquipment(
@@ -57,22 +57,19 @@ class ClientCoachingFacadeDouble implements ClientCoachingFacade {
 }
 
 describe("ClientsClientCoachingAdapter.find", () => {
-  it("translates who she is, her approved coaching facts and her goal and equipment options", async () => {
+  it("translates her approved coaching facts and her goal and equipment options, asking the facade for the client it was given", async () => {
     // arrange
+    const clientCoachingFacadeDouble = new ClientCoachingFacadeDouble();
     const clientsClientCoachingAdapter = new ClientsClientCoachingAdapter(
-      new ClientCoachingFacadeDouble(),
+      clientCoachingFacadeDouble,
     );
 
     // act
     const clientCoaching = await clientsClientCoachingAdapter.find("client-1");
 
     // assert
+    expect(clientCoachingFacadeDouble.asked).toEqual(["client-1"]);
     expect(clientCoaching).toEqual({
-      clientId: "client-1",
-      firstName: "Ana",
-      lastName: "Popescu",
-      gender: "female",
-      coachingEnded: false,
       answers: {
         status: "approved",
         coachingFacts: {
@@ -92,12 +89,11 @@ describe("ClientsClientCoachingAdapter.find", () => {
     });
   });
 
-  it("carries ended coaching and a profile without a primary goal", async () => {
+  it("carries a profile without a primary goal as a goal of null", async () => {
     // arrange
     const clientsClientCoachingAdapter = new ClientsClientCoachingAdapter(
       new ClientCoachingFacadeDouble({
         ...ANA,
-        coachingEnded: true,
         coachingFacts: { ...ANAS_FACTS, primaryGoal: null },
       }),
     );
@@ -106,9 +102,9 @@ describe("ClientsClientCoachingAdapter.find", () => {
     const clientCoaching = await clientsClientCoachingAdapter.find("client-1");
 
     // assert
-    expect(clientCoaching).toMatchObject({
-      coachingEnded: true,
-      answers: { status: "approved", coachingFacts: { goal: null } },
+    expect(clientCoaching.answers).toEqual({
+      status: "approved",
+      coachingFacts: expect.objectContaining({ goal: null }),
     });
   });
 
@@ -122,7 +118,7 @@ describe("ClientsClientCoachingAdapter.find", () => {
     const clientCoaching = await clientsClientCoachingAdapter.find("client-1");
 
     // assert
-    expect(clientCoaching?.answers).toEqual({ status: "not-approved" });
+    expect(clientCoaching.answers).toEqual({ status: "not-approved" });
   });
 
   it("answers approved answers without coaching facts as not approved, since there is nothing to start from", async () => {
@@ -135,20 +131,7 @@ describe("ClientsClientCoachingAdapter.find", () => {
     const clientCoaching = await clientsClientCoachingAdapter.find("client-1");
 
     // assert
-    expect(clientCoaching?.answers).toEqual({ status: "not-approved" });
-  });
-
-  it("answers nothing for a client the clients facade does not know", async () => {
-    // arrange
-    const clientsClientCoachingAdapter = new ClientsClientCoachingAdapter(
-      new ClientCoachingFacadeDouble(null),
-    );
-
-    // act
-    const clientCoaching = await clientsClientCoachingAdapter.find("client-1");
-
-    // assert
-    expect(clientCoaching).toBeNull();
+    expect(clientCoaching.answers).toEqual({ status: "not-approved" });
   });
 
   it.each([

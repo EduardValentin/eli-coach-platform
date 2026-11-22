@@ -187,7 +187,7 @@ describe("composeClientOnboardingFeature", () => {
     // arrange
     const handles = createOnboardingHandles();
     const { clientOnboardingController } =
-      composeClientOnboardingFeature(handles);
+      composeClientOnboardingFeature(handles).feature;
 
     // act
     const loading = clientOnboardingController.loadOnboarding(clientArgs());
@@ -203,7 +203,7 @@ describe("composeClientOnboardingFeature", () => {
     // arrange
     const handles = createOnboardingHandles();
     const { clientOnboardingController } =
-      composeClientOnboardingFeature(handles);
+      composeClientOnboardingFeature(handles).feature;
 
     // act
     const response = await clientOnboardingController.saveDraft(
@@ -230,7 +230,7 @@ describe("composeClientOnboardingFeature", () => {
     // arrange
     const handles = createOnboardingHandles();
     const { clientOnboardingController } =
-      composeClientOnboardingFeature(handles);
+      composeClientOnboardingFeature(handles).feature;
     const form = new FormData();
     form.set(
       "submission",
@@ -266,7 +266,7 @@ describe("composeClientOnboardingFeature", () => {
     // arrange
     const handles = createOnboardingHandles();
     const { clientOnboardingController } =
-      composeClientOnboardingFeature(handles);
+      composeClientOnboardingFeature(handles).feature;
 
     // act
     const response = await clientOnboardingController.answerDetails(
@@ -287,7 +287,7 @@ describe("composeClientOnboardingFeature", () => {
     // arrange
     const handles = createOnboardingHandles();
     const { onboardingReviewController } =
-      composeClientOnboardingFeature(handles);
+      composeClientOnboardingFeature(handles).feature;
 
     // act
     const loading = onboardingReviewController.loadReview(
@@ -306,7 +306,7 @@ describe("composeClientOnboardingFeature", () => {
     // arrange
     const handles = createOnboardingHandles();
     const { onboardingReviewController } =
-      composeClientOnboardingFeature(handles);
+      composeClientOnboardingFeature(handles).feature;
 
     // act
     const response = await onboardingReviewController.requestDetails(

@@ -1,7 +1,5 @@
 import type { ClientLevel, SessionMinutes, TrainingDays } from "./vocabulary";
 
-export type ClientGender = "female" | "male" | "prefer_not_to_say";
-
 export type ClientCoachingFacts = {
   goal: string | null;
   level: ClientLevel;
@@ -13,11 +11,6 @@ export type ClientCoachingFacts = {
 export type EquipmentOption = { value: string; exclusive: boolean };
 
 export type ClientCoaching = {
-  clientId: string;
-  firstName: string;
-  lastName: string;
-  gender: ClientGender;
-  coachingEnded: boolean;
   answers:
     | { status: "approved"; coachingFacts: ClientCoachingFacts }
     | { status: "not-approved" };
@@ -31,6 +24,6 @@ export type EquipmentUpdate = {
 };
 
 export interface ClientCoachingPort {
-  find(clientId: string): Promise<ClientCoaching | null>;
+  find(clientId: string): Promise<ClientCoaching>;
   saveEquipment(update: EquipmentUpdate): Promise<void>;
 }

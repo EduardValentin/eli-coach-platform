@@ -16,6 +16,8 @@ import type { RecipePhotosConfig } from "~/bounded-contexts/programs/nutrition-l
 import { trainingProgramsContext } from "~/bounded-contexts/programs/training-programs/adapters/inbound/http/context.server";
 import { composeTrainingProgramsFeature } from "~/bounded-contexts/programs/training-programs/composition.server";
 import type { ClientCoachingFacade } from "~/bounded-contexts/clients/public/client-coaching-facade";
+import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup-facade";
+import type { CoachingEndedFacade } from "~/bounded-contexts/sales/public/coaching-ended-facade";
 
 type ProgramsHandles = Omit<
   Parameters<typeof composeExerciseLibraryFeature>[0] &
@@ -24,6 +26,8 @@ type ProgramsHandles = Omit<
   | keyof ReturnType<typeof composeRecipePhotoFiles>
 > & {
   clientCoachingFacade: ClientCoachingFacade;
+  clientLookupFacade: Pick<ClientLookupFacade, "identityOf">;
+  coachingEndedFacade: CoachingEndedFacade;
   exerciseVideosConfig: ExerciseVideosConfig;
   recipePhotosConfig: RecipePhotosConfig;
 };

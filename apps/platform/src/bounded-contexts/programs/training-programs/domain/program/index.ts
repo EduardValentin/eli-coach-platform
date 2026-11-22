@@ -6,10 +6,15 @@ export {
   type ClientCoaching,
   type ClientCoachingFacts,
   type ClientCoachingPort,
-  type ClientGender,
   type EquipmentOption,
   type EquipmentUpdate,
 } from "./client-coaching-port";
+export {
+  type ClientGender,
+  type ClientIdentity,
+  type ClientIdentityPort,
+} from "./client-identity-port";
+export { type CoachingEndedPort } from "./coaching-ended-port";
 export { Program } from "./program";
 export { type ProgramContent } from "./program-content";
 export { type ProgramIdsPort } from "./program-ids-port";

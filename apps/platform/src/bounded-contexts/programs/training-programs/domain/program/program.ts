@@ -2,6 +2,7 @@ import type {
   ClientCoaching,
   ClientCoachingFacts,
 } from "./client-coaching-port";
+import type { ClientIdentity } from "./client-identity-port";
 import type { ProgramContent } from "./program-content";
 import type { ProgramSetup } from "./program-setup";
 import {
@@ -32,22 +33,21 @@ type StartedProgramInput = {
 
 type ProgramFields = Omit<ProgramSnapshot, "versions">;
 
-type EligibilityInput = {
+type ClientAnswers = {
+  client: ClientIdentity;
+  coachingEnded: boolean;
   clientCoaching: ClientCoaching;
-  program: Program | null;
 };
 
+type EligibilityInput = ClientAnswers & { program: Program | null };
+
 export type ProgramEligibility =
-  | { status: "has-program"; clientCoaching: ClientCoaching; program: Program }
-  | {
-      status: "coaching-ended" | "not-approved";
-      clientCoaching: ClientCoaching;
-    }
-  | {
+  | ({ status: "has-program"; program: Program } & ClientAnswers)
+  | ({ status: "coaching-ended" | "not-approved" } & ClientAnswers)
+  | ({
       status: "eligible";
-      clientCoaching: ClientCoaching;
       coachingFacts: ClientCoachingFacts;
-    };
+    } & ClientAnswers);
 
 export class Program {
   private constructor(
@@ -78,20 +78,20 @@ export class Program {
   }
 
   static eligibilityFor({
-    clientCoaching,
     program,
+    ...answers
   }: EligibilityInput): ProgramEligibility {
-    if (program) return { status: "has-program", clientCoaching, program };
-    if (clientCoaching.coachingEnded) {
-      return { status: "coaching-ended", clientCoaching };
-    }
+    const { coachingEnded, clientCoaching } = answers;
+
+    if (program) return { status: "has-program", ...answers, program };
+    if (coachingEnded) return { status: "coaching-ended", ...answers };
     if (clientCoaching.answers.status === "not-approved") {
-      return { status: "not-approved", clientCoaching };
+      return { status: "not-approved", ...answers };
     }
 
     return {
       status: "eligible",
-      clientCoaching,
+      ...answers,
       coachingFacts: clientCoaching.answers.coachingFacts,
     };
   }

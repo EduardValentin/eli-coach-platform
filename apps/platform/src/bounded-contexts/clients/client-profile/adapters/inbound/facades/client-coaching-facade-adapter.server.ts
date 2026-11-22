@@ -20,12 +20,12 @@ type ClientCoachingFacadeAdapterOptions = {
 export class ClientCoachingFacadeAdapter implements ClientCoachingFacade {
   constructor(private readonly options: ClientCoachingFacadeAdapterOptions) {}
 
-  async coachingOf(clientId: string): Promise<ClientCoachingDto | null> {
-    const coaching = await this.options.unitOfWork(() =>
-      this.options.readClientCoachingUseCase.execute(clientId),
+  async coachingOf(clientId: string): Promise<ClientCoachingDto> {
+    return this.coachingDtoOf(
+      await this.options.unitOfWork(() =>
+        this.options.readClientCoachingUseCase.execute(clientId),
+      ),
     );
-
-    return coaching && this.coachingDtoOf(coaching);
   }
 
   async saveEquipment({
@@ -44,11 +44,7 @@ export class ClientCoachingFacadeAdapter implements ClientCoachingFacade {
 
     return {
       clientId: coaching.clientId,
-      firstName: coaching.firstName,
-      lastName: coaching.lastName,
-      gender: coaching.gender,
       answersApproved: coaching.answersApproved,
-      coachingEnded: coaching.coachingEnded,
       coachingFacts: facts && {
         primaryGoal: facts.primaryGoal,
         level: facts.level,

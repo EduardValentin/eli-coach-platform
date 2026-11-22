@@ -16,10 +16,10 @@ type CoachingFactsDto = NonNullable<ClientCoachingDto["coachingFacts"]>;
 export class ClientsClientCoachingAdapter implements ClientCoachingPort {
   constructor(private readonly clientCoachingFacade: ClientCoachingFacade) {}
 
-  async find(clientId: string): Promise<ClientCoaching | null> {
-    const coaching = await this.clientCoachingFacade.coachingOf(clientId);
-
-    return coaching && this.clientCoachingOf(coaching);
+  async find(clientId: string): Promise<ClientCoaching> {
+    return this.clientCoachingOf(
+      await this.clientCoachingFacade.coachingOf(clientId),
+    );
   }
 
   async saveEquipment({ clientId, equipment }: EquipmentUpdate): Promise<void> {
@@ -39,11 +39,6 @@ export class ClientsClientCoachingAdapter implements ClientCoachingPort {
     const { coachingFacts } = coaching;
 
     return {
-      clientId: coaching.clientId,
-      firstName: coaching.firstName,
-      lastName: coaching.lastName,
-      gender: coaching.gender,
-      coachingEnded: coaching.coachingEnded,
       answers:
         coaching.answersApproved && coachingFacts
           ? {

@@ -13,11 +13,7 @@ type EquipmentOptionDto = {
 
 export type ClientCoachingDto = {
   clientId: string;
-  firstName: string;
-  lastName: string;
-  gender: "female" | "male" | "prefer_not_to_say";
   answersApproved: boolean;
-  coachingEnded: boolean;
   coachingFacts: ClientCoachingFactsDto | null;
   equipmentOptions: EquipmentOptionDto[];
   primaryGoalOptions: string[];
@@ -40,7 +36,7 @@ export type ClientEquipmentSaveOutcomeDto = {
 };
 
 export interface ClientCoachingFacade {
-  coachingOf(clientId: string): Promise<ClientCoachingDto | null>;
+  coachingOf(clientId: string): Promise<ClientCoachingDto>;
   saveEquipment(
     save: ClientEquipmentSaveDto,
   ): Promise<ClientEquipmentSaveOutcomeDto>;

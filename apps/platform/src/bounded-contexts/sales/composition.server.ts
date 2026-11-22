@@ -1,6 +1,7 @@
 import type { MiddlewareFunction } from "react-router";
 
 import type { ApiKeyAccountsFacade } from "~/bounded-contexts/access/public/api-key-accounts-facade";
+import type { CoachingEndedFacade } from "~/bounded-contexts/sales/public/coaching-ended-facade";
 
 import { paymentsContext } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/context.server";
 import {
@@ -38,6 +39,7 @@ type SalesHandles = Omit<
 };
 
 export type SalesComposition = {
+  facades: { coachingEndedFacade: CoachingEndedFacade };
   middleware: MiddlewareFunction<Response>;
 };
 
@@ -77,6 +79,7 @@ export function composeSales(handles: SalesHandles): SalesComposition {
   });
 
   return {
+    facades: subscriptions.facades,
     middleware: ({ context }, next) => {
       context.set(storeContext, store.feature);
       context.set(waitlistContext, waitlist.feature);

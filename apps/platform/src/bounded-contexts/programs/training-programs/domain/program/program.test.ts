@@ -4,6 +4,7 @@ import type {
   ClientCoaching,
   ClientCoachingFacts,
 } from "./client-coaching-port";
+import type { ClientIdentity } from "./client-identity-port";
 import { Program, type ProgramSnapshot } from "./program";
 import type { ProgramContent } from "./program-content";
 import { ProgramSetup } from "./program-setup";
@@ -27,15 +28,22 @@ const FACTS: ClientCoachingFacts = {
   equipment: ["Dumbbells"],
 };
 
-const CLIENT: ClientCoaching = {
+const CLIENT: ClientIdentity = {
   clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   gender: "female",
-  coachingEnded: false,
+};
+
+const CLIENT_COACHING: ClientCoaching = {
   answers: { status: "approved", coachingFacts: FACTS },
   equipmentOptions: [{ value: "Dumbbells", exclusive: false }],
   goalOptions: ["Lose fat", "Build muscle"],
+};
+
+const NOT_APPROVED: ClientCoaching = {
+  ...CLIENT_COACHING,
+  answers: { status: "not-approved" },
 };
 
 function version(
@@ -80,7 +88,7 @@ describe("Program.started", () => {
         splitShape: "full-body",
         equipment: ["Dumbbells"],
       },
-      CLIENT,
+      CLIENT_COACHING,
     );
     if (result.status === "invalid") throw new Error("expected a valid setup");
 
@@ -142,14 +150,18 @@ describe("Program.eligibilityFor", () => {
 
     // act
     const eligibility = Program.eligibilityFor({
-      clientCoaching: { ...CLIENT, coachingEnded: true },
+      client: CLIENT,
+      coachingEnded: true,
+      clientCoaching: CLIENT_COACHING,
       program,
     });
 
     // assert
     expect(eligibility).toEqual({
       status: "has-program",
-      clientCoaching: { ...CLIENT, coachingEnded: true },
+      client: CLIENT,
+      coachingEnded: true,
+      clientCoaching: CLIENT_COACHING,
       program,
     });
   });
@@ -157,11 +169,9 @@ describe("Program.eligibilityFor", () => {
   it("puts ended coaching before answers that are not approved", () => {
     // act
     const eligibility = Program.eligibilityFor({
-      clientCoaching: {
-        ...CLIENT,
-        coachingEnded: true,
-        answers: { status: "not-approved" },
-      },
+      client: CLIENT,
+      coachingEnded: true,
+      clientCoaching: NOT_APPROVED,
       program: null,
     });
 
@@ -172,7 +182,9 @@ describe("Program.eligibilityFor", () => {
   it("waits for her answers to be approved", () => {
     // act
     const eligibility = Program.eligibilityFor({
-      clientCoaching: { ...CLIENT, answers: { status: "not-approved" } },
+      client: CLIENT,
+      coachingEnded: false,
+      clientCoaching: NOT_APPROVED,
       program: null,
     });
 
@@ -183,14 +195,18 @@ describe("Program.eligibilityFor", () => {
   it("lets the coach start a program for an approved client in coaching, from her coaching facts", () => {
     // act
     const eligibility = Program.eligibilityFor({
-      clientCoaching: CLIENT,
+      client: CLIENT,
+      coachingEnded: false,
+      clientCoaching: CLIENT_COACHING,
       program: null,
     });
 
     // assert
     expect(eligibility).toEqual({
       status: "eligible",
-      clientCoaching: CLIENT,
+      client: CLIENT,
+      coachingEnded: false,
+      clientCoaching: CLIENT_COACHING,
       coachingFacts: FACTS,
     });
   });
