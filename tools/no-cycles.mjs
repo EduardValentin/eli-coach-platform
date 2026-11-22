@@ -6,7 +6,7 @@ const PRODUCTION_ROOT = "apps/platform/src";
 const IN_BOUNDED_CONTEXT = new RegExp(
   `^${PRODUCTION_ROOT}/bounded-contexts/([^/]+)/(.+)$`,
 );
-const NOT_COMPONENT_FOLDERS = new Set(["public", "shared"]);
+const BOUNDED_CONTEXT_OWN_FOLDERS = new Set(["public", "shared"]);
 const BOUNDED_CONTEXT_PUBLIC = new RegExp(
   `^${PRODUCTION_ROOT}/bounded-contexts/[^/]+/public/`,
 );
@@ -41,17 +41,15 @@ function boundedContextOf(path) {
   return path.match(IN_BOUNDED_CONTEXT)?.[1];
 }
 
-// A component is a folder of a bounded context that is neither its public/ nor
-// its shared/. The bounded context's own files (public/, shared/,
-// composition.server.ts, routes.ts) belong to no component.
 function componentOf(path) {
   const match = path.match(IN_BOUNDED_CONTEXT);
   if (!match) return undefined;
   const [, boundedContext, inside] = match;
   const [folder, ...rest] = inside.split("/");
-  const isComponentFolder =
-    rest.length > 0 && !NOT_COMPONENT_FOLDERS.has(folder);
-  return isComponentFolder ? `${boundedContext}/${folder}` : undefined;
+  const atBoundedContextRoot = rest.length === 0;
+  const belongsToNoComponent =
+    atBoundedContextRoot || BOUNDED_CONTEXT_OWN_FOLDERS.has(folder);
+  return belongsToNoComponent ? undefined : `${boundedContext}/${folder}`;
 }
 
 function addDependency(graph, from, to) {
@@ -98,11 +96,11 @@ function componentGraph(modules) {
   for (const module of modules) {
     const from = componentOf(module.source);
     if (!from) continue;
-    const callsFacades = !FACADE_ADAPTER.test(module.source);
+    const implementsFacades = FACADE_ADAPTER.test(module.source);
     for (const { resolved } of module.dependencies) {
       const imported = componentOf(resolved);
       if (imported) addDependency(graph, from, imported);
-      if (!callsFacades) continue;
+      if (implementsFacades) continue;
       for (const provider of providers.get(resolved) ?? []) {
         addDependency(graph, from, provider);
       }

@@ -139,7 +139,9 @@ function ProfileChangeDescription({
       {lines.map(({ label, names }, index) => (
         <Fragment key={label}>
           {" "}
-          <span className={cn("block", index === 0 ? "mt-3" : "mt-1")}>
+          <span
+            className={cn("block", { "mt-3": index === 0, "mt-1": index > 0 })}
+          >
             <span className="font-medium">{label}:</span>{" "}
             <span className="text-text-primary">{names.join(", ")}.</span>
           </span>
@@ -173,13 +175,12 @@ function ProgramSetupSheet({ setup }: { setup: ReadySetup }) {
     return submit(values, { method: "post", encType: "application/json" });
   }
 
-  // The server validates; a form that is visibly incomplete goes straight to
-  // it so the problems show before any confirmation.
   const create = form.handleSubmit((values) => {
-    const incomplete =
+    const fieldProblemsFirst =
       values.goal.trim() === "" || values.equipment.length === 0;
+    const equipmentUnchanged = profileChange.length === 0;
 
-    if (incomplete || profileChange.length === 0) return save(values);
+    if (fieldProblemsFirst || equipmentUnchanged) return save(values);
     setConfirmingProfileChange(true);
   });
 

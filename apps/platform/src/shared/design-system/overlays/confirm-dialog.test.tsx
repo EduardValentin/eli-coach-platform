@@ -133,8 +133,7 @@ describe("ConfirmDialog", () => {
         confirmLabel="Save"
         description={
           <>
-            Saves the change.
-            <span className="block">Adding: Dumbbells.</span>
+            Saves the change. <span className="block">Adding: Dumbbells.</span>
           </>
         }
         onConfirm={() => {}}
@@ -151,7 +150,7 @@ describe("ConfirmDialog", () => {
 
     // assert
     expect(dialog).toHaveAccessibleDescription(
-      "Saves the change.Adding: Dumbbells.",
+      "Saves the change. Adding: Dumbbells.",
     );
   });
 

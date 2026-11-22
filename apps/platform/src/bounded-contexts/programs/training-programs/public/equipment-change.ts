@@ -17,13 +17,13 @@ export function equipmentChangeLines(
   profileEquipment: readonly string[],
   chosenEquipment: readonly string[],
 ): EquipmentChangeLine[] {
-  const named = (kept: (value: string) => boolean) =>
-    options.filter((option) => kept(option.value));
-  const added = named(
+  const inOptionOrder = (included: (value: string) => boolean) =>
+    options.filter((option) => included(option.value));
+  const added = inOptionOrder(
     (value) =>
       chosenEquipment.includes(value) && !profileEquipment.includes(value),
   );
-  const removed = named(
+  const removed = inOptionOrder(
     (value) =>
       profileEquipment.includes(value) && !chosenEquipment.includes(value),
   );

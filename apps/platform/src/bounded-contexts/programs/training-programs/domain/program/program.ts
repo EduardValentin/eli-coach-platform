@@ -33,21 +33,21 @@ type StartedProgramInput = {
 
 type ProgramFields = Omit<ProgramSnapshot, "versions">;
 
-type ClientAnswers = {
+type EligibilitySources = {
   client: ClientIdentity;
   coachingEnded: boolean;
   clientCoaching: ClientCoaching;
 };
 
-type EligibilityInput = ClientAnswers & { program: Program | null };
+type EligibilityInput = EligibilitySources & { program: Program | null };
 
 export type ProgramEligibility =
-  | ({ status: "has-program"; program: Program } & ClientAnswers)
-  | ({ status: "coaching-ended" | "not-approved" } & ClientAnswers)
+  | ({ status: "has-program"; program: Program } & EligibilitySources)
+  | ({ status: "coaching-ended" | "not-approved" } & EligibilitySources)
   | ({
       status: "eligible";
       coachingFacts: ClientCoachingFacts;
-    } & ClientAnswers);
+    } & EligibilitySources);
 
 export class Program {
   private constructor(
@@ -79,19 +79,19 @@ export class Program {
 
   static eligibilityFor({
     program,
-    ...answers
+    ...sources
   }: EligibilityInput): ProgramEligibility {
-    const { coachingEnded, clientCoaching } = answers;
+    const { coachingEnded, clientCoaching } = sources;
 
-    if (program) return { status: "has-program", ...answers, program };
-    if (coachingEnded) return { status: "coaching-ended", ...answers };
+    if (program) return { status: "has-program", ...sources, program };
+    if (coachingEnded) return { status: "coaching-ended", ...sources };
     if (clientCoaching.answers.status === "not-approved") {
-      return { status: "not-approved", ...answers };
+      return { status: "not-approved", ...sources };
     }
 
     return {
       status: "eligible",
-      ...answers,
+      ...sources,
       coachingFacts: clientCoaching.answers.coachingFacts,
     };
   }

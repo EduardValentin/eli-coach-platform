@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { ClipboardList } from 'lucide-react';
@@ -121,9 +121,12 @@ function ProfileChangeDescription({ pronoun, lines }: { pronoun: string; lines: 
     <>
       Creating the program saves the equipment you chose here to {pronoun} profile.
       {lines.map(({ label, names }, index) => (
-        <span key={label} className={index === 0 ? 'mt-3 block' : 'mt-1 block'}>
-          <span className="font-medium">{label}:</span> <span className="text-text-primary">{names.join(', ')}.</span>
-        </span>
+        <Fragment key={label}>
+          {' '}
+          <span className={index === 0 ? 'mt-3 block' : 'mt-1 block'}>
+            <span className="font-medium">{label}:</span> <span className="text-text-primary">{names.join(', ')}.</span>
+          </span>
+        </Fragment>
       ))}
     </>
   );
@@ -232,8 +235,8 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
     onCreated();
   });
 
-  const create = form.handleSubmit(async values => {
-    if (equipmentChangeLines(currentEquipment, clientEquipmentOf(asList(values.equipment))).length === 0) return save();
+  const create = form.handleSubmit(async () => {
+    if (profileChange.length === 0) return save();
     setConfirmingProfileChange(true);
   });
 
