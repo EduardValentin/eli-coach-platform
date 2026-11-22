@@ -51,6 +51,7 @@
   "ignore": [
     "tools/boundary-fixtures/**",
     "tools/domain-layout-fixtures/**",
+    "tools/no-cycles-fixtures/**",
     "designs/**"
   ]
 }
