@@ -16,6 +16,7 @@ import {
   type ClientEquipment,
 } from '../../../domain/clientProfile';
 import { DAILY_STEP_TARGETS } from '../../../domain/programDefaults';
+import { equipmentChangeLines, type EquipmentChangeLine } from '../../../domain/equipmentChange';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
@@ -115,8 +116,17 @@ function setupFrom(values: OnboardingValues): ProgramSetup {
   };
 }
 
-function sameEquipment(chosen: readonly ClientEquipment[], current: readonly ClientEquipment[]): boolean {
-  return chosen.length === current.length && chosen.every(item => current.includes(item));
+function ProfileChangeDescription({ pronoun, lines }: { pronoun: string; lines: EquipmentChangeLine[] }) {
+  return (
+    <>
+      Creating the program saves the equipment you chose here to {pronoun} profile.
+      {lines.map(({ label, names }, index) => (
+        <span key={label} className={index === 0 ? 'mt-3 block' : 'mt-1 block'}>
+          <span className="font-medium">{label}:</span> <span className="text-text-primary">{names.join(', ')}.</span>
+        </span>
+      ))}
+    </>
+  );
 }
 
 function setupTitle(journey: ClientJourney): string {
@@ -200,15 +210,19 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   const headingId = useId();
   const [failed, setFailed] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [confirmingProfileChange, setConfirmingProfileChange] = useState(false);
+  const createButton = useRef<HTMLButtonElement>(null);
   const clientPath = clientDetailPathForJourney(journey);
   useSplitFollowingDays(form);
 
-  const create = form.handleSubmit(async values => {
+  const profileChange = equipmentChangeLines(currentEquipment, clientEquipmentOf(asList(form.watch('equipment'))));
+
+  const save = form.handleSubmit(async values => {
     const equipment = clientEquipmentOf(asList(values.equipment));
     setFailed(false);
     try {
       await writeProgramThroughServer(appState.programWrite, async () => {
-        if (!sameEquipment(equipment, currentEquipment)) await updateClientProfile(journey.callId, { coaching: { equipment } });
+        if (equipmentChangeLines(currentEquipment, equipment).length > 0) await updateClientProfile(journey.callId, { coaching: { equipment } });
         createProgram(journey.callId, setupFrom(values));
       });
     } catch {
@@ -217,6 +231,16 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
     }
     onCreated();
   });
+
+  const create = form.handleSubmit(async values => {
+    if (equipmentChangeLines(currentEquipment, clientEquipmentOf(asList(values.equipment))).length === 0) return save();
+    setConfirmingProfileChange(true);
+  });
+
+  function confirmProfileChange() {
+    setConfirmingProfileChange(false);
+    void save();
+  }
 
   function cancel(event: MouseEvent<HTMLAnchorElement>) {
     if (!isDirty) return;
@@ -236,7 +260,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
                 <Link to={clientPath} onClick={cancel} className={buttonVariants({ variant: 'outline', size: 'md' })}>
                   Cancel
                 </Link>
-                <Button type="submit" size="md" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
+                <Button ref={createButton} type="submit" size="md" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
                   {isSubmitting ? 'Creating…' : 'Create program'}
                 </Button>
               </>
@@ -254,6 +278,16 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
           </p>
         </form>
       </Form>
+      <ConfirmDialog
+        open={confirmingProfileChange}
+        onOpenChange={setConfirmingProfileChange}
+        title={`This updates ${possessive(journey.profile.identity.firstName)} profile`}
+        description={<ProfileChangeDescription pronoun={clientPronouns(journey.profile.identity.gender).possessive.lower} lines={profileChange} />}
+        cancelLabel="Keep editing"
+        confirmLabel="Create program"
+        onConfirm={confirmProfileChange}
+        returnFocusTo={createButton}
+      />
       <ConfirmDialog
         open={confirmingLeave}
         onOpenChange={setConfirmingLeave}
