@@ -540,4 +540,72 @@ export class ProgramSetupPage {
     await this.tabToControl(this.createButton);
     await this.page.keyboard.press("Enter");
   }
+
+  async expectProfileChangeNamed(
+    firstName: string,
+    lines: readonly string[],
+  ): Promise<void> {
+    const dialog = this.profileChangeDialog(firstName);
+
+    await expect(dialog).toBeVisible();
+
+    for (const line of lines) {
+      await expect(dialog).toHaveAccessibleDescription(
+        new RegExp(`(^|\\. )${escapedPattern(line)}( |$)`),
+      );
+    }
+  }
+
+  async expectProfileChangeWithinViewport(firstName: string): Promise<void> {
+    await expect
+      .poll(async () => {
+        const box = await this.profileChangeDialog(firstName).boundingBox();
+        const viewport = this.page.viewportSize();
+
+        return (
+          box !== null &&
+          viewport !== null &&
+          box.x >= 0 &&
+          box.y >= 0 &&
+          box.x + box.width <= viewport.width &&
+          box.y + box.height <= viewport.height
+        );
+      })
+      .toBe(true);
+  }
+
+  async closeProfileChangeWithEscape(firstName: string): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.profileChangeDialog(firstName)).toBeHidden();
+  }
+
+  async closeProfileChangeWithX(firstName: string): Promise<void> {
+    await this.profileChangeDialog(firstName)
+      .getByRole("button", { name: "Close" })
+      .click();
+    await expect(this.profileChangeDialog(firstName)).toBeHidden();
+  }
+
+  async closeProfileChangeOnScrim(firstName: string): Promise<void> {
+    await this.page.mouse.click(2, 2);
+    await expect(this.profileChangeDialog(firstName)).toBeHidden();
+  }
+
+  async expectProfileChangeKeyboardReachesCreate(
+    firstName: string,
+  ): Promise<void> {
+    const dialog = this.profileChangeDialog(firstName);
+
+    await expect(
+      dialog.getByRole("button", { name: "Keep editing", exact: true }),
+    ).toBeFocused();
+    await tabTo(
+      this.page,
+      dialog.getByRole("button", { name: "Create program", exact: true }),
+    );
+  }
+
+  async expectNoProfileChangeQuestionYet(firstName: string): Promise<void> {
+    await this.expectNoProfileChangeQuestion(firstName);
+  }
 }

@@ -477,6 +477,178 @@ test(
 );
 
 test(
+  "the profile confirmation names each change in its own sentence, closes every way back to the form with the choices kept, and fits a phone and a desktop with the keyboard",
+  { tag: "@completeness" },
+  async (
+    {
+      coachClient,
+      databasePool,
+      page,
+      programSetup,
+      provisionClientInState,
+      provisionCoach,
+      signInAsCoach,
+    },
+    testInfo,
+  ) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    const noGoalClient = await provisionClientInState("approved");
+    await clearGoalOnProfile(databasePool, noGoalClient.clientId);
+    const posts: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST") posts.push(request.url());
+    });
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachClient.open(noGoalClient.clientId);
+    await coachClient.buildProgram();
+    await programSetup.expectOpenFor(
+      noGoalClient.firstName,
+      noGoalClient.clientId,
+    );
+    await programSetup.toggleEquipment("Kettlebells");
+
+    // act
+    await programSetup.create();
+
+    // assert
+    await programSetup.expectGoalProblem("Choose a goal.");
+    await programSetup.expectNoProfileChangeQuestion(noGoalClient.firstName);
+
+    // act
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.expectOpenFor(client.firstName, client.clientId);
+    await setPhoneViewport(page);
+    await programSetup.toggleEquipment("Bodyweight only");
+    await programSetup.create();
+
+    // assert
+    await programSetup.expectProfileChangeNamed(client.firstName, [
+      "Switching to: Bodyweight only.",
+      "Removing: Full gym, Dumbbells.",
+    ]);
+    await programSetup.expectProfileChangeWithinViewport(client.firstName);
+    await attachScreenshot(page, testInfo, "profile-change-phone");
+
+    // act
+    await programSetup.closeProfileChangeWithEscape(client.firstName);
+
+    // assert
+    await programSetup.expectCreateFocused();
+    await programSetup.expectEquipmentChecked(["Bodyweight only"]);
+
+    // act
+    await programSetup.create();
+    await programSetup.closeProfileChangeWithX(client.firstName);
+
+    // assert
+    await programSetup.expectEquipmentChecked(["Bodyweight only"]);
+
+    // act
+    await programSetup.create();
+    await programSetup.closeProfileChangeOnScrim(client.firstName);
+
+    // assert
+    await programSetup.expectEquipmentChecked(["Bodyweight only"]);
+    expect(
+      posts.filter((url) => url.includes(`${client.clientId}/program/new`)),
+    ).toHaveLength(0);
+
+    // act
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await programSetup.create();
+
+    // assert
+    await programSetup.expectProfileChangeWithinViewport(client.firstName);
+    await programSetup.expectProfileChangeKeyboardReachesCreate(
+      client.firstName,
+    );
+    await attachScreenshot(page, testInfo, "profile-change-desktop");
+
+    // act
+    await programSetup.closeProfileChangeWithEscape(client.firstName);
+
+    // assert
+    await programSetup.expectCreateFocused();
+  },
+);
+
+test(
+  "after a failed save the confirmation is closed with the alert shown, and Create program asks again before creating",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    page,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    let refused = false;
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.expectOpenFor(client.firstName, client.clientId);
+    await page.route(
+      new RegExp(`/coach/clients/${client.clientId}/program/new`),
+      async (route) => {
+        if (route.request().method() !== "POST" || refused) {
+          return route.fallback();
+        }
+        refused = true;
+        return route.fulfill({
+          status: 200,
+          headers: {
+            "x-remix-response": "yes",
+            "content-type": "text/x-script",
+          },
+          body: FAILED_CREATE_ANSWER,
+        });
+      },
+    );
+    await programSetup.toggleEquipment("Kettlebells");
+
+    // act
+    await programSetup.create();
+    await programSetup.confirmProfileChange(client.firstName);
+
+    // assert
+    await programSetup.expectSaveFailedNotice();
+    await programSetup.expectNoProfileChangeQuestion(client.firstName);
+    await programSetup.expectEquipmentChecked([
+      "Full gym",
+      "Dumbbells",
+      "Kettlebells",
+    ]);
+
+    // act
+    await programSetup.create();
+
+    // assert
+    await programSetup.expectProfileChangeNamed(client.firstName, [
+      "Adding: Kettlebells.",
+    ]);
+
+    // act
+    await programSetup.confirmProfileChange(client.firstName);
+
+    // assert
+    await coachClient.expectOpen(client.clientId);
+  },
+);
+
+test(
   "a failed save tells the coach, keeps her choices, and the next try creates the program",
   { tag: "@completeness" },
   async (
