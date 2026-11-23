@@ -13,7 +13,6 @@ This production app is backed by a reference prototype in `designs/react-referen
 ## Sources of Truth
 
 - `docs/architecture/`: the audited architecture record; `conventions.md` says where a file goes and what it may import.
-- `DESIGN.md`: visual identity and where the design system lives.
 - `PRD.md`: product behavior, business rules, and canonical vocabulary. Rename vocabulary when the PRD changes; never create synonyms.
 - Boundary rules: `tools/dependency-cruiser.config.cjs`; published surfaces: `knip.json`. `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), directly inside `pnpm validate` and the Docker builder stage; both are proven by `tools/boundaries.test.mjs`.
 
@@ -32,7 +31,6 @@ Pre-launch MVP with no users and no production environment.
 
 - Track work in the Linear Eli Coach Platform project. Prefix every commit with the issue ID (`GEN-123 …`). Ad hoc work without an issue omits the prefix; ask before assuming work is ad hoc.
 - Keep `docs/superpowers/` artifacts local and uncommitted unless asked.
-- Re-read a Dependabot PR's current title and diff before merging; a rebase can retarget a minor to a major.
 - Terms changes follow `docs/TERMS.md`. Store products are published only through the management API, per `docs/STORE_PUBLISHING.md`.
 
 Before claiming completion or opening a PR:
@@ -41,8 +39,6 @@ Before claiming completion or opening a PR:
 pnpm validate
 pnpm test:lighthouse
 ```
-
-Exercise UI changes in a browser. If browser verification is unavailable, say so; tests and typechecks do not prove UI behavior.
 
 ## Code
 
@@ -78,3 +74,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Public routes are server-rendered at request time; load database-backed state through loaders, not client-side round trips.
 - Third-party verification stays behind adapters; the server verifies provider tokens before domain logic runs.
 - One `<h1>` per page with non-skipping heading levels; labeled `main`, `nav`, and `aside` landmarks; native semantics first, with ARIA only for what HTML cannot express; every interaction keyboard-operable; a layout-stable `prefers-reduced-motion` fallback for every animation.
+
+## QA Testing
+
+If a QA agent performs manual testing on the application using playwright scripts. Then the QA agent must first inspect our e2e testing suite and configuration to understand the current shape, and integrate it's scripts cleanly into our e2e suite.
