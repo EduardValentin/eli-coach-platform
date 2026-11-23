@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { DRAFT_PATH, renderProgramEditor, stubEditorBrowserApis } from '../../../../test/renderProgramEditor';
+import { renderProgramEditor, stubEditorBrowserApis } from '../../../../test/renderProgramEditor';
 import { useAppState } from '../../../context/AppContext';
 import { DEMO_JOURNEY_CALL_ID } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
@@ -42,14 +42,14 @@ function DraftSavesSwitch() {
 }
 
 function renderBuilder(draftSaves: 'works' | 'fails' | 'stale', user: UserEvent = userEvent.setup()): UserEvent {
-  renderProgramEditor(
-    `&pseed=draft&jstage=approved&pdraft=${draftSaves}`,
-    DRAFT_PATH,
-    <>
-      <StoredPlan />
-      <DraftSavesSwitch />
-    </>,
-  );
+  renderProgramEditor(`&pseed=draft&jstage=approved&pdraft=${draftSaves}`, {
+    beside: (
+      <>
+        <StoredPlan />
+        <DraftSavesSwitch />
+      </>
+    ),
+  });
   return user;
 }
 
@@ -258,9 +258,21 @@ describe('a draft that changed elsewhere', () => {
     expect(draftLine()).toHaveTextContent(`${DRAFT_LINE} · Changed elsewhere`);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByText('Stored plan: Foundation, Hypertrophy, Deload')).toBeInTheDocument();
-    await user.keyboard('{Escape}');
-    expect(screen.getByRole('alertdialog', { name: 'This draft changed elsewhere' })).toBeInTheDocument();
     expect(closingTheTabIsWarned()).toBe(false);
+  });
+
+  it('stays open when she presses Escape', async () => {
+    // arrange
+    const user = renderBuilder('stale');
+    await moveHypertrophyFirst(user);
+    await screen.findByRole('alertdialog', { name: 'This draft changed elsewhere' }, SAVE_WAIT);
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(screen.getByRole('alertdialog', { name: 'This draft changed elsewhere' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload' })).toHaveFocus();
   });
 
   it('shows the newer draft without the refused change after Reload, at the same place, with focus on its heading', async () => {
@@ -352,20 +364,33 @@ describe('leaving the builder with unsaved changes', () => {
     expect(dialog).toHaveAccessibleDescription('Your latest changes aren’t saved yet. If you leave now, they’re lost.');
   });
 
-  it('asks at once after a failed save, and Keep editing returns her to the link she used', async () => {
+  it('asks at once after a failed save, opening on Keep editing', async () => {
+    // arrange
+    const user = renderBuilder('fails');
+    await moveHypertrophyFirst(user);
+    await failedSaveAlert();
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'Back to Jane Doe' }));
+
+    // assert
+    const dialog = screen.getByRole('dialog', { name: 'Unsaved changes' });
+    expect(within(dialog).getByRole('button', { name: 'Keep editing' })).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: 'Leave without saving' })).toBeInTheDocument();
+  });
+
+  it('keeps her in the builder with focus back on the link she used when she keeps editing', async () => {
     // arrange
     const user = renderBuilder('fails');
     await moveHypertrophyFirst(user);
     await failedSaveAlert();
     const back = screen.getByRole('link', { name: 'Back to Jane Doe' });
-
-    // act
     await user.click(back);
 
+    // act
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }));
+
     // assert
-    const dialog = screen.getByRole('dialog', { name: 'Unsaved changes' });
-    expect(within(dialog).getByRole('button', { name: 'Keep editing' })).toHaveFocus();
-    await user.click(within(dialog).getByRole('button', { name: 'Keep editing' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(back).toHaveFocus();
     expect(blockTypesOnScreen()).toEqual(['Hypertrophy', 'Foundation', 'Deload']);

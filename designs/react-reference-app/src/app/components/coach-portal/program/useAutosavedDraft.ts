@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../../context/AppContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { draftOf, type Program } from '../../../domain/program';
-import { saveDraftThroughServer } from '../../../services/programWriteService';
+import { saveDraftThroughServer, type DraftSaveAnswer } from '../../../services/programWriteService';
 import { useEditorAnnouncer } from './editorAnnouncer';
 
 const SAVE_DELAY_MS = 800;
 const SAVE_RETRY_INTERVAL_MS = 15_000;
 
 export type SaveState = 'unchanged' | 'saving' | 'saved' | 'not-saved' | 'changed-elsewhere';
-type SaveResult = 'saved' | 'not-saved' | 'changed-elsewhere';
+type SaveResult = DraftSaveAnswer | 'not-saved';
 type ProgramChange = (program: Program) => Program;
 
 export type DraftSaving = {
@@ -25,13 +25,8 @@ export function hasUnsentChanges(state: SaveState): boolean {
   return state === 'saving' || state === 'not-saved';
 }
 
-/**
- * Holds the program as the builder shows it, which is the stored one until she changes it. A change shows at once
- * and reaches the store through one mocked save at a time, sent after a short delay; a failed save is tried again on a
- * timer, when the connection returns and with the next change, and a save refused because the draft changed elsewhere
- * locks the builder until it reloads the draft.
- */
-export function useDraftSaving(stored: Program) {
+/** The builder's working copy of the program, saved as she works. It follows the store only until her first change, because the prototype's seeds settle after the builder mounts. */
+export function useAutosavedDraft(stored: Program) {
   const { appState } = useAppState();
   const { updateDraftVersion, updateSetup } = usePrograms();
   const announce = useEditorAnnouncer();
@@ -41,10 +36,10 @@ export function useDraftSaving(stored: Program) {
   const [retrying, setRetrying] = useState(false);
 
   const shown = useRef(stored);
-  const outcome = useRef(appState.draftSave);
-  outcome.current = appState.draftSave;
+  const draftSaveOutcome = useRef(appState.draftSave);
+  draftSaveOutcome.current = appState.draftSave;
   const edits = useRef({ made: 0, saved: 0 });
-  const failed = useRef(false);
+  const failingNow = useRef(false);
   const refused = useRef(false);
   const queuedSave = useRef<number | null>(null);
   const inFlight = useRef<Promise<SaveResult> | null>(null);
@@ -61,27 +56,32 @@ export function useDraftSaving(stored: Program) {
     updateSetup(sent.callId, { level: sent.level, language: sent.language });
   }
 
-  function markFailing(next: boolean) {
-    failed.current = next;
-    setFailing(next);
+  function startFailing() {
+    failingNow.current = true;
+    setFailing(true);
   }
 
-  function settle(result: SaveResult, sentAtEdit: number) {
+  function stopFailing() {
+    failingNow.current = false;
+    setFailing(false);
+  }
+
+  function applySaveResult(result: SaveResult, sentAtEdit: number) {
     if (result === 'changed-elsewhere') {
       refused.current = true;
       cancelQueuedSave();
-      markFailing(false);
+      stopFailing();
       setState('changed-elsewhere');
       return;
     }
     if (result === 'not-saved') {
-      markFailing(true);
+      startFailing();
       if (queuedSave.current === null) setState('not-saved');
       return;
     }
     edits.current.saved = sentAtEdit;
-    if (failed.current) {
-      markFailing(false);
+    if (failingNow.current) {
+      stopFailing();
       announce('All changes saved.');
     }
     if (sentAtEdit === edits.current.made) setState('saved');
@@ -95,11 +95,11 @@ export function useDraftSaving(stored: Program) {
     const sentAtEdit = edits.current.made;
     const sent = shown.current;
     setState('saving');
-    const pending = saveDraftThroughServer(outcome.current, () => writeToStore(sent)).catch((): SaveResult => 'not-saved');
+    const pending = saveDraftThroughServer(draftSaveOutcome.current, () => writeToStore(sent)).catch((): SaveResult => 'not-saved');
     inFlight.current = pending;
     const result = await pending;
     inFlight.current = null;
-    settle(result, sentAtEdit);
+    applySaveResult(result, sentAtEdit);
     return result;
   }
 
@@ -131,7 +131,7 @@ export function useDraftSaving(stored: Program) {
     show(stored);
     edits.current = { made: 0, saved: 0 };
     refused.current = false;
-    markFailing(false);
+    stopFailing();
     setState('unchanged');
   }
 

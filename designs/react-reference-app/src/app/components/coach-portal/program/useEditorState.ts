@@ -17,7 +17,7 @@ import type { DocumentEditing } from '../../program-view/documentEditing';
 import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
 import { draftStateOf } from './unpublishableDraft';
-import { useDraftSaving } from './useDraftSaving';
+import { useAutosavedDraft } from './useAutosavedDraft';
 
 export type WriteResult = 'written' | 'failed';
 
@@ -33,7 +33,7 @@ function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date)
 
 export function useEditorState({ journey, program: stored, draft: storedDraft, programPath }: EditorInput) {
   const { discardDraft, publishDraft } = usePrograms();
-  const { program, change, saving, storeShownDraft } = useDraftSaving(stored);
+  const { program, change, saving, storeShownDraft } = useAutosavedDraft(stored);
   const draft = draftOf(program) ?? storedDraft;
   const { exercises } = useTraining();
   const { appState } = useAppState();

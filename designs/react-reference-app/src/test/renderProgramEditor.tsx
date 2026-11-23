@@ -38,10 +38,9 @@ export function stubEditorBrowserApis() {
   Element.prototype.scrollIntoView ??= () => {};
 }
 
-export const DRAFT_PATH = '/coach/clients/c1/program/draft';
+type EditorRenderOptions = { path?: string; beside?: ReactNode };
 
-/** Renders the builder at a URL whose query sets the Dev Toggle state; `beside` renders next to the routes, inside the providers. */
-export function renderProgramEditor(search: string, path = DRAFT_PATH, beside: ReactNode = null) {
+export function renderProgramEditor(search: string, { path = '/coach/clients/c1/program/draft', beside = null }: EditorRenderOptions = {}) {
   const url = `${path}?session=coach${search}`;
   window.history.replaceState(null, '', url);
   render(

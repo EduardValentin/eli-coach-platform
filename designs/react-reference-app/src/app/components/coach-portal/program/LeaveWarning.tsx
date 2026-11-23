@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
-import { hasUnsentChanges, type DraftSaving } from './useDraftSaving';
+import { hasUnsentChanges, type DraftSaving } from './useAutosavedDraft';
 
 type LeavingLink = { element: HTMLAnchorElement; to: string };
 
@@ -30,16 +30,12 @@ function warnBeforeUnload(event: BeforeUnloadEvent) {
 
 type LeaveWarningProps = { draftPath: string; saving: DraftSaving };
 
-/**
- * While a change is unsent, closing the tab gets the browser's prompt, and a link off the builder waits for a save in
- * flight or asks first when saving has failed.
- */
 export function LeaveWarning({ draftPath, saving }: LeaveWarningProps) {
   const navigate = useNavigate();
   const [leavingTo, setLeavingTo] = useState<string | null>(null);
   const usedLink = useRef<HTMLElement | null>(null);
-  const latest = useRef(saving);
-  latest.current = saving;
+  const latestSaving = useRef(saving);
+  latestSaving.current = saving;
   const unsent = hasUnsentChanges(saving.state);
 
   useEffect(() => {
@@ -56,11 +52,11 @@ export function LeaveWarning({ draftPath, saving }: LeaveWarningProps) {
       event.preventDefault();
       event.stopPropagation();
       usedLink.current = link.element;
-      if (latest.current.failing) {
+      if (latestSaving.current.failing) {
         setLeavingTo(link.to);
         return;
       }
-      void latest.current.saveNow().then(result => {
+      void latestSaving.current.saveNow().then(result => {
         if (result === 'saved') navigate(link.to);
         if (result === 'not-saved') setLeavingTo(link.to);
       });

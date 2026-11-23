@@ -18,7 +18,7 @@ import { cn } from '../../ui/utils';
 import { ClientProfilePopover, ClientProfileTrigger } from './ClientProfilePopover';
 import { ProgramFindings, type FindingTarget } from './ProgramFindings';
 import { coachingEndedDraftReason, type DraftState } from './unpublishableDraft';
-import type { DraftSaving, SaveState } from './useDraftSaving';
+import type { DraftSaving, SaveState } from './useAutosavedDraft';
 import type { WriteResult } from './useEditorState';
 
 type EditorTopBarProps = {
@@ -81,7 +81,10 @@ function SaveStateNote({ state }: { state: SaveState }) {
   );
 }
 
-function FailedSaveAlert({ retrying, retryNow }: Pick<DraftSaving, 'retrying' | 'retryNow'>) {
+type FailedSaveAlertProps = Pick<DraftSaving, 'retrying' | 'retryNow'> & { placeHeading: RefObject<HTMLHeadingElement> };
+
+function FailedSaveAlert({ retrying, retryNow, placeHeading }: FailedSaveAlertProps) {
+  useFocusMovedToHeadingOnClose(placeHeading);
   return (
     <Alert
       className="order-last basis-full"
@@ -100,13 +103,14 @@ function focusIsLost(): boolean {
   return document.activeElement === null || document.activeElement === document.body;
 }
 
-/** Focus inside the failed-save alert would drop to the page when the alert goes, so it moves to the place heading. */
-function useFocusKeptWhenAlertCloses(showsAlert: boolean, placeHeading: RefObject<HTMLHeadingElement>) {
-  const showedAlert = useRef(showsAlert);
-  useEffect(() => {
-    if (showedAlert.current && !showsAlert && focusIsLost()) placeHeading.current?.focus();
-    showedAlert.current = showsAlert;
-  }, [showsAlert, placeHeading]);
+/** Focus inside the closing element would drop to the page, so it moves to the place heading. */
+function useFocusMovedToHeadingOnClose(placeHeading: RefObject<HTMLHeadingElement>) {
+  useEffect(
+    () => () => {
+      if (focusIsLost()) placeHeading.current?.focus();
+    },
+    [placeHeading],
+  );
 }
 
 type PlaceProps = Pick<EditorTopBarProps, 'placeTitle' | 'placeHeading' | 'onOverview'>;
@@ -267,7 +271,6 @@ export function EditorTopBar({
     },
   };
   const narrowScreenActions: RowMenuAction[] = showsToolbarIcons ? [] : [...libraryAction, ...previewAction, profileAction];
-  useFocusKeptWhenAlertCloses(saving.failing, placeHeading);
 
   return (
     <>
@@ -327,7 +330,7 @@ export function EditorTopBar({
             </span>
           </div>
         </ClientProfilePopover>
-        {saving.failing && <FailedSaveAlert retrying={saving.retrying} retryNow={saving.retryNow} />}
+        {saving.failing && <FailedSaveAlert retrying={saving.retrying} retryNow={saving.retryNow} placeHeading={placeHeading} />}
       </header>
       <DiscardDialog open={confirmingDiscard} onOpenChange={setConfirmingDiscard} version={version} onDiscard={onDiscard} />
     </>
