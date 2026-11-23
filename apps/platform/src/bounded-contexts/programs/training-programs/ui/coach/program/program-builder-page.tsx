@@ -9,7 +9,7 @@ import { trainingProgramsContext } from "~/bounded-contexts/programs/training-pr
 
 import {
   builderPlaceTitle,
-  builderTitle,
+  builderDocumentTitle,
   ProgramBuilderView,
 } from "./program-builder";
 
@@ -24,7 +24,7 @@ export const handle = COACH_PROGRAM_ROUTE_HANDLE;
 export const meta: MetaFunction<typeof loader> = ({ loaderData, location }) => [
   {
     title: loaderData
-      ? builderTitle(
+      ? builderDocumentTitle(
           builderPlaceTitle(loaderData, location.hash),
           loaderData.client,
         )

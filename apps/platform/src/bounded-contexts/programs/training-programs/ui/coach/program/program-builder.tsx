@@ -28,7 +28,7 @@ import {
 } from "./editor-announcer";
 import { EditorSectionContent } from "./editor-section-content";
 import { sectionFromHash, sectionHash, sectionTitle } from "./editor-section";
-import { clientName, EditorTopBar } from "./editor-top-bar";
+import { clientName, EditorTopBar, type BuilderClient } from "./editor-top-bar";
 import { LeaveWarning } from "./leave-warning";
 import { PlaceHeadingContext } from "./place-heading";
 import { ProgramOutline } from "./program-outline";
@@ -38,9 +38,10 @@ const EDITOR_ID = "editor";
 const DEAD_END_PAGE_CLASS =
   "min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16";
 
-type TitledClient = Parameters<typeof clientName>[0];
-
-export function builderTitle(placeTitle: string, client: TitledClient): string {
+export function builderDocumentTitle(
+  placeTitle: string,
+  client: BuilderClient,
+): string {
   return `${placeTitle} · ${clientName(client)} | Evoa`;
 }
 
@@ -80,7 +81,7 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   }, [placeKey]);
 
   useEffect(() => {
-    document.title = builderTitle(placeTitle, view.client);
+    document.title = builderDocumentTitle(placeTitle, view.client);
   }, [placeTitle, view.client]);
 
   function addBlock(type: BlockType, weeks: number) {

@@ -12,7 +12,11 @@ import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
 
 import type { DraftSaving, SaveState } from "./use-autosaved-draft";
 
-type BuilderClient = { clientId: string; firstName: string; lastName: string };
+export type BuilderClient = {
+  clientId: string;
+  firstName: string;
+  lastName: string;
+};
 
 type EditorTopBarProps = {
   client: BuilderClient;

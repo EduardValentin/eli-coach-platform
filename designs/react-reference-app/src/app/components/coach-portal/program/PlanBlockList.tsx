@@ -218,7 +218,6 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
   const announce = useEditorAnnouncer();
   const handles = useRef(new Map<string, HTMLButtonElement>());
   const openers = useRef(new Map<string, HTMLButtonElement>());
-  const addButton = useRef<HTMLButtonElement>(null);
   const confirm = useDestructiveConfirm();
   const placeHeading = usePlaceHeading();
   const focusAfterMove = useRef<string | null>(null);
@@ -295,7 +294,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
           </li>
         ))}
       </ol>
-      <Button ref={addButton} variant="ghost" className="mt-2" onClick={onAddBlock}>
+      <Button variant="ghost" className="mt-2" onClick={onAddBlock}>
         <Plus aria-hidden="true" />
         Add block
       </Button>
