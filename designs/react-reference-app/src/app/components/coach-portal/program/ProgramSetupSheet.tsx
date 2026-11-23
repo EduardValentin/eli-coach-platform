@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { ClipboardList } from 'lucide-react';
@@ -16,6 +16,7 @@ import {
   type ClientEquipment,
 } from '../../../domain/clientProfile';
 import { DAILY_STEP_TARGETS } from '../../../domain/programDefaults';
+import { equipmentChangeLines, type EquipmentChangeLine } from '../../../domain/equipmentChange';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
@@ -38,6 +39,7 @@ import { Skeleton } from '../../ui/skeleton';
 
 const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
 const NOT_CREATED_MESSAGE = 'The program wasn’t created. Your choices are still here, so try again.';
+const SAVING_MESSAGE = 'Creating the program…';
 const SKELETON_FIELDS = 8;
 
 const COACH_GOAL_LABELS: Record<string, string> = {
@@ -114,20 +116,34 @@ function setupFrom(values: OnboardingValues): ProgramSetup {
   };
 }
 
-function sameEquipment(chosen: readonly ClientEquipment[], current: readonly ClientEquipment[]): boolean {
-  return chosen.length === current.length && chosen.every(item => current.includes(item));
+function ProfileChangeDescription({ pronoun, lines }: { pronoun: string; lines: EquipmentChangeLine[] }) {
+  return (
+    <>
+      Creating the program saves the equipment you chose here to {pronoun} profile.
+      {lines.map(({ label, names }, index) => (
+        <Fragment key={label}>
+          {' '}
+          <span className={index === 0 ? 'mt-3 block' : 'mt-1 block'}>
+            <span className="font-medium">{label}:</span> <span className="text-text-primary">{names.join(', ')}.</span>
+          </span>
+        </Fragment>
+      ))}
+    </>
+  );
 }
 
 function setupTitle(journey: ClientJourney): string {
   return `Build ${possessive(journey.profile.identity.firstName)} program`;
 }
 
-type SetupFrameProps = { journey: ClientJourney; title: string; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
+type SetupParityRoot = 'ProgramSetupSheet' | 'ProgramSetupNotReady';
 
-function SetupFrame({ journey, title, onLeave, children }: SetupFrameProps) {
+type SetupFrameProps = { journey: ClientJourney; title: string; parityRoot: SetupParityRoot; onLeave?: (event: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode };
+
+function SetupFrame({ journey, title, parityRoot, onLeave, children }: SetupFrameProps) {
   useDocumentTitle(title);
   return (
-    <div className="mx-auto w-full max-w-xl">
+    <div className="mx-auto w-full max-w-xl" data-parity-root={parityRoot}>
       <PortalBackLink to={clientDetailPathForJourney(journey)} onClick={onLeave} navigationLabel="Back to the client">
         Back to {journeyClientName(journey)}
       </PortalBackLink>
@@ -141,7 +157,7 @@ const NOT_READY_TITLE = 'Program not ready yet';
 export function ProgramSetupNotReady({ journey }: { journey: ClientJourney }) {
   const her = clientPronouns(journey.profile.identity.gender).possessive.lower;
   return (
-    <SetupFrame journey={journey} title={NOT_READY_TITLE}>
+    <SetupFrame journey={journey} title={NOT_READY_TITLE} parityRoot="ProgramSetupNotReady">
       <DeadEndPanel
         icon={ClipboardList}
         title={NOT_READY_TITLE}
@@ -197,15 +213,19 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   const headingId = useId();
   const [failed, setFailed] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [confirmingProfileChange, setConfirmingProfileChange] = useState(false);
+  const createButton = useRef<HTMLButtonElement>(null);
   const clientPath = clientDetailPathForJourney(journey);
   useSplitFollowingDays(form);
 
-  const create = form.handleSubmit(async values => {
+  const profileChange = equipmentChangeLines(currentEquipment, clientEquipmentOf(asList(form.watch('equipment'))));
+
+  const save = form.handleSubmit(async values => {
     const equipment = clientEquipmentOf(asList(values.equipment));
     setFailed(false);
     try {
       await writeProgramThroughServer(appState.programWrite, async () => {
-        if (!sameEquipment(equipment, currentEquipment)) await updateClientProfile(journey.callId, { coaching: { equipment } });
+        if (equipmentChangeLines(currentEquipment, equipment).length > 0) await updateClientProfile(journey.callId, { coaching: { equipment } });
         createProgram(journey.callId, setupFrom(values));
       });
     } catch {
@@ -215,6 +235,16 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
     onCreated();
   });
 
+  const create = form.handleSubmit(async () => {
+    if (profileChange.length === 0) return save();
+    setConfirmingProfileChange(true);
+  });
+
+  function confirmProfileChange() {
+    setConfirmingProfileChange(false);
+    void save();
+  }
+
   function cancel(event: MouseEvent<HTMLAnchorElement>) {
     if (!isDirty) return;
     event.preventDefault();
@@ -222,7 +252,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
   }
 
   return (
-    <SetupFrame journey={journey} title={setupTitle(journey)} onLeave={cancel}>
+    <SetupFrame journey={journey} title={setupTitle(journey)} parityRoot="ProgramSetupSheet" onLeave={cancel}>
       <PortalPageHeader headingId={headingId} title={setupTitle(journey)} />
       <Form {...form}>
         <form noValidate onSubmit={create}>
@@ -233,21 +263,34 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
                 <Link to={clientPath} onClick={cancel} className={buttonVariants({ variant: 'outline', size: 'md' })}>
                   Cancel
                 </Link>
-                <Button type="submit" size="md" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
+                <Button ref={createButton} type="submit" size="md" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
                   {isSubmitting ? 'Creating…' : 'Create program'}
                 </Button>
               </>
             }
           >
-            <div className="grid gap-6 px-5 py-6 sm:px-6">
+            <div className="grid gap-6 px-5 py-6 sm:px-6" data-parity="setup-fields">
               {setupFields().map(definition => (
                 <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
               ))}
               {failed && <Alert>{NOT_CREATED_MESSAGE}</Alert>}
             </div>
           </SettingsSection>
+          <p role="status" className="sr-only" data-parity="saving-status">
+            {isSubmitting ? SAVING_MESSAGE : ''}
+          </p>
         </form>
       </Form>
+      <ConfirmDialog
+        open={confirmingProfileChange}
+        onOpenChange={setConfirmingProfileChange}
+        title={`This updates ${possessive(journey.profile.identity.firstName)} profile`}
+        description={<ProfileChangeDescription pronoun={clientPronouns(journey.profile.identity.gender).possessive.lower} lines={profileChange} />}
+        cancelLabel="Keep editing"
+        confirmLabel="Create program"
+        onConfirm={confirmProfileChange}
+        returnFocusTo={createButton}
+      />
       <ConfirmDialog
         open={confirmingLeave}
         onOpenChange={setConfirmingLeave}

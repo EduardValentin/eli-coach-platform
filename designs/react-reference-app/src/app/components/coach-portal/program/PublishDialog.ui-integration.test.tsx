@@ -166,3 +166,78 @@ describe('PublishDialog', () => {
     expect(screen.queryByText('Program page')).not.toBeInTheDocument();
   });
 });
+
+describe('Publishing once her coaching has ended', () => {
+  const ENDED_REASON = 'Her coaching has ended, so this draft can’t be published.';
+
+  it('keeps Publish in place, unavailable, and says why on hover', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&jsub=ended');
+    const publish = screen.getByRole('button', { name: 'Publish' });
+
+    // act
+    await user.hover(publish);
+
+    // assert
+    expect(await screen.findByText(ENDED_REASON)).toBeInTheDocument();
+    expect(publish).toHaveAccessibleDescription(ENDED_REASON);
+    expect(publish).toHaveAttribute('aria-disabled', 'true');
+    expect(publish).not.toBeDisabled();
+    expect(screen.getByText('Jane Doe · v1 draft · coaching ended')).toBeInTheDocument();
+  });
+
+  it('never opens the publish dialog from a click, Enter or Space', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&jsub=ended');
+    const publish = screen.getByRole('button', { name: 'Publish' });
+
+    // act
+    await user.click(publish);
+    publish.focus();
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+
+    // assert
+    expect(publish).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Publish version 1' })).not.toBeInTheDocument();
+  });
+
+  it('gives the ended coaching as the reason over the start date', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&jstart=waiting&jsub=ended');
+    const publish = screen.getByRole('button', { name: 'Publish' });
+
+    // act
+    await user.hover(publish);
+
+    // assert
+    expect(await screen.findByText(ENDED_REASON)).toBeInTheDocument();
+    expect(screen.queryByText(/^Publishing opens on/)).not.toBeInTheDocument();
+  });
+
+  it('keeps editing and names the problems as problems in the draft', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&jsub=ended');
+    await emptyFirstBlock(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: /^\d+ problems? in the draft$/ }));
+
+    // assert
+    const review = screen.getByRole('dialog', { name: 'Review the draft' });
+    expect(within(review).getByRole('heading', { name: 'Problems in the draft' })).toBeInTheDocument();
+    expect(within(review).queryByRole('heading', { name: 'Before you can publish' })).not.toBeInTheDocument();
+    expect(within(review).getByRole('button', { name: /^Foundation block 1 has sessions without exercises/ })).toBeInTheDocument();
+  });
+
+  it('still previews the draft as the client sees it', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&jsub=ended');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Preview as client' }));
+
+    // assert
+    expect(screen.getByRole('dialog', { name: 'Preview as client' })).toBeInTheDocument();
+  });
+});

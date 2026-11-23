@@ -69,6 +69,7 @@ export {
   type FindExerciseResult,
 } from "./find-exercise-use-case";
 export { InvalidStoredExerciseError } from "./invalid-stored-exercise-error";
+export { ListCardioExercisesUseCase } from "./list-cardio-exercises-use-case";
 export { ListExercisesUseCase } from "./list-exercises-use-case";
 export {
   OpenExerciseVideoUseCase,

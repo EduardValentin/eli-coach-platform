@@ -1,12 +1,14 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
+import { addMonths } from 'date-fns';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ClientProgramPage } from './ClientProgramPage';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
-import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ProgramProvider } from '../../context/ProgramContext';
+import { ClientJourneyProvider, DEMO_JOURNEY_CALL_ID } from '../../context/ClientJourneyContext';
+import { ProgramProvider, usePrograms, type ProgramContextType } from '../../context/ProgramContext';
+import type { ProgramContent } from '../../domain/program';
 import { TrainingProvider } from '../../context/TrainingContext';
 
 beforeAll(() => {
@@ -26,9 +28,23 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   window.localStorage.clear();
   window.history.replaceState({}, '', '/');
 });
+
+let programs: ProgramContextType;
+
+function ProgramsProbe() {
+  programs = usePrograms();
+  return null;
+}
+
+function withoutExercisesInSecondBlock(content: ProgramContent): ProgramContent {
+  const [first, second, ...rest] = content.plan.blocks;
+  const emptied = { ...second, sessions: second.sessions.map(session => ({ ...session, rows: [] })) };
+  return { ...content, plan: { blocks: [first, emptied, ...rest] } };
+}
 
 function renderPage(clientId: string, query: string) {
   const url = `/coach/clients/${clientId}/program?session=coach${query}`;
@@ -40,6 +56,7 @@ function renderPage(clientId: string, query: string) {
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <ProgramProvider>
+                <ProgramsProbe />
                 <Routes>
                   <Route path="/coach/clients/:id/program" element={<ClientProgramPage />} />
                 </Routes>
@@ -183,6 +200,52 @@ describe('ClientProgramPage', () => {
     expect(screen.getByText('Version 1 is a draft. Jane sees her program once you publish it.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Continue draft' })).toHaveAttribute('href', '/coach/clients/c1/program/draft');
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+
+  it('says his coaching has ended while no version is published', () => {
+    // arrange
+    const query = '&pseed=draft&jsub=ended&jgender=male';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    expect(screen.getByText('No published version yet')).toBeInTheDocument();
+    expect(screen.getByText('Version 1 is a draft. His coaching has ended.')).toBeInTheDocument();
+    expect(screen.queryByText(/once you publish it/)).not.toBeInTheDocument();
+  });
+
+  it('asks for an unwritten block to be published before it starts while she has access', () => {
+    // arrange
+    renderPage('c1', '&pseed=draft&jstage=approved&jsub=cancelled&week=5');
+
+    // act
+    act(() => programs.updateDraft(DEMO_JOURNEY_CALL_ID, withoutExercisesInSecondBlock));
+    act(() => {
+      programs.publishDraft(DEMO_JOURNEY_CALL_ID, new Date());
+    });
+
+    // assert
+    expect(screen.getByText(/^Hypertrophy has no sessions\. It must be published before it starts on \d{1,2} [A-Z][a-z]+\.$/)).toBeInTheDocument();
+  });
+
+  it('drops the publish deadline of an unwritten block once her coaching has ended', async () => {
+    // arrange
+    vi.useFakeTimers({ toFake: ['Date'] });
+    renderPage('c1', '&pseed=draft&jstage=approved&jsub=cancelled&week=5');
+    act(() => programs.updateDraft(DEMO_JOURNEY_CALL_ID, withoutExercisesInSecondBlock));
+    act(() => {
+      programs.publishDraft(DEMO_JOURNEY_CALL_ID, new Date());
+    });
+    vi.setSystemTime(addMonths(new Date(), 7));
+    const user = userEvent.setup();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Next week' }));
+
+    // assert
+    expect(screen.getByRole('region', { name: /^Week 6 of 11/ })).toBeInTheDocument();
+    expect(screen.getByText('Hypertrophy has no sessions.')).toBeInTheDocument();
   });
 
   it('says the client was not found when there is no program', () => {

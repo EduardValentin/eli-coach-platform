@@ -13,7 +13,7 @@ const badgeClasses = cva(
         muted: "border-border-default text-text-muted",
         secondary: "border-transparent bg-secondary text-secondary-foreground",
         pending:
-          "border-status-pending/20 bg-status-pending-soft text-status-pending",
+          "border-status-pending/20 bg-status-pending-soft text-status-pending-ink",
         success:
           "border-feedback-success/20 bg-feedback-success-soft text-feedback-success",
         "tint-slate":

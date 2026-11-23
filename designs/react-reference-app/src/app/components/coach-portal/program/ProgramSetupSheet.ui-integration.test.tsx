@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
@@ -330,14 +330,43 @@ describe('ProgramSetupSheet', () => {
 
     // act
     await user.click(screen.getByRole('button', { name: 'Create program' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create program' }));
 
     // assert
-    expect(screen.getByRole('button', { name: 'Creating…' })).toBeDisabled();
     await screen.findByText('Editor', {}, { timeout: 3000 });
     await user.click(screen.getByRole('link', { name: 'open her profile' }));
     const coaching = screen.getByRole('region', { name: 'Coaching' });
     expect(within(coaching).getByRole('checkbox', { name: 'Bodyweight only' })).toBeChecked();
     expect(within(coaching).getByRole('checkbox', { name: 'Full gym' })).not.toBeChecked();
+  });
+
+  it('announces the saving state through a status that is empty at rest', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+    const status = screen.getByRole('status');
+    expect(status).toBeEmptyDOMElement();
+    await user.click(within(equipment()).getByRole('checkbox', { name: 'Bodyweight only' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Create program' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create program' }));
+
+    // assert
+    expect(status).toHaveTextContent('Creating the program…');
+    expect(screen.getByRole('button', { name: 'Creating…' })).toBeDisabled();
+    await screen.findByText('Editor', {}, { timeout: 3000 });
+  });
+
+  it('leaves the saving status empty again once a create has failed', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved&pwrite=fails');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+    // assert
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
   it('keeps the choices and says so when the program cannot be created', async () => {
@@ -352,6 +381,145 @@ describe('ProgramSetupSheet', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('The program wasn’t created. Your choices are still here, so try again.');
     expect(screen.queryByText('Editor')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: '4 days' })).toBeChecked();
+  });
+
+  describe('when the equipment differs from her profile', () => {
+    async function chooseEquipment(user: User, name: string) {
+      await user.click(within(equipment()).getByRole('checkbox', { name }));
+    }
+
+    const confirmation = () => screen.getByRole('dialog', { name: 'This updates Jane’s profile' });
+
+    it('opens a confirmation that names what changes on her profile', async () => {
+      // arrange
+      const user = renderSheet('&pseed=none&jstage=approved');
+      await chooseEquipment(user, 'Kettlebells');
+      await chooseEquipment(user, 'Full gym');
+
+      // act
+      await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+      // assert
+      const dialog = confirmation();
+      expect(dialog).toHaveAccessibleDescription(
+        'Creating the program saves the equipment you chose here to her profile. Adding: Kettlebells. Removing: Full gym.',
+      );
+      expect(within(dialog).getByRole('button', { name: 'Keep editing' })).toHaveFocus();
+      expect(within(dialog).getByRole('button', { name: 'Create program' })).toBeInTheDocument();
+      expect(screen.queryByText('Editor')).not.toBeInTheDocument();
+    });
+
+    it('says she is switching to bodyweight only', async () => {
+      // arrange
+      const user = renderSheet('&pseed=none&jstage=approved');
+      await chooseEquipment(user, 'Bodyweight only');
+
+      // act
+      await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+      // assert
+      expect(confirmation()).toHaveAccessibleDescription(
+        'Creating the program saves the equipment you chose here to her profile. Switching to: Bodyweight only. Removing: Full gym, Dumbbells.',
+      );
+    });
+
+    it('creates the program and saves the equipment once confirmed', async () => {
+      // arrange
+      const user = renderSheet('&pseed=none&jstage=approved');
+      await chooseEquipment(user, 'Kettlebells');
+      await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+      // act
+      await user.click(within(confirmation()).getByRole('button', { name: 'Create program' }));
+
+      // assert
+      expect(screen.getByRole('button', { name: 'Creating…' })).toBeDisabled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(await screen.findByText('Editor', {}, { timeout: 3000 })).toBeInTheDocument();
+    });
+
+    it.each([
+      ['Keep editing', async (user: User) => user.click(within(confirmation()).getByRole('button', { name: 'Keep editing' }))],
+      ['Escape', async (user: User) => user.keyboard('{Escape}')],
+      ['the X', async (user: User) => user.click(within(confirmation()).getByRole('button', { name: 'Close' }))],
+    ])('returns to the form with every choice kept on %s', async (_way, goBack) => {
+      // arrange
+      const user = renderSheet('&pseed=none&jstage=approved');
+      await user.click(screen.getByRole('radio', { name: '4 days' }));
+      await chooseEquipment(user, 'Kettlebells');
+      const create = screen.getByRole('button', { name: 'Create program' });
+      await user.click(create);
+
+      expect(confirmation()).toBeInTheDocument();
+
+      // act
+      await goBack(user);
+
+      // assert
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(screen.queryByText('Editor')).not.toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: '4 days' })).toBeChecked();
+      expect(within(equipment()).getByRole('checkbox', { name: 'Kettlebells' })).toBeChecked();
+      expect(within(equipment()).getByRole('checkbox', { name: 'Full gym' })).toBeChecked();
+      expect(create).toHaveFocus();
+    });
+
+    it('returns focus to Create program when the form was submitted with Enter from a field', async () => {
+      // arrange
+      const user = renderSheet('&pseed=none&jstage=approved');
+      await chooseEquipment(user, 'Kettlebells');
+      const field = screen.getByRole('radio', { name: '4 days' });
+      field.focus();
+
+      // act
+      fireEvent.submit(field.closest('form')!);
+      const dialog = await screen.findByRole('dialog', { name: 'This updates Jane’s profile' });
+      await user.click(within(dialog).getByRole('button', { name: 'Keep editing' }));
+
+      // assert
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Create program' })).toHaveFocus());
+    });
+
+    it('shows the alert and opens the confirmation again on the next press when the save fails', async () => {
+      // arrange
+      const user = renderSheet('&pseed=none&jstage=approved&pwrite=fails');
+      await chooseEquipment(user, 'Kettlebells');
+      await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+      // act
+      await user.click(within(confirmation()).getByRole('button', { name: 'Create program' }));
+
+      // assert
+      expect(await screen.findByRole('alert')).toHaveTextContent('The program wasn’t created.');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Create program' }));
+      expect(confirmation()).toBeInTheDocument();
+    });
+  });
+
+  it('creates the program at once when the equipment is unchanged', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+    // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByText('Editor', {}, { timeout: 3000 })).toBeInTheDocument();
+  });
+
+  it('shows field problems before any confirmation', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+    await clearEquipment(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Create program' }));
+
+    // assert
+    expect(await screen.findByText('Choose at least one equipment option.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('returns to the client page on cancel when nothing changed', async () => {
@@ -407,6 +575,15 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getAllByRole('link')).toHaveLength(1);
     expect(within(screen.getByRole('navigation', { name: 'Back to the client' })).getByRole('link', { name: 'Back to Jane Doe' })).toHaveAttribute('href', '/coach/clients/c1');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
+  });
+
+  it('returns to the client page once her coaching has ended', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved&jsub=ended');
+
+    // assert
+    expect(screen.getByText('Client page')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
   });
 

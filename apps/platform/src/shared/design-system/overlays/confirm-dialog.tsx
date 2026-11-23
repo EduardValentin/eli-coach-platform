@@ -10,7 +10,7 @@ type ConfirmDialogProps = {
   children?: ReactNode;
   confirmDisabled?: boolean;
   confirmLabel: string;
-  description: string;
+  description: ReactNode;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;

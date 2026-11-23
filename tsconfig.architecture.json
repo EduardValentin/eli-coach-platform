@@ -1,0 +1,12 @@
+{
+  "extends": "./apps/platform/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./apps/platform/src/*"],
+      "~integration-test-config/*": [
+        "./apps/platform/integration-test-config/*"
+      ],
+      "~test-support/*": ["./apps/platform/test-support/*"]
+    }
+  }
+}

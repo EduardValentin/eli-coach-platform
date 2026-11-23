@@ -3,7 +3,7 @@ import { useAppState } from './AppContext';
 import { AWAITING_REVIEW_CALL_ID, DEMO_JOURNEY_CALL_ID, useClientJourneys } from './ClientJourneyContext';
 import { useTraining } from './TrainingContext';
 import { coachingFactsFromAnswers, type CoachingFacts } from '../domain/clientProfile';
-import type { ClientJourney } from '../domain/journey';
+import { coachingHasEnded, type ClientJourney } from '../domain/journey';
 import {
   contentWithFreshIds,
   currentVersion,
@@ -20,7 +20,8 @@ import { seededPrograms, type ProgramSeed, type SeedClient } from '../services/p
 
 export type PublishOutcome =
   | { status: 'published'; version: ProgramVersion }
-  | { status: 'blocked'; problems: RuleFinding<BlockingCode>[] };
+  | { status: 'blocked'; problems: RuleFinding<BlockingCode>[] }
+  | { status: 'coaching-ended' };
 
 export type ProgramContextType = {
   hydrated: boolean;
@@ -181,7 +182,9 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       const program = programsRef.current[callId];
       const draft = program && draftOf(program);
       if (!program || !draft) return { status: 'blocked', problems: [] };
-      const context = ruleContextFor({ journey: journeyForCall(callId), program, draft, today: now, exercises: exercisesRef.current });
+      const journey = journeyForCall(callId);
+      if (journey && coachingHasEnded(journey, now)) return { status: 'coaching-ended' };
+      const context = ruleContextFor({ journey, program, draft, today: now, exercises: exercisesRef.current });
       const problems = blockingProblems(draft.content, context);
       if (problems.length > 0) return { status: 'blocked', problems };
       commit({ ...programsRef.current, [callId]: publishedAfter(program, draft, now) });

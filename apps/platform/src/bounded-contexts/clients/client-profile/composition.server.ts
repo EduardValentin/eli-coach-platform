@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
+import { createUnitOfWork } from "~/shared/database/index.server";
 import type {
   ClientIdentitiesPort,
   ClientReachPort,
@@ -6,6 +7,7 @@ import type {
   OnboardingSubmissionRecorderPort,
   ReviewStampRecorderPort,
 } from "~/bounded-contexts/clients/clients/public";
+import type { ClientCoachingFacade } from "~/bounded-contexts/clients/public/client-coaching-facade";
 import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile-facade";
 import {
   AttachProgressPhotosUseCase,
@@ -28,6 +30,7 @@ import {
   UploadOwnClientAvatarUseCase,
   type ClientAvatarRenditionsPort,
   type ClientAvatarStorePort,
+  type ClientProfilesPort,
   type ProgressPhotoRenditionsPort,
   type ProgressPhotoStorePort,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
@@ -41,6 +44,10 @@ import type {
   MeasurementIdsPort,
 } from "~/bounded-contexts/clients/client-profile/domain/measurement";
 import type { ClockPort } from "~/bounded-contexts/clients/client-profile/domain/clock-port";
+import {
+  ReadClientCoachingUseCase,
+  SaveClientEquipmentUseCase,
+} from "~/bounded-contexts/clients/client-profile/domain/client-coaching";
 import { ClientAvatarController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/avatar/client-avatar-controller.server";
 import { ClientSettingsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-settings-controller.server";
 import { ClientMeasurementsController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/client-measurements-controller.server";
@@ -62,6 +69,7 @@ import { RandomProgressPhotoIdsAdapter } from "~/bounded-contexts/clients/client
 import { PostgresClientProfileOpeningsRepository } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/profiles/postgres-client-profile-openings-repository.server";
 import { seedCoaching } from "./adapters/outbound/persistence/profiles/client-profile-writers.server";
 import { recordPhotoConsent } from "./adapters/outbound/persistence/profiles/client-profile-writers.server";
+import { ClientCoachingFacadeAdapter } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-coaching-facade-adapter.server";
 import { ClientProfileFacadeAdapter } from "~/bounded-contexts/clients/client-profile/adapters/inbound/facades/client-profile-facade-adapter.server";
 import { ClientsClientIdentitiesAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-identities-adapter.server";
 import { ClientsClientReachAdapter } from "~/bounded-contexts/clients/client-profile/adapters/outbound/clients/clients-client-reach-adapter.server";
@@ -85,6 +93,7 @@ import {
   RequestOnboardingDetailsUseCase,
   SaveOnboardingDraftUseCase,
   SubmitOnboardingUseCase,
+  type OnboardingReviewsPort,
 } from "~/bounded-contexts/clients/client-profile/domain/client-onboarding";
 import type { ProductEmailPort } from "~/shared/email/index.server";
 import { ClientOnboardingController } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/client-onboarding-controller.server";
@@ -111,6 +120,7 @@ type ClientProfileComposition = {
   feature: ClientProfileFeature;
   handles: {
     attachProgressPhotosUseCase: AttachProgressPhotosUseCase;
+    clientProfilesPort: ClientProfilesPort;
     clientSettingsSourcePort: ClientSettingsSourcePort;
     measurementIdsPort: MeasurementIdsPort;
     clientMeasurementsSourcePort: ClientMeasurementsSourcePort;
@@ -295,6 +305,7 @@ export function composeClientProfileFeature(
         ...photoIntakePorts,
         clientProfilesPort: postgresClientProfilesRepository,
       }),
+      clientProfilesPort: postgresClientProfilesRepository,
       clientSettingsSourcePort: postgresClientSettingsRepository,
       measurementIdsPort: randomMeasurementIdsAdapter,
       clientMeasurementsSourcePort: postgresClientMeasurementsRepository,
@@ -328,9 +339,14 @@ type ClientOnboardingFeatureHandles = {
   seedCoaching: CoachingSeedWriter;
 };
 
+type ClientOnboardingComposition = {
+  feature: ClientOnboardingFeature;
+  handles: { onboardingReviewsPort: OnboardingReviewsPort };
+};
+
 export function composeClientOnboardingFeature(
   handles: ClientOnboardingFeatureHandles,
-): ClientOnboardingFeature {
+): ClientOnboardingComposition {
   const { clockPort } = handles;
   const clientProfileIncidentsAdapter = new ClientProfileIncidentsAdapter(
     handles.loggerPort,
@@ -370,71 +386,107 @@ export function composeClientOnboardingFeature(
   };
 
   return {
-    clientOnboardingController: new ClientOnboardingController({
-      answerOnboardingDetailsUseCase: new AnswerOnboardingDetailsUseCase({
-        ...reviewPorts,
+    feature: {
+      clientOnboardingController: new ClientOnboardingController({
+        answerOnboardingDetailsUseCase: new AnswerOnboardingDetailsUseCase({
+          ...reviewPorts,
+          clockPort,
+          clientSettingsSourcePort: handles.clientSettingsSourcePort,
+        }),
+        attachProgressPhotosUseCase: handles.attachProgressPhotosUseCase,
         clockPort,
-        clientSettingsSourcePort: handles.clientSettingsSourcePort,
-      }),
-      attachProgressPhotosUseCase: handles.attachProgressPhotosUseCase,
-      clockPort,
-      readClientOnboardingUseCase: new ReadClientOnboardingUseCase({
-        participants,
-        clientOnboardingSourcePort: postgresClientOnboardingsRepository,
-        clientSettingsSourcePort: handles.clientSettingsSourcePort,
-      }),
-      readOpenDetailRequestUseCase: new ReadOpenDetailRequestUseCase(
-        reviewReadPorts,
-      ),
-      saveOnboardingDraftUseCase: new SaveOnboardingDraftUseCase({
-        clientOnboardingChangesPort: postgresClientOnboardingsRepository,
-        clockPort,
-        clientOnboardingIncidentsPort: clientProfileIncidentsAdapter,
-        clientOnboardingSourcePort: postgresClientOnboardingsRepository,
-        participants,
-      }),
-      submitOnboardingUseCase: new SubmitOnboardingUseCase({
-        clientOnboardingChangesPort: postgresClientOnboardingsRepository,
-        clockPort,
-        clientOnboardingIncidentsPort: clientProfileIncidentsAdapter,
-        measurementIdsPort: handles.measurementIdsPort,
-        clientOnboardingSourcePort: postgresClientOnboardingsRepository,
-        participants,
-        onboardingSubmissionStampsPort: new ClientsSubmissionStampsAdapter(
-          handles.onboardingSubmissionRecorderPort,
+        readClientOnboardingUseCase: new ReadClientOnboardingUseCase({
+          participants,
+          clientOnboardingSourcePort: postgresClientOnboardingsRepository,
+          clientSettingsSourcePort: handles.clientSettingsSourcePort,
+        }),
+        readOpenDetailRequestUseCase: new ReadOpenDetailRequestUseCase(
+          reviewReadPorts,
         ),
-        clientSettingsSourcePort: handles.clientSettingsSourcePort,
-      }),
-    }),
-    onboardingReviewController: new OnboardingReviewController({
-      approveOnboardingAnswersUseCase: new ApproveOnboardingAnswersUseCase({
-        ...reviewPorts,
-        clockPort,
-      }),
-      openOnboardingReviewUseCase: new OpenOnboardingReviewUseCase({
-        ...reviewPorts,
-        clockPort,
-      }),
-      readOnboardingReviewUseCase: new ReadOnboardingReviewUseCase({
-        ...reviewReadPorts,
-        clientMeasurementsSourcePort: handles.clientMeasurementsSourcePort,
-      }),
-      requestOnboardingDetailsUseCase: new RequestOnboardingDetailsUseCase({
-        ...reviewPorts,
-        clockPort,
-        onboardingDetailsNotificationsPort:
-          new EmailOnboardingDetailsNotificationsAdapter(
-            handles.productEmailPort,
-            {
-              appBasePath: handles.appBasePath,
-              clockPort,
-              contactEmail: handles.contactEmail,
-              publicAppUrl: handles.publicAppUrl,
-            },
+        saveOnboardingDraftUseCase: new SaveOnboardingDraftUseCase({
+          clientOnboardingChangesPort: postgresClientOnboardingsRepository,
+          clockPort,
+          clientOnboardingIncidentsPort: clientProfileIncidentsAdapter,
+          clientOnboardingSourcePort: postgresClientOnboardingsRepository,
+          participants,
+        }),
+        submitOnboardingUseCase: new SubmitOnboardingUseCase({
+          clientOnboardingChangesPort: postgresClientOnboardingsRepository,
+          clockPort,
+          clientOnboardingIncidentsPort: clientProfileIncidentsAdapter,
+          measurementIdsPort: handles.measurementIdsPort,
+          clientOnboardingSourcePort: postgresClientOnboardingsRepository,
+          participants,
+          onboardingSubmissionStampsPort: new ClientsSubmissionStampsAdapter(
+            handles.onboardingSubmissionRecorderPort,
           ),
-        detailRequestIdsPort: new RandomDetailRequestIdsAdapter(),
+          clientSettingsSourcePort: handles.clientSettingsSourcePort,
+        }),
       }),
-    }),
+      onboardingReviewController: new OnboardingReviewController({
+        approveOnboardingAnswersUseCase: new ApproveOnboardingAnswersUseCase({
+          ...reviewPorts,
+          clockPort,
+        }),
+        openOnboardingReviewUseCase: new OpenOnboardingReviewUseCase({
+          ...reviewPorts,
+          clockPort,
+        }),
+        readOnboardingReviewUseCase: new ReadOnboardingReviewUseCase({
+          ...reviewReadPorts,
+          clientMeasurementsSourcePort: handles.clientMeasurementsSourcePort,
+        }),
+        requestOnboardingDetailsUseCase: new RequestOnboardingDetailsUseCase({
+          ...reviewPorts,
+          clockPort,
+          onboardingDetailsNotificationsPort:
+            new EmailOnboardingDetailsNotificationsAdapter(
+              handles.productEmailPort,
+              {
+                appBasePath: handles.appBasePath,
+                clockPort,
+                contactEmail: handles.contactEmail,
+                publicAppUrl: handles.publicAppUrl,
+              },
+            ),
+          detailRequestIdsPort: new RandomDetailRequestIdsAdapter(),
+        }),
+      }),
+    },
+    handles: { onboardingReviewsPort: postgresOnboardingReviewsRepository },
+  };
+}
+
+type ClientCoachingHandles = {
+  clientProfilesPort: ClientProfilesPort;
+  clockPort: ClockPort;
+  database: DatabaseClient;
+  onboardingReviewsPort: OnboardingReviewsPort;
+};
+
+type ClientCoachingComposition = {
+  facades: { clientCoachingFacade: ClientCoachingFacade };
+};
+
+export function composeClientCoaching(
+  handles: ClientCoachingHandles,
+): ClientCoachingComposition {
+  const { clientProfilesPort, onboardingReviewsPort } = handles;
+
+  return {
+    facades: {
+      clientCoachingFacade: new ClientCoachingFacadeAdapter({
+        readClientCoachingUseCase: new ReadClientCoachingUseCase({
+          onboardingReviewsPort,
+          clientProfilesPort,
+        }),
+        saveClientEquipmentUseCase: new SaveClientEquipmentUseCase({
+          clientProfilesPort,
+          clockPort: handles.clockPort,
+        }),
+        unitOfWork: createUnitOfWork(handles.database),
+      }),
+    },
   };
 }
 

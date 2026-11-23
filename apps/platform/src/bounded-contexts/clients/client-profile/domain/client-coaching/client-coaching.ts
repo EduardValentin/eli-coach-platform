@@ -1,0 +1,72 @@
+import {
+  BODYWEIGHT_ONLY,
+  CLIENT_EQUIPMENT,
+  PRIMARY_GOALS,
+  type ClientEquipment,
+  type ClientProfile,
+  type CoachingFactsSnapshot,
+} from "../client-profile";
+
+type ClientCoachingFacts = Pick<
+  CoachingFactsSnapshot,
+  "primaryGoal" | "level" | "trainingDays" | "sessionMinutes" | "equipment"
+>;
+
+type EquipmentOption = {
+  equipment: ClientEquipment;
+  exclusive: boolean;
+};
+
+type ClientCoachingSources = {
+  clientId: string;
+  answersApprovedAt: Date | null;
+  profile: ClientProfile | null;
+};
+
+type ClientCoachingFields = {
+  clientId: string;
+  answersApproved: boolean;
+  facts: ClientCoachingFacts | null;
+};
+
+export class ClientCoaching {
+  readonly clientId: string;
+  readonly answersApproved: boolean;
+  readonly facts: ClientCoachingFacts | null;
+  readonly equipmentOptions: readonly EquipmentOption[] = CLIENT_EQUIPMENT.map(
+    (equipment) => ({ equipment, exclusive: equipment === BODYWEIGHT_ONLY }),
+  );
+  readonly primaryGoalOptions = PRIMARY_GOALS;
+
+  private constructor(fields: ClientCoachingFields) {
+    this.clientId = fields.clientId;
+    this.answersApproved = fields.answersApproved;
+    this.facts = fields.facts;
+  }
+
+  static of(sources: ClientCoachingSources): ClientCoaching {
+    const { clientId, answersApprovedAt, profile } = sources;
+
+    return new ClientCoaching({
+      clientId,
+      answersApproved: answersApprovedAt !== null,
+      facts: ClientCoaching.factsOf(profile),
+    });
+  }
+
+  private static factsOf(
+    profile: ClientProfile | null,
+  ): ClientCoachingFacts | null {
+    const coaching = profile?.toSnapshot().coaching;
+
+    return coaching
+      ? {
+          primaryGoal: coaching.primaryGoal,
+          level: coaching.level,
+          trainingDays: coaching.trainingDays,
+          sessionMinutes: coaching.sessionMinutes,
+          equipment: coaching.equipment,
+        }
+      : null;
+  }
+}

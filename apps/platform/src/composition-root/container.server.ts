@@ -136,13 +136,6 @@ export function createPlatformContainer(options: {
     productEmailPort,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
-  const programs = composePrograms({
-    clockPort: systemClockAdapter,
-    database: database.client,
-    exerciseVideosConfig: environment,
-    loggerPort: consoleLoggerAdapter,
-    recipePhotosConfig: environment,
-  });
   const sales = composeSales({
     admissionsFacade: clients.facades.admissionsFacade,
     apiKeyAccountsFacade: access.facades.apiKeyAccountsFacade,
@@ -167,6 +160,16 @@ export function createPlatformContainer(options: {
     storeAssetRoot: environment.STORE_ASSET_ROOT,
     termsFacade: legal.facades.terms,
     waitlist: environment,
+  });
+  const programs = composePrograms({
+    clientCoachingFacade: clients.facades.clientCoachingFacade,
+    clientLookupFacade: clients.facades.clientLookupFacade,
+    clockPort: systemClockAdapter,
+    coachingEndedFacade: sales.facades.coachingEndedFacade,
+    database: database.client,
+    exerciseVideosConfig: environment,
+    loggerPort: consoleLoggerAdapter,
+    recipePhotosConfig: environment,
   });
   const platform = composePlatformFeature({
     app: environment,

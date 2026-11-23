@@ -94,6 +94,12 @@ export class ProfileFormSection {
     }
   }
 
+  async expectUnticked(options: readonly string[]): Promise<void> {
+    for (const option of options) {
+      await expect(this.chip(option)).not.toBeChecked();
+    }
+  }
+
   async expectReadOnly(value: string, reasonLabel: string): Promise<void> {
     await expect(this.section.getByText(value, { exact: true })).toBeVisible();
     await expect(

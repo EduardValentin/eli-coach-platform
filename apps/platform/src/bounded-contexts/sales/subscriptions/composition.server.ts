@@ -5,6 +5,7 @@ import type { AdmissionsFacade } from "~/bounded-contexts/clients/public/admissi
 import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup-facade";
 import type { ClientProfileFacade } from "~/bounded-contexts/clients/public/client-profile-facade";
 import type { CoachingPeriodsFacade } from "~/bounded-contexts/clients/public/coaching-periods-facade";
+import type { CoachingEndedFacade } from "~/bounded-contexts/sales/public/coaching-ended-facade";
 import { ReadPricingTiersUseCase } from "~/bounded-contexts/sales/subscriptions/domain/coaching-bundle";
 import type { PricingEligibilitySourceFacade } from "~/bounded-contexts/sales/waitlist/public/pricing-eligibility-source-facade";
 import {
@@ -14,6 +15,7 @@ import {
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
   ReadClientSubscriptionUseCase,
+  ReadCoachingEndedUseCase,
   ReadProgramStatusUseCase,
   ReadSubscriptionSummaryUseCase,
   ReadCheckoutPurchaseUseCase,
@@ -48,6 +50,7 @@ import { CoachingPaymentCardHandler } from "~/bounded-contexts/sales/subscriptio
 import { CoachingPurchaseCompletionHandler } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/payments/coaching-purchase-completion-handler.server";
 import { CoachingSubscriptionEventHandler } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/http/public-site/checkouts-controller.server";
+import { CoachingEndedFacadeAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/inbound/facades/coaching-ended-facade-adapter.server";
 import { ClientsClientLookupAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-client-lookup-adapter.server";
 import { ClientsCoachingEndHandlerAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-coaching-end-handler-adapter.server";
 import { ClientsCoachingPeriodHandlerAdapter } from "~/bounded-contexts/sales/subscriptions/adapters/outbound/clients/clients-coaching-period-handler-adapter.server";
@@ -77,6 +80,7 @@ import type { PaymentRefundHandlerPort } from "~/bounded-contexts/sales/shared/p
 import type { PaymentSubscriptionChangeHandlerPort } from "~/bounded-contexts/sales/shared/payments/adapters/inbound/http/payment-subscription-change-handler-port.server";
 
 type SubscriptionsComposition = {
+  facades: { coachingEndedFacade: CoachingEndedFacade };
   feature: SubscriptionsFeature;
   paymentHandlers: {
     paymentCompletionHandlerPort: PaymentCompletionHandlerPort;
@@ -326,6 +330,15 @@ export function composeSubscriptionsFeature(
     });
 
   return {
+    facades: {
+      coachingEndedFacade: new CoachingEndedFacadeAdapter({
+        readCoachingEndedUseCase: new ReadCoachingEndedUseCase({
+          clockPort,
+          coachingSubscriptionsPort: postgresCoachingSubscriptionsRepository,
+        }),
+        unitOfWork,
+      }),
+    },
     feature: {
       checkoutsController: new CheckoutsController({
         appBasePath: handles.appBasePath,

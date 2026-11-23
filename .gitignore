@@ -75,3 +75,8 @@ apps/platform/e2e/.runtime/
 # .parity/parity-map.md, .parity/parity-pairings.json and .parity/parity-states.json
 # are committed; only per-session folders are ignored.
 .parity/sessions/
+
+# The architecture model is committed in this repository; the current picture
+# `arch collect` writes beside it, the graph cache, findings and working files never are.
+!docs/architecture/architecture.json
+.architecture/

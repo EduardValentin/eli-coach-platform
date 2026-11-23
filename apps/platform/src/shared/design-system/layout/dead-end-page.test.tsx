@@ -179,6 +179,25 @@ describe("DeadEndPanel", () => {
     expect(panel).toContainElement(screen.getByTestId("icon"));
   });
 
+  it("stays quiet when the dead end is the page's expected content rather than news", () => {
+    // arrange
+    // act
+    render(
+      <DeadEndPanel
+        announcement="none"
+        description="The program opens once her answers are approved."
+        icon={<svg aria-hidden="true" />}
+        title="Program not ready yet"
+      />,
+    );
+
+    // assert
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Program not ready yet" }),
+    ).toBeInTheDocument();
+  });
+
   it("carries a data attribute such as a parity hook on the panel", () => {
     // arrange
     // act

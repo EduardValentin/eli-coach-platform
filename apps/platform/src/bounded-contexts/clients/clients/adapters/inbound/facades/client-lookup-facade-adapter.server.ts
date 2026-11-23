@@ -28,6 +28,7 @@ export class ClientLookupFacadeAdapter implements ClientLookupFacade {
           firstName: identity.firstName,
           lastName: identity.lastName,
           email: identity.email,
+          gender: identity.gender,
         }
       : null;
   }

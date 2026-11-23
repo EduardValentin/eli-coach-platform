@@ -78,4 +78,19 @@ describe("cleanUpRunAssessmentCalls", () => {
     expect(positionOf(notifications)).toBeGreaterThan(-1);
     expect(positionOf(notifications)).toBeLessThan(positionOf(clients));
   });
+
+  it("deletes the run's program versions, then their programs, before any client", async () => {
+    // arrange
+    const versions = /delete from app\.program_versions/;
+    const programs = /delete from app\.programs\b/;
+    const clients = /delete from app\.clients/;
+
+    // act
+    await cleanUpRunAssessmentCalls(RUN_ID, "[test]");
+
+    // assert
+    expect(positionOf(versions)).toBeGreaterThan(-1);
+    expect(positionOf(versions)).toBeLessThan(positionOf(programs));
+    expect(positionOf(programs)).toBeLessThan(positionOf(clients));
+  });
 });

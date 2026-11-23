@@ -154,6 +154,30 @@ describe('publishing', () => {
     expect(hooks.journeys.demoJourney.stage).toBe('approved');
   });
 
+  it('refuses to publish once her coaching has ended and changes nothing', () => {
+    // arrange
+    renderPrograms('?jstage=approved&jsub=ended');
+    act(() => {
+      hooks.programs.createProgram(DEMO_JOURNEY_CALL_ID, SETUP);
+    });
+    act(() => {
+      hooks.programs.updateDraft(DEMO_JOURNEY_CALL_ID, withExercises);
+    });
+    const before = hooks.programs.programFor(DEMO_JOURNEY_CALL_ID);
+
+    // act
+    let outcome: ReturnType<ProgramContextType['publishDraft']> | undefined;
+    act(() => {
+      outcome = hooks.programs.publishDraft(DEMO_JOURNEY_CALL_ID, new Date());
+    });
+
+    // assert
+    expect(outcome?.status).toBe('coaching-ended');
+    expect(hooks.programs.programFor(DEMO_JOURNEY_CALL_ID)).toEqual(before);
+    expect(hooks.journeys.demoJourney.stage).toBe('approved');
+    expect(hooks.journeys.demoJourney.programReadyAt).toBeNull();
+  });
+
   it('supersedes the previous version when a later version is published', () => {
     // arrange
     renderPrograms('?pseed=published');

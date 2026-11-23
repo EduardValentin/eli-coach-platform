@@ -118,8 +118,16 @@ export function DeadEndLink({
   );
 }
 
+type DeadEndAnnouncement = "alert" | "none";
+
+const ANNOUNCEMENT_ROLE: Record<DeadEndAnnouncement, "alert" | undefined> = {
+  alert: "alert",
+  none: undefined,
+};
+
 type DeadEndPanelProps = DataAttributes & {
   action?: ReactNode;
+  announcement?: DeadEndAnnouncement;
   description: ReactNode;
   icon: ReactNode;
   title: string;
@@ -127,6 +135,7 @@ type DeadEndPanelProps = DataAttributes & {
 
 export function DeadEndPanel({
   action,
+  announcement = "alert",
   description,
   icon,
   title,
@@ -139,7 +148,7 @@ export function DeadEndPanel({
         cardVariants({ variant: "portal-panel" }),
         DEAD_END_BODY_CLASS_NAME,
       )}
-      role="alert"
+      role={ANNOUNCEMENT_ROLE[announcement]}
     >
       <DeadEndContent description={description} icon={icon} title={title}>
         {action}

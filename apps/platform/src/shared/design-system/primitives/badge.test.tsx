@@ -65,15 +65,17 @@ describe("badge", () => {
     );
   });
 
-  it("warms a pending badge with the pending status colour", () => {
+  it("warms a pending badge with the pending tint and sets its text in the pending ink", () => {
     // arrange, act
     render(<Badge tone="pending">Pending</Badge>);
 
     // assert
-    expect(screen.getByText("Pending")).toHaveClass(
+    const badge = screen.getByText("Pending");
+    expect(badge).toHaveClass(
       "bg-status-pending-soft",
-      "text-status-pending",
+      "text-status-pending-ink",
     );
+    expect(badge).not.toHaveClass("text-status-pending");
   });
 
   it("greens a success badge with the success feedback colour", () => {

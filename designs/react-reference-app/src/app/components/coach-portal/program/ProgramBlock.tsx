@@ -3,7 +3,7 @@ import { CircleCheck, CircleDashed, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
-import { isBeforeStage, type ClientJourney } from '../../../domain/journey';
+import { coachingHasEnded, isBeforeStage, type ClientJourney } from '../../../domain/journey';
 import {
   BLOCK_TYPE_LABELS,
   currentVersion,
@@ -25,6 +25,7 @@ import { filledSessionsText } from './blockParts';
 import { NextVersionAction } from './NextVersionAction';
 import { journeyProgramView } from '../../program-view/journeyProgramView';
 import { ProgramPlanSummary } from '../../program-view/ProgramPlan';
+import { coachingEndedDraftReason, draftStateOf } from './unpublishableDraft';
 import { UpcomingBlockWarnings } from './UpcomingBlockWarnings';
 import { VersionReading } from './VersionReading';
 
@@ -41,7 +42,7 @@ function missingFrom(version: ProgramVersion): string[] {
 
 function BlockChip({ block, index }: { block: Block; index: number }) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm font-medium text-text-primary">
+    <span className="inline-flex items-center gap-2 text-sm font-medium text-text-primary" data-parity={`block-${index + 1}-chip`}>
       <BlockNumber block={block} index={index} size="xs" />
       {`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}
     </span>
@@ -55,9 +56,9 @@ function DraftBlocks({ blocks }: { blocks: readonly Block[] }) {
         const filled = filledSessionCount(block);
         const total = block.sessions.length;
         return (
-          <li key={block.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0">
+          <li key={block.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0" data-parity={`block-${index + 1}`}>
             <BlockChip block={block} index={index} />
-            <span className={cn('text-sm tabular-nums', filled < total ? 'text-warning' : 'text-text-secondary')}>
+            <span className={cn('text-sm tabular-nums', filled < total ? 'text-warning' : 'text-text-secondary')} data-parity={`block-${index + 1}-sessions`}>
               {filledSessionsText(filled, total)}
             </span>
           </li>
@@ -94,14 +95,18 @@ function DraftReadiness({ missing }: { missing: readonly string[] }) {
   );
 }
 
-function DraftSummary({ version }: { version: ProgramVersion }) {
+function DraftSummary({ journey, version }: { journey: ClientJourney; version: ProgramVersion }) {
   return (
-    <SettingsBody className="grid gap-4">
+    <SettingsBody className="grid gap-4" parity="draft-summary">
       <p className={EYEBROW_CLASS}>{`Version ${version.number} · draft`}</p>
-      <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-8" data-parity="draft-columns">
         <DraftBlocks blocks={version.content.plan.blocks} />
-        <div className="self-start rounded-field bg-surface-quiet p-4">
-          <DraftReadiness missing={missingFrom(version)} />
+        <div className="self-start rounded-field bg-surface-quiet p-4" data-parity="draft-readiness">
+          {draftStateOf(journey, new Date()) === 'coaching-ended' ? (
+            <p className="text-sm text-text-secondary">{coachingEndedDraftReason(journey)}</p>
+          ) : (
+            <DraftReadiness missing={missingFrom(version)} />
+          )}
         </div>
       </div>
     </SettingsBody>
@@ -126,34 +131,47 @@ function PublishedSummary({ journey, program, programPath }: { journey: ClientJo
   );
 }
 
+function NoProgram({ journey, programPath }: { journey: ClientJourney; programPath: string }) {
+  const possessive = clientPronouns(journey.profile.identity.gender).possessive;
+  if (coachingHasEnded(journey, new Date())) {
+    return <EmptyState icon={ClipboardList} title="No program" description={`${possessive.capitalised} coaching has ended.`} />;
+  }
+  if (isBeforeStage(journey.stage, 'approved')) {
+    return (
+      <EmptyState
+        icon={ClipboardList}
+        title="No program yet"
+        description={`The program opens once ${possessive.lower} answers are approved.`}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      icon={ClipboardList}
+      title="No program yet"
+      description={`Build it from ${possessive.lower} profile.`}
+      action={
+        <Button variant="primary" asChild>
+          <Link to={`${programPath}/new`}>Build program</Link>
+        </Button>
+      }
+    />
+  );
+}
+
 export function ProgramBlock({ journey }: { journey: ClientJourney }) {
   const { programFor } = usePrograms();
   const program = programFor(journey.callId);
   const programPath = `${clientDetailPathForJourney(journey)}/program`;
   const draft = program && draftOf(program);
   const published = program?.versions.some(version => version.state === 'published');
-  const possessive = clientPronouns(journey.profile.identity.gender).possessive.lower;
 
   let body: ReactNode;
   let footer: ReactNode = null;
   if (!program) {
-    const waiting = isBeforeStage(journey.stage, 'approved');
-    body = (
-      <EmptyState
-        icon={ClipboardList}
-        title="No program yet"
-        description={waiting ? `The program opens once ${possessive} answers are approved.` : `Build it from ${possessive} profile.`}
-        action={
-          !waiting && (
-            <Button variant="primary" asChild>
-              <Link to={`${programPath}/new`}>Build program</Link>
-            </Button>
-          )
-        }
-      />
-    );
+    body = <NoProgram journey={journey} programPath={programPath} />;
   } else if (!published) {
-    body = draft && <DraftSummary version={draft} />;
+    body = draft && <DraftSummary journey={journey} version={draft} />;
     footer = <NextVersionAction journey={journey} program={program} />;
   } else {
     body = <PublishedSummary journey={journey} program={program} programPath={programPath} />;

@@ -8,6 +8,7 @@ type PortalPageHeaderProps = {
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  headingId?: string;
   headingRef?: Ref<HTMLHeadingElement>;
 };
 
@@ -16,6 +17,7 @@ export function PortalPageHeader({
   title,
   subtitle,
   actions,
+  headingId,
   headingRef,
 }: PortalPageHeaderProps) {
   const focusable = headingRef !== undefined;
@@ -25,6 +27,7 @@ export function PortalPageHeader({
       <div className="space-y-2">
         {eyebrow && <p className={EYEBROW_CLASS}>{eyebrow}</p>}
         <h1
+          id={headingId}
           className={cn(PORTAL_PAGE_TITLE_CLASS, { "outline-none": focusable })}
           ref={headingRef}
           tabIndex={focusable ? -1 : undefined}

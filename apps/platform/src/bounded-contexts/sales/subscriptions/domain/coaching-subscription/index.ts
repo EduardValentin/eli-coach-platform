@@ -61,6 +61,7 @@ export { type PaymentCustomerCardsPort } from "./payment-customer-cards-port";
 export { type PaymentSubscriptionsPort } from "./payment-subscriptions-port";
 export { STEPS_AFTER_SUBMISSION } from "./program-steps";
 export { PurchasedSubscription } from "./purchased-subscription";
+export { ReadCoachingEndedUseCase } from "./read-coaching-ended-use-case";
 export { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
 export { ReadProgramStatusUseCase } from "./read-program-status-use-case";
 export { ReadSubscriptionSummaryUseCase } from "./read-subscription-summary-use-case";

@@ -25,6 +25,19 @@ describe("PortalPageHeader", () => {
     expect(screen.getAllByRole("heading")).toHaveLength(1);
   });
 
+  it("gives the heading the id a region below names itself after", () => {
+    // arrange
+    // act
+    render(
+      <PortalPageHeader headingId="setup-heading" title="Build program" />,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Build program" }),
+    ).toHaveAttribute("id", "setup-heading");
+  });
+
   it("reads the subtitle under the title when given", () => {
     // arrange
     // act

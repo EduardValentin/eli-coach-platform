@@ -5,16 +5,13 @@
   "apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/persistence/schema.server.ts": [
     "schema-foreign-keys-point-at-providers"
   ],
-  "apps/platform/src/bounded-contexts/access/accounts/adapters/outbound/sales/reaches-later-bounded-context.server.ts": [
-    "bounded-context-order-access"
-  ],
   "apps/platform/src/bounded-contexts/clients/client-resources/ui/client/reads-earlier-published.tsx": [],
   "apps/platform/src/bounded-contexts/clients/client-resources/ui/client/reads-foreign-component-public.tsx": [
-    "bounded-context-order-clients",
+    "bounded-context-imports-published-only",
     "ui-reads-published-only"
   ],
   "apps/platform/src/bounded-contexts/clients/composition.server.ts": [
-    "bounded-context-order-clients",
+    "bounded-context-imports-published-only",
     "bounded-context-root-own-components"
   ],
   "apps/platform/src/bounded-contexts/operations/feature-flags/adapters/inbound/http/imports-feature-flag-overrides.server.ts": [
@@ -49,13 +46,13 @@
     "inbound-reads-request-keys-only-from-public"
   ],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-other-component-public.server.ts": [
-    "bounded-context-order-sales",
+    "bounded-context-imports-published-only",
     "inbound-reads-request-keys-only-from-public"
   ],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-payment-vocabulary.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/access/reads-earlier-bounded-context.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-component-public.server.ts": [
-    "bounded-context-order-sales",
+    "bounded-context-imports-published-only",
     "component-roots-read-provider-paths"
   ],
   "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-facade.server.ts": [
@@ -80,7 +77,7 @@
   ],
   "apps/platform/src/bounded-contexts/sales/subscriptions/public/paths.ts": [],
   "apps/platform/src/bounded-contexts/sales/subscriptions/ui/coach/reads-other-context-domain.tsx": [
-    "bounded-context-order-sales",
+    "bounded-context-imports-published-only",
     "no-cross-context-domain-import",
     "ui-reads-published-only"
   ],
@@ -156,12 +153,7 @@
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/reads-request-key.server.ts": [
     "component-key-consumers"
   ],
-  "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/schema.server.ts": [
-    "schema-foreign-keys-point-at-providers"
-  ],
-  "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/waitlist/reaches-later-sibling.server.ts": [
-    "component-order-store"
-  ],
+  "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/schema.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/composition.server.ts": [
     "config-runtime-readers"
   ],
@@ -183,7 +175,7 @@
   ],
   "apps/platform/src/bounded-contexts/sales/store/public/reads-own-domain.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/routes.ts": [
-    "bounded-context-order-sales",
+    "bounded-context-imports-published-only",
     "component-roots-read-provider-paths"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half.tsx": [
@@ -206,7 +198,7 @@
     "keys-construct-nothing"
   ],
   "apps/platform/src/bounded-contexts/sales/waitlist/composition.server.ts": [
-    "bounded-context-order-sales",
+    "bounded-context-imports-published-only",
     "component-composition-reads-provider-public"
   ],
   "apps/platform/src/bounded-contexts/sales/waitlist/config.server.ts": [],
@@ -302,5 +294,15 @@
   "apps/platform/src/surfaces/public-site/sections/reads-platform-context.server.ts": [
     "composition-root"
   ],
-  "apps/platform/src/surfaces/public-site/shell/layout.server.ts": []
+  "apps/platform/src/surfaces/public-site/shell/layout.server.ts": [],
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/sales/reads-subscription-domain.server.ts": [
+    "bounded-context-imports-published-only",
+    "no-cross-context-domain-import",
+    "outbound-provider-adapter-only-importer"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/sales/reads-sales-public.server.ts": [],
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/reads-exercise-domain.server.ts": [
+    "sibling-imports-published-only"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/reads-exercise-public.server.ts": []
 }

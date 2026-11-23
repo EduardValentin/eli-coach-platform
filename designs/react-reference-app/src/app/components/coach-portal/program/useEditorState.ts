@@ -16,6 +16,7 @@ import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import type { DocumentEditing } from '../../program-view/documentEditing';
 import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
+import { draftStateOf } from './unpublishableDraft';
 
 export type WriteResult = 'written' | 'failed';
 
@@ -92,7 +93,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   function publish(): WriteResult {
     try {
       const outcome = writeProgramThroughServer(appState.programWrite, () => publishDraft(program.callId, new Date()));
-      if (outcome.status === 'blocked') return 'failed';
+      if (outcome.status !== 'published') return 'failed';
       toast.success(`Version ${outcome.version.number} published`);
     } catch {
       return 'failed';
@@ -121,6 +122,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     problems: blockingProblems(content, ruleContext),
     warnings: warnings(content, ruleContext),
     opensOn: ruleContext.startDate && isAfter(startOfDay(ruleContext.startDate), startOfDay(today)) ? ruleContext.startDate : null,
+    draftState: draftStateOf(journey, today),
     select,
     openInStructure,
     updateBlocks,

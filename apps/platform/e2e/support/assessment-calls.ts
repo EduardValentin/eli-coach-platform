@@ -68,6 +68,19 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   },
   clientOwnedRows("weekly check-in series", "check_in_series"),
   {
+    rows: "program versions",
+    statement: `
+      delete from app.program_versions
+      where program_id in (
+        select id from app.programs
+        where client_id in (
+          select id from app.clients where assessment_call_id = any($1::uuid[])
+        )
+      )
+    `,
+  },
+  clientOwnedRows("programs", "programs"),
+  {
     rows: "client notifications",
     statement: `
       delete from app.notifications

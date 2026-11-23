@@ -1,4 +1,3 @@
-const { readdirSync } = require("node:fs");
 const path = require("node:path");
 
 const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
@@ -8,11 +7,7 @@ const BOUNDED_CONTEXT = `${BOUNDED_CONTEXTS_ROOT}[^/]+/`;
 const COMPONENT = "(?!(?:public|shared)/)[^/]+";
 const UNIT = `(?:${COMPONENT}|shared/[^/]+)`;
 const BOUNDED_CONTEXT_PUBLIC = `${BOUNDED_CONTEXT}public/`;
-function publishedFoldersOf(boundedContexts) {
-  return `${BOUNDED_CONTEXTS_ROOT}${boundedContexts}/(public|${COMPONENT}/ui/shared)/`;
-}
-
-const PUBLISHED_FOLDERS = publishedFoldersOf("[^/]+");
+const PUBLISHED_FOLDERS = `${BOUNDED_CONTEXTS_ROOT}[^/]+/(public|${COMPONENT}/ui/shared)/`;
 const SURFACES = "^apps/platform/src/surfaces/";
 const CONCEPT = "{concept}";
 
@@ -38,132 +33,6 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
   `${APP}composition-root/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
-
-const BOUNDED_CONTEXT_ORDER = [
-  "operations",
-  "legal",
-  "access",
-  "scheduling",
-  "clients",
-  "programs",
-  "sales",
-];
-
-const COMPONENT_ORDER = {
-  operations: ["feature-flags"],
-  legal: ["legal"],
-  access: ["accounts"],
-  scheduling: ["coach-schedule", "assessment-calls"],
-  clients: [
-    "clients",
-    "client-profile",
-    "client-resources",
-    "notifications",
-    "check-ins",
-  ],
-  programs: ["exercise-library", "nutrition-library"],
-  sales: ["store", "waitlist", "subscriptions"],
-};
-
-const COMBINED_ORDER = BOUNDED_CONTEXT_ORDER.flatMap((boundedContext) =>
-  COMPONENT_ORDER[boundedContext].map((component) => ({
-    boundedContext,
-    component,
-  })),
-);
-
-function foldersOf(directory) {
-  return readdirSync(path.join(__dirname, "..", directory), {
-    withFileTypes: true,
-  })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
-}
-
-function requireEveryFolderOrdered(directory) {
-  const unordered = foldersOf(directory).flatMap((boundedContext) => {
-    if (!BOUNDED_CONTEXT_ORDER.includes(boundedContext)) {
-      return [`${boundedContext} (not in BOUNDED_CONTEXT_ORDER)`];
-    }
-    return foldersOf(path.join(directory, boundedContext))
-      .filter((folder) => !["public", "shared"].includes(folder))
-      .filter(
-        (component) => !COMPONENT_ORDER[boundedContext].includes(component),
-      )
-      .map(
-        (component) =>
-          `${boundedContext}/${component} (not in COMPONENT_ORDER.${boundedContext})`,
-      );
-  });
-
-  if (unordered.length > 0) {
-    throw new Error(
-      `Place every bounded context of ${directory} in BOUNDED_CONTEXT_ORDER and every component in its COMPONENT_ORDER entry; missing: ${unordered.join(", ")}.`,
-    );
-  }
-}
-
-requireEveryFolderOrdered("apps/platform/src/bounded-contexts");
-
-function boundedContextOrderRule(boundedContext, position) {
-  const earlier = BOUNDED_CONTEXT_ORDER.slice(0, position);
-
-  return {
-    name: `bounded-context-order-${boundedContext}`,
-    comment: `A bounded context imports only the bounded contexts before it in BOUNDED_CONTEXT_ORDER, and of those only their published folders (the bounded context's public/ and each component's ui/shared/): ${boundedContext} may reach ${earlier.join(", ") || "no other bounded context"}. Schema files are held by schema-foreign-keys-point-at-providers instead.`,
-    severity: "error",
-    from: {
-      path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/`,
-      pathNot: COMPONENT_SCHEMA,
-    },
-    to: {
-      path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/)[^/]+/`,
-      ...(earlier.length > 0 && {
-        pathNot: publishedFoldersOf(`(${earlier.join("|")})`),
-      }),
-    },
-  };
-}
-
-function componentOrderRule({ boundedContext, component }) {
-  const components = COMPONENT_ORDER[boundedContext];
-  const earlierAndOwn = components.slice(0, components.indexOf(component) + 1);
-
-  return {
-    name: `component-order-${component}`,
-    comment: `Inside ${boundedContext}, a component imports only the components before it in COMPONENT_ORDER.${boundedContext}: ${component} may reach ${earlierAndOwn.slice(0, -1).join(", ") || "no sibling"}. Schema files are held by schema-foreign-keys-point-at-providers instead.`,
-    severity: "error",
-    from: {
-      path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/${component}/`,
-      pathNot: COMPONENT_SCHEMA,
-    },
-    to: {
-      path: `${BOUNDED_CONTEXTS_ROOT}${boundedContext}/(?!(${earlierAndOwn.join("|")})/)${COMPONENT}/`,
-    },
-  };
-}
-
-function schemaForeignKeyRule({ boundedContext, component }, position) {
-  const providers = COMBINED_ORDER.slice(0, position).map(
-    (earlier) => earlier.component,
-  );
-
-  return {
-    name: "schema-foreign-keys-point-at-providers",
-    comment:
-      "A component's adapters/outbound/persistence/schema.server.ts imports nothing of any bounded context outside its own component except, for a foreign key, consumer to provider, the schema.server.ts of a component earlier in BOUNDED_CONTEXT_ORDER, then COMPONENT_ORDER.",
-    severity: "error",
-    from: {
-      path: `${BOUNDED_CONTEXT}${component}/${SCHEMA_FILE}`,
-    },
-    to: {
-      path: `${BOUNDED_CONTEXTS_ROOT}(?!${boundedContext}/${component}/)`,
-      ...(providers.length > 0 && {
-        pathNot: `${BOUNDED_CONTEXT}(${providers.join("|")})/${SCHEMA_FILE}`,
-      }),
-    },
-  };
-}
 
 function surfaceToBoundedContextRule(surface, slice) {
   return {
@@ -192,13 +61,37 @@ module.exports = {
       from: {},
       to: { circular: true },
     },
-    ...BOUNDED_CONTEXT_ORDER.map(boundedContextOrderRule),
-    ...COMBINED_ORDER.map(componentOrderRule),
-    ...COMBINED_ORDER.map(schemaForeignKeyRule),
+    {
+      name: "bounded-context-imports-published-only",
+      comment:
+        "Another bounded context is reached only through its published folders: the bounded context's public/ and each component's ui/shared/. Which bounded contexts depend on which is free; a cycle between two is caught by tools/no-cycles.mjs. Schema files are held by schema-foreign-keys-point-at-providers instead.",
+      severity: "error",
+      from: {
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/`,
+        pathNot: COMPONENT_SCHEMA,
+      },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/)[^/]+/`,
+        pathNot: PUBLISHED_FOLDERS,
+      },
+    },
+    {
+      name: "schema-foreign-keys-point-at-providers",
+      comment:
+        "A component's adapters/outbound/persistence/schema.server.ts imports, outside its own component, only another component's schema.server.ts, for a foreign key.",
+      severity: "error",
+      from: {
+        path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/(${COMPONENT})/${SCHEMA_FILE}`,
+      },
+      to: {
+        path: `${BOUNDED_CONTEXTS_ROOT}(?!$1/$2/)`,
+        pathNot: COMPONENT_SCHEMA,
+      },
+    },
     {
       name: "sibling-imports-published-only",
       comment:
-        "Inside a bounded context, a component reaches a sibling only through the sibling's public/ and ui/shared/. Schema files are held by schema-foreign-keys-point-at-providers instead.",
+        "Inside a bounded context, a component reaches a sibling only through the sibling's public/ and ui/shared/. Which sibling depends on which is free; a cycle between two is caught by tools/no-cycles.mjs. Schema files are held by schema-foreign-keys-point-at-providers instead.",
       severity: "error",
       from: {
         path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/(${COMPONENT})/`,
@@ -684,7 +577,7 @@ module.exports = {
     {
       name: "bounded-context-public-publishes-keys-and-paths",
       comment:
-        "A bounded context's public/ holds interfaces, DTO types, route paths and the request-context keys, and nothing else that runs: of a bounded context it imports only a bounded-context public/ (its own or an earlier one's), its own components' request-context keys (adapters/inbound/http/*context.server.ts) and their public/paths.ts. Never a component public/, which may re-export domain types, and never another bounded context's component.",
+        "A bounded context's public/ holds interfaces, DTO types, route paths and the request-context keys, and nothing else that runs: of a bounded context it imports only a bounded-context public/ (its own or another's), its own components' request-context keys (adapters/inbound/http/*context.server.ts) and their public/paths.ts. Never a component public/, which may re-export domain types, and never another bounded context's component.",
       severity: "error",
       from: { path: `${BOUNDED_CONTEXTS_ROOT}([^/]+)/public/` },
       to: {

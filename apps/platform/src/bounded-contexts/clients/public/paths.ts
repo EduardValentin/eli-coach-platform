@@ -3,5 +3,6 @@ export {
   CLIENT_ENDED_PATH,
   CLIENT_ENDED_ROUTE_SEGMENT,
   CLIENT_ONBOARDING_PATH,
+  COACH_CLIENTS_ROUTE_SEGMENT,
   coachClientPath,
 } from "../clients/public/paths";

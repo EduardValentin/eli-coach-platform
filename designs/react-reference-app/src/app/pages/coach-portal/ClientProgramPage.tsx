@@ -19,12 +19,24 @@ import { Button } from '../../components/ui/button';
 import { cardVariants } from '../../components/ui/card';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { currentVersion, draftOf, type ProgramVersion } from '../../domain/program';
+import { coachingHasEnded, type ClientJourney } from '../../domain/journey';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
-import { clientDetailPathForJourney, journeyClientName } from '../../utils/journeyLabels';
+import { clientDetailPathForJourney, clientPronouns, journeyClientName } from '../../utils/journeyLabels';
 
 function unwrittenDescription({ name, start }: UnwrittenBlock): string {
   const deadline = start ? ` It must be published before it starts on ${format(start, 'd MMMM')}.` : '';
   return `${name} has no sessions.${deadline}`;
+}
+
+function unwrittenAfterCoachingEnded({ name }: UnwrittenBlock): string {
+  return `${name} has no sessions.`;
+}
+
+function unpublishedDescription(journey: ClientJourney, draft: ProgramVersion | undefined, now: Date): string {
+  const promise = coachingHasEnded(journey, now)
+    ? `${clientPronouns(journey.profile.identity.gender).possessive.capitalised} coaching has ended.`
+    : `${journey.profile.identity.firstName} sees her program once you publish it.`;
+  return [draft && `Version ${draft.number} is a draft.`, promise].filter(Boolean).join(' ');
 }
 
 export function ClientProgramPage() {
@@ -53,6 +65,7 @@ export function ClientProgramPage() {
   const draft = draftOf(program);
   const view = current && journeyProgramView({ journey, program, version: current, exercises, today: new Date() });
   const nextVersion = <NextVersionAction journey={journey} program={program} />;
+  const coachingEnded = coachingHasEnded(journey, new Date());
 
   return (
     <div className="w-full pb-12" data-parity-root="ClientProgramPage">
@@ -79,7 +92,7 @@ export function ClientProgramPage() {
           <EmptyState
             icon={Pencil}
             title="No published version yet"
-            description={[draft && `Version ${draft.number} is a draft.`, `${journey.profile.identity.firstName} sees her program once you publish it.`].filter(Boolean).join(' ')}
+            description={unpublishedDescription(journey, draft, new Date())}
             action={nextVersion}
           />
         </div>
@@ -112,7 +125,7 @@ export function ClientProgramPage() {
             )
           }
           exerciseDetailFooter={exercise => <ExerciseLibraryLink exercise={exercise} />}
-          unwrittenDescription={unwrittenDescription}
+          unwrittenDescription={coachingEnded ? unwrittenAfterCoachingEnded : unwrittenDescription}
           unwrittenAction={nextVersion}
         />
       )}
