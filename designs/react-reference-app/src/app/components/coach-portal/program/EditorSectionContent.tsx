@@ -75,7 +75,6 @@ function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState>
 }
 
 function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor' | 'onAddBlock'>) {
-  const { updateSetup } = usePrograms();
   const { exercises } = useTraining();
   return (
     <PlanOverview
@@ -89,7 +88,7 @@ function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSe
       onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
       onAddBlock={onAddBlock}
       onUseSuggestion={editor.applySuggestion}
-      settings={<ProgramSettings program={program} onChange={patch => updateSetup(program.callId, patch)} />}
+      settings={<ProgramSettings program={program} onChange={editor.changeSettings} />}
     />
   );
 }
