@@ -94,7 +94,8 @@ export default [
   },
   // A write that ends a user action goes through a React Router fetcher or
   // route action; raw fetch in browser code is reserved for named background
-  // sync (today: the onboarding draft autosave), which is excluded below.
+  // sync (today: the onboarding draft autosave and the program builder's draft
+  // save), which is excluded below.
   // This block replaces the options of the one above for the same files, so
   // XMLHttpRequest is refused here again.
   {
@@ -105,6 +106,7 @@ export default [
     ignores: [
       "**/*.test.{ts,tsx}",
       "apps/platform/src/bounded-contexts/clients/client-profile/ui/client/onboarding/draft-autosave-requests.ts",
+      "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/program-draft-save-requests.ts",
     ],
     rules: {
       "no-restricted-globals": [

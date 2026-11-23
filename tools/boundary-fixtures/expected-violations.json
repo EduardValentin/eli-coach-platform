@@ -25,65 +25,28 @@
   "apps/platform/src/bounded-contexts/programs/nutrition-library/ui/coach/recipes/recipe-builder.tsx": [
     "not-to-unresolvable"
   ],
-  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/memory/stripe-confined.server.ts": [
-    "not-to-unresolvable",
-    "stripe-confined"
-  ],
-  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/reads-component.server.ts": [
-    "bounded-context-shared-imports-no-component"
-  ],
-  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/stripe/stripe-client.server.ts": [
-    "not-to-unresolvable"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/facades/names-database.server.ts": [
-    "no-database-types-outside-persistence"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/cycle-a.ts": [
-    "no-circular"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-access-session.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-foreign-facade.server.ts": [
-    "inbound-reads-request-keys-only-from-public"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-other-component-public.server.ts": [
-    "bounded-context-imports-published-only",
-    "inbound-reads-request-keys-only-from-public"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-payment-vocabulary.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/access/reads-earlier-bounded-context.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-component-public.server.ts": [
-    "bounded-context-imports-published-only",
-    "component-roots-read-provider-paths"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-facade.server.ts": [
-    "component-roots-read-provider-paths"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/payments/reads-shared-payments.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/payments/stripe/stripe-client.server.ts": [
-    "not-to-unresolvable"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/reaches-other-bounded-context.server.ts": [
-    "outbound-provider-adapter-only-importer"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/schema.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/store/reads-earlier-sibling.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/store/reads-sibling-domain.server.ts": [
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/reads-exercise-domain.server.ts": [
     "sibling-imports-published-only"
   ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/composition.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/domain/coaching-bundle/reads-sibling-domain.ts": [
-    "domain-imports-only-itself",
-    "sibling-imports-published-only"
-  ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/public/paths.ts": [],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/ui/coach/reads-other-context-domain.tsx": [
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/reads-exercise-public.server.ts": [],
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/sales/reads-sales-public.server.ts": [],
+  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/sales/reads-subscription-domain.server.ts": [
     "bounded-context-imports-published-only",
     "no-cross-context-domain-import",
-    "ui-reads-published-only"
+    "outbound-provider-adapter-only-importer"
   ],
-  "apps/platform/src/bounded-contexts/sales/subscriptions/ui/public/clerk-confined.tsx": [
-    "clerk-confined",
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/dnd-parts.tsx": [
     "not-to-unresolvable"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/plan-block-list.tsx": [
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/program-builder.tsx": [
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/react-dnd-confined.tsx": [
+    "not-to-unresolvable",
+    "react-dnd-confined"
   ],
   "apps/platform/src/bounded-contexts/sales/composition.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/public/design-system-browser-only.ts": [
@@ -99,18 +62,28 @@
   "apps/platform/src/bounded-contexts/sales/public/reads-store-paths.ts": [],
   "apps/platform/src/bounded-contexts/sales/public/request-context.ts": [],
   "apps/platform/src/bounded-contexts/sales/routes.ts": [],
+  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/memory/stripe-confined.server.ts": [
+    "not-to-unresolvable",
+    "stripe-confined"
+  ],
+  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/reads-component.server.ts": [
+    "bounded-context-shared-imports-no-component"
+  ],
+  "apps/platform/src/bounded-contexts/sales/shared/payments/adapters/outbound/stripe/stripe-client.server.ts": [
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/catalog/deeper/not-a-route.ts": [
     "inbound-never-imports-outbound"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/context.server.ts": [],
-  "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/inbound-never-imports-ui.ts": [
-    "inbound-never-imports-ui"
-  ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/imports-facade.ts": [
     "route-thinness"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/imports-inbound-server-module.ts": [
     "route-thinness"
+  ],
+  "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/inbound-never-imports-ui.ts": [
+    "inbound-never-imports-ui"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/management/imports-management-auth.ts": [
     "route-thinness"
@@ -190,10 +163,60 @@
   "apps/platform/src/bounded-contexts/sales/store/ui/public/surface-import.tsx": [
     "surface-import"
   ],
+  "apps/platform/src/bounded-contexts/sales/store/ui/shared/product-card.tsx": [],
   "apps/platform/src/bounded-contexts/sales/store/ui/shared/shared-ui-never-imports-actor-ui.ts": [
     "shared-ui-never-imports-actor-ui"
   ],
-  "apps/platform/src/bounded-contexts/sales/store/ui/shared/product-card.tsx": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/facades/names-database.server.ts": [
+    "no-database-types-outside-persistence"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/cycle-a.ts": [
+    "no-circular"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-access-session.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-foreign-facade.server.ts": [
+    "inbound-reads-request-keys-only-from-public"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-other-component-public.server.ts": [
+    "bounded-context-imports-published-only",
+    "inbound-reads-request-keys-only-from-public"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/inbound/http/reads-payment-vocabulary.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/access/reads-earlier-bounded-context.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-component-public.server.ts": [
+    "bounded-context-imports-published-only",
+    "component-roots-read-provider-paths"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/email/reads-foreign-facade.server.ts": [
+    "component-roots-read-provider-paths"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/payments/reads-shared-payments.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/payments/stripe/stripe-client.server.ts": [
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/reaches-other-bounded-context.server.ts": [
+    "outbound-provider-adapter-only-importer"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/persistence/schema.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/store/reads-earlier-sibling.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/adapters/outbound/store/reads-sibling-domain.server.ts": [
+    "sibling-imports-published-only"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/composition.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/domain/coaching-bundle/reads-sibling-domain.ts": [
+    "domain-imports-only-itself",
+    "sibling-imports-published-only"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/public/paths.ts": [],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/ui/coach/reads-other-context-domain.tsx": [
+    "bounded-context-imports-published-only",
+    "no-cross-context-domain-import",
+    "ui-reads-published-only"
+  ],
+  "apps/platform/src/bounded-contexts/sales/subscriptions/ui/public/clerk-confined.tsx": [
+    "clerk-confined",
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server.ts": [
     "keys-construct-nothing"
   ],
@@ -216,7 +239,9 @@
   "apps/platform/src/composition-root/reads-bounded-context-entries.server.ts": [],
   "apps/platform/src/root.server.ts": [],
   "apps/platform/src/root.tsx": [],
-  "apps/platform/src/routes.ts": ["root-registry-to-server"],
+  "apps/platform/src/routes.ts": [
+    "root-registry-to-server"
+  ],
   "apps/platform/src/shared/design-system/filters/imports-layout.tsx": [
     "ui-subpaths"
   ],
@@ -294,15 +319,5 @@
   "apps/platform/src/surfaces/public-site/sections/reads-platform-context.server.ts": [
     "composition-root"
   ],
-  "apps/platform/src/surfaces/public-site/shell/layout.server.ts": [],
-  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/sales/reads-subscription-domain.server.ts": [
-    "bounded-context-imports-published-only",
-    "no-cross-context-domain-import",
-    "outbound-provider-adapter-only-importer"
-  ],
-  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/sales/reads-sales-public.server.ts": [],
-  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/reads-exercise-domain.server.ts": [
-    "sibling-imports-published-only"
-  ],
-  "apps/platform/src/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/reads-exercise-public.server.ts": []
+  "apps/platform/src/surfaces/public-site/shell/layout.server.ts": []
 }
