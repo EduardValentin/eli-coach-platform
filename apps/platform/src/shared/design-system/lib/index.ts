@@ -33,6 +33,7 @@ export {
   PORTAL_PAGE_TITLE_CLASS,
   VALUE_CLASS,
   VALUE_LG_CLASS,
+  WIDGET_TITLE_CLASS,
 } from "./typography";
 export { toggled } from "./toggled";
 export { useDisplayTimeZone } from "./use-display-time-zone";

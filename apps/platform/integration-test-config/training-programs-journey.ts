@@ -66,6 +66,10 @@ export function programSetupPage(clientId: string): string {
   return `${coachClientPage(clientId)}/program/new`;
 }
 
+export function programBuilderPage(clientId: string): string {
+  return `${coachClientPage(clientId)}/program/draft`;
+}
+
 function programDraftSaveAddress(clientId: string): string {
   return `/api/coach/clients/${clientId}/program/draft`;
 }
@@ -102,6 +106,10 @@ export class TrainingProgramsJourney {
 
   openSetup(requester: Requester, clientId: string): Promise<Response> {
     return this.send(requester, programSetupPage(clientId));
+  }
+
+  openBuilder(requester: Requester, clientId: string): Promise<Response> {
+    return this.send(requester, programBuilderPage(clientId));
   }
 
   openClientPage(requester: Requester, clientId: string): Promise<Response> {

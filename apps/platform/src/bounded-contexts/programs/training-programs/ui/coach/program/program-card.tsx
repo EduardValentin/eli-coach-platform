@@ -9,9 +9,15 @@ import { CircleCheck, CircleDashed, ClipboardList } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { Link } from "react-router";
 
-import { programSetupPath } from "~/bounded-contexts/programs/training-programs/public/paths";
+import {
+  programBuilderPath,
+  programSetupPath,
+} from "~/bounded-contexts/programs/training-programs/public/paths";
 import type { ProgramCardView } from "~/bounded-contexts/programs/training-programs/public/program-card";
 import { possessivePronoun } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/visitor-profile-display";
+
+import { filledSessionsText } from "./block-parts";
+import { BlockNumber } from "./block-number";
 
 type DraftCard = Extract<ProgramCardView, { state: "draft" }>;
 
@@ -20,13 +26,6 @@ type ProgramCardDraft = DraftCard["draft"];
 type ProgramCardBlock = ProgramCardDraft["blocks"][number];
 
 type ProgramCardProps = { card: ProgramCardView; clientId: string };
-
-const BLOCK_BORDER_CLASS: Record<ProgramCardBlock["type"], string> = {
-  foundation: "border-training-foundation",
-  hypertrophy: "border-training-hypertrophy",
-  strength: "border-training-strength",
-  deload: "border-training-deload",
-};
 
 function BlockChip({
   block,
@@ -40,15 +39,7 @@ function BlockChip({
       className="inline-flex items-center gap-2 text-sm font-medium text-text-primary"
       data-parity={`block-${number}-chip`}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "inline-flex size-5.5 shrink-0 items-center justify-center rounded-tile border-2 bg-surface-base text-xs leading-none font-semibold text-text-primary tabular-nums",
-          BLOCK_BORDER_CLASS[block.type],
-        )}
-      >
-        {number}
-      </span>
+      <BlockNumber block={block} index={number - 1} size="xs" />
       {`${block.typeLabel} · ${block.weeks} wk`}
     </span>
   );
@@ -75,7 +66,7 @@ function DraftBlocks({ blocks }: { blocks: ProgramCardDraft["blocks"] }) {
               })}
               data-parity={`block-${number}-sessions`}
             >
-              {`${block.filledSessions} of ${block.sessions} sessions`}
+              {filledSessionsText(block.filledSessions, block.sessions)}
             </span>
           </li>
         );
@@ -205,11 +196,32 @@ function ProgramCardBody({ card, clientId }: ProgramCardProps) {
   }
 }
 
+function ContinueDraft({ clientId }: { clientId: string }) {
+  return (
+    <Link
+      className={buttonVariants({ size: "sm", variant: "primary" })}
+      to={programBuilderPath(clientId)}
+    >
+      Continue draft
+    </Link>
+  );
+}
+
+const DRAFT_STATES: readonly ProgramCardView["state"][] = [
+  "draft",
+  "draft-coaching-ended",
+];
+
 export function ProgramCard(props: ProgramCardProps) {
   return (
     <SettingsSection
       className="mb-8"
       data-parity-root="ProgramBlock"
+      footer={
+        DRAFT_STATES.includes(props.card.state) && (
+          <ContinueDraft clientId={props.clientId} />
+        )
+      }
       headingId="client-program"
       icon={ClipboardList}
       title="Program"

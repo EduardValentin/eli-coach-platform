@@ -33,6 +33,16 @@ export const WEEKDAYS = [
 ] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
+
 export const TRAINING_DAY_OPTIONS = [2, 3, 4, 5] as const;
 export type TrainingDays = (typeof TRAINING_DAY_OPTIONS)[number];
 

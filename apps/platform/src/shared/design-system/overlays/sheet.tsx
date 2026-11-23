@@ -6,6 +6,8 @@ import { useReturnFocusToOpener } from "../lib/use-return-focus-to-opener";
 
 export const Sheet = RadixDialog.Root;
 
+export const SheetTrigger = RadixDialog.Trigger;
+
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof RadixDialog.Overlay>,
   React.ComponentPropsWithoutRef<typeof RadixDialog.Overlay>

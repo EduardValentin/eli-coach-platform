@@ -9,7 +9,7 @@ import {
 } from "./nutrition-library/routes";
 import {
   trainingProgramsApiRoutes,
-  trainingProgramsCoachSetupRoutes,
+  trainingProgramsCoachRoutes,
 } from "./training-programs/routes";
 
 export const programsRoutes = {
@@ -20,7 +20,7 @@ export const programsRoutes = {
   ],
   coachPortal: [
     ...nutritionLibraryCoachBuilderRoutes,
-    ...trainingProgramsCoachSetupRoutes,
+    ...trainingProgramsCoachRoutes,
   ],
   coachPortalShell: [
     ...exerciseLibraryCoachRoutes,

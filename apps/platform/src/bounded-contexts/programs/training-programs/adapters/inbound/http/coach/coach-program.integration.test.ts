@@ -35,6 +35,7 @@ import {
 import { SubscriptionsJourney } from "~integration-test-config/subscriptions-journey";
 import {
   coachClientPage,
+  programBuilderPage,
   programSetupPage,
   SIGNED_OUT,
   TrainingProgramsJourney,
@@ -205,7 +206,7 @@ describe("a client's training program, from her profile", () => {
   });
 
   describe("creating her program", () => {
-    it("creates her program from the prefilled setup, with version 1 a draft of the beginner plan, and returns to her page", async () => {
+    it("creates her program from the prefilled setup, with version 1 a draft of the beginner plan, and opens it in the builder", async () => {
       // arrange
       const clientId = await programs.approvedClient(ANA_CLIENT);
 
@@ -222,7 +223,7 @@ describe("a client's training program, from her profile", () => {
 
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe(
-        suite.path(coachClientPage(clientId)),
+        suite.path(programBuilderPage(clientId)),
       );
       expect(await programs.programRowsOf(clientId)).toEqual([
         expect.objectContaining({
@@ -455,7 +456,7 @@ describe("a client's training program, from her profile", () => {
       expect(await programs.programRowsOf(clientId)).toEqual([]);
     });
 
-    it("leads back to her page and makes no second program when she already has one", async () => {
+    it("opens her existing draft in the builder and makes no second program when she already has one", async () => {
       // arrange
       const clientId = await programs.approvedClient(ANA_CLIENT);
       await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
@@ -470,7 +471,7 @@ describe("a client's training program, from her profile", () => {
       // assert
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe(
-        suite.path(coachClientPage(clientId)),
+        suite.path(programBuilderPage(clientId)),
       );
       expect(await programs.programRowsOf(clientId)).toEqual([
         expect.objectContaining({ level: "beginner" }),
@@ -571,7 +572,7 @@ describe("a client's training program, from her profile", () => {
       );
     });
 
-    it("leads back to her page once she has a program", async () => {
+    it("opens her draft in the builder once she has a program", async () => {
       // arrange
       const clientId = await programs.approvedClient(ANA_CLIENT);
       await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
@@ -582,7 +583,7 @@ describe("a client's training program, from her profile", () => {
       // assert
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe(
-        suite.path(coachClientPage(clientId)),
+        suite.path(programBuilderPage(clientId)),
       );
     });
 
@@ -742,6 +743,10 @@ describe("a client's training program, from her profile", () => {
       expect(texts).toContain("9 sessions without exercises");
       expect(texts).not.toContain("No program yet");
       expect(buildProgramLinkOf(page)).toBeUndefined();
+      expect(page).toContain(
+        `href="${suite.path(programBuilderPage(clientId))}"`,
+      );
+      expect(texts).toContain("Continue draft");
     });
 
     it("shows the draft and says it can't be published once her coaching has ended", async () => {
@@ -764,6 +769,68 @@ describe("a client's training program, from her profile", () => {
       );
       expect(texts).not.toContain("Still missing");
       expect(texts).not.toContain("9 sessions without exercises");
+    });
+  });
+
+  describe("the builder page", () => {
+    it("opens her draft on the plan overview with its blocks and her name on the draft line", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+
+      // act
+      const response = await programs.openBuilder(COACH_SESSION, clientId);
+
+      // assert
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
+
+      expect(response.status).toBe(200);
+      expect(page).toContain("<title>Overview · Ana Popescu | Evoa</title>");
+      expect(texts).toContain("Ana Popescu · v1 draft");
+      expect(texts).toContain("Overview");
+      expect(texts).toContain("Foundation");
+      expect(texts).toContain("Hypertrophy");
+      expect(texts).toContain("Deload");
+      expect(texts).toContain("Add block");
+    });
+
+    it("says she has no program yet and offers the setup", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+
+      // act
+      const response = await programs.openBuilder(COACH_SESSION, clientId);
+
+      // assert
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("No program yet");
+      expect(texts).toContain(
+        "There is no draft to edit yet. Set up the program to start its first version.",
+      );
+      expect(texts).toContain("Set up program");
+      expect(page).toContain(
+        `href="${suite.path(programSetupPage(clientId))}"`,
+      );
+    });
+
+    it("answers 404 for a client no one paid for and for an id that is not one", async () => {
+      // arrange
+      await programs.approvedClient(ANA_CLIENT);
+
+      // act
+      const unknown = await programs.openBuilder(
+        COACH_SESSION,
+        UNKNOWN_CLIENT_ID,
+      );
+      const malformed = await programs.openBuilder(COACH_SESSION, "client-1");
+
+      // assert
+      expect(unknown.status).toBe(404);
+      expect(malformed.status).toBe(404);
     });
   });
 
@@ -1051,6 +1118,32 @@ describe("a client's training program, from her profile", () => {
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toContain("/sign-in");
       expect(await programs.draftRowsOf(clientId)).toEqual([stored]);
+    });
+
+    it("keeps a signed-in client out of the builder", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      await rig.provisionClient();
+
+      // act
+      const response = await programs.openBuilder(CLIENT_SESSION, clientId);
+
+      // assert
+      expect(response.status).toBe(403);
+    });
+
+    it("sends a signed-out visitor from the builder to sign in", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+
+      // act
+      const response = await programs.openBuilder(SIGNED_OUT, clientId);
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toContain("/sign-in");
     });
 
     it("sends a signed-out visitor from the client's page to sign in", async () => {

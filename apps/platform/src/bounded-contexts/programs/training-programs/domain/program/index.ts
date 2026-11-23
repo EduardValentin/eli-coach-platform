@@ -23,7 +23,6 @@ export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
 export {
   type Block,
-  type CalendarEntry,
   type CardioSession,
   type ProgramContent,
   type Session,
@@ -44,7 +43,6 @@ export {
   ProgramSuggestions,
   type BlockSetup,
   type ProposedBlock,
-  type SuggestionSetup,
 } from "./program-suggestions";
 export {
   type DraftSummary,
@@ -82,6 +80,7 @@ export {
   SPLIT_SHAPES,
   TRAINING_DAY_OPTIONS,
   VERSION_STATUSES,
+  WEEKDAY_LABELS,
   WEEKDAYS,
   type BlockType,
   type ClientLevel,

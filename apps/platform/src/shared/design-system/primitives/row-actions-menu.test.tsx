@@ -393,3 +393,48 @@ describe("a row menu with a submenu", () => {
     expect(trigger).toHaveFocus();
   });
 });
+
+describe("a row menu named for its place in the page", () => {
+  function renderResetMenu() {
+    render(
+      <main>
+        <RowActionsMenu
+          actions={[{ label: "Reset", name: "reset", onSelect: vi.fn() }]}
+          label="Block actions"
+          parityRoot="BlockActionsMenu"
+        />
+      </main>,
+    );
+
+    return userEvent.setup();
+  }
+
+  it("names its menu for the surface that asks", async () => {
+    // arrange
+    const user = renderResetMenu();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Block actions" }));
+
+    // assert
+    expect(await screen.findByRole("menu")).toHaveAttribute(
+      "data-parity-root",
+      "BlockActionsMenu",
+    );
+  });
+
+  it("lets an item go without an icon", async () => {
+    // arrange
+    const user = renderResetMenu();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Block actions" }));
+
+    // assert
+    expect(
+      (await screen.findByRole("menuitem", { name: "Reset" })).querySelector(
+        "svg",
+      ),
+    ).toBeNull();
+  });
+});

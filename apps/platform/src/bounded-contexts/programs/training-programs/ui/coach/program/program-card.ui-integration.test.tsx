@@ -6,7 +6,10 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { programSetupPath } from "~/bounded-contexts/programs/training-programs/public/paths";
+import {
+  programBuilderPath,
+  programSetupPath,
+} from "~/bounded-contexts/programs/training-programs/public/paths";
 import type { ProgramCardView } from "~/bounded-contexts/programs/training-programs/public/program-card";
 
 import { ProgramCard } from "./program-card";
@@ -164,7 +167,9 @@ describe("the Program card", () => {
     expect(
       within(card).queryByRole("list", { name: "Still missing" }),
     ).not.toBeInTheDocument();
-    expect(within(card).queryByRole("link")).not.toBeInTheDocument();
+    expect(
+      within(card).queryByRole("link", { name: "Build program" }),
+    ).not.toBeInTheDocument();
   });
 
   it("counts the sessions that still have no exercises", async () => {
@@ -239,6 +244,23 @@ describe("the Program card", () => {
     ).toBeInTheDocument();
     expect(within(card).queryByText("Still missing")).not.toBeInTheDocument();
   });
+
+  it.each(["draft", "draft-coaching-ended"] as const)(
+    "offers to continue the %s in the builder",
+    async (state) => {
+      // arrange, act
+      await renderCard(
+        state === "draft"
+          ? { state, gender: "female", draft: FILLED_DRAFT, stillMissing: [] }
+          : { state, gender: "female", draft: FILLED_DRAFT },
+      );
+
+      // assert
+      expect(
+        within(programCard()).getByRole("link", { name: "Continue draft" }),
+      ).toHaveAttribute("href", programBuilderPath(CLIENT_ID));
+    },
+  );
 });
 
 function programCard(): HTMLElement {

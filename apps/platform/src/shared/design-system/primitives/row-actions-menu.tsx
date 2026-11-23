@@ -16,7 +16,7 @@ import {
 export type RowMenuAction = {
   disabled?: boolean;
   disabledReason?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   label: string;
   name: string;
   onSelect: () => void;
@@ -42,6 +42,7 @@ const TRIGGER_SIZE: Record<RowActionsMenuSize, "icon-xs" | "icon-sm"> = {
 type RowActionsMenuProps = {
   actions: ReadonlyArray<RowMenuEntry>;
   label: string;
+  parityRoot?: string;
   size?: RowActionsMenuSize;
   triggerRef?: Ref<HTMLButtonElement>;
 };
@@ -65,7 +66,7 @@ function RowMenuItem(props: {
       onSelect={chooseAction(action)}
       variant={tone}
     >
-      <Icon aria-hidden="true" />
+      {Icon && <Icon aria-hidden="true" />}
       <span>{action.label}</span>
     </DropdownMenuItem>
   );
@@ -106,6 +107,7 @@ function RowMenuSub(props: {
 export function RowActionsMenu({
   actions,
   label,
+  parityRoot = "RowActionsMenu",
   size = "sm",
   triggerRef,
 }: RowActionsMenuProps) {
@@ -145,7 +147,7 @@ export function RowActionsMenu({
       <DropdownMenuContent
         align="end"
         className="min-w-40"
-        data-parity-root="RowActionsMenu"
+        data-parity-root={parityRoot}
         onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
       >
         {actions.map((entry) =>
