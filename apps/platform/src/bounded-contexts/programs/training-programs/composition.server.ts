@@ -40,6 +40,9 @@ export function composeTrainingProgramsFeature(
   const postgresProgramStoreRepository = new PostgresProgramStoreRepository(
     handles.database,
   );
+  const cardioExercisesPort = new ExerciseLibraryCardioExercisesAdapter(
+    handles.cardioExercisesFacade,
+  );
   const programReads = {
     clientIdentityPort: new ClientsClientIdentityAdapter(
       handles.clientLookupFacade,
@@ -59,13 +62,14 @@ export function composeTrainingProgramsFeature(
       readProgramSetupUseCase: new ReadProgramSetupUseCase(programReads),
       startProgramUseCase: new StartProgramUseCase({
         ...programReads,
-        cardioExercisesPort: new ExerciseLibraryCardioExercisesAdapter(
-          handles.cardioExercisesFacade,
-        ),
+        cardioExercisesPort,
         programIdsPort: new RandomProgramIdsAdapter(),
         clockPort: handles.clockPort,
       }),
-      readProgramDraftUseCase: new ReadProgramDraftUseCase(programReads),
+      readProgramDraftUseCase: new ReadProgramDraftUseCase({
+        ...programReads,
+        cardioExercisesPort,
+      }),
       saveProgramDraftUseCase: new SaveProgramDraftUseCase({
         ...programReads,
         clockPort: handles.clockPort,

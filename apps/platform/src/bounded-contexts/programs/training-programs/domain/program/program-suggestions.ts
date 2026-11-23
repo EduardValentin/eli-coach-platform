@@ -46,6 +46,8 @@ export type BlockSetup = Pick<
   "splitShape" | "trainingDays" | "sessionMinutes" | "dailySteps" | "language"
 >;
 
+export type SuggestionSetup = BlockSetup & Pick<ProgramSetupValues, "level">;
+
 type NewBlockContext = { setup: BlockSetup; previous?: Block };
 
 export type ProposedBlock = { type: BlockType; weeks: number };
@@ -83,7 +85,11 @@ export class ProgramSuggestions {
     return { type, weeks: BlockWeeks.forType(type, PROPOSED_WEEKS) };
   }
 
-  initialContent(setup: ProgramSetupValues): ProgramContent {
+  static suggestedBlocks(level: ClientLevel): ProposedBlock[] {
+    return SUGGESTED_BLOCKS[level].map(({ type, weeks }) => ({ type, weeks }));
+  }
+
+  initialContent(setup: SuggestionSetup): ProgramContent {
     const blocks: Block[] = [];
     for (const { type, weeks, calibrationWeek } of SUGGESTED_BLOCKS[
       setup.level

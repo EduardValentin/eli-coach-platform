@@ -1,5 +1,7 @@
 import {
   CLIENT_LEVELS,
+  type BlockSetup,
+  type CardioExercise,
   PROGRAM_LANGUAGES,
   type ClientGender,
   type ClientLevel,
@@ -51,4 +53,6 @@ export type ProgramDraftView =
       versionNumber: number;
       content: ProgramContent;
       updatedAt: string;
+      blockSetup: BlockSetup;
+      cardioExercises: CardioExercise[];
     };

@@ -25,6 +25,7 @@ import { CoachProgramController } from "./coach-program-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const CLIENT_PAGE = `/coach/clients/${CLIENT_ID}`;
+const BUILDER_PAGE = `${CLIENT_PAGE}/program/draft`;
 
 const COACH: SessionAccount = {
   authSubjectId: "user_eli",
@@ -118,6 +119,14 @@ const DRAFT_READING: ProgramDraftReading = {
   level: "intermediate",
   language: "ro",
   draft: { versionNumber: 1, content: CONTENT, updatedAt: SAVED_AT },
+  blockSetup: {
+    splitShape: "upper-lower",
+    trainingDays: 4,
+    sessionMinutes: 45,
+    dailySteps: 6000,
+    language: "ro",
+  },
+  cardioExercises: [{ id: "exercise-walk", name: "Walking" }],
 };
 
 const SAVE_REQUEST = {
@@ -373,9 +382,12 @@ describe("CoachProgramController loadSetup", () => {
     expect(setup).toEqual({ state: "not-ready", client: ANA });
   });
 
-  it.each(["has-program", "coaching-ended"] as const)(
-    "sends the coach back to her page when the setup reads %s",
-    async (status) => {
+  it.each([
+    ["has-program", BUILDER_PAGE],
+    ["coaching-ended", CLIENT_PAGE],
+  ] as const)(
+    "sends the coach on when the setup reads %s",
+    async (status, location) => {
       // arrange
       const { coachProgramController } = createController({
         setup: { status },
@@ -388,7 +400,7 @@ describe("CoachProgramController loadSetup", () => {
 
       // assert
       expect((thrown as Response).status).toBe(302);
-      expect((thrown as Response).headers.get("Location")).toBe(CLIENT_PAGE);
+      expect((thrown as Response).headers.get("Location")).toBe(location);
     },
   );
 
@@ -426,7 +438,7 @@ describe("CoachProgramController loadSetup", () => {
 });
 
 describe("CoachProgramController create", () => {
-  it("starts her program for the coach inside one unit of work and sends the coach to her page", async () => {
+  it("starts her program for the coach inside one unit of work and sends the coach to its builder", async () => {
     // arrange
     const { coachProgramController, startProgram, unitOfWork } =
       createController({ start: { status: "started" } });
@@ -438,7 +450,7 @@ describe("CoachProgramController create", () => {
 
     // assert
     expect((thrown as Response).status).toBe(302);
-    expect((thrown as Response).headers.get("Location")).toBe(CLIENT_PAGE);
+    expect((thrown as Response).headers.get("Location")).toBe(BUILDER_PAGE);
     expect(unitOfWork).toHaveBeenCalledOnce();
     expect(startProgram).toHaveBeenCalledWith({
       coachAccountId: COACH.id,
@@ -465,7 +477,7 @@ describe("CoachProgramController create", () => {
   });
 
   it.each([
-    ["has-program", CLIENT_PAGE],
+    ["has-program", BUILDER_PAGE],
     ["coaching-ended", CLIENT_PAGE],
     ["not-approved", `${CLIENT_PAGE}/program/new`],
   ] as const)(
@@ -629,8 +641,19 @@ describe("CoachProgramController loadDraft", () => {
       versionNumber: 1,
       content: CONTENT,
       updatedAt: "2026-11-21T10:30:00.000Z",
+      blockSetup: {
+        splitShape: "upper-lower",
+        trainingDays: 4,
+        sessionMinutes: 45,
+        dailySteps: 6000,
+        language: "ro",
+      },
+      cardioExercises: [{ id: "exercise-walk", name: "Walking" }],
     });
-    expect(readProgramDraft).toHaveBeenCalledWith({ clientId: CLIENT_ID });
+    expect(readProgramDraft).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      coachAccountId: COACH.id,
+    });
   });
 
   it("says she has no program yet", async () => {

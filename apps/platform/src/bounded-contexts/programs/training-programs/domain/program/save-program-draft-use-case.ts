@@ -36,7 +36,7 @@ export class SaveProgramDraftUseCase {
   async execute({
     clientId,
     expectedUpdatedAt,
-    ...save
+    ...changes
   }: SaveProgramDraftCommand): Promise<SaveProgramDraftResult> {
     const { clientIdentityPort, programStorePort, clockPort } = this.options;
 
@@ -51,7 +51,7 @@ export class SaveProgramDraftUseCase {
     }
 
     const at = clockPort.now();
-    const saving = program.saveDraft({ ...save, at });
+    const saving = program.saveDraft({ ...changes, at });
 
     if (saving.status !== "saved") {
       return saving;

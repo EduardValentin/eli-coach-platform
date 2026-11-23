@@ -20,7 +20,13 @@ export {
 export { type CoachingEndedPort } from "./coaching-ended-port";
 export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
-export { type ProgramContent } from "./program-content";
+export {
+  type Block,
+  type CalendarEntry,
+  type CardioSession,
+  type ProgramContent,
+  type Session,
+} from "./program-content";
 export { type ProgramIdsPort } from "./program-ids-port";
 export { type ProgramIncidentsPort } from "./program-incidents-port";
 export {
@@ -37,6 +43,7 @@ export {
   ProgramSuggestions,
   type BlockSetup,
   type ProposedBlock,
+  type SuggestionSetup,
 } from "./program-suggestions";
 export {
   type DraftSummary,

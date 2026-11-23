@@ -40,7 +40,10 @@ import {
 } from "~/bounded-contexts/programs/training-programs/public/program-setup";
 import type { UnitOfWork } from "~/shared/http/unit-of-work";
 import { accessContext } from "~/bounded-contexts/access/public/session";
-import { programSetupPath } from "~/bounded-contexts/programs/training-programs/public/paths";
+import {
+  programBuilderPath,
+  programSetupPath,
+} from "~/bounded-contexts/programs/training-programs/public/paths";
 import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
 
 type CoachProgramControllerOptions = {
@@ -109,6 +112,7 @@ export class CoachProgramController {
       case "unknown-client":
         throw this.notFoundResponse();
       case "has-program":
+        throw redirect(programBuilderPath(target));
       case "coaching-ended":
         throw redirect(coachClientPath(target));
       case "not-approved":
@@ -151,6 +155,7 @@ export class CoachProgramController {
     switch (result.status) {
       case "started":
       case "has-program":
+        throw redirect(programBuilderPath(target));
       case "coaching-ended":
         throw redirect(coachClientPath(target));
       case "not-approved":
@@ -168,9 +173,11 @@ export class CoachProgramController {
     args: LoaderFunctionArgs,
     clientId: string | undefined,
   ): Promise<ProgramDraftView> {
-    const target = this.requireCoachClientId(args, clientId);
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
+    const target = this.requireClientId(clientId);
     const reading = await this.options.readProgramDraftUseCase.execute({
       clientId: target,
+      coachAccountId: coach.id,
     });
 
     switch (reading.status) {
@@ -192,6 +199,8 @@ export class CoachProgramController {
           versionNumber: draft.versionNumber,
           content: draft.content,
           updatedAt: draft.updatedAt.toISOString(),
+          blockSetup: reading.blockSetup,
+          cardioExercises: reading.cardioExercises,
         };
       }
     }

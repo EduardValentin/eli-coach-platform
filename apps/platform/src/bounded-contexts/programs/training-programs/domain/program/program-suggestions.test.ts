@@ -398,3 +398,46 @@ describe("ProgramSuggestions proposedBlockAfter", () => {
     );
   });
 });
+
+describe("ProgramSuggestions suggestedBlocks", () => {
+  it("names the blocks suggested for each level, as the plan starts with them", () => {
+    // act
+    const suggested = (["beginner", "advanced"] as const).map((level) =>
+      ProgramSuggestions.suggestedBlocks(level),
+    );
+
+    // assert
+    expect(suggested).toEqual([
+      [
+        { type: "foundation", weeks: 4 },
+        { type: "hypertrophy", weeks: 6 },
+        { type: "deload", weeks: 1 },
+      ],
+      [
+        { type: "hypertrophy", weeks: 5 },
+        { type: "deload", weeks: 1 },
+        { type: "strength", weeks: 4 },
+        { type: "deload", weeks: 1 },
+      ],
+    ]);
+  });
+
+  it("suggests the plan again from a block setup and her level alone, as the builder offers it once no block is left", () => {
+    // act
+    const blocks = suggestionsOver([]).initialContent({
+      splitShape: "full-body",
+      trainingDays: 3,
+      sessionMinutes: 45,
+      dailySteps: 7000,
+      language: "en",
+      level: "intermediate",
+    }).plan.blocks;
+
+    // assert
+    expect(blocks.map(({ type }) => type)).toEqual([
+      "hypertrophy",
+      "deload",
+      "hypertrophy",
+    ]);
+  });
+});
