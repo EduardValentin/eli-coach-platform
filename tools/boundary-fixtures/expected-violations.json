@@ -239,9 +239,7 @@
   "apps/platform/src/composition-root/reads-bounded-context-entries.server.ts": [],
   "apps/platform/src/root.server.ts": [],
   "apps/platform/src/root.tsx": [],
-  "apps/platform/src/routes.ts": [
-    "root-registry-to-server"
-  ],
+  "apps/platform/src/routes.ts": ["root-registry-to-server"],
   "apps/platform/src/shared/design-system/filters/imports-layout.tsx": [
     "ui-subpaths"
   ],
