@@ -360,8 +360,8 @@ describe("Program saveDraft", () => {
 
     // assert
     expect(savings).toEqual([
-      { status: "not-a-draft" },
-      { status: "not-a-draft" },
+      { status: "level-and-language-fixed" },
+      { status: "level-and-language-fixed" },
     ]);
   });
 

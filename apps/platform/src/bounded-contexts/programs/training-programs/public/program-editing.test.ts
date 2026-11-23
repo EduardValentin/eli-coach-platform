@@ -62,7 +62,7 @@ describe("the builder's editing rules, as the browser reaches them", () => {
     ]);
     expect(
       SessionTiming.estimatedDuration(
-        SessionTiming.estimatedMinutes(first.sessions[0]),
+        SessionTiming.routineMinutes(first.sessions[0]),
       ),
     ).toBe("0 min");
     expect(SessionTiming.cardioMinutes(first.cardioSessions[0])).toBe(30);

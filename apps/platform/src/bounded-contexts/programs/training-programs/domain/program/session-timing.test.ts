@@ -15,10 +15,10 @@ function session(overrides: Partial<Session> = {}): Session {
   };
 }
 
-describe("SessionTiming estimatedMinutes", () => {
+describe("SessionTiming routineMinutes", () => {
   it("estimates an empty session at zero minutes", () => {
     // act
-    const minutes = SessionTiming.estimatedMinutes(session());
+    const minutes = SessionTiming.routineMinutes(session());
 
     // assert
     expect(minutes).toBe(0);
@@ -48,8 +48,8 @@ describe("SessionTiming estimatedMinutes", () => {
     });
 
     // act
-    const withCoolDown = SessionTiming.estimatedMinutes(routine);
-    const withoutCoolDown = SessionTiming.estimatedMinutes({
+    const withCoolDown = SessionTiming.routineMinutes(routine);
+    const withoutCoolDown = SessionTiming.routineMinutes({
       ...routine,
       coolDown: { ...routine.coolDown, enabled: false },
     });

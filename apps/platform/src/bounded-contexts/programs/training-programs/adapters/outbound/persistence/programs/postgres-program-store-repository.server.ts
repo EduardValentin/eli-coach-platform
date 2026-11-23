@@ -7,7 +7,7 @@ import {
   Program,
   type DraftSaveOutcome,
   type ProgramAddition,
-  type ProgramDraftSave,
+  type DraftWrite,
   type ProgramStorePort,
   type ProgramVersionSnapshot,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
@@ -79,7 +79,7 @@ export class PostgresProgramStoreRepository implements ProgramStorePort {
   async saveDraft({
     program,
     expectedUpdatedAt,
-  }: ProgramDraftSave): Promise<DraftSaveOutcome> {
+  }: DraftWrite): Promise<DraftSaveOutcome> {
     const draft = program.draft();
 
     if (!draft) {

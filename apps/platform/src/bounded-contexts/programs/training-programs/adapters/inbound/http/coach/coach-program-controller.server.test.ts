@@ -742,6 +742,7 @@ describe("CoachProgramController saveDraft", () => {
   it.each([
     ["changed-elsewhere", 409],
     ["not-a-draft", 409],
+    ["level-and-language-fixed", 409],
     ["no-program", 404],
   ] as const)(
     "answers a save refused as %s so the builder can tell it apart",
@@ -805,14 +806,16 @@ describe("CoachProgramController saveDraft", () => {
       saveArgs(SAVE_REQUEST),
       CLIENT_ID,
     );
-    const malformed = await coachProgramController.saveDraft(
-      saveArgs(SAVE_REQUEST),
-      "not-a-client-id",
+    const malformed = await captureThrown(() =>
+      coachProgramController.saveDraft(
+        saveArgs(SAVE_REQUEST),
+        "not-a-client-id",
+      ),
     );
 
     // assert
     expect(unknown.status).toBe(404);
-    expect(malformed.status).toBe(404);
+    expect((malformed as Response).status).toBe(404);
     expect(saveProgramDraft).toHaveBeenCalledOnce();
   });
 

@@ -130,30 +130,6 @@ describe("BlockLoss describe", () => {
     expect(lost).toEqual([]);
   });
 
-  it("names the cleared session", () => {
-    // arrange
-    const start = filledBlock(5, 4, 0);
-
-    // act
-    const strength = BlockLoss.describe(start, {
-      kind: "clear-session",
-      sessionId: start.sessions[1].id,
-    });
-    const empty = BlockLoss.describe(start, {
-      kind: "clear-session",
-      sessionId: start.sessions[2].id,
-    });
-    const cleared = BlockLoss.describe(start, {
-      kind: "clear-session",
-      sessionId: start.cardioSessions[0].id,
-    });
-
-    // assert
-    expect(strength).toEqual(["Full Body B · 4 exercises"]);
-    expect(empty).toEqual([]);
-    expect(cleared).toEqual(["Easy cardio · 1 segment"]);
-  });
-
   it("names every session and cardio with content when the block is removed", () => {
     // arrange
     const start = filledBlock(5, 0, 2);

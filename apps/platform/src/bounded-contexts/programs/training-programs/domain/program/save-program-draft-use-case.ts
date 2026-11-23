@@ -18,6 +18,7 @@ export type SaveProgramDraftResult =
       status:
         | "changed-elsewhere"
         | "not-a-draft"
+        | "level-and-language-fixed"
         | "not-well-formed"
         | "no-program"
         | "unknown-client";

@@ -19,7 +19,7 @@ export type DayChoice =
   | { kind: "cardio" }
   | { kind: "rest" };
 
-type DayEntry = { entry: CalendarEntry; added?: CardioSession };
+type DayPlacement = { entry: CalendarEntry; newCardio?: CardioSession };
 
 type BlockEditingOptions = { newId: () => string };
 
@@ -29,25 +29,27 @@ export class BlockEditing {
   constructor(private readonly options: BlockEditingOptions) {}
 
   blockWithDay(block: Block, day: Weekday, choice: DayChoice): Block {
-    const { entry, added } = this.entryFor(block, day, choice);
+    const { entry, newCardio } = this.placementFor(block, day, choice);
     const previous = block.calendar[day];
-    const removedSession =
+    const removedSessionId =
       previous.kind === "session" && choice.kind !== "session"
         ? previous.sessionId
         : undefined;
     const calendar = mapCalendar((other) => {
       if (other === day) return entry;
       const current = block.calendar[other];
-      const leftBehind =
+      const isDayTheSessionLeft =
         choice.kind === "session" &&
         current.kind === "session" &&
         current.sessionId === choice.sessionId;
-      const removed =
-        current.kind === "session" && current.sessionId === removedSession;
+      const isRemovedSessionDay =
+        current.kind === "session" && current.sessionId === removedSessionId;
 
-      return leftBehind || removed ? { kind: "rest" } : current;
+      return isDayTheSessionLeft || isRemovedSessionDay
+        ? { kind: "rest" }
+        : current;
     });
-    const dropped =
+    const replacedCardioId =
       previous.kind === "cardio" && entry.kind !== "cardio"
         ? previous.cardioId
         : undefined;
@@ -56,11 +58,13 @@ export class BlockEditing {
       ...block,
       calendar,
       sessions: block.sessions.filter(
-        (session) => session.id !== removedSession,
+        (session) => session.id !== removedSessionId,
       ),
       cardioSessions: [
-        ...block.cardioSessions.filter((cardio) => cardio.id !== dropped),
-        ...(added ? [added] : []),
+        ...block.cardioSessions.filter(
+          (cardio) => cardio.id !== replacedCardioId,
+        ),
+        ...(newCardio ? [newCardio] : []),
       ],
     };
   }
@@ -119,16 +123,20 @@ export class BlockEditing {
     return { ...block, type, weeks: BlockWeeks.forType(type, block.weeks) };
   }
 
-  private entryFor(block: Block, day: Weekday, choice: DayChoice): DayEntry {
+  private placementFor(
+    block: Block,
+    day: Weekday,
+    choice: DayChoice,
+  ): DayPlacement {
     if (choice.kind === "session") {
       return { entry: { kind: "session", sessionId: choice.sessionId } };
     }
     if (choice.kind === "rest") return { entry: { kind: "rest" } };
     const current = block.calendar[day];
     if (current.kind === "cardio") return { entry: current };
-    const added = this.emptyCardioSession();
+    const newCardio = this.emptyCardioSession();
 
-    return { entry: { kind: "cardio", cardioId: added.id }, added };
+    return { entry: { kind: "cardio", cardioId: newCardio.id }, newCardio };
   }
 
   private emptyCardioSession(): CardioSession {

@@ -50,7 +50,7 @@ export type ProgramEligibility =
       coachingFacts: ClientCoachingFacts;
     } & EligibilitySources);
 
-type DraftSave = {
+type DraftChanges = {
   content: ProgramContent;
   level: ClientLevel;
   language: ProgramLanguage;
@@ -59,7 +59,9 @@ type DraftSave = {
 
 type DraftSaving =
   | { status: "saved"; program: Program }
-  | { status: "not-a-draft" | "not-well-formed" };
+  | {
+      status: "not-a-draft" | "level-and-language-fixed" | "not-well-formed";
+    };
 
 export class Program {
   private constructor(
@@ -132,13 +134,16 @@ export class Program {
     return this.draftVersion()?.draftReading() ?? null;
   }
 
-  saveDraft({ content, level, language, at }: DraftSave): DraftSaving {
+  saveDraft({ content, level, language, at }: DraftChanges): DraftSaving {
     const draft = this.draftVersion();
-    const settingsChanged =
+    const levelOrLanguageChanged =
       level !== this.fields.level || language !== this.fields.language;
 
-    if (!draft || (settingsChanged && !draft.isFirst)) {
+    if (!draft) {
       return { status: "not-a-draft" };
+    }
+    if (levelOrLanguageChanged && !draft.isFirst) {
+      return { status: "level-and-language-fixed" };
     }
     if (!ProgramVersion.isWellFormed(content)) {
       return { status: "not-well-formed" };

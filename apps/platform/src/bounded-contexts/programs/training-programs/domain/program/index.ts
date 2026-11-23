@@ -30,7 +30,7 @@ export {
 export {
   type DraftSaveOutcome,
   type ProgramAddition,
-  type ProgramDraftSave,
+  type DraftWrite,
   type ProgramStorePort,
 } from "./program-store-port";
 export {

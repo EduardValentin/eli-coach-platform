@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ClientIdentity } from "./client-identity-port";
 import { Program } from "./program";
 import type { ProgramContent } from "./program-content";
-import type { DraftSaveOutcome, ProgramDraftSave } from "./program-store-port";
+import type { DraftSaveOutcome, DraftWrite } from "./program-store-port";
 import type { ProgramVersionSnapshot } from "./program-version";
 import { SaveProgramDraftUseCase } from "./save-program-draft-use-case";
 
@@ -62,7 +62,7 @@ function saveDraft({
   programs = [anasProgram([DRAFT_VERSION])],
   storeOutcome = "saved",
 }: Arrangement = {}) {
-  const saves: ProgramDraftSave[] = [];
+  const writes: DraftWrite[] = [];
   const saveProgramDraftUseCase = new SaveProgramDraftUseCase({
     clientIdentityPort: {
       find: async (clientId) =>
@@ -71,8 +71,8 @@ function saveDraft({
     programStorePort: {
       findByClientId: async (clientId) =>
         programs.find((program) => program.clientId === clientId) ?? null,
-      saveDraft: async (save) => {
-        saves.push(save);
+      saveDraft: async (write) => {
+        writes.push(write);
 
         return storeOutcome;
       },
@@ -80,7 +80,7 @@ function saveDraft({
     clockPort: { now: () => NOW },
   });
 
-  return { saveProgramDraftUseCase, saves };
+  return { saveProgramDraftUseCase, writes };
 }
 
 const COMMAND = {
@@ -94,16 +94,16 @@ const COMMAND = {
 describe("SaveProgramDraftUseCase", () => {
   it("saves the draft with its level and language while the copy is the stored one, and answers when it was saved", async () => {
     // arrange
-    const { saveProgramDraftUseCase, saves } = saveDraft();
+    const { saveProgramDraftUseCase, writes } = saveDraft();
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({ status: "saved", updatedAt: NOW });
-    expect(saves).toHaveLength(1);
-    expect(saves[0].expectedUpdatedAt).toEqual(CREATED);
-    expect(saves[0].program.toSnapshot()).toMatchObject({
+    expect(writes).toHaveLength(1);
+    expect(writes[0].expectedUpdatedAt).toEqual(CREATED);
+    expect(writes[0].program.toSnapshot()).toMatchObject({
       level: "intermediate",
       language: "ro",
       updatedAt: NOW,
@@ -126,7 +126,7 @@ describe("SaveProgramDraftUseCase", () => {
 
   it("refuses a program that holds no draft and writes nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, saves } = saveDraft({
+    const { saveProgramDraftUseCase, writes } = saveDraft({
       programs: [anasProgram([{ ...DRAFT_VERSION, status: "published" }])],
     });
 
@@ -135,12 +135,12 @@ describe("SaveProgramDraftUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-a-draft" });
-    expect(saves).toEqual([]);
+    expect(writes).toEqual([]);
   });
 
   it("refuses content that is not well formed and writes nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, saves } = saveDraft();
+    const { saveProgramDraftUseCase, writes } = saveDraft();
     const twoWeekDeload: ProgramContent = {
       ...EDITED_CONTENT,
       plan: {
@@ -182,30 +182,30 @@ describe("SaveProgramDraftUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-well-formed" });
-    expect(saves).toEqual([]);
+    expect(writes).toEqual([]);
   });
 
   it("says she has no program yet", async () => {
     // arrange
-    const { saveProgramDraftUseCase, saves } = saveDraft({ programs: [] });
+    const { saveProgramDraftUseCase, writes } = saveDraft({ programs: [] });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({ status: "no-program" });
-    expect(saves).toEqual([]);
+    expect(writes).toEqual([]);
   });
 
   it("does not know a client no one paid for", async () => {
     // arrange
-    const { saveProgramDraftUseCase, saves } = saveDraft({ clients: [] });
+    const { saveProgramDraftUseCase, writes } = saveDraft({ clients: [] });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
 
     // assert
     expect(result).toEqual({ status: "unknown-client" });
-    expect(saves).toEqual([]);
+    expect(writes).toEqual([]);
   });
 });

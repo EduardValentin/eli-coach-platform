@@ -26,6 +26,7 @@ import {
   type ProgramCardView,
 } from "~/bounded-contexts/programs/training-programs/public/program-card";
 import {
+  PROGRAM_DRAFT_REFUSALS,
   programDraftRefusalSchema,
   programDraftSavedAnswerSchema,
   programDraftSaveRequestSchema,
@@ -56,10 +57,7 @@ type ProgramReading = Extract<ProgramCardReading, { status: "program" }>;
 
 type StartCommand = Parameters<StartProgramUseCase["execute"]>[0];
 
-type DraftRefusal = Exclude<
-  SaveProgramDraftResult["status"],
-  "saved" | "not-well-formed" | "unknown-client"
->;
+type DraftRefusal = (typeof PROGRAM_DRAFT_REFUSALS)[number];
 
 const PROGRAM_SETUP_REQUEST_MAX_BYTES = 16 * 1024;
 
@@ -68,6 +66,7 @@ const PROGRAM_DRAFT_REQUEST_MAX_BYTES = 1024 * 1024;
 const DRAFT_REFUSAL_STATUS: Record<DraftRefusal, number> = {
   "changed-elsewhere": 409,
   "not-a-draft": 409,
+  "level-and-language-fixed": 409,
   "no-program": 404,
 };
 
@@ -203,12 +202,7 @@ export class CoachProgramController {
     clientId: string | undefined,
   ): Promise<Response> {
     args.context.get(accessContext).requirePortalAccess("COACH");
-    const target = clientIdSchema.safeParse(clientId);
-
-    if (!target.success) {
-      return this.notFoundResponse();
-    }
-
+    const target = this.requireClientId(clientId);
     const request = programDraftSaveRequestSchema.safeParse(
       await readJsonRequestBody(args.request, {
         maxBytes: PROGRAM_DRAFT_REQUEST_MAX_BYTES,
@@ -222,7 +216,7 @@ export class CoachProgramController {
     const { updatedAt, ...draft } = request.data;
     const result = await this.options.unitOfWork(() =>
       this.options.saveProgramDraftUseCase.execute({
-        clientId: target.data,
+        clientId: target,
         ...draft,
         expectedUpdatedAt: new Date(updatedAt),
       }),

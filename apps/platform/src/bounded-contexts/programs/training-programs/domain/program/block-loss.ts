@@ -7,7 +7,6 @@ export type LossChange =
   | { kind: "reset" }
   | { kind: "training-days"; days: TrainingDays }
   | { kind: "day"; weekday: Weekday }
-  | { kind: "clear-session"; sessionId: string }
   | { kind: "remove-block" };
 
 export class BlockLoss {
@@ -17,15 +16,6 @@ export class BlockLoss {
         return BlockLoss.lostOnDay(block, change.weekday);
       case "training-days":
         return BlockLoss.lostToTrainingDays(block, change.days);
-      case "clear-session":
-        return [
-          ...block.sessions
-            .filter((session) => session.id === change.sessionId)
-            .flatMap(BlockLoss.sessionLoss),
-          ...block.cardioSessions
-            .filter((cardio) => cardio.id === change.sessionId)
-            .flatMap(BlockLoss.cardioLoss),
-        ];
       case "remove-block":
         return [
           ...block.sessions.flatMap(BlockLoss.sessionLoss),

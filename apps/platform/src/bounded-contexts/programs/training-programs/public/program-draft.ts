@@ -22,8 +22,15 @@ export const programDraftSavedAnswerSchema = z.strictObject({
   updatedAt: z.iso.datetime(),
 });
 
+export const PROGRAM_DRAFT_REFUSALS = [
+  "changed-elsewhere",
+  "not-a-draft",
+  "level-and-language-fixed",
+  "no-program",
+] as const;
+
 export const programDraftRefusalSchema = z.strictObject({
-  error: z.enum(["changed-elsewhere", "not-a-draft", "no-program"]),
+  error: z.enum(PROGRAM_DRAFT_REFUSALS),
 });
 
 type ProgramDraftClient = {
