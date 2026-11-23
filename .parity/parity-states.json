@@ -1,4 +1,32 @@
 {
+  "add-block-dialog": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=navigation[name=\"Program sections\"] >> role=button[name=\"Add block\"]"
+    }
+  ],
+  "add-resource-tag-query": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Add resource\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] >> text=Drop a file here or choose one"
+    },
+    {
+      "wait": 1200
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=combobox[name=/^Tags/]"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=combobox[name=/^Tags/]",
+        "Meal prep"
+      ]
+    }
+  ],
   "add-resource-tag-suggestions": [
     {
       "use": "add-resource-tag-query"
@@ -30,6 +58,29 @@
       "click": "[role=\"dialog\"] h3"
     }
   ],
+  "archived-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Exercises\" s]"
+      },
+      {
+        "click": "#dev-exercise-seed"
+      },
+      {
+        "click": "role=option[name=\"Empty\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "text=No archived exercises"
+      }
+    ],
+    "real": []
+  },
   "ask-details-toast": [
     {
       "use": "review-dialog-flag-and-note"
@@ -41,6 +92,141 @@
       "waitFor": "[data-sonner-toast]"
     }
   ],
+  "avatar-remove-focus-visible": [
+    {
+      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input"
+    },
+    {
+      "press": "Shift+Tab"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "avatar-remove-hover": [
+    {
+      "hover": "[data-parity=\"avatar-actions\"] >> role=button[name=\"Remove\" s]"
+    }
+  ],
+  "avatar-upload-focus-visible": [
+    {
+      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "avatar-upload-hover": [
+    {
+      "hover": "[data-parity=\"avatar-actions\"] label"
+    }
+  ],
+  "bell-arrival-toast": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-notification-arrive"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "bell-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-notification-bell"
+      },
+      {
+        "click": "role=option[name=\"Empty\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": []
+  },
+  "bell-many": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-notification-bell"
+      },
+      {
+        "click": "role=option[name=\"Many (40, shows 30)\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": []
+  },
+  "bell-mark-all-focus": [
+    {
+      "use": "open-bell"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "bell-row-focus": [
+    {
+      "use": "open-bell"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "bell-row-hover": [
+    {
+      "use": "open-bell"
+    },
+    {
+      "hover": "[role=\"dialog\"][aria-label=\"Notifications\"] [data-parity=\"notification-row\"] >> nth=1"
+    }
+  ],
+  "bell-unread": [
+    {
+      "waitFor": "role=button[name=/^Notifications, \\d+ unread$/] >> visible=true"
+    }
+  ],
+  "block-day-menu": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Monday options\"]"
+    },
+    {
+      "click": "role=menuitem[name=\"Session\"]"
+    }
+  ],
   "book-date-picked": [
     {
       "click": "td[data-day] button:not([disabled])"
@@ -49,7 +235,6 @@
       "waitFor": "button[aria-pressed]"
     }
   ],
-  "book-slots-unavailable": [],
   "book-details": [
     {
       "use": "book-time-picked"
@@ -66,6 +251,7 @@
       "click": "form button[type=\"submit\"]"
     }
   ],
+  "book-slots-unavailable": [],
   "book-time-picked": [
     {
       "click": "td[data-day] button:not([disabled])"
@@ -78,6 +264,174 @@
     },
     {
       "click": "button[aria-pressed]"
+    }
+  ],
+  "builder-block": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=navigation[name=\"Program sections\"] >> role=button[name=/^2\\s?Hypertrophy/]"
+    }
+  ],
+  "builder-block-phone": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=button[name=\"Program sections\"]"
+    },
+    {
+      "click": "role=dialog[name=\"Program outline\"] >> role=button[name=/^2\\s?Hypertrophy/]"
+    }
+  ],
+  "builder-changed-elsewhere": {
+    "prototype": [
+      {
+        "use": "builder-opened"
+      },
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-draft-save"
+      },
+      {
+        "click": "role=option[name=\"Changed elsewhere (save refused)\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=combobox[name=\"Level\"]"
+      },
+      {
+        "click": "role=option[name=\"Intermediate\"]"
+      },
+      {
+        "waitFor": "role=alertdialog"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=combobox[name=\"Level\"]"
+      },
+      {
+        "click": "role=option[name=\"Intermediate\"]"
+      },
+      {
+        "waitFor": "role=alertdialog"
+      }
+    ]
+  },
+  "builder-leave-warning": [
+    {
+      "use": "builder-save-failed"
+    },
+    {
+      "click": "role=link[name=\"Back to Jane Doe\"]"
+    }
+  ],
+  "builder-opened": {
+    "prototype": [
+      {
+        "click": "role=link[name=\"Build program\"]"
+      },
+      {
+        "click": "role=button[name=\"Create program\"]"
+      }
+    ],
+    "real": []
+  },
+  "builder-phone-drawer": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=button[name=\"Program sections\"]"
+    }
+  ],
+  "builder-save-failed": {
+    "prototype": [
+      {
+        "use": "builder-opened"
+      },
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-draft-save"
+      },
+      {
+        "click": "role=option[name=\"Fails (retries until switched back)\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=combobox[name=\"Level\"]"
+      },
+      {
+        "click": "role=option[name=\"Intermediate\"]"
+      },
+      {
+        "waitFor": "role=alert >> text=Try again now"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=combobox[name=\"Level\"]"
+      },
+      {
+        "click": "role=option[name=\"Intermediate\"]"
+      },
+      {
+        "waitFor": "role=alert >> text=Try again now"
+      }
+    ]
+  },
+  "builder-saved": [
+    {
+      "use": "builder-saving"
+    },
+    {
+      "waitFor": "[data-parity=\"save-state\"] >> text=Saved"
+    }
+  ],
+  "builder-saving": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=combobox[name=\"Level\"]"
+    },
+    {
+      "click": "role=option[name=\"Intermediate\"]"
+    }
+  ],
+  "calls-no-match": [
+    {
+      "fill": [
+        "[aria-label=\"Search calls\"]",
+        "zzzz"
+      ]
+    },
+    {
+      "waitFor": "role=button[name=\"Clear filters\" s]"
+    }
+  ],
+  "calls-page-2": [
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
     }
   ],
   "calls-unavailable": [],
@@ -153,6 +507,202 @@
     ],
     "real": []
   },
+  "cart-checkout-unavailable": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [role=\"alert\"]"
+    }
+  ],
+  "cart-details": [
+    {
+      "use": "cart-one-item"
+    },
+    {
+      "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    }
+  ],
+  "cart-empty": [
+    {
+      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+    },
+    {
+      "click": "role=button[name=/^Remove .+ from cart$/]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
+    }
+  ],
+  "cart-mixed": [
+    {
+      "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-total\"]"
+    }
+  ],
+  "cart-one-item": [
+    {
+      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+    }
+  ],
+  "cart-paid-details-empty": [
+    {
+      "use": "cart-mixed"
+    },
+    {
+      "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"order-summary-block\"]"
+    }
+  ],
+  "cart-paid-details-filled": [
+    {
+      "use": "cart-paid-details-empty"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"delivery-consent-checkbox\"]"
+    }
+  ],
+  "cart-paid-hint": [
+    {
+      "use": "cart-paid-details-empty"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "cart-paid-hint-focus": [
+    {
+      "use": "cart-paid-details-empty"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "cart-payment-not-completed": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "click": "a[href*=\"payment=cancelled\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
+    }
+  ],
+  "cart-sent": [
+    {
+      "use": "cart-terms-accepted"
+    },
+    {
+      "click": "role=button[name=\"Send my resources\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] h2:text-is(\"Check your inbox\")"
+    }
+  ],
+  "cart-subaddress-refused": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor+store@example.com"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] input[type=\"email\"][aria-invalid=\"true\"]"
+    }
+  ],
+  "cart-terms-accepted": [
+    {
+      "use": "cart-details"
+    },
+    {
+      "click": "role=checkbox[name=/^I agree to the Terms & Conditions/]"
+    }
+  ],
+  "cart-unavailable-products": [
+    {
+      "use": "cart-paid-details-filled"
+    },
+    {
+      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-summary\"]"
+    }
+  ],
   "checkin-approve-toast": [
     {
       "click": "[data-parity-root=\"CoachCheckins\"] >> role=button[name=\"Approve\" s] >> nth=0"
@@ -539,6 +1089,144 @@
       }
     ]
   },
+  "checkins-kind-open": [
+    {
+      "use": "checkins-many-requests"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "checkins-kind-weekly": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
+    },
+    {
+      "click": "role=option[name=/^Weekly/]"
+    },
+    {
+      "waitFor": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s] >> text=Weekly"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-many": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"Many check-ins\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 600
+      }
+    ],
+    "real": [
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 600
+      }
+    ]
+  },
+  "checkins-many-past": [
+    {
+      "use": "checkins-many"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "checkins-many-requests": [
+    {
+      "use": "checkins-many"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "checkins-many-upcoming": [
+    {
+      "use": "checkins-many"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "checkins-no-match": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
+    },
+    {
+      "click": "role=option[name=/^Ad-hoc/]"
+    },
+    {
+      "waitFor": "text=No check-ins match"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
   "checkins-open-request": {
     "prototype": [
       {
@@ -588,6 +1276,60 @@
     ],
     "real": []
   },
+  "checkins-page-2": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-search-typed": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "fill": [
+        "role=searchbox[name=\"Search check-ins\" s]",
+        "jane"
+      ]
+    },
+    {
+      "waitFor": "text=Showing 1–10 of 11"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-sort-latest": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "[data-parity=\"checkin-search-sort\"] >> role=button[name=\"Soonest first\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"checkin-search-sort\"] [aria-pressed=\"true\"]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
   "checkins-tab-past": [
     {
       "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
@@ -619,6 +1361,20 @@
     },
     {
       "wait": 900
+    }
+  ],
+  "checkins-waiting-open": [
+    {
+      "use": "checkins-many-requests"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Waiting on\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    },
+    {
+      "wait": 400
     }
   ],
   "checkout-immediate": {
@@ -688,6 +1444,26 @@
       },
       {
         "waitFor": "[data-parity-root=\"OnboardingPanel\"] >> text=Approved"
+      }
+    ],
+    "real": []
+  },
+  "client-avatar-none": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-seeded-avatar"
+      },
+      {
+        "click": "role=option[name=\"None\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
       }
     ],
     "real": []
@@ -1272,6 +2048,33 @@
     }
   ],
   "coach-checkins-ready": [],
+  "coach-checkins-upcoming-series": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 900
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 900
+      }
+    ]
+  },
   "coach-hover-checkin-reschedule-moved-twice": [
     {
       "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
@@ -1307,6 +2110,17 @@
     },
     {
       "hover": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"] >> nth=0"
+    }
+  ],
+  "coach-nutrition-active": [
+    {
+      "use": "pending-checkins-empty"
+    },
+    {
+      "click": "[data-parity=\"link-nutrition\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"link-nutrition\"][aria-current=\"page\"]"
     }
   ],
   "coach-open-checkin-cancel-confirm": [
@@ -1346,6 +2160,23 @@
     },
     {
       "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    }
+  ],
+  "coach-open-scheduled-checkin-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Jane Doe\"):has-text(\"10:00 AM\"):has([data-parity=\"row-actions-trigger\"]) >> nth=0 >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
     }
   ],
   "coach-resources-search-no-matches": [
@@ -1404,6 +2235,33 @@
       "waitFor": "role=option[name=/^All tags/]"
     }
   ],
+  "coach-training-active": [
+    {
+      "click": "[data-parity=\"link-training\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"link-training\"][aria-current=\"page\"]"
+    },
+    {
+      "waitFor": "main h1:has-text(\"Exercises\")"
+    }
+  ],
+  "confirm-remove-block": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=button[name=\"Remove block 1, Foundation\"]"
+    }
+  ],
+  "dashboard-empty": [
+    {
+      "use": "empty-calls"
+    },
+    {
+      "use": "pending-checkins-empty"
+    }
+  ],
   "delete-resource-toast": [
     {
       "use": "trigger-resource-delete-confirm"
@@ -1416,6 +2274,30 @@
     },
     {
       "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "download-ready": {
+    "prototype": [],
+    "real": [
+      {
+        "waitFor": "[data-parity-root=\"DownloadPage\"] [data-parity=\"download-resources\"]"
+      }
+    ]
+  },
+  "drawer-bell-empty": [
+    {
+      "use": "bell-empty"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
+  "drawer-bell-unread": [
+    {
+      "use": "bell-unread"
+    },
+    {
+      "use": "open-coach-drawer"
     }
   ],
   "edit-resource-changed": [
@@ -1567,6 +2449,323 @@
     ],
     "real": []
   },
+  "exercise-archived-toast": [
+    {
+      "use": "open-exercise-actions-bike"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Archive\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
+    }
+  ],
+  "exercise-editor-name-missing": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "B"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        ""
+      ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]:focus"
+    }
+  ],
+  "exercise-editor-name-taken": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Barbell Back Squat"
+      ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]:focus"
+    }
+  ],
+  "exercise-editor-too-long": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Barbell back squat with a three-second pause at the bottom and a slow steady rise"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
+        "Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit betwee"
+      ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] textarea[aria-invalid=\"true\"]:focus"
+    }
+  ],
+  "exercise-equipment-open": [
+    {
+      "click": "role=combobox[name=\"Equipment\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-no-match": [
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\" s]",
+        "zzzz"
+      ]
+    },
+    {
+      "waitFor": "text=No exercises match"
+    }
+  ],
+  "exercise-page-2": [
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    }
+  ],
+  "exercise-pager-focus-visible": [
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "exercise-pager-next-hover": [
+    {
+      "hover": "role=link[name=\"Go to next page\" s]"
+    }
+  ],
+  "exercise-search-typed": [
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\" s]",
+        "squat"
+      ]
+    },
+    {
+      "waitFor": "[data-parity=\"exercise-table\"] >> text=Bulgarian Split Squat"
+    }
+  ],
+  "exercise-sort-difficulty-desc": [
+    {
+      "click": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"exercise-header-row\"] th[aria-sort=\"ascending\"] >> text=Difficulty"
+    },
+    {
+      "click": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"exercise-header-row\"] th[aria-sort=\"descending\"]"
+    }
+  ],
+  "exercise-sort-focus-visible": [
+    {
+      "click": "role=searchbox[name=\"Search exercises\" s]"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-sort-hover": [
+    {
+      "hover": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
+    }
+  ],
+  "exercise-status-open": [
+    {
+      "click": "role=combobox[name=\"Status\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-tags-chosen": [
+    {
+      "use": "exercise-tags-open"
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=checkbox[name=/^Strength/]"
+    },
+    {
+      "click": "main h1"
+    },
+    {
+      "waitFor": "role=button[name=\"Tags, 1 selected\" s]"
+    }
+  ],
+  "exercise-tags-open": [
+    {
+      "click": "role=button[name=/^Tags/]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-type-open": [
+    {
+      "click": "role=combobox[name=\"Type\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-type-resistance": [
+    {
+      "use": "exercise-type-open"
+    },
+    {
+      "click": "role=option[name=/^Resistance/]"
+    },
+    {
+      "waitFor": "role=combobox[name=\"Type\" s] >> text=Resistance"
+    }
+  ],
+  "exercise-video-chosen": [
+    {
+      "use": "open-new-exercise"
+    }
+  ],
+  "exercise-video-dropzone-hover": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> text=Drop a video here or choose one"
+    }
+  ],
+  "exercise-video-file-refused": [
+    {
+      "use": "open-new-exercise"
+    }
+  ],
+  "exercise-video-picker-focus-visible": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-remove-focus-visible": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-remove-hover": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Remove video\" s]"
+    }
+  ],
+  "exercise-video-replace-focus-visible": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-replace-hover": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Replace video\" s]"
+    }
+  ],
+  "exercise-video-save-held": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=button[name=\"Save changes\" s]"
+    }
+  ],
+  "expand-approved-onboarding": [
+    {
+      "click": "[data-parity-root=\"OnboardingPanel\"] [data-slot=\"accordion-trigger\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"answers-section\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"OnboardingPanel\"] h2"
+    }
+  ],
   "expand-assessment-call": [
     {
       "click": "[data-parity-root=\"AssessmentCallBlock\"] [data-slot=\"accordion-trigger\"]"
@@ -1611,6 +2810,169 @@
       "use": "open-resource-actions-then-close"
     }
   ],
+  "food-editor-macro-out-of-range": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+        "10000"
+      ]
+    }
+  ],
+  "food-editor-name-missing": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "C"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        ""
+      ]
+    }
+  ],
+  "food-editor-name-taken": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Chicken breast"
+      ]
+    }
+  ],
+  "food-editor-portion-out-of-range": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+        "0.5"
+      ]
+    }
+  ],
+  "food-editor-too-long": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Chicken breast fillet, skinless and boneless, grilled without oil and lightly salted"
+      ]
+    }
+  ],
+  "food-icon-chosen": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Poultry\" s]"
+    }
+  ],
+  "food-save-failed-toast": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+        "120"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"FoodEditorPage\"] >> role=button[name=\"Create food\" s]"
+    }
+  ],
+  "food-updated-toast": [
+    {
+      "use": "open-food-editor-chicken"
+    },
+    {
+      "click": "role=button[name=\"Save changes\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
+    }
+  ],
+  "hover-checkin-reschedule-later-week": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ]
+  },
   "hover-checkin-reschedule-moved-twice": [
     {
       "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
@@ -1804,6 +3166,401 @@
     ],
     "real": []
   },
+  "nutrition-recipes-tab": [
+    {
+      "click": "[data-parity=\"nutrition-toolbar\"] >> role=tab[name=\"Recipes\" s]"
+    }
+  ],
+  "onboarding-complete-form1": [
+    {
+      "fill": [
+        "[data-parity=\"field-weight\"] input",
+        "70"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-height\"] input",
+        "165"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-goalWeight\"] input",
+        "65"
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lose fat\"]"
+    },
+    {
+      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+    },
+    {
+      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"New to training\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+    },
+    {
+      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-coachExpectations\"] input",
+        "Keep me accountable."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lightly active\"]"
+    },
+    {
+      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Home\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    }
+  ],
+  "onboarding-complete-through-form2": [
+    {
+      "fill": [
+        "[data-parity=\"field-weight\"] input",
+        "70"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-height\"] input",
+        "165"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-goalWeight\"] input",
+        "65"
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lose fat\"]"
+    },
+    {
+      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+    },
+    {
+      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"New to training\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+    },
+    {
+      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-coachExpectations\"] input",
+        "Keep me accountable."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lightly active\"]"
+    },
+    {
+      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Home\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    }
+  ],
+  "onboarding-complete-through-form4": [
+    {
+      "fill": [
+        "[data-parity=\"field-weight\"] input",
+        "70"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-height\"] input",
+        "165"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-goalWeight\"] input",
+        "65"
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lose fat\"]"
+    },
+    {
+      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+    },
+    {
+      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"New to training\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+    },
+    {
+      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-coachExpectations\"] input",
+        "Keep me accountable."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lightly active\"]"
+    },
+    {
+      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Home\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"No, or very rarely\"]"
+    },
+    {
+      "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
+    },
+    {
+      "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-gynaecologicalCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-recurringSymptoms\"] input[aria-label=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-eatingStyle\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"No restrictions\"]"
+    },
+    {
+      "click": "[data-parity=\"field-allergiesOrIntolerances\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-mealsPerDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Three\"]"
+    },
+    {
+      "click": "[data-parity=\"field-snacksPerDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"One\"]"
+    },
+    {
+      "click": "[data-parity=\"field-firstMeal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"7–9am\"]"
+    },
+    {
+      "click": "[data-parity=\"field-lastMeal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"6–8pm\"]"
+    },
+    {
+      "click": "[data-parity=\"field-energyDips\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-jobType\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Mostly sitting\"]"
+    },
+    {
+      "click": "[data-parity=\"field-sleepHours\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"7–8 hours\"]"
+    },
+    {
+      "click": "[data-parity=\"field-eatingOutFrequency\"] >> role=radio[name=\"Bring food from home\"]"
+    },
+    {
+      "click": "[data-parity=\"field-cookingSetup\"] >> role=radio[name=\"I do\"]"
+    },
+    {
+      "click": "[data-parity=\"field-cookingTime\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"15–30 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-waterPerDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"2–5 glasses\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-nutritionGoal\"] input",
+        "Eat more consistently."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-checkInDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Monday\"]"
+    },
+    {
+      "click": "[data-parity=\"field-checkInChannel\"] >> role=radio[name=\"Email\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    }
+  ],
   "onboarding-form2-consent-missing": [
     {
       "use": "onboarding-complete-form1"
@@ -2023,6 +3780,28 @@
       }
     ]
   },
+  "onboarding-trigger-focus-visible": [
+    {
+      "click": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "press": "Shift+Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "onboarding-trigger-hover": [
+    {
+      "hover": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
+    }
+  ],
   "onboarding-unsaved": {
     "prototype": [
       {
@@ -2099,6 +3878,35 @@
     },
     {
       "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "open-archived-exercise-actions": [
+    {
+      "click": "role=button[name=\"Actions for Smith Machine Squat\" s]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+    }
+  ],
+  "open-bell": [
+    {
+      "click": "role=button[name=/^Notifications/] >> visible=true"
+    }
+  ],
+  "open-bell-empty": [
+    {
+      "use": "bell-empty"
+    },
+    {
+      "use": "open-bell"
+    }
+  ],
+  "open-bell-many": [
+    {
+      "use": "bell-many"
+    },
+    {
+      "use": "open-bell"
     }
   ],
   "open-cancel-dialog": [
@@ -2219,6 +4027,20 @@
       "waitFor": "[data-parity-root=\"CycleModeTooltip\"]"
     }
   ],
+  "open-delete-exercise-confirm": [
+    {
+      "use": "open-exercise-actions-bike"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
+  ],
   "open-delete-resource-confirm": [
     {
       "use": "trigger-resource-delete-confirm"
@@ -2235,6 +4057,121 @@
       "hover": "[role=\"dialog\"] h3"
     }
   ],
+  "open-email-hint": [
+    {
+      "hover": "[data-parity=\"identity-email-hint\"]"
+    },
+    {
+      "waitFor": "role=dialog"
+    }
+  ],
+  "open-exercise-actions": [
+    {
+      "click": "role=button[name=\"Actions for Barbell Back Squat\" s]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+    }
+  ],
+  "open-exercise-actions-bike": [
+    {
+      "click": "role=button[name=\"Actions for Bike Intervals\" s]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+    }
+  ],
+  "open-exercise-editor-back-squat": [
+    {
+      "use": "open-exercise-actions"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    },
+    {
+      "waitFor": "h1:has-text(\"Edit exercise\")"
+    }
+  ],
+  "open-food-actions": [
+    {
+      "click": "role=button[name=\"Actions for Chicken breast\" s]"
+    }
+  ],
+  "open-food-category": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "click": "role=combobox[name=\"Category\" s]"
+    }
+  ],
+  "open-food-editor-chicken": [
+    {
+      "use": "open-food-actions"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "open-front-photo-lightbox": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-later-weekly-row-menu": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      }
+    ]
+  },
   "open-lightbox-front": [
     {
       "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
@@ -2250,6 +4187,28 @@
     },
     {
       "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
+    }
+  ],
+  "open-measured-in": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "[data-parity-root=\"ExerciseEditorPage\"] >> role=combobox[name=\"Measured in\" s]"
+    },
+    {
+      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"listbox\"][data-state=\"open\"] [role=\"option\"][aria-selected=\"true\"]:focus"
+    }
+  ],
+  "open-measurements-photo-sheet": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos\"]"
+    },
+    {
+      "wait": 1200
     }
   ],
   "open-mobile-menu": [
@@ -2277,6 +4236,21 @@
       "wait": 1500
     }
   ],
+  "open-new-exercise": [
+    {
+      "click": "[data-parity-root=\"TrainingHub\"] header >> text=New exercise"
+    }
+  ],
+  "open-new-food": [
+    {
+      "click": "[data-parity-root=\"NutritionHub\"] header >> text=New food"
+    }
+  ],
+  "open-new-recipe": [
+    {
+      "click": "[data-parity-root=\"NutritionHub\"] header >> text=New recipe"
+    }
+  ],
   "open-panel-approve-confirm": [
     {
       "click": "[data-parity=\"approve-action\"]"
@@ -2293,9 +4267,110 @@
       "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"
     }
   ],
+  "open-preference-hint": [
+    {
+      "hover": "[data-parity=\"preference-channel-hint\"]"
+    },
+    {
+      "waitFor": "role=dialog"
+    }
+  ],
+  "open-primary-muscles": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "role=button[name=/^Primary muscles/]"
+    },
+    {
+      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"dialog\"][data-state=\"open\"] input:focus"
+    }
+  ],
+  "open-primary-muscles-chosen": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=button[name=/^Primary muscles/]"
+    },
+    {
+      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"dialog\"][data-state=\"open\"] input:focus"
+    }
+  ],
+  "open-recipe-actions": [
+    {
+      "click": "role=button[name=\"Actions for Greek yogurt & oats\" s]"
+    }
+  ],
+  "open-recipe-builder-chicken-rice-bowl": [
+    {
+      "click": "role=button[name=\"Actions for Chicken rice bowl\" s]"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "open-recipe-builder-yogurt-oats": [
+    {
+      "use": "open-recipe-actions"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "open-recipe-icon-popover": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
+    }
+  ],
+  "open-recipe-icon-popover-pastry": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Pastry\" s]"
+    }
+  ],
+  "open-remove-front-photo-confirm": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"remove-front\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
   "open-remove-photo-confirm": [
     {
       "use": "open-remove-front-photo-confirm"
+    }
+  ],
+  "open-rescheduled-checkin-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
     }
   ],
   "open-resend-dialog": [
@@ -2312,6 +4387,48 @@
     },
     {
       "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    }
+  ],
+  "open-resource-actions-then-close": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Escape"
+    }
+  ],
+  "open-resource-edit-details-dialog": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Edit details\" s]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"resource-file-row\"]"
+    },
+    {
+      "wait": 1200
+    }
+  ],
+  "open-resource-viewer": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    },
+    {
+      "wait": 600
     }
   ],
   "open-resource-viewer-coach-actions": [
@@ -2336,6 +4453,17 @@
     },
     {
       "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    }
+  ],
+  "open-resource-viewer-with-management": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"]"
+    },
+    {
+      "wait": 600
     }
   ],
   "open-resource-viewer-word": [
@@ -2398,6 +4526,23 @@
       "wait": 600
     }
   ],
+  "open-weekly-menu": [
+    {
+      "use": "weekly-series-active"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-stop\"]"
+    },
+    {
+      "wait": 300
+    }
+  ],
   "open-weekly-stop": [
     {
       "use": "open-weekly-menu"
@@ -2412,6 +4557,86 @@
       "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
     }
   ],
+  "order-confirmed": {
+    "prototype": [
+      {
+        "use": "cart-paid-details-filled"
+      },
+      {
+        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
+      },
+      {
+        "click": "role=button[name=/^Pay /]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"StoreOrderComplete\"] [data-parity=\"order-email\"]"
+      }
+    ],
+    "real": []
+  },
+  "order-resend-processing": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "order-resend-sent": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
+  "order-resend-try-later": {
+    "prototype": [
+      {
+        "use": "order-confirmed"
+      },
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=\"Send my order email again\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"resend-feedback\"] p"
+      }
+    ]
+  },
   "payment-method-fails": {
     "prototype": [
       {
@@ -2423,6 +4648,220 @@
     ],
     "real": []
   },
+  "pending-checkins-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"None pending\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "plan-overview-empty": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=button[name=\"Remove block 1, Foundation\"]"
+    },
+    {
+      "click": "role=dialog >> role=button[name=\"Remove block\"]"
+    },
+    {
+      "click": "role=button[name=\"Remove block 1, Hypertrophy\"]"
+    },
+    {
+      "click": "role=dialog >> role=button[name=\"Remove block\"]"
+    },
+    {
+      "click": "role=button[name=\"Remove block 1, Deload\"]"
+    },
+    {
+      "click": "role=dialog >> role=button[name=\"Remove block\"]"
+    }
+  ],
+  "plan-overview-sequence-problem": [
+    {
+      "use": "builder-opened"
+    },
+    {
+      "click": "role=combobox[name=\"Type of block 1\"]"
+    },
+    {
+      "click": "role=option[name=\"Deload\"]"
+    }
+  ],
+  "product-free": [
+    {
+      "click": "section:has(> h2:text-is(\"Free resources\")) h3 >> nth=0"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ProductDetails\"] h1"
+    }
+  ],
+  "product-paid": [
+    {
+      "click": "section:has(> h2:text-is(\"Plans\")) h3 >> nth=0"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ProductDetails\"] [data-parity=\"product-price\"]"
+    }
+  ],
+  "product-paid-usd": [
+    {
+      "use": "store-usd"
+    },
+    {
+      "use": "product-paid"
+    }
+  ],
+  "profile-about-dirty": [
+    {
+      "fill": [
+        "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input",
+        "Anna"
+      ]
+    }
+  ],
+  "profile-about-saved": [
+    {
+      "use": "profile-about-dirty"
+    },
+    {
+      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"section-save\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast] >> text=Changes saved"
+    }
+  ],
+  "profile-field-problem": [
+    {
+      "fill": [
+        "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input",
+        ""
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"section-save\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"field-firstName-error\"]"
+    }
+  ],
+  "program-card-built": {
+    "prototype": [
+      {
+        "click": "role=link[name=\"Build program\"]"
+      },
+      {
+        "click": "role=button[name=\"Create program\"]"
+      },
+      {
+        "click": "role=link[name=\"Back to Jane Doe\"]"
+      }
+    ],
+    "real": []
+  },
+  "program-card-coaching-ended": {
+    "prototype": [],
+    "real": []
+  },
+  "program-card-draft": {
+    "prototype": [
+      {
+        "use": "program-card-built"
+      }
+    ],
+    "real": []
+  },
+  "program-card-draft-coaching-ended": {
+    "prototype": [
+      {
+        "use": "program-card-built"
+      },
+      {
+        "use": "client-ended"
+      }
+    ],
+    "real": []
+  },
+  "program-card-ready-to-build": {
+    "prototype": [],
+    "real": []
+  },
+  "program-card-waiting": {
+    "prototype": [],
+    "real": []
+  },
+  "program-setup-default": {
+    "prototype": [],
+    "real": []
+  },
+  "program-setup-equipment-problem": [
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Full gym\"]"
+    },
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Dumbbells\"]"
+    },
+    {
+      "click": "role=button[name=\"Create program\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"field-equipment-error\"]"
+    }
+  ],
+  "program-setup-failed-save": [
+    {
+      "click": "role=radio[name=\"4 days\"]"
+    },
+    {
+      "click": "role=button[name=\"Create program\"]"
+    },
+    {
+      "waitFor": "role=alert >> text=The program wasn’t created"
+    }
+  ],
+  "program-setup-leave-confirm": [
+    {
+      "click": "role=radio[name=\"4 days\"]"
+    },
+    {
+      "click": "role=link[name=\"Cancel\"]"
+    },
+    {
+      "waitFor": "role=dialog[name=\"Unsaved changes\"]"
+    }
+  ],
+  "program-setup-not-ready": {
+    "prototype": [],
+    "real": []
+  },
+  "program-setup-profile-confirm": [
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Kettlebells\"]"
+    },
+    {
+      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Full gym\"]"
+    },
+    {
+      "click": "role=button[name=\"Create program\"]"
+    },
+    {
+      "waitFor": "role=dialog[name=\"This updates Jane’s profile\"]"
+    }
+  ],
   "ratio-hidden": {
     "prototype": [
       {
@@ -2446,6 +4885,267 @@
     ],
     "real": []
   },
+  "recipe-builder-dragging": [
+    {
+      "use": "recipe-builder-library-narrowed"
+    }
+  ],
+  "recipe-builder-drawer-open": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "click": "role=button[name=\"Open food library\" s]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-library\"] >> role=searchbox[name=\"Search foods\" s]",
+        "en"
+      ]
+    }
+  ],
+  "recipe-builder-grams-out-of-range": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "fill": [
+        "role=spinbutton[name=\"Grams of Greek yogurt\" s]",
+        "0"
+      ]
+    }
+  ],
+  "recipe-builder-instructions-too-long": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  ],
+  "recipe-builder-library-narrowed": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-library\"] >> role=searchbox[name=\"Search foods\" s]",
+        "en"
+      ]
+    }
+  ],
+  "recipe-builder-minutes-out-of-range": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
+        "10000"
+      ]
+    }
+  ],
+  "recipe-builder-name-missing": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "C"
+      ]
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        ""
+      ]
+    }
+  ],
+  "recipe-builder-name-taken": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Greek yogurt & oats"
+      ]
+    }
+  ],
+  "recipe-builder-name-too-long": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Overnight Greek yogurt with rolled oats, chia seeds, fresh berries and some honey"
+      ]
+    }
+  ],
+  "recipe-created-toast": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Quinoa bowl"
+      ]
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ],
+  "recipe-icon-chosen": [
+    {
+      "use": "open-recipe-icon-popover"
+    },
+    {
+      "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Soup\" s]"
+    }
+  ],
+  "recipe-icon-option-focus-visible": [
+    {
+      "use": "open-recipe-icon-popover"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "recipe-icon-option-hover": [
+    {
+      "use": "open-recipe-icon-popover"
+    },
+    {
+      "hover": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Soup\" s]"
+    }
+  ],
+  "recipe-library-food-hover": [
+    {
+      "use": "recipe-builder-library-narrowed"
+    },
+    {
+      "hover": "[data-parity=\"recipe-builder-library\"] >> text=Chicken breast"
+    }
+  ],
+  "recipe-photo-browser-refused": [
+    {
+      "use": "open-new-recipe"
+    }
+  ],
+  "recipe-photo-chosen": [
+    {
+      "use": "open-new-recipe"
+    }
+  ],
+  "recipe-photo-failed-to-load": [
+    {
+      "use": "nutrition-recipes-tab"
+    }
+  ],
+  "recipe-photo-remove-focus-visible": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Poultry\" s]"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "recipe-photo-remove-hover": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "hover": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Remove recipe photo\" s]"
+    }
+  ],
+  "recipe-photo-removed": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Remove recipe photo\" s]"
+    }
+  ],
+  "recipe-photo-replace-focus-visible": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Poultry\" s]"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Shift+Tab"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "recipe-photo-replace-hover": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "hover": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Replace recipe photo\" s]"
+    }
+  ],
+  "recipe-photo-save-held": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    }
+  ],
+  "recipe-photo-server-refused": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    }
+  ],
+  "recipe-photo-upload-failed": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    }
+  ],
+  "recipe-save-failed-toast": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Quinoa bowl"
+      ]
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ],
+  "recipe-updated-toast": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ],
   "record-consent-reopen-sheet": [
     {
       "use": "open-measurements-photo-sheet"
@@ -2534,6 +5234,64 @@
     },
     {
       "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"] >> text=No front photo"
+    }
+  ],
+  "request-checkin-pick-time": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    }
+  ],
+  "reschedule-checkin-pick-time": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
     }
   ],
   "resend-invitation-failed-toast": {
@@ -2625,12 +5383,43 @@
   "resources-empty": [],
   "resources-populated": [],
   "resources-unavailable": [],
+  "review-dialog-flag-and-note": [
+    {
+      "click": "[data-parity=\"review-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"flag-sleepHours\"]"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"review-note\"]",
+        "Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder."
+      ]
+    }
+  ],
   "review-dialog-flagged": [
     {
       "use": "review-dialog-flag-and-note"
     },
     {
       "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"ask-details\"]:not([disabled])"
+    }
+  ],
+  "review-first-pending": [
+    {
+      "click": "[data-parity-root=\"PendingCheckins\" i] >> role=link[name=/Review/] >> nth=0"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
     }
   ],
   "save-failed": {
@@ -2688,6 +5477,29 @@
     },
     {
       "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "schedule-checkin-pick-time": [
+    {
+      "click": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
     }
   ],
   "search-calls-paid-client": [
@@ -2781,6 +5593,660 @@
       "waitFor": "role=button[name=\"Clear filters\"]"
     }
   ],
+  "seed-exercise-back-squat": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Barbell Back Squat"
+        ]
+      },
+      {
+        "use": "seed-primary-quadriceps-glutes"
+      },
+      {
+        "click": "role=button[name=/^Secondary muscles/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Core\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Hamstrings\" s]"
+      },
+      {
+        "press": "Escape"
+      },
+      {
+        "click": "role=button[name=/^Equipment/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Barbell\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Squat rack\" s]"
+      },
+      {
+        "press": "Escape"
+      },
+      {
+        "click": "role=combobox[name=\"Difficulty\" s]"
+      },
+      {
+        "click": "role=option[name=\"Intermediate\" s]"
+      },
+      {
+        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Strength\" s]"
+      },
+      {
+        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Hypertrophy\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
+          "A compound lower body exercise that targets the quads, glutes, and core."
+        ]
+      },
+      {
+        "click": "role=button[name=\"Create exercise\" s]"
+      }
+    ]
+  },
+  "seed-exercise-split-squat": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Bulgarian Split Squat"
+        ]
+      },
+      {
+        "use": "seed-primary-quadriceps-glutes"
+      },
+      {
+        "click": "role=button[name=/^Equipment/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Dumbbells\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Bench\" s]"
+      },
+      {
+        "press": "Escape"
+      },
+      {
+        "click": "role=combobox[name=\"Difficulty\" s]"
+      },
+      {
+        "click": "role=option[name=\"Advanced\" s]"
+      },
+      {
+        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Hypertrophy\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create exercise\" s]"
+      }
+    ]
+  },
+  "seed-food-chicken-breast": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Chicken breast"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Protein\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Poultry\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "165"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "31"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "3.6"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lunch\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Post-workout\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-greek-yogurt": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Greek yogurt"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Protein\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Dairy\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "59"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "10"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "3.6"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "0.4"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "170"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Breakfast\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Snack\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-lentils": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Lentils"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Legumes\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Legume / bean\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "116"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "9"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "20"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "0.4"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Iron-rich\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Vegetarian\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lactose-free\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-oats": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Oats"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Carb\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Grain\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "389"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "17"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "66"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "7"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "50"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Breakfast\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Magnesium\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-olive-oil": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Olive oil"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Fat\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Oil / fat\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "884"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "100"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "10"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Anti-inflammatory\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-salmon": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Salmon"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Protein\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Fish\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "208"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "20"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "13"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Omega-3\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Anti-inflammatory\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-white-rice": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "White rice"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Carb\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Grain\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "130"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "2.7"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "28"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "0.3"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lunch\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-primary-quadriceps-glutes": {
+    "prototype": [],
+    "real": [
+      {
+        "click": "role=button[name=/^Primary muscles/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Quadriceps\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Glutes\" s]"
+      },
+      {
+        "press": "Escape"
+      }
+    ]
+  },
+  "seed-recipe-chicken-rice-bowl": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "role=textbox[name=\"Recipe name\" s]",
+          "Chicken rice bowl"
+        ]
+      },
+      {
+        "click": "role=button[name=\"Add Chicken breast to recipe\" s]"
+      },
+      {
+        "click": "role=button[name=\"Add White rice to recipe\" s]"
+      },
+      {
+        "click": "role=button[name=\"Add Olive oil to recipe\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Cooking method for Chicken breast\" s]"
+      },
+      {
+        "click": "role=option[name=\"Grilled\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Cooking method for White rice\" s]"
+      },
+      {
+        "click": "role=option[name=\"Boiled\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Cooking method for Olive oil\" s]"
+      },
+      {
+        "click": "role=option[name=\"Pan-fried\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
+          "10"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Cook (min)\" s]",
+          "20"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
+          "Season the chicken and grill 6–7 minutes per side until cooked through. Boil the rice per package instructions. Slice the chicken, plate over rice, and finish with a drizzle of olive oil."
+        ]
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Lunch\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Iron-rich\" s]"
+      },
+      {
+        "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Poultry\" s]"
+      },
+      {
+        "click": "role=button[name=\"Save recipe\" s]"
+      }
+    ]
+  },
+  "seed-recipe-greek-yogurt-oats": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "role=textbox[name=\"Recipe name\" s]",
+          "Greek yogurt & oats"
+        ]
+      },
+      {
+        "click": "role=button[name=\"Add Greek yogurt to recipe\" s]"
+      },
+      {
+        "click": "role=button[name=\"Add Oats to recipe\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
+          "5"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
+          "Stir the oats into the Greek yogurt and let sit 5 minutes to soften (or overnight in the fridge). Top with fruit or seeds if desired."
+        ]
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Breakfast\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Magnesium\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Vegetarian\" s]"
+      },
+      {
+        "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Pastry\" s]"
+      },
+      {
+        "click": "role=button[name=\"Save recipe\" s]"
+      }
+    ]
+  },
   "seeded-photos": {
     "prototype": [
       {
@@ -3029,6 +6495,25 @@
     ],
     "real": []
   },
+  "store-filter-no-match": [
+    {
+      "click": "[aria-label=\"Filter by Type\"] >> role=radio[name=\"E-Books\"]"
+    },
+    {
+      "click": "[aria-label=\"Filter by Goal\"] >> role=radio[name=\"Fat Loss\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"Store\"] p:text-is(\"No products found matching your filters.\")"
+    }
+  ],
+  "store-usd": [
+    {
+      "click": "[data-parity-root=\"Store\"] >> role=radio[name=\"USD\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"Store\"] [role=\"radio\"][aria-checked=\"true\"]:has-text(\"USD\")"
+    }
+  ],
   "subscription-cancelled": {
     "prototype": [
       {
@@ -3106,6 +6591,37 @@
       "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos-tiles\"] input:not([disabled])"
     }
   ],
+  "trigger-checkin-cancel-confirm": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "trigger-resource-delete-confirm": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
   "wait-banner": [],
   "wait-bundle": [],
   "wait-resumed": [
@@ -3126,6 +6642,17 @@
     },
     {
       "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "weekly-counting": [
+    {
+      "use": "weekly-pick-hour"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-weekday\"] >> role=radio[name=\"Friday\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"hour-clashes-loading\"]"
     }
   ],
   "weekly-pick-hour": [
@@ -3351,3325 +6878,5 @@
       }
     ],
     "real": []
-  },
-  "onboarding-complete-through-form4": [
-    {
-      "fill": [
-        "[data-parity=\"field-weight\"] input",
-        "70"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-height\"] input",
-        "165"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-goalWeight\"] input",
-        "65"
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Lose fat\"]"
-    },
-    {
-      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
-    },
-    {
-      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"New to training\"]"
-    },
-    {
-      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
-    },
-    {
-      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
-    },
-    {
-      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-coachExpectations\"] input",
-        "Keep me accountable."
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Lightly active\"]"
-    },
-    {
-      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
-    },
-    {
-      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Home\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    },
-    {
-      "wait": 500
-    },
-    {
-      "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
-    },
-    {
-      "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    },
-    {
-      "wait": 500
-    },
-    {
-      "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"No, or very rarely\"]"
-    },
-    {
-      "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"None\"]"
-    },
-    {
-      "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
-    },
-    {
-      "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-gynaecologicalCondition\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-recurringSymptoms\"] input[aria-label=\"None\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    },
-    {
-      "wait": 500
-    },
-    {
-      "click": "[data-parity=\"field-eatingStyle\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"No restrictions\"]"
-    },
-    {
-      "click": "[data-parity=\"field-allergiesOrIntolerances\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-mealsPerDay\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Three\"]"
-    },
-    {
-      "click": "[data-parity=\"field-snacksPerDay\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"One\"]"
-    },
-    {
-      "click": "[data-parity=\"field-firstMeal\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"7–9am\"]"
-    },
-    {
-      "click": "[data-parity=\"field-lastMeal\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"6–8pm\"]"
-    },
-    {
-      "click": "[data-parity=\"field-energyDips\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-jobType\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Mostly sitting\"]"
-    },
-    {
-      "click": "[data-parity=\"field-sleepHours\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"7–8 hours\"]"
-    },
-    {
-      "click": "[data-parity=\"field-eatingOutFrequency\"] >> role=radio[name=\"Bring food from home\"]"
-    },
-    {
-      "click": "[data-parity=\"field-cookingSetup\"] >> role=radio[name=\"I do\"]"
-    },
-    {
-      "click": "[data-parity=\"field-cookingTime\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"15–30 minutes\"]"
-    },
-    {
-      "click": "[data-parity=\"field-waterPerDay\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"2–5 glasses\"]"
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-nutritionGoal\"] input",
-        "Eat more consistently."
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-checkInDay\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Monday\"]"
-    },
-    {
-      "click": "[data-parity=\"field-checkInChannel\"] >> role=radio[name=\"Email\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    }
-  ],
-  "onboarding-complete-through-form2": [
-    {
-      "fill": [
-        "[data-parity=\"field-weight\"] input",
-        "70"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-height\"] input",
-        "165"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-goalWeight\"] input",
-        "65"
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Lose fat\"]"
-    },
-    {
-      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
-    },
-    {
-      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"New to training\"]"
-    },
-    {
-      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
-    },
-    {
-      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
-    },
-    {
-      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-coachExpectations\"] input",
-        "Keep me accountable."
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Lightly active\"]"
-    },
-    {
-      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
-    },
-    {
-      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Home\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    },
-    {
-      "wait": 500
-    },
-    {
-      "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
-    },
-    {
-      "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    },
-    {
-      "wait": 500
-    }
-  ],
-  "onboarding-complete-form1": [
-    {
-      "fill": [
-        "[data-parity=\"field-weight\"] input",
-        "70"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-height\"] input",
-        "165"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-goalWeight\"] input",
-        "65"
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Lose fat\"]"
-    },
-    {
-      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
-    },
-    {
-      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"New to training\"]"
-    },
-    {
-      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
-    },
-    {
-      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
-    },
-    {
-      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
-    },
-    {
-      "fill": [
-        "[data-parity=\"field-coachExpectations\"] input",
-        "Keep me accountable."
-      ]
-    },
-    {
-      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Lightly active\"]"
-    },
-    {
-      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
-    },
-    {
-      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
-    },
-    {
-      "click": "role=option[name=\"Home\"]"
-    },
-    {
-      "click": "[data-parity=\"continue\"]"
-    }
-  ],
-  "open-rescheduled-checkin-menu": [
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
-    },
-    {
-      "wait": 400
-    }
-  ],
-  "reschedule-checkin-pick-time": [
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
-    },
-    {
-      "wait": 400
-    },
-    {
-      "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
-    }
-  ],
-  "open-measurements-photo-sheet": [
-    {
-      "click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"
-    },
-    {
-      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos\"]"
-    },
-    {
-      "wait": 1200
-    }
-  ],
-  "add-resource-tag-query": [
-    {
-      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Add resource\"]"
-    },
-    {
-      "waitFor": "[role=\"dialog\"] >> text=Drop a file here or choose one"
-    },
-    {
-      "wait": 1200
-    },
-    {
-      "click": "[role=\"dialog\"] >> role=combobox[name=/^Tags/]"
-    },
-    {
-      "fill": [
-        "[role=\"dialog\"] >> role=combobox[name=/^Tags/]",
-        "Meal prep"
-      ]
-    }
-  ],
-  "request-checkin-pick-time": [
-    {
-      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
-    }
-  ],
-  "schedule-checkin-pick-time": [
-    {
-      "click": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
-    }
-  ],
-  "open-resource-edit-details-dialog": [
-    {
-      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
-    },
-    {
-      "click": "role=menu >> role=menuitem[name=\"Edit details\" s]"
-    },
-    {
-      "waitFor": "[role=\"dialog\"] [data-parity=\"resource-file-row\"]"
-    },
-    {
-      "wait": 1200
-    }
-  ],
-  "open-front-photo-lightbox": [
-    {
-      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
-    },
-    {
-      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "open-remove-front-photo-confirm": [
-    {
-      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
-    },
-    {
-      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"remove-front\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
-    }
-  ],
-  "review-dialog-flag-and-note": [
-    {
-      "click": "[data-parity=\"review-action\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"flag-sleepHours\"]"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"review-note\"]",
-        "Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder."
-      ]
-    }
-  ],
-  "trigger-checkin-cancel-confirm": [
-    {
-      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
-    },
-    {
-      "wait": 400
-    },
-    {
-      "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
-    }
-  ],
-  "trigger-resource-delete-confirm": [
-    {
-      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
-    },
-    {
-      "click": "role=menu >> role=menuitem[name=\"Delete\" s]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
-    }
-  ],
-  "open-resource-actions-then-close": [
-    {
-      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
-    },
-    {
-      "wait": 400
-    },
-    {
-      "press": "Escape"
-    }
-  ],
-  "open-resource-viewer": [
-    {
-      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "open-resource-viewer-with-management": [
-    {
-      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\" s]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"]"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "pending-checkins-empty": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Check-ins\"]"
-      },
-      {
-        "click": "#dev-pending-checkins"
-      },
-      {
-        "click": "role=option[name=\"None pending\" s]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      }
-    ],
-    "real": []
-  },
-  "review-first-pending": [
-    {
-      "click": "[data-parity-root=\"PendingCheckins\" i] >> role=link[name=/Review/] >> nth=0"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 900
-    }
-  ],
-  "dashboard-empty": [
-    {
-      "use": "empty-calls"
-    },
-    {
-      "use": "pending-checkins-empty"
-    }
-  ],
-  "open-weekly-menu": [
-    {
-      "use": "weekly-series-active"
-    },
-    {
-      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
-    },
-    {
-      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-stop\"]"
-    },
-    {
-      "wait": 300
-    }
-  ],
-  "weekly-counting": [
-    {
-      "use": "weekly-pick-hour"
-    },
-    {
-      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-weekday\"] >> role=radio[name=\"Friday\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"hour-clashes-loading\"]"
-    }
-  ],
-  "coach-checkins-upcoming-series": {
-    "prototype": [
-      {
-        "use": "weekly-series-active"
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-      },
-      {
-        "hover": "h1"
-      },
-      {
-        "wait": 900
-      }
-    ],
-    "real": [
-      {
-        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-      },
-      {
-        "hover": "h1"
-      },
-      {
-        "wait": 900
-      }
-    ]
-  },
-  "coach-open-scheduled-checkin-menu": [
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Jane Doe\"):has-text(\"10:00 AM\"):has([data-parity=\"row-actions-trigger\"]) >> nth=0 >> [data-parity=\"row-actions-trigger\"]"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
-    },
-    {
-      "wait": 400
-    }
-  ],
-  "open-later-weekly-row-menu": {
-    "prototype": [
-      {
-        "use": "weekly-series-active"
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-      },
-      {
-        "wait": 600
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
-      },
-      {
-        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-      },
-      {
-        "wait": 400
-      }
-    ],
-    "real": [
-      {
-        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-      },
-      {
-        "wait": 600
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
-      },
-      {
-        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-      },
-      {
-        "wait": 400
-      }
-    ]
-  },
-  "hover-checkin-reschedule-later-week": {
-    "prototype": [
-      {
-        "use": "weekly-series-active"
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-      },
-      {
-        "wait": 600
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
-      },
-      {
-        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-      },
-      {
-        "wait": 400
-      },
-      {
-        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-      },
-      {
-        "waitFor": "[data-parity=\"disabled-action-hint\"]"
-      }
-    ],
-    "real": [
-      {
-        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-      },
-      {
-        "wait": 600
-      },
-      {
-        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
-      },
-      {
-        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-      },
-      {
-        "wait": 400
-      },
-      {
-        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-      },
-      {
-        "waitFor": "[data-parity=\"disabled-action-hint\"]"
-      }
-    ]
-  },
-  "bell-unread": [
-    {
-      "waitFor": "role=button[name=/^Notifications, \\d+ unread$/] >> visible=true"
-    }
-  ],
-  "bell-empty": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Check-ins\"]"
-      },
-      {
-        "click": "#dev-notification-bell"
-      },
-      {
-        "click": "role=option[name=\"Empty\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
-        "wait": 400
-      }
-    ],
-    "real": []
-  },
-  "bell-many": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Check-ins\"]"
-      },
-      {
-        "click": "#dev-notification-bell"
-      },
-      {
-        "click": "role=option[name=\"Many (40, shows 30)\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
-        "wait": 400
-      }
-    ],
-    "real": []
-  },
-  "drawer-bell-unread": [
-    {
-      "use": "bell-unread"
-    },
-    {
-      "use": "open-coach-drawer"
-    }
-  ],
-  "drawer-bell-empty": [
-    {
-      "use": "bell-empty"
-    },
-    {
-      "use": "open-coach-drawer"
-    }
-  ],
-  "open-bell": [
-    {
-      "click": "role=button[name=/^Notifications/] >> visible=true"
-    }
-  ],
-  "open-bell-empty": [
-    {
-      "use": "bell-empty"
-    },
-    {
-      "use": "open-bell"
-    }
-  ],
-  "open-bell-many": [
-    {
-      "use": "bell-many"
-    },
-    {
-      "use": "open-bell"
-    }
-  ],
-  "bell-row-hover": [
-    {
-      "use": "open-bell"
-    },
-    {
-      "hover": "[role=\"dialog\"][aria-label=\"Notifications\"] [data-parity=\"notification-row\"] >> nth=1"
-    }
-  ],
-  "bell-mark-all-focus": [
-    {
-      "use": "open-bell"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Shift+Tab"
-    }
-  ],
-  "bell-row-focus": [
-    {
-      "use": "open-bell"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "bell-arrival-toast": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Check-ins\"]"
-      },
-      {
-        "click": "#dev-notification-arrive"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      }
-    ],
-    "real": []
-  },
-  "coach-training-active": [
-    {
-      "click": "[data-parity=\"link-training\"]"
-    },
-    {
-      "waitFor": "[data-parity=\"link-training\"][aria-current=\"page\"]"
-    },
-    {
-      "waitFor": "main h1:has-text(\"Exercises\")"
-    }
-  ],
-  "open-new-exercise": [
-    {
-      "click": "[data-parity-root=\"TrainingHub\"] header >> text=New exercise"
-    }
-  ],
-  "exercise-editor-name-missing": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "B"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        ""
-      ]
-    },
-    {
-      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]:focus"
-    }
-  ],
-  "exercise-editor-too-long": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Barbell back squat with a three-second pause at the bottom and a slow steady rise"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
-        "Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit betwee"
-      ]
-    },
-    {
-      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] textarea[aria-invalid=\"true\"]:focus"
-    }
-  ],
-  "exercise-editor-name-taken": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Barbell Back Squat"
-      ]
-    },
-    {
-      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]:focus"
-    }
-  ],
-  "open-exercise-actions": [
-    {
-      "click": "role=button[name=\"Actions for Barbell Back Squat\" s]"
-    },
-    {
-      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
-    }
-  ],
-  "open-exercise-editor-back-squat": [
-    {
-      "use": "open-exercise-actions"
-    },
-    {
-      "click": "role=menuitem[name=\"Edit\" s]"
-    },
-    {
-      "waitFor": "h1:has-text(\"Edit exercise\")"
-    }
-  ],
-  "open-primary-muscles": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "click": "role=button[name=/^Primary muscles/]"
-    },
-    {
-      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"dialog\"][data-state=\"open\"] input:focus"
-    }
-  ],
-  "open-primary-muscles-chosen": [
-    {
-      "use": "open-exercise-editor-back-squat"
-    },
-    {
-      "click": "role=button[name=/^Primary muscles/]"
-    },
-    {
-      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"dialog\"][data-state=\"open\"] input:focus"
-    }
-  ],
-  "seed-primary-quadriceps-glutes": {
-    "prototype": [],
-    "real": [
-      {
-        "click": "role=button[name=/^Primary muscles/]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Quadriceps\" s]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Glutes\" s]"
-      },
-      {
-        "press": "Escape"
-      }
-    ]
-  },
-  "seed-exercise-back-squat": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Barbell Back Squat"
-        ]
-      },
-      {
-        "use": "seed-primary-quadriceps-glutes"
-      },
-      {
-        "click": "role=button[name=/^Secondary muscles/]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Core\" s]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Hamstrings\" s]"
-      },
-      {
-        "press": "Escape"
-      },
-      {
-        "click": "role=button[name=/^Equipment/]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Barbell\" s]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Squat rack\" s]"
-      },
-      {
-        "press": "Escape"
-      },
-      {
-        "click": "role=combobox[name=\"Difficulty\" s]"
-      },
-      {
-        "click": "role=option[name=\"Intermediate\" s]"
-      },
-      {
-        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Strength\" s]"
-      },
-      {
-        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Hypertrophy\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
-          "A compound lower body exercise that targets the quads, glutes, and core."
-        ]
-      },
-      {
-        "click": "role=button[name=\"Create exercise\" s]"
-      }
-    ]
-  },
-  "seed-exercise-split-squat": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Bulgarian Split Squat"
-        ]
-      },
-      {
-        "use": "seed-primary-quadriceps-glutes"
-      },
-      {
-        "click": "role=button[name=/^Equipment/]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Dumbbells\" s]"
-      },
-      {
-        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Bench\" s]"
-      },
-      {
-        "press": "Escape"
-      },
-      {
-        "click": "role=combobox[name=\"Difficulty\" s]"
-      },
-      {
-        "click": "role=option[name=\"Advanced\" s]"
-      },
-      {
-        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Hypertrophy\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create exercise\" s]"
-      }
-    ]
-  },
-  "open-measured-in": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "click": "[data-parity-root=\"ExerciseEditorPage\"] >> role=combobox[name=\"Measured in\" s]"
-    },
-    {
-      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"listbox\"][data-state=\"open\"] [role=\"option\"][aria-selected=\"true\"]:focus"
-    }
-  ],
-  "cart-one-item": [
-    {
-      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
-    }
-  ],
-  "cart-details": [
-    {
-      "use": "cart-one-item"
-    },
-    {
-      "click": "role=button[name=\"Continue\"]"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-        "visitor@example.com"
-      ]
-    }
-  ],
-  "cart-terms-accepted": [
-    {
-      "use": "cart-details"
-    },
-    {
-      "click": "role=checkbox[name=/^I agree to the Terms & Conditions/]"
-    }
-  ],
-  "cart-sent": [
-    {
-      "use": "cart-terms-accepted"
-    },
-    {
-      "click": "role=button[name=\"Send my resources\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] h2:text-is(\"Check your inbox\")"
-    }
-  ],
-  "coach-nutrition-active": [
-    {
-      "use": "pending-checkins-empty"
-    },
-    {
-      "click": "[data-parity=\"link-nutrition\"]"
-    },
-    {
-      "waitFor": "[data-parity=\"link-nutrition\"][aria-current=\"page\"]"
-    }
-  ],
-  "open-new-food": [
-    {
-      "click": "[data-parity-root=\"NutritionHub\"] header >> text=New food"
-    }
-  ],
-  "food-editor-name-missing": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "C"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        ""
-      ]
-    }
-  ],
-  "food-editor-too-long": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Chicken breast fillet, skinless and boneless, grilled without oil and lightly salted"
-      ]
-    }
-  ],
-  "food-editor-name-taken": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Chicken breast"
-      ]
-    }
-  ],
-  "food-editor-macro-out-of-range": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Quinoa"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-        "10000"
-      ]
-    }
-  ],
-  "food-editor-portion-out-of-range": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Quinoa"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-        "0.5"
-      ]
-    }
-  ],
-  "food-icon-chosen": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Poultry\" s]"
-    }
-  ],
-  "open-food-category": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "click": "role=combobox[name=\"Category\" s]"
-    }
-  ],
-  "open-food-actions": [
-    {
-      "click": "role=button[name=\"Actions for Chicken breast\" s]"
-    }
-  ],
-  "open-food-editor-chicken": [
-    {
-      "use": "open-food-actions"
-    },
-    {
-      "click": "role=menuitem[name=\"Edit\" s]"
-    }
-  ],
-  "food-updated-toast": [
-    {
-      "use": "open-food-editor-chicken"
-    },
-    {
-      "click": "role=button[name=\"Save changes\" s]"
-    },
-    {
-      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
-    }
-  ],
-  "seed-food-chicken-breast": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Chicken breast"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Protein\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Poultry\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "165"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "31"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "0"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "3.6"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "150"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lunch\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Post-workout\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "seed-food-lentils": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Lentils"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Legumes\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Legume / bean\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "116"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "9"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "20"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "0.4"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "150"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Iron-rich\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Vegetarian\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lactose-free\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "seed-food-salmon": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Salmon"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Protein\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Fish\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "208"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "20"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "0"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "13"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "150"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Omega-3\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Anti-inflammatory\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "exercise-video-chosen": [
-    {
-      "use": "open-new-exercise"
-    }
-  ],
-  "exercise-video-file-refused": [
-    {
-      "use": "open-new-exercise"
-    }
-  ],
-  "exercise-video-save-held": [
-    {
-      "use": "open-exercise-editor-back-squat"
-    },
-    {
-      "click": "role=button[name=\"Save changes\" s]"
-    }
-  ],
-  "exercise-video-remove-hover": [
-    {
-      "use": "open-exercise-editor-back-squat"
-    },
-    {
-      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Remove video\" s]"
-    }
-  ],
-  "exercise-video-replace-hover": [
-    {
-      "use": "open-exercise-editor-back-squat"
-    },
-    {
-      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Replace video\" s]"
-    }
-  ],
-  "exercise-video-remove-focus-visible": [
-    {
-      "use": "open-exercise-editor-back-squat"
-    },
-    {
-      "click": "role=textbox[name=\"Form cues\" s]"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "exercise-video-replace-focus-visible": [
-    {
-      "use": "open-exercise-editor-back-squat"
-    },
-    {
-      "click": "role=textbox[name=\"Form cues\" s]"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "exercise-video-picker-focus-visible": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "click": "role=textbox[name=\"Form cues\" s]"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "exercise-video-dropzone-hover": [
-    {
-      "use": "open-new-exercise"
-    },
-    {
-      "hover": "[data-parity=\"exercise-video-field\"] >> text=Drop a video here or choose one"
-    }
-  ],
-  "exercise-type-open": [
-    {
-      "click": "role=combobox[name=\"Type\" s]"
-    },
-    {
-      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
-    }
-  ],
-  "exercise-equipment-open": [
-    {
-      "click": "role=combobox[name=\"Equipment\" s]"
-    },
-    {
-      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
-    }
-  ],
-  "exercise-tags-open": [
-    {
-      "click": "role=button[name=/^Tags/]"
-    },
-    {
-      "waitFor": "[role=\"dialog\"][data-state=\"open\"]"
-    }
-  ],
-  "exercise-tags-chosen": [
-    {
-      "use": "exercise-tags-open"
-    },
-    {
-      "click": "[role=\"dialog\"] >> role=checkbox[name=/^Strength/]"
-    },
-    {
-      "click": "main h1"
-    },
-    {
-      "waitFor": "role=button[name=\"Tags, 1 selected\" s]"
-    }
-  ],
-  "exercise-type-resistance": [
-    {
-      "use": "exercise-type-open"
-    },
-    {
-      "click": "role=option[name=/^Resistance/]"
-    },
-    {
-      "waitFor": "role=combobox[name=\"Type\" s] >> text=Resistance"
-    }
-  ],
-  "exercise-search-typed": [
-    {
-      "fill": [
-        "role=searchbox[name=\"Search exercises\" s]",
-        "squat"
-      ]
-    },
-    {
-      "waitFor": "[data-parity=\"exercise-table\"] >> text=Bulgarian Split Squat"
-    }
-  ],
-  "exercise-no-match": [
-    {
-      "fill": [
-        "role=searchbox[name=\"Search exercises\" s]",
-        "zzzz"
-      ]
-    },
-    {
-      "waitFor": "text=No exercises match"
-    }
-  ],
-  "exercise-sort-difficulty-desc": [
-    {
-      "click": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
-    },
-    {
-      "waitFor": "[data-parity=\"exercise-header-row\"] th[aria-sort=\"ascending\"] >> text=Difficulty"
-    },
-    {
-      "click": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
-    },
-    {
-      "waitFor": "[data-parity=\"exercise-header-row\"] th[aria-sort=\"descending\"]"
-    }
-  ],
-  "exercise-sort-hover": [
-    {
-      "hover": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
-    }
-  ],
-  "exercise-sort-focus-visible": [
-    {
-      "click": "role=searchbox[name=\"Search exercises\" s]"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "exercise-page-2": [
-    {
-      "click": "role=link[name=\"Go to page 2\" s]"
-    },
-    {
-      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
-    }
-  ],
-  "exercise-pager-next-hover": [
-    {
-      "hover": "role=link[name=\"Go to next page\" s]"
-    }
-  ],
-  "exercise-pager-focus-visible": [
-    {
-      "click": "role=link[name=\"Go to page 2\" s]"
-    },
-    {
-      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
-    },
-    {
-      "press": "Shift+Tab"
-    }
-  ],
-  "calls-page-2": [
-    {
-      "click": "role=link[name=\"Go to page 2\" s]"
-    },
-    {
-      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
-    }
-  ],
-  "calls-no-match": [
-    {
-      "fill": [
-        "[aria-label=\"Search calls\"]",
-        "zzzz"
-      ]
-    },
-    {
-      "waitFor": "role=button[name=\"Clear filters\" s]"
-    }
-  ],
-  "checkins-many": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Check-ins\"]"
-      },
-      {
-        "click": "#dev-pending-checkins"
-      },
-      {
-        "click": "role=option[name=\"Many check-ins\" s]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
-        "wait": 400
-      },
-      {
-        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
-      },
-      {
-        "hover": "h1"
-      },
-      {
-        "wait": 600
-      }
-    ],
-    "real": [
-      {
-        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
-      },
-      {
-        "hover": "h1"
-      },
-      {
-        "wait": 600
-      }
-    ]
-  },
-  "checkins-many-upcoming": [
-    {
-      "use": "checkins-many"
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 900
-    }
-  ],
-  "checkins-many-requests": [
-    {
-      "use": "checkins-many"
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 900
-    }
-  ],
-  "checkins-many-past": [
-    {
-      "use": "checkins-many"
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 900
-    }
-  ],
-  "checkins-kind-weekly": [
-    {
-      "use": "checkins-many-upcoming"
-    },
-    {
-      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
-    },
-    {
-      "click": "role=option[name=/^Weekly/]"
-    },
-    {
-      "waitFor": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s] >> text=Weekly"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "checkins-kind-open": [
-    {
-      "use": "checkins-many-requests"
-    },
-    {
-      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
-    },
-    {
-      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
-    },
-    {
-      "wait": 400
-    }
-  ],
-  "checkins-waiting-open": [
-    {
-      "use": "checkins-many-requests"
-    },
-    {
-      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Waiting on\" s]"
-    },
-    {
-      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
-    },
-    {
-      "wait": 400
-    }
-  ],
-  "checkins-search-typed": [
-    {
-      "use": "checkins-many-upcoming"
-    },
-    {
-      "fill": [
-        "role=searchbox[name=\"Search check-ins\" s]",
-        "jane"
-      ]
-    },
-    {
-      "waitFor": "text=Showing 1–10 of 11"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "checkins-sort-latest": [
-    {
-      "use": "checkins-many-upcoming"
-    },
-    {
-      "click": "[data-parity=\"checkin-search-sort\"] >> role=button[name=\"Soonest first\" s]"
-    },
-    {
-      "waitFor": "[data-parity=\"checkin-search-sort\"] [aria-pressed=\"true\"]"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "checkins-page-2": [
-    {
-      "use": "checkins-many-upcoming"
-    },
-    {
-      "click": "role=link[name=\"Go to page 2\" s]"
-    },
-    {
-      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "checkins-no-match": [
-    {
-      "use": "checkins-many-upcoming"
-    },
-    {
-      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
-    },
-    {
-      "click": "role=option[name=/^Ad-hoc/]"
-    },
-    {
-      "waitFor": "text=No check-ins match"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "wait": 600
-    }
-  ],
-  "open-exercise-actions-bike": [
-    {
-      "click": "role=button[name=\"Actions for Bike Intervals\" s]"
-    },
-    {
-      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
-    }
-  ],
-  "open-archived-exercise-actions": [
-    {
-      "click": "role=button[name=\"Actions for Smith Machine Squat\" s]"
-    },
-    {
-      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
-    }
-  ],
-  "exercise-status-open": [
-    {
-      "click": "role=combobox[name=\"Status\" s]"
-    },
-    {
-      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
-    }
-  ],
-  "archived-empty": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Exercises\" s]"
-      },
-      {
-        "click": "#dev-exercise-seed"
-      },
-      {
-        "click": "role=option[name=\"Empty\" s]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
-        "waitFor": "text=No archived exercises"
-      }
-    ],
-    "real": []
-  },
-  "open-delete-exercise-confirm": [
-    {
-      "use": "open-exercise-actions-bike"
-    },
-    {
-      "click": "role=menu >> role=menuitem[name=\"Delete\" s]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
-    },
-    {
-      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
-    }
-  ],
-  "exercise-archived-toast": [
-    {
-      "use": "open-exercise-actions-bike"
-    },
-    {
-      "click": "role=menu >> role=menuitem[name=\"Archive\" s]"
-    },
-    {
-      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
-    }
-  ],
-  "nutrition-recipes-tab": [
-    {
-      "click": "[data-parity=\"nutrition-toolbar\"] >> role=tab[name=\"Recipes\" s]"
-    }
-  ],
-  "open-new-recipe": [
-    {
-      "click": "[data-parity-root=\"NutritionHub\"] header >> text=New recipe"
-    }
-  ],
-  "open-recipe-actions": [
-    {
-      "click": "role=button[name=\"Actions for Greek yogurt & oats\" s]"
-    }
-  ],
-  "open-recipe-builder-yogurt-oats": [
-    {
-      "use": "open-recipe-actions"
-    },
-    {
-      "click": "role=menuitem[name=\"Edit\" s]"
-    }
-  ],
-  "open-recipe-builder-chicken-rice-bowl": [
-    {
-      "click": "role=button[name=\"Actions for Chicken rice bowl\" s]"
-    },
-    {
-      "click": "role=menuitem[name=\"Edit\" s]"
-    }
-  ],
-  "recipe-builder-name-missing": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "fill": [
-        "role=textbox[name=\"Recipe name\" s]",
-        "C"
-      ]
-    },
-    {
-      "fill": [
-        "role=textbox[name=\"Recipe name\" s]",
-        ""
-      ]
-    }
-  ],
-  "recipe-builder-name-taken": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "fill": [
-        "role=textbox[name=\"Recipe name\" s]",
-        "Greek yogurt & oats"
-      ]
-    }
-  ],
-  "recipe-builder-name-too-long": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "fill": [
-        "role=textbox[name=\"Recipe name\" s]",
-        "Overnight Greek yogurt with rolled oats, chia seeds, fresh berries and some honey"
-      ]
-    }
-  ],
-  "recipe-builder-grams-out-of-range": [
-    {
-      "use": "open-recipe-builder-yogurt-oats"
-    },
-    {
-      "fill": [
-        "role=spinbutton[name=\"Grams of Greek yogurt\" s]",
-        "0"
-      ]
-    }
-  ],
-  "recipe-builder-minutes-out-of-range": [
-    {
-      "use": "open-recipe-builder-yogurt-oats"
-    },
-    {
-      "fill": [
-        "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
-        "10000"
-      ]
-    }
-  ],
-  "recipe-builder-instructions-too-long": [
-    {
-      "use": "open-recipe-builder-yogurt-oats"
-    },
-    {
-      "fill": [
-        "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      ]
-    }
-  ],
-  "open-recipe-icon-popover": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
-    }
-  ],
-  "open-recipe-icon-popover-pastry": [
-    {
-      "use": "open-recipe-builder-yogurt-oats"
-    },
-    {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Pastry\" s]"
-    }
-  ],
-  "recipe-icon-chosen": [
-    {
-      "use": "open-recipe-icon-popover"
-    },
-    {
-      "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Soup\" s]"
-    }
-  ],
-  "recipe-icon-option-hover": [
-    {
-      "use": "open-recipe-icon-popover"
-    },
-    {
-      "hover": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Soup\" s]"
-    }
-  ],
-  "recipe-icon-option-focus-visible": [
-    {
-      "use": "open-recipe-icon-popover"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "recipe-photo-chosen": [
-    {
-      "use": "open-new-recipe"
-    }
-  ],
-  "recipe-photo-replace-hover": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    },
-    {
-      "hover": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Replace recipe photo\" s]"
-    }
-  ],
-  "recipe-photo-remove-hover": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    },
-    {
-      "hover": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Remove recipe photo\" s]"
-    }
-  ],
-  "recipe-photo-replace-focus-visible": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    },
-    {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Poultry\" s]"
-    },
-    {
-      "press": "Escape"
-    },
-    {
-      "wait": 400
-    },
-    {
-      "press": "Shift+Tab"
-    },
-    {
-      "press": "Shift+Tab"
-    }
-  ],
-  "recipe-photo-remove-focus-visible": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    },
-    {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Poultry\" s]"
-    },
-    {
-      "press": "Escape"
-    },
-    {
-      "wait": 400
-    },
-    {
-      "press": "Shift+Tab"
-    }
-  ],
-  "recipe-photo-browser-refused": [
-    {
-      "use": "open-new-recipe"
-    }
-  ],
-  "recipe-photo-save-held": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    }
-  ],
-  "recipe-photo-upload-failed": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    }
-  ],
-  "recipe-photo-server-refused": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    }
-  ],
-  "recipe-photo-removed": [
-    {
-      "use": "open-recipe-builder-chicken-rice-bowl"
-    },
-    {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Remove recipe photo\" s]"
-    }
-  ],
-  "recipe-photo-failed-to-load": [
-    {
-      "use": "nutrition-recipes-tab"
-    }
-  ],
-  "recipe-builder-library-narrowed": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "fill": [
-        "[data-parity=\"recipe-builder-library\"] >> role=searchbox[name=\"Search foods\" s]",
-        "en"
-      ]
-    }
-  ],
-  "recipe-library-food-hover": [
-    {
-      "use": "recipe-builder-library-narrowed"
-    },
-    {
-      "hover": "[data-parity=\"recipe-builder-library\"] >> text=Chicken breast"
-    }
-  ],
-  "recipe-builder-drawer-open": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "click": "role=button[name=\"Open food library\" s]"
-    },
-    {
-      "fill": [
-        "[data-parity=\"recipe-builder-library\"] >> role=searchbox[name=\"Search foods\" s]",
-        "en"
-      ]
-    }
-  ],
-  "recipe-created-toast": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "fill": [
-        "role=textbox[name=\"Recipe name\" s]",
-        "Quinoa bowl"
-      ]
-    },
-    {
-      "click": "role=button[name=\"Save recipe\" s]"
-    }
-  ],
-  "recipe-updated-toast": [
-    {
-      "use": "open-recipe-builder-yogurt-oats"
-    },
-    {
-      "click": "role=button[name=\"Save recipe\" s]"
-    }
-  ],
-  "seed-food-white-rice": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "White rice"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Carb\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Grain\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "130"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "2.7"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "28"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "0.3"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "150"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lunch\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "seed-food-olive-oil": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Olive oil"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Fat\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Oil / fat\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "884"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "0"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "0"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "100"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "10"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Anti-inflammatory\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "seed-food-greek-yogurt": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Greek yogurt"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Protein\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Dairy\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "59"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "10"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "3.6"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "0.4"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "170"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Breakfast\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Snack\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "seed-food-oats": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-          "Oats"
-        ]
-      },
-      {
-        "click": "role=combobox[name=\"Category\" s]"
-      },
-      {
-        "click": "role=option[name=\"Carb\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Grain\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-          "389"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
-          "17"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
-          "66"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
-          "7"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
-          "50"
-        ]
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Breakfast\" s]"
-      },
-      {
-        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Magnesium\" s]"
-      },
-      {
-        "click": "role=button[name=\"Create food\" s]"
-      }
-    ]
-  },
-  "seed-recipe-chicken-rice-bowl": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "role=textbox[name=\"Recipe name\" s]",
-          "Chicken rice bowl"
-        ]
-      },
-      {
-        "click": "role=button[name=\"Add Chicken breast to recipe\" s]"
-      },
-      {
-        "click": "role=button[name=\"Add White rice to recipe\" s]"
-      },
-      {
-        "click": "role=button[name=\"Add Olive oil to recipe\" s]"
-      },
-      {
-        "click": "role=combobox[name=\"Cooking method for Chicken breast\" s]"
-      },
-      {
-        "click": "role=option[name=\"Grilled\" s]"
-      },
-      {
-        "click": "role=combobox[name=\"Cooking method for White rice\" s]"
-      },
-      {
-        "click": "role=option[name=\"Boiled\" s]"
-      },
-      {
-        "click": "role=combobox[name=\"Cooking method for Olive oil\" s]"
-      },
-      {
-        "click": "role=option[name=\"Pan-fried\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
-          "10"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Cook (min)\" s]",
-          "20"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
-          "Season the chicken and grill 6–7 minutes per side until cooked through. Boil the rice per package instructions. Slice the chicken, plate over rice, and finish with a drizzle of olive oil."
-        ]
-      },
-      {
-        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Lunch\" s]"
-      },
-      {
-        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Dinner\" s]"
-      },
-      {
-        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Iron-rich\" s]"
-      },
-      {
-        "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
-      },
-      {
-        "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Poultry\" s]"
-      },
-      {
-        "click": "role=button[name=\"Save recipe\" s]"
-      }
-    ]
-  },
-  "seed-recipe-greek-yogurt-oats": {
-    "prototype": [],
-    "real": [
-      {
-        "fill": [
-          "role=textbox[name=\"Recipe name\" s]",
-          "Greek yogurt & oats"
-        ]
-      },
-      {
-        "click": "role=button[name=\"Add Greek yogurt to recipe\" s]"
-      },
-      {
-        "click": "role=button[name=\"Add Oats to recipe\" s]"
-      },
-      {
-        "fill": [
-          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
-          "5"
-        ]
-      },
-      {
-        "fill": [
-          "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
-          "Stir the oats into the Greek yogurt and let sit 5 minutes to soften (or overnight in the fridge). Top with fruit or seeds if desired."
-        ]
-      },
-      {
-        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Breakfast\" s]"
-      },
-      {
-        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Magnesium\" s]"
-      },
-      {
-        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Vegetarian\" s]"
-      },
-      {
-        "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
-      },
-      {
-        "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Pastry\" s]"
-      },
-      {
-        "click": "role=button[name=\"Save recipe\" s]"
-      }
-    ]
-  },
-  "recipe-builder-dragging": [
-    {
-      "use": "recipe-builder-library-narrowed"
-    }
-  ],
-  "recipe-save-failed-toast": [
-    {
-      "use": "open-new-recipe"
-    },
-    {
-      "fill": [
-        "role=textbox[name=\"Recipe name\" s]",
-        "Quinoa bowl"
-      ]
-    },
-    {
-      "click": "role=button[name=\"Save recipe\" s]"
-    }
-  ],
-  "food-save-failed-toast": [
-    {
-      "use": "open-new-food"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
-        "Quinoa"
-      ]
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
-        "120"
-      ]
-    },
-    {
-      "click": "[data-parity-root=\"FoodEditorPage\"] >> role=button[name=\"Create food\" s]"
-    }
-  ],
-  "expand-approved-onboarding": [
-    {
-      "click": "[data-parity-root=\"OnboardingPanel\"] [data-slot=\"accordion-trigger\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"answers-section\"]"
-    },
-    {
-      "hover": "[data-parity-root=\"OnboardingPanel\"] h2"
-    }
-  ],
-  "open-preference-hint": [
-    {
-      "hover": "[data-parity=\"preference-channel-hint\"]"
-    },
-    {
-      "waitFor": "role=dialog"
-    }
-  ],
-  "open-email-hint": [
-    {
-      "hover": "[data-parity=\"identity-email-hint\"]"
-    },
-    {
-      "waitFor": "role=dialog"
-    }
-  ],
-  "profile-about-dirty": [
-    {
-      "fill": [
-        "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input",
-        "Anna"
-      ]
-    }
-  ],
-  "profile-about-saved": [
-    {
-      "use": "profile-about-dirty"
-    },
-    {
-      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"section-save\"]"
-    },
-    {
-      "waitFor": "[data-sonner-toast] >> text=Changes saved"
-    }
-  ],
-  "profile-field-problem": [
-    {
-      "fill": [
-        "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input",
-        ""
-      ]
-    },
-    {
-      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"section-save\"]"
-    },
-    {
-      "waitFor": "[data-parity=\"field-firstName-error\"]"
-    }
-  ],
-  "client-avatar-none": {
-    "prototype": [
-      {
-        "click": "[aria-label=\"Open Dev Toggle\"]"
-      },
-      {
-        "click": "role=tab[name=\"Journey\"]"
-      },
-      {
-        "click": "#dev-seeded-avatar"
-      },
-      {
-        "click": "role=option[name=\"None\"]"
-      },
-      {
-        "click": "[aria-label=\"Close Dev Settings\"]"
-      }
-    ],
-    "real": []
-  },
-  "onboarding-trigger-hover": [
-    {
-      "hover": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
-    }
-  ],
-  "onboarding-trigger-focus-visible": [
-    {
-      "click": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
-    },
-    {
-      "click": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
-    },
-    {
-      "hover": "h1"
-    },
-    {
-      "press": "Shift+Tab"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "avatar-upload-hover": [
-    {
-      "hover": "[data-parity=\"avatar-actions\"] label"
-    }
-  ],
-  "avatar-upload-focus-visible": [
-    {
-      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input"
-    },
-    {
-      "press": "Shift+Tab"
-    }
-  ],
-  "avatar-remove-hover": [
-    {
-      "hover": "[data-parity=\"avatar-actions\"] >> role=button[name=\"Remove\" s]"
-    }
-  ],
-  "avatar-remove-focus-visible": [
-    {
-      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input"
-    },
-    {
-      "press": "Shift+Tab"
-    },
-    {
-      "press": "Shift+Tab"
-    }
-  ],
-  "store-usd": [
-    {
-      "click": "[data-parity-root=\"Store\"] >> role=radio[name=\"USD\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"Store\"] [role=\"radio\"][aria-checked=\"true\"]:has-text(\"USD\")"
-    }
-  ],
-  "product-paid": [
-    {
-      "click": "section:has(> h2:text-is(\"Plans\")) h3 >> nth=0"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ProductDetails\"] [data-parity=\"product-price\"]"
-    }
-  ],
-  "product-paid-usd": [
-    {
-      "use": "store-usd"
-    },
-    {
-      "use": "product-paid"
-    }
-  ],
-  "product-free": [
-    {
-      "click": "section:has(> h2:text-is(\"Free resources\")) h3 >> nth=0"
-    },
-    {
-      "waitFor": "[data-parity-root=\"ProductDetails\"] h1"
-    }
-  ],
-  "cart-mixed": [
-    {
-      "click": "role=button[name=/^Add .+ to cart$/] >> nth=0"
-    },
-    {
-      "press": "Escape"
-    },
-    {
-      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-total\"]"
-    }
-  ],
-  "store-filter-no-match": [
-    {
-      "click": "[aria-label=\"Filter by Type\"] >> role=radio[name=\"E-Books\"]"
-    },
-    {
-      "click": "[aria-label=\"Filter by Goal\"] >> role=radio[name=\"Fat Loss\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"Store\"] p:text-is(\"No products found matching your filters.\")"
-    }
-  ],
-  "cart-empty": [
-    {
-      "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
-    },
-    {
-      "click": "role=button[name=/^Remove .+ from cart$/]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] p:text-is(\"Your cart is empty\")"
-    }
-  ],
-  "cart-paid-details-empty": [
-    {
-      "use": "cart-mixed"
-    },
-    {
-      "click": "role=button[name=\"Continue\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"order-summary-block\"]"
-    }
-  ],
-  "cart-paid-details-filled": [
-    {
-      "use": "cart-paid-details-empty"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-        "visitor@example.com"
-      ]
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"delivery-consent-checkbox\"]"
-    }
-  ],
-  "cart-paid-hint": [
-    {
-      "use": "cart-paid-details-empty"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-        "visitor@example.com"
-      ]
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
-    },
-    {
-      "hover": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-    },
-    {
-      "waitFor": "[data-parity=\"disabled-action-hint\"]"
-    }
-  ],
-  "cart-paid-hint-focus": [
-    {
-      "use": "cart-paid-details-empty"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-        "visitor@example.com"
-      ]
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] [data-parity=\"terms-checkbox\"]"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    },
-    {
-      "press": "Tab"
-    }
-  ],
-  "cart-checkout-unavailable": [
-    {
-      "use": "cart-paid-details-filled"
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] [role=\"alert\"]"
-    }
-  ],
-  "cart-unavailable-products": [
-    {
-      "use": "cart-paid-details-filled"
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"cart-summary\"]"
-    }
-  ],
-  "cart-subaddress-refused": [
-    {
-      "use": "cart-paid-details-filled"
-    },
-    {
-      "fill": [
-        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-        "visitor+store@example.com"
-      ]
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] input[type=\"email\"][aria-invalid=\"true\"]"
-    }
-  ],
-  "cart-payment-not-completed": [
-    {
-      "use": "cart-paid-details-filled"
-    },
-    {
-      "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-    },
-    {
-      "click": "a[href*=\"payment=cancelled\"]"
-    },
-    {
-      "waitFor": "[data-parity-root=\"CartDrawer\"] [data-parity=\"payment-not-completed-notice\"]"
-    }
-  ],
-  "order-confirmed": {
-    "prototype": [
-      {
-        "use": "cart-paid-details-filled"
-      },
-      {
-        "click": "[data-parity-root=\"CartDrawer\"] >> role=button[name=\"Continue to payment\"]"
-      },
-      {
-        "click": "role=button[name=/^Pay /]"
-      },
-      {
-        "waitFor": "[data-parity-root=\"StoreOrderComplete\"] [data-parity=\"order-email\"]"
-      }
-    ],
-    "real": []
-  },
-  "order-resend-sent": {
-    "prototype": [
-      {
-        "use": "order-confirmed"
-      },
-      {
-        "click": "role=button[name=\"Send my order email again\"]"
-      },
-      {
-        "waitFor": "[data-parity=\"resend-feedback\"] p"
-      }
-    ],
-    "real": [
-      {
-        "click": "role=button[name=\"Send my order email again\"]"
-      },
-      {
-        "waitFor": "[data-parity=\"resend-feedback\"] p"
-      }
-    ]
-  },
-  "order-resend-processing": {
-    "prototype": [
-      {
-        "use": "order-confirmed"
-      },
-      {
-        "click": "role=button[name=\"Send my order email again\"]"
-      },
-      {
-        "waitFor": "[data-parity=\"resend-feedback\"] p"
-      }
-    ],
-    "real": [
-      {
-        "click": "role=button[name=\"Send my order email again\"]"
-      },
-      {
-        "waitFor": "[data-parity=\"resend-feedback\"] p"
-      }
-    ]
-  },
-  "order-resend-try-later": {
-    "prototype": [
-      {
-        "use": "order-confirmed"
-      },
-      {
-        "click": "role=button[name=\"Send my order email again\"]"
-      },
-      {
-        "waitFor": "[data-parity=\"resend-feedback\"] p"
-      }
-    ],
-    "real": [
-      {
-        "click": "role=button[name=\"Send my order email again\"]"
-      },
-      {
-        "waitFor": "[data-parity=\"resend-feedback\"] p"
-      }
-    ]
-  },
-  "download-ready": {
-    "prototype": [],
-    "real": [
-      {
-        "waitFor": "[data-parity-root=\"DownloadPage\"] [data-parity=\"download-resources\"]"
-      }
-    ]
-  },
-  "program-card-waiting": {
-    "prototype": [],
-    "real": []
-  },
-  "program-card-ready-to-build": {
-    "prototype": [],
-    "real": []
-  },
-  "program-card-coaching-ended": {
-    "prototype": [],
-    "real": []
-  },
-  "program-card-built": {
-    "prototype": [
-      {
-        "click": "role=link[name=\"Build program\"]"
-      },
-      {
-        "click": "role=button[name=\"Create program\"]"
-      },
-      {
-        "click": "role=link[name=\"Back to Jane Doe\"]"
-      },
-      {
-        "waitFor": "role=list[name=\"Blocks\"]"
-      }
-    ],
-    "real": []
-  },
-  "program-card-draft": {
-    "prototype": [
-      {
-        "use": "program-card-built"
-      }
-    ],
-    "real": []
-  },
-  "program-card-draft-coaching-ended": {
-    "prototype": [
-      {
-        "use": "program-card-built"
-      },
-      {
-        "use": "client-ended"
-      }
-    ],
-    "real": []
-  },
-  "program-setup-default": {
-    "prototype": [],
-    "real": []
-  },
-  "program-setup-equipment-problem": [
-    {
-      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Full gym\"]"
-    },
-    {
-      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Dumbbells\"]"
-    },
-    {
-      "click": "role=button[name=\"Create program\"]"
-    },
-    {
-      "waitFor": "[data-parity=\"field-equipment-error\"]"
-    }
-  ],
-  "program-setup-failed-save": [
-    {
-      "click": "role=radio[name=\"4 days\"]"
-    },
-    {
-      "click": "role=button[name=\"Create program\"]"
-    },
-    {
-      "waitFor": "role=alert >> text=The program wasn’t created"
-    }
-  ],
-  "program-setup-not-ready": {
-    "prototype": [],
-    "real": []
-  },
-  "program-setup-leave-confirm": [
-    {
-      "click": "role=radio[name=\"4 days\"]"
-    },
-    {
-      "click": "role=link[name=\"Cancel\"]"
-    },
-    {
-      "waitFor": "role=dialog[name=\"Unsaved changes\"]"
-    }
-  ],
-  "program-setup-profile-confirm": [
-    {
-      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Kettlebells\"]"
-    },
-    {
-      "click": "role=group[name=/^Equipment/] >> role=checkbox[name=\"Full gym\"]"
-    },
-    {
-      "click": "role=button[name=\"Create program\"]"
-    },
-    {
-      "waitFor": "role=dialog[name=\"This updates Jane’s profile\"]"
-    }
-  ]
+  }
 }
