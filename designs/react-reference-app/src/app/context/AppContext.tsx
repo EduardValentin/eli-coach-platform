@@ -55,7 +55,7 @@ import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
 import { PROGRAM_LOAD_OUTCOMES, type ProgramLoadOutcome } from '../services/programLoadService';
-import { PROGRAM_WRITE_OUTCOMES, type ProgramWriteOutcome } from '../services/programWriteService';
+import { DRAFT_SAVE_OUTCOMES, PROGRAM_WRITE_OUTCOMES, type DraftSaveOutcome, type ProgramWriteOutcome } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES, type RecipePhotoUpload } from '../services/recipePhotoService';
 import {
   EXERCISE_VIDEO_UPLOAD_OUTCOMES,
@@ -183,6 +183,7 @@ type AppState = {
   exerciseSeed: ExerciseSeed;
   programSeed: ProgramSeed;
   programWrite: ProgramWriteOutcome;
+  draftSave: DraftSaveOutcome;
   programLoad: ProgramLoadOutcome;
   exerciseVideoUpload: ExerciseVideoUpload;
   foodSeed: FoodSeed;
@@ -252,6 +253,7 @@ const defaultState: AppState = {
   exerciseSeed: 'seeded',
   programSeed: 'none',
   programWrite: 'works',
+  draftSave: 'works',
   programLoad: 'ready',
   exerciseVideoUpload: 'works',
   foodSeed: 'seeded',
@@ -595,6 +597,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('pwrite'),
     defaultState.programWrite,
   );
+  state.draftSave = optionOrDefault(
+    DRAFT_SAVE_OUTCOMES,
+    params.get('pdraft'),
+    defaultState.draftSave,
+  );
   state.programLoad = optionOrDefault(
     PROGRAM_LOAD_OUTCOMES,
     params.get('pload'),
@@ -731,6 +738,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('exseed');
     url.searchParams.delete('pseed');
     url.searchParams.delete('pwrite');
+    url.searchParams.delete('pdraft');
     url.searchParams.delete('pload');
     url.searchParams.delete('exupload');
     url.searchParams.delete('nutseed');
@@ -889,6 +897,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.programWrite !== defaultState.programWrite) {
       url.searchParams.set('pwrite', appState.programWrite);
+    }
+    if (appState.draftSave !== defaultState.draftSave) {
+      url.searchParams.set('pdraft', appState.draftSave);
     }
     if (appState.programLoad !== defaultState.programLoad) {
       url.searchParams.set('pload', appState.programLoad);

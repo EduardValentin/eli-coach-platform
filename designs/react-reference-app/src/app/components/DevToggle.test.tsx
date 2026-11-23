@@ -312,3 +312,56 @@ describe('DevToggle resource opening', () => {
     expect(screen.getByRole('combobox', { name: 'Resource opening' })).toHaveTextContent('Fails');
   });
 });
+
+describe('DevToggle draft saves', () => {
+  it('lets a draft save work, fail until switched back, or be refused because the draft changed elsewhere', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Draft saves' }));
+
+    // assert
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Works',
+      'Fails (retries until switched back)',
+      'Changed elsewhere (save refused)',
+    ]);
+  });
+
+  it('keeps the chosen outcome in the address so the state can be shared', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+    await user.click(screen.getByRole('combobox', { name: 'Draft saves' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'Changed elsewhere (save refused)' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Draft saves' })).toHaveTextContent(
+      'Changed elsewhere (save refused)',
+    );
+    expect(new URLSearchParams(window.location.search).get('pdraft')).toBe('stale');
+  });
+
+  it('reads the outcome from a shared address', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle('?pdraft=fails');
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Draft saves' })).toHaveTextContent(
+      'Fails (retries until switched back)',
+    );
+  });
+});
