@@ -26,10 +26,10 @@ type PlanOverviewProps = {
   weekDates: BuilderWeekDates;
 };
 
-const LEVEL_LABELS: Record<LevelHint, string> = {
-  beginner: 'beginner',
-  intermediate: 'intermediate',
-  advanced: 'advanced',
+const CLIENT_OF_LEVEL: Record<LevelHint, string> = {
+  beginner: 'a beginner client',
+  intermediate: 'an intermediate client',
+  advanced: 'an advanced client',
 };
 
 function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => void }) {
@@ -39,7 +39,7 @@ function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => voi
     .join(' → ');
   return (
     <div data-parity="suggestion-banner" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-base p-4">
-      <p className="text-sm text-text-primary">{`Suggested for a ${LEVEL_LABELS[level]} client: ${plan}`}</p>
+      <p className="text-sm text-text-primary">{`Suggested for ${CLIENT_OF_LEVEL[level]}: ${plan}`}</p>
       <Button
         size="sm"
         onClick={() => {

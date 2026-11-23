@@ -42,14 +42,20 @@ function focusedControl(): HTMLElement | null {
     : null;
 }
 
+function applyWithoutAsking({ apply, focusAfterApply }: ConfirmRequest) {
+  apply();
+  if (!focusAfterApply) return;
+  requestAnimationFrame(() => focusAfterApply()?.focus());
+}
+
 export function useDestructiveConfirm() {
   const [pending, setPending] = useState<ConfirmRequest | null>(null);
   const lastPending = useRef<ConfirmRequest | null>(null);
-  const focusTarget = useRef<() => HTMLElement | null>(() => null);
+  const resolveFocusOnClose = useRef<() => HTMLElement | null>(() => null);
   const returnFocus = useMemo<RefObject<HTMLElement | null>>(
     () => ({
       get current() {
-        return focusTarget.current();
+        return resolveFocusOnClose.current();
       },
     }),
     [],
@@ -59,20 +65,17 @@ export function useDestructiveConfirm() {
 
   function request(next: ConfirmRequest) {
     if (next.lines.length === 0) {
-      next.apply();
-      const { focusAfterApply } = next;
-      if (focusAfterApply) {
-        requestAnimationFrame(() => focusAfterApply()?.focus());
-      }
+      applyWithoutAsking(next);
       return;
     }
     const control = next.returnFocus ?? focusedControl();
-    focusTarget.current = () => control;
+    resolveFocusOnClose.current = () => control;
     setPending(next);
   }
 
   function confirm() {
-    if (pending?.focusAfterApply) focusTarget.current = pending.focusAfterApply;
+    if (pending?.focusAfterApply)
+      resolveFocusOnClose.current = pending.focusAfterApply;
     pending?.apply();
     setPending(null);
   }

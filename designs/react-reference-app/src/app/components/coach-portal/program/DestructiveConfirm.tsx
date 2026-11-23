@@ -39,15 +39,21 @@ function focusedControl(): HTMLElement | null {
   return focused instanceof HTMLElement && focused !== document.body ? focused : null;
 }
 
+function applyWithoutAsking({ apply, focusAfterApply }: ConfirmRequest) {
+  apply();
+  if (!focusAfterApply) return;
+  requestAnimationFrame(() => focusAfterApply()?.focus());
+}
+
 /** Applies a change at once when it deletes nothing; otherwise asks first, in an alert dialog that lists what is lost. */
 export function useDestructiveConfirm() {
   const [pending, setPending] = useState<ConfirmRequest | null>(null);
   const lastPending = useRef<ConfirmRequest | null>(null);
-  const focusTarget = useRef<() => HTMLElement | null>(() => null);
+  const resolveFocusOnClose = useRef<() => HTMLElement | null>(() => null);
   const returnFocus = useMemo<RefObject<HTMLElement | null>>(
     () => ({
       get current() {
-        return focusTarget.current();
+        return resolveFocusOnClose.current();
       },
     }),
     [],
@@ -57,13 +63,11 @@ export function useDestructiveConfirm() {
 
   function request(next: ConfirmRequest) {
     if (next.lines.length === 0) {
-      next.apply();
-      const { focusAfterApply } = next;
-      if (focusAfterApply) requestAnimationFrame(() => focusAfterApply()?.focus());
+      applyWithoutAsking(next);
       return;
     }
     const control = next.returnFocus ?? focusedControl();
-    focusTarget.current = () => control;
+    resolveFocusOnClose.current = () => control;
     setPending(next);
   }
 
@@ -94,7 +98,7 @@ export function useDestructiveConfirm() {
             data-parity="confirm"
             variant="destructive"
             onClick={() => {
-              if (pending?.focusAfterApply) focusTarget.current = pending.focusAfterApply;
+              if (pending?.focusAfterApply) resolveFocusOnClose.current = pending.focusAfterApply;
               pending?.apply();
             }}
           >

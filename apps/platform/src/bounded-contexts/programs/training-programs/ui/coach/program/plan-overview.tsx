@@ -25,6 +25,12 @@ type PlanOverviewProps = {
   settings: ReactNode;
 };
 
+const CLIENT_OF_LEVEL: Record<ClientLevel, string> = {
+  beginner: "a beginner client",
+  intermediate: "an intermediate client",
+  advanced: "an advanced client",
+};
+
 function SuggestionBanner({
   level,
   onUse,
@@ -44,7 +50,7 @@ function SuggestionBanner({
       className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border-default bg-surface-base p-4"
       data-parity="suggestion-banner"
     >
-      <p className="text-sm text-text-primary">{`Suggested for a ${level} client: ${plan}`}</p>
+      <p className="text-sm text-text-primary">{`Suggested for ${CLIENT_OF_LEVEL[level]}: ${plan}`}</p>
       <Button
         onClick={() => {
           onUse();

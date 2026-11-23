@@ -624,12 +624,12 @@ describe("the plan overview", () => {
       {
         level: "intermediate" as const,
         suggestion:
-          "Suggested for a intermediate client: Hypertrophy 6 weeks → Deload 1 week → Hypertrophy 6 weeks",
+          "Suggested for an intermediate client: Hypertrophy 6 weeks → Deload 1 week → Hypertrophy 6 weeks",
       },
       {
         level: "advanced" as const,
         suggestion:
-          "Suggested for a advanced client: Hypertrophy 5 weeks → Deload 1 week → Strength 4 weeks → Deload 1 week",
+          "Suggested for an advanced client: Hypertrophy 5 weeks → Deload 1 week → Strength 4 weeks → Deload 1 week",
       },
     ])("suggests the blocks for a $level client", ({ level, suggestion }) => {
       // arrange, act
