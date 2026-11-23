@@ -1,3 +1,4 @@
+import { BlockWeeks } from "./block-weeks";
 import type { CardioExercise } from "./cardio-exercises-port";
 import { CardioPresets } from "./cardio-presets";
 import {
@@ -9,14 +10,9 @@ import {
   type WeeklyCalendar,
 } from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
-import { fillTemplate, templateText } from "./program-templates";
+import { templateText } from "./program-templates";
 import { SplitTemplate } from "./split-template";
-import type {
-  BlockType,
-  ClientLevel,
-  ProgramLanguage,
-  SplitShape,
-} from "./vocabulary";
+import type { BlockType, ClientLevel, ProgramLanguage } from "./vocabulary";
 
 type SuggestedBlock = {
   type: BlockType;
@@ -45,6 +41,18 @@ const SUGGESTED_BLOCKS: Record<ClientLevel, readonly SuggestedBlock[]> = {
 
 type BlockTexts = Pick<Block, "introText" | "missedDayNote">;
 
+export type BlockSetup = Pick<
+  ProgramSetupValues,
+  "splitShape" | "trainingDays" | "sessionMinutes" | "dailySteps" | "language"
+>;
+
+type NewBlockContext = { setup: BlockSetup; previous?: Block };
+
+export type ProposedBlock = { type: BlockType; weeks: number };
+
+const PROPOSED_WEEKS = 4;
+const DELOAD_AFTER_WEEKS = 4;
+
 type CopiedIds = {
   sessionIds: ReadonlyMap<string, string>;
   cardioIds: ReadonlyMap<string, string>;
@@ -62,10 +70,29 @@ export class ProgramSuggestions {
     this.cardioPresets = new CardioPresets(options);
   }
 
+  static proposedBlockAfter(
+    lastBlock: Pick<Block, "type" | "weeks"> | undefined,
+  ): ProposedBlock {
+    const loading =
+      lastBlock?.type === "strength" || lastBlock?.type === "hypertrophy";
+    const type =
+      loading && lastBlock.weeks >= DELOAD_AFTER_WEEKS
+        ? "deload"
+        : "hypertrophy";
+
+    return { type, weeks: BlockWeeks.forType(type, PROPOSED_WEEKS) };
+  }
+
   initialContent(setup: ProgramSetupValues): ProgramContent {
     const blocks: Block[] = [];
-    for (const suggestion of SUGGESTED_BLOCKS[setup.level]) {
-      blocks.push(this.newBlock(suggestion, setup, blocks.at(-1)));
+    for (const { type, weeks, calibrationWeek } of SUGGESTED_BLOCKS[
+      setup.level
+    ]) {
+      const block = this.newBlock(type, weeks, {
+        setup,
+        previous: blocks.at(-1),
+      });
+      blocks.push({ ...block, calibrationWeek });
     }
 
     return {
@@ -76,21 +103,19 @@ export class ProgramSuggestions {
     };
   }
 
-  private newBlock(
-    suggestion: SuggestedBlock,
-    setup: ProgramSetupValues,
-    previous: Block | undefined,
+  newBlock(
+    type: BlockType,
+    weeks: number,
+    { setup, previous }: NewBlockContext,
   ): Block {
-    const { type, weeks, calibrationWeek } = suggestion;
-
     if (type === "deload" && previous) {
-      return this.deloadAfter(previous, suggestion, setup);
+      return this.deloadAfter(previous, weeks, setup);
     }
     const { newId } = this.options;
     const shape = setup.splitShape;
     const sessions = previous
       ? this.copiedSessions(previous.sessions)
-      : this.emptySessionsFor(shape, setup.trainingDays);
+      : SplitTemplate.of(shape).emptySessions(setup.trainingDays, newId);
     const cardioSessions = this.cardioPresets.defaultsFor(type);
 
     return {
@@ -99,7 +124,7 @@ export class ProgramSuggestions {
       type,
       weeks,
       trainingDays: previous?.trainingDays ?? setup.trainingDays,
-      calibrationWeek,
+      calibrationWeek: false,
       ...this.blockTexts(type, setup.language),
       clientNote: "",
       split: previous
@@ -107,9 +132,10 @@ export class ProgramSuggestions {
         : {
             shape,
             name: "",
-            text: fillTemplate(templateText(`split.${shape}`, setup.language), {
-              days: setup.trainingDays,
-            }),
+            text: SplitTemplate.of(shape).text(
+              setup.trainingDays,
+              setup.language,
+            ),
           },
       targetMinutes: setup.sessionMinutes,
       calendar: SplitTemplate.of(previous?.split.shape ?? shape).weeklyCalendar(
@@ -124,8 +150,8 @@ export class ProgramSuggestions {
 
   private deloadAfter(
     previous: Block,
-    { weeks, calibrationWeek }: SuggestedBlock,
-    setup: ProgramSetupValues,
+    weeks: number,
+    setup: BlockSetup,
   ): Block {
     return {
       ...this.blockWithFreshIds(previous),
@@ -133,7 +159,7 @@ export class ProgramSuggestions {
       ...this.blockTexts("deload", setup.language),
       originId: this.options.newId(),
       weeks,
-      calibrationWeek,
+      calibrationWeek: false,
       clientNote: "",
       targetMinutes: setup.sessionMinutes,
       dailySteps: setup.dailySteps,
@@ -145,23 +171,6 @@ export class ProgramSuggestions {
       introText: templateText(`block.${type}`, language),
       missedDayNote: templateText("missedDay", language),
     };
-  }
-
-  private emptySessionsFor(shape: SplitShape, days: number): Session[] {
-    return SplitTemplate.of(shape)
-      .sessionNames(days)
-      .map((name) => {
-        const id = this.options.newId();
-
-        return {
-          id,
-          originId: id,
-          name,
-          warmUp: { items: [] },
-          coolDown: { enabled: false, items: [] },
-          rows: [],
-        };
-      });
   }
 
   private blockWithFreshIds(block: Block): Block {

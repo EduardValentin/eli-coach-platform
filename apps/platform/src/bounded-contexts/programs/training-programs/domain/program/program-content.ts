@@ -6,7 +6,7 @@ import {
   type Weekday,
 } from "./vocabulary";
 
-type Range = { min: number; max: number };
+export type Range = { min: number; max: number };
 
 type WarmUpItem = {
   id: string;

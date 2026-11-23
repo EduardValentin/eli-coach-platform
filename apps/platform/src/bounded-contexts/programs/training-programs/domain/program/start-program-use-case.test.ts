@@ -64,7 +64,10 @@ const SETUP: ProgramSetupValues = {
 
 const BIKE: CardioExercise = { id: "bike", name: "Stationary bike" };
 
-class InMemoryProgramStoreAdapter implements ProgramStorePort {
+class InMemoryProgramStoreAdapter implements Pick<
+  ProgramStorePort,
+  "findByClientId" | "add"
+> {
   readonly added: Program[] = [];
 
   constructor(private readonly programs: Program[] = []) {}

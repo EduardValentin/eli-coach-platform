@@ -33,7 +33,7 @@ type ProgramStart = {
 };
 
 type StartProgramUseCaseOptions = {
-  programStorePort: ProgramStorePort;
+  programStorePort: Pick<ProgramStorePort, "findByClientId" | "add">;
   clientIdentityPort: ClientIdentityPort;
   coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: ClientCoachingPort;

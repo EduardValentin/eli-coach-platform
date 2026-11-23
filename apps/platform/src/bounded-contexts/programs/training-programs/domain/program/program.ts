@@ -7,6 +7,7 @@ import type { ProgramContent } from "./program-content";
 import type { ProgramSetup } from "./program-setup";
 import {
   ProgramVersion,
+  type DraftReading,
   type DraftSummary,
   type ProgramVersionSnapshot,
 } from "./program-version";
@@ -48,6 +49,17 @@ export type ProgramEligibility =
       status: "eligible";
       coachingFacts: ClientCoachingFacts;
     } & EligibilitySources);
+
+type DraftSave = {
+  content: ProgramContent;
+  level: ClientLevel;
+  language: ProgramLanguage;
+  at: Date;
+};
+
+type DraftSaving =
+  | { status: "saved"; program: Program }
+  | { status: "not-a-draft" | "not-well-formed" };
 
 export class Program {
   private constructor(
@@ -104,8 +116,43 @@ export class Program {
     return this.fields.clientId;
   }
 
+  get level(): ClientLevel {
+    return this.fields.level;
+  }
+
+  get language(): ProgramLanguage {
+    return this.fields.language;
+  }
+
   draftSummary(): DraftSummary | null {
-    return this.versions.find((version) => version.isDraft)?.summary() ?? null;
+    return this.draftVersion()?.summary() ?? null;
+  }
+
+  draft(): DraftReading | null {
+    return this.draftVersion()?.draftReading() ?? null;
+  }
+
+  saveDraft({ content, level, language, at }: DraftSave): DraftSaving {
+    const draft = this.draftVersion();
+    const settingsChanged =
+      level !== this.fields.level || language !== this.fields.language;
+
+    if (!draft || (settingsChanged && !draft.isFirst)) {
+      return { status: "not-a-draft" };
+    }
+    if (!ProgramVersion.isWellFormed(content)) {
+      return { status: "not-well-formed" };
+    }
+
+    return {
+      status: "saved",
+      program: new Program(
+        { ...this.fields, level, language, updatedAt: at },
+        this.versions.map((version) =>
+          version === draft ? draft.withContent(content, at) : version,
+        ),
+      ),
+    };
   }
 
   toSnapshot(): ProgramSnapshot {
@@ -113,5 +160,9 @@ export class Program {
       ...this.fields,
       versions: this.versions.map((version) => version.toSnapshot()),
     };
+  }
+
+  private draftVersion(): ProgramVersion | undefined {
+    return this.versions.find((version) => version.isDraft);
   }
 }
