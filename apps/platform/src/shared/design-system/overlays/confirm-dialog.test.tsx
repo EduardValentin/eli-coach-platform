@@ -277,3 +277,60 @@ describe("ConfirmDialog", () => {
     expect(confirm).not.toHaveClass("bg-primary");
   });
 });
+
+describe("ConfirmDialog details", () => {
+  it("lists the details in the dialog's description after the consequence", () => {
+    // arrange, act
+    render(
+      <ConfirmDialog
+        confirmLabel="Remove block"
+        description="The block leaves the plan and these sessions are deleted:"
+        details={
+          <ul>
+            <li>Monday: Lower body</li>
+            <li>Thursday: Upper body</li>
+          </ul>
+        }
+        onConfirm={() => {}}
+        onOpenChange={() => {}}
+        open
+        title="Remove block 2?"
+        tone="destructive"
+      />,
+    );
+
+    // assert
+    const dialog = screen.getByRole("dialog", { name: "Remove block 2?" });
+    expect(dialog).toHaveAccessibleDescription(
+      "The block leaves the plan and these sessions are deleted: Monday: Lower body Thursday: Upper body",
+    );
+    expect(
+      within(dialog)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Monday: Lower body", "Thursday: Upper body"]);
+  });
+
+  it("asks with its details alone when there is no consequence to state", () => {
+    // arrange, act
+    render(
+      <ConfirmDialog
+        confirmLabel="Move day"
+        details={
+          <ul>
+            <li>Wednesday: Rest</li>
+          </ul>
+        }
+        onConfirm={() => {}}
+        onOpenChange={() => {}}
+        open
+        title="Move this day?"
+      />,
+    );
+
+    // assert
+    const dialog = screen.getByRole("dialog", { name: "Move this day?" });
+    expect(dialog).toHaveAccessibleDescription("Wednesday: Rest");
+    expect(dialog.querySelector("p")).toBeNull();
+  });
+});

@@ -2,10 +2,16 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Dialog, DialogContent } from "./dialog";
 
@@ -273,5 +279,118 @@ describe("DialogContent", () => {
     expect(
       screen.getByRole("dialog", { name: "Photos from 29 September" }),
     ).toHaveFocus();
+  });
+});
+
+function UploadInProgress(props: {
+  details?: React.ReactNode;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog onOpenChange={props.onOpenChange} open>
+      <DialogContent
+        description="Keep this window open until the upload finishes."
+        details={props.details}
+        dismissal="locked"
+        footer={<button type="button">Wait</button>}
+        role="alertdialog"
+        title="Uploading your photo"
+      />
+    </Dialog>
+  );
+}
+
+describe("DialogContent with locked dismissal", () => {
+  it("offers no close control", () => {
+    // arrange, act
+    render(<UploadInProgress onOpenChange={vi.fn()} />);
+
+    // assert
+    expect(
+      screen.queryByRole("button", { name: "Close" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("stays open on Escape", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(<UploadInProgress onOpenChange={onOpenChange} />);
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("stays open on a press outside", () => {
+    // arrange
+    const onOpenChange = vi.fn();
+    render(<UploadInProgress onOpenChange={onOpenChange} />);
+
+    // act
+    fireEvent.pointerDown(document.body);
+
+    // assert
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("takes the alert dialog role from its caller", () => {
+    // arrange, act
+    render(<UploadInProgress onOpenChange={vi.fn()} />);
+
+    // assert
+    expect(
+      screen.getByRole("alertdialog", { name: "Uploading your photo" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("DialogContent details", () => {
+  it("sets the details after the description inside the dialog's description", () => {
+    // arrange, act
+    render(
+      <UploadInProgress
+        details={
+          <ul>
+            <li>Front photo</li>
+            <li>Side photo</li>
+          </ul>
+        }
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    // assert
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toHaveAccessibleDescription(
+      "Keep this window open until the upload finishes. Front photo Side photo",
+    );
+    expect(within(dialog).getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("lays the description and its details out in one grid", () => {
+    // arrange, act
+    render(<UploadInProgress details={<ul />} onOpenChange={vi.fn()} />);
+
+    // assert
+    const description = screen
+      .getByText("Keep this window open until the upload finishes.")
+      .closest("div");
+    expect(description).toHaveClass("grid", "gap-2", "leading-relaxed");
+  });
+
+  it("keeps a plain paragraph for a description without details", () => {
+    // arrange, act
+    render(<UploadInProgress onOpenChange={vi.fn()} />);
+
+    // assert
+    expect(
+      screen.getByText("Keep this window open until the upload finishes.")
+        .tagName,
+    ).toBe("P");
   });
 });

@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarClock, CalendarX } from "lucide-react";
+import { CalendarClock, CalendarX, Copy } from "lucide-react";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { configureAxe } from "vitest-axe";
@@ -286,5 +286,110 @@ describe("a row menu action that is not allowed right now", () => {
     expect(triggerRef.current).toBe(
       screen.getByRole("button", { name: "More actions" }),
     );
+  });
+});
+
+describe("a row menu with a submenu", () => {
+  function renderMenuWithSubmenu() {
+    const onCopyToTuesday = vi.fn();
+    const onCopyToWednesday = vi.fn();
+    render(
+      <main>
+        <RowActionsMenu
+          actions={[
+            {
+              actions: [
+                {
+                  icon: CalendarClock,
+                  label: "Tuesday",
+                  name: "copy-tuesday",
+                  onSelect: onCopyToTuesday,
+                },
+                {
+                  icon: CalendarClock,
+                  label: "Wednesday",
+                  name: "copy-wednesday",
+                  onSelect: onCopyToWednesday,
+                },
+              ],
+              icon: Copy,
+              label: "Copy day to",
+              name: "copy-to",
+            },
+            {
+              icon: CalendarX,
+              label: "Cancel",
+              name: "cancel",
+              onSelect: vi.fn(),
+            },
+          ]}
+          label="More actions"
+        />
+      </main>,
+    );
+
+    return {
+      onCopyToTuesday,
+      onCopyToWednesday,
+      trigger: screen.getByRole("button", { name: "More actions" }),
+      user: userEvent.setup(),
+    };
+  }
+
+  async function openSubmenuByKeyboard(
+    user: ReturnType<typeof userEvent.setup>,
+    trigger: HTMLElement,
+  ) {
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menu");
+    await user.keyboard("{ArrowDown}{ArrowUp}{ArrowRight}");
+  }
+
+  it("lists the submenu among the menu's items as one that opens another menu", async () => {
+    // arrange
+    const { trigger, user } = renderMenuWithSubmenu();
+
+    // act
+    await openMenu(user, trigger);
+
+    // assert
+    const submenu = screen.getByRole("menuitem", { name: "Copy day to" });
+    expect(submenu).toHaveAttribute("aria-haspopup", "menu");
+    expect(submenu).toHaveAttribute("data-parity", "row-action-copy-to");
+    expect(screen.queryByRole("menuitem", { name: "Tuesday" })).toBeNull();
+  });
+
+  it("opens its items beside the menu on ArrowRight", async () => {
+    // arrange
+    const { trigger, user } = renderMenuWithSubmenu();
+
+    // act
+    await openSubmenuByKeyboard(user, trigger);
+
+    // assert
+    expect(
+      await screen.findByRole("menuitem", { name: "Tuesday" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Wednesday" })).toHaveAttribute(
+      "data-parity",
+      "row-action-copy-wednesday",
+    );
+  });
+
+  it("runs the chosen submenu item once and hands focus back to the trigger", async () => {
+    // arrange
+    const { onCopyToTuesday, onCopyToWednesday, trigger, user } =
+      renderMenuWithSubmenu();
+    await openSubmenuByKeyboard(user, trigger);
+    await screen.findByRole("menuitem", { name: "Tuesday" });
+
+    // act
+    await user.keyboard("{Enter}");
+
+    // assert
+    await waitFor(() => expect(onCopyToTuesday).toHaveBeenCalledOnce());
+    expect(onCopyToWednesday).not.toHaveBeenCalled();
+    expect(trigger).toHaveFocus();
   });
 });
