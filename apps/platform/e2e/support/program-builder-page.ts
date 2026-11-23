@@ -19,8 +19,9 @@ export class ProgramBuilderPage {
 
   private get blockRows(): Locator {
     return this.page
+      .getByRole("main")
       .getByRole("list", { name: "Blocks", exact: true })
-      .getByRole("listitem");
+      .locator(":scope > li");
   }
 
   private get week(): Locator {
