@@ -530,11 +530,13 @@ export class ProgramBuilderPage {
     await this.page.keyboard.press("ArrowRight");
     const item = this.menuItem(session);
     await expect(item).toBeVisible();
-    while (
-      !(await item.evaluate((element) => element === document.activeElement))
-    ) {
+    const sessions = await this.page.getByRole("menuitem").count();
+    for (let press = 0; press < sessions; press += 1) {
+      if (await item.evaluate((element) => element === document.activeElement))
+        break;
       await this.page.keyboard.press("ArrowDown");
     }
+    await expect(item).toBeFocused();
     await this.page.keyboard.press("Enter");
     await expect(this.page.getByRole("menu")).toHaveCount(0);
     await expect(this.dayMenu(weekday)).toBeFocused();
@@ -605,10 +607,9 @@ export class ProgramBuilderPage {
     await this.page.keyboard.press("Space");
   }
 
-  async expectCalibration(on: boolean): Promise<void> {
+  async expectCalibrationOn(): Promise<void> {
     await expect(this.calibrationSwitch).toBeVisible();
-    if (on) await expect(this.calibrationSwitch).toBeChecked();
-    else await expect(this.calibrationSwitch).not.toBeChecked();
+    await expect(this.calibrationSwitch).toBeChecked();
   }
 
   async expectNoCalibration(): Promise<void> {
@@ -771,13 +772,14 @@ export class ProgramBuilderPage {
             animation.playState === "running" &&
             Number(animation.effect?.getComputedTiming().duration ?? 0) > 1,
         )
-        .map((animation) =>
-          animation instanceof CSSTransition
-            ? animation.transitionProperty
-            : animation instanceof CSSAnimation
-              ? animation.animationName
-              : "script",
-        ),
+        .map((animation) => {
+          if (animation instanceof CSSTransition) {
+            return animation.transitionProperty;
+          }
+          if (animation instanceof CSSAnimation) return animation.animationName;
+
+          return "script";
+        }),
     );
 
     expect(running).toEqual([]);

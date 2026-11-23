@@ -334,7 +334,7 @@ test(
     await programBuilder.expectDayReads("Sunday", "Full Body A0 min");
     await programBuilder.expectDayReads("Monday", "Cardio");
     await programBuilder.expectDayReads("Tuesday", "Rest");
-    await programBuilder.expectCalibration(true);
+    await programBuilder.expectCalibrationOn();
     await programBuilder.expectSplitName("Three full days");
     await programBuilder.expectSelectReads("Target", "45 min");
     await programBuilder.expectTrainingDays("3 days");
