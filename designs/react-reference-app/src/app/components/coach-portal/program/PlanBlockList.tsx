@@ -242,7 +242,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
     confirm.request({
       ...removeBlockRequest(block, index, () => onChange(current => current.filter(other => other.id !== block.id))),
       returnFocus: trigger,
-      focusAfterApply: neighbour ? openers.current.get(neighbour.id) : placeHeading.current,
+      focusAfterApply: () => (neighbour ? (openers.current.get(neighbour.id) ?? null) : placeHeading.current),
     });
   }
 

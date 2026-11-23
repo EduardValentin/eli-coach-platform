@@ -320,9 +320,10 @@ export function PlanBlockList({
           ),
       }),
       returnFocus: trigger,
-      focusAfterApply: neighbour
-        ? openers.current.get(neighbour.id)
-        : placeHeading.current,
+      focusAfterApply: () =>
+        neighbour
+          ? (openers.current.get(neighbour.id) ?? null)
+          : placeHeading.current,
     });
   }
 

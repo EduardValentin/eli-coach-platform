@@ -288,6 +288,31 @@ describe("focus and title as the plan changes", () => {
     );
   });
 
+  it("moves focus to the place heading once the open block is removed from its own menu", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    const user = await renderBuilder();
+    await user.click(
+      within(sectionList()).getByRole("button", { name: /^3\s?Deload/ }),
+    );
+
+    // act
+    screen.getByRole("button", { name: "Block actions" }).focus();
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menuitem", { name: "Remove block" });
+    await user.keyboard("{End}{Enter}");
+    const confirm = await screen.findByRole("button", { name: "Remove block" });
+    confirm.focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Overview" }),
+      ).toHaveFocus(),
+    );
+  });
+
   it("titles the page after the place, also for a block added in this visit", async () => {
     // arrange
     answerSaves(savedAt(FIRST_SAVE_AT));

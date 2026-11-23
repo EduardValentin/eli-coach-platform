@@ -298,6 +298,7 @@ describe('ProgramEditorPage', () => {
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Plan overview' })).toBeInTheDocument();
     expect(blockRows()).toHaveLength(2);
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toHaveFocus());
   });
 
   it('keeps the current block from being removed', async () => {

@@ -17,6 +17,7 @@ import { BlockNumber } from '../../program-view/BlockNumber';
 import { BlockSettings } from './BlockSettings';
 import { CopyBlockDialog } from './CopyBlockDialog';
 import { removeBlockRequest, useDestructiveConfirm } from './DestructiveConfirm';
+import { usePlaceHeading } from './placeHeading';
 import { useWeeksField } from './weeksField';
 
 type BlockHeaderProps = {
@@ -147,6 +148,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   const block = blocks[index];
   const [copying, setCopying] = useState(false);
   const confirm = useDestructiveConfirm();
+  const placeHeading = usePlaceHeading();
   const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit: value => onChange({ ...block, weeks: value }) });
   const settings = useCollapsingSettings();
 
@@ -167,7 +169,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   const actions: BlockActions = {
     onCopy: () => setCopying(true),
     onReset: () => rebuild('Reset to the split?', blockWithSplit(block, block.split.shape, language), describeLoss(block, { kind: 'reset' })),
-    onRemove: () => confirm.request(removeBlockRequest(block, index, onRemove)),
+    onRemove: () => confirm.request({ ...removeBlockRequest(block, index, onRemove), focusAfterApply: () => placeHeading.current }),
   };
   const { headerRef: scrollRef } = settings;
   const headerRef = useCallback(

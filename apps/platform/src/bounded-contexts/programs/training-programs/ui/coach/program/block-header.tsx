@@ -26,6 +26,7 @@ import {
   removeBlockRequest,
   useDestructiveConfirm,
 } from "./destructive-confirm";
+import { usePlaceHeading } from "./place-heading";
 import { useWeeksField } from "./weeks-field";
 
 type BlockHeaderProps = {
@@ -224,6 +225,7 @@ export function BlockHeader({
 }: BlockHeaderProps) {
   const block = blocks[index];
   const confirm = useDestructiveConfirm();
+  const placeHeading = usePlaceHeading();
   const weeks = useWeeksField({
     block,
     onCommit: (value) => onChange({ ...block, weeks: value }),
@@ -263,7 +265,10 @@ export function BlockHeader({
         lines: BlockLoss.describe(block, { kind: "reset" }),
       }),
     onRemove: () =>
-      confirm.request(removeBlockRequest({ block, index, apply: onRemove })),
+      confirm.request({
+        ...removeBlockRequest({ block, index, apply: onRemove }),
+        focusAfterApply: () => placeHeading.current,
+      }),
   };
   const { headerRef: scrollRef } = settings;
   const headerRef = useCallback(

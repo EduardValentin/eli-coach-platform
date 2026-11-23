@@ -1,5 +1,5 @@
 import { ConfirmDialog } from "~/shared/design-system/overlays";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState, type RefObject } from "react";
 
 import {
   BlockLoss,
@@ -13,7 +13,8 @@ export type ConfirmRequest = {
   lines: string[];
   apply: () => void;
   returnFocus?: HTMLElement | null;
-  focusAfterApply?: HTMLElement | null;
+  // Read once the change has landed, since the control it names may only exist then.
+  focusAfterApply?: () => HTMLElement | null;
 };
 
 type RemovedBlock = { block: Block; index: number; apply: () => void };
@@ -44,21 +45,34 @@ function focusedControl(): HTMLElement | null {
 export function useDestructiveConfirm() {
   const [pending, setPending] = useState<ConfirmRequest | null>(null);
   const lastPending = useRef<ConfirmRequest | null>(null);
-  const returnFocus = useRef<HTMLElement | null>(null);
+  const focusTarget = useRef<() => HTMLElement | null>(() => null);
+  const returnFocus = useMemo<RefObject<HTMLElement | null>>(
+    () => ({
+      get current() {
+        return focusTarget.current();
+      },
+    }),
+    [],
+  );
   if (pending) lastPending.current = pending;
   const shown = pending ?? lastPending.current;
 
   function request(next: ConfirmRequest) {
     if (next.lines.length === 0) {
       next.apply();
+      const { focusAfterApply } = next;
+      if (focusAfterApply) {
+        requestAnimationFrame(() => focusAfterApply()?.focus());
+      }
       return;
     }
-    returnFocus.current = next.returnFocus ?? focusedControl();
+    const control = next.returnFocus ?? focusedControl();
+    focusTarget.current = () => control;
     setPending(next);
   }
 
   function confirm() {
-    if (pending?.focusAfterApply) returnFocus.current = pending.focusAfterApply;
+    if (pending?.focusAfterApply) focusTarget.current = pending.focusAfterApply;
     pending?.apply();
     setPending(null);
   }
