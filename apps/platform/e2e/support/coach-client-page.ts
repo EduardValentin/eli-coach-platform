@@ -1068,7 +1068,10 @@ export class CoachClientPage {
       ),
     ).toBeVisible();
     await expect(this.programCard.getByText("Still missing")).toHaveCount(0);
-    await this.expectProgramCardOffersNoAction();
+    await expect(this.programCard.getByRole("link")).toHaveText([
+      "Continue draft",
+    ]);
+    await expect(this.programCard.getByRole("button")).toHaveCount(0);
   }
 
   async expectProgramCardOffersNoAction(): Promise<void> {

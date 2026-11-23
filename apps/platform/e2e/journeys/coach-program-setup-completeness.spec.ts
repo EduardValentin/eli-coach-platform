@@ -1038,6 +1038,8 @@ test(
     await coachClient.buildProgram();
     await programSetup.expectOpenFor(client.firstName, client.clientId);
     await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectDraftProgram({
       version: 1,
       blocks: ENDED_BLOCKS,
