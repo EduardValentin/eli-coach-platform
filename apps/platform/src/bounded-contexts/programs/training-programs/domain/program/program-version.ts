@@ -1,5 +1,6 @@
+import { BlockFilling } from "./block-filling";
 import { BlockWeeks } from "./block-weeks";
-import type { Block, ProgramContent, Session } from "./program-content";
+import type { Block, ProgramContent } from "./program-content";
 import type { BlockType, VersionStatus } from "./vocabulary";
 
 export type ProgramVersionSnapshot = {
@@ -81,7 +82,7 @@ export class ProgramVersion {
       (block): BlockSummary => ({
         type: block.type,
         weeks: block.weeks,
-        filledSessions: this.filledSessionCount(block),
+        filledSessions: BlockFilling.filledSessionCount(block),
         sessions: block.sessions.length,
       }),
     );
@@ -119,14 +120,5 @@ export class ProgramVersion {
 
       return true;
     });
-  }
-
-  private filledSessionCount(block: Block): number {
-    return block.sessions.filter((session) => this.hasExercises(session))
-      .length;
-  }
-
-  private hasExercises(session: Session): boolean {
-    return session.rows.some((row) => row.exerciseId !== "");
   }
 }

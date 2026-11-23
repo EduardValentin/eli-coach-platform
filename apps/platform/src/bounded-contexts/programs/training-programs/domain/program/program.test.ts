@@ -222,14 +222,12 @@ function suggestedContent(): ProgramContent {
     cardioExercises: [],
     newId: () => `id-${(next += 1)}`,
   }).initialContent({
-    goal: "Lose fat",
     level: "beginner",
     trainingDays: 3,
     sessionMinutes: 60,
     language: "en",
     dailySteps: 6000,
     splitShape: "full-body",
-    equipment: ["Dumbbells"],
   });
 }
 

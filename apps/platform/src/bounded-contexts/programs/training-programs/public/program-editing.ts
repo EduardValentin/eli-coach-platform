@@ -2,6 +2,7 @@ export {
   BLOCK_TYPE_LABELS,
   BLOCK_TYPES,
   BlockEditing,
+  BlockFilling,
   BlockLoss,
   BlockWeeks,
   CLIENT_LEVELS,

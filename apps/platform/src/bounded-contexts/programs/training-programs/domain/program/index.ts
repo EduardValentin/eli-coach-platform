@@ -1,4 +1,5 @@
 export { BlockEditing, type DayChoice } from "./block-editing";
+export { BlockFilling } from "./block-filling";
 export { BlockLoss, type LossChange } from "./block-loss";
 export { BlockWeeks } from "./block-weeks";
 export {
