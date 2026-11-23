@@ -530,8 +530,8 @@ export class ProgramBuilderPage {
     await this.page.keyboard.press("ArrowRight");
     const item = this.menuItem(session);
     await expect(item).toBeVisible();
-    const sessions = await this.page.getByRole("menuitem").count();
-    for (let press = 0; press < sessions; press += 1) {
+    const maxPresses = await this.page.getByRole("menuitem").count();
+    for (let press = 0; press < maxPresses; press += 1) {
       if (await item.evaluate((element) => element === document.activeElement))
         break;
       await this.page.keyboard.press("ArrowDown");
