@@ -102,6 +102,17 @@ describe('PlanTimeline', () => {
     expect(onOpen).toHaveBeenCalledWith(1);
   });
 
+  it('leaves the weeks of a timeline that opens blocks undated when the builder shows no dates before day 1', () => {
+    // arrange, act
+    render(
+      <PlanTimeline blocks={blocks} dayOne={null} preferredWeekday="mon" today={dayOne} weekAction={{ kind: 'open-block', onOpen: vi.fn(), dates: 'undated' }} />,
+    );
+
+    // assert
+    expect(weekNames()[0]).toBe('Week 1 of 11, Foundation week 1 of 4, open block');
+    expect(screen.queryByText(/^Check-in form day/)).not.toBeInTheDocument();
+  });
+
   it('marks no week as this week once the plan has ended', () => {
     // arrange
     const today = addDays(dayOne, 11 * 7);

@@ -350,6 +350,21 @@ describe('DevToggle draft saves', () => {
     expect(new URLSearchParams(window.location.search).get('pdraft')).toBe('stale');
   });
 
+  it('keeps the builder week dates in the address so a state without day 1 dates can be shared', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+    await user.click(screen.getByRole('combobox', { name: 'Builder week dates' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'None (as production before publishing)' }));
+
+    // assert
+    expect(new URLSearchParams(window.location.search).get('pweekdates')).toBe('undated');
+  });
+
   it('reads the outcome from a shared address', async () => {
     // arrange
     const user = userEvent.setup();

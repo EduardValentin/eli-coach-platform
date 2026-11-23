@@ -1,3 +1,4 @@
+import type { BuilderWeekDates } from '../../services/programWriteService';
 import { format } from 'date-fns';
 import { Fragment, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router';
@@ -29,7 +30,7 @@ const PEEK_CLOSE_DELAY_MS = 200;
 export type TimelineWeekAction =
   | { kind: 'select'; label: string; onSelect: (weekOfPlan: number) => void }
   | { kind: 'link'; label: string; hrefOf: (weekOfPlan: number) => string }
-  | { kind: 'open-block'; onOpen: (blockIndex: number) => void }
+  | { kind: 'open-block'; onOpen: (blockIndex: number) => void; dates?: BuilderWeekDates }
   | { kind: 'anchor'; hrefOf: (weekOfPlan: number) => string | null }
   | { kind: 'none' };
 
@@ -145,7 +146,7 @@ function WeekCorner({ week, date }: { week: TimelineWeek; date: WeekDate }) {
   return (
     <>
       {week.checkIn && <CheckInDot className="absolute top-2 right-1.5" />}
-      <span aria-hidden="true" className="text-caption font-medium whitespace-nowrap">
+      <span aria-hidden="true" data-parity="plan-week-date" className="text-caption font-medium whitespace-nowrap">
         {shown ? format(shown, CELL_DATE) : NO_DATE}
       </span>
     </>
@@ -157,7 +158,7 @@ function WeekFace({ week, look, marks }: { week: TimelineWeek; look: CellLook; m
   const layout = look.face;
   return (
     <>
-      <span aria-hidden="true" className={cn('flex items-baseline font-medium', { 'gap-1.5 text-base': layout === 'row', 'flex-col items-center text-sm leading-none': layout === 'stacked' })}>
+      <span aria-hidden="true" data-parity="plan-week-number" className={cn('flex items-baseline font-medium', { 'gap-1.5 text-base': layout === 'row', 'flex-col items-center text-sm leading-none': layout === 'stacked' })}>
         {week.weekOfPlan}
         {now && <span className={cn('text-xs', { 'mt-1': layout === 'stacked' })}>Now</span>}
       </span>
@@ -252,13 +253,13 @@ function BlockHead({ block, index, weeks, layout, meta }: BlockHeadProps) {
   const range = first && last ? dateRangeText({ start: first.start, end: last.end }) : null;
   const span = [...(block.weeks > 1 ? [counted(block.weeks, 'week')] : []), ...(range ? [range] : [])];
   return (
-    <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 pb-2', { [cn('border-t-3 pt-2', BLOCK_RULE[block.type])]: layout === 'row' })}>
+    <div data-parity="plan-block-head" className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 pb-2', { [cn('border-t-3 pt-2', BLOCK_RULE[block.type])]: layout === 'row' })}>
       <span className="flex min-w-0 items-center gap-2 whitespace-nowrap">
         <BlockNumber block={block} index={index} size="xs" />
         <span className={cn('min-w-0 font-semibold text-text-primary', { 'text-sm': layout === 'row', 'text-base': layout === 'stacked' })}>{blockName(block)}</span>
       </span>
       {span.length > 0 && (
-        <span className={cn('text-sm text-text-secondary tabular-nums', { 'basis-full': meta === 'below', 'ml-auto text-right': meta === 'beside' })}>
+        <span data-parity="plan-block-span" className={cn('text-sm text-text-secondary tabular-nums', { 'basis-full': meta === 'below', 'ml-auto text-right': meta === 'beside' })}>
           {span.map((part, partIndex) => (
             <Fragment key={part}>
               {partIndex > 0 && ' · '}
@@ -320,7 +321,7 @@ function TimelineBlocks({ blocks, byBlock, layout, look, currentBlock, renderWee
               style={layout === 'row' ? { gridTemplateColumns: `repeat(${block.weeks}, minmax(0, 1fr))` } : undefined}
             >
               {weeks.map(week => (
-                <li key={week.weekOfPlan} className="grid">
+                <li key={week.weekOfPlan} data-parity="plan-week-item" className="grid">
                   {renderWeek(week)}
                 </li>
               ))}
@@ -346,7 +347,7 @@ const DATED_LOOK: CellLook = { face: 'row', date: 'start' };
 
 /** The builder's plan dates its weeks from today until day 1 is set, without marking any week as now. */
 function datedFrom({ dayOne, today, weekAction }: Pick<PlanTimelineProps, 'dayOne' | 'today' | 'weekAction'>): Date | null {
-  return weekAction.kind === 'open-block' ? (dayOne ?? today) : dayOne;
+  return weekAction.kind === 'open-block' && weekAction.dates !== 'undated' ? (dayOne ?? today) : dayOne;
 }
 
 export function PlanTimeline(props: PlanTimelineProps) {
@@ -449,10 +450,11 @@ type PlanStripProps = { blocks: readonly Block[]; dayOne: Date | null; today?: D
 export function PlanStrip({ blocks, dayOne, today }: PlanStripProps) {
   const schedule = today ? { blocks, dayOne, today } : null;
   return (
-    <span aria-hidden="true" className="flex h-1.5 gap-0.5">
+    <span aria-hidden="true" data-parity="plan-strip" className="flex h-1.5 gap-0.5">
       {blocks.map((block, index) => (
         <span
           key={block.id}
+          data-parity="plan-strip-segment"
           className={cn('rounded-full', BLOCK_SWATCH[block.type], {
             'opacity-40': schedule !== null && blockStatus(schedule, index).kind === 'ended',
           })}

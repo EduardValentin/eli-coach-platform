@@ -70,7 +70,7 @@ function SaveStateNote({ state }: { state: SaveState }) {
   return (
     <>
       {' '}
-      <span className="whitespace-nowrap">
+      <span className="whitespace-nowrap" data-parity="save-state">
         {'· '}
         <span className={cn({ 'inline-flex items-center gap-1 align-top font-medium text-destructive': notSaved })}>
           {notSaved && <AlertCircle aria-hidden="true" size={12} />}
@@ -88,6 +88,7 @@ function FailedSaveAlert({ retrying, retryNow, placeHeading }: FailedSaveAlertPr
   return (
     <Alert
       className="order-last basis-full"
+      data-parity="failed-save"
       action={
         <AlertAction aria-disabled={retrying || undefined} onClick={retrying ? undefined : retryNow} className="aria-disabled:opacity-100">
           {retrying ? 'Trying again…' : 'Try again now'}
@@ -288,7 +289,7 @@ export function EditorTopBar({
           {railToggle}
         </nav>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
-          <p className="text-xs break-words text-text-secondary">
+          <p className="text-xs break-words text-text-secondary" data-parity="draft-line">
             {[draftLine(name, version, basedOn), DRAFT_STATE_NOTE[draftState]].filter(Boolean).join(' · ')}
             <SaveStateNote state={saving.state} />
           </p>

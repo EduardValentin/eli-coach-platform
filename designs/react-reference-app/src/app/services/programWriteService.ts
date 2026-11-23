@@ -3,6 +3,9 @@ export type ProgramWriteOutcome = (typeof PROGRAM_WRITE_OUTCOMES)[number];
 
 export const DRAFT_SAVE_OUTCOMES = ['works', 'fails', 'stale'] as const;
 export type DraftSaveOutcome = (typeof DRAFT_SAVE_OUTCOMES)[number];
+
+export const BUILDER_WEEK_DATES = ['from-today', 'undated'] as const;
+export type BuilderWeekDates = (typeof BUILDER_WEEK_DATES)[number];
 export type DraftSaveAnswer = 'saved' | 'changed-elsewhere';
 
 export const DRAFT_SAVE_LATENCY_MS = 500;

@@ -32,11 +32,11 @@ export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
 
   return (
     <div role="group" aria-label="Program settings" className="flex w-full flex-wrap items-center gap-4 sm:w-auto">
-      <div className={FIELD_CLASS}>
+      <div data-parity="settings-level-field" className={FIELD_CLASS}>
         <Label htmlFor={ids.level} className="text-text-secondary">
           Level
         </Label>
-        <div className={SELECT_CLASS}>
+        <div data-parity="settings-level-control" className={SELECT_CLASS}>
           <OptionSelect id={ids.level} options={LEVELS} value={program.level} onChange={level => onChange({ level })} />
         </div>
       </div>
@@ -51,11 +51,11 @@ export function ProgramSettings({ program, onChange }: ProgramSettingsProps) {
           <span className="flex min-h-10 items-center text-sm font-medium text-text-primary sm:min-w-36">{LANGUAGES.find(option => option.value === program.language)?.label}</span>
         </div>
       ) : (
-        <div className={FIELD_CLASS}>
+        <div data-parity="settings-language-field" className={FIELD_CLASS}>
           <Label htmlFor={ids.language} className="text-text-secondary">
             Language
           </Label>
-          <div className={SELECT_CLASS}>
+          <div data-parity="settings-language-control" className={SELECT_CLASS}>
             <OptionSelect id={ids.language} options={LANGUAGES} value={program.language} onChange={language => onChange({ language })} />
           </div>
         </div>

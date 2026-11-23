@@ -34,13 +34,14 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: { lastBlock: Block | undef
 
   return (
     <form
+      data-parity-root="AddBlockDialog"
       className="grid gap-5"
       onSubmit={event => {
         event.preventDefault();
         if (valid) onAdd(type, chosenWeeks);
       }}
     >
-      <div className="grid gap-2">
+      <div data-parity="add-block-type-field" className="grid gap-2">
         <Label htmlFor={typeId}>Type</Label>
         <Select value={type} onValueChange={value => setType(value as BlockType)}>
           <SelectTrigger id={typeId}>
@@ -55,7 +56,7 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: { lastBlock: Block | undef
           </SelectContent>
         </Select>
       </div>
-      <div className="grid gap-2">
+      <div data-parity="add-block-weeks-field" className="grid gap-2">
         <Label htmlFor={weeksId}>Weeks</Label>
         <Input
           id={weeksId}

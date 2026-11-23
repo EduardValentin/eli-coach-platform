@@ -29,10 +29,10 @@ function stepOptions(current: number): Option<number>[] {
   return [...values].sort((a, b) => a - b).map(value => ({ value, label: value.toLocaleString('en-US') }));
 }
 
-function Setting({ label, children }: { label: string; children: (labelId: string) => ReactNode }) {
+function Setting({ label, name, children }: { label: string; name: string; children: (labelId: string) => ReactNode }) {
   const labelId = useId();
   return (
-    <div className="grid content-start gap-1.5">
+    <div className="grid content-start gap-1.5" data-parity={`setting-${name}`}>
       <span id={labelId} className={LABEL_CLASS}>
         {label}
       </span>
@@ -44,7 +44,7 @@ function Setting({ label, children }: { label: string; children: (labelId: strin
 function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'block' | 'weeks' | 'onChange'>) {
   return (
     <>
-      <Setting label="Weeks">
+      <Setting label="Weeks" name="weeks">
         {labelId => (
           <>
             <WeeksField field={weeks} name={{ labelledBy: labelId }} />
@@ -53,7 +53,7 @@ function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'bl
         )}
       </Setting>
       {block.type !== 'deload' && (
-        <Setting label="Calibration">
+        <Setting label="Calibration" name="calibration">
           {labelId => (
             <span role="group" aria-labelledby={labelId} className="flex min-h-(--size-control-md) items-center gap-1">
               <label className="flex items-center gap-2 text-sm text-text-primary">
@@ -76,7 +76,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
   const daysTrigger = useRef<HTMLButtonElement>(null);
   return (
     <>
-      <Setting label="Split">
+      <Setting label="Split" name="split">
         {labelId => (
           <Select value={block.split.shape} onValueChange={value => onChangeShape(value as SplitShape, splitTrigger.current)}>
             <SelectTrigger ref={splitTrigger} className="w-36" aria-labelledby={labelId}>
@@ -92,7 +92,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
           </Select>
         )}
       </Setting>
-      <Setting label="Training days">
+      <Setting label="Training days" name="training-days">
         {labelId => (
           <OptionSelect
             labelledBy={labelId}
@@ -103,7 +103,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
           />
         )}
       </Setting>
-      <Setting label="Split name">
+      <Setting label="Split name" name="split-name">
         {labelId => (
           <Input
             className="w-40"
@@ -114,7 +114,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
           />
         )}
       </Setting>
-      <Setting label="Target">
+      <Setting label="Target" name="target">
         {labelId => (
           <Select value={String(block.targetMinutes)} onValueChange={value => onChange({ ...block, targetMinutes: Number(value) })}>
             <SelectTrigger className="w-28" aria-labelledby={labelId}>
@@ -130,7 +130,7 @@ function ScheduleSettings({ block, onChange, onChangeShape, onChangeTrainingDays
           </Select>
         )}
       </Setting>
-      <Setting label="Daily steps">
+      <Setting label="Daily steps" name="daily-steps">
         {labelId => (
           <OptionSelect
             labelledBy={labelId}
@@ -154,8 +154,8 @@ const SETTINGS_LAYOUT_CLASS = cn(
 
 export function BlockSettings(props: BlockSettingsProps) {
   return (
-    <div className="@container px-4 py-3">
-      <div className={SETTINGS_LAYOUT_CLASS}>
+    <div className="@container px-4 py-3" data-parity="block-settings">
+      <div className={SETTINGS_LAYOUT_CLASS} data-parity="settings-fields">
         <LengthSettings block={props.block} weeks={props.weeks} onChange={props.onChange} />
         <ScheduleSettings block={props.block} onChange={props.onChange} onChangeShape={props.onChangeShape} onChangeTrainingDays={props.onChangeTrainingDays} />
       </div>

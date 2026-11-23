@@ -91,7 +91,7 @@ function DetailLine({ detail }: { detail: Detail }) {
 
 function ProblemMark() {
   return (
-    <span className="text-destructive">
+    <span className="text-destructive" data-parity="problem-mark">
       <AlertCircle aria-hidden="true" size={16} />
       <span className="sr-only"> has a problem</span>
     </span>
@@ -128,6 +128,7 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         type="button"
         aria-current={current ? 'true' : undefined}
         onClick={onClick}
+        data-parity={`rail-block-${index + 1}`}
         className={cn(railEntryVariants({ state: current ? 'current' : 'idle' }), 'grid gap-0.5 px-3 py-2')}
       >
         <span className={cn('flex items-center gap-2 text-text-primary', { 'font-medium': current })}>
@@ -179,6 +180,7 @@ export function EditorRail(props: EditorRailProps) {
           type="button"
           aria-current={overviewCurrent ? 'true' : undefined}
           onClick={() => onSelect(OVERVIEW)}
+          data-parity="rail-overview"
           className={cn(railEntryVariants({ state: overviewCurrent ? 'current' : 'idle' }), 'grid gap-2.5 p-3')}
         >
           <span className={cn('flex items-center gap-2 text-text-primary', { 'font-semibold': overviewCurrent, 'font-medium': !overviewCurrent })}>

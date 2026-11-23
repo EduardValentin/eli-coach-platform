@@ -1,3 +1,4 @@
+import type { BuilderWeekDates } from '../../../services/programWriteService';
 import type { ReactNode } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
@@ -21,6 +22,7 @@ type PlanOverviewProps = {
   onAddBlock: () => void;
   onUseSuggestion: () => void;
   settings: ReactNode;
+  weekDates: BuilderWeekDates;
 };
 
 const LEVEL_LABELS: Record<LevelHint, string> = {
@@ -34,7 +36,7 @@ function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => voi
     .map(block => `${BLOCK_TYPE_LABELS[block.type]} ${counted(block.weeks, 'week')}`)
     .join(' → ');
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-base p-4">
+    <div data-parity="suggestion-banner" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-base p-4">
       <p className="text-sm text-text-primary">{`Suggested for a ${LEVEL_LABELS[level]} client: ${plan}`}</p>
       <Button size="sm" onClick={onUse}>
         Use suggestion
@@ -51,12 +53,12 @@ function problemsByBlock(problems: readonly RuleFinding<BlockingCode>[]): Map<st
   return byBlock;
 }
 
-export function PlanOverview({ content, dayOne, preferredWeekday, today, level, library, onChange, onOpenBlock, onAddBlock, onUseSuggestion, settings }: PlanOverviewProps) {
+export function PlanOverview({ content, dayOne, preferredWeekday, today, level, library, onChange, onOpenBlock, onAddBlock, onUseSuggestion, settings, weekDates }: PlanOverviewProps) {
   const { blocks } = content.plan;
 
   return (
-    <section className="grid grid-cols-1 gap-6">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+    <section data-parity-root="PlanOverview" className="grid grid-cols-1 gap-6">
+      <div data-parity="plan-overview-settings" className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <h2 className="sr-only">Plan overview</h2>
         {settings}
       </div>
@@ -69,7 +71,7 @@ export function PlanOverview({ content, dayOne, preferredWeekday, today, level, 
             dayOne={dayOne}
             preferredWeekday={preferredWeekday}
             today={today}
-            weekAction={{ kind: 'open-block', onOpen: blockIndex => onOpenBlock(blocks[blockIndex].id) }}
+            weekAction={{ kind: 'open-block', onOpen: blockIndex => onOpenBlock(blocks[blockIndex].id), dates: weekDates }}
           />
           <PlanBlockList
             blocks={blocks}

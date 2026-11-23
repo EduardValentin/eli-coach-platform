@@ -109,9 +109,10 @@ function DateMark({ date, isToday, kind }: { date: Date; isToday: boolean; kind:
 }
 
 
-function DayGlyph({ kind }: { kind: DayKind }) {
+function DayGlyph({ day }: { day: Pick<WeekDay, 'weekday' | 'plan'> }) {
+  const { kind } = day.plan;
   const Glyph = KIND_ICON[kind];
-  return <Glyph aria-hidden="true" strokeWidth={KIND_GLYPH_STROKE[kind]} className={cn('size-4 shrink-0', KIND_GLYPH_CLASS[kind])} />;
+  return <Glyph aria-hidden="true" strokeWidth={KIND_GLYPH_STROKE[kind]} className={cn('size-4 shrink-0', KIND_GLYPH_CLASS[kind])} data-parity={`day-glyph-${day.weekday}`} />;
 }
 
 const DAY_FACE_CLASS = 'col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left';
@@ -128,20 +129,23 @@ export function DayFace({ day, exercisesById, onOpen }: DayFaceProps) {
   const length = dayLengthOf(day.plan, exercisesById)?.shown;
   const face = (
     <>
-      <span className={cn('line-clamp-2 text-sm font-medium text-balance break-words', KIND_NAME_CLASS[kind])}>{dayPlanName(day.plan)}</span>
+      <span className={cn('line-clamp-2 text-sm font-medium text-balance break-words', KIND_NAME_CLASS[kind])} data-parity={`day-name-${day.weekday}`}>
+        {dayPlanName(day.plan)}
+      </span>
       <span className="flex items-center gap-1.5">
-        <DayGlyph kind={kind} />
+        <DayGlyph day={day} />
         {length && (
-          <span aria-hidden="true" className={cn('text-sm tabular-nums', KIND_META_CLASS[kind])}>
+          <span aria-hidden="true" className={cn('text-sm tabular-nums', KIND_META_CLASS[kind])} data-parity={`day-length-${day.weekday}`}>
             {length}
           </span>
         )}
       </span>
     </>
   );
-  if (!onOpen) return <div className={DAY_FACE_CLASS}>{face}</div>;
+  const parity = `day-face-${day.weekday}`;
+  if (!onOpen) return <div className={DAY_FACE_CLASS} data-parity={parity}>{face}</div>;
   return (
-    <button type="button" onClick={onOpen} className={cn(DAY_FACE_CLASS, CARD_WIDE_BUTTON_CLASS)}>
+    <button type="button" onClick={onOpen} className={cn(DAY_FACE_CLASS, CARD_WIDE_BUTTON_CLASS)} data-parity={parity}>
       {face}
     </button>
   );
@@ -162,7 +166,7 @@ export function DayCell({ day }: { day: WeekDay }) {
           {day.checkIn && <CheckInLabel />}
         </span>
         <span className="flex items-center gap-1.5 self-end">
-          <DayGlyph kind={kind} />
+          <DayGlyph day={day} />
         </span>
         {day.checkIn && <CheckInDot className="absolute top-1.5 right-1.5 @3xl:hidden" />}
       </span>

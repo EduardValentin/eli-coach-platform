@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router';
+import { useAppState } from '../../../context/AppContext';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
@@ -76,6 +77,7 @@ function ContinueToTexts({ editor }: { editor: ReturnType<typeof useEditorState>
 
 function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSectionContentProps, 'program' | 'draft' | 'editor' | 'onAddBlock'>) {
   const { exercises } = useTraining();
+  const { appState } = useAppState();
   return (
     <PlanOverview
       content={draft.content}
@@ -89,6 +91,7 @@ function StructureOverview({ program, draft, editor, onAddBlock }: Pick<EditorSe
       onAddBlock={onAddBlock}
       onUseSuggestion={editor.applySuggestion}
       settings={<ProgramSettings program={program} onChange={editor.changeSettings} />}
+      weekDates={appState.builderWeekDates}
     />
   );
 }
