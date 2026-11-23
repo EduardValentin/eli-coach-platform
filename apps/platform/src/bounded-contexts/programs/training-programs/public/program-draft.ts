@@ -53,6 +53,6 @@ export type ProgramDraftView =
       versionNumber: number;
       content: ProgramContent;
       updatedAt: string;
-      blockSetup: BlockSetup;
+      startingBlockSetup: BlockSetup;
       cardioExercises: CardioExercise[];
     };

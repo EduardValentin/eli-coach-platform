@@ -144,18 +144,26 @@ export class ProgramBuilderPage {
     await this.page.getByRole("option", { name: option, exact: true }).click();
   }
 
-  async confirmIfAsked(confirmLabel: string): Promise<void> {
+  private async confirmUnlessApplied(
+    confirmLabel: string,
+    applied: Locator,
+  ): Promise<void> {
     const confirm = this.page.getByRole("button", {
       name: confirmLabel,
       exact: true,
     });
 
+    await expect(confirm.or(applied).first()).toBeVisible();
     if (await confirm.isVisible()) await confirm.click();
+    await expect(applied).toBeVisible();
   }
 
   async chooseTrainingDays(days: string): Promise<void> {
     await this.chooseOption("Training days", days);
-    await this.confirmIfAsked("Change training days");
+    await this.confirmUnlessApplied(
+      "Rebuild sessions",
+      this.select("Training days").filter({ hasText: days }),
+    );
   }
 
   async makeRestDay(weekday: string): Promise<void> {
@@ -163,7 +171,10 @@ export class ProgramBuilderPage {
     await this.page
       .getByRole("menuitem", { name: "Rest", exact: true })
       .click();
-    await this.confirmIfAsked("Change day");
+    await this.confirmUnlessApplied(
+      "Change day",
+      this.dayCard(weekday).filter({ hasText: "Rest" }),
+    );
   }
 
   async expectDay(weekday: string, plan: string): Promise<void> {

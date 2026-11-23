@@ -31,7 +31,7 @@ export type ProgramDraftReading =
       level: ClientLevel;
       language: ProgramLanguage;
       draft: DraftReading;
-      blockSetup: BlockSetup;
+      startingBlockSetup: BlockSetup;
       cardioExercises: CardioExercise[];
     };
 
@@ -41,12 +41,6 @@ type ReadProgramDraftUseCaseOptions = {
   clientCoachingPort: Pick<ClientCoachingPort, "find">;
   cardioExercisesPort: CardioExercisesPort;
   programStorePort: Pick<ProgramStorePort, "findByClientId">;
-};
-
-type BlockSetupSources = {
-  program: Program;
-  draft: DraftReading;
-  clientCoaching: ClientCoaching;
 };
 
 const UNAPPROVED_COACHING_FACTS: ClientCoachingFacts = {
@@ -96,35 +90,30 @@ export class ReadProgramDraftUseCase {
       level: program.level,
       language: program.language,
       draft,
-      blockSetup: this.blockSetupOf({
+      startingBlockSetup: this.startingBlockSetupOf(
         program,
-        draft,
-        clientCoaching: await clientCoachingPort.find(clientId),
-      }),
+        await clientCoachingPort.find(clientId),
+      ),
       cardioExercises: await cardioExercisesPort.listFor(coachAccountId),
     };
   }
 
-  // A new block is set up as her setup would set it up today, in the
-  // program's language and the plan's split.
-  private blockSetupOf({
-    program,
-    draft,
-    clientCoaching,
-  }: BlockSetupSources): BlockSetup {
-    const { answers } = clientCoaching;
-    const startingValues = ProgramSetup.startingValues(
-      answers.status === "approved"
-        ? answers.coachingFacts
-        : UNAPPROVED_COACHING_FACTS,
-    );
+  private startingBlockSetupOf(
+    program: Program,
+    { answers }: ClientCoaching,
+  ): BlockSetup {
+    const { splitShape, trainingDays, sessionMinutes, dailySteps } =
+      ProgramSetup.startingValues(
+        answers.status === "approved"
+          ? answers.coachingFacts
+          : UNAPPROVED_COACHING_FACTS,
+      );
 
     return {
-      splitShape:
-        draft.content.plan.blocks[0]?.split.shape ?? startingValues.splitShape,
-      trainingDays: startingValues.trainingDays,
-      sessionMinutes: startingValues.sessionMinutes,
-      dailySteps: startingValues.dailySteps,
+      splitShape,
+      trainingDays,
+      sessionMinutes,
+      dailySteps,
       language: program.language,
     };
   }

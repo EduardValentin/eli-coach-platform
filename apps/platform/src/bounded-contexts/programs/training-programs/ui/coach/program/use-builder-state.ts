@@ -19,19 +19,13 @@ import {
   type EditorSection,
 } from "./editor-section";
 import type { BlocksUpdate } from "./plan-block-list";
+import type { SettingsPatch } from "./program-settings";
 import { useAutosavedDraft, type BuilderDraft } from "./use-autosaved-draft";
 
 export type DraftView = Extract<ProgramDraftView, { state: "draft" }>;
 
-type SettingsPatch = { level?: ClientLevel; language?: ProgramLanguage };
-
 function blockSetupOf(view: DraftView, draft: BuilderDraft): BlockSetup {
-  return {
-    ...view.blockSetup,
-    language: draft.language,
-    splitShape:
-      draft.content.plan.blocks[0]?.split.shape ?? view.blockSetup.splitShape,
-  };
+  return { ...view.startingBlockSetup, language: draft.language };
 }
 
 export function useBuilderState(view: DraftView) {

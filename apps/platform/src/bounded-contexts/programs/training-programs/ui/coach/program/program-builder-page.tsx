@@ -4,7 +4,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { PROGRAM_SETUP_ROUTE_HANDLE } from "~/bounded-contexts/programs/training-programs/public/paths";
+import { COACH_PROGRAM_ROUTE_HANDLE } from "~/bounded-contexts/programs/training-programs/public/paths";
 import { trainingProgramsContext } from "~/bounded-contexts/programs/training-programs/adapters/inbound/http/context.server";
 
 import { clientName } from "./editor-top-bar";
@@ -16,7 +16,7 @@ export function loader(args: LoaderFunctionArgs) {
     .coachProgramController.loadDraft(args, args.params.clientId);
 }
 
-export const handle = PROGRAM_SETUP_ROUTE_HANDLE;
+export const handle = COACH_PROGRAM_ROUTE_HANDLE;
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData, location }) => [
   {

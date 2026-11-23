@@ -199,7 +199,7 @@ export class CoachProgramController {
           versionNumber: draft.versionNumber,
           content: draft.content,
           updatedAt: draft.updatedAt.toISOString(),
-          blockSetup: reading.blockSetup,
+          startingBlockSetup: reading.startingBlockSetup,
           cardioExercises: reading.cardioExercises,
         };
       }

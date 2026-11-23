@@ -7,7 +7,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { PROGRAM_SETUP_ROUTE_HANDLE } from "~/bounded-contexts/programs/training-programs/public/paths";
+import { COACH_PROGRAM_ROUTE_HANDLE } from "~/bounded-contexts/programs/training-programs/public/paths";
 import type { ProgramCreateOutcome } from "~/bounded-contexts/programs/training-programs/public/program-setup";
 import { trainingProgramsContext } from "~/bounded-contexts/programs/training-programs/adapters/inbound/http/context.server";
 
@@ -58,7 +58,7 @@ export async function clientAction({
   }
 }
 
-export const handle = PROGRAM_SETUP_ROUTE_HANDLE;
+export const handle = COACH_PROGRAM_ROUTE_HANDLE;
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
   {

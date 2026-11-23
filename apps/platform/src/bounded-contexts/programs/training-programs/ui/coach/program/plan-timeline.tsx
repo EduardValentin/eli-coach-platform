@@ -148,7 +148,11 @@ function BlockHead({ block, index, layout }: BlockHeadProps) {
   );
 }
 
-function stepFrom(key: string, week: number, total: number): number | null {
+function weekReachedByKey(
+  key: string,
+  week: number,
+  total: number,
+): number | null {
   if (key === "ArrowRight") return Math.min(week + 1, total);
   if (key === "ArrowLeft") return Math.max(week - 1, 1);
   if (key === "Home") return 1;
@@ -171,7 +175,7 @@ export function PlanTimeline({ blocks, onOpenBlock }: PlanTimelineProps) {
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const week = Number((event.target as HTMLElement).dataset.week);
     if (!week) return;
-    const next = stepFrom(event.key, week, totalWeeks);
+    const next = weekReachedByKey(event.key, week, totalWeeks);
     if (next === null) return;
     event.preventDefault();
     cells.current.get(next)?.focus();

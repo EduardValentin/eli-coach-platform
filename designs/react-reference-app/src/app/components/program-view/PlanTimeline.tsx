@@ -1,4 +1,4 @@
-import type { BuilderWeekDates } from '../../services/programWriteService';
+import type { BuilderWeekDates } from '../../services/builderWeekDates';
 import { format } from 'date-fns';
 import { Fragment, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router';

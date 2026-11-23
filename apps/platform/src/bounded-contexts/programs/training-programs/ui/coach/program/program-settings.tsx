@@ -8,7 +8,7 @@ import type {
 
 import { OptionSelect, type Option } from "./option-select";
 
-type SettingsPatch = { level?: ClientLevel; language?: ProgramLanguage };
+export type SettingsPatch = { level?: ClientLevel; language?: ProgramLanguage };
 
 type ProgramSettingsProps = {
   level: ClientLevel;

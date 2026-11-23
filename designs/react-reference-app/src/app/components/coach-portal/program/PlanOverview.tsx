@@ -1,4 +1,4 @@
-import type { BuilderWeekDates } from '../../../services/programWriteService';
+import type { BuilderWeekDates } from '../../../services/builderWeekDates';
 import type { ReactNode } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';

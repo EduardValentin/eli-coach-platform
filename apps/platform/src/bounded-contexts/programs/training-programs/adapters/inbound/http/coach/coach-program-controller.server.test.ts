@@ -119,7 +119,7 @@ const DRAFT_READING: ProgramDraftReading = {
   level: "intermediate",
   language: "ro",
   draft: { versionNumber: 1, content: CONTENT, updatedAt: SAVED_AT },
-  blockSetup: {
+  startingBlockSetup: {
     splitShape: "upper-lower",
     trainingDays: 4,
     sessionMinutes: 45,
@@ -641,7 +641,7 @@ describe("CoachProgramController loadDraft", () => {
       versionNumber: 1,
       content: CONTENT,
       updatedAt: "2026-11-21T10:30:00.000Z",
-      blockSetup: {
+      startingBlockSetup: {
         splitShape: "upper-lower",
         trainingDays: 4,
         sessionMinutes: 45,

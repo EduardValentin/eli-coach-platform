@@ -83,7 +83,7 @@ function draftView(
     versionNumber: 1,
     content: beginnerPlan(),
     updatedAt: OPENED_AT,
-    blockSetup: BLOCK_SETUP,
+    startingBlockSetup: BLOCK_SETUP,
     cardioExercises: [],
     ...overrides,
   };

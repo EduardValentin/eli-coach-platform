@@ -16,7 +16,7 @@ export function InsertionLine({ isOver, canDrop }: DropReadiness) {
           "bg-transparent": !canDrop,
         },
       )}
-      data-parity="block-insertion-line"
+      data-parity="insertion-line"
     />
   );
 }

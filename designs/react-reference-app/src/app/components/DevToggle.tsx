@@ -75,7 +75,8 @@ import { FOOD_SEEDS } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
 import { PROGRAM_LOAD_OUTCOMES } from '../services/programLoadService';
-import { BUILDER_WEEK_DATES, DRAFT_SAVE_OUTCOMES, PROGRAM_WRITE_OUTCOMES } from '../services/programWriteService';
+import { BUILDER_WEEK_DATES } from '../services/builderWeekDates';
+import { DRAFT_SAVE_OUTCOMES, PROGRAM_WRITE_OUTCOMES } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES } from '../services/recipePhotoService';
 import {
   RESOURCE_LOAD_OUTCOMES,

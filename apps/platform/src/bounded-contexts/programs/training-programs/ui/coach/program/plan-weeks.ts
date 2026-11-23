@@ -1,5 +1,9 @@
 import type { Block } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
+export function weeksText(weeks: number): string {
+  return `${weeks} ${weeks === 1 ? "week" : "weeks"}`;
+}
+
 export type WeekSpan = { startWeek: number; endWeek: number };
 
 export function blockSpan(

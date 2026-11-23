@@ -12,6 +12,7 @@ import {
 
 import { PlanBlockList, type BlocksUpdate } from "./plan-block-list";
 import { PlanTimeline } from "./plan-timeline";
+import { weeksText } from "./plan-weeks";
 
 type PlanOverviewProps = {
   content: ProgramContent;
@@ -22,10 +23,6 @@ type PlanOverviewProps = {
   onUseSuggestion: () => void;
   settings: ReactNode;
 };
-
-function weeksText(weeks: number): string {
-  return `${weeks} ${weeks === 1 ? "week" : "weeks"}`;
-}
 
 function SuggestionBanner({
   level,

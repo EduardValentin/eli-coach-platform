@@ -62,11 +62,11 @@ export function useAutosavedDraft(stored: StoredDraft) {
   const latestStored = useRef(stored);
   latestStored.current = stored;
   const awaitingReload = useRef(false);
-  const shown = useRef(draft);
-  const marker = useRef(stored.updatedAt);
+  const latestDraft = useRef(draft);
+  const expectedUpdatedAt = useRef(stored.updatedAt);
   const edits = useRef({ made: 0, saved: 0 });
   const failingNow = useRef(false);
-  const refused = useRef(false);
+  const changedElsewhere = useRef(false);
   const queuedSave = useRef<number | null>(null);
   const inFlight = useRef<Promise<SaveResult> | null>(null);
 
@@ -86,13 +86,13 @@ export function useAutosavedDraft(stored: StoredDraft) {
   }
 
   function show(next: BuilderDraft) {
-    shown.current = next;
+    latestDraft.current = next;
     setDraft(next);
   }
 
   function applyAnswer(answer: DraftSaveAnswer, sentAtEdit: number) {
     if (answer.status === "changed-elsewhere") {
-      refused.current = true;
+      changedElsewhere.current = true;
       cancelQueuedSave();
       stopFailing();
       setState("changed-elsewhere");
@@ -103,7 +103,7 @@ export function useAutosavedDraft(stored: StoredDraft) {
       if (queuedSave.current === null) setState("not-saved");
       return;
     }
-    marker.current = answer.updatedAt;
+    expectedUpdatedAt.current = answer.updatedAt;
     edits.current.saved = sentAtEdit;
     if (failingNow.current) {
       stopFailing();
@@ -116,8 +116,8 @@ export function useAutosavedDraft(stored: StoredDraft) {
     const sentAtEdit = edits.current.made;
     setState("saving");
     const pending = saveProgramDraft(latestStored.current.clientId, {
-      ...shown.current,
-      updatedAt: marker.current,
+      ...latestDraft.current,
+      updatedAt: expectedUpdatedAt.current,
     });
     inFlight.current = pending.then((answer) => answer.status);
     const answer = await pending;
@@ -130,15 +130,15 @@ export function useAutosavedDraft(stored: StoredDraft) {
   async function saveNow(): Promise<SaveResult> {
     cancelQueuedSave();
     while (inFlight.current) await inFlight.current;
-    if (refused.current) return "changed-elsewhere";
+    if (changedElsewhere.current) return "changed-elsewhere";
     if (edits.current.saved === edits.current.made) return "saved";
 
     return send();
   }
 
   function change(update: DraftChange) {
-    if (refused.current) return;
-    show(update(shown.current));
+    if (changedElsewhere.current) return;
+    show(update(latestDraft.current));
     edits.current.made += 1;
     setState("saving");
     cancelQueuedSave();
@@ -163,9 +163,9 @@ export function useAutosavedDraft(stored: StoredDraft) {
   useEffect(() => {
     if (!awaitingReload.current) return;
     awaitingReload.current = false;
-    marker.current = stored.updatedAt;
+    expectedUpdatedAt.current = stored.updatedAt;
     edits.current = { made: 0, saved: 0 };
-    refused.current = false;
+    changedElsewhere.current = false;
     show(draftOf(stored));
     setState("unchanged");
   }, [stored.content, stored.updatedAt]);

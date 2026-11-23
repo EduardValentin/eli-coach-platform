@@ -24,6 +24,7 @@ import {
 } from "./destructive-confirm";
 import { DragPreview, InsertionLine } from "./dnd-parts";
 import { useEditorAnnouncer } from "./editor-announcer";
+import { weeksText } from "./plan-weeks";
 import { useWeeksField, WeeksField, WeeksFieldNotes } from "./weeks-field";
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
@@ -52,10 +53,6 @@ function moved(blocks: Block[], from: number, to: number): Block[] {
 
 function replaceAt(blocks: Block[], index: number, block: Block): Block[] {
   return blocks.map((other, at) => (at === index ? block : other));
-}
-
-function weeksText(weeks: number): string {
-  return `${weeks} ${weeks === 1 ? "week" : "weeks"}`;
 }
 
 function splitLabel(block: Block): string {

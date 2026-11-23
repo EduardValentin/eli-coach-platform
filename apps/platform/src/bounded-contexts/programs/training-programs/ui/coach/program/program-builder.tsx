@@ -54,11 +54,12 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   const announce = useEditorAnnouncer();
   const main = useRef<HTMLElement>(null);
   const placeHeading = useRef<HTMLHeadingElement>(null);
-  const blockAdded = useRef(false);
-  const focusAfterAdding = useMemo<RefObject<HTMLElement | null>>(
+  const focusHeadingOnClose = useRef(false);
+  // Read as the dialog closes: the place heading remounts once the new block opens.
+  const addDialogReturnFocus = useMemo<RefObject<HTMLElement | null>>(
     () => ({
       get current() {
-        return blockAdded.current ? placeHeading.current : null;
+        return focusHeadingOnClose.current ? placeHeading.current : null;
       },
     }),
     [],
@@ -71,7 +72,7 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   }, [placeKey]);
 
   function addBlock(type: BlockType, weeks: number) {
-    blockAdded.current = true;
+    focusHeadingOnClose.current = true;
     setAddingBlock(false);
     builder.addBlock(type, weeks);
     announce(
@@ -81,7 +82,7 @@ function ProgramBuilder({ view }: { view: DraftView }) {
 
   function startAddingBlock() {
     setRailOpen(false);
-    blockAdded.current = false;
+    focusHeadingOnClose.current = false;
     setAddingBlock(true);
   }
 
@@ -146,7 +147,7 @@ function ProgramBuilder({ view }: { view: DraftView }) {
           onAdd={addBlock}
           onOpenChange={setAddingBlock}
           open={addingBlock}
-          returnFocusTo={focusAfterAdding}
+          returnFocusTo={addDialogReturnFocus}
         />
         <ChangedElsewhereDialog
           onReload={saving.reload}

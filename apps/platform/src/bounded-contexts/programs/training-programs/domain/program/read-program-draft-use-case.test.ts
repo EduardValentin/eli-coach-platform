@@ -4,8 +4,7 @@ import type { CardioExercise } from "./cardio-exercises-port";
 import type { ClientCoaching } from "./client-coaching-port";
 import type { ClientIdentity } from "./client-identity-port";
 import { Program } from "./program";
-import type { Block, ProgramContent } from "./program-content";
-import { ProgramSuggestions } from "./program-suggestions";
+import type { ProgramContent } from "./program-content";
 import type { ProgramVersionSnapshot } from "./program-version";
 import { ReadProgramDraftUseCase } from "./read-program-draft-use-case";
 
@@ -72,24 +71,6 @@ const DRAFT_VERSION: ProgramVersionSnapshot = {
   updatedAt: SAVED,
 };
 
-function initialBlock(): Block {
-  let id = 0;
-  const programSuggestions = new ProgramSuggestions({
-    cardioExercises: [],
-    newId: () => `id-${(id += 1)}`,
-  });
-
-  return programSuggestions.newBlock("foundation", 4, {
-    setup: {
-      splitShape: "full-body",
-      trainingDays: 3,
-      sessionMinutes: 60,
-      dailySteps: 6000,
-      language: "en",
-    },
-  });
-}
-
 type Arrangement = {
   clients?: ClientIdentity[];
   coachingEnded?: boolean;
@@ -122,7 +103,7 @@ function readDraft({
 }
 
 describe("ReadProgramDraftUseCase", () => {
-  it("reads her draft with the program's level and language and when the draft was last saved", async () => {
+  it("reads her draft with the program's level and language, when the draft was last saved, and what a new block starts from", async () => {
     // arrange
     const readProgramDraftUseCase = readDraft({
       programs: [anasProgram([DRAFT_VERSION])],
@@ -142,7 +123,7 @@ describe("ReadProgramDraftUseCase", () => {
       level: "intermediate",
       language: "ro",
       draft: { versionNumber: 1, content: CONTENT, updatedAt: SAVED },
-      blockSetup: {
+      startingBlockSetup: {
         splitShape: "upper-lower",
         trainingDays: 4,
         sessionMinutes: 45,
@@ -153,34 +134,7 @@ describe("ReadProgramDraftUseCase", () => {
     });
   });
 
-  it("takes a new block's split from the plan's first block", async () => {
-    // arrange
-    const block = initialBlock();
-    const readProgramDraftUseCase = readDraft({
-      programs: [
-        anasProgram([
-          {
-            ...DRAFT_VERSION,
-            content: { ...CONTENT, plan: { blocks: [block] } },
-          },
-        ]),
-      ],
-    });
-
-    // act
-    const reading = await readProgramDraftUseCase.execute({
-      clientId: CLIENT_ID,
-      coachAccountId: COACH_ACCOUNT_ID,
-    });
-
-    // assert
-    expect(reading).toMatchObject({
-      status: "draft",
-      blockSetup: { splitShape: block.split.shape },
-    });
-  });
-
-  it("sets up a new block from three days of an hour while her answers are not approved", async () => {
+  it("starts a new block from three days of an hour while her answers are not approved", async () => {
     // arrange
     const readProgramDraftUseCase = readDraft({
       clientCoaching: NOT_APPROVED,
@@ -196,7 +150,7 @@ describe("ReadProgramDraftUseCase", () => {
     // assert
     expect(reading).toMatchObject({
       status: "draft",
-      blockSetup: {
+      startingBlockSetup: {
         splitShape: "full-body",
         trainingDays: 3,
         sessionMinutes: 60,
