@@ -7,8 +7,6 @@ import {
   type Block,
   type BlockSetup,
   type BlockType,
-  type ClientLevel,
-  type ProgramLanguage,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 import { newBuilderId } from "./builder-editing";
