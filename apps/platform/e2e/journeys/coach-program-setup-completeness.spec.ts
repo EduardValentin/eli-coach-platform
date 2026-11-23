@@ -245,6 +245,7 @@ test(
       coachClient,
       databasePool,
       page,
+      programBuilder,
       programSetup,
       provisionClientInState,
       provisionCoach,
@@ -314,6 +315,8 @@ test(
     await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,
@@ -335,6 +338,7 @@ test(
       coachClient,
       coachClientProfile,
       page,
+      programBuilder,
       programSetup,
       provisionClientInState,
       provisionCoach,
@@ -384,6 +388,8 @@ test(
     release();
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,
@@ -406,6 +412,8 @@ test(
     await page.goto(`/coach/clients/${client.clientId}/program/new`);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await expectOneH1AndNoSkippedLevels(page);
   },
@@ -417,6 +425,7 @@ test(
   async ({
     coachClient,
     page,
+    programBuilder,
     programSetup,
     provisionClientInState,
     provisionCoach,
@@ -472,6 +481,8 @@ test(
 
     // assert
     await programSetup.expectNoProfileChangeQuestion(client.firstName);
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
   },
 );
@@ -584,6 +595,7 @@ test(
   async ({
     coachClient,
     page,
+    programBuilder,
     programSetup,
     provisionClientInState,
     provisionCoach,
@@ -644,6 +656,8 @@ test(
     await programSetup.confirmProfileChange(client.firstName);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
   },
 );
@@ -655,6 +669,7 @@ test(
     {
       coachClient,
       page,
+      programBuilder,
       programSetup,
       provisionClientInState,
       provisionCoach,
@@ -713,6 +728,8 @@ test(
     await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,
@@ -936,6 +953,7 @@ test(
       databasePool,
       page,
       portalRequests,
+      programBuilder,
       programSetup,
       provisionCoach,
       provisionSubscribedClient,
@@ -975,6 +993,8 @@ test(
     await programSetup.create();
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,
@@ -993,6 +1013,7 @@ test(
       databasePool,
       page,
       portalRequests,
+      programBuilder,
       programSetup,
       provisionCoach,
       provisionSubscribedClient,
@@ -1046,6 +1067,8 @@ test(
     await page.goto(`/coach/clients/${client.clientId}/program/new`);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectEndedDraftProgram(client.gender, {
       version: 1,
@@ -1133,6 +1156,7 @@ test(
   async ({
     coachClient,
     page,
+    programBuilder,
     programSetup,
     provisionClientInState,
     provisionCoach,
@@ -1221,6 +1245,8 @@ test(
     await programSetup.confirmProfileChangeWithKeyboard(client.firstName);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,
@@ -1242,6 +1268,7 @@ test(
       coachClient,
       databasePool,
       page,
+      programBuilder,
       programSetup,
       provisionClientInState,
       provisionCoach,
@@ -1289,6 +1316,8 @@ test(
     await programSetup.createConfirmingProfileChange(client.firstName);
 
     // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await expectOneH1AndNoSkippedLevels(page);
     await testInfo.attach("client-page-accessibility-tree", {
@@ -1306,6 +1335,7 @@ test(
       coachClient,
       databasePool,
       page,
+      programBuilder,
       programSetup,
       provisionClientInState,
       provisionCoach,
@@ -1347,6 +1377,8 @@ test(
     await programSetup.chooseFromSelect("Goal", "Muscle gain");
     await programSetup.toggleEquipment("Barbell");
     await programSetup.createConfirmingProfileChange(client.firstName);
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.goBackToClient(client.fullName);
     await coachClient.expectOpen(client.clientId);
     await coachClient.expectDraftProgram({
       version: 1,
