@@ -76,8 +76,7 @@ apps/platform/e2e/.runtime/
 # are committed; only per-session folders are ignored.
 .parity/sessions/
 
-# The architecture record is committed in this repository (docs/architecture/README.md);
-# its graph cache, findings and working files never are.
+# The architecture model is committed in this repository; the current picture
+# `arch collect` writes beside it, the graph cache, findings and working files never are.
 !docs/architecture/architecture.json
-!docs/architecture/current.md
 .architecture/
