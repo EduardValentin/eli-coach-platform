@@ -72,7 +72,7 @@ function SaveStateNote({ state }: { state: SaveState }) {
       {' '}
       <span className="whitespace-nowrap">
         {'· '}
-        <span className={cn({ 'inline-flex items-center gap-1 font-medium text-destructive': notSaved })}>
+        <span className={cn({ 'inline-flex items-center gap-1 align-top font-medium text-destructive': notSaved })}>
           {notSaved && <AlertCircle aria-hidden="true" size={12} />}
           {label}
         </span>
@@ -89,7 +89,7 @@ function FailedSaveAlert({ retrying, retryNow, placeHeading }: FailedSaveAlertPr
     <Alert
       className="order-last basis-full"
       action={
-        <AlertAction aria-disabled={retrying || undefined} onClick={retrying ? undefined : retryNow}>
+        <AlertAction aria-disabled={retrying || undefined} onClick={retrying ? undefined : retryNow} className="aria-disabled:opacity-100">
           {retrying ? 'Trying again…' : 'Try again now'}
         </AlertAction>
       }
@@ -274,7 +274,11 @@ export function EditorTopBar({
 
   return (
     <>
-      <header className="@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
+      <header
+        className={cn('@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6', {
+          'max-h-[50dvh] overflow-y-auto': saving.failing,
+        })}
+      >
         <nav aria-label="Editor" className="flex shrink-0 items-center gap-4">
           <Button asChild variant="ghost" size="icon-sm">
             <Link to={clientDetailPathForJourney(journey)} aria-label={`Back to ${name}`}>
