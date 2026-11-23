@@ -2,7 +2,10 @@ import type {
   ProgramCardReading,
   ProgramIncidentsPort,
   ReadProgramCardUseCase,
+  ReadProgramDraftUseCase,
   ReadProgramSetupUseCase,
+  SaveProgramDraftResult,
+  SaveProgramDraftUseCase,
   StartProgramResult,
   StartProgramUseCase,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
@@ -23,6 +26,12 @@ import {
   type ProgramCardView,
 } from "~/bounded-contexts/programs/training-programs/public/program-card";
 import {
+  programDraftRefusalSchema,
+  programDraftSavedAnswerSchema,
+  programDraftSaveRequestSchema,
+  type ProgramDraftView,
+} from "~/bounded-contexts/programs/training-programs/public/program-draft";
+import {
   programSetupChoices,
   programSetupRequestSchema,
   type ProgramCreateOutcome,
@@ -37,6 +46,8 @@ type CoachProgramControllerOptions = {
   readProgramCardUseCase: ReadProgramCardUseCase;
   readProgramSetupUseCase: ReadProgramSetupUseCase;
   startProgramUseCase: StartProgramUseCase;
+  readProgramDraftUseCase: ReadProgramDraftUseCase;
+  saveProgramDraftUseCase: SaveProgramDraftUseCase;
   unitOfWork: UnitOfWork;
   programIncidentsPort: ProgramIncidentsPort;
 };
@@ -45,7 +56,20 @@ type ProgramReading = Extract<ProgramCardReading, { status: "program" }>;
 
 type StartCommand = Parameters<StartProgramUseCase["execute"]>[0];
 
+type DraftRefusal = Exclude<
+  SaveProgramDraftResult["status"],
+  "saved" | "not-well-formed" | "unknown-client"
+>;
+
 const PROGRAM_SETUP_REQUEST_MAX_BYTES = 16 * 1024;
+
+const PROGRAM_DRAFT_REQUEST_MAX_BYTES = 1024 * 1024;
+
+const DRAFT_REFUSAL_STATUS: Record<DraftRefusal, number> = {
+  "changed-elsewhere": 409,
+  "not-a-draft": 409,
+  "no-program": 404,
+};
 
 const clientIdSchema = z.uuid();
 
@@ -138,6 +162,95 @@ export class CoachProgramController {
         return { status: "invalid", problems: result.problems };
       case "failed":
         return { status: "failed" };
+    }
+  }
+
+  async loadDraft(
+    args: LoaderFunctionArgs,
+    clientId: string | undefined,
+  ): Promise<ProgramDraftView> {
+    const target = this.requireCoachClientId(args, clientId);
+    const reading = await this.options.readProgramDraftUseCase.execute({
+      clientId: target,
+    });
+
+    switch (reading.status) {
+      case "unknown-client":
+        throw this.notFoundResponse();
+      case "no-draft":
+        throw redirect(coachClientPath(target));
+      case "no-program":
+        return { state: "no-program", client: reading.client };
+      case "draft": {
+        const { client, coachingEnded, level, language, draft } = reading;
+
+        return {
+          state: "draft",
+          client,
+          coachingEnded,
+          level,
+          language,
+          versionNumber: draft.versionNumber,
+          content: draft.content,
+          updatedAt: draft.updatedAt.toISOString(),
+        };
+      }
+    }
+  }
+
+  async saveDraft(
+    args: ActionFunctionArgs,
+    clientId: string | undefined,
+  ): Promise<Response> {
+    args.context.get(accessContext).requirePortalAccess("COACH");
+    const target = clientIdSchema.safeParse(clientId);
+
+    if (!target.success) {
+      return this.notFoundResponse();
+    }
+
+    const request = programDraftSaveRequestSchema.safeParse(
+      await readJsonRequestBody(args.request, {
+        maxBytes: PROGRAM_DRAFT_REQUEST_MAX_BYTES,
+      }),
+    );
+
+    if (!request.success) {
+      return createBadRequestResponse("The program draft could not be read.");
+    }
+
+    const { updatedAt, ...draft } = request.data;
+    const result = await this.options.unitOfWork(() =>
+      this.options.saveProgramDraftUseCase.execute({
+        clientId: target.data,
+        ...draft,
+        expectedUpdatedAt: new Date(updatedAt),
+      }),
+    );
+
+    return this.draftSaveResponse(result);
+  }
+
+  private draftSaveResponse(result: SaveProgramDraftResult): Response {
+    switch (result.status) {
+      case "saved":
+        return Response.json(
+          programDraftSavedAnswerSchema.parse({
+            status: "saved",
+            updatedAt: result.updatedAt.toISOString(),
+          }),
+        );
+      case "not-well-formed":
+        return createBadRequestResponse(
+          "The program draft is not well formed.",
+        );
+      case "unknown-client":
+        return this.notFoundResponse();
+      default:
+        return Response.json(
+          programDraftRefusalSchema.parse({ error: result.status }),
+          { status: DRAFT_REFUSAL_STATUS[result.status] },
+        );
     }
   }
 

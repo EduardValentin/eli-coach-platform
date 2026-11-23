@@ -2,7 +2,9 @@ import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import {
   ReadProgramCardUseCase,
+  ReadProgramDraftUseCase,
   ReadProgramSetupUseCase,
+  SaveProgramDraftUseCase,
   StartProgramUseCase,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
 import type { ClockPort } from "~/bounded-contexts/programs/training-programs/domain/clock-port";
@@ -61,6 +63,11 @@ export function composeTrainingProgramsFeature(
           handles.cardioExercisesFacade,
         ),
         programIdsPort: new RandomProgramIdsAdapter(),
+        clockPort: handles.clockPort,
+      }),
+      readProgramDraftUseCase: new ReadProgramDraftUseCase(programReads),
+      saveProgramDraftUseCase: new SaveProgramDraftUseCase({
+        ...programReads,
         clockPort: handles.clockPort,
       }),
       unitOfWork: createUnitOfWork(handles.database),

@@ -1,9 +1,14 @@
 import type {
   DraftSummary,
   ProgramCardReading,
+  ProgramContent,
+  ProgramDraftReading,
   ProgramSetupReading,
   ReadProgramCardUseCase,
+  ReadProgramDraftUseCase,
   ReadProgramSetupUseCase,
+  SaveProgramDraftResult,
+  SaveProgramDraftUseCase,
   StartProgramResult,
   StartProgramUseCase,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
@@ -94,6 +99,33 @@ const READY_SETUP: ProgramSetupReading = {
     5: "upper-lower",
   },
 };
+
+const CONTENT: ProgramContent = {
+  header: { title: "Strong spring", focus: "", personalNote: "" },
+  plan: { blocks: [] },
+  nutritionNotes: "",
+  lifestyleNotes: "",
+};
+
+const SAVED_AT = new Date("2026-11-21T10:30:00.000Z");
+
+const NEWER_SAVED_AT = new Date("2026-11-21T10:31:00.000Z");
+
+const DRAFT_READING: ProgramDraftReading = {
+  status: "draft",
+  client: ANA,
+  coachingEnded: true,
+  level: "intermediate",
+  language: "ro",
+  draft: { versionNumber: 1, content: CONTENT, updatedAt: SAVED_AT },
+};
+
+const SAVE_REQUEST = {
+  content: CONTENT,
+  level: "advanced",
+  language: "en",
+  updatedAt: SAVED_AT.toISOString(),
+} as const;
 
 describe("CoachProgramController loadCard", () => {
   it.each([
@@ -577,11 +609,245 @@ describe("CoachProgramController create", () => {
   });
 });
 
+describe("CoachProgramController loadDraft", () => {
+  it("answers her draft with the program's level and language and the marker of the copy read", async () => {
+    // arrange
+    const { coachProgramController, readProgramDraft } = createController({
+      draft: DRAFT_READING,
+    });
+
+    // act
+    const view = await coachProgramController.loadDraft(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(view).toEqual({
+      state: "draft",
+      client: ANA,
+      coachingEnded: true,
+      level: "intermediate",
+      language: "ro",
+      versionNumber: 1,
+      content: CONTENT,
+      updatedAt: "2026-11-21T10:30:00.000Z",
+    });
+    expect(readProgramDraft).toHaveBeenCalledWith({ clientId: CLIENT_ID });
+  });
+
+  it("says she has no program yet", async () => {
+    // arrange
+    const { coachProgramController } = createController({
+      draft: { status: "no-program", client: ANA },
+    });
+
+    // act
+    const view = await coachProgramController.loadDraft(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(view).toEqual({ state: "no-program", client: ANA });
+  });
+
+  it("sends the coach to her page when her program holds no draft", async () => {
+    // arrange
+    const { coachProgramController } = createController({
+      draft: { status: "no-draft" },
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      coachProgramController.loadDraft(coachArgs(), CLIENT_ID),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe(CLIENT_PAGE);
+  });
+
+  it("answers not found for a client it does not know and for an id that is not one", async () => {
+    // arrange
+    const { coachProgramController } = createController({
+      draft: { status: "unknown-client" },
+    });
+
+    // act
+    const unknown = await captureThrown(() =>
+      coachProgramController.loadDraft(coachArgs(), CLIENT_ID),
+    );
+    const malformed = await captureThrown(() =>
+      coachProgramController.loadDraft(coachArgs(), "not-a-client-id"),
+    );
+
+    // assert
+    expect((unknown as Response).status).toBe(404);
+    expect((malformed as Response).status).toBe(404);
+  });
+
+  it("refuses a signed-in client and sends a signed-out visitor to sign in, reading nothing", async () => {
+    // arrange
+    const { coachProgramController, readProgramDraft } = createController();
+
+    // act
+    const client = await captureThrown(() =>
+      coachProgramController.loadDraft(
+        coachArgs({ session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
+    );
+    const visitor = await captureThrown(() =>
+      coachProgramController.loadDraft(
+        coachArgs({ session: ANONYMOUS_SESSION }),
+        CLIENT_ID,
+      ),
+    );
+
+    // assert
+    expect((client as Response).status).toBe(403);
+    expect((visitor as Response).status).toBe(302);
+    expect((visitor as Response).headers.get("Location")).toContain(
+      "accounts.evoa.fit/sign-in",
+    );
+    expect(readProgramDraft).not.toHaveBeenCalled();
+  });
+});
+
+describe("CoachProgramController saveDraft", () => {
+  it("saves the whole draft with its level and language inside one unit of work and answers the new marker", async () => {
+    // arrange
+    const { coachProgramController, saveProgramDraft, unitOfWork } =
+      createController({
+        save: { status: "saved", updatedAt: NEWER_SAVED_AT },
+      });
+
+    // act
+    const response = await coachProgramController.saveDraft(
+      saveArgs(SAVE_REQUEST),
+      CLIENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: "saved",
+      updatedAt: "2026-11-21T10:31:00.000Z",
+    });
+    expect(unitOfWork).toHaveBeenCalledOnce();
+    expect(saveProgramDraft).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      content: CONTENT,
+      level: "advanced",
+      language: "en",
+      expectedUpdatedAt: SAVED_AT,
+    });
+  });
+
+  it.each([
+    ["changed-elsewhere", 409],
+    ["not-a-draft", 409],
+    ["no-program", 404],
+  ] as const)(
+    "answers a save refused as %s so the builder can tell it apart",
+    async (status, httpStatus) => {
+      // arrange
+      const { coachProgramController } = createController({
+        save: { status },
+      });
+
+      // act
+      const response = await coachProgramController.saveDraft(
+        saveArgs(SAVE_REQUEST),
+        CLIENT_ID,
+      );
+
+      // assert
+      expect(response.status).toBe(httpStatus);
+      expect(await response.json()).toEqual({ error: status });
+    },
+  );
+
+  it("answers a bad request for a draft that is not well formed", async () => {
+    // arrange
+    const { coachProgramController } = createController({
+      save: { status: "not-well-formed" },
+    });
+
+    // act
+    const response = await coachProgramController.saveDraft(
+      saveArgs(SAVE_REQUEST),
+      CLIENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+  });
+
+  it("answers a bad request for a draft it cannot read, without saving", async () => {
+    // arrange
+    const { coachProgramController, saveProgramDraft } = createController();
+
+    // act
+    const response = await coachProgramController.saveDraft(
+      saveArgs({ ...SAVE_REQUEST, level: "expert" }),
+      CLIENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(saveProgramDraft).not.toHaveBeenCalled();
+  });
+
+  it("answers not found for a client it does not know and for an id that is not one", async () => {
+    // arrange
+    const { coachProgramController, saveProgramDraft } = createController({
+      save: { status: "unknown-client" },
+    });
+
+    // act
+    const unknown = await coachProgramController.saveDraft(
+      saveArgs(SAVE_REQUEST),
+      CLIENT_ID,
+    );
+    const malformed = await coachProgramController.saveDraft(
+      saveArgs(SAVE_REQUEST),
+      "not-a-client-id",
+    );
+
+    // assert
+    expect(unknown.status).toBe(404);
+    expect(malformed.status).toBe(404);
+    expect(saveProgramDraft).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a signed-in client and sends a signed-out visitor to sign in, saving nothing", async () => {
+    // arrange
+    const { coachProgramController, saveProgramDraft } = createController();
+
+    // act
+    const client = await captureThrown(() =>
+      coachProgramController.saveDraft(
+        saveArgs(SAVE_REQUEST, { session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
+    );
+    const visitor = await captureThrown(() =>
+      coachProgramController.saveDraft(
+        saveArgs(SAVE_REQUEST, { session: ANONYMOUS_SESSION }),
+        CLIENT_ID,
+      ),
+    );
+
+    // assert
+    expect((client as Response).status).toBe(403);
+    expect((visitor as Response).status).toBe(302);
+    expect(saveProgramDraft).not.toHaveBeenCalled();
+  });
+});
+
 function createController(
   options: {
     card?: ProgramCardReading;
     setup?: ProgramSetupReading;
     start?: StartProgramResult;
+    draft?: ProgramDraftReading;
+    save?: SaveProgramDraftResult;
   } = {},
 ) {
   const readProgramCard = vi
@@ -593,6 +859,14 @@ function createController(
   const startProgram = vi
     .fn()
     .mockResolvedValue(options.start ?? { status: "started" });
+  const readProgramDraft = vi
+    .fn()
+    .mockResolvedValue(options.draft ?? { status: "unknown-client" });
+  const saveProgramDraft = vi
+    .fn()
+    .mockResolvedValue(
+      options.save ?? { status: "saved", updatedAt: NEWER_SAVED_AT },
+    );
   const unitOfWork = vi.fn((work: () => Promise<unknown>) => work());
   const programStartFailed = vi.fn();
   const coachProgramController = new CoachProgramController({
@@ -605,6 +879,12 @@ function createController(
     startProgramUseCase: {
       execute: startProgram,
     } as unknown as StartProgramUseCase,
+    readProgramDraftUseCase: {
+      execute: readProgramDraft,
+    } as unknown as ReadProgramDraftUseCase,
+    saveProgramDraftUseCase: {
+      execute: saveProgramDraft,
+    } as unknown as SaveProgramDraftUseCase,
     unitOfWork: unitOfWork as UnitOfWork,
     programIncidentsPort: { programStartFailed },
   });
@@ -614,6 +894,8 @@ function createController(
     readProgramCard,
     readProgramSetup,
     startProgram,
+    readProgramDraft,
+    saveProgramDraft,
     unitOfWork,
     programStartFailed,
   };
@@ -637,6 +919,20 @@ function createArgs(
       headers: { "Content-Type": "application/json" },
       method: "POST",
     }),
+  });
+}
+
+function saveArgs(body: unknown, options: { session?: ResolvedSession } = {}) {
+  return createRequestArgs({
+    ...sessionAccess(options.session),
+    request: new Request(
+      `https://evoa.fit/api/coach/clients/${CLIENT_ID}/program/draft`,
+      {
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+      },
+    ),
   });
 }
 

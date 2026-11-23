@@ -38,6 +38,7 @@ import {
   programSetupPage,
   SIGNED_OUT,
   TrainingProgramsJourney,
+  type DraftRow,
   type ProgramSetupRequest,
   type StoredBlock,
 } from "~integration-test-config/training-programs-journey";
@@ -75,6 +76,83 @@ const PREFILLED_BEGINNER_SETUP: ProgramSetupRequest = {
   splitShape: "full-body",
   equipment: ["Full gym", "Dumbbells"],
 };
+
+type WeekEntry =
+  | { kind: "session"; sessionId: string }
+  | { kind: "cardio"; cardioId: string }
+  | { kind: "rest" };
+
+const EMPTY_WEEK: Record<string, WeekEntry> = {
+  mon: { kind: "rest" },
+  tue: { kind: "rest" },
+  wed: { kind: "rest" },
+  thu: { kind: "rest" },
+  fri: { kind: "rest" },
+  sat: { kind: "rest" },
+  sun: { kind: "rest" },
+};
+
+function emptySession(id: string, name: string) {
+  return {
+    id,
+    originId: id,
+    name,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, items: [] },
+    rows: [],
+  };
+}
+
+function block(id: string, type: string, weeks: number) {
+  const calendar: Record<string, WeekEntry> = {
+    ...EMPTY_WEEK,
+    tue: { kind: "session", sessionId: `${id}-a` },
+    fri: { kind: "session", sessionId: `${id}-b` },
+    sun: { kind: "cardio", cardioId: `${id}-walk` },
+  };
+
+  return {
+    id,
+    originId: id,
+    type,
+    weeks,
+    trainingDays: 2,
+    calibrationWeek: false,
+    introText: "",
+    clientNote: "",
+    split: { shape: "full-body", name: "", text: "" },
+    targetMinutes: 45,
+    calendar,
+    sessions: [
+      emptySession(`${id}-a`, "Full Body A"),
+      emptySession(`${id}-b`, "Full Body B"),
+    ],
+    cardioSessions: [
+      {
+        id: `${id}-walk`,
+        originId: `${id}-walk`,
+        name: "Cardio",
+        segments: [],
+      },
+    ],
+    dailySteps: 8000,
+    missedDayNote: "",
+  };
+}
+
+function reshapedPlan(...blocks: ReturnType<typeof block>[]) {
+  return {
+    header: { title: "", focus: "", personalNote: "" },
+    plan: { blocks },
+    nutritionNotes: "",
+    lifestyleNotes: "",
+  };
+}
+
+const RESHAPED_PLAN = reshapedPlan(
+  block("block-1", "foundation", 3),
+  block("block-2", "strength", 5),
+);
 
 const STRUCTURED_EXPERIENCE =
   "I train consistently and follow a structured program";
@@ -689,6 +767,181 @@ describe("a client's training program, from her profile", () => {
     });
   });
 
+  describe("saving her draft", () => {
+    it("saves the changed draft as the coach sent it and answers the new marker, and her page shows it", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      const createdAt = await holdClockAfter(rig.now());
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const savedAt = await holdClockAfter(createdAt);
+
+      // act
+      const response = await programs.saveDraft(COACH_SESSION, clientId, {
+        content: RESHAPED_PLAN,
+        level: "beginner",
+        language: "en",
+        updatedAt: createdAt.toISOString(),
+      });
+
+      // assert
+      const page = await programs.openClientPage(COACH_SESSION, clientId);
+      const texts = textNodesOf(await visibleDocument(page));
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        status: "saved",
+        updatedAt: savedAt.toISOString(),
+      });
+      expect(await programs.draftRowsOf(clientId)).toEqual([
+        { content: RESHAPED_PLAN, updatedAt: savedAt },
+      ]);
+      expect(texts).toContain("Foundation · 3 wk");
+      expect(texts).toContain("Strength · 5 wk");
+      expect(texts).not.toContain("Hypertrophy · 6 wk");
+    });
+
+    it("saves a change of level and language with the draft", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      const createdAt = await holdClockAfter(rig.now());
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      await holdClockAfter(createdAt);
+
+      // act
+      const response = await programs.saveDraft(COACH_SESSION, clientId, {
+        content: RESHAPED_PLAN,
+        level: "advanced",
+        language: "ro",
+        updatedAt: createdAt.toISOString(),
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await programs.programRowsOf(clientId)).toEqual([
+        expect.objectContaining({ level: "advanced", language: "ro" }),
+      ]);
+    });
+
+    it("refuses a save from an older copy as changed elsewhere and keeps the newer draft", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      const createdAt = await holdClockAfter(rig.now());
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const savedAt = await holdClockAfter(createdAt);
+      await expectSaved(
+        programs.saveDraft(COACH_SESSION, clientId, {
+          content: RESHAPED_PLAN,
+          level: "beginner",
+          language: "en",
+          updatedAt: createdAt.toISOString(),
+        }),
+      );
+      await holdClockAfter(savedAt);
+
+      // act
+      const response = await programs.saveDraft(COACH_SESSION, clientId, {
+        content: reshapedPlan(block("block-9", "hypertrophy", 8)),
+        level: "advanced",
+        language: "ro",
+        updatedAt: createdAt.toISOString(),
+      });
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({ error: "changed-elsewhere" });
+      expect(await programs.draftRowsOf(clientId)).toEqual([
+        { content: RESHAPED_PLAN, updatedAt: savedAt },
+      ]);
+      expect(await programs.programRowsOf(clientId)).toEqual([
+        expect.objectContaining({ level: "beginner", language: "en" }),
+      ]);
+    });
+
+    it("refuses a draft that is not well formed and keeps the stored one", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      const createdAt = await holdClockAfter(rig.now());
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const stored = await storedDraftOf(clientId);
+      const save = (content: unknown) =>
+        programs.saveDraft(COACH_SESSION, clientId, {
+          content,
+          level: "beginner",
+          language: "en",
+          updatedAt: createdAt.toISOString(),
+        });
+
+      // act
+      const longDeload = await save(
+        reshapedPlan(
+          block("block-1", "foundation", 3),
+          block("block-2", "deload", 2),
+        ),
+      );
+      const noWeeks = await save(
+        reshapedPlan(block("block-1", "foundation", 0)),
+      );
+      const unknownDay = await save(
+        reshapedPlan({
+          ...block("block-1", "foundation", 3),
+          calendar: {
+            ...EMPTY_WEEK,
+            mon: { kind: "session", sessionId: "gone" },
+          },
+        }),
+      );
+
+      // assert
+      expect(
+        [longDeload, noWeeks, unknownDay].map((response) => response.status),
+      ).toEqual([400, 400, 400]);
+      expect(await programs.draftRowsOf(clientId)).toEqual([stored]);
+    });
+
+    it("answers that she has no program yet", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+
+      // act
+      const response = await programs.saveDraft(COACH_SESSION, clientId, {
+        content: RESHAPED_PLAN,
+        level: "beginner",
+        language: "en",
+        updatedAt: rig.now().toISOString(),
+      });
+
+      // assert
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: "no-program" });
+    });
+
+    it("answers 404 for a client no one paid for and for an id that is not one", async () => {
+      // arrange
+      const request = {
+        content: RESHAPED_PLAN,
+        level: "beginner",
+        language: "en",
+        updatedAt: rig.now().toISOString(),
+      };
+
+      // act
+      const unknown = await programs.saveDraft(
+        COACH_SESSION,
+        UNKNOWN_CLIENT_ID,
+        request,
+      );
+      const malformed = await programs.saveDraft(
+        COACH_SESSION,
+        "not-a-client",
+        request,
+      );
+
+      // assert
+      expect(unknown.status).toBe(404);
+      expect(malformed.status).toBe(404);
+    });
+  });
+
   describe("access", () => {
     it("keeps a signed-in client out of the setup page", async () => {
       // arrange
@@ -760,6 +1013,46 @@ describe("a client's training program, from her profile", () => {
       expect(await programs.programRowsOf(clientId)).toEqual([]);
     });
 
+    it("refuses a signed-in client's draft save and saves nothing", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const stored = await storedDraftOf(clientId);
+      await rig.provisionClient();
+
+      // act
+      const response = await programs.saveDraft(CLIENT_SESSION, clientId, {
+        content: RESHAPED_PLAN,
+        level: "beginner",
+        language: "en",
+        updatedAt: stored.updatedAt.toISOString(),
+      });
+
+      // assert
+      expect(response.status).toBe(403);
+      expect(await programs.draftRowsOf(clientId)).toEqual([stored]);
+    });
+
+    it("sends a signed-out visitor's draft save to sign in and saves nothing", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const stored = await storedDraftOf(clientId);
+
+      // act
+      const response = await programs.saveDraft(SIGNED_OUT, clientId, {
+        content: RESHAPED_PLAN,
+        level: "beginner",
+        language: "en",
+        updatedAt: stored.updatedAt.toISOString(),
+      });
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toContain("/sign-in");
+      expect(await programs.draftRowsOf(clientId)).toEqual([stored]);
+    });
+
     it("sends a signed-out visitor from the client's page to sign in", async () => {
       // arrange
       const clientId = await programs.approvedClient(ANA_CLIENT);
@@ -803,6 +1096,31 @@ async function endHerCoaching(): Promise<void> {
 
   if (response.status !== 200) {
     throw new Error(`Ending her coaching answered ${response.status}.`);
+  }
+}
+
+async function storedDraftOf(clientId: string): Promise<DraftRow> {
+  const [draft] = await programs.draftRowsOf(clientId);
+
+  if (!draft) {
+    throw new Error("Her program holds no draft.");
+  }
+
+  return draft;
+}
+
+async function holdClockAfter(instant: Date): Promise<Date> {
+  const later = new Date(instant.getTime() + 60_000);
+  await rig.holdClock(later);
+
+  return later;
+}
+
+async function expectSaved(saving: Promise<Response>): Promise<void> {
+  const response = await saving;
+
+  if (response.status !== 200) {
+    throw new Error(`Saving her draft answered ${response.status}.`);
   }
 }
 
