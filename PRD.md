@@ -394,6 +394,7 @@ Every entity in this section is in the MVP.
 13. The coach previews the program as the client sees it.
 14. A publish checklist lists what Business Rules 31–33 refuse, which blocks publishing, and what they warn about, which the coach may publish past; while she edits, she sees how many warnings there are. The coach can also discard the draft.
 15. The coach's program page reads the published version in the same view as the client (Business Rule 37), without the client's what-changed notice, and adds only the coach's actions: she opens the PDF document of a published version, continues the draft or starts the next version, sees every version including the draft, and goes from an exercise's detail to that exercise in her library. It also tells her when an empty block starts within sight (Business Rule 32).
+16. The draft saves as the coach works; there is no Save button. While a change is being saved the builder says so, and once it is saved it says so quietly. When a save fails she is told, her changes stay on screen, saving keeps trying by itself and she can try again now. Leaving the builder or closing the page while a change is not yet saved warns her first. When the same draft is open in two places, the place holding the older copy is told at its next save that the draft changed elsewhere: that save is refused, nothing is saved over the newer draft, and she must reload to see the newer draft before editing again.
 
 ## 7. Foods and Recipes (`/coach/nutrition`)
 
