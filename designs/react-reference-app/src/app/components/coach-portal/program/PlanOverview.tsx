@@ -7,6 +7,7 @@ import { blockingMessage, sequenceProblems, type BlockingCode, type RuleFinding 
 import { suggestedBlocks } from '../../../domain/programSuggestions';
 import { counted } from '../../../utils/counted';
 import { Button } from '../../ui/button';
+import { usePlaceHeading } from './placeHeading';
 import { PlanBlockList, type BlocksUpdate } from './PlanBlockList';
 import { PlanTimeline } from '../../program-view/PlanTimeline';
 
@@ -32,13 +33,20 @@ const LEVEL_LABELS: Record<LevelHint, string> = {
 };
 
 function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => void }) {
+  const placeHeading = usePlaceHeading();
   const plan = suggestedBlocks(level)
     .map(block => `${BLOCK_TYPE_LABELS[block.type]} ${counted(block.weeks, 'week')}`)
     .join(' → ');
   return (
     <div data-parity="suggestion-banner" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-base p-4">
       <p className="text-sm text-text-primary">{`Suggested for a ${LEVEL_LABELS[level]} client: ${plan}`}</p>
-      <Button size="sm" onClick={onUse}>
+      <Button
+        size="sm"
+        onClick={() => {
+          onUse();
+          placeHeading.current?.focus();
+        }}
+      >
         Use suggestion
       </Button>
     </div>

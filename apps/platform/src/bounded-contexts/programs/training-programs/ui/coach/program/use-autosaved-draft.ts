@@ -184,7 +184,13 @@ export function useAutosavedDraft(stored: StoredDraft) {
     // that started failing stays correct.
   }, [failing]);
 
-  useEffect(() => cancelQueuedSave, []);
+  // Leaving with a change still queued sends it rather than dropping it.
+  useEffect(
+    () => () => {
+      if (queuedSave.current !== null) void saveNow();
+    },
+    [],
+  );
 
   const saving: DraftSaving = {
     state,

@@ -92,6 +92,7 @@ function draftView(
 type SaveRequestBody = { level: string; language: string; updatedAt: string };
 
 const server = setupServer();
+let router: ReturnType<typeof createMemoryRouter>;
 const saveRequests: SaveRequestBody[] = [];
 let storedView: ProgramDraftView = draftView();
 
@@ -253,6 +254,58 @@ describe("the program builder", () => {
     ).toBeInTheDocument();
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Hypertrophy block added as block 4",
+    );
+  });
+});
+
+describe("focus and title as the plan changes", () => {
+  it("moves focus to the place heading once the last block is removed and again after using the suggestion", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    const user = await renderBuilder();
+    for (const type of ["Foundation", "Hypertrophy"]) {
+      await removeFirstBlock(user, type);
+    }
+
+    // act
+    await removeFirstBlock(user, "Deload");
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Overview" }),
+      ).toHaveFocus(),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Use suggestion" }));
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Overview" }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it("titles the page after the place, also for a block added in this visit", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    const user = await renderBuilder();
+
+    // act
+    await user.click(
+      within(sectionList()).getByRole("button", { name: "Add block" }),
+    );
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Add block",
+      }),
+    );
+
+    // assert
+    await waitFor(() =>
+      expect(document.title).toBe("Block 4 · Hypertrophy · Jane Doe | Evoa"),
     );
   });
 });
@@ -533,6 +586,26 @@ describe("leaving with unsaved changes", () => {
     expect(saveRequests).toHaveLength(sentBefore);
   });
 
+  it("still sends a change queued for saving when she leaves by the browser history", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    const user = await renderBuilder();
+    await chooseLevel(user, "Advanced");
+
+    // act
+    await act(() => router.navigate(`/coach/clients/${CLIENT_ID}`));
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { name: "Client page" }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(saveRequests).toEqual([
+        expect.objectContaining({ level: "advanced" }),
+      ]),
+    );
+  });
+
   it("warns on closing the tab only while a change is unsent", async () => {
     // arrange
     answerSaves(savedAt(FIRST_SAVE_AT));
@@ -556,6 +629,17 @@ function unloadIsHeld(): boolean {
   window.dispatchEvent(event);
 
   return event.defaultPrevented;
+}
+
+async function removeFirstBlock(
+  user: ReturnType<typeof userEvent.setup>,
+  type: string,
+) {
+  await user.click(
+    screen.getByRole("button", { name: `Remove block 1, ${type}` }),
+  );
+  const confirm = screen.queryByRole("button", { name: "Remove block" });
+  if (confirm) await user.click(confirm);
 }
 
 function sectionList(): HTMLElement {
@@ -592,7 +676,7 @@ function chooseLanguage(
 
 async function renderBuilder() {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-  const router = createMemoryRouter(
+  router = createMemoryRouter(
     [
       {
         Component: ProgramBuilderRoute,

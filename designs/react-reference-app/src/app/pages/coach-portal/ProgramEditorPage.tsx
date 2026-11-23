@@ -18,6 +18,7 @@ import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar
 import { LeaveWarning } from '../../components/coach-portal/program/LeaveWarning';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutline } from '../../components/coach-portal/program/ProgramOutline';
+import { PlaceHeadingContext } from '../../components/coach-portal/program/placeHeading';
 import { ProgramSetupNotReady, ProgramSetupSheet, ProgramSetupSkeleton } from '../../components/coach-portal/program/ProgramSetupSheet';
 import type { FindingTarget } from '../../components/coach-portal/program/ProgramFindings';
 import { PublishDialog } from '../../components/coach-portal/program/PublishDialog';
@@ -134,7 +135,8 @@ function ProgramEditor(props: EditorProps) {
 
   return (
     <Sheet open={railOpen && !isDesktop} onOpenChange={setRailOpen}>
-      <EditorShell data-parity-root="ProgramEditorPage">
+      <PlaceHeadingContext.Provider value={placeHeading}>
+        <EditorShell data-parity-root="ProgramEditorPage">
         <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
         <EditorTopBar
           journey={journey}
@@ -228,7 +230,8 @@ function ProgramEditor(props: EditorProps) {
         />
         <ChangedElsewhereDialog open={saving.state === 'changed-elsewhere'} onReload={saving.reload} returnFocusTo={placeHeading} />
         <LeaveWarning draftPath={`${programPath}/draft`} saving={saving} />
-      </EditorShell>
+        </EditorShell>
+      </PlaceHeadingContext.Provider>
     </Sheet>
   );
 }

@@ -7,8 +7,11 @@ import {
 import { COACH_PROGRAM_ROUTE_HANDLE } from "~/bounded-contexts/programs/training-programs/public/paths";
 import { trainingProgramsContext } from "~/bounded-contexts/programs/training-programs/adapters/inbound/http/context.server";
 
-import { clientName } from "./editor-top-bar";
-import { builderPlaceTitle, ProgramBuilderView } from "./program-builder";
+import {
+  builderPlaceTitle,
+  builderTitle,
+  ProgramBuilderView,
+} from "./program-builder";
 
 export function loader(args: LoaderFunctionArgs) {
   return args.context
@@ -21,7 +24,10 @@ export const handle = COACH_PROGRAM_ROUTE_HANDLE;
 export const meta: MetaFunction<typeof loader> = ({ loaderData, location }) => [
   {
     title: loaderData
-      ? `${builderPlaceTitle(loaderData, location.hash)} · ${clientName(loaderData.client)} | Evoa`
+      ? builderTitle(
+          builderPlaceTitle(loaderData, location.hash),
+          loaderData.client,
+        )
       : "Program | Evoa",
   },
 ];

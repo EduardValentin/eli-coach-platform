@@ -25,6 +25,7 @@ import {
 import { DragPreview, InsertionLine } from "./dnd-parts";
 import { useEditorAnnouncer } from "./editor-announcer";
 import { weeksText } from "./plan-weeks";
+import { usePlaceHeading } from "./place-heading";
 import { useWeeksField, WeeksField, WeeksFieldNotes } from "./weeks-field";
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
@@ -287,8 +288,8 @@ export function PlanBlockList({
   const announce = useEditorAnnouncer();
   const handles = useRef(new Map<string, HTMLButtonElement>());
   const openers = useRef(new Map<string, HTMLButtonElement>());
-  const addButton = useRef<HTMLButtonElement>(null);
   const confirm = useDestructiveConfirm();
+  const placeHeading = usePlaceHeading();
   const focusAfterMove = useRef<string | null>(null);
 
   useEffect(() => {
@@ -319,8 +320,9 @@ export function PlanBlockList({
           ),
       }),
       returnFocus: trigger,
-      focusAfterApply:
-        (neighbour && openers.current.get(neighbour.id)) ?? addButton.current,
+      focusAfterApply: neighbour
+        ? openers.current.get(neighbour.id)
+        : placeHeading.current,
     });
   }
 
@@ -369,12 +371,7 @@ export function PlanBlockList({
           </li>
         ))}
       </ol>
-      <Button
-        className="mt-2"
-        onClick={onAddBlock}
-        ref={addButton}
-        variant="ghost"
-      >
+      <Button className="mt-2" onClick={onAddBlock} variant="ghost">
         <Plus aria-hidden="true" />
         Add block
       </Button>

@@ -30,12 +30,19 @@ import { EditorSectionContent } from "./editor-section-content";
 import { sectionFromHash, sectionHash, sectionTitle } from "./editor-section";
 import { clientName, EditorTopBar } from "./editor-top-bar";
 import { LeaveWarning } from "./leave-warning";
+import { PlaceHeadingContext } from "./place-heading";
 import { ProgramOutline } from "./program-outline";
 import { useBuilderState, type DraftView } from "./use-builder-state";
 
 const EDITOR_ID = "editor";
 const DEAD_END_PAGE_CLASS =
   "min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16";
+
+type TitledClient = Parameters<typeof clientName>[0];
+
+export function builderTitle(placeTitle: string, client: TitledClient): string {
+  return `${placeTitle} · ${clientName(client)} | Evoa`;
+}
 
 export function builderPlaceTitle(view: ProgramDraftView, hash: string) {
   if (view.state === "no-program") return "No program yet";
@@ -66,10 +73,15 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   );
   const { blocks } = draft.content.plan;
   const placeKey = sectionHash(selected);
+  const placeTitle = sectionTitle(selected, blocks);
 
   useEffect(() => {
     if (main.current) main.current.scrollTop = 0;
   }, [placeKey]);
+
+  useEffect(() => {
+    document.title = builderTitle(placeTitle, view.client);
+  }, [placeTitle, view.client]);
 
   function addBlock(type: BlockType, weeks: number) {
     focusHeadingOnClose.current = true;
@@ -88,77 +100,79 @@ function ProgramBuilder({ view }: { view: DraftView }) {
 
   return (
     <Sheet onOpenChange={setRailOpen} open={railOpen && !isDesktop}>
-      <div
-        className="fixed inset-0 z-50 flex flex-col bg-surface-subtle"
-        data-parity-root="ProgramEditorPage"
-      >
-        <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
-        <EditorTopBar
-          client={view.client}
-          coachingEnded={view.coachingEnded}
-          onOverview={
-            selected.kind === "plan"
-              ? null
-              : () => builder.select({ kind: "plan" })
-          }
-          placeHeading={placeHeading}
-          placeTitle={sectionTitle(selected, blocks)}
-          railToggle={
-            <SheetTrigger
-              aria-label="Program sections"
-              className={cn(
-                buttonVariants({ size: "icon-sm", variant: "ghost" }),
-                "lg:hidden",
-              )}
-            >
-              <ListTree size={20} />
-            </SheetTrigger>
-          }
-          saving={saving}
-          versionNumber={view.versionNumber}
-        />
-        <div className="flex min-h-0 flex-1 flex-row gap-0">
-          <ProgramOutline
-            blocks={blocks}
-            onAddBlock={startAddingBlock}
-            onSelect={(section) => {
-              builder.select(section);
-              setRailOpen(false);
-            }}
-            selected={selected}
+      <PlaceHeadingContext.Provider value={placeHeading}>
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-surface-subtle"
+          data-parity-root="ProgramEditorPage"
+        >
+          <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
+          <EditorTopBar
+            client={view.client}
+            coachingEnded={view.coachingEnded}
+            onOverview={
+              selected.kind === "plan"
+                ? null
+                : () => builder.select({ kind: "plan" })
+            }
+            placeHeading={placeHeading}
+            placeTitle={placeTitle}
+            railToggle={
+              <SheetTrigger
+                aria-label="Program sections"
+                className={cn(
+                  buttonVariants({ size: "icon-sm", variant: "ghost" }),
+                  "lg:hidden",
+                )}
+              >
+                <ListTree size={20} />
+              </SheetTrigger>
+            }
+            saving={saving}
+            versionNumber={view.versionNumber}
           />
-          <main
-            aria-label="Program editor"
-            className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
-            id={EDITOR_ID}
-            ref={main}
-            tabIndex={-1}
-          >
-            <div className="mx-auto w-full max-w-5xl flex-none">
-              <EditorSectionContent
-                builder={builder}
-                onAddBlock={startAddingBlock}
-              />
-            </div>
-          </main>
+          <div className="flex min-h-0 flex-1 flex-row gap-0">
+            <ProgramOutline
+              blocks={blocks}
+              onAddBlock={startAddingBlock}
+              onSelect={(section) => {
+                builder.select(section);
+                setRailOpen(false);
+              }}
+              selected={selected}
+            />
+            <main
+              aria-label="Program editor"
+              className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] focus:outline-none lg:p-6"
+              id={EDITOR_ID}
+              ref={main}
+              tabIndex={-1}
+            >
+              <div className="mx-auto w-full max-w-5xl flex-none">
+                <EditorSectionContent
+                  builder={builder}
+                  onAddBlock={startAddingBlock}
+                />
+              </div>
+            </main>
+          </div>
+          <AddBlockDialog
+            lastBlock={blocks.at(-1)}
+            onAdd={addBlock}
+            onOpenChange={setAddingBlock}
+            open={addingBlock}
+            returnFocusTo={addDialogReturnFocus}
+          />
+          <ChangedElsewhereDialog
+            onReload={saving.reload}
+            open={saving.state === "changed-elsewhere"}
+            returnFocusTo={placeHeading}
+          />
+          <LeaveWarning
+            builderPath={programBuilderPath(view.client.clientId)}
+            saving={saving}
+          />
         </div>
-        <AddBlockDialog
-          lastBlock={blocks.at(-1)}
-          onAdd={addBlock}
-          onOpenChange={setAddingBlock}
-          open={addingBlock}
-          returnFocusTo={addDialogReturnFocus}
-        />
-        <ChangedElsewhereDialog
-          onReload={saving.reload}
-          open={saving.state === "changed-elsewhere"}
-          returnFocusTo={placeHeading}
-        />
-        <LeaveWarning
-          builderPath={programBuilderPath(view.client.clientId)}
-          saving={saving}
-        />
-      </div>
+      </PlaceHeadingContext.Provider>
     </Sheet>
   );
 }

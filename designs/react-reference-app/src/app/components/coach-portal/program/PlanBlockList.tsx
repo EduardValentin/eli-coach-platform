@@ -17,6 +17,7 @@ import { useEditorAnnouncer } from './editorAnnouncer';
 import { blockProgress, BlockTypeSelect, filledSessionsText, STARTED_BLOCK_REASON } from './blockParts';
 import { BlockNumber } from '../../program-view/BlockNumber';
 import { useDestructiveConfirm, removeBlockRequest } from './DestructiveConfirm';
+import { usePlaceHeading } from './placeHeading';
 import { useWeeksField, WeeksField, WeeksFieldNotes } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
@@ -219,6 +220,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
   const openers = useRef(new Map<string, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement>(null);
   const confirm = useDestructiveConfirm();
+  const placeHeading = usePlaceHeading();
   const focusAfterMove = useRef<string | null>(null);
   const firstMovable = statuses.reduce((first, status, index) => (status.kind === 'upcoming' ? first : index + 1), 0);
 
@@ -241,7 +243,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
     confirm.request({
       ...removeBlockRequest(block, index, () => onChange(current => current.filter(other => other.id !== block.id))),
       returnFocus: trigger,
-      focusAfterApply: (neighbour && openers.current.get(neighbour.id)) ?? addButton.current,
+      focusAfterApply: neighbour ? openers.current.get(neighbour.id) : placeHeading.current,
     });
   }
 

@@ -151,7 +151,13 @@ export function useAutosavedDraft(stored: Program) {
     if (edits.current.made === 0) show(stored);
   }, [stored]);
 
-  useEffect(() => cancelQueuedSave, []);
+  // Leaving with a change still queued sends it rather than dropping it; saveNow reads only refs.
+  useEffect(
+    () => () => {
+      if (queuedSave.current !== null) void saveNow();
+    },
+    [],
+  );
 
   const saving: DraftSaving = {
     state,

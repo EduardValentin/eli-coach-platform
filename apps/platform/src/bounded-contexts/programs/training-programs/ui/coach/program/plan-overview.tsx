@@ -11,6 +11,7 @@ import {
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 import { PlanBlockList, type BlocksUpdate } from "./plan-block-list";
+import { usePlaceHeading } from "./place-heading";
 import { PlanTimeline } from "./plan-timeline";
 import { weeksText } from "./plan-weeks";
 
@@ -31,6 +32,7 @@ function SuggestionBanner({
   level: ClientLevel;
   onUse: () => void;
 }) {
+  const placeHeading = usePlaceHeading();
   const plan = ProgramSuggestions.suggestedBlocks(level)
     .map(
       (block) => `${BLOCK_TYPE_LABELS[block.type]} ${weeksText(block.weeks)}`,
@@ -43,7 +45,13 @@ function SuggestionBanner({
       data-parity="suggestion-banner"
     >
       <p className="text-sm text-text-primary">{`Suggested for a ${level} client: ${plan}`}</p>
-      <Button onClick={onUse} size="sm">
+      <Button
+        onClick={() => {
+          onUse();
+          placeHeading.current?.focus();
+        }}
+        size="sm"
+      >
         Use suggestion
       </Button>
     </div>

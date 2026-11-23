@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
+import { useNavigate } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderProgramEditor, stubEditorBrowserApis } from '../../../../test/renderProgramEditor';
 import { useAppState } from '../../../context/AppContext';
@@ -41,12 +42,22 @@ function DraftSavesSwitch() {
   );
 }
 
+function LeaveByHistory() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate('/coach/clients/c1')}>
+      Leave by the browser's history
+    </button>
+  );
+}
+
 function renderBuilder(draftSaves: 'works' | 'fails' | 'stale', user: UserEvent = userEvent.setup()): UserEvent {
   renderProgramEditor(`&pseed=draft&jstage=approved&pdraft=${draftSaves}`, {
     beside: (
       <>
         <StoredPlan />
         <DraftSavesSwitch />
+        <LeaveByHistory />
       </>
     ),
   });
@@ -409,6 +420,19 @@ describe('leaving the builder with unsaved changes', () => {
     // assert
     expect(await screen.findByText('Client page')).toBeInTheDocument();
     expect(screen.getByText('Stored plan: Foundation, Hypertrophy, Deload')).toBeInTheDocument();
+  });
+
+  it('still sends a change queued for saving when she leaves by the browser history', async () => {
+    // arrange
+    const user = renderBuilder('works');
+    await moveHypertrophyFirst(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: "Leave by the browser's history" }));
+
+    // assert
+    expect(screen.getByText('Client page')).toBeInTheDocument();
+    await screen.findByText('Stored plan: Hypertrophy, Foundation, Deload', undefined, SAVE_WAIT);
   });
 
   it('leaves at once when every change is saved', async () => {
