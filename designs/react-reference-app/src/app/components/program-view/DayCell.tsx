@@ -126,7 +126,7 @@ type DayFaceProps = { day: WeekDay; exercisesById: ExerciseLibrary; onOpen?: () 
 /** The plan and its length under the top line of a `compact` card; with `onOpen` it is the card's one open control. */
 export function DayFace({ day, exercisesById, onOpen }: DayFaceProps) {
   const { kind } = day.plan;
-  const length = dayLengthOf(day.plan, exercisesById)?.shown;
+  const length = dayLengthOf(day.plan, exercisesById);
   const face = (
     <>
       <span className={cn('line-clamp-2 text-sm font-medium text-balance break-words', KIND_NAME_CLASS[kind])} data-parity={`day-name-${day.weekday}`}>
@@ -135,9 +135,12 @@ export function DayFace({ day, exercisesById, onOpen }: DayFaceProps) {
       <span className="flex items-center gap-1.5">
         <DayGlyph day={day} />
         {length && (
-          <span aria-hidden="true" className={cn('text-sm tabular-nums', KIND_META_CLASS[kind])} data-parity={`day-length-${day.weekday}`}>
-            {length}
-          </span>
+          <>
+            <span aria-hidden="true" className={cn('text-sm tabular-nums', KIND_META_CLASS[kind])} data-parity={`day-length-${day.weekday}`}>
+              {length.shown}
+            </span>
+            <span className="sr-only">{length.spoken}</span>
+          </>
         )}
       </span>
     </>

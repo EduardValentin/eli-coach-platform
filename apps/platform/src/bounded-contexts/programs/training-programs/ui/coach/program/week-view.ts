@@ -37,15 +37,21 @@ export function dayPlanName(plan: DayPlan): string {
   return plan.kind === "cardio" ? plan.cardio.name : "Rest";
 }
 
-export function dayLengthOf(plan: DayPlan): string | null {
+type DayLength = { shown: string; spoken: string };
+
+export function dayLengthOf(plan: DayPlan): DayLength | null {
   if (plan.kind === "session") {
-    return SessionTiming.estimatedDuration(
-      SessionTiming.routineMinutes(plan.session),
-    );
+    const minutes = SessionTiming.routineMinutes(plan.session);
+
+    return {
+      shown: SessionTiming.estimatedDuration(minutes),
+      spoken: `about ${minutes} min`,
+    };
   }
   if (plan.kind === "rest" || plan.cardio.segments.length === 0) return null;
+  const minutes = `${SessionTiming.cardioMinutes(plan.cardio)} min`;
 
-  return `${SessionTiming.cardioMinutes(plan.cardio)} min`;
+  return { shown: minutes, spoken: minutes };
 }
 
 export function weekdayAbbreviation(weekday: Weekday): string {

@@ -33,8 +33,14 @@ import { LeaveWarning } from "./leave-warning";
 import { PlaceHeadingContext } from "./place-heading";
 import { ProgramOutline } from "./program-outline";
 import { useBuilderState, type DraftView } from "./use-builder-state";
+import { useHydrated } from "./use-hydrated";
 
 const EDITOR_ID = "editor";
+
+// Runs while the page is parsed: an address naming a block keeps the builder
+// hidden until hydration has opened that block, so the overview never shows.
+const HIDE_UNTIL_SECTION_SCRIPT =
+  'if (location.hash.indexOf("#block-") === 0) document.currentScript.parentElement.style.visibility = "hidden";';
 const DEAD_END_PAGE_CLASS =
   "min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16";
 
@@ -61,6 +67,8 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   const [addingBlock, setAddingBlock] = useState(false);
   const announce = useEditorAnnouncer();
   const main = useRef<HTMLElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const hydrated = useHydrated();
   const placeHeading = useRef<HTMLHeadingElement>(null);
   const focusHeadingOnClose = useRef(false);
   // Read as the dialog closes: the place heading remounts once the new block opens.
@@ -84,6 +92,10 @@ function ProgramBuilder({ view }: { view: DraftView }) {
     document.title = builderDocumentTitle(placeTitle, view.client);
   }, [placeTitle, view.client]);
 
+  useEffect(() => {
+    if (hydrated) root.current?.style.removeProperty("visibility");
+  }, [hydrated]);
+
   function addBlock(type: BlockType, weeks: number) {
     focusHeadingOnClose.current = true;
     setAddingBlock(false);
@@ -105,7 +117,12 @@ function ProgramBuilder({ view }: { view: DraftView }) {
         <div
           className="fixed inset-0 z-50 flex flex-col bg-surface-subtle"
           data-parity-root="ProgramEditorPage"
+          ref={root}
+          suppressHydrationWarning
         >
+          <script
+            dangerouslySetInnerHTML={{ __html: HIDE_UNTIL_SECTION_SCRIPT }}
+          />
           <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
           <EditorTopBar
             client={view.client}

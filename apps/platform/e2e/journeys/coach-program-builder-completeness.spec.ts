@@ -282,3 +282,44 @@ test(
     await expectLayoutFits(page);
   },
 );
+
+test(
+  "opening the builder at a block's address shows that block from the first paint and hydrates without a mismatch",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    page,
+    programBuilder,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await programBuilder.openBlockFromSections(2, "Hypertrophy");
+    await programBuilder.watchForOverviewPaint();
+    const consoleErrors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") consoleErrors.push(message.text());
+    });
+    page.on("pageerror", (error) => consoleErrors.push(error.message));
+
+    // act
+    await page.reload();
+
+    // assert
+    await programBuilder.expectOnBlock(2, "Hypertrophy");
+    await programBuilder.expectNoOverviewPainted();
+    expect(consoleErrors.filter((error) => /hydrat/i.test(error))).toEqual([]);
+  },
+);

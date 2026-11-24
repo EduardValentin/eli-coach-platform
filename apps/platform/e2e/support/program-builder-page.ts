@@ -5,6 +5,8 @@ import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export type PlanRow = { type: string; weeks: string };
 
+const OVERVIEW_PAINTED_KEY = "e2e-overview-painted";
+
 const SAVE_REQUEST = /\/api\/coach\/clients\/[^/]+\/program\/draft$/;
 
 export class ProgramBuilderPage {
@@ -120,6 +122,34 @@ export class ProgramBuilderPage {
       })
       .click();
     await this.expectOnBlock(position, type);
+  }
+
+  // Watches every animation frame from the document's start, so a heading
+  // painted only before hydration is still caught.
+  async watchForOverviewPaint(): Promise<void> {
+    await this.page.addInitScript((OVERVIEW_PAINTED_KEY) => {
+      sessionStorage.removeItem(OVERVIEW_PAINTED_KEY);
+      const watch = () => {
+        const heading = document.querySelector("h1");
+        if (
+          heading?.textContent === "Overview" &&
+          heading.checkVisibility({ visibilityProperty: true })
+        ) {
+          sessionStorage.setItem(OVERVIEW_PAINTED_KEY, "true");
+        }
+        requestAnimationFrame(watch);
+      };
+      requestAnimationFrame(watch);
+    }, OVERVIEW_PAINTED_KEY);
+  }
+
+  async expectNoOverviewPainted(): Promise<void> {
+    const painted = await this.page.evaluate(
+      (key) => sessionStorage.getItem(key),
+      OVERVIEW_PAINTED_KEY,
+    );
+
+    expect(painted).toBeNull();
   }
 
   async openOverview(): Promise<void> {

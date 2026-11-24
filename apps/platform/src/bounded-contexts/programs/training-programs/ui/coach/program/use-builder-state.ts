@@ -19,6 +19,7 @@ import {
 import type { BlocksUpdate } from "./plan-block-list";
 import type { SettingsPatch } from "./program-settings";
 import { useAutosavedDraft, type BuilderDraft } from "./use-autosaved-draft";
+import { useHydrated } from "./use-hydrated";
 
 export type DraftView = Extract<ProgramDraftView, { state: "draft" }>;
 
@@ -35,6 +36,7 @@ export function useBuilderState(view: DraftView) {
     updatedAt: view.updatedAt,
   });
   const location = useLocation();
+  const hydrated = useHydrated();
   const navigate = useNavigate();
   const programSuggestions = useMemo(
     () =>
@@ -45,7 +47,9 @@ export function useBuilderState(view: DraftView) {
     [view.cardioExercises],
   );
   const { blocks } = draft.content.plan;
-  const selected = sectionFromHash(location.hash, blocks);
+  // The server cannot see the address's hash, so hydration starts on the
+  // overview and the section follows once the page is hydrated.
+  const selected = hydrated ? sectionFromHash(location.hash, blocks) : OVERVIEW;
 
   function select(section: EditorSection) {
     navigate(

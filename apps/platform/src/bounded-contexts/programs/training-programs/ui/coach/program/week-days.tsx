@@ -179,7 +179,7 @@ function BuilderWeekTabs({ block, days, onChoose }: BuilderWeekProps) {
   const [selected, setSelected] = useState<Weekday>(() => initialRailDay(days));
   const day =
     days.find((candidate) => candidate.weekday === selected) ?? days[0];
-  const length = dayLengthOf(day.plan);
+  const length = dayLengthOf(day.plan)?.shown;
 
   return (
     <Tabs

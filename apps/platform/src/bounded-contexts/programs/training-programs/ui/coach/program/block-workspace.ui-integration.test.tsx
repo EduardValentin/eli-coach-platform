@@ -662,6 +662,16 @@ describe("the week", () => {
     expect(dayCard("Monday")).toHaveTextContent("0 min");
   });
 
+  it("gives a screen reader each day's estimated length", () => {
+    // arrange, act
+    renderWorkspace({ block: newBlock() });
+
+    // assert
+    const spoken = within(dayCard("Monday")).getByText("about 0 min");
+    expect(spoken.closest("[aria-hidden='true']")).toBeNull();
+    expect(dayCard("Tuesday")).toHaveTextContent("30 min");
+  });
+
   it("gives a rest day no length", () => {
     // arrange, act
     renderWorkspace({ block: newBlock() });

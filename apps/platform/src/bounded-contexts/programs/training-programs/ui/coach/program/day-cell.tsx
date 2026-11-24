@@ -119,13 +119,16 @@ export function DayFace({ day }: { day: WeekDay }) {
       <span className="flex items-center gap-1.5">
         <DayGlyph day={day} />
         {length && (
-          <span
-            aria-hidden="true"
-            className={cn("text-sm tabular-nums", KIND_META_CLASS[kind])}
-            data-parity={`day-length-${day.weekday}`}
-          >
-            {length}
-          </span>
+          <>
+            <span
+              aria-hidden="true"
+              className={cn("text-sm tabular-nums", KIND_META_CLASS[kind])}
+              data-parity={`day-length-${day.weekday}`}
+            >
+              {length.shown}
+            </span>
+            <span className="sr-only">{length.spoken}</span>
+          </>
         )}
       </span>
     </div>
