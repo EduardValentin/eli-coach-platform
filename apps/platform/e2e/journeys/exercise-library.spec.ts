@@ -861,6 +861,74 @@ test(
 );
 
 test(
+  "on a phone the coach changes a resistance exercise's movement pattern and role by keyboard from its row menu, and they outlast a reload",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const saved = hipThrustNamed(`Good morning ${scenarioTag}`);
+    const changed: SavedExercise = {
+      name: saved.name,
+      type: "Resistance",
+      unit: "Reps",
+      sides: "Both sides together",
+      primaryMuscles: saved.primaryMuscles,
+      secondaryMuscles: saved.secondaryMuscles,
+      equipment: saved.equipment,
+      difficulty: saved.difficulty,
+      pattern: "Core",
+      role: "Isolation",
+      tags: saved.tags,
+      cues: saved.cues,
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createAccepted(saved);
+    await setPhoneViewport(page);
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(saved.name);
+
+    // act
+    await exerciseEditor.choosePatternAndRoleWithKeyboard(changed);
+
+    // assert
+    await exerciseEditor.expectEntries(changed);
+    await exerciseEditor.expectFits();
+
+    // act
+    await exerciseEditor.saveChanges();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise updated");
+    await exerciseLibrary.expectListed({
+      name: changed.name,
+      summary: "Resistance · Core · Barbell, Bench",
+      tags: changed.tags,
+      primaryMuscles: changed.primaryMuscles,
+      difficulty: changed.difficulty,
+    });
+
+    // act
+    await exerciseLibrary.edit(changed.name);
+    await exerciseEditor.reload();
+
+    // assert
+    await exerciseEditor.expectEditing(changed);
+  },
+);
+
+test(
   "the coach tags an exercise Conditioning and the library's Tags filter narrows to it",
   { tag: "@completeness" },
   async ({

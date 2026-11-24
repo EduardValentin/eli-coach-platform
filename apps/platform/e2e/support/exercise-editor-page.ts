@@ -9,6 +9,7 @@ import {
 
 import type { SampleVideo } from "./exercise-video-files";
 import { tabTo } from "./keyboard";
+import { expectLayoutFits } from "./layout-fit";
 import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { expectButtonsAlongTopEdgeOf } from "./overlay-bar";
 
@@ -721,6 +722,20 @@ export class ExerciseEditorPage {
     await expect(this.select(ROLE_FIELD)).toHaveText(
       choices.role ?? ROLE_PLACEHOLDER,
     );
+  }
+
+  async choosePatternAndRoleWithKeyboard(
+    choices: Pick<SavedExercise, "pattern" | "role">,
+  ): Promise<void> {
+    await this.waitUntilInteractiveByKeyboard();
+    if (choices.pattern) {
+      await this.chooseByKeyboard(PATTERN_FIELD, choices.pattern);
+    }
+    if (choices.role) await this.chooseByKeyboard(ROLE_FIELD, choices.role);
+  }
+
+  async expectFits(): Promise<void> {
+    await expectLayoutFits(this.page);
   }
 
   async expectNoPatternOrRole(): Promise<void> {

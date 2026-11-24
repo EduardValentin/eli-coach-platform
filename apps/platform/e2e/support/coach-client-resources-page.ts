@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { expectAccessRefused } from "./control-states";
+import { expectOneH1AndNoSkippedLevels } from "./heading-outline";
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { ResourceCards, type ResourceCardFacts } from "./resource-cards";
@@ -181,6 +182,10 @@ export class CoachClientResourcesPage {
     ).toBeVisible();
     await expect(this.backLinkTo(fullName)).toBeVisible();
     await expect(this.addButton).toHaveCount(0);
+    await expect(
+      this.page.getByRole("heading", { name: "Resources", exact: true }),
+    ).toHaveCount(0);
+    await expectOneH1AndNoSkippedLevels(this.page);
   }
 
   async retry(): Promise<void> {
