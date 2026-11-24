@@ -117,6 +117,16 @@ describe("Select", () => {
     );
   });
 
+  it("shows its placeholder in the soft placeholder colour", () => {
+    // arrange, act
+    renderHourSelect();
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Start" })).toHaveClass(
+      "data-[placeholder]:text-placeholder-soft",
+    );
+  });
+
   it("opens the listbox of options from the keyboard", async () => {
     // arrange
     const user = userEvent.setup();

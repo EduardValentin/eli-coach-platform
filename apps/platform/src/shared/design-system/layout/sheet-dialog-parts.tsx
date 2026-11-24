@@ -45,7 +45,7 @@ export function SheetDialogHeader({
   return (
     <div
       className={cn(
-        "shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8",
+        "relative shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8",
         RULE_COLOR_CLASS[rule],
       )}
       data-parity="sheet-header"
