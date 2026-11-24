@@ -490,7 +490,17 @@
         "waitFor": "[data-parity=\"cancel-problem\"]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "open-cancel-dialog"
+      },
+      {
+        "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"cancel-problem\"]"
+      }
+    ]
   },
   "cancel-no-refund-toast": [
     {
@@ -2777,6 +2787,11 @@
       "click": "role=button[name=\"Save changes\" s]"
     }
   ],
+  "exercise-video-server-refused": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    }
+  ],
   "expand-approved-onboarding": [
     {
       "click": "[data-parity-root=\"OnboardingPanel\"] [data-slot=\"accordion-trigger\"]"
@@ -3882,7 +3897,7 @@
       "wait": 1200
     },
     {
-      "hover": "[role=\"dialog\"] h3"
+      "hover": "[role=\"dialog\"] h2"
     }
   ],
   "open-approve-confirm": [
@@ -4690,6 +4705,11 @@
     ],
     "real": []
   },
+  "photo-browser-refusal": [
+    {
+      "use": "tick-photo-consent"
+    }
+  ],
   "plan-overview-empty": [
     {
       "use": "builder-opened"
@@ -5369,6 +5389,11 @@
     },
     {
       "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "resource-refused-by-server": [
+    {
+      "use": "open-add-resource-dialog"
     }
   ],
   "resource-viewer-next": [
@@ -6394,7 +6419,17 @@
         "waitFor": "[data-parity=\"start-now-problem\"]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "open-start-now-dialog"
+      },
+      {
+        "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"start-now-problem\"]"
+      }
+    ]
   },
   "status-approved": {
     "prototype": [
