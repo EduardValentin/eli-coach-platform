@@ -3,24 +3,26 @@ import { describe, expect, it } from "vitest";
 import {
   DIFFICULTIES,
   EQUIPMENT,
+  EXERCISE_ROLES,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
   EXERCISE_UNITS,
   MAX_EXERCISE_NAME_LENGTH,
   MAX_FORM_CUES_LENGTH,
+  MOVEMENT_PATTERNS,
   MUSCLES,
   defaultUnitFor,
   unitsFor,
 } from "./vocabulary";
 
 describe("exercise vocabulary", () => {
-  it("holds the five types, the four units, the three difficulties and the three tags in the library's order", () => {
+  it("holds the five types, the four units, the three difficulties and the four tags in the library's order", () => {
     // arrange
     const expected = {
       types: ["resistance", "cardio", "mobility", "stretching", "breathing"],
       units: ["reps", "time", "distance", "breaths"],
       difficulties: ["Beginner", "Intermediate", "Advanced"],
-      tags: ["Strength", "Hypertrophy", "Recovery"],
+      tags: ["Strength", "Hypertrophy", "Recovery", "Conditioning"],
     };
 
     // act
@@ -52,6 +54,32 @@ describe("exercise vocabulary", () => {
       "Kettlebell",
     ]);
     expect(EQUIPMENT.at(-1)).toBe("Jump rope");
+  });
+
+  it("holds the eleven movement patterns and the three roles of a resistance exercise in the library's order", () => {
+    // arrange
+    const expected = {
+      patterns: [
+        "squat",
+        "lunge",
+        "hinge",
+        "horizontal-push",
+        "vertical-push",
+        "horizontal-pull",
+        "vertical-pull",
+        "core",
+        "carry",
+        "isolation",
+        "conditioning",
+      ],
+      roles: ["main-compound", "secondary-compound", "isolation"],
+    };
+
+    // act
+    const vocabulary = { patterns: MOVEMENT_PATTERNS, roles: EXERCISE_ROLES };
+
+    // assert
+    expect(vocabulary).toEqual(expected);
   });
 
   it("limits the name to 80 characters and the form cues to 1,000", () => {

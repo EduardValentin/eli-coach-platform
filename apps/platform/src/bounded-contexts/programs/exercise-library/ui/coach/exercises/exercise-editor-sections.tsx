@@ -27,10 +27,14 @@ import {
   DIFFICULTY_LABELS,
   EQUIPMENT,
   EQUIPMENT_LABELS,
+  EXERCISE_ROLE_LABELS,
+  EXERCISE_ROLES,
   EXERCISE_TAG_LABELS,
   EXERCISE_TAGS,
   EXERCISE_TYPE_LABELS,
   EXERCISE_TYPES,
+  MOVEMENT_PATTERN_LABELS,
+  MOVEMENT_PATTERNS,
   MUSCLE_LABELS,
   MUSCLES,
   UNIT_EXAMPLES,
@@ -183,6 +187,10 @@ export function ExerciseWorkSection({
   const primaryProblemId = useId();
   const secondaryId = useId();
   const equipmentId = useId();
+  const patternId = useId();
+  const patternProblemId = useId();
+  const roleId = useId();
+  const roleProblemId = useId();
   const difficultyId = useId();
   const tagsLabelId = useId();
 
@@ -261,6 +269,77 @@ export function ExerciseWorkSection({
             summary="names"
           />
         </SettingsRow>
+        {values.type === "resistance" && (
+          <>
+            <SettingsRow
+              htmlFor={patternId}
+              layout="stacked"
+              problem={shownProblem(patternProblemId, problems.pattern)}
+              required
+              title="Movement pattern"
+            >
+              <Select
+                onValueChange={(chosen) => {
+                  const pattern = MOVEMENT_PATTERNS.find(
+                    (known) => known === chosen,
+                  );
+                  if (pattern) changeValues(form, { pattern });
+                }}
+                value={values.pattern ?? ""}
+              >
+                <SelectTrigger
+                  id={patternId}
+                  {...fieldProblemAttributes(
+                    patternProblemId,
+                    problems.pattern,
+                  )}
+                >
+                  <SelectValue placeholder="Choose a pattern">
+                    {values.pattern && MOVEMENT_PATTERN_LABELS[values.pattern]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {MOVEMENT_PATTERNS.map((pattern) => (
+                    <SelectItem key={pattern} value={pattern}>
+                      {MOVEMENT_PATTERN_LABELS[pattern]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingsRow>
+            <SettingsRow
+              htmlFor={roleId}
+              layout="stacked"
+              problem={shownProblem(roleProblemId, problems.role)}
+              required
+              title="Role"
+            >
+              <Select
+                onValueChange={(chosen) => {
+                  const role = EXERCISE_ROLES.find((known) => known === chosen);
+                  if (role) changeValues(form, { role });
+                }}
+                value={values.role ?? ""}
+              >
+                <SelectTrigger
+                  id={roleId}
+                  {...fieldProblemAttributes(roleProblemId, problems.role)}
+                >
+                  <SelectValue placeholder="Choose a role">
+                    {values.role && EXERCISE_ROLE_LABELS[values.role]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {EXERCISE_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {EXERCISE_ROLE_LABELS[role]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingsRow>
+          </>
+        )}
         <SettingsRow htmlFor={difficultyId} layout="stacked" title="Difficulty">
           <Select
             onValueChange={(chosen) => {

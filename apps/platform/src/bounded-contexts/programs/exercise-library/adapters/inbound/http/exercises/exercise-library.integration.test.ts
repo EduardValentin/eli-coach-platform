@@ -54,6 +54,8 @@ const BACK_SQUAT: ExerciseFields = {
   secondaryMuscles: ["Core"],
   equipment: ["Barbell", "Squat rack"],
   difficulty: "Intermediate",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Strength"],
   cues: "Brace, then sit between the hips.",
 };
@@ -67,6 +69,8 @@ const HIP_THRUST: ExerciseFields = {
   secondaryMuscles: ["Hamstrings"],
   equipment: ["Barbell", "Bench"],
   difficulty: "Beginner",
+  pattern: "hinge",
+  role: "secondary-compound",
   tags: ["Hypertrophy"],
   cues: "",
 };
@@ -80,6 +84,8 @@ const BOX_BREATHING: ExerciseFields = {
   secondaryMuscles: [],
   equipment: ["Mat"],
   difficulty: "Beginner",
+  pattern: null,
+  role: null,
   tags: ["Recovery"],
   cues: "Four counts each side of the box.",
 };
@@ -93,11 +99,13 @@ const PLANK: ExerciseFields = {
   secondaryMuscles: [],
   equipment: [],
   difficulty: "Beginner",
+  pattern: "core",
+  role: "isolation",
   tags: [],
   cues: "",
 };
 
-const FIVE_PROBLEMS = [
+const SAVE_PROBLEMS = [
   {
     problem: "no name",
     fields: { name: "   " },
@@ -117,6 +125,16 @@ const FIVE_PROBLEMS = [
     problem: "no primary muscle for a resistance exercise",
     fields: { primaryMuscles: [] },
     problems: { primaryMuscles: "missing" },
+  },
+  {
+    problem: "no movement pattern for a resistance exercise",
+    fields: { pattern: null },
+    problems: { pattern: "missing" },
+  },
+  {
+    problem: "no role for a resistance exercise",
+    fields: { role: null },
+    problems: { role: "missing" },
   },
   {
     problem: "a name another exercise has",
@@ -196,7 +214,7 @@ describe("exercise library integration", () => {
       ]);
     });
 
-    it("stores a cardio exercise without a primary muscle and a bodyweight exercise without equipment", async () => {
+    it("stores a cardio exercise without a primary muscle, movement pattern or role, and a bodyweight exercise without equipment", async () => {
       // arrange
       const jog = {
         ...BACK_SQUAT,
@@ -206,7 +224,7 @@ describe("exercise library integration", () => {
         primaryMuscles: [],
         secondaryMuscles: [],
         equipment: [],
-        tags: [],
+        tags: ["Conditioning"],
         cues: "",
       };
 
@@ -220,11 +238,14 @@ describe("exercise library integration", () => {
           name: "Easy jog",
           primaryMuscles: [],
           equipment: [],
+          pattern: null,
+          role: null,
+          tags: ["Conditioning"],
         }),
       ]);
     });
 
-    it.each(FIVE_PROBLEMS)(
+    it.each(SAVE_PROBLEMS)(
       "refuses $problem with 422 and its code, storing nothing new",
       async ({ fields, problems }) => {
         // arrange
@@ -288,6 +309,8 @@ describe("exercise library integration", () => {
         ...BACK_SQUAT,
         type: "yoga",
         equipment: ["Sled"],
+        pattern: "twist",
+        role: "accessory",
         tags: ["Power"],
       };
 
@@ -297,7 +320,13 @@ describe("exercise library integration", () => {
       // assert
       expect(response.status).toBe(422);
       expect(await response.json()).toEqual({
-        problems: { type: "unknown", equipment: "unknown", tags: "unknown" },
+        problems: {
+          type: "unknown",
+          equipment: "unknown",
+          pattern: "unknown",
+          role: "unknown",
+          tags: "unknown",
+        },
       });
       expect(await library.exerciseRows()).toEqual([]);
     });
@@ -330,7 +359,7 @@ describe("exercise library integration", () => {
   });
 
   describe("editing an exercise", () => {
-    it("replaces every entry, keeps its owner and the moment it was created and names the library as the next page", async () => {
+    it("replaces every entry, drops the movement pattern and role of what is no longer resistance, keeps its owner and the moment it was created and names the library as the next page", async () => {
       // arrange
       await rig.holdClock(CREATED_AT);
       const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
@@ -362,6 +391,8 @@ describe("exercise library integration", () => {
           id: squat.id,
           ownerSubjectId: COACH_SESSION.subjectId,
           name: "Front squat",
+          pattern: null,
+          role: null,
           formCues: cues,
           archivedAt: null,
           createdAt: CREATED_AT,
@@ -418,7 +449,7 @@ describe("exercise library integration", () => {
       },
     );
 
-    it.each(FIVE_PROBLEMS)(
+    it.each(SAVE_PROBLEMS)(
       "refuses $problem with 422 and its code, leaving the exercise as it was",
       async ({ fields, problems }) => {
         // arrange
@@ -831,8 +862,8 @@ describe("exercise library integration", () => {
       expect(page).toContain("Difficulty Video Actions");
       expect(page).toContain(
         [
-          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate Attached",
-          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner —",
+          "Back squat Resistance · Squat · Barbell, Squat rack Strength Quadriceps Glutes Intermediate Attached",
+          "Hip thrust Resistance · Hinge · Barbell, Bench Hypertrophy Glutes Beginner —",
         ].join(" "),
       );
     });
@@ -1284,10 +1315,10 @@ describe("exercise library integration", () => {
       );
       expect(page).toContain(
         [
-          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate —",
+          "Back squat Resistance · Squat · Barbell, Squat rack Strength Quadriceps Glutes Intermediate —",
           "Box breathing Breathing · Mat Recovery Core Beginner —",
-          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner —",
-          "plank Resistance · No equipment Core Beginner —",
+          "Hip thrust Resistance · Hinge · Barbell, Bench Hypertrophy Glutes Beginner —",
+          "plank Resistance · Core · No equipment Core Beginner —",
         ].join(" "),
       );
     });

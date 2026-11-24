@@ -19,6 +19,8 @@ const CARDIO: StoredExercise = {
   secondaryMuscles: [],
   equipment: [],
   difficulty: "Beginner",
+  pattern: null,
+  role: null,
   tags: [],
   cues: "",
   video: null,
@@ -43,6 +45,8 @@ const HIP_THRUST = Exercise.reconstitute({
   type: "resistance",
   unit: "reps",
   primaryMuscles: ["Glutes"],
+  pattern: "hinge",
+  role: "main-compound",
 });
 
 const OTHER_COACHS_ROWER = Exercise.reconstitute({

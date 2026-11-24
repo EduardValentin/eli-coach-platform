@@ -456,6 +456,13 @@
       "when": 1795210755166,
       "tag": "0068_training_programs",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1795546407023,
+      "tag": "0069_exercise_patterns_and_roles",
+      "breakpoints": true
     }
   ]
 }

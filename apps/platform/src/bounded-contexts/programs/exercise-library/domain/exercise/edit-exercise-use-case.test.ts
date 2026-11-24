@@ -31,6 +31,8 @@ const STORED_SQUAT: ExerciseSnapshot = {
   secondaryMuscles: [],
   equipment: ["Barbell"],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: [],
   cues: "",
   video: {
@@ -74,6 +76,8 @@ const SQUAT_REVISED: ExerciseDraftInput = {
   secondaryMuscles: ["Glutes"],
   equipment: [],
   difficulty: "Advanced",
+  pattern: null,
+  role: null,
   tags: ["Strength", "Recovery"],
   cues: "Elbows high.",
 };
@@ -89,6 +93,8 @@ const EDITED_SQUAT: ExerciseSnapshot = {
   secondaryMuscles: ["Glutes"],
   equipment: [],
   difficulty: "Advanced",
+  pattern: null,
+  role: null,
   tags: ["Strength", "Recovery"],
   cues: "Elbows high.",
   video: {

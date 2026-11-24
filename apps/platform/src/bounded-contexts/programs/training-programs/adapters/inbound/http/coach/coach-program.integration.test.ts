@@ -167,6 +167,8 @@ const INCLINE_WALK: ExerciseFields = {
   secondaryMuscles: [],
   equipment: ["Treadmill"],
   difficulty: "Beginner",
+  pattern: null,
+  role: null,
   tags: [],
   cues: "",
 };
@@ -180,6 +182,8 @@ const BACK_SQUAT: ExerciseFields = {
   secondaryMuscles: ["Core"],
   equipment: ["Barbell", "Squat rack"],
   difficulty: "Intermediate",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Strength"],
   cues: "",
 };

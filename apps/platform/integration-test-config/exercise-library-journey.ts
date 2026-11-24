@@ -16,6 +16,8 @@ export type ExerciseFields = {
   secondaryMuscles: string[];
   equipment: string[];
   difficulty: string;
+  pattern: string | null;
+  role: string | null;
   tags: string[];
   cues: string;
 };
@@ -46,7 +48,7 @@ export const LIBRARY_PAGE = "/coach/training";
 const EXERCISE_ROW_SELECTION = `select exercises.id, exercises.name, exercises.form_cues as "formCues",
   exercises.type, exercises.unit, exercises.per_side as "perSide", exercises.difficulty,
   exercises.primary_muscles as "primaryMuscles", exercises.secondary_muscles as "secondaryMuscles",
-  exercises.equipment, exercises.tags,
+  exercises.equipment, exercises.tags, exercises.movement_pattern as "pattern", exercises.role,
   exercises.archived_at as "archivedAt", exercises.created_at as "createdAt", exercises.updated_at as "updatedAt",
   owners.auth_subject_id as "ownerSubjectId"
   from app.exercises

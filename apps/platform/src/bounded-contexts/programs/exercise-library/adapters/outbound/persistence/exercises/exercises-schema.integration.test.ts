@@ -25,9 +25,9 @@ const insertCoachSql = `
 
 const insertExerciseSql = `
   insert into app.exercises
-    (id, owner_account_id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, archived_at, created_at, updated_at)
+    (id, owner_account_id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, archived_at, movement_pattern, role, created_at, updated_at)
   values
-    ($1, $2, $3, $10, $4, $5, false, $6, $11, $12, $13, $14, $7, $8, $9, $15, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
+    ($1, $2, $3, $10, $4, $5, false, $6, $11, $12, $13, $14, $7, $8, $9, $15, $16, $17, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
 `;
 
 type ExerciseRow = {
@@ -42,6 +42,8 @@ type ExerciseRow = {
   secondaryMuscles?: (string | null)[];
   equipment?: (string | null)[];
   tags?: (string | null)[];
+  pattern?: string | null;
+  role?: string | null;
   video?: { videoId?: string; format?: string; sizeBytes?: number };
   archivedAt?: string | null;
 };
@@ -52,10 +54,13 @@ const UPDATABLE_COLUMNS = {
   name: "name",
   formCues: "form_cues",
   type: "type",
+  unit: "unit",
   primaryMuscles: "primary_muscles",
   secondaryMuscles: "secondary_muscles",
   equipment: "equipment",
   tags: "tags",
+  pattern: "movement_pattern",
+  role: "role",
   videoSizeBytes: "video_size_bytes",
 } as const;
 
@@ -249,8 +254,16 @@ describe("exercises schema", () => {
         primaryMuscles: ["Glutes", "Hamstrings"],
         secondaryMuscles: ["Core"],
         equipment: ["Barbell", "Bench"],
-        tags: ["Strength", "Recovery"],
+        tags: ["Strength", "Recovery", "Conditioning"],
       },
+    ],
+    [
+      "a resistance exercise with its movement pattern and role",
+      { pattern: "horizontal-pull", role: "secondary-compound" },
+    ],
+    [
+      "a mobility exercise with neither a movement pattern nor a role",
+      { type: "mobility", unit: "time", pattern: null, role: null },
     ],
     [
       "a video of one byte",
@@ -323,6 +336,32 @@ describe("exercises schema", () => {
     ],
     ["an unknown tag", { tags: ["Power"] }, /exercises_tags_vocabulary_check/],
     [
+      "an unknown movement pattern",
+      { pattern: "twist" },
+      /exercises_movement_pattern_check/,
+    ],
+    ["an unknown role", { role: "accessory" }, /exercises_role_check/],
+    [
+      "a resistance exercise without a movement pattern",
+      { pattern: null },
+      /exercises_pattern_and_role_for_type_check/,
+    ],
+    [
+      "a resistance exercise without a role",
+      { role: null },
+      /exercises_pattern_and_role_for_type_check/,
+    ],
+    [
+      "a cardio exercise with a movement pattern",
+      { type: "cardio", unit: "time", pattern: "conditioning" },
+      /exercises_pattern_and_role_for_type_check/,
+    ],
+    [
+      "a stretching exercise with a role",
+      { type: "stretching", unit: "time", role: "isolation" },
+      /exercises_pattern_and_role_for_type_check/,
+    ],
+    [
       "a video of no bytes",
       { video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 0 } },
       /exercises_video_size_check/,
@@ -364,10 +403,28 @@ describe("exercises schema", () => {
       /exercises_form_cues_check/,
     ],
     [
-      "its type to one its unit does not suit",
-      "type",
-      "breathing",
+      "its unit to one its type does not measure in",
+      "unit",
+      "breaths",
       /exercises_unit_for_type_check/,
+    ],
+    [
+      "its type to one without a movement pattern or role",
+      "type",
+      "mobility",
+      /exercises_pattern_and_role_for_type_check/,
+    ],
+    [
+      "its movement pattern to an unknown one",
+      "pattern",
+      "twist",
+      /exercises_movement_pattern_check/,
+    ],
+    [
+      "its role to none",
+      "role",
+      null,
+      /exercises_pattern_and_role_for_type_check/,
     ],
     [
       "its primary muscles to none",
@@ -453,8 +510,14 @@ function insertExercise(row: ExerciseRow): Promise<unknown> {
       row.equipment ?? [],
       row.tags ?? [],
       row.archivedAt ?? null,
+      row.pattern === undefined ? resistanceOnly(row, "hinge") : row.pattern,
+      row.role === undefined ? resistanceOnly(row, "main-compound") : row.role,
     ],
   });
+}
+
+function resistanceOnly(row: ExerciseRow, choice: string): string | null {
+  return (row.type ?? "resistance") === "resistance" ? choice : null;
 }
 
 function updateExercise(

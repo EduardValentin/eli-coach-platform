@@ -12,6 +12,8 @@ const SQUAT: ExerciseDraftInput = {
   secondaryMuscles: ["Core"],
   equipment: ["Barbell", "Squat rack"],
   difficulty: "Intermediate",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Strength"],
   cues: "Brace, sit between the hips.",
 };
@@ -84,6 +86,43 @@ describe("ExerciseDraft", () => {
 
     // assert
     expect(changed).toEqual(["name", "primaryMuscles", "tags"]);
+  });
+
+  it("drops the movement pattern and role of an exercise that is not resistance, and names them as changed", () => {
+    // arrange
+    const input = {
+      ...SQUAT,
+      type: "mobility",
+      unit: "time",
+      tags: ["Recovery", "Conditioning"],
+    };
+    const result = ExerciseDraft.from(input);
+
+    // act
+    const kept = result.status === "valid" && result.draft.toSnapshot();
+    const changed =
+      result.status === "valid" && result.draft.fieldsNormalizedFrom(input);
+
+    // assert
+    expect(kept).toEqual({ ...input, pattern: null, role: null });
+    expect(changed).toEqual(["pattern", "role"]);
+  });
+
+  it("accepts an exercise that is not resistance without a movement pattern or role", () => {
+    // arrange
+    const input = {
+      ...SQUAT,
+      type: "stretching",
+      unit: "time",
+      pattern: null,
+      role: null,
+    };
+
+    // act
+    const result = ExerciseDraft.from(input);
+
+    // assert
+    expect(result.status).toBe("valid");
   });
 
   it("names no entry when it keeps every one as entered", () => {
@@ -180,6 +219,12 @@ describe("ExerciseDraft", () => {
       { unit: "not-allowed" },
     ],
     [
+      "no movement pattern for a resistance exercise",
+      { pattern: null },
+      { pattern: "missing" },
+    ],
+    ["no role for a resistance exercise", { role: null }, { role: "missing" }],
+    [
       "a muscle chosen as both primary and secondary",
       { secondaryMuscles: ["Glutes"] },
       { secondaryMuscles: "overlap" },
@@ -228,6 +273,13 @@ describe("ExerciseDraft", () => {
     ],
     ["a piece of equipment", { equipment: ["Sled"] }, { equipment: "unknown" }],
     ["a tag", { tags: ["Power"] }, { tags: "unknown" }],
+    ["a movement pattern", { pattern: "twist" }, { pattern: "unknown" }],
+    ["a role", { role: "accessory" }, { role: "unknown" }],
+    [
+      "a movement pattern on an exercise that is not resistance",
+      { type: "cardio", unit: "time", pattern: "twist" },
+      { pattern: "unknown" },
+    ],
     [
       "several values",
       { type: "yoga", tags: ["Power"] },
