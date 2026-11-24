@@ -37,6 +37,7 @@ import {
   MOVEMENT_PATTERNS,
   MUSCLE_LABELS,
   MUSCLES,
+  takesPatternAndRole,
   UNIT_EXAMPLES,
   UNIT_LABELS,
   unitsFor,
@@ -178,6 +179,61 @@ export function ExerciseAboutSection({
   );
 }
 
+type RequiredChoice<Choice extends string> = {
+  choices: readonly Choice[];
+  labels: Readonly<Record<Choice, string>>;
+  value: Choice | null;
+  problem: string | undefined;
+  onChoose: (choice: Choice) => void;
+};
+
+function RequiredChoiceRow<Choice extends string>({
+  title,
+  placeholder,
+  field,
+}: {
+  title: string;
+  placeholder: string;
+  field: RequiredChoice<Choice>;
+}) {
+  const id = useId();
+  const problemId = useId();
+
+  return (
+    <SettingsRow
+      htmlFor={id}
+      layout="stacked"
+      problem={shownProblem(problemId, field.problem)}
+      required
+      title={title}
+    >
+      <Select
+        onValueChange={(chosen) => {
+          const choice = field.choices.find((known) => known === chosen);
+          if (choice) field.onChoose(choice);
+        }}
+        value={field.value ?? ""}
+      >
+        <SelectTrigger
+          id={id}
+          {...fieldProblemAttributes(problemId, field.problem)}
+        >
+          <SelectValue placeholder={placeholder}>
+            {field.value && field.labels[field.value]}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {field.choices.map((choice) => (
+            <SelectItem key={choice} value={choice}>
+              {field.labels[choice]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </SettingsRow>
+  );
+}
+
 export function ExerciseWorkSection({
   form,
   values,
@@ -187,10 +243,6 @@ export function ExerciseWorkSection({
   const primaryProblemId = useId();
   const secondaryId = useId();
   const equipmentId = useId();
-  const patternId = useId();
-  const patternProblemId = useId();
-  const roleId = useId();
-  const roleProblemId = useId();
   const difficultyId = useId();
   const tagsLabelId = useId();
 
@@ -269,75 +321,30 @@ export function ExerciseWorkSection({
             summary="names"
           />
         </SettingsRow>
-        {values.type === "resistance" && (
+        {takesPatternAndRole(values.type) && (
           <>
-            <SettingsRow
-              htmlFor={patternId}
-              layout="stacked"
-              problem={shownProblem(patternProblemId, problems.pattern)}
-              required
+            <RequiredChoiceRow
+              field={{
+                choices: MOVEMENT_PATTERNS,
+                labels: MOVEMENT_PATTERN_LABELS,
+                value: values.pattern,
+                problem: problems.pattern,
+                onChoose: (pattern) => changeValues(form, { pattern }),
+              }}
+              placeholder="Choose a pattern"
               title="Movement pattern"
-            >
-              <Select
-                onValueChange={(chosen) => {
-                  const pattern = MOVEMENT_PATTERNS.find(
-                    (known) => known === chosen,
-                  );
-                  if (pattern) changeValues(form, { pattern });
-                }}
-                value={values.pattern ?? ""}
-              >
-                <SelectTrigger
-                  id={patternId}
-                  {...fieldProblemAttributes(
-                    patternProblemId,
-                    problems.pattern,
-                  )}
-                >
-                  <SelectValue placeholder="Choose a pattern">
-                    {values.pattern && MOVEMENT_PATTERN_LABELS[values.pattern]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {MOVEMENT_PATTERNS.map((pattern) => (
-                    <SelectItem key={pattern} value={pattern}>
-                      {MOVEMENT_PATTERN_LABELS[pattern]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </SettingsRow>
-            <SettingsRow
-              htmlFor={roleId}
-              layout="stacked"
-              problem={shownProblem(roleProblemId, problems.role)}
-              required
+            />
+            <RequiredChoiceRow
+              field={{
+                choices: EXERCISE_ROLES,
+                labels: EXERCISE_ROLE_LABELS,
+                value: values.role,
+                problem: problems.role,
+                onChoose: (role) => changeValues(form, { role }),
+              }}
+              placeholder="Choose a role"
               title="Role"
-            >
-              <Select
-                onValueChange={(chosen) => {
-                  const role = EXERCISE_ROLES.find((known) => known === chosen);
-                  if (role) changeValues(form, { role });
-                }}
-                value={values.role ?? ""}
-              >
-                <SelectTrigger
-                  id={roleId}
-                  {...fieldProblemAttributes(roleProblemId, problems.role)}
-                >
-                  <SelectValue placeholder="Choose a role">
-                    {values.role && EXERCISE_ROLE_LABELS[values.role]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {EXERCISE_ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {EXERCISE_ROLE_LABELS[role]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </SettingsRow>
+            />
           </>
         )}
         <SettingsRow htmlFor={difficultyId} layout="stacked" title="Difficulty">

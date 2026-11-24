@@ -14,7 +14,7 @@ const OVER_THE_CAP_REFUSAL = "deadlift-demo.mp4 is larger than 50 MB";
 const NO_VIDEO_INSIDE_REFUSAL =
   "squat-demo.mp4 doesn’t contain an MP4 or MOV video.";
 const SEEK_TO_SECONDS = 1.2;
-const MOVEMENT_PATTERNS = [
+const MOVEMENT_PATTERN_LABELS = [
   "Squat",
   "Lunge",
   "Hinge",
@@ -27,7 +27,7 @@ const MOVEMENT_PATTERNS = [
   "Isolation",
   "Conditioning",
 ] as const;
-const EXERCISE_ROLES = [
+const EXERCISE_ROLE_LABELS = [
   "Main compound",
   "Secondary compound",
   "Isolation",
@@ -677,8 +677,8 @@ test(
     // assert
     await exerciseEditor.expectPatternAndRole({ pattern: null, role: null });
     await exerciseEditor.expectPatternAndRoleRightAfterEquipment();
-    await exerciseEditor.expectPatternChoices(MOVEMENT_PATTERNS);
-    await exerciseEditor.expectRoleChoices(EXERCISE_ROLES);
+    await exerciseEditor.expectPatternChoices(MOVEMENT_PATTERN_LABELS);
+    await exerciseEditor.expectRoleChoices(EXERCISE_ROLE_LABELS);
 
     // act
     await exerciseEditor.enter({ pattern: "Vertical pull" });

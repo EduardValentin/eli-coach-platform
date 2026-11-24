@@ -92,6 +92,7 @@ export {
   MOVEMENT_PATTERNS,
   MUSCLES,
   defaultUnitFor,
+  takesPatternAndRole,
   unitsFor,
   type Difficulty,
   type Equipment,

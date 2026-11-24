@@ -29,6 +29,10 @@ export function defaultUnitFor(type: ExerciseType): ExerciseUnit {
   return UNITS_BY_TYPE[type][0];
 }
 
+export function takesPatternAndRole(type: ExerciseType): boolean {
+  return type === "resistance";
+}
+
 export const MUSCLES = [
   "Chest",
   "Upper back",

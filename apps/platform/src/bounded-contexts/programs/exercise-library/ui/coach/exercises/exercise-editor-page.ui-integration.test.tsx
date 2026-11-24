@@ -303,7 +303,7 @@ describe("a new exercise", () => {
     // arrange
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
-    await chooseResistanceKind(user);
+    await choosePatternAndRole(user);
 
     // act
     await enter(user, "Name (required)", `  ${"n".repeat(80)}  `);
@@ -322,7 +322,7 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
-    await chooseResistanceKind(user);
+    await choosePatternAndRole(user);
 
     // act
     await enter(user, "Form cues", "c".repeat(1_001));
@@ -517,7 +517,7 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
-    await chooseResistanceKind(user);
+    await choosePatternAndRole(user);
 
     // act
     await user.click(screen.getByRole("button", { name: "Create exercise" }));
@@ -569,7 +569,7 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
-    await chooseResistanceKind(user);
+    await choosePatternAndRole(user);
 
     // act
     await user.click(screen.getByRole("button", { name: "Create exercise" }));
@@ -1183,7 +1183,7 @@ describe("saving with a demo video", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
-    await chooseResistanceKind(user);
+    await choosePatternAndRole(user);
     await user.upload(
       screen.getByLabelText(VIDEO_PROMPT),
       videoNamed("bridge.mp4"),
@@ -1584,7 +1584,7 @@ function workFieldLabels(): string[] {
     .map((label) => (label.textContent ?? "").replace(/\*.*$/, ""));
 }
 
-async function chooseResistanceKind(user: UserEvent) {
+async function choosePatternAndRole(user: UserEvent) {
   await choose(user, "Movement pattern (required)", "Squat");
   await choose(user, "Role (required)", "Main compound");
 }

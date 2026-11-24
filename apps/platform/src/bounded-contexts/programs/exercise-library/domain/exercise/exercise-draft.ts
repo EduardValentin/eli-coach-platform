@@ -9,6 +9,7 @@ import {
   MAX_FORM_CUES_LENGTH,
   MOVEMENT_PATTERNS,
   MUSCLES,
+  takesPatternAndRole,
   unitsFor,
   type Difficulty,
   type Equipment,
@@ -132,8 +133,8 @@ export class ExerciseDraft {
       secondaryMuscles: [...new Set(secondaryMuscles)],
       equipment: [...new Set(equipment)],
       difficulty,
-      pattern: type === "resistance" ? (pattern ?? null) : null,
-      role: type === "resistance" ? (role ?? null) : null,
+      pattern: takesPatternAndRole(type) ? (pattern ?? null) : null,
+      role: takesPatternAndRole(type) ? (role ?? null) : null,
       tags: [...new Set(tags)],
       cues: input.cues,
     });
@@ -179,7 +180,7 @@ export class ExerciseDraft {
       role,
       cues,
     } = this.snapshot;
-    const resistance = type === "resistance";
+    const needsPatternAndRole = takesPatternAndRole(type);
 
     return {
       ...(name && { name }),
@@ -191,8 +192,8 @@ export class ExerciseDraft {
       ) && {
         secondaryMuscles: "overlap",
       }),
-      ...(resistance && pattern === null && { pattern: "missing" }),
-      ...(resistance && role === null && { role: "missing" }),
+      ...(needsPatternAndRole && pattern === null && { pattern: "missing" }),
+      ...(needsPatternAndRole && role === null && { role: "missing" }),
       ...(cues.length > MAX_FORM_CUES_LENGTH && { cues: "too-long" }),
     };
   }

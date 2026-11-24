@@ -64,9 +64,11 @@ export default function CoachClientResourcesRoute() {
   return (
     <div className={PAGE_CLASS} data-parity-root={PAGE_PARITY_ROOT}>
       <CoachResourceLibrary
-        clientId={client.clientId}
-        clientName={clientFullName(client)}
-        firstName={client.firstName}
+        client={{
+          clientId: client.clientId,
+          name: clientFullName(client),
+          firstName: client.firstName,
+        }}
         listing={listing}
       />
     </div>

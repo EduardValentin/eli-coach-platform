@@ -41,10 +41,10 @@ type PendingDeletion = {
   stage: "asking" | "kept" | "confirmed";
 };
 
+type ResourcesClient = { clientId: string; name: string; firstName: string };
+
 type CoachResourceLibraryProps = {
-  clientId: string;
-  firstName: string;
-  clientName: string;
+  client: ResourcesClient;
   listing: CoachResourceListing;
 };
 
@@ -54,13 +54,10 @@ type ReadyCoachResourceListing = Extract<
 >;
 
 export function CoachResourceLibrary({
-  clientId,
-  firstName,
-  clientName,
+  client,
   listing,
 }: CoachResourceLibraryProps) {
   const revalidator = useRevalidator();
-  const client = { clientId, name: clientName };
 
   if (listing.status === "unavailable") {
     return (
@@ -71,26 +68,16 @@ export function CoachResourceLibrary({
     );
   }
 
-  return (
-    <ReadyResourceLibrary
-      clientId={clientId}
-      clientName={clientName}
-      firstName={firstName}
-      listing={listing}
-    />
-  );
+  return <ReadyResourceLibrary client={client} listing={listing} />;
 }
 
-type ReadyResourceLibraryProps = Omit<CoachResourceLibraryProps, "listing"> & {
+type ReadyResourceLibraryProps = {
+  client: ResourcesClient;
   listing: ReadyCoachResourceListing;
 };
 
-function ReadyResourceLibrary({
-  clientId,
-  firstName,
-  clientName,
-  listing,
-}: ReadyResourceLibraryProps) {
+function ReadyResourceLibrary({ client, listing }: ReadyResourceLibraryProps) {
+  const { clientId, firstName } = client;
   const [formMode, setFormMode] = useState<ResourceFormMode | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const removal = useResourceRemoval();
@@ -120,7 +107,7 @@ function ReadyResourceLibrary({
             </Button>
           )
         }
-        client={{ clientId, name: clientName }}
+        client={client}
         headingRef={heading}
         title="Resources"
       />

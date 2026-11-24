@@ -14,6 +14,7 @@ import {
   MOVEMENT_PATTERNS,
   MUSCLES,
   defaultUnitFor,
+  takesPatternAndRole,
   unitsFor,
   type Difficulty,
   type Equipment,
@@ -43,6 +44,7 @@ export {
   EXERCISE_TYPES,
   MOVEMENT_PATTERNS,
   MUSCLES,
+  takesPatternAndRole,
   unitsFor,
   type ExerciseType,
   type ExerciseUnit,
@@ -280,12 +282,12 @@ function exerciseDraftInputOf(
   values: ExerciseFormValues,
 ): Omit<ExerciseFormValues, "unitPicked"> {
   const { unitPicked: _unitPicked, ...draft } = values;
-  const resistance = values.type === "resistance";
+  const keepsPatternAndRole = takesPatternAndRole(values.type);
 
   return {
     ...draft,
-    pattern: resistance ? values.pattern : null,
-    role: resistance ? values.role : null,
+    pattern: keepsPatternAndRole ? values.pattern : null,
+    role: keepsPatternAndRole ? values.role : null,
   };
 }
 

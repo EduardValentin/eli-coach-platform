@@ -2,13 +2,13 @@ import {
   PortalBackLink,
   PortalPageHeader,
 } from "~/shared/design-system/portal";
-import type { ReactNode, Ref } from "react";
+import type { ComponentProps, ReactNode, Ref } from "react";
 
 import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
 
 type ClientLink = { clientId: string; name: string };
 
-type BackLinkGap = "page" | "title";
+type BackLinkGap = NonNullable<ComponentProps<typeof PortalBackLink>["gap"]>;
 
 export function ClientBackLink({
   client,
