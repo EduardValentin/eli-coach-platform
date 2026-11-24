@@ -320,7 +320,7 @@ describe("the plan overview", () => {
       );
 
       // assert
-      const dialog = await screen.findByRole("dialog", {
+      const dialog = await screen.findByRole("alertdialog", {
         name: "Remove block 2?",
       });
       expect(
@@ -336,6 +336,27 @@ describe("the plan overview", () => {
       ).toHaveLength(2);
     });
 
+    it("offers only Cancel and Remove block, with no corner close", async () => {
+      // arrange
+      const user = userEvent.setup();
+      render(<Harness blocks={[FOUNDATION, HYPERTROPHY]} />);
+
+      // act
+      await user.click(
+        screen.getByRole("button", { name: "Remove block 2, Hypertrophy" }),
+      );
+
+      // assert
+      const dialog = await screen.findByRole("alertdialog", {
+        name: "Remove block 2?",
+      });
+      expect(
+        within(dialog)
+          .getAllByRole("button")
+          .map((button) => button.textContent),
+      ).toEqual(["Cancel", "Remove block"]);
+    });
+
     it("removes the block once the coach confirms", async () => {
       // arrange
       const user = userEvent.setup();
@@ -343,7 +364,7 @@ describe("the plan overview", () => {
       await user.click(
         screen.getByRole("button", { name: "Remove block 2, Hypertrophy" }),
       );
-      const dialog = await screen.findByRole("dialog", {
+      const dialog = await screen.findByRole("alertdialog", {
         name: "Remove block 2?",
       });
 
@@ -365,7 +386,7 @@ describe("the plan overview", () => {
         name: "Remove block 2, Hypertrophy",
       });
       await user.click(remove);
-      const dialog = await screen.findByRole("dialog", {
+      const dialog = await screen.findByRole("alertdialog", {
         name: "Remove block 2?",
       });
 
@@ -373,6 +394,27 @@ describe("the plan overview", () => {
       await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
 
       // assert
+      await waitFor(() => expect(remove).toHaveFocus());
+      expect(blockRows()).toHaveLength(2);
+    });
+
+    it("keeps the block and returns focus to the remove control when the coach presses Escape", async () => {
+      // arrange
+      const user = userEvent.setup();
+      render(<Harness blocks={[FOUNDATION, HYPERTROPHY]} />);
+      const remove = screen.getByRole("button", {
+        name: "Remove block 2, Hypertrophy",
+      });
+      await user.click(remove);
+      await screen.findByRole("alertdialog", { name: "Remove block 2?" });
+
+      // act
+      await user.keyboard("{Escape}");
+
+      // assert
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
       await waitFor(() => expect(remove).toHaveFocus());
       expect(blockRows()).toHaveLength(2);
     });
@@ -388,7 +430,7 @@ describe("the plan overview", () => {
       );
 
       // assert
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
       expect(blockRows()).toHaveLength(1);
       expect(
         within(rowOfBlock(1)).getByRole("combobox", {

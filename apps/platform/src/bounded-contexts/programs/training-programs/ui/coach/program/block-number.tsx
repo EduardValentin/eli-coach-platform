@@ -8,6 +8,7 @@ type BlockNumberProps = {
   block: { type: BlockType };
   index: number;
   size: BlockNumberSize;
+  parity?: string;
 };
 
 const SIZE_CLASS: Record<BlockNumberSize, string> = {
@@ -23,7 +24,7 @@ export const BLOCK_RULE: Record<BlockType, string> = {
   deload: "border-training-deload",
 };
 
-export function BlockNumber({ block, index, size }: BlockNumberProps) {
+export function BlockNumber({ block, index, size, parity }: BlockNumberProps) {
   return (
     <span
       aria-hidden="true"
@@ -32,6 +33,7 @@ export function BlockNumber({ block, index, size }: BlockNumberProps) {
         SIZE_CLASS[size],
         BLOCK_RULE[block.type],
       )}
+      data-parity={parity}
     >
       {index + 1}
     </span>

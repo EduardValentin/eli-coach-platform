@@ -88,10 +88,10 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: AddBlockFormProps) {
         )}
       </div>
       <SheetDialogActions>
-        <Button disabled={!valid} type="submit">
+        <Button disabled={!valid} size="sm" type="submit">
           Add block
         </Button>
-        <Button onClick={onCancel} type="button" variant="ghost">
+        <Button onClick={onCancel} size="sm" type="button" variant="ghost">
           Cancel
         </Button>
       </SheetDialogActions>

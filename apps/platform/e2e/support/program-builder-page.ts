@@ -312,7 +312,7 @@ export class ProgramBuilderPage {
   }
 
   private confirmation(title: string): Locator {
-    return this.page.getByRole("dialog", { name: title, exact: true });
+    return this.page.getByRole("alertdialog", { name: title, exact: true });
   }
 
   private blockRow(position: number): Locator {
@@ -461,7 +461,7 @@ export class ProgramBuilderPage {
   }
 
   async expectNoConfirmation(): Promise<void> {
-    await expect(this.page.getByRole("dialog")).toHaveCount(0);
+    await expect(this.page.getByRole("alertdialog")).toHaveCount(0);
   }
 
   async cancelConfirmation(title: string): Promise<void> {
@@ -513,8 +513,8 @@ export class ProgramBuilderPage {
     const handle = this.page.getByRole("button", {
       name: `Reorder ${type} block`,
     });
-    const dropLine = this.blockRow(targetPosition).locator(
-      "[data-parity=block-drop-line]",
+    const dropLine = this.page.locator(
+      `[data-parity="block-drop-line-${targetPosition - 1}"]`,
     );
     const from = await handle.boundingBox();
     const to = await dropLine.boundingBox();

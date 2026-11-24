@@ -63,7 +63,7 @@ function DropLine({ index, firstMovable, onDrop }: { index: number; firstMovable
     [index, firstMovable, onDrop],
   );
   return (
-    <div ref={drop as unknown as Ref<HTMLDivElement>} data-parity="block-drop-line" aria-hidden="true" className="py-1.5">
+    <div ref={drop as unknown as Ref<HTMLDivElement>} data-parity={`block-drop-line-${index}`} aria-hidden="true" className="py-1.5">
       <InsertionLine isOver={isOver} canDrop={canDrop} />
     </div>
   );

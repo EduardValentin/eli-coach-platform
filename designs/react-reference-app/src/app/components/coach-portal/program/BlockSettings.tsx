@@ -57,7 +57,7 @@ function LengthSettings({ block, weeks, onChange }: Pick<BlockSettingsProps, 'bl
           {labelId => (
             <span role="group" aria-labelledby={labelId} className="flex min-h-(--size-control-md) items-center gap-1">
               <label className="flex items-center gap-2 text-sm text-text-primary">
-                <Switch checked={block.calibrationWeek} onCheckedChange={checked => onChange({ ...block, calibrationWeek: checked })} />
+                <Switch checked={block.calibrationWeek} data-parity="setting-calibration-switch" onCheckedChange={checked => onChange({ ...block, calibrationWeek: checked })} />
                 Calibration week
               </label>
               <IconHint label="What a calibration week is" icon={<Info aria-hidden="true" size={14} />} size="compact" tone="muted">

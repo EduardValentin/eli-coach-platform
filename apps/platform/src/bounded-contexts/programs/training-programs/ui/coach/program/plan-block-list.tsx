@@ -84,7 +84,7 @@ function DropLine({
     <div
       aria-hidden="true"
       className="py-1.5"
-      data-parity="block-drop-line"
+      data-parity={`block-drop-line-${index}`}
       ref={(node) => {
         drop(node);
       }}
@@ -372,8 +372,8 @@ export function PlanBlockList({
           </li>
         ))}
       </ol>
-      <Button className="mt-2" onClick={onAddBlock} variant="ghost">
-        <Plus aria-hidden="true" />
+      <Button className="mt-2" onClick={onAddBlock} size="sm" variant="ghost">
+        <Plus aria-hidden="true" size={16} />
         Add block
       </Button>
       {confirm.dialog}

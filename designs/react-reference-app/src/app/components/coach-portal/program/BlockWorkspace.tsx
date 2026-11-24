@@ -64,7 +64,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
   }
 
   return (
-    <section className="grid grid-cols-[minmax(0,1fr)] gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
+    <section data-parity-root="BlockWorkspace" className="grid grid-cols-[minmax(0,1fr)] gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
       <BlockHeader
         key={block.id}
         blocks={blocks}

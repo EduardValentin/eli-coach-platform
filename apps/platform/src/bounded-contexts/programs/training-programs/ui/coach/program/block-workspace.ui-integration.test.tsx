@@ -190,7 +190,7 @@ async function chooseBlockAction(
 }
 
 function dialog() {
-  return screen.getByRole("dialog");
+  return screen.getByRole("alertdialog");
 }
 
 function lostLines() {
@@ -394,7 +394,7 @@ describe("changing the split", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Change the split?" }),
+      screen.getByRole("alertdialog", { name: "Change the split?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual([
       "Full Body A · 2 exercises",
@@ -414,7 +414,7 @@ describe("changing the split", () => {
     await user.click(screen.getByRole("button", { name: "Rebuild sessions" }));
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(plan("Monday", "Lower A")).toBeInTheDocument();
     expect(plan("Wednesday", "Upper A")).toBeInTheDocument();
     expect(plan("Friday", "Lower B")).toBeInTheDocument();
@@ -431,7 +431,7 @@ describe("changing the split", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(changes).toHaveLength(0);
     expect(plan("Monday", "Full Body A")).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Split" })).toHaveFocus();
@@ -445,7 +445,7 @@ describe("changing the split", () => {
     await chooseOption(user, "Split", "Upper / Lower");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(plan("Monday", "Lower A")).toBeInTheDocument();
   });
 });
@@ -462,7 +462,7 @@ describe("changing the training days", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Change training days?" }),
+      screen.getByRole("alertdialog", { name: "Change training days?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual(["Moderate cardio · 1 segment"]);
     expect(changes).toHaveLength(0);
@@ -527,7 +527,7 @@ describe("changing the training days", () => {
     await chooseOption(user, "Training days", "4 days");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Training days" }),
     ).toHaveTextContent("4 days");
@@ -547,7 +547,7 @@ describe("resetting to the split", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Reset to the split?" }),
+      screen.getByRole("alertdialog", { name: "Reset to the split?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual([
       "Full Body A · 4 exercises",
@@ -595,7 +595,7 @@ describe("resetting to the split", () => {
     await chooseBlockAction(user, "Reset to split");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(changes).toHaveLength(1);
   });
 });
@@ -612,7 +612,7 @@ describe("removing the block", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Remove block 1?" }),
+      screen.getByRole("alertdialog", { name: "Remove block 1?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual([
       "Full Body A · 2 exercises",
@@ -773,7 +773,7 @@ describe("changing a day from its menu", () => {
     await chooseSession(user, "Sunday", "Full Body A");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(plan("Sunday", "Full Body A")).toBeInTheDocument();
     expect(plan("Monday", "Rest")).toBeInTheDocument();
   });
@@ -787,7 +787,7 @@ describe("changing a day from its menu", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Put Full Body A on Tuesday?" }),
+      screen.getByRole("alertdialog", { name: "Put Full Body A on Tuesday?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual(["Easy cardio · 1 segment"]);
     expect(changes).toHaveLength(0);
@@ -814,7 +814,7 @@ describe("changing a day from its menu", () => {
     await chooseDayEntry(user, "Sunday", "Cardio");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(plan("Sunday", "Cardio")).toBeInTheDocument();
     expect(dayCard("Sunday")).not.toHaveTextContent("min");
   });
@@ -830,7 +830,7 @@ describe("changing a day from its menu", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Make Monday a cardio day?" }),
+      screen.getByRole("alertdialog", { name: "Make Monday a cardio day?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual(["Full Body A · 3 exercises"]);
   });
@@ -843,7 +843,7 @@ describe("changing a day from its menu", () => {
     await chooseDayEntry(user, "Tuesday", "Cardio");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(plan("Tuesday", "Easy cardio")).toBeInTheDocument();
   });
 
@@ -856,7 +856,7 @@ describe("changing a day from its menu", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", { name: "Make Tuesday a rest day?" }),
+      screen.getByRole("alertdialog", { name: "Make Tuesday a rest day?" }),
     ).toBeInTheDocument();
     expect(lostLines()).toEqual(["Easy cardio · 1 segment"]);
   });
@@ -896,7 +896,7 @@ describe("changing a day from its menu", () => {
     await chooseDayEntry(user, "Monday", "Rest");
 
     // assert
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(plan("Monday", "Rest")).toBeInTheDocument();
   });
 });

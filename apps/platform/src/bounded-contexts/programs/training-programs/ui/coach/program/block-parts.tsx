@@ -48,7 +48,7 @@ export function BlockTypeSelect({
         aria-invalid={problemId ? true : undefined}
         aria-label={label}
         className={cn({
-          "w-auto min-w-0 bg-transparent px-2 text-left text-lg font-semibold whitespace-normal text-text-primary shadow-none hover:bg-surface-quiet md:text-lg *:data-[slot=select-value]:line-clamp-2":
+          "w-auto min-w-0 bg-transparent px-2 text-left text-lg font-semibold whitespace-normal text-text-primary shadow-none hover:bg-surface-quiet md:text-lg [&>span:first-child]:line-clamp-2 [&>span:first-child]:whitespace-normal":
             appearance === "title",
           "w-full min-w-0 @3xl:w-auto @3xl:min-w-40": appearance === "field",
         })}

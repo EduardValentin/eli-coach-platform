@@ -276,6 +276,7 @@ export function EditorTopBar({
   return (
     <>
       <header
+        data-parity-root="EditorTopBar"
         className={cn('@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6', {
           'max-h-[50dvh] overflow-y-auto': saving.failing,
         })}

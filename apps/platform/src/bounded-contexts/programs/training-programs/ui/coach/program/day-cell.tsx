@@ -104,7 +104,7 @@ export function DayFace({ day }: { day: WeekDay }) {
 
   return (
     <div
-      className="col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left"
+      className="col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left font-medium"
       data-parity={`day-face-${day.weekday}`}
     >
       <span

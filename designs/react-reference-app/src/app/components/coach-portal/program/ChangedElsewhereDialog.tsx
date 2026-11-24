@@ -20,6 +20,7 @@ export function ChangedElsewhereDialog({ open, onReload, returnFocusTo }: Change
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
+        data-parity-root="ChangedElsewhereDialog"
         returnFocusTo={returnFocusTo}
         onEscapeKeyDown={event => event.preventDefault()}
         className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md"

@@ -454,7 +454,7 @@ export function PlanStrip({ blocks, dayOne, today }: PlanStripProps) {
       {blocks.map((block, index) => (
         <span
           key={block.id}
-          data-parity="plan-strip-segment"
+          data-parity={`plan-strip-segment-${index + 1}`}
           className={cn('rounded-full', BLOCK_SWATCH[block.type], {
             'opacity-40': schedule !== null && blockStatus(schedule, index).kind === 'ended',
           })}

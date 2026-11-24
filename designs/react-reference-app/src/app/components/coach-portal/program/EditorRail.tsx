@@ -132,8 +132,8 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         className={cn(railEntryVariants({ state: current ? 'current' : 'idle' }), 'grid gap-0.5 px-3 py-2')}
       >
         <span className={cn('flex items-center gap-2 text-text-primary', { 'font-medium': current })}>
-          <BlockNumber block={block} index={index} size="xs" />
-          <span className="sr-only">{`${index + 1} `}</span>
+          <BlockNumber block={block} index={index} size="xs" parity={`rail-block-${index + 1}-number`} />
+          <span className="sr-only" data-parity={`rail-block-${index + 1}-spoken-number`}>{`${index + 1} `}</span>
           {BLOCK_TYPE_LABELS[block.type]}
           {problem && <ProblemMark />}
         </span>
@@ -173,7 +173,7 @@ export function EditorRail(props: EditorRailProps) {
   const flagged = writing ? new Set<string>() : blocksWithProblems(blocks);
 
   return (
-    <div className="grid content-start gap-6 p-3">
+    <div className="grid content-start gap-6 p-3" data-parity-root="EditorRail">
       <ModeSwitch {...props} />
       <nav aria-label="Program sections" className="grid content-start gap-6">
         <button

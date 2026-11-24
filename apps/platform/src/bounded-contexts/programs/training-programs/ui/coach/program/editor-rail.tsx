@@ -142,8 +142,16 @@ function BlockEntry({
             "font-medium": current,
           })}
         >
-          <BlockNumber block={block} index={index} size="xs" />
-          <span className="sr-only">{`${index + 1} `}</span>
+          <BlockNumber
+            block={block}
+            index={index}
+            parity={`rail-block-${index + 1}-number`}
+            size="xs"
+          />
+          <span
+            className="sr-only"
+            data-parity={`rail-block-${index + 1}-spoken-number`}
+          >{`${index + 1} `}</span>
           {BLOCK_TYPE_LABELS[block.type]}
           {problem && <ProblemMark />}
         </span>
@@ -207,9 +215,10 @@ export function EditorRail({
             <Button
               className="w-full justify-start has-[>svg]:px-4"
               onClick={onAddBlock}
+              size="sm"
               variant="ghost"
             >
-              <Plus aria-hidden="true" />
+              <Plus aria-hidden="true" size={16} />
               Add block
             </Button>
           </li>

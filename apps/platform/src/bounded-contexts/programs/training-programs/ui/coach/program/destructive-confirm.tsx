@@ -1,4 +1,5 @@
-import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { Dialog, DialogContent } from "~/shared/design-system/overlays";
+import { Button } from "~/shared/design-system/primitives";
 import { useMemo, useRef, useState, type RefObject } from "react";
 
 import {
@@ -48,6 +49,64 @@ function applyWithoutAsking({ apply, focusAfterApply }: ConfirmRequest) {
   requestAnimationFrame(() => focusAfterApply()?.focus());
 }
 
+type DestructiveAlertDialogProps = {
+  request: ConfirmRequest | null;
+  open: boolean;
+  returnFocusTo: RefObject<HTMLElement | null>;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+// Built on DialogContent because the shared ConfirmDialog stays a dismissible dialog with a corner close.
+function DestructiveAlertDialog({
+  request,
+  open,
+  returnFocusTo,
+  onCancel,
+  onConfirm,
+}: DestructiveAlertDialogProps) {
+  return (
+    <Dialog open={open}>
+      <DialogContent
+        data-parity-root="ConfirmDialog"
+        description={request?.consequence}
+        details={
+          <ul className="grid gap-1">
+            {request?.lines.map((line, index) => (
+              <li key={`${index}-${line}`}>{line}</li>
+            ))}
+          </ul>
+        }
+        dismissal="locked"
+        footer={
+          <>
+            <Button
+              data-parity="cancel"
+              onClick={onCancel}
+              size="sm"
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+            <Button
+              data-parity="confirm"
+              onClick={onConfirm}
+              size="sm"
+              variant="destructive"
+            >
+              {request?.confirmLabel}
+            </Button>
+          </>
+        }
+        onEscapeKeyDown={onCancel}
+        returnFocusTo={returnFocusTo}
+        role="alertdialog"
+        title={request?.title ?? ""}
+      />
+    </Dialog>
+  );
+}
+
 export function useDestructiveConfirm() {
   const [pending, setPending] = useState<ConfirmRequest | null>(null);
   const lastPending = useRef<ConfirmRequest | null>(null);
@@ -81,24 +140,12 @@ export function useDestructiveConfirm() {
   }
 
   const dialog = (
-    <ConfirmDialog
-      confirmLabel={shown?.confirmLabel ?? ""}
-      description={shown?.consequence}
-      details={
-        <ul className="grid gap-1">
-          {shown?.lines.map((line, index) => (
-            <li key={`${index}-${line}`}>{line}</li>
-          ))}
-        </ul>
-      }
+    <DestructiveAlertDialog
+      onCancel={() => setPending(null)}
       onConfirm={confirm}
-      onOpenChange={(open) => {
-        if (!open) setPending(null);
-      }}
       open={pending !== null}
+      request={shown}
       returnFocusTo={returnFocus}
-      title={shown?.title ?? ""}
-      tone="destructive"
     />
   );
 

@@ -4,7 +4,7 @@
       "use": "builder-opened"
     },
     {
-      "click": "role=navigation[name=\"Program sections\"] >> role=button[name=\"Add block\"]"
+      "click": "[data-parity-root=\"PlanOverview\"] >> role=button[name=\"Add block\"]"
     }
   ],
   "add-resource-tag-query": [
@@ -216,6 +216,14 @@
       "waitFor": "role=button[name=/^Notifications, \\d+ unread$/] >> visible=true"
     }
   ],
+  "block-actions-menu": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Block actions\"]"
+    }
+  ],
   "block-day-menu": [
     {
       "use": "builder-block"
@@ -271,20 +279,24 @@
       "use": "builder-opened"
     },
     {
-      "click": "role=navigation[name=\"Program sections\"] >> role=button[name=/^2\\s?Hypertrophy/]"
+      "click": "role=button[name=/^Open block 2, Hypertrophy/]"
     }
   ],
-  "builder-block-phone": [
-    {
-      "use": "builder-opened"
-    },
-    {
-      "click": "role=button[name=\"Program sections\"]"
-    },
-    {
-      "click": "role=dialog[name=\"Program outline\"] >> role=button[name=/^2\\s?Hypertrophy/]"
-    }
-  ],
+  "builder-block-wide": {
+    "prototype": [
+      {
+        "use": "builder-block"
+      },
+      {
+        "click": "role=button[name=\"Exercise library\"][pressed=true]"
+      }
+    ],
+    "real": [
+      {
+        "use": "builder-block"
+      }
+    ]
+  },
   "builder-changed-elsewhere": {
     "prototype": [
       {
@@ -317,6 +329,9 @@
     ],
     "real": [
       {
+        "use": "builder-opened"
+      },
+      {
         "click": "role=combobox[name=\"Level\"]"
       },
       {
@@ -344,7 +359,11 @@
         "click": "role=button[name=\"Create program\"]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "click": "role=heading[level=1]"
+      }
+    ]
   },
   "builder-phone-drawer": [
     {
@@ -385,6 +404,9 @@
       }
     ],
     "real": [
+      {
+        "use": "builder-opened"
+      },
       {
         "click": "role=combobox[name=\"Level\"]"
       },
@@ -4676,19 +4698,19 @@
       "click": "role=button[name=\"Remove block 1, Foundation\"]"
     },
     {
-      "click": "role=dialog >> role=button[name=\"Remove block\"]"
+      "click": "role=alertdialog >> role=button[name=\"Remove block\"]"
     },
     {
       "click": "role=button[name=\"Remove block 1, Hypertrophy\"]"
     },
     {
-      "click": "role=dialog >> role=button[name=\"Remove block\"]"
+      "click": "role=alertdialog >> role=button[name=\"Remove block\"]"
     },
     {
       "click": "role=button[name=\"Remove block 1, Deload\"]"
     },
     {
-      "click": "role=dialog >> role=button[name=\"Remove block\"]"
+      "click": "role=alertdialog >> role=button[name=\"Remove block\"]"
     }
   ],
   "plan-overview-sequence-problem": [

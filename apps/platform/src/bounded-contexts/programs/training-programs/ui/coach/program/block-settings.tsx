@@ -111,6 +111,7 @@ function LengthSettings({
               >
                 <Switch
                   checked={block.calibrationWeek}
+                  data-parity="setting-calibration-switch"
                   id={switchId}
                   onCheckedChange={(checked) =>
                     onChange({ ...block, calibrationWeek: checked })

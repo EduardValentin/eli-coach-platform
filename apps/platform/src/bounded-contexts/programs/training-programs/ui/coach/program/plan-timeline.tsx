@@ -257,10 +257,10 @@ export function PlanStrip({ blocks }: { blocks: readonly Block[] }) {
       className="flex h-1.5 gap-0.5"
       data-parity="plan-strip"
     >
-      {blocks.map((block) => (
+      {blocks.map((block, index) => (
         <span
           className={cn("rounded-full", BLOCK_SWATCH[block.type])}
-          data-parity="plan-strip-segment"
+          data-parity={`plan-strip-segment-${index + 1}`}
           key={block.id}
           style={{ flexGrow: block.weeks, flexBasis: 0 }}
         />
