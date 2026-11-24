@@ -1,4 +1,5 @@
 import { expect, test } from "../support/fixtures";
+import { collectPageProblems } from "../support/page-problems";
 
 const JOURNEY_TIMEOUT_MS = 300_000;
 
@@ -256,9 +257,9 @@ test(
       "4 days",
       "5 days",
     ]);
-    await programBuilder.expectDayReads("Monday", "Full Body A0 min");
-    await programBuilder.expectDay("Tuesday", "Easy cardio");
-    await programBuilder.expectDayReads("Sunday", "Rest");
+    await programBuilder.expectDaySpoken("Monday", "Full Body A about 0 min");
+    await programBuilder.expectDaySpoken("Tuesday", "Easy cardio 30 min");
+    await programBuilder.expectDaySpoken("Sunday", "Rest");
     await programBuilder.expectOnlyDayMenusInTheWeek();
 
     // act
@@ -281,22 +282,22 @@ test(
 
     // assert
     await programBuilder.expectNoConfirmation();
-    await programBuilder.expectDayReads("Monday", "Full Body A0 min");
+    await programBuilder.expectDaySpoken("Monday", "Full Body A about 0 min");
 
     // act
     await programBuilder.putSessionOnDayByKeyboard("Sunday", "Full Body A");
 
     // assert
     await programBuilder.expectNoConfirmation();
-    await programBuilder.expectDayReads("Sunday", "Full Body A0 min");
-    await programBuilder.expectDayReads("Monday", "Rest");
+    await programBuilder.expectDaySpoken("Sunday", "Full Body A about 0 min");
+    await programBuilder.expectDaySpoken("Monday", "Rest");
 
     // act
     await programBuilder.chooseDayKind("Monday", "Cardio");
 
     // assert
     await programBuilder.expectNoConfirmation();
-    await programBuilder.expectDayReads("Monday", "Cardio");
+    await programBuilder.expectDaySpoken("Monday", "Cardio");
 
     // act
     await programBuilder.chooseDayKind("Tuesday", "Rest");
@@ -327,13 +328,19 @@ test(
 
     // act
     await programBuilder.expectSaved();
+    await programBuilder.watchForOverviewPaint();
+    const problems = collectPageProblems(page);
     await page.reload();
 
     // assert
     await programBuilder.expectOnBlock(2, "Strength");
-    await programBuilder.expectDayReads("Sunday", "Full Body A0 min");
-    await programBuilder.expectDayReads("Monday", "Cardio");
-    await programBuilder.expectDayReads("Tuesday", "Rest");
+    await programBuilder.expectNoOverviewPainted();
+    expect(
+      problems.filter((problem) => /hydrat|script tag/i.test(problem)),
+    ).toEqual([]);
+    await programBuilder.expectDaySpoken("Sunday", "Full Body A about 0 min");
+    await programBuilder.expectDaySpoken("Monday", "Cardio");
+    await programBuilder.expectDaySpoken("Tuesday", "Rest");
     await programBuilder.expectCalibrationOn();
     await programBuilder.expectSplitName("Three full days");
     await programBuilder.expectSelectReads("Target", "45 min");

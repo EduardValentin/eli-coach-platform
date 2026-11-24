@@ -290,8 +290,10 @@ test(
     await programBuilder.closeSectionsDrawerByEscape();
     await programBuilder.openSectionsDrawerByKeyboard();
     await programBuilder.openBlockFromDrawerByKeyboard(3, "Deload");
+    await programBuilder.chooseDayTab("Monday");
 
     // assert
+    await programBuilder.expectOpenDaySpoken(/^Monday \S.* · ~?\d+ min$/);
     await expectOneH1AndNoSkippedLevels(page);
 
     // act

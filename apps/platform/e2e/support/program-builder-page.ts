@@ -581,10 +581,29 @@ export class ProgramBuilderPage {
     await expect(this.dayMenu(weekday)).toBeFocused();
   }
 
-  async expectDayReads(weekday: string, text: string): Promise<void> {
-    await expect(this.dayCard(weekday)).toHaveText(
-      new RegExp(`${escapedPattern(text)}$`),
-    );
+  private spokenText(scope: Locator): Promise<string> {
+    return scope.evaluate((root) => {
+      const parts: string[] = [];
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.parentElement?.closest("[aria-hidden='true']")) continue;
+        parts.push(node.textContent ?? "");
+      }
+
+      return parts.join(" ").replace(/\s+/g, " ").trim();
+    });
+  }
+
+  async expectDaySpoken(weekday: string, spoken: string): Promise<void> {
+    await expect
+      .poll(() => this.spokenText(this.dayCard(weekday)))
+      .toBe(`${weekday} ${spoken}`);
+  }
+
+  async expectOpenDaySpoken(spoken: RegExp): Promise<void> {
+    await expect
+      .poll(() => this.spokenText(this.week.getByRole("tabpanel")))
+      .toMatch(spoken);
   }
 
   async expectBlockActions(actions: readonly string[]): Promise<void> {
