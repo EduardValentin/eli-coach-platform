@@ -105,7 +105,12 @@ export class CoachClientResourcesPage {
     await this.cards.expectCover(title);
   }
 
+  private async movePointerOffToasts(): Promise<void> {
+    await this.page.getByRole("heading", { level: 1 }).hover();
+  }
+
   async openAdd(): Promise<void> {
+    await this.movePointerOffToasts();
     await expect(async () => {
       await this.addButton.click();
       await expect(this.addDialog).toBeVisible({

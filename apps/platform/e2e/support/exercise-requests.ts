@@ -14,6 +14,8 @@ export type ExerciseFields = {
   secondaryMuscles: readonly string[];
   equipment: readonly string[];
   difficulty: string;
+  pattern: string | null;
+  role: string | null;
   tags: readonly string[];
   cues: string;
 };
