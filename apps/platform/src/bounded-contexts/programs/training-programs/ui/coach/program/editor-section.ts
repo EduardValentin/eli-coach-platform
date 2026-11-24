@@ -17,6 +17,10 @@ export function sectionHash(section: EditorSection): string {
     : PLAN_HASH;
 }
 
+export function sectionAnchorId(section: EditorSection): string {
+  return sectionHash(section).slice(1);
+}
+
 export function sectionFromHash(
   hash: string,
   blocks: readonly Block[],

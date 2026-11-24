@@ -320,6 +320,8 @@ test(
     // assert
     await programBuilder.expectOnBlock(2, "Hypertrophy");
     await programBuilder.expectNoOverviewPainted();
-    expect(consoleErrors.filter((error) => /hydrat/i.test(error))).toEqual([]);
+    expect(
+      consoleErrors.filter((error) => /hydrat|script tag/i.test(error)),
+    ).toEqual([]);
   },
 );
