@@ -5677,6 +5677,18 @@
         "press": "Escape"
       },
       {
+        "click": "role=combobox[name=\"Movement pattern (required)\" s]"
+      },
+      {
+        "click": "role=option[name=\"Squat\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Role (required)\" s]"
+      },
+      {
+        "click": "role=option[name=\"Main compound\" s]"
+      },
+      {
         "click": "role=combobox[name=\"Difficulty\" s]"
       },
       {
@@ -5722,6 +5734,18 @@
       },
       {
         "press": "Escape"
+      },
+      {
+        "click": "role=combobox[name=\"Movement pattern (required)\" s]"
+      },
+      {
+        "click": "role=option[name=\"Lunge\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Role (required)\" s]"
+      },
+      {
+        "click": "role=option[name=\"Secondary compound\" s]"
       },
       {
         "click": "role=combobox[name=\"Difficulty\" s]"
