@@ -59,4 +59,21 @@ describe("PortalBackLink", () => {
       screen.getByRole("link", { name: "Back to Clients" }),
     ).not.toHaveClass("mb-8");
   });
+
+  it("sits close to the title that follows it when given the title gap", () => {
+    // arrange
+    // act
+    render(
+      <MemoryRouter>
+        <PortalBackLink gap="title" to="/coach/clients/ana">
+          Ana Popescu
+        </PortalBackLink>
+      </MemoryRouter>,
+    );
+
+    // assert
+    const link = screen.getByRole("link", { name: "Ana Popescu" });
+    expect(link).toHaveClass("mb-1");
+    expect(link).not.toHaveClass("mb-8");
+  });
 });

@@ -59,7 +59,7 @@ const COACH_TIME_ZONE = "Europe/Bucharest";
 const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const UPLOAD_URL = `http://localhost${clientResourcesPath(CLIENT_ID)}`;
 const RESOURCE_URL = `http://localhost${CLIENT_RESOURCES_API_PATHS.resource}`;
-const HEADING = "Andreea’s resources";
+const HEADING = "Resources";
 const DELETE_FAILED = "The resource wasn’t deleted. Try again.";
 const MEGABYTE = 1024 * 1024;
 const DROP_PROMPT = "Drop a file here or choose one";
@@ -255,7 +255,7 @@ describe("the coach's client resources page", () => {
 
     // assert
     expect(
-      screen.getByRole("heading", { level: 1, name: "Andreea’s resources" }),
+      screen.getByRole("heading", { level: 1, name: "Resources" }),
     ).toBeInTheDocument();
     expect(screen.getByText("No resources yet")).toBeInTheDocument();
     expect(
@@ -275,14 +275,19 @@ describe("the coach's client resources page", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("leads back to her record", async () => {
+  it("heads the page with Resources alone, under a way back to her record that shows her name", async () => {
     // arrange, act
     await renderResourcesPage();
 
     // assert
-    expect(
-      screen.getByRole("link", { name: "Back to Andreea Popescu" }),
-    ).toHaveAttribute("href", coachClientPath(CLIENT_ID));
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: "Resources",
+    });
+    expect(heading.closest("header")).toHaveTextContent(/^Resources/);
+    const back = screen.getByRole("link", { name: "Back to Andreea Popescu" });
+    expect(back).toHaveAttribute("href", coachClientPath(CLIENT_ID));
+    expect(within(back).getByText("Back to")).toHaveClass("sr-only");
   });
 
   it("lists her resources in the order given, newest first, each a card named by its title", async () => {
@@ -367,7 +372,7 @@ describe("the coach's client resources page", () => {
       screen.getByRole("link", { name: "Back to Andreea Popescu" }),
     ).toHaveAttribute("href", coachClientPath(CLIENT_ID));
     expect(
-      screen.queryByRole("heading", { name: "Andreea’s resources" }),
+      screen.queryByRole("heading", { name: "Resources" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Add resource" }),
@@ -394,7 +399,7 @@ describe("the coach's client resources page", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Andreea’s resources",
+        name: "Resources",
       }),
     ).toBeInTheDocument();
     expect(

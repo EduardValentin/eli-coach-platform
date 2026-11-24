@@ -51,7 +51,8 @@ export class CoachClientResourcesPage {
     await expect(
       this.page.getByRole("heading", {
         level: 1,
-        name: `${owner.firstName}’s resources`,
+        name: "Resources",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(this.backLinkTo(owner.fullName)).toHaveAttribute(
