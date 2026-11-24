@@ -25,11 +25,13 @@ describe("InlineProblem", () => {
     expect(problem).toHaveClass(
       "flex",
       "items-start",
-      "gap-2",
+      "gap-1.5",
       "text-sm",
       "leading-snug",
+      "font-medium",
       "text-feedback-danger",
     );
+    expect(problem).not.toHaveClass("gap-2");
     const icon = problem.querySelector("svg");
     expect(icon).toHaveAttribute("aria-hidden", "true");
     expect(icon).toHaveAttribute("width", "16");
