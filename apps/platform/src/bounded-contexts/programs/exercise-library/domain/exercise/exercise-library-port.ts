@@ -11,7 +11,7 @@ export type ExerciseReference = {
   exerciseId: string;
 };
 
-export type ExerciseVersionUsage = {
+export type VersionExerciseUsage = {
   programId: string;
   versionNumber: number;
   exerciseIds: readonly string[];
@@ -25,6 +25,6 @@ export interface ExerciseLibraryPort {
   add(exercise: Exercise): Promise<ExerciseAddition>;
   replace(exercise: Exercise): Promise<ExerciseReplacement>;
   remove(reference: ExerciseReference): Promise<ExerciseRemoval>;
-  replaceVersionUsage(usage: ExerciseVersionUsage): Promise<void>;
+  replaceVersionUsage(usage: VersionExerciseUsage): Promise<void>;
   programCountsOf(ownerAccountId: string): Promise<ExerciseProgramCounts>;
 }

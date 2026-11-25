@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Exercise, type StoredExercise } from "./exercise";
 import type {
   ExerciseLibraryPort,
-  ExerciseVersionUsage,
+  VersionExerciseUsage,
 } from "./exercise-library-port";
 import { RecordExerciseUsageUseCase } from "./record-exercise-usage-use-case";
 
@@ -68,7 +68,7 @@ function createUseCase() {
       ),
     ),
     replaceVersionUsage: vi.fn(
-      async (_usage: ExerciseVersionUsage) => undefined,
+      async (_usage: VersionExerciseUsage) => undefined,
     ),
   } satisfies Pick<ExerciseLibraryPort, "list" | "replaceVersionUsage">;
   const recordExerciseUsageUseCase = new RecordExerciseUsageUseCase({

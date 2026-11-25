@@ -1,9 +1,9 @@
 import type {
   ExerciseLibraryPort,
-  ExerciseVersionUsage,
+  VersionExerciseUsage,
 } from "./exercise-library-port";
 
-export type RecordExerciseUsageInput = ExerciseVersionUsage & {
+export type RecordExerciseUsageInput = VersionExerciseUsage & {
   ownerAccountId: string;
 };
 

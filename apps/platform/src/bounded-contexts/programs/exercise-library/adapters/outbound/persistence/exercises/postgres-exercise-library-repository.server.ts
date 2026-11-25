@@ -11,8 +11,8 @@ import {
   type ExerciseReference,
   type ExerciseRemoval,
   type ExerciseReplacement,
-  type ExerciseVersionUsage,
   type ExerciseVideoSnapshot,
+  type VersionExerciseUsage,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { and, asc, countDistinct, eq, sql } from "drizzle-orm";
 
@@ -117,7 +117,7 @@ export class PostgresExerciseLibraryRepository implements ExerciseLibraryPort {
     programId,
     versionNumber,
     exerciseIds,
-  }: ExerciseVersionUsage): Promise<void> {
+  }: VersionExerciseUsage): Promise<void> {
     await this.executor
       .delete(exerciseProgramUsagesTable)
       .where(

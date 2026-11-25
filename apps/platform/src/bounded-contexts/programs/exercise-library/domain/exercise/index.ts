@@ -28,7 +28,7 @@ export {
   type ExerciseReference,
   type ExerciseRemoval,
   type ExerciseReplacement,
-  type ExerciseVersionUsage,
+  type VersionExerciseUsage,
 } from "./exercise-library-port";
 export { type ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 export {
