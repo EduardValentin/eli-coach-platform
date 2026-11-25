@@ -16,6 +16,10 @@ import {
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import {
+  ClientOnboardingJourney,
+  regularSubmission,
+} from "~integration-test-config/client-onboarding-journey";
+import {
   ExerciseLibraryJourney,
   LIBRARY_PAGE,
   VISITOR,
@@ -27,15 +31,61 @@ import {
   COACH_SESSION,
   OTHER_COACH_SESSION,
   PlatformRig,
+  type AccountSession,
 } from "~integration-test-config/platform-rig";
 import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
+import { routeLoaderData } from "~integration-test-config/route-data";
+import {
+  SECOND_PURCHASE,
+  SubscriptionsJourney,
+  type Visitor,
+} from "~integration-test-config/subscriptions-journey";
+import {
+  exerciseRow,
+  planWithSession,
+  TrainingProgramsJourney,
+  type ProgramSetupRequest,
+} from "~integration-test-config/training-programs-journey";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const library = new ExerciseLibraryJourney(rig);
+const onboarding = new ClientOnboardingJourney(
+  rig,
+  new SubscriptionsJourney(rig),
+);
+const programs = new TrainingProgramsJourney(rig, onboarding);
+
+const ANA_CLIENT: AccountSession = {
+  sessionId: "sess_library_usage_ana",
+  subjectId: "user_library_usage_ana",
+};
+
+const MARIA_CLIENT: AccountSession = {
+  sessionId: "sess_library_usage_maria",
+  subjectId: "user_library_usage_maria",
+};
+
+const MARIA: Visitor = {
+  email: "maria.library@example.com",
+  firstName: "Maria",
+  gender: "female",
+  lastName: "Ionescu",
+};
+
+const PROGRAM_SETUP: ProgramSetupRequest = {
+  goal: "Lose fat",
+  level: "beginner",
+  trainingDays: 3,
+  sessionMinutes: 60,
+  language: "en",
+  dailySteps: 6000,
+  splitShape: "full-body",
+  equipment: ["Full gym", "Dumbbells"],
+};
 
 const CREATED_AT = new Date("2026-10-14T09:00:00.000Z");
 const EDITED_AT = new Date("2026-10-15T10:30:00.000Z");
@@ -103,6 +153,29 @@ const PLANK: ExerciseFields = {
   role: "isolation",
   tags: [],
   cues: "",
+};
+
+const INCLINE_WALK: ExerciseFields = {
+  name: "Incline walk",
+  type: "cardio",
+  unit: "time",
+  perSide: false,
+  primaryMuscles: [],
+  secondaryMuscles: [],
+  equipment: ["Treadmill"],
+  difficulty: "Beginner",
+  pattern: null,
+  role: null,
+  tags: [],
+  cues: "",
+};
+
+const PIGEON_STRETCH: ExerciseFields = {
+  ...INCLINE_WALK,
+  name: "Pigeon stretch",
+  type: "stretching",
+  primaryMuscles: ["Glutes"],
+  equipment: ["Mat"],
 };
 
 const SAVE_PROBLEMS = [
@@ -1267,6 +1340,206 @@ describe("exercise library integration", () => {
     });
   });
 
+  describe("an exercise programs use", () => {
+    it("refuses deleting an exercise a draft session uses with 409 and how many programs use it, and keeps it", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await draftUsing({
+        rows: [exerciseRow("row-1", squat.id, { slot: "A" })],
+      });
+
+      // act
+      const response = await library.remove(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error: "in-use",
+        programCount: 1,
+      });
+      expect(await library.exerciseRows()).toEqual([squat]);
+    });
+
+    it("refuses deleting a cardio exercise only a new program's cardio preset uses", async () => {
+      // arrange
+      const walk = await library.createAccepted(COACH_SESSION, INCLINE_WALK);
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PROGRAM_SETUP);
+
+      // act
+      const response = await library.remove(COACH_SESSION, walk.id);
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error: "in-use",
+        programCount: 1,
+      });
+      expect(await library.exerciseRows()).toEqual([walk]);
+    });
+
+    it("counts each of two clients' programs using the exercise", async () => {
+      // arrange
+      const walk = await library.createAccepted(COACH_SESSION, INCLINE_WALK);
+      const anasClientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(anasClientId, PROGRAM_SETUP);
+      const mariasClientId = await programs.approvedClient(
+        MARIA_CLIENT,
+        regularSubmission(),
+        { visitor: MARIA, purchase: SECOND_PURCHASE },
+      );
+      await programs.start(mariasClientId, PROGRAM_SETUP);
+
+      // act
+      const response = await library.remove(COACH_SESSION, walk.id);
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error: "in-use",
+        programCount: 2,
+      });
+    });
+
+    it("refuses deleting an exercise a draft uses only as a substitution", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      const hipThrust = await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await draftUsing({
+        rows: [
+          exerciseRow("row-1", squat.id, {
+            slot: "A",
+            substitutions: [hipThrust.id],
+          }),
+        ],
+      });
+
+      // act
+      const response = await library.remove(COACH_SESSION, hipThrust.id);
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error: "in-use",
+        programCount: 1,
+      });
+    });
+
+    it("refuses deleting a stretch a draft uses only in a switched-off cool-down", async () => {
+      // arrange
+      const pigeon = await library.createAccepted(
+        COACH_SESSION,
+        PIGEON_STRETCH,
+      );
+      await draftUsing({
+        coolDown: {
+          enabled: false,
+          items: [{ id: "cool-down-1", exerciseId: pigeon.id, seconds: 30 }],
+        },
+      });
+
+      // act
+      const response = await library.remove(COACH_SESSION, pigeon.id);
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error: "in-use",
+        programCount: 1,
+      });
+    });
+
+    it("archives an exercise in use, and the draft still holds it", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      const session = {
+        rows: [exerciseRow("row-1", squat.id, { slot: "A" })],
+      };
+      const clientId = await draftUsing(session);
+
+      // act
+      const response = await library.archive(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await programs.draftRowsOf(clientId)).toEqual([
+        { content: planWithSession(session), updatedAt: expect.any(Date) },
+      ]);
+      expect(await library.exerciseRows()).toEqual([
+        expect.objectContaining({ id: squat.id, archivedAt: expect.any(Date) }),
+      ]);
+    });
+
+    it("lists an archived exercise in use among her archived exercises", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await draftUsing({
+        rows: [exerciseRow("row-1", squat.id, { slot: "A" })],
+      });
+      await library.archive(COACH_SESSION, squat.id);
+
+      // act
+      const response = await library.openArchivedLibrary(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await pageTextOf(response)).toContain(
+        "Back squat Resistance · Squat · Barbell, Squat rack Strength Quadriceps Glutes Intermediate —",
+      );
+    });
+
+    it("carries how many programs use each exercise in the library's data", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await draftUsing({
+        rows: [exerciseRow("row-1", squat.id, { slot: "A" })],
+      });
+
+      // act
+      const response = await library.readLibraryData(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(programCountsIn(await routeLoaderData(response))).toEqual({
+        "Back squat": 1,
+        "Hip thrust": 0,
+      });
+    });
+
+    it("deletes an exercise once a save removes it everywhere, and its video with it", async () => {
+      // arrange
+      await library.clearVideoFiles();
+      const video = await sampleVideo(LANDSCAPE_SAMPLE_VIDEO_PATH, {
+        name: "squat.mp4",
+        type: "video/mp4",
+      });
+      await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        video,
+      );
+      const [squat] = await library.exerciseRows();
+
+      if (!squat) {
+        throw new Error("The exercise was not stored.");
+      }
+
+      const clientId = await draftUsing({
+        rows: [exerciseRow("row-1", squat.id, { slot: "A" })],
+      });
+      await programs.saveOverStoredDraft(clientId, planWithSession({}));
+
+      // act
+      const response = await library.remove(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.exerciseRows()).toEqual([]);
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+  });
+
   describe("who may write", () => {
     it.each([
       { who: "a signed-in client", requester: CLIENT_SESSION, status: 403 },
@@ -1431,6 +1704,16 @@ describe("exercise library integration", () => {
   });
 });
 
+async function draftUsing(
+  session: Parameters<typeof planWithSession>[0],
+): Promise<string> {
+  const clientId = await programs.approvedClient(ANA_CLIENT);
+  await programs.start(clientId, PROGRAM_SETUP);
+  await programs.saveOverStoredDraft(clientId, planWithSession(session));
+
+  return clientId;
+}
+
 async function pageTextOf(response: Response): Promise<string> {
   return textOf(await visibleDocument(response));
 }
@@ -1439,4 +1722,16 @@ function textOf(document: string): string {
   return textNodesOf(document)
     .filter((text) => text.length > 0)
     .join(" ");
+}
+
+type ListedExercise = { name: string; programCount: number };
+
+function programCountsIn(routes: unknown[]): Record<string, number> {
+  const exercises = routes.flatMap(
+    (data) => (data as { exercises?: ListedExercise[] }).exercises ?? [],
+  );
+
+  return Object.fromEntries(
+    exercises.map(({ name, programCount }) => [name, programCount]),
+  );
 }
