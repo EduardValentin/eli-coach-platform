@@ -122,12 +122,12 @@ export function Hero() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex flex-col items-center gap-3"
               >
-                <Link to="/book" className="inline-block">
-                  <Button type="button" size="md" elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
+                <Button asChild size="md" elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
+                  <Link to="/book">
                     See if we’re a fit
                     <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <p className="text-text-inverted-secondary text-sm font-light tracking-wide">
                   Free 30-minute call.
                 </p>
