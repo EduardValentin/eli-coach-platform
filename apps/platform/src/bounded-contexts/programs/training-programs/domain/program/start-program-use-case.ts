@@ -1,8 +1,8 @@
 import type { ClockPort } from "../clock-port";
-import type { CardioExercisesPort } from "./cardio-exercises-port";
 import type { ClientCoachingPort } from "./client-coaching-port";
 import type { ClientIdentityPort } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import type { LibraryExercisesPort } from "./library-exercises-port";
 import { Program } from "./program";
 import type { ProgramIdsPort } from "./program-ids-port";
 import {
@@ -37,7 +37,7 @@ type StartProgramUseCaseOptions = {
   clientIdentityPort: ClientIdentityPort;
   coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: ClientCoachingPort;
-  cardioExercisesPort: CardioExercisesPort;
+  libraryExercisesPort: LibraryExercisesPort;
   programIdsPort: ProgramIdsPort;
   clockPort: ClockPort;
 };
@@ -88,12 +88,12 @@ export class StartProgramUseCase {
     const {
       programStorePort,
       clientCoachingPort,
-      cardioExercisesPort,
+      libraryExercisesPort,
       programIdsPort,
       clockPort,
     } = this.options;
     const suggestions = new ProgramSuggestions({
-      cardioExercises: await cardioExercisesPort.listFor(
+      libraryExercises: await libraryExercisesPort.listFor(
         command.coachAccountId,
       ),
       newId: () => programIdsPort.generate(),

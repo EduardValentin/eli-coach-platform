@@ -1,8 +1,4 @@
 import type {
-  CardioExercise,
-  CardioExercisesPort,
-} from "./cardio-exercises-port";
-import type {
   ClientCoaching,
   ClientCoachingFacts,
   ClientCoachingPort,
@@ -12,6 +8,8 @@ import type {
   ClientIdentityPort,
 } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import type { LibraryExercise } from "./library-exercise";
+import type { LibraryExercisesPort } from "./library-exercises-port";
 import type { Program } from "./program";
 import { ProgramSetup } from "./program-setup";
 import type { ProgramStorePort } from "./program-store-port";
@@ -32,14 +30,14 @@ export type ProgramDraftReading =
       language: ProgramLanguage;
       draft: DraftReading;
       startingBlockSetup: BlockSetup;
-      cardioExercises: CardioExercise[];
+      libraryExercises: LibraryExercise[];
     };
 
 type ReadProgramDraftUseCaseOptions = {
   clientIdentityPort: ClientIdentityPort;
   coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: Pick<ClientCoachingPort, "find">;
-  cardioExercisesPort: CardioExercisesPort;
+  libraryExercisesPort: LibraryExercisesPort;
   programStorePort: Pick<ProgramStorePort, "findByClientId">;
 };
 
@@ -62,7 +60,7 @@ export class ReadProgramDraftUseCase {
       clientIdentityPort,
       coachingEndedPort,
       clientCoachingPort,
-      cardioExercisesPort,
+      libraryExercisesPort,
       programStorePort,
     } = this.options;
     const client = await clientIdentityPort.find(clientId);
@@ -94,7 +92,7 @@ export class ReadProgramDraftUseCase {
         program,
         await clientCoachingPort.find(clientId),
       ),
-      cardioExercises: await cardioExercisesPort.listFor(coachAccountId),
+      libraryExercises: await libraryExercisesPort.listFor(coachAccountId),
     };
   }
 

@@ -3,10 +3,6 @@ export { BlockFilling } from "./block-filling";
 export { BlockLoss, type LossChange } from "./block-loss";
 export { BlockWeeks } from "./block-weeks";
 export {
-  type CardioExercise,
-  type CardioExercisesPort,
-} from "./cardio-exercises-port";
-export {
   type ClientCoaching,
   type ClientCoachingFacts,
   type ClientCoachingPort,
@@ -19,6 +15,8 @@ export {
   type ClientIdentityPort,
 } from "./client-identity-port";
 export { type CoachingEndedPort } from "./coaching-ended-port";
+export { type LibraryExercise } from "./library-exercise";
+export { type LibraryExercisesPort } from "./library-exercises-port";
 export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
 export {

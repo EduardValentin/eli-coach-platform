@@ -7,7 +7,7 @@ function fullBodyBlock() {
   let id = 0;
 
   return new ProgramSuggestions({
-    cardioExercises: [],
+    libraryExercises: [],
     newId: () => `id-${(id += 1)}`,
   }).newBlock("foundation", 4, {
     setup: {

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
 import type {
   ClientCoaching,
   ClientCoachingPort,
@@ -11,6 +10,7 @@ import type {
   ClientIdentityPort,
 } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import type { LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
 import type { ProgramSetupValues } from "./program-setup";
 import type { ProgramAddition, ProgramStorePort } from "./program-store-port";
@@ -62,7 +62,31 @@ const SETUP: ProgramSetupValues = {
   equipment: ["Resistance bands", "Dumbbells"],
 };
 
-const BIKE: CardioExercise = { id: "bike", name: "Stationary bike" };
+function libraryExercise(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
+
+const BIKE = libraryExercise("bike", "Stationary bike");
 
 class InMemoryProgramStoreAdapter implements Pick<
   ProgramStorePort,
@@ -125,7 +149,7 @@ type Arrangement = {
   coachingEnded?: boolean;
   clientCoaching?: ClientCoaching;
   programs?: Program[];
-  cardioExercises?: CardioExercise[];
+  libraryExercises?: LibraryExercise[];
 };
 
 function startProgram({
@@ -133,20 +157,20 @@ function startProgram({
   coachingEnded = false,
   clientCoaching = ANAS_COACHING,
   programs = [],
-  cardioExercises = [],
+  libraryExercises = [],
 }: Arrangement = {}) {
   let next = 0;
   const programStorePort = new InMemoryProgramStoreAdapter(programs);
   const clientIdentityPort = new InMemoryClientIdentityAdapter(clients);
   const coachingEndedPort = new InMemoryCoachingEndedAdapter(coachingEnded);
   const clientCoachingPort = new InMemoryClientCoachingAdapter(clientCoaching);
-  const cardioExercisesPort = { listFor: vi.fn(async () => cardioExercises) };
+  const libraryExercisesPort = { listFor: vi.fn(async () => libraryExercises) };
   const startProgramUseCase = new StartProgramUseCase({
     programStorePort,
     clientIdentityPort,
     coachingEndedPort,
     clientCoachingPort,
-    cardioExercisesPort,
+    libraryExercisesPort,
     programIdsPort: { generate: () => `id-${(next += 1)}` },
     clockPort: { now: () => NOW },
   });
@@ -157,7 +181,7 @@ function startProgram({
     clientIdentityPort,
     coachingEndedPort,
     clientCoachingPort,
-    cardioExercisesPort,
+    libraryExercisesPort,
   };
 }
 
@@ -319,8 +343,8 @@ describe("StartProgramUseCase", () => {
 
   it("builds the cardio sessions on a cardio exercise from the coach's library", async () => {
     // arrange
-    const { startProgramUseCase, programStorePort, cardioExercisesPort } =
-      startProgram({ cardioExercises: [BIKE] });
+    const { startProgramUseCase, programStorePort, libraryExercisesPort } =
+      startProgram({ libraryExercises: [BIKE] });
 
     // act
     await startProgramUseCase.execute({
@@ -330,7 +354,7 @@ describe("StartProgramUseCase", () => {
     });
 
     // assert
-    expect(cardioExercisesPort.listFor).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
+    expect(libraryExercisesPort.listFor).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
     const [program] = programStorePort.added;
     const [block] = program.toSnapshot().versions[0].content.plan.blocks;
     expect(

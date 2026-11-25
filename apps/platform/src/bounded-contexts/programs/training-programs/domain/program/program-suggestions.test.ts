@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
+import type { LibraryExercise } from "./library-exercise";
 import type { Block } from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
 import { ProgramSuggestions } from "./program-suggestions";
@@ -16,13 +16,37 @@ const SETUP: ProgramSetupValues = {
   equipment: ["Dumbbells"],
 };
 
-const BIKE: CardioExercise = { id: "bike", name: "Stationary bike" };
+function libraryExercise(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
 
-function suggestionsOver(cardioExercises: CardioExercise[]) {
+const BIKE = libraryExercise("bike", "Stationary bike");
+
+function suggestionsOver(libraryExercises: LibraryExercise[]) {
   let next = 0;
 
   return new ProgramSuggestions({
-    cardioExercises,
+    libraryExercises,
     newId: () => `id-${(next += 1)}`,
   });
 }

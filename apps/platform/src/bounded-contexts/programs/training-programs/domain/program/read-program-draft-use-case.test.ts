@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
 import type { ClientCoaching } from "./client-coaching-port";
 import type { ClientIdentity } from "./client-identity-port";
+import type { LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
 import type { ProgramContent } from "./program-content";
 import type { ProgramVersionSnapshot } from "./program-version";
@@ -34,7 +34,36 @@ const NOT_APPROVED: ClientCoaching = {
   goalOptions: [],
 };
 
-const WALKING: CardioExercise = { id: "exercise-walk", name: "Walking" };
+function libraryExercise(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
+
+const WALKING = libraryExercise("exercise-walk", "Walking");
+const ARCHIVED_SQUAT = libraryExercise("exercise-squat", "Back squat", {
+  type: "resistance",
+  unit: "reps",
+  archived: true,
+});
 
 const ANA: ClientIdentity = {
   clientId: CLIENT_ID,
@@ -91,9 +120,9 @@ function readDraft({
     },
     coachingEndedPort: { hasEnded: async () => coachingEnded },
     clientCoachingPort: { find: async () => clientCoaching },
-    cardioExercisesPort: {
+    libraryExercisesPort: {
       listFor: async (coachAccountId) =>
-        coachAccountId === COACH_ACCOUNT_ID ? [WALKING] : [],
+        coachAccountId === COACH_ACCOUNT_ID ? [WALKING, ARCHIVED_SQUAT] : [],
     },
     programStorePort: {
       findByClientId: async (clientId) =>
@@ -130,7 +159,7 @@ describe("ReadProgramDraftUseCase", () => {
         dailySteps: 6000,
         language: "ro",
       },
-      cardioExercises: [WALKING],
+      libraryExercises: [WALKING, ARCHIVED_SQUAT],
     });
   });
 

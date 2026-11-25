@@ -1,4 +1,4 @@
-import type { CardioExercise } from "./cardio-exercises-port";
+import type { LibraryExercise } from "./library-exercise";
 import type {
   CardioIntensity,
   CardioSegment,
@@ -22,7 +22,7 @@ const STEADY_PRESETS: Record<CardioPresetKind, SteadyPreset> = {
 const STEADY_NAME_PATTERN = /walk|bike|cycling|ellip/i;
 
 type CardioPresetsOptions = {
-  cardioExercises: readonly CardioExercise[];
+  libraryExercises: readonly LibraryExercise[];
   newId: () => string;
 };
 
@@ -59,7 +59,9 @@ export class CardioPresets {
   }
 
   private steadyExerciseId(): string {
-    const { cardioExercises } = this.options;
+    const cardioExercises = this.options.libraryExercises.filter(
+      (exercise) => exercise.type === "cardio" && !exercise.archived,
+    );
     const picked =
       cardioExercises.find((exercise) =>
         STEADY_NAME_PATTERN.test(exercise.name),

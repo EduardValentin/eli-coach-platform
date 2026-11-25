@@ -24,7 +24,7 @@ function idsFrom(prefix: string): () => string {
 
 function block(): Block {
   return new ProgramSuggestions({
-    cardioExercises: [],
+    libraryExercises: [],
     newId: idsFrom("built"),
   }).newBlock("foundation", 4, { setup: SETUP });
 }

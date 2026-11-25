@@ -1,6 +1,6 @@
 import { BlockWeeks } from "./block-weeks";
-import type { CardioExercise } from "./cardio-exercises-port";
 import { CardioPresets } from "./cardio-presets";
+import type { LibraryExercise } from "./library-exercise";
 import {
   mapCalendar,
   type Block,
@@ -61,7 +61,7 @@ type CopiedIds = {
 };
 
 type ProgramSuggestionsOptions = {
-  cardioExercises: readonly CardioExercise[];
+  libraryExercises: readonly LibraryExercise[];
   newId: () => string;
 };
 

@@ -32,7 +32,7 @@ describe("the builder's editing rules, as the browser reaches them", () => {
   it("reshapes a plan: adds the proposed block, makes a day cardio, re-lays the week, and names what a change would lose", () => {
     // arrange
     const suggestions = new ProgramSuggestions({
-      cardioExercises: [],
+      libraryExercises: [],
       newId: idsFrom("suggested"),
     });
     const blockEditing = new BlockEditing({ newId: idsFrom("edited") });

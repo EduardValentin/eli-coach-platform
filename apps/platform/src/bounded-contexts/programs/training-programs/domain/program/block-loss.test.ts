@@ -20,7 +20,7 @@ function block(): Block {
   let next = 0;
 
   return new ProgramSuggestions({
-    cardioExercises: [],
+    libraryExercises: [],
     newId: () => `id-${(next += 1)}`,
   }).newBlock("foundation", 4, { setup: SETUP });
 }
