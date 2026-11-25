@@ -32,8 +32,8 @@ import type { FieldErrors, Resolver } from "react-hook-form";
 import {
   EXERCISE_FORM_FIELDS,
   type ExerciseProblems,
+  type EditedExerciseView,
   type ExerciseRequest,
-  type ExerciseView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
 
 export {
@@ -170,7 +170,7 @@ export function newExerciseFormValues(): ExerciseFormValues {
 }
 
 export function exerciseFormValuesOf(
-  exercise: ExerciseView,
+  exercise: EditedExerciseView,
 ): ExerciseFormValues {
   return {
     name: exercise.name,

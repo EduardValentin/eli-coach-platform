@@ -64,6 +64,7 @@ const HIP_THRUST: ExerciseView = {
   cues: "Chin tucked.",
   video: { path: HIP_THRUST_VIDEO_PATH, format: "mp4" },
   status: "active",
+  programCount: 0,
 };
 
 const BREATH_HOLD: ExerciseView = {
@@ -82,6 +83,7 @@ const BREATH_HOLD: ExerciseView = {
   cues: "Exhale slowly.",
   video: null,
   status: "active",
+  programCount: 0,
 };
 
 const LIBRARY = [BREATH_HOLD, HIP_THRUST];

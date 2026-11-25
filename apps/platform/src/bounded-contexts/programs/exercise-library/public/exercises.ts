@@ -1,6 +1,7 @@
 import type {
   Exercise,
   ExerciseDraftInput,
+  ExerciseListingEntry,
   ExerciseSaveProblems,
   ExerciseSnapshot,
   ExerciseStatus,
@@ -15,12 +16,18 @@ type ExerciseVideoView = { path: string; format: ExerciseVideoFormat };
 export type ExerciseView = Omit<
   ExerciseSnapshot,
   "ownerAccountId" | "archivedAt" | "createdAt" | "updatedAt" | "video"
-> & { video: ExerciseVideoView | null; status: ExerciseStatus };
+> & {
+  video: ExerciseVideoView | null;
+  status: ExerciseStatus;
+  programCount: number;
+};
 
 export type ExerciseLibraryView = { exercises: ExerciseView[] };
 
+export type EditedExerciseView = Omit<ExerciseView, "programCount">;
+
 export type ExerciseEditorView = {
-  exercise: ExerciseView | null;
+  exercise: EditedExerciseView | null;
   otherNames: string[];
 };
 
@@ -79,7 +86,20 @@ export const exerciseProblemsAnswerSchema = z.object({
   problems: exerciseProblemsSchema,
 });
 
-export function presentExercise(exercise: Exercise): ExerciseView {
+export function presentExercise({
+  programCount,
+  ...exercise
+}: ExerciseListingEntry): ExerciseView {
+  return { ...exerciseViewOf(exercise), programCount };
+}
+
+export function presentEditedExercise(exercise: Exercise): EditedExerciseView {
+  return exerciseViewOf({ ...exercise.toSnapshot(), status: exercise.status });
+}
+
+function exerciseViewOf(
+  exercise: ExerciseSnapshot & { status: ExerciseStatus },
+): EditedExerciseView {
   const {
     ownerAccountId: _ownerAccountId,
     archivedAt: _archivedAt,
@@ -87,7 +107,7 @@ export function presentExercise(exercise: Exercise): ExerciseView {
     updatedAt: _updatedAt,
     video,
     ...view
-  } = exercise.toSnapshot();
+  } = exercise;
 
   return {
     ...view,
@@ -95,6 +115,5 @@ export function presentExercise(exercise: Exercise): ExerciseView {
       path: exerciseVideoPath(view.id, video.videoId),
       format: video.format,
     },
-    status: exercise.status,
   };
 }

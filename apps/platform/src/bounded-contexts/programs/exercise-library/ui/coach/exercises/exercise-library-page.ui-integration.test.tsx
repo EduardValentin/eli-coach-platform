@@ -67,6 +67,7 @@ const BACK_SQUAT: ExerciseView = {
     format: "mp4",
   },
   status: "active",
+  programCount: 0,
 };
 
 const BOX_BREATHING: ExerciseView = {
@@ -85,6 +86,7 @@ const BOX_BREATHING: ExerciseView = {
   cues: "",
   video: null,
   status: "active",
+  programCount: 0,
 };
 
 const CAT_COW: ExerciseView = {

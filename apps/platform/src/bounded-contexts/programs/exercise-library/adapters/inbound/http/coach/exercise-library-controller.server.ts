@@ -1,5 +1,4 @@
 import {
-  ExerciseNames,
   MAX_EXERCISE_VIDEO_BYTES,
   type ArchiveExerciseUseCase,
   type CreateExerciseUseCase,
@@ -39,6 +38,7 @@ import {
   exerciseProblemsAnswerSchema,
   exerciseRequestSchema,
   exerciseSavedAnswerSchema,
+  presentEditedExercise,
   presentExercise,
   type ExerciseEditorView,
   type ExerciseLibraryView,
@@ -95,14 +95,11 @@ export class ExerciseLibraryController {
 
   async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { exercises } = await this.options.listExercisesUseCase.execute(
+    const { reservedNames } = await this.options.listExercisesUseCase.execute(
       coach.id,
     );
 
-    return {
-      exercise: null,
-      otherNames: ExerciseNames.reservedBy(exercises).toArray(),
-    };
+    return { exercise: null, otherNames: reservedNames };
   }
 
   async load(
@@ -126,7 +123,7 @@ export class ExerciseLibraryController {
     }
 
     return {
-      exercise: presentExercise(found.exercise),
+      exercise: presentEditedExercise(found.exercise),
       otherNames: found.otherNames,
     };
   }

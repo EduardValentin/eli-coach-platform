@@ -125,13 +125,18 @@ const OPENED: OpenExerciseVideoResult = {
 
 function createController() {
   const listExercises = {
-    execute: vi.fn(async () => ({
-      status: "listed" as const,
-      exercises: [
-        Exercise.reconstitute(HIP_THRUST),
-        Exercise.reconstitute(ARCHIVED_LUNGE),
-      ],
-    })),
+    execute: vi.fn(
+      async (): Promise<
+        Awaited<ReturnType<ListExercisesUseCase["execute"]>>
+      > => ({
+        status: "listed",
+        exercises: [
+          { ...HIP_THRUST, status: "active", programCount: 2 },
+          { ...ARCHIVED_LUNGE, status: "archived", programCount: 0 },
+        ],
+        reservedNames: ["Hip thrust"],
+      }),
+    ),
   };
   const findExercise = {
     execute: vi.fn(async (): Promise<FindExerciseResult> => ({
@@ -309,7 +314,7 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
 }
 
 describe("ExerciseLibraryController#list", () => {
-  it("presents every exercise the signed-in coach's library lists", async () => {
+  it("presents every exercise the signed-in coach's library lists, with how many programs use each", async () => {
     // arrange
     const { exerciseLibraryController, listExercises } = createController();
 
@@ -319,13 +324,14 @@ describe("ExerciseLibraryController#list", () => {
     // assert
     expect(library).toEqual({
       exercises: [
-        HIP_THRUST_VIEW,
+        { ...HIP_THRUST_VIEW, programCount: 2 },
         {
           ...HIP_THRUST_VIEW,
           id: ARCHIVED_LUNGE.id,
           name: "Lunge",
           video: null,
           status: "archived",
+          programCount: 0,
         },
       ],
     });
@@ -347,7 +353,7 @@ describe("ExerciseLibraryController#list", () => {
 });
 
 describe("ExerciseLibraryController#loadNew", () => {
-  it("opens a blank exercise with the names of the active exercises in the signed-in coach's library", async () => {
+  it("opens a blank exercise with the names the signed-in coach's library reserves", async () => {
     // arrange
     const { exerciseLibraryController, listExercises } = createController();
 
