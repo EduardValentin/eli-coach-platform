@@ -2,6 +2,7 @@ export { BlockEditing, type DayChoice } from "./block-editing";
 export { BlockFilling } from "./block-filling";
 export { BlockLoss, type LossChange } from "./block-loss";
 export { BlockWeeks } from "./block-weeks";
+export { CoolDownEditing } from "./cool-down-editing";
 export {
   type ClientCoaching,
   type ClientCoachingFacts,
@@ -31,14 +32,34 @@ export {
   type LibraryExercise,
 } from "./library-exercise";
 export { type LibraryExercisesPort } from "./library-exercises-port";
+export { LibraryEquipment } from "./library-equipment";
+export { LibraryPicks, type LibraryPick } from "./library-picks";
+export {
+  LibrarySelection,
+  type ActiveFilter,
+  type LibraryOffer,
+  type LibraryType,
+} from "./library-selection";
+export { type LibraryTarget } from "./library-target";
 export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
-export { type WeekContext } from "./program-progression";
 export {
+  ProgramProgression,
+  type ResolvedWeek,
+  type SetSpec,
+  type WeekContext,
+  type WeekRow,
+  type WeekSession,
+} from "./program-progression";
+export {
+  MAX_WARM_UP_ITEMS,
   type Block,
   type CardioSession,
+  type ExerciseRow,
+  type PlannedSet,
   type ProgramContent,
   type Session,
+  type SetTargets,
 } from "./program-content";
 export { type ProgramIdsPort } from "./program-ids-port";
 export { type ProgramIncidentsPort } from "./program-incidents-port";
@@ -77,8 +98,15 @@ export {
   SaveProgramDraftUseCase,
   type SaveProgramDraftResult,
 } from "./save-program-draft-use-case";
+export {
+  SessionEditing,
+  type Placement,
+  type SlotUnit,
+} from "./session-editing";
 export { SessionTiming } from "./session-timing";
-export { SplitTemplate } from "./split-template";
+export { SplitTemplate, type SlotPlan } from "./split-template";
+export { Substitutions } from "./substitutions";
+export { WarmUpEditing } from "./warm-up-editing";
 export {
   StartProgramUseCase,
   type StartProgramResult,
@@ -103,6 +131,7 @@ export {
   type ClientLevel,
   type ProgramLanguage,
   type SessionMinutes,
+  type Slot,
   type SplitShape,
   type TrainingDays,
   type Weekday,

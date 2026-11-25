@@ -7,7 +7,12 @@ import {
 } from "./program-content";
 import { RowDefaults } from "./row-defaults";
 import { Substitutions } from "./substitutions";
-import { SLOTS, type BlockType, type Slot } from "./vocabulary";
+import {
+  SLOTS,
+  type BlockType,
+  type RowField,
+  type Slot,
+} from "./vocabulary";
 
 export type Placement = { slot: Slot; beforeRowId?: string };
 
@@ -21,6 +26,8 @@ type SessionEditingOptions = {
   libraryEquipment: readonly Equipment[];
 };
 
+type PlacedRow = Pick<ExerciseRow, "id" | "slot" | "supersetGroup">;
+
 type RowPlacement = { slot: Slot; supersetGroup?: string };
 
 /** The coach's edits of a session's exercise rows (Business Rule 35); each answers the edited session. */
@@ -29,6 +36,35 @@ export class SessionEditing {
 
   constructor(private readonly options: SessionEditingOptions) {
     this.rowDefaults = new RowDefaults(options);
+  }
+
+  /** What a row goes by in its session: its slot, followed by its place in its superset when it is in one. */
+  static positionLabel(
+    session: { rows: readonly PlacedRow[] },
+    row: PlacedRow,
+  ): string {
+    if (row.supersetGroup === undefined) return row.slot;
+    const group = session.rows.filter(
+      (other) =>
+        other.slot === row.slot && other.supersetGroup === row.supersetGroup,
+    );
+
+    return group.length < 2
+      ? row.slot
+      : `${row.slot}${group.findIndex((other) => other.id === row.id) + 1}`;
+  }
+
+  /** A row with one of her changes, remembered as hers so a new block type keeps it. */
+  static withField<Field extends RowField>(
+    row: ExerciseRow,
+    field: Field,
+    value: ExerciseRow[Field],
+  ): ExerciseRow {
+    const touched = row.touched.includes(field)
+      ? row.touched
+      : [...row.touched, field];
+
+    return { ...row, [field]: value, touched };
   }
 
   slotUnits(session: Session, slot: Slot): SlotUnit[] {

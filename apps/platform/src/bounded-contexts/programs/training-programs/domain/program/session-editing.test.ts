@@ -413,3 +413,35 @@ describe("SessionEditing", () => {
     expect(cleared).toEqual({ ...session, rows: [] });
   });
 });
+
+describe("a row's place and the details she changes", () => {
+  it("names a lone row by its slot and the rows of a superset by their order in it", () => {
+    // arrange
+    const unpaired = withExercises(["squat", "A"], ["curl", "C"], ["raise", "C"]);
+    const session = sessionEditing().supersetWithNext(
+      unpaired,
+      rowOf(unpaired, "curl").id,
+    );
+
+    // act
+    const labels = ["squat", "curl", "raise"].map((id) =>
+      SessionEditing.positionLabel(session, rowOf(session, id)),
+    );
+
+    // assert
+    expect(labels).toEqual(["A", "C1", "C2"]);
+  });
+
+  it("remembers a detail she changed so a new block type keeps it", () => {
+    // arrange
+    const row = rowOf(withExercises(["curl", "C"]), "curl");
+
+    // act
+    const changed = SessionEditing.withField(row, "tempo", "3-1-1");
+    const changedAgain = SessionEditing.withField(changed, "tempo", "2-0-1");
+
+    // assert
+    expect(changed).toMatchObject({ tempo: "3-1-1", touched: ["tempo"] });
+    expect(changedAgain.touched).toEqual(["tempo"]);
+  });
+});
