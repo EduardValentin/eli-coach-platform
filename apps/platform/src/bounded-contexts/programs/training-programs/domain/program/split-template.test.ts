@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Block, CardioSession, Session } from "./program-content";
 import { SplitTemplate } from "./split-template";
-import { WEEKDAYS, type SplitShape } from "./vocabulary";
+import { SLOTS, WEEKDAYS, type SplitShape } from "./vocabulary";
 
 function cardio(id: string): CardioSession {
   return { id, originId: id, name: "Easy cardio", segments: [] };
@@ -201,6 +201,42 @@ function blockWith(shape: SplitShape, sessions: Session[]): Block {
     missedDayNote: "",
   };
 }
+
+describe("SplitTemplate slotPlanOrFallback", () => {
+  it("reads the slot plan of a session in the block", () => {
+    // arrange
+    const sessions = [session("a"), session("b")];
+    const block = blockWith("full-body", sessions);
+
+    // act
+    const plan = SplitTemplate.slotPlanOrFallback(block, sessions[0], "A");
+
+    // assert
+    expect(plan).toEqual({
+      slot: "A",
+      patterns: ["squat"],
+      label: "Main lift",
+    });
+  });
+
+  it("plans a session outside the block by its slot's usual label", () => {
+    // arrange
+    const block = blockWith("full-body", [session("a"), session("b")]);
+
+    // act
+    const plans = SLOTS.map((slot) =>
+      SplitTemplate.slotPlanOrFallback(block, session("elsewhere"), slot),
+    );
+
+    // assert
+    expect(plans).toEqual([
+      { slot: "A", patterns: [], label: "Main lift" },
+      { slot: "B", patterns: [], label: "Secondary" },
+      { slot: "C", patterns: ["isolation"], label: "Accessories" },
+      { slot: "D", patterns: ["core"], label: "Core / finisher" },
+    ]);
+  });
+});
 
 describe("SplitTemplate slotPlanFor", () => {
   it("reads the slot plan of the session at its position in the block", () => {

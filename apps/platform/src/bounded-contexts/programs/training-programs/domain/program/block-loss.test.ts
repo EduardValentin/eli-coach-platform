@@ -93,6 +93,25 @@ describe("BlockLoss describe", () => {
     expect(reset).toEqual(split);
   });
 
+  it("names the exercises a cleared session loses", () => {
+    // arrange
+    const start = filledBlock(5, 1, 0);
+
+    // act
+    const cleared = BlockLoss.describe(start, {
+      kind: "clear-session",
+      sessionId: start.sessions[0].id,
+    });
+    const empty = BlockLoss.describe(start, {
+      kind: "clear-session",
+      sessionId: start.sessions[2].id,
+    });
+
+    // assert
+    expect(cleared).toEqual(["Full Body A · 5 exercises"]);
+    expect(empty).toEqual([]);
+  });
+
   it("names the sessions and cardio that fewer or more training days drop", () => {
     // arrange
     const start: Block = {

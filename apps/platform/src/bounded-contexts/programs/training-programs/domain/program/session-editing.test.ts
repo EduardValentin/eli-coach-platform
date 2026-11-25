@@ -417,7 +417,11 @@ describe("SessionEditing", () => {
 describe("a row's place and the details she changes", () => {
   it("names a lone row by its slot and the rows of a superset by their order in it", () => {
     // arrange
-    const unpaired = withExercises(["squat", "A"], ["curl", "C"], ["raise", "C"]);
+    const unpaired = withExercises(
+      ["squat", "A"],
+      ["curl", "C"],
+      ["raise", "C"],
+    );
     const session = sessionEditing().supersetWithNext(
       unpaired,
       rowOf(unpaired, "curl").id,

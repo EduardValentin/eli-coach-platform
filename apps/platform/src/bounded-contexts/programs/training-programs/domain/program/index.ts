@@ -30,10 +30,11 @@ export {
   MUSCLES,
   type Equipment,
   type LibraryExercise,
+  type MovementPattern,
+  type Muscle,
 } from "./library-exercise";
 export { type LibraryExercisesPort } from "./library-exercises-port";
-export { LibraryEquipment } from "./library-equipment";
-export { LibraryPicks, type LibraryPick } from "./library-picks";
+export { LibraryPicks } from "./library-picks";
 export {
   LibrarySelection,
   type ActiveFilter,
@@ -45,21 +46,22 @@ export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
 export {
   ProgramProgression,
-  type ResolvedWeek,
   type SetSpec,
   type WeekContext,
   type WeekRow,
   type WeekSession,
 } from "./program-progression";
 export {
-  MAX_WARM_UP_ITEMS,
+  MAX_SUBSTITUTIONS,
+  SINGLE_UNIT_SLOTS,
   type Block,
   type CardioSession,
+  type CoolDownItem,
   type ExerciseRow,
-  type PlannedSet,
   type ProgramContent,
   type Session,
   type SetTargets,
+  type WarmUpItem,
 } from "./program-content";
 export { type ProgramIdsPort } from "./program-ids-port";
 export { type ProgramIncidentsPort } from "./program-incidents-port";
@@ -98,15 +100,14 @@ export {
   SaveProgramDraftUseCase,
   type SaveProgramDraftResult,
 } from "./save-program-draft-use-case";
-export {
-  SessionEditing,
-  type Placement,
-  type SlotUnit,
-} from "./session-editing";
+export { SessionEditing, type Placement } from "./session-editing";
 export { SessionTiming } from "./session-timing";
 export { SplitTemplate, type SlotPlan } from "./split-template";
-export { Substitutions } from "./substitutions";
-export { WarmUpEditing } from "./warm-up-editing";
+export {
+  WARM_UP_REPS,
+  WARM_UP_SECONDS,
+  WarmUpEditing,
+} from "./warm-up-editing";
 export {
   StartProgramUseCase,
   type StartProgramResult,
@@ -129,6 +130,7 @@ export {
   WEEKDAYS,
   type BlockType,
   type ClientLevel,
+  type LastSetTechnique,
   type ProgramLanguage,
   type SessionMinutes,
   type Slot,

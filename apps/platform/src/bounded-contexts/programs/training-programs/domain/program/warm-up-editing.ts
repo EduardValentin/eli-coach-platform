@@ -6,8 +6,8 @@ import {
   type WarmUpItem,
 } from "./program-content";
 
-const WARM_UP_REPS: Range = { min: 10, max: 10 };
-const WARM_UP_SECONDS = 45;
+export const WARM_UP_REPS: Range = { min: 10, max: 10 };
+export const WARM_UP_SECONDS = 45;
 
 type WarmUpEditingOptions = {
   newId: () => string;

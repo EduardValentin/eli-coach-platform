@@ -4,15 +4,17 @@ import {
   type Block,
   type CalendarEntry,
   type CardioSession,
+  type Session,
 } from "./program-content";
 import { RowDefaults, type BlockTypeChangeContext } from "./row-defaults";
 import { SplitTemplate } from "./split-template";
-import type {
-  BlockType,
-  ProgramLanguage,
-  SplitShape,
-  TrainingDays,
-  Weekday,
+import {
+  WEEKDAYS,
+  type BlockType,
+  type ProgramLanguage,
+  type SplitShape,
+  type TrainingDays,
+  type Weekday,
 } from "./vocabulary";
 
 export type DayChoice =
@@ -31,6 +33,23 @@ export class BlockEditing {
 
   constructor(private readonly options: BlockEditingOptions) {
     this.rowDefaults = new RowDefaults(options);
+  }
+
+  /** The strength sessions in the order the builder lists them: by weekday on the calendar, then the ones off it. */
+  static listedSessions(block: Block): Session[] {
+    const scheduledIds = WEEKDAYS.flatMap((day) => {
+      const entry = block.calendar[day];
+
+      return entry.kind === "session" ? [entry.sessionId] : [];
+    });
+    const scheduled = [...new Set(scheduledIds)].flatMap((id) =>
+      block.sessions.filter((session) => session.id === id),
+    );
+
+    return [
+      ...scheduled,
+      ...block.sessions.filter((session) => !scheduled.includes(session)),
+    ];
   }
 
   blockWithDay(block: Block, day: Weekday, choice: DayChoice): Block {

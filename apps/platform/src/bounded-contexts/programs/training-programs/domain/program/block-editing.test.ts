@@ -216,6 +216,28 @@ describe("BlockEditing blockWithDay", () => {
   });
 });
 
+describe("BlockEditing listedSessions", () => {
+  it("lists the strength sessions by their weekday, then the ones not on the calendar", () => {
+    // arrange
+    const start = block();
+    const [first, second, third] = start.sessions;
+    const moved = blockEditing().blockWithDay(start, "mon", {
+      kind: "session",
+      sessionId: second.id,
+    });
+
+    // act
+    const listed = BlockEditing.listedSessions(moved);
+
+    // assert
+    expect(listed.map((session) => session.id)).toEqual([
+      second.id,
+      third.id,
+      first.id,
+    ]);
+  });
+});
+
 describe("BlockEditing relayoutBlock", () => {
   it("starts with as many training days as the block has sessions", () => {
     // act

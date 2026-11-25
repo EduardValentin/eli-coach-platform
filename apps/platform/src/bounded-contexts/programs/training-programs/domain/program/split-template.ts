@@ -45,6 +45,13 @@ const ISOLATION: SlotPlan = {
   label: SLOT_LABELS.C,
 };
 
+const FALLBACK_SLOT_PLANS: Record<Slot, SlotPlan> = {
+  A: { slot: "A", patterns: [], label: SLOT_LABELS.A },
+  B: { slot: "B", patterns: [], label: SLOT_LABELS.B },
+  C: ISOLATION,
+  D: CORE,
+};
+
 const FULL_BODY_LOWER: MainAndSecondary[] = [
   { main: ["squat"], secondary: ["hinge", "lunge"] },
   { main: ["hinge"], secondary: ["squat", "lunge"] },
@@ -133,6 +140,18 @@ export class SplitTemplate {
     if (!first) return undefined;
 
     return { ...first, patterns: plans.flatMap((plan) => plan.patterns) };
+  }
+
+  /** The slot's plan, or its usual one for a session the split does not plan. */
+  static slotPlanOrFallback(
+    block: Block,
+    session: Session,
+    slot: Slot,
+  ): SlotPlan {
+    return (
+      SplitTemplate.slotPlanFor(block, session, slot) ??
+      FALLBACK_SLOT_PLANS[slot]
+    );
   }
 
   get label(): string {

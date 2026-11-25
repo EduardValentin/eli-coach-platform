@@ -7,12 +7,7 @@ import {
 } from "./program-content";
 import { RowDefaults } from "./row-defaults";
 import { Substitutions } from "./substitutions";
-import {
-  SLOTS,
-  type BlockType,
-  type RowField,
-  type Slot,
-} from "./vocabulary";
+import { SLOTS, type BlockType, type RowField, type Slot } from "./vocabulary";
 
 export type Placement = { slot: Slot; beforeRowId?: string };
 
