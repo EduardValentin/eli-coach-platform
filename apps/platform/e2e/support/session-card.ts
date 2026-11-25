@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 const SESSION_NAME = "Session name";
 const SESSION_SETTLE_MS = 5_000;
@@ -47,11 +47,15 @@ export class SessionCard {
   }
 
   cardOf(exercise: string): Locator {
-    return this.page.locator(`article[aria-label$=" ${exercise}"]`);
+    return this.page.getByRole("article", {
+      name: new RegExp(` ${escapedPattern(exercise)}$`),
+    });
   }
 
   async openFirstStrengthDay(): Promise<void> {
-    const face = this.week.locator("button[data-parity^='day-face']").first();
+    const face = this.week
+      .getByRole("button", { name: /^(?!.* options$)/ })
+      .first();
 
     await expect(async () => {
       await face.click();
@@ -91,7 +95,7 @@ export class SessionCard {
   async expectCardLabels(labels: readonly string[]): Promise<void> {
     await expect(async () => {
       const found = await this.page
-        .locator("article[aria-label]")
+        .getByRole("article")
         .evaluateAll((cards) =>
           cards.map((card) => card.getAttribute("aria-label")),
         );
@@ -102,7 +106,7 @@ export class SessionCard {
 
   async chooseFromActions(exercise: string, item: string): Promise<void> {
     const trigger = this.actionsOf(exercise);
-    const menu = this.page.locator("[role='menu'][data-state='open']");
+    const menu = this.page.getByRole("menu");
 
     await trigger.focus();
     await this.page.keyboard.press("Enter");

@@ -662,11 +662,9 @@ export class ExerciseLibraryPage {
       await this.actionsTriggerOf(name).click({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
-      await expect(this.rowMenuItem("Delete")).toHaveAttribute(
-        "aria-disabled",
-        "true",
-        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
-      );
+      await expect(this.rowMenuItem("Delete")).toBeDisabled({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
       await this.rowMenuItem("Delete").hover();
       await expect(this.page.getByText(reason, { exact: true })).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
@@ -687,11 +685,9 @@ export class ExerciseLibraryPage {
       await this.actionsTriggerOf(name).click({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
-      await expect(this.rowMenuItem("Delete")).not.toHaveAttribute(
-        "aria-disabled",
-        "true",
-        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
-      );
+      await expect(this.rowMenuItem("Delete")).toBeEnabled({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
     }).toPass();
     await this.closeRowMenuAndHint();
   }

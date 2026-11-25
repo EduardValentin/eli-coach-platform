@@ -35,10 +35,7 @@ export class LibraryPanel {
   }
 
   private entryOf(exercise: string): Locator {
-    return this.listedExercises
-      .filter({ hasText: exercise })
-      .locator("div.cursor-grab")
-      .first();
+    return this.listedExercises.filter({ hasText: exercise }).first();
   }
 
   async expectPaneOpen(): Promise<void> {
