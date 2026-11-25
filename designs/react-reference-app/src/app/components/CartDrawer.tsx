@@ -27,7 +27,7 @@ import { FreeTag } from "./FreeTag";
 import { Price } from "./Price";
 import { InlineProblem } from "./ui/inline-problem";
 import { StoreOrderSummary } from "./StoreOrderSummary";
-import { Button } from "./ThemeButton";
+import { Button } from "./ui/button";
 import { Alert } from "./ui/alert";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -510,6 +510,7 @@ function CartDetailsForm(
         <Button
           disabled={props.fields.isSubmitting}
           onClick={props.onBack}
+          type="button"
           size="lg"
           variant="outline"
         >
@@ -744,6 +745,7 @@ function CartReview(props: {
         )}
         <Button
           onClick={props.onContinue}
+          type="button"
           size="lg"
           variant="inverted"
           width="full"

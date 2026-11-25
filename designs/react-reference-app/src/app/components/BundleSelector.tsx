@@ -1,7 +1,8 @@
 import { useId, useState, type ReactNode } from 'react';
 import { CheckCircle2, Star, Tag } from 'lucide-react';
 import { motion } from 'motion/react';
-import { buttonVariants, cn } from './ThemeButton';
+import { buttonVariants } from './ui/button';
+import { cn } from './ui/utils';
 import { cardVariants } from './ui/card';
 import {
   bundlePerMonth,

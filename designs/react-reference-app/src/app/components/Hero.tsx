@@ -2,7 +2,7 @@ import { Play, Pause, RotateCcw, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Button } from './ThemeButton';
+import { Button } from './ui/button';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
@@ -123,7 +123,7 @@ export function Hero() {
                 className="flex flex-col items-center gap-3"
               >
                 <Link to="/book" className="inline-block">
-                  <Button elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
+                  <Button type="button" size="md" elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
                     See if we’re a fit
                     <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Button>

@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
-import { buttonVariants } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ui/button';
 import {
   ConfirmationActions,
   ConfirmationHeading,
@@ -59,7 +59,7 @@ export function CheckoutComplete() {
       </ConfirmationReadings>
 
       <ConfirmationActions>
-        <Link className={buttonVariants({ variant: 'outline' })} to="/">
+        <Link className={buttonVariants({ size: 'md', variant: 'outline' })} to="/">
           Back to the home page
         </Link>
       </ConfirmationActions>

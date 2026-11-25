@@ -6,7 +6,7 @@ import { BundleSelector } from '../components/BundleSelector';
 import { DismissibleNotice } from '../components/DismissibleNotice';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { StartChoice } from '../components/StartChoice';
-import { buttonVariants } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ui/button';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { usePaymentLinkToken } from '../hooks/usePaymentLinkToken';

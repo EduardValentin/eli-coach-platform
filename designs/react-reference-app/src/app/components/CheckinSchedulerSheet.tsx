@@ -7,7 +7,7 @@ import {
 } from './ResponsiveSheetDialog';
 import { DateTimePicker } from './DateTimePicker';
 import { AssessmentSlotPicker } from './AssessmentSlotPicker';
-import { Button } from './ThemeButton';
+import { Button } from './ui/button';
 import { Alert, AlertAction } from './ui/alert';
 import { formatSlotTime } from '../utils/dateFormatters';
 
@@ -84,6 +84,7 @@ export function StepButton({
 }) {
   return (
     <Button
+      type="button"
       data-parity="checkin-picker-step"
       onClick={onSubmit}
       disabled={disabled || busy}

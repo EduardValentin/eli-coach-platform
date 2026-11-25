@@ -9,7 +9,8 @@ import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { ChoiceGroup, ChoiceOption } from '../components/ChoiceGroup';
 import { ProductTag } from '../components/ProductTag';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { buttonVariants, cn } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ui/button';
+import { cn } from '../components/ui/utils';
 import { cardVariants } from '../components/ui/card';
 import { FreeTag } from '../components/FreeTag';
 

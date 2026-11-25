@@ -11,7 +11,7 @@ import {
 import type { PrototypeWaitlistAvailability } from '../../context/AppContext';
 import { cn } from '../ui/utils';
 import { resolveTokenColors } from '../../utils/tokenColors';
-import { buttonVariants } from '../ThemeButton';
+import { buttonVariants } from '../ui/button';
 
 type WaitlistEmailFormProps = {
   availability: PrototypeWaitlistAvailability;

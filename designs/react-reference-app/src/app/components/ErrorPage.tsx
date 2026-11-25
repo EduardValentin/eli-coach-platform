@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft, ArrowRight, type LucideIcon } from 'lucide-react';
 import { Link, type LinkProps } from 'react-router';
 import { SectionEyebrow } from './SectionEyebrow';
-import { buttonVariants } from './ThemeButton';
+import { buttonVariants } from './ui/button';
 import { cn } from './ui/utils';
 
 // Shared by every dead end (404, 403, failed sign-in). Production replaces the

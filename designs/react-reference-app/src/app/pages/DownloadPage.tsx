@@ -4,7 +4,7 @@ import { useAppState } from '../context/AppContext';
 import { Download, FileText, LinkIcon } from 'lucide-react';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { DeadEndLink } from '../components/ErrorPage';
-import { buttonVariants } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ui/button';
 
 type GrantedResource = {
   title: string;

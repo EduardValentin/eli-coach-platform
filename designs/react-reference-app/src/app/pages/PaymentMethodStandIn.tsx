@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Button } from '../components/ThemeButton';
+import { Button } from '../components/ui/button';
 import {
   ProviderStandInShell,
   STAND_IN_BACK_LINK_CLASS,
@@ -43,6 +43,8 @@ export function PaymentMethodStandIn() {
         className="mt-8"
         disabled={saving}
         onClick={() => void save()}
+        size="md"
+        type="button"
         variant="inverted"
         width="full"
       >

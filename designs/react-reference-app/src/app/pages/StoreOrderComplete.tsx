@@ -8,7 +8,7 @@ import {
   ConfirmationPage,
 } from '../components/CheckoutConfirmation';
 import { StoreOrderSummary } from '../components/StoreOrderSummary';
-import { Button, buttonVariants } from '../components/ThemeButton';
+import { Button, buttonVariants } from '../components/ui/button';
 import { EYEBROW_CLASS } from '../components/typography';
 import { linkVariants } from '../components/ui/link';
 import { useAppState } from '../context/AppContext';
@@ -117,12 +117,14 @@ function ConfirmedOrderView({ order, sessionId }: { order: ConfirmedOrder; sessi
           aria-disabled={resend === 'sending' || undefined}
           className="mt-4"
           onClick={sendAgain}
+          size="md"
+          type="button"
           variant="outline"
         >
           {resend === 'sending' ? (
-            <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />
+            <Loader2 aria-hidden="true" className="size-4.5 animate-spin motion-reduce:hidden" />
           ) : (
-            <Mail aria-hidden="true" size={18} />
+            <Mail aria-hidden="true" className="size-4.5" />
           )}
           Send my order email again
         </Button>
@@ -181,7 +183,7 @@ function FeedbackLine({ icon, children }: { icon: ReactNode; children: ReactNode
 function BackToStore() {
   return (
     <ConfirmationActions>
-      <Link className={buttonVariants({ variant: 'outline' })} to="/store">
+      <Link className={buttonVariants({ size: 'md', variant: 'outline' })} to="/store">
         Back to the store
       </Link>
     </ConfirmationActions>
