@@ -6,6 +6,8 @@ import ts from "typescript";
 const HEADING_LEVEL = "selects a heading by level; find it by its name instead";
 const FIXED_WAIT =
   "waits a fixed time; wait for what the user sees or the event instead";
+const SINGLE_FILE_CHOOSER =
+  "waits for one file chooser; open it through FileChoosers instead";
 const SKIPPED_DIRECTORIES = new Set([
   "node_modules",
   "playwright-report",
@@ -27,16 +29,24 @@ function hasProperty(options, name) {
   );
 }
 
-function selectsHeadingByLevel(call, callee) {
-  const [role, options] = call.arguments;
+function firstArgumentIs(call, text) {
+  const [first] = call.arguments;
 
   return (
-    callee.text === "getByRole" &&
-    role !== undefined &&
-    ts.isStringLiteralLike(role) &&
-    role.text === "heading" &&
-    hasProperty(options, "level")
+    first !== undefined && ts.isStringLiteralLike(first) && first.text === text
   );
+}
+
+function selectsHeadingByLevel(call, callee) {
+  return (
+    callee.text === "getByRole" &&
+    firstArgumentIs(call, "heading") &&
+    hasProperty(call.arguments[1], "level")
+  );
+}
+
+function waitsForOneFileChooser(call, callee) {
+  return callee.text === "waitForEvent" && firstArgumentIs(call, "filechooser");
 }
 
 function waitsFixedTime(call, callee) {
@@ -49,6 +59,7 @@ function waitsFixedTime(call, callee) {
 function problemOf(call, callee) {
   if (selectsHeadingByLevel(call, callee)) return HEADING_LEVEL;
   if (waitsFixedTime(call, callee)) return FIXED_WAIT;
+  if (waitsForOneFileChooser(call, callee)) return SINGLE_FILE_CHOOSER;
   return undefined;
 }
 

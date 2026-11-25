@@ -33,6 +33,10 @@ describe("fragile e2e patterns", () => {
     ],
     ["a test's own timeout", "test.setTimeout(90_000);"],
     [
+      "a wait for a download",
+      'const download = page.waitForEvent("download");',
+    ],
+    [
       "a wait for what the page shows",
       'await expect(page.getByRole("status")).toHaveText("Saved");',
     ],
@@ -70,6 +74,13 @@ describe("fragile e2e patterns", () => {
       "await new Promise((resolve) => setTimeout(resolve, 1_500));",
       [
         "a.ts:1: waits a fixed time; wait for what the user sees or the event instead",
+      ],
+    ],
+    [
+      "a wait for one file chooser",
+      'const chooser = page.waitForEvent("filechooser");',
+      [
+        "a.ts:1: waits for one file chooser; open it through FileChoosers instead",
       ],
     ],
     [
