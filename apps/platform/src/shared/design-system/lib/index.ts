@@ -34,11 +34,15 @@ export {
   SCREEN_CARD_TITLE_CLASS,
   VALUE_CLASS,
   VALUE_LG_CLASS,
-  WIDGET_SUBHEADING_CLASS,
   WIDGET_TITLE_CLASS,
 } from "./typography";
 export { toggled } from "./toggled";
 export { useDisplayTimeZone } from "./use-display-time-zone";
 export { useFragmentToken } from "./use-fragment-token";
 export { useSearchParamsWriter } from "./use-search-params-writer";
-export { useIsDesktopViewport, useIsMobileViewport } from "./viewport";
+export {
+  useIsDesktopViewport,
+  useIsMobileViewport,
+  useIsWideViewport,
+} from "./viewport";
+export { useReturnFocusToOpener } from "./use-return-focus-to-opener";

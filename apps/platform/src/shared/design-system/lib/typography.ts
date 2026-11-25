@@ -5,6 +5,5 @@ export const LABEL_CLASS = "text-xs font-medium text-text-secondary";
 export const EYEBROW_CLASS = "text-label uppercase text-text-secondary";
 export const VALUE_LG_CLASS = "text-value-lg text-text-primary";
 export const VALUE_CLASS = "text-sm font-medium text-text-primary";
-export const WIDGET_SUBHEADING_CLASS = "text-sm font-medium text-text-primary";
 export const SCREEN_CARD_TITLE_CLASS =
   "font-heading text-lg font-normal text-text-primary";

@@ -21,6 +21,8 @@ const MOBILE_VIEWPORT = viewportQuery("(width < 48em)");
 
 const DESKTOP_VIEWPORT = viewportQuery("(min-width: 64em)");
 
+const WIDE_VIEWPORT = viewportQuery("(min-width: 80em)");
+
 function serverMatchesNoViewport() {
   return false;
 }
@@ -39,4 +41,8 @@ export function useIsMobileViewport(): boolean {
 
 export function useIsDesktopViewport(): boolean {
   return useViewportMatches(DESKTOP_VIEWPORT);
+}
+
+export function useIsWideViewport(): boolean {
+  return useViewportMatches(WIDE_VIEWPORT);
 }

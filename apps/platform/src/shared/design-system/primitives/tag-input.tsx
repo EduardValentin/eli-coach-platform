@@ -1,9 +1,10 @@
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../lib/cn";
 import { FIELD_FRAME_CLASS } from "./field-frame";
 import { Popover, PopoverAnchor, PopoverContent } from "./popover";
+import { RemovableChip } from "./removable-chip";
 
 type TagSuggestion = { kind: "existing" | "create"; tag: string };
 
@@ -84,28 +85,6 @@ function optionsFor(
     tag.length > 0 && !hasTag(vocabulary, tag) && !hasTag(chosen, tag);
 
   return creatable ? [...existing, { kind: "create", tag }] : existing;
-}
-
-type RemovableChipProps = {
-  label: string;
-  removeLabel: string;
-  onRemove: () => void;
-};
-
-function RemovableChip({ label, removeLabel, onRemove }: RemovableChipProps) {
-  return (
-    <li className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full border border-border-default bg-surface-base py-0.5 pr-1 pl-3 text-sm text-text-primary">
-      <span className="min-w-0 break-words">{label}</span>
-      <button
-        aria-label={removeLabel}
-        className="relative hit-area inline-flex size-6 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-muted-hover hover:text-text-primary"
-        onClick={onRemove}
-        type="button"
-      >
-        <X aria-hidden="true" className="size-3.5" />
-      </button>
-    </li>
-  );
 }
 
 type SuggestionOptionProps = {

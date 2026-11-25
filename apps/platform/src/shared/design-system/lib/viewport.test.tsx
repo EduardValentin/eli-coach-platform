@@ -3,7 +3,11 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { useIsDesktopViewport, useIsMobileViewport } from "./viewport";
+import {
+  useIsDesktopViewport,
+  useIsMobileViewport,
+  useIsWideViewport,
+} from "./viewport";
 
 type ViewportListener = () => void;
 
@@ -122,5 +126,35 @@ describe("useIsMobileViewport", () => {
 
     // assert
     expect(result.current).toBe(true);
+  });
+});
+
+describe("useIsWideViewport", () => {
+  it.each([
+    { width: 1024, wide: false },
+    { width: 1279, wide: false },
+    { width: 1280, wide: true },
+    { width: 1920, wide: true },
+  ])("answers $wide at $width px", ({ width, wide }) => {
+    // arrange
+    viewportIs(width);
+
+    // act
+    const { result } = renderHook(() => useIsWideViewport());
+
+    // assert
+    expect(result.current).toBe(wide);
+  });
+
+  it("follows the viewport across the wide breakpoint", () => {
+    // arrange
+    viewportIs(1440);
+    const { result } = renderHook(() => useIsWideViewport());
+
+    // act
+    resizeViewportTo(1100);
+
+    // assert
+    expect(result.current).toBe(false);
   });
 });

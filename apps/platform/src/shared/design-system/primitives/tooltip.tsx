@@ -3,7 +3,7 @@ import { Tooltip as RadixTooltip } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
-export function TooltipProvider({
+function TooltipProvider({
   delayDuration = 0,
   ...props
 }: React.ComponentProps<typeof RadixTooltip.Provider>) {
