@@ -394,3 +394,23 @@ describe("button marked aria-invalid", () => {
     },
   );
 });
+
+describe("glass button", () => {
+  it("lays a dark tint under its white label so the label stays readable over any photo", () => {
+    // arrange
+    const variant = "glass";
+
+    // act
+    const classes = buttonVariants({ variant }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "bg-surface-inverted/5",
+        "not-aria-disabled:hover:bg-surface-inverted/15",
+        "text-text-inverted",
+      ]),
+    );
+    expect(classes).not.toContain("bg-text-inverted/15");
+  });
+});
