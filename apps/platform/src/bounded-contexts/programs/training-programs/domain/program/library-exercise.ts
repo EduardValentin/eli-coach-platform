@@ -1,7 +1,7 @@
-export type ExerciseType =
+type ExerciseType =
   "resistance" | "cardio" | "mobility" | "stretching" | "breathing";
 
-export type ExerciseUnit = "reps" | "time" | "distance" | "breaths";
+type ExerciseUnit = "reps" | "time" | "distance" | "breaths";
 
 export type MovementPattern =
   | "squat"

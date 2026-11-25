@@ -32,7 +32,7 @@ export type SetTargets = { reps: Range; rir: number; weightKg?: number };
 
 export type PlannedSet = { id: string; kind: SetKind; start: SetTargets };
 
-export type Progression = { kind: "double" } | { kind: "custom"; text: string };
+type Progression = { kind: "double" } | { kind: "custom"; text: string };
 
 export type ExerciseRow = {
   id: string;

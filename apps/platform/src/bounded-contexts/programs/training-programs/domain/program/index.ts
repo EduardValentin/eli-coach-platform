@@ -15,8 +15,6 @@ export {
   type ClientIdentityPort,
 } from "./client-identity-port";
 export { type CoachingEndedPort } from "./coaching-ended-port";
-export { type LibraryExercise } from "./library-exercise";
-export { type LibraryExercisesPort } from "./library-exercises-port";
 export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
 export {
