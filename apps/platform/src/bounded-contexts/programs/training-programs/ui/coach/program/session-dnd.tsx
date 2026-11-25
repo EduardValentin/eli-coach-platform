@@ -135,6 +135,7 @@ type DropZoneProps = {
   accepts?: typeof acceptsIntoSession;
   className?: string;
   tone?: DropZoneTone;
+  parityRoot?: string;
   children: ReactNode;
 };
 
@@ -143,6 +144,7 @@ export function DropZone({
   accepts,
   className,
   tone = "ring",
+  parityRoot,
   children,
 }: DropZoneProps) {
   const [{ isOver, canDrop }, drop] = useSessionDrop(rules, accepts);
@@ -152,6 +154,7 @@ export function DropZone({
       className={cn(className, {
         [DROP_ZONE_ACTIVE_CLASS[tone]]: isOver && canDrop,
       })}
+      data-parity-root={parityRoot}
       ref={drop as unknown as Ref<HTMLDivElement>}
     >
       {children}

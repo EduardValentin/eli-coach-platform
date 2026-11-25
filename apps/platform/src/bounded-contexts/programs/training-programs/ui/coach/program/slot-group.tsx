@@ -167,6 +167,7 @@ export function SlotGroup({
 
   return (
     <section
+      data-parity-root="SlotGroup"
       className={cn("grid grid-cols-[minmax(0,1fr)] gap-2 rounded-control", {
         [LIBRARY_TARGET_CLASS]: filling,
       })}

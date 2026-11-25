@@ -242,6 +242,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
 
   return (
     <article
+      data-parity-root="ExerciseCard"
       ref={drop as unknown as Ref<HTMLElement>}
       aria-label={`${position} ${name}`}
       data-row-id={row.id}

@@ -49,6 +49,7 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
   const filling = useIsLibraryTarget({ kind: 'warm-up', sessionId: session.id });
   return (
     <DropZone
+      parityRoot="WarmUpCard"
       rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsLibraryExercise}
       className={cn('rounded-control border border-border-subtle bg-surface-subtle p-3', { [LIBRARY_TARGET_CLASS]: filling })}

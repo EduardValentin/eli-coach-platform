@@ -120,6 +120,7 @@ export function SessionCard({
   if (!expanded) {
     return (
       <article
+        data-parity-root="SessionCard"
         aria-labelledby={headingId}
         className={SESSION_ARTICLE_CLASS}
         ref={articleRef}
@@ -142,6 +143,7 @@ export function SessionCard({
 
   return (
     <article
+      data-parity-root="SessionCard"
       aria-labelledby={headingId}
       className={cn(SESSION_ARTICLE_CLASS, EXPANDED_SESSION_CLASS)}
       ref={articleRef}

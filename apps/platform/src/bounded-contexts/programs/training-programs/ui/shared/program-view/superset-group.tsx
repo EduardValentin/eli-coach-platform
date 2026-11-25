@@ -10,7 +10,7 @@ export function SupersetGroup({ action, children }: SupersetGroupProps) {
   const labelId = useId();
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" data-parity-root="SupersetGroup">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <p id={labelId} className={EYEBROW_CLASS}>
           Superset

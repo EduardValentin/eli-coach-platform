@@ -356,6 +356,7 @@ function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
   if (!isDrawer) {
     return (
       <aside
+        data-parity-root="LibraryPanel"
         aria-labelledby={headingId}
         className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border-default bg-surface-base"
       >
@@ -367,6 +368,7 @@ function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
   return (
     <Sheet onOpenChange={(open) => !open && onClose()} open>
       <SheetContent
+        data-parity-root="LibraryPanel"
         aria-describedby={undefined}
         className="bg-surface-base p-0 sm:max-w-sm"
       >

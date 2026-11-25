@@ -269,6 +269,7 @@ export function ExerciseCard({
 
   return (
     <article
+      data-parity-root="ExerciseCard"
       aria-label={`${position} ${name}`}
       className={cn(
         DRAGGABLE_CARD_CLASS,

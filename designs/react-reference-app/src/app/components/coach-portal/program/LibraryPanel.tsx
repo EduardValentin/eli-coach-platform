@@ -239,14 +239,14 @@ type FrameProps = { isDrawer: boolean; headingId: string; onClose: () => void; c
 function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
   if (!isDrawer) {
     return (
-      <aside aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
+      <aside data-parity-root="LibraryPanel" aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
         {children}
       </aside>
     );
   }
   return (
     <Sheet open onOpenChange={open => !open && onClose()}>
-      <SheetContent padding="flush" width="sm" aria-describedby={undefined} className="bg-card">
+      <SheetContent data-parity-root="LibraryPanel" padding="flush" width="sm" aria-describedby={undefined} className="bg-card">
         {children}
       </SheetContent>
     </Sheet>

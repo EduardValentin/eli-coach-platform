@@ -294,6 +294,9 @@
     "real": [
       {
         "use": "builder-block"
+      },
+      {
+        "click": "role=button[name=\"Exercise library\"][pressed=true]"
       }
     ]
   },
@@ -6968,6 +6971,355 @@
   "story-paused": [
     {
       "click": "role=button[name=\"Pause story\"]"
+    }
+  ],
+  "library-empty-type": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=combobox[name=\"Exercise type\"]"
+    },
+    {
+      "click": "role=option[name=\"Cardio\"]"
+    },
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\"]",
+        "zzzz"
+      ]
+    }
+  ],
+  "exercise-detail-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=/^Barbell Back Squat/][haspopup=dialog]"
+    }
+  ],
+  "session-filled": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    }
+  ],
+  "session-superset": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=\"Lateral Raises actions\"]"
+    },
+    {
+      "click": "role=menuitem[name=\"Superset with next\"]"
+    }
+  ],
+  "warm-up-filled": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to warm-up\"]"
+    },
+    {
+      "click": "role=button[name=\"Add 90/90 Hip Switches\"]"
+    }
+  ],
+  "session-over-target": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Triceps Pushdown\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Walking Lunges\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Leg Press\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Dumbbell Rows\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Plank\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lying Leg Curl\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Cable Hip Abduction\"]"
+    }
+  ],
+  "cool-down-on-filled": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=switch[name=\"Cool-down\"]"
+    },
+    {
+      "click": "role=button[name=\"Add stretch to cool-down\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Couch Stretch\"]"
+    }
+  ],
+  "session-clear-confirm": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=\"Full Body A actions\"]"
+    },
+    {
+      "click": "role=menuitem[name=\"Clear session\"]"
+    }
+  ],
+  "library-filters-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=/^Filters/]"
+    }
+  ],
+  "session-open": [
+    {
+      "use": "builder-block"
+    }
+  ],
+  "exercise-details-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=/^Details for Barbell Back Squat/]"
+    }
+  ],
+  "session-collapsed": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=/^Full Body B/]"
+    }
+  ],
+  "draft-actions-menu": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Draft actions\"]"
+    }
+  ],
+  "library-no-matches": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\"]",
+        "zzzz"
+      ]
+    }
+  ],
+  "library-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    }
+  ],
+  "client-profile-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Client profile\"]"
+    }
+  ],
+  "cool-down-on": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=switch[name=\"Cool-down\"]"
     }
   ]
 }

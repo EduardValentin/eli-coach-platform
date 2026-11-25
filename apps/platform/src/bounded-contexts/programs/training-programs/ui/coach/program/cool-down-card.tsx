@@ -49,6 +49,7 @@ export function CoolDownCard({
 
   return (
     <DropZone
+      parityRoot="CoolDownCard"
       accepts={acceptsStretch}
       className={cn(
         "rounded-control border border-border-subtle bg-surface-subtle p-3",

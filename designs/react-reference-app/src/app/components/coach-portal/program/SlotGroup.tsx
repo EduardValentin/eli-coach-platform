@@ -96,7 +96,7 @@ export function SlotGroup({ session, plan, library, edits, slots, schedule, onCh
   };
 
   return (
-    <section ref={section} className={cn('grid grid-cols-[minmax(0,1fr)] gap-2 rounded-control', { [LIBRARY_TARGET_CLASS]: filling })}>
+    <section data-parity-root="SlotGroup" ref={section} className={cn('grid grid-cols-[minmax(0,1fr)] gap-2 rounded-control', { [LIBRARY_TARGET_CLASS]: filling })}>
       <header className="flex items-start gap-3">
         <div className="flex min-h-(--size-control-xs) min-w-0 flex-1 flex-wrap content-center items-center gap-x-3 gap-y-2">
           <h4 className={EYEBROW_CLASS}>{heading}</h4>

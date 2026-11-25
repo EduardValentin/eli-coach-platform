@@ -91,6 +91,7 @@ export function ClientProfilePopover({
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverAnchor asChild>{children}</PopoverAnchor>
       <PopoverContent
+        data-parity-root="ClientProfilePopover"
         align="end"
         aria-labelledby={headingId}
         className="grid w-80 gap-3 rounded-card"

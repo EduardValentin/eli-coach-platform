@@ -84,6 +84,7 @@ export function WarmUpCard({
 
   return (
     <DropZone
+      parityRoot="WarmUpCard"
       accepts={acceptsLibraryExercise}
       className={cn(
         "rounded-control border border-border-subtle bg-surface-subtle p-3",

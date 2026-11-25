@@ -259,7 +259,7 @@ export function ExerciseDetailProvider({
             titleRef={title}
           />
           <SheetDialogBody>
-            <div ref={body}>
+            <div data-parity-root="ExerciseDetail" ref={body}>
               <DetailBody
                 shown={shown}
                 onOpenSwap={(swap) => showSwap(swap, { kind: "title" })}
