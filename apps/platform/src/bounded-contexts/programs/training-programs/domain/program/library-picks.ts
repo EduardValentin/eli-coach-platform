@@ -1,17 +1,26 @@
 import type { Equipment, LibraryExercise } from "./library-exercise";
 import type { LibraryTarget } from "./library-target";
-import { CoolDownEditing } from "./cool-down-editing";
+import { CoolDownEditing, type CoolDownRefusal } from "./cool-down-editing";
 import { SINGLE_UNIT_SLOTS, type Block, type Session } from "./program-content";
-import { SessionEditing } from "./session-editing";
+import { SessionEditing, type SubstitutionRefusal } from "./session-editing";
 import { SplitTemplate } from "./split-template";
 import { SLOTS, type Slot } from "./vocabulary";
-import { WarmUpEditing } from "./warm-up-editing";
+import { WarmUpEditing, type WarmUpRefusal } from "./warm-up-editing";
 
 export type LibraryPick = {
   exercise: LibraryExercise;
   target: LibraryTarget | null;
   openSessionId: string | undefined;
 };
+
+export type LibraryPickRefusal =
+  WarmUpRefusal | CoolDownRefusal | SubstitutionRefusal;
+
+type PickDestination =
+  | { place: "substitution"; rowId: string }
+  | { place: "warm-up" }
+  | { place: "cool-down" }
+  | { place: "slot" };
 
 type LibraryPicksOptions = {
   newId: () => string;
@@ -51,6 +60,30 @@ export class LibraryPicks {
     return matching ?? ACCESSORIES_SLOT;
   }
 
+  /** Why a pick adds nothing: the place it would land refuses it. */
+  refusalFor(block: Block, pick: LibraryPick): LibraryPickRefusal | undefined {
+    const sessionId = pick.target?.sessionId ?? pick.openSessionId;
+    const session = block.sessions.find((other) => other.id === sessionId);
+    if (!session) return undefined;
+    const destination = LibraryPicks.destinationOf(pick);
+    const { id } = pick.exercise;
+    if (destination.place === "substitution") {
+      return this.sessionEditingFor(block).substitutionRefusalFor(
+        session,
+        destination.rowId,
+        id,
+      );
+    }
+    if (destination.place === "warm-up") {
+      return this.warmUpEditing.refusalFor(session, id);
+    }
+    if (destination.place === "cool-down") {
+      return this.coolDownEditing.refusalFor(session, id);
+    }
+
+    return undefined;
+  }
+
   blockWithLibraryPick(block: Block, pick: LibraryPick): Block {
     const sessionId = pick.target?.sessionId ?? pick.openSessionId;
 
@@ -69,17 +102,19 @@ export class LibraryPicks {
     session: Session,
     { exercise, target }: LibraryPick,
   ): Session {
-    const sessionEditing = new SessionEditing({
-      ...this.options,
-      blockType: block.type,
-    });
-    if (target?.kind === "substitution") {
-      return sessionEditing.addSubstitution(session, target.rowId, exercise.id);
+    const sessionEditing = this.sessionEditingFor(block);
+    const destination = LibraryPicks.destinationOf({ exercise, target });
+    if (destination.place === "substitution") {
+      return sessionEditing.addSubstitution(
+        session,
+        destination.rowId,
+        exercise.id,
+      );
     }
-    if (target?.kind === "warm-up" || exercise.type === "mobility") {
+    if (destination.place === "warm-up") {
       return this.warmUpEditing.add(session, exercise.id);
     }
-    if (target?.kind === "cool-down" || exercise.type === "stretching") {
+    if (destination.place === "cool-down") {
       return this.coolDownEditing.add(session, exercise.id);
     }
     const slot =
@@ -88,5 +123,26 @@ export class LibraryPicks {
         : LibraryPicks.quickAddSlot(block, session, exercise);
 
     return sessionEditing.add(session, exercise, { slot });
+  }
+
+  private sessionEditingFor(block: Block): SessionEditing {
+    return new SessionEditing({ ...this.options, blockType: block.type });
+  }
+
+  private static destinationOf({
+    exercise,
+    target,
+  }: Pick<LibraryPick, "exercise" | "target">): PickDestination {
+    if (target?.kind === "substitution") {
+      return { place: "substitution", rowId: target.rowId };
+    }
+    if (target?.kind === "warm-up" || exercise.type === "mobility") {
+      return { place: "warm-up" };
+    }
+    if (target?.kind === "cool-down" || exercise.type === "stretching") {
+      return { place: "cool-down" };
+    }
+
+    return { place: "slot" };
   }
 }

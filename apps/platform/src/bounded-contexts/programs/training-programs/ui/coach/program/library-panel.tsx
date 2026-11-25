@@ -37,6 +37,7 @@ import {
   type ActiveFilter,
   type Equipment,
   type LibraryExercise,
+  type LibraryPickRefusal,
   type LibraryType,
   type Muscle,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
@@ -63,9 +64,23 @@ type LibraryPanelProps = {
   libraryExercises: readonly LibraryExercise[];
   libraryEquipment: readonly Equipment[];
   searchRef: RefObject<HTMLInputElement | null>;
-  onAdd: (exercise: LibraryExercise) => void;
+  onAdd: (exercise: LibraryExercise) => LibraryPickRefusal | undefined;
   onClose: () => void;
   onDrawerCloseAutoFocus?: (event: Event) => void;
+};
+
+const REFUSED_ADD_TEXT: Readonly<
+  Record<LibraryPickRefusal, (name: string) => string>
+> = {
+  "warm-up-full": (name) =>
+    `${name} not added: the warm-up holds four exercises`,
+  "already-in-warm-up": (name) => `${name} is already in the warm-up`,
+  "already-in-cool-down": (name) => `${name} is already in the cool-down`,
+  "own-substitution": (name) => `${name} can’t be its own substitution`,
+  "already-a-substitution": (name) =>
+    `${name} is already one of its substitutions`,
+  "substitutions-full": (name) =>
+    `${name} not added: an exercise holds two substitutions`,
 };
 
 type ChangeSelection = (
@@ -441,7 +456,12 @@ export function LibraryPanel({
   useCountAnnouncement(shown.length, selection);
 
   function add(exercise: LibraryExercise) {
-    onAdd(exercise);
+    const refusal = onAdd(exercise);
+    if (refusal) {
+      announce(REFUSED_ADD_TEXT[refusal](exercise.name));
+
+      return;
+    }
     announce(
       purpose
         ? `${exercise.name} added to ${purpose.destination}`

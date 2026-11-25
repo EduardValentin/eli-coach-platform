@@ -206,3 +206,142 @@ describe("LibraryPicks blockWithLibraryPick", () => {
     expect(picked.sessions[0].rows[0].substitutions).toEqual(["hinge"]);
   });
 });
+
+describe("LibraryPicks refusalFor", () => {
+  const warmUpTarget = (sessionId: string) => ({
+    kind: "warm-up" as const,
+    sessionId,
+  });
+
+  function blockWith(change: (session: Session) => Session): Block {
+    const block = foundationBlock();
+
+    return {
+      ...block,
+      sessions: [change(block.sessions[0]), ...block.sessions.slice(1)],
+    };
+  }
+
+  function warmUpItem(exerciseId: string): Session["warmUp"]["items"][number] {
+    return {
+      id: `warm-up-${exerciseId}`,
+      exerciseId,
+      sets: 1,
+      reps: { min: 10, max: 10 },
+    };
+  }
+
+  it("refuses a fifth warm-up exercise and one already in the warm-up, whether the warm-up or the exercise's type chose the place", () => {
+    // arrange
+    const four = blockWith((session) => ({
+      ...session,
+      warmUp: { items: ["a", "b", "c", "d"].map(warmUpItem) },
+    }));
+    const withHips = blockWith((session) => ({
+      ...session,
+      warmUp: { items: [warmUpItem("hips")] },
+    }));
+    const picks = libraryPicks();
+    const openSessionId = four.sessions[0].id;
+
+    // act
+    const fifth = picks.refusalFor(four, {
+      exercise: byId("burpee"),
+      target: warmUpTarget(openSessionId),
+      openSessionId,
+    });
+    const fifthByType = picks.refusalFor(four, {
+      exercise: byId("hips"),
+      target: null,
+      openSessionId,
+    });
+    const repeated = picks.refusalFor(withHips, {
+      exercise: byId("hips"),
+      target: null,
+      openSessionId,
+    });
+    const fourth = picks.refusalFor(withHips, {
+      exercise: byId("burpee"),
+      target: warmUpTarget(openSessionId),
+      openSessionId,
+    });
+
+    // assert
+    expect(fifth).toBe("warm-up-full");
+    expect(fifthByType).toBe("warm-up-full");
+    expect(repeated).toBe("already-in-warm-up");
+    expect(fourth).toBeUndefined();
+  });
+
+  it("refuses a stretch already in the cool-down", () => {
+    // arrange
+    const block = blockWith((session) => ({
+      ...session,
+      coolDown: {
+        enabled: true,
+        items: [
+          { id: "stretch-1", exerciseId: "hamstringStretch", seconds: 30 },
+        ],
+      },
+    }));
+    const openSessionId = block.sessions[0].id;
+
+    // act
+    const refusal = libraryPicks().refusalFor(block, {
+      exercise: byId("hamstringStretch"),
+      target: { kind: "cool-down", sessionId: openSessionId },
+      openSessionId,
+    });
+
+    // assert
+    expect(refusal).toBe("already-in-cool-down");
+  });
+
+  it("refuses a substitution that is the row's own exercise, one it already has, or a third", () => {
+    // arrange
+    const block = foundationBlock();
+    const filled = withSquatInA(block.sessions[0]);
+    const rowId = filled.rows[0].id;
+    const withRow = (substitutions: string[]): Block => ({
+      ...block,
+      sessions: [
+        { ...filled, rows: [{ ...filled.rows[0], substitutions }] },
+        ...block.sessions.slice(1),
+      ],
+    });
+    const pick = (id: string) => ({
+      exercise: byId(id),
+      target: { kind: "substitution" as const, sessionId: filled.id, rowId },
+      openSessionId: filled.id,
+    });
+    const picks = libraryPicks();
+
+    // act
+    const own = picks.refusalFor(withRow(["hinge"]), pick("squat"));
+    const repeated = picks.refusalFor(withRow(["hinge"]), pick("hinge"));
+    const third = picks.refusalFor(withRow(["hinge", "curl"]), pick("raise"));
+    const second = picks.refusalFor(withRow(["hinge"]), pick("raise"));
+
+    // assert
+    expect(own).toBe("own-substitution");
+    expect(repeated).toBe("already-a-substitution");
+    expect(third).toBe("substitutions-full");
+    expect(second).toBeUndefined();
+  });
+
+  it("refuses nothing for a resistance exercise going into a group", () => {
+    // arrange
+    const block = foundationBlock();
+    const openSessionId = block.sessions[0].id;
+
+    // act
+    const refusal = libraryPicks().refusalFor(block, {
+      exercise: byId("plank"),
+      target: { kind: "slot", sessionId: openSessionId, slot: "C" },
+      openSessionId,
+    });
+
+    // assert
+    expect(refusal).toBeUndefined();
+  });
+});

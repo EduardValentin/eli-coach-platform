@@ -106,6 +106,25 @@ describe("WarmUpEditing", () => {
     expect(beforeTheStart).toEqual(start);
   });
 
+  it("says why it refuses an exercise already in the warm-up or a fifth one", () => {
+    // arrange
+    const three = added("hips", "catCow", "worldsGreatest");
+    const four = added("hips", "catCow", "worldsGreatest", "ankles");
+    const editing = warmUpEditing();
+
+    // act
+    const repeated = editing.refusalFor(three, "catCow");
+    const fourth = editing.refusalFor(three, "ankles");
+    const fifth = editing.refusalFor(four, "thoracic");
+    const repeatedInFour = editing.refusalFor(four, "hips");
+
+    // assert
+    expect(repeated).toBe("already-in-warm-up");
+    expect(fourth).toBeUndefined();
+    expect(fifth).toBe("warm-up-full");
+    expect(repeatedInFour).toBe("already-in-warm-up");
+  });
+
   it("holds four exercises at most", () => {
     // arrange
     const full = added("hips", "catCow", "worldsGreatest", "ankles");

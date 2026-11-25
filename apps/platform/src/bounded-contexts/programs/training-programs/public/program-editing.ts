@@ -42,6 +42,7 @@ export {
   type LastSetTechnique,
   type LibraryExercise,
   type LibraryOffer,
+  type LibraryPickRefusal,
   type LibraryTarget,
   type LibraryType,
   type LossChange,

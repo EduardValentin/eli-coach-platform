@@ -883,6 +883,91 @@ describe("the exercise library opened from a place in the open session", () => {
     expect(pane).toBeInTheDocument();
   });
 
+  it("says why an exercise already in the warm-up was not added, and keeps one of it", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT, HIP_CIRCLES],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    await user.click(
+      screen.getByRole("button", { name: "Add exercise to warm-up" }),
+    );
+    const pane = screen.getByRole("complementary", {
+      name: "Exercise library",
+    });
+    await user.click(
+      within(pane).getByRole("button", { name: "Add Hip Circles" }),
+    );
+    await screen.findByText(/^Hip Circles added to/);
+
+    // act
+    await user.click(
+      within(pane).getByRole("button", { name: "Add Hip Circles" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText("Hip Circles is already in the warm-up"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Hip Circles added to/)).not.toBeInTheDocument();
+    await advance(SAVE_DELAY_MS);
+    await waitFor(() => expect(saveRequests).toHaveLength(1));
+    const [hypertrophy] = savedBlocks(saveRequests[0]).filter(
+      (block) => block.type === "hypertrophy",
+    );
+    const [openSession] = BlockEditing.listedSessions(hypertrophy);
+    expect(openSession.warmUp.items.map((item) => item.exerciseId)).toEqual([
+      HIP_CIRCLES.id,
+    ]);
+  });
+
+  it("keeps the drawer open when the add is refused on a phone", async () => {
+    // arrange
+    stubScreen("phone");
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT, HIP_CIRCLES],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    await user.click(
+      screen.getByRole("button", { name: "Add exercise to warm-up" }),
+    );
+    await user.click(
+      within(
+        await screen.findByRole("dialog", { name: "Exercise library" }),
+      ).getByRole("button", { name: "Add Hip Circles" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Exercise library" }),
+      ).not.toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Add exercise to warm-up" }),
+    );
+    const drawer = await screen.findByRole("dialog", {
+      name: "Exercise library",
+    });
+
+    // act
+    await user.click(
+      within(drawer).getByRole("button", { name: "Add Hip Circles" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText("Hip Circles is already in the warm-up"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Exercise library" }),
+    ).toBeInTheDocument();
+  });
+
   it("closes the drawer once the exercise is added on a phone", async () => {
     // arrange
     stubScreen("phone");

@@ -2,6 +2,8 @@ import type { CoolDown, CoolDownItem, Session } from "./program-content";
 
 const STRETCH_SECONDS = 30;
 
+export type CoolDownRefusal = "already-in-cool-down";
+
 type CoolDownEditingOptions = { newId: () => string };
 
 /** A session's cool-down: switched on or off, its stretches held for seconds, none twice. */
@@ -12,9 +14,18 @@ export class CoolDownEditing {
     return { ...session, coolDown };
   }
 
+  refusalFor(
+    session: Session,
+    exerciseId: string,
+  ): CoolDownRefusal | undefined {
+    return session.coolDown.items.some((item) => item.exerciseId === exerciseId)
+      ? "already-in-cool-down"
+      : undefined;
+  }
+
   add(session: Session, exerciseId: string): Session {
+    if (this.refusalFor(session, exerciseId)) return session;
     const { items } = session.coolDown;
-    if (items.some((item) => item.exerciseId === exerciseId)) return session;
 
     return CoolDownEditing.withItems(session, [
       ...items,

@@ -9,6 +9,8 @@ import {
 export const WARM_UP_REPS: Range = { min: 10, max: 10 };
 export const WARM_UP_SECONDS = 45;
 
+export type WarmUpRefusal = "already-in-warm-up" | "warm-up-full";
+
 type WarmUpEditingOptions = {
   newId: () => string;
   libraryExercises: readonly LibraryExercise[];
@@ -18,14 +20,18 @@ type WarmUpEditingOptions = {
 export class WarmUpEditing {
   constructor(private readonly options: WarmUpEditingOptions) {}
 
-  add(session: Session, exerciseId: string): Session {
+  refusalFor(session: Session, exerciseId: string): WarmUpRefusal | undefined {
     const { items } = session.warmUp;
-    if (
-      items.some((item) => item.exerciseId === exerciseId) ||
-      items.length >= MAX_WARM_UP_ITEMS
-    ) {
-      return session;
+    if (items.some((item) => item.exerciseId === exerciseId)) {
+      return "already-in-warm-up";
     }
+
+    return items.length >= MAX_WARM_UP_ITEMS ? "warm-up-full" : undefined;
+  }
+
+  add(session: Session, exerciseId: string): Session {
+    if (this.refusalFor(session, exerciseId)) return session;
+    const { items } = session.warmUp;
 
     return WarmUpEditing.withItems(session, [
       ...items,

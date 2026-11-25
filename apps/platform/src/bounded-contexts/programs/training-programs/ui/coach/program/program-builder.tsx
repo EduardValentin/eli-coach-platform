@@ -18,6 +18,7 @@ import {
 import {
   BLOCK_TYPE_LABELS,
   LibraryPicks,
+  type LibraryPickRefusal,
   type Block,
   type BlockType,
   type LibraryExercise,
@@ -143,18 +144,23 @@ function ProgramBuilder({ view }: { view: DraftView }) {
     document.title = builderDocumentTitle(placeTitle, view.client);
   }, [placeTitle, view.client]);
 
-  function addFromLibrary(exercise: LibraryExercise) {
-    if (!block) return;
+  function addFromLibrary(
+    exercise: LibraryExercise,
+  ): LibraryPickRefusal | undefined {
+    if (!block) return undefined;
     const picks = new LibraryPicks({
       newId: newBuilderId,
       libraryExercises: builder.libraryExercises,
       libraryEquipment: builder.libraryEquipment,
     });
-    const picked = picks.blockWithLibraryPick(block, {
+    const pick = {
       exercise,
       target: panel.panelTarget?.target ?? null,
       openSessionId,
-    });
+    };
+    const refusal = picks.refusalFor(block, pick);
+    if (refusal) return refusal;
+    const picked = picks.blockWithLibraryPick(block, pick);
     builder.replaceBlock(picked);
     const addedRow = rowsOf(picked).find(
       (row) => !rowsOf(block).some((other) => other.id === row.id),
@@ -162,6 +168,8 @@ function ProgramBuilder({ view }: { view: DraftView }) {
     panel.finishTarget(
       addedRow && (() => actionsTriggerIn(`[data-row-id="${addedRow.id}"]`)),
     );
+
+    return undefined;
   }
 
   function addBlock(type: BlockType, weeks: number) {

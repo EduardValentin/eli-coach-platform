@@ -34,7 +34,7 @@ export {
   type Muscle,
 } from "./library-exercise";
 export { type LibraryExercisesPort } from "./library-exercises-port";
-export { LibraryPicks } from "./library-picks";
+export { LibraryPicks, type LibraryPickRefusal } from "./library-picks";
 export {
   LibrarySelection,
   type ActiveFilter,

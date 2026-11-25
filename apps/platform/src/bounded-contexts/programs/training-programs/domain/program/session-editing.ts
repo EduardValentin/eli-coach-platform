@@ -11,6 +11,9 @@ import { SLOTS, type BlockType, type RowField, type Slot } from "./vocabulary";
 
 export type Placement = { slot: Slot; beforeRowId?: string };
 
+export type SubstitutionRefusal =
+  "own-substitution" | "already-a-substitution" | "substitutions-full";
+
 /** A slot group's rows as the builder shows them: one row, or the rows of one superset. */
 export type SlotUnit = { key: string; group?: string; rows: ExerciseRow[] };
 
@@ -250,27 +253,32 @@ export class SessionEditing {
     return { ...session, rows: [] };
   }
 
+  substitutionRefusalFor(
+    session: Session,
+    rowId: string,
+    exerciseId: string,
+  ): SubstitutionRefusal | undefined {
+    const row = session.rows.find((other) => other.id === rowId);
+    if (!row) return undefined;
+    if (row.exerciseId === exerciseId) return "own-substitution";
+    if (row.substitutions.includes(exerciseId)) return "already-a-substitution";
+
+    return row.substitutions.length >= MAX_SUBSTITUTIONS
+      ? "substitutions-full"
+      : undefined;
+  }
+
   addSubstitution(
     session: Session,
     rowId: string,
     exerciseId: string,
   ): Session {
-    return SessionEditing.withRowChanged(session, rowId, (row) => {
-      if (
-        row.exerciseId === exerciseId ||
-        row.substitutions.includes(exerciseId)
-      ) {
-        return row;
-      }
+    if (this.substitutionRefusalFor(session, rowId, exerciseId)) return session;
 
-      return {
-        ...row,
-        substitutions: [...row.substitutions, exerciseId].slice(
-          0,
-          MAX_SUBSTITUTIONS,
-        ),
-      };
-    });
+    return SessionEditing.withRowChanged(session, rowId, (row) => ({
+      ...row,
+      substitutions: [...row.substitutions, exerciseId],
+    }));
   }
 
   removeSubstitution(

@@ -28,6 +28,7 @@ import {
   type Block,
   type Equipment,
   type LibraryExercise,
+  type LibraryPickRefusal,
   type LibraryTarget,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
@@ -185,9 +186,10 @@ type HarnessProps = {
   library: readonly LibraryExercise[];
   added: LibraryExercise[];
   dropped: DraggedItem[];
+  refusal?: LibraryPickRefusal;
 };
 
-function Harness({ library, added, dropped }: HarnessProps) {
+function Harness({ library, added, dropped, refusal }: HarnessProps) {
   const panel = useLibraryPanel();
   const open = (target: LibraryTarget) => () => panel.openFor(target);
 
@@ -234,8 +236,11 @@ function Harness({ library, added, dropped }: HarnessProps) {
           libraryEquipment={HER_EQUIPMENT}
           libraryExercises={library}
           onAdd={(picked) => {
+            if (refusal) return refusal;
             added.push(picked);
             panel.finishTarget();
+
+            return undefined;
           }}
           onClose={panel.close}
           presentation={panel.isWide ? "pane" : "drawer"}
@@ -247,16 +252,24 @@ function Harness({ library, added, dropped }: HarnessProps) {
   );
 }
 
-type Arrangement = { library?: readonly LibraryExercise[] };
+type Arrangement = {
+  library?: readonly LibraryExercise[];
+  refusal?: LibraryPickRefusal;
+};
 
-async function renderPanel({ library = LIBRARY }: Arrangement = {}) {
+async function renderPanel({ library = LIBRARY, refusal }: Arrangement = {}) {
   const added: LibraryExercise[] = [];
   const dropped: DraggedItem[] = [];
   const user = userEvent.setup();
   render(
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <EditorAnnouncerProvider>
-        <Harness added={added} dropped={dropped} library={library} />
+        <Harness
+          added={added}
+          dropped={dropped}
+          library={library}
+          refusal={refusal}
+        />
       </EditorAnnouncerProvider>
     </DndProvider>,
   );
@@ -689,6 +702,38 @@ describe("a library opened for a place in a session", () => {
       ),
     );
   });
+
+  it.each<[LibraryPickRefusal, string]>([
+    ["warm-up-full", "Hip Circles not added: the warm-up holds four exercises"],
+    ["already-in-warm-up", "Hip Circles is already in the warm-up"],
+    ["already-in-cool-down", "Hip Circles is already in the cool-down"],
+    ["own-substitution", "Hip Circles can’t be its own substitution"],
+    [
+      "already-a-substitution",
+      "Hip Circles is already one of its substitutions",
+    ],
+    [
+      "substitutions-full",
+      "Hip Circles not added: an exercise holds two substitutions",
+    ],
+  ])(
+    "announces what the %s refusal means instead of that the exercise was added",
+    async (refusal, copy) => {
+      // arrange
+      const { user, added } = await renderPanel({ refusal });
+      await user.click(screen.getByRole("button", { name: "Add to warm-up" }));
+
+      // act
+      await user.click(addButton("Hip Circles"));
+
+      // assert
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(copy),
+      );
+      expect(screen.getByRole("status")).not.toHaveTextContent("added to");
+      expect(added).toEqual([]);
+    },
+  );
 
   it("opens on stretching for the cool-down", async () => {
     // arrange

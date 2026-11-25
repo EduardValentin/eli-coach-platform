@@ -15,6 +15,20 @@ function emptySession(): Session {
 }
 
 describe("CoolDownEditing", () => {
+  it("says why it refuses a stretch already in the cool-down", () => {
+    // arrange
+    const editing = new CoolDownEditing({ newId: () => "id-1" });
+    const session = editing.add(emptySession(), "hamstringStretch");
+
+    // act
+    const repeated = editing.refusalFor(session, "hamstringStretch");
+    const another = editing.refusalFor(session, "quadStretch");
+
+    // assert
+    expect(repeated).toBe("already-in-cool-down");
+    expect(another).toBeUndefined();
+  });
+
   it("keeps the cool-down on with stretches with seconds each", () => {
     // arrange
     let next = 0;

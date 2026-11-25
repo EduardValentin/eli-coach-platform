@@ -374,6 +374,26 @@ describe("SessionEditing", () => {
     expect(third.rows[0].substitutions).toEqual(["raise", "squat"]);
   });
 
+  it("says why it refuses a substitution: the row's own exercise, one it already has, or a third", () => {
+    // arrange
+    const session = withExercises(["curl", "C"]);
+    const rowId = session.rows[0].id;
+    const editing = sessionEditing();
+    const oneLeft = editing.removeSubstitution(session, rowId, "raise");
+
+    // act
+    const own = editing.substitutionRefusalFor(session, rowId, "curl");
+    const repeated = editing.substitutionRefusalFor(session, rowId, "raise");
+    const third = editing.substitutionRefusalFor(session, rowId, "plank");
+    const second = editing.substitutionRefusalFor(oneLeft, rowId, "plank");
+
+    // assert
+    expect(own).toBe("own-substitution");
+    expect(repeated).toBe("already-a-substitution");
+    expect(third).toBe("substitutions-full");
+    expect(second).toBeUndefined();
+  });
+
   it("offers a superset with the next row only between two accessory rows not already together", () => {
     // arrange
     const session = withExercises(
