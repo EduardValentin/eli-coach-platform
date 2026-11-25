@@ -37,6 +37,8 @@ type MinutesField = "Prep (min)" | "Cook (min)";
 
 export type ProblemField = TextField | MinutesField | `Grams of ${string}`;
 
+type HeldSaves = { release: () => void; sent: () => number };
+
 const NEW_RECIPE_PATH = "/coach/nutrition/recipe-builder";
 const RECIPE_PATH = /\/coach\/nutrition\/recipe-builder\/([^/]+)$/;
 const EMPTY_ZONE =
@@ -537,19 +539,23 @@ export class RecipeBuilderPage {
     expectButtonsAlongTopEdgeOf([replace, remove], preview);
   }
 
-  async delayNextSave(milliseconds: number): Promise<() => number> {
+  async holdSaves(): Promise<HeldSaves> {
     let saves = 0;
+    let release: () => void = () => {};
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
 
     await this.page.route(
       (url) => SAVE_ROUTE.test(url.pathname),
       async (route) => {
         saves += 1;
-        await new Promise((resolve) => setTimeout(resolve, milliseconds));
+        await released;
         await route.continue();
       },
     );
 
-    return () => saves;
+    return { release, sent: () => saves };
   }
 
   async expectSaving(): Promise<void> {
