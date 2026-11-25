@@ -18,6 +18,7 @@ const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 const COACH_ACCOUNT_ID = "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a";
 const OTHER_COACH_ACCOUNT_ID = "6e5d4c3b-2a1f-4e0d-9c8b-7a6f5e4d3c2b";
 const NO_ACCOUNT_ID = "7f6e5d4c-3b2a-4f1e-8d9c-8b7a6f5e4d3c";
+const PROGRAM_ID = "8a7f6e5d-4c3b-4a2f-9e1d-0c9b8a7f6e5d";
 
 const insertCoachSql = `
   insert into app.accounts (id, auth_subject_id, role) values ($1, $2, 'COACH')
@@ -28,6 +29,10 @@ const insertExerciseSql = `
     (id, owner_account_id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, archived_at, movement_pattern, role, created_at, updated_at)
   values
     ($1, $2, $3, $10, $4, $5, false, $6, $11, $12, $13, $14, $7, $8, $9, $15, $16, $17, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
+`;
+
+const insertUsageSql = `
+  insert into app.exercise_program_usages (exercise_id, program_id, version_number) values ($1, $2, $3)
 `;
 
 type ExerciseRow = {
@@ -489,7 +494,32 @@ describe("exercises schema", () => {
     await expect(inserting).rejects.toThrow(/too long/);
     expect(await countExercises()).toBe(0);
   });
+
+  it("refuses deleting an exercise a program uses", async () => {
+    // arrange
+    await insertExercise({});
+    await insertUsage(FIRST_ID);
+
+    // act
+    const deleting = suite.postgres.executeSql({
+      sql: "delete from app.exercises where id = $1",
+      values: [FIRST_ID],
+    });
+
+    // assert
+    await expect(deleting).rejects.toThrow(
+      /exercise_program_usages_exercise_id_exercises_id_fk/,
+    );
+    expect(await countExercises()).toBe(1);
+  });
 });
+
+function insertUsage(exerciseId: string): Promise<unknown> {
+  return suite.postgres.executeSql({
+    sql: insertUsageSql,
+    values: [exerciseId, PROGRAM_ID, 1],
+  });
+}
 
 function insertExercise(row: ExerciseRow): Promise<unknown> {
   return suite.postgres.executeSql({
