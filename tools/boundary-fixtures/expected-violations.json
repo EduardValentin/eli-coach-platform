@@ -38,6 +38,12 @@
   "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/dnd-parts.tsx": [
     "not-to-unresolvable"
   ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/exercise-card.tsx": [
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/library-panel.tsx": [
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/plan-block-list.tsx": [
     "not-to-unresolvable"
   ],
@@ -47,6 +53,9 @@
   "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/react-dnd-confined.tsx": [
     "not-to-unresolvable",
     "react-dnd-confined"
+  ],
+  "apps/platform/src/bounded-contexts/programs/training-programs/ui/coach/program/session-dnd.tsx": [
+    "not-to-unresolvable"
   ],
   "apps/platform/src/bounded-contexts/sales/composition.server.ts": [],
   "apps/platform/src/bounded-contexts/sales/public/design-system-browser-only.ts": [
@@ -239,7 +248,9 @@
   "apps/platform/src/composition-root/reads-bounded-context-entries.server.ts": [],
   "apps/platform/src/root.server.ts": [],
   "apps/platform/src/root.tsx": [],
-  "apps/platform/src/routes.ts": ["root-registry-to-server"],
+  "apps/platform/src/routes.ts": [
+    "root-registry-to-server"
+  ],
   "apps/platform/src/shared/design-system/filters/imports-layout.tsx": [
     "ui-subpaths"
   ],
