@@ -229,31 +229,37 @@ describe('buttonVariants', () => {
 });
 
 describe('Button', () => {
-  it('renders a button marked as the button slot', () => {
+  it('marks the rendered button as the button slot', () => {
     // arrange
-    render(<Button variant="inverted" size="lg">Continue</Button>);
-
     // act
-    const button = screen.getByRole('button', { name: 'Continue' });
+    render(<Button>Continue</Button>);
 
     // assert
-    expect(button).toHaveAttribute('data-slot', 'button');
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveAttribute('data-slot', 'button');
+  });
+
+  it('draws the chosen variant and size on the rendered button', () => {
+    // arrange
+    // act
+    render(<Button variant="inverted" size="lg">Continue</Button>);
+
+    // assert
+    const button = screen.getByRole('button', { name: 'Continue' });
     expect(button.className).toContain('bg-surface-inverted');
     expect(button.className).toContain('h-(--size-control-lg)');
   });
 
   it('lends its look to its only child when rendered as a child', () => {
     // arrange
+    // act
     render(
       <Button asChild variant="outline">
         <a href="/store">Back to the store</a>
       </Button>,
     );
 
-    // act
-    const link = screen.getByRole('link', { name: 'Back to the store' });
-
     // assert
+    const link = screen.getByRole('link', { name: 'Back to the store' });
     expect(link.className).toContain('border-control-border-soft');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });

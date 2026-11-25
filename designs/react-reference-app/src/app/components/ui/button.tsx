@@ -41,18 +41,18 @@ const buttonClasses = cva(
         pill: "rounded-full",
       },
       size: {
-        xs: "h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5 [&_svg:not([class*='size-'])]:size-4",
-        sm: "h-(--size-control-sm) px-4 text-sm has-[>svg]:px-3 [&_svg:not([class*='size-'])]:size-4",
-        md: "h-(--size-control-md) px-6 text-base has-[>svg]:px-5 [&_svg:not([class*='size-'])]:size-4",
+        xs: "h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5",
+        sm: "h-(--size-control-sm) px-4 text-sm has-[>svg]:px-3",
+        md: "h-(--size-control-md) px-6 text-base has-[>svg]:px-5",
         "md-wide": "h-(--size-control-md) px-6 text-base",
         "md-grow": "min-h-(--size-control-md) px-5 text-base whitespace-normal",
         lg: "h-(--size-control-lg) px-8 text-base",
         "lg-tight": "h-(--size-control-lg) px-4 text-base",
         xl: "h-(--size-control-xl) px-12 text-lg",
         inline:
-          "h-auto w-fit whitespace-normal px-0 text-left text-sm has-[>svg]:px-0 [&_svg:not([class*='size-'])]:size-4",
-        "icon-xs": "size-(--size-control-xs) rounded-full [&_svg:not([class*='size-'])]:size-4",
-        "icon-sm": "size-(--size-control-sm) rounded-full [&_svg:not([class*='size-'])]:size-4",
+          "h-auto w-fit whitespace-normal px-0 text-left text-sm has-[>svg]:px-0",
+        "icon-xs": "size-(--size-control-xs) rounded-full",
+        "icon-sm": "size-(--size-control-sm) rounded-full",
         "icon-md": "size-(--size-control-md) rounded-full [&_svg:not([class*='size-'])]:size-5",
       },
       width: {
@@ -88,6 +88,10 @@ const buttonClasses = cva(
     compoundVariants: [
       { variant: "disclosure", class: "font-normal" },
       { variant: "drop", size: "md", class: "text-sm" },
+      {
+        size: ["xs", "sm", "md", "inline", "icon-xs", "icon-sm"],
+        class: "[&_svg:not([class*='size-'])]:size-4",
+      },
     ],
     defaultVariants: {
       variant: "primary",
