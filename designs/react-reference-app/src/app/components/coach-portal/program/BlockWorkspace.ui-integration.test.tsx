@@ -1385,3 +1385,91 @@ describe('BlockWorkspace weeks of a Hypertrophy block', () => {
     expect(within(squat).getByText('Set by you.')).toBeInTheDocument();
   });
 });
+
+describe('BlockWorkspace with the first week and no cardio', () => {
+  async function openFirstWeekBlock() {
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&psessions=first-week');
+    await user.click(within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation\b/ }));
+    return user;
+  }
+
+  function stubNarrowWeek() {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private readonly onResize: (entries: { contentRect: { width: number } }[]) => void) {}
+        observe() {
+          this.onResize([{ contentRect: { width: 320 } }]);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  }
+
+  it('offers Details only on a card, with no Sets disclosure, no Progression item and no reset in its menu', async () => {
+    // arrange
+    const user = await openFirstWeekBlock();
+    const main = card(/^A /);
+
+    // act
+    await user.click(within(main).getByRole('button', { name: / actions$/ }));
+
+    // assert
+    expect(within(main).getByRole('button', { name: /^Details for / })).toBeInTheDocument();
+    expect(within(main).queryByRole('button', { name: /^Sets for / })).not.toBeInTheDocument();
+    expect(setStats(main)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3', 'Rest 1:15']);
+    expect(await screen.findByRole('menuitem', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Reset to block defaults' })).not.toBeInTheDocument();
+  });
+
+  it('shows a cardio day as a face that is not a button, and lists no cardio card', async () => {
+    // arrange
+    const user = await openFirstWeekBlock();
+
+    // act
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+
+    // assert
+    const saturday = day('Saturday');
+    expect(within(saturday).getByText('Cardio')).toBeInTheDocument();
+    expect(within(saturday).getAllByRole('button').map(button => button.getAttribute('aria-label'))).toEqual(['Saturday options']);
+    expect(screen.queryByRole('article', { name: 'Cardio' })).not.toBeInTheDocument();
+    expect(within(day('Monday')).getByRole('button', { name: /^Full Body A\s+about \d+ min$/ })).toBeInTheDocument();
+  });
+
+  it('gives a cardio day in the narrow week no Open session and starts the rail on the first strength day', async () => {
+    // arrange
+    stubNarrowWeek();
+    const user = await openFirstWeekBlock();
+
+    // act
+    const days = within(week()).getByRole('tablist', { name: 'Days' });
+    await user.click(within(days).getByRole('tab', { name: /^Saturday/ }));
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+
+    // assert
+    expect(within(week()).getByRole('tab', { name: /^Saturday.*Cardio/, selected: true })).toBeInTheDocument();
+    expect(within(week()).queryByRole('button', { name: 'Open session' })).not.toBeInTheDocument();
+
+    // act
+    await user.click(within(days).getByRole('tab', { name: /^Monday/ }));
+
+    // assert
+    expect(within(week()).getByRole('button', { name: 'Open session' })).toBeInTheDocument();
+  });
+
+  it('opens the first strength session when a cardio day comes first in the week', async () => {
+    // arrange
+    const user = await openFirstWeekBlock();
+
+    // act
+    await chooseInDayMenu(user, 'Monday', 'Cardio');
+    const confirm = screen.queryByRole('alertdialog');
+    if (confirm) await user.click(within(confirm).getByRole('button', { name: 'Change day' }));
+
+    // assert
+    expect(within(week()).queryByRole('button', { name: 'Cardio' })).not.toBeInTheDocument();
+    expect(within(session('Full Body B')).getAllByRole('article').length).toBeGreaterThan(0);
+  });
+});

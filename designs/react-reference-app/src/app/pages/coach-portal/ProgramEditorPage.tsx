@@ -34,20 +34,22 @@ import { Sheet, SheetTrigger } from '../../components/ui/sheet';
 import { Tabs, TabsContent } from '../../components/ui/tabs';
 import { SkipLink } from '../../components/ui/skip-link';
 import { useIsDesktop } from '../../components/ui/use-desktop';
+import { useAppState } from '../../context/AppContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, currentVersion, draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../domain/program';
 import { coachingHasEnded, isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { blockWithLibraryPick } from '../../domain/programEditing';
-import { plannedId, plannedSessions } from '../../domain/weekEditing';
+import { plannedId } from '../../domain/weekEditing';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { listedSessions, type BuilderSessions } from '../../services/builderSessions';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 import { journeyClientName } from '../../utils/journeyLabels';
 
 const EDITOR_ID = 'editor';
 const SETUP_PAGE_CLASS = 'min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16';
 
-function openSessionOf(block: Block, chosen: string | undefined): string | undefined {
-  const ids = plannedSessions(block).map(plannedId);
+function openSessionOf(block: Block, chosen: string | undefined, sessions: BuilderSessions): string | undefined {
+  const ids = listedSessions(block, sessions).map(plannedId);
   return chosen && ids.includes(chosen) ? chosen : ids[0];
 }
 
@@ -62,6 +64,7 @@ function ProgramEditor(props: EditorProps) {
   const panel = useLibraryPanel();
   const announce = useEditorAnnouncer();
   const { exercises } = useTraining();
+  const { appState } = useAppState();
   const [addingBlock, setAddingBlock] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -84,7 +87,7 @@ function ProgramEditor(props: EditorProps) {
   const placeTitle = sectionTitle(selected, content.plan.blocks);
   const blockIndex = editor.mode === 'structure' && selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
   const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
-  const openSessionId = block && openSessionOf(block, openSessions[block.id]);
+  const openSessionId = block && openSessionOf(block, openSessions[block.id], appState.builderSessions);
   const openBlock: OpenBlock | undefined = block && {
     block,
     index: blockIndex,
