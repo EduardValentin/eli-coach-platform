@@ -9,7 +9,7 @@ import {
   StandInClosed,
   StandInReading,
 } from '../components/ProviderStandIn';
-import { Button } from '../components/ThemeButton';
+import { Button } from '../components/ui/button';
 import { formatStorePrice } from '../context/StoreContext';
 import { isPaidLine, storeOrderTotal } from '../domain/storeOrder';
 import {
@@ -79,7 +79,7 @@ export function StoreCheckoutStandIn() {
 
       <StandInCardFields />
 
-      <Button aria-busy={paying} className="mt-8" disabled={paying} onClick={pay} variant="inverted" width="full">
+      <Button aria-busy={paying} className="mt-8" disabled={paying} onClick={pay} size="md" type="button" variant="inverted" width="full">
         {paying ? 'Taking payment…' : `Pay ${total}`}
       </Button>
 

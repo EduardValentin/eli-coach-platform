@@ -6,7 +6,8 @@ import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from '../components/waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from '../components/waitlist/WaitlistAvailabilityStatus';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { buttonVariants, cn } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ui/button';
+import { cn } from '../components/ui/utils';
 import { cardVariants } from '../components/ui/card';
 
 export function Pricing() {

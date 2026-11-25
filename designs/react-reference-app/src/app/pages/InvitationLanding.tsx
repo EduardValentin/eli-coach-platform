@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MailQuestion, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { ErrorPage, DeadEndLink } from '../components/ErrorPage';
-import { Button } from '../components/ThemeButton';
+import { Button } from '../components/ui/button';
 import { isSignedIn, useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { useFragmentToken } from '../hooks/useFragmentToken';
@@ -78,7 +78,7 @@ export function InvitationLanding() {
         title={SIGNED_IN_TITLE}
         description={SIGNED_IN_BODY}
       >
-        <Button onClick={signOut} size="lg" variant="inverted">
+        <Button onClick={signOut} size="lg" type="button" variant="inverted">
           Sign out
         </Button>
       </ErrorPage>

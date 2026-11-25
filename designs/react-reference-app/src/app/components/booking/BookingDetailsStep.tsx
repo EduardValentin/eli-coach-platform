@@ -9,7 +9,7 @@ import {
   type VisitorPrimaryGoal,
 } from '../../services/visitorProfile';
 import { FieldError } from '../FieldError';
-import { Button } from '../ThemeButton';
+import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
@@ -177,6 +177,7 @@ export function BookingDetailsStep({
           type="submit"
           disabled={isSubmitting}
           aria-busy={isSubmitting || undefined}
+          size="md"
           weight="semibold"
           width="full"
         >

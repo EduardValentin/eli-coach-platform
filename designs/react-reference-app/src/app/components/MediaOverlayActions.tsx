@@ -1,6 +1,6 @@
 import type { ComponentProps, Ref } from 'react';
 import { RefreshCw, X } from 'lucide-react';
-import { Button as ThemeButton } from './ThemeButton';
+import { Button } from './ui/button';
 
 type MediaOverlayActionsProps = {
   subject: string;
@@ -25,7 +25,7 @@ export function MediaOverlayActions({
       data-surface="inverted"
       data-parity="media-overlay-actions"
     >
-      <ThemeButton
+      <Button
         ref={replaceRef}
         type="button"
         aria-label={`Replace ${subject}`}
@@ -35,10 +35,10 @@ export function MediaOverlayActions({
         size="xs"
         {...replaceProps}
       >
-        <RefreshCw size={12} aria-hidden="true" />
+        <RefreshCw className="size-3" aria-hidden="true" />
         Replace
-      </ThemeButton>
-      <ThemeButton
+      </Button>
+      <Button
         type="button"
         aria-label={`Remove ${subject}`}
         onClick={onRemove}
@@ -46,9 +46,9 @@ export function MediaOverlayActions({
         variant="glass"
         size="xs"
       >
-        <X size={12} aria-hidden="true" />
+        <X className="size-3" aria-hidden="true" />
         Remove
-      </ThemeButton>
+      </Button>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
 import { Card, CardContent } from '../components/ui/card';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { buttonVariants } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ui/button';
 import { Price } from '../components/Price';
 import { ProductTag } from '../components/ProductTag';
 

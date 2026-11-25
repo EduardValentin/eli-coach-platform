@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
-import { Button } from './ThemeButton';
+import { Button } from './ui/button';
 import { InstagramWidget } from './InstagramWidget';
 import { useAppState } from '../context/AppContext';
 import { SectionEyebrow } from './SectionEyebrow';
@@ -70,9 +70,9 @@ export function About() {
 
           {!appState.isWaitlistMode && (
             <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
-              <Link to="/book" className="inline-block">
-                <Button elevation="raised" press="scale">Book a free call</Button>
-              </Link>
+              <Button asChild size="md" elevation="raised" press="scale">
+                <Link to="/book">Book a free call</Link>
+              </Button>
               <Link to="/pricing" className="text-sm font-semibold text-link-muted hover:text-brand underline underline-offset-4 transition-colors">
                 See pricing
               </Link>

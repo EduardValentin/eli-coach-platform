@@ -8,7 +8,7 @@ import {
   StandInReading,
 } from '../components/ProviderStandIn';
 import { Link, useNavigate, useParams } from 'react-router';
-import { Button } from '../components/ThemeButton';
+import { Button } from '../components/ui/button';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import {
   bundleForMonths,
@@ -96,6 +96,8 @@ export function CheckoutStandIn() {
         className="mt-8"
         disabled={paying}
         onClick={pay}
+        size="md"
+        type="button"
         variant="inverted"
         width="full"
       >

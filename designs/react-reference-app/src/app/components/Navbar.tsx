@@ -8,7 +8,7 @@ import { isBeforeStage, type ClientJourney } from '../domain/journey';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
 import { keepingSignInReturn, signInReturnTarget } from '../utils/signInReturn';
-import { buttonVariants } from './ThemeButton';
+import { buttonVariants } from './ui/button';
 import { NavigationDialog } from './ui/navigation-dialog';
 
 const FINISH_ONBOARDING_LABEL = 'Finish your onboarding';

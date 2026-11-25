@@ -9,7 +9,8 @@ import { LegalFooter } from '../components/legal/LegalNav';
 import { BookingDetailsStep, FIELD_IDS } from '../components/booking/BookingDetailsStep';
 import { firstInvalidField, useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
 import { Alert, AlertAction } from '../components/ui/alert';
-import { Button, buttonVariants, cn } from '../components/ThemeButton';
+import { Button, buttonVariants } from '../components/ui/button';
+import { cn } from '../components/ui/utils';
 import { Card, cardVariants } from '../components/ui/card';
 import { useAppState } from '../context/AppContext';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
@@ -243,6 +244,8 @@ export function Book() {
                             onClick={() => goToStep('details')}
                             disabled={!selectedSlot}
                             className="mt-6"
+                            size="md"
+                            type="button"
                             weight="semibold"
                             width="full"
                           >
@@ -331,7 +334,7 @@ export function Book() {
 
                     <Link
                       to="/"
-                      className={buttonVariants({ textSize: 'sm', variant: 'outline', weight: 'semibold' })}
+                      className={buttonVariants({ size: 'md', textSize: 'sm', variant: 'outline', weight: 'semibold' })}
                     >
                       Return to Home
                     </Link>
