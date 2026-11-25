@@ -77,6 +77,7 @@ export {
   OpenExerciseVideoUseCase,
   type OpenExerciseVideoResult,
 } from "./open-exercise-video-use-case";
+export { RecordExerciseUsageUseCase } from "./record-exercise-usage-use-case";
 export {
   RestoreExerciseUseCase,
   type RestoreExerciseResult,
