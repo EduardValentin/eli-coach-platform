@@ -34,7 +34,7 @@ import { clientAction as archiveExercise } from "~/bounded-contexts/programs/exe
 import { clientAction as restoreExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercise-restore";
 import type {
   ExerciseLibraryView,
-  ExerciseView,
+  ExerciseListingView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
 import {
   COACH_TRAINING_PATH,
@@ -48,7 +48,7 @@ import ExerciseLibraryRoute, {
   shouldRevalidate,
 } from "./exercise-library-page";
 
-const BACK_SQUAT: ExerciseView = {
+const BACK_SQUAT: ExerciseListingView = {
   id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
   name: "Back squat",
   type: "resistance",
@@ -70,7 +70,7 @@ const BACK_SQUAT: ExerciseView = {
   programCount: 0,
 };
 
-const BOX_BREATHING: ExerciseView = {
+const BOX_BREATHING: ExerciseListingView = {
   id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
   name: "Box breathing",
   type: "breathing",
@@ -89,7 +89,7 @@ const BOX_BREATHING: ExerciseView = {
   programCount: 0,
 };
 
-const CAT_COW: ExerciseView = {
+const CAT_COW: ExerciseListingView = {
   ...BOX_BREATHING,
   id: "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
   name: "Cat-cow",
@@ -99,7 +99,7 @@ const CAT_COW: ExerciseView = {
   tags: ["Recovery"],
 };
 
-const DEADLIFT: ExerciseView = {
+const DEADLIFT: ExerciseListingView = {
   ...BACK_SQUAT,
   id: "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a",
   name: "Deadlift",
@@ -111,7 +111,7 @@ const DEADLIFT: ExerciseView = {
   video: null,
 };
 
-const HIP_THRUST: ExerciseView = {
+const HIP_THRUST: ExerciseListingView = {
   ...BACK_SQUAT,
   id: "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
   name: "Hip thrust",
@@ -124,7 +124,7 @@ const HIP_THRUST: ExerciseView = {
   video: null,
 };
 
-const JUMP_ROPE: ExerciseView = {
+const JUMP_ROPE: ExerciseListingView = {
   ...BOX_BREATHING,
   id: "6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c",
   name: "Jump rope",
@@ -144,7 +144,7 @@ const LIBRARY = [
   BOX_BREATHING,
 ];
 
-const WALKING_LUNGE: ExerciseView = {
+const WALKING_LUNGE: ExerciseListingView = {
   ...DEADLIFT,
   id: "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d",
   name: "Walking lunge",
@@ -155,7 +155,7 @@ const WALKING_LUNGE: ExerciseView = {
   status: "archived",
 };
 
-const SIDE_PLANK: ExerciseView = {
+const SIDE_PLANK: ExerciseListingView = {
   ...CAT_COW,
   id: "8b9c0d1e-2f3a-4b4c-9d5e-6f7a8b9c0d1e",
   name: "Side plank",
@@ -170,7 +170,7 @@ const HEADING = "Exercises";
 
 const server = setupServer();
 
-const ELEVEN_EXERCISES: ExerciseView[] = Array.from(
+const ELEVEN_EXERCISES: ExerciseListingView[] = Array.from(
   { length: 11 },
   (_, index) => ({
     ...BOX_BREATHING,
@@ -369,7 +369,10 @@ describe("narrowing the library", () => {
 
   it("offers Conditioning among the tags with its count and narrows to the exercises that carry it", async () => {
     // arrange
-    const intervals: ExerciseView = { ...JUMP_ROPE, tags: ["Conditioning"] };
+    const intervals: ExerciseListingView = {
+      ...JUMP_ROPE,
+      tags: ["Conditioning"],
+    };
     const { router, user } = await renderLibrary({
       exercises: [intervals, BOX_BREATHING],
     });
@@ -1134,7 +1137,7 @@ type LibraryRouter = ReturnType<typeof createMemoryRouter>;
 
 type LibraryStore = {
   load: () => ExerciseLibraryView;
-  replace: (exercise: ExerciseView) => void;
+  replace: (exercise: ExerciseListingView) => void;
   remove: (exerciseId: string) => void;
 };
 
@@ -1154,7 +1157,10 @@ function libraryStore(library: ExerciseLibraryView): LibraryStore {
   };
 }
 
-function exerciseIn(store: LibraryStore, exerciseId: unknown): ExerciseView {
+function exerciseIn(
+  store: LibraryStore,
+  exerciseId: unknown,
+): ExerciseListingView {
   const found = store
     .load()
     .exercises.find(({ id }) => id === String(exerciseId));

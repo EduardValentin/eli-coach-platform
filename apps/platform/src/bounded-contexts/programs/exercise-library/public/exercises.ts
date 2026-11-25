@@ -19,15 +19,14 @@ export type ExerciseView = Omit<
 > & {
   video: ExerciseVideoView | null;
   status: ExerciseStatus;
-  programCount: number;
 };
 
-export type ExerciseLibraryView = { exercises: ExerciseView[] };
+export type ExerciseListingView = ExerciseView & { programCount: number };
 
-export type EditedExerciseView = Omit<ExerciseView, "programCount">;
+export type ExerciseLibraryView = { exercises: ExerciseListingView[] };
 
 export type ExerciseEditorView = {
-  exercise: EditedExerciseView | null;
+  exercise: ExerciseView | null;
   otherNames: string[];
 };
 
@@ -89,17 +88,17 @@ export const exerciseProblemsAnswerSchema = z.object({
 export function presentExercise({
   programCount,
   ...exercise
-}: ExerciseListingEntry): ExerciseView {
+}: ExerciseListingEntry): ExerciseListingView {
   return { ...exerciseViewOf(exercise), programCount };
 }
 
-export function presentEditedExercise(exercise: Exercise): EditedExerciseView {
+export function presentEditedExercise(exercise: Exercise): ExerciseView {
   return exerciseViewOf({ ...exercise.toSnapshot(), status: exercise.status });
 }
 
 function exerciseViewOf(
   exercise: ExerciseSnapshot & { status: ExerciseStatus },
-): EditedExerciseView {
+): ExerciseView {
   const {
     ownerAccountId: _ownerAccountId,
     archivedAt: _archivedAt,
