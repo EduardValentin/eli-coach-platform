@@ -464,6 +464,7 @@ test(
       "Search: “zzz”",
       "Only her equipment",
     ]);
+    await libraryPanel.expectDrawerAnnounced("No exercises match");
 
     // act
     await libraryPanel.removeFilterChip("Search: “zzz”");
@@ -485,12 +486,7 @@ test(
 
     // assert
     await libraryPanel.expectDrawerOpen();
-
-    // act
-    await libraryPanel.closeDrawer();
-
-    // assert
-    await programBuilder.expectAnnounced(
+    await libraryPanel.expectDrawerAnnounced(
       "Hip circles is already in the warm-up",
     );
   },

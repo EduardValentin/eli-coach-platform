@@ -50,6 +50,10 @@ export class LibraryPanel {
     await expect(this.drawer).toHaveCount(0);
   }
 
+  async expectDrawerAnnounced(message: string): Promise<void> {
+    await expect(this.drawer.getByRole("status")).toHaveText(message);
+  }
+
   async expectAddingTo(destination: string): Promise<void> {
     await expect(this.searchField).toHaveAccessibleDescription(
       `Adding to ${destination}`,
