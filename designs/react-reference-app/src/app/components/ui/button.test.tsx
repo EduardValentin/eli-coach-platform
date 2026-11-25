@@ -186,15 +186,21 @@ describe('buttonVariants', () => {
     );
   });
 
-  it('frosts a glass button over a photo', () => {
+  it('frosts a glass button over a photo with a faint dark tint that deepens on hover', () => {
     // arrange
     // act
     const classes = buttonVariants({ variant: 'glass' }).split(' ');
 
     // assert
     expect(classes).toEqual(
-      expect.arrayContaining(['backdrop-blur-sm', 'text-surface-inverted-foreground']),
+      expect.arrayContaining([
+        'backdrop-blur-sm',
+        'text-surface-inverted-foreground',
+        'bg-surface-inverted/5',
+        'not-aria-disabled:hover:bg-surface-inverted/15',
+      ]),
     );
+    expect(classes).not.toContain('bg-surface-inverted-foreground/15');
   });
 
   it('draws a disclosure toggle at regular weight', () => {
