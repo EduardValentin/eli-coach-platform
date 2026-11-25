@@ -7,7 +7,6 @@ import { saladNamed } from "../support/recipe-requests";
 
 const NOT_FOUND = 404;
 const ONE_YEAR_IMMUTABLE = "private, max-age=31536000, immutable";
-const SAVE_DELAY_MS = 1500;
 const REFUSED_UPLOAD_STATUSES = [401, 403, 404];
 
 const recipePhotos = new RecipePhotoSamples();
@@ -102,7 +101,7 @@ test(
     await recipeBuilder.openNew();
     await recipeBuilder.enterDetails({ name });
     await recipeBuilder.attachPhoto(await recipePhotos.cameraJpeg());
-    const savesSent = await recipeBuilder.delayNextSave(SAVE_DELAY_MS);
+    const heldSaves = await recipeBuilder.holdSaves();
 
     // act
     await recipeBuilder.save();
@@ -112,10 +111,11 @@ test(
 
     // act
     await recipeBuilder.submitWhileSaving();
+    heldSaves.release();
 
     // assert
     await nutritionLibrary.expectConfirmation("Recipe created");
-    expect(savesSent()).toBe(1);
+    expect(heldSaves.sent()).toBe(1);
     await nutritionLibrary.expectRecipePhoto(name);
 
     // arrange

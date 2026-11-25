@@ -8,6 +8,7 @@ import {
 } from "@playwright/test";
 
 import type { SampleVideo } from "./exercise-video-files";
+import { FileChoosers } from "./file-choosers";
 import { tabTo } from "./keyboard";
 import { expectLayoutFits } from "./layout-fit";
 import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
@@ -38,6 +39,7 @@ export type ProblemField =
 export type ExerciseProblems = Readonly<Partial<Record<ProblemField, string>>>;
 
 const NEW_EXERCISE_PATH = "/coach/training/exercises/new";
+const EITHER_EDITOR_HEADING = /^(New|Edit) exercise$/;
 const VIDEO_PROMPT = "Drop a video here or choose one";
 const VIDEO_GUIDANCE =
   "MP4 or MOV up to 50 MB, in a format that plays well on a phone.";
@@ -78,7 +80,11 @@ const PROBLEM_FIELDS: readonly ProblemField[] = [
 const TAGS = ["Strength", "Hypertrophy", "Recovery", "Conditioning"] as const;
 
 export class ExerciseEditorPage {
-  constructor(private readonly page: Page) {}
+  private readonly fileChoosers: FileChoosers;
+
+  constructor(private readonly page: Page) {
+    this.fileChoosers = new FileChoosers(page);
+  }
 
   private get nameField() {
     return this.page.getByRole("textbox", { name: "Name" });
@@ -108,8 +114,8 @@ export class ExerciseEditorPage {
     return this.page.getByRole("radio", { name });
   }
 
-  private heading(name?: string): Locator {
-    return this.page.getByRole("heading", { level: 1, name });
+  private heading(name: string | RegExp): Locator {
+    return this.page.getByRole("heading", { name, exact: true });
   }
 
   private select(label: string): Locator {
@@ -304,23 +310,23 @@ export class ExerciseEditorPage {
     await this.waitUntilInteractiveByKeyboard();
     await tabTo(this.page, this.videoDropzone);
     await this.expectFocusVisible(this.videoDropzone);
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.page.keyboard.press("Space");
-    await (await chooser).setFiles(sample.path);
+    await this.fileChoosers.choose(sample.path, () =>
+      this.page.keyboard.press("Space"),
+    );
   }
 
   async replaceVideo(sample: SampleVideo): Promise<void> {
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.replaceVideoButton.click();
-    await (await chooser).setFiles(sample.path);
+    await this.fileChoosers.choose(sample.path, () =>
+      this.replaceVideoButton.click(),
+    );
   }
 
   async replaceVideoWithKeyboard(sample: SampleVideo): Promise<void> {
     await tabTo(this.page, this.replaceVideoButton);
     await this.expectFocusVisible(this.replaceVideoButton);
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.page.keyboard.press("Enter");
-    await (await chooser).setFiles(sample.path);
+    await this.fileChoosers.choose(sample.path, () =>
+      this.page.keyboard.press("Enter"),
+    );
   }
 
   async removeVideo(): Promise<void> {
@@ -551,18 +557,20 @@ export class ExerciseEditorPage {
   }
 
   async recordUploadMessages(): Promise<void> {
-    await this.videoField.locator('[role="status"]').evaluate((region, key) => {
-      const messages: string[] = [];
-      new MutationObserver(() => {
-        const message = region.querySelector("p")?.textContent ?? "";
-        if (message && messages.at(-1) !== message) messages.push(message);
-      }).observe(region, {
-        characterData: true,
-        childList: true,
-        subtree: true,
-      });
-      Object.assign(window, { [key]: messages });
-    }, UPLOAD_MESSAGES_KEY);
+    await this.videoField
+      .getByRole("status", { includeHidden: true })
+      .evaluate((region, key) => {
+        const messages: string[] = [];
+        new MutationObserver(() => {
+          const message = region.querySelector("p")?.textContent ?? "";
+          if (message && messages.at(-1) !== message) messages.push(message);
+        }).observe(region, {
+          characterData: true,
+          childList: true,
+          subtree: true,
+        });
+        Object.assign(window, { [key]: messages });
+      }, UPLOAD_MESSAGES_KEY);
   }
 
   async expectUploadAnnouncedThenFinishedUp(): Promise<void> {
@@ -917,7 +925,9 @@ export class ExerciseEditorPage {
 
   private async waitUntilInteractiveByKeyboard(): Promise<void> {
     await expect(async () => {
-      await this.heading().click({ position: { x: 1, y: 1 } });
+      await this.heading(EITHER_EDITOR_HEADING).click({
+        position: { x: 1, y: 1 },
+      });
       await tabTo(this.page, this.select("Type"));
       await this.page.keyboard.press("Enter");
       await expect(this.listbox).toBeVisible({

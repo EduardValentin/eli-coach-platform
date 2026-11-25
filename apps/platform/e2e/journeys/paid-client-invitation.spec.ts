@@ -135,8 +135,8 @@ test(
     // assert
     await expect(
       page.getByRole("heading", {
-        level: 1,
         name: `Welcome to Evoa Fitness, ${CLIENT_FIRST_NAME}`,
+        exact: true,
       }),
     ).toBeVisible();
     await expect(page.getByText(FIVE_PART_INTRO)).toBeVisible();

@@ -1,11 +1,12 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page, type Route } from "@playwright/test";
 
 import { tabTo } from "./keyboard";
 import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export type PlanRow = { type: string; weeks: string };
 
-const OVERVIEW_PAINTED_KEY = "e2e-overview-painted";
+const ANY_REQUEST = "**/*";
+const OVERVIEW = "Overview";
 
 const SAVE_REQUEST = /\/api\/coach\/clients\/[^/]+\/program\/draft$/;
 
@@ -35,6 +36,10 @@ export class ProgramBuilderPage {
     return this.page.getByRole("combobox", { name, exact: true });
   }
 
+  private placeHeading(place: string): Locator {
+    return this.page.getByRole("heading", { name: place, exact: true });
+  }
+
   private dayCard(weekday: string): Locator {
     return this.week.getByRole("listitem").filter({
       has: this.page.getByRole("heading", { name: weekday, exact: true }),
@@ -49,9 +54,7 @@ export class ProgramBuilderPage {
     await expect(this.page).toHaveURL(
       new RegExp(`/coach/clients/${clientId}/program/draft(#.*)?$`),
     );
-    await expect(
-      this.page.getByRole("heading", { level: 1, name: "Overview" }),
-    ).toBeVisible();
+    await expect(this.placeHeading(OVERVIEW)).toBeVisible();
     await expect(this.draftLine).toHaveText(
       new RegExp(`^${escapedPattern(fullName)} · v1 draft`),
     );
@@ -124,50 +127,39 @@ export class ProgramBuilderPage {
     await this.expectOnBlock(position, type);
   }
 
-  // Watches every animation frame from the document's start, so a heading
-  // painted only before hydration is still caught.
-  async watchForOverviewPaint(): Promise<void> {
-    await this.page.addInitScript((OVERVIEW_PAINTED_KEY) => {
-      sessionStorage.removeItem(OVERVIEW_PAINTED_KEY);
-      const watch = () => {
-        const heading = document.querySelector("h1");
-        if (
-          heading?.textContent === "Overview" &&
-          heading.checkVisibility({ visibilityProperty: true })
-        ) {
-          sessionStorage.setItem(OVERVIEW_PAINTED_KEY, "true");
-        }
-        requestAnimationFrame(watch);
-      };
-      requestAnimationFrame(watch);
-    }, OVERVIEW_PAINTED_KEY);
+  // Holds every script until the returned hydrate() runs, so the page stays
+  // exactly as the server rendered it for as long as the journey looks.
+  async reloadHoldingHydration(): Promise<() => Promise<void>> {
+    const { released, release } = this.releaseGate();
+    const holdScripts = async (route: Route) => {
+      if (route.request().resourceType() === "script") await released;
+      await route.fallback();
+    };
+    await this.page.route(ANY_REQUEST, holdScripts);
+    await this.page.reload({ waitUntil: "commit" });
+    await this.page.waitForFunction(() => document.readyState !== "loading");
+
+    return async () => {
+      release();
+      await this.page.unroute(ANY_REQUEST, holdScripts);
+    };
   }
 
-  async expectNoOverviewPainted(): Promise<void> {
-    const painted = await this.page.evaluate(
-      (key) => sessionStorage.getItem(key),
-      OVERVIEW_PAINTED_KEY,
-    );
-
-    expect(painted).toBeNull();
+  async expectNoOverviewShown(): Promise<void> {
+    await expect(this.placeHeading(OVERVIEW)).toBeHidden();
   }
 
   async openOverview(): Promise<void> {
     await this.page
       .getByRole("navigation", { name: "Breadcrumb" })
-      .getByRole("button", { name: "Overview" })
+      .getByRole("button", { name: OVERVIEW })
       .click();
-    await expect(
-      this.page.getByRole("heading", { level: 1, name: "Overview" }),
-    ).toBeVisible();
+    await expect(this.placeHeading(OVERVIEW)).toBeVisible();
   }
 
   async expectOnBlock(position: number, type: string): Promise<void> {
     await expect(
-      this.page.getByRole("heading", {
-        level: 1,
-        name: `Block ${position} · ${type}`,
-      }),
+      this.placeHeading(`Block ${position} · ${type}`),
     ).toBeVisible();
   }
 
@@ -260,10 +252,10 @@ export class ProgramBuilderPage {
     await this.page.getByRole("button", { name: "Try again now" }).click();
   }
 
-  async expectRecovered(): Promise<void> {
+  async expectRecovered(place: string): Promise<void> {
     await expect(this.page.getByRole("alert")).toHaveCount(0);
     await this.expectSaved();
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeFocused();
+    await this.expectPlaceHeadingFocused(place);
   }
 
   async expectChangedElsewhere(): Promise<void> {
@@ -421,8 +413,8 @@ export class ProgramBuilderPage {
     await expect(this.addBlockDialog).toHaveCount(0);
   }
 
-  async expectPlaceHeadingFocused(): Promise<void> {
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeFocused();
+  async expectPlaceHeadingFocused(place: string): Promise<void> {
+    await expect(this.placeHeading(place)).toBeFocused();
   }
 
   async expectProblemOnBlock(position: number, problem: string): Promise<void> {
@@ -712,24 +704,35 @@ export class ProgramBuilderPage {
     await expect(dialog.getByRole("button", { name: "Reload" })).toBeFocused();
   }
 
-  async holdSaves(): Promise<() => void> {
+  private releaseGate(): { released: Promise<void>; release: () => void } {
     let release: () => void = () => {};
     const released = new Promise<void>((resolve) => {
       release = resolve;
     });
+
+    return { released, release };
+  }
+
+  private async holdSavesThen(
+    answer: (route: Route) => Promise<void>,
+  ): Promise<() => void> {
+    const { released, release } = this.releaseGate();
     await this.page.route(SAVE_REQUEST, async (route) => {
       await released;
-      await route.continue();
+      await answer(route);
     });
 
     return release;
   }
 
-  async failSavesSlowly(delayMs: number): Promise<void> {
-    await this.page.route(SAVE_REQUEST, async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-      await route.fulfill({ status: 500, body: "" });
-    });
+  async holdSaves(): Promise<() => void> {
+    return this.holdSavesThen((route) => route.continue());
+  }
+
+  async holdFailingSaves(): Promise<() => void> {
+    return this.holdSavesThen((route) =>
+      route.fulfill({ status: 500, body: "" }),
+    );
   }
 
   async expectTryingAgain(): Promise<void> {

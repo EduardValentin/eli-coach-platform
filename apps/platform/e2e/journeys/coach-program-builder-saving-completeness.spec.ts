@@ -5,7 +5,6 @@ import { setPhoneViewport } from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 300_000;
 const AUTOMATIC_RETRY_WAIT_MS = 20_000;
-const SLOW_FAILURE_MS = 1_500;
 
 test.use({ trace: "on" });
 
@@ -45,7 +44,7 @@ test(
     await programBuilder.expectSaved();
 
     // act
-    await programBuilder.failSavesSlowly(SLOW_FAILURE_MS);
+    await programBuilder.failSaves();
     await programBuilder.chooseLevel("Intermediate");
 
     // assert
@@ -53,10 +52,16 @@ test(
     await programBuilder.expectLevel("Intermediate");
 
     // act
+    const failTheRetry = await programBuilder.holdFailingSaves();
     await programBuilder.tryAgainNow();
 
     // assert
     await programBuilder.expectTryingAgain();
+
+    // act
+    failTheRetry();
+
+    // assert
     await programBuilder.expectTryAgainNowFocused();
     await programBuilder.expectAnnounced("Still not saved.");
     await programBuilder.expectStillFailing();
@@ -201,7 +206,7 @@ test(
     // assert
     await programBuilder.expectLevel("Advanced");
     await programBuilder.expectLanguage("Romanian");
-    await programBuilder.expectPlaceHeadingFocused();
+    await programBuilder.expectPlaceHeadingFocused("Overview");
     await programBuilder.expectNoSaveState();
   },
 );

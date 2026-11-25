@@ -9,9 +9,11 @@ export class StoreProductPage {
     private readonly cartDrawer: StoreCartDrawer,
   ) {}
 
-  async open(slug: string): Promise<void> {
-    await this.page.goto(storeProductPath(slug));
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+  async open(product: { slug: string; title: string }): Promise<void> {
+    await this.page.goto(storeProductPath(product.slug));
+    await expect(
+      this.page.getByRole("heading", { name: product.title, exact: true }),
+    ).toBeVisible();
   }
 
   async expectPrice(price: string): Promise<void> {

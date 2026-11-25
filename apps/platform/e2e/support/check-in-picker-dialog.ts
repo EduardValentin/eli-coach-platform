@@ -96,7 +96,7 @@ export class CheckInPickerDialog {
   async expectOpen(): Promise<void> {
     await expect(this.dialog).toBeVisible();
     await expect(
-      this.dialog.getByRole("heading", { level: 3, name: this.kind.title }),
+      this.dialog.getByRole("heading", { name: this.kind.title, exact: true }),
     ).toBeFocused();
     await expect(this.days).toBeVisible();
   }

@@ -42,7 +42,7 @@ export class CoachClientProfilePage {
       new RegExp(`${this.pathOf(client.clientId)}$`),
     );
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Profile" }),
+      this.page.getByRole("heading", { name: "Profile", exact: true }),
     ).toBeVisible();
     await expect(
       this.page.getByRole("link", { name: `Back to ${client.fullName}` }),

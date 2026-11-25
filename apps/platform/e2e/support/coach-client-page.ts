@@ -57,8 +57,6 @@ const CHECK_INS_PATH = "/coach/checkins";
 
 const ARROW_SETTLE_MS = 250;
 
-const DISABLED_ACTION_HINT = '[data-parity="disabled-action-hint"]';
-
 export const STOP_WEEKLY_CHECK_IN_LABELS: ConfirmationLabels = {
   title: "Stop the weekly check-in?",
   confirm: "Stop",
@@ -113,7 +111,7 @@ export class CoachClientPage {
   }
 
   private get assessmentCall() {
-    return this.page.locator('[data-parity-root="AssessmentCallBlock"]');
+    return this.block("Assessment call");
   }
 
   private get assessmentCallTrigger() {
@@ -240,23 +238,30 @@ export class CoachClientPage {
       button: this.setUpWeeklyButton,
       opens: this.weeklyDialog,
       reason: this.awaitingOnboardingReason(gender),
-      focusByKeyboard: () => this.tabToSetUpOnceHintsSettle(),
+      focusByKeyboard: () => this.tabToSetUpOnceHintsSettle(gender),
     });
   }
 
-  private async tabToSetUpOnceHintsSettle(): Promise<void> {
+  private async tabToSetUpOnceHintsSettle(
+    gender: VisitorGender,
+  ): Promise<void> {
     const setUp = this.setUpWeeklyButton;
 
     if (await isFocused(setUp)) {
       await this.page.keyboard.press("Shift+Tab");
     }
     await tabTo(this.page, setUp);
-    await expect(this.page.locator(DISABLED_ACTION_HINT)).toHaveCount(1);
+    await expect(
+      this.page.getByRole("dialog", {
+        name: this.awaitingOnboardingReason(gender),
+        exact: true,
+      }),
+    ).toHaveCount(1);
   }
 
   private headerOf(fullName: string): Locator {
     return this.page
-      .getByRole("heading", { level: 1, name: fullName })
+      .getByRole("heading", { name: fullName, exact: true })
       .locator("xpath=ancestor::header[1]");
   }
 
@@ -392,8 +397,8 @@ export class CoachClientPage {
 
   async expectClient(fullName: string, email: string): Promise<void> {
     const heading = this.page.getByRole("heading", {
-      level: 1,
       name: fullName,
+      exact: true,
     });
 
     await expect(heading).toBeVisible();
@@ -443,7 +448,6 @@ export class CoachClientPage {
     );
     await expect(
       this.onboarding.getByRole("heading", {
-        level: 3,
         name: "Answers",
         exact: true,
       }),

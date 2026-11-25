@@ -7,7 +7,9 @@ export class PrivacyPolicyPage {
 
   async open(): Promise<void> {
     await this.page.goto(PRIVACY_PATH);
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(
+      this.page.getByRole("heading", { name: "Privacy Policy", exact: true }),
+    ).toBeVisible();
   }
 
   async expectVersion(version: string, effective: string): Promise<void> {
@@ -20,7 +22,7 @@ export class PrivacyPolicyPage {
 
   async expectSection(heading: string): Promise<void> {
     await expect(
-      this.page.getByRole("heading", { level: 2, name: heading }),
+      this.page.getByRole("heading", { name: heading, exact: true }),
     ).toBeVisible();
   }
 

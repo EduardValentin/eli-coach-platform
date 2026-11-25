@@ -19,6 +19,7 @@ const PROGRAM_REGION_LABEL = "Your program";
 const NEEDS_DETAILS_LABEL = "Your coach needs a few more details";
 const ANSWER_PATH = "/client/onboarding?answer=1";
 const DASHBOARD_PATH = "/client";
+const GREETING = /^Welcome back\b/;
 const PROFILE_PATH = "/client/profile";
 const NUDGE_LINES = [
   "Your weekly weigh-in is due",
@@ -39,6 +40,10 @@ export type NudgeLine = (typeof NUDGE_LINES)[number];
 
 export class ClientDashboard {
   constructor(private readonly page: Page) {}
+
+  private get greeting() {
+    return this.page.getByRole("heading", { name: GREETING });
+  }
 
   private get onboardingStatus() {
     return this.page.getByRole("region", { name: ONBOARDING_REGION_LABEL });
@@ -69,7 +74,7 @@ export class ClientDashboard {
 
   async open(): Promise<void> {
     await this.page.goto(DASHBOARD_PATH);
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(this.greeting).toBeVisible();
   }
 
   async readLoaderPayload(): Promise<string> {
@@ -78,12 +83,12 @@ export class ClientDashboard {
 
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(new RegExp(`${DASHBOARD_PATH}$`));
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(this.greeting).toBeVisible();
   }
 
   async reload(): Promise<void> {
     await this.page.reload();
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(this.greeting).toBeVisible();
   }
 
   async expectNoRefusedPhotosCarried(): Promise<void> {
@@ -172,7 +177,7 @@ export class ClientDashboard {
     const dialog = new ConfirmationDialog(this.page, START_NOW_LABELS);
 
     await expect(async () => {
-      await this.page.getByRole("heading", { level: 1 }).click();
+      await this.greeting.click();
       await tabTo(this.page, this.startNowButton);
       await this.page.keyboard.press("Enter");
       await dialog.expectShownWithin(HYDRATION_RETRY_TIMEOUT_MS);

@@ -832,7 +832,7 @@ test(
 
     // assert
     await expect(
-      page.getByRole("heading", { level: 1, name: "Page not found" }),
+      page.getByRole("heading", { name: "Page not found", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByText("The program wasn’t created.", { exact: false }),
@@ -1136,7 +1136,7 @@ test(
     // assert
     expect(unknownVisit?.status()).toBe(NOT_FOUND);
     await expect(
-      page.getByRole("heading", { level: 1, name: "Page not found" }),
+      page.getByRole("heading", { name: "Page not found", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: /^Build .+’s program$/ }),

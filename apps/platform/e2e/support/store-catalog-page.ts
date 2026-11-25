@@ -21,7 +21,6 @@ export class StoreCatalogPage {
       .getByRole("article")
       .filter({
         has: this.page.getByRole("heading", {
-          level: 3,
           name: title,
           exact: true,
         }),
@@ -37,7 +36,10 @@ export class StoreCatalogPage {
   async open(): Promise<void> {
     await this.page.goto(STORE_PATH);
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Find the right plan" }),
+      this.page.getByRole("heading", {
+        name: "Find the right plan",
+        exact: true,
+      }),
     ).toBeVisible();
   }
 

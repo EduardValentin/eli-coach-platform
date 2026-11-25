@@ -63,7 +63,7 @@ export class CoachCheckInsPage {
   }
 
   private get heading() {
-    return this.page.getByRole("heading", { level: 1, name: "Check-ins" });
+    return this.page.getByRole("heading", { name: "Check-ins", exact: true });
   }
 
   private get searchField() {
@@ -532,8 +532,8 @@ export class CoachCheckInsPage {
   async expectMeetingLinkNotSet(): Promise<void> {
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: "Your meeting link isn't set yet",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(

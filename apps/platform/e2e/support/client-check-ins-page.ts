@@ -90,7 +90,7 @@ export class ClientCheckInsPage {
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(CHECK_INS_PATH);
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Check-ins" }),
+      this.page.getByRole("heading", { name: "Check-ins", exact: true }),
     ).toBeVisible();
   }
 
@@ -482,7 +482,7 @@ export class ClientCheckInsPage {
   async expectNotFound(response: Response | null): Promise<void> {
     expect(response?.status()).toBe(404);
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Page not found" }),
+      this.page.getByRole("heading", { name: "Page not found", exact: true }),
     ).toBeVisible();
   }
 
@@ -490,8 +490,8 @@ export class ClientCheckInsPage {
     await expect(this.page).toHaveURL(this.joinPathOf(checkInId));
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: "Your check-in link isn't ready yet",
+        exact: true,
       }),
     ).toBeVisible();
   }

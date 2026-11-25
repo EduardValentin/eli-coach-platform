@@ -89,7 +89,7 @@ export class TagField {
   }
 
   async leave(): Promise<void> {
-    await this.dialog.getByRole("heading", { level: 3 }).click();
+    await this.page.keyboard.press("Tab");
     await expect(this.suggestions).toBeHidden();
     await expect(this.entry).not.toBeFocused();
   }
@@ -121,7 +121,7 @@ export class TagField {
       "true",
     );
     await expect(
-      this.suggestions.locator('[role="option"][aria-selected="true"]'),
+      this.suggestions.getByRole("option", { selected: true }),
     ).toHaveCount(1);
   }
 

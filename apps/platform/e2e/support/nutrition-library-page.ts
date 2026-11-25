@@ -58,7 +58,7 @@ export class NutritionLibraryPage {
   }
 
   private get heading(): Locator {
-    return this.page.getByRole("heading", { level: 1 });
+    return this.page.getByRole("heading", { name: "Nutrition", exact: true });
   }
 
   private get newFoodLink(): Locator {
@@ -105,7 +105,7 @@ export class NutritionLibraryPage {
   }
 
   private get recipeNames(): Locator {
-    return this.page.getByRole("article").getByRole("heading", { level: 2 });
+    return this.page.getByRole("article").getByRole("heading");
   }
 
   private async chooseEditFrom(actionsTrigger: Locator): Promise<void> {
@@ -139,7 +139,7 @@ export class NutritionLibraryPage {
 
   async expectTab(tab: NutritionTab): Promise<void> {
     await expect(this.page).toHaveURL(TAB_ADDRESSES[tab]);
-    await expect(this.heading).toHaveText("Nutrition");
+    await expect(this.heading).toBeVisible();
     await expect(this.tabOf(tab)).toHaveAttribute("aria-selected", "true");
     await expect(
       this.page.getByRole("link", { name: TAB_ACTIONS[tab], exact: true }),
@@ -182,9 +182,9 @@ export class NutritionLibraryPage {
   async expectRecipeCard(card: RecipeCard): Promise<void> {
     const listed = this.recipeCardOf(card.name);
 
-    await expect(listed.getByRole("heading", { level: 2 })).toHaveText(
-      card.name,
-    );
+    await expect(
+      listed.getByRole("heading", { name: card.name, exact: true }),
+    ).toBeVisible();
     await expect(listed.getByRole("img", { name: card.name })).toBeVisible();
     await expect(
       listed.getByText(`${card.minutes} min`, { exact: true }),
@@ -271,7 +271,7 @@ export class NutritionLibraryPage {
 
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(LIBRARY_PATH);
-    await expect(this.heading).toHaveText("Nutrition");
+    await expect(this.heading).toBeVisible();
   }
 
   async expectNutritionRightAfterTraining(): Promise<void> {

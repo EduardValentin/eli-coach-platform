@@ -85,7 +85,7 @@ test(
 
     // assert
     await programBuilder.expectOnBlock(4, "Hypertrophy");
-    await programBuilder.expectPlaceHeadingFocused();
+    await programBuilder.expectPlaceHeadingFocused("Block 4 · Hypertrophy");
     await programBuilder.expectAnnounced("Hypertrophy block added as block 4");
     expect(await programBuilder.sessionsOfDayMenu("Monday")).toEqual(
       deloadSessions,
@@ -328,13 +328,17 @@ test(
 
     // act
     await programBuilder.expectSaved();
-    await programBuilder.watchForOverviewPaint();
     const problems = collectPageProblems(page);
-    await page.reload();
+    const hydrate = await programBuilder.reloadHoldingHydration();
+
+    // assert
+    await programBuilder.expectNoOverviewShown();
+
+    // act
+    await hydrate();
 
     // assert
     await programBuilder.expectOnBlock(2, "Strength");
-    await programBuilder.expectNoOverviewPainted();
     expect(
       problems.filter((problem) => /hydrat|script tag/i.test(problem)),
     ).toEqual([]);
@@ -360,12 +364,12 @@ test(
 
     // assert
     await expect(
-      page.getByRole("heading", { level: 1, name: "Overview" }),
+      page.getByRole("heading", { name: "Overview", exact: true }),
     ).toBeVisible();
     await programBuilder.expectPlan([
       { type: "Foundation", weeks: "4" },
       { type: "Deload", weeks: "1" },
     ]);
-    await programBuilder.expectPlaceHeadingFocused();
+    await programBuilder.expectPlaceHeadingFocused("Overview");
   },
 );

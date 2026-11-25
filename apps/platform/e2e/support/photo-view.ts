@@ -4,7 +4,6 @@ import {
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { tabTo } from "./keyboard";
 import { expectImageLoaded } from "./loaded-images";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { MeasurementsHistory } from "./measurements-history";
@@ -59,8 +58,7 @@ export class PhotoView {
 
   async openWithKeyboardFor(date: string): Promise<void> {
     await expect(async () => {
-      await this.page.getByRole("heading", { level: 1 }).click();
-      await tabTo(this.page, this.measurementsHistory.viewPhotosAction(date));
+      await this.measurementsHistory.tabToViewPhotos(date);
       await this.page.keyboard.press("Enter");
       await expect(this.dialog).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
