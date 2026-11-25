@@ -94,7 +94,7 @@ export function ClientProfilePopover({
         data-parity-root="ClientProfilePopover"
         align="end"
         aria-labelledby={headingId}
-        className="grid w-80 gap-3 rounded-card"
+        className="grid w-80 gap-3 rounded-card p-4"
         collisionPadding={16}
         onCloseAutoFocus={returnFocusToOpener}
         sideOffset={8}

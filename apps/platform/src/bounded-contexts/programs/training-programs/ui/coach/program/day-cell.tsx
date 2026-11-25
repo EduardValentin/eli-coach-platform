@@ -108,11 +108,11 @@ function DayGlyph({ day }: { day: WeekDay }) {
 }
 
 const DAY_FACE_CLASS =
-  "col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left font-medium";
+  "col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left";
 
 /** The pointer area spans the whole card, so a click anywhere on it opens the day; the card's own controls sit above it. */
 const CARD_WIDE_BUTTON_CLASS =
-  "cursor-pointer outline-none after:absolute after:inset-0 after:rounded-control after:content-[''] focus-visible:after:ring-[3px] focus-visible:after:ring-focus-ring/50";
+  "cursor-pointer font-medium outline-none after:absolute after:inset-0 after:rounded-control after:content-[''] focus-visible:after:ring-[3px] focus-visible:after:ring-focus-ring/50";
 
 type DayFaceProps = { day: WeekDay; onOpen?: () => void };
 

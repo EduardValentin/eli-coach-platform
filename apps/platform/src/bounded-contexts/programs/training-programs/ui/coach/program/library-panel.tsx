@@ -395,7 +395,7 @@ function LibraryHeading({
       <SheetTitle
         className={cn(
           WIDGET_TITLE_CLASS,
-          "flex min-h-12 items-center font-sans",
+          "flex min-h-12 items-center font-body",
         )}
       >
         Exercise library

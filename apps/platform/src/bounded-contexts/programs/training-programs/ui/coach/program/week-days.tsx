@@ -272,7 +272,7 @@ function BuilderWeekTabs({
               variant="outline"
             >
               Open session
-              <ArrowRight aria-hidden="true" />
+              <ArrowRight aria-hidden="true" className="size-4" />
             </Button>
           )}
         </div>

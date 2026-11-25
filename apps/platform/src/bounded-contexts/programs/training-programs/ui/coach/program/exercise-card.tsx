@@ -312,7 +312,7 @@ export function ExerciseCard({
               >
                 Details
                 <span className="sr-only">{` for ${name}`}</span>
-                <ChevronDown aria-hidden="true" />
+                <ChevronDown aria-hidden="true" className="size-4" />
               </Button>
             </DisclosureTrigger>
           </div>
