@@ -7022,7 +7022,7 @@
       "click": "role=button[name=\"Add Biceps Curl\"]"
     },
     {
-      "click": "role=button[name=/^Barbell Back Squat/][haspopup=dialog]"
+      "click": "role=heading[level=5] >> role=button[name=/^Barbell Back Squat/]"
     }
   ],
   "session-filled": [
@@ -7105,46 +7105,16 @@
       "use": "builder-block"
     },
     {
-      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+      "click": "role=combobox[name=\"Target\"]"
     },
     {
-      "click": "role=button[name=\"Add Barbell Back Squat\"]"
-    },
-    {
-      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
-    },
-    {
-      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+      "click": "role=option[name=\"30 min\"]"
     },
     {
       "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
     },
     {
-      "click": "role=button[name=\"Add Lateral Raises\"]"
-    },
-    {
-      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
-    },
-    {
-      "click": "role=button[name=\"Add Biceps Curl\"]"
-    },
-    {
-      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
-    },
-    {
-      "click": "role=button[name=\"Add Triceps Pushdown\"]"
-    },
-    {
-      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
-    },
-    {
       "click": "role=button[name=\"Add Walking Lunges\"]"
-    },
-    {
-      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
-    },
-    {
-      "click": "role=button[name=\"Add Leg Press\"]"
     },
     {
       "click": "role=button[name=\"Add exercise to C · Accessories\"]"
@@ -7156,19 +7126,13 @@
       "click": "role=button[name=\"Add exercise to C · Accessories\"]"
     },
     {
-      "click": "role=button[name=\"Add Plank\"]"
+      "click": "role=button[name=\"Add Bulgarian Split Squat\"]"
     },
     {
       "click": "role=button[name=\"Add exercise to C · Accessories\"]"
     },
     {
-      "click": "role=button[name=\"Add Lying Leg Curl\"]"
-    },
-    {
-      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
-    },
-    {
-      "click": "role=button[name=\"Add Cable Hip Abduction\"]"
+      "click": "role=button[name=\"Add Reverse Lunge\"]"
     }
   ],
   "cool-down-on-filled": [
@@ -7214,7 +7178,7 @@
       "click": "role=button[name=\"Add Biceps Curl\"]"
     },
     {
-      "click": "role=button[name=\"Full Body A actions\"]"
+      "click": "[data-parity-root=\"SessionCard\"]:first-of-type > header [data-parity=\"row-actions-trigger\"]"
     },
     {
       "click": "role=menuitem[name=\"Clear session\"]"
@@ -7273,7 +7237,7 @@
       "use": "builder-block"
     },
     {
-      "click": "role=button[name=/^Full Body B/]"
+      "click": "[data-parity-root=\"SessionCard\"] > h3 > button[aria-expanded=\"false\"]"
     }
   ],
   "draft-actions-menu": [
@@ -7328,7 +7292,7 @@
         "use": "open-exercise-actions"
       },
       {
-        "hover": "role=menu >> role=menuitem[name=\"Delete\" s]"
+        "press": "End"
       },
       {
         "waitFor": "[data-parity=\"row-action-delete-hint\"]"
@@ -7339,7 +7303,7 @@
         "use": "open-exercise-actions"
       },
       {
-        "hover": "role=menu >> role=menuitem[name=\"Delete\" s]"
+        "press": "End"
       },
       {
         "waitFor": "[data-parity=\"disabled-action-hint\"]"
