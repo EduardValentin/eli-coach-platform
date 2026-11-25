@@ -28,13 +28,6 @@ const LOAD_EQUIPMENT: readonly Equipment[] = [
 const EPSILON = 1e-6;
 
 export class WeightSteps {
-  static stepFor(equipment: readonly Equipment[]): WeightStep {
-    return (
-      STEP_BY_EQUIPMENT.find(([kind]) => equipment.includes(kind))?.[1] ??
-      PLATE_STEP
-    );
-  }
-
   /** An exercise missing from the library loads in plate steps. */
   static stepOf(exercise: LibraryExercise | undefined): WeightStep {
     return exercise ? WeightSteps.stepFor(exercise.equipment) : PLATE_STEP;
@@ -61,6 +54,13 @@ export class WeightSteps {
     const steps = Math.round((weightKg - step.lightestKg) / step.incrementKg);
 
     return WeightSteps.loadAt(step, Math.max(0, steps));
+  }
+
+  private static stepFor(equipment: readonly Equipment[]): WeightStep {
+    return (
+      STEP_BY_EQUIPMENT.find(([kind]) => equipment.includes(kind))?.[1] ??
+      PLATE_STEP
+    );
   }
 
   private static loadAt(

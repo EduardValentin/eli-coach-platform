@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type {
-  Equipment,
-  ExerciseRole,
-  LibraryExercise,
-} from "./library-exercise";
+import type { Equipment, LibraryExercise } from "./library-exercise";
 import type {
   Block,
   ExerciseRow,
@@ -17,7 +13,7 @@ import {
   type RowDefaultTargets,
   type WorkingTargets,
 } from "./row-defaults";
-import type { BlockType } from "./vocabulary";
+import type { BlockType, Slot } from "./vocabulary";
 
 type RirStart = Pick<WorkingTargets, "rir" | "lastSetRir">;
 const LOADING_RIR: RirStart = { rir: 3, lastSetRir: 2 };
@@ -190,66 +186,69 @@ function blockOf(rows: ExerciseRow[]): Block {
   };
 }
 
-const TABLE: [BlockType, ExerciseRole, RowDefaultTargets][] = [
+const TABLE: [BlockType, Slot, RowDefaultTargets][] = [
   [
     "foundation",
-    "main-compound",
+    "A",
     { start: start(3, { min: 12, max: 15 }, { rir: 3 }), restSeconds: 75 },
   ],
   [
     "foundation",
-    "secondary-compound",
+    "B",
     { start: start(3, { min: 12, max: 15 }, { rir: 3 }), restSeconds: 75 },
   ],
   [
     "foundation",
-    "isolation",
+    "C",
     { start: start(3, { min: 12, max: 15 }, { rir: 3 }), restSeconds: 75 },
   ],
   [
     "hypertrophy",
-    "main-compound",
+    "A",
     { start: start(4, { min: 6, max: 10 }, LOADING_RIR), restSeconds: 150 },
   ],
   [
     "hypertrophy",
-    "secondary-compound",
+    "B",
     { start: start(3, { min: 8, max: 12 }, LOADING_RIR), restSeconds: 105 },
   ],
   [
     "hypertrophy",
-    "isolation",
+    "C",
     { start: start(3, { min: 10, max: 20 }, LOADING_RIR), restSeconds: 75 },
   ],
   [
     "strength",
-    "main-compound",
+    "A",
     { start: start(4, { min: 3, max: 6 }, LOADING_RIR), restSeconds: 150 },
   ],
   [
     "strength",
-    "secondary-compound",
+    "B",
     { start: start(3, { min: 8, max: 12 }, LOADING_RIR), restSeconds: 105 },
   ],
   [
     "strength",
-    "isolation",
+    "C",
     { start: start(3, { min: 10, max: 20 }, LOADING_RIR), restSeconds: 75 },
   ],
 ];
 
-describe("RowDefaults forRole", () => {
-  it.each(TABLE)("gives %s %s its table values", (type, role, expected) => {
-    // act
-    const defaults = RowDefaults.forRole(type, role);
+describe("RowDefaults forSlot", () => {
+  it.each(TABLE)(
+    "gives %s slot %s its table values",
+    (type, slot, expected) => {
+      // act
+      const defaults = RowDefaults.forSlot(type, slot);
 
-    // assert
-    expect(defaults).toEqual(expected);
-  });
+      // assert
+      expect(defaults).toEqual(expected);
+    },
+  );
 
-  it("gives a new row in a Deload block half the Hypertrophy sets at RIR 4", () => {
+  it("gives a new main lift in a Deload block half the Hypertrophy sets at RIR 4", () => {
     // act
-    const result = RowDefaults.forRole("deload", "main-compound");
+    const result = RowDefaults.forSlot("deload", "A");
 
     // assert
     expect(result).toEqual({

@@ -24,7 +24,7 @@ export type ActiveFilter =
   | { kind: "only-her-equipment" }
   | { kind: "bodyweight" };
 
-type LibrarySelectionSnapshot = {
+type LibrarySelectionFields = {
   type: LibraryType;
   query: string;
   patterns: MovementPattern[];
@@ -39,7 +39,7 @@ type OfferSource = {
   libraryExercises: readonly LibraryExercise[];
 };
 
-const CLEARED: LibrarySelectionSnapshot = {
+const CLEARED: LibrarySelectionFields = {
   type: "resistance",
   query: "",
   patterns: [],
@@ -59,7 +59,7 @@ const SLOT_OFFER: LibraryOffer = { type: "resistance", patterns: [] };
 
 /** Which of her library exercises the builder's library panel offers, by type, filters and the target it adds to. */
 export class LibrarySelection {
-  private constructor(private readonly fields: LibrarySelectionSnapshot) {}
+  private constructor(private readonly fields: LibrarySelectionFields) {}
 
   /** The panel opens on resistance exercises, limited to her equipment. */
   static initial(): LibrarySelection {
@@ -107,14 +107,6 @@ export class LibrarySelection {
 
   get bodyweightOnly(): boolean {
     return this.fields.bodyweightOnly;
-  }
-
-  toSnapshot(): LibrarySelectionSnapshot {
-    return {
-      ...this.fields,
-      patterns: [...this.fields.patterns],
-      muscles: [...this.fields.muscles],
-    };
   }
 
   offered(

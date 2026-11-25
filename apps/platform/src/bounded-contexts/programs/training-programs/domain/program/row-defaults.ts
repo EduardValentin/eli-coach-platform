@@ -87,22 +87,6 @@ const DELOAD_LARGEST_CUT = 0.2;
 export class RowDefaults {
   constructor(private readonly options: RowDefaultsOptions) {}
 
-  static forRole(type: BlockType, role: ExerciseRole): RowDefaultTargets {
-    if (type !== "deload") {
-      return RowDefaults.copied(RowDefaults.loadedDefaults(type, role));
-    }
-    const loaded = RowDefaults.loadedDefaults("hypertrophy", role);
-    const { count, reps } = loaded.start;
-
-    return {
-      start: {
-        count: RowDefaults.halved(count),
-        ...RowDefaults.deloadedSet({ reps, rir: DELOAD_RIR }, PLATE_STEP),
-      },
-      restSeconds: loaded.restSeconds,
-    };
-  }
-
   static forSlot(type: BlockType, slot: Slot): RowDefaultTargets {
     return RowDefaults.forRole(type, ROLE_BY_SLOT[slot]);
   }
@@ -193,6 +177,25 @@ export class RowDefaults {
     });
 
     return { ...block, type: "deload", weeks: 1, sessions };
+  }
+
+  private static forRole(
+    type: BlockType,
+    role: ExerciseRole,
+  ): RowDefaultTargets {
+    if (type !== "deload") {
+      return RowDefaults.copied(RowDefaults.loadedDefaults(type, role));
+    }
+    const loaded = RowDefaults.loadedDefaults("hypertrophy", role);
+    const { count, reps } = loaded.start;
+
+    return {
+      start: {
+        count: RowDefaults.halved(count),
+        ...RowDefaults.deloadedSet({ reps, rir: DELOAD_RIR }, PLATE_STEP),
+      },
+      restSeconds: loaded.restSeconds,
+    };
   }
 
   private static loadedDefaults(

@@ -268,14 +268,12 @@ describe("LibrarySelection offerFor", () => {
     });
 
     // assert
-    expect(offered.toSnapshot()).toMatchObject({
-      type: "resistance",
-      query: "squat",
-      patterns: ["squat"],
-      muscles: ["Quadriceps"],
-      onlyHerEquipment: true,
-      bodyweightOnly: false,
-    });
+    expect(offered.type).toBe("resistance");
+    expect(offered.query).toBe("squat");
+    expect(offered.patterns).toEqual(["squat"]);
+    expect(offered.muscles).toEqual(["Quadriceps"]);
+    expect(offered.onlyHerEquipment).toBe(true);
+    expect(offered.bodyweightOnly).toBe(false);
   });
 });
 

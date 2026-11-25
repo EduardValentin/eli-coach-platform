@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { LibraryExercise } from "./library-exercise";
 import { PLATE_STEP, WeightSteps } from "./weight-steps";
 
-const BARBELL_STEP = WeightSteps.stepFor(["Barbell"]);
-const DUMBBELL_STEP = WeightSteps.stepFor(["Dumbbells"]);
-const KETTLEBELL_STEP = WeightSteps.stepFor(["Kettlebell"]);
+const BARBELL_STEP = { lightestKg: 20, incrementKg: 5 };
+const DUMBBELL_STEP = { lightestKg: 0, incrementKg: 1 };
+const KETTLEBELL_STEP = { lightestKg: 0, incrementKg: 4 };
 
 function exercise(
   id: string,
@@ -30,25 +30,29 @@ function exercise(
   };
 }
 
-describe("WeightSteps stepFor", () => {
+describe("WeightSteps stepOf", () => {
   it.each([
-    [["Barbell", "Squat rack"] as const, { lightestKg: 20, incrementKg: 5 }],
-    [["Dumbbells", "Bench"] as const, { lightestKg: 0, incrementKg: 1 }],
-    [["Kettlebell"] as const, { lightestKg: 0, incrementKg: 4 }],
+    [["Barbell", "Squat rack"] as const, BARBELL_STEP],
+    [["Dumbbells", "Bench"] as const, DUMBBELL_STEP],
+    [["Kettlebell"] as const, KETTLEBELL_STEP],
     [["Cable"] as const, PLATE_STEP],
     [["Machine"] as const, PLATE_STEP],
     [["EZ bar"] as const, PLATE_STEP],
     [[] as const, PLATE_STEP],
-  ])("derives the step from %j", (equipment, expected) => {
-    // act
-    const step = WeightSteps.stepFor(equipment);
+  ])(
+    "derives the step from the exercise equipment %j",
+    (equipment, expected) => {
+      // arrange
+      const loaded = exercise("loaded", { equipment: [...equipment] });
 
-    // assert
-    expect(step).toEqual(expected);
-  });
-});
+      // act
+      const step = WeightSteps.stepOf(loaded);
 
-describe("WeightSteps stepOf", () => {
+      // assert
+      expect(step).toEqual(expected);
+    },
+  );
+
   it("takes the step from the exercise equipment, and plate steps for an exercise missing from the library", () => {
     // act
     const steps = [
