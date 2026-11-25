@@ -30,6 +30,7 @@ test(
     await programBuilder.moveBlockUpByKeyboard("Hypertrophy");
     await programBuilder.addProposedBlock();
     await programBuilder.expectOnBlock(4, "Hypertrophy");
+    await programBuilder.closeExerciseLibrary();
     await programBuilder.chooseTrainingDays("4 days");
     await programBuilder.makeRestDay("Monday");
     await programBuilder.expectSaved();
@@ -37,6 +38,7 @@ test(
 
     // assert
     await programBuilder.expectOnBlock(4, "Hypertrophy");
+    await programBuilder.closeExerciseLibrary();
     await programBuilder.expectTrainingDays("4 days");
     await programBuilder.expectDay("Monday", "Rest");
 

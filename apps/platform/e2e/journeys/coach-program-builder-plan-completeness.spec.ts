@@ -246,6 +246,7 @@ test(
 
     // act
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
+    await programBuilder.closeExerciseLibrary();
     await programBuilder.chooseTrainingDays("3 days");
     await programBuilder.chooseSplit("Full Body");
 
@@ -260,7 +261,7 @@ test(
     await programBuilder.expectDaySpoken("Monday", "Full Body A about 0 min");
     await programBuilder.expectDaySpoken("Tuesday", "Easy cardio 30 min");
     await programBuilder.expectDaySpoken("Sunday", "Rest");
-    await programBuilder.expectOnlyDayMenusInTheWeek();
+    await programBuilder.expectOnlyDayMenusAndStrengthFacesInTheWeek(3);
 
     // act
     await programBuilder.chooseTrainingDaysExpectingConfirmation("5 days");

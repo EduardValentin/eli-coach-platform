@@ -157,6 +157,14 @@ export class ProgramBuilderPage {
     await expect(this.placeHeading(OVERVIEW)).toBeVisible();
   }
 
+  // A block opens with the exercise library beside it from 80em, which leaves
+  // the week too narrow for its seven-day row.
+  async closeExerciseLibrary(): Promise<void> {
+    await this.page
+      .getByRole("button", { name: "Exercise library", pressed: true })
+      .click();
+  }
+
   async expectOnBlock(position: number, type: string): Promise<void> {
     await expect(
       this.placeHeading(`Block ${position} · ${type}`),
@@ -869,8 +877,10 @@ export class ProgramBuilderPage {
     ).toBeVisible();
   }
 
-  async expectOnlyDayMenusInTheWeek(): Promise<void> {
-    await expect(this.week.getByRole("button")).toHaveCount(7);
+  async expectOnlyDayMenusAndStrengthFacesInTheWeek(
+    strengthDays: number,
+  ): Promise<void> {
+    await expect(this.week.getByRole("button")).toHaveCount(7 + strengthDays);
     await expect(
       this.week.getByRole("button", { name: /^[A-Z][a-z]+day options$/ }),
     ).toHaveCount(7);

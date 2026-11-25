@@ -259,9 +259,10 @@ test(
 
     // act
     await programBuilder.openBlockFromSections(1, "Foundation");
+    await programBuilder.closeExerciseLibrary();
 
     // assert
-    await programBuilder.expectOnlyDayMenusInTheWeek();
+    await programBuilder.expectOnlyDayMenusAndStrengthFacesInTheWeek(3);
     await expectLayoutFits(page);
 
     // act
