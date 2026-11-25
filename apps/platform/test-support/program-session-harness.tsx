@@ -21,7 +21,7 @@ import { ExerciseDetailProvider } from "~/bounded-contexts/programs/training-pro
 
 import {
   BlockWorkspace,
-  openSessionOf,
+  openSessionIdOf,
 } from "~/bounded-contexts/programs/training-programs/ui/coach/program/block-workspace";
 import { EditorAnnouncerProvider } from "~/bounded-contexts/programs/training-programs/ui/coach/program/editor-announcer";
 import { LIBRARY_EXERCISE } from "~/bounded-contexts/programs/training-programs/ui/coach/program/session-dnd";
@@ -313,7 +313,7 @@ function Workspace({
             onOpenLibrary={onOpenLibrary}
             onOpenSession={setChosen}
             onRemove={() => {}}
-            openSessionId={openSessionOf(block, chosen)}
+            openSessionId={openSessionIdOf(block, chosen)}
           />
           <ul aria-label="Library">
             {LIBRARY.map((item) => (

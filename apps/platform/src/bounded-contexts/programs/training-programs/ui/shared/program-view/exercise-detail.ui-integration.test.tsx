@@ -102,11 +102,7 @@ function renderDetail(detail: ExerciseDetailContent | null, subject = squat) {
         <button type="button">Edit {shown.name} in library</button>
       )}
     >
-      <ExerciseNameButton
-        exercise={subject}
-        detail={detail}
-        place="session A"
-      />
+      <ExerciseNameButton exercise={subject} detail={detail} />
     </ExerciseDetailProvider>,
   );
 }
@@ -118,7 +114,7 @@ describe("exercise detail", () => {
     renderDetail(detailOf(squat, { cues: "Brace\nDrive through the floor" }));
     const opener = screen.getByRole("button", {
       name: "Squat",
-      description: "cues and video, session A",
+      description: "cues and video",
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
@@ -171,7 +167,7 @@ describe("exercise detail", () => {
     await user.click(
       screen.getByRole("button", {
         name: "Lunge",
-        description: "cues, session A",
+        description: "cues",
       }),
     );
 

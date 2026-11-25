@@ -13,7 +13,6 @@ import {
   musclesAndEquipmentText,
   nonEmptyLines,
   repsSuffix,
-  repsUnit,
   rirSpan,
   setsBreakdown,
 } from "./program-view";
@@ -187,7 +186,6 @@ describe("exercise wording", () => {
 
     // assert
     expect(suffixes).toEqual(["", " per side", " s"]);
-    expect(repsUnit(plank, "column")).toBe("Seconds");
   });
 });
 

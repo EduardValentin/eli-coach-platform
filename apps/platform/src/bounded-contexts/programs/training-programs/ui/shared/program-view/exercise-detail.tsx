@@ -221,10 +221,16 @@ export function ExerciseDetailProvider({
     setOpen(true);
   }
 
-  function showSwap(swap: LibraryExercise | null, focusTarget: FocusTarget) {
+  function openSwap(swap: LibraryExercise) {
     if (!shown) return;
-    focusAfterChange.current = focusTarget;
+    focusAfterChange.current = { kind: "title" };
     setShown({ detail: shown.detail, swap });
+  }
+
+  function backToExercise() {
+    if (!shown) return;
+    focusAfterChange.current = backFrom(shown.swap);
+    setShown({ detail: shown.detail, swap: null });
   }
 
   function backFrom(swap: LibraryExercise | null): FocusTarget {
@@ -262,8 +268,8 @@ export function ExerciseDetailProvider({
             <div data-parity-root="ExerciseDetail" ref={body}>
               <DetailBody
                 shown={shown}
-                onOpenSwap={(swap) => showSwap(swap, { kind: "title" })}
-                onBack={() => showSwap(null, backFrom(shown.swap))}
+                onOpenSwap={openSwap}
+                onBack={backToExercise}
               />
             </div>
           </SheetDialogBody>

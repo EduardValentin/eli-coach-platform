@@ -202,14 +202,14 @@ function blockWith(shape: SplitShape, sessions: Session[]): Block {
   };
 }
 
-describe("SplitTemplate slotPlanOrFallback", () => {
+describe("SplitTemplate slotPlanOrUsual", () => {
   it("reads the slot plan of a session in the block", () => {
     // arrange
     const sessions = [session("a"), session("b")];
     const block = blockWith("full-body", sessions);
 
     // act
-    const plan = SplitTemplate.slotPlanOrFallback(block, sessions[0], "A");
+    const plan = SplitTemplate.slotPlanOrUsual(block, sessions[0], "A");
 
     // assert
     expect(plan).toEqual({
@@ -225,7 +225,7 @@ describe("SplitTemplate slotPlanOrFallback", () => {
 
     // act
     const plans = SLOTS.map((slot) =>
-      SplitTemplate.slotPlanOrFallback(block, session("elsewhere"), slot),
+      SplitTemplate.slotPlanOrUsual(block, session("elsewhere"), slot),
     );
 
     // assert

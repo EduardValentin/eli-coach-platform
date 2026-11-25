@@ -36,18 +36,22 @@ import {
 } from "./session-card-parts";
 import { SlotGroup } from "./slot-group";
 import { useMeasuredHeight } from "./use-measured-height";
-import { usePendingFocus } from "./use-pending-focus";
 import { WarmUpCard } from "./warm-up-card";
 
 type SessionCardProps = {
   session: Session;
   block: Block;
   level: ClientLevel;
-  expanded: boolean;
   articleRef: Ref<HTMLElement>;
   libraryExercises: readonly LibraryExercise[];
-  libraryEquipment: readonly Equipment[];
+};
+
+type CollapsedSessionCardProps = SessionCardProps & {
   onExpand: () => void;
+};
+
+type OpenSessionCardProps = SessionCardProps & {
+  libraryEquipment: readonly Equipment[];
   onChange: (session: Session) => void;
   onOpenLibrary: (target: LibraryTarget) => void;
 };
@@ -66,33 +70,64 @@ function sessionSummary(session: Session, minutes: number): string {
     : `${exercises} · ${SessionTiming.estimatedDuration(minutes)}`;
 }
 
-export function SessionCard({
-  session,
-  block,
-  level,
-  expanded,
-  articleRef,
-  libraryExercises,
-  libraryEquipment,
-  onExpand,
-  onChange,
-  onOpenLibrary,
-}: SessionCardProps) {
-  const headingId = useId();
-  const nameField = useRef<HTMLInputElement>(null);
-  const focusLater = usePendingFocus();
-  const expand = () => {
-    focusLater(() => nameField.current);
-    onExpand();
-  };
-  const header = useMeasuredHeight();
-  const confirm = useDestructiveConfirm();
-  const announce = useEditorAnnouncer();
+function useSessionTiming(
+  block: Block,
+  level: ClientLevel,
+  libraryExercises: readonly LibraryExercise[],
+) {
   const exercisesById = useMemo(
     () => new Map(libraryExercises.map((exercise) => [exercise.id, exercise])),
     [libraryExercises],
   );
-  const timing = { block, level, exercisesById };
+
+  return { block, level, exercisesById };
+}
+
+export function CollapsedSessionCard({
+  session,
+  block,
+  level,
+  articleRef,
+  libraryExercises,
+  onExpand,
+}: CollapsedSessionCardProps) {
+  const headingId = useId();
+  const timing = useSessionTiming(block, level, libraryExercises);
+  const minutes = SessionTiming.longestWeekMinutes(session, timing);
+
+  return (
+    <article
+      data-parity-root="SessionCard"
+      aria-labelledby={headingId}
+      className={SESSION_ARTICLE_CLASS}
+      ref={articleRef}
+    >
+      <CollapsedSessionHeader
+        headingId={headingId}
+        name={session.name}
+        onExpand={onExpand}
+        summary={sessionSummary(session, minutes)}
+      />
+    </article>
+  );
+}
+
+export function OpenSessionCard({
+  session,
+  block,
+  level,
+  articleRef,
+  libraryExercises,
+  libraryEquipment,
+  onChange,
+  onOpenLibrary,
+}: OpenSessionCardProps) {
+  const headingId = useId();
+  const nameField = useRef<HTMLInputElement>(null);
+  const header = useMeasuredHeight();
+  const confirm = useDestructiveConfirm();
+  const announce = useEditorAnnouncer();
+  const timing = useSessionTiming(block, level, libraryExercises);
   const minutes = SessionTiming.longestWeekMinutes(session, timing);
   const overTarget = SessionTiming.isOverTarget(session, timing);
   const editing = new SessionEditing({
@@ -117,27 +152,9 @@ export function SessionCard({
     });
   }
 
-  if (!expanded) {
-    return (
-      <article
-        data-parity-root="SessionCard"
-        aria-labelledby={headingId}
-        className={SESSION_ARTICLE_CLASS}
-        ref={articleRef}
-      >
-        <CollapsedSessionHeader
-          headingId={headingId}
-          name={session.name}
-          onExpand={expand}
-          summary={sessionSummary(session, minutes)}
-        />
-      </article>
-    );
-  }
-
-  const firstWeek = ProgramProgression.sessionAtWeek(session, 1, timing);
+  const firstWeekSession = ProgramProgression.sessionAtWeek(session, 1, timing);
   const plans = SLOTS.map((slot) =>
-    SplitTemplate.slotPlanOrFallback(block, session, slot),
+    SplitTemplate.slotPlanOrUsual(block, session, slot),
   );
   const slots = plans.map(({ slot, label }) => ({ slot, label }));
 
@@ -209,7 +226,7 @@ export function SessionCard({
         {plans.map((plan) => (
           <SlotGroup
             editing={editing}
-            firstWeek={firstWeek}
+            firstWeekSession={firstWeekSession}
             key={plan.slot}
             libraryExercises={libraryExercises}
             onAdd={(slot) =>

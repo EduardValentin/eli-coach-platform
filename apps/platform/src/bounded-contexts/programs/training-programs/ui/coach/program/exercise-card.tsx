@@ -67,7 +67,7 @@ export type RowFocus = {
 type ExerciseCardProps = {
   session: Session;
   row: ExerciseRow;
-  firstWeek: WeekRow;
+  firstWeekRow: WeekRow;
   exercise: LibraryExercise | undefined;
   libraryExercises: readonly LibraryExercise[];
   editing: SessionEditing;
@@ -130,14 +130,14 @@ function moveToSlotActions({
   name,
   announce,
 }: MenuContext): RowMenuAction[] {
-  const open = (target: SlotTarget) =>
+  const canTakeRow = (target: SlotTarget) =>
     target.slot !== row.slot &&
     !(
       SINGLE_UNIT_SLOTS.includes(target.slot) &&
       session.rows.some((other) => other.slot === target.slot)
     );
 
-  return slots.filter(open).map((target) => ({
+  return slots.filter(canTakeRow).map((target) => ({
     name: `move-to-${target.slot}`,
     label: `Move to ${target.slot} · ${target.label}`,
     icon: CornerDownRight,
@@ -213,7 +213,7 @@ const CARD_GRID_CLASS = cn(
 export function ExerciseCard({
   session,
   row,
-  firstWeek,
+  firstWeekRow,
   exercise,
   libraryExercises,
   editing,
@@ -228,7 +228,7 @@ export function ExerciseCard({
   const facts = musclesAndEquipmentText(exercise);
   const detail = rowExerciseDetail({
     session,
-    row: firstWeek,
+    row: firstWeekRow,
     progression: row.progression.kind === "custom" ? row.progression.text : "",
     findExercise: (id) => libraryExercises.find((item) => item.id === id),
   });
@@ -286,7 +286,7 @@ export function ExerciseCard({
           />
           <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
             <h5 className="flex items-center gap-2.5">
-              <PositionBadge label={position} size="sm" />{" "}
+              <PositionBadge label={position} />{" "}
               <ExerciseNameButton
                 detail={detail}
                 exercise={exercise}
@@ -300,7 +300,7 @@ export function ExerciseCard({
           </div>
           <TargetsSummary
             className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3"
-            items={rowTargets(firstWeek, repsSuffix(exercise))}
+            items={rowTargets(firstWeekRow, repsSuffix(exercise))}
             size="sm"
           />
           <div className="mt-2 mb-3 flex flex-wrap gap-x-1 gap-y-4 [grid-area:toggles] sm:mt-3 sm:mb-0">

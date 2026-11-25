@@ -31,7 +31,10 @@ import {
   EditorAnnouncerProvider,
   useEditorAnnouncer,
 } from "./editor-announcer";
-import { EditorSectionContent, type OpenBlock } from "./editor-section-content";
+import {
+  EditorSectionContent,
+  type SessionOpening,
+} from "./editor-section-content";
 import {
   sectionAnchorId,
   sectionFromHash,
@@ -42,7 +45,7 @@ import { clientName, EditorTopBar, type BuilderClient } from "./editor-top-bar";
 import { LeaveWarning } from "./leave-warning";
 import { LibraryPanel } from "./library-panel";
 import { PlaceHeadingContext } from "./place-heading";
-import { openSessionOf } from "./block-workspace";
+import { openSessionIdOf } from "./block-workspace";
 import { ProgramOutline } from "./program-outline";
 import { useBuilderState, type DraftView } from "./use-builder-state";
 import { useHydrated } from "./use-hydrated";
@@ -116,8 +119,8 @@ function ProgramBuilder({ view }: { view: DraftView }) {
     selected.kind === "block"
       ? blocks.find((other) => other.id === selected.blockId)
       : undefined;
-  const openSessionId = block && openSessionOf(block, openSessions[block.id]);
-  const openBlock: OpenBlock = {
+  const openSessionId = block && openSessionIdOf(block, openSessions[block.id]);
+  const sessionOpening: SessionOpening = {
     openSessionId,
     onOpenSession: (sessionId) =>
       block &&
@@ -234,7 +237,7 @@ function ProgramBuilder({ view }: { view: DraftView }) {
                 <EditorSectionContent
                   builder={builder}
                   onAddBlock={startAddingBlock}
-                  openBlock={openBlock}
+                  sessionOpening={sessionOpening}
                 />
               </div>
             </main>

@@ -215,7 +215,7 @@ export function EditorTopBar({
   const profileReturnFocus = useRef<HTMLElement | null>(null);
   const draftActions = useRef<HTMLSpanElement>(null);
   const showsToolbarIcons = useIsDesktopViewport();
-  const libraryAction: RowMenuAction[] = library
+  const libraryActions: RowMenuAction[] = library
     ? [
         {
           name: "library",
@@ -237,7 +237,7 @@ export function EditorTopBar({
   };
   const narrowScreenActions: RowMenuAction[] = showsToolbarIcons
     ? []
-    : [...libraryAction, profileAction];
+    : [...libraryActions, profileAction];
 
   return (
     <header

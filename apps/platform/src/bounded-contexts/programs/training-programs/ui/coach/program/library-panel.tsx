@@ -346,14 +346,19 @@ function FiltersPopover({
 }
 
 type FrameProps = {
-  isDrawer: boolean;
+  presentation: LibraryPresentation;
   headingId: string;
   onClose: () => void;
   children: ReactNode;
 };
 
-function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
-  if (!isDrawer) {
+function LibraryFrame({
+  presentation,
+  headingId,
+  onClose,
+  children,
+}: FrameProps) {
+  if (presentation === "pane") {
     return (
       <aside
         data-parity-root="LibraryPanel"
@@ -379,13 +384,13 @@ function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
 }
 
 function LibraryHeading({
-  isDrawer,
+  presentation,
   headingId,
 }: {
-  isDrawer: boolean;
+  presentation: LibraryPresentation;
   headingId: string;
 }) {
-  if (isDrawer) {
+  if (presentation === "drawer") {
     return (
       <SheetTitle
         className={cn(
@@ -422,7 +427,6 @@ export function LibraryPanel({
   const filtersTrigger = useRef<HTMLButtonElement>(null);
   const headingId = useId();
   const purposeId = useId();
-  const isDrawer = presentation === "drawer";
   if (purpose && purpose.key !== appliedPurpose) {
     setAppliedPurpose(purpose.key);
     setSelection((current) => current.forOffer(purpose.offer));
@@ -459,10 +463,14 @@ export function LibraryPanel({
   }
 
   return (
-    <LibraryFrame headingId={headingId} isDrawer={isDrawer} onClose={onClose}>
+    <LibraryFrame
+      headingId={headingId}
+      onClose={onClose}
+      presentation={presentation}
+    >
       <div className="contents" ref={content}>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
-          <LibraryHeading headingId={headingId} isDrawer={isDrawer} />
+          <LibraryHeading headingId={headingId} presentation={presentation} />
           {purpose && (
             <p className="sr-only" id={purposeId}>
               {purpose.label}

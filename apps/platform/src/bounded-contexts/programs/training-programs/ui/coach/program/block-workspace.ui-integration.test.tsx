@@ -25,7 +25,7 @@ import {
   type Session,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
-import { BlockWorkspace, openSessionOf } from "./block-workspace";
+import { BlockWorkspace, openSessionIdOf } from "./block-workspace";
 import { EditorAnnouncerProvider } from "./editor-announcer";
 
 const SETUP = {
@@ -143,7 +143,7 @@ function renderWorkspace({
             onOpenLibrary={() => {}}
             onOpenSession={setChosen}
             onRemove={onRemove}
-            openSessionId={openSessionOf(current, chosen)}
+            openSessionId={openSessionIdOf(current, chosen)}
           />
         </EditorAnnouncerProvider>
       </DndProvider>

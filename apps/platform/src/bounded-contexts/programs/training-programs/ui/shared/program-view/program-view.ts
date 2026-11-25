@@ -46,29 +46,9 @@ export function perSideUnit(
   return [unit, exercise?.perSide ? "per side" : ""].filter(Boolean).join(" ");
 }
 
-/** How the reps unit reads: `implied` after a number where reps go without saying, `spelled` after a number, `column` as a column name. */
-type RepsWording = "implied" | "spelled" | "column";
-
-const REPS_WORDS: Record<RepsWording, { reps: string; time: string }> = {
-  implied: { reps: "", time: "s" },
-  spelled: { reps: "reps", time: "s" },
-  column: { reps: "Reps", time: "Seconds" },
-};
-
-export function repsUnit(
-  exercise: LibraryExercise | undefined,
-  wording: RepsWording = "implied",
-): string {
-  const words = REPS_WORDS[wording];
-
-  return perSideUnit(
-    exercise,
-    exercise?.unit === "time" ? words.time : words.reps,
-  );
-}
-
+/** The unit that follows a rep count, where reps go without saying. */
 export function repsSuffix(exercise: LibraryExercise | undefined): string {
-  const unit = repsUnit(exercise);
+  const unit = perSideUnit(exercise, exercise?.unit === "time" ? "s" : "");
 
   return unit && ` ${unit}`;
 }

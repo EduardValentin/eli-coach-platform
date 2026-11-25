@@ -5,7 +5,7 @@ import { PlanOverview } from "./plan-overview";
 import { ProgramSettings } from "./program-settings";
 import type { BuilderState } from "./use-builder-state";
 
-export type OpenBlock = {
+export type SessionOpening = {
   openSessionId: string | undefined;
   onOpenSession: (sessionId: string) => void;
   onOpenLibrary: (target: LibraryTarget) => void;
@@ -14,13 +14,13 @@ export type OpenBlock = {
 
 type EditorSectionContentProps = {
   builder: BuilderState;
-  openBlock: OpenBlock;
+  sessionOpening: SessionOpening;
   onAddBlock: () => void;
 };
 
 export function EditorSectionContent({
   builder,
-  openBlock,
+  sessionOpening,
   onAddBlock,
 }: EditorSectionContentProps) {
   const { draft, selected } = builder;
@@ -59,12 +59,12 @@ export function EditorSectionContent({
       level={draft.level}
       libraryEquipment={builder.libraryEquipment}
       libraryExercises={builder.libraryExercises}
-      libraryTarget={openBlock.libraryTarget}
+      libraryTarget={sessionOpening.libraryTarget}
       onChange={builder.replaceBlock}
-      onOpenLibrary={openBlock.onOpenLibrary}
-      onOpenSession={openBlock.onOpenSession}
+      onOpenLibrary={sessionOpening.onOpenLibrary}
+      onOpenSession={sessionOpening.onOpenSession}
       onRemove={() => builder.removeBlock(block.id)}
-      openSessionId={openBlock.openSessionId}
+      openSessionId={sessionOpening.openSessionId}
     />
   );
 }

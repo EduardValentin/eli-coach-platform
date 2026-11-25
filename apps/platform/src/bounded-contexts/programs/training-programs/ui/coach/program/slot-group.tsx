@@ -35,7 +35,7 @@ import { actionsTriggerIn, usePendingFocus } from "./use-pending-focus";
 type SlotGroupProps = {
   session: Session;
   plan: SlotPlan;
-  firstWeek: WeekSession;
+  firstWeekSession: WeekSession;
   libraryExercises: readonly LibraryExercise[];
   editing: SessionEditing;
   slots: readonly SlotTarget[];
@@ -95,7 +95,7 @@ function PatternText({
 export function SlotGroup({
   session,
   plan,
-  firstWeek,
+  firstWeekSession,
   libraryExercises,
   editing,
   slots,
@@ -122,7 +122,7 @@ export function SlotGroup({
   });
   const units = editing.slotUnits(session, slot);
   const heading = `${slot} · ${label}`;
-  const several = !SINGLE_UNIT_SLOTS.includes(slot);
+  const holdsSeveralUnits = !SINGLE_UNIT_SLOTS.includes(slot);
   const placeAt = (placement: Placement) => (dragged: DraggedItem) =>
     onChange(
       dragged.kind === PLAN_ROW
@@ -143,16 +143,16 @@ export function SlotGroup({
     announce(`${positions.join(" and ")} ungrouped`);
   }
 
-  const card = (rowId: string) => {
+  const exerciseCardFor = (rowId: string) => {
     const row = session.rows.find((other) => other.id === rowId);
-    const weekRow = firstWeek.rows.find((other) => other.id === rowId);
+    const weekRow = firstWeekSession.rows.find((other) => other.id === rowId);
     if (!row || !weekRow) return null;
 
     return (
       <ExerciseCard
         editing={editing}
         exercise={libraryExercises.find((item) => item.id === row.exerciseId)}
-        firstWeek={weekRow}
+        firstWeekRow={weekRow}
         focus={focus}
         key={row.id}
         libraryExercises={libraryExercises}
@@ -180,7 +180,7 @@ export function SlotGroup({
             patterns={exercisePatterns(session, slot, libraryExercises)}
           />
         </div>
-        {several && units.length > 0 && (
+        {holdsSeveralUnits && units.length > 0 && (
           <IconActionButton
             data-slot-add=""
             hint="Add exercise"
@@ -203,7 +203,7 @@ export function SlotGroup({
           />
         ) : (
           <div className="grid grid-cols-[minmax(0,1fr)]">
-            {several && (
+            {holdsSeveralUnits && (
               <DropSeparator
                 rules={rulesAt({ slot, beforeRowId: units[0].rows[0].id })}
               />
@@ -215,7 +215,7 @@ export function SlotGroup({
               return (
                 <div className="grid grid-cols-[minmax(0,1fr)]" key={unit.key}>
                   {group === undefined ? (
-                    card(unit.rows[0].id)
+                    exerciseCardFor(unit.rows[0].id)
                   ) : (
                     <SupersetUnit
                       onUngroup={() => ungroup(group, unit.rows)}
@@ -224,11 +224,11 @@ export function SlotGroup({
                       )}
                     >
                       {unit.rows.map((row) => (
-                        <li key={row.id}>{card(row.id)}</li>
+                        <li key={row.id}>{exerciseCardFor(row.id)}</li>
                       ))}
                     </SupersetUnit>
                   )}
-                  {several && (
+                  {holdsSeveralUnits && (
                     <DropSeparator
                       rules={rulesAt({
                         slot,

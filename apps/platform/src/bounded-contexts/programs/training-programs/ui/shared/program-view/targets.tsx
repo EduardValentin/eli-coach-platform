@@ -19,22 +19,22 @@ function workingValue(count: number, reps: string): ReactNode {
   );
 }
 
+function workingTarget(working: number, reps: string | null): Target {
+  return {
+    term: "Working",
+    value: reps
+      ? workingValue(working, reps)
+      : `${counted(working, "set")}, varied`,
+  };
+}
+
 export function rowTargets(row: WeekRow, repsSuffix: string): Target[] {
   const { warmUp, working, reps, rir } = setsBreakdown(row.sets, repsSuffix);
   if (warmUp + working === 0) return [NO_SETS];
 
   return [
     ...(warmUp > 0 ? [{ term: "Warm-up", value: counted(warmUp, "set") }] : []),
-    ...(working > 0
-      ? [
-          {
-            term: "Working",
-            value: reps
-              ? workingValue(working, reps)
-              : `${counted(working, "set")}, varied`,
-          },
-        ]
-      : []),
+    ...(working > 0 ? [workingTarget(working, reps)] : []),
     ...(rir ? [{ term: "RIR", value: <RirValue rir={rir} /> }] : []),
     { term: "Rest", value: formatRest(row.restSeconds) },
   ];

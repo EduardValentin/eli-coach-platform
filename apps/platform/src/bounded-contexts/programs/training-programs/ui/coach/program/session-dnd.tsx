@@ -81,15 +81,15 @@ export function DropSeparator({ rules }: { rules: SessionDropRules }) {
   );
 }
 
-type DropReadiness = "over" | "ready" | undefined;
+type EmptyTargetCue = "over" | "ready" | undefined;
 
-function dropReadiness({
+function emptyTargetCue({
   isOver,
   canDrop,
 }: {
   isOver: boolean;
   canDrop: boolean;
-}): DropReadiness {
+}): EmptyTargetCue {
   if (!canDrop) return undefined;
 
   return isOver ? "over" : "ready";
@@ -103,30 +103,29 @@ type EmptyDropTargetProps = {
 
 export function EmptyDropTarget({ rules, place, onAdd }: EmptyDropTargetProps) {
   const [state, drop] = useSessionDrop(rules);
-  const readiness = dropReadiness(state);
+  const cue = emptyTargetCue(state);
 
   return (
     <div ref={drop as unknown as Ref<HTMLDivElement>}>
       <Button
-        data-drop={readiness}
+        data-drop={cue}
         data-slot-add=""
         onClick={onAdd}
         size="md"
         variant="drop"
       >
         <Plus aria-hidden="true" />
-        {readiness === "over" ? "Release to add" : "Add or drop an exercise"}
+        {cue === "over" ? "Release to add" : "Add or drop an exercise"}
         <span className="sr-only">{` in ${place}`}</span>
       </Button>
     </div>
   );
 }
 
-type DropZoneTone = "ring" | "inset" | "fill";
+type DropZoneTone = "ring" | "fill";
 
 const DROP_ZONE_ACTIVE_CLASS: Record<DropZoneTone, string> = {
   ring: "ring-2 ring-primary/40",
-  inset: "ring-2 ring-inset ring-primary/40",
   fill: "bg-primary-soft",
 };
 

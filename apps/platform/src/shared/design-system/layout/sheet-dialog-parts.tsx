@@ -44,7 +44,7 @@ export function SheetDialogHeader({
   titleRef,
 }: SheetDialogHeaderProps) {
   const announceHeader = useContext(ShownHeaderContext);
-  const close = useContext(SheetCloseContext);
+  const sheetClose = useContext(SheetCloseContext);
 
   useLayoutEffect(() => {
     announceHeader({ description });
@@ -59,7 +59,7 @@ export function SheetDialogHeader({
       )}
       data-parity="sheet-header"
     >
-      {close === "shown" && (
+      {sheetClose === "shown" && (
         <RadixDialog.Close
           aria-label="Close"
           className={buttonVariants({

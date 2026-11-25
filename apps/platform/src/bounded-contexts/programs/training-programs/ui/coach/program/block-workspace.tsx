@@ -15,12 +15,13 @@ import {
 
 import { BlockHeader } from "./block-header";
 import { LibraryTargetContext } from "./library-target";
-import { SessionCard } from "./session-card";
+import { CollapsedSessionCard, OpenSessionCard } from "./session-card";
 import { SessionDragLayer } from "./session-dnd";
 import { useMeasuredHeight } from "./use-measured-height";
+import { usePendingFocus } from "./use-pending-focus";
 import { WeekDays } from "./week-days";
 
-export function openSessionOf(
+export function openSessionIdOf(
   block: Block,
   chosen: string | undefined,
 ): string | undefined {
@@ -73,6 +74,7 @@ export function BlockWorkspace({
   const reducedMotion = useClientReducedMotionPreference();
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
+  const focusLater = usePendingFocus();
 
   useEffect(() => {
     if (!scrollTarget) return;
@@ -86,6 +88,15 @@ export function BlockWorkspace({
   function openFromWeek(sessionId: string) {
     onOpenSession(sessionId);
     setScrollTarget(sessionId);
+  }
+
+  function expandFromCard(sessionId: string) {
+    focusLater(() =>
+      articles.current
+        .get(sessionId)
+        ?.querySelector<HTMLElement>('[aria-label="Session name"]'),
+    );
+    onOpenSession(sessionId);
   }
 
   function articleRefFor(sessionId: string) {
@@ -121,21 +132,31 @@ export function BlockWorkspace({
       />
       <LibraryTargetContext.Provider value={libraryTarget}>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
-          {BlockEditing.listedSessions(block).map((session) => (
-            <SessionCard
-              articleRef={articleRefFor(session.id)}
-              block={block}
-              expanded={session.id === openSessionId}
-              key={session.id}
-              level={level}
-              libraryEquipment={libraryEquipment}
-              libraryExercises={libraryExercises}
-              onChange={(next) => onChange(blockWithSession(block, next))}
-              onExpand={() => onOpenSession(session.id)}
-              onOpenLibrary={onOpenLibrary}
-              session={session}
-            />
-          ))}
+          {BlockEditing.listedSessions(block).map((session) =>
+            session.id === openSessionId ? (
+              <OpenSessionCard
+                articleRef={articleRefFor(session.id)}
+                block={block}
+                key={session.id}
+                level={level}
+                libraryEquipment={libraryEquipment}
+                libraryExercises={libraryExercises}
+                onChange={(next) => onChange(blockWithSession(block, next))}
+                onOpenLibrary={onOpenLibrary}
+                session={session}
+              />
+            ) : (
+              <CollapsedSessionCard
+                articleRef={articleRefFor(session.id)}
+                block={block}
+                key={session.id}
+                level={level}
+                libraryExercises={libraryExercises}
+                onExpand={() => expandFromCard(session.id)}
+                session={session}
+              />
+            ),
+          )}
         </div>
       </LibraryTargetContext.Provider>
       <SessionDragLayer />

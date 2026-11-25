@@ -61,14 +61,8 @@ export function ExerciseNameMark({ exercise }: { exercise: LibraryExercise }) {
   );
 }
 
-function spokenOpens(
-  exercise: LibraryExercise,
-  place: string | undefined,
-): string {
-  return [
-    exercise.videoPath ? "cues and video" : "cues",
-    place ? `, ${place}` : "",
-  ].join("");
+function spokenOpens(exercise: LibraryExercise): string {
+  return exercise.videoPath ? "cues and video" : "cues";
 }
 
 type ExerciseNameButtonProps = {
@@ -76,7 +70,6 @@ type ExerciseNameButtonProps = {
   detail: ExerciseDetailContent | null;
   weight?: NameWeight;
   size?: NameSize;
-  place?: string;
 };
 
 export function ExerciseNameButton({
@@ -84,7 +77,6 @@ export function ExerciseNameButton({
   detail,
   weight = "semibold",
   size = "base",
-  place,
 }: ExerciseNameButtonProps) {
   const openDetail = useOpenExerciseDetail();
   const opensId = useId();
@@ -118,7 +110,7 @@ export function ExerciseNameButton({
         <ExerciseNameWords exercise={detail.exercise} />
       </InlineTextButton>
       <span id={opensId} aria-hidden="true" className="sr-only">
-        {spokenOpens(detail.exercise, place)}
+        {spokenOpens(detail.exercise)}
       </span>
     </>
   );

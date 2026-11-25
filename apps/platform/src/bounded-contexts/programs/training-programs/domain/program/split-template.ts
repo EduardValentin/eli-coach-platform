@@ -143,11 +143,7 @@ export class SplitTemplate {
   }
 
   /** The slot's plan, or its usual one for a session the split does not plan. */
-  static slotPlanOrFallback(
-    block: Block,
-    session: Session,
-    slot: Slot,
-  ): SlotPlan {
+  static slotPlanOrUsual(block: Block, session: Session, slot: Slot): SlotPlan {
     return (
       SplitTemplate.slotPlanFor(block, session, slot) ??
       FALLBACK_SLOT_PLANS[slot]
