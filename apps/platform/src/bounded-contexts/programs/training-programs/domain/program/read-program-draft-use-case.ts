@@ -8,7 +8,8 @@ import type {
   ClientIdentityPort,
 } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
-import type { LibraryExercise } from "./library-exercise";
+import { LibraryEquipment } from "./library-equipment";
+import type { Equipment, LibraryExercise } from "./library-exercise";
 import type { LibraryExercisesPort } from "./library-exercises-port";
 import type { Program } from "./program";
 import { ProgramSetup } from "./program-setup";
@@ -31,6 +32,8 @@ export type ProgramDraftReading =
       draft: DraftReading;
       startingBlockSetup: BlockSetup;
       libraryExercises: LibraryExercise[];
+      clientProfile: ClientCoachingFacts | null;
+      libraryEquipment: Equipment[];
     };
 
 type ReadProgramDraftUseCaseOptions = {
@@ -47,6 +50,8 @@ const UNAPPROVED_COACHING_FACTS: ClientCoachingFacts = {
   trainingDays: 3,
   sessionMinutes: 60,
   equipment: [],
+  trainingPlace: null,
+  limitations: "",
 };
 
 export class ReadProgramDraftUseCase {
@@ -81,6 +86,10 @@ export class ReadProgramDraftUseCase {
       return { status: "no-draft" };
     }
 
+    const clientProfile = this.approvedFactsOf(
+      await clientCoachingPort.find(clientId),
+    );
+
     return {
       status: "draft",
       client,
@@ -88,24 +97,27 @@ export class ReadProgramDraftUseCase {
       level: program.level,
       language: program.language,
       draft,
-      startingBlockSetup: this.startingBlockSetupOf(
-        program,
-        await clientCoachingPort.find(clientId),
-      ),
+      startingBlockSetup: this.startingBlockSetupOf(program, clientProfile),
       libraryExercises: await libraryExercisesPort.listFor(coachAccountId),
+      clientProfile,
+      libraryEquipment: LibraryEquipment.coveredBy(
+        clientProfile?.equipment ?? [],
+      ),
     };
+  }
+
+  private approvedFactsOf({
+    answers,
+  }: ClientCoaching): ClientCoachingFacts | null {
+    return answers.status === "approved" ? answers.coachingFacts : null;
   }
 
   private startingBlockSetupOf(
     program: Program,
-    { answers }: ClientCoaching,
+    clientProfile: ClientCoachingFacts | null,
   ): BlockSetup {
     const { splitShape, trainingDays, sessionMinutes, dailySteps } =
-      ProgramSetup.startingValues(
-        answers.status === "approved"
-          ? answers.coachingFacts
-          : UNAPPROVED_COACHING_FACTS,
-      );
+      ProgramSetup.startingValues(clientProfile ?? UNAPPROVED_COACHING_FACTS);
 
     return {
       splitShape,

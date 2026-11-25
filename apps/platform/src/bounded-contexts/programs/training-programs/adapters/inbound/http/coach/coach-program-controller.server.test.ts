@@ -1,5 +1,6 @@
 import type {
   DraftSummary,
+  LibraryExercise,
   ProgramCardReading,
   ProgramContent,
   ProgramDraftReading,
@@ -112,6 +113,23 @@ const SAVED_AT = new Date("2026-11-21T10:30:00.000Z");
 
 const NEWER_SAVED_AT = new Date("2026-11-21T10:31:00.000Z");
 
+const WALKING: LibraryExercise = {
+  id: "exercise-walk",
+  name: "Walking",
+  type: "cardio",
+  unit: "time",
+  perSide: false,
+  pattern: null,
+  role: null,
+  primaryMuscles: [],
+  secondaryMuscles: [],
+  equipment: [],
+  tags: [],
+  cues: "",
+  videoPath: "/coach/exercises/exercise-walk/videos/video-1",
+  archived: true,
+};
+
 const DRAFT_READING: ProgramDraftReading = {
   status: "draft",
   client: ANA,
@@ -126,7 +144,17 @@ const DRAFT_READING: ProgramDraftReading = {
     dailySteps: 6000,
     language: "ro",
   },
-  cardioExercises: [{ id: "exercise-walk", name: "Walking" }],
+  libraryExercises: [WALKING],
+  clientProfile: {
+    goal: "Build muscle",
+    level: "intermediate",
+    trainingDays: 4,
+    sessionMinutes: 45,
+    equipment: ["Dumbbells"],
+    trainingPlace: "Home",
+    limitations: "Left knee, no deep lunges",
+  },
+  libraryEquipment: ["Dumbbells", "Bench"],
 };
 
 const SAVE_REQUEST = {
@@ -648,11 +676,37 @@ describe("CoachProgramController loadDraft", () => {
         dailySteps: 6000,
         language: "ro",
       },
-      cardioExercises: [{ id: "exercise-walk", name: "Walking" }],
+      libraryExercises: [WALKING],
+      clientProfile: {
+        goal: "Build muscle",
+        equipment: ["Dumbbells"],
+        trainingPlace: "Home",
+        trainingDays: 4,
+        sessionMinutes: 45,
+        limitations: "Left knee, no deep lunges",
+      },
+      libraryEquipment: ["Dumbbells", "Bench"],
     });
     expect(readProgramDraft).toHaveBeenCalledWith({
       clientId: CLIENT_ID,
       coachAccountId: COACH.id,
+    });
+  });
+
+  it("answers no client profile while her answers are not approved", async () => {
+    // arrange
+    const { coachProgramController } = createController({
+      draft: { ...DRAFT_READING, clientProfile: null, libraryEquipment: [] },
+    });
+
+    // act
+    const view = await coachProgramController.loadDraft(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(view).toMatchObject({
+      state: "draft",
+      clientProfile: null,
+      libraryEquipment: [],
     });
   });
 
@@ -733,7 +787,7 @@ describe("CoachProgramController loadDraft", () => {
 });
 
 describe("CoachProgramController saveDraft", () => {
-  it("saves the whole draft with its level and language inside one unit of work and answers the new marker", async () => {
+  it("saves the whole draft with its level and language for the signed-in coach inside one unit of work and answers the new marker", async () => {
     // arrange
     const { coachProgramController, saveProgramDraft, unitOfWork } =
       createController({
@@ -754,6 +808,7 @@ describe("CoachProgramController saveDraft", () => {
     });
     expect(unitOfWork).toHaveBeenCalledOnce();
     expect(saveProgramDraft).toHaveBeenCalledWith({
+      coachAccountId: COACH.id,
       clientId: CLIENT_ID,
       content: CONTENT,
       level: "advanced",

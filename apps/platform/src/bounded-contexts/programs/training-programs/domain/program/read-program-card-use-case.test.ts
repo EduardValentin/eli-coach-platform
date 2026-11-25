@@ -25,6 +25,8 @@ const ANAS_COACHING: ClientCoaching = {
       trainingDays: 3,
       sessionMinutes: 60,
       equipment: ["Dumbbells"],
+      trainingPlace: "Gym",
+      limitations: "",
     },
   },
   equipmentOptions: [{ value: "Dumbbells", exclusive: false }],

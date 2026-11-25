@@ -2,6 +2,7 @@ import type { ClockPort } from "../clock-port";
 import type { ClientCoachingPort } from "./client-coaching-port";
 import type { ClientIdentityPort } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import type { ExerciseUsagePort } from "./exercise-usage-port";
 import type { LibraryExercisesPort } from "./library-exercises-port";
 import { Program } from "./program";
 import type { ProgramIdsPort } from "./program-ids-port";
@@ -38,6 +39,7 @@ type StartProgramUseCaseOptions = {
   coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: ClientCoachingPort;
   libraryExercisesPort: LibraryExercisesPort;
+  exerciseUsagePort: ExerciseUsagePort;
   programIdsPort: ProgramIdsPort;
   clockPort: ClockPort;
 };
@@ -89,6 +91,7 @@ export class StartProgramUseCase {
       programStorePort,
       clientCoachingPort,
       libraryExercisesPort,
+      exerciseUsagePort,
       programIdsPort,
       clockPort,
     } = this.options;
@@ -108,6 +111,12 @@ export class StartProgramUseCase {
 
     if ((await programStorePort.add(program)) === "client-has-program") {
       return { status: "has-program" };
+    }
+
+    const usage = program.draftUsage(command.coachAccountId);
+
+    if (usage) {
+      await exerciseUsagePort.recordVersionUsage(usage);
     }
 
     await clientCoachingPort.saveEquipment({

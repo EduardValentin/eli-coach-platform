@@ -1,43 +1,59 @@
-type ExerciseType =
-  "resistance" | "cardio" | "mobility" | "stretching" | "breathing";
+export const EXERCISE_TYPES = [
+  "resistance",
+  "cardio",
+  "mobility",
+  "stretching",
+  "breathing",
+] as const;
+type ExerciseType = (typeof EXERCISE_TYPES)[number];
 
-type ExerciseUnit = "reps" | "time" | "distance" | "breaths";
+export const EXERCISE_UNITS = ["reps", "time", "distance", "breaths"] as const;
+type ExerciseUnit = (typeof EXERCISE_UNITS)[number];
 
-export type MovementPattern =
-  | "squat"
-  | "lunge"
-  | "hinge"
-  | "horizontal-push"
-  | "vertical-push"
-  | "horizontal-pull"
-  | "vertical-pull"
-  | "core"
-  | "carry"
-  | "isolation"
-  | "conditioning";
+export const MOVEMENT_PATTERNS = [
+  "squat",
+  "lunge",
+  "hinge",
+  "horizontal-push",
+  "vertical-push",
+  "horizontal-pull",
+  "vertical-pull",
+  "core",
+  "carry",
+  "isolation",
+  "conditioning",
+] as const;
+export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
 
-export type ExerciseRole = "main-compound" | "secondary-compound" | "isolation";
+export const EXERCISE_ROLES = [
+  "main-compound",
+  "secondary-compound",
+  "isolation",
+] as const;
+export type ExerciseRole = (typeof EXERCISE_ROLES)[number];
 
-export type Muscle =
-  | "Chest"
-  | "Upper back"
-  | "Lats"
-  | "Lower back"
-  | "Traps"
-  | "Shoulders"
-  | "Biceps"
-  | "Triceps"
-  | "Forearms"
-  | "Core"
-  | "Obliques"
-  | "Glutes"
-  | "Quadriceps"
-  | "Hamstrings"
-  | "Adductors"
-  | "Abductors"
-  | "Hip flexors"
-  | "Calves"
-  | "Full body";
+export const MUSCLES = [
+  "Chest",
+  "Upper back",
+  "Lats",
+  "Lower back",
+  "Traps",
+  "Shoulders",
+  "Biceps",
+  "Triceps",
+  "Forearms",
+  "Core",
+  "Obliques",
+  "Glutes",
+  "Quadriceps",
+  "Hamstrings",
+  "Adductors",
+  "Abductors",
+  "Hip flexors",
+  "Calves",
+  "Full body",
+] as const;
+export type Muscle = (typeof MUSCLES)[number];
 
 export const EQUIPMENT = [
   "Barbell",
@@ -66,8 +82,13 @@ export const EQUIPMENT = [
 ] as const;
 export type Equipment = (typeof EQUIPMENT)[number];
 
-export type ExerciseTag =
-  "Strength" | "Hypertrophy" | "Recovery" | "Conditioning";
+export const EXERCISE_TAGS = [
+  "Strength",
+  "Hypertrophy",
+  "Recovery",
+  "Conditioning",
+] as const;
+export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 
 export type LibraryExercise = {
   id: string;

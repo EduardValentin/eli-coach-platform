@@ -17,6 +17,8 @@ const ANAS_FACTS: NonNullable<ClientCoachingDto["coachingFacts"]> = {
   trainingDays: 4,
   sessionMinutes: 45,
   equipment: ["Dumbbells", "Resistance bands"],
+  trainingPlace: "Home",
+  limitations: "Left knee, no deep lunges",
 };
 
 const ANA: ClientCoachingDto = {
@@ -78,6 +80,8 @@ describe("ClientsClientCoachingAdapter.find", () => {
           trainingDays: 4,
           sessionMinutes: 45,
           equipment: ["Dumbbells", "Resistance bands"],
+          trainingPlace: "Home",
+          limitations: "Left knee, no deep lunges",
         },
       },
       equipmentOptions: [
@@ -105,6 +109,25 @@ describe("ClientsClientCoachingAdapter.find", () => {
     expect(clientCoaching.answers).toEqual({
       status: "approved",
       coachingFacts: expect.objectContaining({ goal: null }),
+    });
+  });
+
+  it("carries a profile without a training place as a training place of null", async () => {
+    // arrange
+    const clientsClientCoachingAdapter = new ClientsClientCoachingAdapter(
+      new ClientCoachingFacadeDouble({
+        ...ANA,
+        coachingFacts: { ...ANAS_FACTS, trainingPlace: null },
+      }),
+    );
+
+    // act
+    const clientCoaching = await clientsClientCoachingAdapter.find("client-1");
+
+    // assert
+    expect(clientCoaching.answers).toEqual({
+      status: "approved",
+      coachingFacts: expect.objectContaining({ trainingPlace: null }),
     });
   });
 

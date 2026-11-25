@@ -27,6 +27,8 @@ const FACTS: ClientCoachingFacts = {
   trainingDays: 3,
   sessionMinutes: 60,
   equipment: ["Dumbbells"],
+  trainingPlace: "Gym",
+  limitations: "",
 };
 
 const CLIENT: ClientIdentity = {
@@ -452,5 +454,46 @@ describe("Program draft", () => {
 
     // assert
     expect(draft).toBeNull();
+  });
+});
+
+describe("Program draftUsage", () => {
+  it("names, for the coach, the exercises its draft uses under the program and the draft's version number", () => {
+    // arrange
+    const content = withFirstBlock(suggestedContent(), (block) => ({
+      ...block,
+      cardioSessions: block.cardioSessions.map((cardio) => ({
+        ...cardio,
+        segments: cardio.segments.map((segment) => ({
+          ...segment,
+          exerciseId: "bike",
+        })),
+      })),
+    }));
+    const program = programWith([
+      version(1, "published"),
+      { ...version(2, "draft"), content },
+    ]);
+
+    // act
+    const usage = program.draftUsage("coach-account-1");
+
+    // assert
+    expect(usage).toEqual({
+      coachAccountId: "coach-account-1",
+      programId: "program-1",
+      versionNumber: 2,
+      exerciseIds: ["bike"],
+    });
+  });
+
+  it("names nothing when no version is a draft", () => {
+    // act
+    const usage = programWith([version(1, "published")]).draftUsage(
+      "coach-account-1",
+    );
+
+    // assert
+    expect(usage).toBeNull();
   });
 });

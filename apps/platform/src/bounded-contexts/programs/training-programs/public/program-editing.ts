@@ -21,6 +21,7 @@ export {
   type CardioSession,
   type ClientLevel,
   type DayChoice,
+  type LibraryExercise,
   type LossChange,
   type ProgramContent,
   type ProgramLanguage,

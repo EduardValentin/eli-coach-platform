@@ -12,6 +12,8 @@ const FACTS: ClientCoachingFacts = {
   trainingDays: 3,
   sessionMinutes: 60,
   equipment: ["Dumbbells", "Resistance bands"],
+  trainingPlace: "Gym",
+  limitations: "",
 };
 
 const CHOICES: Pick<ClientCoaching, "goalOptions" | "equipmentOptions"> = {

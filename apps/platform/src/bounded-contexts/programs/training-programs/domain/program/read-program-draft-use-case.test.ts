@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ClientCoaching } from "./client-coaching-port";
 import type { ClientIdentity } from "./client-identity-port";
-import type { LibraryExercise } from "./library-exercise";
+import { EQUIPMENT, type LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
 import type { ProgramContent } from "./program-content";
 import type { ProgramVersionSnapshot } from "./program-version";
@@ -22,6 +22,8 @@ const APPROVED: ClientCoaching = {
       trainingDays: 4,
       sessionMinutes: 45,
       equipment: ["Full gym"],
+      trainingPlace: "Gym",
+      limitations: "Lower back, no heavy hinges",
     },
   },
   equipmentOptions: [],
@@ -160,6 +162,71 @@ describe("ReadProgramDraftUseCase", () => {
         language: "ro",
       },
       libraryExercises: [WALKING, ARCHIVED_SQUAT],
+      clientProfile: {
+        goal: "Build muscle",
+        level: "intermediate",
+        trainingDays: 4,
+        sessionMinutes: 45,
+        equipment: ["Full gym"],
+        trainingPlace: "Gym",
+        limitations: "Lower back, no heavy hinges",
+      },
+      libraryEquipment: [...EQUIPMENT],
+    });
+  });
+
+  it("maps her equipment to the library's equipment", async () => {
+    // arrange
+    const readProgramDraftUseCase = readDraft({
+      clientCoaching: {
+        ...APPROVED,
+        answers: {
+          status: "approved",
+          coachingFacts: {
+            goal: "Build muscle",
+            level: "intermediate",
+            trainingDays: 4,
+            sessionMinutes: 45,
+            equipment: ["Dumbbells", "Resistance bands"],
+            trainingPlace: "Home",
+            limitations: "",
+          },
+        },
+      },
+      programs: [anasProgram([DRAFT_VERSION])],
+    });
+
+    // act
+    const reading = await readProgramDraftUseCase.execute({
+      clientId: CLIENT_ID,
+      coachAccountId: COACH_ACCOUNT_ID,
+    });
+
+    // assert
+    expect(reading).toMatchObject({
+      status: "draft",
+      libraryEquipment: ["Dumbbells", "Bench", "Bands"],
+    });
+  });
+
+  it("shows no client profile and none of her equipment while her answers are not approved", async () => {
+    // arrange
+    const readProgramDraftUseCase = readDraft({
+      clientCoaching: NOT_APPROVED,
+      programs: [anasProgram([DRAFT_VERSION])],
+    });
+
+    // act
+    const reading = await readProgramDraftUseCase.execute({
+      clientId: CLIENT_ID,
+      coachAccountId: COACH_ACCOUNT_ID,
+    });
+
+    // assert
+    expect(reading).toMatchObject({
+      status: "draft",
+      clientProfile: null,
+      libraryEquipment: [],
     });
   });
 

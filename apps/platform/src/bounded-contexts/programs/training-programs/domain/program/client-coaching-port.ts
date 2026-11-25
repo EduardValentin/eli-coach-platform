@@ -6,6 +6,8 @@ export type ClientCoachingFacts = {
   trainingDays: TrainingDays;
   sessionMinutes: SessionMinutes;
   equipment: string[];
+  trainingPlace: string | null;
+  limitations: string;
 };
 
 export type EquipmentOption = { value: string; exclusive: boolean };

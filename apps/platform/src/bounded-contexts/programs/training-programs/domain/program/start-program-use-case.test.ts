@@ -10,6 +10,10 @@ import type {
   ClientIdentityPort,
 } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import type {
+  ExerciseUsagePort,
+  VersionExerciseUsage,
+} from "./exercise-usage-port";
 import type { LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
 import type { ProgramSetupValues } from "./program-setup";
@@ -40,6 +44,8 @@ const ANAS_COACHING: ClientCoaching = {
       trainingDays: 3,
       sessionMinutes: 60,
       equipment: ["Dumbbells", "Resistance bands"],
+      trainingPlace: "Gym",
+      limitations: "",
     },
   },
   equipmentOptions: [
@@ -144,6 +150,14 @@ class InMemoryClientCoachingAdapter implements ClientCoachingPort {
   }
 }
 
+class InMemoryExerciseUsageAdapter implements ExerciseUsagePort {
+  readonly recorded: VersionExerciseUsage[] = [];
+
+  async recordVersionUsage(usage: VersionExerciseUsage): Promise<void> {
+    this.recorded.push(usage);
+  }
+}
+
 type Arrangement = {
   clients?: ClientIdentity[];
   coachingEnded?: boolean;
@@ -165,12 +179,14 @@ function startProgram({
   const coachingEndedPort = new InMemoryCoachingEndedAdapter(coachingEnded);
   const clientCoachingPort = new InMemoryClientCoachingAdapter(clientCoaching);
   const libraryExercisesPort = { listFor: vi.fn(async () => libraryExercises) };
+  const exerciseUsagePort = new InMemoryExerciseUsageAdapter();
   const startProgramUseCase = new StartProgramUseCase({
     programStorePort,
     clientIdentityPort,
     coachingEndedPort,
     clientCoachingPort,
     libraryExercisesPort,
+    exerciseUsagePort,
     programIdsPort: { generate: () => `id-${(next += 1)}` },
     clockPort: { now: () => NOW },
   });
@@ -182,6 +198,7 @@ function startProgram({
     coachingEndedPort,
     clientCoachingPort,
     libraryExercisesPort,
+    exerciseUsagePort,
   };
 }
 
@@ -364,6 +381,51 @@ describe("StartProgramUseCase", () => {
     ).toEqual(["bike", "bike"]);
   });
 
+  it("records, for the coach, the exercises her new program's first draft uses: its cardio presets", async () => {
+    // arrange
+    const { startProgramUseCase, exerciseUsagePort } = startProgram({
+      libraryExercises: [BIKE],
+    });
+
+    // act
+    await startProgramUseCase.execute({
+      coachAccountId: COACH_ACCOUNT_ID,
+      clientId: CLIENT_ID,
+      setup: SETUP,
+    });
+
+    // assert
+    expect(exerciseUsagePort.recorded).toEqual([
+      {
+        coachAccountId: COACH_ACCOUNT_ID,
+        programId: "id-1",
+        versionNumber: 1,
+        exerciseIds: ["bike"],
+      },
+    ]);
+  });
+
+  it("fails whole when the library cannot record the exercises the program uses, so the unit of work rolls the program back", async () => {
+    // arrange
+    const failure = new Error("usage refused");
+    const { startProgramUseCase, exerciseUsagePort } = startProgram({
+      libraryExercises: [BIKE],
+    });
+    vi.spyOn(exerciseUsagePort, "recordVersionUsage").mockRejectedValue(
+      failure,
+    );
+
+    // act
+    const started = startProgramUseCase.execute({
+      coachAccountId: COACH_ACCOUNT_ID,
+      clientId: CLIENT_ID,
+      setup: SETUP,
+    });
+
+    // assert
+    await expect(started).rejects.toBe(failure);
+  });
+
   it("builds the cardio sessions without an exercise when the coach has no cardio exercise", async () => {
     // arrange
     const { startProgramUseCase, programStorePort } = startProgram();
@@ -404,8 +466,12 @@ describe("StartProgramUseCase", () => {
     ["has-program", { programs: [existingProgram()] }],
   ])("refuses with %s and writes nothing", async (status, arrangement) => {
     // arrange
-    const { startProgramUseCase, programStorePort, clientCoachingPort } =
-      startProgram(arrangement);
+    const {
+      startProgramUseCase,
+      programStorePort,
+      clientCoachingPort,
+      exerciseUsagePort,
+    } = startProgram({ ...arrangement, libraryExercises: [BIKE] });
 
     // act
     const result = await startProgramUseCase.execute({
@@ -418,6 +484,7 @@ describe("StartProgramUseCase", () => {
     expect(result).toEqual({ status });
     expect(programStorePort.added).toEqual([]);
     expect(clientCoachingPort.savedEquipment).toEqual([]);
+    expect(exerciseUsagePort.recorded).toEqual([]);
   });
 
   it("refuses a setup without a goal or without equipment, naming each problem, and writes nothing", async () => {
@@ -505,10 +572,14 @@ describe("StartProgramUseCase", () => {
     ]);
   });
 
-  it("refuses with has-program and saves no equipment when another program for her lands first", async () => {
+  it("refuses with has-program, saving no equipment and recording no exercise, when another program for her lands first", async () => {
     // arrange
-    const { startProgramUseCase, programStorePort, clientCoachingPort } =
-      startProgram();
+    const {
+      startProgramUseCase,
+      programStorePort,
+      clientCoachingPort,
+      exerciseUsagePort,
+    } = startProgram({ libraryExercises: [BIKE] });
     vi.spyOn(programStorePort, "add").mockResolvedValue("client-has-program");
 
     // act
@@ -521,6 +592,7 @@ describe("StartProgramUseCase", () => {
     // assert
     expect(result).toEqual({ status: "has-program" });
     expect(clientCoachingPort.savedEquipment).toEqual([]);
+    expect(exerciseUsagePort.recorded).toEqual([]);
   });
 
   it("writes the program and her equipment in one call, failing it whole when the equipment save fails so the unit of work rolls both back", async () => {
