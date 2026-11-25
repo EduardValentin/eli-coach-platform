@@ -7,9 +7,10 @@ import {
   EditExerciseUseCase,
   ExerciseVideoCleanup,
   FindExerciseUseCase,
-  ListCardioExercisesUseCase,
   ListExercisesUseCase,
+  ListLibraryExercisesUseCase,
   OpenExerciseVideoUseCase,
+  RecordExerciseUsageUseCase,
   RestoreExerciseUseCase,
   StageExerciseVideoUseCase,
   type ExerciseVideoFormatDetectorPort,
@@ -27,16 +28,21 @@ import { ExerciseLibraryIncidentsAdapter } from "~/bounded-contexts/programs/exe
 import { createExerciseVideoFormatDetectorAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/create-exercise-video-format-detector-adapter.server";
 import { createExerciseVideoStoreAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/create-exercise-video-store-adapter.server";
 import type { ExerciseVideosConfig } from "~/bounded-contexts/programs/exercise-library/config.server";
-import { CardioExercisesFacadeAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/facades/cardio-exercises-facade-adapter.server";
-import type { CardioExercisesFacade } from "~/bounded-contexts/programs/exercise-library/public/cardio-exercises-facade";
+import { ExerciseUsageFacadeAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/facades/exercise-usage-facade-adapter.server";
+import { LibraryExercisesFacadeAdapter } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/facades/library-exercises-facade-adapter.server";
+import type { ExerciseUsageFacade } from "~/bounded-contexts/programs/exercise-library/public/exercise-usage-facade";
+import type { LibraryExercisesFacade } from "~/bounded-contexts/programs/exercise-library/public/library-exercises-facade";
 
 type ExerciseVideoFiles = {
   exerciseVideoFormatDetectorPort: ExerciseVideoFormatDetectorPort;
   exerciseVideoStorePort: ExerciseVideoStorePort;
 };
 
-type CardioExercisesComposition = {
-  handles: { cardioExercisesFacade: CardioExercisesFacade };
+type ExerciseLibraryFacadesComposition = {
+  handles: {
+    libraryExercisesFacade: LibraryExercisesFacade;
+    exerciseUsageFacade: ExerciseUsageFacade;
+  };
 };
 
 type ExerciseLibraryFeatureHandles = ExerciseVideoFiles & {
@@ -103,18 +109,26 @@ export function composeExerciseLibraryFeature(
   };
 }
 
-export function composeCardioExercises(handles: {
+export function composeExerciseLibraryFacades(handles: {
   database: DatabaseClient;
-}): CardioExercisesComposition {
+}): ExerciseLibraryFacadesComposition {
+  const postgresExerciseLibraryRepository =
+    new PostgresExerciseLibraryRepository(handles.database);
+  const unitOfWork = createUnitOfWork(handles.database);
+
   return {
     handles: {
-      cardioExercisesFacade: new CardioExercisesFacadeAdapter({
-        listCardioExercisesUseCase: new ListCardioExercisesUseCase({
-          exerciseLibraryPort: new PostgresExerciseLibraryRepository(
-            handles.database,
-          ),
+      libraryExercisesFacade: new LibraryExercisesFacadeAdapter({
+        listLibraryExercisesUseCase: new ListLibraryExercisesUseCase({
+          exerciseLibraryPort: postgresExerciseLibraryRepository,
         }),
-        unitOfWork: createUnitOfWork(handles.database),
+        unitOfWork,
+      }),
+      exerciseUsageFacade: new ExerciseUsageFacadeAdapter({
+        recordExerciseUsageUseCase: new RecordExerciseUsageUseCase({
+          exerciseLibraryPort: postgresExerciseLibraryRepository,
+        }),
+        unitOfWork,
       }),
     },
   };

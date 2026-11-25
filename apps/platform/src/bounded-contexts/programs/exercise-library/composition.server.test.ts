@@ -4,7 +4,10 @@ import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
 import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
-import { composeExerciseLibraryFeature } from "./composition.server";
+import {
+  composeExerciseLibraryFacades,
+  composeExerciseLibraryFeature,
+} from "./composition.server";
 
 const COACH: SessionAccount = {
   authSubjectId: "user_coach",
@@ -29,6 +32,8 @@ const SQUAT_REQUEST = {
 };
 
 const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
+
+const PROGRAM_ID = "8a7f6e5d-4c3b-4a2f-9e1d-0c9b8a7f6e5d";
 
 describe("composeExerciseLibraryFeature", () => {
   it("lists the library from the exercises table", async () => {
@@ -120,6 +125,41 @@ describe("composeExerciseLibraryFeature with exercise videos", () => {
   });
 });
 
+describe("composeExerciseLibraryFacades", () => {
+  it("lists the coach's library exercises from the exercises table inside a unit of work", async () => {
+    // arrange
+    const database = createUnreachableDatabase();
+    const { handles } = composeExerciseLibraryFacades({ database });
+
+    // act
+    const listing = handles.libraryExercisesFacade.listLibraryExercises(
+      COACH.id,
+    );
+
+    // assert
+    await expect(listing).rejects.toThrow("database down");
+    expect(database.transaction).toHaveBeenCalledOnce();
+  });
+
+  it("reads the coach's exercises from the exercises table inside a unit of work before recording a version's usage", async () => {
+    // arrange
+    const database = createUnreachableDatabase();
+    const { handles } = composeExerciseLibraryFacades({ database });
+
+    // act
+    const recording = handles.exerciseUsageFacade.recordVersionUsage({
+      coachAccountId: COACH.id,
+      programId: PROGRAM_ID,
+      versionNumber: 1,
+      exerciseIds: [EXERCISE_ID],
+    });
+
+    // assert
+    await expect(recording).rejects.toThrow("database down");
+    expect(database.transaction).toHaveBeenCalledOnce();
+  });
+});
+
 function createHandles() {
   return {
     clockPort: { now: () => new Date("2026-10-14T09:00:00.000Z") },
@@ -146,12 +186,19 @@ function createHandles() {
   };
 }
 
-function createUnreachableDatabase(): DatabaseClient {
-  return {
+function createUnreachableDatabase() {
+  const database = {
     select: () => {
       throw new Error("database down");
     },
-  } as unknown as DatabaseClient;
+    transaction: vi.fn((work: (transaction: unknown) => Promise<unknown>) =>
+      work(database),
+    ),
+  };
+
+  return database as unknown as DatabaseClient & {
+    transaction: typeof database.transaction;
+  };
 }
 
 function multipartRequest(): Request {

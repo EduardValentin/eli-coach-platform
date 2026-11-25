@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { Exercise, type StoredExercise } from "./exercise";
 import type { ExerciseLibraryPort } from "./exercise-library-port";
-import { ListCardioExercisesUseCase } from "./list-cardio-exercises-use-case";
+import { ListLibraryExercisesUseCase } from "./list-library-exercises-use-case";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
@@ -67,10 +67,10 @@ function libraryHolding(
   };
 }
 
-describe("ListCardioExercisesUseCase", () => {
-  it("lists only her active cardio exercises", async () => {
+describe("ListLibraryExercisesUseCase", () => {
+  it("lists every exercise of hers, archived ones included, with its status", async () => {
     // arrange
-    const listCardioExercisesUseCase = new ListCardioExercisesUseCase({
+    const listLibraryExercisesUseCase = new ListLibraryExercisesUseCase({
       exerciseLibraryPort: libraryHolding([
         INCLINE_WALK,
         ARCHIVED_BIKE,
@@ -81,23 +81,25 @@ describe("ListCardioExercisesUseCase", () => {
 
     // act
     const exercises =
-      await listCardioExercisesUseCase.execute(COACH_ACCOUNT_ID);
+      await listLibraryExercisesUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
-    expect(exercises.map((exercise) => exercise.name)).toEqual([
-      "Incline walk",
+    expect(exercises).toEqual([
+      { ...INCLINE_WALK.toSnapshot(), status: "active" },
+      { ...ARCHIVED_BIKE.toSnapshot(), status: "archived" },
+      { ...HIP_THRUST.toSnapshot(), status: "active" },
     ]);
   });
 
-  it("lists nothing for a coach without a cardio exercise", async () => {
+  it("lists nothing for a coach without an exercise", async () => {
     // arrange
-    const listCardioExercisesUseCase = new ListCardioExercisesUseCase({
-      exerciseLibraryPort: libraryHolding([HIP_THRUST, OTHER_COACHS_ROWER]),
+    const listLibraryExercisesUseCase = new ListLibraryExercisesUseCase({
+      exerciseLibraryPort: libraryHolding([OTHER_COACHS_ROWER]),
     });
 
     // act
     const exercises =
-      await listCardioExercisesUseCase.execute(COACH_ACCOUNT_ID);
+      await listLibraryExercisesUseCase.execute(COACH_ACCOUNT_ID);
 
     // assert
     expect(exercises).toEqual([]);
