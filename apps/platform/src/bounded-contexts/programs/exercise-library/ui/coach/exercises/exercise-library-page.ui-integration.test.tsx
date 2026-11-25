@@ -1079,6 +1079,120 @@ describe("deleting an exercise", () => {
   });
 });
 
+describe("an exercise a program uses", () => {
+  it("holds Delete back, saying the exercise is used in one program", async () => {
+    // arrange
+    const { user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 1 }, DEADLIFT],
+    });
+
+    // act
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+    await user.hover(remove);
+
+    // assert
+    expect(remove).toHaveAttribute("aria-disabled", "true");
+    expect(await screen.findByText("Used in 1 program")).toBeInTheDocument();
+  });
+
+  it("says the exercise is used in two programs", async () => {
+    // arrange
+    const { user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 2 }],
+    });
+
+    // act
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+    await user.hover(remove);
+
+    // assert
+    expect(await screen.findByText("Used in 2 programs")).toBeInTheDocument();
+  });
+
+  it("does not ask to confirm or send a delete when she chooses the held-back Delete", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 1 }],
+    });
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+
+    // act
+    await user.click(remove);
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: "Delete “Back squat”?" }),
+    ).not.toBeInTheDocument();
+    expect(sent).toEqual([]);
+  });
+
+  it("keeps Archive allowed for an exercise a program uses", async () => {
+    // arrange
+    const { user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 1 }],
+    });
+
+    // act
+    const archive = await openRowMenuItem(user, "Back squat", "Archive");
+
+    // assert
+    expect(archive).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("holds Delete back for an archived exercise a program uses", async () => {
+    // arrange
+    const { user } = await renderLibrary(
+      {
+        exercises: [{ ...WALKING_LUNGE, programCount: 1 }, SIDE_PLANK],
+      },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+
+    // act
+    const remove = await openRowMenuItem(user, "Walking lunge", "Delete");
+
+    // assert
+    expect(remove).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("leaves Delete allowed when no program uses the exercise", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: [BACK_SQUAT] });
+
+    // act
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+
+    // assert
+    expect(remove).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("tells her the exercise is in use and keeps it when a delete is refused anyway", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: LIBRARY });
+    server.use(
+      http.delete(`*${EXERCISE_LIBRARY_API_PATHS.exercise}`, () =>
+        HttpResponse.json(
+          { error: "in-use", programCount: 1 },
+          { status: 409 },
+        ),
+      ),
+    );
+    const confirm = await openDeleteConfirm(user, "Back squat");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(
+      await screen.findByText('"Back squat" is in use, so it was not deleted'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('"Back squat" wasn’t deleted. Try again.'),
+    ).not.toBeInTheDocument();
+    expect(shownExerciseNames()).toContain("Back squat");
+  });
+});
+
 function EditorStandIn() {
   const { exerciseId } = useParams();
 
@@ -1211,6 +1325,12 @@ function acceptLifecycleWrites(store: LibraryStore): string[] {
   );
 
   return sent;
+}
+
+async function openRowMenuItem(user: UserEvent, name: string, action: string) {
+  await user.click(screen.getByRole("button", { name: `Actions for ${name}` }));
+
+  return screen.findByRole("menuitem", { name: action });
 }
 
 async function chooseRowAction(user: UserEvent, name: string, action: string) {

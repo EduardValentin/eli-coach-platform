@@ -59,7 +59,7 @@ import {
 import { useState, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router";
 
-import type { ExerciseView } from "~/bounded-contexts/programs/exercise-library/public/exercises";
+import type { ExerciseListingView } from "~/bounded-contexts/programs/exercise-library/public/exercises";
 import { exerciseEditorPath } from "~/bounded-contexts/programs/exercise-library/public/paths";
 
 import {
@@ -113,7 +113,7 @@ const HEAD_SORTS: Readonly<Record<SortDirection, TableSort>> = {
 type ExerciseSortChoice = SortChoice<ExerciseSortKey>;
 
 type PendingDeletion = {
-  exercise: ExerciseView;
+  exercise: ExerciseListingView;
   stage: "asking" | "kept" | "confirmed";
 };
 
@@ -134,7 +134,7 @@ export function ExerciseListing({
   exercises,
   heading,
 }: {
-  exercises: readonly ExerciseView[];
+  exercises: readonly ExerciseListingView[];
   heading: RefObject<HTMLHeadingElement | null>;
 }) {
   const listing = useExerciseListingParams();
@@ -155,7 +155,7 @@ export function ExerciseListing({
     perPage: EXERCISES_PER_PAGE,
   });
 
-  const edit = (exercise: ExerciseView) =>
+  const edit = (exercise: ExerciseListingView) =>
     void navigate(exerciseEditorPath(exercise.id), {
       state: listing.returnState,
     });
@@ -274,7 +274,7 @@ export function ExerciseListing({
 
 function useExerciseDeletion(
   heading: RefObject<HTMLHeadingElement | null>,
-  onConfirmed: (exercise: ExerciseView) => void,
+  onConfirmed: (exercise: ExerciseListingView) => void,
 ) {
   const [deletion, setDeletion] = useState<PendingDeletion | null>(null);
 
@@ -282,7 +282,8 @@ function useExerciseDeletion(
     asking: deletion?.stage === "asking",
     name: deletion?.exercise.name ?? "",
     returnFocusTo: deletion?.stage === "confirmed" ? heading : undefined,
-    ask: (exercise: ExerciseView) => setDeletion({ exercise, stage: "asking" }),
+    ask: (exercise: ExerciseListingView) =>
+      setDeletion({ exercise, stage: "asking" }),
     keep: () => {
       if (deletion?.stage === "asking") {
         setDeletion({ ...deletion, stage: "kept" });
@@ -395,7 +396,7 @@ function ExerciseFilters({
   onSelectionChange,
   selection,
 }: {
-  exercises: readonly ExerciseView[];
+  exercises: readonly ExerciseListingView[];
   onSelectionChange: (next: ExerciseSelection) => void;
   selection: ExerciseSelection;
 }) {
@@ -491,7 +492,7 @@ function NoMatchingExercises({
 }
 
 type ExerciseRowProps = {
-  exercise: ExerciseView;
+  exercise: ExerciseListingView;
   onArchive: () => void;
   onDelete: () => void;
   onEdit: () => void;
@@ -571,6 +572,9 @@ function rowActionsFor({
   onRestore,
 }: ExerciseRowProps): RowMenuAction[] {
   const deleteAction: RowMenuAction = {
+    ...(exercise.programCount > 0 && {
+      disabledReason: usageHintOf(exercise.programCount),
+    }),
     icon: Trash2,
     label: "Delete",
     name: "delete",
@@ -595,6 +599,10 @@ function rowActionsFor({
     },
     deleteAction,
   ];
+}
+
+function usageHintOf(programCount: number): string {
+  return `Used in ${programCount} ${programCount === 1 ? "program" : "programs"}`;
 }
 
 function ExerciseLifecycleAnswer({
