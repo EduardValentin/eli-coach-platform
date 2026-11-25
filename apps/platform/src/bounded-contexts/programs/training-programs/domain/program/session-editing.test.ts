@@ -137,12 +137,14 @@ describe("SessionEditing", () => {
   });
 
   it("keeps rows in slot order whatever the order of adding", () => {
-    // arrange / act
-    const session = withExercises(
-      ["plank", "D"],
-      ["curl", "C"],
-      ["squat", "A"],
-    );
+    // arrange
+    const editing = sessionEditing();
+    const empty = emptySession();
+
+    // act
+    const withPlank = editing.add(empty, byId("plank"), { slot: "D" });
+    const withCurl = editing.add(withPlank, byId("curl"), { slot: "C" });
+    const session = editing.add(withCurl, byId("squat"), { slot: "A" });
 
     // assert
     expect(layout(session)).toEqual(["A:squat", "C:curl", "D:plank"]);
