@@ -18,5 +18,7 @@ export function usePendingFocus() {
 }
 
 export function actionsTriggerIn(selector: string): HTMLElement | null {
-  return document.querySelector<HTMLElement>(`${selector} [aria-haspopup="menu"]`);
+  return document.querySelector<HTMLElement>(
+    `${selector} [aria-haspopup="menu"]`,
+  );
 }

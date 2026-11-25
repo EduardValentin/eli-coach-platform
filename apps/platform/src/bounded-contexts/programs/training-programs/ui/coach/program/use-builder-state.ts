@@ -102,6 +102,7 @@ export function useBuilderState(view: DraftView) {
 
   return {
     draft,
+    libraryEquipment: view.libraryEquipment,
     libraryExercises: view.libraryExercises,
     saving,
     selected,

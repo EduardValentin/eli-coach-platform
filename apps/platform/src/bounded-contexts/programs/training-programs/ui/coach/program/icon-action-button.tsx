@@ -23,7 +23,13 @@ export const IconActionButton = forwardRef<
 >(({ icon: Icon, label, hint, ...props }, ref) => (
   <Tooltip>
     <TooltipTrigger asChild>
-      <Button aria-label={label} ref={ref} size="icon-xs" variant="ghost" {...props}>
+      <Button
+        aria-label={label}
+        ref={ref}
+        size="icon-xs"
+        variant="ghost"
+        {...props}
+      >
         <Icon aria-hidden="true" />
       </Button>
     </TooltipTrigger>

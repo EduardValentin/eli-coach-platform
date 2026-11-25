@@ -27,6 +27,7 @@ import {
 } from "vitest";
 
 import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
+import { exerciseEditorPath } from "~/bounded-contexts/programs/exercise-library/public/paths";
 import {
   PROGRAM_BUILDER_ROUTE_SEGMENT,
   programBuilderPath,
@@ -35,8 +36,11 @@ import {
 } from "~/bounded-contexts/programs/training-programs/public/paths";
 import type { ProgramDraftView } from "~/bounded-contexts/programs/training-programs/public/program-draft";
 import {
+  BlockEditing,
   ProgramSuggestions,
+  type Block,
   type BlockSetup,
+  type LibraryExercise,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 import ProgramBuilderRoute from "./program-builder-page";
@@ -92,7 +96,40 @@ function draftView(
   };
 }
 
-type SaveRequestBody = { level: string; language: string; updatedAt: string };
+const BARBELL_SQUAT: LibraryExercise = {
+  id: "barbell-squat",
+  name: "Barbell Back Squat",
+  type: "resistance",
+  unit: "reps",
+  perSide: false,
+  pattern: "squat",
+  role: "main-compound",
+  primaryMuscles: ["Quadriceps"],
+  secondaryMuscles: ["Glutes"],
+  equipment: ["Barbell"],
+  tags: [],
+  cues: "Brace\nDrive through the floor",
+  videoPath: null,
+  archived: false,
+};
+
+const HIP_CIRCLES: LibraryExercise = {
+  ...BARBELL_SQUAT,
+  id: "hip-circles",
+  name: "Hip Circles",
+  type: "mobility",
+  pattern: null,
+  primaryMuscles: ["Hip flexors"],
+  secondaryMuscles: [],
+  equipment: [],
+};
+
+type SaveRequestBody = {
+  level: string;
+  language: string;
+  updatedAt: string;
+  content: { plan: { blocks: Block[] } };
+};
 
 const server = setupServer();
 let router: ReturnType<typeof createMemoryRouter>;
@@ -117,17 +154,23 @@ function failing() {
   return new HttpResponse(null, { status: 500 });
 }
 
+type Screen = "desktop" | "phone";
+
+function stubScreen(shown: Screen) {
+  vi.stubGlobal("matchMedia", (media: string) => ({
+    matches: shown === "desktop" && media.includes("min-width"),
+    media,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
   Element.prototype.scrollIntoView = () => {};
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.releasePointerCapture = () => {};
-  vi.stubGlobal("matchMedia", (media: string) => ({
-    matches: media.includes("min-width"),
-    media,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  }));
+  stubScreen("desktop");
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -146,6 +189,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  stubScreen("desktop");
   server.resetHandlers();
   vi.useRealTimers();
 });
@@ -667,6 +711,292 @@ describe("leaving with unsaved changes", () => {
   });
 });
 
+describe("the exercise library beside an open block", () => {
+  it("shows beside an open block and collapses and returns from the top bar", async () => {
+    // arrange
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    expect(
+      screen.queryByRole("button", { name: "Exercise library" }),
+    ).not.toBeInTheDocument();
+
+    // act
+    await openHypertrophyBlock(user);
+
+    // assert
+    const toggle = screen.getByRole("button", { name: "Exercise library" });
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("complementary", { name: "Exercise library" }),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(toggle);
+
+    // assert
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.queryByRole("complementary", { name: "Exercise library" }),
+    ).not.toBeInTheDocument();
+
+    // act
+    await user.click(toggle);
+
+    // assert
+    expect(
+      screen.getByRole("complementary", { name: "Exercise library" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens from the draft actions menu as a drawer on a phone", async () => {
+    // arrange
+    stubScreen("phone");
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    expect(
+      screen.queryByRole("dialog", { name: "Exercise library" }),
+    ).not.toBeInTheDocument();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Draft actions" }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Exercise library" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByRole("dialog", { name: "Exercise library" }),
+    ).toBeInTheDocument();
+  });
+
+  it("adds an exercise to the open session from the phone drawer, saving it with the autosave", async () => {
+    // arrange
+    stubScreen("phone");
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    await user.click(screen.getByRole("button", { name: "Draft actions" }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Exercise library" }),
+    );
+    const drawer = await screen.findByRole("dialog", {
+      name: "Exercise library",
+    });
+
+    // act
+    await user.click(
+      within(drawer).getByRole("button", { name: "Add Barbell Back Squat" }),
+    );
+    await advance(SAVE_DELAY_MS);
+
+    // assert
+    await waitFor(() => expect(saveRequests).toHaveLength(1));
+    const [hypertrophy] = savedBlocks(saveRequests[0]).filter(
+      (block) => block.type === "hypertrophy",
+    );
+    expect(sessionsHolding(hypertrophy, BARBELL_SQUAT.id)).toEqual([
+      BlockEditing.listedSessions(hypertrophy)[0].id,
+    ]);
+  });
+
+  it("adds an exercise to the open session of a wide screen's pane, leaving the pane open", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    const pane = screen.getByRole("complementary", {
+      name: "Exercise library",
+    });
+
+    // act
+    await user.click(
+      within(pane).getByRole("button", { name: "Add Barbell Back Squat" }),
+    );
+    await advance(SAVE_DELAY_MS);
+
+    // assert
+    await waitFor(() => expect(saveRequests).toHaveLength(1));
+    const [hypertrophy] = savedBlocks(saveRequests[0]).filter(
+      (block) => block.type === "hypertrophy",
+    );
+    expect(sessionsHolding(hypertrophy, BARBELL_SQUAT.id)).toEqual([
+      BlockEditing.listedSessions(hypertrophy)[0].id,
+    ]);
+    expect(
+      screen.getByRole("complementary", { name: "Exercise library" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("the exercise library opened from a place in the open session", () => {
+  it("adds to that place, announcing where, and leaves the pane open on a wide screen", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT, HIP_CIRCLES],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Add exercise to warm-up" }),
+    );
+    const pane = screen.getByRole("complementary", {
+      name: "Exercise library",
+    });
+    await user.click(
+      within(pane).getByRole("button", { name: "Add Hip Circles" }),
+    );
+    const announced = (await screen.findByText(/^Hip Circles added to/))
+      .textContent;
+    await advance(SAVE_DELAY_MS);
+
+    // assert
+    await waitFor(() => expect(saveRequests).toHaveLength(1));
+    const [hypertrophy] = savedBlocks(saveRequests[0]).filter(
+      (block) => block.type === "hypertrophy",
+    );
+    const [openSession] = BlockEditing.listedSessions(hypertrophy);
+    expect(openSession.warmUp.items.map((item) => item.exerciseId)).toEqual([
+      HIP_CIRCLES.id,
+    ]);
+    expect(announced).toBe(
+      `Hip Circles added to ${openSession.name} · Warm-up`,
+    );
+    expect(pane).toBeInTheDocument();
+  });
+
+  it("closes the drawer once the exercise is added on a phone", async () => {
+    // arrange
+    stubScreen("phone");
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT, HIP_CIRCLES],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    await user.click(
+      screen.getByRole("button", { name: "Add exercise to warm-up" }),
+    );
+    const drawer = await screen.findByRole("dialog", {
+      name: "Exercise library",
+    });
+
+    // act
+    await user.click(
+      within(drawer).getByRole("button", { name: "Add Hip Circles" }),
+    );
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Exercise library" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+});
+
+describe("an exercise's detail in the builder", () => {
+  it("links to the exercise in the library, which asks before leaving while a save has failed", async () => {
+    // arrange
+    answerSaves(failing);
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await chooseLevel(user, "Advanced");
+    await advance(SAVE_DELAY_MS);
+    await screen.findByRole("alert");
+    await openHypertrophyBlock(user);
+    await user.click(
+      within(
+        screen.getByRole("complementary", { name: "Exercise library" }),
+      ).getByRole("button", { name: "Barbell Back Squat" }),
+    );
+    const link = within(
+      await screen.findByRole("dialog", { name: "Barbell Back Squat" }),
+    ).getByRole("link", { name: "Edit in exercise library" });
+    expect(link).toHaveAttribute("href", exerciseEditorPath(BARBELL_SQUAT.id));
+
+    // act
+    await user.click(link);
+
+    // assert
+    expect(
+      await screen.findByRole("dialog", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Exercise page" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("leaves for the exercise in the library once everything is saved", async () => {
+    // arrange
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    await user.click(
+      within(
+        screen.getByRole("complementary", { name: "Exercise library" }),
+      ).getByRole("button", { name: "Barbell Back Squat" }),
+    );
+
+    // act
+    await user.click(
+      await screen.findByRole("link", { name: "Edit in exercise library" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { name: "Exercise page" }),
+    ).toBeInTheDocument();
+  });
+});
+
+function savedBlocks(request: SaveRequestBody): Block[] {
+  return request.content.plan.blocks;
+}
+
+function sessionsHolding(block: Block, exerciseId: string): string[] {
+  return block.sessions
+    .filter((session) =>
+      session.rows.some((row) => row.exerciseId === exerciseId),
+    )
+    .map((session) => session.id);
+}
+
+async function openHypertrophyBlock(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    within(sectionList()).getByRole("button", { name: /^2\s?Hypertrophy/ }),
+  );
+  await screen.findByRole("heading", {
+    level: 1,
+    name: "Block 2 · Hypertrophy",
+  });
+}
+
 function unloadIsHeld(): boolean {
   const event = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(event);
@@ -729,6 +1059,10 @@ async function renderBuilder(options?: RenderOptions) {
       {
         Component: () => <h1>Client page</h1>,
         path: "/coach/clients/:clientId",
+      },
+      {
+        Component: () => <h1>Exercise page</h1>,
+        path: "/coach/training/exercises/:exerciseId",
       },
     ],
     { initialEntries: [programBuilderPath(CLIENT_ID)] },

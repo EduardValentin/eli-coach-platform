@@ -10,23 +10,28 @@ import { TouchBackend } from "react-dnd-touch-backend";
 import { Link } from "react-router";
 
 import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
+import { exerciseEditorPath } from "~/bounded-contexts/programs/exercise-library/public/paths";
 import {
   programBuilderPath,
   programSetupPath,
 } from "~/bounded-contexts/programs/training-programs/public/paths";
 import {
   BLOCK_TYPE_LABELS,
+  LibraryPicks,
   type BlockType,
+  type LibraryExercise,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 import type { ProgramDraftView } from "~/bounded-contexts/programs/training-programs/public/program-draft";
+import { ExerciseDetailProvider } from "~/bounded-contexts/programs/training-programs/ui/shared/program-view/exercise-detail";
 
+import { newBuilderId } from "./builder-editing";
 import { AddBlockDialog } from "./add-block-dialog";
 import { ChangedElsewhereDialog } from "./changed-elsewhere-dialog";
 import {
   EditorAnnouncerProvider,
   useEditorAnnouncer,
 } from "./editor-announcer";
-import { EditorSectionContent } from "./editor-section-content";
+import { EditorSectionContent, type OpenBlock } from "./editor-section-content";
 import {
   sectionAnchorId,
   sectionFromHash,
@@ -35,10 +40,13 @@ import {
 } from "./editor-section";
 import { clientName, EditorTopBar, type BuilderClient } from "./editor-top-bar";
 import { LeaveWarning } from "./leave-warning";
+import { LibraryPanel } from "./library-panel";
 import { PlaceHeadingContext } from "./place-heading";
+import { openSessionOf } from "./block-workspace";
 import { ProgramOutline } from "./program-outline";
 import { useBuilderState, type DraftView } from "./use-builder-state";
 import { useHydrated } from "./use-hydrated";
+import { libraryPurpose, useLibraryPanel } from "./use-library-panel";
 
 const EDITOR_ID = "editor";
 
@@ -65,9 +73,25 @@ export function builderPlaceTitle(view: ProgramDraftView, hash: string) {
   return sectionTitle(sectionFromHash(hash, blocks), blocks);
 }
 
+function ExerciseLibraryLink({ exercise }: { exercise: LibraryExercise }) {
+  return (
+    <div className="flex justify-end">
+      <Link
+        className={buttonVariants({ size: "sm", variant: "outline" })}
+        to={exerciseEditorPath(exercise.id)}
+      >
+        <Pencil aria-hidden="true" />
+        Edit in exercise library
+      </Link>
+    </div>
+  );
+}
+
 function ProgramBuilder({ view }: { view: DraftView }) {
   const builder = useBuilderState(view);
   const { draft, saving, selected } = builder;
+  const panel = useLibraryPanel();
+  const [openSessions, setOpenSessions] = useState<Record<string, string>>({});
   const [railOpen, setRailOpen] = useState(false);
   const isDesktop = useIsDesktopViewport();
   const [addingBlock, setAddingBlock] = useState(false);
@@ -88,6 +112,19 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   const { blocks } = draft.content.plan;
   const placeKey = sectionHash(selected);
   const placeTitle = sectionTitle(selected, blocks);
+  const block =
+    selected.kind === "block"
+      ? blocks.find((other) => other.id === selected.blockId)
+      : undefined;
+  const openSessionId = block && openSessionOf(block, openSessions[block.id]);
+  const openBlock: OpenBlock = {
+    openSessionId,
+    onOpenSession: (sessionId) =>
+      block &&
+      setOpenSessions((current) => ({ ...current, [block.id]: sessionId })),
+    onOpenLibrary: panel.openFor,
+    libraryTarget: panel.panelTarget?.target ?? null,
+  };
 
   useEffect(() => {
     if (main.current) main.current.scrollTop = 0;
@@ -96,6 +133,23 @@ function ProgramBuilder({ view }: { view: DraftView }) {
   useEffect(() => {
     document.title = builderDocumentTitle(placeTitle, view.client);
   }, [placeTitle, view.client]);
+
+  function addFromLibrary(exercise: LibraryExercise) {
+    if (!block) return;
+    const picks = new LibraryPicks({
+      newId: newBuilderId,
+      libraryExercises: builder.libraryExercises,
+      libraryEquipment: builder.libraryEquipment,
+    });
+    builder.replaceBlock(
+      picks.blockWithLibraryPick(block, {
+        exercise,
+        target: panel.panelTarget?.target ?? null,
+        openSessionId,
+      }),
+    );
+    panel.finishTarget();
+  }
 
   function addBlock(type: BlockType, weeks: number) {
     focusHeadingOnClose.current = true;
@@ -133,7 +187,11 @@ function ProgramBuilder({ view }: { view: DraftView }) {
           <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
           <EditorTopBar
             client={view.client}
+            clientProfile={view.clientProfile}
             coachingEnded={view.coachingEnded}
+            library={
+              block ? { open: panel.visible, onToggle: panel.toggle } : null
+            }
             onOverview={
               selected.kind === "plan"
                 ? null
@@ -176,9 +234,25 @@ function ProgramBuilder({ view }: { view: DraftView }) {
                 <EditorSectionContent
                   builder={builder}
                   onAddBlock={startAddingBlock}
+                  openBlock={openBlock}
                 />
               </div>
             </main>
+            {block && panel.visible && (
+              <LibraryPanel
+                libraryEquipment={builder.libraryEquipment}
+                libraryExercises={builder.libraryExercises}
+                onAdd={addFromLibrary}
+                onClose={panel.close}
+                presentation={panel.isWide ? "pane" : "drawer"}
+                purpose={libraryPurpose(
+                  block,
+                  panel.panelTarget,
+                  builder.libraryExercises,
+                )}
+                searchRef={panel.search}
+              />
+            )}
           </div>
           <AddBlockDialog
             lastBlock={blocks.at(-1)}
@@ -242,7 +316,11 @@ export function ProgramBuilderView({ view }: { view: ProgramDraftView }) {
   return (
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <EditorAnnouncerProvider>
-        <ProgramBuilder view={view} />
+        <ExerciseDetailProvider
+          footer={(exercise) => <ExerciseLibraryLink exercise={exercise} />}
+        >
+          <ProgramBuilder view={view} />
+        </ExerciseDetailProvider>
       </EditorAnnouncerProvider>
     </DndProvider>
   );

@@ -5,6 +5,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
+import { DndProvider } from "react-dnd";
+import { TouchBackend } from "react-dnd-touch-backend";
 import {
   afterEach,
   beforeAll,
@@ -23,7 +25,8 @@ import {
   type Session,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
-import { BlockWorkspace } from "./block-workspace";
+import { BlockWorkspace, openSessionOf } from "./block-workspace";
+import { EditorAnnouncerProvider } from "./editor-announcer";
 
 const SETUP = {
   splitShape: "full-body",
@@ -119,21 +122,31 @@ function renderWorkspace({
 
   function Harness() {
     const [current, setCurrent] = useState(block);
+    const [chosen, setChosen] = useState<string>();
 
     return (
-      <BlockWorkspace
-        block={current}
-        blockIndex={0}
-        blocks={[current]}
-        language={language}
-        level="beginner"
-        libraryExercises={[]}
-        onChange={(next) => {
-          changes.push(next);
-          setCurrent(next);
-        }}
-        onRemove={onRemove}
-      />
+      <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
+        <EditorAnnouncerProvider>
+          <BlockWorkspace
+            block={current}
+            blockIndex={0}
+            blocks={[current]}
+            language={language}
+            level="beginner"
+            libraryEquipment={[]}
+            libraryExercises={[]}
+            libraryTarget={null}
+            onChange={(next) => {
+              changes.push(next);
+              setCurrent(next);
+            }}
+            onOpenLibrary={() => {}}
+            onOpenSession={setChosen}
+            onRemove={onRemove}
+            openSessionId={openSessionOf(current, chosen)}
+          />
+        </EditorAnnouncerProvider>
+      </DndProvider>
     );
   }
 
@@ -292,7 +305,9 @@ describe("the block page's header and settings", () => {
     expect(
       screen.getByRole("heading", { level: 3, name: "Week" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 4 })).toHaveLength(7);
+    expect(within(week()).getAllByRole("heading", { level: 4 })).toHaveLength(
+      7,
+    );
     for (const weekday of WEEKDAY_NAMES) {
       expect(
         screen.getByRole("heading", { level: 4, name: weekday }),
@@ -696,8 +711,8 @@ describe("the week", () => {
     expect(dayCard("Sunday")).not.toHaveTextContent("min");
   });
 
-  it.each(["Monday", "Tuesday", "Sunday"])(
-    "makes the options menu the only control on %s's card",
+  it.each(["Tuesday", "Sunday"])(
+    "makes the options menu the only control on %s's card, which opens nothing",
     (weekday) => {
       // arrange, act
       renderWorkspace({ block: newBlock() });
@@ -710,6 +725,111 @@ describe("the week", () => {
       ).toEqual([`${weekday} options`]);
     },
   );
+
+  it("gives a strength day's card one control to open its session beside its options menu", () => {
+    // arrange, act
+    renderWorkspace({ block: newBlock() });
+
+    // assert
+    const buttons = within(dayCard("Monday")).getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    expect(
+      within(dayCard("Monday")).getByRole("button", {
+        name: /^Full Body A\s*about 0 min$/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(dayCard("Monday")).getByRole("button", {
+        name: "Monday options",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a cardio face as plain text, not a button", () => {
+    // arrange, act
+    renderWorkspace({ block: newBlock() });
+
+    // assert
+    expect(
+      within(dayCard("Tuesday")).queryByRole("button", { name: /Easy cardio/ }),
+    ).not.toBeInTheDocument();
+    expect(plan("Tuesday", "Easy cardio")).toBeInTheDocument();
+  });
+
+  it("cues a hover on a strength or rest day's card and on no cardio card", () => {
+    // arrange, act
+    renderWorkspace({ block: newBlock() });
+
+    // assert
+    const card = (weekday: string) => dayCard(weekday).firstElementChild;
+    expect(card("Monday")).toHaveClass("hover:bg-surface-subtle");
+    expect(card("Sunday")).toHaveClass("hover:bg-surface-muted-hover");
+    expect(card("Tuesday")?.className).not.toMatch(/hover:/);
+  });
+
+  it("opens a strength day's session below the week and scrolls to it", async () => {
+    // arrange
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const { user } = renderWorkspace({ block: newBlock() });
+    expect(
+      within(screen.getByRole("article", { name: "Full Body B" })).queryByRole(
+        "textbox",
+        { name: "Session name" },
+      ),
+    ).not.toBeInTheDocument();
+
+    // act
+    await user.click(
+      within(dayCard("Wednesday")).getByRole("button", {
+        name: /^Full Body B/,
+      }),
+    );
+
+    // assert
+    expect(
+      within(screen.getByRole("article", { name: "Full Body B" })).getByRole(
+        "textbox",
+        { name: "Session name" },
+      ),
+    ).toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView.mock.contexts[0]).toBe(
+      screen.getByRole("article", { name: "Full Body B" }),
+    );
+  });
+
+  it("opens the first strength session by default and lists no cardio card", () => {
+    // arrange, act
+    renderWorkspace({ block: newBlock() });
+
+    // assert
+    expect(
+      within(screen.getByRole("article", { name: "Full Body A" })).getByRole(
+        "textbox",
+        { name: "Session name" },
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("article", { name: /cardio/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the first strength session listed when a cardio day comes first in the week", async () => {
+    // arrange
+    const { user } = renderWorkspace({ block: newBlock() });
+
+    // act
+    await chooseDayEntry(user, "Monday", "Cardio");
+
+    // assert
+    expect(
+      within(screen.getByRole("article", { name: "Full Body B" })).getByRole(
+        "textbox",
+        { name: "Session name" },
+      ),
+    ).toBeInTheDocument();
+  });
 
   it("shows a day at a time with the rail choosing the day when the container is narrow", async () => {
     // arrange
@@ -730,25 +850,59 @@ describe("the week", () => {
     expect(screen.getByRole("tabpanel")).toHaveTextContent(
       "Easy cardio · 30 min",
     );
-    expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(1);
+    expect(within(week()).queryAllByRole("heading", { level: 4 })).toHaveLength(
+      1,
+    );
   });
 
-  it("never offers to open a session from the one-day panel", () => {
-    // arrange, act
-    renderWorkspace({ block: newBlock(), width: NARROW_WIDTH });
+  it("offers to open a session from a strength day's one-day panel and not from a cardio day's", async () => {
+    // arrange
+    const { user } = renderWorkspace({
+      block: newBlock(),
+      width: NARROW_WIDTH,
+    });
+    const days = screen.getByRole("tablist", { name: "Days" });
 
     // assert
     expect(
-      screen.queryByRole("button", { name: /open session/i }),
-    ).not.toBeInTheDocument();
-    expect(
       within(screen.getByRole("tabpanel"))
         .getAllByRole("button")
-        .map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["Monday options"]);
+        .map(
+          (button) => button.getAttribute("aria-label") ?? button.textContent,
+        ),
+    ).toEqual(["Monday options", "Open session"]);
+
+    // act
+    await user.click(within(days).getByRole("tab", { name: /^Tuesday/ }));
+
+    // assert
+    expect(
+      screen.queryByRole("button", { name: "Open session" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("starts the one-day panel on the first day with a plan", () => {
+  it("opens the day's session from the one-day panel", async () => {
+    // arrange
+    const { user } = renderWorkspace({
+      block: newBlock(),
+      width: NARROW_WIDTH,
+    });
+    const days = screen.getByRole("tablist", { name: "Days" });
+    await user.click(within(days).getByRole("tab", { name: /^Wednesday/ }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Open session" }));
+
+    // assert
+    expect(
+      within(screen.getByRole("article", { name: "Full Body B" })).getByRole(
+        "textbox",
+        { name: "Session name" },
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("starts the one-day panel on the first strength day", () => {
     // arrange, act
     renderWorkspace({ block: newBlock(), width: NARROW_WIDTH });
 

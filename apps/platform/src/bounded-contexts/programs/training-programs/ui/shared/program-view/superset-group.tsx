@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 
 import { cn, EYEBROW_CLASS } from "~/shared/design-system/lib";
 
-export const GROUP_BRACKET_CLASS = "border-l-2 border-text-primary";
+const GROUP_BRACKET_CLASS = "border-l-2 border-text-primary";
 
 type SupersetGroupProps = { action?: ReactNode; children: ReactNode };
 
