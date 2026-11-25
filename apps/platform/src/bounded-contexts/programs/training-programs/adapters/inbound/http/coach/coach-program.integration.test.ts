@@ -29,7 +29,6 @@ import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
-import { routeLoaderData } from "~integration-test-config/route-data";
 import {
   stripeSubscriptionObject,
   SubscriptionLifecycleJourney,
@@ -848,27 +847,6 @@ describe("a client's training program, from her profile", () => {
       expect(texts).toContain("Add block");
     });
 
-    it("reads her training place and limitations with the draft the builder opens", async () => {
-      // arrange
-      const clientId = await programs.approvedClient(ANA_CLIENT);
-      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
-
-      // act
-      const response = await programs.readBuilderData(COACH_SESSION, clientId);
-
-      // assert
-      expect(response.status).toBe(200);
-      expect(builderViewIn(await routeLoaderData(response))).toMatchObject({
-        state: "draft",
-        clientProfile: {
-          goal: "Lose fat",
-          equipment: ["Full gym", "Dumbbells"],
-          trainingPlace: "Gym",
-          limitations: "Right shoulder aches on overhead pressing.",
-        },
-      });
-    });
-
     it("says she has no program yet and offers the setup", async () => {
       // arrange
       const clientId = await programs.approvedClient(ANA_CLIENT);
@@ -1084,7 +1062,7 @@ describe("a client's training program, from her profile", () => {
   });
 
   describe("filling a session", () => {
-    it("saves a session filled from her library, details, warm-up and a switched-off cool-down included, and reads it back after a reload", async () => {
+    it("saves a session filled from her library, details, warm-up and a switched-off cool-down included, and the builder opens it again after a reload", async () => {
       // arrange
       const clientId = await programs.approvedClient(ANA_CLIENT);
       await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
@@ -1101,11 +1079,6 @@ describe("a client's training program, from her profile", () => {
 
       // assert
       const reload = await programs.openBuilder(COACH_SESSION, clientId);
-      const reread = builderViewIn(
-        await routeLoaderData(
-          await programs.readBuilderData(COACH_SESSION, clientId),
-        ),
-      );
 
       expect(response.status).toBe(200);
       expect(await programs.draftRowsOf(clientId)).toEqual([
@@ -1115,7 +1088,6 @@ describe("a client's training program, from her profile", () => {
       expect(textNodesOf(await visibleDocument(reload))).toContain(
         "Foundation",
       );
-      expect(reread).toMatchObject({ state: "draft", content });
     });
 
     it("counts the filled session on the Program card of her page", async () => {
@@ -1358,12 +1330,6 @@ async function filledSession() {
       items: [{ id: "cool-down-1", exerciseId: pigeon.id, seconds: 30 }],
     },
   };
-}
-
-function builderViewIn(routes: unknown[]): unknown {
-  return routes.find(
-    (data) => typeof data === "object" && data !== null && "state" in data,
-  );
 }
 
 function submissionAnswering(

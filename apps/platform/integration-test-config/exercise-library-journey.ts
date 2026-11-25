@@ -194,11 +194,6 @@ export class ExerciseLibraryJourney {
     return this.send(requester, `${LIBRARY_PAGE}?status=archived`);
   }
 
-  /** The route data the library reads, as the browser fetches it on a client-side visit. */
-  readLibraryData(requester: Requester): Promise<Response> {
-    return this.send(requester, `${LIBRARY_PAGE}.data`);
-  }
-
   openNewExercise(requester: Requester): Promise<Response> {
     return this.send(requester, `${LIBRARY_PAGE}/exercises/new`);
   }

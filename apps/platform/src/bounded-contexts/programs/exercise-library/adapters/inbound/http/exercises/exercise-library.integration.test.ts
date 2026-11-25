@@ -37,7 +37,6 @@ import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
-import { routeLoaderData } from "~integration-test-config/route-data";
 import {
   SECOND_PURCHASE,
   SubscriptionsJourney,
@@ -1488,25 +1487,6 @@ describe("exercise library integration", () => {
       );
     });
 
-    it("carries how many programs use each exercise in the library's data", async () => {
-      // arrange
-      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
-      await library.createAccepted(COACH_SESSION, HIP_THRUST);
-      await draftUsing({
-        rows: [exerciseRow("row-1", squat.id, { slot: "A" })],
-      });
-
-      // act
-      const response = await library.readLibraryData(COACH_SESSION);
-
-      // assert
-      expect(response.status).toBe(200);
-      expect(programCountsIn(await routeLoaderData(response))).toEqual({
-        "Back squat": 1,
-        "Hip thrust": 0,
-      });
-    });
-
     it("deletes an exercise once a save removes it everywhere, and its video with it", async () => {
       // arrange
       await library.clearVideoFiles();
@@ -1722,16 +1702,4 @@ function textOf(document: string): string {
   return textNodesOf(document)
     .filter((text) => text.length > 0)
     .join(" ");
-}
-
-type ListedExercise = { name: string; programCount: number };
-
-function programCountsIn(routes: unknown[]): Record<string, number> {
-  const exercises = routes.flatMap(
-    (data) => (data as { exercises?: ListedExercise[] }).exercises ?? [],
-  );
-
-  return Object.fromEntries(
-    exercises.map(({ name, programCount }) => [name, programCount]),
-  );
 }

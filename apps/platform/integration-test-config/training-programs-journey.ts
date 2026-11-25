@@ -225,11 +225,6 @@ export class TrainingProgramsJourney {
     return this.send(requester, programBuilderPage(clientId));
   }
 
-  /** The route data the builder reads, as the browser fetches it on a client-side visit. */
-  readBuilderData(requester: Requester, clientId: string): Promise<Response> {
-    return this.send(requester, `${programBuilderPage(clientId)}.data`);
-  }
-
   openClientPage(requester: Requester, clientId: string): Promise<Response> {
     return this.send(requester, coachClientPage(clientId));
   }
