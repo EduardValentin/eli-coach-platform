@@ -1,6 +1,7 @@
 import { expect, test } from "../support/fixtures";
 import { expectOneH1AndNoSkippedLevels } from "../support/heading-outline";
 import { expectLayoutFits } from "../support/layout-fit";
+import { collectPageProblems } from "../support/page-problems";
 import { setDesktopViewport, setPhoneViewport } from "../support/viewport";
 import { ProgramBuilderPage } from "../support/program-builder-page";
 
@@ -53,7 +54,7 @@ test(
 
     // assert
     await programBuilder.expectLevel("Advanced");
-    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+    await programBuilder.expectPlaceHeadingFocused("Overview");
   },
 );
 
@@ -94,7 +95,7 @@ test(
     await programBuilder.tryAgainNow();
 
     // assert
-    await programBuilder.expectRecovered();
+    await programBuilder.expectRecovered("Overview");
     await programBuilder.expectAnnounced("All changes saved.");
 
     // act
@@ -307,21 +308,21 @@ test(
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
-    await programBuilder.watchForOverviewPaint();
-    const consoleErrors: string[] = [];
-    page.on("console", (message) => {
-      if (message.type() === "error") consoleErrors.push(message.text());
-    });
-    page.on("pageerror", (error) => consoleErrors.push(error.message));
+    const problems = collectPageProblems(page);
 
     // act
-    await page.reload();
+    const hydrate = await programBuilder.reloadHoldingHydration();
+
+    // assert
+    await programBuilder.expectNoOverviewShown();
+
+    // act
+    await hydrate();
 
     // assert
     await programBuilder.expectOnBlock(2, "Hypertrophy");
-    await programBuilder.expectNoOverviewPainted();
     expect(
-      consoleErrors.filter((error) => /hydrat|script tag/i.test(error)),
+      problems.filter((problem) => /hydrat|script tag/i.test(problem)),
     ).toEqual([]);
   },
 );
