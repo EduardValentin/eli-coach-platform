@@ -18,7 +18,7 @@ type SessionEditingOptions = {
   newId: () => string;
   blockType: BlockType;
   libraryExercises: readonly LibraryExercise[];
-  equipment: readonly Equipment[];
+  libraryEquipment: readonly Equipment[];
 };
 
 type RowPlacement = { slot: Slot; supersetGroup?: string };
@@ -276,7 +276,7 @@ export class SessionEditing {
     return Substitutions.suggestedFor(
       exercise,
       this.options.libraryExercises,
-      this.options.equipment,
+      this.options.libraryEquipment,
     );
   }
 

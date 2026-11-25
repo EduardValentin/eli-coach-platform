@@ -16,10 +16,10 @@ export type LibraryPick = {
 type LibraryPicksOptions = {
   newId: () => string;
   libraryExercises: readonly LibraryExercise[];
-  equipment: readonly Equipment[];
+  libraryEquipment: readonly Equipment[];
 };
 
-const FALLBACK_SLOT: Slot = "C";
+const ACCESSORIES_SLOT: Slot = "C";
 
 /** An exercise picked in the library lands on its target, or without one by its type (Business Rule 35). */
 export class LibraryPicks {
@@ -48,7 +48,7 @@ export class LibraryPicks {
       return fits && !taken;
     });
 
-    return matching ?? FALLBACK_SLOT;
+    return matching ?? ACCESSORIES_SLOT;
   }
 
   blockWithLibraryPick(block: Block, pick: LibraryPick): Block {

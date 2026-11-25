@@ -8,7 +8,7 @@ export class Substitutions {
   static suggestedFor(
     exercise: LibraryExercise,
     libraryExercises: readonly LibraryExercise[],
-    equipment: readonly Equipment[],
+    libraryEquipment: readonly Equipment[],
   ): string[] {
     const candidates = libraryExercises.filter(
       (other) =>
@@ -21,7 +21,7 @@ export class Substitutions {
         ),
     );
     const owned = candidates.filter((candidate) =>
-      candidate.equipment.every((item) => equipment.includes(item)),
+      candidate.equipment.every((item) => libraryEquipment.includes(item)),
     );
     const others = candidates.filter((candidate) => !owned.includes(candidate));
     const picks = Substitutions.pickPair(owned);

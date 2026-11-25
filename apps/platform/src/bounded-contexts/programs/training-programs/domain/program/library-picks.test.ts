@@ -77,7 +77,7 @@ function libraryPicks(): LibraryPicks {
   return new LibraryPicks({
     newId: idsFrom("picked"),
     libraryExercises: LIBRARY,
-    equipment: [],
+    libraryEquipment: [],
   });
 }
 
@@ -86,7 +86,7 @@ function withSquatInA(session: Session): Session {
     newId: idsFrom("edited"),
     blockType: "foundation",
     libraryExercises: LIBRARY,
-    equipment: [],
+    libraryEquipment: [],
   }).add(session, byId("squat"), { slot: "A" });
 }
 

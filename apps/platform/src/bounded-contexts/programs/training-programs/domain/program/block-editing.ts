@@ -5,7 +5,7 @@ import {
   type CalendarEntry,
   type CardioSession,
 } from "./program-content";
-import { RowDefaults, type DeloadSwitch } from "./row-defaults";
+import { RowDefaults, type BlockTypeChangeContext } from "./row-defaults";
 import { SplitTemplate } from "./split-template";
 import type {
   BlockType,
@@ -127,10 +127,10 @@ export class BlockEditing {
   blockWithType(
     block: Block,
     type: BlockType,
-    deloadSwitch: DeloadSwitch,
+    typeChangeContext: BlockTypeChangeContext,
   ): Block {
     if (type === "deload") {
-      return this.rowDefaults.blockSwitchedToDeload(block, deloadSwitch);
+      return this.rowDefaults.blockSwitchedToDeload(block, typeChangeContext);
     }
     const reDefaulted = this.rowDefaults.reDefaultedBlock(block, type);
 

@@ -22,7 +22,7 @@ describe("CoolDownEditing", () => {
     const session = emptySession();
 
     // act
-    const turnedOn = editing.change(session, {
+    const turnedOn = editing.withCoolDown(session, {
       ...session.coolDown,
       enabled: true,
     });

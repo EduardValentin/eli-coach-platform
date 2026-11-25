@@ -24,12 +24,14 @@ export type RowDefaultTargets = { start: WorkingTargets; restSeconds: number };
 
 export type LoadingBlockType = Exclude<BlockType, "deload">;
 
-export type DeloadSource = {
+export type DeloadContext = {
   level: ClientLevel;
   libraryExercises: readonly LibraryExercise[];
 };
 
-export type DeloadSwitch = DeloadSource & { previous: Block | undefined };
+export type BlockTypeChangeContext = DeloadContext & {
+  previous: Block | undefined;
+};
 
 type RowDefaultsOptions = { newId: () => string };
 
@@ -40,6 +42,18 @@ type DeloadedWeek = (
   sessionIndex: number,
   exercise: LibraryExercise | undefined,
 ) => ResolvedWeek;
+
+type DeloadedRow = {
+  row: ExerciseRow;
+  sessionIndex: number;
+  exercise: LibraryExercise | undefined;
+};
+
+type DeloadStart = {
+  block: Block;
+  previous: Block | undefined;
+  level: ClientLevel;
+};
 
 type DeloadedRowsSource = {
   libraryExercises: readonly LibraryExercise[];
@@ -134,46 +148,33 @@ export class RowDefaults {
   }
 
   deloadedBlock(
-    source: Block,
-    { level, libraryExercises }: DeloadSource,
+    block: Block,
+    { level, libraryExercises }: DeloadContext,
   ): Block {
-    const sessions = this.withDeloadedRows(source, {
+    const sessions = this.withDeloadedRows(block, {
       libraryExercises,
       weekOf: (row, _session, exercise) =>
-        ProgramProgression.resolvedWeek(row, source.weeks, {
-          block: source,
+        ProgramProgression.resolvedWeek(row, block.weeks, {
+          block,
           level,
           exercise,
         }),
     });
 
-    return { ...source, type: "deload", sessions };
+    return { ...block, type: "deload", sessions };
   }
 
   blockSwitchedToDeload(
     block: Block,
-    { previous, level, libraryExercises }: DeloadSwitch,
+    { previous, level, libraryExercises }: BlockTypeChangeContext,
   ): Block {
     const sessions = this.withDeloadedRows(block, {
       libraryExercises,
-      weekOf: (row, sessionIndex, exercise) => {
-        const source =
-          previous &&
-          RowDefaults.previousRowOf(previous, sessionIndex, row.exerciseId);
-        if (previous && source) {
-          return ProgramProgression.resolvedWeek(source, previous.weeks, {
-            block: previous,
-            level,
-            exercise,
-          });
-        }
-
-        return ProgramProgression.resolvedWeek(row, 1, {
-          block,
-          level,
-          exercise,
-        });
-      },
+      weekOf: (row, sessionIndex, exercise) =>
+        RowDefaults.deloadStartWeek(
+          { row, sessionIndex, exercise },
+          { block, previous, level },
+        ),
     });
 
     return { ...block, type: "deload", weeks: 1, sessions };
@@ -260,6 +261,27 @@ export class RowDefaults {
       rir: index === count - 1 ? lastSetRir : rir,
       ...(weightKg === undefined ? {} : { weightKg }),
     }));
+  }
+
+  private static deloadStartWeek(
+    { row, sessionIndex, exercise }: DeloadedRow,
+    { block, previous, level }: DeloadStart,
+  ): ResolvedWeek {
+    const firstWeek = () =>
+      ProgramProgression.resolvedWeek(row, 1, { block, level, exercise });
+    if (!previous) return firstWeek();
+    const previousRow = RowDefaults.previousRowOf(
+      previous,
+      sessionIndex,
+      row.exerciseId,
+    );
+    if (!previousRow) return firstWeek();
+
+    return ProgramProgression.resolvedWeek(previousRow, previous.weeks, {
+      block: previous,
+      level,
+      exercise,
+    });
   }
 
   private static previousRowOf(

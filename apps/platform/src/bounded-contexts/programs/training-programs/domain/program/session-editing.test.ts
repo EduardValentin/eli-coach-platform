@@ -51,7 +51,7 @@ function sessionEditing(blockType: BlockType = "foundation"): SessionEditing {
     newId: () => `id-${(next += 1)}`,
     blockType,
     libraryExercises: LIBRARY,
-    equipment: [],
+    libraryEquipment: [],
   });
 }
 

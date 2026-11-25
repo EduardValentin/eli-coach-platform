@@ -111,7 +111,7 @@ export class LibrarySelection {
 
   offered(
     libraryExercises: readonly LibraryExercise[],
-    herEquipment: readonly Equipment[],
+    libraryEquipment: readonly Equipment[],
   ): LibraryExercise[] {
     return libraryExercises.filter(
       (exercise) =>
@@ -120,7 +120,7 @@ export class LibrarySelection {
         this.matchesSearch(exercise) &&
         this.matchesPatterns(exercise) &&
         this.matchesMuscles(exercise) &&
-        this.matchesEquipment(exercise, herEquipment),
+        this.matchesEquipment(exercise, libraryEquipment),
     );
   }
 
@@ -278,14 +278,14 @@ export class LibrarySelection {
 
   private matchesEquipment(
     exercise: LibraryExercise,
-    herEquipment: readonly Equipment[],
+    libraryEquipment: readonly Equipment[],
   ): boolean {
     const { onlyHerEquipment, bodyweightOnly } = this.fields;
     if (bodyweightOnly && exercise.equipment.length > 0) return false;
 
     return (
       !onlyHerEquipment ||
-      exercise.equipment.every((item) => herEquipment.includes(item))
+      exercise.equipment.every((item) => libraryEquipment.includes(item))
     );
   }
 }

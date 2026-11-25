@@ -8,7 +8,7 @@ type CoolDownEditingOptions = { newId: () => string };
 export class CoolDownEditing {
   constructor(private readonly options: CoolDownEditingOptions) {}
 
-  change(session: Session, coolDown: CoolDown): Session {
+  withCoolDown(session: Session, coolDown: CoolDown): Session {
     return { ...session, coolDown };
   }
 
