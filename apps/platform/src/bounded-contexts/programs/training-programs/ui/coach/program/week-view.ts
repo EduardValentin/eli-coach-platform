@@ -3,9 +3,8 @@ import {
   WEEKDAY_LABELS,
   type Block,
   type CardioSession,
-  type ClientLevel,
-  type LibraryExercise,
   type Session,
+  type WeekContext,
   type Weekday,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
@@ -16,10 +15,7 @@ export type DayPlan =
 
 export type WeekDay = { weekday: Weekday; plan: DayPlan };
 
-export type WeekTiming = {
-  level: ClientLevel;
-  exercisesById: ReadonlyMap<string, LibraryExercise>;
-};
+export type WeekTiming = Omit<WeekContext, "block">;
 
 export function planOn(
   block: Block,

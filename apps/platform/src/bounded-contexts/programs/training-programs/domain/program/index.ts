@@ -33,6 +33,7 @@ export {
 export { type LibraryExercisesPort } from "./library-exercises-port";
 export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
+export { type WeekContext } from "./program-progression";
 export {
   type Block,
   type CardioSession,

@@ -228,7 +228,7 @@ function setsAtWeek(stored: ExerciseRow, week: number, shape: ContextShape) {
     shape.exercise ? [[stored.exerciseId, shape.exercise]] : [],
   );
   const [read] = ProgramProgression.sessionAtWeek(session([stored]), week, {
-    block,
+    block: block as Block,
     level,
     exercisesById,
   }).rows;
@@ -800,22 +800,5 @@ describe("ProgramProgression warm-up weights", () => {
     expect(weeks[4].sets.slice(0, 2).map((set) => set.weightKg)).toEqual([
       20, 45,
     ]);
-  });
-});
-
-describe("ProgramProgression firstWeekSets", () => {
-  it("lists the first week's warm-up sets before its working sets", () => {
-    // arrange
-    const [warmUp, ...working] = startSets(
-      { count: 2, reps: { min: 6, max: 8 }, rir: 3 },
-      WARM_UPS.slice(0, 1),
-    );
-    const mixed = row({ startSets: [...working, warmUp] });
-
-    // act
-    const sets = ProgramProgression.firstWeekSets(mixed);
-
-    // assert
-    expect(sets.map((set) => set.id)).toEqual(["warm-up-1", "set-1", "set-2"]);
   });
 });

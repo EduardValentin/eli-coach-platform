@@ -58,8 +58,8 @@ export type WeekRow = Omit<ExerciseRow, "startSets"> & { sets: SetSpec[] };
 
 export type WeekSession = Omit<Session, "rows"> & { rows: WeekRow[] };
 
-export type SessionWeekPlace = {
-  block: ProgressionContext["block"];
+export type WeekContext = {
+  block: Block;
   level: ClientLevel;
   exercisesById: ReadonlyMap<string, LibraryExercise>;
 };
@@ -119,14 +119,6 @@ type SetInWeek = { set: PlannedSet; week: number };
  * week, the client's level and the block type (Business Rule 34).
  */
 export class ProgramProgression {
-  /** The first week's sets, warm-up sets first, as later blocks and the Deload start from them. */
-  static firstWeekSets(row: ExerciseRow): PlannedSet[] {
-    return ProgramProgression.firstWeekPlannedSets(row).map((set) => ({
-      ...set,
-      start: ProgramProgression.cloned(set.start),
-    }));
-  }
-
   static resolvedWeek(
     row: ExerciseRow,
     week: number,
@@ -147,13 +139,13 @@ export class ProgramProgression {
   static sessionAtWeek(
     session: Session,
     week: number,
-    place: SessionWeekPlace,
+    { block, level, exercisesById }: WeekContext,
   ): WeekSession {
     const rows = session.rows.map((row) =>
       ProgramProgression.rowAtWeek(row, week, {
-        block: place.block,
-        level: place.level,
-        exercise: place.exercisesById.get(row.exerciseId),
+        block,
+        level,
+        exercise: exercisesById.get(row.exerciseId),
       }),
     );
 

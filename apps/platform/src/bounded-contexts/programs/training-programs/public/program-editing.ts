@@ -30,5 +30,6 @@ export {
   type Session,
   type SplitShape,
   type TrainingDays,
+  type WeekContext,
   type Weekday,
 } from "~/bounded-contexts/programs/training-programs/domain/program";

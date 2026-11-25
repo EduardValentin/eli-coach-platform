@@ -1,6 +1,5 @@
 import type { LibraryExercise } from "./library-exercise";
 import type {
-  Block,
   CardioSession,
   Range,
   Session,
@@ -8,19 +7,13 @@ import type {
 } from "./program-content";
 import {
   ProgramProgression,
+  type WeekContext,
   type WeekRow,
   type WeekSession,
 } from "./program-progression";
-import type { ClientLevel } from "./vocabulary";
 
 type ExercisesById = ReadonlyMap<string, LibraryExercise>;
 type Amount = { range: Range; timed: boolean };
-
-export type TimingContext = {
-  block: Block;
-  level: ClientLevel;
-  exercisesById: ExercisesById;
-};
 
 const SECONDS_PER_REP = 4;
 const WARM_UP_SET_REST_SECONDS = 60;
@@ -52,34 +45,29 @@ export class SessionTiming {
   }
 
   /** A session's working sets may differ by week, so the builder times it by its longest week. */
-  static longestWeekOf(
-    session: Session,
-    { block, level, exercisesById }: TimingContext,
-  ): WeekSession {
-    const weeks = Array.from({ length: Math.max(1, block.weeks) }, (_, index) =>
-      ProgramProgression.sessionAtWeek(session, index + 1, {
-        block,
-        level,
-        exercisesById,
-      }),
+  static longestWeekOf(session: Session, context: WeekContext): WeekSession {
+    const weeks = Array.from(
+      { length: Math.max(1, context.block.weeks) },
+      (_, index) =>
+        ProgramProgression.sessionAtWeek(session, index + 1, context),
     );
 
     return weeks.reduce((longest, week) =>
-      SessionTiming.estimatedMinutes(week, exercisesById) >
-      SessionTiming.estimatedMinutes(longest, exercisesById)
+      SessionTiming.estimatedMinutes(week, context.exercisesById) >
+      SessionTiming.estimatedMinutes(longest, context.exercisesById)
         ? week
         : longest,
     );
   }
 
-  static longestWeekMinutes(session: Session, context: TimingContext): number {
+  static longestWeekMinutes(session: Session, context: WeekContext): number {
     return SessionTiming.estimatedMinutes(
       SessionTiming.longestWeekOf(session, context),
       context.exercisesById,
     );
   }
 
-  static isOverTarget(session: Session, context: TimingContext): boolean {
+  static isOverTarget(session: Session, context: WeekContext): boolean {
     return (
       SessionTiming.longestWeekMinutes(session, context) >
       context.block.targetMinutes + OVER_TARGET_TOLERANCE_MINUTES
