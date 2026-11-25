@@ -70,7 +70,7 @@ function sessionSummary(session: Session, minutes: number): string {
     : `${exercises} · ${SessionTiming.estimatedDuration(minutes)}`;
 }
 
-function useSessionTiming(
+function useWeekContext(
   block: Block,
   level: ClientLevel,
   libraryExercises: readonly LibraryExercise[],
@@ -92,8 +92,8 @@ export function CollapsedSessionCard({
   onExpand,
 }: CollapsedSessionCardProps) {
   const headingId = useId();
-  const timing = useSessionTiming(block, level, libraryExercises);
-  const minutes = SessionTiming.longestWeekMinutes(session, timing);
+  const weekContext = useWeekContext(block, level, libraryExercises);
+  const minutes = SessionTiming.longestWeekMinutes(session, weekContext);
 
   return (
     <article
@@ -127,9 +127,9 @@ export function OpenSessionCard({
   const header = useMeasuredHeight();
   const confirm = useDestructiveConfirm();
   const announce = useEditorAnnouncer();
-  const timing = useSessionTiming(block, level, libraryExercises);
-  const minutes = SessionTiming.longestWeekMinutes(session, timing);
-  const overTarget = SessionTiming.isOverTarget(session, timing);
+  const weekContext = useWeekContext(block, level, libraryExercises);
+  const minutes = SessionTiming.longestWeekMinutes(session, weekContext);
+  const overTarget = SessionTiming.isOverTarget(session, weekContext);
   const editing = new SessionEditing({
     newId: newBuilderId,
     blockType: block.type,
@@ -152,7 +152,11 @@ export function OpenSessionCard({
     });
   }
 
-  const firstWeekSession = ProgramProgression.sessionAtWeek(session, 1, timing);
+  const firstWeekSession = ProgramProgression.sessionAtWeek(
+    session,
+    1,
+    weekContext,
+  );
   const plans = SLOTS.map((slot) =>
     SplitTemplate.slotPlanOrUsual(block, session, slot),
   );

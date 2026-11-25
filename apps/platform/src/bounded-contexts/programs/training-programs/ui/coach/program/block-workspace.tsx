@@ -16,6 +16,7 @@ import {
 import { BlockHeader } from "./block-header";
 import { LibraryTargetContext } from "./library-target";
 import { CollapsedSessionCard, OpenSessionCard } from "./session-card";
+import { SESSION_NAME_LABEL } from "./session-card-parts";
 import { SessionDragLayer } from "./session-dnd";
 import { useMeasuredHeight } from "./use-measured-height";
 import { usePendingFocus } from "./use-pending-focus";
@@ -94,7 +95,7 @@ export function BlockWorkspace({
     focusLater(() =>
       articles.current
         .get(sessionId)
-        ?.querySelector<HTMLElement>('[aria-label="Session name"]'),
+        ?.querySelector<HTMLElement>(`[aria-label="${SESSION_NAME_LABEL}"]`),
     );
     onOpenSession(sessionId);
   }

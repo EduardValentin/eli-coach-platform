@@ -3,6 +3,7 @@ import type { CSSProperties, Ref } from "react";
 import { cn, SCREEN_CARD_TITLE_CLASS } from "~/shared/design-system/lib";
 import { Input } from "~/shared/design-system/primitives";
 
+export const SESSION_NAME_LABEL = "Session name";
 export const SESSION_ARTICLE_CLASS =
   "rounded-card border border-border-default bg-surface-base shadow-card";
 export const EXPANDED_SESSION_CLASS =
@@ -62,7 +63,7 @@ export function SessionNameInput({
 }: SessionNameInputProps) {
   return (
     <Input
-      aria-label="Session name"
+      aria-label={SESSION_NAME_LABEL}
       className={cn(SCREEN_CARD_TITLE_CLASS, INLINE_TITLE_CLASS)}
       onChange={(event) => onChange(event.target.value)}
       ref={inputRef}
