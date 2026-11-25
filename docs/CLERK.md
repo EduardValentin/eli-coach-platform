@@ -260,7 +260,10 @@ path that must keep proving itself, or `@completeness` for a check that covers
 variants, refusals, layouts and edge states. `pnpm test:e2e:critical` runs the
 `@critical` tests; `pnpm test:e2e` runs everything. `tools/e2e-tags.test.mjs`
 fails `pnpm validate` when a journey test has no tag, more than one, or another
-tag. QA browser checks are journeys and page objects under
+tag, and `tools/e2e-fragile-patterns.test.mjs` fails it when anything under
+`apps/platform/e2e` finds a heading by its level or waits a fixed time. Console
+checks share `collectPageProblems` (`e2e/support/page-problems.ts`), which
+ignores only the development-server noise it names. QA browser checks are journeys and page objects under
 `apps/platform/e2e`, never scratch scripts.
 
 Prerequisites:
