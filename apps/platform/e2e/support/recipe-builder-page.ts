@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { FileChoosers } from "./file-choosers";
 import { tabTo } from "./keyboard";
 import { expectButtonsAlongTopEdgeOf } from "./overlay-bar";
 import { HYDRATION_RETRY_TIMEOUT_MS, escapedPattern } from "./locator-text";
@@ -80,7 +81,11 @@ const COOKING_METHODS = [
 ] as const;
 
 export class RecipeBuilderPage {
-  constructor(private readonly page: Page) {}
+  private readonly fileChoosers: FileChoosers;
+
+  constructor(private readonly page: Page) {
+    this.fileChoosers = new FileChoosers(page);
+  }
 
   private get main(): Locator {
     return this.page.getByRole("main", { name: "Recipe builder" });
@@ -464,9 +469,9 @@ export class RecipeBuilderPage {
   }
 
   async replacePhoto(photo: SamplePhoto): Promise<void> {
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.replacePhotoButton.click();
-    await (await chooser).setFiles(photo);
+    await this.fileChoosers.choose(photo, () =>
+      this.replacePhotoButton.click(),
+    );
   }
 
   async removePhoto(): Promise<void> {
@@ -515,9 +520,9 @@ export class RecipeBuilderPage {
   async choosePhotoWithKeyboard(photo: SamplePhoto): Promise<void> {
     await this.waitUntilInteractiveByKeyboard();
     await tabTo(this.page, this.uploadPhotoButton);
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.page.keyboard.press("Enter");
-    await (await chooser).setFiles(photo);
+    await this.fileChoosers.choose(photo, () =>
+      this.page.keyboard.press("Enter"),
+    );
   }
 
   async removePhotoWithKeyboard(): Promise<void> {

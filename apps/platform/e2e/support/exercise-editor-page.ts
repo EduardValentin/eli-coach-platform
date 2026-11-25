@@ -8,6 +8,7 @@ import {
 } from "@playwright/test";
 
 import type { SampleVideo } from "./exercise-video-files";
+import { FileChoosers } from "./file-choosers";
 import { tabTo } from "./keyboard";
 import { expectLayoutFits } from "./layout-fit";
 import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
@@ -79,7 +80,11 @@ const PROBLEM_FIELDS: readonly ProblemField[] = [
 const TAGS = ["Strength", "Hypertrophy", "Recovery", "Conditioning"] as const;
 
 export class ExerciseEditorPage {
-  constructor(private readonly page: Page) {}
+  private readonly fileChoosers: FileChoosers;
+
+  constructor(private readonly page: Page) {
+    this.fileChoosers = new FileChoosers(page);
+  }
 
   private get nameField() {
     return this.page.getByRole("textbox", { name: "Name" });
@@ -305,23 +310,23 @@ export class ExerciseEditorPage {
     await this.waitUntilInteractiveByKeyboard();
     await tabTo(this.page, this.videoDropzone);
     await this.expectFocusVisible(this.videoDropzone);
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.page.keyboard.press("Space");
-    await (await chooser).setFiles(sample.path);
+    await this.fileChoosers.choose(sample.path, () =>
+      this.page.keyboard.press("Space"),
+    );
   }
 
   async replaceVideo(sample: SampleVideo): Promise<void> {
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.replaceVideoButton.click();
-    await (await chooser).setFiles(sample.path);
+    await this.fileChoosers.choose(sample.path, () =>
+      this.replaceVideoButton.click(),
+    );
   }
 
   async replaceVideoWithKeyboard(sample: SampleVideo): Promise<void> {
     await tabTo(this.page, this.replaceVideoButton);
     await this.expectFocusVisible(this.replaceVideoButton);
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.page.keyboard.press("Enter");
-    await (await chooser).setFiles(sample.path);
+    await this.fileChoosers.choose(sample.path, () =>
+      this.page.keyboard.press("Enter"),
+    );
   }
 
   async removeVideo(): Promise<void> {

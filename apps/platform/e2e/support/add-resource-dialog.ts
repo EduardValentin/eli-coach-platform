@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
+import { FileChoosers } from "./file-choosers";
 import { tabTo } from "./keyboard";
 import { escapedPattern } from "./locator-text";
 import type { ResourceDetails } from "./resource-requests";
@@ -22,9 +23,11 @@ const UPLOAD_ROUTE = "**/api/client-resources/clients/*/resources";
 
 export class AddResourceDialog {
   readonly tags: TagField;
+  private readonly fileChoosers: FileChoosers;
 
   constructor(private readonly page: Page) {
     this.tags = new TagField(page, this.dialog);
+    this.fileChoosers = new FileChoosers(page);
   }
 
   private get dialog() {
@@ -104,9 +107,9 @@ export class AddResourceDialog {
 
   async chooseWithKeyboard(sample: SampleResource): Promise<void> {
     await tabTo(this.page, this.dropzoneInput);
-    const chooser = this.page.waitForEvent("filechooser");
-    await this.page.keyboard.press("Space");
-    await (await chooser).setFiles(sample);
+    await this.fileChoosers.choose(sample, () =>
+      this.page.keyboard.press("Space"),
+    );
   }
 
   async expectChosen(fileName: string): Promise<void> {
