@@ -67,6 +67,7 @@ import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
 import { PrivacyPolicyPage } from "./privacy-policy-page";
 import { ProgramBuilderPage } from "./program-builder-page";
+import { ProgramSessionPage } from "./program-session-page";
 import { ProgramSetupPage } from "./program-setup-page";
 import { RecipeBuilderPage } from "./recipe-builder-page";
 import { RecipeRequests } from "./recipe-requests";
@@ -161,6 +162,7 @@ type PlatformFixtures = {
   coachClientResources: CoachClientResourcesPage;
   programSetup: ProgramSetupPage;
   programBuilder: ProgramBuilderPage;
+  programSession: ProgramSessionPage;
   coachCheckIns: CoachCheckInsPage;
   coachDashboard: CoachDashboardPage;
   coachMeetingRoom: CoachMeetingRoom;
@@ -557,6 +559,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   programBuilder: async ({ page }, use) => {
     await use(new ProgramBuilderPage(page));
+  },
+
+  programSession: async ({ page }, use) => {
+    await use(new ProgramSessionPage(page));
   },
 
   coachCheckIns: async ({ page }, use) => {
