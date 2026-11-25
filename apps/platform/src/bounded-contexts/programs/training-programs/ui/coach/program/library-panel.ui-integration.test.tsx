@@ -45,6 +45,8 @@ const SETUP = {
   language: "en",
 } as const;
 
+const PAST_COUNT_ANNOUNCEMENT_MS = 900;
+
 const HER_EQUIPMENT: Equipment[] = ["Barbell", "Dumbbells"];
 
 function exercise(
@@ -742,7 +744,9 @@ describe("a library opened for a place in a session", () => {
 
     // act
     await user.click(addButton("Hip Circles"));
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    await new Promise((resolve) =>
+      setTimeout(resolve, PAST_COUNT_ANNOUNCEMENT_MS),
+    );
 
     // assert
     expect(screen.getByRole("status")).toHaveTextContent(

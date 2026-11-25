@@ -52,6 +52,10 @@ type RowActionsMenuProps = {
 
 type ChooseAction = (action: RowMenuAction) => (event: Event) => void;
 
+function isHeldBack({ disabledHint, disabledReason }: RowMenuAction): boolean {
+  return Boolean(disabledReason) || disabledHint !== undefined;
+}
+
 function isSubmenu(entry: RowMenuEntry): entry is RowMenuSubmenu {
   return "actions" in entry;
 }
@@ -160,7 +164,7 @@ export function RowActionsMenu({
   };
 
   const chooseAction: ChooseAction = (action) => (event) => {
-    if (action.disabledReason || action.disabledHint !== undefined) {
+    if (isHeldBack(action)) {
       event.preventDefault();
       return;
     }

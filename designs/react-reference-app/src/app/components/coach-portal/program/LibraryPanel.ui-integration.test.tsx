@@ -14,6 +14,8 @@ import { TrainingProvider } from '../../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
 
 
+const PAST_COUNT_ANNOUNCEMENT_MS = 900;
+
 function setStats(container: HTMLElement): string[] {
   const terms = within(container).getAllByRole('term');
   const values = within(container).getAllByRole('definition');
@@ -416,7 +418,7 @@ describe('LibraryPanel', () => {
 
     // act
     await user.click(within(library()).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
-    await new Promise(resolve => setTimeout(resolve, 900));
+    await new Promise(resolve => setTimeout(resolve, PAST_COUNT_ANNOUNCEMENT_MS));
 
     // assert
     expect(screen.getByRole('status')).toHaveTextContent('90/90 Hip Switches is already in the warm-up');

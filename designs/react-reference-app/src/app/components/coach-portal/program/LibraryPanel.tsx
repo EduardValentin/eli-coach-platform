@@ -116,16 +116,16 @@ function panelFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
 function useCountAnnouncement(count: number, filtersKey: string) {
   const announce = useEditorAnnouncer();
   const firstRender = useRef(true);
-  const pending = useRef<number>();
+  const pendingCountTimer = useRef<number>();
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    pending.current = window.setTimeout(() => announce(count === 0 ? 'No exercises match' : counted(count, 'exercise')), COUNT_ANNOUNCE_DELAY_MS);
-    return () => window.clearTimeout(pending.current);
+    pendingCountTimer.current = window.setTimeout(() => announce(count === 0 ? 'No exercises match' : counted(count, 'exercise')), COUNT_ANNOUNCE_DELAY_MS);
+    return () => window.clearTimeout(pendingCountTimer.current);
   }, [announce, count, filtersKey]);
-  return { cancelPending: () => window.clearTimeout(pending.current) };
+  return { cancelPending: () => window.clearTimeout(pendingCountTimer.current) };
 }
 
 function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (exercise: Exercise) => void }) {
