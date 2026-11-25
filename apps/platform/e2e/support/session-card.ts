@@ -12,6 +12,10 @@ export class SessionCard {
     return this.page.getByRole("region", { name: "Week", exact: true });
   }
 
+  private get dayFaces(): Locator {
+    return this.week.getByRole("button", { name: /^(?!.* options$)/ });
+  }
+
   private get nameField(): Locator {
     return this.page.getByRole("textbox", { name: SESSION_NAME });
   }
@@ -53,9 +57,7 @@ export class SessionCard {
   }
 
   async openFirstStrengthDay(): Promise<void> {
-    const face = this.week
-      .getByRole("button", { name: /^(?!.* options$)/ })
-      .first();
+    const face = this.dayFaces.first();
 
     await expect(async () => {
       await face.click();
@@ -97,7 +99,7 @@ export class SessionCard {
       const found = await this.page
         .getByRole("article")
         .evaluateAll((cards) =>
-          cards.map((card) => card.getAttribute("aria-label")),
+          cards.flatMap((card) => card.getAttribute("aria-label") ?? []),
         );
 
       expect(found).toEqual([...labels]);

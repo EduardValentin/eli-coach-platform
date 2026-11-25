@@ -50,6 +50,7 @@ import {
 
 import {
   AnnouncementRegion,
+  type Announce,
   useAnnouncement,
   useEditorAnnouncer,
 } from "./editor-announcer";
@@ -122,8 +123,8 @@ function filterLabel(filter: ActiveFilter): string {
   return "Bodyweight";
 }
 
-type CountAnnouncement = {
-  announce: (message: string) => void;
+type CountAnnouncementOptions = {
+  announce: Announce;
   count: number;
   selection: LibrarySelection;
 };
@@ -132,7 +133,7 @@ function useCountAnnouncement({
   announce,
   count,
   selection,
-}: CountAnnouncement) {
+}: CountAnnouncementOptions) {
   const firstRender = useRef(true);
   const pendingCountTimer = useRef<number>(undefined);
 

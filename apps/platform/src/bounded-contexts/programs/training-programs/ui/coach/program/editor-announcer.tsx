@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
-type Announce = (message: string) => void;
+export type Announce = (message: string) => void;
 
 const EditorAnnouncerContext = createContext<Announce>(() => {});
 

@@ -31,7 +31,7 @@ import { FieldTrigger } from '../../ui/select';
 import { Sheet, SheetContent, SheetTitle } from '../../ui/sheet';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
-import { AnnouncementRegion, useAnnouncement, useEditorAnnouncer } from './editorAnnouncer';
+import { AnnouncementRegion, useAnnouncement, useEditorAnnouncer, type Announce } from './editorAnnouncer';
 import { usePendingFocus } from './usePendingFocus';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { OptionSelect } from './OptionSelect';
@@ -113,7 +113,7 @@ function panelFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
   ];
 }
 
-function useCountAnnouncement(count: number, filtersKey: string, announce: (message: string) => void) {
+function useCountAnnouncement(count: number, filtersKey: string, announce: Announce) {
   const firstRender = useRef(true);
   const pendingCountTimer = useRef<number>();
   useEffect(() => {

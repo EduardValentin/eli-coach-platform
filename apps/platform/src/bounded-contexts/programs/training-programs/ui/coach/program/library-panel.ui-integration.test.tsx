@@ -46,6 +46,7 @@ const SETUP = {
 } as const;
 
 const PAST_COUNT_ANNOUNCEMENT_MS = 900;
+const COUNT_ANNOUNCEMENT_TIMEOUT_MS = 2000;
 
 const HER_EQUIPMENT: Equipment[] = ["Barbell", "Dumbbells"];
 
@@ -650,7 +651,7 @@ describe("a library with nothing to show", () => {
     // assert
     await waitFor(
       () => expect(screen.getByRole("status")).toHaveTextContent("1 exercise"),
-      { timeout: 2000 },
+      { timeout: COUNT_ANNOUNCEMENT_TIMEOUT_MS },
     );
 
     // act
@@ -662,7 +663,7 @@ describe("a library with nothing to show", () => {
         expect(screen.getByRole("status")).toHaveTextContent(
           "No exercises match",
         ),
-      { timeout: 2000 },
+      { timeout: COUNT_ANNOUNCEMENT_TIMEOUT_MS },
     );
   });
 });
@@ -968,7 +969,7 @@ describe("the library drawer's announcements", () => {
         expect(within(drawer()).getByRole("status")).toHaveTextContent(
           "No exercises match",
         ),
-      { timeout: 2000 },
+      { timeout: COUNT_ANNOUNCEMENT_TIMEOUT_MS },
     );
   });
 
