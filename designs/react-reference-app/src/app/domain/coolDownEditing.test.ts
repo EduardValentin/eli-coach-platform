@@ -3,6 +3,19 @@ import { session as emptySession } from '../../test/programFixtures';
 import { coolDownEdits } from './coolDownEditing';
 
 describe('coolDownEdits', () => {
+  it('says why it refuses a stretch already in the cool-down', () => {
+    // arrange
+    const session = coolDownEdits(emptySession()).add('hamstringStretch');
+
+    // act
+    const repeated = coolDownEdits(session).refusalFor('hamstringStretch');
+    const another = coolDownEdits(session).refusalFor('quadStretch');
+
+    // assert
+    expect(repeated).toBe('already-in-cool-down');
+    expect(another).toBeUndefined();
+  });
+
   it('keeps the cool-down on with stretches with seconds each', () => {
     // arrange
     const session = emptySession();

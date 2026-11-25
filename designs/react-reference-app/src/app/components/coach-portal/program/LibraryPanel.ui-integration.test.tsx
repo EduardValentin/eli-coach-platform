@@ -408,6 +408,28 @@ describe('LibraryPanel', () => {
     expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
     await waitFor(() => expect(opener).toHaveFocus());
   });
+
+  it('keeps the drawer open and says why when an add is refused, where an add closes it', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' }));
+    const drawer = screen.getByRole('dialog', { name: 'Exercise library' });
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
+
+    // assert
+    expect(await screen.findByText('90/90 Hip Switches is already in the warm-up')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Exercise library' })).toBeInTheDocument();
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add Jumping Jacks' }));
+
+    // assert
+    expect(await screen.findByText('Jumping Jacks added to Full Body A · Warm-up')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
+  });
 });
 
 describe('CopyBlockDialog', () => {

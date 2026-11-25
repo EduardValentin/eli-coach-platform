@@ -38,7 +38,7 @@ import { useAppState } from '../../context/AppContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, currentVersion, draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../domain/program';
 import { coachingHasEnded, isBeforeStage, type ClientJourney } from '../../domain/journey';
-import { blockWithLibraryPick } from '../../domain/programEditing';
+import { blockWithLibraryPick, libraryPickRefusal, type LibraryPickRefusal } from '../../domain/programEditing';
 import { plannedId } from '../../domain/weekEditing';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { listedSessions, type BuilderSessions } from '../../services/builderSessions';
@@ -98,11 +98,15 @@ function ProgramEditor(props: EditorProps) {
   };
   useDocumentTitle(`${EDITOR_MODE_LABELS[editor.mode]} · ${placeTitle} · ${journeyClientName(journey)}`);
 
-  function addFromLibrary(exercise: Exercise) {
-    if (!block) return;
+  function addFromLibrary(exercise: Exercise): LibraryPickRefusal | undefined {
+    if (!block) return undefined;
     const pick = { exercise, target: panel.panelTarget?.target ?? null, openSessionId };
-    editor.replaceBlock(blockWithLibraryPick(block, pick, { blockType: block.type, library: exercises, equipment: editor.equipment }));
+    const context = { blockType: block.type, library: exercises, equipment: editor.equipment };
+    const refusal = libraryPickRefusal(block, pick, context);
+    if (refusal) return refusal;
+    editor.replaceBlock(blockWithLibraryPick(block, pick, context));
     panel.finishTarget();
+    return undefined;
   }
 
   function addBlock(type: BlockType, weeks: number) {

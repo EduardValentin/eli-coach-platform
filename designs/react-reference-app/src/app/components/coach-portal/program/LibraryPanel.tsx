@@ -13,6 +13,7 @@ import {
   type MovementPattern,
 } from '../../../domain/exercises';
 import { pickableItems } from '../../../domain/libraryLifecycle';
+import type { LibraryPickRefusal } from '../../../domain/programEditing';
 import { counted } from '../../../utils/counted';
 import { IconActionButton } from '../../IconActionButton';
 import { MultiSelect } from '../../MultiSelect';
@@ -46,13 +47,23 @@ export type LibraryPurpose = {
 };
 export type LibraryPresentation = 'pane' | 'drawer';
 
+const REFUSED_ADD_TEXT: Readonly<Record<LibraryPickRefusal, (name: string) => string>> = {
+  'warm-up-full': name => `${name} not added: the warm-up holds four exercises`,
+  'already-in-warm-up': name => `${name} is already in the warm-up`,
+  'already-in-cool-down': name => `${name} is already in the cool-down`,
+  'own-substitution': name => `${name} can’t be its own substitution`,
+  'already-a-substitution': name => `${name} is already one of its substitutions`,
+  'substitutions-full': name => `${name} not added: an exercise holds two substitutions`,
+  'not-cardio': name => `${name} not added: a cardio session takes cardio exercises`,
+};
+
 type LibraryPanelProps = {
   presentation: LibraryPresentation;
   purpose: LibraryPurpose | null;
   library: readonly Exercise[];
   equipment: readonly Equipment[];
   searchRef: RefObject<HTMLInputElement>;
-  onAdd: (exercise: Exercise) => void;
+  onAdd: (exercise: Exercise) => LibraryPickRefusal | undefined;
   onClose: () => void;
 };
 
@@ -300,7 +311,11 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   useCountAnnouncement(shown.length, JSON.stringify([type, filters]));
 
   function add(exercise: Exercise) {
-    onAdd(exercise);
+    const refusal = onAdd(exercise);
+    if (refusal) {
+      announce(REFUSED_ADD_TEXT[refusal](exercise.name));
+      return;
+    }
     announce(purpose ? `${exercise.name} added to ${purpose.destination}` : `${exercise.name} added`);
   }
 

@@ -219,6 +219,27 @@ describe('rowEdits', () => {
     expect(next.rows[0].substitutions).toEqual(['kickback']);
     expect(next.rows[0].touched).toContain('substitutions');
   });
+
+  it('says why it refuses a substitution: the row’s own exercise, one it has, or a third', () => {
+    // arrange
+    const session = withExercises(['curl', 'C']);
+    const edits = rowEdits(session, CONTEXT);
+    const rowId = session.rows[0].id;
+    const oneLeft = rowEdits(edits.removeSubstitution(rowId, 'raise'), CONTEXT);
+
+    // act
+    const own = edits.substitutionRefusalFor(rowId, 'curl');
+    const repeated = edits.substitutionRefusalFor(rowId, 'raise');
+    const third = edits.substitutionRefusalFor(rowId, 'plank');
+    const second = oneLeft.substitutionRefusalFor(rowId, 'plank');
+
+    // assert
+    expect(own).toBe('own-substitution');
+    expect(repeated).toBe('already-a-substitution');
+    expect(third).toBe('substitutions-full');
+    expect(second).toBeUndefined();
+    expect(edits.addSubstitution(rowId, 'plank')).toEqual(session);
+  });
 });
 
 describe('quickAddSlot', () => {

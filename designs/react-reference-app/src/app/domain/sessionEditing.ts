@@ -8,6 +8,8 @@ import { MAX_SUBSTITUTIONS, substitutionsFor } from './substitutions';
 export type Placement = { slot: Slot; beforeRowId?: string };
 export type SlotUnit<Unit extends PlacedRow = Row> = { key: string; group?: string; rows: Unit[] };
 
+export type SubstitutionRefusal = 'own-substitution' | 'already-a-substitution' | 'substitutions-full';
+
 export const SINGLE_CARD_SLOTS: readonly Slot[] = ['A', 'B'];
 
 function nextSlot(slot: Slot): Slot {
@@ -105,6 +107,14 @@ export function rowEdits(session: Session, context: RowContext) {
     return index < 0 ? undefined : rows[index + step];
   }
 
+  function substitutionRefusalFor(rowId: string, exerciseId: string): SubstitutionRefusal | undefined {
+    const row = rowOf(rowId);
+    if (!row) return undefined;
+    if (row.exerciseId === exerciseId) return 'own-substitution';
+    if (row.substitutions.includes(exerciseId)) return 'already-a-substitution';
+    return row.substitutions.length >= MAX_SUBSTITUTIONS ? 'substitutions-full' : undefined;
+  }
+
   function add(exercise: Exercise, placement: Placement): Session {
     const slot = openSlot(rows, placement.slot);
     const beforeRowId = slot === placement.slot ? placement.beforeRowId : undefined;
@@ -178,11 +188,10 @@ export function rowEdits(session: Session, context: RowContext) {
     clear(): Session {
       return { ...session, rows: [] };
     },
+    substitutionRefusalFor,
     addSubstitution(rowId: string, exerciseId: string): Session {
-      return mapRow(rowId, row => {
-        if (row.exerciseId === exerciseId || row.substitutions.includes(exerciseId)) return row;
-        return { ...row, substitutions: [...row.substitutions, exerciseId].slice(0, MAX_SUBSTITUTIONS) };
-      });
+      if (substitutionRefusalFor(rowId, exerciseId)) return session;
+      return mapRow(rowId, row => ({ ...row, substitutions: [...row.substitutions, exerciseId] }));
     },
     removeSubstitution(rowId: string, exerciseId: string): Session {
       return mapRow(rowId, row => withField(row, 'substitutions', row.substitutions.filter(id => id !== exerciseId)));

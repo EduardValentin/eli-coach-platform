@@ -7,6 +7,8 @@ const LIBRARY = [
   exercise('hips', { type: 'mobility' }),
   exercise('catCow', { type: 'mobility', measuredIn: 'time' }),
   exercise('worldsGreatest', { type: 'mobility' }),
+  exercise('shoulderCircles', { type: 'mobility' }),
+  exercise('legSwings', { type: 'mobility' }),
 ];
 
 function added(...ids: string[]): Session {
@@ -31,6 +33,25 @@ describe('warmUpEdits', () => {
     ]);
     expect(twice).toEqual(withCatCow);
     expect(removed.warmUp.items).toEqual([{ ...hips, sets: 2 }]);
+  });
+
+  it('says why it refuses an exercise already in the warm-up or a fifth one, and leaves the warm-up as it was', () => {
+    // arrange
+    const three = added('hips', 'catCow', 'worldsGreatest');
+    const four = added('hips', 'catCow', 'worldsGreatest', 'shoulderCircles');
+
+    // act
+    const repeated = warmUpEdits(three, LIBRARY).refusalFor('catCow');
+    const fourth = warmUpEdits(three, LIBRARY).refusalFor('shoulderCircles');
+    const fifth = warmUpEdits(four, LIBRARY).refusalFor('legSwings');
+    const repeatedInFour = warmUpEdits(four, LIBRARY).refusalFor('hips');
+
+    // assert
+    expect(repeated).toBe('already-in-warm-up');
+    expect(fourth).toBeUndefined();
+    expect(fifth).toBe('warm-up-full');
+    expect(repeatedInFour).toBe('already-in-warm-up');
+    expect(warmUpEdits(four, LIBRARY).add('legSwings')).toEqual(four);
   });
 
   it('reorders warm-up exercises', () => {
