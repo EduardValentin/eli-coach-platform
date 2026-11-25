@@ -27,44 +27,55 @@ export class ExerciseLibraryLibraryExercisesAdapter implements LibraryExercisesP
   }
 
   private libraryExerciseOf(exercise: LibraryExerciseView): LibraryExercise {
-    const termOf = <Term extends string>(
-      vocabulary: readonly Term[],
-      value: string,
-    ): Term => {
-      const term = vocabulary.find((candidate) => candidate === value);
-
-      if (term === undefined) {
-        throw new Error(
-          `The library's exercise ${exercise.name} holds ${value}, outside ${vocabulary.join(", ")}.`,
-        );
-      }
-
-      return term;
-    };
-    const termsOf = <Term extends string>(
-      vocabulary: readonly Term[],
-      values: readonly string[],
-    ): Term[] => values.map((value) => termOf(vocabulary, value));
-
     return {
       id: exercise.exerciseId,
       name: exercise.name,
-      type: termOf(EXERCISE_TYPES, exercise.type),
-      unit: termOf(EXERCISE_UNITS, exercise.unit),
+      type: this.termOf(exercise, EXERCISE_TYPES, exercise.type),
+      unit: this.termOf(exercise, EXERCISE_UNITS, exercise.unit),
       perSide: exercise.perSide,
       pattern:
         exercise.pattern === null
           ? null
-          : termOf(MOVEMENT_PATTERNS, exercise.pattern),
+          : this.termOf(exercise, MOVEMENT_PATTERNS, exercise.pattern),
       role:
-        exercise.role === null ? null : termOf(EXERCISE_ROLES, exercise.role),
-      primaryMuscles: termsOf(MUSCLES, exercise.primaryMuscles),
-      secondaryMuscles: termsOf(MUSCLES, exercise.secondaryMuscles),
-      equipment: termsOf(EQUIPMENT, exercise.equipment),
-      tags: termsOf(EXERCISE_TAGS, exercise.tags),
+        exercise.role === null
+          ? null
+          : this.termOf(exercise, EXERCISE_ROLES, exercise.role),
+      primaryMuscles: this.termsOf(exercise, MUSCLES, exercise.primaryMuscles),
+      secondaryMuscles: this.termsOf(
+        exercise,
+        MUSCLES,
+        exercise.secondaryMuscles,
+      ),
+      equipment: this.termsOf(exercise, EQUIPMENT, exercise.equipment),
+      tags: this.termsOf(exercise, EXERCISE_TAGS, exercise.tags),
       cues: exercise.cues,
       videoPath: exercise.videoPath,
       archived: exercise.archived,
     };
+  }
+
+  private termOf<Term extends string>(
+    exercise: LibraryExerciseView,
+    vocabulary: readonly Term[],
+    value: string,
+  ): Term {
+    const term = vocabulary.find((candidate) => candidate === value);
+
+    if (term === undefined) {
+      throw new Error(
+        `The library's exercise ${exercise.name} holds ${value}, outside ${vocabulary.join(", ")}.`,
+      );
+    }
+
+    return term;
+  }
+
+  private termsOf<Term extends string>(
+    exercise: LibraryExerciseView,
+    vocabulary: readonly Term[],
+    values: readonly string[],
+  ): Term[] {
+    return values.map((value) => this.termOf(exercise, vocabulary, value));
   }
 }
