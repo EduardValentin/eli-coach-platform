@@ -3471,32 +3471,47 @@ test(
     await programBuilder.expectSaved();
     await exerciseLibrary.open();
     await exerciseLibrary.focusRowActionByKeyboard("Back squat", "Edit");
-    const normal = await exerciseLibrary.focusedActionFill();
-    await exerciseLibrary.closeRowMenu();
+    const normalFill = await exerciseLibrary.focusedActionFill();
+    await exerciseLibrary.closeRowMenuAndHint();
 
     // act
     await exerciseLibrary.focusRowActionByKeyboard("Back squat", "Delete");
-    const heldBack = await exerciseLibrary.focusedActionFill();
+    const heldBackFill = await exerciseLibrary.focusedActionFill();
 
     // assert
-    expect(heldBack.fill).toBe(normal.fill);
+    expect(heldBackFill).toBe(normalFill);
     await exerciseLibrary.expectHintShown("Used in 1 program");
 
     // act
-    await exerciseLibrary.pressEnterOnHeldBackAction();
-    await exerciseLibrary.clickHeldBackDelete();
-    await exerciseLibrary.closeRowMenu();
-    await exerciseLibrary.focusRowActionByKeyboard("Calf raise", "Delete");
-    const deletable = await exerciseLibrary.focusedActionFill();
+    await exerciseLibrary.pressEnterOnFocusedAction();
 
     // assert
-    expect(deletable.fill).not.toBe(normal.fill);
+    await exerciseLibrary.expectHeldBackDeleteDidNothing();
 
     // act
-    await page.keyboard.press("Enter");
+    await exerciseLibrary.clickHeldBackDelete();
 
     // assert
+    await exerciseLibrary.expectHeldBackDeleteDidNothing();
+
+    // act
+    await exerciseLibrary.closeRowMenuAndHint();
+    await exerciseLibrary.focusRowActionByKeyboard("Calf raise", "Delete");
+    const deletableFill = await exerciseLibrary.focusedActionFill();
+
+    // assert
+    expect(deletableFill).not.toBe(normalFill);
+
+    // act
+    await exerciseLibrary.pressEnterOnFocusedAction();
+
+    // assert
+    await exerciseLibrary.expectDeleteAsked("Calf raise");
+
+    // act
     await exerciseLibrary.confirmDelete();
+
+    // assert
     await exerciseLibrary.expectToast('"Calf raise" deleted');
   },
 );

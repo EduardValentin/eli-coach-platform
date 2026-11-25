@@ -25,8 +25,6 @@ type SingleChoiceFilter = Exclude<ListingFilter, "Tags">;
 
 type RowAction = "Edit" | "Archive" | "Restore" | "Delete";
 
-export type FocusedActionFill = { fill: string; surface: string };
-
 export type SortableColumn = "Exercise" | "Difficulty";
 
 export type SortDirection = "ascending" | "descending";
@@ -287,33 +285,30 @@ export class ExerciseLibraryPage {
     await this.arrowDownTo(this.rowMenuItem(action));
   }
 
-  async focusedActionFill(): Promise<FocusedActionFill> {
-    return this.page.locator('[role="menuitem"]:focus').evaluate((item) => ({
-      fill: getComputedStyle(item).backgroundColor,
-      surface: getComputedStyle(item.closest('[role="menu"]')!).backgroundColor,
-    }));
+  async focusedActionFill(): Promise<string> {
+    return this.page
+      .locator('[role="menuitem"]:focus')
+      .evaluate((item) => getComputedStyle(item).backgroundColor);
   }
 
   async expectHintShown(reason: string): Promise<void> {
     await expect(this.page.getByText(reason, { exact: true })).toBeVisible();
   }
 
-  async pressEnterOnHeldBackAction(): Promise<void> {
+  async pressEnterOnFocusedAction(): Promise<void> {
     await this.page.keyboard.press("Enter");
-    await expect(this.rowMenu).toBeVisible();
-    await expect(this.deleteDialog).toHaveCount(0);
   }
 
   async clickHeldBackDelete(): Promise<void> {
     await this.rowMenuItem("Delete").click({ force: true });
+  }
+
+  async expectHeldBackDeleteDidNothing(): Promise<void> {
+    await expect(this.rowMenu).toBeVisible();
     await expect(this.deleteDialog).toHaveCount(0);
   }
 
-  async closeRowMenu(): Promise<void> {
-    await this.closeRowMenuAndHint();
-  }
-
-  private async expectDeleteAsked(name: string): Promise<void> {
+  async expectDeleteAsked(name: string): Promise<void> {
     await expect(this.deleteDialog).toHaveAccessibleName(`Delete “${name}”?`);
     await expect(this.deleteDialog).toHaveAccessibleDescription(
       DELETE_DESCRIPTION,
@@ -708,7 +703,7 @@ export class ExerciseLibraryPage {
     await this.closeRowMenuAndHint();
   }
 
-  private async closeRowMenuAndHint(): Promise<void> {
+  async closeRowMenuAndHint(): Promise<void> {
     await expect(async () => {
       await this.page.keyboard.press("Escape");
       await expect(this.rowMenu).toBeHidden({ timeout: ARROW_SETTLE_MS });

@@ -93,10 +93,6 @@ export class LibraryPanel {
     ).toHaveText(chips.map((chip) => new RegExp(chip)));
   }
 
-  async expectPaneAnnounced(message: string | RegExp): Promise<void> {
-    await expect(this.page.getByRole("status")).toHaveText(message);
-  }
-
   async expectNoMatches(): Promise<void> {
     await expect(
       this.page.getByText("No matches", { exact: true }),

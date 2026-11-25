@@ -101,7 +101,7 @@ export class ProgramBuilderPage {
     await expect(handle).toBeFocused();
   }
 
-  async expectAnnounced(message: string): Promise<void> {
+  async expectAnnounced(message: string | RegExp): Promise<void> {
     await expect(this.page.getByRole("status")).toHaveText(message);
   }
 

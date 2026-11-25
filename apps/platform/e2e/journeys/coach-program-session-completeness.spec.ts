@@ -624,29 +624,27 @@ test(
     await sessionCard.openFirstStrengthDay();
     await libraryPanel.expectPaneOpen();
     await liveRegions.startListening();
-
-    // assert
     await liveRegions.expectOnlySpeakerIsThePage();
 
     // act
     await libraryPanel.search("zzz");
 
     // assert
-    await libraryPanel.expectPaneAnnounced("No exercises match");
+    await programBuilder.expectAnnounced("No exercises match");
     await liveRegions.expectSpokenOnce("No exercises match", "page");
 
     // act
     await libraryPanel.search("squat");
 
     // assert
-    await libraryPanel.expectPaneAnnounced(/^\d+ exercises?$/);
+    await programBuilder.expectAnnounced(/^\d+ exercises?$/);
 
     // act
     await sessionCard.openLibraryFor("A · Main lift");
     await libraryPanel.add("Back squat");
 
     // assert
-    await libraryPanel.expectPaneAnnounced(
+    await programBuilder.expectAnnounced(
       "Back squat added to Full Body A · A Main lift",
     );
     await libraryPanel.expectPaneOpen();

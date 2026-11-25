@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
-type Spoken = { where: "drawer" | "page"; hidden: boolean; text: string };
+type Speaker = "drawer" | "page";
+type Spoken = { where: Speaker; hidden: boolean; text: string };
 
 declare global {
   interface Window {
@@ -37,10 +38,7 @@ export class LiveRegions {
     });
   }
 
-  async expectSpokenOnce(
-    message: string,
-    where: "drawer" | "page",
-  ): Promise<void> {
+  async expectSpokenOnce(message: string, where: Speaker): Promise<void> {
     await expect
       .poll(() =>
         this.page.evaluate(
