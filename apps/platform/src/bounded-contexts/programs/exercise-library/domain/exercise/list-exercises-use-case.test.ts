@@ -37,6 +37,8 @@ describe("ListExercisesUseCase", () => {
       add: vi.fn(),
       replace: vi.fn(),
       remove: vi.fn(),
+      replaceVersionUsage: vi.fn(),
+      programCountsOf: vi.fn(),
     } satisfies ExerciseLibraryPort;
     const listExercisesUseCase = new ListExercisesUseCase({
       exerciseLibraryPort: library,

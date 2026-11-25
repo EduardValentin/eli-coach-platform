@@ -11,10 +11,20 @@ export type ExerciseReference = {
   exerciseId: string;
 };
 
+export type ExerciseVersionUsage = {
+  programId: string;
+  versionNumber: number;
+  exerciseIds: readonly string[];
+};
+
+export type ExerciseProgramCounts = ReadonlyMap<string, number>;
+
 export interface ExerciseLibraryPort {
   list(ownerAccountId: string): Promise<Exercise[]>;
   find(reference: ExerciseReference): Promise<Exercise | null>;
   add(exercise: Exercise): Promise<ExerciseAddition>;
   replace(exercise: Exercise): Promise<ExerciseReplacement>;
   remove(reference: ExerciseReference): Promise<ExerciseRemoval>;
+  replaceVersionUsage(usage: ExerciseVersionUsage): Promise<void>;
+  programCountsOf(ownerAccountId: string): Promise<ExerciseProgramCounts>;
 }

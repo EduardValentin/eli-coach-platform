@@ -24,9 +24,11 @@ export { type ExerciseIdsPort } from "./exercise-ids-port";
 export {
   type ExerciseAddition,
   type ExerciseLibraryPort,
+  type ExerciseProgramCounts,
   type ExerciseReference,
   type ExerciseRemoval,
   type ExerciseReplacement,
+  type ExerciseVersionUsage,
 } from "./exercise-library-port";
 export { type ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 export {

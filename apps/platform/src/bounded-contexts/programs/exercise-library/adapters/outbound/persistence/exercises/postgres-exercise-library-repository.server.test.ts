@@ -6,7 +6,10 @@ import {
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { describe, expect, it } from "vitest";
 
-import { exercisesTable } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/schema.server";
+import {
+  exerciseProgramUsagesTable,
+  exercisesTable,
+} from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/schema.server";
 
 import { PostgresExerciseLibraryRepository } from "./postgres-exercise-library-repository.server";
 
@@ -36,6 +39,8 @@ const SQUAT: ExerciseSnapshot = {
 };
 
 const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
+const LUNGE_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+const PROGRAM_ID = "8a7f6e5d-4c3b-4a2f-9e1d-0c9b8a7f6e5d";
 
 const SQUAT_ROW = {
   id: SQUAT.id,
@@ -75,7 +80,9 @@ const OTHER_UNIQUE_VIOLATION = Object.assign(new Error("Failed query"), {
 });
 
 type Write =
-  { insert: unknown; row: unknown } | { update: unknown; row: unknown };
+  | { insert: unknown; row: unknown }
+  | { update: unknown; row: unknown }
+  | { delete: unknown };
 
 function createDatabase(failure?: Error, rows: unknown[] = []) {
   const writes: Write[] = [];
@@ -86,7 +93,18 @@ function createDatabase(failure?: Error, rows: unknown[] = []) {
         where: () => ({
           orderBy: () => Promise.resolve(rows),
         }),
+        innerJoin: () => ({
+          where: () => ({
+            groupBy: () => Promise.resolve(rows),
+          }),
+        }),
       }),
+    }),
+    delete: (table: unknown) => ({
+      where: () => {
+        writes.push({ delete: table });
+        return settle();
+      },
     }),
     insert: (table: unknown) => ({
       values: (row: unknown) => {
@@ -286,5 +304,74 @@ describe("PostgresExerciseLibraryRepository#replace", () => {
 
     // assert
     await expect(replacing).rejects.toBe(failure);
+  });
+});
+
+describe("PostgresExerciseLibraryRepository#replaceVersionUsage", () => {
+  it("removes what the program version used before, then records each exercise it uses now", async () => {
+    // arrange
+    const database = createDatabase();
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
+
+    // act
+    await postgresExerciseLibraryRepository.replaceVersionUsage({
+      programId: PROGRAM_ID,
+      versionNumber: 2,
+      exerciseIds: [SQUAT.id, LUNGE_ID],
+    });
+
+    // assert
+    expect(database.writes).toEqual([
+      { delete: exerciseProgramUsagesTable },
+      {
+        insert: exerciseProgramUsagesTable,
+        row: [
+          { exerciseId: SQUAT.id, programId: PROGRAM_ID, versionNumber: 2 },
+          { exerciseId: LUNGE_ID, programId: PROGRAM_ID, versionNumber: 2 },
+        ],
+      },
+    ]);
+  });
+
+  it("only removes what the program version used before when it uses no exercise now", async () => {
+    // arrange
+    const database = createDatabase();
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
+
+    // act
+    await postgresExerciseLibraryRepository.replaceVersionUsage({
+      programId: PROGRAM_ID,
+      versionNumber: 1,
+      exerciseIds: [],
+    });
+
+    // assert
+    expect(database.writes).toEqual([{ delete: exerciseProgramUsagesTable }]);
+  });
+});
+
+describe("PostgresExerciseLibraryRepository#programCountsOf", () => {
+  it("answers how many programs use each of her exercises", async () => {
+    // arrange
+    const database = createDatabase(undefined, [
+      { exerciseId: SQUAT.id, programCount: 2 },
+      { exerciseId: LUNGE_ID, programCount: 1 },
+    ]);
+    const postgresExerciseLibraryRepository =
+      new PostgresExerciseLibraryRepository(database.client);
+
+    // act
+    const counts =
+      await postgresExerciseLibraryRepository.programCountsOf(COACH_ACCOUNT_ID);
+
+    // assert
+    expect(counts).toEqual(
+      new Map([
+        [SQUAT.id, 2],
+        [LUNGE_ID, 1],
+      ]),
+    );
   });
 });

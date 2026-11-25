@@ -110,6 +110,8 @@ function createUseCase() {
     add: vi.fn(async (): Promise<ExerciseAddition> => "added"),
     replace: vi.fn(),
     remove: vi.fn(),
+    replaceVersionUsage: vi.fn(),
+    programCountsOf: vi.fn(),
   } satisfies ExerciseLibraryPort;
   const incidents = {
     exerciseCreationFailed: vi.fn(),
