@@ -58,6 +58,7 @@ import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
 import { NotificationBell } from "./notification-bell";
 import { LibraryPanel } from "./library-panel";
+import { LiveRegions } from "./live-regions";
 import { NotificationRecords } from "./notification-records";
 import { NutritionLibraryPage } from "./nutrition-library-page";
 import { OnboardingRecords } from "./onboarding-records";
@@ -165,6 +166,7 @@ type PlatformFixtures = {
   programBuilder: ProgramBuilderPage;
   sessionCard: SessionCard;
   libraryPanel: LibraryPanel;
+  liveRegions: LiveRegions;
   coachCheckIns: CoachCheckInsPage;
   coachDashboard: CoachDashboardPage;
   coachMeetingRoom: CoachMeetingRoom;
@@ -569,6 +571,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   libraryPanel: async ({ page }, use) => {
     await use(new LibraryPanel(page));
+  },
+
+  liveRegions: async ({ page }, use) => {
+    await use(new LiveRegions(page));
   },
 
   coachCheckIns: async ({ page }, use) => {

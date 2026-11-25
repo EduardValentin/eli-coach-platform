@@ -50,7 +50,7 @@ export class LibraryPanel {
     await expect(this.drawer).toHaveCount(0);
   }
 
-  async expectDrawerAnnounced(message: string): Promise<void> {
+  async expectDrawerAnnounced(message: string | RegExp): Promise<void> {
     await expect(this.drawer.getByRole("status")).toHaveText(message);
   }
 
@@ -91,6 +91,10 @@ export class LibraryPanel {
         .getByRole("list", { name: "Active filters" })
         .getByRole("listitem"),
     ).toHaveText(chips.map((chip) => new RegExp(chip)));
+  }
+
+  async expectPaneAnnounced(message: string | RegExp): Promise<void> {
+    await expect(this.page.getByRole("status")).toHaveText(message);
   }
 
   async expectNoMatches(): Promise<void> {

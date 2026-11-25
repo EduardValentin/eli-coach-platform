@@ -25,6 +25,8 @@ type SingleChoiceFilter = Exclude<ListingFilter, "Tags">;
 
 type RowAction = "Edit" | "Archive" | "Restore" | "Delete";
 
+export type FocusedActionFill = { fill: string; surface: string };
+
 export type SortableColumn = "Exercise" | "Difficulty";
 
 export type SortDirection = "ascending" | "descending";
@@ -264,6 +266,14 @@ export class ExerciseLibraryPage {
   }
 
   private async chooseRowActionWithKeyboard(name: string, action: RowAction) {
+    await this.focusRowActionByKeyboard(name, action);
+    await this.page.keyboard.press("Enter");
+  }
+
+  async focusRowActionByKeyboard(
+    name: string,
+    action: RowAction,
+  ): Promise<void> {
     await expect(async () => {
       if (!(await this.rowMenu.isVisible())) {
         await this.tabFromHeadingTo(this.actionsTriggerOf(name));
@@ -275,7 +285,32 @@ export class ExerciseLibraryPage {
     }).toPass();
     await expect(this.rowMenu.getByRole("menuitem").first()).toBeFocused();
     await this.arrowDownTo(this.rowMenuItem(action));
+  }
+
+  async focusedActionFill(): Promise<FocusedActionFill> {
+    return this.page.locator('[role="menuitem"]:focus').evaluate((item) => ({
+      fill: getComputedStyle(item).backgroundColor,
+      surface: getComputedStyle(item.closest('[role="menu"]')!).backgroundColor,
+    }));
+  }
+
+  async expectHintShown(reason: string): Promise<void> {
+    await expect(this.page.getByText(reason, { exact: true })).toBeVisible();
+  }
+
+  async pressEnterOnHeldBackAction(): Promise<void> {
     await this.page.keyboard.press("Enter");
+    await expect(this.rowMenu).toBeVisible();
+    await expect(this.deleteDialog).toHaveCount(0);
+  }
+
+  async clickHeldBackDelete(): Promise<void> {
+    await this.rowMenuItem("Delete").click({ force: true });
+    await expect(this.deleteDialog).toHaveCount(0);
+  }
+
+  async closeRowMenu(): Promise<void> {
+    await this.closeRowMenuAndHint();
   }
 
   private async expectDeleteAsked(name: string): Promise<void> {

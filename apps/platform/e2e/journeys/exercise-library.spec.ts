@@ -3434,3 +3434,69 @@ test(
     await exerciseLibrary.expectListedInOrder(["Back squat"]);
   },
 );
+
+test(
+  "a held-back Delete takes the menu's own focus fill by keyboard, stays held back on Enter and click, and a deletable one keeps its red focus",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    exerciseLibrary,
+    exerciseRequests,
+    libraryPanel,
+    page,
+    programBuilder,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    sessionCard,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(SESSION_LIBRARY);
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await setTallDesktopViewport(page);
+    await programBuilder.openBlockFromSections(2, "Hypertrophy");
+    await sessionCard.openFirstStrengthDay();
+    await sessionCard.openLibraryFor("A · Main lift");
+    await libraryPanel.add("Back squat");
+    await programBuilder.expectSaved();
+    await exerciseLibrary.open();
+    await exerciseLibrary.focusRowActionByKeyboard("Back squat", "Edit");
+    const normal = await exerciseLibrary.focusedActionFill();
+    await exerciseLibrary.closeRowMenu();
+
+    // act
+    await exerciseLibrary.focusRowActionByKeyboard("Back squat", "Delete");
+    const heldBack = await exerciseLibrary.focusedActionFill();
+
+    // assert
+    expect(heldBack.fill).toBe(normal.fill);
+    await exerciseLibrary.expectHintShown("Used in 1 program");
+
+    // act
+    await exerciseLibrary.pressEnterOnHeldBackAction();
+    await exerciseLibrary.clickHeldBackDelete();
+    await exerciseLibrary.closeRowMenu();
+    await exerciseLibrary.focusRowActionByKeyboard("Calf raise", "Delete");
+    const deletable = await exerciseLibrary.focusedActionFill();
+
+    // assert
+    expect(deletable.fill).not.toBe(normal.fill);
+
+    // act
+    await page.keyboard.press("Enter");
+
+    // assert
+    await exerciseLibrary.confirmDelete();
+    await exerciseLibrary.expectToast('"Calf raise" deleted');
+  },
+);

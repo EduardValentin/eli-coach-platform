@@ -893,6 +893,13 @@ export class ProgramBuilderPage {
     await this.page.getByRole("button", { name: "Client profile" }).click();
   }
 
+  async openLibraryFromDraftActions(): Promise<void> {
+    await this.page.getByRole("button", { name: "Draft actions" }).click();
+    await this.page
+      .getByRole("menuitem", { name: "Exercise library", exact: true })
+      .click();
+  }
+
   async openClientProfileFromDraftActions(): Promise<void> {
     await this.page.getByRole("button", { name: "Draft actions" }).click();
     await this.page.getByRole("menuitem", { name: "Client profile" }).click();

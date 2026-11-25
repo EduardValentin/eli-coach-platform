@@ -491,3 +491,165 @@ test(
     );
   },
 );
+
+test(
+  "on a phone the open drawer speaks its own announcements, and an add that closes it is spoken once by the page after it closes",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    exerciseRequests,
+    libraryPanel,
+    liveRegions,
+    page,
+    programBuilder,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    sessionCard,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted([
+      ...SESSION_LIBRARY,
+      ...WARM_UP_LIBRARY,
+    ]);
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await setPhoneViewport(page);
+    await programBuilder.openSectionsDrawer();
+    await programBuilder.openBlockFromDrawer(2, "Hypertrophy");
+    await programBuilder.chooseDayTab("Monday");
+    await sessionCard.openSessionOfChosenDay();
+    await liveRegions.startListening();
+
+    // act
+    await programBuilder.openLibraryFromDraftActions();
+
+    // assert
+    await libraryPanel.expectDrawerOpen();
+    await liveRegions.expectOnlySpeakerIsTheDrawer();
+
+    // act
+    await libraryPanel.search("squat");
+
+    // assert
+    await libraryPanel.expectDrawerAnnounced(/^\d+ exercises?$/);
+    await liveRegions.expectOnlySpeakerIsTheDrawer();
+
+    // act
+    await libraryPanel.search("zzz");
+
+    // assert
+    await libraryPanel.expectDrawerAnnounced("No exercises match");
+    await liveRegions.expectSpokenOnce("No exercises match", "drawer");
+
+    // act
+    await libraryPanel.search("");
+    await libraryPanel.add("Back squat");
+
+    // assert
+    await libraryPanel.expectDrawerOpen();
+    await libraryPanel.expectDrawerAnnounced("Back squat added");
+    await liveRegions.expectSpokenOnce("Back squat added", "drawer");
+
+    // act
+    await libraryPanel.closeDrawer();
+    await sessionCard.openLibraryForWarmUp();
+    await libraryPanel.add("Hip circles");
+
+    // assert
+    await libraryPanel.expectDrawerClosed();
+    await liveRegions.expectOnlySpeakerIsThePage();
+    await programBuilder.expectAnnounced(
+      "Hip circles added to Full Body A · Warm-up",
+    );
+    await liveRegions.expectSpokenOnce(
+      "Hip circles added to Full Body A · Warm-up",
+      "page",
+    );
+
+    // act
+    await sessionCard.openLibraryForWarmUp();
+    await libraryPanel.add("Hip circles");
+
+    // assert
+    await libraryPanel.expectDrawerAnnounced(
+      "Hip circles is already in the warm-up",
+    );
+    await liveRegions.expectSpokenOnce(
+      "Hip circles is already in the warm-up",
+      "drawer",
+    );
+  },
+);
+
+test(
+  "on a wide screen the library is a pane and the page's own region announces its count and its adds",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    exerciseRequests,
+    libraryPanel,
+    liveRegions,
+    page,
+    programBuilder,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    sessionCard,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(SESSION_LIBRARY);
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await setTallDesktopViewport(page);
+    await programBuilder.openBlockFromSections(2, "Hypertrophy");
+    await sessionCard.openFirstStrengthDay();
+    await libraryPanel.expectPaneOpen();
+    await liveRegions.startListening();
+
+    // assert
+    await liveRegions.expectOnlySpeakerIsThePage();
+
+    // act
+    await libraryPanel.search("zzz");
+
+    // assert
+    await libraryPanel.expectPaneAnnounced("No exercises match");
+    await liveRegions.expectSpokenOnce("No exercises match", "page");
+
+    // act
+    await libraryPanel.search("squat");
+
+    // assert
+    await libraryPanel.expectPaneAnnounced(/^\d+ exercises?$/);
+
+    // act
+    await sessionCard.openLibraryFor("A · Main lift");
+    await libraryPanel.add("Back squat");
+
+    // assert
+    await libraryPanel.expectPaneAnnounced(
+      "Back squat added to Full Body A · A Main lift",
+    );
+    await libraryPanel.expectPaneOpen();
+    await liveRegions.expectOnlySpeakerIsThePage();
+  },
+);
