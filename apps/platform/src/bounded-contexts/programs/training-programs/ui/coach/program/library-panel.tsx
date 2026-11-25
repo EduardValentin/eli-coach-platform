@@ -48,7 +48,11 @@ import {
   musclesAndEquipmentText,
 } from "~/bounded-contexts/programs/training-programs/ui/shared/program-view/program-view";
 
-import { useEditorAnnouncer } from "./editor-announcer";
+import {
+  AnnouncementRegion,
+  useAnnouncement,
+  useEditorAnnouncer,
+} from "./editor-announcer";
 import { IconActionButton } from "./icon-action-button";
 import { MOVEMENT_PATTERN_LABELS } from "./movement-pattern-labels";
 import { OptionSelect } from "./option-select";
@@ -118,8 +122,17 @@ function filterLabel(filter: ActiveFilter): string {
   return "Bodyweight";
 }
 
-function useCountAnnouncement(count: number, selection: LibrarySelection) {
-  const announce = useEditorAnnouncer();
+type CountAnnouncement = {
+  announce: (message: string) => void;
+  count: number;
+  selection: LibrarySelection;
+};
+
+function useCountAnnouncement({
+  announce,
+  count,
+  selection,
+}: CountAnnouncement) {
   const firstRender = useRef(true);
   const pendingCountTimer = useRef<number>(undefined);
 
@@ -446,7 +459,8 @@ export function LibraryPanel({
 }: LibraryPanelProps) {
   const [selection, setSelection] = useState(LibrarySelection.initial);
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
-  const announce = useEditorAnnouncer();
+  const announceOnPage = useEditorAnnouncer();
+  const drawerAnnouncement = useAnnouncement();
   const focusLater = usePendingFocus();
   const content = useRef<HTMLDivElement>(null);
   const filtersTrigger = useRef<HTMLButtonElement>(null);
@@ -458,7 +472,15 @@ export function LibraryPanel({
   }
   const shown = selection.offered(libraryExercises, libraryEquipment);
   const panelFilters = selection.panelFilters();
-  const countAnnouncement = useCountAnnouncement(shown.length, selection);
+  const isDrawer = presentation === "drawer";
+  // A modal drawer hides the page's live region, so it speaks from its own while it is open.
+  const announce = isDrawer ? drawerAnnouncement.announce : announceOnPage;
+  const addClosesDrawer = isDrawer && purpose !== null;
+  const countAnnouncement = useCountAnnouncement({
+    announce,
+    count: shown.length,
+    selection,
+  });
 
   function add(exercise: LibraryExercise) {
     const refusal = onAdd(exercise);
@@ -468,7 +490,8 @@ export function LibraryPanel({
 
       return;
     }
-    announce(
+    const announceAdd = addClosesDrawer ? announceOnPage : announce;
+    announceAdd(
       purpose
         ? `${exercise.name} added to ${purpose.destination}`
         : `${exercise.name} added`,
@@ -501,6 +524,9 @@ export function LibraryPanel({
       presentation={presentation}
     >
       <div className="contents" ref={content}>
+        {isDrawer && (
+          <AnnouncementRegion message={drawerAnnouncement.message} />
+        )}
         <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
           <LibraryHeading headingId={headingId} presentation={presentation} />
           {purpose && (

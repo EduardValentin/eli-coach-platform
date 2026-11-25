@@ -920,3 +920,96 @@ describe("the library as a pane or a drawer", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("the library drawer's announcements", () => {
+  function drawer(): HTMLElement {
+    return screen.getByRole("dialog", { name: "Exercise library" });
+  }
+
+  async function renderNarrowPanel(arrangement: Arrangement = {}) {
+    stubViewport("narrow");
+
+    return renderPanel(arrangement);
+  }
+
+  it("speaks a refused add from a live region inside the drawer, which stays open", async () => {
+    // arrange
+    const { user } = await renderNarrowPanel({ refusal: "already-in-warm-up" });
+    await user.click(screen.getByRole("button", { name: "Add to warm-up" }));
+
+    // act
+    await user.click(
+      within(drawer()).getByRole("button", { name: "Add Hip Circles" }),
+    );
+
+    // assert
+    await waitFor(() =>
+      expect(within(drawer()).getByRole("status")).toHaveTextContent(
+        "Hip Circles is already in the warm-up",
+      ),
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+
+  it("speaks the count after a search from inside the drawer", async () => {
+    // arrange
+    const { user } = await renderNarrowPanel();
+    await user.click(screen.getByRole("button", { name: "Toggle library" }));
+
+    // act
+    await user.type(
+      within(drawer()).getByRole("searchbox", { name: "Search exercises" }),
+      "zzz",
+    );
+
+    // assert
+    await waitFor(
+      () =>
+        expect(within(drawer()).getByRole("status")).toHaveTextContent(
+          "No exercises match",
+        ),
+      { timeout: 2000 },
+    );
+  });
+
+  it("speaks an add that leaves the drawer open from inside the drawer", async () => {
+    // arrange
+    const { user } = await renderNarrowPanel();
+    await user.click(screen.getByRole("button", { name: "Toggle library" }));
+
+    // act
+    await user.click(
+      within(drawer()).getByRole("button", { name: "Add Push-Up" }),
+    );
+
+    // assert
+    await waitFor(() =>
+      expect(within(drawer()).getByRole("status")).toHaveTextContent(
+        "Push-Up added",
+      ),
+    );
+    expect(drawer()).toBeInTheDocument();
+  });
+
+  it("hands the announcement of an add that closes the drawer to the page, once", async () => {
+    // arrange
+    const { user } = await renderNarrowPanel();
+    await user.click(screen.getByRole("button", { name: "Add to warm-up" }));
+
+    // act
+    await user.click(
+      within(drawer()).getByRole("button", { name: "Add Hip Circles" }),
+    );
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: "Exercise library" }),
+    ).not.toBeInTheDocument();
+    const copy = `Hip Circles added to ${SESSION.name} · Warm-up`;
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(copy),
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getAllByText(copy)).toHaveLength(1);
+  });
+});

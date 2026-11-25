@@ -77,7 +77,10 @@ function RowMenuItem(props: {
   const item = (
     <DropdownMenuItem
       aria-disabled={flagged ? true : undefined}
-      className={cn({ "aria-disabled:opacity-100": flagged })}
+      className={cn({
+        "aria-disabled:opacity-100 data-[variant=destructive]:focus:bg-primary-soft":
+          flagged,
+      })}
       data-parity={`row-action-${name}`}
       disabled={disabled}
       onSelect={chooseAction(action)}

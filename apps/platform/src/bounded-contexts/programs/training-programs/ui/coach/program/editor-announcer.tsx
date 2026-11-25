@@ -10,19 +10,31 @@ type Announce = (message: string) => void;
 
 const EditorAnnouncerContext = createContext<Announce>(() => {});
 
-export function EditorAnnouncerProvider({ children }: { children: ReactNode }) {
+export function useAnnouncement() {
   const [message, setMessage] = useState("");
   const announce = useCallback<Announce>((next) => {
     setMessage("");
     requestAnimationFrame(() => setMessage(next));
   }, []);
 
+  return { announce, message };
+}
+
+export function AnnouncementRegion({ message }: { message: string }) {
+  return (
+    <p className="sr-only" role="status">
+      {message}
+    </p>
+  );
+}
+
+export function EditorAnnouncerProvider({ children }: { children: ReactNode }) {
+  const { announce, message } = useAnnouncement();
+
   return (
     <EditorAnnouncerContext.Provider value={announce}>
       {children}
-      <p className="sr-only" role="status">
-        {message}
-      </p>
+      <AnnouncementRegion message={message} />
     </EditorAnnouncerContext.Provider>
   );
 }

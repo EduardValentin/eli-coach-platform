@@ -333,6 +333,50 @@ describe("a row menu action held back with a hint", () => {
     expect(screen.getByText("Delete")).toHaveClass("opacity-50");
   });
 
+  it("takes the menu's own focus fill instead of the faint red tint of a destructive item", async () => {
+    // arrange
+    const { trigger, user } = renderHeldBackMenu();
+
+    // act
+    await openMenu(user, trigger);
+
+    // assert
+    expect(screen.getByRole("menuitem", { name: "Delete" })).toHaveClass(
+      "data-[variant=destructive]:focus:bg-primary-soft",
+    );
+  });
+
+  it("keeps the red focus tint on a destructive item that can run", async () => {
+    // arrange
+    render(
+      <main>
+        <RowActionsMenu
+          actions={[
+            {
+              icon: Trash2,
+              label: "Delete",
+              name: "delete",
+              onSelect: vi.fn(),
+              tone: "destructive",
+            },
+          ]}
+          label="More actions"
+        />
+      </main>,
+    );
+
+    // act
+    await openMenu(
+      userEvent.setup(),
+      screen.getByRole("button", { name: "More actions" }),
+    );
+
+    // assert
+    expect(screen.getByRole("menuitem", { name: "Delete" })).not.toHaveClass(
+      "data-[variant=destructive]:focus:bg-primary-soft",
+    );
+  });
+
   it("explains itself below the item, aligned to its trailing end, on hover", async () => {
     // arrange
     const { trigger, user } = renderHeldBackMenu();
