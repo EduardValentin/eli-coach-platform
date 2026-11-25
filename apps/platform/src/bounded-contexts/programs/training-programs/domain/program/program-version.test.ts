@@ -159,3 +159,150 @@ describe("ProgramVersion.firstDraft", () => {
     });
   });
 });
+
+function withFirstSession(change: (session: Session) => Session) {
+  return firstBlockWithSessions(suggestedContent(), ([first, ...rest]) => [
+    change(first),
+    ...rest,
+  ]);
+}
+
+function placed(
+  exerciseId: string,
+  placement: Partial<ExerciseRow>,
+): ExerciseRow {
+  return { ...row(exerciseId), ...placement };
+}
+
+describe("ProgramVersion.isWellFormed", () => {
+  it("accepts a session with one main lift, one secondary, an accessory superset, two substitutions and four warm-up exercises", () => {
+    // arrange
+    const content = withFirstSession((session) => ({
+      ...session,
+      warmUp: {
+        items: ["hips", "ankles", "cat-cow", "thoracic"].map((id) => ({
+          id,
+          exerciseId: id,
+          sets: 1,
+          seconds: 45,
+        })),
+      },
+      coolDown: {
+        enabled: false,
+        items: [{ id: "c1", exerciseId: "pigeon", seconds: 30 }],
+      },
+      rows: [
+        placed("squat", { slot: "A", substitutions: ["goblet", "leg-press"] }),
+        placed("hinge", { slot: "B" }),
+        placed("press", { slot: "C", supersetGroup: "g" }),
+        placed("row", { slot: "C", supersetGroup: "g" }),
+        placed("plank", { slot: "D", supersetGroup: "h" }),
+      ],
+    }));
+
+    // act
+    const wellFormed = ProgramVersion.isWellFormed(content);
+
+    // assert
+    expect(wellFormed).toBe(true);
+  });
+
+  it("refuses two exercises in the main lift or the secondary", () => {
+    // arrange
+    const twoMainLifts = withFirstSession((session) => ({
+      ...session,
+      rows: [placed("squat", { slot: "A" }), placed("hinge", { slot: "A" })],
+    }));
+    const twoSecondaries = withFirstSession((session) => ({
+      ...session,
+      rows: [placed("lunge", { slot: "B" }), placed("hinge", { slot: "B" })],
+    }));
+
+    // act
+    const answers = [twoMainLifts, twoSecondaries].map((content) =>
+      ProgramVersion.isWellFormed(content),
+    );
+
+    // assert
+    expect(answers).toEqual([false, false]);
+  });
+
+  it("refuses a superset outside the accessories and the core", () => {
+    // arrange
+    const content = withFirstSession((session) => ({
+      ...session,
+      rows: [placed("squat", { slot: "A", supersetGroup: "g" })],
+    }));
+
+    // act
+    const wellFormed = ProgramVersion.isWellFormed(content);
+
+    // assert
+    expect(wellFormed).toBe(false);
+  });
+
+  it("refuses more than two substitutions, or the row's own exercise as one", () => {
+    // arrange
+    const three = withFirstSession((session) => ({
+      ...session,
+      rows: [placed("squat", { substitutions: ["a", "b", "c"] })],
+    }));
+    const itself = withFirstSession((session) => ({
+      ...session,
+      rows: [placed("squat", { substitutions: ["squat"] })],
+    }));
+
+    // act
+    const answers = [three, itself].map((content) =>
+      ProgramVersion.isWellFormed(content),
+    );
+
+    // assert
+    expect(answers).toEqual([false, false]);
+  });
+
+  it("refuses more than four warm-up exercises, or one exercise twice in the warm-up or the cool-down", () => {
+    // arrange
+    const fiveWarmUps = withFirstSession((session) => ({
+      ...session,
+      warmUp: {
+        items: ["a", "b", "c", "d", "e"].map((id) => ({
+          id,
+          exerciseId: id,
+          sets: 1,
+          seconds: 45,
+        })),
+      },
+    }));
+    const warmUpTwice = withFirstSession((session) => ({
+      ...session,
+      warmUp: {
+        items: ["w1", "w2"].map((id) => ({
+          id,
+          exerciseId: "hips",
+          sets: 1,
+          seconds: 45,
+        })),
+      },
+    }));
+    const coolDownTwice = withFirstSession((session) => ({
+      ...session,
+      coolDown: {
+        enabled: true,
+        items: ["c1", "c2"].map((id) => ({
+          id,
+          exerciseId: "pigeon",
+          seconds: 30,
+        })),
+      },
+    }));
+
+    // act
+    const answers = [fiveWarmUps, warmUpTwice, coolDownTwice].map((content) =>
+      ProgramVersion.isWellFormed(content),
+    );
+
+    // assert
+    expect(answers).toEqual([false, false, false]);
+  });
+});
