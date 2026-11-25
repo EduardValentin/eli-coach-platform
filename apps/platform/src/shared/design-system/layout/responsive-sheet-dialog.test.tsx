@@ -405,3 +405,95 @@ describe("ResponsiveSheetDialog with a shown header", () => {
     },
   );
 });
+
+type MediaSheetOptions = {
+  dismissal?: "allowed" | "locked";
+  sheetClose?: "none" | "shown";
+  width?: "full" | "media";
+};
+
+function renderMediaSheet(
+  viewportWidth: number,
+  { dismissal, sheetClose, width }: MediaSheetOptions,
+) {
+  viewportIs(viewportWidth);
+  render(
+    <MotionConfig reducedMotion="always">
+      <ResponsiveSheetDialog
+        dismissal={dismissal}
+        onOpenChange={() => {}}
+        open
+        sheetClose={sheetClose}
+        title="Pick exercise"
+        width={width}
+      >
+        <SheetDialogHeader title="Pick exercise" />
+        <p>Library</p>
+      </ResponsiveSheetDialog>
+    </MotionConfig>,
+  );
+}
+
+describe("ResponsiveSheetDialog media width", () => {
+  it("widens the dialog for media on a wide screen", async () => {
+    // arrange
+    // act
+    renderMediaSheet(DESKTOP_WIDTH, { width: "media" });
+
+    // assert
+    const surface = await screen.findByRole("dialog", {
+      name: "Pick exercise",
+    });
+    expect(surface).toHaveClass("sm:max-w-4xl");
+    expect(surface).not.toHaveClass("sm:max-w-2xl");
+  });
+});
+
+describe("ResponsiveSheetDialog sheet close", () => {
+  it("offers a close button in the header of the phone sheet when asked", async () => {
+    // arrange
+    // act
+    renderMediaSheet(PHONE_WIDTH, { sheetClose: "shown" });
+
+    // assert
+    const close = await screen.findByRole("button", { name: "Close" });
+    expect(close).toHaveClass("absolute", "top-4", "right-3");
+    expect(close.parentElement).toBe(
+      screen.getByRole("heading", { name: "Pick exercise" }).parentElement,
+    );
+  });
+
+  it("leaves the phone sheet without a close button by default", async () => {
+    // arrange
+    // act
+    renderMediaSheet(PHONE_WIDTH, {});
+
+    // assert
+    await screen.findByRole("dialog", { name: "Pick exercise" });
+    expect(
+      screen.queryByRole("button", { name: "Close" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers no close button on the phone sheet while dismissal is locked", async () => {
+    // arrange
+    // act
+    renderMediaSheet(PHONE_WIDTH, { dismissal: "locked", sheetClose: "shown" });
+
+    // assert
+    await screen.findByRole("dialog", { name: "Pick exercise" });
+    expect(
+      screen.queryByRole("button", { name: "Close" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the wide dialog's single frame close button", async () => {
+    // arrange
+    // act
+    renderMediaSheet(DESKTOP_WIDTH, { sheetClose: "shown" });
+
+    // assert
+    await screen.findByRole("dialog", { name: "Pick exercise" });
+    expect(screen.getAllByRole("button", { name: "Close" })).toHaveLength(1);
+  });
+});

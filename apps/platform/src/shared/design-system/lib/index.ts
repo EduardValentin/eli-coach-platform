@@ -31,8 +31,10 @@ export {
   EYEBROW_CLASS,
   LABEL_CLASS,
   PORTAL_PAGE_TITLE_CLASS,
+  SCREEN_CARD_TITLE_CLASS,
   VALUE_CLASS,
   VALUE_LG_CLASS,
+  WIDGET_SUBHEADING_CLASS,
   WIDGET_TITLE_CLASS,
 } from "./typography";
 export { toggled } from "./toggled";

@@ -16,6 +16,9 @@ type PortalBackLinkProps = {
 
 const GAP_CLASS: Record<BackLinkGap, string> = { page: "mb-8", title: "mb-1" };
 
+export const BACK_LINK_CLASS =
+  "relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary";
+
 export function PortalBackLink({
   to,
   onClick,
@@ -25,10 +28,9 @@ export function PortalBackLink({
 }: PortalBackLinkProps) {
   const link = (
     <Link
-      className={cn(
-        "relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary",
-        { [GAP_CLASS[gap]]: navigationLabel === undefined },
-      )}
+      className={cn(BACK_LINK_CLASS, {
+        [GAP_CLASS[gap]]: navigationLabel === undefined,
+      })}
       to={to}
       onClick={onClick}
     >

@@ -108,6 +108,19 @@ describe("SheetDialogHeader", () => {
     expect(band).not.toHaveClass("border-border-subtle");
   });
 
+  it("shows a caller's eyebrow above the title", () => {
+    // arrange
+    // act
+    renderInDialog(
+      <SheetDialogHeader eyebrow={<p>Strength day</p>} title="Add exercise" />,
+    );
+
+    // assert
+    const eyebrow = screen.getByText("Strength day");
+    const title = screen.getByRole("heading", { name: "Add exercise" });
+    expect(eyebrow.nextElementSibling).toBe(title);
+  });
+
   it("leaves the description out when there is none", () => {
     // arrange
     // act

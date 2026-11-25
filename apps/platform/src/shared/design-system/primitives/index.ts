@@ -14,6 +14,11 @@ export { Checkbox } from "./checkbox";
 export { CheckboxChip } from "./checkbox-chip";
 export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
+export {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./collapsible";
 export { DateTimeLabel } from "./date-time-label";
 export { DisabledActionHint } from "./disabled-action-hint";
 export { DismissibleNotice } from "./dismissible-notice";
@@ -71,4 +76,10 @@ export {
 } from "./table";
 export { TagInput } from "./tag-input";
 export { Textarea } from "./textarea";
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 export { ValueTile } from "./value-tile";

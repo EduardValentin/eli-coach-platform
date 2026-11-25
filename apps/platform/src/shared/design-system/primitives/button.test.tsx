@@ -395,6 +395,82 @@ describe("button marked aria-invalid", () => {
   );
 });
 
+describe("button disclosure variant", () => {
+  it("renders the prototype's disclosure look with regular weight", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "xs", variant: "disclosure" }).split(
+      " ",
+    );
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "font-normal",
+        "text-text-secondary",
+        "not-aria-disabled:hover:bg-surface-quiet",
+        "not-aria-disabled:hover:text-text-primary",
+        "data-[state=open]:text-text-primary",
+        "[&>svg:last-child]:transition-transform",
+        "motion-reduce:[&>svg:last-child]:transition-none",
+        "data-[state=open]:[&>svg:last-child]:rotate-180",
+      ]),
+    );
+    expect(classes).not.toContain("font-medium");
+  });
+
+  it("lets an explicit weight replace the regular weight", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({
+      variant: "disclosure",
+      weight: "semibold",
+    }).split(" ");
+
+    // assert
+    expect(classes).toContain("font-semibold");
+    expect(classes).not.toContain("font-normal");
+  });
+});
+
+describe("button drop variant", () => {
+  it("renders the prototype's dashed drop target with its drag states", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "sm", variant: "drop" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "w-full",
+        "border",
+        "border-dashed",
+        "border-control-border-soft",
+        "bg-surface-subtle",
+        "text-text-secondary",
+        "not-aria-disabled:hover:border-primary",
+        "not-aria-disabled:hover:bg-primary-soft",
+        "not-aria-disabled:hover:text-primary",
+        "data-[drop=ready]:border-primary/40",
+        "data-[drop=ready]:bg-primary-soft",
+        "data-[drop=over]:border-primary",
+        "data-[drop=over]:bg-primary-soft",
+        "data-[drop=over]:text-primary",
+      ]),
+    );
+  });
+
+  it("sets the medium drop button's text to small", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "md", variant: "drop" }).split(" ");
+
+    // assert
+    expect(classes).toContain("text-sm");
+    expect(classes).not.toContain("text-base");
+  });
+});
+
 describe("glass button", () => {
   it("lays a dark tint under its white label so the label stays readable over any photo", () => {
     // arrange

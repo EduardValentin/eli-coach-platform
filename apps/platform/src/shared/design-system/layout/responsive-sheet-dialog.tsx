@@ -10,10 +10,15 @@ import {
   type DialogDismissal,
 } from "../lib/dialog-frame";
 import { BottomSheet } from "./bottom-sheet";
-import { ShownHeaderContext, type ShownHeader } from "./sheet-dialog-parts";
+import {
+  SheetCloseContext,
+  ShownHeaderContext,
+  type SheetClose,
+  type ShownHeader,
+} from "./sheet-dialog-parts";
 import { useIsMobileViewport } from "../lib/viewport";
 
-type SheetDialogWidth = "full" | "fit";
+type SheetDialogWidth = "full" | "fit" | "media";
 
 type ResponsiveSheetDialogProps = {
   children: ReactNode;
@@ -23,6 +28,7 @@ type ResponsiveSheetDialogProps = {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   returnFocusTo?: RefObject<HTMLElement | null>;
+  sheetClose?: SheetClose;
   title: string;
   width?: SheetDialogWidth;
 };
@@ -30,6 +36,7 @@ type ResponsiveSheetDialogProps = {
 const DIALOG_WIDTH_CLASS: Record<SheetDialogWidth, string> = {
   full: "",
   fit: "sm:w-fit",
+  media: "sm:max-w-4xl",
 };
 
 export function ResponsiveSheetDialog({
@@ -40,6 +47,7 @@ export function ResponsiveSheetDialog({
   onOpenChange,
   open,
   returnFocusTo,
+  sheetClose = "none",
   title,
   width = "full",
 }: ResponsiveSheetDialogProps) {
@@ -64,7 +72,11 @@ export function ResponsiveSheetDialog({
         returnFocusTo={returnFocusTo}
         title={title}
       >
-        {content}
+        <SheetCloseContext.Provider
+          value={dismissal === "allowed" ? sheetClose : "none"}
+        >
+          {content}
+        </SheetCloseContext.Provider>
       </BottomSheet>
     );
   }

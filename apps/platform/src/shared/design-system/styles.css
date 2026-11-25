@@ -167,6 +167,37 @@
   --color-status-pending-soft: rgba(172, 80, 44, 0.1);
   --color-status-pending-ink: #4e2414;
 
+  --effort-high: var(--color-feedback-danger);
+  --effort-mid: var(--color-tint-amber);
+  --effort-low: var(--color-feedback-success);
+  --effort-ink: var(--color-text-primary);
+  /* The three steps of the effort scale, shared by RIR and cardio intensity: a low step
+     (RIR 3 or more, Easy) and a mid step (RIR 2, Moderate) as ink on a tint, and the
+     high step (RIR 0–1, Hard) as a fill under surface-base text. The amber tint takes 16%
+     where the green takes 12% so the two tints land at the same lightness on white. */
+  --color-effort-low-ink: color-mix(
+    in oklch,
+    var(--effort-ink) 75%,
+    var(--effort-low)
+  );
+  --color-effort-low-soft: color-mix(
+    in oklch,
+    var(--effort-low) 12%,
+    transparent
+  );
+  /* Darker than the 75% mix the other inks use, so a 14px semibold RIR 2 reaches APCA Lc 90 on its tint. */
+  --color-effort-mid-ink: #342416;
+  --color-effort-mid-soft: color-mix(
+    in oklch,
+    var(--effort-mid) 16%,
+    transparent
+  );
+  --color-effort-high-fill: color-mix(
+    in oklch,
+    var(--effort-ink) 30%,
+    var(--effort-high)
+  );
+
   --color-training-strength: #c81d6b;
   --color-training-strength-soft: rgba(200, 29, 107, 0.1);
   --color-training-recovery: #00796b;
@@ -425,6 +456,11 @@
   --color-status-pending: var(--color-status-pending);
   --color-status-pending-soft: var(--color-status-pending-soft);
   --color-status-pending-ink: var(--color-status-pending-ink);
+  --color-effort-low-ink: var(--color-effort-low-ink);
+  --color-effort-low-soft: var(--color-effort-low-soft);
+  --color-effort-mid-ink: var(--color-effort-mid-ink);
+  --color-effort-mid-soft: var(--color-effort-mid-soft);
+  --color-effort-high-fill: var(--color-effort-high-fill);
 
   --color-training-strength: var(--color-training-strength);
   --color-training-strength-soft: var(--color-training-strength-soft);
