@@ -28,7 +28,18 @@ function suggestedContent(): ProgramContent {
 }
 
 function row(exerciseId: string): ExerciseRow {
-  return { id: `row-${exerciseId}`, exerciseId };
+  return {
+    id: `row-${exerciseId}`,
+    exerciseId,
+    slot: "A",
+    startSets: [],
+    restSeconds: 60,
+    lastSetTechnique: "none",
+    substitutions: [],
+    progression: { kind: "double" },
+    cues: "",
+    touched: [],
+  };
 }
 
 function withRows(session: Session, rows: ExerciseRow[]): Session {

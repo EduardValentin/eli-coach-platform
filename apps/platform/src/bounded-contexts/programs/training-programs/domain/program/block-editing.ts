@@ -5,6 +5,7 @@ import {
   type CalendarEntry,
   type CardioSession,
 } from "./program-content";
+import { RowDefaults, type DeloadSwitch } from "./row-defaults";
 import { SplitTemplate } from "./split-template";
 import type {
   BlockType,
@@ -26,7 +27,11 @@ type BlockEditingOptions = { newId: () => string };
 const NEW_CARDIO_NAME = "Cardio";
 
 export class BlockEditing {
-  constructor(private readonly options: BlockEditingOptions) {}
+  private readonly rowDefaults: RowDefaults;
+
+  constructor(private readonly options: BlockEditingOptions) {
+    this.rowDefaults = new RowDefaults(options);
+  }
 
   blockWithDay(block: Block, day: Weekday, choice: DayChoice): Block {
     const { entry, newCardio } = this.placementFor(block, day, choice);
@@ -119,8 +124,17 @@ export class BlockEditing {
     };
   }
 
-  blockWithType(block: Block, type: BlockType): Block {
-    return { ...block, type, weeks: BlockWeeks.forType(type, block.weeks) };
+  blockWithType(
+    block: Block,
+    type: BlockType,
+    deloadSwitch: DeloadSwitch,
+  ): Block {
+    if (type === "deload") {
+      return this.rowDefaults.blockSwitchedToDeload(block, deloadSwitch);
+    }
+    const reDefaulted = this.rowDefaults.reDefaultedBlock(block, type);
+
+    return { ...reDefaulted, weeks: BlockWeeks.forType(type, block.weeks) };
   }
 
   private placementFor(

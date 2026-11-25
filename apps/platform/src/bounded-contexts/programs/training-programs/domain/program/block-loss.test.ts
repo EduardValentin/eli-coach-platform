@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { BlockLoss } from "./block-loss";
-import type { Block, CardioSession, Session } from "./program-content";
+import type {
+  Block,
+  CardioSession,
+  ExerciseRow,
+  Session,
+} from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
 import { ProgramSuggestions } from "./program-suggestions";
 
@@ -26,10 +31,21 @@ function block(): Block {
 }
 
 function filled(session: Session, exerciseCount: number): Session {
-  const rows = Array.from({ length: exerciseCount }, (_, index) => ({
-    id: `${session.id}-row-${index}`,
-    exerciseId: `e${index}`,
-  }));
+  const rows = Array.from(
+    { length: exerciseCount },
+    (_, index): ExerciseRow => ({
+      id: `${session.id}-row-${index}`,
+      exerciseId: `e${index}`,
+      slot: "A",
+      startSets: [],
+      restSeconds: 60,
+      lastSetTechnique: "none",
+      substitutions: [],
+      progression: { kind: "double" },
+      cues: "",
+      touched: [],
+    }),
+  );
 
   return { ...session, rows };
 }

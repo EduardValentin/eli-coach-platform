@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { BlockEditing } from "./block-editing";
-import type { Block, CardioSession, Session } from "./program-content";
+import type { LibraryExercise } from "./library-exercise";
+import type {
+  Block,
+  CardioSession,
+  ExerciseRow,
+  PlannedSet,
+  Session,
+  SetTargets,
+} from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
 import { ProgramSuggestions } from "./program-suggestions";
 
@@ -33,11 +41,26 @@ function blockEditing(): BlockEditing {
   return new BlockEditing({ newId: idsFrom("edited") });
 }
 
+function row(overrides: Partial<ExerciseRow> = {}): ExerciseRow {
+  return {
+    id: "row",
+    exerciseId: "",
+    slot: "A",
+    startSets: [],
+    restSeconds: 60,
+    lastSetTechnique: "none",
+    substitutions: [],
+    progression: { kind: "double" },
+    cues: "",
+    touched: [],
+    ...overrides,
+  };
+}
+
 function filled(session: Session, exerciseCount: number): Session {
-  const rows = Array.from({ length: exerciseCount }, (_, index) => ({
-    id: `${session.id}-row-${index}`,
-    exerciseId: `e${index}`,
-  }));
+  const rows = Array.from({ length: exerciseCount }, (_, index) =>
+    row({ id: `${session.id}-row-${index}`, exerciseId: `e${index}` }),
+  );
 
   return { ...session, rows };
 }
@@ -308,13 +331,69 @@ describe("BlockEditing blockWithSplit", () => {
   });
 });
 
+const SQUAT: LibraryExercise = {
+  id: "squat",
+  name: "Back squat",
+  type: "resistance",
+  unit: "reps",
+  perSide: false,
+  pattern: "squat",
+  role: "main-compound",
+  primaryMuscles: [],
+  secondaryMuscles: [],
+  equipment: ["Barbell"],
+  tags: [],
+  cues: "",
+  videoPath: null,
+  archived: false,
+};
+
+function squatRow(weightKg: number): ExerciseRow {
+  const startSets = [3, 3, 3, 2].map((rir, index): PlannedSet => ({
+    id: `set-${index + 1}`,
+    kind: "working",
+    start: { reps: { min: 6, max: 8 }, rir, weightKg },
+  }));
+
+  return row({
+    id: "row-1",
+    exerciseId: "squat",
+    startSets,
+    restSeconds: 90,
+  });
+}
+
+function hypertrophyBlock(rows: ExerciseRow[], weeks: number): Block {
+  const start = block();
+  const [first, ...others] = start.sessions;
+
+  return {
+    ...start,
+    type: "hypertrophy",
+    weeks,
+    sessions: [{ ...first, rows }, ...others],
+  };
+}
+
+function workingStartsOf(edited: Block): SetTargets[] {
+  return edited.sessions[0].rows[0].startSets
+    .filter((set) => set.kind === "working")
+    .map((set) => set.start);
+}
+
+const NO_PREVIOUS = {
+  previous: undefined,
+  level: "intermediate",
+  libraryExercises: [SQUAT],
+} as const;
+
 describe("BlockEditing blockWithType", () => {
   it("switches a block to a Deload one week long, keeping its days", () => {
     // arrange
     const start: Block = { ...block(), type: "hypertrophy", weeks: 4 };
 
     // act
-    const result = blockEditing().blockWithType(start, "deload");
+    const result = blockEditing().blockWithType(start, "deload", NO_PREVIOUS);
 
     // assert
     expect(result).toEqual({ ...start, type: "deload", weeks: 1 });
@@ -325,9 +404,44 @@ describe("BlockEditing blockWithType", () => {
     const start: Block = { ...block(), type: "hypertrophy", weeks: 4 };
 
     // act
-    const result = blockEditing().blockWithType(start, "strength");
+    const result = blockEditing().blockWithType(start, "strength", NO_PREVIOUS);
 
     // assert
     expect(result).toEqual({ ...start, type: "strength" });
+  });
+
+  it("switches a block to a Deload one week long, prefilled from the last loading week of the block before it", () => {
+    // arrange
+    const previous = hypertrophyBlock([squatRow(70)], 6);
+    const start = hypertrophyBlock([squatRow(60)], 4);
+
+    // act
+    const result = blockEditing().blockWithType(start, "deload", {
+      ...NO_PREVIOUS,
+      previous,
+    });
+
+    // assert
+    expect(result).toMatchObject({ type: "deload", weeks: 1 });
+    expect(workingStartsOf(result)).toEqual([
+      { reps: { min: 7, max: 8 }, rir: 4, weightKg: 65 },
+      { reps: { min: 7, max: 8 }, rir: 4, weightKg: 65 },
+    ]);
+  });
+
+  it("changes a block to another type with that type’s default rest, keeping its weeks and its days", () => {
+    // arrange
+    const start = hypertrophyBlock([squatRow(60)], 4);
+
+    // act
+    const result = blockEditing().blockWithType(start, "strength", NO_PREVIOUS);
+
+    // assert
+    expect(result).toMatchObject({
+      type: "strength",
+      weeks: 4,
+      calendar: start.calendar,
+    });
+    expect(result.sessions[0].rows[0].restSeconds).toBe(150);
   });
 });

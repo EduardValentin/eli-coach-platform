@@ -36,7 +36,9 @@ describe("the builder's editing rules, as the browser reaches them", () => {
       newId: idsFrom("suggested"),
     });
     const blockEditing = new BlockEditing({ newId: idsFrom("edited") });
-    const first = suggestions.newBlock("hypertrophy", 6, { setup: SETUP });
+    const first = suggestions.newBlock("hypertrophy", 6, {
+      setup: { ...SETUP, level: "beginner" },
+    });
     const cardioDay: DayChoice = { kind: "cardio" };
     const fewerDays: LossChange = { kind: "training-days", days: 2 };
 
@@ -44,7 +46,7 @@ describe("the builder's editing rules, as the browser reaches them", () => {
     const proposal: ProposedBlock =
       ProgramSuggestions.proposedBlockAfter(first);
     const added = suggestions.newBlock(proposal.type, proposal.weeks, {
-      setup: SETUP,
+      setup: { ...SETUP, level: "beginner" },
       previous: first,
     });
     const withCardioSunday = blockEditing.blockWithDay(first, "sun", cardioDay);

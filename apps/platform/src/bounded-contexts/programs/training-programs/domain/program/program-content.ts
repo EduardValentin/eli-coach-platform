@@ -1,14 +1,22 @@
 import {
   WEEKDAYS,
   type BlockType,
+  type LastSetTechnique,
+  type RowField,
+  type SetKind,
+  type Slot,
   type SplitShape,
   type TrainingDays,
   type Weekday,
 } from "./vocabulary";
 
+export const SINGLE_UNIT_SLOTS: readonly Slot[] = ["A", "B"];
+export const MAX_SUBSTITUTIONS = 2;
+export const MAX_WARM_UP_ITEMS = 4;
+
 export type Range = { min: number; max: number };
 
-type WarmUpItem = {
+export type WarmUpItem = {
   id: string;
   exerciseId: string;
   sets: number;
@@ -16,16 +24,37 @@ type WarmUpItem = {
   seconds?: number;
 };
 
-type CoolDownItem = { id: string; exerciseId: string; seconds: number };
+export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
 
-export type ExerciseRow = { id: string; exerciseId: string };
+export type CoolDown = { enabled: boolean; items: CoolDownItem[] };
+
+export type SetTargets = { reps: Range; rir: number; weightKg?: number };
+
+export type PlannedSet = { id: string; kind: SetKind; start: SetTargets };
+
+export type Progression = { kind: "double" } | { kind: "custom"; text: string };
+
+export type ExerciseRow = {
+  id: string;
+  exerciseId: string;
+  slot: Slot;
+  supersetGroup?: string;
+  startSets: PlannedSet[];
+  restSeconds: number;
+  tempo?: string;
+  lastSetTechnique: LastSetTechnique;
+  substitutions: string[];
+  progression: Progression;
+  cues: string;
+  touched: RowField[];
+};
 
 export type Session = {
   id: string;
   originId: string;
   name: string;
   warmUp: { items: WarmUpItem[] };
-  coolDown: { enabled: boolean; items: CoolDownItem[] };
+  coolDown: CoolDown;
   rows: ExerciseRow[];
 };
 
