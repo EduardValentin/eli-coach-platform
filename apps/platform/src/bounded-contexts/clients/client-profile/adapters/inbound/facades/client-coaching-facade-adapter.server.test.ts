@@ -20,7 +20,7 @@ const PROFILE = ClientProfile.reconstitute({
     sessionMinutes: 45,
     equipment: ["Dumbbells"],
     trainingPlace: "Home",
-    limitations: "",
+    limitations: "Left knee, no deep lunges",
     level: "beginner",
     primaryGoal: "Build muscle",
     goalWeightKg: null,
@@ -82,6 +82,8 @@ describe("ClientCoachingFacadeAdapter.coachingOf", () => {
         trainingDays: 3,
         sessionMinutes: 45,
         equipment: ["Dumbbells"],
+        trainingPlace: "Home",
+        limitations: "Left knee, no deep lunges",
       },
       equipmentOptions: expect.arrayContaining([
         { equipment: "Dumbbells", exclusive: false },
