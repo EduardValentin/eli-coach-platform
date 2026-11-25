@@ -29,6 +29,12 @@ const LIBRARIES = [
     statement: `delete from app.foods where ${OWNED_BY_RUN_COACHES}`,
   },
   {
+    label: "Exercise program usages",
+    statement: `delete from app.exercise_program_usages where exercise_id in (
+      select id from app.exercises where ${OWNED_BY_RUN_COACHES}
+    )`,
+  },
+  {
     label: "Exercises",
     statement: `delete from app.exercises where ${OWNED_BY_RUN_COACHES}`,
   },

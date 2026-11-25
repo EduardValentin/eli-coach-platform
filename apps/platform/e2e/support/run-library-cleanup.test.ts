@@ -124,7 +124,7 @@ describe("cleanUpRunLibraries", () => {
     }
   });
 
-  it("deletes the recipes, then the foods, then the exercises of every coach account the run recorded and forgets them", async () => {
+  it("deletes the recipes, then the foods, then the program usages of the exercises, then the exercises of every coach account the run recorded and forgets them", async () => {
     // arrange
     recordCoachAccount("user_coach_one", runId);
     recordCoachAccount("user_coach_two", runId);
@@ -149,6 +149,12 @@ describe("cleanUpRunLibraries", () => {
       },
       {
         statement: expect.stringMatching(/delete from app\.foods/),
+        values: [["user_coach_one", "user_coach_two"]],
+      },
+      {
+        statement: expect.stringMatching(
+          /delete from app\.exercise_program_usages/,
+        ),
         values: [["user_coach_one", "user_coach_two"]],
       },
       {
@@ -207,6 +213,7 @@ describe("cleanUpRunLibraries", () => {
       expect.stringMatching(/select photo_id/),
       expect.stringMatching(/delete from app\.recipes/),
       expect.stringMatching(/delete from app\.foods/),
+      expect.stringMatching(/delete from app\.exercise_program_usages/),
       expect.stringMatching(/delete from app\.exercises/),
     ]);
   });
@@ -278,6 +285,7 @@ describe("cleanUpRunLibraries", () => {
       expect.stringMatching(/select photo_id/),
       expect.stringMatching(/delete from app\.recipes/),
       expect.stringMatching(/delete from app\.foods/),
+      expect.stringMatching(/delete from app\.exercise_program_usages/),
       expect.stringMatching(/delete from app\.exercises/),
     ]);
   });
