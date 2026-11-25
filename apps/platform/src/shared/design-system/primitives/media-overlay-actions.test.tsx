@@ -74,7 +74,7 @@ describe("MediaOverlayActions", () => {
     for (const button of [replace, remove]) {
       expect(button).toHaveAttribute("type", "button");
       expect(button).toHaveClass(
-        "bg-text-inverted/15",
+        "bg-surface-inverted/5",
         "backdrop-blur-sm",
         "h-(--size-control-xs)",
       );

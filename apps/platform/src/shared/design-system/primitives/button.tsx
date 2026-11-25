@@ -29,7 +29,7 @@ const buttonClasses = cva(
         "destructive-outline":
           "border border-feedback-danger/30 bg-surface-base text-feedback-danger not-aria-disabled:hover:bg-feedback-danger/10",
         glass:
-          "border border-text-inverted/30 bg-text-inverted/15 text-text-inverted backdrop-blur-sm not-aria-disabled:hover:bg-text-inverted/25",
+          "border border-text-inverted/30 bg-surface-inverted/5 text-text-inverted backdrop-blur-sm not-aria-disabled:hover:bg-surface-inverted/15",
         ink: "bg-text-primary text-surface-base not-aria-disabled:hover:bg-brand-primary",
         "on-brand":
           "bg-surface-base text-brand-primary not-aria-disabled:hover:bg-surface-subtle",
