@@ -65,6 +65,7 @@ type LibraryPanelProps = {
   searchRef: RefObject<HTMLInputElement | null>;
   onAdd: (exercise: LibraryExercise) => void;
   onClose: () => void;
+  onDrawerCloseAutoFocus?: (event: Event) => void;
 };
 
 type ChangeSelection = (
@@ -349,6 +350,7 @@ type FrameProps = {
   presentation: LibraryPresentation;
   headingId: string;
   onClose: () => void;
+  onDrawerCloseAutoFocus?: (event: Event) => void;
   children: ReactNode;
 };
 
@@ -356,6 +358,7 @@ function LibraryFrame({
   presentation,
   headingId,
   onClose,
+  onDrawerCloseAutoFocus,
   children,
 }: FrameProps) {
   if (presentation === "pane") {
@@ -376,6 +379,7 @@ function LibraryFrame({
         data-parity-root="LibraryPanel"
         aria-describedby={undefined}
         className="bg-surface-base p-0 sm:max-w-sm"
+        onCloseAutoFocus={onDrawerCloseAutoFocus}
       >
         {children}
       </SheetContent>
@@ -418,6 +422,7 @@ export function LibraryPanel({
   searchRef,
   onAdd,
   onClose,
+  onDrawerCloseAutoFocus,
 }: LibraryPanelProps) {
   const [selection, setSelection] = useState(LibrarySelection.initial);
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
@@ -466,6 +471,7 @@ export function LibraryPanel({
     <LibraryFrame
       headingId={headingId}
       onClose={onClose}
+      onDrawerCloseAutoFocus={onDrawerCloseAutoFocus}
       presentation={presentation}
     >
       <div className="contents" ref={content}>

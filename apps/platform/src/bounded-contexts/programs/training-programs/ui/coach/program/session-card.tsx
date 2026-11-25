@@ -197,7 +197,10 @@ export function OpenSessionCard({
               name: "rename",
               label: "Rename",
               icon: PencilLine,
-              onSelect: () => nameField.current?.select(),
+              onSelect: () => {
+                nameField.current?.focus();
+                nameField.current?.select();
+              },
             },
             {
               name: "clear",

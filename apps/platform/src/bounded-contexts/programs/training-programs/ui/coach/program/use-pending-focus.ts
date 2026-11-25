@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-type FocusTarget = () => HTMLElement | null | undefined;
+export type FocusTarget = () => HTMLElement | null | undefined;
 
 export function usePendingFocus() {
   const pending = useRef<FocusTarget | null>(null);

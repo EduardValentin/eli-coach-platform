@@ -117,10 +117,14 @@ export function RowActionsMenu({
     return null;
   }
 
-  const runOnceFocusIsBackOnTheTrigger = () => {
+  const runChosenAction = (event: Event) => {
     const action = chosenAction.current;
     chosenAction.current = null;
-    action?.();
+    if (!action) return;
+
+    const focusedBefore = document.activeElement;
+    action();
+    if (document.activeElement !== focusedBefore) event.preventDefault();
   };
 
   const chooseAction: ChooseAction = (action) => (event) => {
@@ -148,7 +152,7 @@ export function RowActionsMenu({
         align="end"
         className="min-w-40"
         data-parity-root={parityRoot}
-        onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
+        onCloseAutoFocus={runChosenAction}
       >
         {actions.map((entry) =>
           isSubmenu(entry) ? (

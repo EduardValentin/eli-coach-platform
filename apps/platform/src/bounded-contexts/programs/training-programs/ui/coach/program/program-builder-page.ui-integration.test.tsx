@@ -912,6 +912,73 @@ describe("the exercise library opened from a place in the open session", () => {
       ).not.toBeInTheDocument(),
     );
   });
+
+  it("moves focus to the new exercise's actions button when the drawer closes after an add from an empty slot", async () => {
+    // arrange
+    stubScreen("phone");
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT, HIP_CIRCLES],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    await user.click(
+      screen.getByRole("button", {
+        name: /^Add or drop an exercise\s*in A · Main lift$/,
+      }),
+    );
+    const drawer = await screen.findByRole("dialog", {
+      name: "Exercise library",
+    });
+
+    // act
+    await user.click(
+      within(drawer).getByRole("button", { name: "Add Barbell Back Squat" }),
+    );
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Exercise library" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("button", { name: "Barbell Back Squat actions" }),
+    ).toHaveFocus();
+  });
+
+  it("returns focus to the warm-up add button when the drawer closes after an add to the warm-up", async () => {
+    // arrange
+    stubScreen("phone");
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    storedView = draftView({
+      libraryExercises: [BARBELL_SQUAT, HIP_CIRCLES],
+      libraryEquipment: ["Barbell"],
+    });
+    const user = await renderBuilder();
+    await openHypertrophyBlock(user);
+    const opener = screen.getByRole("button", {
+      name: "Add exercise to warm-up",
+    });
+    await user.click(opener);
+    const drawer = await screen.findByRole("dialog", {
+      name: "Exercise library",
+    });
+
+    // act
+    await user.click(
+      within(drawer).getByRole("button", { name: "Add Hip Circles" }),
+    );
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Exercise library" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(opener).toHaveFocus();
+  });
 });
 
 describe("an exercise's detail in the builder", () => {

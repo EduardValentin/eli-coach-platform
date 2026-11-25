@@ -18,6 +18,7 @@ import {
 import {
   BLOCK_TYPE_LABELS,
   LibraryPicks,
+  type Block,
   type BlockType,
   type LibraryExercise,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
@@ -48,6 +49,7 @@ import { PlaceHeadingContext } from "./place-heading";
 import { openSessionIdOf } from "./block-workspace";
 import { ProgramOutline } from "./program-outline";
 import { useBuilderState, type DraftView } from "./use-builder-state";
+import { actionsTriggerIn } from "./use-pending-focus";
 import { useHydrated } from "./use-hydrated";
 import { libraryPurpose, useLibraryPanel } from "./use-library-panel";
 
@@ -74,6 +76,10 @@ export function builderPlaceTitle(view: ProgramDraftView, hash: string) {
   const { blocks } = view.content.plan;
 
   return sectionTitle(sectionFromHash(hash, blocks), blocks);
+}
+
+function rowsOf(block: Block) {
+  return block.sessions.flatMap((session) => session.rows);
 }
 
 function ExerciseLibraryLink({ exercise }: { exercise: LibraryExercise }) {
@@ -144,14 +150,18 @@ function ProgramBuilder({ view }: { view: DraftView }) {
       libraryExercises: builder.libraryExercises,
       libraryEquipment: builder.libraryEquipment,
     });
-    builder.replaceBlock(
-      picks.blockWithLibraryPick(block, {
-        exercise,
-        target: panel.panelTarget?.target ?? null,
-        openSessionId,
-      }),
+    const picked = picks.blockWithLibraryPick(block, {
+      exercise,
+      target: panel.panelTarget?.target ?? null,
+      openSessionId,
+    });
+    builder.replaceBlock(picked);
+    const addedRow = rowsOf(picked).find(
+      (row) => !rowsOf(block).some((other) => other.id === row.id),
     );
-    panel.finishTarget();
+    panel.finishTarget(
+      addedRow && (() => actionsTriggerIn(`[data-row-id="${addedRow.id}"]`)),
+    );
   }
 
   function addBlock(type: BlockType, weeks: number) {
@@ -247,6 +257,7 @@ function ProgramBuilder({ view }: { view: DraftView }) {
                 libraryExercises={builder.libraryExercises}
                 onAdd={addFromLibrary}
                 onClose={panel.close}
+                onDrawerCloseAutoFocus={panel.focusAfterDrawerCloses}
                 presentation={panel.isWide ? "pane" : "drawer"}
                 purpose={libraryPurpose(
                   block,

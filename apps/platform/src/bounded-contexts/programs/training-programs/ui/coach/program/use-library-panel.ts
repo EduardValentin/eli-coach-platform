@@ -10,6 +10,8 @@ import {
   type LibraryTarget,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
+import { type FocusTarget } from "./use-pending-focus";
+
 type PanelTarget = { target: LibraryTarget; nonce: number };
 
 export type LibraryPurpose = {
@@ -81,6 +83,8 @@ export function useLibraryPanel() {
   const [focusRequest, setFocusRequest] = useState(0);
   const openings = useRef(0);
   const search = useRef<HTMLInputElement>(null);
+  const opener = useRef<Element | null>(null);
+  const focusAfterClose = useRef<FocusTarget | null>(null);
   const visible = isWide ? !collapsed : drawerOpen;
 
   function show() {
@@ -90,6 +94,7 @@ export function useLibraryPanel() {
   }
 
   function openFor(next: LibraryTarget) {
+    opener.current = document.activeElement;
     openings.current += 1;
     setPanelTarget({ target: next, nonce: openings.current });
     show();
@@ -111,8 +116,22 @@ export function useLibraryPanel() {
     else close();
   }
 
-  function finishTarget() {
-    if (panelTarget && !isWide) close();
+  function finishTarget(focusInstead?: FocusTarget) {
+    if (!panelTarget || isWide) return;
+    focusAfterClose.current = focusInstead ?? null;
+    close();
+  }
+
+  function focusAfterDrawerCloses(event: Event) {
+    const find = focusAfterClose.current;
+    focusAfterClose.current = null;
+    const openerStays =
+      opener.current?.isConnected && opener.current !== document.body;
+    const target = !openerStays && find?.();
+    if (!target) return;
+
+    event.preventDefault();
+    target.focus();
   }
 
   useEffect(() => {
@@ -128,5 +147,6 @@ export function useLibraryPanel() {
     close,
     toggle,
     finishTarget,
+    focusAfterDrawerCloses,
   };
 }

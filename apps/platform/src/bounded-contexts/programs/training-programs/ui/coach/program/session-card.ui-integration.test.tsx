@@ -205,6 +205,7 @@ describe("a session card", () => {
     await user.click(await screen.findByRole("menuitem", { name: "Rename" }));
 
     // assert
+    expect(name).toHaveFocus();
     expect(name.selectionStart).toBe(0);
     expect(name.selectionEnd).toBe("Legs".length);
   });
