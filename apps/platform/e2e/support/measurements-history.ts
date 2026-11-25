@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { tabTo } from "./keyboard";
+
 export type MeasurementRowReadings = readonly string[];
 
 const HISTORY_CAPTION = "Measurements history, newest first";
@@ -22,10 +24,11 @@ export class MeasurementsHistory {
     });
   }
 
-  async clickDateColumnHeader(): Promise<void> {
+  async tabToViewPhotos(date: string): Promise<void> {
     await this.table
       .getByRole("columnheader", { name: "Date", exact: true })
       .click();
+    await tabTo(this.page, this.viewPhotosAction(date));
   }
 
   viewPhotosAction(date: string): Locator {

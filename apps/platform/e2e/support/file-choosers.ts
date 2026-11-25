@@ -6,15 +6,15 @@ type ChosenFiles = Parameters<FileChooser["setFiles"]>[0];
 // choosers. A waitForEvent per chooser switches interception off as it ends,
 // and that switch can land after the next chooser's wait has switched it on.
 export class FileChoosers {
-  private readonly waiting: ((chooser: FileChooser) => void)[] = [];
+  private readonly pendingChoices: ((chooser: FileChooser) => void)[] = [];
 
   constructor(page: Page) {
-    page.on("filechooser", (chooser) => this.waiting.shift()?.(chooser));
+    page.on("filechooser", (chooser) => this.pendingChoices.shift()?.(chooser));
   }
 
   async choose(files: ChosenFiles, open: () => Promise<void>): Promise<void> {
     const opened = new Promise<FileChooser>((resolve) =>
-      this.waiting.push(resolve),
+      this.pendingChoices.push(resolve),
     );
 
     await open();

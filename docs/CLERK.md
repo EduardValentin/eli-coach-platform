@@ -263,7 +263,7 @@ fails `pnpm validate` when a journey test has no tag, more than one, or another
 tag, and `tools/e2e-fragile-patterns.test.mjs` fails it when anything under
 `apps/platform/e2e` finds a heading by its level, waits a fixed time or waits for a single file chooser. Console
 checks share `collectPageProblems` (`e2e/support/page-problems.ts`), which
-ignores only the development-server noise it names. QA browser checks are journeys and page objects under
+ignores only the development noise it names. QA browser checks are journeys and page objects under
 `apps/platform/e2e`, never scratch scripts.
 
 Prerequisites:

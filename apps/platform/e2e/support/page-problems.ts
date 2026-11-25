@@ -7,7 +7,7 @@ const FIRST_FAILING_STATUS = 400;
 const CANCELLED_BY_THE_PAGE = "net::ERR_ABORTED";
 const SHOWN_TEXT_LENGTH = 160;
 
-const DEVELOPMENT_SERVER_NOISE: readonly ConsoleNoise[] = [
+const ALLOWED_CONSOLE_NOISE: readonly ConsoleNoise[] = [
   {
     reason:
       "Clerk warns on every page that the suite runs on its Development instance's keys, which it always does.",
@@ -28,7 +28,7 @@ function isConsoleProblem(message: ConsoleMessage): boolean {
 
   return (
     PROBLEM_CONSOLE_TYPES.includes(message.type()) &&
-    !DEVELOPMENT_SERVER_NOISE.some((noise) => noise.matches(text))
+    !ALLOWED_CONSOLE_NOISE.some((noise) => noise.matches(text))
   );
 }
 
