@@ -5,8 +5,9 @@ import type { SavedExercise } from "../support/exercise-editor-page";
 import type { ExerciseFields } from "../support/exercise-requests";
 import { storedExerciseVideoIds } from "../support/exercise-video-files";
 import { CARDIO_EXERCISE, SESSION_LIBRARY } from "../support/session-library";
-import { setPhoneViewport } from "../support/viewport";
+import { setPhoneViewport, setTallDesktopViewport } from "../support/viewport";
 
+const JOURNEY_TIMEOUT_MS = 300_000;
 const UNKNOWN_EXERCISE_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_AN_EXERCISE_ID = "not-an-exercise";
 const NOT_A_VIDEO_REFUSAL =
@@ -3302,7 +3303,7 @@ test(
     sessionCard,
     signInAsCoach,
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
 
     // arrange
     await provisionCoach();
@@ -3323,7 +3324,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize({ width: 1440, height: 2400 });
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
     await sessionCard.openLibraryFor("A · Main lift");

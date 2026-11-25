@@ -1,8 +1,8 @@
 import { test } from "../support/fixtures";
 import { SESSION_LIBRARY, WARM_UP_LIBRARY } from "../support/session-library";
+import { setTallDesktopViewport } from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 300_000;
-const DESKTOP_VIEWPORT = { width: 1440, height: 2400 };
 
 test.use({ trace: "on" });
 
@@ -36,7 +36,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
 

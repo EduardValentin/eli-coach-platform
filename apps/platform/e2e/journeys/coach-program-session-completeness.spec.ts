@@ -1,10 +1,9 @@
 import { expect, test } from "../support/fixtures";
 import { expectLayoutFits } from "../support/layout-fit";
 import { SESSION_LIBRARY, WARM_UP_LIBRARY } from "../support/session-library";
-import { setPhoneViewport } from "../support/viewport";
+import { setPhoneViewport, setTallDesktopViewport } from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 300_000;
-const DESKTOP_VIEWPORT = { width: 1440, height: 2400 };
 const OTHER_SQUATS = ["Front squat", "Goblet squat", "Hack squat"] as const;
 
 function squatOutside(held: readonly string[]): string {
@@ -44,7 +43,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
     await sessionCard.openLibraryFor("A · Main lift");
@@ -131,7 +130,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
     await sessionCard.openLibraryFor("A · Main lift");
@@ -211,7 +210,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
     await sessionCard.openLibraryForWarmUp();
@@ -286,7 +285,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
     await sessionCard.openLibraryFor("A · Main lift");
@@ -361,7 +360,7 @@ test(
     await coachClient.buildProgram();
     await programSetup.create();
     await programBuilder.expectOpenFor(client.fullName, client.clientId);
-    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await setTallDesktopViewport(page);
     await programBuilder.openBlockFromSections(2, "Hypertrophy");
     await sessionCard.openFirstStrengthDay();
     await libraryPanel.expectPaneOpen();
@@ -449,7 +448,7 @@ test(
 
     // act
     await programBuilder.chooseDayTab("Monday");
-    await sessionCard.openFirstStrengthDayFromPhoneRail();
+    await sessionCard.openSessionOfChosenDay();
     await sessionCard.openLibraryFor("A · Main lift");
 
     // assert

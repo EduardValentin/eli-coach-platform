@@ -1,6 +1,7 @@
 import { devices, expect, type Page } from "@playwright/test";
 
 const PHONE_VIEWPORT = { height: 844, width: 390 };
+const TALL_DESKTOP_VIEWPORT = { height: 2400, width: 1440 };
 const TABLET_VIEWPORT = { height: 1180, width: 820 };
 
 export async function setPhoneViewport(page: Page): Promise<void> {
@@ -13,6 +14,10 @@ export async function setTabletViewport(page: Page): Promise<void> {
 
 export async function setDesktopViewport(page: Page): Promise<void> {
   await page.setViewportSize(devices["Desktop Chrome"].viewport);
+}
+
+export async function setTallDesktopViewport(page: Page): Promise<void> {
+  await page.setViewportSize(TALL_DESKTOP_VIEWPORT);
 }
 
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {

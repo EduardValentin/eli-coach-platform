@@ -100,7 +100,6 @@ const MOBILITY_NAMES = [
 export const WARM_UP_LIBRARY: readonly ExerciseFields[] = MOBILITY_NAMES.map(
   (name) => ({
     ...RECOVERY,
-    type: "mobility",
     name,
     primaryMuscles: ["Lower back"],
   }),

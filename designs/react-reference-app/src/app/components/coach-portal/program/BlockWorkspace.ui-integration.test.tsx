@@ -85,7 +85,7 @@ async function addFromLibrary(user: User, name: string) {
   await user.click(within(library()).getByRole('button', { name: `Add ${name}` }));
 }
 
-async function openSubstitutionPicker() {
+async function openSubstitutionPickerWithOneHeld() {
   const user = await openFirstBlock();
   const main = card(/^A /);
   const [mainName] = within(main).getAllByRole('heading', { level: 5 }).map(heading => within(heading).getByRole('button').textContent ?? '');
@@ -936,7 +936,7 @@ describe('BlockWorkspace', () => {
 
   it('says an exercise cannot be its own substitution, or one it already has, instead of that it was added', async () => {
     // arrange
-    const { user, substitutions, mainName, held } = await openSubstitutionPicker();
+    const { user, substitutions, mainName, held } = await openSubstitutionPickerWithOneHeld();
 
     // act
     await user.click(within(library()).getByRole('button', { name: `Add ${mainName}` }));
@@ -954,7 +954,7 @@ describe('BlockWorkspace', () => {
 
   it('says an exercise holds two substitutions instead of that a third was added', async () => {
     // arrange
-    const { user, substitutions, mainName, held } = await openSubstitutionPicker();
+    const { user, substitutions, mainName, held } = await openSubstitutionPickerWithOneHeld();
     const [second, third] = within(library())
       .getAllByRole('button', { name: /^Add / })
       .map(button => (button.getAttribute('aria-label') ?? '').replace(/^Add /, ''))

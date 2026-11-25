@@ -62,7 +62,7 @@ export class LibraryPicks {
 
   /** Why a pick adds nothing: the place it would land refuses it. */
   refusalFor(block: Block, pick: LibraryPick): LibraryPickRefusal | undefined {
-    const sessionId = pick.target?.sessionId ?? pick.openSessionId;
+    const sessionId = LibraryPicks.sessionIdOf(pick);
     const session = block.sessions.find((other) => other.id === sessionId);
     if (!session) return undefined;
     const destination = LibraryPicks.destinationOf(pick);
@@ -85,7 +85,7 @@ export class LibraryPicks {
   }
 
   blockWithLibraryPick(block: Block, pick: LibraryPick): Block {
-    const sessionId = pick.target?.sessionId ?? pick.openSessionId;
+    const sessionId = LibraryPicks.sessionIdOf(pick);
 
     return {
       ...block,
@@ -127,6 +127,10 @@ export class LibraryPicks {
 
   private sessionEditingFor(block: Block): SessionEditing {
     return new SessionEditing({ ...this.options, blockType: block.type });
+  }
+
+  private static sessionIdOf(pick: LibraryPick): string | undefined {
+    return pick.target?.sessionId ?? pick.openSessionId;
   }
 
   private static destinationOf({

@@ -84,12 +84,6 @@ export class LibraryPanel {
     await this.searchField.fill(query);
   }
 
-  async expectListed(exercises: readonly string[]): Promise<void> {
-    await expect(this.listedExercises).toHaveText(
-      exercises.map((exercise) => new RegExp(`^${exercise}`)),
-    );
-  }
-
   async expectActiveFilterChips(chips: readonly string[]): Promise<void> {
     await expect(
       this.page

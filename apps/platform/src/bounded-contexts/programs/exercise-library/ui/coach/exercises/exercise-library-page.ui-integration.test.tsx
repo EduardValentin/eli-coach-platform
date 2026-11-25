@@ -1334,8 +1334,7 @@ async function openRowMenuItem(user: UserEvent, name: string, action: string) {
 }
 
 async function chooseRowAction(user: UserEvent, name: string, action: string) {
-  await user.click(screen.getByRole("button", { name: `Actions for ${name}` }));
-  await user.click(await screen.findByRole("menuitem", { name: action }));
+  await user.click(await openRowMenuItem(user, name, action));
 }
 
 async function openDeleteConfirm(user: UserEvent, name: string) {

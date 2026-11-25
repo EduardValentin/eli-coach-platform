@@ -3,7 +3,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 const SESSION_NAME = "Session name";
-const CARD_LABEL_SETTLE_MS = 5_000;
+const SESSION_SETTLE_MS = 5_000;
 
 export class SessionCard {
   constructor(private readonly page: Page) {}
@@ -61,7 +61,7 @@ export class SessionCard {
     }).toPass();
   }
 
-  async openFirstStrengthDayFromPhoneRail(): Promise<void> {
+  async openSessionOfChosenDay(): Promise<void> {
     await this.page.getByRole("button", { name: "Open session" }).click();
     await expect(this.nameField).toBeVisible();
   }
@@ -97,7 +97,7 @@ export class SessionCard {
         );
 
       expect(found).toEqual([...labels]);
-    }).toPass({ timeout: CARD_LABEL_SETTLE_MS });
+    }).toPass({ timeout: SESSION_SETTLE_MS });
   }
 
   async chooseFromActions(exercise: string, item: string): Promise<void> {
@@ -116,7 +116,7 @@ export class SessionCard {
         await this.page.keyboard.press("ArrowDown");
       }
       expect(focused).toMatch(new RegExp(`^${item}`));
-    }).toPass({ timeout: CARD_LABEL_SETTLE_MS });
+    }).toPass({ timeout: SESSION_SETTLE_MS });
     await this.page.keyboard.press("Enter");
   }
 
