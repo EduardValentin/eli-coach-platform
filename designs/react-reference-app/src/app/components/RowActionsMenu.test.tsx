@@ -45,6 +45,30 @@ describe('RowActionsMenu with a blocked action', () => {
     expect(deleteItem).toHaveAttribute('aria-disabled', 'true');
   });
 
+  it('takes the menu\'s own focus fill on a blocked destructive action, not the faint red tint', async () => {
+    // arrange
+    const { user } = renderBlockedDeleteMenu();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+
+    // assert
+    const deleteItem = screen.getByRole('menuitem', { name: 'Delete' });
+    expect(deleteItem).toHaveClass('data-[variant=destructive]:focus:bg-accent', 'dark:data-[variant=destructive]:focus:bg-accent');
+  });
+
+  it('keeps the red focus tint on a destructive action that can run', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<RowActionsMenu label="Actions for Plank" actions={[{ name: 'delete', label: 'Delete', icon: Trash2, tone: 'destructive', onSelect: vi.fn() }]} />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+
+    // assert
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).not.toHaveClass('data-[variant=destructive]:focus:bg-accent');
+  });
+
   it('does nothing and stays open when the blocked action is clicked', async () => {
     // arrange
     const { user, onDelete } = renderBlockedDeleteMenu();

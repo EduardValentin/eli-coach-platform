@@ -57,7 +57,9 @@ function RowMenuItem({
       data-parity={`row-action-${name}`}
       disabled={disabled}
       aria-disabled={flagged ? true : undefined}
-      className={cn({ 'aria-disabled:opacity-100': flagged })}
+      className={cn({
+        'aria-disabled:opacity-100 data-[variant=destructive]:focus:bg-accent dark:data-[variant=destructive]:focus:bg-accent': flagged,
+      })}
       onSelect={(event) => {
         if (blocked) {
           event.preventDefault();

@@ -447,6 +447,72 @@ describe('LibraryPanel', () => {
   });
 });
 
+describe('LibraryPanel drawer announcements', () => {
+  async function openDrawerForWarmUp() {
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' }));
+
+    return { user, drawer: screen.getByRole('dialog', { name: 'Exercise library' }) };
+  }
+
+  it('speaks a refused add from a live region inside the drawer, which stays open', async () => {
+    // arrange
+    const { user, drawer } = await openDrawerForWarmUp();
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
+
+    // assert
+    await waitFor(() => expect(within(drawer).getByRole('status')).toHaveTextContent('90/90 Hip Switches is already in the warm-up'));
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+  });
+
+  it('speaks the count after a search from inside the drawer', async () => {
+    // arrange
+    const { user, drawer } = await openDrawerForWarmUp();
+
+    // act
+    await user.type(within(drawer).getByRole('searchbox', { name: 'Search exercises' }), 'zzzz');
+    await new Promise(resolve => setTimeout(resolve, PAST_COUNT_ANNOUNCEMENT_MS));
+
+    // assert
+    expect(within(drawer).getByRole('status')).toHaveTextContent('No exercises match');
+  });
+
+  it('speaks an add that leaves the drawer open from inside the drawer', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(screen.getByRole('button', { name: 'Draft actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Exercise library' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Exercise library' });
+    const [first] = within(drawer).getAllByRole('button', { name: /^Add / });
+    const exerciseName = first.getAttribute('aria-label')!.replace(/^Add /, '');
+
+    // act
+    await user.click(first);
+
+    // assert
+    await waitFor(() => expect(within(drawer).getByRole('status')).toHaveTextContent(`${exerciseName} added`));
+    expect(screen.getByRole('dialog', { name: 'Exercise library' })).toBeInTheDocument();
+  });
+
+  it('hands the announcement of an add that closes the drawer to the page, once', async () => {
+    // arrange
+    const { user, drawer } = await openDrawerForWarmUp();
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add Jumping Jacks' }));
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Jumping Jacks added to Full Body A · Warm-up'));
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getAllByText('Jumping Jacks added to Full Body A · Warm-up')).toHaveLength(1);
+  });
+});
+
 describe('CopyBlockDialog', () => {
   it('copies a block from another client', async () => {
     // arrange

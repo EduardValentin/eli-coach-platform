@@ -31,7 +31,7 @@ import { FieldTrigger } from '../../ui/select';
 import { Sheet, SheetContent, SheetTitle } from '../../ui/sheet';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
-import { useEditorAnnouncer } from './editorAnnouncer';
+import { AnnouncementRegion, useAnnouncement, useEditorAnnouncer } from './editorAnnouncer';
 import { usePendingFocus } from './usePendingFocus';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { OptionSelect } from './OptionSelect';
@@ -113,8 +113,7 @@ function panelFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
   ];
 }
 
-function useCountAnnouncement(count: number, filtersKey: string) {
-  const announce = useEditorAnnouncer();
+function useCountAnnouncement(count: number, filtersKey: string, announce: (message: string) => void) {
   const firstRender = useRef(true);
   const pendingCountTimer = useRef<number>();
   useEffect(() => {
@@ -285,13 +284,17 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   const [filters, setFilters] = useState<Filters>({ ...CLEARED_FILTERS, onlyHers: true });
   const [type, setType] = useState<LibraryType>('resistance');
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
-  const announce = useEditorAnnouncer();
+  const announceOnPage = useEditorAnnouncer();
+  const drawerAnnouncement = useAnnouncement();
   const focusLater = usePendingFocus();
   const content = useRef<HTMLDivElement>(null);
   const filtersTrigger = useRef<HTMLButtonElement>(null);
   const headingId = useId();
   const purposeId = useId();
   const isDrawer = presentation === 'drawer';
+  // A modal drawer hides the page's live region, so it speaks from its own while open.
+  const announce = isDrawer ? drawerAnnouncement.announce : announceOnPage;
+  const addClosesDrawer = isDrawer && purpose !== null;
   const { query, patterns, muscles, onlyHers, bodyweightOnly } = filters;
   const change = (next: Partial<Filters>) => setFilters(current => ({ ...current, ...next }));
   if (purpose && purpose.key !== appliedPurpose) {
@@ -310,7 +313,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
     .filter(exercise => !onlyHers || exercise.equipment.every(item => equipment.includes(item)))
     .filter(exercise => !bodyweightOnly || exercise.equipment.length === 0);
   const fromPanel = panelFilters(filters, type);
-  const countAnnouncement = useCountAnnouncement(shown.length, JSON.stringify([type, filters]));
+  const countAnnouncement = useCountAnnouncement(shown.length, JSON.stringify([type, filters]), announce);
 
   function add(exercise: Exercise) {
     const refusal = onAdd(exercise);
@@ -319,7 +322,8 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
       announce(REFUSED_ADD_TEXT[refusal](exercise.name));
       return;
     }
-    announce(purpose ? `${exercise.name} added to ${purpose.destination}` : `${exercise.name} added`);
+    const announceAdd = addClosesDrawer ? announceOnPage : announce;
+    announceAdd(purpose ? `${exercise.name} added to ${purpose.destination}` : `${exercise.name} added`);
   }
 
   function removeFilter(filter: ActiveFilter, index: number) {
@@ -342,6 +346,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   return (
     <LibraryFrame isDrawer={isDrawer} headingId={headingId} onClose={onClose}>
       <div ref={content} className="contents">
+        {isDrawer && <AnnouncementRegion message={drawerAnnouncement.message} />}
         <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
           <LibraryHeading isDrawer={isDrawer} headingId={headingId} />
           {purpose && (
