@@ -20,6 +20,7 @@ import {
   type Block,
   type BlockType,
   type ProgramLanguage,
+  type Session,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 import { BlockWorkspace } from "./block-workspace";
@@ -55,11 +56,13 @@ function newId(): string {
 }
 
 function suggestions() {
-  return new ProgramSuggestions({ cardioExercises: [], newId });
+  return new ProgramSuggestions({ libraryExercises: [], newId });
 }
 
 function newBlock(type: BlockType = "hypertrophy"): Block {
-  return suggestions().newBlock(type, 4, { setup: SETUP });
+  return suggestions().newBlock(type, 4, {
+    setup: { ...SETUP, level: "beginner" },
+  });
 }
 
 function withExercises(block: Block, counts: readonly number[]): Block {
@@ -67,10 +70,21 @@ function withExercises(block: Block, counts: readonly number[]): Block {
     ...block,
     sessions: block.sessions.map((session, index) => ({
       ...session,
-      rows: Array.from({ length: counts[index] ?? 0 }, (_, row) => ({
-        id: `${session.id}-row-${row}`,
-        exerciseId: `exercise-${row}`,
-      })),
+      rows: Array.from(
+        { length: counts[index] ?? 0 },
+        (_, row): Session["rows"][number] => ({
+          id: `${session.id}-row-${row}`,
+          exerciseId: `exercise-${row}`,
+          slot: "C",
+          startSets: [],
+          restSeconds: 60,
+          lastSetTechnique: "none",
+          substitutions: [],
+          progression: { kind: "double" },
+          cues: "",
+          touched: [],
+        }),
+      ),
     })),
   };
 }
@@ -112,6 +126,8 @@ function renderWorkspace({
         blockIndex={0}
         blocks={[current]}
         language={language}
+        level="beginner"
+        libraryExercises={[]}
         onChange={(next) => {
           changes.push(next);
           setCurrent(next);

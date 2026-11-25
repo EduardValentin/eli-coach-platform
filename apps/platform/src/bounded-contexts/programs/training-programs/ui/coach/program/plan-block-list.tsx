@@ -13,6 +13,8 @@ import {
   BlockFilling,
   SplitTemplate,
   type Block,
+  type ClientLevel,
+  type LibraryExercise,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 import { BlockNumber } from "./block-number";
@@ -32,6 +34,8 @@ export type BlocksUpdate = (blocks: Block[]) => Block[];
 
 type PlanBlockListProps = {
   blocks: Block[];
+  level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
   problems: ReadonlyMap<string, readonly string[]>;
   onChange: (update: BlocksUpdate) => void;
   onOpenBlock: (blockId: string) => void;
@@ -107,6 +111,8 @@ function BlockDragLayer() {
 
 type BlockRowProps = {
   blocks: Block[];
+  level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
   index: number;
   instructionsId: string;
   problems: readonly string[] | undefined;
@@ -120,6 +126,8 @@ type BlockRowProps = {
 
 function BlockRow({
   blocks,
+  level,
+  libraryExercises,
   index,
   instructionsId,
   problems,
@@ -203,7 +211,11 @@ function BlockRow({
               replaceAt(
                 current,
                 index,
-                blockEditing.blockWithType(current[index], type),
+                blockEditing.blockWithType(current[index], type, {
+                  previous: current[index - 1],
+                  level,
+                  libraryExercises,
+                }),
               ),
             )
           }
@@ -279,6 +291,8 @@ function BlockRow({
 
 export function PlanBlockList({
   blocks,
+  level,
+  libraryExercises,
   problems,
   onChange,
   onOpenBlock,
@@ -350,6 +364,8 @@ export function PlanBlockList({
             <DropLine index={index} onDrop={dropAt} />
             <BlockRow
               blocks={blocks}
+              level={level}
+              libraryExercises={libraryExercises}
               handleRef={(element) => {
                 if (element) handles.current.set(block.id, element);
                 else handles.current.delete(block.id);

@@ -13,6 +13,8 @@ import {
   BlockLoss,
   type Block,
   type BlockType,
+  type ClientLevel,
+  type LibraryExercise,
   type ProgramLanguage,
   type SplitShape,
   type TrainingDays,
@@ -33,6 +35,8 @@ type BlockHeaderProps = {
   blocks: Block[];
   index: number;
   language: ProgramLanguage;
+  level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
   onChange: (block: Block) => void;
   onRemove: () => void;
   measureRef: (header: HTMLElement | null) => void;
@@ -219,6 +223,8 @@ export function BlockHeader({
   blocks,
   index,
   language,
+  level,
+  libraryExercises,
   onChange,
   onRemove,
   measureRef,
@@ -306,7 +312,13 @@ export function BlockHeader({
             block={block}
             index={index}
             onChangeType={(type) =>
-              onChange(blockEditing.blockWithType(block, type))
+              onChange(
+                blockEditing.blockWithType(block, type, {
+                  previous: blocks[index - 1],
+                  level,
+                  libraryExercises,
+                }),
+              )
             }
             toggle={
               settings.collapsible ? { ...toggleControl, expanded: true } : null

@@ -67,7 +67,7 @@ function beginnerPlan() {
   let next = 0;
 
   return new ProgramSuggestions({
-    cardioExercises: [],
+    libraryExercises: [],
     newId: () => `id-${(next += 1)}`,
   }).initialContent({ ...BLOCK_SETUP, level: "beginner" });
 }
@@ -85,7 +85,9 @@ function draftView(
     content: beginnerPlan(),
     updatedAt: OPENED_AT,
     startingBlockSetup: BLOCK_SETUP,
-    cardioExercises: [],
+    libraryExercises: [],
+    clientProfile: null,
+    libraryEquipment: [],
     ...overrides,
   };
 }

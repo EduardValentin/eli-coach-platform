@@ -1,4 +1,11 @@
-import { useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import {
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 import {
   cn,
@@ -16,7 +23,9 @@ import {
   WEEKDAY_LABELS,
   WEEKDAYS,
   type Block,
+  type ClientLevel,
   type DayChoice,
+  type LibraryExercise,
   type Weekday,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
@@ -30,10 +39,16 @@ import {
   planOn,
   weekdayAbbreviation,
   type WeekDay,
+  type WeekTiming,
 } from "./week-view";
 import { WeekRailTabs } from "./week-rail";
 
-type WeekDaysProps = { block: Block; onChange: (block: Block) => void };
+type WeekDaysProps = {
+  block: Block;
+  level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
+  onChange: (block: Block) => void;
+};
 
 type DayMenuProps = {
   block: Block;
@@ -109,8 +124,11 @@ function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
     : BlockLoss.describe(block, { kind: "day", weekday: day });
 }
 
-function weekOf(block: Block): WeekDay[] {
-  return WEEKDAYS.map((weekday) => ({ weekday, plan: planOn(block, weekday) }));
+function weekOf(block: Block, timing: WeekTiming): WeekDay[] {
+  return WEEKDAYS.map((weekday) => ({
+    weekday,
+    plan: planOn(block, weekday, timing),
+  }));
 }
 
 function useWeekLayout(): {
@@ -240,11 +258,20 @@ function WeekSection({ children, headingId, layoutRef }: WeekSectionProps) {
   );
 }
 
-export function WeekDays({ block, onChange }: WeekDaysProps) {
+export function WeekDays({
+  block,
+  level,
+  libraryExercises,
+  onChange,
+}: WeekDaysProps) {
   const headingId = useId();
   const confirm = useDestructiveConfirm();
   const { ref, layout } = useWeekLayout();
-  const days = weekOf(block);
+  const exercisesById = useMemo(
+    () => new Map(libraryExercises.map((exercise) => [exercise.id, exercise])),
+    [libraryExercises],
+  );
+  const days = weekOf(block, { level, exercisesById });
 
   function choose(
     day: Weekday,

@@ -20,6 +20,7 @@ export function EditorSectionContent({
       <PlanOverview
         content={draft.content}
         level={draft.level}
+        libraryExercises={builder.libraryExercises}
         onAddBlock={onAddBlock}
         onChange={builder.updateBlocks}
         onOpenBlock={(blockId) => builder.select({ kind: "block", blockId })}
@@ -44,6 +45,8 @@ export function EditorSectionContent({
       blockIndex={index}
       blocks={blocks}
       language={draft.language}
+      level={draft.level}
+      libraryExercises={builder.libraryExercises}
       onChange={builder.replaceBlock}
       onRemove={() => builder.removeBlock(block.id)}
     />

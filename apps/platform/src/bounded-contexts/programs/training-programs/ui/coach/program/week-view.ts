@@ -3,24 +3,41 @@ import {
   WEEKDAY_LABELS,
   type Block,
   type CardioSession,
+  type ClientLevel,
+  type LibraryExercise,
   type Session,
   type Weekday,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 export type DayPlan =
-  | { kind: "session"; session: Session }
+  | { kind: "session"; session: Session; minutes: number }
   | { kind: "cardio"; cardio: CardioSession }
   | { kind: "rest" };
 
 export type WeekDay = { weekday: Weekday; plan: DayPlan };
 
-export function planOn(block: Block, weekday: Weekday): DayPlan {
+export type WeekTiming = {
+  level: ClientLevel;
+  exercisesById: ReadonlyMap<string, LibraryExercise>;
+};
+
+export function planOn(
+  block: Block,
+  weekday: Weekday,
+  timing: WeekTiming,
+): DayPlan {
   const entry = block.calendar[weekday];
   const session =
     entry.kind === "session"
       ? block.sessions.find((candidate) => candidate.id === entry.sessionId)
       : undefined;
-  if (session) return { kind: "session", session };
+  if (session) {
+    return {
+      kind: "session",
+      session,
+      minutes: SessionTiming.longestWeekMinutes(session, { block, ...timing }),
+    };
+  }
   const cardio =
     entry.kind === "cardio"
       ? block.cardioSessions.find(
@@ -41,11 +58,9 @@ type DayLength = { shown: string; spoken: string };
 
 export function dayLengthOf(plan: DayPlan): DayLength | null {
   if (plan.kind === "session") {
-    const minutes = SessionTiming.routineMinutes(plan.session);
-
     return {
-      shown: SessionTiming.estimatedDuration(minutes),
-      spoken: `about ${minutes} min`,
+      shown: SessionTiming.estimatedDuration(plan.minutes),
+      spoken: `about ${plan.minutes} min`,
     };
   }
   if (plan.kind === "rest" || plan.cardio.segments.length === 0) return null;

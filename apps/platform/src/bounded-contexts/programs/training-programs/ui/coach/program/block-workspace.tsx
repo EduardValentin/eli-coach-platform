@@ -2,6 +2,8 @@ import type { CSSProperties } from "react";
 
 import type {
   Block,
+  ClientLevel,
+  LibraryExercise,
   ProgramLanguage,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
@@ -14,6 +16,8 @@ type BlockWorkspaceProps = {
   blockIndex: number;
   blocks: Block[];
   language: ProgramLanguage;
+  level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
   onChange: (block: Block) => void;
   onRemove: () => void;
 };
@@ -23,6 +27,8 @@ export function BlockWorkspace({
   blockIndex,
   blocks,
   language,
+  level,
+  libraryExercises,
   onChange,
   onRemove,
 }: BlockWorkspaceProps) {
@@ -39,11 +45,18 @@ export function BlockWorkspace({
         index={blockIndex}
         key={block.id}
         language={language}
+        level={level}
+        libraryExercises={libraryExercises}
         measureRef={header.measureRef}
         onChange={onChange}
         onRemove={onRemove}
       />
-      <WeekDays block={block} onChange={onChange} />
+      <WeekDays
+        block={block}
+        level={level}
+        libraryExercises={libraryExercises}
+        onChange={onChange}
+      />
     </section>
   );
 }
