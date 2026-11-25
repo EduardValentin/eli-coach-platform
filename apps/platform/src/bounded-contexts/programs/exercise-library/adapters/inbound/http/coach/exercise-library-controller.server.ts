@@ -38,8 +38,8 @@ import {
   exerciseProblemsAnswerSchema,
   exerciseRequestSchema,
   exerciseSavedAnswerSchema,
-  presentEditedExercise,
   presentExercise,
+  presentListedExercise,
   type ExerciseEditorView,
   type ExerciseLibraryView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
@@ -90,7 +90,7 @@ export class ExerciseLibraryController {
       coach.id,
     );
 
-    return { exercises: exercises.map(presentExercise) };
+    return { exercises: exercises.map(presentListedExercise) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
@@ -123,7 +123,7 @@ export class ExerciseLibraryController {
     }
 
     return {
-      exercise: presentEditedExercise(found.exercise),
+      exercise: presentExercise(found.exercise),
       otherNames: found.otherNames,
     };
   }

@@ -37,17 +37,13 @@ type RowDefaultsOptions = { newId: () => string };
 
 type SetValues = Pick<PlannedSet, "kind" | "start">;
 
-type DeloadedWeek = (
-  row: ExerciseRow,
-  sessionIndex: number,
-  exercise: LibraryExercise | undefined,
-) => ResolvedWeek;
-
 type DeloadedRow = {
   row: ExerciseRow;
   sessionIndex: number;
   exercise: LibraryExercise | undefined;
 };
+
+type DeloadedWeek = (deloadedRow: DeloadedRow) => ResolvedWeek;
 
 type DeloadStart = {
   block: Block;
@@ -153,7 +149,7 @@ export class RowDefaults {
   ): Block {
     const sessions = this.withDeloadedRows(block, {
       libraryExercises,
-      weekOf: (row, _session, exercise) =>
+      weekOf: ({ row, exercise }) =>
         ProgramProgression.resolvedWeek(row, block.weeks, {
           block,
           level,
@@ -170,11 +166,8 @@ export class RowDefaults {
   ): Block {
     const sessions = this.withDeloadedRows(block, {
       libraryExercises,
-      weekOf: (row, sessionIndex, exercise) =>
-        RowDefaults.deloadStartWeek(
-          { row, sessionIndex, exercise },
-          { block, previous, level },
-        ),
+      weekOf: (deloadedRow) =>
+        RowDefaults.deloadStartWeek(deloadedRow, { block, previous, level }),
     });
 
     return { ...block, type: "deload", weeks: 1, sessions };
@@ -370,7 +363,7 @@ export class RowDefaults {
       ...session,
       rows: session.rows.map((row) => {
         const exercise = exercisesById.get(row.exerciseId);
-        const sets = weekOf(row, sessionIndex, exercise).sets.map(
+        const sets = weekOf({ row, sessionIndex, exercise }).sets.map(
           (set): SetValues => ({
             kind: set.kind,
             start: ProgramProgression.targetsOf(set),

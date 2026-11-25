@@ -85,14 +85,14 @@ export const exerciseProblemsAnswerSchema = z.object({
   problems: exerciseProblemsSchema,
 });
 
-export function presentExercise({
+export function presentListedExercise({
   programCount,
   ...exercise
 }: ExerciseListingEntry): ExerciseListingView {
   return { ...exerciseViewOf(exercise), programCount };
 }
 
-export function presentEditedExercise(exercise: Exercise): ExerciseView {
+export function presentExercise(exercise: Exercise): ExerciseView {
   return exerciseViewOf({ ...exercise.toSnapshot(), status: exercise.status });
 }
 
