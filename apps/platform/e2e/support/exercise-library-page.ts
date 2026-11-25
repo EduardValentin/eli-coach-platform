@@ -657,6 +657,45 @@ export class ExerciseLibraryPage {
     await expect(this.rowMenu).toBeHidden();
   }
 
+  async expectDeleteHeldBack(name: string, reason: string): Promise<void> {
+    await expect(async () => {
+      await this.actionsTriggerOf(name).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await expect(this.rowMenuItem("Delete")).toHaveAttribute(
+        "aria-disabled",
+        "true",
+        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
+      );
+      await this.rowMenuItem("Delete").hover();
+      await expect(this.page.getByText(reason, { exact: true })).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await this.closeRowMenuAndHint();
+  }
+
+  private async closeRowMenuAndHint(): Promise<void> {
+    await expect(async () => {
+      await this.page.keyboard.press("Escape");
+      await expect(this.rowMenu).toBeHidden({ timeout: ARROW_SETTLE_MS });
+    }).toPass();
+  }
+
+  async expectDeleteAllowed(name: string): Promise<void> {
+    await expect(async () => {
+      await this.actionsTriggerOf(name).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await expect(this.rowMenuItem("Delete")).not.toHaveAttribute(
+        "aria-disabled",
+        "true",
+        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
+      );
+    }).toPass();
+    await this.closeRowMenuAndHint();
+  }
+
   async archive(name: string): Promise<void> {
     await this.chooseRowAction(name, "Archive");
   }

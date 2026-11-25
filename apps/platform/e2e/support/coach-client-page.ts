@@ -973,6 +973,15 @@ export class CoachClientPage {
       .click();
   }
 
+  async expectProgramCardBlock(block: string, sessions: string): Promise<void> {
+    await expect(
+      this.programCard
+        .getByRole("list", { name: "Blocks", exact: true })
+        .getByRole("listitem")
+        .filter({ hasText: block }),
+    ).toContainText(sessions);
+  }
+
   async expectDraftProgram(draft: DraftProgramCard): Promise<void> {
     const blocks = this.programCard
       .getByRole("list", { name: "Blocks", exact: true })

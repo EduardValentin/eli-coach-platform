@@ -877,6 +877,44 @@ export class ProgramBuilderPage {
     ).toBeVisible();
   }
 
+  async expectOpenSessionOffered(): Promise<void> {
+    await expect(
+      this.page.getByRole("button", { name: "Open session" }),
+    ).toHaveCount(1);
+  }
+
+  async expectNoOpenSessionOffered(): Promise<void> {
+    await expect(
+      this.page.getByRole("button", { name: "Open session" }),
+    ).toHaveCount(0);
+  }
+
+  async openClientProfile(): Promise<void> {
+    await this.page.getByRole("button", { name: "Client profile" }).click();
+  }
+
+  async openClientProfileFromDraftActions(): Promise<void> {
+    await this.page.getByRole("button", { name: "Draft actions" }).click();
+    await this.page.getByRole("menuitem", { name: "Client profile" }).click();
+  }
+
+  async expectClientProfile(
+    name: string,
+    facts: Readonly<Record<string, string>>,
+  ): Promise<void> {
+    const profile = this.page.getByRole("dialog", { name });
+
+    await expect(profile.getByRole("term")).toHaveText(Object.keys(facts));
+    await expect(profile.getByRole("definition")).toHaveText(
+      Object.values(facts),
+    );
+  }
+
+  async closeClientProfile(name: string): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.page.getByRole("dialog", { name })).toHaveCount(0);
+  }
+
   async expectOnlyDayMenusAndStrengthFacesInTheWeek(
     strengthDays: number,
   ): Promise<void> {

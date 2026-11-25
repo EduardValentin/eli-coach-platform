@@ -343,6 +343,11 @@ test(
     expect(
       problems.filter((problem) => /hydrat|script tag/i.test(problem)),
     ).toEqual([]);
+
+    // act
+    await programBuilder.closeExerciseLibrary();
+
+    // assert
     await programBuilder.expectDaySpoken("Sunday", "Full Body A about 0 min");
     await programBuilder.expectDaySpoken("Monday", "Cardio");
     await programBuilder.expectDaySpoken("Tuesday", "Rest");

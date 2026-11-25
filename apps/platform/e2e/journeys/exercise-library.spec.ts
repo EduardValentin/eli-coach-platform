@@ -4,6 +4,7 @@ import { expect, test } from "../support/fixtures";
 import type { SavedExercise } from "../support/exercise-editor-page";
 import type { ExerciseFields } from "../support/exercise-requests";
 import { storedExerciseVideoIds } from "../support/exercise-video-files";
+import { CARDIO_EXERCISE, SESSION_LIBRARY } from "../support/session-library";
 import { setPhoneViewport } from "../support/viewport";
 
 const UNKNOWN_EXERCISE_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
@@ -3282,5 +3283,98 @@ test(
       hipThrust.name,
     ]);
     await exerciseLibrary.expectStatusCounts({ Active: 2, Archived: 1 });
+  },
+);
+
+test(
+  "an exercise a program uses is held back from Delete with the number of programs, can still be archived, and is deletable once the draft no longer holds it",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    exerciseLibrary,
+    exerciseRequests,
+    libraryPanel,
+    page,
+    programBuilder,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    sessionCard,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(300_000);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted([
+      ...SESSION_LIBRARY,
+      CARDIO_EXERCISE,
+    ]);
+    await exerciseLibrary.open();
+
+    // assert
+    await exerciseLibrary.expectDeleteAllowed(CARDIO_EXERCISE.name);
+
+    // act
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await page.setViewportSize({ width: 1440, height: 2400 });
+    await programBuilder.openBlockFromSections(2, "Hypertrophy");
+    await sessionCard.openFirstStrengthDay();
+    await sessionCard.openLibraryFor("A · Main lift");
+    await libraryPanel.add("Back squat");
+    await programBuilder.expectSaved();
+    await exerciseLibrary.open();
+
+    // assert
+    await exerciseLibrary.expectDeleteHeldBack(
+      CARDIO_EXERCISE.name,
+      "Used in 1 program",
+    );
+    await exerciseLibrary.expectDeleteHeldBack(
+      "Back squat",
+      "Used in 1 program",
+    );
+    await exerciseLibrary.expectDeleteAllowed("Calf raise");
+
+    // act
+    await exerciseLibrary.archive("Back squat");
+
+    // assert
+    await exerciseLibrary.expectToast('"Back squat" archived');
+
+    // act
+    await exerciseLibrary.chooseStatus("Archived");
+
+    // assert
+    await exerciseLibrary.expectDeleteHeldBack(
+      "Back squat",
+      "Used in 1 program",
+    );
+
+    // act
+    await exerciseLibrary.restore("Back squat");
+    await exerciseLibrary.expectToast('"Back squat" restored');
+    await programBuilder.open(client.clientId);
+    await programBuilder.openBlockFromSections(2, "Hypertrophy");
+    await sessionCard.openFirstStrengthDay();
+    await sessionCard.chooseFromActions("Back squat", "Remove");
+    await programBuilder.expectSaved();
+    await exerciseLibrary.open();
+
+    // assert
+    await exerciseLibrary.expectDeleteAllowed("Back squat");
+
+    // act
+    await exerciseLibrary.requestDelete("Back squat");
+    await exerciseLibrary.confirmDelete();
+
+    // assert
+    await exerciseLibrary.expectToast('"Back squat" deleted');
   },
 );
