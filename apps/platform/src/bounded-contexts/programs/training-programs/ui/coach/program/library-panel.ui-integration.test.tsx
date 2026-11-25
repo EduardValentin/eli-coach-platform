@@ -735,6 +735,21 @@ describe("a library opened for a place in a session", () => {
     },
   );
 
+  it("keeps the announcement of an add made as the library opens instead of the count that follows", async () => {
+    // arrange
+    const { user } = await renderPanel({ refusal: "warm-up-full" });
+    await user.click(screen.getByRole("button", { name: "Add to warm-up" }));
+
+    // act
+    await user.click(addButton("Hip Circles"));
+    await new Promise((resolve) => setTimeout(resolve, 900));
+
+    // assert
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Hip Circles not added: the warm-up holds four exercises",
+    );
+  });
+
   it("opens on stretching for the cool-down", async () => {
     // arrange
     const { user } = await renderPanel();

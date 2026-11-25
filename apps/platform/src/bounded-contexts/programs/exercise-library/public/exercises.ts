@@ -60,6 +60,11 @@ export const exerciseInUseAnswerSchema = z.object({
   programCount: z.number().int().positive(),
 });
 
+export const exerciseInUseRefusalSchema = z.object({
+  status: z.literal("refused"),
+  httpStatus: z.literal(409),
+});
+
 export const exerciseSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
 });

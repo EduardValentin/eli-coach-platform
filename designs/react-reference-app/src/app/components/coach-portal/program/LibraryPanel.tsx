@@ -116,14 +116,16 @@ function panelFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
 function useCountAnnouncement(count: number, filtersKey: string) {
   const announce = useEditorAnnouncer();
   const firstRender = useRef(true);
+  const pending = useRef<number>();
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    const timer = window.setTimeout(() => announce(count === 0 ? 'No exercises match' : counted(count, 'exercise')), COUNT_ANNOUNCE_DELAY_MS);
-    return () => window.clearTimeout(timer);
+    pending.current = window.setTimeout(() => announce(count === 0 ? 'No exercises match' : counted(count, 'exercise')), COUNT_ANNOUNCE_DELAY_MS);
+    return () => window.clearTimeout(pending.current);
   }, [announce, count, filtersKey]);
+  return { cancelPending: () => window.clearTimeout(pending.current) };
 }
 
 function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (exercise: Exercise) => void }) {
@@ -308,10 +310,11 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
     .filter(exercise => !onlyHers || exercise.equipment.every(item => equipment.includes(item)))
     .filter(exercise => !bodyweightOnly || exercise.equipment.length === 0);
   const fromPanel = panelFilters(filters, type);
-  useCountAnnouncement(shown.length, JSON.stringify([type, filters]));
+  const countAnnouncement = useCountAnnouncement(shown.length, JSON.stringify([type, filters]));
 
   function add(exercise: Exercise) {
     const refusal = onAdd(exercise);
+    countAnnouncement.cancelPending();
     if (refusal) {
       announce(REFUSED_ADD_TEXT[refusal](exercise.name));
       return;

@@ -7286,30 +7286,17 @@
       "click": "role=switch[name=\"Cool-down\"]"
     }
   ],
-  "exercise-delete-held-back": {
-    "prototype": [
-      {
-        "use": "open-exercise-actions"
-      },
-      {
-        "press": "End"
-      },
-      {
-        "waitFor": "[data-parity=\"row-action-delete-hint\"]"
-      }
-    ],
-    "real": [
-      {
-        "use": "open-exercise-actions"
-      },
-      {
-        "press": "End"
-      },
-      {
-        "waitFor": "[data-parity=\"disabled-action-hint\"]"
-      }
-    ]
-  },
+  "exercise-delete-held-back": [
+    {
+      "use": "open-exercise-actions"
+    },
+    {
+      "press": "End"
+    },
+    {
+      "waitFor": "[data-parity=\"row-action-delete-hint\"]"
+    }
+  ],
   "library-add-refused": [
     {
       "use": "builder-block"

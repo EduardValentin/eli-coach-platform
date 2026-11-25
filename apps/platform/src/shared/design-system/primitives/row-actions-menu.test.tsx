@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarClock, CalendarX, Copy } from "lucide-react";
+import { CalendarClock, CalendarX, Copy, Trash2 } from "lucide-react";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { configureAxe } from "vitest-axe";
@@ -286,6 +286,98 @@ describe("a row menu action that is not allowed right now", () => {
     expect(triggerRef.current).toBe(
       screen.getByRole("button", { name: "More actions" }),
     );
+  });
+});
+
+describe("a row menu action held back with a hint", () => {
+  const HINT = "Used in 1 program";
+
+  function renderHeldBackMenu() {
+    const onDelete = vi.fn();
+    render(
+      <main>
+        <RowActionsMenu
+          actions={[
+            {
+              disabledHint: HINT,
+              icon: Trash2,
+              label: "Delete",
+              name: "delete",
+              onSelect: onDelete,
+              tone: "destructive",
+            },
+          ]}
+          label="More actions"
+        />
+      </main>,
+    );
+
+    return {
+      onDelete,
+      trigger: screen.getByRole("button", { name: "More actions" }),
+      user: userEvent.setup(),
+    };
+  }
+
+  it("stays in the menu, marked disabled, and keeps its own opacity so only its icon and label fade", async () => {
+    // arrange
+    const { trigger, user } = renderHeldBackMenu();
+
+    // act
+    await openMenu(user, trigger);
+
+    // assert
+    const item = screen.getByRole("menuitem", { name: "Delete" });
+    expect(item).toHaveAttribute("aria-disabled", "true");
+    expect(item).toHaveClass("aria-disabled:opacity-100");
+    expect(screen.getByText("Delete")).toHaveClass("opacity-50");
+  });
+
+  it("explains itself below the item, aligned to its trailing end, on hover", async () => {
+    // arrange
+    const { trigger, user } = renderHeldBackMenu();
+    await openMenu(user, trigger);
+
+    // act
+    await user.hover(screen.getByRole("menuitem", { name: "Delete" }));
+
+    // assert
+    const hint = (await screen.findByText(HINT)).closest("[data-parity]");
+    expect(hint).toHaveAttribute("data-parity", "row-action-delete-hint");
+    expect(hint).toHaveAttribute("data-side", "bottom");
+    expect(hint).toHaveAttribute("data-align", "end");
+  });
+
+  it("can be reached with the arrow keys, explains itself there and does not run on Enter", async () => {
+    // arrange
+    const { onDelete, trigger, user } = renderHeldBackMenu();
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menu");
+
+    // act
+    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{Enter}");
+
+    // assert
+    const item = screen.getByRole("menuitem", { name: "Delete" });
+    expect(item).toHaveFocus();
+    await waitFor(() => expect(item).toHaveAccessibleDescription(HINT));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("does not run on a click", async () => {
+    // arrange
+    const { onDelete, trigger, user } = renderHeldBackMenu();
+    await openMenu(user, trigger);
+
+    // act
+    await user.click(screen.getByRole("menuitem", { name: "Delete" }));
+
+    // assert
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
   });
 });
 

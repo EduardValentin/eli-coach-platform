@@ -573,7 +573,7 @@ function rowActionsFor({
 }: ExerciseRowProps): RowMenuAction[] {
   const deleteAction: RowMenuAction = {
     ...(exercise.programCount > 0 && {
-      disabledReason: usageHintOf(exercise.programCount),
+      disabledHint: usageHintOf(exercise.programCount),
     }),
     icon: Trash2,
     label: "Delete",

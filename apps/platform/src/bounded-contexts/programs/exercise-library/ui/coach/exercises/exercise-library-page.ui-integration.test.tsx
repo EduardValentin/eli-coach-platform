@@ -1170,11 +1170,9 @@ describe("an exercise a program uses", () => {
     // arrange
     const { user } = await renderLibrary({ exercises: LIBRARY });
     server.use(
-      http.delete(`*${EXERCISE_LIBRARY_API_PATHS.exercise}`, () =>
-        HttpResponse.json(
-          { error: "in-use", programCount: 1 },
-          { status: 409 },
-        ),
+      http.delete(
+        `*${EXERCISE_LIBRARY_API_PATHS.exercise}`,
+        () => new HttpResponse("The exercise is in use.", { status: 409 }),
       ),
     );
     const confirm = await openDeleteConfirm(user, "Back squat");

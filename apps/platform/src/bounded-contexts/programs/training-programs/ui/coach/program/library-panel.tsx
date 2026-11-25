@@ -121,6 +121,7 @@ function filterLabel(filter: ActiveFilter): string {
 function useCountAnnouncement(count: number, selection: LibrarySelection) {
   const announce = useEditorAnnouncer();
   const firstRender = useRef(true);
+  const pending = useRef<number>(undefined);
 
   useEffect(() => {
     if (firstRender.current) {
@@ -128,7 +129,7 @@ function useCountAnnouncement(count: number, selection: LibrarySelection) {
 
       return;
     }
-    const timer = window.setTimeout(
+    pending.current = window.setTimeout(
       () =>
         announce(
           count === 0 ? "No exercises match" : counted(count, "exercise"),
@@ -136,8 +137,10 @@ function useCountAnnouncement(count: number, selection: LibrarySelection) {
       COUNT_ANNOUNCE_DELAY_MS,
     );
 
-    return () => window.clearTimeout(timer);
+    return () => window.clearTimeout(pending.current);
   }, [announce, count, selection]);
+
+  return { cancelPending: () => window.clearTimeout(pending.current) };
 }
 
 type LibraryExerciseCardProps = {
@@ -453,10 +456,11 @@ export function LibraryPanel({
   }
   const shown = selection.offered(libraryExercises, libraryEquipment);
   const panelFilters = selection.panelFilters();
-  useCountAnnouncement(shown.length, selection);
+  const countAnnouncement = useCountAnnouncement(shown.length, selection);
 
   function add(exercise: LibraryExercise) {
     const refusal = onAdd(exercise);
+    countAnnouncement.cancelPending();
     if (refusal) {
       announce(REFUSED_ADD_TEXT[refusal](exercise.name));
 

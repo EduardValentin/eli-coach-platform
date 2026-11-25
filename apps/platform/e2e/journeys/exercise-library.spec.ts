@@ -4,6 +4,9 @@ import { expect, test } from "../support/fixtures";
 import type { SavedExercise } from "../support/exercise-editor-page";
 import type { ExerciseFields } from "../support/exercise-requests";
 import { storedExerciseVideoIds } from "../support/exercise-video-files";
+import { LibraryPanel } from "../support/library-panel";
+import { ProgramBuilderPage } from "../support/program-builder-page";
+import { SessionCard } from "../support/session-card";
 import { CARDIO_EXERCISE, SESSION_LIBRARY } from "../support/session-library";
 import { setPhoneViewport, setTallDesktopViewport } from "../support/viewport";
 
@@ -3377,5 +3380,57 @@ test(
 
     // assert
     await exerciseLibrary.expectToast('"Back squat" deleted');
+  },
+);
+
+test(
+  "a delete the server refuses because a program began using the exercise meanwhile says it is in use and keeps the exercise",
+  { tag: "@completeness" },
+  async ({
+    coachClient,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    programBuilder,
+    programSetup,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(SESSION_LIBRARY);
+    await coachClient.open(client.clientId);
+    await coachClient.buildProgram();
+    await programSetup.create();
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+    await exerciseLibrary.open();
+    await exerciseLibrary.expectDeleteAllowed("Back squat");
+    const builderTab = await page.context().newPage();
+    const builderInTab = new ProgramBuilderPage(builderTab);
+    const sessionInTab = new SessionCard(builderTab);
+    await setTallDesktopViewport(builderTab);
+    await builderInTab.open(client.clientId);
+    await builderInTab.openBlockFromSections(2, "Hypertrophy");
+    await sessionInTab.openFirstStrengthDay();
+    await sessionInTab.openLibraryFor("A · Main lift");
+    await new LibraryPanel(builderTab).add("Back squat");
+    await builderInTab.expectSaved();
+    await builderTab.close();
+
+    // act
+    await exerciseLibrary.requestDelete("Back squat");
+    await exerciseLibrary.confirmDelete();
+
+    // assert
+    await exerciseLibrary.expectToast(
+      '"Back squat" is in use, so it was not deleted',
+    );
+    await exerciseLibrary.expectListedInOrder(["Back squat"]);
   },
 );

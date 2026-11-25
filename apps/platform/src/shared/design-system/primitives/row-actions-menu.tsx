@@ -1,8 +1,10 @@
-import { Ellipsis, type LucideIcon } from "lucide-react";
+import { Ellipsis, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useRef, type Ref } from "react";
 
+import { cn } from "../lib/cn";
 import { Button } from "./button";
 import { DisabledActionHint } from "./disabled-action-hint";
+import { HintPopover } from "./hint-popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import {
 
 export type RowMenuAction = {
   disabled?: boolean;
+  disabledHint?: string;
   disabledReason?: string;
   icon?: LucideIcon;
   label: string;
@@ -58,21 +61,50 @@ function RowMenuItem(props: {
   chooseAction: ChooseAction;
 }) {
   const { action, chooseAction } = props;
-  const { disabled, disabledReason, icon: Icon, name, tone } = action;
+  const {
+    disabled,
+    disabledHint,
+    disabledReason,
+    icon: Icon,
+    name,
+    tone,
+  } = action;
+  const flagged = disabledHint !== undefined;
   const item = (
     <DropdownMenuItem
+      aria-disabled={flagged ? true : undefined}
+      className={cn({ "aria-disabled:opacity-100": flagged })}
       data-parity={`row-action-${name}`}
       disabled={disabled}
       onSelect={chooseAction(action)}
       variant={tone}
     >
-      {Icon && <Icon aria-hidden="true" />}
-      <span>{action.label}</span>
+      {Icon && (
+        <Icon aria-hidden="true" className={cn({ "opacity-50": flagged })} />
+      )}
+      <span className={cn({ "opacity-50": flagged })}>{action.label}</span>
+      {flagged && (
+        <span className="ml-auto flex pl-2">
+          <TriangleAlert aria-hidden="true" className="text-feedback-warning" />
+        </span>
+      )}
     </DropdownMenuItem>
   );
 
-  return disabledReason ? (
-    <DisabledActionHint reason={disabledReason}>{item}</DisabledActionHint>
+  if (disabledReason) {
+    return (
+      <DisabledActionHint reason={disabledReason}>{item}</DisabledActionHint>
+    );
+  }
+
+  return flagged ? (
+    <HintPopover
+      align="end"
+      contentParity={`row-action-${name}-hint`}
+      hint={disabledHint}
+    >
+      {item}
+    </HintPopover>
   ) : (
     item
   );
@@ -128,7 +160,7 @@ export function RowActionsMenu({
   };
 
   const chooseAction: ChooseAction = (action) => (event) => {
-    if (action.disabledReason) {
+    if (action.disabledReason || action.disabledHint !== undefined) {
       event.preventDefault();
       return;
     }

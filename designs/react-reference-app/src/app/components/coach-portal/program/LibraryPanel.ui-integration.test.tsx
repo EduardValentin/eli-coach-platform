@@ -409,6 +409,19 @@ describe('LibraryPanel', () => {
     await waitFor(() => expect(opener).toHaveFocus());
   });
 
+  it('keeps the announcement of an add made as the library opens instead of the count that follows', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' }));
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
+    await new Promise(resolve => setTimeout(resolve, 900));
+
+    // assert
+    expect(screen.getByRole('status')).toHaveTextContent('90/90 Hip Switches is already in the warm-up');
+  });
+
   it('keeps the drawer open and says why when an add is refused, where an add closes it', async () => {
     // arrange
     stubPhoneViewport();
