@@ -185,7 +185,7 @@ function createController() {
   const deleteExercise = {
     execute: vi.fn(async (): Promise<DeleteExerciseResult> => ({
       status: "deleted",
-      exercise: Exercise.reconstitute(HIP_THRUST),
+      name: "Hip thrust",
     })),
   };
   const exerciseLibraryController = new ExerciseLibraryController({
@@ -1218,6 +1218,25 @@ describe("ExerciseLibraryController#delete", () => {
       ownerAccountId: COACH.id,
       exerciseId: EXERCISE_ID,
     });
+  });
+
+  it("answers 409 with how many programs use an exercise in use", async () => {
+    // arrange
+    const { exerciseLibraryController, deleteExercise } = createController();
+    deleteExercise.execute.mockResolvedValueOnce({
+      status: "in-use",
+      programCount: 2,
+    });
+
+    // act
+    const response = await exerciseLibraryController.delete(
+      argsFor({ request: lifecycleRequest("DELETE") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "in-use", programCount: 2 });
   });
 
   it("answers 404 for an unknown exercise", async () => {

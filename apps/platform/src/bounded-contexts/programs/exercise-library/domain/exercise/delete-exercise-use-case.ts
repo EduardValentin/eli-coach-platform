@@ -1,4 +1,3 @@
-import type { Exercise } from "./exercise";
 import type {
   ExerciseLibraryPort,
   ExerciseReference,
@@ -6,10 +5,15 @@ import type {
 import type { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 
 export type DeleteExerciseResult =
-  { status: "deleted"; exercise: Exercise } | { status: "not-found" };
+  | { status: "deleted"; name: string }
+  | { status: "in-use"; programCount: number }
+  | { status: "not-found" };
 
 type DeleteExerciseUseCaseOptions = {
-  exerciseLibraryPort: Pick<ExerciseLibraryPort, "find" | "remove">;
+  exerciseLibraryPort: Pick<
+    ExerciseLibraryPort,
+    "find" | "remove" | "programCountsOf"
+  >;
   videos: Pick<ExerciseVideoCleanup, "removeStored">;
 };
 
@@ -24,6 +28,15 @@ export class DeleteExerciseUseCase {
       return { status: "not-found" };
     }
 
+    const programCounts = await exerciseLibraryPort.programCountsOf(
+      reference.ownerAccountId,
+    );
+    const programCount = programCounts.get(exercise.id) ?? 0;
+
+    if (programCount > 0) {
+      return { status: "in-use", programCount };
+    }
+
     const removal = await exerciseLibraryPort.remove(reference);
 
     if (removal === "missing") {
@@ -32,6 +45,6 @@ export class DeleteExerciseUseCase {
 
     await this.options.videos.removeStored(exercise.video);
 
-    return { status: "deleted", exercise };
+    return { status: "deleted", name: exercise.name };
   }
 }

@@ -4,6 +4,7 @@ import { DeleteExerciseUseCase } from "./delete-exercise-use-case";
 import { Exercise, type ExerciseSnapshot } from "./exercise";
 import type {
   ExerciseLibraryPort,
+  ExerciseProgramCounts,
   ExerciseReference,
   ExerciseRemoval,
 } from "./exercise-library-port";
@@ -67,7 +68,11 @@ function createUseCase() {
       async (_reference: ExerciseReference): Promise<ExerciseRemoval> =>
         "removed",
     ),
-  } satisfies Pick<ExerciseLibraryPort, "find" | "remove">;
+    programCountsOf: vi.fn(
+      async (_ownerAccountId: string): Promise<ExerciseProgramCounts> =>
+        new Map([[LUNGE_ID, 0]]),
+    ),
+  } satisfies Pick<ExerciseLibraryPort, "find" | "remove" | "programCountsOf">;
   const store = {
     discard: vi.fn(async (_stagingId: string) => undefined),
     remove: vi.fn(async (_videoId: string) => undefined),
@@ -98,10 +103,7 @@ describe("DeleteExerciseUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({
-      status: "deleted",
-      exercise: Exercise.reconstitute(HIP_THRUST),
-    });
+    expect(result).toEqual({ status: "deleted", name: "Hip thrust" });
     expect(library.remove).toHaveBeenCalledExactlyOnceWith({
       ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: HIP_THRUST_ID,
@@ -123,10 +125,7 @@ describe("DeleteExerciseUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({
-      status: "deleted",
-      exercise: Exercise.reconstitute(LUNGE),
-    });
+    expect(result).toEqual({ status: "deleted", name: "Lunge" });
     expect(store.remove).not.toHaveBeenCalled();
   });
 
@@ -148,6 +147,29 @@ describe("DeleteExerciseUseCase", () => {
       videoId: VIDEO_ID,
       error: failure,
     });
+  });
+
+  it("refuses to delete an exercise programs use, answering how many, and removes nothing", async () => {
+    // arrange
+    const { deleteExerciseUseCase, library, store } = createUseCase();
+    library.programCountsOf.mockResolvedValueOnce(
+      new Map([
+        [LUNGE_ID, 1],
+        [HIP_THRUST_ID, 2],
+      ]),
+    );
+
+    // act
+    const result = await deleteExerciseUseCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: HIP_THRUST_ID,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "in-use", programCount: 2 });
+    expect(library.programCountsOf).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
+    expect(library.remove).not.toHaveBeenCalled();
+    expect(store.remove).not.toHaveBeenCalled();
   });
 
   it("finds nothing to delete when the exercise is gone before it is removed", async () => {

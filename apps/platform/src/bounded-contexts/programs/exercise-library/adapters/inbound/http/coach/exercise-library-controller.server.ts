@@ -5,7 +5,6 @@ import {
   type CreateExerciseUseCase,
   type DeleteExerciseUseCase,
   type EditExerciseUseCase,
-  type Exercise,
   type ExerciseReference,
   type ExerciseDraftInput,
   type ExerciseSaveProblems,
@@ -35,6 +34,7 @@ import { z } from "zod";
 
 import {
   EXERCISE_FORM_FIELDS,
+  exerciseInUseAnswerSchema,
   exerciseLifecycleAnswerSchema,
   exerciseProblemsAnswerSchema,
   exerciseRequestSchema,
@@ -214,7 +214,7 @@ export class ExerciseLibraryController {
 
     switch (result.status) {
       case "archived":
-        return this.lifecycleResponse(result.exercise);
+        return this.lifecycleResponse(result.exercise.name);
       case "not-found":
         return this.notFoundResponse();
     }
@@ -237,7 +237,7 @@ export class ExerciseLibraryController {
 
     switch (result.status) {
       case "restored":
-        return this.lifecycleResponse(result.exercise);
+        return this.lifecycleResponse(result.exercise.name);
       case "not-found":
         return this.notFoundResponse();
       case "failed":
@@ -262,7 +262,9 @@ export class ExerciseLibraryController {
 
     switch (result.status) {
       case "deleted":
-        return this.lifecycleResponse(result.exercise);
+        return this.lifecycleResponse(result.name);
+      case "in-use":
+        return this.inUseResponse(result.programCount);
       case "not-found":
         return this.notFoundResponse();
     }
@@ -415,9 +417,14 @@ export class ExerciseLibraryController {
       : null;
   }
 
-  private lifecycleResponse(exercise: Exercise): Response {
+  private lifecycleResponse(name: string): Response {
+    return Response.json(exerciseLifecycleAnswerSchema.parse({ name }));
+  }
+
+  private inUseResponse(programCount: number): Response {
     return Response.json(
-      exerciseLifecycleAnswerSchema.parse({ name: exercise.name }),
+      exerciseInUseAnswerSchema.parse({ error: "in-use", programCount }),
+      { status: 409 },
     );
   }
 

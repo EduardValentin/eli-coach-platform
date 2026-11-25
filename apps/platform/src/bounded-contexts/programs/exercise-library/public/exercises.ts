@@ -49,6 +49,11 @@ export type ExerciseRequest = z.infer<typeof exerciseRequestSchema>;
 
 export const exerciseLifecycleAnswerSchema = z.object({ name: z.string() });
 
+export const exerciseInUseAnswerSchema = z.object({
+  error: z.literal("in-use"),
+  programCount: z.number().int().positive(),
+});
+
 export const exerciseSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
 });
