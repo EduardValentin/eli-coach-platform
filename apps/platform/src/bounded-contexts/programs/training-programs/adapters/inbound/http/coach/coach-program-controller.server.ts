@@ -190,7 +190,7 @@ export class CoachProgramController {
       case "no-program":
         return { state: "no-program", client: reading.client };
       case "draft": {
-        const { client, coachingEnded, level, language, draft, clientProfile } =
+        const { client, coachingEnded, level, language, draft, coachingFacts } =
           reading;
 
         return {
@@ -204,7 +204,7 @@ export class CoachProgramController {
           updatedAt: draft.updatedAt.toISOString(),
           startingBlockSetup: reading.startingBlockSetup,
           libraryExercises: reading.libraryExercises,
-          clientProfile: clientProfile && this.clientProfileOf(clientProfile),
+          clientProfile: coachingFacts && this.clientProfileOf(coachingFacts),
           libraryEquipment: reading.libraryEquipment,
         };
       }

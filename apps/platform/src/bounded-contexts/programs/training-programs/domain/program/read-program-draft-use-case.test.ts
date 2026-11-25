@@ -162,7 +162,7 @@ describe("ReadProgramDraftUseCase", () => {
         language: "ro",
       },
       libraryExercises: [WALKING, ARCHIVED_SQUAT],
-      clientProfile: {
+      coachingFacts: {
         goal: "Build muscle",
         level: "intermediate",
         trainingDays: 4,
@@ -225,7 +225,7 @@ describe("ReadProgramDraftUseCase", () => {
     // assert
     expect(reading).toMatchObject({
       status: "draft",
-      clientProfile: null,
+      coachingFacts: null,
       libraryEquipment: [],
     });
   });

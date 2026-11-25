@@ -32,7 +32,7 @@ export type ProgramDraftReading =
       draft: DraftReading;
       startingBlockSetup: BlockSetup;
       libraryExercises: LibraryExercise[];
-      clientProfile: ClientCoachingFacts | null;
+      coachingFacts: ClientCoachingFacts | null;
       libraryEquipment: Equipment[];
     };
 
@@ -86,7 +86,7 @@ export class ReadProgramDraftUseCase {
       return { status: "no-draft" };
     }
 
-    const clientProfile = this.approvedFactsOf(
+    const coachingFacts = this.approvedFactsOf(
       await clientCoachingPort.find(clientId),
     );
 
@@ -97,11 +97,11 @@ export class ReadProgramDraftUseCase {
       level: program.level,
       language: program.language,
       draft,
-      startingBlockSetup: this.startingBlockSetupOf(program, clientProfile),
+      startingBlockSetup: this.startingBlockSetupOf(program, coachingFacts),
       libraryExercises: await libraryExercisesPort.listFor(coachAccountId),
-      clientProfile,
+      coachingFacts,
       libraryEquipment: LibraryEquipment.coveredBy(
-        clientProfile?.equipment ?? [],
+        coachingFacts?.equipment ?? [],
       ),
     };
   }
@@ -114,10 +114,10 @@ export class ReadProgramDraftUseCase {
 
   private startingBlockSetupOf(
     program: Program,
-    clientProfile: ClientCoachingFacts | null,
+    coachingFacts: ClientCoachingFacts | null,
   ): BlockSetup {
     const { splitShape, trainingDays, sessionMinutes, dailySteps } =
-      ProgramSetup.startingValues(clientProfile ?? UNAPPROVED_COACHING_FACTS);
+      ProgramSetup.startingValues(coachingFacts ?? UNAPPROVED_COACHING_FACTS);
 
     return {
       splitShape,

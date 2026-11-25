@@ -145,7 +145,7 @@ const DRAFT_READING: ProgramDraftReading = {
     language: "ro",
   },
   libraryExercises: [WALKING],
-  clientProfile: {
+  coachingFacts: {
     goal: "Build muscle",
     level: "intermediate",
     trainingDays: 4,
@@ -696,7 +696,7 @@ describe("CoachProgramController loadDraft", () => {
   it("answers no client profile while her answers are not approved", async () => {
     // arrange
     const { coachProgramController } = createController({
-      draft: { ...DRAFT_READING, clientProfile: null, libraryEquipment: [] },
+      draft: { ...DRAFT_READING, coachingFacts: null, libraryEquipment: [] },
     });
 
     // act
