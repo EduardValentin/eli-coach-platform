@@ -123,6 +123,7 @@ export default [
   {
     files: [
       "apps/platform/src/bounded-contexts/programs/exercise-library/ui/coach/exercises/exercise-video-field.tsx",
+      "apps/platform/src/bounded-contexts/programs/training-programs/ui/shared/program-view/exercise-detail.tsx",
     ],
     rules: {
       "jsx-a11y/media-has-caption": "off",
