@@ -59,6 +59,7 @@ export {
 } from "./select";
 export { SkipLink } from "./skip-link";
 export { Stepper } from "./stepper";
+export { Switch } from "./switch";
 export {
   Table,
   TableBody,

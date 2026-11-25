@@ -40,4 +40,15 @@ describe("Textarea", () => {
       "min-w-0",
     );
   });
+
+  it("shows its placeholder in the soft placeholder colour", () => {
+    // arrange
+    // act
+    render(<Textarea aria-label="Notes" placeholder="Anything to add" />);
+
+    // assert
+    expect(screen.getByRole("textbox", { name: "Notes" })).toHaveClass(
+      "placeholder:text-placeholder-soft",
+    );
+  });
 });

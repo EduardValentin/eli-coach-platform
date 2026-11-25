@@ -13,7 +13,7 @@ export function InlineProblem({
   return (
     <p
       className={cn(
-        "flex items-start gap-2 text-sm leading-snug text-feedback-danger",
+        "flex items-start gap-1.5 text-sm leading-snug font-medium text-feedback-danger",
         className,
       )}
       {...props}

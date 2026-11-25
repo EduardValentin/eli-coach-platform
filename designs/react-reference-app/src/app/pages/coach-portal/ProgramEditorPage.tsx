@@ -7,6 +7,7 @@ import { DeadEndPanel } from '../../components/ErrorPage';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { ExerciseLibraryLink } from '../../components/coach-portal/ExerciseLibraryLink';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
+import { ChangedElsewhereDialog } from '../../components/coach-portal/program/ChangedElsewhereDialog';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
 import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
 import { EDITOR_MODE_LABELS, sectionHash, sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
@@ -14,8 +15,10 @@ import { EditorAnnouncerProvider, useEditorAnnouncer } from '../../components/co
 import { EditorShell } from '../../components/coach-portal/program/EditorShell';
 import { EditorSkeleton } from '../../components/coach-portal/program/EditorSkeleton';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
+import { LeaveWarning } from '../../components/coach-portal/program/LeaveWarning';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { ProgramOutline } from '../../components/coach-portal/program/ProgramOutline';
+import { PlaceHeadingContext } from '../../components/coach-portal/program/placeHeading';
 import { ProgramSetupNotReady, ProgramSetupSheet, ProgramSetupSkeleton } from '../../components/coach-portal/program/ProgramSetupSheet';
 import type { FindingTarget } from '../../components/coach-portal/program/ProgramFindings';
 import { PublishDialog } from '../../components/coach-portal/program/PublishDialog';
@@ -51,8 +54,9 @@ function openSessionOf(block: Block, chosen: string | undefined): string | undef
 type EditorProps = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
 function ProgramEditor(props: EditorProps) {
-  const { journey, program, draft } = props;
+  const { journey, programPath } = props;
   const editor = useEditorState(props);
+  const { program, draft, saving } = editor;
   const [railOpen, setRailOpen] = useState(false);
   const isDesktop = useIsDesktop();
   const panel = useLibraryPanel();
@@ -131,7 +135,8 @@ function ProgramEditor(props: EditorProps) {
 
   return (
     <Sheet open={railOpen && !isDesktop} onOpenChange={setRailOpen}>
-      <EditorShell data-parity-root="ProgramEditorPage">
+      <PlaceHeadingContext.Provider value={placeHeading}>
+        <EditorShell data-parity-root="ProgramEditorPage">
         <SkipLink targetId={EDITOR_ID}>Skip to editor</SkipLink>
         <EditorTopBar
           journey={journey}
@@ -156,6 +161,7 @@ function ProgramEditor(props: EditorProps) {
           draftState={editor.draftState}
           problems={editor.problems}
           warnings={editor.warnings}
+          saving={saving}
         />
         <Tabs value={editor.mode} activationMode="manual" variant="segmented" className="min-h-0 flex-1 flex-row gap-0">
           <ProgramOutline
@@ -222,7 +228,10 @@ function ProgramEditor(props: EditorProps) {
           returnFocusTo={focusAfterAdding}
           onAdd={addBlock}
         />
-      </EditorShell>
+        <ChangedElsewhereDialog open={saving.state === 'changed-elsewhere'} onReload={saving.reload} returnFocusTo={placeHeading} />
+        <LeaveWarning draftPath={`${programPath}/draft`} saving={saving} />
+        </EditorShell>
+      </PlaceHeadingContext.Provider>
     </Sheet>
   );
 }

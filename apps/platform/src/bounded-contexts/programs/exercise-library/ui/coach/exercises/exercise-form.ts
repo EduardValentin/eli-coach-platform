@@ -2,6 +2,7 @@ import {
   ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
   DIFFICULTIES,
   EQUIPMENT,
+  EXERCISE_ROLES,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
   EXERCISE_VIDEO_EXTENSIONS,
@@ -10,15 +11,19 @@ import {
   MAX_EXERCISE_NAME_LENGTH,
   MAX_EXERCISE_VIDEO_BYTES,
   MAX_FORM_CUES_LENGTH,
+  MOVEMENT_PATTERNS,
   MUSCLES,
   defaultUnitFor,
+  takesPatternAndRole,
   unitsFor,
   type Difficulty,
   type Equipment,
+  type ExerciseRole,
   type ExerciseSaveProblems,
   type ExerciseTag,
   type ExerciseType,
   type ExerciseUnit,
+  type MovementPattern,
   type Muscle,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { toggled } from "~/shared/design-system/lib";
@@ -34,9 +39,12 @@ import {
 export {
   DIFFICULTIES,
   EQUIPMENT,
+  EXERCISE_ROLES,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
+  MOVEMENT_PATTERNS,
   MUSCLES,
+  takesPatternAndRole,
   unitsFor,
   type ExerciseType,
   type ExerciseUnit,
@@ -52,6 +60,8 @@ export type ExerciseFormValues = {
   secondaryMuscles: Muscle[];
   equipment: Equipment[];
   difficulty: Difficulty;
+  pattern: MovementPattern | null;
+  role: ExerciseRole | null;
   tags: ExerciseTag[];
   cues: string;
 };
@@ -59,6 +69,8 @@ export type ExerciseFormValues = {
 export const EXERCISE_PROBLEM_FIELDS = [
   "name",
   "primaryMuscles",
+  "pattern",
+  "role",
   "cues",
 ] as const;
 
@@ -74,6 +86,28 @@ export const EXERCISE_TYPE_LABELS: Readonly<Record<ExerciseType, string>> = {
   mobility: "Mobility",
   stretching: "Stretching",
   breathing: "Breathing",
+};
+
+export const MOVEMENT_PATTERN_LABELS: Readonly<
+  Record<MovementPattern, string>
+> = {
+  squat: "Squat",
+  lunge: "Lunge",
+  hinge: "Hinge",
+  "horizontal-push": "Horizontal push",
+  "vertical-push": "Vertical push",
+  "horizontal-pull": "Horizontal pull",
+  "vertical-pull": "Vertical pull",
+  core: "Core",
+  carry: "Carry",
+  isolation: "Isolation",
+  conditioning: "Conditioning",
+};
+
+export const EXERCISE_ROLE_LABELS: Readonly<Record<ExerciseRole, string>> = {
+  "main-compound": "Main compound",
+  "secondary-compound": "Secondary compound",
+  isolation: "Isolation",
 };
 
 export const UNIT_LABELS: Readonly<Record<ExerciseUnit, string>> = {
@@ -110,6 +144,8 @@ const PROBLEM_COPY = {
     taken: "An exercise with this name already exists",
   },
   primaryMuscles: { missing: "Pick at least one primary muscle" },
+  pattern: { missing: "Choose a movement pattern" },
+  role: { missing: "Choose a role" },
   cues: {
     "too-long": `Keep the form cues to ${MAX_FORM_CUES_LENGTH.toLocaleString("en-GB")} characters`,
   },
@@ -126,6 +162,8 @@ export function newExerciseFormValues(): ExerciseFormValues {
     secondaryMuscles: [],
     equipment: [],
     difficulty: "Beginner",
+    pattern: null,
+    role: null,
     tags: [],
     cues: "",
   };
@@ -144,6 +182,8 @@ export function exerciseFormValuesOf(
     secondaryMuscles: [...exercise.secondaryMuscles],
     equipment: [...exercise.equipment],
     difficulty: exercise.difficulty,
+    pattern: exercise.pattern,
+    role: exercise.role,
     tags: [...exercise.tags],
     cues: exercise.cues,
   };
@@ -242,8 +282,13 @@ function exerciseDraftInputOf(
   values: ExerciseFormValues,
 ): Omit<ExerciseFormValues, "unitPicked"> {
   const { unitPicked: _unitPicked, ...draft } = values;
+  const keepsPatternAndRole = takesPatternAndRole(values.type);
 
-  return draft;
+  return {
+    ...draft,
+    pattern: keepsPatternAndRole ? values.pattern : null,
+    role: keepsPatternAndRole ? values.role : null,
+  };
 }
 
 export function exerciseSaveBodyOf(
@@ -267,14 +312,18 @@ export function exerciseSaveBodyOf(
 export function exerciseFieldProblemsOf(
   problems: ExerciseSaveProblems,
 ): ExerciseFieldProblems {
-  const primaryMuscles =
-    problems.primaryMuscles === "missing"
-      ? PROBLEM_COPY.primaryMuscles.missing
-      : undefined;
+  const missing = <Field extends "primaryMuscles" | "pattern" | "role">(
+    field: Field,
+  ) =>
+    problems[field] === "missing"
+      ? { [field]: PROBLEM_COPY[field].missing }
+      : {};
 
   return {
     ...(problems.name && { name: PROBLEM_COPY.name[problems.name] }),
-    ...(primaryMuscles && { primaryMuscles }),
+    ...missing("primaryMuscles"),
+    ...missing("pattern"),
+    ...missing("role"),
     ...(problems.cues && { cues: PROBLEM_COPY.cues[problems.cues] }),
   };
 }
@@ -285,6 +334,8 @@ export function shownExerciseProblemsOf(
   return {
     name: errors.name?.message,
     primaryMuscles: errors.primaryMuscles?.message,
+    pattern: errors.pattern?.message,
+    role: errors.role?.message,
     cues: errors.cues?.message,
   };
 }

@@ -208,7 +208,7 @@ describe('program structure sections', () => {
 describe('texts page', () => {
   it('renders the program document for editing inside the builder chrome', () => {
     // arrange / act
-    renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
 
     // assert
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
@@ -226,7 +226,7 @@ describe('texts page', () => {
 
   it('nests the program-wide pages under the cover and the block pages straight under the page heading', async () => {
     // arrange / act
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
 
     // assert
     expect(within(programDocument()).getByRole('heading', { level: 2, name: 'Program title (optional)' })).toBeInTheDocument();
@@ -243,7 +243,7 @@ describe('texts page', () => {
 
   it('labels an empty text with its printed heading and marks it optional', () => {
     // arrange / act
-    renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
 
     // assert
     const heading = within(programDocument()).getByRole('heading', { level: 3, name: 'Nutrition (optional)' });
@@ -253,7 +253,7 @@ describe('texts page', () => {
 
   it('writes an empty text in place, shows it as it prints and opens it again', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
 
     // act
     await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'Focus until the next check-in (optional)' }), 'Own the squat pattern');
@@ -282,7 +282,7 @@ describe('texts page', () => {
 
   it('shows an empty text at rest as its heading and field only', () => {
     // arrange / act
-    renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
 
     // assert
     const nutrition = within(programDocument()).getByRole('heading', { name: 'Nutrition (optional)' }).closest('section') as HTMLElement;
@@ -293,7 +293,7 @@ describe('texts page', () => {
 
   it('closes an empty text on Done or Escape, leaving focus on its heading', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
     const nutrition = within(programDocument()).getByRole('textbox', { name: 'Nutrition (optional)' });
     const heading = within(programDocument()).getByRole('heading', { name: 'Nutrition (optional)' });
     await user.click(nutrition);
@@ -325,7 +325,7 @@ describe('texts page', () => {
 
   it('reaches the formatting toolbar in one tab stop after the text and moves inside it with the arrow keys', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
     await user.click(within(programDocument()).getByRole('textbox', { name: 'Nutrition (optional)' }));
 
     // act
@@ -352,7 +352,7 @@ describe('texts page', () => {
 
   it('closes an open written text when focus leaves it', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
     await user.click(within(programDocument()).getByRole('button', { name: 'Edit How to read your session' }));
     expect(within(programDocument()).getByRole('textbox', { name: 'How to read your session' })).toHaveFocus();
 
@@ -366,7 +366,7 @@ describe('texts page', () => {
 
   it('keeps written texts on the draft across the structure and back', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
     await writeRichText(user, within(programDocument()).getByRole('textbox', { name: 'A note from Eli (optional)' }), 'So glad to start with you');
 
     // act
@@ -387,7 +387,7 @@ describe('texts page', () => {
 
   it("shows the coach's edited guide text to the client, resets it to the standard text and undoes the reset", async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft', { path: TEXTS_PATH });
     await user.click(within(programDocument()).getByRole('button', { name: 'Edit How to read your session' }));
     const legend = within(programDocument()).getByRole('textbox', { name: 'How to read your session' });
     expect(within(programDocument()).queryByRole('button', { name: 'Reset to standard text' })).not.toBeInTheDocument();
@@ -425,7 +425,7 @@ describe('texts page', () => {
 
   it('counts in the rail only the texts still to write', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
     await user.click(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ }));
     expect(within(rail()).getByRole('button', { name: /^2 Hypertrophy/ })).toHaveTextContent('All texts ready');
     expect(within(programDocument()).getByRole('textbox', { name: 'A note from Eli (optional)' })).toHaveTextContent(/^$/);
@@ -455,7 +455,7 @@ describe('texts page', () => {
 
   it('offers only the formatting each text prints', async () => {
     // arrange
-    const user = renderProgramEditor('&pseed=draft&jstage=approved', TEXTS_PATH);
+    const user = renderProgramEditor('&pseed=draft&jstage=approved', { path: TEXTS_PATH });
     const toolsOf = async (field: string, name: string) => {
       await user.click(within(programDocument()).getByRole('textbox', { name: field }));
       const toolbar = within(programDocument()).queryByRole('toolbar', { name: `Formatting for ${name}` });

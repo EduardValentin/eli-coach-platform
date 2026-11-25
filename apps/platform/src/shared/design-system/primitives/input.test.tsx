@@ -27,4 +27,15 @@ describe("Input", () => {
       "aria-invalid:border-feedback-danger",
     );
   });
+
+  it("shows its placeholder in the soft placeholder colour", () => {
+    // arrange
+    // act
+    render(<Input aria-label="Name" placeholder="e.g. Back squat" />);
+
+    // assert
+    expect(screen.getByLabelText("Name")).toHaveClass(
+      "placeholder:text-placeholder-soft",
+    );
+  });
 });

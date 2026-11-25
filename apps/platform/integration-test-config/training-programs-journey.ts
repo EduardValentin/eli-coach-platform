@@ -53,12 +53,25 @@ export type ProgramVersionRow = {
   content: { plan: { blocks: StoredBlock[] } };
 };
 
+export type DraftRow = {
+  content: unknown;
+  updatedAt: Date;
+};
+
 export function coachClientPage(clientId: string): string {
   return `/coach/clients/${clientId}`;
 }
 
 export function programSetupPage(clientId: string): string {
   return `${coachClientPage(clientId)}/program/new`;
+}
+
+export function programBuilderPage(clientId: string): string {
+  return `${coachClientPage(clientId)}/program/draft`;
+}
+
+function programDraftSaveAddress(clientId: string): string {
+  return `/api/coach/clients/${clientId}/program/draft`;
 }
 
 /**
@@ -95,6 +108,10 @@ export class TrainingProgramsJourney {
     return this.send(requester, programSetupPage(clientId));
   }
 
+  openBuilder(requester: Requester, clientId: string): Promise<Response> {
+    return this.send(requester, programBuilderPage(clientId));
+  }
+
   openClientPage(requester: Requester, clientId: string): Promise<Response> {
     return this.send(requester, coachClientPage(clientId));
   }
@@ -120,6 +137,19 @@ export class TrainingProgramsJourney {
     });
   }
 
+  /** The request the builder sends to save the whole draft. */
+  saveDraft(
+    requester: Requester,
+    clientId: string,
+    request: unknown,
+  ): Promise<Response> {
+    return this.send(requester, programDraftSaveAddress(clientId), {
+      body: JSON.stringify(request),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+  }
+
   async start(clientId: string, setup: ProgramSetupRequest): Promise<void> {
     const response = await this.create(COACH_SESSION, clientId, setup);
 
@@ -142,6 +172,16 @@ export class TrainingProgramsJourney {
         join app.programs programs on programs.id = versions.program_id
         where programs.client_id = $1
         order by versions.number`,
+      values: [clientId],
+    });
+  }
+
+  draftRowsOf(clientId: string): Promise<DraftRow[]> {
+    return this.rig.suite.postgres.queryRows<DraftRow>({
+      sql: `select versions.content, versions.updated_at as "updatedAt"
+        from app.program_versions versions
+        join app.programs programs on programs.id = versions.program_id
+        where programs.client_id = $1 and versions.status = 'draft'`,
       values: [clientId],
     });
   }

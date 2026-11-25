@@ -1,4 +1,6 @@
-import type { Block, ProgramContent, Session } from "./program-content";
+import { BlockFilling } from "./block-filling";
+import { BlockWeeks } from "./block-weeks";
+import type { Block, ProgramContent } from "./program-content";
 import type { BlockType, VersionStatus } from "./vocabulary";
 
 export type ProgramVersionSnapshot = {
@@ -24,6 +26,12 @@ export type DraftSummary = {
   stillMissing: DraftGap[];
 };
 
+export type DraftReading = {
+  versionNumber: number;
+  content: ProgramContent;
+  updatedAt: Date;
+};
+
 type FirstDraftInput = { content: ProgramContent; at: Date };
 
 export class ProgramVersion {
@@ -43,8 +51,30 @@ export class ProgramVersion {
     return new ProgramVersion(stored);
   }
 
+  static isWellFormed(content: ProgramContent): boolean {
+    return content.plan.blocks.every(
+      (block) =>
+        BlockWeeks.isAllowed(block.type, block.weeks) &&
+        ProgramVersion.calendarNamesItsOwnDays(block),
+    );
+  }
+
   get isDraft(): boolean {
     return this.snapshot.status === "draft";
+  }
+
+  get isFirst(): boolean {
+    return this.snapshot.number === 1;
+  }
+
+  draftReading(): DraftReading {
+    const { number, content, updatedAt } = this.snapshot;
+
+    return { versionNumber: number, content, updatedAt };
+  }
+
+  withContent(content: ProgramContent, at: Date): ProgramVersion {
+    return new ProgramVersion({ ...this.snapshot, content, updatedAt: at });
   }
 
   summary(): DraftSummary {
@@ -52,7 +82,7 @@ export class ProgramVersion {
       (block): BlockSummary => ({
         type: block.type,
         weeks: block.weeks,
-        filledSessions: this.filledSessionCount(block),
+        filledSessions: BlockFilling.filledSessionCount(block),
         sessions: block.sessions.length,
       }),
     );
@@ -80,12 +110,15 @@ export class ProgramVersion {
     return { ...this.snapshot };
   }
 
-  private filledSessionCount(block: Block): number {
-    return block.sessions.filter((session) => this.hasExercises(session))
-      .length;
-  }
+  private static calendarNamesItsOwnDays(block: Block): boolean {
+    const sessionIds = new Set(block.sessions.map((session) => session.id));
+    const cardioIds = new Set(block.cardioSessions.map((cardio) => cardio.id));
 
-  private hasExercises(session: Session): boolean {
-    return session.rows.some((row) => row.exerciseId !== "");
+    return Object.values(block.calendar).every((entry) => {
+      if (entry.kind === "session") return sessionIds.has(entry.sessionId);
+      if (entry.kind === "cardio") return cardioIds.has(entry.cardioId);
+
+      return true;
+    });
   }
 }

@@ -75,7 +75,8 @@ import { FOOD_SEEDS } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
 import { PROGRAM_LOAD_OUTCOMES } from '../services/programLoadService';
-import { PROGRAM_WRITE_OUTCOMES } from '../services/programWriteService';
+import { BUILDER_WEEK_DATES } from '../services/builderWeekDates';
+import { DRAFT_SAVE_OUTCOMES, PROGRAM_WRITE_OUTCOMES } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES } from '../services/recipePhotoService';
 import {
   RESOURCE_LOAD_OUTCOMES,
@@ -1434,6 +1435,51 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
                       <SelectItem value="fails">Fails (create, publish, discard)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-draft-save" className={DEV_LABEL_CLASS}>
+                    Draft saves
+                  </Label>
+                  <Select
+                    value={appState.draftSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        draftSave: optionOrDefault(DRAFT_SAVE_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-draft-save" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails (retries until switched back)</SelectItem>
+                      <SelectItem value="stale">Changed elsewhere (save refused)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-builder-week-dates" className={DEV_LABEL_CLASS}>
+                    Builder week dates
+                  </Label>
+                  <Select
+                    value={appState.builderWeekDates}
+                    onValueChange={(value) =>
+                      setAppState({
+                        builderWeekDates: optionOrDefault(BUILDER_WEEK_DATES, value, 'from-today'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-builder-week-dates" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="from-today">From today until day 1</SelectItem>
+                      <SelectItem value="undated">None (as production before publishing)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

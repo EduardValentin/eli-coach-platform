@@ -1,0 +1,7 @@
+ALTER TABLE "app"."exercises" DROP CONSTRAINT "exercises_tags_vocabulary_check";--> statement-breakpoint
+ALTER TABLE "app"."exercises" ADD COLUMN "movement_pattern" varchar(24);--> statement-breakpoint
+ALTER TABLE "app"."exercises" ADD COLUMN "role" varchar(24);--> statement-breakpoint
+ALTER TABLE "app"."exercises" ADD CONSTRAINT "exercises_movement_pattern_check" CHECK ("app"."exercises"."movement_pattern" in ('squat', 'lunge', 'hinge', 'horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull', 'core', 'carry', 'isolation', 'conditioning'));--> statement-breakpoint
+ALTER TABLE "app"."exercises" ADD CONSTRAINT "exercises_role_check" CHECK ("app"."exercises"."role" in ('main-compound', 'secondary-compound', 'isolation'));--> statement-breakpoint
+ALTER TABLE "app"."exercises" ADD CONSTRAINT "exercises_pattern_and_role_for_type_check" CHECK (case when "app"."exercises"."type" = 'resistance' then "app"."exercises"."movement_pattern" is not null and "app"."exercises"."role" is not null else "app"."exercises"."movement_pattern" is null and "app"."exercises"."role" is null end);--> statement-breakpoint
+ALTER TABLE "app"."exercises" ADD CONSTRAINT "exercises_tags_vocabulary_check" CHECK ("app"."exercises"."tags" <@ array['Strength', 'Hypertrophy', 'Recovery', 'Conditioning']::text[]);

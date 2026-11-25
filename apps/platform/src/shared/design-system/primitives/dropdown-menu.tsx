@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { DropdownMenu as RadixDropdownMenu } from "radix-ui";
 
@@ -76,3 +77,42 @@ export const DropdownMenuItem = React.forwardRef<
 ));
 
 DropdownMenuItem.displayName = "DropdownMenuItem";
+
+export const DropdownMenuSub = RadixDropdownMenu.Sub;
+
+export const DropdownMenuSubTrigger = React.forwardRef<
+  React.ElementRef<typeof RadixDropdownMenu.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof RadixDropdownMenu.SubTrigger>
+>(({ children, className, ...props }, ref) => (
+  <RadixDropdownMenu.SubTrigger
+    className={cn(
+      "flex min-h-12 cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm outline-hidden select-none focus:bg-primary-soft focus:text-primary data-[state=open]:bg-primary-soft data-[state=open]:text-primary [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-text-muted",
+      className,
+    )}
+    ref={ref}
+    {...props}
+  >
+    {children}
+    <ChevronRight aria-hidden="true" className="ml-auto size-4" />
+  </RadixDropdownMenu.SubTrigger>
+));
+
+DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
+
+export const DropdownMenuSubContent = React.forwardRef<
+  React.ElementRef<typeof RadixDropdownMenu.SubContent>,
+  React.ComponentPropsWithoutRef<typeof RadixDropdownMenu.SubContent>
+>(({ className, ...props }, ref) => (
+  <RadixDropdownMenu.Portal>
+    <RadixDropdownMenu.SubContent
+      className={cn(
+        "z-floating-over-sheet min-w-32 origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-field border bg-surface-base p-1 text-text-primary shadow-action-hover motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
+        className,
+      )}
+      ref={ref}
+      {...props}
+    />
+  </RadixDropdownMenu.Portal>
+));
+
+DropdownMenuSubContent.displayName = "DropdownMenuSubContent";

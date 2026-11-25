@@ -2,9 +2,16 @@ import {
   mapCalendar,
   type CalendarEntry,
   type CardioSession,
+  type Session,
   type WeeklyCalendar,
 } from "./program-content";
-import { WEEKDAYS, type SplitShape, type Weekday } from "./vocabulary";
+import { fillTemplate, templateText } from "./program-templates";
+import {
+  WEEKDAYS,
+  type ProgramLanguage,
+  type SplitShape,
+  type Weekday,
+} from "./vocabulary";
 
 const FULL_BODY_MAX_DAYS = 3;
 const SESSION_LETTERS = ["A", "B", "C", "D", "E"];
@@ -41,6 +48,13 @@ export class SplitTemplate {
     );
   }
 
+  static cardioFitting(
+    cardioSessions: readonly CardioSession[],
+    trainingDays: number,
+  ): CardioSession[] {
+    return cardioSessions.slice(0, WEEKDAYS.length - trainingDays);
+  }
+
   get label(): string {
     return LABELS[this.shape];
   }
@@ -53,6 +67,27 @@ export class SplitTemplate {
     return SESSION_LETTERS.slice(0, days).map(
       (letter) => `Full Body ${letter}`,
     );
+  }
+
+  text(days: number, language: ProgramLanguage): string {
+    return fillTemplate(templateText(`split.${this.shape}`, language), {
+      days,
+    });
+  }
+
+  emptySessions(days: number, newId: () => string): Session[] {
+    return this.sessionNames(days).map((name) => {
+      const id = newId();
+
+      return {
+        id,
+        originId: id,
+        name,
+        warmUp: { items: [] },
+        coolDown: { enabled: false, items: [] },
+        rows: [],
+      };
+    });
   }
 
   weeklyCalendar(

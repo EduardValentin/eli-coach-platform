@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState, type RefObject } from 'react';
 import type { Block } from '../../../domain/program';
 import { describeLoss } from '../../../domain/weekEditing';
 import {
@@ -20,7 +20,8 @@ export type ConfirmRequest = {
   lines: string[];
   apply: () => void;
   returnFocus?: HTMLElement | null;
-  focusAfterApply?: HTMLElement | null;
+  /** Read once the change has landed, since the control it names may only exist then. */
+  focusAfterApply?: () => HTMLElement | null;
 };
 
 export function removeBlockRequest(block: Block, index: number, apply: () => void): ConfirmRequest {
@@ -38,20 +39,35 @@ function focusedControl(): HTMLElement | null {
   return focused instanceof HTMLElement && focused !== document.body ? focused : null;
 }
 
+function applyWithoutAsking({ apply, focusAfterApply }: ConfirmRequest) {
+  apply();
+  if (!focusAfterApply) return;
+  requestAnimationFrame(() => focusAfterApply()?.focus());
+}
+
 /** Applies a change at once when it deletes nothing; otherwise asks first, in an alert dialog that lists what is lost. */
 export function useDestructiveConfirm() {
   const [pending, setPending] = useState<ConfirmRequest | null>(null);
   const lastPending = useRef<ConfirmRequest | null>(null);
-  const returnFocus = useRef<HTMLElement | null>(null);
+  const resolveFocusOnClose = useRef<() => HTMLElement | null>(() => null);
+  const returnFocus = useMemo<RefObject<HTMLElement | null>>(
+    () => ({
+      get current() {
+        return resolveFocusOnClose.current();
+      },
+    }),
+    [],
+  );
   if (pending) lastPending.current = pending;
   const shown = pending ?? lastPending.current;
 
   function request(next: ConfirmRequest) {
     if (next.lines.length === 0) {
-      next.apply();
+      applyWithoutAsking(next);
       return;
     }
-    returnFocus.current = next.returnFocus ?? focusedControl();
+    const control = next.returnFocus ?? focusedControl();
+    resolveFocusOnClose.current = () => control;
     setPending(next);
   }
 
@@ -82,7 +98,7 @@ export function useDestructiveConfirm() {
             data-parity="confirm"
             variant="destructive"
             onClick={() => {
-              if (pending?.focusAfterApply) returnFocus.current = pending.focusAfterApply;
+              if (pending?.focusAfterApply) resolveFocusOnClose.current = pending.focusAfterApply;
               pending?.apply();
             }}
           >

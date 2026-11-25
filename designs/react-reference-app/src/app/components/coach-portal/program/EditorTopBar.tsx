@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { AlertCircle, AlertTriangle, ArrowLeft, ChevronRight, Eye, Library, Send, Trash2, UserRound } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
@@ -9,7 +9,7 @@ import { clientDetailPathForJourney, formatJourneyDate, journeyClientName } from
 import { DisabledActionHint } from '../../DisabledActionHint';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { WIDGET_TITLE_CLASS } from '../../typography';
-import { Alert } from '../../ui/alert';
+import { Alert, AlertAction } from '../../ui/alert';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
@@ -18,6 +18,7 @@ import { cn } from '../../ui/utils';
 import { ClientProfilePopover, ClientProfileTrigger } from './ClientProfilePopover';
 import { ProgramFindings, type FindingTarget } from './ProgramFindings';
 import { coachingEndedDraftReason, type DraftState } from './unpublishableDraft';
+import type { DraftSaving, SaveState } from './useAutosavedDraft';
 import type { WriteResult } from './useEditorState';
 
 type EditorTopBarProps = {
@@ -27,7 +28,7 @@ type EditorTopBarProps = {
   railToggle: ReactNode;
   library: { open: boolean; onToggle: () => void } | null;
   placeTitle: string;
-  placeHeading: Ref<HTMLHeadingElement>;
+  placeHeading: RefObject<HTMLHeadingElement>;
   onOverview: (() => void) | null;
   onOpenFinding: (target: FindingTarget) => void;
   onPreview: () => void;
@@ -37,6 +38,7 @@ type EditorTopBarProps = {
   draftState: DraftState;
   problems: readonly RuleFinding<BlockingCode>[];
   warnings: readonly RuleFinding<WarningCode>[];
+  saving: DraftSaving;
 };
 
 const SM_QUERY = '(min-width: 40em)';
@@ -51,6 +53,65 @@ function discardDescription(version: ProgramVersion): string {
 function draftLine(name: string, version: ProgramVersion, basedOn: ProgramVersion | undefined): string {
   const origin = version.number > 1 && basedOn?.publishedAt ? ` · from v${version.number - 1}, ${formatJourneyDate(basedOn.publishedAt)}` : '';
   return `${name} · v${version.number} draft${origin}`;
+}
+
+const SAVE_STATE_LABEL: Record<SaveState, string | null> = {
+  unchanged: null,
+  saving: 'Saving…',
+  saved: 'Saved',
+  'not-saved': 'Not saved',
+  'changed-elsewhere': 'Changed elsewhere',
+};
+
+function SaveStateNote({ state }: { state: SaveState }) {
+  const label = SAVE_STATE_LABEL[state];
+  if (!label) return null;
+  const notSaved = state === 'not-saved' || state === 'changed-elsewhere';
+  return (
+    <>
+      {' '}
+      <span className="whitespace-nowrap" data-parity="save-state">
+        {'· '}
+        <span className={cn({ 'inline-flex items-center gap-1 align-top font-medium text-destructive': notSaved })}>
+          {notSaved && <AlertCircle aria-hidden="true" size={12} />}
+          {label}
+        </span>
+      </span>
+    </>
+  );
+}
+
+type FailedSaveAlertProps = Pick<DraftSaving, 'retrying' | 'retryNow'> & { placeHeading: RefObject<HTMLHeadingElement> };
+
+function FailedSaveAlert({ retrying, retryNow, placeHeading }: FailedSaveAlertProps) {
+  useFocusMovedToHeadingOnClose(placeHeading);
+  return (
+    <Alert
+      className="order-last basis-full"
+      data-parity="failed-save"
+      action={
+        <AlertAction aria-disabled={retrying || undefined} onClick={retrying ? undefined : retryNow} className="aria-disabled:opacity-100">
+          {retrying ? 'Trying again…' : 'Try again now'}
+        </AlertAction>
+      }
+    >
+      Your latest changes aren’t saved yet. They’re still here, and saving keeps trying.
+    </Alert>
+  );
+}
+
+function focusIsLost(): boolean {
+  return document.activeElement === null || document.activeElement === document.body;
+}
+
+/** Focus inside the closing element would drop to the page, so it moves to the place heading. */
+function useFocusMovedToHeadingOnClose(placeHeading: RefObject<HTMLHeadingElement>) {
+  useEffect(
+    () => () => {
+      if (focusIsLost()) placeHeading.current?.focus();
+    },
+    [placeHeading],
+  );
 }
 
 type PlaceProps = Pick<EditorTopBarProps, 'placeTitle' | 'placeHeading' | 'onOverview'>;
@@ -190,6 +251,7 @@ export function EditorTopBar({
   draftState,
   problems,
   warnings,
+  saving,
 }: EditorTopBarProps) {
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -213,7 +275,12 @@ export function EditorTopBar({
 
   return (
     <>
-      <header className="@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6">
+      <header
+        data-parity-root="EditorTopBar"
+        className={cn('@container flex min-h-16 shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border bg-card px-3 py-2 lg:gap-x-4 lg:px-6', {
+          'max-h-[50dvh] overflow-y-auto': saving.failing,
+        })}
+      >
         <nav aria-label="Editor" className="flex shrink-0 items-center gap-4">
           <Button asChild variant="ghost" size="icon-sm">
             <Link to={clientDetailPathForJourney(journey)} aria-label={`Back to ${name}`}>
@@ -223,7 +290,10 @@ export function EditorTopBar({
           {railToggle}
         </nav>
         <div className="grid min-w-0 flex-1 gap-0.5 max-sm:order-last max-sm:basis-full max-sm:px-1">
-          <p className="text-xs break-words text-text-secondary">{[draftLine(name, version, basedOn), DRAFT_STATE_NOTE[draftState]].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs break-words text-text-secondary" data-parity="draft-line">
+            {[draftLine(name, version, basedOn), DRAFT_STATE_NOTE[draftState]].filter(Boolean).join(' · ')}
+            <SaveStateNote state={saving.state} />
+          </p>
           <Place placeTitle={placeTitle} placeHeading={placeHeading} onOverview={onOverview} />
         </div>
         <ClientProfilePopover
@@ -266,6 +336,7 @@ export function EditorTopBar({
             </span>
           </div>
         </ClientProfilePopover>
+        {saving.failing && <FailedSaveAlert retrying={saving.retrying} retryNow={saving.retryNow} placeHeading={placeHeading} />}
       </header>
       <DiscardDialog open={confirmingDiscard} onOpenChange={setConfirmingDiscard} version={version} onDiscard={onDiscard} />
     </>

@@ -1,5 +1,5 @@
 import { ConfirmDialog } from "~/shared/design-system/overlays";
-import { EmptyState, PortalPageHeader } from "~/shared/design-system/portal";
+import { EmptyState } from "~/shared/design-system/portal";
 import { Button } from "~/shared/design-system/primitives";
 import { FolderOpen, Plus } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
@@ -9,12 +9,15 @@ import type {
   ClientResourceView,
   CoachResourceListing,
 } from "~/bounded-contexts/clients/client-resources/public/client-resources";
-import { possessive } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGallery } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-gallery";
 import { ResourceNoMatches } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-no-matches";
 import { ResourceToolbar } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-toolbar";
 import { ResourcesUnavailable } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resources-unavailable";
 import { useResourceBrowse } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/use-resource-browse";
+import {
+  ClientBackLink,
+  ClientPageHeader,
+} from "~/bounded-contexts/clients/clients/ui/shared/client-page-header";
 
 import {
   ResourceActionsMenu,
@@ -38,9 +41,10 @@ type PendingDeletion = {
   stage: "asking" | "kept" | "confirmed";
 };
 
+type ResourcesClient = { clientId: string; name: string; firstName: string };
+
 type CoachResourceLibraryProps = {
-  clientId: string;
-  firstName: string;
+  client: ResourcesClient;
   listing: CoachResourceListing;
 };
 
@@ -50,38 +54,30 @@ type ReadyCoachResourceListing = Extract<
 >;
 
 export function CoachResourceLibrary({
-  clientId,
-  firstName,
+  client,
   listing,
 }: CoachResourceLibraryProps) {
   const revalidator = useRevalidator();
 
   if (listing.status === "unavailable") {
     return (
-      <ResourcesUnavailable onRetry={() => void revalidator.revalidate()} />
+      <>
+        <ClientBackLink client={client} gap="page" />
+        <ResourcesUnavailable onRetry={() => void revalidator.revalidate()} />
+      </>
     );
   }
 
-  return (
-    <ReadyResourceLibrary
-      clientId={clientId}
-      firstName={firstName}
-      listing={listing}
-    />
-  );
+  return <ReadyResourceLibrary client={client} listing={listing} />;
 }
 
 type ReadyResourceLibraryProps = {
-  clientId: string;
-  firstName: string;
+  client: ResourcesClient;
   listing: ReadyCoachResourceListing;
 };
 
-function ReadyResourceLibrary({
-  clientId,
-  firstName,
-  listing,
-}: ReadyResourceLibraryProps) {
+function ReadyResourceLibrary({ client, listing }: ReadyResourceLibraryProps) {
+  const { clientId, firstName } = client;
   const [formMode, setFormMode] = useState<ResourceFormMode | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const removal = useResourceRemoval();
@@ -102,7 +98,7 @@ function ReadyResourceLibrary({
 
   return (
     <>
-      <PortalPageHeader
+      <ClientPageHeader
         actions={
           populated && (
             <Button onClick={startAdding} size="md" variant="primary">
@@ -111,8 +107,9 @@ function ReadyResourceLibrary({
             </Button>
           )
         }
+        client={client}
         headingRef={heading}
-        title={`${possessive(firstName)} resources`}
+        title="Resources"
       />
 
       {populated ? (

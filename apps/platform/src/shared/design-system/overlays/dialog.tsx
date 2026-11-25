@@ -3,6 +3,7 @@ import { Dialog as RadixDialog } from "radix-ui";
 
 import { cn } from "../lib/cn";
 import {
+  type DialogDismissal,
   DialogFrame,
   DialogFrameDescription,
   DialogFrameTitle,
@@ -18,8 +19,10 @@ type DialogContentProps = Omit<
   React.ComponentPropsWithoutRef<typeof RadixDialog.Content>,
   "onCloseAutoFocus" | "onOpenAutoFocus" | "title"
 > & {
-  description: React.ReactNode;
+  description?: React.ReactNode;
   descriptionParity?: string;
+  details?: React.ReactNode;
+  dismissal?: DialogDismissal;
   footer: React.ReactNode;
   footerAlignment?: DialogFooterAlignment;
   footerParity?: string;
@@ -53,6 +56,8 @@ export function DialogContent({
   className,
   description,
   descriptionParity,
+  details,
+  dismissal,
   footer,
   footerAlignment = "content",
   footerParity,
@@ -63,15 +68,19 @@ export function DialogContent({
   const sizeClasses = SIZE_CLASSES[size];
 
   return (
-    <DialogFrame className={cn(sizeClasses.content, className)} {...props}>
+    <DialogFrame
+      className={cn(sizeClasses.content, className)}
+      dismissal={dismissal}
+      {...props}
+    >
       <div className={cn(HEADER_CLASS, sizeClasses.header)}>
         <DialogFrameTitle>{title}</DialogFrameTitle>
-        <DialogFrameDescription
+        <DialogDescription
           className={sizeClasses.description}
-          data-parity={descriptionParity}
-        >
-          {description}
-        </DialogFrameDescription>
+          description={description}
+          details={details}
+          parity={descriptionParity}
+        />
       </div>
       <DialogBody size={size}>{children}</DialogBody>
       <div
@@ -83,6 +92,39 @@ export function DialogContent({
         {footer}
       </div>
     </DialogFrame>
+  );
+}
+
+function DialogDescription({
+  className,
+  description,
+  details,
+  parity,
+}: {
+  className: string | undefined;
+  description: React.ReactNode;
+  details: React.ReactNode;
+  parity: string | undefined;
+}) {
+  if (details === undefined) {
+    return (
+      <DialogFrameDescription className={className} data-parity={parity}>
+        {description}
+      </DialogFrameDescription>
+    );
+  }
+
+  return (
+    <DialogFrameDescription
+      asChild
+      className={cn("grid gap-2", className)}
+      data-parity={parity}
+    >
+      <div>
+        {description ? <p>{description}</p> : null}
+        {details}
+      </div>
+    </DialogFrameDescription>
   );
 }
 

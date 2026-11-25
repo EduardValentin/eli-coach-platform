@@ -1,3 +1,7 @@
+export { BlockEditing, type DayChoice } from "./block-editing";
+export { BlockFilling } from "./block-filling";
+export { BlockLoss, type LossChange } from "./block-loss";
+export { BlockWeeks } from "./block-weeks";
 export {
   type CardioExercise,
   type CardioExercisesPort,
@@ -15,8 +19,14 @@ export {
   type ClientIdentityPort,
 } from "./client-identity-port";
 export { type CoachingEndedPort } from "./coaching-ended-port";
+export { PlanSequence, type SequenceProblem } from "./plan-sequence";
 export { Program } from "./program";
-export { type ProgramContent } from "./program-content";
+export {
+  type Block,
+  type CardioSession,
+  type ProgramContent,
+  type Session,
+} from "./program-content";
 export { type ProgramIdsPort } from "./program-ids-port";
 export { type ProgramIncidentsPort } from "./program-incidents-port";
 export {
@@ -24,9 +34,16 @@ export {
   type ProgramSetupValues,
 } from "./program-setup";
 export {
+  type DraftSaveOutcome,
   type ProgramAddition,
+  type DraftWrite,
   type ProgramStorePort,
 } from "./program-store-port";
+export {
+  ProgramSuggestions,
+  type BlockSetup,
+  type ProposedBlock,
+} from "./program-suggestions";
 export {
   type DraftSummary,
   type ProgramVersionSnapshot,
@@ -36,9 +53,18 @@ export {
   type ProgramCardReading,
 } from "./read-program-card-use-case";
 export {
+  ReadProgramDraftUseCase,
+  type ProgramDraftReading,
+} from "./read-program-draft-use-case";
+export {
   ReadProgramSetupUseCase,
   type ProgramSetupReading,
 } from "./read-program-setup-use-case";
+export {
+  SaveProgramDraftUseCase,
+  type SaveProgramDraftResult,
+} from "./save-program-draft-use-case";
+export { SessionTiming } from "./session-timing";
 export { SplitTemplate } from "./split-template";
 export {
   StartProgramUseCase,
@@ -54,6 +80,7 @@ export {
   SPLIT_SHAPES,
   TRAINING_DAY_OPTIONS,
   VERSION_STATUSES,
+  WEEKDAY_LABELS,
   WEEKDAYS,
   type BlockType,
   type ClientLevel,

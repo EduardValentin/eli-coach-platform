@@ -17,6 +17,7 @@ import { useEditorAnnouncer } from './editorAnnouncer';
 import { blockProgress, BlockTypeSelect, filledSessionsText, STARTED_BLOCK_REASON } from './blockParts';
 import { BlockNumber } from '../../program-view/BlockNumber';
 import { useDestructiveConfirm, removeBlockRequest } from './DestructiveConfirm';
+import { usePlaceHeading } from './placeHeading';
 import { useWeeksField, WeeksField, WeeksFieldNotes } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
@@ -62,7 +63,7 @@ function DropLine({ index, firstMovable, onDrop }: { index: number; firstMovable
     [index, firstMovable, onDrop],
   );
   return (
-    <div ref={drop as unknown as Ref<HTMLDivElement>} aria-hidden="true" className="py-1.5">
+    <div ref={drop as unknown as Ref<HTMLDivElement>} data-parity={`block-drop-line-${index}`} aria-hidden="true" className="py-1.5">
       <InsertionLine isOver={isOver} canDrop={canDrop} />
     </div>
   );
@@ -129,6 +130,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
 
   return (
     <div
+      data-parity="block-row"
       className={cn(
         'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 rounded-card border border-border bg-surface-base p-2.5 shadow-card transition-opacity [grid-template-areas:"lead_open_remove"_"fields_fields_fields"] motion-reduce:transition-none @3xl:grid-cols-[auto_auto_minmax(0,1fr)_auto] @3xl:[grid-template-areas:"lead_fields_open_remove"]',
         {
@@ -137,7 +139,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
         },
       )}
     >
-      <div className="flex items-center gap-2 [grid-area:lead]">
+      <div data-parity="block-row-lead" className="flex items-center gap-2 [grid-area:lead]">
         {movable ? (
           <button
             ref={element => {
@@ -150,14 +152,14 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
             onKeyDown={onHandleKey}
             className="relative hit-area flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary active:cursor-grabbing"
           >
-            <GripVertical aria-hidden="true" size={18} />
+            <GripVertical aria-hidden="true" data-parity="block-handle-icon" size={18} />
           </button>
         ) : (
           <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
         )}
         <BlockNumber block={block} index={index} size="sm" />
       </div>
-      <div className="grid grid-cols-[minmax(0,16rem)_auto] items-center justify-start gap-x-3 [grid-area:fields] @3xl:flex @3xl:flex-wrap @3xl:gap-y-2">
+      <div data-parity="block-row-fields" className="grid grid-cols-[minmax(0,16rem)_auto] items-center justify-start gap-x-3 [grid-area:fields] @3xl:flex @3xl:flex-wrap @3xl:gap-y-2">
         {status.kind === 'ended' ? (
           <span className="text-sm font-medium text-text-primary @3xl:min-w-40">{typeLabel}</span>
         ) : (
@@ -177,20 +179,20 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
         onClick={onOpen}
         className="group/open flex min-h-(--size-hit-target) min-w-0 items-center gap-x-3 gap-y-1 rounded-field px-2 py-1 text-left [grid-area:open] hover:bg-surface-quiet"
       >
-        <span className="grid min-w-0 flex-1 justify-items-start gap-1 @3xl:flex @3xl:flex-wrap @3xl:items-center @3xl:gap-x-3">
-          <span className="text-sm break-words text-text-label">
+        <span data-parity="block-row-open-body" className="grid min-w-0 flex-1 justify-items-start gap-1 @3xl:flex @3xl:flex-wrap @3xl:items-center @3xl:gap-x-3">
+          <span data-parity="block-row-split" className="text-sm break-words text-text-label">
             <span className="sr-only">{`Open block ${position}, ${typeLabel}: `}</span>
             {splitLabel(block)}
             {line && <span className="text-text-secondary">{` · ${line}`}</span>}
             <span className="sr-only">,</span>
           </span>
-          <Badge tone={filled < total ? 'pending' : 'muted'} className="tabular-nums">
+          <Badge data-parity="block-row-sessions" tone={filled < total ? 'pending' : 'muted'} className="tabular-nums">
             {filledSessionsText(filled, total)}
           </Badge>
         </span>
-        <ArrowRight aria-hidden="true" size={16} className="shrink-0 text-text-secondary group-hover/open:text-text-primary" />
+        <ArrowRight aria-hidden="true" data-parity="block-row-arrow" size={16} className="shrink-0 text-text-secondary group-hover/open:text-text-primary" />
       </button>
-      <div className="ml-1 [grid-area:remove]">
+      <div data-parity="block-row-remove" className="ml-1 [grid-area:remove]">
         <IconActionButton
           icon={Trash2}
           label={removeLabel}
@@ -201,7 +203,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, proble
       </div>
       <WeeksFieldNotes field={weeks} className="col-span-full -mt-2 @3xl:col-start-2" />
       {problems && (
-        <div id={problemId} className="col-span-full grid gap-1">
+        <div id={problemId} data-parity="block-row-problems" className="col-span-full grid gap-1">
           {problems.map(problem => (
             <InlineProblem key={problem}>{problem}</InlineProblem>
           ))}
@@ -216,8 +218,8 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
   const announce = useEditorAnnouncer();
   const handles = useRef(new Map<string, HTMLButtonElement>());
   const openers = useRef(new Map<string, HTMLButtonElement>());
-  const addButton = useRef<HTMLButtonElement>(null);
   const confirm = useDestructiveConfirm();
+  const placeHeading = usePlaceHeading();
   const focusAfterMove = useRef<string | null>(null);
   const firstMovable = statuses.reduce((first, status, index) => (status.kind === 'upcoming' ? first : index + 1), 0);
 
@@ -240,7 +242,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
     confirm.request({
       ...removeBlockRequest(block, index, () => onChange(current => current.filter(other => other.id !== block.id))),
       returnFocus: trigger,
-      focusAfterApply: (neighbour && openers.current.get(neighbour.id)) ?? addButton.current,
+      focusAfterApply: () => (neighbour ? (openers.current.get(neighbour.id) ?? null) : placeHeading.current),
     });
   }
 
@@ -256,7 +258,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
   }
 
   return (
-    <div>
+    <div data-parity="block-list">
       <BlockDragLayer />
       <p id={instructionsId} className="sr-only">
         Press arrow up or arrow down to move the block.
@@ -292,7 +294,7 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, problems, deloa
           </li>
         ))}
       </ol>
-      <Button ref={addButton} variant="ghost" className="mt-2" onClick={onAddBlock}>
+      <Button variant="ghost" className="mt-2" onClick={onAddBlock}>
         <Plus aria-hidden="true" />
         Add block
       </Button>

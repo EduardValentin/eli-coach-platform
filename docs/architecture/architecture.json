@@ -651,5 +651,8 @@
   ],
   "rules": {
     "R31": ["advisory", "Stability is a ratio of imports, read as a screen. Dependency direction is held to a directed acyclic graph by tools/no-cycles.mjs at bounded-context and component level, and a composition always depends on the components it composes."]
-  }
+  },
+  "exceptions": [
+    { "from": "apps/platform/src/bounded-contexts/programs/training-programs", "to": "*", "rule": "R32", "reason": "Leaf component: nothing outside it depends on its builder modules except the programs composition, so no cost of its position can be named (owner, 2026-11-23, GEN-239)." }
+  ]
 }

@@ -37,7 +37,7 @@ type SelectTriggerProps = React.ComponentPropsWithoutRef<
 function selectTriggerClasses(): string {
   return cn(
     FIELD_FRAME_CLASS,
-    "relative hit-area flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
+    "relative hit-area flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-placeholder-soft focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
     FIELD_SIZE_CLASS,
   );
 }

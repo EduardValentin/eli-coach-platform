@@ -20,6 +20,8 @@ function exerciseCalled(id: string, name: string): Exercise {
     secondaryMuscles: [],
     equipment: [],
     difficulty: "Beginner",
+    pattern: "squat",
+    role: "main-compound",
     tags: [],
     cues: "",
     video: null,

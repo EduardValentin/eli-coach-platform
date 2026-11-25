@@ -54,6 +54,7 @@ describe("SheetDialogHeader", () => {
       "sm:text-sm",
     );
     expect(title.parentElement).toHaveClass(
+      "relative",
       "shrink-0",
       "border-b",
       "border-border-subtle",

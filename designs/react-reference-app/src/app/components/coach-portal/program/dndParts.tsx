@@ -18,6 +18,7 @@ export function draggableCardState({ targeted, dragging }: { targeted: boolean; 
 export function InsertionLine({ isOver, canDrop }: DropReadiness) {
   return (
     <div
+      data-parity="insertion-line"
       className={cn('mx-3 h-0.5 rounded-full transition-all duration-200 motion-reduce:transition-none', {
         'h-1 bg-primary': isOver && canDrop,
         'bg-border': canDrop && !isOver,

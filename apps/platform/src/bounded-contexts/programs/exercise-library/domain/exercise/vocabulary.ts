@@ -29,6 +29,10 @@ export function defaultUnitFor(type: ExerciseType): ExerciseUnit {
   return UNITS_BY_TYPE[type][0];
 }
 
+export function takesPatternAndRole(type: ExerciseType): boolean {
+  return type === "resistance";
+}
+
 export const MUSCLES = [
   "Chest",
   "Upper back",
@@ -82,7 +86,34 @@ export type Equipment = (typeof EQUIPMENT)[number];
 export const DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const EXERCISE_TAGS = ["Strength", "Hypertrophy", "Recovery"] as const;
+export const MOVEMENT_PATTERNS = [
+  "squat",
+  "lunge",
+  "hinge",
+  "horizontal-push",
+  "vertical-push",
+  "horizontal-pull",
+  "vertical-pull",
+  "core",
+  "carry",
+  "isolation",
+  "conditioning",
+] as const;
+export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
+
+export const EXERCISE_ROLES = [
+  "main-compound",
+  "secondary-compound",
+  "isolation",
+] as const;
+export type ExerciseRole = (typeof EXERCISE_ROLES)[number];
+
+export const EXERCISE_TAGS = [
+  "Strength",
+  "Hypertrophy",
+  "Recovery",
+  "Conditioning",
+] as const;
 export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 
 export const MAX_EXERCISE_NAME_LENGTH = 80;

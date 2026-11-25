@@ -27,12 +27,17 @@ import {
   DIFFICULTY_LABELS,
   EQUIPMENT,
   EQUIPMENT_LABELS,
+  EXERCISE_ROLE_LABELS,
+  EXERCISE_ROLES,
   EXERCISE_TAG_LABELS,
   EXERCISE_TAGS,
   EXERCISE_TYPE_LABELS,
   EXERCISE_TYPES,
+  MOVEMENT_PATTERN_LABELS,
+  MOVEMENT_PATTERNS,
   MUSCLE_LABELS,
   MUSCLES,
+  takesPatternAndRole,
   UNIT_EXAMPLES,
   UNIT_LABELS,
   unitsFor,
@@ -174,6 +179,61 @@ export function ExerciseAboutSection({
   );
 }
 
+type RequiredChoice<Choice extends string> = {
+  choices: readonly Choice[];
+  labels: Readonly<Record<Choice, string>>;
+  value: Choice | null;
+  problem: string | undefined;
+  onChoose: (choice: Choice) => void;
+};
+
+function RequiredChoiceRow<Choice extends string>({
+  title,
+  placeholder,
+  field,
+}: {
+  title: string;
+  placeholder: string;
+  field: RequiredChoice<Choice>;
+}) {
+  const id = useId();
+  const problemId = useId();
+
+  return (
+    <SettingsRow
+      htmlFor={id}
+      layout="stacked"
+      problem={shownProblem(problemId, field.problem)}
+      required
+      title={title}
+    >
+      <Select
+        onValueChange={(chosen) => {
+          const choice = field.choices.find((known) => known === chosen);
+          if (choice) field.onChoose(choice);
+        }}
+        value={field.value ?? ""}
+      >
+        <SelectTrigger
+          id={id}
+          {...fieldProblemAttributes(problemId, field.problem)}
+        >
+          <SelectValue placeholder={placeholder}>
+            {field.value && field.labels[field.value]}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {field.choices.map((choice) => (
+            <SelectItem key={choice} value={choice}>
+              {field.labels[choice]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </SettingsRow>
+  );
+}
+
 export function ExerciseWorkSection({
   form,
   values,
@@ -261,6 +321,32 @@ export function ExerciseWorkSection({
             summary="names"
           />
         </SettingsRow>
+        {takesPatternAndRole(values.type) && (
+          <>
+            <RequiredChoiceRow
+              field={{
+                choices: MOVEMENT_PATTERNS,
+                labels: MOVEMENT_PATTERN_LABELS,
+                value: values.pattern,
+                problem: problems.pattern,
+                onChoose: (pattern) => changeValues(form, { pattern }),
+              }}
+              placeholder="Choose a pattern"
+              title="Movement pattern"
+            />
+            <RequiredChoiceRow
+              field={{
+                choices: EXERCISE_ROLES,
+                labels: EXERCISE_ROLE_LABELS,
+                value: values.role,
+                problem: problems.role,
+                onChoose: (role) => changeValues(form, { role }),
+              }}
+              placeholder="Choose a role"
+              title="Role"
+            />
+          </>
+        )}
         <SettingsRow htmlFor={difficultyId} layout="stacked" title="Difficulty">
           <Select
             onValueChange={(chosen) => {

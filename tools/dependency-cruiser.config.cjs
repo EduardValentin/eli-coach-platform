@@ -417,11 +417,12 @@ module.exports = {
     {
       name: "react-dnd-confined",
       comment:
-        "Drag and drop stays in the recipe builder: nothing else names react-dnd or react-dnd-touch-backend.",
+        "Drag and drop stays in the recipe builder and the program builder's block list: nothing else names react-dnd or react-dnd-touch-backend.",
       severity: "error",
       from: {
         pathNot: [
           `${BOUNDED_CONTEXT}nutrition-library/ui/coach/recipes/recipe-builder(-sections)?\\.tsx$`,
+          `${BOUNDED_CONTEXT}training-programs/ui/coach/program/(program-builder|plan-block-list|dnd-parts)\\.tsx$`,
         ],
       },
       to: { path: "(^|/)react-dnd(-touch-backend)?(/|$)" },

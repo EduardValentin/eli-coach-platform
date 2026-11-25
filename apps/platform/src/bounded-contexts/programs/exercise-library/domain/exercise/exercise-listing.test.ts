@@ -302,7 +302,12 @@ describe("ExerciseSelection", () => {
       const counts = selection.countsByTag(library);
 
       // assert
-      expect(counts).toEqual({ Strength: 2, Hypertrophy: 0, Recovery: 0 });
+      expect(counts).toEqual({
+        Strength: 2,
+        Hypertrophy: 0,
+        Recovery: 0,
+        Conditioning: 0,
+      });
     });
 
     it("counts equipment under the type, tags and search but not under the equipment itself", () => {

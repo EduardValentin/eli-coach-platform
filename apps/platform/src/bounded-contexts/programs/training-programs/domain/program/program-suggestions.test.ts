@@ -303,3 +303,141 @@ describe("ProgramSuggestions", () => {
     );
   });
 });
+
+describe("ProgramSuggestions newBlock", () => {
+  it("adds a block of the chosen type and weeks after the last one, from its sessions, without a calibration week", () => {
+    // arrange
+    const suggestions = suggestionsOver([BIKE]);
+    const [previous] = suggestions.initialContent({
+      ...SETUP,
+      level: "intermediate",
+    }).plan.blocks;
+
+    // act
+    const block = suggestions.newBlock("strength", 5, {
+      setup: SETUP,
+      previous,
+    });
+
+    // assert
+    expect(block).toMatchObject({
+      type: "strength",
+      weeks: 5,
+      calibrationWeek: false,
+      trainingDays: previous.trainingDays,
+      split: previous.split,
+    });
+    expect(block.sessions.map((session) => session.originId)).toEqual(
+      previous.sessions.map((session) => session.originId),
+    );
+    expect(block.introText).toContain("Getting stronger");
+  });
+
+  it("prefills a Deload from the block before it, one week long", () => {
+    // arrange
+    const suggestions = suggestionsOver([]);
+    const [previous] = suggestions.initialContent(SETUP).plan.blocks;
+
+    // act
+    const deload = suggestions.newBlock("deload", 1, {
+      setup: SETUP,
+      previous,
+    });
+
+    // assert
+    expect(deload).toMatchObject({ type: "deload", weeks: 1 });
+    expect(deload.sessions.map((session) => session.originId)).toEqual(
+      previous.sessions.map((session) => session.originId),
+    );
+  });
+
+  it("builds a first block from the setup when there is no block before it", () => {
+    // act
+    const block = suggestionsOver([]).newBlock("hypertrophy", 4, {
+      setup: { ...SETUP, trainingDays: 4, splitShape: "upper-lower" },
+    });
+
+    // assert
+    expect(block).toMatchObject({ type: "hypertrophy", weeks: 4 });
+    expect(block.sessions.map((session) => session.name)).toEqual([
+      "Lower A",
+      "Upper A",
+      "Lower B",
+      "Upper B",
+    ]);
+  });
+});
+
+describe("ProgramSuggestions proposedBlockAfter", () => {
+  it("proposes a Deload after four or more weeks of Hypertrophy or Strength", () => {
+    // act
+    const proposals = [
+      ProgramSuggestions.proposedBlockAfter({ type: "hypertrophy", weeks: 4 }),
+      ProgramSuggestions.proposedBlockAfter({ type: "strength", weeks: 6 }),
+    ];
+
+    // assert
+    expect(proposals).toEqual([
+      { type: "deload", weeks: 1 },
+      { type: "deload", weeks: 1 },
+    ]);
+  });
+
+  it("proposes four weeks of Hypertrophy otherwise", () => {
+    // act
+    const proposals = [
+      ProgramSuggestions.proposedBlockAfter(undefined),
+      ProgramSuggestions.proposedBlockAfter({ type: "hypertrophy", weeks: 3 }),
+      ProgramSuggestions.proposedBlockAfter({ type: "foundation", weeks: 6 }),
+      ProgramSuggestions.proposedBlockAfter({ type: "deload", weeks: 1 }),
+    ];
+
+    // assert
+    expect(proposals).toEqual(
+      proposals.map(() => ({ type: "hypertrophy", weeks: 4 })),
+    );
+  });
+});
+
+describe("ProgramSuggestions suggestedBlocks", () => {
+  it("names the blocks suggested for each level, as the plan starts with them", () => {
+    // act
+    const suggested = (["beginner", "advanced"] as const).map((level) =>
+      ProgramSuggestions.suggestedBlocks(level),
+    );
+
+    // assert
+    expect(suggested).toEqual([
+      [
+        { type: "foundation", weeks: 4 },
+        { type: "hypertrophy", weeks: 6 },
+        { type: "deload", weeks: 1 },
+      ],
+      [
+        { type: "hypertrophy", weeks: 5 },
+        { type: "deload", weeks: 1 },
+        { type: "strength", weeks: 4 },
+        { type: "deload", weeks: 1 },
+      ],
+    ]);
+  });
+
+  it("suggests the plan again from a block setup and her level alone, as the builder offers it once no block is left", () => {
+    // act
+    const blocks = suggestionsOver([]).initialContent({
+      splitShape: "full-body",
+      trainingDays: 3,
+      sessionMinutes: 45,
+      dailySteps: 7000,
+      language: "en",
+      level: "intermediate",
+    }).plan.blocks;
+
+    // assert
+    expect(blocks.map(({ type }) => type)).toEqual([
+      "hypertrophy",
+      "deload",
+      "hypertrophy",
+    ]);
+  });
+});

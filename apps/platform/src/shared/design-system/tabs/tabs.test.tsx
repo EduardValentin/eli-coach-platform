@@ -132,3 +132,79 @@ describe("segmented tabs", () => {
     );
   });
 });
+
+function renderWeekRail() {
+  const user = userEvent.setup();
+
+  render(
+    <Tabs defaultValue="monday" variant="rail">
+      <TabsList aria-label="Days of the week">
+        <TabsTrigger value="monday">Monday</TabsTrigger>
+        <TabsTrigger value="tuesday">Tuesday</TabsTrigger>
+        <TabsTrigger value="wednesday">Wednesday</TabsTrigger>
+      </TabsList>
+      <TabsContent value="monday">Lower body</TabsContent>
+      <TabsContent value="tuesday">Rest</TabsContent>
+      <TabsContent value="wednesday">Upper body</TabsContent>
+    </Tabs>,
+  );
+
+  return user;
+}
+
+describe("rail tabs", () => {
+  it("marks the selected day as the active one", () => {
+    // arrange, act
+    renderWeekRail();
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Monday" })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(screen.getByRole("tab", { name: "Tuesday" })).toHaveAttribute(
+      "data-state",
+      "inactive",
+    );
+  });
+
+  it("moves between days from the keyboard", async () => {
+    // arrange
+    const user = renderWeekRail();
+
+    // act
+    await user.tab();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Wednesday" })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(screen.getByText("Upper body")).toBeInTheDocument();
+  });
+
+  it("lays its days out as one full-width grid without the pill bar", () => {
+    // arrange, act
+    renderWeekRail();
+
+    // assert
+    expect(screen.getByRole("tablist")).toHaveClass(
+      "grid",
+      "w-full",
+      "bg-transparent",
+      "p-0",
+    );
+    expect(screen.getByRole("tablist")).not.toHaveClass("inline-flex", "w-fit");
+  });
+
+  it("draws the selected day as the chosen cell instead of a filled pill", () => {
+    // arrange, act
+    renderWeekRail();
+
+    // assert
+    const day = screen.getByRole("tab", { name: "Monday" });
+    expect(day).toHaveClass("data-[state=active]:selected-cell");
+    expect(day).not.toHaveClass("data-[state=active]:bg-primary");
+  });
+});

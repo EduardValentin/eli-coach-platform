@@ -58,6 +58,8 @@ const BACK_SQUAT: ExerciseView = {
   secondaryMuscles: ["Core"],
   equipment: ["Barbell", "Squat rack"],
   difficulty: "Intermediate",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Strength", "Hypertrophy"],
   cues: "Brace, then sit between the hips.",
   video: {
@@ -77,6 +79,8 @@ const BOX_BREATHING: ExerciseView = {
   secondaryMuscles: [],
   equipment: [],
   difficulty: "Beginner",
+  pattern: null,
+  role: null,
   tags: [],
   cues: "",
   video: null,
@@ -97,6 +101,7 @@ const DEADLIFT: ExerciseView = {
   ...BACK_SQUAT,
   id: "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a",
   name: "Deadlift",
+  pattern: "hinge",
   primaryMuscles: ["Hamstrings", "Glutes"],
   equipment: ["Barbell"],
   difficulty: "Advanced",
@@ -108,6 +113,8 @@ const HIP_THRUST: ExerciseView = {
   ...BACK_SQUAT,
   id: "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
   name: "Hip thrust",
+  pattern: "hinge",
+  role: "isolation",
   primaryMuscles: ["Glutes"],
   equipment: ["Barbell", "Bench"],
   difficulty: "Beginner",
@@ -216,7 +223,7 @@ describe("the coach's exercise library", () => {
     ]);
     expect(rowTexts()).toEqual([
       [
-        "Back squatResistance · Barbell, Squat rack",
+        "Back squatResistance · Squat · Barbell, Squat rack",
         "StrengthHypertrophy",
         "QuadricepsGlutes",
         "Intermediate",
@@ -356,6 +363,26 @@ describe("narrowing the library", () => {
       expect(addressOf(router)).toEqual({});
     });
     expect(shownExerciseNames()).toHaveLength(LIBRARY.length);
+  });
+
+  it("offers Conditioning among the tags with its count and narrows to the exercises that carry it", async () => {
+    // arrange
+    const intervals: ExerciseView = { ...JUMP_ROPE, tags: ["Conditioning"] };
+    const { router, user } = await renderLibrary({
+      exercises: [intervals, BOX_BREATHING],
+    });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Tags" }));
+    await user.click(
+      screen.getByRole("checkbox", { name: /^Conditioning\s*1$/ }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ tags: "Conditioning" });
+    });
+    expect(shownExerciseNames()).toEqual(["Jump rope"]);
   });
 
   it("matches any of the tags she picks and counts each tag under the type", async () => {

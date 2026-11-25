@@ -105,17 +105,16 @@ afterAll(() => {
 });
 
 describe("the coach's client profile page", () => {
-  it("heads the page with her name over Profile, under a way back to her page", async () => {
+  it("heads the page with Profile alone, under a way back to her page that shows her name", async () => {
     // arrange, act
     await renderProfilePage({ profile: APPROVED });
 
     // assert
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Profile" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Back to Ana Popescu" }),
-    ).toHaveAttribute("href", coachClientPath(CLIENT_ID));
+    const heading = screen.getByRole("heading", { level: 1, name: "Profile" });
+    expect(heading.closest("header")).toHaveTextContent(/^Profile$/);
+    const back = screen.getByRole("link", { name: "Back to Ana Popescu" });
+    expect(back).toHaveAttribute("href", coachClientPath(CLIENT_ID));
+    expect(within(back).getByText("Back to")).toHaveClass("sr-only");
     const picture = screen.getByRole("region", { name: "Ana Popescu" });
     expect(within(picture).getByText("ana@example.com")).toBeInTheDocument();
     expect(

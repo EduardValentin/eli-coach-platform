@@ -66,6 +66,7 @@ import {
   EXERCISE_TAG_LABELS,
   EXERCISE_TAGS,
   EXERCISE_TYPE_LABELS,
+  MOVEMENT_PATTERN_LABELS,
 } from "./exercise-form";
 import {
   DEFAULT_EXERCISE_STATUS,
@@ -499,10 +500,13 @@ type ExerciseRowProps = {
 
 function ExerciseRow(props: ExerciseRowProps) {
   const { exercise } = props;
-  const equipment =
+  const summary = [
+    EXERCISE_TYPE_LABELS[exercise.type],
+    ...(exercise.pattern ? [MOVEMENT_PATTERN_LABELS[exercise.pattern]] : []),
     exercise.equipment.length > 0
       ? exercise.equipment.join(", ")
-      : "No equipment";
+      : "No equipment",
+  ].join(" · ");
 
   return (
     <TableRow data-parity="exercise-row">
@@ -510,7 +514,7 @@ function ExerciseRow(props: ExerciseRowProps) {
         <ItemIdentity
           glyphAttributes={{ "data-parity": "exercise-glyph" }}
           icon={Activity}
-          summary={`${EXERCISE_TYPE_LABELS[exercise.type]} · ${equipment}`}
+          summary={summary}
           summaryAttributes={{ "data-parity": "exercise-summary" }}
           title={exercise.name}
         />

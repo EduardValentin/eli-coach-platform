@@ -29,6 +29,8 @@ const HIP_THRUST: ExerciseSnapshot = {
   secondaryMuscles: [],
   equipment: ["Barbell"],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: [],
   cues: "",
   video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },

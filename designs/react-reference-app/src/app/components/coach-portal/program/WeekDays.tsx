@@ -91,7 +91,7 @@ type DayCardProps = { day: WeekDay; exercisesById: ExerciseLibrary; menu: ReactN
 function DayCard({ day, exercisesById, menu, onOpenSession }: DayCardProps) {
   const openableId = openableIdOf(day.plan);
   return (
-    <div className={dayCellVariants({ variant: 'compact', kind: day.plan.kind })}>
+    <div className={dayCellVariants({ variant: 'compact', kind: day.plan.kind })} data-parity={`day-${day.weekday}`}>
       <h4 className={cn(EYEBROW_CLASS, 'col-start-1 row-start-1')}>
         <span aria-hidden="true">{weekdayAbbreviation(day.weekday)}</span>
         <span className="sr-only">{WEEKDAY_LABELS[day.weekday]}</span>
@@ -106,7 +106,7 @@ type BuilderWeekProps = { block: Block; days: WeekDay[]; exercisesById: Exercise
 
 function BuilderWeekRow({ block, days, exercisesById, onOpenSession, onChoose }: BuilderWeekProps) {
   return (
-    <ol className="grid grid-cols-7 gap-x-2">
+    <ol className="grid grid-cols-7 gap-x-2" data-parity="week-row">
       {days.map(day => (
         <li key={day.weekday} className="grid">
           <DayCard
@@ -139,9 +139,13 @@ function BuilderWeekTabs({ block, days, exercisesById, onOpenSession, onChoose }
           <DayMenu block={block} day={day.weekday} onChoose={(choice, trigger) => onChoose(day.weekday, choice, trigger)} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-          <p className="text-sm text-text-primary">
+          <p className="text-sm text-text-primary" data-parity="day-panel-plan">
             {dayPlanName(day.plan)}
-            {length && <span className="text-text-secondary tabular-nums">{` · ${length}`}</span>}
+            {length && (
+              <span className="text-text-secondary tabular-nums" data-parity="day-panel-length">
+                {` · ${length}`}
+              </span>
+            )}
           </p>
           {openableId !== null && (
             <Button variant="outline" size="sm" onClick={() => onOpenSession(openableId)}>

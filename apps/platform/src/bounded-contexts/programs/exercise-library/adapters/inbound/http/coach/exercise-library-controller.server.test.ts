@@ -57,6 +57,8 @@ const HIP_THRUST: ExerciseSnapshot = {
   secondaryMuscles: ["Hamstrings"],
   equipment: ["Barbell", "Bench"],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
   video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
@@ -75,6 +77,8 @@ const HIP_THRUST_VIEW = {
   secondaryMuscles: ["Hamstrings"],
   equipment: ["Barbell", "Bench"],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
   video: {
@@ -446,6 +450,28 @@ describe("ExerciseLibraryController#create", () => {
     });
   });
 
+  it("reads a body that names no movement pattern or role as having neither", async () => {
+    // arrange
+    const { exerciseLibraryController, createExercise } = createController();
+    const {
+      pattern: _pattern,
+      role: _role,
+      ...withoutThem
+    } = HIP_THRUST_REQUEST;
+
+    // act
+    await exerciseLibraryController.create(
+      argsFor({ request: jsonRequest("POST", withoutThem) }),
+    );
+
+    // assert
+    expect(createExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      draft: { ...HIP_THRUST_DRAFT, pattern: null, role: null },
+      video: { kind: "keep" },
+    });
+  });
+
   it("stages the video of a multipart save and creates the exercise with it attached", async () => {
     // arrange
     const {
@@ -644,6 +670,11 @@ describe("ExerciseLibraryController#create", () => {
     ["a body that is not JSON", "{"],
     ["a body missing a field", { ...HIP_THRUST_REQUEST, cues: undefined }],
     ["a muscle that is not text", { ...HIP_THRUST_REQUEST, tags: [3] }],
+    [
+      "a movement pattern that is not text",
+      { ...HIP_THRUST_REQUEST, pattern: 3 },
+    ],
+    ["a role that is not text", { ...HIP_THRUST_REQUEST, role: ["isolation"] }],
   ])("answers 400 to %s without creating", async (_case, body) => {
     // arrange
     const { exerciseLibraryController, createExercise } = createController();

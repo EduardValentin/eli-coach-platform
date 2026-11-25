@@ -10,7 +10,8 @@ type ConfirmDialogProps = {
   children?: ReactNode;
   confirmDisabled?: boolean;
   confirmLabel: string;
-  description: ReactNode;
+  description?: ReactNode;
+  details?: ReactNode;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   confirmDisabled = false,
   confirmLabel,
   description,
+  details,
   onConfirm,
   onOpenChange,
   open,
@@ -42,6 +44,7 @@ export function ConfirmDialog({
       <DialogContent
         data-parity-root="ConfirmDialog"
         description={description}
+        details={details}
         footer={
           <>
             <Button

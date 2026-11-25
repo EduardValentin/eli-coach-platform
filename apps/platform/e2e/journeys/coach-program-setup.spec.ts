@@ -15,11 +15,12 @@ const PREFILLED_FROM_HER_PROFILE: ProgramSetupChoices = {
 };
 
 test(
-  "the coach builds a program for an approved client and finds the draft on her page",
+  "the coach builds a program for an approved client, lands in its builder and finds the draft on her page",
   { tag: "@critical" },
   async ({
     coachClient,
     page,
+    programBuilder,
     programSetup,
     provisionClientInState,
     provisionCoach,
@@ -53,6 +54,12 @@ test(
 
     // act
     await programSetup.create();
+
+    // assert
+    await programBuilder.expectOpenFor(client.fullName, client.clientId);
+
+    // act
+    await programBuilder.goBackToClient(client.fullName);
 
     // assert
     await coachClient.expectOpen(client.clientId);

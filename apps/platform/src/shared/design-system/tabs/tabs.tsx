@@ -17,6 +17,7 @@ const tabsListClasses = cva(
           "h-auto max-w-full flex-wrap gap-1 rounded-compact border border-control-border-soft p-[3px]",
           PAIRS_A_FOURTH_TRIGGER_BELOW_SM,
         ),
+        rail: "grid h-auto w-full items-stretch rounded-none bg-transparent p-0",
       },
     },
     defaultVariants: {
@@ -25,14 +26,20 @@ const tabsListClasses = cva(
   },
 );
 
+const ACTIVE_FILL_CLASSES =
+  "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground";
+
 const tabsTriggerClasses = cva(
-  "relative hit-area inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-field px-2 py-1 text-sm font-medium text-text-primary transition-[color,box-shadow] hover:text-primary disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "relative hit-area inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-field px-2 py-1 text-sm font-medium text-text-primary transition-[color,box-shadow] hover:text-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "",
-        segmented:
+        default: ACTIVE_FILL_CLASSES,
+        segmented: cn(
+          ACTIVE_FILL_CLASSES,
           "h-auto flex-auto px-4 py-[11px] font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+        ),
+        rail: "h-auto flex-auto justify-normal rounded-none font-normal whitespace-normal text-text-secondary hover:text-text-secondary data-[state=active]:z-10 data-[state=active]:selected-cell",
       },
     },
     defaultVariants: {
@@ -46,6 +53,7 @@ const tabsContentClasses = cva("flex-1 outline-none", {
     variant: {
       default: "",
       segmented: "rounded-card",
+      rail: "",
     },
   },
   defaultVariants: {

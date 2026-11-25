@@ -17,6 +17,7 @@ import { BlockNumber } from '../../program-view/BlockNumber';
 import { BlockSettings } from './BlockSettings';
 import { CopyBlockDialog } from './CopyBlockDialog';
 import { removeBlockRequest, useDestructiveConfirm } from './DestructiveConfirm';
+import { usePlaceHeading } from './placeHeading';
 import { useWeeksField } from './weeksField';
 
 type BlockHeaderProps = {
@@ -99,7 +100,7 @@ type BarProps = { block: Block; index: number; status: BlockStatus };
 function CollapsedBlockBar({ block, index, status, toggle }: BarProps & { toggle: SettingsToggleProps }) {
   const line = statusLine(block, status);
   return (
-    <div className="flex items-center gap-3 py-2 pr-2 pl-4">
+    <div className="flex items-center gap-3 py-2 pr-2 pl-4" data-parity="block-collapsed-bar">
       <BlockNumber block={block} index={index} size="md" />
       <p className={cn(WIDGET_TITLE_CLASS, 'truncate')}>{`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}</p>
       {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
@@ -115,7 +116,7 @@ type BlockActions = { onCopy: () => void; onReset: () => void; onRemove: () => v
 function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: BarProps & { toggle: SettingsToggleProps | null; actions: BlockActions; onChangeType: (type: BlockType) => void }) {
   const line = statusLine(block, status);
   return (
-    <div className="flex min-w-0 items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
+    <div className="flex min-w-0 items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4" data-parity="block-title-bar">
       <BlockNumber block={block} index={index} size="md" />
       <BlockTypeSelect value={block.type} label="Block type" appearance="title" onChange={onChangeType} />
       {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
@@ -147,6 +148,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   const block = blocks[index];
   const [copying, setCopying] = useState(false);
   const confirm = useDestructiveConfirm();
+  const placeHeading = usePlaceHeading();
   const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit: value => onChange({ ...block, weeks: value }) });
   const settings = useCollapsingSettings();
 
@@ -167,7 +169,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   const actions: BlockActions = {
     onCopy: () => setCopying(true),
     onReset: () => rebuild('Reset to the split?', blockWithSplit(block, block.split.shape, language), describeLoss(block, { kind: 'reset' })),
-    onRemove: () => confirm.request(removeBlockRequest(block, index, onRemove)),
+    onRemove: () => confirm.request({ ...removeBlockRequest(block, index, onRemove), focusAfterApply: () => placeHeading.current }),
   };
   const { headerRef: scrollRef } = settings;
   const headerRef = useCallback(
@@ -182,6 +184,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   return (
     <header
       ref={headerRef}
+      data-parity="block-header"
       className={cn('z-10 rounded-card border border-border bg-card shadow-card lg:sticky lg:-top-6', { 'lg:rounded-t-none lg:border-t-0': settings.collapsed })}
     >
       <h2 className="sr-only">{BLOCK_TYPE_LABELS[block.type]}</h2>

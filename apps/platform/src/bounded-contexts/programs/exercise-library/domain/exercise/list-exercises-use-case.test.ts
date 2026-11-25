@@ -18,6 +18,8 @@ const HIP_THRUST = Exercise.reconstitute({
   secondaryMuscles: [],
   equipment: ["Barbell", "Bench"],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: ["Hypertrophy"],
   cues: "",
   video: null,

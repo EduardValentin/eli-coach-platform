@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { expectAccessRefused } from "./control-states";
+import { expectOneH1AndNoSkippedLevels } from "./heading-outline";
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { ResourceCards, type ResourceCardFacts } from "./resource-cards";
@@ -51,7 +52,8 @@ export class CoachClientResourcesPage {
     await expect(
       this.page.getByRole("heading", {
         level: 1,
-        name: `${owner.firstName}’s resources`,
+        name: "Resources",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(this.backLinkTo(owner.fullName)).toHaveAttribute(
@@ -104,7 +106,12 @@ export class CoachClientResourcesPage {
     await this.cards.expectCover(title);
   }
 
+  private async movePointerOffToasts(): Promise<void> {
+    await this.page.getByRole("heading", { level: 1 }).hover();
+  }
+
   async openAdd(): Promise<void> {
+    await this.movePointerOffToasts();
     await expect(async () => {
       await this.addButton.click();
       await expect(this.addDialog).toBeVisible({
@@ -175,6 +182,10 @@ export class CoachClientResourcesPage {
     ).toBeVisible();
     await expect(this.backLinkTo(fullName)).toBeVisible();
     await expect(this.addButton).toHaveCount(0);
+    await expect(
+      this.page.getByRole("heading", { name: "Resources", exact: true }),
+    ).toHaveCount(0);
+    await expectOneH1AndNoSkippedLevels(this.page);
   }
 
   async retry(): Promise<void> {

@@ -7,18 +7,30 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 
 export type RowMenuAction = {
   disabled?: boolean;
   disabledReason?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   label: string;
   name: string;
   onSelect: () => void;
   tone?: "default" | "destructive";
 };
+
+type RowMenuSubmenu = {
+  actions: ReadonlyArray<RowMenuAction>;
+  icon: LucideIcon;
+  label: string;
+  name: string;
+};
+
+type RowMenuEntry = RowMenuAction | RowMenuSubmenu;
 
 type RowActionsMenuSize = "xs" | "sm";
 
@@ -28,15 +40,74 @@ const TRIGGER_SIZE: Record<RowActionsMenuSize, "icon-xs" | "icon-sm"> = {
 };
 
 type RowActionsMenuProps = {
-  actions: ReadonlyArray<RowMenuAction>;
+  actions: ReadonlyArray<RowMenuEntry>;
   label: string;
+  parityRoot?: string;
   size?: RowActionsMenuSize;
   triggerRef?: Ref<HTMLButtonElement>;
 };
 
+type ChooseAction = (action: RowMenuAction) => (event: Event) => void;
+
+function isSubmenu(entry: RowMenuEntry): entry is RowMenuSubmenu {
+  return "actions" in entry;
+}
+
+function RowMenuItem(props: {
+  action: RowMenuAction;
+  chooseAction: ChooseAction;
+}) {
+  const { action, chooseAction } = props;
+  const { disabled, disabledReason, icon: Icon, name, tone } = action;
+  const item = (
+    <DropdownMenuItem
+      data-parity={`row-action-${name}`}
+      disabled={disabled}
+      onSelect={chooseAction(action)}
+      variant={tone}
+    >
+      {Icon && <Icon aria-hidden="true" />}
+      <span>{action.label}</span>
+    </DropdownMenuItem>
+  );
+
+  return disabledReason ? (
+    <DisabledActionHint reason={disabledReason}>{item}</DisabledActionHint>
+  ) : (
+    item
+  );
+}
+
+function RowMenuSub(props: {
+  chooseAction: ChooseAction;
+  submenu: RowMenuSubmenu;
+}) {
+  const { chooseAction, submenu } = props;
+  const { actions, icon: Icon, label, name } = submenu;
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger data-parity={`row-action-${name}`}>
+        <Icon aria-hidden="true" />
+        {label}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        {actions.map((action) => (
+          <RowMenuItem
+            action={action}
+            chooseAction={chooseAction}
+            key={action.name}
+          />
+        ))}
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
+}
+
 export function RowActionsMenu({
   actions,
   label,
+  parityRoot = "RowActionsMenu",
   size = "sm",
   triggerRef,
 }: RowActionsMenuProps) {
@@ -52,7 +123,7 @@ export function RowActionsMenu({
     action?.();
   };
 
-  const chooseAction = (action: RowMenuAction) => (event: Event) => {
+  const chooseAction: ChooseAction = (action) => (event) => {
     if (action.disabledReason) {
       event.preventDefault();
       return;
@@ -76,32 +147,24 @@ export function RowActionsMenu({
       <DropdownMenuContent
         align="end"
         className="min-w-40"
-        data-parity-root="RowActionsMenu"
+        data-parity-root={parityRoot}
         onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
       >
-        {actions.map((action) => {
-          const { disabled, disabledReason, icon: Icon, name, tone } = action;
-          const item = (
-            <DropdownMenuItem
-              data-parity={`row-action-${name}`}
-              disabled={disabled}
-              key={name}
-              onSelect={chooseAction(action)}
-              variant={tone}
-            >
-              <Icon aria-hidden="true" />
-              <span>{action.label}</span>
-            </DropdownMenuItem>
-          );
-
-          return disabledReason ? (
-            <DisabledActionHint key={name} reason={disabledReason}>
-              {item}
-            </DisabledActionHint>
+        {actions.map((entry) =>
+          isSubmenu(entry) ? (
+            <RowMenuSub
+              chooseAction={chooseAction}
+              key={entry.name}
+              submenu={entry}
+            />
           ) : (
-            item
-          );
-        })}
+            <RowMenuItem
+              action={entry}
+              chooseAction={chooseAction}
+              key={entry.name}
+            />
+          ),
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

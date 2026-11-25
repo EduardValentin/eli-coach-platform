@@ -240,3 +240,14 @@ describe("TagInput removing tags", () => {
     expect(chosenTags()).toEqual(["Nutrition"]);
   });
 });
+
+describe("TagInput field", () => {
+  it("shows its placeholder in the soft placeholder colour", () => {
+    // arrange
+    // act
+    render(<TagField />);
+
+    // assert
+    expect(tagsField()).toHaveClass("placeholder:text-placeholder-soft");
+  });
+});

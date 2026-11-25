@@ -1,8 +1,4 @@
-import {
-  PortalBackLink,
-  PortalPageHeader,
-  SettingsSection,
-} from "~/shared/design-system/portal";
+import { SettingsSection } from "~/shared/design-system/portal";
 import { CalendarCheck } from "lucide-react";
 
 import {
@@ -15,7 +11,7 @@ import { coachClientAvatarApiPath } from "~/bounded-contexts/clients/client-prof
 import { AvatarField } from "~/bounded-contexts/clients/client-profile/ui/shared/avatar/avatar-field";
 import { PreferenceRows } from "~/bounded-contexts/clients/client-profile/ui/shared/profile/preference-rows";
 import { clientFullName } from "~/bounded-contexts/clients/clients/public/clients";
-import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
+import { ClientPageHeader } from "~/bounded-contexts/clients/clients/ui/shared/client-page-header";
 
 import { ClientIdentitySection } from "./client-identity-section";
 import { CoachingSection } from "./coaching-section";
@@ -59,10 +55,7 @@ export function CoachClientProfile({
 
   return (
     <div className="w-full max-w-3xl" data-parity-root="ClientProfilePage">
-      <PortalBackLink to={coachClientPath(clientId)}>
-        Back to {name}
-      </PortalBackLink>
-      <PortalPageHeader eyebrow={name} title="Profile" />
+      <ClientPageHeader client={{ clientId, name }} title="Profile" />
       <div className="space-y-6 sm:space-y-8">
         <AvatarField
           avatarEndpoint={coachClientAvatarApiPath(clientId)}

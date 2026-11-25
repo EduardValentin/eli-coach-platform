@@ -20,6 +20,8 @@ const SQUAT: ExerciseDraftInput = {
   secondaryMuscles: [],
   equipment: ["Barbell"],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: [],
   cues: "",
 };
@@ -261,7 +263,13 @@ describe("Exercise.reconstitute", () => {
     { description: "a stored exercise", change: {} },
     {
       description: "a cardio exercise without a primary muscle",
-      change: { type: "cardio", unit: "time", primaryMuscles: [] },
+      change: {
+        type: "cardio",
+        unit: "time",
+        primaryMuscles: [],
+        pattern: null,
+        role: null,
+      },
     },
     { description: "an 80-character name", change: { name: "n".repeat(80) } },
     {
@@ -367,6 +375,21 @@ describe("Exercise.reconstitute", () => {
       description: "a repeated tag",
       field: "tags",
       change: { tags: ["Strength", "Strength"] },
+    },
+    {
+      description: "a resistance exercise without a movement pattern",
+      field: "pattern",
+      change: { pattern: null },
+    },
+    {
+      description: "an unknown role",
+      field: "role",
+      change: { role: "accessory" },
+    },
+    {
+      description: "a cardio exercise with a movement pattern",
+      field: "pattern",
+      change: { type: "cardio", unit: "time", role: null },
     },
     {
       description: "a video that breaks the video rules",

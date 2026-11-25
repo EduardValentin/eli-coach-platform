@@ -14,6 +14,24 @@ const OVER_THE_CAP_REFUSAL = "deadlift-demo.mp4 is larger than 50 MB";
 const NO_VIDEO_INSIDE_REFUSAL =
   "squat-demo.mp4 doesn’t contain an MP4 or MOV video.";
 const SEEK_TO_SECONDS = 1.2;
+const MOVEMENT_PATTERN_LABELS = [
+  "Squat",
+  "Lunge",
+  "Hinge",
+  "Horizontal push",
+  "Vertical push",
+  "Horizontal pull",
+  "Vertical pull",
+  "Core",
+  "Carry",
+  "Isolation",
+  "Conditioning",
+] as const;
+const EXERCISE_ROLE_LABELS = [
+  "Main compound",
+  "Secondary compound",
+  "Isolation",
+] as const;
 
 function videoIdOf(videoPath: string): string {
   const videoId = videoPath.split("/").pop();
@@ -33,6 +51,8 @@ function hipThrustNamed(name: string): ExerciseFields {
     secondaryMuscles: ["Hamstrings"],
     equipment: ["Barbell", "Bench"],
     difficulty: "Beginner",
+    pattern: "hinge",
+    role: "main-compound",
     tags: ["Hypertrophy"],
     cues: "",
   };
@@ -40,7 +60,14 @@ function hipThrustNamed(name: string): ExerciseFields {
 
 type GrownLibrarySeed = Pick<
   ExerciseFields,
-  "name" | "type" | "unit" | "tags" | "equipment" | "primaryMuscles"
+  | "name"
+  | "type"
+  | "unit"
+  | "tags"
+  | "equipment"
+  | "primaryMuscles"
+  | "pattern"
+  | "role"
 > & { difficulty: "Beginner" | "Intermediate" | "Advanced" };
 
 const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
@@ -52,6 +79,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: ["Barbell"],
     primaryMuscles: ["Quadriceps", "Glutes"],
     difficulty: "Intermediate",
+    pattern: "squat",
+    role: "main-compound",
   },
   {
     name: "Box breathing",
@@ -61,6 +90,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: [],
     primaryMuscles: ["Core"],
     difficulty: "Beginner",
+    pattern: null,
+    role: null,
   },
   {
     name: "Cat cow",
@@ -70,6 +101,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: ["Mat"],
     primaryMuscles: ["Lower back"],
     difficulty: "Beginner",
+    pattern: null,
+    role: null,
   },
   {
     name: "Frog pump",
@@ -79,6 +112,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: [],
     primaryMuscles: ["Glutes", "Adductors"],
     difficulty: "Intermediate",
+    pattern: "hinge",
+    role: "isolation",
   },
   {
     name: "Glute bridge",
@@ -88,6 +123,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: [],
     primaryMuscles: ["Glutes"],
     difficulty: "Beginner",
+    pattern: "hinge",
+    role: "secondary-compound",
   },
   {
     name: "Hip flexor stretch",
@@ -97,6 +134,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: [],
     primaryMuscles: ["Hip flexors"],
     difficulty: "Beginner",
+    pattern: null,
+    role: null,
   },
   {
     name: "Hip thrust",
@@ -106,6 +145,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: ["Barbell", "Bench"],
     primaryMuscles: ["Glutes"],
     difficulty: "Beginner",
+    pattern: "hinge",
+    role: "main-compound",
   },
   {
     name: "Jump rope",
@@ -115,6 +156,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: ["Jump rope"],
     primaryMuscles: ["Calves"],
     difficulty: "Beginner",
+    pattern: null,
+    role: null,
   },
   {
     name: "Pike push-up",
@@ -124,6 +167,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: [],
     primaryMuscles: ["Shoulders", "Triceps"],
     difficulty: "Intermediate",
+    pattern: "vertical-push",
+    role: "secondary-compound",
   },
   {
     name: "Romanian deadlift",
@@ -133,6 +178,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: ["Barbell"],
     primaryMuscles: ["Hamstrings", "Glutes"],
     difficulty: "Advanced",
+    pattern: "hinge",
+    role: "main-compound",
   },
   {
     name: "Rowing intervals",
@@ -142,6 +189,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: ["Rower"],
     primaryMuscles: ["Full body"],
     difficulty: "Intermediate",
+    pattern: null,
+    role: null,
   },
   {
     name: "Single-leg glute bridge",
@@ -151,6 +200,8 @@ const GROWN_LIBRARY: readonly GrownLibrarySeed[] = [
     equipment: [],
     primaryMuscles: ["Glutes", "Hamstrings"],
     difficulty: "Advanced",
+    pattern: "hinge",
+    role: "isolation",
   },
 ];
 
@@ -210,6 +261,8 @@ test(
       secondaryMuscles: ["Hamstrings", "Core"],
       equipment: ["Mat"],
       difficulty: "Beginner",
+      pattern: "Hinge",
+      role: "Secondary compound",
       tags: ["Strength"],
       cues: "Squeeze at the top and hold.",
     };
@@ -245,6 +298,8 @@ test(
       primaryMuscles: created.primaryMuscles,
       secondaryMuscles: created.secondaryMuscles,
       equipment: created.equipment,
+      pattern: created.pattern,
+      role: created.role,
       toggledTags: created.tags,
       cues: created.cues,
     });
@@ -261,7 +316,7 @@ test(
     await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: created.name,
-      summary: "Resistance · Mat",
+      summary: "Resistance · Hinge · Mat",
       tags: created.tags,
       primaryMuscles: created.primaryMuscles,
       difficulty: created.difficulty,
@@ -294,7 +349,7 @@ test(
     await exerciseLibrary.expectToast("Exercise updated");
     await exerciseLibrary.expectListed({
       name: edited.name,
-      summary: "Resistance · Mat, Barbell",
+      summary: "Resistance · Hinge · Mat, Barbell",
       tags: edited.tags,
       primaryMuscles: edited.primaryMuscles,
       difficulty: edited.difficulty,
@@ -338,6 +393,16 @@ test(
 
     // act
     await exerciseEditor.enter({ name: `Lunge ${scenarioTag}` });
+
+    // assert
+    await exerciseEditor.expectOnlyProblems({
+      "Primary muscles": "Pick at least one primary muscle",
+      "Movement pattern": "Choose a movement pattern",
+      Role: "Choose a role",
+    });
+
+    // act
+    await exerciseEditor.enter({ pattern: "Lunge", role: "Main compound" });
 
     // assert
     await exerciseEditor.expectOnlyProblem(
@@ -442,6 +507,8 @@ test(
       secondaryMuscles: ["Adductors"],
       equipment: ["Dumbbells", "Bench"],
       difficulty: "Advanced",
+      pattern: "Lunge",
+      role: "Main compound",
       tags: ["Strength"],
       cues: "Front shin stays vertical.",
     };
@@ -456,6 +523,8 @@ test(
       primaryMuscles: entered.primaryMuscles,
       secondaryMuscles: entered.secondaryMuscles,
       equipment: entered.equipment,
+      pattern: entered.pattern,
+      role: entered.role,
       difficulty: entered.difficulty,
       toggledTags: entered.tags,
       cues: entered.cues,
@@ -485,7 +554,7 @@ test(
     await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: `${entered.name} (heavy)`,
-      summary: "Resistance · Dumbbells, Bench",
+      summary: "Resistance · Lunge · Dumbbells, Bench",
       tags: entered.tags,
       primaryMuscles: entered.primaryMuscles,
       difficulty: entered.difficulty,
@@ -587,6 +656,362 @@ test(
 );
 
 test(
+  "a resistance exercise asks for a movement pattern and a role right after Equipment, other types ask for neither, and a chosen pattern outlasts a change of type",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+
+    // act
+    await exerciseEditor.openNew();
+
+    // assert
+    await exerciseEditor.expectPatternAndRole({ pattern: null, role: null });
+    await exerciseEditor.expectPatternAndRoleRightAfterEquipment();
+    await exerciseEditor.expectPatternChoices(MOVEMENT_PATTERN_LABELS);
+    await exerciseEditor.expectRoleChoices(EXERCISE_ROLE_LABELS);
+
+    // act
+    await exerciseEditor.enter({ pattern: "Vertical pull" });
+
+    // assert
+    await exerciseEditor.expectPatternAndRole({
+      pattern: "Vertical pull",
+      role: null,
+    });
+
+    for (const type of ["Cardio", "Mobility", "Stretching", "Breathing"]) {
+      // act
+      await exerciseEditor.enter({ type });
+
+      // assert
+      await exerciseEditor.expectNoPatternOrRole();
+    }
+
+    // act
+    await exerciseEditor.enter({ type: "Resistance" });
+
+    // assert
+    await exerciseEditor.expectPatternAndRole({
+      pattern: "Vertical pull",
+      role: null,
+    });
+    await exerciseEditor.expectPatternAndRoleRightAfterEquipment();
+  },
+);
+
+test(
+  "a resistance exercise shows the movement pattern and role problems at their fields, is created only once both are chosen, and is listed with its pattern",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const name = `Farmer carry ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+
+    // act
+    await exerciseEditor.enter({
+      name,
+      primaryMuscles: ["Forearms"],
+      equipment: ["Kettlebell"],
+    });
+
+    // assert
+    await exerciseEditor.expectOnlyProblems({
+      "Movement pattern": "Choose a movement pattern",
+      Role: "Choose a role",
+    });
+
+    // act
+    await exerciseEditor.enter({ pattern: "Carry" });
+
+    // assert
+    await exerciseEditor.expectOnlyProblem("Role", "Choose a role");
+
+    // act
+    await exerciseEditor.enter({ role: "Main compound" });
+
+    // assert
+    await exerciseEditor.expectNoProblems();
+    await exerciseEditor.expectCreateAvailable();
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise created");
+    await exerciseLibrary.expectListed({
+      name,
+      summary: "Resistance · Carry · Kettlebell",
+      tags: [],
+      primaryMuscles: ["Forearms"],
+      difficulty: "Beginner",
+    });
+  },
+);
+
+test(
+  "a resistance exercise created by keyboard keeps its movement pattern and role through a reload, and saved as another type it drops them",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const created: SavedExercise = {
+      name: `Single-arm row ${scenarioTag}`,
+      type: "Resistance",
+      unit: "Reps",
+      sides: "One side at a time",
+      primaryMuscles: ["Lats"],
+      secondaryMuscles: [],
+      equipment: ["Dumbbells", "Bench"],
+      difficulty: "Intermediate",
+      pattern: "Horizontal pull",
+      role: "Secondary compound",
+      tags: ["Hypertrophy"],
+      cues: "Pull the elbow to the hip.",
+    };
+    const retyped: SavedExercise = {
+      ...created,
+      type: "Mobility",
+      pattern: null,
+      role: null,
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+
+    // act
+    await exerciseEditor.createWithKeyboard(created);
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise created");
+    await exerciseLibrary.expectListed({
+      name: created.name,
+      summary: "Resistance · Horizontal pull · Dumbbells, Bench",
+      tags: created.tags,
+      primaryMuscles: created.primaryMuscles,
+      difficulty: created.difficulty,
+    });
+
+    // act
+    await exerciseLibrary.edit(created.name);
+    await exerciseEditor.reload();
+
+    // assert
+    await exerciseEditor.expectEditing(created);
+
+    // act
+    await exerciseEditor.enter({ type: retyped.type, unit: retyped.unit });
+    await exerciseEditor.saveChanges();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise updated");
+    await exerciseLibrary.expectListed({
+      name: created.name,
+      summary: "Mobility · Dumbbells, Bench",
+      tags: created.tags,
+      primaryMuscles: created.primaryMuscles,
+      difficulty: created.difficulty,
+    });
+
+    // act
+    await exerciseLibrary.edit(created.name);
+
+    // assert
+    await exerciseEditor.expectEditing(retyped);
+
+    // act
+    await exerciseEditor.enter({ type: "Resistance" });
+
+    // assert
+    await exerciseEditor.expectPatternAndRole({ pattern: null, role: null });
+  },
+);
+
+test(
+  "on a phone the coach changes a resistance exercise's movement pattern and role by keyboard from its row menu, and they outlast a reload",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const saved = hipThrustNamed(`Good morning ${scenarioTag}`);
+    const changed: SavedExercise = {
+      name: saved.name,
+      type: "Resistance",
+      unit: "Reps",
+      sides: "Both sides together",
+      primaryMuscles: saved.primaryMuscles,
+      secondaryMuscles: saved.secondaryMuscles,
+      equipment: saved.equipment,
+      difficulty: saved.difficulty,
+      pattern: "Core",
+      role: "Isolation",
+      tags: saved.tags,
+      cues: saved.cues,
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createAccepted(saved);
+    await setPhoneViewport(page);
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(saved.name);
+
+    // act
+    await exerciseEditor.choosePatternAndRoleWithKeyboard(changed);
+
+    // assert
+    await exerciseEditor.expectEntries(changed);
+    await exerciseEditor.expectFits();
+
+    // act
+    await exerciseEditor.saveChanges();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise updated");
+    await exerciseLibrary.expectListed({
+      name: changed.name,
+      summary: "Resistance · Core · Barbell, Bench",
+      tags: changed.tags,
+      primaryMuscles: changed.primaryMuscles,
+      difficulty: changed.difficulty,
+    });
+
+    // act
+    await exerciseLibrary.edit(changed.name);
+    await exerciseEditor.reload();
+
+    // assert
+    await exerciseEditor.expectEditing(changed);
+  },
+);
+
+test(
+  "the coach tags an exercise Conditioning and the library's Tags filter narrows to it",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const swing: SavedExercise = {
+      name: `Kettlebell swing ${scenarioTag}`,
+      type: "Resistance",
+      unit: "Reps",
+      sides: "Both sides together",
+      primaryMuscles: ["Glutes"],
+      secondaryMuscles: ["Hamstrings"],
+      equipment: ["Kettlebell"],
+      difficulty: "Intermediate",
+      pattern: "Conditioning",
+      role: "Main compound",
+      tags: ["Conditioning"],
+      cues: "Snap the hips, let the bell float.",
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createAccepted(
+      hipThrustNamed(`Hip thrust ${scenarioTag}`),
+    );
+    await exerciseEditor.openNew();
+    await exerciseEditor.enter({
+      name: swing.name,
+      primaryMuscles: swing.primaryMuscles,
+      secondaryMuscles: swing.secondaryMuscles,
+      equipment: swing.equipment,
+      pattern: swing.pattern,
+      role: swing.role,
+      difficulty: swing.difficulty,
+      toggledTags: swing.tags,
+      cues: swing.cues,
+    });
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise created");
+    await exerciseLibrary.expectListed({
+      name: swing.name,
+      summary: "Resistance · Conditioning · Kettlebell",
+      tags: swing.tags,
+      primaryMuscles: swing.primaryMuscles,
+      difficulty: swing.difficulty,
+    });
+    await exerciseLibrary.expectOptionCounts("Tags", {
+      Strength: 0,
+      Hypertrophy: 1,
+      Recovery: 0,
+      Conditioning: 1,
+    });
+
+    // act
+    await exerciseLibrary.toggleTag("Conditioning");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ tags: "Conditioning" });
+    await exerciseLibrary.expectListedNamesExactly([swing.name]);
+
+    // act
+    await exerciseLibrary.edit(swing.name);
+
+    // assert
+    await exerciseEditor.expectEditing(swing);
+  },
+);
+
+test(
   "a muscle made primary leaves the secondary muscles, which offer only muscles that aren't primary",
   { tag: "@completeness" },
   async ({
@@ -623,6 +1048,8 @@ test(
       secondaryMuscles: ["Core"],
       equipment: [],
       difficulty: "Beginner",
+      pattern: null,
+      role: null,
       tags: [],
       cues: "",
     });
@@ -657,6 +1084,8 @@ test(
       secondaryMuscles: ["Lats"],
       equipment: ["Mat"],
       difficulty: "Intermediate",
+      pattern: null,
+      role: null,
       tags: ["Strength", "Recovery"],
       cues: "Ribs down, roll out slowly.",
     };
@@ -790,7 +1219,7 @@ test(
     await exerciseLibrary.expectNotListed(discarded);
     await exerciseLibrary.expectListed({
       name: saved,
-      summary: "Resistance · Barbell, Bench",
+      summary: "Resistance · Hinge · Barbell, Bench",
       tags: ["Hypertrophy"],
       primaryMuscles: ["Glutes"],
       difficulty: "Beginner",
@@ -1031,7 +1460,7 @@ test(
     await exerciseLibrary.expectOpen();
     await exerciseLibrary.expectListed({
       name: saved.name,
-      summary: "Resistance · Barbell, Bench",
+      summary: "Resistance · Hinge · Barbell, Bench",
       tags: saved.tags,
       primaryMuscles: saved.primaryMuscles,
       difficulty: saved.difficulty,
@@ -1085,6 +1514,8 @@ test(
       secondaryMuscles: ["Glutes"],
       equipment: ["Dumbbells"],
       difficulty: "Intermediate",
+      pattern: "Squat",
+      role: "Secondary compound",
       tags: ["Strength"],
       cues: "Elbows inside the knees.",
     };
@@ -1098,6 +1529,8 @@ test(
       primaryMuscles: entered.primaryMuscles,
       secondaryMuscles: entered.secondaryMuscles,
       equipment: entered.equipment,
+      pattern: entered.pattern,
+      role: entered.role,
       difficulty: entered.difficulty,
       toggledTags: entered.tags,
       cues: entered.cues,
@@ -1126,7 +1559,7 @@ test(
     await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: entered.name,
-      summary: "Resistance · Dumbbells",
+      summary: "Resistance · Squat · Dumbbells",
       tags: entered.tags,
       primaryMuscles: entered.primaryMuscles,
       difficulty: entered.difficulty,
@@ -1157,7 +1590,12 @@ test(
     await signInAsCoach();
     await coachDashboard.open();
     await exerciseEditor.openNew();
-    await exerciseEditor.enter({ name, primaryMuscles: ["Hamstrings"] });
+    await exerciseEditor.enter({
+      name,
+      primaryMuscles: ["Hamstrings"],
+      pattern: "Hinge",
+      role: "Main compound",
+    });
     await exerciseEditor.chooseVideo(exerciseVideoSamples.landscape);
     await exerciseRequests.createAccepted(hipThrustNamed(name));
     const storedBefore = storedExerciseVideoIds();
@@ -1183,7 +1621,7 @@ test(
     await exerciseLibrary.expectOpen();
     await exerciseLibrary.expectListed({
       name: renamed,
-      summary: "Resistance · No equipment",
+      summary: "Resistance · Hinge · No equipment",
       tags: [],
       primaryMuscles: ["Hamstrings"],
       difficulty: "Beginner",
@@ -1212,7 +1650,12 @@ test(
     await signInAsCoach();
     await coachDashboard.open();
     await exerciseEditor.openNew();
-    await exerciseEditor.enter({ name, primaryMuscles: ["Glutes"] });
+    await exerciseEditor.enter({
+      name,
+      primaryMuscles: ["Glutes"],
+      pattern: "Hinge",
+      role: "Isolation",
+    });
     await exerciseEditor.chooseVideo(exerciseVideoSamples.slowToUpload());
     const saves = exerciseEditor.countSaves();
     await exerciseEditor.recordUploadMessages();
@@ -1261,6 +1704,8 @@ test(
       secondaryMuscles: ["Quadriceps"],
       equipment: ["Dumbbells"],
       difficulty: "Beginner",
+      pattern: "Lunge",
+      role: "Secondary compound",
       tags: ["Hypertrophy"],
       cues: "Step long, knee kisses the floor.",
     };
@@ -1275,6 +1720,8 @@ test(
       primaryMuscles: entered.primaryMuscles,
       secondaryMuscles: entered.secondaryMuscles,
       equipment: entered.equipment,
+      pattern: entered.pattern,
+      role: entered.role,
       toggledTags: entered.tags,
       cues: entered.cues,
     });
@@ -1297,7 +1744,7 @@ test(
     await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: entered.name,
-      summary: "Resistance · Dumbbells",
+      summary: "Resistance · Lunge · Dumbbells",
       tags: entered.tags,
       primaryMuscles: entered.primaryMuscles,
       difficulty: entered.difficulty,
@@ -1324,7 +1771,7 @@ test(
     const saved = hipThrustNamed(`Frog pump ${scenarioTag}`);
     const listed = {
       name: saved.name,
-      summary: "Resistance · Barbell, Bench",
+      summary: "Resistance · Hinge · Barbell, Bench",
       tags: saved.tags,
       primaryMuscles: saved.primaryMuscles,
       difficulty: saved.difficulty,
@@ -1622,6 +2069,8 @@ test(
       secondaryMuscles: [],
       equipment: ["Mat"],
       difficulty: "Beginner",
+      pattern: null,
+      role: null,
       tags: ["Recovery"],
       cues: "Low back stays on the mat.",
     };
@@ -1747,6 +2196,7 @@ test(
       Strength: 3,
       Hypertrophy: 6,
       Recovery: 0,
+      Conditioning: 0,
     });
 
     // act
@@ -2075,6 +2525,7 @@ test(
       Strength: 3,
       Hypertrophy: 6,
       Recovery: 3,
+      Conditioning: 0,
     });
     await exerciseLibrary.expectOptionCounts("Type", {
       "Any type": 6,
@@ -2103,6 +2554,7 @@ test(
       Strength: 3,
       Hypertrophy: 5,
       Recovery: 0,
+      Conditioning: 0,
     });
     await exerciseLibrary.expectOptionCounts("Equipment", {
       "Any equipment": 6,
@@ -2276,6 +2728,8 @@ test(
       name: added,
       type: "Resistance",
       primaryMuscles: ["Quadriceps"],
+      pattern: "Squat",
+      role: "Main compound",
       difficulty: "Beginner",
     });
     await exerciseEditor.create();
@@ -2801,6 +3255,8 @@ test(
     await exerciseEditor.enter({
       name: ` ${bridge.name.toUpperCase()} `,
       primaryMuscles: ["Glutes"],
+      pattern: "Hinge",
+      role: "Main compound",
     });
 
     // assert

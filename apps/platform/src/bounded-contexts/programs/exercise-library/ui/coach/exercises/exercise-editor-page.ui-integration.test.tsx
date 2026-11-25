@@ -58,6 +58,8 @@ const HIP_THRUST: ExerciseView = {
   secondaryMuscles: ["Hamstrings"],
   equipment: ["Barbell", "Bench"],
   difficulty: "Beginner",
+  pattern: "hinge",
+  role: "main-compound",
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
   video: { path: HIP_THRUST_VIDEO_PATH, format: "mp4" },
@@ -74,6 +76,8 @@ const BREATH_HOLD: ExerciseView = {
   secondaryMuscles: [],
   equipment: ["Mat"],
   difficulty: "Advanced",
+  pattern: null,
+  role: null,
   tags: ["Recovery"],
   cues: "Exhale slowly.",
   video: null,
@@ -208,12 +212,22 @@ describe("a new exercise", () => {
       "Pick equipment",
     );
     expect(screen.getByText("Leave it empty for a bodyweight exercise."));
-    for (const tag of ["Strength", "Hypertrophy", "Recovery"]) {
+    expect(
+      screen.getByRole("combobox", { name: "Movement pattern (required)" }),
+    ).toHaveTextContent("Choose a pattern");
+    expect(
+      screen.getByRole("combobox", { name: "Role (required)" }),
+    ).toHaveTextContent("Choose a role");
+    for (const tag of ["Strength", "Hypertrophy", "Recovery", "Conditioning"]) {
       expect(screen.getByRole("checkbox", { name: tag })).not.toBeChecked();
     }
     expect(screen.getByRole("textbox", { name: "Form cues" })).toHaveValue("");
     expect(screen.queryByText("Give the exercise a name")).toBeNull();
     expect(screen.queryByText("Pick at least one primary muscle")).toBeNull();
+    expect(screen.queryByText("Choose a movement pattern")).toBeNull();
+    expect(
+      screen.getByRole("combobox", { name: "Role (required)" }),
+    ).not.toHaveAttribute("aria-invalid");
     expect(
       screen.getByRole("button", { name: "Create exercise" }),
     ).toBeDisabled();
@@ -237,6 +251,15 @@ describe("a new exercise", () => {
     expect(
       screen.getByRole("button", { name: "Primary muscles (required)" }),
     ).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getByRole("combobox", { name: "Movement pattern (required)" }),
+    ).toHaveAccessibleDescription("Choose a movement pattern");
+    expect(
+      screen.getByRole("combobox", { name: "Movement pattern (required)" }),
+    ).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getByRole("combobox", { name: "Role (required)" }),
+    ).toHaveAccessibleDescription("Choose a role");
 
     // act
     await user.clear(screen.getByRole("textbox", { name: "Name (required)" }));
@@ -280,6 +303,7 @@ describe("a new exercise", () => {
     // arrange
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
+    await choosePatternAndRole(user);
 
     // act
     await enter(user, "Name (required)", `  ${"n".repeat(80)}  `);
@@ -298,6 +322,7 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
+    await choosePatternAndRole(user);
 
     // act
     await enter(user, "Form cues", "c".repeat(1_001));
@@ -313,7 +338,7 @@ describe("a new exercise", () => {
     ).toBeDisabled();
   });
 
-  it("stars Name and Primary muscles as mandatory", async () => {
+  it("stars Name, Primary muscles, Movement pattern and Role as mandatory", async () => {
     // arrange, act
     await renderEditor(NEW_EXERCISE_PATH);
 
@@ -324,10 +349,80 @@ describe("a new exercise", () => {
     expect(
       screen.getByText("Primary muscles", { selector: "label" }),
     ).toHaveTextContent("Primary muscles* (required)");
-    expect(screen.getAllByText("*")).toHaveLength(2);
+    expect(
+      screen.getByText("Movement pattern", { selector: "label" }),
+    ).toHaveTextContent("Movement pattern* (required)");
+    expect(screen.getByText("Role", { selector: "label" })).toHaveTextContent(
+      "Role* (required)",
+    );
+    expect(screen.getAllByText("*")).toHaveLength(4);
     expect(
       screen.getByRole("button", { name: "Primary muscles (required)" }),
     ).toBeInTheDocument();
+  });
+
+  it("asks for no movement pattern or role on a type other than resistance", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+
+    // act
+    await choose(user, "Type", "Mobility");
+
+    // assert
+    expect(workFieldLabels()).toEqual(["Equipment", "Difficulty"]);
+    expect(
+      screen.queryByRole("combobox", { name: "Movement pattern (required)" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("combobox", { name: "Role (required)" }),
+    ).toBeNull();
+  });
+
+  it("lists Equipment, Movement pattern, Role and Difficulty in that order on a resistance exercise", async () => {
+    // arrange, act
+    await renderEditor(NEW_EXERCISE_PATH);
+
+    // assert
+    expect(workFieldLabels()).toEqual([
+      "Equipment",
+      "Movement pattern",
+      "Role",
+      "Difficulty",
+    ]);
+  });
+
+  it("offers the eleven movement patterns and the three roles", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+
+    // act
+    await user.click(
+      screen.getByRole("combobox", { name: "Movement pattern (required)" }),
+    );
+    const patterns = (await screen.findAllByRole("option")).map(
+      (option) => option.textContent,
+    );
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("combobox", { name: "Role (required)" }));
+    const roles = (await screen.findAllByRole("option")).map(
+      (option) => option.textContent,
+    );
+
+    // assert
+    expect(patterns).toEqual([
+      "Squat",
+      "Lunge",
+      "Hinge",
+      "Horizontal push",
+      "Vertical push",
+      "Horizontal pull",
+      "Vertical pull",
+      "Core",
+      "Carry",
+      "Isolation",
+      "Conditioning",
+    ]);
+    expect(roles).toEqual(["Main compound", "Secondary compound", "Isolation"]);
   });
 
   it("drops the star from Primary muscles on a cardio exercise", async () => {
@@ -342,6 +437,8 @@ describe("a new exercise", () => {
       screen.getByText("Primary muscles", { selector: "label" }),
     ).toHaveTextContent(/^Primary muscles$/);
     expect(screen.getAllByText("*")).toHaveLength(1);
+    expect(screen.queryByText("Movement pattern")).toBeNull();
+    expect(screen.queryByText("Role")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Primary muscles" }),
     ).toBeInTheDocument();
@@ -372,8 +469,11 @@ describe("a new exercise", () => {
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
     await pickMuscles(user, "Secondary muscles", ["Hamstrings", "Core"]);
     await pickMuscles(user, "Equipment", ["Mat"]);
+    await choose(user, "Movement pattern (required)", "Hinge");
+    await choose(user, "Role (required)", "Secondary compound");
     await choose(user, "Difficulty", "Intermediate");
     await user.click(screen.getByRole("checkbox", { name: "Strength" }));
+    await user.click(screen.getByRole("checkbox", { name: "Conditioning" }));
     await enter(user, "Form cues", "Squeeze at the top.");
 
     // act
@@ -397,7 +497,9 @@ describe("a new exercise", () => {
           secondaryMuscles: ["Hamstrings", "Core"],
           equipment: ["Mat"],
           difficulty: "Intermediate",
-          tags: ["Strength"],
+          pattern: "hinge",
+          role: "secondary-compound",
+          tags: ["Strength", "Conditioning"],
           cues: "Squeeze at the top.",
           video: "keep",
         },
@@ -415,6 +517,7 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
+    await choosePatternAndRole(user);
 
     // act
     await user.click(screen.getByRole("button", { name: "Create exercise" }));
@@ -466,6 +569,7 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
+    await choosePatternAndRole(user);
 
     // act
     await user.click(screen.getByRole("button", { name: "Create exercise" }));
@@ -622,6 +726,43 @@ describe("editing an exercise", () => {
     );
   });
 
+  it("opens a resistance exercise with its saved movement pattern and role", async () => {
+    // arrange, act
+    await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // assert
+    expect(
+      screen.getByRole("combobox", { name: "Movement pattern (required)" }),
+    ).toHaveTextContent("Hinge");
+    expect(
+      screen.getByRole("combobox", { name: "Role (required)" }),
+    ).toHaveTextContent("Main compound");
+  });
+
+  it("sends no movement pattern or role once a resistance exercise becomes another type", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    await choose(user, "Type", "Mobility");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByText("Exercise updated")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      expect.objectContaining({
+        body: expect.objectContaining({
+          type: "mobility",
+          pattern: null,
+          role: null,
+        }),
+      }),
+    ]);
+  });
+
   it("keeps its own name free while flagging another exercise's", async () => {
     // arrange
     const user = await renderEditor(exerciseEditorPath(BREATH_HOLD.id));
@@ -670,6 +811,8 @@ describe("editing an exercise", () => {
           secondaryMuscles: [],
           equipment: ["Mat"],
           difficulty: "Advanced",
+          pattern: null,
+          role: null,
           tags: ["Recovery"],
           cues: "Exhale slowly.",
           video: "keep",
@@ -1040,6 +1183,7 @@ describe("saving with a demo video", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
     await enter(user, "Name (required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
+    await choosePatternAndRole(user);
     await user.upload(
       screen.getByLabelText(VIDEO_PROMPT),
       videoNamed("bridge.mp4"),
@@ -1064,6 +1208,8 @@ describe("saving with a demo video", () => {
             secondaryMuscles: [],
             equipment: [],
             difficulty: "Beginner",
+            pattern: "squat",
+            role: "main-compound",
             tags: [],
             cues: "",
             video: "attach",
@@ -1428,6 +1574,19 @@ async function enter(user: UserEvent, field: string, text: string) {
 async function choose(user: UserEvent, field: string, option: string | RegExp) {
   await user.click(screen.getByRole("combobox", { name: field }));
   await user.click(await screen.findByRole("option", { name: option }));
+}
+
+function workFieldLabels(): string[] {
+  return within(screen.getByRole("region", { name: "What it works" }))
+    .getAllByText(/^(Equipment|Movement pattern|Role|Difficulty)$/, {
+      selector: "label",
+    })
+    .map((label) => (label.textContent ?? "").replace(/\*.*$/, ""));
+}
+
+async function choosePatternAndRole(user: UserEvent) {
+  await choose(user, "Movement pattern (required)", "Squat");
+  await choose(user, "Role (required)", "Main compound");
 }
 
 async function unitsOffered(user: UserEvent): Promise<string[]> {

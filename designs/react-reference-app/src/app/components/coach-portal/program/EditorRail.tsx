@@ -91,7 +91,7 @@ function DetailLine({ detail }: { detail: Detail }) {
 
 function ProblemMark() {
   return (
-    <span className="text-destructive">
+    <span className="text-destructive" data-parity="problem-mark">
       <AlertCircle aria-hidden="true" size={16} />
       <span className="sr-only"> has a problem</span>
     </span>
@@ -128,11 +128,12 @@ function BlockEntry({ block, index, details, problem, current, onClick }: BlockE
         type="button"
         aria-current={current ? 'true' : undefined}
         onClick={onClick}
+        data-parity={`rail-block-${index + 1}`}
         className={cn(railEntryVariants({ state: current ? 'current' : 'idle' }), 'grid gap-0.5 px-3 py-2')}
       >
         <span className={cn('flex items-center gap-2 text-text-primary', { 'font-medium': current })}>
-          <BlockNumber block={block} index={index} size="xs" />
-          <span className="sr-only">{`${index + 1} `}</span>
+          <BlockNumber block={block} index={index} size="xs" parity={`rail-block-${index + 1}-number`} />
+          <span className="sr-only" data-parity={`rail-block-${index + 1}-spoken-number`}>{`${index + 1} `}</span>
           {BLOCK_TYPE_LABELS[block.type]}
           {problem && <ProblemMark />}
         </span>
@@ -172,13 +173,14 @@ export function EditorRail(props: EditorRailProps) {
   const flagged = writing ? new Set<string>() : blocksWithProblems(blocks);
 
   return (
-    <div className="grid content-start gap-6 p-3">
+    <div className="grid content-start gap-6 p-3" data-parity-root="EditorRail">
       <ModeSwitch {...props} />
       <nav aria-label="Program sections" className="grid content-start gap-6">
         <button
           type="button"
           aria-current={overviewCurrent ? 'true' : undefined}
           onClick={() => onSelect(OVERVIEW)}
+          data-parity="rail-overview"
           className={cn(railEntryVariants({ state: overviewCurrent ? 'current' : 'idle' }), 'grid gap-2.5 p-3')}
         >
           <span className={cn('flex items-center gap-2 text-text-primary', { 'font-semibold': overviewCurrent, 'font-medium': !overviewCurrent })}>

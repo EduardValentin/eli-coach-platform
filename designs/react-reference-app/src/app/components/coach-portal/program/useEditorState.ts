@@ -5,7 +5,7 @@ import { useAppState } from '../../../context/AppContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { useTraining } from '../../../context/TrainingContext';
 import type { ClientJourney } from '../../../domain/journey';
-import type { Block, BlockType, Program, ProgramVersion } from '../../../domain/program';
+import { draftOf, type Block, type BlockType, type Program, type ProgramVersion } from '../../../domain/program';
 import { currentPosition } from '../../../domain/programCalendar';
 import { libraryEquipmentFor, setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { blockingProblems, ruleContextFor, warnings } from '../../../domain/programRules';
@@ -17,10 +17,12 @@ import type { DocumentEditing } from '../../program-view/documentEditing';
 import { modeOfPath, modePath, sectionFromHash, sectionHash, type EditorMode, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
 import { draftStateOf } from './unpublishableDraft';
+import { useAutosavedDraft } from './useAutosavedDraft';
 
 export type WriteResult = 'written' | 'failed';
 
 type EditorInput = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
+type SettingsPatch = Partial<Pick<Program, 'level' | 'language'>>;
 
 function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date): EditorSection {
   const { blocks } = draft.content.plan;
@@ -29,8 +31,10 @@ function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date)
   return position.status === 'in-plan' ? { kind: 'block', blockId: blocks[position.blockIndex].id } : { kind: 'plan' };
 }
 
-export function useEditorState({ journey, program, draft, programPath }: EditorInput) {
-  const { updateDraft, updateDraftVersion, discardDraft, publishDraft } = usePrograms();
+export function useEditorState({ journey, program: stored, draft: storedDraft, programPath }: EditorInput) {
+  const { discardDraft, publishDraft } = usePrograms();
+  const { program, change, saving, storeShownDraft } = useAutosavedDraft(stored);
+  const draft = draftOf(program) ?? storedDraft;
   const { exercises } = useTraining();
   const { appState } = useAppState();
   const location = useLocation();
@@ -62,8 +66,16 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     navigate(locationOf('structure', section), { replace: mode === 'structure' });
   }
 
+  function changeDraft(update: (version: ProgramVersion) => ProgramVersion) {
+    change(current => ({ ...current, versions: current.versions.map(version => (version.state === 'draft' ? update(version) : version)) }));
+  }
+
   function updateBlocks(update: BlocksUpdate) {
-    updateDraft(program.callId, current => ({ ...current, plan: { blocks: update(current.plan.blocks) } }));
+    changeDraft(version => ({ ...version, content: { ...version.content, plan: { blocks: update(version.content.plan.blocks) } } }));
+  }
+
+  function changeSettings(patch: SettingsPatch) {
+    change(current => ({ ...current, ...patch }));
   }
 
   function replaceBlock(block: Block) {
@@ -86,13 +98,16 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   }
 
   const textEditing: DocumentEditing = {
-    write: (target, text) => updateDraftVersion(program.callId, version => versionWithText(version, target, text)),
-    reset: target => updateDraftVersion(program.callId, version => versionWithStandardText(version, target, program.language)),
+    write: (target, text) => changeDraft(version => versionWithText(version, target, text)),
+    reset: target => changeDraft(version => versionWithStandardText(version, target, program.language)),
   };
 
   function publish(): WriteResult {
     try {
-      const outcome = writeProgramThroughServer(appState.programWrite, () => publishDraft(program.callId, new Date()));
+      const outcome = writeProgramThroughServer(appState.programWrite, () => {
+        storeShownDraft();
+        return publishDraft(program.callId, new Date());
+      });
       if (outcome.status !== 'published') return 'failed';
       toast.success(`Version ${outcome.version.number} published`);
     } catch {
@@ -113,6 +128,9 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   }
 
   return {
+    program,
+    draft,
+    saving,
     today,
     ruleContext,
     equipment,
@@ -126,6 +144,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     select,
     openInStructure,
     updateBlocks,
+    changeSettings,
     replaceBlock,
     textEditing,
     addBlock,

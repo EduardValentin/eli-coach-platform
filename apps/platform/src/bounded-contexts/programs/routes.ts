@@ -7,13 +7,20 @@ import {
   nutritionLibraryCoachBuilderRoutes,
   nutritionLibraryCoachRoutes,
 } from "./nutrition-library/routes";
-import { trainingProgramsCoachSetupRoutes } from "./training-programs/routes";
+import {
+  trainingProgramsApiRoutes,
+  trainingProgramsCoachRoutes,
+} from "./training-programs/routes";
 
 export const programsRoutes = {
-  api: [...exerciseLibraryApiRoutes, ...nutritionLibraryApiRoutes],
+  api: [
+    ...exerciseLibraryApiRoutes,
+    ...nutritionLibraryApiRoutes,
+    ...trainingProgramsApiRoutes,
+  ],
   coachPortal: [
     ...nutritionLibraryCoachBuilderRoutes,
-    ...trainingProgramsCoachSetupRoutes,
+    ...trainingProgramsCoachRoutes,
   ],
   coachPortalShell: [
     ...exerciseLibraryCoachRoutes,

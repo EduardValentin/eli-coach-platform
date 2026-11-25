@@ -30,6 +30,8 @@ const SQUAT: ExerciseSnapshot = {
   secondaryMuscles: [],
   equipment: [],
   difficulty: "Beginner",
+  pattern: "squat",
+  role: "main-compound",
   tags: [],
   cues: "",
   video: {

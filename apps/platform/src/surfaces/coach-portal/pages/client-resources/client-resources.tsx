@@ -1,4 +1,3 @@
-import { PortalBackLink } from "~/shared/design-system/portal";
 import {
   isRouteErrorResponse,
   useLoaderData,
@@ -14,7 +13,6 @@ import {
 import { CoachResourceLibrary } from "~/bounded-contexts/clients/client-resources/ui/coach/resources/coach-resource-library";
 import { possessive } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-copy";
 import { clientFullName } from "~/bounded-contexts/clients/clients/public/clients";
-import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;
@@ -65,13 +63,12 @@ export default function CoachClientResourcesRoute() {
 
   return (
     <div className={PAGE_CLASS} data-parity-root={PAGE_PARITY_ROOT}>
-      <PortalBackLink to={coachClientPath(client.clientId)}>
-        Back to {clientFullName(client)}
-      </PortalBackLink>
-
       <CoachResourceLibrary
-        clientId={client.clientId}
-        firstName={client.firstName}
+        client={{
+          clientId: client.clientId,
+          name: clientFullName(client),
+          firstName: client.firstName,
+        }}
         listing={listing}
       />
     </div>

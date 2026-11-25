@@ -2,7 +2,9 @@ import type { DatabaseClient } from "~/shared/database";
 import { createUnitOfWork } from "~/shared/database/index.server";
 import {
   ReadProgramCardUseCase,
+  ReadProgramDraftUseCase,
   ReadProgramSetupUseCase,
+  SaveProgramDraftUseCase,
   StartProgramUseCase,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
 import type { ClockPort } from "~/bounded-contexts/programs/training-programs/domain/clock-port";
@@ -38,6 +40,8 @@ export function composeTrainingProgramsFeature(
   const postgresProgramStoreRepository = new PostgresProgramStoreRepository(
     handles.database,
   );
+  const exerciseLibraryCardioExercisesAdapter =
+    new ExerciseLibraryCardioExercisesAdapter(handles.cardioExercisesFacade);
   const programReads = {
     clientIdentityPort: new ClientsClientIdentityAdapter(
       handles.clientLookupFacade,
@@ -57,10 +61,16 @@ export function composeTrainingProgramsFeature(
       readProgramSetupUseCase: new ReadProgramSetupUseCase(programReads),
       startProgramUseCase: new StartProgramUseCase({
         ...programReads,
-        cardioExercisesPort: new ExerciseLibraryCardioExercisesAdapter(
-          handles.cardioExercisesFacade,
-        ),
+        cardioExercisesPort: exerciseLibraryCardioExercisesAdapter,
         programIdsPort: new RandomProgramIdsAdapter(),
+        clockPort: handles.clockPort,
+      }),
+      readProgramDraftUseCase: new ReadProgramDraftUseCase({
+        ...programReads,
+        cardioExercisesPort: exerciseLibraryCardioExercisesAdapter,
+      }),
+      saveProgramDraftUseCase: new SaveProgramDraftUseCase({
+        ...programReads,
         clockPort: handles.clockPort,
       }),
       unitOfWork: createUnitOfWork(handles.database),

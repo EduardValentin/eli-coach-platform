@@ -2,6 +2,7 @@ import { appSchema } from "~/shared/database";
 import {
   DIFFICULTIES,
   EQUIPMENT,
+  EXERCISE_ROLES,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
   EXERCISE_VIDEO_FORMATS,
@@ -9,14 +10,17 @@ import {
   MAX_EXERCISE_NAME_LENGTH,
   MAX_EXERCISE_VIDEO_BYTES,
   MAX_FORM_CUES_LENGTH,
+  MOVEMENT_PATTERNS,
   MUSCLES,
   unitsFor,
   type Difficulty,
   type Equipment,
+  type ExerciseRole,
   type ExerciseTag,
   type ExerciseType,
   type ExerciseUnit,
   type ExerciseVideoFormat,
+  type MovementPattern,
   type Muscle,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
 import { sql, type SQL } from "drizzle-orm";
@@ -59,6 +63,10 @@ export const exercisesTable = appSchema.table(
       .notNull(),
     equipment: text("equipment").array().$type<Equipment[]>().notNull(),
     tags: text("tags").array().$type<ExerciseTag[]>().notNull(),
+    pattern: varchar("movement_pattern", {
+      length: 24,
+    }).$type<MovementPattern>(),
+    role: varchar("role", { length: 24 }).$type<ExerciseRole>(),
     videoId: uuid("video_file_id"),
     videoFormat: varchar("video_format", {
       length: 8,
@@ -123,6 +131,18 @@ export const exercisesTable = appSchema.table(
     check(
       "exercises_tags_vocabulary_check",
       sql`${table.tags} <@ ${textArray(EXERCISE_TAGS)}`,
+    ),
+    check(
+      "exercises_movement_pattern_check",
+      sql`${table.pattern} in (${quotedList(MOVEMENT_PATTERNS)})`,
+    ),
+    check(
+      "exercises_role_check",
+      sql`${table.role} in (${quotedList(EXERCISE_ROLES)})`,
+    ),
+    check(
+      "exercises_pattern_and_role_for_type_check",
+      sql`case when ${table.type} = 'resistance' then ${table.pattern} is not null and ${table.role} is not null else ${table.pattern} is null and ${table.role} is null end`,
     ),
     check(
       "exercises_video_format_check",

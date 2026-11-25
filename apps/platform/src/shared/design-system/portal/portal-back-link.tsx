@@ -4,26 +4,30 @@ import { Link, type LinkProps } from "react-router";
 
 import { cn } from "../lib/cn";
 
+type BackLinkGap = "page" | "title";
+
 type PortalBackLinkProps = {
   to: LinkProps["to"];
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
   navigationLabel?: string;
+  gap?: BackLinkGap;
   children: ReactNode;
 };
 
-const GAP_TO_PAGE_CLASS = "mb-8";
+const GAP_CLASS: Record<BackLinkGap, string> = { page: "mb-8", title: "mb-1" };
 
 export function PortalBackLink({
   to,
   onClick,
   navigationLabel,
+  gap = "page",
   children,
 }: PortalBackLinkProps) {
   const link = (
     <Link
       className={cn(
         "relative hit-area inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary",
-        { [GAP_TO_PAGE_CLASS]: navigationLabel === undefined },
+        { [GAP_CLASS[gap]]: navigationLabel === undefined },
       )}
       to={to}
       onClick={onClick}
@@ -33,7 +37,7 @@ export function PortalBackLink({
   );
   if (navigationLabel === undefined) return link;
   return (
-    <nav aria-label={navigationLabel} className={GAP_TO_PAGE_CLASS}>
+    <nav aria-label={navigationLabel} className={GAP_CLASS[gap]}>
       {link}
     </nav>
   );

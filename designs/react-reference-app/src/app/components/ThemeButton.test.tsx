@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { buttonVariants } from './ThemeButton';
 
 describe('buttonVariants', () => {
+  it('gives every button the 48px tap area around its own box', () => {
+    // arrange
+    // act
+    const classes = buttonVariants().split(' ');
+
+    // assert
+    expect(classes).toEqual(expect.arrayContaining(['relative', 'hit-area']));
+  });
+
   it('rounds a button to the field corner by default', () => {
     // arrange
     // act

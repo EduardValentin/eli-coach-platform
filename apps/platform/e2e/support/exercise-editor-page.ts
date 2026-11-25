@@ -9,6 +9,7 @@ import {
 
 import type { SampleVideo } from "./exercise-video-files";
 import { tabTo } from "./keyboard";
+import { expectLayoutFits } from "./layout-fit";
 import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { expectButtonsAlongTopEdgeOf } from "./overlay-bar";
 
@@ -21,6 +22,8 @@ export type SavedExercise = {
   secondaryMuscles: readonly string[];
   equipment: readonly string[];
   difficulty: string;
+  pattern: string | null;
+  role: string | null;
   tags: readonly string[];
   cues: string;
 };
@@ -29,7 +32,10 @@ export type ExerciseEntries = Partial<Omit<SavedExercise, "tags">> & {
   toggledTags?: readonly string[];
 };
 
-export type ProblemField = "Name" | "Primary muscles" | "Form cues";
+export type ProblemField =
+  "Name" | "Primary muscles" | "Movement pattern" | "Role" | "Form cues";
+
+export type ExerciseProblems = Readonly<Partial<Record<ProblemField, string>>>;
 
 const NEW_EXERCISE_PATH = "/coach/training/exercises/new";
 const VIDEO_PROMPT = "Drop a video here or choose one";
@@ -53,12 +59,23 @@ const SERVED_VIDEO = /\/api\/exercises\/[^/]+\/video\/[^/]+$/;
 const PARTIAL_CONTENT = 206;
 const EXERCISE_PATH = /\/coach\/training\/exercises\/([^/]+)$/;
 const HELD_KEY_MS = 80;
+const RESISTANCE = "Resistance";
+const PATTERN_FIELD = "Movement pattern";
+const ROLE_FIELD = "Role";
+const PATTERN_PLACEHOLDER = "Choose a pattern";
+const ROLE_PLACEHOLDER = "Choose a role";
+const RESISTANCE_ONLY_FIELDS: readonly ProblemField[] = [
+  PATTERN_FIELD,
+  ROLE_FIELD,
+];
 const PROBLEM_FIELDS: readonly ProblemField[] = [
   "Name",
   "Primary muscles",
+  PATTERN_FIELD,
+  ROLE_FIELD,
   "Form cues",
 ];
-const TAGS = ["Strength", "Hypertrophy", "Recovery"] as const;
+const TAGS = ["Strength", "Hypertrophy", "Recovery", "Conditioning"] as const;
 
 export class ExerciseEditorPage {
   constructor(private readonly page: Page) {}
@@ -113,6 +130,8 @@ export class ExerciseEditorPage {
     const fields: Record<ProblemField, Locator> = {
       Name: this.nameField,
       "Primary muscles": this.multiSelect(field),
+      "Movement pattern": this.select(PATTERN_FIELD),
+      Role: this.select(ROLE_FIELD),
       "Form cues": this.cuesField,
     };
 
@@ -205,6 +224,8 @@ export class ExerciseEditorPage {
       secondaryMuscles: [],
       equipment: [],
       difficulty: "Beginner",
+      pattern: null,
+      role: null,
       tags: [],
       cues: "",
     });
@@ -234,6 +255,8 @@ export class ExerciseEditorPage {
       await this.pick("Secondary muscles", entries.secondaryMuscles);
     }
     if (entries.equipment) await this.pick("Equipment", entries.equipment);
+    if (entries.pattern) await this.choose(PATTERN_FIELD, entries.pattern);
+    if (entries.role) await this.choose(ROLE_FIELD, entries.role);
     if (entries.difficulty) await this.choose("Difficulty", entries.difficulty);
     for (const tag of entries.toggledTags ?? []) await this.tag(tag).click();
     if (entries.cues !== undefined) await this.cuesField.fill(entries.cues);
@@ -670,17 +693,70 @@ export class ExerciseEditorPage {
   }
 
   async expectOnlyProblem(field: ProblemField, problem: string): Promise<void> {
-    await expect(this.page.getByText(problem, { exact: true })).toBeVisible();
-    await expect(this.fieldOf(field)).toHaveAttribute("aria-invalid", "true");
-    await expect(this.fieldOf(field)).toHaveAccessibleDescription(problem);
-    for (const other of PROBLEM_FIELDS.filter((known) => known !== field)) {
-      await this.expectNoProblem(other);
+    await this.expectOnlyProblems({ [field]: problem });
+  }
+
+  async expectOnlyProblems(problems: ExerciseProblems): Promise<void> {
+    for (const field of PROBLEM_FIELDS) {
+      const problem = problems[field];
+      if (problem !== undefined) await this.expectProblem(field, problem);
+    }
+    for (const field of await this.problemFieldsOnScreen()) {
+      if (problems[field] === undefined) await this.expectNoProblem(field);
     }
     await this.expectCreateUnavailable();
   }
 
   async expectNoProblems(): Promise<void> {
-    for (const field of PROBLEM_FIELDS) await this.expectNoProblem(field);
+    for (const field of await this.problemFieldsOnScreen()) {
+      await this.expectNoProblem(field);
+    }
+  }
+
+  async expectPatternAndRole(
+    choices: Pick<SavedExercise, "pattern" | "role">,
+  ): Promise<void> {
+    await expect(this.select(PATTERN_FIELD)).toHaveText(
+      choices.pattern ?? PATTERN_PLACEHOLDER,
+    );
+    await expect(this.select(ROLE_FIELD)).toHaveText(
+      choices.role ?? ROLE_PLACEHOLDER,
+    );
+  }
+
+  async choosePatternAndRoleWithKeyboard(
+    choices: Pick<SavedExercise, "pattern" | "role">,
+  ): Promise<void> {
+    await this.waitUntilInteractiveByKeyboard();
+    if (choices.pattern) {
+      await this.chooseByKeyboard(PATTERN_FIELD, choices.pattern);
+    }
+    if (choices.role) await this.chooseByKeyboard(ROLE_FIELD, choices.role);
+  }
+
+  async expectFits(): Promise<void> {
+    await expectLayoutFits(this.page);
+  }
+
+  async expectNoPatternOrRole(): Promise<void> {
+    await expect(this.select(PATTERN_FIELD)).toHaveCount(0);
+    await expect(this.select(ROLE_FIELD)).toHaveCount(0);
+  }
+
+  async expectPatternAndRoleRightAfterEquipment(): Promise<void> {
+    await this.multiSelect("Equipment").focus();
+    for (const next of [PATTERN_FIELD, ROLE_FIELD, "Difficulty"]) {
+      await this.page.keyboard.press("Tab");
+      await expect(this.select(next)).toBeFocused();
+    }
+  }
+
+  async expectPatternChoices(patterns: readonly string[]): Promise<void> {
+    await this.expectChoices(PATTERN_FIELD, patterns);
+  }
+
+  async expectRoleChoices(roles: readonly string[]): Promise<void> {
+    await this.expectChoices(ROLE_FIELD, roles);
   }
 
   async expectFocusOn(field: ProblemField): Promise<void> {
@@ -692,12 +768,7 @@ export class ExerciseEditorPage {
   }
 
   async expectUnitChoices(units: readonly string[]): Promise<void> {
-    await this.select("Measured in").click();
-    await expect(this.listbox.getByRole("option")).toHaveText(
-      units.map((unit) => new RegExp(`^${unit}\\b`)),
-    );
-    await this.page.keyboard.press("Escape");
-    await expect(this.listbox).toBeHidden();
+    await this.expectChoices("Measured in", units);
   }
 
   async expectSecondaryChoicesWithout(
@@ -736,6 +807,10 @@ export class ExerciseEditorPage {
     await this.pickByKeyboard("Primary muscles", exercise.primaryMuscles);
     await this.pickByKeyboard("Secondary muscles", exercise.secondaryMuscles);
     await this.pickByKeyboard("Equipment", exercise.equipment);
+    if (exercise.pattern) {
+      await this.chooseByKeyboard(PATTERN_FIELD, exercise.pattern);
+    }
+    if (exercise.role) await this.chooseByKeyboard(ROLE_FIELD, exercise.role);
     await this.chooseByKeyboard("Difficulty", exercise.difficulty);
     for (const tag of exercise.tags) {
       await tabTo(this.page, this.tag(tag));
@@ -760,6 +835,11 @@ export class ExerciseEditorPage {
     await this.expectPicked("Primary muscles", exercise.primaryMuscles);
     await this.expectPicked("Secondary muscles", exercise.secondaryMuscles);
     await this.expectPicked("Equipment", exercise.equipment);
+    if (exercise.type === RESISTANCE) {
+      await this.expectPatternAndRole(exercise);
+    } else {
+      await this.expectNoPatternOrRole();
+    }
     await expect(this.select("Difficulty")).toHaveText(exercise.difficulty);
     for (const tag of TAGS) {
       await expect(this.tag(tag)).toBeChecked({
@@ -796,6 +876,38 @@ export class ExerciseEditorPage {
     }).toPass();
     await this.page.keyboard.press("Escape");
     await expect(this.listbox).toBeHidden();
+  }
+
+  private async expectChoices(label: string, choices: readonly string[]) {
+    await this.select(label).click();
+    await expect(this.listbox.getByRole("option")).toHaveText(
+      choices.map((choice) => new RegExp(`^${choice}\\b`)),
+    );
+    await this.page.keyboard.press("Escape");
+    await expect(this.listbox).toBeHidden();
+  }
+
+  private async problemFieldsOnScreen(): Promise<readonly ProblemField[]> {
+    const type = await this.select("Type").textContent();
+
+    return type === RESISTANCE
+      ? PROBLEM_FIELDS
+      : PROBLEM_FIELDS.filter(
+          (field) => !RESISTANCE_ONLY_FIELDS.includes(field),
+        );
+  }
+
+  private async expectProblem(
+    field: ProblemField,
+    problem: string,
+  ): Promise<void> {
+    const control = this.fieldOf(field);
+
+    await expect(control).toHaveAttribute("aria-invalid", "true");
+    await expect(control).toHaveAccessibleDescription(problem);
+    const problemId = await control.getAttribute("aria-describedby");
+    await expect(this.page.locator(`[id="${problemId}"]`)).toHaveText(problem);
+    await expect(this.page.locator(`[id="${problemId}"]`)).toBeVisible();
   }
 
   private async expectNoProblem(field: ProblemField): Promise<void> {

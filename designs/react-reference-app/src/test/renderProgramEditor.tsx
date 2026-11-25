@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { vi } from 'vitest';
 import { Toaster } from '../app/components/ui/sonner';
@@ -37,7 +38,9 @@ export function stubEditorBrowserApis() {
   Element.prototype.scrollIntoView ??= () => {};
 }
 
-export function renderProgramEditor(search: string, path = '/coach/clients/c1/program/draft') {
+type EditorRenderOptions = { path?: string; beside?: ReactNode };
+
+export function renderProgramEditor(search: string, { path = '/coach/clients/c1/program/draft', beside = null }: EditorRenderOptions = {}) {
   const url = `${path}?session=coach${search}`;
   window.history.replaceState(null, '', url);
   render(
@@ -55,6 +58,7 @@ export function renderProgramEditor(search: string, path = '/coach/clients/c1/pr
                       <Route path="/coach/clients/:id" element={<p>Client page</p>} />
                     </Routes>
                     <Toaster />
+                    {beside}
                   </ProgramProvider>
                 </ClientJourneyProvider>
               </AssessmentCallProvider>

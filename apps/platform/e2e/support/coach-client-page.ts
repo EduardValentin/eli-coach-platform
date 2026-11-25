@@ -963,6 +963,12 @@ export class CoachClientPage {
     await this.buildProgramLink.click();
   }
 
+  async continueDraft(): Promise<void> {
+    await this.programCard
+      .getByRole("link", { name: "Continue draft", exact: true })
+      .click();
+  }
+
   async expectDraftProgram(draft: DraftProgramCard): Promise<void> {
     const blocks = this.programCard
       .getByRole("list", { name: "Blocks", exact: true })
@@ -986,6 +992,12 @@ export class CoachClientPage {
         .getByRole("listitem"),
     ).toHaveText([...draft.stillMissing]);
     await expect(this.buildProgramLink).toHaveCount(0);
+    await expect(
+      this.programCard.getByRole("link", {
+        name: "Continue draft",
+        exact: true,
+      }),
+    ).toBeVisible();
   }
 
   async expectProgramWaitingOnApproval(gender: VisitorGender): Promise<void> {
@@ -1056,7 +1068,10 @@ export class CoachClientPage {
       ),
     ).toBeVisible();
     await expect(this.programCard.getByText("Still missing")).toHaveCount(0);
-    await this.expectProgramCardOffersNoAction();
+    await expect(this.programCard.getByRole("link")).toHaveText([
+      "Continue draft",
+    ]);
+    await expect(this.programCard.getByRole("button")).toHaveCount(0);
   }
 
   async expectProgramCardOffersNoAction(): Promise<void> {

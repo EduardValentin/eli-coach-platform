@@ -149,6 +149,16 @@ describe('BlockWorkspace', () => {
     expect(within(day('Monday')).getByText(`${cleared} min`)).toBeInTheDocument();
   });
 
+  it('gives a screen reader the estimated length of a training day', async () => {
+    // arrange, act
+    await openFirstBlock();
+
+    // assert
+    const estimate = /~(\d+) of \d+ min/.exec(session('Full Body A').textContent ?? '')?.[1];
+    const spoken = within(day('Monday')).getByText(`about ${estimate} min`);
+    expect(spoken.closest("[aria-hidden='true']")).toBeNull();
+  });
+
   it('heads every day card with its weekday and options menu and opens nothing from a rest day', async () => {
     // arrange
     await openFirstBlock();
@@ -159,8 +169,8 @@ describe('BlockWorkspace', () => {
     // assert
     expect(within(day('Monday')).getAllByRole('button')).toHaveLength(2);
     expect(within(day('Monday')).getByRole('button', { name: 'Monday options' })).toBeInTheDocument();
-    expect(within(day('Monday')).getByRole('button', { name: 'Full Body A' })).toBeInTheDocument();
-    expect(within(day('Monday')).getByText(/min$/)).toBeInTheDocument();
+    expect(within(day('Monday')).getByRole('button', { name: /^Full Body A\s+about \d+ min$/ })).toBeInTheDocument();
+    expect(within(day('Monday')).getByText(/^~\d+ min$/)).toBeInTheDocument();
     expect(within(saturday).getByText('Rest')).toBeInTheDocument();
     expect(within(saturday).getAllByRole('button').map(button => button.getAttribute('aria-label'))).toEqual(['Saturday options']);
     expect(within(saturday).queryByText(/min$/)).not.toBeInTheDocument();
@@ -178,7 +188,7 @@ describe('BlockWorkspace', () => {
     await user.keyboard('{Enter}');
 
     // assert
-    expect(within(day('Saturday')).getByRole('button', { name: 'Full Body A' })).toBeInTheDocument();
+    expect(within(day('Saturday')).getByRole('button', { name: /^Full Body A\s+about \d+ min$/ })).toBeInTheDocument();
     expect(within(day('Monday')).getByText('Rest')).toBeInTheDocument();
   });
 
@@ -188,7 +198,7 @@ describe('BlockWorkspace', () => {
     expect(within(session('Full Body B')).queryByRole('heading', { name: 'A · Main lift' })).not.toBeInTheDocument();
 
     // act
-    await user.click(within(day('Wednesday')).getByRole('button', { name: 'Full Body B' }));
+    await user.click(within(day('Wednesday')).getByRole('button', { name: /^Full Body B\s+about \d+ min$/ }));
 
     // assert
     expect(within(session('Full Body B')).getByRole('heading', { name: 'A · Main lift' })).toBeInTheDocument();
@@ -739,7 +749,7 @@ describe('BlockWorkspace', () => {
       'Intervals',
       'Steady',
     ]);
-    expect(within(day('Saturday')).getByText('26 min')).toBeInTheDocument();
+    expect(within(day('Saturday')).getAllByText('26 min')).toHaveLength(2);
   });
 
   it('edits a steady segment and adds intervals', async () => {
@@ -934,7 +944,7 @@ describe('BlockWorkspace', () => {
     await user.click(within(confirm).getByRole('button', { name: 'Rebuild sessions' }));
 
     // assert
-    expect(within(day('Monday')).getByRole('button', { name: 'Lower A' })).toBeInTheDocument();
+    expect(within(day('Monday')).getByRole('button', { name: /^Lower A\s+about \d+ min$/ })).toBeInTheDocument();
     expect(within(session('Lower A')).getAllByText('Add or drop an exercise')).toHaveLength(4);
   });
 
@@ -955,8 +965,8 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(screen.getByRole('combobox', { name: 'Training days' })).toHaveTextContent('2 days');
-    expect(within(day('Monday')).getByRole('button', { name: 'Full Body A' })).toBeInTheDocument();
-    expect(within(day('Thursday')).getByRole('button', { name: 'Full Body B' })).toBeInTheDocument();
+    expect(within(day('Monday')).getByRole('button', { name: /^Full Body A\s+about \d+ min$/ })).toBeInTheDocument();
+    expect(within(day('Thursday')).getByRole('button', { name: /^Full Body B\s+about \d+ min$/ })).toBeInTheDocument();
     expect(screen.queryByRole('article', { name: 'Full Body C' })).not.toBeInTheDocument();
   });
 

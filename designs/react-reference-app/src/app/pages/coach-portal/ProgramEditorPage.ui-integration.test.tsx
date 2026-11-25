@@ -190,6 +190,29 @@ describe('ProgramEditorPage', () => {
     await waitFor(() => expect(within(blockRows()[0]).getByRole('button', { name: /^Open block 1, / })).toHaveFocus());
   });
 
+  it('moves focus to the place heading once the last block is removed and again after using the suggestion', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+    for (const position of [3, 2]) {
+      await user.click(within(blockRows()[position - 1]).getByRole('button', { name: new RegExp(`^Remove block ${position}, `) }));
+      await user.click(within(await screen.findByRole('alertdialog', { name: `Remove block ${position}?` })).getByRole('button', { name: 'Remove block' }));
+    }
+
+    // act
+    await user.click(within(blockRows()[0]).getByRole('button', { name: /^Remove block 1, / }));
+    await user.click(within(await screen.findByRole('alertdialog', { name: 'Remove block 1?' })).getByRole('button', { name: 'Remove block' }));
+
+    // assert
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toHaveFocus());
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Use suggestion' }));
+
+    // assert
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toHaveFocus());
+    expect(blockRows().length).toBeGreaterThan(0);
+  });
+
   it('opens a block from its row', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
@@ -275,6 +298,7 @@ describe('ProgramEditorPage', () => {
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Plan overview' })).toBeInTheDocument();
     expect(blockRows()).toHaveLength(2);
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toHaveFocus());
   });
 
   it('keeps the current block from being removed', async () => {
