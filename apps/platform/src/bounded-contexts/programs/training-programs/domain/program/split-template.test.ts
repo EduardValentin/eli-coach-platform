@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioSession } from "./program-content";
+import type { Block, CardioSession, Session } from "./program-content";
 import { SplitTemplate } from "./split-template";
 import { WEEKDAYS, type SplitShape } from "./vocabulary";
 
@@ -162,3 +162,92 @@ function sessionDaysOf(shape: SplitShape, sessionCount: number) {
 
   return WEEKDAYS.filter((day) => calendar[day].kind === "session");
 }
+
+function session(id: string): Session {
+  return {
+    id,
+    originId: id,
+    name: id,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, items: [] },
+    rows: [],
+  };
+}
+
+function blockWith(shape: SplitShape, sessions: Session[]): Block {
+  return {
+    id: "block",
+    originId: "block",
+    type: "hypertrophy",
+    weeks: 6,
+    trainingDays: 4,
+    calibrationWeek: false,
+    introText: "",
+    clientNote: "",
+    split: { shape, name: "", text: "" },
+    targetMinutes: 60,
+    calendar: {
+      mon: { kind: "rest" },
+      tue: { kind: "rest" },
+      wed: { kind: "rest" },
+      thu: { kind: "rest" },
+      fri: { kind: "rest" },
+      sat: { kind: "rest" },
+      sun: { kind: "rest" },
+    },
+    sessions,
+    cardioSessions: [],
+    dailySteps: 6000,
+    missedDayNote: "",
+  };
+}
+
+describe("SplitTemplate slotPlanFor", () => {
+  it("reads the slot plan of the session at its position in the block", () => {
+    // arrange
+    const sessions = ["lower-a", "upper-a", "lower-b", "upper-b"].map(session);
+    const block = blockWith("upper-lower", sessions);
+
+    // act
+    const plan = SplitTemplate.slotPlanFor(block, sessions[3], "B");
+
+    // assert
+    expect(plan).toEqual({
+      slot: "B",
+      patterns: ["vertical-push", "horizontal-push"],
+      label: "Secondary",
+    });
+  });
+
+  it("joins the patterns of a slot planned as a superset", () => {
+    // arrange
+    const sessions = [session("a"), session("b")];
+    const block = blockWith("full-body", sessions);
+
+    // act
+    const plan = SplitTemplate.slotPlanFor(block, sessions[1], "C");
+
+    // assert
+    expect(plan).toEqual({
+      slot: "C",
+      patterns: [
+        "horizontal-push",
+        "vertical-push",
+        "horizontal-pull",
+        "vertical-pull",
+      ],
+      label: "Accessories",
+    });
+  });
+
+  it("finds nothing for a session outside the block", () => {
+    // arrange
+    const block = blockWith("full-body", [session("a"), session("b")]);
+
+    // act
+    const plan = SplitTemplate.slotPlanFor(block, session("elsewhere"), "A");
+
+    // assert
+    expect(plan).toBeUndefined();
+  });
+});

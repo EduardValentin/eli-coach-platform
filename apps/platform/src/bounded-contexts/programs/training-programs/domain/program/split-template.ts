@@ -1,5 +1,7 @@
+import type { MovementPattern } from "./library-exercise";
 import {
   mapCalendar,
+  type Block,
   type CalendarEntry,
   type CardioSession,
   type Session,
@@ -9,18 +11,87 @@ import { fillTemplate, templateText } from "./program-templates";
 import {
   WEEKDAYS,
   type ProgramLanguage,
+  type Slot,
   type SplitShape,
   type Weekday,
 } from "./vocabulary";
 
+export type SlotPlan = {
+  slot: Slot;
+  patterns: MovementPattern[];
+  label: string;
+};
+
+type SessionTemplate = { name: string; slots: SlotPlan[] };
+
 const FULL_BODY_MAX_DAYS = 3;
 const SESSION_LETTERS = ["A", "B", "C", "D", "E"];
-const UPPER_LOWER_SESSION_NAMES = [
-  "Lower A",
-  "Upper A",
-  "Lower B",
-  "Upper B",
-  "Lower C",
+
+const SLOT_LABELS: Record<Slot, string> = {
+  A: "Main lift",
+  B: "Secondary",
+  C: "Accessories",
+  D: "Core / finisher",
+};
+const CORE: SlotPlan = { slot: "D", patterns: ["core"], label: SLOT_LABELS.D };
+const ISOLATION: SlotPlan = {
+  slot: "C",
+  patterns: ["isolation"],
+  label: SLOT_LABELS.C,
+};
+
+const FULL_BODY_LOWER: [MovementPattern[], MovementPattern[]][] = [
+  [["squat"], ["hinge", "lunge"]],
+  [["hinge"], ["squat", "lunge"]],
+];
+const FULL_BODY_ACCESSORIES: SlotPlan[] = [
+  {
+    slot: "C",
+    patterns: ["horizontal-push", "vertical-push"],
+    label: SLOT_LABELS.C,
+  },
+  {
+    slot: "C",
+    patterns: ["horizontal-pull", "vertical-pull"],
+    label: SLOT_LABELS.C,
+  },
+];
+
+function mainAndSecondary(
+  main: MovementPattern[],
+  secondary: MovementPattern[],
+): SlotPlan[] {
+  return [
+    { slot: "A", patterns: main, label: SLOT_LABELS.A },
+    { slot: "B", patterns: secondary, label: SLOT_LABELS.B },
+  ];
+}
+
+function upperLowerSession(
+  name: string,
+  main: MovementPattern[],
+  secondary: MovementPattern[],
+): SessionTemplate {
+  return {
+    name,
+    slots: [...mainAndSecondary(main, secondary), ISOLATION, CORE],
+  };
+}
+
+const UPPER_LOWER_SESSIONS: SessionTemplate[] = [
+  upperLowerSession("Lower A", ["squat"], ["hinge", "lunge"]),
+  upperLowerSession(
+    "Upper A",
+    ["horizontal-push"],
+    ["vertical-pull", "horizontal-pull"],
+  ),
+  upperLowerSession("Lower B", ["hinge"], ["lunge", "squat"]),
+  upperLowerSession(
+    "Upper B",
+    ["vertical-pull"],
+    ["vertical-push", "horizontal-push"],
+  ),
+  upperLowerSession("Lower C", ["squat"], ["hinge", "lunge"]),
 ];
 
 const LABELS: Record<SplitShape, string> = {
@@ -55,18 +126,30 @@ export class SplitTemplate {
     return cardioSessions.slice(0, WEEKDAYS.length - trainingDays);
   }
 
+  /** The movement patterns the split suggests for a slot of the session at its position in the block. */
+  static slotPlanFor(
+    block: Block,
+    session: Session,
+    slot: Slot,
+  ): SlotPlan | undefined {
+    const index = block.sessions.findIndex((other) => other.id === session.id);
+    if (index < 0) return undefined;
+    const template = SplitTemplate.of(block.split.shape).sessionTemplates(
+      block.sessions.length,
+    )[index];
+    const plans = template?.slots.filter((plan) => plan.slot === slot) ?? [];
+    const [first] = plans;
+    if (!first) return undefined;
+
+    return { ...first, patterns: plans.flatMap((plan) => plan.patterns) };
+  }
+
   get label(): string {
     return LABELS[this.shape];
   }
 
   sessionNames(days: number): string[] {
-    if (this.shape === "upper-lower") {
-      return UPPER_LOWER_SESSION_NAMES.slice(0, days);
-    }
-
-    return SESSION_LETTERS.slice(0, days).map(
-      (letter) => `Full Body ${letter}`,
-    );
+    return this.sessionTemplates(days).map((template) => template.name);
   }
 
   text(days: number, language: ProgramLanguage): string {
@@ -107,6 +190,25 @@ export class SplitTemplate {
     });
 
     return calendar;
+  }
+
+  private sessionTemplates(days: number): SessionTemplate[] {
+    if (this.shape === "upper-lower") {
+      return UPPER_LOWER_SESSIONS.slice(0, days);
+    }
+
+    return SESSION_LETTERS.slice(0, days).map((letter, index) => {
+      const [main, secondary] = FULL_BODY_LOWER[index % FULL_BODY_LOWER.length];
+
+      return {
+        name: `Full Body ${letter}`,
+        slots: [
+          ...mainAndSecondary(main, secondary),
+          ...FULL_BODY_ACCESSORIES,
+          CORE,
+        ],
+      };
+    });
   }
 
   private trainingWeekdays(sessionCount: number): Weekday[] {
