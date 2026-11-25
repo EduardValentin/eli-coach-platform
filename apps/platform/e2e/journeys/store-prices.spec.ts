@@ -69,7 +69,7 @@ test(
     await storeCatalog.expectPlanAt(plan.title, "$45.00");
 
     // act
-    await storeProduct.open(plan.slug);
+    await storeProduct.open(plan);
 
     // assert
     await storeProduct.expectPrice("$45.00");

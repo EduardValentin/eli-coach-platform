@@ -29,7 +29,7 @@ export class ClientSettingsPage {
   }
 
   private get heading() {
-    return this.page.getByRole("heading", { level: 1, name: "Settings" });
+    return this.page.getByRole("heading", { name: "Settings", exact: true });
   }
 
   private get subscription() {
@@ -38,8 +38,8 @@ export class ClientSettingsPage {
 
   private get subscriptionHeading() {
     return this.subscription.getByRole("heading", {
-      level: 2,
       name: "Subscription",
+      exact: true,
     });
   }
 

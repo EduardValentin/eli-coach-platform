@@ -55,8 +55,8 @@ export class ProgramSetupPage {
     );
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: `Build ${firstName}’s program`,
+        exact: true,
       }),
     ).toBeVisible();
   }
@@ -348,8 +348,8 @@ export class ProgramSetupPage {
   async expectNotReady(her: string): Promise<void> {
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: "Program not ready yet",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(

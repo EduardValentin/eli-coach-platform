@@ -15,7 +15,7 @@ export class StoreOrderCompletePage {
 
   async expectConfirmedFor(email: string): Promise<void> {
     await expect(
-      this.main.getByRole("heading", { level: 1, name: "Order confirmed" }),
+      this.main.getByRole("heading", { name: "Order confirmed", exact: true }),
     ).toBeVisible();
     await expect(
       this.main.getByText(`Your order email is on its way to ${email}.`),
@@ -33,8 +33,8 @@ export class StoreOrderCompletePage {
   async expectPaymentNotCompleted(): Promise<void> {
     await expect(
       this.main.getByRole("heading", {
-        level: 1,
         name: "Payment not completed",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(

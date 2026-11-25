@@ -10,6 +10,7 @@ import {
 } from "@playwright/test";
 
 import { expectAvailability, type Availability } from "./control-states";
+import { expectOneH1 } from "./heading-outline";
 import { tabTo } from "./keyboard";
 import { ProgressPhotoTiles } from "./progress-photo-tiles";
 import type { SamplePhoto } from "./sample-photos";
@@ -143,8 +144,8 @@ export class ClientOnboarding {
   async expectWelcomeHeading(firstName: string): Promise<void> {
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: `Welcome to Evoa Fitness, ${firstName}`,
+        exact: true,
       }),
     ).toBeVisible();
   }
@@ -252,9 +253,9 @@ export class ClientOnboarding {
   }
 
   async expectOnePageHeading(): Promise<void> {
-    await expect(this.page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expectOneH1(this.page);
     await expect(
-      this.page.getByRole("heading", { level: 1, name: PAGE_HEADING }),
+      this.page.getByRole("heading", { name: PAGE_HEADING, exact: true }),
     ).toBeVisible();
   }
 
@@ -264,13 +265,13 @@ export class ClientOnboarding {
     total: number,
   ): Promise<void> {
     await expect(
-      this.page.getByRole("heading", { level: 2, name: title }),
+      this.page.getByRole("heading", { name: title, exact: true }),
     ).toHaveAccessibleDescription(`Step ${step} of ${total}`);
   }
 
   async expectStepHeadingFocused(title: string): Promise<void> {
     await expect(
-      this.page.getByRole("heading", { level: 2, name: title }),
+      this.page.getByRole("heading", { name: title, exact: true }),
     ).toBeFocused();
   }
 
@@ -498,9 +499,12 @@ export class ClientOnboarding {
   }
 
   async expectAnswerPage(note: string): Promise<void> {
-    await expect(this.page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expectOneH1(this.page);
     await expect(
-      this.page.getByRole("heading", { level: 1, name: ANSWER_PAGE_HEADING }),
+      this.page.getByRole("heading", {
+        name: ANSWER_PAGE_HEADING,
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
       this.answerRequest.getByText(note, { exact: true }),

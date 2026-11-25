@@ -184,7 +184,7 @@ export class ClientPortalShell {
 
   async expectGreeting(greeting: string): Promise<void> {
     await expect(
-      this.page.getByRole("heading", { level: 1, name: greeting }),
+      this.page.getByRole("heading", { name: greeting, exact: true }),
     ).toBeVisible();
   }
 

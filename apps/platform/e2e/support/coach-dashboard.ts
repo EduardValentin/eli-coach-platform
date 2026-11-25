@@ -40,8 +40,8 @@ export class CoachDashboardPage {
     await expect(this.page).toHaveURL(DASHBOARD_PATH);
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: "Good morning, Eli.",
+        exact: true,
       }),
     ).toBeVisible();
   }

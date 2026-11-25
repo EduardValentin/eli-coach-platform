@@ -69,7 +69,7 @@ export class ExerciseLibraryPage {
   }
 
   private get heading(): Locator {
-    return this.page.getByRole("heading", { level: 1 });
+    return this.page.getByRole("heading", { name: "Exercises", exact: true });
   }
 
   private get newExerciseLink() {
@@ -93,7 +93,10 @@ export class ExerciseLibraryPage {
   }
 
   private get editorHeading(): Locator {
-    return this.page.getByRole("heading", { level: 1, name: "Edit exercise" });
+    return this.page.getByRole("heading", {
+      name: "Edit exercise",
+      exact: true,
+    });
   }
 
   private get rows(): Locator {
@@ -326,7 +329,7 @@ export class ExerciseLibraryPage {
 
   async expectOpen(search = ""): Promise<void> {
     await expect(this.page).toHaveURL(`${LIBRARY_PATH}${search}`);
-    await expect(this.heading).toHaveText("Exercises");
+    await expect(this.heading).toBeVisible();
   }
 
   async expectTrainingRightAfterDashboard(): Promise<void> {

@@ -59,7 +59,7 @@ export class PhotoView {
 
   async openWithKeyboardFor(date: string): Promise<void> {
     await expect(async () => {
-      await this.page.getByRole("heading", { level: 1 }).click();
+      await this.measurementsHistory.clickDateColumnHeader();
       await tabTo(this.page, this.measurementsHistory.viewPhotosAction(date));
       await this.page.keyboard.press("Enter");
       await expect(this.dialog).toBeVisible({

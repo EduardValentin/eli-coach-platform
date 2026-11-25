@@ -27,6 +27,10 @@ export class CoachClientResourcesPage {
     return this.page.getByRole("button", { name: ADD_RESOURCE, exact: true });
   }
 
+  private get heading() {
+    return this.page.getByRole("heading", { name: "Resources", exact: true });
+  }
+
   private get addDialog() {
     return this.page.getByRole("dialog", { name: ADD_RESOURCE });
   }
@@ -49,13 +53,7 @@ export class CoachClientResourcesPage {
     await expect(this.page).toHaveURL(
       new RegExp(`/coach/clients/${owner.clientId}/resources$`),
     );
-    await expect(
-      this.page.getByRole("heading", {
-        level: 1,
-        name: "Resources",
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(this.heading).toBeVisible();
     await expect(this.backLinkTo(owner.fullName)).toHaveAttribute(
       "href",
       `/coach/clients/${owner.clientId}`,
@@ -64,7 +62,7 @@ export class CoachClientResourcesPage {
 
   async reload(): Promise<void> {
     await this.page.reload();
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(this.heading).toBeVisible();
   }
 
   async goBack(fullName: string): Promise<void> {
@@ -107,7 +105,7 @@ export class CoachClientResourcesPage {
   }
 
   private async movePointerOffToasts(): Promise<void> {
-    await this.page.getByRole("heading", { level: 1 }).hover();
+    await this.heading.hover();
   }
 
   async openAdd(): Promise<void> {
@@ -122,9 +120,7 @@ export class CoachClientResourcesPage {
 
   async openAddWithKeyboard(): Promise<void> {
     await expect(async () => {
-      await this.page
-        .getByRole("heading", { level: 1 })
-        .click({ position: { x: 1, y: 1 } });
+      await this.heading.click({ position: { x: 1, y: 1 } });
       await tabTo(this.page, this.addButton);
       await this.page.keyboard.press("Enter");
       await expect(this.addDialog).toBeVisible({
@@ -182,9 +178,7 @@ export class CoachClientResourcesPage {
     ).toBeVisible();
     await expect(this.backLinkTo(fullName)).toBeVisible();
     await expect(this.addButton).toHaveCount(0);
-    await expect(
-      this.page.getByRole("heading", { name: "Resources", exact: true }),
-    ).toHaveCount(0);
+    await expect(this.heading).toHaveCount(0);
     await expectOneH1AndNoSkippedLevels(this.page);
   }
 

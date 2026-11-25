@@ -151,7 +151,9 @@ export class ResourceToolbar {
   }
 
   async expectHidden(): Promise<void> {
-    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(
+      this.page.getByRole("heading", { name: "Resources", exact: true }),
+    ).toBeVisible();
     await expect(this.tagFilter).toHaveCount(0);
     await expect(this.searchField).toHaveCount(0);
     await expect(this.sortControl).toHaveCount(0);

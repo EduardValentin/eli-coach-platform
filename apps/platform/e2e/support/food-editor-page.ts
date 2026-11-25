@@ -107,7 +107,7 @@ export class FoodEditorPage {
   }
 
   private heading(name: string): Locator {
-    return this.page.getByRole("heading", { level: 1, name });
+    return this.page.getByRole("heading", { name, exact: true });
   }
 
   private amount(title: AmountTitle): Locator {

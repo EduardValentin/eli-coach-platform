@@ -25,7 +25,7 @@ export class StoreDownloadPage {
   async open(link: string): Promise<void> {
     await this.openLink(link);
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Your resources" }),
+      this.page.getByRole("heading", { name: "Your resources", exact: true }),
     ).toBeVisible();
   }
 
@@ -41,8 +41,8 @@ export class StoreDownloadPage {
   async expectUnavailable(): Promise<void> {
     await expect(
       this.page.getByRole("heading", {
-        level: 1,
         name: "This link is no longer available",
+        exact: true,
       }),
     ).toBeVisible();
     await expect(this.downloadButton).toHaveCount(0);

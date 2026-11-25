@@ -72,7 +72,7 @@ export class ClientProfilePage {
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(new RegExp(`${PROFILE_PATH}$`));
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Your Profile" }),
+      this.page.getByRole("heading", { name: "Your Profile", exact: true }),
     ).toBeVisible();
     await expect(
       this.page.getByText(PROFILE_SUBTITLE, { exact: true }),

@@ -80,7 +80,7 @@ export class CheckInToolbar {
 
   private async tabFromHeadingTo(control: Locator): Promise<void> {
     await this.page
-      .getByRole("heading", { level: 1 })
+      .getByRole("heading", { name: "Check-ins", exact: true })
       .click({ position: { x: 1, y: 1 } });
     await tabTo(this.page, control);
   }

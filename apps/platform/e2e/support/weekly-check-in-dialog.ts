@@ -165,7 +165,7 @@ export class WeeklyCheckInDialog {
   async expectOpen(mode: WeeklyDialogMode): Promise<void> {
     await expect(this.dialog).toBeVisible();
     await expect(
-      this.dialog.getByRole("heading", { level: 3, name: TITLES[mode] }),
+      this.dialog.getByRole("heading", { name: TITLES[mode], exact: true }),
     ).toBeFocused();
     await expect(this.hours).toBeVisible();
   }

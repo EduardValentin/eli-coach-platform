@@ -53,7 +53,7 @@ test(
 
     // assert
     await expect(
-      page.getByRole("heading", { level: 1, name: "Assessment calls" }),
+      page.getByRole("heading", { name: "Assessment calls", exact: true }),
     ).toBeVisible();
     const bookedCall = coachAssessmentCalls.call(VISITOR_NAME);
     await expect(bookedCall.getByText(visitorEmail)).toBeVisible();

@@ -28,7 +28,7 @@ export class ClientEndedPage {
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(new RegExp(`${ENDED_PATH}$`));
     await expect(
-      this.landmark.getByRole("heading", { level: 1, name: ENDED_TITLE }),
+      this.landmark.getByRole("heading", { name: ENDED_TITLE, exact: true }),
     ).toBeVisible();
     await expect(
       this.landmark.getByText(ENDED_LINE, { exact: true }),

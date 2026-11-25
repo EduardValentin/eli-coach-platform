@@ -52,7 +52,9 @@ export class CoachClientsPage {
   }
 
   private async tabFromHeadingTo(locator: Locator): Promise<void> {
-    await this.page.getByRole("heading", { level: 1, name: "Clients" }).click();
+    await this.page
+      .getByRole("heading", { name: "Clients", exact: true })
+      .click();
     await tabTo(this.page, locator);
   }
 
@@ -101,7 +103,7 @@ export class CoachClientsPage {
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(new RegExp(`${CLIENTS_PATH}$`));
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Clients" }),
+      this.page.getByRole("heading", { name: "Clients", exact: true }),
     ).toBeVisible();
   }
 

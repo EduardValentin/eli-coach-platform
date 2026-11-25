@@ -3,6 +3,7 @@ import { expect, type Page } from "@playwright/test";
 import { ResourceCards, type ResourceCardFacts } from "./resource-cards";
 
 const RESOURCES_PATH = "/client/resources";
+const PAGE_TITLE = "Resources";
 const NEW_MARK = "New";
 const OPENED_ROUTE = "**/api/client-resources/*/opened.data";
 const MANAGEMENT_CONTROL = /\b(add|edit|delete|remove|replace|upload)\b/i;
@@ -14,8 +15,8 @@ export class ClientResourcesPage {
     this.cards = new ResourceCards(page);
   }
 
-  private get heading() {
-    return this.page.getByRole("heading", { level: 1 });
+  private heading(name: string) {
+    return this.page.getByRole("heading", { name, exact: true });
   }
 
   private get main() {
@@ -28,12 +29,12 @@ export class ClientResourcesPage {
 
   async reload(): Promise<void> {
     await this.page.reload();
-    await expect(this.heading).toBeVisible();
+    await expect(this.heading(PAGE_TITLE)).toBeVisible();
   }
 
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(new RegExp(`${RESOURCES_PATH}$`));
-    await expect(this.heading).toHaveText(["Resources"]);
+    await expect(this.heading(PAGE_TITLE)).toBeVisible();
   }
 
   async expectCards(titles: readonly string[]): Promise<void> {
@@ -101,7 +102,8 @@ export class ClientResourcesPage {
   }
 
   async expectUnavailable(): Promise<void> {
-    await expect(this.heading).toHaveText(["Resources didn’t load"]);
+    await expect(this.heading("Resources didn’t load")).toBeVisible();
+    await expect(this.heading(PAGE_TITLE)).toHaveCount(0);
     await expect(
       this.main.getByText(
         "Something went wrong on our side. Try again in a moment.",

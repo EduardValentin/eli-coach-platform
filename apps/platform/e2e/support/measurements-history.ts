@@ -22,6 +22,12 @@ export class MeasurementsHistory {
     });
   }
 
+  async clickDateColumnHeader(): Promise<void> {
+    await this.table
+      .getByRole("columnheader", { name: "Date", exact: true })
+      .click();
+  }
+
   viewPhotosAction(date: string): Locator {
     return this.table.getByRole("button", {
       name: `View photos from ${date}`,
