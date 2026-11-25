@@ -43,6 +43,7 @@ export function useAutosavedDraft(stored: Program) {
   const refused = useRef(false);
   const queuedSave = useRef<number | null>(null);
   const inFlight = useRef<Promise<SaveResult> | null>(null);
+  const left = useRef(false);
 
   function cancelQueuedSave() {
     if (queuedSave.current !== null) window.clearTimeout(queuedSave.current);
@@ -99,7 +100,7 @@ export function useAutosavedDraft(stored: Program) {
     inFlight.current = pending;
     const result = await pending;
     inFlight.current = null;
-    applySaveResult(result, sentAtEdit);
+    if (!left.current) applySaveResult(result, sentAtEdit);
     return result;
   }
 
@@ -152,8 +153,10 @@ export function useAutosavedDraft(stored: Program) {
   }, [stored]);
 
   // Leaving with a change still queued sends it rather than dropping it; saveNow reads only refs.
+  // Its answer arrives after the builder is gone, so nothing on screen is updated with it.
   useEffect(
     () => () => {
+      left.current = true;
       if (queuedSave.current !== null) void saveNow();
     },
     [],
