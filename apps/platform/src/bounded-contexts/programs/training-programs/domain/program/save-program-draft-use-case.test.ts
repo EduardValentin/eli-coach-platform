@@ -170,7 +170,7 @@ function saveDraft({
 }: Arrangement = {}) {
   const writes: DraftWrite[] = [];
   const libraryExercisesPort = { listFor: vi.fn(async () => libraryExercises) };
-  const exerciseUsagePort = new InMemoryExerciseUsageAdapter();
+  const inMemoryExerciseUsageAdapter = new InMemoryExerciseUsageAdapter();
   const saveProgramDraftUseCase = new SaveProgramDraftUseCase({
     clientIdentityPort: {
       find: async (clientId) =>
@@ -186,7 +186,7 @@ function saveDraft({
       },
     },
     libraryExercisesPort,
-    exerciseUsagePort,
+    exerciseUsagePort: inMemoryExerciseUsageAdapter,
     clockPort: { now: () => NOW },
   });
 
@@ -194,7 +194,7 @@ function saveDraft({
     saveProgramDraftUseCase,
     writes,
     libraryExercisesPort,
-    exerciseUsagePort,
+    inMemoryExerciseUsageAdapter,
   };
 }
 
@@ -229,9 +229,11 @@ describe("SaveProgramDraftUseCase", () => {
 
   it("answers that the draft changed elsewhere when the store holds a newer copy, recording nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, exerciseUsagePort } = saveDraft({
-      storeOutcome: "changed-elsewhere",
-    });
+    const { saveProgramDraftUseCase, inMemoryExerciseUsageAdapter } = saveDraft(
+      {
+        storeOutcome: "changed-elsewhere",
+      },
+    );
 
     // act
     const result = await saveProgramDraftUseCase.execute({
@@ -241,13 +243,16 @@ describe("SaveProgramDraftUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "changed-elsewhere" });
-    expect(exerciseUsagePort.recorded).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("records, for the coach, every exercise the saved draft uses under its version number, archived ones of hers included", async () => {
     // arrange
-    const { saveProgramDraftUseCase, libraryExercisesPort, exerciseUsagePort } =
-      saveDraft();
+    const {
+      saveProgramDraftUseCase,
+      libraryExercisesPort,
+      inMemoryExerciseUsageAdapter,
+    } = saveDraft();
 
     // act
     const result = await saveProgramDraftUseCase.execute({
@@ -258,30 +263,27 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "saved", updatedAt: NOW });
     expect(libraryExercisesPort.listFor).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
-    expect(exerciseUsagePort.recorded).toHaveLength(1);
-    expect(exerciseUsagePort.recorded[0]).toMatchObject({
+    expect(inMemoryExerciseUsageAdapter.recorded).toHaveLength(1);
+    expect(inMemoryExerciseUsageAdapter.recorded[0]).toMatchObject({
       coachAccountId: COACH_ACCOUNT_ID,
       programId: "program-1",
       versionNumber: 1,
     });
-    expect([...exerciseUsagePort.recorded[0].exerciseIds].sort()).toEqual([
-      "bike",
-      "hips",
-      "lunge",
-      "pigeon",
-      "squat",
-    ]);
+    expect(
+      [...inMemoryExerciseUsageAdapter.recorded[0].exerciseIds].sort(),
+    ).toEqual(["bike", "hips", "lunge", "pigeon", "squat"]);
   });
 
   it("records an empty set when the saved draft uses no exercise any more", async () => {
     // arrange
-    const { saveProgramDraftUseCase, exerciseUsagePort } = saveDraft();
+    const { saveProgramDraftUseCase, inMemoryExerciseUsageAdapter } =
+      saveDraft();
 
     // act
     await saveProgramDraftUseCase.execute(COMMAND);
 
     // assert
-    expect(exerciseUsagePort.recorded).toEqual([
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([
       {
         coachAccountId: COACH_ACCOUNT_ID,
         programId: "program-1",
@@ -304,9 +306,10 @@ describe("SaveProgramDraftUseCase", () => {
     "refuses content naming %s as not well formed, writing and recording nothing",
     async (_case, libraryExercises) => {
       // arrange
-      const { saveProgramDraftUseCase, writes, exerciseUsagePort } = saveDraft({
-        libraryExercises,
-      });
+      const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+        saveDraft({
+          libraryExercises,
+        });
 
       // act
       const result = await saveProgramDraftUseCase.execute({
@@ -317,17 +320,19 @@ describe("SaveProgramDraftUseCase", () => {
       // assert
       expect(result).toEqual({ status: "not-well-formed" });
       expect(writes).toEqual([]);
-      expect(exerciseUsagePort.recorded).toEqual([]);
+      expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
     },
   );
 
   it("fails whole when the library cannot record what the saved draft uses, so the unit of work rolls the save back", async () => {
     // arrange
     const failure = new Error("usage refused");
-    const { saveProgramDraftUseCase, exerciseUsagePort } = saveDraft();
-    vi.spyOn(exerciseUsagePort, "recordVersionUsage").mockRejectedValue(
-      failure,
-    );
+    const { saveProgramDraftUseCase, inMemoryExerciseUsageAdapter } =
+      saveDraft();
+    vi.spyOn(
+      inMemoryExerciseUsageAdapter,
+      "recordVersionUsage",
+    ).mockRejectedValue(failure);
 
     // act
     const saved = saveProgramDraftUseCase.execute({
@@ -341,9 +346,10 @@ describe("SaveProgramDraftUseCase", () => {
 
   it("refuses a program that holds no draft and writes nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes, exerciseUsagePort } = saveDraft({
-      programs: [anasProgram([{ ...DRAFT_VERSION, status: "published" }])],
-    });
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft({
+        programs: [anasProgram([{ ...DRAFT_VERSION, status: "published" }])],
+      });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
@@ -351,12 +357,13 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-a-draft" });
     expect(writes).toEqual([]);
-    expect(exerciseUsagePort.recorded).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("refuses content that is not well formed and writes nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes, exerciseUsagePort } = saveDraft();
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft();
     const twoWeekDeload: ProgramContent = {
       ...EDITED_CONTENT,
       plan: {
@@ -399,14 +406,15 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-well-formed" });
     expect(writes).toEqual([]);
-    expect(exerciseUsagePort.recorded).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("says she has no program yet", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes, exerciseUsagePort } = saveDraft({
-      programs: [],
-    });
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft({
+        programs: [],
+      });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
@@ -414,14 +422,15 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "no-program" });
     expect(writes).toEqual([]);
-    expect(exerciseUsagePort.recorded).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("does not know a client no one paid for", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes, exerciseUsagePort } = saveDraft({
-      clients: [],
-    });
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft({
+        clients: [],
+      });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
@@ -429,6 +438,6 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "unknown-client" });
     expect(writes).toEqual([]);
-    expect(exerciseUsagePort.recorded).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 });

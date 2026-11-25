@@ -62,6 +62,7 @@ const ANA_CLIENT: AccountSession = {
 };
 
 const UNKNOWN_CLIENT_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
+const UNKNOWN_EXERCISE_ID = "5c1e9a3d-7b2f-4e8a-a6d4-3f0b9c2e8d71";
 
 const PAID_THROUGH = new Date("2027-01-21T08:00:00.000Z");
 
@@ -1139,7 +1140,7 @@ describe("a client's training program, from her profile", () => {
         rows: [
           exerciseRow("row-1", squat.id, {
             slot: "A",
-            substitutions: [UNKNOWN_CLIENT_ID],
+            substitutions: [UNKNOWN_EXERCISE_ID],
           }),
         ],
       });
