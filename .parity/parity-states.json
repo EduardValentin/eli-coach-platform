@@ -7321,5 +7321,46 @@
     {
       "click": "role=switch[name=\"Cool-down\"]"
     }
+  ],
+  "exercise-delete-held-back": {
+    "prototype": [
+      {
+        "use": "open-exercise-actions"
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Delete\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"row-action-delete-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "use": "open-exercise-actions"
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Delete\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ]
+  },
+  "library-add-refused": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to warm-up\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Jumping Jacks\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to warm-up\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Jumping Jacks\"]"
+    }
   ]
 }
