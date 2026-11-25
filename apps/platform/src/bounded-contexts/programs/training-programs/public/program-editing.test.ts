@@ -64,7 +64,11 @@ describe("the builder's editing rules, as the browser reaches them", () => {
     ]);
     expect(
       SessionTiming.estimatedDuration(
-        SessionTiming.routineMinutes(first.sessions[0]),
+        SessionTiming.longestWeekMinutes(first.sessions[0], {
+          block: first,
+          level: "beginner",
+          exercisesById: new Map(),
+        }),
       ),
     ).toBe("0 min");
     expect(SessionTiming.cardioMinutes(first.cardioSessions[0])).toBe(30);
