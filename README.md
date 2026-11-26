@@ -149,7 +149,7 @@ pnpm typecheck       # TypeScript checks across every workspace package
 pnpm test            # typecheck, then run the unit and integration Vitest projects
 pnpm build           # build the platform app only
 pnpm validate        # lint, boundaries, unit and integration tests, and build: the workspace CI gate
-pnpm validate:unit   # the same without the integration suites; CI runs them as a parallel job (pnpm test:integration)
+pnpm validate:unit   # the same without the integration suites
 pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
 pnpm test:e2e        # Playwright: local-only, real Clerk and Stripe test mode (see End-to-End Journeys)
 pnpm test:e2e:critical # only the journeys tagged @critical
@@ -157,7 +157,9 @@ pnpm check:workflows # actionlint over .github/workflows (Docker)
 pnpm test:deploy-simulation # scripts/deploy/deploy.sh against a simulated host in a throwaway Docker daemon (see docs/RELEASE_AND_ROLLBACK.md)
 ```
 
-The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`; no workspace gate reaches it. CI typechecks and builds the prototype in a separate step but does not run its vitest suite, so run `npm test` locally before changing it.
+The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`; no workspace gate reaches it. CI typechecks and builds the prototype in its own job, only when `designs/` changed, and does not run its vitest suite, so run `npm test` locally before changing it.
+
+CI runs the pieces of `pnpm validate` as parallel jobs in `.github/workflows/ci.yml`: lint, boundaries and types; the unit suites in three shards; the build with Lighthouse; and the integration suites. A pull request that changes only Markdown runs the first of those and skips the rest. A push to `main` always runs everything.
 
 ## Database
 
