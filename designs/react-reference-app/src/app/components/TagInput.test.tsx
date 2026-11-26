@@ -109,6 +109,24 @@ describe('TagInput', () => {
     expect(chosenTags()).toEqual(['Training']);
   });
 
+  it('rings the highlighted suggestion inside its own box, so keyboard users see where Enter will act', async () => {
+    // arrange
+    render(<TagField />);
+    await userEvent.type(screen.getByRole('combobox', { name: 'Tags' }), 'tr');
+
+    // act
+    await userEvent.keyboard('{ArrowDown}');
+
+    // assert
+    const [highlighted, others] = [
+      screen.getAllByRole('option', { selected: true }),
+      screen.getAllByRole('option', { selected: false }),
+    ];
+    expect(highlighted).toHaveLength(1);
+    expect(highlighted[0]).toHaveClass('outline-2', '-outline-offset-2', 'outline-focus-ring');
+    expect(others[0]).not.toHaveClass('outline-2');
+  });
+
   it('removes the last tag with Backspace on an empty field', async () => {
     // arrange
     render(<TagField initial={['Cycle', 'Nutrition']} />);

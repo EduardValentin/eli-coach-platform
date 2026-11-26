@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CalendarClock, CalendarX, Pencil, Trash2 } from 'lucide-react';
 import { describe, expect, it, vi } from 'vitest';
@@ -264,5 +264,53 @@ describe('a row menu action that is not allowed right now', () => {
 
     // assert
     await waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
+  });
+});
+
+describe('the fade on a blocked row action', () => {
+  function fadedParts(item: HTMLElement, label: string) {
+    return { box: item, icon: item.querySelector('svg'), label: within(item).getByText(label) };
+  }
+
+  it('sits on the icon and label of a held-back action, so its focus ring keeps full strength', async () => {
+    // arrange
+    const { user } = renderBlockedDeleteMenu();
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+
+    // act
+    const { box, icon, label } = fadedParts(screen.getByRole('menuitem', { name: 'Delete' }), 'Delete');
+
+    // assert
+    expect(box).toHaveClass('aria-disabled:opacity-100');
+    expect(icon).toHaveClass('opacity-50');
+    expect(label).toHaveClass('opacity-50');
+  });
+
+  it('sits on the icon and label of an action held back with a reason, so its focus ring keeps full strength', async () => {
+    // arrange
+    const { user, trigger } = renderMovedCheckinMenu();
+    await openMenu(user, trigger);
+
+    // act
+    const { box, icon, label } = fadedParts(screen.getByRole('menuitem', { name: 'Reschedule' }), 'Reschedule');
+
+    // assert
+    expect(box).toHaveClass('aria-disabled:opacity-100');
+    expect(icon).toHaveClass('opacity-50');
+    expect(label).toHaveClass('opacity-50');
+  });
+
+  it('leaves an available action unfaded', async () => {
+    // arrange
+    const { user, trigger } = renderMovedCheckinMenu();
+    await openMenu(user, trigger);
+
+    // act
+    const { box, icon, label } = fadedParts(screen.getByRole('menuitem', { name: 'Cancel' }), 'Cancel');
+
+    // assert
+    expect(box).not.toHaveClass('aria-disabled:opacity-100');
+    expect(icon).not.toHaveClass('opacity-50');
+    expect(label).not.toHaveClass('opacity-50');
   });
 });

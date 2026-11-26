@@ -232,7 +232,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
                 aria-selected={index === activeIndex}
                 className={cn(
                   'flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm text-text-primary select-none',
-                  { 'bg-accent text-accent-foreground': index === activeIndex },
+                  { 'bg-accent text-accent-foreground outline-2 -outline-offset-2 outline-focus-ring': index === activeIndex },
                 )}
                 id={`${optionIdPrefix}-${index}`}
                 key={`${option.kind}-${option.tag}`}

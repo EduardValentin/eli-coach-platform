@@ -58,7 +58,8 @@ function RowMenuItem({
       disabled={disabled}
       aria-disabled={flagged ? true : undefined}
       className={cn({
-        'aria-disabled:opacity-100 data-[variant=destructive]:focus:bg-accent dark:data-[variant=destructive]:focus:bg-accent': flagged,
+        'aria-disabled:opacity-100': blocked,
+        'data-[variant=destructive]:focus:bg-accent dark:data-[variant=destructive]:focus:bg-accent': flagged,
       })}
       onSelect={(event) => {
         if (blocked) {
@@ -69,8 +70,8 @@ function RowMenuItem({
       }}
       variant={tone}
     >
-      {Icon && <Icon aria-hidden="true" className={cn({ 'opacity-50': flagged })} />}
-      <span className={cn({ 'opacity-50': flagged })}>{label}</span>
+      {Icon && <Icon aria-hidden="true" className={cn({ 'opacity-50': blocked })} />}
+      <span className={cn({ 'opacity-50': blocked })}>{label}</span>
       {flagged && (
         <span className="ml-auto flex pl-2">
           <TriangleAlert aria-hidden="true" className="text-warning" />
