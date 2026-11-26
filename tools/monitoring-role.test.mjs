@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   chmodSync,
   mkdtempSync,
@@ -38,8 +38,9 @@ const stubMigrationImage = "eli-monitoring-role-test-migrations:local";
 let workDirectory;
 let network;
 let container;
+let dockerShimDirectory;
 
-function postgresEnvironmentFile(monitoringPassword) {
+function postgresEnvironmentContents({ monitoringKeys }) {
   return [
     `POSTGRES_DB=${database}`,
     `POSTGRES_USER=${bootstrapUser.name}`,
@@ -49,14 +50,25 @@ function postgresEnvironmentFile(monitoringPassword) {
     "APP_DB_APP_PASSWORD=application-password",
     `APP_DB_MIGRATION_USER=${migrationUser.name}`,
     `APP_DB_MIGRATION_PASSWORD=${migrationUser.password}`,
-    ...(monitoringPassword
-      ? [
-          `APP_DB_MONITORING_USER=${monitoringUser}`,
-          `APP_DB_MONITORING_PASSWORD=${monitoringPassword}`,
-        ]
-      : []),
+    ...(monitoringKeys ?? []),
     "",
   ].join("\n");
+}
+
+function postgresEnvironmentWithMonitoringRole({ user, password }) {
+  return postgresEnvironmentContents({
+    monitoringKeys: [
+      `APP_DB_MONITORING_USER=${user}`,
+      `APP_DB_MONITORING_PASSWORD=${password}`,
+    ],
+  });
+}
+
+function postgresEnvironmentWithMonitoringPassword(password) {
+  return postgresEnvironmentWithMonitoringRole({
+    user: monitoringUser,
+    password,
+  });
 }
 
 // The real deploy pulls the migration image from a registry; this stand-in
@@ -86,6 +98,7 @@ function buildStubMigrationImage() {
 
 function writeDockerPullShim() {
   const shimDirectory = join(workDirectory, "shim");
+  dockerShimDirectory = shimDirectory;
   const realDocker = execFileSync("which", ["docker"], {
     encoding: "utf8",
   }).trim();
@@ -95,26 +108,24 @@ function writeDockerPullShim() {
     `#!/bin/sh\n[ "$1" = pull ] && exit 0\nexec "${realDocker}" "$@"\n`,
   );
   chmodSync(join(shimDirectory, "docker"), 0o755);
-
-  return shimDirectory;
 }
 
-function runMigrationScript(monitoringPassword) {
+function runMigrationScript(postgresEnvironment) {
   const postgresEnvFile = join(workDirectory, "postgres.env");
-  writeFileSync(postgresEnvFile, postgresEnvironmentFile(monitoringPassword));
+  writeFileSync(postgresEnvFile, postgresEnvironment);
 
   try {
     execFileSync("bash", [migrationScript], {
       encoding: "utf8",
       stdio: "pipe",
       env: {
-        PATH: `${join(workDirectory, "shim")}:${process.env.PATH}`,
+        PATH: `${dockerShimDirectory}:${process.env.PATH}`,
         HOME: process.env.HOME,
         DEPLOY_ENV: "test",
         MIGRATION_IMAGE: stubMigrationImage,
         POSTGRES_ENV_FILE: postgresEnvFile,
         APP_ENV_FILE: join(workDirectory, "absent-app.env"),
-        POSTGRES_CONTAINER_NAME: container.getName().replace(/^\//, ""),
+        POSTGRES_CONTAINER_NAME: containerName(),
         INTERNAL_NETWORK: network.getName(),
       },
     });
@@ -125,11 +136,25 @@ function runMigrationScript(monitoringPassword) {
   }
 }
 
+// Loopback connections are trusted by the image's pg_hba, so passwords are
+// only checked on the network address, as the exporter connects.
+function serverLog() {
+  const logs = spawnSync("docker", ["logs", containerName()], {
+    encoding: "utf8",
+  });
+
+  return `${logs.stdout}${logs.stderr}`;
+}
+
+function containerName() {
+  return container.getName().replace(/^\//, "");
+}
+
 async function psqlAs({ user, password, commands }) {
   const result = await container.exec(
     [
       "psql",
-      "--host=127.0.0.1",
+      `--host=${container.getIpAddress(network.getName())}`,
       `--username=${user}`,
       `--dbname=${database}`,
       "-tA",
@@ -157,7 +182,9 @@ beforeAll(async () => {
   buildStubMigrationImage();
   writeDockerPullShim();
 
-  const firstRun = runMigrationScript(firstPassword);
+  const firstRun = runMigrationScript(
+    postgresEnvironmentWithMonitoringPassword(firstPassword),
+  );
   expect(firstRun.exitCode, firstRun.output).toBe(0);
   await psqlAs({
     user: migrationUser.name,
@@ -260,7 +287,9 @@ describe("monitoring role", () => {
       const rotatedPassword = "rotatedmonitoringpassword";
 
       // act
-      const rerun = runMigrationScript(rotatedPassword);
+      const rerun = runMigrationScript(
+        postgresEnvironmentWithMonitoringPassword(rotatedPassword),
+      );
       const withOldPassword = await asMonitoringRole(firstPassword, "select 1");
       const withNewPassword = await asMonitoringRole(
         rotatedPassword,
@@ -274,9 +303,50 @@ describe("monitoring role", () => {
     },
   );
 
+  it("keeps the password out of the server log when the role cannot be created", async () => {
+    // arrange
+    const leakedPassword = "leakcanarypassword7731";
+    const reservedRoleName = "pg_reserved_monitoring";
+
+    // act
+    const run = runMigrationScript(
+      postgresEnvironmentWithMonitoringRole({
+        user: reservedRoleName,
+        password: leakedPassword,
+      }),
+    );
+    const log = serverLog();
+
+    // assert
+    expect(run.exitCode).not.toBe(0);
+    expect(log).toContain(reservedRoleName);
+    expect(log).not.toContain(leakedPassword);
+  });
+
+  it("refuses a monitoring role that is one of the other database roles", async () => {
+    // arrange
+    const environment = postgresEnvironmentWithMonitoringRole({
+      user: migrationUser.name,
+      password: "collidingpassword",
+    });
+
+    // act
+    const run = runMigrationScript(environment);
+    const migrationLogin = await psqlAs({
+      user: migrationUser.name,
+      password: migrationUser.password,
+      commands: ["select 1"],
+    });
+
+    // assert
+    expect(run.exitCode).not.toBe(0);
+    expect(run.output).toContain("must differ");
+    expect(migrationLogin).toEqual({ exitCode: 0, output: "1" });
+  });
+
   it("stops the deploy before any change when the monitoring keys are missing", () => {
     // arrange
-    const withoutMonitoringKeys = undefined;
+    const withoutMonitoringKeys = postgresEnvironmentContents({});
 
     // act
     const run = runMigrationScript(withoutMonitoringKeys);

@@ -106,8 +106,9 @@ load_metrics_bind_ip() {
 
   METRICS_BIND_IP="$(read_env_file_value "${OBSERVABILITY_ENV_FILE}" METRICS_BIND_IP)"
 
-  [[ -n "${METRICS_BIND_IP}" && "${METRICS_BIND_IP}" != "0.0.0.0" ]] \
-    || fail "METRICS_BIND_IP in ${OBSERVABILITY_ENV_FILE} must be one interface address, never empty or 0.0.0.0"
+  local octet='(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'
+  [[ "${METRICS_BIND_IP}" =~ ^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.${octet}\.${octet}$ ]] \
+    || fail "METRICS_BIND_IP in ${OBSERVABILITY_ENV_FILE} must be the host's Tailscale address (100.64.0.0/10)"
 
   export METRICS_BIND_IP
 }
@@ -328,7 +329,6 @@ EOF
 
 start_infrastructure() {
   prepare_postgres_data_root
-  write_postgres_exporter_env_file
 
   docker compose \
     --env-file /dev/null \
@@ -399,6 +399,7 @@ ACTIVE_ENV_FILE="${APP_DIR}/deploy-${ACTIVE_COLOR}.env"
 log "starting ${DEPLOY_ENV} deploy"
 log "active color=${ACTIVE_COLOR} target color=${TARGET_COLOR}"
 
+write_postgres_exporter_env_file
 start_infrastructure
 run_migrations
 write_stack_env_files

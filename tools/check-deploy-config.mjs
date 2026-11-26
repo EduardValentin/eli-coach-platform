@@ -13,7 +13,9 @@ const SCRIPTS = [
 const SAMPLE_EDGE_HOSTNAME = "app.example.com";
 const SAMPLE_STACK_COLOR = "blue";
 const SAMPLE_METRICS_BIND_IP = "100.64.0.1";
-const METRICS_PUBLISHER = "postgres-exporter";
+const SAMPLE_SUPERUSER_PASSWORD = "sample-superuser";
+const SAMPLE_MONITORING_USER = "sample-monitoring";
+const POSTGRES_EXPORTER_SERVICE = "postgres-exporter";
 const METRICS_PORT = 9187;
 const LOG_OPTIONS = { "max-size": "10m", "max-file": "5" };
 const FORBIDDEN_SERVICE_KEYS = [
@@ -65,8 +67,14 @@ function writeSampleComposeEnvironment(deployEnv, directory) {
   const exporterEnvFile = join(directory, "postgres-exporter.env");
   const composeEnvFile = join(directory, `${deployEnv}.compose.env`);
   writeFileSync(appEnvFile, "");
-  writeFileSync(postgresEnvFile, "POSTGRES_PASSWORD=sample-superuser\n");
-  writeFileSync(exporterEnvFile, "DATA_SOURCE_USER=sample-monitoring\n");
+  writeFileSync(
+    postgresEnvFile,
+    `POSTGRES_PASSWORD=${SAMPLE_SUPERUSER_PASSWORD}\n`,
+  );
+  writeFileSync(
+    exporterEnvFile,
+    `DATA_SOURCE_USER=${SAMPLE_MONITORING_USER}\n`,
+  );
   writeFileSync(
     composeEnvFile,
     [
@@ -140,7 +148,7 @@ function logCapProblems(where, logging = {}) {
 }
 
 function forbiddenKeysFor(name) {
-  return name === METRICS_PUBLISHER
+  return name === POSTGRES_EXPORTER_SERVICE
     ? FORBIDDEN_SERVICE_KEYS.filter((key) => key !== "ports")
     : FORBIDDEN_SERVICE_KEYS;
 }
@@ -234,24 +242,29 @@ function stripeRelayProblems({ settings, infrastructure }) {
     : [`test stripe relay does not ${forwardTo}`];
 }
 
+function publishesOnlyOnMetricsAddress(ports = []) {
+  const [published, ...others] = ports;
+
+  return (
+    others.length === 0 &&
+    published?.host_ip === SAMPLE_METRICS_BIND_IP &&
+    published?.target === METRICS_PORT &&
+    published?.published === String(METRICS_PORT)
+  );
+}
+
 function postgresExporterProblems({ deployEnv, infrastructure }) {
-  const exporter = infrastructure.services[METRICS_PUBLISHER];
-  const where = `${deployEnv} ${METRICS_PUBLISHER}`;
-  const [published, ...others] = exporter.ports ?? [];
+  const exporter = infrastructure.services[POSTGRES_EXPORTER_SERVICE];
+  const where = `${deployEnv} ${POSTGRES_EXPORTER_SERVICE}`;
   const problems = [];
 
-  if (
-    others.length > 0 ||
-    published?.host_ip !== SAMPLE_METRICS_BIND_IP ||
-    published?.target !== METRICS_PORT ||
-    published?.published !== String(METRICS_PORT)
-  ) {
+  if (!publishesOnlyOnMetricsAddress(exporter.ports)) {
     problems.push(
       `${where}: must publish exactly ${SAMPLE_METRICS_BIND_IP}:${METRICS_PORT}:${METRICS_PORT}`,
     );
   }
   if (
-    exporter.environment?.DATA_SOURCE_USER !== "sample-monitoring" ||
+    exporter.environment?.DATA_SOURCE_USER !== SAMPLE_MONITORING_USER ||
     "POSTGRES_PASSWORD" in (exporter.environment ?? {})
   ) {
     problems.push(
@@ -264,7 +277,7 @@ function postgresExporterProblems({ deployEnv, infrastructure }) {
   if (Object.keys(exporter.networks ?? {}).join() !== "internal") {
     problems.push(`${where}: must sit on the internal network only`);
   }
-  if (exporter.labels?.service !== METRICS_PUBLISHER) {
+  if (exporter.labels?.service !== POSTGRES_EXPORTER_SERVICE) {
     problems.push(`${where}: service label is ${exporter.labels?.service}`);
   }
 
