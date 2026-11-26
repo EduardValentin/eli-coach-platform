@@ -1,7 +1,17 @@
+# One file for TEST and PROD. `DEPLOY_ENV` (test|prod) names the containers,
+# the internal network and the `env` label; the rest of deploy/env/<env>.env
+# supplies the runtime values. Services that exist on TEST only carry
+# `profiles: ["test"]`, and every deploy command passes `--profile "$DEPLOY_ENV"`.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
 services:
   platform:
     image: ${PLATFORM_IMAGE}
-    container_name: eli-coach-platform-test-platform-${STACK_COLOR}
+    container_name: eli-coach-platform-${DEPLOY_ENV:?DEPLOY_ENV is required}-platform-${STACK_COLOR}
     restart: unless-stopped
     mem_limit: 1536m
     # Every application secret and Clerk runtime var (CLERK_PUBLISHABLE_KEY,
@@ -18,8 +28,8 @@ services:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
     environment:
       APP_NAME: eli-coach-platform
-      APP_BASE_PATH: /eli-coach-platform
-      ENVIRONMENT: test
+      APP_BASE_PATH: ${APP_BASE_PATH:?APP_BASE_PATH is required}
+      ENVIRONMENT: ${ENVIRONMENT:?ENVIRONMENT is required}
       PORT: "3000"
       STORE_ASSET_ROOT: /srv/store-assets
       CLIENT_MEDIA_PROVIDER: filesystem
@@ -33,9 +43,10 @@ services:
       - ${CLIENT_RESOURCE_ROOT_HOST}:/srv/client-resources
       - ${EXERCISE_VIDEO_ROOT_HOST}:/srv/exercise-videos
       - ${RECIPE_PHOTO_ROOT_HOST}:/srv/recipe-photos
+    logging: *logging
     labels:
       logging: promtail
-      env: test
+      env: ${DEPLOY_ENV}
       app: eli-coach-platform
       service: platform
       host: ${HOST_LABEL}
@@ -45,11 +56,13 @@ services:
 
   design-reference:
     image: ${DESIGN_REFERENCE_IMAGE}
-    container_name: eli-coach-platform-test-design-reference-${STACK_COLOR}
+    container_name: eli-coach-platform-${DEPLOY_ENV}-design-reference-${STACK_COLOR}
+    profiles: ["test"]
     restart: unless-stopped
+    logging: *logging
     labels:
       logging: promtail
-      env: test
+      env: ${DEPLOY_ENV}
       app: eli-coach-platform
       service: design-reference
       host: ${HOST_LABEL}
@@ -62,4 +75,4 @@ networks:
     name: edge_default
   internal:
     external: true
-    name: eli-coach-platform-test-internal
+    name: eli-coach-platform-${DEPLOY_ENV}-internal

@@ -55,7 +55,7 @@ Progress photos live in a second private root, configured by
 `CLIENT_MEDIA_ROOT` when `CLIENT_MEDIA_PROVIDER=filesystem`. Local development
 uses the gitignored `local/client-media/` directory, created by
 `pnpm client:media:local:prepare`. TEST sets both values in
-`deploy/test/docker-compose.application.yml` and bind-mounts the persistent
+`deploy/docker-compose.application.yml` and bind-mounts the persistent
 host directory `/srv/client-media/eli-coach-platform`, which the deploy script
 creates, at `/srv/client-media` as read-write in both blue and green platform
 containers. Like the store root, it must never be served by the edge proxy:
@@ -69,7 +69,7 @@ placeholder. The root holds plain private files. Unlike progress photos they are
 not encrypted, so it needs no key. Local development uses the gitignored
 `local/client-resources/` directory, created by
 `pnpm client:resources:local:prepare`. TEST sets the value in
-`deploy/test/docker-compose.application.yml` and bind-mounts the persistent
+`deploy/docker-compose.application.yml` and bind-mounts the persistent
 host directory `/srv/client-resources/eli-coach-platform`, which the deploy
 script creates, at `/srv/client-resources` as read-write in both blue and green
 platform containers. It must never be served by the edge proxy: the application
@@ -82,7 +82,7 @@ a production runtime rejects the `replace-me` placeholder, and it holds plain
 private files: coaching content, not client data, so it is not encrypted. Local
 development uses the gitignored `local/exercise-videos/` directory, created by
 `pnpm exercise:videos:local:prepare`. TEST sets the value in
-`deploy/test/docker-compose.application.yml` and bind-mounts the persistent host
+`deploy/docker-compose.application.yml` and bind-mounts the persistent host
 directory `/srv/exercise-videos/eli-coach-platform`, which the deploy script
 creates, at `/srv/exercise-videos` as read-write in both blue and green platform
 containers. It must never be served by the edge proxy: the application streams
@@ -95,7 +95,7 @@ switch, a production runtime rejects the `replace-me` placeholder, and it holds
 plain private files: coaching content, not client data, so it is not encrypted.
 Local development uses the gitignored `local/recipe-photos/` directory, created
 by `pnpm recipe:photos:local:prepare`. TEST sets the value in
-`deploy/test/docker-compose.application.yml` and bind-mounts the persistent host
+`deploy/docker-compose.application.yml` and bind-mounts the persistent host
 directory `/srv/recipe-photos/eli-coach-platform`, which the deploy script
 creates, at `/srv/recipe-photos` as read-write in both blue and green platform
 containers. It must never be served by the edge proxy: the application serves a
@@ -142,7 +142,7 @@ It should also expose the Clerk identity provider configuration:
 
 See [CLERK.md](CLERK.md) for the full per-environment contract, the Clerk
 Dashboard configuration this app assumes, and the opt-in TEST webhook relay
-(`deploy/test/docker-compose.webhook-relay.yml`), which needs its own
+(`deploy/docker-compose.clerk-webhook-relay.yml`), which needs its own
 `CLERK_WEBHOOK_RELAY_TOKEN` in the same runtime file.
 
 Store publishing needs no runtime secret of its own: the publishing agent holds
@@ -195,7 +195,7 @@ The per-environment values of both secrets are provisioned by `terraform-infra` 
 
 Webhook delivery differs per environment:
 
-- **TEST** has no public DNS, so Stripe cannot post to it. The `stripe-webhook-relay` service in `deploy/test/docker-compose.infrastructure.yml` runs `stripe listen` inside the stack and starts with every deploy beside postgres: it dials out to Stripe with `STRIPE_SECRET_KEY`, receives the account's test-mode `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `invoice.paid`, `invoice.payment_failed`, `payment_method.attached`, `payment_method.automatically_updated` and `payment_method.detached` events and forwards them to the app over the compose network with the CLI's own signature. No Dashboard endpoint is registered for TEST. The signing secret is derived from the API key: run `stripe listen --api-key <the TEST STRIPE_SECRET_KEY> --print-secret` once and put its output in the TEST env file as `STRIPE_WEBHOOK_SIGNING_SECRET`; a rotated key needs the command run again. The key must be one `stripe listen` accepts (a test-mode secret key, or a restricted key that the command accepts on a dry run). Events that arrive while the relay is down are not redelivered: `stripe listen` has no redelivery, so the platform's copy of a subscription lags until Stripe sends the next event for it.
+- **TEST** has no public DNS, so Stripe cannot post to it. The `stripe-webhook-relay` service in `deploy/docker-compose.infrastructure.yml` runs `stripe listen` inside the stack and starts with every deploy beside postgres: it dials out to Stripe with `STRIPE_SECRET_KEY`, receives the account's test-mode `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `invoice.paid`, `invoice.payment_failed`, `payment_method.attached`, `payment_method.automatically_updated` and `payment_method.detached` events and forwards them to the app over the compose network with the CLI's own signature. No Dashboard endpoint is registered for TEST. The signing secret is derived from the API key: run `stripe listen --api-key <the TEST STRIPE_SECRET_KEY> --print-secret` once and put its output in the TEST env file as `STRIPE_WEBHOOK_SIGNING_SECRET`; a rotated key needs the command run again. The key must be one `stripe listen` accepts (a test-mode secret key, or a restricted key that the command accepts on a dry run). Events that arrive while the relay is down are not redelivered: `stripe listen` has no redelivery, so the platform's copy of a subscription lags until Stripe sends the next event for it.
 - **PROD** has a public domain, so Stripe posts to the Dashboard endpoint `<PUBLIC_APP_URL>/api/stripe/webhooks` (live mode) and the relay does not run. Register it for the `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `invoice.paid`, `invoice.payment_failed`, `payment_method.attached`, `payment_method.automatically_updated` and `payment_method.detached` events; that endpoint's signing secret becomes `STRIPE_WEBHOOK_SIGNING_SECRET`. Where the app is served under a mount path, the path precedes `/api/`.
 
 Each deployed environment's Stripe Dashboard (test mode for TEST, live mode for PROD) also needs these settings, which nothing in the app can set or check:

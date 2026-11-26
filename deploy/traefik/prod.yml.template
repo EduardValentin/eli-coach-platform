@@ -1,0 +1,42 @@
+http:
+  routers:
+    eli-coach-platform-prod-platform:
+      entryPoints:
+        - websecure
+      middlewares:
+        - secure-headers@file
+      rule: Host(`__EDGE_HOSTNAME__`)
+      service: eli-coach-platform-prod-platform
+      tls:
+        certResolver: letsencrypt
+
+    eli-coach-platform-prod-platform-www:
+      entryPoints:
+        - websecure
+      middlewares:
+        - eli-coach-platform-prod-www-to-apex
+      rule: Host(`www.__EDGE_HOSTNAME__`)
+      service: eli-coach-platform-prod-platform
+      tls:
+        certResolver: letsencrypt
+
+    eli-coach-platform-prod-platform-http:
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https@file
+      rule: Host(`__EDGE_HOSTNAME__`) || Host(`www.__EDGE_HOSTNAME__`)
+      service: eli-coach-platform-prod-platform
+
+  middlewares:
+    eli-coach-platform-prod-www-to-apex:
+      redirectRegex:
+        regex: ^https://www\.([^/]+)(.*)
+        replacement: https://${1}${2}
+        permanent: true
+
+  services:
+    eli-coach-platform-prod-platform:
+      loadBalancer:
+        servers:
+          - url: http://eli-coach-platform-prod-platform-__STACK_COLOR__:3000

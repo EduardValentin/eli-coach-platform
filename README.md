@@ -30,11 +30,11 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
     /composition-root  container, runtime environment, root middleware,
                    resource routes no surface owns
     /types         ambient type declarations
-/deploy          per-environment Compose stacks
+/deploy          Compose stacks, Traefik templates and non-secret settings shared by TEST and PROD
 /docker          image definitions
 /docs            database, secret, store-publishing, and web-session guides
-/scripts         local development and secret helpers, plus the deploy scripts CI ships to the TEST host
-/tools           boundary rules, their fixture self-tests, and the layout and deploy checks
+/scripts         local development and secret helpers, plus the deploy scripts CI ships to the app hosts
+/tools           boundary rules, their fixture self-tests, and the layout and deploy checks (`pnpm check:deploy-config` renders both environments' deploy files)
 /designs/react-reference-app
 ```
 

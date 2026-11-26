@@ -1,7 +1,16 @@
+# One file for TEST and PROD, selected by `DEPLOY_ENV` and `--profile`; see
+# docker-compose.application.yml. PROD runs postgres only.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
 services:
   postgres:
     image: ${POSTGRES_RUNTIME_IMAGE}
-    container_name: eli-coach-platform-test-postgres
+    container_name: eli-coach-platform-${DEPLOY_ENV:?DEPLOY_ENV is required}-postgres
+    logging: *logging
     restart: unless-stopped
     env_file:
       - ${POSTGRES_ENV_FILE:-/srv/postgres/eli-coach-platform.env}
@@ -18,7 +27,7 @@ services:
   # from the API key, so `stripe listen --api-key "$STRIPE_SECRET_KEY"
   # --print-secret` prints the value `STRIPE_WEBHOOK_SIGNING_SECRET` must
   # hold; rotating the key changes the secret. The app is mounted under
-  # /eli-coach-platform on TEST, so the forward path carries the base path.
+  # TEST's base path, so the forward path carries it.
   # Stripe does not redeliver events the relay missed while it was down. One
   # instance for the whole host, so it lives beside postgres rather than in the
   # blue/green application stack; the deploy script brings it up every release.
@@ -26,7 +35,9 @@ services:
     # Pinned to the digest of the v1.35.0 release, the CLI version verified
     # locally; bump deliberately.
     image: stripe/stripe-cli@sha256:8c600a76e784d667c0557d0482b3c3dd53b89576ed8c512074c56e17569dc9b9
-    container_name: eli-coach-platform-test-stripe-webhook-relay
+    container_name: eli-coach-platform-${DEPLOY_ENV}-stripe-webhook-relay
+    profiles: ["test"]
+    logging: *logging
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
@@ -40,10 +51,10 @@ services:
         exec stripe listen
         --api-key "$${STRIPE_SECRET_KEY}"
         --events checkout.session.completed,customer.subscription.updated,customer.subscription.deleted,charge.refunded,invoice.paid,invoice.payment_failed,payment_method.attached,payment_method.automatically_updated,payment_method.detached
-        --forward-to http://platform:3000/eli-coach-platform/api/stripe/webhooks
+        --forward-to http://platform:3000${APP_BASE_PATH:?APP_BASE_PATH is required}/api/stripe/webhooks
     labels:
       logging: promtail
-      env: test
+      env: ${DEPLOY_ENV}
       app: eli-coach-platform
       service: stripe-webhook-relay
       host: ${HOST_LABEL}
@@ -52,4 +63,4 @@ services:
 
 networks:
   internal:
-    name: eli-coach-platform-test-internal
+    name: eli-coach-platform-${DEPLOY_ENV}-internal
