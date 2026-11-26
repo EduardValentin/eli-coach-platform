@@ -198,20 +198,17 @@ describe("coming-soon mode", () => {
   it("lets the management API answer for itself", async () => {
     // arrange
     const authorization = await rig.authorizeStorePublishing();
-    const target = suite.url("/api/management/store/product-validations");
+    const target = suite.url("/api/management/store/products");
 
     // act
     const withCredentials = await suite.request(
-      new Request(target, { headers: { authorization }, method: "POST" }),
+      new Request(target, { headers: { authorization } }),
     );
-    const withoutCredentials = await suite.request(
-      new Request(target, { method: "POST" }),
-    );
+    const withoutCredentials = await suite.request(new Request(target));
 
     // assert
     expect(withoutCredentials.status).toBe(403);
-    expect(withCredentials.status).not.toBe(403);
-    expect(withCredentials.status).not.toBe(404);
+    expect(withCredentials.status).toBe(405);
   });
 });
 

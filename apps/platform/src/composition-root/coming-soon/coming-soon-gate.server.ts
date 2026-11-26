@@ -29,10 +29,7 @@ const OPEN_PATTERN_PREFIXES = [`${STORE_MANAGEMENT_API_PATH}/`] as const;
 
 const PAGE_METHODS: ReadonlySet<string> = new Set(["GET", "HEAD"]);
 const FILE_EXTENSION = /\.[A-Za-z0-9]+$/;
-// No route names this URL, so only the URL can say it is not a page. Reading
-// it here can only turn a 200 into a 404.
 const CATCH_ALL_PATTERN = "/*";
-const NON_PAGE_URL_PATH = /\/api\/|\.[A-Za-z0-9]+$/;
 const SINGLE_FETCH_SUFFIX = ".data";
 
 type MiddlewareArgs = Parameters<MiddlewareFunction<Response>>[0];
@@ -80,7 +77,16 @@ export class ComingSoonGate {
       !routePath.startsWith(API_PATH_PREFIX) &&
       !FILE_EXTENSION.test(routePath) &&
       !pathname.endsWith(SINGLE_FETCH_SUFFIX) &&
-      !(routePath === CATCH_ALL_PATTERN && NON_PAGE_URL_PATH.test(pathname))
+      !this.isUnmatchedNonPage(routePath, pathname)
+    );
+  }
+
+  // No route names an unmatched URL, so only the URL can say it is not a
+  // page. Reading it here can only turn a 200 into a 404.
+  private isUnmatchedNonPage(routePath: string, pathname: string): boolean {
+    return (
+      routePath === CATCH_ALL_PATTERN &&
+      (pathname.includes(API_PATH_PREFIX) || FILE_EXTENSION.test(pathname))
     );
   }
 
