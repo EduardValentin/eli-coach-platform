@@ -112,6 +112,8 @@ require_env APP_DB_APP_USER
 require_env APP_DB_APP_PASSWORD
 require_env APP_DB_MIGRATION_USER
 require_env APP_DB_MIGRATION_PASSWORD
+require_env APP_DB_MONITORING_USER
+require_env APP_DB_MONITORING_PASSWORD
 
 DATABASE_MIGRATION_URL="${DATABASE_MIGRATION_URL:-postgresql://${APP_DB_MIGRATION_USER}:${APP_DB_MIGRATION_PASSWORD}@${POSTGRES_RUNTIME_HOST}:${POSTGRES_RUNTIME_PORT}/${POSTGRES_DB}}"
 
@@ -154,10 +156,35 @@ stream_rendered_bootstrap_sql() {
     -e "s|:'app_db_migration_password'|${migration_password}|g"
 }
 
+stream_rendered_monitoring_role_sql() {
+  local monitoring_user=""
+  local monitoring_password=""
+
+  monitoring_user="$(quote_sql_literal "${APP_DB_MONITORING_USER}")"
+  monitoring_password="$(quote_sql_literal "${APP_DB_MONITORING_PASSWORD}")"
+
+  stream_file_from_migration_image "${MIGRATION_WORKDIR}/sql/monitoring-role.sql" | sed \
+    -e "s|:'app_db_monitoring_user'|${monitoring_user}|g" \
+    -e "s|:'app_db_monitoring_password'|${monitoring_password}|g"
+}
+
 bootstrap_database() {
   log "bootstrapping database roles and grants"
 
   stream_rendered_bootstrap_sql | docker exec -i \
+    -e PGPASSWORD="${POSTGRES_PASSWORD}" \
+    "${POSTGRES_CONTAINER_NAME}" \
+    psql \
+      --host 127.0.0.1 \
+      --username "${POSTGRES_USER}" \
+      --dbname "${POSTGRES_DB}" \
+      --set ON_ERROR_STOP=1
+}
+
+bootstrap_monitoring_role() {
+  log "bootstrapping the read-only monitoring role"
+
+  stream_rendered_monitoring_role_sql | docker exec -i \
     -e PGPASSWORD="${POSTGRES_PASSWORD}" \
     "${POSTGRES_CONTAINER_NAME}" \
     psql \
@@ -177,4 +204,5 @@ run_drizzle_migrations() {
 }
 
 bootstrap_database
+bootstrap_monitoring_role
 run_drizzle_migrations
