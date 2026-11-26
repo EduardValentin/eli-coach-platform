@@ -129,6 +129,7 @@ export function InstagramWidget() {
 
   return (
     <PhoneFrame
+      aria-label="Instagram story preview"
       statusBarVariant="light"
       className="w-full max-w-[280px] lg:max-w-[340px] aspect-[9/16] shrink-0 mx-auto lg:mx-0"
     >
@@ -164,7 +165,7 @@ export function InstagramWidget() {
         />
       </div>
 
-      <div className="absolute top-12 left-0 right-0 px-4 flex gap-1 z-40 pointer-events-none">
+      <div aria-hidden="true" className="absolute top-12 left-0 right-0 px-4 flex gap-1 z-40 pointer-events-none">
         {stories.map((_, idx) => (
           <div key={idx} className="h-[3px] flex-1 bg-white/30 rounded-full overflow-hidden">
             <div
@@ -188,7 +189,15 @@ export function InstagramWidget() {
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="text-white text-sm font-medium">eli.fitness</span>
+          <a
+            href="https://www.instagram.com/elilungu_"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            className="pointer-events-auto text-white text-sm font-medium"
+          >
+            eli.fitness
+          </a>
           <span className="text-surface-inverted-foreground text-xs ml-1">4h</span>
         </div>
         {shouldReduceMotion ? null : (

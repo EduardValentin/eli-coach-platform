@@ -253,27 +253,25 @@ export function PublicHero(props: PublicHeroProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <div>
-                  <Link
-                    className={cn(
-                      buttonVariants({
-                        elevation: "raised",
-                        lettering: "caps",
-                        press: "scale",
-                        textSize: "sm",
-                        weight: "semibold",
-                      }),
-                      "group",
-                    )}
-                    to={BOOK_PATH}
-                  >
-                    See if we’re a fit
-                    <ChevronRight
-                      aria-hidden="true"
-                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                    />
-                  </Link>
-                </div>
+                <Link
+                  className={cn(
+                    buttonVariants({
+                      elevation: "raised",
+                      lettering: "caps",
+                      press: "scale",
+                      textSize: "sm",
+                      weight: "semibold",
+                    }),
+                    "group",
+                  )}
+                  to={BOOK_PATH}
+                >
+                  See if we’re a fit
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
                 <p className="text-sm font-light tracking-wide text-text-inverted-secondary">
                   Free 30-minute call.
                 </p>
