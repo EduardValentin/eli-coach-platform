@@ -46,10 +46,10 @@ catalogs:
     '@react-router/dev':
       specifier: 8.5.1
       version: 8.5.1
-    '@react-router/node':
+    '@react-router/express':
       specifier: 8.5.1
       version: 8.5.1
-    '@react-router/serve':
+    '@react-router/node':
       specifier: 8.5.1
       version: 8.5.1
     '@tailwindcss/vite':
@@ -112,6 +112,9 @@ catalogs:
     eslint-plugin-jsx-a11y:
       specifier: 6.10.2
       version: 6.10.2
+    express:
+      specifier: 5.3.0
+      version: 5.3.0
     file-type:
       specifier: 22.3.0
       version: 22.3.0
@@ -133,6 +136,9 @@ catalogs:
     lucide-react:
       specifier: 1.64.0
       version: 1.64.0
+    morgan:
+      specifier: 1.10.1
+      version: 1.10.1
     motion:
       specifier: 14.8.0
       version: 14.8.0
@@ -327,10 +333,10 @@ importers:
       '@napi-rs/canvas':
         specifier: 1.0.13
         version: 1.0.13
-      '@react-router/node':
+      '@react-router/express':
         specifier: 'catalog:'
-        version: 8.5.1(react-router@8.5.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(typescript@6.0.3)
-      '@react-router/serve':
+        version: 8.5.1(express@5.3.0)(react-router@8.5.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(typescript@6.0.3)
+      '@react-router/node':
         specifier: 'catalog:'
         version: 8.5.1(react-router@8.5.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(typescript@6.0.3)
       '@tokenizer/inflate':
@@ -348,9 +354,15 @@ importers:
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
+      compression:
+        specifier: 1.8.2
+        version: 1.8.2
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      express:
+        specifier: 'catalog:'
+        version: 5.3.0
       file-type:
         specifier: 'catalog:'
         version: 22.3.0
@@ -360,6 +372,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 1.64.0(@types/react@19.3.0)(react@19.3.1)
+      morgan:
+        specifier: 'catalog:'
+        version: 1.10.1
       motion:
         specifier: 'catalog:'
         version: 14.8.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -5765,10 +5780,6 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  side-channel-list@1.0.0:
-    resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
-    engines: {node: '>= 0.4'}
-
   side-channel-list@1.0.1:
     resolution: {integrity: sha512-mjn/0bi/oUURjc5Xl7IaWi/OJJJumuoJFQJfDDyO46+hBWsfaVM65TBHq2eoZBhzl9EchxOijpkbRC8SVBQU0w==}
     engines: {node: '>= 0.4'}
@@ -5779,10 +5790,6 @@ packages:
 
   side-channel-weakmap@1.0.2:
     resolution: {integrity: sha512-WPS/HvHQTYnHisLo9McqBHOJk2FkHO/tlpvldyrnem4aeQp4hai3gythswg6p01oSoTl58rcpiFAjF2br2Ak2A==}
-    engines: {node: '>= 0.4'}
-
-  side-channel@1.1.0:
-    resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
 
   side-channel@1.1.1:
@@ -8426,6 +8433,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+    optional: true
 
   '@remix-run/node-fetch-server@0.14.2': {}
 
@@ -10318,7 +10326,7 @@ snapshots:
     dependencies:
       es-errors: 1.3.0
       hasown: 2.0.2
-      side-channel: 1.1.0
+      side-channel: 1.1.1
 
   interpret@3.1.1: {}
 
@@ -11809,11 +11817,6 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  side-channel-list@1.0.0:
-    dependencies:
-      es-errors: 1.3.0
-      object-inspect: 1.13.4
-
   side-channel-list@1.0.1:
     dependencies:
       es-errors: 1.3.0
@@ -11833,14 +11836,6 @@ snapshots:
       get-intrinsic: 1.3.0
       object-inspect: 1.13.4
       side-channel-map: 1.0.1
-
-  side-channel@1.1.0:
-    dependencies:
-      es-errors: 1.3.0
-      object-inspect: 1.13.4
-      side-channel-list: 1.0.0
-      side-channel-map: 1.0.1
-      side-channel-weakmap: 1.0.2
 
   side-channel@1.1.1:
     dependencies:

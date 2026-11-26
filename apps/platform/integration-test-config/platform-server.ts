@@ -12,7 +12,7 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const platformDirectory = resolve(currentDirectory, "..");
 
 /** The command a deployed container runs — see docker/Dockerfile.react-router. */
-const SERVE_BINARY_PATH = "node_modules/@react-router/serve/bin.cjs";
+const SERVER_ENTRY_PATH = "server.mjs";
 const SERVER_BUILD_PATH = "build/server/index.js";
 /**
  * The rig's wall-clock seam, loaded before a single application module is. It
@@ -61,7 +61,7 @@ export type PlatformServerOptions = {
 
 /**
  * The application as it is deployed: the production build, served by the same
- * binary the container's CMD names, in its own process, reached over HTTP.
+ * entry the container's CMD names, in its own process, reached over HTTP.
  * Nothing here imports the application, so nothing here can assemble a version
  * of it that no deployment would produce.
  */
@@ -204,7 +204,7 @@ export class PlatformServer {
       [
         "--import",
         SERVER_CLOCK_PRELOAD_URL,
-        SERVE_BINARY_PATH,
+        SERVER_ENTRY_PATH,
         SERVER_BUILD_PATH,
       ],
       {

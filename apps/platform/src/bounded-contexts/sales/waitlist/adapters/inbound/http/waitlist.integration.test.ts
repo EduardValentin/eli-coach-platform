@@ -25,6 +25,7 @@ const activeOffer = {
 const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
 const AVAILABLE_LABEL = "Reduced-price spots available";
 const NORMAL_MODE_CTA = "Book a free call";
+const PUBLIC_HOST = "platform.example";
 /**
  * A moment inside a named availability bucket, and that bucket's own start.
  * The server derives the bucket it reads from its own clock, so pinning that
@@ -107,6 +108,18 @@ describe("waitlist API integration", () => {
     expect(normalModeDocument).not.toContain(AVAILABLE_LABEL);
     expect(waitlistModeResponse.status).toBe(200);
     expect(waitlistModeDocument).toContain(AVAILABLE_LABEL);
+  });
+
+  it("accepts a browser signup that reaches the server through the TLS-terminating proxy", async () => {
+    // arrange
+    const email = "eli@example.com";
+
+    // act
+    const response = await requestJoinThroughTlsProxy(email);
+
+    // assert
+    expect(response.status).toBe(201);
+    await expect(readWaitlistEntries(email)).resolves.toHaveLength(1);
   });
 
   it("treats a missing persisted mode as disabled", async () => {
@@ -711,6 +724,27 @@ async function requestJoin(
     new Request(suite.url("/api/waitlist"), {
       body,
       headers: { "content-type": "application/x-www-form-urlencoded" },
+      method: "POST",
+    }),
+  );
+}
+
+async function requestJoinThroughTlsProxy(email: string): Promise<Response> {
+  return suite.request(
+    new Request(suite.url("/api/waitlist.data"), {
+      body: new URLSearchParams({
+        "cf-turnstile-response": waitlistSubmissionToken,
+        email,
+      }),
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        origin: `https://${PUBLIC_HOST}`,
+        "sec-fetch-site": "same-origin",
+        // fetch cannot replace Host, whose port the server would otherwise
+        // keep, so the forwarded host names the port a proxy leaves implicit.
+        "x-forwarded-host": `${PUBLIC_HOST}:443`,
+        "x-forwarded-proto": "https",
+      },
       method: "POST",
     }),
   );
