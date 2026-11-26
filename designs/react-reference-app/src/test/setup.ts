@@ -25,6 +25,10 @@ Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false);
 Element.prototype.setPointerCapture = vi.fn();
 Element.prototype.releasePointerCapture = vi.fn();
 
+// jsdom implements no media playback; its play() returns no promise.
+HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+HTMLMediaElement.prototype.pause = vi.fn();
+
 Range.prototype.getBoundingClientRect = () => new DOMRect();
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
 

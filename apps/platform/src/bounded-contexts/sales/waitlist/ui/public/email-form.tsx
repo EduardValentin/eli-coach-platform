@@ -82,7 +82,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
                     className={cn(emailFieldClassName, {
                       "border-control-border-soft bg-surface-base text-text-primary placeholder:text-placeholder-soft":
                         !isDark,
-                      "border-surface-base/20 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/50 backdrop-blur-md":
+                      "border-surface-base/20 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/70 backdrop-blur-md":
                         isDark,
                     })}
                     disabled={submission.isSubmitting}

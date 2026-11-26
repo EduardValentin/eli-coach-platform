@@ -15,12 +15,9 @@ import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/e
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
+import { HERO_POSTER_PATH, HERO_VIDEO_SOURCES } from "./hero-media";
+
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
-const HERO_VIDEO_POSTER_PATH = "media/hero/hero-training-poster.jpg";
-const HERO_VIDEO_SOURCES = [
-  { path: "media/hero/hero-training-loop.webm", type: "video/webm" },
-  { path: "media/hero/hero-training-loop.mp4", type: "video/mp4" },
-];
 
 type PublicHeroProps = {
   botDetection: BotDetectionConfig;
@@ -39,17 +36,23 @@ function isDataSaverEnabled() {
   return connection?.saveData === true;
 }
 
-function useShouldLoadHeroVideo() {
+function useHeroVideoLoading() {
   const prefersReducedMotion = useClientReducedMotionPreference();
-  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isSavingData, setIsSavingData] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion || isDataSaverEnabled()) {
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    if (isDataSaverEnabled()) {
+      setIsSavingData(true);
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setShouldLoadVideo(true);
+      setIsLoaded(true);
     }, HERO_VIDEO_LOAD_DELAY_MS);
 
     return () => {
@@ -57,15 +60,15 @@ function useShouldLoadHeroVideo() {
     };
   }, [prefersReducedMotion]);
 
-  return shouldLoadVideo;
+  return { isLoaded, isWithheld: prefersReducedMotion || isSavingData };
 }
 
 export function PublicHero(props: PublicHeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const shouldReduceMotion = useClientReducedMotionPreference();
-  const shouldLoadVideo = useShouldLoadHeroVideo();
+  const heroVideo = useHeroVideoLoading();
+  const shouldLoadVideo = heroVideo.isLoaded;
   const [playRequested, setPlayRequested] = useState(true);
-  const isPlaying = !shouldReduceMotion && playRequested;
+  const isPlaying = !heroVideo.isWithheld && playRequested;
   const { isClosed, isUnavailable, mode } = props.waitlist;
 
   useEffect(() => {
@@ -96,7 +99,7 @@ export function PublicHero(props: PublicHeroProps) {
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
 
-      if (!shouldReduceMotion) {
+      if (!heroVideo.isWithheld) {
         void videoRef.current.play().catch(() => {
           setPlayRequested(false);
         });
@@ -108,37 +111,49 @@ export function PublicHero(props: PublicHeroProps) {
 
   return (
     <section
-      className="relative flex h-screen min-h-[600px] w-full items-center justify-center overflow-hidden bg-surface-inverted"
+      className="relative flex min-h-[max(100vh,600px)] w-full items-center justify-center overflow-hidden bg-surface-inverted"
       data-parity-root="Hero"
       data-surface="inverted"
     >
       <MotionConfig reducedMotion="user">
-        <div aria-hidden="true" className="absolute inset-0 h-full w-full">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full"
+          data-parity="hero-media"
+        >
           <video
             ref={videoRef}
             autoPlay={shouldLoadVideo && isPlaying}
             className="h-full w-full object-cover opacity-60"
+            data-parity="hero-video"
             loop
             muted
             playsInline
-            poster={appUrl(HERO_VIDEO_POSTER_PATH)}
+            poster={appUrl(HERO_POSTER_PATH)}
             preload="none"
           >
             {shouldLoadVideo
               ? HERO_VIDEO_SOURCES.map((source) => (
                   <source
-                    key={source.type}
+                    key={source.path}
+                    media={source.media}
                     src={appUrl(source.path)}
                     type={source.type}
                   />
                 ))
               : null}
           </video>
-          <div className="absolute inset-0 bg-linear-to-t from-surface-inverted via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-surface-inverted/30" />
+          <div
+            className="absolute inset-0 bg-linear-to-t from-surface-inverted via-transparent to-transparent"
+            data-parity="hero-gradient"
+          />
+          <div
+            className="absolute inset-0 bg-surface-inverted/55"
+            data-parity="hero-dim"
+          />
         </div>
 
-        <div className="relative z-10 flex w-full flex-col items-center justify-center px-6 text-center">
+        <div className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-[calc(var(--size-control-md)+2rem)] text-center">
           {props.waitlist.mode !== "disabled" ? (
             <div className="flex w-full flex-col items-center">
               {isClosed ? (
@@ -238,27 +253,25 @@ export function PublicHero(props: PublicHeroProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <div>
-                  <Link
-                    className={cn(
-                      buttonVariants({
-                        elevation: "raised",
-                        lettering: "caps",
-                        press: "scale",
-                        textSize: "sm",
-                        weight: "semibold",
-                      }),
-                      "group",
-                    )}
-                    to={BOOK_PATH}
-                  >
-                    See if we’re a fit
-                    <ChevronRight
-                      aria-hidden="true"
-                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                    />
-                  </Link>
-                </div>
+                <Link
+                  className={cn(
+                    buttonVariants({
+                      elevation: "raised",
+                      lettering: "caps",
+                      press: "scale",
+                      textSize: "sm",
+                      weight: "semibold",
+                    }),
+                    "group",
+                  )}
+                  to={BOOK_PATH}
+                >
+                  See if we’re a fit
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
                 <p className="text-sm font-light tracking-wide text-text-inverted-secondary">
                   Free 30-minute call.
                 </p>
@@ -267,10 +280,13 @@ export function PublicHero(props: PublicHeroProps) {
           )}
         </div>
 
-        <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-6 text-text-inverted/70">
+        <div
+          className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 text-text-inverted/70"
+          data-parity="hero-controls"
+        >
           <button
             aria-label={isPlaying ? "Pause hero video" : "Play hero video"}
-            className="transition-colors hover:text-text-inverted"
+            className={heroVideoControlClassName}
             onClick={isPlaying ? pauseVideo : playVideo}
             type="button"
           >
@@ -282,7 +298,7 @@ export function PublicHero(props: PublicHeroProps) {
           </button>
           <button
             aria-label="Restart hero video"
-            className="transition-colors hover:text-text-inverted"
+            className={heroVideoControlClassName}
             onClick={restartVideo}
             type="button"
           >
@@ -296,6 +312,9 @@ export function PublicHero(props: PublicHeroProps) {
 
 const heroHeadingClassName =
   "mb-4 font-heading text-display-md font-medium leading-none text-balance text-text-inverted min-[360px]:text-4xl sm:text-5xl md:text-7xl";
+
+const heroVideoControlClassName =
+  "inline-flex size-(--size-control-md) items-center justify-center rounded-full transition-colors hover:text-text-inverted";
 
 function heroEntranceMotion(options: {
   transition: Transition;

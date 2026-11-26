@@ -23,41 +23,30 @@ export const ABOUT_CHIPS = [
 export const ABOUT_MEDIA = {
   eliPortraitLarge: ELI_PORTRAIT_PATHS.large,
   eliPortraitSmall: ELI_PORTRAIT_PATHS.small,
-  heroPoster: "media/hero/hero-training-poster.jpg",
-  heroVideoMp4: "media/hero/hero-training-loop.mp4",
-  heroVideoWebm: "media/hero/hero-training-loop.webm",
 } as const;
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";
 
-const ABOUT_STORY_VIDEO_SOURCES = [
-  {
-    path: ABOUT_MEDIA.heroVideoWebm,
-    type: "video/webm",
-  },
-  {
-    path: ABOUT_MEDIA.heroVideoMp4,
-    type: "video/mp4",
-  },
-] as const;
+function aboutMediaPath(fileName: string) {
+  return `media/about/${fileName}`;
+}
+
+function storyMedia(reelName: string) {
+  return {
+    posterPath: aboutMediaPath(`story-${reelName}-poster.webp`),
+    // A browser plays the first source it supports, so AV1 comes first.
+    videoSources: [
+      {
+        path: aboutMediaPath(`story-${reelName}.av1.mp4`),
+        type: 'video/mp4; codecs="av01.0.05M.08"',
+      },
+      { path: aboutMediaPath(`story-${reelName}.h264.mp4`), type: "video/mp4" },
+    ],
+  };
+}
 
 export const ABOUT_STORIES = [
-  {
-    alt: "Story 1 of 3",
-    objectPosition: "center",
-    posterPath: ABOUT_MEDIA.heroPoster,
-    videoSources: ABOUT_STORY_VIDEO_SOURCES,
-  },
-  {
-    alt: "Story 2 of 3",
-    objectPosition: "35% center",
-    posterPath: ABOUT_MEDIA.heroPoster,
-    videoSources: ABOUT_STORY_VIDEO_SOURCES,
-  },
-  {
-    alt: "Story 3 of 3",
-    objectPosition: "65% center",
-    posterPath: ABOUT_MEDIA.heroPoster,
-    videoSources: ABOUT_STORY_VIDEO_SOURCES,
-  },
+  { alt: "Story 1 of 3", ...storyMedia("lifestyle") },
+  { alt: "Story 2 of 3", ...storyMedia("mobility") },
+  { alt: "Story 3 of 3", ...storyMedia("gym") },
 ] as const;

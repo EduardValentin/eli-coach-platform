@@ -2,12 +2,15 @@ import { PhoneFrame } from "~/shared/design-system/layout";
 import { cn } from "~/shared/design-system/lib";
 import { appUrl } from "~/shared/http/base-path";
 import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
-import { Heart, Send } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { Heart, Pause, Play, Send } from "lucide-react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import {
   type KeyboardEvent,
   type MouseEvent,
+  type ReactNode,
+  useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -17,8 +20,66 @@ import {
   INSTAGRAM_PROFILE_URL,
 } from "./about-content";
 
-const STORY_PROGRESS_TICK_MS = 50;
+const STORY_DURATION_MS = 10_000;
 const STORY_PROGRESS_COMPLETE = 100;
+const STORY_PROGRESS_TICK_MS = STORY_DURATION_MS / STORY_PROGRESS_COMPLETE;
+const STORY_LOAD_VIEWPORT_MARGIN = "200px";
+
+function isAutoplayRefusal(error: unknown) {
+  return error instanceof DOMException && error.name === "NotAllowedError";
+}
+
+type StoryVideoProps = {
+  children: ReactNode;
+  label: string;
+  onAutoplayRefused: () => void;
+  playback: "held" | "running";
+  poster?: string;
+};
+
+function StoryVideo(props: StoryVideoProps) {
+  const shouldReduceMotion = useClientReducedMotionPreference();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { onAutoplayRefused, playback } = props;
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    if (playback === "held") {
+      video.pause();
+      return;
+    }
+
+    void video.play().catch((error: unknown) => {
+      if (isAutoplayRefusal(error)) {
+        onAutoplayRefused();
+      }
+    });
+  }, [onAutoplayRefused, playback]);
+
+  return (
+    <motion.video
+      ref={videoRef}
+      animate={{ opacity: 1 }}
+      aria-label={props.label}
+      className="absolute inset-0 size-full object-cover"
+      data-parity="story-media"
+      exit={{ opacity: 0 }}
+      initial={shouldReduceMotion ? false : { opacity: 0 }}
+      muted
+      playsInline
+      poster={props.poster}
+      preload="none"
+      transition={{ duration: 0.2 }}
+    >
+      {props.children}
+    </motion.video>
+  );
+}
 
 function getNextStoryIndex(currentIndex: number) {
   return (currentIndex + 1) % ABOUT_STORIES.length;
@@ -41,12 +102,20 @@ function getStoryProgress(options: {
 }
 
 export function InstagramStoryWidget() {
+  const storySurfaceRef = useRef<HTMLDivElement>(null);
+  const isNearViewport = useInView(storySurfaceRef, {
+    margin: STORY_LOAD_VIEWPORT_MARGIN,
+    once: true,
+  });
+  const isInViewport = useInView(storySurfaceRef);
   const shouldReduceMotion = useClientReducedMotionPreference();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [playRequested, setPlayRequested] = useState(true);
   const [likedStories, setLikedStories] = useState(() =>
     ABOUT_STORIES.map(() => false),
   );
+  const isStoryRunning = playRequested && isInViewport && !shouldReduceMotion;
   const currentStory = ABOUT_STORIES[currentIndex];
   const isCurrentStoryLiked = likedStories[currentIndex] ?? false;
   const currentProgress = shouldReduceMotion
@@ -71,7 +140,7 @@ export function InstagramStoryWidget() {
   };
 
   useEffect(() => {
-    if (shouldReduceMotion) {
+    if (!isStoryRunning) {
       return;
     }
 
@@ -82,16 +151,20 @@ export function InstagramStoryWidget() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [currentIndex, shouldReduceMotion]);
+  }, [currentIndex, isStoryRunning]);
 
   useEffect(() => {
-    if (progress <= STORY_PROGRESS_COMPLETE) {
+    if (progress < STORY_PROGRESS_COMPLETE) {
       return;
     }
 
     setCurrentIndex((value) => getNextStoryIndex(value));
     setProgress(0);
   }, [progress]);
+
+  const holdPlayback = useCallback(() => {
+    setPlayRequested(false);
+  }, []);
 
   const navigateFromPointer = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -133,9 +206,11 @@ export function InstagramStoryWidget() {
     <PhoneFrame
       aria-label="Instagram story preview"
       className="mx-auto aspect-[9/16] w-full max-w-[280px] shrink-0 lg:mx-0 lg:max-w-[340px]"
+      data-parity-root="InstagramWidget"
       statusBarVariant="light"
     >
       <div
+        ref={storySurfaceRef}
         aria-label="Instagram stories — tap left or right to navigate"
         className="absolute inset-0 cursor-pointer"
         onClick={navigateFromPointer}
@@ -144,36 +219,30 @@ export function InstagramStoryWidget() {
         tabIndex={0}
       >
         <AnimatePresence mode="wait">
-          <motion.video
-            animate={{ opacity: 1 }}
-            aria-label={currentStory.alt}
-            autoPlay={!shouldReduceMotion}
-            className="absolute inset-0 size-full object-cover"
-            exit={{ opacity: 0 }}
-            initial={shouldReduceMotion ? false : { opacity: 0 }}
+          <StoryVideo
             key={currentStory.alt}
-            loop={!shouldReduceMotion}
-            muted
-            playsInline
-            poster={appUrl(currentStory.posterPath)}
-            preload={shouldReduceMotion ? "none" : "metadata"}
-            style={{ objectPosition: currentStory.objectPosition }}
-            transition={{ duration: 0.2 }}
+            label={currentStory.alt}
+            onAutoplayRefused={holdPlayback}
+            playback={isStoryRunning ? "running" : "held"}
+            poster={
+              isNearViewport ? appUrl(currentStory.posterPath) : undefined
+            }
           >
-            {shouldReduceMotion
-              ? null
-              : currentStory.videoSources.map((source) => (
+            {isNearViewport && !shouldReduceMotion
+              ? currentStory.videoSources.map((source) => (
                   <source
-                    key={source.type}
+                    key={source.path}
                     src={appUrl(source.path)}
                     type={source.type}
                   />
-                ))}
-          </motion.video>
+                ))
+              : null}
+          </StoryVideo>
         </AnimatePresence>
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-inverted/90 via-transparent to-surface-inverted/60"
+          data-parity="story-overlay"
         />
       </div>
 
@@ -216,12 +285,29 @@ export function InstagramStoryWidget() {
           >
             eli.fitness
           </a>
-          <span className="ml-1 text-xs text-text-inverted/60">4h</span>
+          <span className="ml-1 text-xs text-text-inverted">4h</span>
         </div>
+        {shouldReduceMotion ? null : (
+          <button
+            aria-label={playRequested ? "Pause story" : "Play story"}
+            className="pointer-events-auto ml-auto -my-2 -mr-3.5 inline-flex size-(--size-control-md) items-center justify-center rounded-full text-text-inverted transition-colors hover:bg-surface-base/10 active:bg-surface-base/20"
+            data-focus-inset
+            data-focus-on-media
+            data-parity="story-playback"
+            onClick={() => setPlayRequested(!playRequested)}
+            type="button"
+          >
+            {playRequested ? (
+              <Pause aria-hidden="true" size={20} />
+            ) : (
+              <Play aria-hidden="true" size={20} />
+            )}
+          </button>
+        )}
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
-        <div className="pointer-events-none flex-1 rounded-full border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
+        <div className="pointer-events-none flex-1 rounded-full border border-surface-base/70 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
           Send message…
         </div>
         <button

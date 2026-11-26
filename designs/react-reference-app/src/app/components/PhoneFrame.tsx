@@ -5,6 +5,7 @@ interface PhoneFrameProps {
   statusBarVariant?: 'light' | 'dark';
   time?: string;
   className?: string;
+  'aria-label'?: string;
 }
 
 export function PhoneFrame({
@@ -12,12 +13,14 @@ export function PhoneFrame({
   statusBarVariant = 'dark',
   time = '9:41',
   className = '',
+  'aria-label': ariaLabel,
 }: PhoneFrameProps) {
   const textClass = statusBarVariant === 'light' ? 'text-white' : 'text-foreground';
   const dotClass = statusBarVariant === 'light' ? 'bg-white' : 'bg-foreground';
 
   return (
     <div
+      aria-label={ariaLabel}
       className={`relative rounded-phone-frame border-4 border-foreground/10 bg-card shadow-phone-frame overflow-hidden ${className}`}
     >
       {children}
