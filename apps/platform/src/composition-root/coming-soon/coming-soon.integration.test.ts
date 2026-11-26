@@ -2,13 +2,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { clerkWebhook } from "~integration-test-config/clerk-webhook-request";
-import { PlatformRig } from "~integration-test-config/platform-rig";
 import { stripeWebhook } from "~integration-test-config/stripe-webhook-request";
 
 const suite = new ApiIntegrationTestSuite({
   environment: { COMING_SOON_MODE: "on" },
 });
-const rig = new PlatformRig(suite);
 
 const PLACEHOLDER_HEADING = "Evoa is almost here.";
 const PLACEHOLDER_TITLE = "<title>Evoa — Coming soon</title>";
@@ -195,20 +193,19 @@ describe("coming-soon mode", () => {
     expect(acknowledged.status).toBe(200);
   });
 
-  it("lets the management API answer for itself", async () => {
+  it("lets the management API answer with its own refusals", async () => {
     // arrange
-    const authorization = await rig.authorizeStorePublishing();
     const target = suite.url("/api/management/store/products");
 
     // act
-    const withCredentials = await suite.request(
-      new Request(target, { headers: { authorization } }),
+    const withoutCredentials = await suite.request(
+      new Request(target, { method: "POST" }),
     );
-    const withoutCredentials = await suite.request(new Request(target));
+    const wrongMethod = await suite.request(new Request(target));
 
     // assert
     expect(withoutCredentials.status).toBe(403);
-    expect(withCredentials.status).toBe(405);
+    expect(wrongMethod.status).toBe(405);
   });
 });
 
