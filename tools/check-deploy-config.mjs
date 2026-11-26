@@ -9,6 +9,11 @@ const SHELLCHECK_IMAGE =
 const SCRIPTS = [
   "scripts/deploy/deploy.sh",
   "scripts/deploy/run_migrations.sh",
+  ".github/actions/remote.sh",
+  "scripts/deploy/simulation/run.sh",
+  "scripts/deploy/simulation/scenarios.sh",
+  "scripts/deploy/simulation/stubs/app-backup.sh",
+  "scripts/deploy/simulation/stubs/run_migrations.sh",
 ];
 const SAMPLE_EDGE_HOSTNAME = "app.example.com";
 const SAMPLE_STACK_COLOR = "blue";
@@ -382,10 +387,29 @@ function keySetProblems({ rendered, section, expected }) {
     : [`traefik: ${section} are [${found}], expected [${expected}]`];
 }
 
+function stackColorProblems({ rendered, deployEnv }) {
+  const platformRouter = `${APP_NAME}-${deployEnv}-platform`;
+  const middleware = `${APP_NAME}-${deployEnv}-stack-colour`;
+
+  return [
+    ...missingFromBlock({
+      rendered,
+      key: platformRouter,
+      expectedLines: [`- ${middleware}`],
+    }),
+    ...missingFromBlock({
+      rendered,
+      key: middleware,
+      expectedLines: [`X-Stack-Color: ${SAMPLE_STACK_COLOR}`],
+    }),
+  ];
+}
+
 function testTraefikProblems(rendered) {
   const host = `Host(\`${SAMPLE_EDGE_HOSTNAME}\`)`;
 
   return [
+    ...stackColorProblems({ rendered, deployEnv: "test" }),
     ...missingFromBlock({
       rendered,
       key: `${APP_NAME}-test-platform`,
@@ -411,6 +435,7 @@ function prodTraefikProblems(rendered) {
   const platformRouter = `${APP_NAME}-prod-platform`;
 
   return [
+    ...stackColorProblems({ rendered, deployEnv: "prod" }),
     ...keySetProblems({
       rendered,
       section: "routers",

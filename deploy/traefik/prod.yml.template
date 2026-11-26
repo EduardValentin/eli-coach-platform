@@ -5,6 +5,7 @@ http:
         - websecure
       middlewares:
         - secure-headers@file
+        - eli-coach-platform-prod-stack-colour
       rule: Host(`__EDGE_HOSTNAME__`)
       service: eli-coach-platform-prod-platform
       tls:
@@ -29,6 +30,11 @@ http:
       service: eli-coach-platform-prod-platform
 
   middlewares:
+    eli-coach-platform-prod-stack-colour:
+      headers:
+        customResponseHeaders:
+          X-Stack-Color: __STACK_COLOR__
+
     eli-coach-platform-prod-www-to-apex:
       redirectRegex:
         regex: ^https://www\.([^/]+)(.*)

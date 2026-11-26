@@ -6,7 +6,7 @@ const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = dirname(currentFilePath);
 
 const integrationTestGlobs = ["apps/**/*.integration.test.{ts,tsx}"];
-const toolsTestGlobs = ["tools/**/*.test.mjs"];
+const toolsTestGlobs = ["tools/**/*.test.mjs", "scripts/**/*.test.mjs"];
 const testGlobs = ["apps/**/*.test.{ts,tsx}"];
 
 function integrationProject(options: { name: string; appBasePath: string }) {

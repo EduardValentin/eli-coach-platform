@@ -1,0 +1,136 @@
+name: Deploy to an app host
+description: >-
+  Installs the deploy files for one environment on the host and runs
+  scripts/deploy/deploy.sh there. The deploy script's exit code is kept in
+  $RUNNER_TEMP/remote-deploy/deploy-exit-code for the caller's status step.
+
+inputs:
+  deploy-env:
+    description: test or prod
+    required: true
+  edge-hostname:
+    description: Public host name Traefik routes
+    required: true
+  host-label:
+    description: Value of the host label on the containers' logs
+    required: true
+  release-sha:
+    description: Commit the images were built from
+    required: true
+  expected-live-sha:
+    description: >-
+      The commit the host must report as live, or none for a host with no
+      release. Required on prod; left empty, TEST does not compare
+    required: false
+    default: ""
+  ghcr-username:
+    description: GHCR pull username
+    required: true
+  ghcr-token:
+    description: GHCR pull token
+    required: true
+  platform-image:
+    description: Platform image reference by digest
+    required: true
+  migration-image:
+    description: Migration image reference by digest
+    required: true
+  design-reference-image:
+    description: Design reference image reference, TEST only
+    required: false
+    default: ""
+  postgres-runtime-image:
+    description: Postgres runtime image reference by digest
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install the deploy files on the host
+      shell: bash
+      env:
+        DEPLOY_ENV: ${{ inputs.deploy-env }}
+      run: |
+        set -euo pipefail
+        source "${GITHUB_ACTION_PATH}/../remote.sh"
+
+        [[ "${DEPLOY_ENV}" =~ ^(test|prod)$ ]] || { echo "deploy-env must be test or prod"; exit 1; }
+
+        remote_command=$(cat <<EOF
+        set -euo pipefail
+        sudo install -d -m 0755 ${REMOTE_APP_DIRECTORY} ${REMOTE_APP_DIRECTORY}/deploy ${REMOTE_APP_DIRECTORY}/scripts/deploy
+        sudo tar --no-same-owner --no-same-permissions -xzf - -C ${REMOTE_APP_DIRECTORY}
+        sudo chmod 0755 ${REMOTE_APP_DIRECTORY}/scripts/deploy/deploy.sh ${REMOTE_APP_DIRECTORY}/scripts/deploy/run_migrations.sh
+        EOF
+        )
+
+        tar -czf - \
+          scripts/deploy/deploy.sh \
+          scripts/deploy/run_migrations.sh \
+          deploy/docker-compose.application.yml \
+          deploy/docker-compose.infrastructure.yml \
+          "deploy/env/${DEPLOY_ENV}.env" \
+          "deploy/traefik/${DEPLOY_ENV}.yml.template" \
+          | remote "${remote_command}"
+
+    - name: Verify the runtime env files exist on the host
+      shell: bash
+      run: |
+        set -euo pipefail
+        source "${GITHUB_ACTION_PATH}/../remote.sh"
+
+        remote "sudo test -s ${REMOTE_APP_DIRECTORY}/.env && sudo test -s /srv/postgres/eli-coach-platform.env"
+
+    - name: Run the deploy on the host
+      shell: bash
+      env:
+        DEPLOY_ENV: ${{ inputs.deploy-env }}
+        EDGE_HOSTNAME: ${{ inputs.edge-hostname }}
+        HOST_LABEL: ${{ inputs.host-label }}
+        RELEASE_SHA: ${{ inputs.release-sha }}
+        EXPECTED_LIVE_SHA: ${{ inputs.expected-live-sha }}
+        GHCR_PULL_USERNAME: ${{ inputs.ghcr-username }}
+        GHCR_PULL_TOKEN: ${{ inputs.ghcr-token }}
+        PLATFORM_IMAGE: ${{ inputs.platform-image }}
+        MIGRATION_IMAGE: ${{ inputs.migration-image }}
+        DESIGN_REFERENCE_IMAGE: ${{ inputs.design-reference-image }}
+        POSTGRES_RUNTIME_IMAGE: ${{ inputs.postgres-runtime-image }}
+      run: |
+        set -euo pipefail
+        source "${GITHUB_ACTION_PATH}/../remote.sh"
+
+        if [[ -z "${GHCR_PULL_USERNAME}" || -z "${GHCR_PULL_TOKEN}" ]]; then
+          echo "Missing GHCR pull credentials for remote deploy"
+          exit 1
+        fi
+
+        # deploy.sh validates every other value; %q keeps each one a single word on the host.
+        assignments=(
+          "DEPLOY_ENV=${DEPLOY_ENV}"
+          "EDGE_HOSTNAME=${EDGE_HOSTNAME}"
+          "HOST_LABEL=${HOST_LABEL}"
+          "RELEASE_SHA=${RELEASE_SHA}"
+          "GHCR_USERNAME=${GHCR_PULL_USERNAME}"
+          "GHCR_TOKEN=${GHCR_PULL_TOKEN}"
+          "PLATFORM_IMAGE=${PLATFORM_IMAGE}"
+          "MIGRATION_IMAGE=${MIGRATION_IMAGE}"
+          "DESIGN_REFERENCE_IMAGE=${DESIGN_REFERENCE_IMAGE}"
+          "POSTGRES_RUNTIME_IMAGE=${POSTGRES_RUNTIME_IMAGE}"
+        )
+        if [[ -n "${EXPECTED_LIVE_SHA}" ]]; then
+          assignments+=("EXPECTED_LIVE_SHA=${EXPECTED_LIVE_SHA}")
+        fi
+
+        remote_command="sudo env"
+        for assignment in "${assignments[@]}"; do
+          remote_command+=" $(printf '%q' "${assignment}")"
+        done
+        remote_command+=" bash ${REMOTE_APP_DIRECTORY}/scripts/deploy/deploy.sh"
+
+        set +e
+        remote "${remote_command}"
+        exit_code=$?
+        set -e
+
+        printf '%s' "${exit_code}" > "${REMOTE_STATE_DIRECTORY}/deploy-exit-code"
+        exit "${exit_code}"

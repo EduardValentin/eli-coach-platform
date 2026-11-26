@@ -32,7 +32,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
     /types         ambient type declarations
 /deploy          Compose stacks, Traefik templates and non-secret settings shared by TEST and PROD
 /docker          image definitions
-/docs            database, secret, store-publishing, and web-session guides
+/docs            database, secret, store-publishing, release, and web-session guides
 /scripts         local development and secret helpers, plus the deploy scripts CI ships to the app hosts
 /tools           boundary rules, their fixture self-tests, and the layout and deploy checks (`pnpm check:deploy-config` renders both environments' deploy files)
 /designs/react-reference-app
@@ -151,6 +151,8 @@ pnpm validate:unit   # the same without the integration suites; CI runs them as 
 pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
 pnpm test:e2e        # Playwright: local-only, real Clerk and Stripe test mode (see End-to-End Journeys)
 pnpm test:e2e:critical # only the journeys tagged @critical
+pnpm check:workflows # actionlint over .github/workflows (Docker)
+pnpm test:deploy-simulation # scripts/deploy/deploy.sh against a simulated host in a throwaway Docker daemon (see docs/RELEASE_AND_ROLLBACK.md)
 ```
 
 The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`; no workspace gate reaches it. CI typechecks and builds the prototype in a separate step but does not run its vitest suite, so run `npm test` locally before changing it.
