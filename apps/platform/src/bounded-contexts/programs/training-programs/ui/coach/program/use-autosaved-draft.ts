@@ -69,6 +69,7 @@ export function useAutosavedDraft(stored: StoredDraft) {
   const changedElsewhere = useRef(false);
   const queuedSave = useRef<number | null>(null);
   const inFlight = useRef<Promise<SaveResult> | null>(null);
+  const left = useRef(false);
 
   function cancelQueuedSave() {
     if (queuedSave.current !== null) window.clearTimeout(queuedSave.current);
@@ -122,7 +123,7 @@ export function useAutosavedDraft(stored: StoredDraft) {
     inFlight.current = pending.then((answer) => answer.status);
     const answer = await pending;
     inFlight.current = null;
-    applyAnswer(answer, sentAtEdit);
+    if (!left.current) applyAnswer(answer, sentAtEdit);
 
     return answer.status;
   }
@@ -184,9 +185,11 @@ export function useAutosavedDraft(stored: StoredDraft) {
     // that started failing stays correct.
   }, [failing]);
 
-  // Leaving with a change still queued sends it rather than dropping it.
+  // Leaving with a change still queued sends it rather than dropping it. Its
+  // answer arrives after the builder is gone, so nothing on screen is updated.
   useEffect(
     () => () => {
+      left.current = true;
       if (queuedSave.current !== null) void saveNow();
     },
     [],
