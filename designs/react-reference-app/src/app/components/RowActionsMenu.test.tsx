@@ -268,20 +268,21 @@ describe('a row menu action that is not allowed right now', () => {
 });
 
 describe('the fade on a blocked row action', () => {
-  function fadedParts(item: HTMLElement, label: string) {
-    return { box: item, icon: item.querySelector('svg'), label: within(item).getByText(label) };
+  function iconAndLabelOf(item: HTMLElement, label: string) {
+    return { icon: item.querySelector('svg'), label: within(item).getByText(label) };
   }
 
   it('sits on the icon and label of a held-back action, so its focus ring keeps full strength', async () => {
     // arrange
     const { user } = renderBlockedDeleteMenu();
-    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
 
     // act
-    const { box, icon, label } = fadedParts(screen.getByRole('menuitem', { name: 'Delete' }), 'Delete');
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
 
     // assert
-    expect(box).toHaveClass('aria-disabled:opacity-100');
+    const item = screen.getByRole('menuitem', { name: 'Delete' });
+    const { icon, label } = iconAndLabelOf(item, 'Delete');
+    expect(item).toHaveClass('aria-disabled:opacity-100');
     expect(icon).toHaveClass('opacity-50');
     expect(label).toHaveClass('opacity-50');
   });
@@ -289,13 +290,14 @@ describe('the fade on a blocked row action', () => {
   it('sits on the icon and label of an action held back with a reason, so its focus ring keeps full strength', async () => {
     // arrange
     const { user, trigger } = renderMovedCheckinMenu();
-    await openMenu(user, trigger);
 
     // act
-    const { box, icon, label } = fadedParts(screen.getByRole('menuitem', { name: 'Reschedule' }), 'Reschedule');
+    await openMenu(user, trigger);
 
     // assert
-    expect(box).toHaveClass('aria-disabled:opacity-100');
+    const item = screen.getByRole('menuitem', { name: 'Reschedule' });
+    const { icon, label } = iconAndLabelOf(item, 'Reschedule');
+    expect(item).toHaveClass('aria-disabled:opacity-100');
     expect(icon).toHaveClass('opacity-50');
     expect(label).toHaveClass('opacity-50');
   });
@@ -303,13 +305,14 @@ describe('the fade on a blocked row action', () => {
   it('leaves an available action unfaded', async () => {
     // arrange
     const { user, trigger } = renderMovedCheckinMenu();
-    await openMenu(user, trigger);
 
     // act
-    const { box, icon, label } = fadedParts(screen.getByRole('menuitem', { name: 'Cancel' }), 'Cancel');
+    await openMenu(user, trigger);
 
     // assert
-    expect(box).not.toHaveClass('aria-disabled:opacity-100');
+    const item = screen.getByRole('menuitem', { name: 'Cancel' });
+    const { icon, label } = iconAndLabelOf(item, 'Cancel');
+    expect(item).not.toHaveClass('aria-disabled:opacity-100');
     expect(icon).not.toHaveClass('opacity-50');
     expect(label).not.toHaveClass('opacity-50');
   });

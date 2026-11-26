@@ -74,12 +74,12 @@ function RowMenuItem(props: {
     tone,
   } = action;
   const flagged = disabledHint !== undefined;
-  const blocked = flagged || Boolean(disabledReason);
+  const heldBack = isHeldBack(action);
   const item = (
     <DropdownMenuItem
       aria-disabled={flagged ? true : undefined}
       className={cn({
-        "aria-disabled:opacity-100": blocked,
+        "aria-disabled:opacity-100": heldBack,
         "data-[variant=destructive]:focus:bg-primary-soft": flagged,
       })}
       data-parity={`row-action-${name}`}
@@ -88,9 +88,9 @@ function RowMenuItem(props: {
       variant={tone}
     >
       {Icon && (
-        <Icon aria-hidden="true" className={cn({ "opacity-50": blocked })} />
+        <Icon aria-hidden="true" className={cn({ "opacity-50": heldBack })} />
       )}
-      <span className={cn({ "opacity-50": blocked })}>{action.label}</span>
+      <span className={cn({ "opacity-50": heldBack })}>{action.label}</span>
       {flagged && (
         <span className="ml-auto flex pl-2">
           <TriangleAlert aria-hidden="true" className="text-feedback-warning" />

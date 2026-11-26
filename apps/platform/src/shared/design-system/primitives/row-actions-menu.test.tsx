@@ -171,6 +171,20 @@ describe("RowActionsMenu", () => {
     expect(trigger).toHaveFocus();
     expect(onCancel).not.toHaveBeenCalled();
   });
+
+  it("fades nothing on the action beside a held-back one that can run", async () => {
+    // arrange
+    const { trigger, user } = renderMenu();
+
+    // act
+    await openMenu(user, trigger);
+
+    // assert
+    const item = screen.getByRole("menuitem", { name: "Cancel" });
+    expect(item).not.toHaveClass("aria-disabled:opacity-100");
+    expect(item.querySelector("svg")).not.toHaveClass("opacity-50");
+    expect(screen.getByText("Cancel")).not.toHaveClass("opacity-50");
+  });
 });
 
 describe("a row menu action that is not allowed right now", () => {
@@ -267,20 +281,6 @@ describe("a row menu action that is not allowed right now", () => {
     expect(item).toHaveClass("aria-disabled:opacity-100");
     expect(item.querySelector("svg")).toHaveClass("opacity-50");
     expect(screen.getByText("Reschedule")).toHaveClass("opacity-50");
-  });
-
-  it("leaves an action that can run unfaded", async () => {
-    // arrange
-    const { trigger, user } = renderMenu();
-
-    // act
-    await openMenu(user, trigger);
-
-    // assert
-    const item = screen.getByRole("menuitem", { name: "Cancel" });
-    expect(item).not.toHaveClass("aria-disabled:opacity-100");
-    expect(item.querySelector("svg")).not.toHaveClass("opacity-50");
-    expect(screen.getByText("Cancel")).not.toHaveClass("opacity-50");
   });
 
   it("passes the axe checks with its reason open", async () => {

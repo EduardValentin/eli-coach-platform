@@ -19,8 +19,7 @@ const INSET_RING = [
   "[--focus-ring-halo:0_0_#0000]",
 ];
 
-async function openMenu() {
-  const user = userEvent.setup();
+function renderMenuOfEveryItemKind() {
   render(
     <DropdownMenu>
       <DropdownMenuTrigger>Open</DropdownMenuTrigger>
@@ -40,7 +39,6 @@ async function openMenu() {
       </DropdownMenuContent>
     </DropdownMenu>,
   );
-  await user.click(screen.getByRole("button", { name: "Open" }));
 }
 
 describe("dropdown menu items", () => {
@@ -52,24 +50,28 @@ describe("dropdown menu items", () => {
     ["a submenu trigger", "menuitem", "Move to"],
   ] as const)("draws %s's focus ring inside its own box, without a halo", async (_name, role, label) => {
     // arrange
-    await openMenu();
+    const user = userEvent.setup();
+    renderMenuOfEveryItemKind();
 
     // act
-    const item = screen.getByRole(role, { name: label });
+    await user.click(screen.getByRole("button", { name: "Open" }));
 
     // assert
+    const item = screen.getByRole(role, { name: label });
     expect(item).toHaveAttribute("data-focus-ring");
     expect(item).toHaveClass(...INSET_RING);
   });
 
   it("holds a submenu trigger's fill only while its submenu is open, so the fill never outlives the focus", async () => {
     // arrange
-    await openMenu();
+    const user = userEvent.setup();
+    renderMenuOfEveryItemKind();
 
     // act
-    const trigger = screen.getByRole("menuitem", { name: "Move to" });
+    await user.click(screen.getByRole("button", { name: "Open" }));
 
     // assert
+    const trigger = screen.getByRole("menuitem", { name: "Move to" });
     expect(trigger).toHaveClass("data-[state=open]:bg-accent", "focus:bg-accent");
     expect(trigger).not.toHaveClass("bg-accent");
   });

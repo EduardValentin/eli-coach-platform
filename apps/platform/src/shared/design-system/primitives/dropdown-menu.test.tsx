@@ -171,9 +171,7 @@ describe("DropdownMenu", () => {
     }
   });
 
-  it("draws a submenu trigger's focus ring inside its own box and holds its fill only while its submenu is open", async () => {
-    // arrange
-    const user = userEvent.setup();
+  function renderMenuWithSubmenu() {
     render(
       <DropdownMenu>
         <DropdownMenuTrigger>Actions for Day</DropdownMenuTrigger>
@@ -187,6 +185,12 @@ describe("DropdownMenu", () => {
         </DropdownMenuContent>
       </DropdownMenu>,
     );
+  }
+
+  it("draws a submenu trigger's focus ring inside its own box, without a halo", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderMenuWithSubmenu();
 
     // act
     await user.click(screen.getByRole("button", { name: "Actions for Day" }));
@@ -197,6 +201,20 @@ describe("DropdownMenu", () => {
     expect(trigger).toHaveClass(
       "[--focus-ring-offset:-2px]",
       "[--focus-ring-halo:0_0_#0000]",
+    );
+  });
+
+  it("holds a submenu trigger's fill only while its submenu is open, so the fill never outlives the focus", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderMenuWithSubmenu();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Actions for Day" }));
+
+    // assert
+    const trigger = screen.getByRole("menuitem", { name: "Copy day to" });
+    expect(trigger).toHaveClass(
       "focus:bg-primary-soft",
       "data-[state=open]:bg-primary-soft",
     );
