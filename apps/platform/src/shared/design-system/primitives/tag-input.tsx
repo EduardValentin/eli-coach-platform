@@ -107,7 +107,10 @@ function SuggestionOption({
       aria-selected={active}
       className={cn(
         "flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm text-text-primary select-none",
-        { "bg-primary-soft text-primary": active },
+        {
+          "bg-primary-soft text-primary outline-2 -outline-offset-2 outline-focus-ring":
+            active,
+        },
       )}
       id={id}
       onMouseDown={(event) => {

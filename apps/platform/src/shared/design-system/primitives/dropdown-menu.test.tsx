@@ -10,6 +10,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 
@@ -146,6 +149,58 @@ describe("DropdownMenu", () => {
       "aria-disabled:cursor-not-allowed",
       "aria-disabled:opacity-50",
     );
+  });
+
+  it("draws every item's focus ring inside its own box, without a halo, so a keyboard user sees which item Enter acts on", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderResourceActions();
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Meal plan" }),
+    );
+
+    // assert
+    for (const item of screen.getAllByRole("menuitem")) {
+      expect(item).toHaveAttribute("data-focus-ring");
+      expect(item).toHaveClass(
+        "[--focus-ring-offset:-2px]",
+        "[--focus-ring-halo:0_0_#0000]",
+      );
+    }
+  });
+
+  it("draws a submenu trigger's focus ring inside its own box and holds its fill only while its submenu is open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger>Actions for Day</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Copy day to</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem>Tuesday</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Actions for Day" }));
+
+    // assert
+    const trigger = screen.getByRole("menuitem", { name: "Copy day to" });
+    expect(trigger).toHaveAttribute("data-focus-ring");
+    expect(trigger).toHaveClass(
+      "[--focus-ring-offset:-2px]",
+      "[--focus-ring-halo:0_0_#0000]",
+      "focus:bg-primary-soft",
+      "data-[state=open]:bg-primary-soft",
+    );
+    expect(trigger).not.toHaveClass("bg-primary-soft");
   });
 
   it("closes on Escape and returns focus to the trigger", async () => {

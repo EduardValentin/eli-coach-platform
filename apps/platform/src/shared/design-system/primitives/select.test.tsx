@@ -91,6 +91,40 @@ describe("Select", () => {
     );
   });
 
+  it("draws an option's focus ring inside its own box, without a halo", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderHourSelect();
+
+    // act
+    screen.getByRole("combobox", { name: "Start" }).focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    const option = screen.getByRole("option", { name: "10:00" });
+    expect(option).toHaveAttribute("data-focus-ring");
+    expect(option).toHaveClass(
+      "[--focus-ring-offset:-2px]",
+      "[--focus-ring-halo:0_0_#0000]",
+    );
+  });
+
+  it("draws the checked option's ring in the primary foreground, one step further in, so it shows on the primary fill", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderHourSelect();
+
+    // act
+    screen.getByRole("combobox", { name: "Start" }).focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(screen.getByRole("option", { name: "09:00" })).toHaveClass(
+      "data-[state=checked]:[--focus-ring-offset:-4px]",
+      "data-[state=checked]:[--color-focus-ring:var(--color-primary-foreground)]",
+    );
+  });
+
   it("gives every option row the 48px pointer target", async () => {
     // arrange
     const user = userEvent.setup();
