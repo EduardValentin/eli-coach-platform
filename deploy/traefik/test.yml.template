@@ -3,7 +3,7 @@ http:
     eli-coach-platform-test-design-reference-strip:
       stripPrefix:
         prefixes:
-          - /eli-coach-platform/design-reference
+          - __APP_BASE_PATH__/design-reference
 
   routers:
     eli-coach-platform-test-design-reference:
@@ -12,7 +12,7 @@ http:
       middlewares:
         - eli-coach-platform-test-design-reference-strip
       priority: 300
-      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`/eli-coach-platform/design-reference`)
+      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`__APP_BASE_PATH__/design-reference`)
       service: eli-coach-platform-test-design-reference
       tls: {}
 
@@ -20,7 +20,7 @@ http:
       entryPoints:
         - websecure
       priority: 1
-      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`/eli-coach-platform`)
+      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`__APP_BASE_PATH__`)
       service: eli-coach-platform-test-platform
       tls: {}
 

@@ -12,7 +12,7 @@
 # not. Bring it up explicitly when TEST needs to exercise real webhook
 # delivery end to end:
 #
-#   docker compose -f deploy/test/docker-compose.webhook-relay.yml up -d
+#   DEPLOY_ENV=test docker compose -f deploy/docker-compose.clerk-webhook-relay.yml up -d
 #
 # Per GEN-188: LOCAL and TEST are two separate relay inboxes, each with its
 # own token and its own Clerk Dashboard endpoint, even though both endpoints
@@ -32,8 +32,13 @@ services:
     # Pinned to the same digest docker/Dockerfile.react-router uses, so the
     # relay and the app build from the identical, reproducible base image.
     image: node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
-    container_name: eli-coach-platform-test-clerk-webhook-relay
+    container_name: eli-coach-platform-${DEPLOY_ENV:?DEPLOY_ENV is required}-clerk-webhook-relay
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
     # clerk@3.2.0 is pinned rather than clerk@latest so a Clerk CLI release
@@ -47,7 +52,7 @@ services:
         --token "$${CLERK_WEBHOOK_RELAY_TOKEN}"
     labels:
       logging: promtail
-      env: test
+      env: ${DEPLOY_ENV}
       app: eli-coach-platform
       service: clerk-webhook-relay
       host: ${HOST_LABEL}
@@ -57,4 +62,4 @@ services:
 networks:
   internal:
     external: true
-    name: eli-coach-platform-test-internal
+    name: eli-coach-platform-${DEPLOY_ENV}-internal

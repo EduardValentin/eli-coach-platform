@@ -71,11 +71,18 @@ load_env_file() {
   done < "${file_path}"
 }
 
+require_env DEPLOY_ENV
+
+case "${DEPLOY_ENV}" in
+  test | prod) ;;
+  *) fail "DEPLOY_ENV must be test or prod, got: ${DEPLOY_ENV}" ;;
+esac
+
 APP_NAME="${APP_NAME:-eli-coach-platform}"
 APP_ENV_FILE="${APP_ENV_FILE:-/srv/apps/${APP_NAME}/.env}"
 POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
-POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-${APP_NAME}-test-postgres}"
-INTERNAL_NETWORK="${INTERNAL_NETWORK:-${APP_NAME}-test-internal}"
+POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-${APP_NAME}-${DEPLOY_ENV}-postgres}"
+INTERNAL_NETWORK="${INTERNAL_NETWORK:-${APP_NAME}-${DEPLOY_ENV}-internal}"
 MIGRATION_WORKDIR="${MIGRATION_WORKDIR:-/workspace}"
 POSTGRES_RUNTIME_HOST="${POSTGRES_RUNTIME_HOST:-${POSTGRES_CONTAINER_NAME}}"
 POSTGRES_RUNTIME_PORT="${POSTGRES_RUNTIME_PORT:-5432}"

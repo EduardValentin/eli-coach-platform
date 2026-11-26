@@ -152,11 +152,11 @@ NDJSON output if you're scripting against it.
 
 ### TEST relay
 
-`deploy/test/docker-compose.webhook-relay.yml` is the same listener as an
+`deploy/docker-compose.clerk-webhook-relay.yml` is the same listener as an
 opt-in sidecar, run explicitly with:
 
 ```bash
-docker compose -f deploy/test/docker-compose.webhook-relay.yml up -d
+DEPLOY_ENV=test docker compose -f deploy/docker-compose.clerk-webhook-relay.yml up -d
 ```
 
 It is not part of the standard TEST deploy (`docker-compose.application.yml`

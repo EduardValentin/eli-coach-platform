@@ -430,18 +430,20 @@ jobs:
 
           remote_command=$(cat <<'EOF'
           set -euo pipefail
-          sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy
-          sudo tar -xzf - -C /srv/apps/eli-coach-platform
-          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
+          sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy /srv/apps/eli-coach-platform/scripts/deploy
+          sudo rm -rf /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
+          sudo tar --no-same-owner --no-same-permissions -xzf - -C /srv/apps/eli-coach-platform
+          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy.sh /srv/apps/eli-coach-platform/scripts/deploy/run_migrations.sh
           EOF
           )
 
           tar -czf - \
-            scripts/deploy/deploy_test.sh \
-            scripts/deploy/run_test_migrations.sh \
-            deploy/test/docker-compose.application.yml \
-            deploy/test/docker-compose.infrastructure.yml \
-            deploy/test/traefik-dynamic.yml.template \
+            scripts/deploy/deploy.sh \
+            scripts/deploy/run_migrations.sh \
+            deploy/docker-compose.application.yml \
+            deploy/docker-compose.infrastructure.yml \
+            deploy/env/test.env \
+            deploy/traefik/test.yml.template \
             | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
 
       - name: Verify runtime env files exist on TEST
@@ -473,7 +475,7 @@ jobs:
           fi
 
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
-            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' MIGRATION_IMAGE='${MIGRATION_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' POSTGRES_RUNTIME_IMAGE='${POSTGRES_RUNTIME_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
+            "sudo DEPLOY_ENV=test EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' MIGRATION_IMAGE='${MIGRATION_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' POSTGRES_RUNTIME_IMAGE='${POSTGRES_RUNTIME_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy.sh"
 
       - name: Cleanup temporary known_hosts
         if: always()
