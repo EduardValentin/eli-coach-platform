@@ -142,6 +142,7 @@ type AppState = {
   signInOutcome: PrototypeSignInOutcome;
   hasBundle: boolean;
   isWaitlistMode: boolean;
+  isComingSoonMode: boolean;
   nutritionBlockCompleted: boolean;
   nutritionPreferenceConflict: boolean;
   waitlistAvailability: PrototypeWaitlistAvailability;
@@ -214,6 +215,7 @@ const defaultState: AppState = {
   signInOutcome: 'client',
   hasBundle: false,
   isWaitlistMode: false,
+  isComingSoonMode: false,
   nutritionBlockCompleted: false,
   nutritionPreferenceConflict: false,
   waitlistAvailability: 'available',
@@ -356,6 +358,7 @@ function parseDevParamsFromURL(): AppState {
   }
   if (params.has('bundle')) state.hasBundle = params.get('bundle') === '1';
   if (params.has('waitlist')) state.isWaitlistMode = params.get('waitlist') === '1';
+  if (params.has('comingsoon')) state.isComingSoonMode = params.get('comingsoon') === '1';
   if (state.prototypeMode === 'post-mvp' && params.has('nblock')) {
     state.nutritionBlockCompleted = params.get('nblock') === '1';
   }
@@ -711,6 +714,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('signin');
     url.searchParams.delete('bundle');
     url.searchParams.delete('waitlist');
+    url.searchParams.delete('comingsoon');
     url.searchParams.delete('nblock');
     url.searchParams.delete('npref');
     url.searchParams.delete('availability');
@@ -782,6 +786,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.hasBundle) url.searchParams.set('bundle', '1');
     if (appState.isWaitlistMode) url.searchParams.set('waitlist', '1');
+    if (appState.isComingSoonMode) url.searchParams.set('comingsoon', '1');
     if (appState.prototypeMode === 'post-mvp' && appState.nutritionBlockCompleted) {
       url.searchParams.set('nblock', '1');
     }

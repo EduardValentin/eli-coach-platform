@@ -576,6 +576,17 @@ export function DevToggle() {
               </Select>
             </div>
 
+            <div className="mb-4">
+              <DevCheckboxRow
+                id="dev-coming-soon-mode"
+                label="Coming-soon mode"
+                checked={appState.isComingSoonMode}
+                onCheckedChange={(isComingSoonMode) =>
+                  setAppState({ isComingSoonMode })
+                }
+              />
+            </div>
+
             <Tabs key={appState.prototypeMode} defaultValue="session">
               <TabsList className="h-auto w-full flex-wrap gap-1">
                 <TabsTrigger value="session" className={TAB_TRIGGER_CLASS}>
