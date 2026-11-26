@@ -139,7 +139,7 @@ A **Check-in** has a client, a coach, a date and time, a kind (`recurring`, `ad-
 
 ## Legal and Public Submissions
 
-53. **The current Privacy Policy and Terms & Conditions are dedicated public pages** at `/privacy` and `/terms`, each showing its version and effective date. Every public page links to both, in normal and waiting list mode.
+53. **The current Privacy Policy and Terms & Conditions are dedicated public pages** at `/privacy` and `/terms`, each showing its version and effective date. Every public page links to both, in normal and waiting list mode, except the placeholder page of coming-soon mode.
 54. **Every public submission rejects bot-driven attempts before it affects system state.** This covers waitlist capture (hero, footer, pricing page), store acquisition for logged-out buyers, assessment call booking, and any future public submission point. The mechanism must offer accessible alternatives or require no visual or motor input, in keeping with the WCAG AA target.
 55. **On the production site, forms accept only a person's main email address; a subaddressed address (name+tag@domain) is refused.** Test environments accept subaddresses.
 
@@ -195,6 +195,10 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 ### Waiting list mode
 
 While enabled, the navigation shows the brand logo, Home, Store, Pricing, and the free-resource cart; sign-in and portal links are hidden. The hero CTA becomes a waitlist email capture form, the About "Start my plan" CTA is hidden, and the footer CTA switches to waitlist messaging with the same capture and availability behavior as the hero and pricing page. All content sections stay visible. Email capture validates format before submission and behaves per Business Rules 16–20 and 54.
+
+### Coming-soon mode
+
+An operator-controlled environment setting, `COMING_SOON_MODE` (`on` or `off`), not a feature flag: it is read when the server starts and changing it is a settings change, not a release. Unset, it is on in the production environment and off everywhere else. While on, every page the app serves, an unknown URL included, shows one placeholder page and answers 200, with no redirect: the Evoa brand mark, the words "Coming soon", the heading "Evoa is almost here." and one line saying the full site opens soon. The page has no header, navigation, footer, link, button or form. Every response carries a `noindex` signal, so search engines are told not to list the site. Every other URL answers 404: the app's own API, the feature-flag API, app metadata, the web manifest and the service worker, single-fetch data requests, and every non-GET request to a page. Still open, each with its own authentication: the health checks (`/readyz`, `/client/readyz`, `/coach/readyz`), the Clerk and Stripe webhooks, and the management API. Files the web server hands out before the app sees the request (the built assets, the app icon and the media folder) stay reachable. Coming-soon mode is not waiting list mode and has no other name; when it is on, the waiting list never shows.
 
 ### Pricing (`/pricing`)
 
