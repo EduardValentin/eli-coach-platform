@@ -133,6 +133,7 @@ export function InstagramStoryWidget() {
     <PhoneFrame
       aria-label="Instagram story preview"
       className="mx-auto aspect-[9/16] w-full max-w-[280px] shrink-0 lg:mx-0 lg:max-w-[340px]"
+      data-parity-root="InstagramWidget"
       statusBarVariant="light"
     >
       <div
@@ -149,6 +150,7 @@ export function InstagramStoryWidget() {
             aria-label={currentStory.alt}
             autoPlay={!shouldReduceMotion}
             className="absolute inset-0 size-full object-cover"
+            data-parity="story-media"
             exit={{ opacity: 0 }}
             initial={shouldReduceMotion ? false : { opacity: 0 }}
             key={currentStory.alt}
@@ -164,7 +166,7 @@ export function InstagramStoryWidget() {
               ? null
               : currentStory.videoSources.map((source) => (
                   <source
-                    key={source.type}
+                    key={source.path}
                     src={appUrl(source.path)}
                     type={source.type}
                   />
@@ -173,7 +175,8 @@ export function InstagramStoryWidget() {
         </AnimatePresence>
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-inverted/80 via-transparent to-surface-inverted/50"
+          data-parity="story-overlay"
         />
       </div>
 
@@ -216,7 +219,7 @@ export function InstagramStoryWidget() {
           >
             eli.fitness
           </a>
-          <span className="ml-1 text-xs text-text-inverted/60">4h</span>
+          <span className="ml-1 text-xs text-text-inverted">4h</span>
         </div>
       </div>
 

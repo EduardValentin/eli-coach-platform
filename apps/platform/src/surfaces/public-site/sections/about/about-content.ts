@@ -1,4 +1,8 @@
 import { ELI_PORTRAIT_PATHS } from "~/shared/brand";
+import {
+  HERO_PHONE_VIDEO_SOURCES,
+  HERO_POSTER_PATH,
+} from "~/surfaces/public-site/sections/hero/hero-media";
 
 export const ABOUT_COPY = {
   bioParagraphs: [
@@ -23,41 +27,27 @@ export const ABOUT_CHIPS = [
 export const ABOUT_MEDIA = {
   eliPortraitLarge: ELI_PORTRAIT_PATHS.large,
   eliPortraitSmall: ELI_PORTRAIT_PATHS.small,
-  heroPoster: "media/hero/hero-training-poster.jpg",
-  heroVideoMp4: "media/hero/hero-training-loop.mp4",
-  heroVideoWebm: "media/hero/hero-training-loop.webm",
 } as const;
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";
-
-const ABOUT_STORY_VIDEO_SOURCES = [
-  {
-    path: ABOUT_MEDIA.heroVideoWebm,
-    type: "video/webm",
-  },
-  {
-    path: ABOUT_MEDIA.heroVideoMp4,
-    type: "video/mp4",
-  },
-] as const;
 
 export const ABOUT_STORIES = [
   {
     alt: "Story 1 of 3",
     objectPosition: "center",
-    posterPath: ABOUT_MEDIA.heroPoster,
-    videoSources: ABOUT_STORY_VIDEO_SOURCES,
+    posterPath: HERO_POSTER_PATH,
+    videoSources: HERO_PHONE_VIDEO_SOURCES,
   },
   {
     alt: "Story 2 of 3",
-    objectPosition: "35% center",
-    posterPath: ABOUT_MEDIA.heroPoster,
-    videoSources: ABOUT_STORY_VIDEO_SOURCES,
+    objectPosition: "40% center",
+    posterPath: HERO_POSTER_PATH,
+    videoSources: HERO_PHONE_VIDEO_SOURCES,
   },
   {
     alt: "Story 3 of 3",
-    objectPosition: "65% center",
-    posterPath: ABOUT_MEDIA.heroPoster,
-    videoSources: ABOUT_STORY_VIDEO_SOURCES,
+    objectPosition: "60% center",
+    posterPath: HERO_POSTER_PATH,
+    videoSources: HERO_PHONE_VIDEO_SOURCES,
   },
 ] as const;

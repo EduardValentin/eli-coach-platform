@@ -196,18 +196,10 @@ describe("PublicHero local interactions", () => {
     expect(video).toBeInTheDocument();
     expect(video).toHaveAttribute(
       "poster",
-      "/media/hero/hero-training-poster.jpg",
+      "/media/hero/hero-studio-poster.webp",
     );
     expect(video).toHaveAttribute("preload", "none");
     expect(sourceCountBeforeLoading).toBe(0);
-    expect(video?.querySelector("source[type='video/webm']")).toHaveAttribute(
-      "src",
-      "/media/hero/hero-training-loop.webm",
-    );
-    expect(video?.querySelector("source[type='video/mp4']")).toHaveAttribute(
-      "src",
-      "/media/hero/hero-training-loop.mp4",
-    );
     const mediaSources = Array.from(container.querySelectorAll("[src]")).map(
       (element) => element.getAttribute("src"),
     );
@@ -220,6 +212,48 @@ describe("PublicHero local interactions", () => {
           !source.includes("images.unsplash.com"),
       ),
     ).toBe(true);
+  });
+
+  it("offers phones the 720p clip and prefers AV1 over H.264 at each size", async () => {
+    // arrange
+    vi.useFakeTimers();
+    const waitlist = { availability: "available" as const, enabled: false };
+    const { container } = renderHero(waitlist);
+
+    // act
+    await act(async () => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    // assert
+    expect(
+      Array.from(container.querySelectorAll("video source")).map((source) => ({
+        media: source.getAttribute("media"),
+        src: source.getAttribute("src"),
+        type: source.getAttribute("type"),
+      })),
+    ).toEqual([
+      {
+        media: "(max-width: 767px)",
+        src: "/media/hero/hero-studio-loop-720.av1.mp4",
+        type: 'video/mp4; codecs="av01.0.05M.08"',
+      },
+      {
+        media: "(max-width: 767px)",
+        src: "/media/hero/hero-studio-loop-720.h264.mp4",
+        type: "video/mp4",
+      },
+      {
+        media: null,
+        src: "/media/hero/hero-studio-loop-1080.av1.mp4",
+        type: 'video/mp4; codecs="av01.0.08M.08"',
+      },
+      {
+        media: null,
+        src: "/media/hero/hero-studio-loop-1080.h264.mp4",
+        type: "video/mp4",
+      },
+    ]);
   });
 
   it("keeps the poster only when reduced motion is requested", async () => {
@@ -237,6 +271,28 @@ describe("PublicHero local interactions", () => {
 
     // assert
     expect(container.querySelector("video source")).not.toBeInTheDocument();
+  });
+
+  it("offers to play, not pause, the poster it keeps for a visitor saving data", async () => {
+    // arrange
+    vi.useFakeTimers();
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      connection: { saveData: true },
+    });
+    const waitlist = { availability: "available" as const, enabled: false };
+
+    // act
+    const { container } = renderHero(waitlist);
+    await act(async () => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    // assert
+    expect(container.querySelector("video source")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Play hero video" }),
+    ).toBeInTheDocument();
   });
 
   it("operates video playback from focused keyboard controls", async () => {

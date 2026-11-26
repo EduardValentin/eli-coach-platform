@@ -61,7 +61,7 @@ export function WaitlistEmailForm({
   const inputClasses = cn(
     'h-14 w-full rounded-full border px-6 text-base outline-none transition-all focus:ring-2 focus:ring-brand/30',
     {
-      'border-surface-base/20 bg-surface-base/10 text-surface-inverted-foreground placeholder:text-surface-inverted-foreground/50 backdrop-blur-md':
+      'border-surface-base/20 bg-surface-base/10 text-surface-inverted-foreground placeholder:text-surface-inverted-foreground/70 backdrop-blur-md':
         isDark,
       'border-control-border-soft bg-card text-foreground placeholder:text-placeholder-soft':
         !isDark,

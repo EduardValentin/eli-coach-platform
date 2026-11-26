@@ -58,6 +58,35 @@ describe("InstagramStoryWidget", () => {
     ).toBeInTheDocument();
   });
 
+  it("plays the studio clip over its poster, preferring the phone-sized AV1 file", () => {
+    // arrange
+    // act
+    renderStoryWidget();
+
+    // assert
+    const story = screen.getByLabelText("Story 1 of 3");
+
+    expect(story).toHaveAttribute(
+      "poster",
+      "/media/hero/hero-studio-poster.webp",
+    );
+    expect(
+      Array.from(story.querySelectorAll("source")).map((source) => ({
+        src: source.getAttribute("src"),
+        type: source.getAttribute("type"),
+      })),
+    ).toEqual([
+      {
+        src: "/media/hero/hero-studio-loop-720.av1.mp4",
+        type: 'video/mp4; codecs="av01.0.05M.08"',
+      },
+      {
+        src: "/media/hero/hero-studio-loop-720.h264.mp4",
+        type: "video/mp4",
+      },
+    ]);
+  });
+
   it("advances and rewinds from the left and right halves", async () => {
     // arrange
     renderStoryWidget();

@@ -82,12 +82,14 @@ export function InstagramWidget() {
             transition={{ duration: 0.2 }}
             src={stories[currentIndex]}
             alt={`Story ${currentIndex + 1} of ${stories.length}`}
+            data-parity="story-media"
             className="absolute inset-0 w-full h-full object-cover"
           />
         </AnimatePresence>
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40 pointer-events-none"
+          data-parity="story-overlay"
+          className="absolute inset-0 bg-gradient-to-b from-surface-inverted/80 via-transparent to-surface-inverted/50 pointer-events-none"
         />
       </div>
 
@@ -116,7 +118,7 @@ export function InstagramWidget() {
             />
           </div>
           <span className="text-white text-sm font-medium">eli.fitness</span>
-          <span className="text-white/60 text-xs ml-1">4h</span>
+          <span className="text-surface-inverted-foreground text-xs ml-1">4h</span>
         </div>
       </div>
 

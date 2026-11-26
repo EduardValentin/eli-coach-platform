@@ -6959,5 +6959,10 @@
       }
     ],
     "real": []
-  }
+  },
+  "hero-video-paused": [
+    {
+      "click": "role=button[name=\"Pause hero video\"]"
+    }
+  ]
 }

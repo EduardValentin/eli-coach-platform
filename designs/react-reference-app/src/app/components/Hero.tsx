@@ -1,33 +1,72 @@
 import { Play, Pause, RotateCcw, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useState } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from './ui/button';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
 
+const HERO_MEDIA_ROOT = `${import.meta.env.BASE_URL}media/hero/`;
+const HERO_POSTER_SRC = `${HERO_MEDIA_ROOT}hero-studio-poster.webp`;
+const HERO_VIDEO_SRC = `${HERO_MEDIA_ROOT}hero-studio-loop-720.h264.mp4`;
+
+const heroControlClassName =
+  'inline-flex size-(--size-control-md) items-center justify-center rounded-full transition-colors hover:text-surface-inverted-foreground';
+
 export function Hero() {
-  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const shouldReduceMotion = useReducedMotion() === true;
+  const [playRequested, setPlayRequested] = useState(true);
+  const isPlaying = !shouldReduceMotion && playRequested;
   const { appState } = useAppState();
   const isClosed = appState.waitlistAvailability === 'closed';
   const isUnavailable = appState.waitlistAvailability === null;
 
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    if (!isPlaying) {
+      video.pause();
+      return;
+    }
+
+    void video.play().catch(() => setPlayRequested(false));
+  }, [isPlaying]);
+
+  const restartVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+
+    setPlayRequested(true);
+  };
+
   return (
-    <section data-surface="inverted" className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-surface-inverted">
-      {/* Background Media Placeholder */}
-      <div className="absolute inset-0 w-full h-full">
-        <img
-          src="https://images.unsplash.com/photo-1594269807754-7b7926246d65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21lbiUyMGZpdG5lc3MlMjB0cmFpbmluZyUyMHN0cm9uZ3xlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080"
-          alt="Woman training with kettlebell"
+    <section data-parity-root="Hero" data-surface="inverted" className="relative w-full min-h-[max(100vh,600px)] flex items-center justify-center overflow-hidden bg-surface-inverted">
+      <div aria-hidden="true" data-parity="hero-media" className="absolute inset-0 w-full h-full">
+        <video
+          ref={videoRef}
+          data-parity="hero-video"
+          autoPlay={isPlaying}
+          loop
+          muted
+          playsInline
+          poster={HERO_POSTER_SRC}
           className="w-full h-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface-inverted via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-surface-inverted/30" />
+        >
+          {shouldReduceMotion ? null : <source src={HERO_VIDEO_SRC} type="video/mp4" />}
+        </video>
+        <div data-parity="hero-gradient" className="absolute inset-0 bg-gradient-to-t from-surface-inverted via-transparent to-transparent" />
+        <div data-parity="hero-dim" className="absolute inset-0 bg-surface-inverted/55" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 w-full">
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-[calc(var(--size-control-md)+2rem)] w-full">
         <AnimatePresence mode="wait">
           {appState.isWaitlistMode ? (
             <motion.div
@@ -137,17 +176,17 @@ export function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* Video Controls Mock */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 text-surface-inverted-foreground/70">
+      <div data-parity="hero-controls" className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 text-surface-inverted-foreground/70">
         <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="hover:text-surface-inverted-foreground transition-colors"
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          type="button"
+          onClick={() => setPlayRequested(!isPlaying)}
+          className={heroControlClassName}
+          aria-label={isPlaying ? 'Pause hero video' : 'Play hero video'}
         >
-          {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+          {isPlaying ? <Pause aria-hidden="true" size={20} /> : <Play aria-hidden="true" size={20} />}
         </button>
-        <button className="hover:text-surface-inverted-foreground transition-colors" aria-label="Restart">
-          <RotateCcw size={20} />
+        <button type="button" onClick={restartVideo} className={heroControlClassName} aria-label="Restart hero video">
+          <RotateCcw aria-hidden="true" size={20} />
         </button>
       </div>
     </section>
