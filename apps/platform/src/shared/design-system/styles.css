@@ -590,6 +590,10 @@
   --color-focus-ring: var(--color-brand-primary-on-inverted);
 }
 
+[data-focus-on-media]:focus-visible {
+  --color-focus-ring: var(--color-text-inverted);
+}
+
 [data-focus-inset] {
   --focus-ring-offset: -2px;
   --focus-ring-halo: inset 0 0 0 6px

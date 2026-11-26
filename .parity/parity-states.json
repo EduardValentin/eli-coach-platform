@@ -6964,5 +6964,10 @@
     {
       "click": "role=button[name=\"Pause hero video\"]"
     }
+  ],
+  "story-paused": [
+    {
+      "click": "role=button[name=\"Pause story\"]"
+    }
   ]
 }

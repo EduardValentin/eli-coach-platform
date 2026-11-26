@@ -794,6 +794,10 @@
   --focus-ring: var(--brand-on-inverted);
 }
 
+[data-focus-on-media]:focus-visible {
+  --focus-ring: var(--surface-inverted-foreground);
+}
+
 [data-focus-inset] {
   --focus-ring-offset: -2px;
   --focus-ring-halo: inset 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);

@@ -1,8 +1,4 @@
 import { ELI_PORTRAIT_PATHS } from "~/shared/brand";
-import {
-  HERO_PHONE_VIDEO_SOURCES,
-  HERO_POSTER_PATH,
-} from "~/surfaces/public-site/sections/hero/hero-media";
 
 export const ABOUT_COPY = {
   bioParagraphs: [
@@ -31,23 +27,26 @@ export const ABOUT_MEDIA = {
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";
 
+function aboutMediaPath(fileName: string) {
+  return `media/about/${fileName}`;
+}
+
+function storyMedia(reelName: string) {
+  return {
+    posterPath: aboutMediaPath(`story-${reelName}-poster.webp`),
+    // A browser plays the first source it supports, so AV1 comes first.
+    videoSources: [
+      {
+        path: aboutMediaPath(`story-${reelName}.av1.mp4`),
+        type: 'video/mp4; codecs="av01.0.05M.08"',
+      },
+      { path: aboutMediaPath(`story-${reelName}.h264.mp4`), type: "video/mp4" },
+    ],
+  };
+}
+
 export const ABOUT_STORIES = [
-  {
-    alt: "Story 1 of 3",
-    objectPosition: "center",
-    posterPath: HERO_POSTER_PATH,
-    videoSources: HERO_PHONE_VIDEO_SOURCES,
-  },
-  {
-    alt: "Story 2 of 3",
-    objectPosition: "40% center",
-    posterPath: HERO_POSTER_PATH,
-    videoSources: HERO_PHONE_VIDEO_SOURCES,
-  },
-  {
-    alt: "Story 3 of 3",
-    objectPosition: "60% center",
-    posterPath: HERO_POSTER_PATH,
-    videoSources: HERO_PHONE_VIDEO_SOURCES,
-  },
+  { alt: "Story 1 of 3", ...storyMedia("lifestyle") },
+  { alt: "Story 2 of 3", ...storyMedia("mobility") },
+  { alt: "Story 3 of 3", ...storyMedia("gym") },
 ] as const;

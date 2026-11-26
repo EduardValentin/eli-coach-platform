@@ -13,7 +13,7 @@ function heroMediaPath(fileName: string) {
 
 export const HERO_POSTER_PATH = heroMediaPath("hero-studio-poster.webp");
 
-export const HERO_PHONE_VIDEO_SOURCES: readonly HeroVideoSource[] = [
+const HERO_PHONE_VIDEO_SOURCES: readonly HeroVideoSource[] = [
   {
     path: heroMediaPath("hero-studio-loop-720.av1.mp4"),
     type: 'video/mp4; codecs="av01.0.05M.08"',
