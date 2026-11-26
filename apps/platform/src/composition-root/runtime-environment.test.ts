@@ -55,6 +55,36 @@ describe("runtime environment", () => {
     overrides: Parameters<typeof loadRuntimeEnvironment>[0] = {},
   ) => loadRuntimeEnvironment(buildEnvironment(overrides));
 
+  it.each(["/", "/eli-coach-platform", "/eli-coach-platform/", "/a/b-c_d.e~f"])(
+    "accepts %s as the URL prefix",
+    (appBasePath) => {
+      // arrange, act
+      const environment = loadTestRuntimeEnvironment({
+        APP_BASE_PATH: appBasePath,
+      });
+
+      // assert
+      expect(environment.APP_BASE_PATH).toBe(appBasePath);
+    },
+  );
+
+  it.each([
+    "eli-coach-platform",
+    "//evil.example",
+    "https://evil.example",
+    "/eli;Domain=evil.example",
+    '/eli"onload',
+    "/eli coach",
+    "/eli//coach",
+  ])("refuses %s as the URL prefix", (appBasePath) => {
+    // arrange
+    const load = () =>
+      loadTestRuntimeEnvironment({ APP_BASE_PATH: appBasePath });
+
+    // act, assert
+    expect(load).toThrow("APP_BASE_PATH");
+  });
+
   it("defaults the active waitlist offer to all coaching bundles", () => {
     // arrange
     // act

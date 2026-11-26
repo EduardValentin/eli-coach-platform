@@ -14,7 +14,8 @@ type BuildRegistry = { [PLATFORM_BUILD_KEY]?: Promise<void> };
  * Produces the artifact the suites serve: the one production build every
  * deployment runs, whatever prefix it is served under. Each integration
  * project serves it under its own prefix, so the projects share one build
- * per run instead of making one each.
+ * per run instead of making one each. Vitest loads this module once per
+ * project, so the shared build lives on `globalThis`, not in a module variable.
  */
 export function buildPlatformServer(): Promise<void> {
   const registry = globalThis as BuildRegistry;

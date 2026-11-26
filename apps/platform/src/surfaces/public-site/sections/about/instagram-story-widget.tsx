@@ -155,7 +155,7 @@ export function InstagramStoryWidget() {
             loop={!shouldReduceMotion}
             muted
             playsInline
-            poster={appUrl(currentStory.posterSrc)}
+            poster={appUrl(currentStory.posterPath)}
             preload={shouldReduceMotion ? "none" : "metadata"}
             style={{ objectPosition: currentStory.objectPosition }}
             transition={{ duration: 0.2 }}
@@ -165,7 +165,7 @@ export function InstagramStoryWidget() {
               : currentStory.videoSources.map((source) => (
                   <source
                     key={source.type}
-                    src={appUrl(source.src)}
+                    src={appUrl(source.path)}
                     type={source.type}
                   />
                 ))}

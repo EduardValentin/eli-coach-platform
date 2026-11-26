@@ -45,7 +45,7 @@ afterEach(() => {
 describe("the server build served under the prefix the instance starts with", () => {
   it("moves the router, the static files and every built asset URL under the prefix", async () => {
     // arrange
-    startsWith("/eli-coach-platform");
+    instanceStartsUnder("/eli-coach-platform");
 
     // act
     const served = await import("./server-build.server");
@@ -78,7 +78,7 @@ describe("the server build served under the prefix the instance starts with", ()
 
   it("accepts the prefix written with a trailing slash", async () => {
     // arrange
-    startsWith("/eli-coach-platform/");
+    instanceStartsUnder("/eli-coach-platform/");
 
     // act
     const served = await import("./server-build.server");
@@ -93,7 +93,7 @@ describe("the server build served under the prefix the instance starts with", ()
 
   it("serves the build unchanged at the root", async () => {
     // arrange
-    startsWith("/");
+    instanceStartsUnder("/");
 
     // act
     const served = await import("./server-build.server");
@@ -106,7 +106,7 @@ describe("the server build served under the prefix the instance starts with", ()
 
   it("keeps the fields it does not serve differently", async () => {
     // arrange
-    startsWith("/eli-coach-platform");
+    instanceStartsUnder("/eli-coach-platform");
 
     // act
     const served = await import("./server-build.server");
@@ -118,7 +118,7 @@ describe("the server build served under the prefix the instance starts with", ()
 
   it("hands the prefix to the code that builds links", async () => {
     // arrange
-    startsWith("/eli-coach-platform");
+    instanceStartsUnder("/eli-coach-platform");
 
     // act
     await import("./server-build.server");
@@ -129,7 +129,7 @@ describe("the server build served under the prefix the instance starts with", ()
   });
 });
 
-function startsWith(appBasePath: string): void {
+function instanceStartsUnder(appBasePath: string): void {
   vi.doMock("~/composition-root/runtime-environment", () => ({
     getRuntimeEnvironment: () => ({ APP_BASE_PATH: appBasePath }),
   }));

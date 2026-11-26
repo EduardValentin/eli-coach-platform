@@ -32,11 +32,11 @@ export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";
 
 const ABOUT_STORY_VIDEO_SOURCES = [
   {
-    src: ABOUT_MEDIA.heroVideoWebm,
+    path: ABOUT_MEDIA.heroVideoWebm,
     type: "video/webm",
   },
   {
-    src: ABOUT_MEDIA.heroVideoMp4,
+    path: ABOUT_MEDIA.heroVideoMp4,
     type: "video/mp4",
   },
 ] as const;
@@ -45,19 +45,19 @@ export const ABOUT_STORIES = [
   {
     alt: "Story 1 of 3",
     objectPosition: "center",
-    posterSrc: ABOUT_MEDIA.heroPoster,
+    posterPath: ABOUT_MEDIA.heroPoster,
     videoSources: ABOUT_STORY_VIDEO_SOURCES,
   },
   {
     alt: "Story 2 of 3",
     objectPosition: "35% center",
-    posterSrc: ABOUT_MEDIA.heroPoster,
+    posterPath: ABOUT_MEDIA.heroPoster,
     videoSources: ABOUT_STORY_VIDEO_SOURCES,
   },
   {
     alt: "Story 3 of 3",
     objectPosition: "65% center",
-    posterSrc: ABOUT_MEDIA.heroPoster,
+    posterPath: ABOUT_MEDIA.heroPoster,
     videoSources: ABOUT_STORY_VIDEO_SOURCES,
   },
 ] as const;

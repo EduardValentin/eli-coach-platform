@@ -25,13 +25,14 @@ describe("one build served under the prefix the instance starts with", () => {
   });
 
   it("names every script, stylesheet, font, icon and image of the home page under the prefix, and serves each", async () => {
-    // arrange, act
+    // arrange
     const document = await (await requestPath("/")).text();
-
-    // assert
     const assetUrls = sameOriginAssetUrlsIn(document);
+
+    // act
     const answers = await Promise.all(assetUrls.map(statusOf));
 
+    // assert
     expect(
       assetUrls.filter((url) => url.endsWith(".js")).length,
     ).toBeGreaterThan(0);
