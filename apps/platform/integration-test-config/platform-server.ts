@@ -14,6 +14,8 @@ const platformDirectory = resolve(currentDirectory, "..");
 /** The command a deployed container runs — see docker/Dockerfile.react-router. */
 const SERVER_ENTRY_PATH = "server.mjs";
 const SERVER_BUILD_PATH = "build/server/index.js";
+/** What `server.mjs` prints once it holds its port. */
+const LISTENING_ANNOUNCEMENT = "[platform] http://localhost";
 /**
  * The rig's wall-clock seam, loaded before a single application module is. It
  * is named here and nowhere else — no production script, Dockerfile or build
@@ -72,6 +74,7 @@ export class PlatformServer {
   private logFilePath: string | null = null;
   private logStream: WriteStream | null = null;
   private port: number | null = null;
+  private listening = false;
   private readonly retainedOutput: string[] = [];
   private readonly exitGuard = (): void => this.forceCleanupOnProcessExit();
   /** Correlates each clock instruction with the acknowledgement it awaits. */
@@ -193,6 +196,7 @@ export class PlatformServer {
     this.exit = null;
     this.spawnError = null;
     this.retainedOutput.length = 0;
+    this.listening = false;
     this.logFilePath = join(
       await mkdtemp(join(tmpdir(), "eli-coach-platform-integration-server-")),
       "server.log",
@@ -329,10 +333,10 @@ export class PlatformServer {
       }
 
       // Readiness is the application's own answer about its dependencies, so
-      // waiting for it is waiting for the database to be reachable too.
-      const status = await this.probeReadiness();
-
-      if (status === 200) {
+      // waiting for it is waiting for the database to be reachable too. Until
+      // this child says it is listening, a 200 on the port may come from
+      // another suite's server that took the same port first.
+      if (this.listening && (await this.probeReadiness()) === 200) {
         return;
       }
 
@@ -410,6 +414,9 @@ export class PlatformServer {
 
     this.logStream?.write(output);
     this.retainedOutput.push(...output.split("\n"));
+    this.listening ||= this.retainedOutput.some((line) =>
+      line.includes(`${LISTENING_ANNOUNCEMENT}:${this.port}`),
+    );
     this.retainedOutput.splice(
       0,
       Math.max(this.retainedOutput.length - RETAINED_OUTPUT_LINES, 0),
@@ -431,8 +438,10 @@ function describeExit(exit: ProcessExit): string {
 
 /**
  * Suites run in separate processes and must not collide on a port. The kernel
- * hands out a free one, and it is released again immediately — nothing else
- * asks for an ephemeral port in the moment between here and the spawn.
+ * hands out a free one and it is released again immediately, so a suite in
+ * another process can be handed the same port before this child binds it; the
+ * child then exits on EADDRINUSE without announcing that it listens, and the
+ * spawn is retried on a new port.
  */
 async function reserveFreePort(): Promise<number> {
   return new Promise((resolvePort, rejectPort) => {
