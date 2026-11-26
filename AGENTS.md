@@ -20,12 +20,12 @@ Before implementing from a ticket, prototype, PRD, or branch: fetch `origin/main
 
 ## Project Stage
 
-Pre-launch MVP with no users and no production environment.
+Live product on a production environment (PROD, `https://evoa.fit`).
 
-- Write nothing whose only purpose is to protect existing data, users, or a previous implementation.
-- Prefer the simplest change over the compatible one. No compatibility shims, dual-write paths, backfills, or staged rollouts.
-- LOCAL and TEST databases may be dropped and recreated at will.
-- Revisit this section before the first production deployment.
+- PROD data is never dropped, recreated, or rewritten by hand. Change it only through migrations and application code.
+- Every migration keeps the previous release working: add first, remove in a later release. Rollback runs the previous image against the newer schema, so a column, table, or constraint the previous release still uses stays until a later release has shipped without it.
+- LOCAL and TEST databases may still be dropped and recreated at will.
+- For code that is not schema, prefer the simplest change over the compatible one. No compatibility shims, dual-write paths, or staged rollouts.
 
 ## Delivery
 
