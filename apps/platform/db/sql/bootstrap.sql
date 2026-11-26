@@ -1,24 +1,22 @@
 \set ON_ERROR_STOP on
 
+-- Passwords are set outside the DO block: an error inside it logs the executed
+-- statement as CONTEXT, which no log setting suppresses.
+SET log_min_error_statement = panic;
+
 DO $bootstrap$
 DECLARE
   application_schema text := :'app_db_schema';
   application_user text := :'app_db_app_user';
-  application_password text := :'app_db_app_password';
   migration_user text := :'app_db_migration_user';
-  migration_password text := :'app_db_migration_password';
   database_name text := current_database();
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = application_user) THEN
-    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', application_user, application_password);
-  ELSE
-    EXECUTE format('ALTER ROLE %I LOGIN PASSWORD %L', application_user, application_password);
+    EXECUTE format('CREATE ROLE %I LOGIN', application_user);
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = migration_user) THEN
-    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', migration_user, migration_password);
-  ELSE
-    EXECUTE format('ALTER ROLE %I LOGIN PASSWORD %L', migration_user, migration_password);
+    EXECUTE format('CREATE ROLE %I LOGIN', migration_user);
   END IF;
 
   EXECUTE format('REVOKE ALL ON DATABASE %I FROM %I', database_name, application_user);
@@ -56,3 +54,6 @@ BEGIN
   );
 END
 $bootstrap$;
+
+SELECT format('ALTER ROLE %I LOGIN PASSWORD %L', :'app_db_app_user', :'app_db_app_password') \gexec
+SELECT format('ALTER ROLE %I LOGIN PASSWORD %L', :'app_db_migration_user', :'app_db_migration_password') \gexec

@@ -1,5 +1,5 @@
 # One file for TEST and PROD, selected by `DEPLOY_ENV` and `--profile`; see
-# docker-compose.application.yml. PROD runs postgres only.
+# docker-compose.application.yml. PROD runs postgres and its exporter only.
 x-logging: &logging
   driver: json-file
   options:
@@ -16,8 +16,36 @@ services:
       - ${POSTGRES_ENV_FILE:-/srv/postgres/eli-coach-platform.env}
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
+    labels:
+      logging: promtail
+      env: ${DEPLOY_ENV}
+      app: eli-coach-platform
+      service: postgres
+      host: ${HOST_LABEL}
     volumes:
       - /srv/postgres/data/eli-coach-platform:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  # Postgres metrics for Ops, published on the host's Tailscale address only.
+  # It signs in as the read-only monitoring role from its own env file, which
+  # the deploy script writes without the bootstrap superuser's password.
+  postgres-exporter:
+    # Pinned to the digest of the v0.20.1 release; bump deliberately.
+    image: prometheuscommunity/postgres-exporter@sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e
+    container_name: eli-coach-platform-${DEPLOY_ENV}-postgres-exporter
+    logging: *logging
+    restart: unless-stopped
+    env_file:
+      - ${POSTGRES_EXPORTER_ENV_FILE:-/srv/postgres/eli-coach-platform.exporter.env}
+    ports:
+      - "${METRICS_BIND_IP:?METRICS_BIND_IP is required}:9187:9187"
+    labels:
+      logging: promtail
+      env: ${DEPLOY_ENV}
+      app: eli-coach-platform
+      service: postgres-exporter
+      host: ${HOST_LABEL}
     networks:
       - internal
 

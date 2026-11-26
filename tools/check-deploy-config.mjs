@@ -12,6 +12,11 @@ const SCRIPTS = [
 ];
 const SAMPLE_EDGE_HOSTNAME = "app.example.com";
 const SAMPLE_STACK_COLOR = "blue";
+const SAMPLE_METRICS_BIND_IP = "100.64.0.1";
+const SAMPLE_SUPERUSER_PASSWORD = "sample-superuser";
+const SAMPLE_MONITORING_USER = "sample-monitoring";
+const POSTGRES_EXPORTER_SERVICE = "postgres-exporter";
+const METRICS_PORT = 9187;
 const LOG_OPTIONS = { "max-size": "10m", "max-file": "5" };
 const FORBIDDEN_SERVICE_KEYS = [
   "ports",
@@ -25,9 +30,12 @@ const FORBIDDEN_SERVICE_KEYS = [
 const SERVICES_BY_ENV = {
   test: {
     application: ["design-reference", "platform"],
-    infrastructure: ["postgres", "stripe-webhook-relay"],
+    infrastructure: ["postgres", "postgres-exporter", "stripe-webhook-relay"],
   },
-  prod: { application: ["platform"], infrastructure: ["postgres"] },
+  prod: {
+    application: ["platform"],
+    infrastructure: ["postgres", "postgres-exporter"],
+  },
 };
 const RUNTIME_ENVIRONMENT_BY_ENV = { test: "test", prod: "production" };
 // Compose lets the caller's shell variables override --env-file, so none are passed.
@@ -56,15 +64,25 @@ function readDeploySettings(deployEnv) {
 function writeSampleComposeEnvironment(deployEnv, directory) {
   const appEnvFile = join(directory, "app.env");
   const postgresEnvFile = join(directory, "postgres.env");
+  const exporterEnvFile = join(directory, "postgres-exporter.env");
   const composeEnvFile = join(directory, `${deployEnv}.compose.env`);
   writeFileSync(appEnvFile, "");
-  writeFileSync(postgresEnvFile, "");
+  writeFileSync(
+    postgresEnvFile,
+    `POSTGRES_PASSWORD=${SAMPLE_SUPERUSER_PASSWORD}\n`,
+  );
+  writeFileSync(
+    exporterEnvFile,
+    `DATA_SOURCE_USER=${SAMPLE_MONITORING_USER}\n`,
+  );
   writeFileSync(
     composeEnvFile,
     [
       readFileSync(deployEnvFilePath(deployEnv), "utf8"),
       `APP_ENV_FILE=${appEnvFile}`,
       `POSTGRES_ENV_FILE=${postgresEnvFile}`,
+      `POSTGRES_EXPORTER_ENV_FILE=${exporterEnvFile}`,
+      `METRICS_BIND_IP=${SAMPLE_METRICS_BIND_IP}`,
       `STACK_COLOR=${SAMPLE_STACK_COLOR}`,
       `HOST_LABEL=${SAMPLE_EDGE_HOSTNAME}`,
       "PLATFORM_IMAGE=registry.example.com/platform@sha256:0",
@@ -129,17 +147,23 @@ function logCapProblems(where, logging = {}) {
   return [...driverProblems, ...optionProblems];
 }
 
+function forbiddenKeysFor(name) {
+  return name === POSTGRES_EXPORTER_SERVICE
+    ? FORBIDDEN_SERVICE_KEYS.filter((key) => key !== "ports")
+    : FORBIDDEN_SERVICE_KEYS;
+}
+
 function serviceProblems({ deployEnv, stack, name, service }) {
   const where = `${deployEnv} ${stack} ${name}`;
   const problems = [...logCapProblems(where, service.logging)];
 
-  for (const key of FORBIDDEN_SERVICE_KEYS.filter((key) => key in service)) {
+  for (const key of forbiddenKeysFor(name).filter((key) => key in service)) {
     problems.push(`${where}: sets ${key}`);
   }
-  if (name !== "postgres" && service.labels?.logging !== "promtail") {
+  if (service.labels?.logging !== "promtail") {
     problems.push(`${where}: lost the logging=promtail label`);
   }
-  if (name !== "postgres" && service.labels?.env !== deployEnv) {
+  if (service.labels?.env !== deployEnv) {
     problems.push(
       `${where}: env label is ${service.labels?.env}, expected ${deployEnv}`,
     );
@@ -218,6 +242,48 @@ function stripeRelayProblems({ settings, infrastructure }) {
     : [`test stripe relay does not ${forwardTo}`];
 }
 
+function publishesOnlyOnMetricsAddress(ports = []) {
+  const [published, ...others] = ports;
+
+  return (
+    others.length === 0 &&
+    published?.host_ip === SAMPLE_METRICS_BIND_IP &&
+    published?.target === METRICS_PORT &&
+    published?.published === String(METRICS_PORT)
+  );
+}
+
+function postgresExporterProblems({ deployEnv, infrastructure }) {
+  const exporter = infrastructure.services[POSTGRES_EXPORTER_SERVICE];
+  const where = `${deployEnv} ${POSTGRES_EXPORTER_SERVICE}`;
+  const problems = [];
+
+  if (!publishesOnlyOnMetricsAddress(exporter.ports)) {
+    problems.push(
+      `${where}: must publish exactly ${SAMPLE_METRICS_BIND_IP}:${METRICS_PORT}:${METRICS_PORT}`,
+    );
+  }
+  if (
+    exporter.environment?.DATA_SOURCE_USER !== SAMPLE_MONITORING_USER ||
+    "POSTGRES_PASSWORD" in (exporter.environment ?? {})
+  ) {
+    problems.push(
+      `${where}: must read only its own env file, never the bootstrap password`,
+    );
+  }
+  if (!/@sha256:[0-9a-f]{64}$/.test(exporter.image)) {
+    problems.push(`${where}: image ${exporter.image} is not pinned by digest`);
+  }
+  if (Object.keys(exporter.networks ?? {}).join() !== "internal") {
+    problems.push(`${where}: must sit on the internal network only`);
+  }
+  if (exporter.labels?.service !== POSTGRES_EXPORTER_SERVICE) {
+    problems.push(`${where}: service label is ${exporter.labels?.service}`);
+  }
+
+  return problems;
+}
+
 function composeProblemsForEnv(deployEnv, directory) {
   try {
     return renderedComposeProblems(deployEnv, directory);
@@ -252,6 +318,7 @@ function renderedComposeProblems(deployEnv, directory) {
       config: infrastructure,
     }),
     ...platformProblems({ deployEnv, settings, application }),
+    ...postgresExporterProblems({ deployEnv, infrastructure }),
     ...relayProblems,
   ];
 }

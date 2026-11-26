@@ -177,6 +177,10 @@ It now also carries the database bootstrap and migration-role inputs used by pro
 - `APP_DB_APP_PASSWORD`
 - `APP_DB_MIGRATION_USER`
 - `APP_DB_MIGRATION_PASSWORD`
+- `APP_DB_MONITORING_USER`
+- `APP_DB_MONITORING_PASSWORD`
+
+The monitoring role is created by `apps/platform/db/sql/monitoring-role.sql` on every deploy, after the application and migration roles. It is read-only (`pg_monitor`, no access to the `app` schema), and it is the only database account the Postgres exporter signs in with. `scripts/deploy/deploy.sh` writes that account's credentials to `/srv/postgres/eli-coach-platform.exporter.env` (mode 0600), so the bootstrap superuser's password never reaches the exporter. The role can read other sessions' query text through `pg_stat_activity` (`pg_monitor`), so treat the exporter env file as sensitive. The password must be alphanumeric, because the deploy renders it through `sed`; generate it with `openssl rand -hex 24`. A deploy stops before it starts or replaces any container while either monitoring key is missing from the Postgres file, so its value must reach the host before the release that requires it.
 
 ## Payments (Stripe)
 
