@@ -153,7 +153,7 @@ pnpm test:e2e        # Playwright: local-only, real Clerk and Stripe test mode (
 pnpm test:e2e:critical # only the journeys tagged @critical
 ```
 
-The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.
+The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`; no workspace gate reaches it. CI typechecks and builds the prototype in a separate step but does not run its vitest suite, so run `npm test` locally before changing it.
 
 ## Database
 
