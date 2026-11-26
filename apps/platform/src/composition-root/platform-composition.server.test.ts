@@ -30,6 +30,7 @@ function composePlatform() {
   return composePlatformFeature({
     app: createRuntimeEnvironment(),
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
+    comingSoonMode: "off",
     version: "dev",
   });
 }

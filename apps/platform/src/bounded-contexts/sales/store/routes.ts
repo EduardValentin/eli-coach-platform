@@ -1,5 +1,6 @@
 import { relative } from "@react-router/dev/routes";
 
+import { STORE_MANAGEMENT_API_PATH } from "../public/paths";
 import {
   STORE_API_PATHS,
   STORE_CHECKOUT_COMPLETE_ROUTE_SEGMENT,
@@ -51,23 +52,23 @@ export const storeApiRoutes = [
     "./adapters/inbound/http/covers/covers.ts",
   ),
   route(
-    "api/management/store/product-validations",
+    `${STORE_MANAGEMENT_API_PATH.slice(1)}/store/product-validations`,
     "./adapters/inbound/http/management/management-product-validations.ts",
   ),
   route(
-    "api/management/store/products",
+    `${STORE_MANAGEMENT_API_PATH.slice(1)}/store/products`,
     "./adapters/inbound/http/management/management-products.ts",
   ),
   route(
-    "api/management/store/products/:productId",
+    `${STORE_MANAGEMENT_API_PATH.slice(1)}/store/products/:productId`,
     "./adapters/inbound/http/management/management-product.ts",
   ),
   route(
-    "api/management/store/products/:productId/versions",
+    `${STORE_MANAGEMENT_API_PATH.slice(1)}/store/products/:productId/versions`,
     "./adapters/inbound/http/management/management-product-versions.ts",
   ),
   route(
-    "api/management/store/products/:productId/prices",
+    `${STORE_MANAGEMENT_API_PATH.slice(1)}/store/products/:productId/prices`,
     "./adapters/inbound/http/management/management-product-prices.ts",
   ),
 ];

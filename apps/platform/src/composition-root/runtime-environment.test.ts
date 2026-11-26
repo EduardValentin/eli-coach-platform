@@ -1154,4 +1154,15 @@ describe("Clerk runtime environment", () => {
     // assert
     expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBeUndefined();
   });
+
+  it("rejects a coming-soon mode that is neither on nor off", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, COMING_SOON_MODE: "yes" };
+
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(act).toThrow();
+  });
 });

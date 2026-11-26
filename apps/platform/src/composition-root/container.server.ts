@@ -36,6 +36,7 @@ import {
   composeScheduling,
   type SchedulingComposition,
 } from "~/bounded-contexts/scheduling/composition.server";
+import { resolveComingSoonMode } from "~/composition-root/coming-soon/config.server";
 import { createPlatformDatabase } from "~/composition-root/database.server";
 import { resolveEmailSubaddressPolicy } from "~/composition-root/email-subaddress-policy.server";
 import { ConsoleLoggerAdapter } from "~/shared/logging/console-logger-adapter.server";
@@ -174,6 +175,7 @@ export function createPlatformContainer(options: {
   const platform = composePlatformFeature({
     app: environment,
     botDetection,
+    comingSoonMode: resolveComingSoonMode(environment),
     version: process.env.GIT_SHA ?? "dev",
   });
 

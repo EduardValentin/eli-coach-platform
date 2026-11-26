@@ -12,6 +12,8 @@ export function invitationPath(link: { token: string }): string {
 
 export const INVITATION_RESOLUTION_API_PATH = "/api/clients/invitation";
 
+export const CLERK_WEBHOOKS_API_PATH = "/api/clerk/webhooks";
+
 export const CLIENT_PORTAL_ROUTE_SEGMENT = "client";
 export const CLIENT_PORTAL_PATH = `/${CLIENT_PORTAL_ROUTE_SEGMENT}`;
 
