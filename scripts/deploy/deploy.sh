@@ -39,6 +39,8 @@ EDGE_HOSTNAME="${EDGE_HOSTNAME:-}"
 HOST_LABEL="${HOST_LABEL:-$EDGE_HOSTNAME}"
 APP_ENV_FILE="${APP_ENV_FILE:-${APP_DIR}/.env}"
 POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
+POSTGRES_EXPORTER_ENV_FILE="${POSTGRES_EXPORTER_ENV_FILE:-/srv/postgres/${APP_NAME}.exporter.env}"
+OBSERVABILITY_ENV_FILE="${OBSERVABILITY_ENV_FILE:-/srv/apps/observability/.env}"
 READINESS_TIMEOUT_SECONDS="${READINESS_TIMEOUT_SECONDS:-180}"
 EDGE_NETWORK="${EDGE_NETWORK:-edge_default}"
 POSTGRES_DATA_ROOT="${POSTGRES_DATA_ROOT:-/srv/postgres/data/${APP_NAME}}"
@@ -97,6 +99,17 @@ load_deploy_settings() {
   require_env ENVIRONMENT
 
   export DEPLOY_ENV APP_BASE_PATH ENVIRONMENT
+}
+
+load_metrics_bind_ip() {
+  ensure_file_exists "${OBSERVABILITY_ENV_FILE}"
+
+  METRICS_BIND_IP="$(read_env_file_value "${OBSERVABILITY_ENV_FILE}" METRICS_BIND_IP)"
+
+  [[ -n "${METRICS_BIND_IP}" && "${METRICS_BIND_IP}" != "0.0.0.0" ]] \
+    || fail "METRICS_BIND_IP in ${OBSERVABILITY_ENV_FILE} must be one interface address, never empty or 0.0.0.0"
+
+  export METRICS_BIND_IP
 }
 
 require_inputs() {
@@ -291,8 +304,31 @@ prepare_host_directories() {
   ensure_file_exists "${APPLICATION_COMPOSE_FILE}"
 }
 
+write_postgres_exporter_env_file() {
+  local postgres_db=""
+  local monitoring_user=""
+  local monitoring_password=""
+
+  postgres_db="$(read_env_file_value "${POSTGRES_ENV_FILE}" POSTGRES_DB)"
+  monitoring_user="$(read_env_file_value "${POSTGRES_ENV_FILE}" APP_DB_MONITORING_USER)"
+  monitoring_password="$(read_env_file_value "${POSTGRES_ENV_FILE}" APP_DB_MONITORING_PASSWORD)"
+
+  [[ "${postgres_db}" =~ ^[A-Za-z0-9_]+$ ]] || fail "POSTGRES_DB missing or not a plain name in ${POSTGRES_ENV_FILE}"
+  [[ "${monitoring_user}" =~ ^[a-z_][a-z0-9_]*$ ]] || fail "APP_DB_MONITORING_USER missing or not a plain role name in ${POSTGRES_ENV_FILE}"
+  [[ "${monitoring_password}" =~ ^[A-Za-z0-9]+$ ]] || fail "APP_DB_MONITORING_PASSWORD missing or not alphanumeric in ${POSTGRES_ENV_FILE}"
+
+  install -m 0600 /dev/null "${POSTGRES_EXPORTER_ENV_FILE}.next"
+  cat > "${POSTGRES_EXPORTER_ENV_FILE}.next" <<EOF
+DATA_SOURCE_URI=${APP_NAME}-${DEPLOY_ENV}-postgres:5432/${postgres_db}?sslmode=disable
+DATA_SOURCE_USER=${monitoring_user}
+DATA_SOURCE_PASS=${monitoring_password}
+EOF
+  mv "${POSTGRES_EXPORTER_ENV_FILE}.next" "${POSTGRES_EXPORTER_ENV_FILE}"
+}
+
 start_infrastructure() {
   prepare_postgres_data_root
+  write_postgres_exporter_env_file
 
   docker compose \
     --env-file /dev/null \
@@ -341,8 +377,9 @@ retire_previous_color() {
 }
 
 load_deploy_settings
+load_metrics_bind_ip
 require_inputs
-export HOST_LABEL POSTGRES_RUNTIME_IMAGE
+export HOST_LABEL POSTGRES_RUNTIME_IMAGE POSTGRES_EXPORTER_ENV_FILE
 prepare_host_directories
 login_to_ghcr
 reclaim_docker_disk_space
