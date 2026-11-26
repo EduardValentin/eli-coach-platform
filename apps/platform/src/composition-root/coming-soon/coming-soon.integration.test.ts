@@ -36,6 +36,8 @@ const BLOCKED_NON_PAGES = [
   "/api/meta",
   "/client/manifest.webmanifest",
   "/client/sw.js",
+  "/api/no-route-names-this",
+  "/wp-login.php",
 ];
 
 describe("coming-soon mode", () => {

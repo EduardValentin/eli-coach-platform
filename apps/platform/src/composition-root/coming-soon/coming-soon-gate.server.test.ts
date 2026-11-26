@@ -87,6 +87,35 @@ describe("ComingSoonGate when on", () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it.each(["/readyz", "/api/clerk/webhooks", "/api/management/store/products"])(
+    "marks the open route %s noindex too",
+    async (pattern) => {
+      // arrange
+      const next = ok();
+
+      // act
+      const response = await gate("on").noIndex(argsFor({ pattern }), next);
+
+      // assert
+      expect(response.headers.get("x-robots-tag")).toBe("noindex");
+    },
+  );
+
+  it.each([
+    "http://localhost/api/nope",
+    "http://localhost/eli-coach-platform/api/nope",
+    "http://localhost/wp-login.php",
+  ])("answers the unmatched non-page %s with a plain 404", async (url) => {
+    // arrange
+    const request = argsFor({ pattern: "/*", url });
+
+    // act
+    const response = await gate("on").blockUnlessOpen(request, ok());
+
+    // assert
+    expect(response?.status).toBe(404);
+  });
+
   it("recognises an open pattern the router reports without its leading slash", async () => {
     // arrange
     const next = ok();

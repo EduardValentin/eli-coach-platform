@@ -28,7 +28,11 @@ const OPEN_PATTERNS: ReadonlySet<string> = new Set([
 const OPEN_PATTERN_PREFIXES = [`${STORE_MANAGEMENT_API_PATH}/`] as const;
 
 const PAGE_METHODS: ReadonlySet<string> = new Set(["GET", "HEAD"]);
-const FILE_LIKE_PATTERN = /\.[A-Za-z0-9]+$/;
+const FILE_EXTENSION = /\.[A-Za-z0-9]+$/;
+// No route names this URL, so only the URL can say it is not a page. Reading
+// it here can only turn a 200 into a 404.
+const CATCH_ALL_PATTERN = "/*";
+const NON_PAGE_URL_PATH = /\/api\/|\.[A-Za-z0-9]+$/;
 const SINGLE_FETCH_SUFFIX = ".data";
 
 type MiddlewareArgs = Parameters<MiddlewareFunction<Response>>[0];
@@ -59,7 +63,7 @@ export class ComingSoonGate {
   };
 
   private isOpen(pattern: string): boolean {
-    const path = withLeadingSlash(pattern);
+    const path = this.routePath(pattern);
 
     return (
       OPEN_PATTERNS.has(path) ||
@@ -68,15 +72,19 @@ export class ComingSoonGate {
   }
 
   private isPageRequest({ pattern, request }: MiddlewareArgs): boolean {
+    const routePath = this.routePath(pattern);
+    const { pathname } = new URL(request.url);
+
     return (
       PAGE_METHODS.has(request.method) &&
-      !withLeadingSlash(pattern).startsWith(API_PATH_PREFIX) &&
-      !FILE_LIKE_PATTERN.test(pattern) &&
-      !new URL(request.url).pathname.endsWith(SINGLE_FETCH_SUFFIX)
+      !routePath.startsWith(API_PATH_PREFIX) &&
+      !FILE_EXTENSION.test(routePath) &&
+      !pathname.endsWith(SINGLE_FETCH_SUFFIX) &&
+      !(routePath === CATCH_ALL_PATTERN && NON_PAGE_URL_PATH.test(pathname))
     );
   }
-}
 
-function withLeadingSlash(pattern: string): string {
-  return pattern.startsWith("/") ? pattern : `/${pattern}`;
+  private routePath(pattern: string): string {
+    return pattern.startsWith("/") ? pattern : `/${pattern}`;
+  }
 }

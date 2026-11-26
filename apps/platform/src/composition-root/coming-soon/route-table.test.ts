@@ -7,19 +7,26 @@ import { ComingSoonGate } from "./coming-soon-gate.server";
 
 type RegisteredRoute = { file: string; pattern: string };
 
-function flatten(
+function registeredRoutesOf(
   entries: readonly RouteConfigEntry[],
   parentPattern = "",
 ): RegisteredRoute[] {
   return entries.flatMap((entry) => {
-    const own = entry.path ? `${parentPattern}/${entry.path}` : parentPattern;
-    const here = entry.file ? [{ file: entry.file, pattern: own || "/" }] : [];
+    const entryPattern = entry.path
+      ? `${parentPattern}/${entry.path}`
+      : parentPattern;
+    const entryRoute = entry.file
+      ? [{ file: entry.file, pattern: entryPattern || "/" }]
+      : [];
 
-    return [...here, ...flatten(entry.children ?? [], own)];
+    return [
+      ...entryRoute,
+      ...registeredRoutesOf(entry.children ?? [], entryPattern),
+    ];
   });
 }
 
-const resourceRoutes = flatten(routes).filter(({ file }) =>
+const resourceRoutes = registeredRoutesOf(routes).filter(({ file }) =>
   file.endsWith(".ts"),
 );
 
@@ -34,13 +41,14 @@ describe("the route table under coming-soon mode", () => {
     ({ pattern }) => {
       // arrange
       const next = vi.fn().mockResolvedValue(new Response());
-      const request = {
+      const middlewareArgs = {
         pattern,
         request: new Request("http://localhost/x"),
       } as never;
 
       // act
-      const act = () => new ComingSoonGate("on").blockUnlessOpen(request, next);
+      const act = () =>
+        new ComingSoonGate("on").blockUnlessOpen(middlewareArgs, next);
 
       // assert
       expect(act).not.toThrow();
