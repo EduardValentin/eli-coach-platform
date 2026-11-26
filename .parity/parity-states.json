@@ -7313,5 +7313,128 @@
     {
       "click": "role=button[name=\"Add Jumping Jacks\"]"
     }
+  ],
+  "keyboard-resource-actions-delete": [
+    {
+      "use": "keyboard-open-resource-actions"
+    },
+    {
+      "press": "End"
+    }
+  ],
+  "exercise-type-keyboard-open": [
+    {
+      "use": "exercise-type-open"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-type-keyboard-next": [
+    {
+      "use": "exercise-type-keyboard-open"
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "checkins-kind-keyboard-open": [
+    {
+      "use": "checkins-kind-open"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "checkins-kind-keyboard-next": [
+    {
+      "use": "checkins-kind-keyboard-open"
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "add-resource-tag-suggestion-keyboard": [
+    {
+      "use": "add-resource-tag-suggestions"
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "block-day-menu-session-focus-visible": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Monday options\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Session\"]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "focus-checkin-reschedule-moved-twice": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "ArrowDown"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "coach-focus-checkin-reschedule-moved-twice": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "ArrowDown"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
   ]
 }
