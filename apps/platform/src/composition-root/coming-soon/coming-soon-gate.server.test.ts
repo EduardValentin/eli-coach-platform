@@ -51,7 +51,7 @@ describe("ComingSoonGate when off", () => {
 
     // assert
     expect(blocked).toBeInstanceOf(Response);
-    expect(response.headers.get("x-robots-tag")).toBeNull();
+    expect(response?.headers.get("x-robots-tag")).toBeNull();
     expect(next).toHaveBeenCalledTimes(2);
   });
 });
@@ -65,7 +65,7 @@ describe("ComingSoonGate when on", () => {
     const response = await gate("on").noIndex(argsFor({ pattern: "/" }), next);
 
     // assert
-    expect(response.headers.get("x-robots-tag")).toBe("noindex");
+    expect(response?.headers.get("x-robots-tag")).toBe("noindex");
   });
 
   it.each([
@@ -97,7 +97,7 @@ describe("ComingSoonGate when on", () => {
       const response = await gate("on").noIndex(argsFor({ pattern }), next);
 
       // assert
-      expect(response.headers.get("x-robots-tag")).toBe("noindex");
+      expect(response?.headers.get("x-robots-tag")).toBe("noindex");
     },
   );
 
