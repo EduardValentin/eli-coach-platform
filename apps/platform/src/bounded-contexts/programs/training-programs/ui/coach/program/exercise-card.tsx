@@ -279,12 +279,15 @@ export function ExerciseCard({
       ref={drop as unknown as Ref<HTMLElement>}
     >
       <TextDisclosureGroup>
-        <div className={CARD_GRID_CLASS}>
+        <div className={CARD_GRID_CLASS} data-parity="exercise-card-grid">
           <DragHandle
             className="mt-3.5 [grid-area:handle]"
             handleRef={drag as unknown as Ref<HTMLSpanElement>}
           />
-          <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
+          <div
+            className="mt-3 grid min-w-0 gap-1 [grid-area:info]"
+            data-parity="exercise-card-info"
+          >
             <h5 className="flex items-center gap-2.5">
               <PositionBadge label={position} />{" "}
               <ExerciseNameButton
@@ -295,7 +298,12 @@ export function ExerciseCard({
               />
             </h5>
             {facts && (
-              <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>
+              <p
+                className="pl-9.5 text-sm text-text-secondary"
+                data-parity="exercise-card-facts"
+              >
+                {facts}
+              </p>
             )}
           </div>
           <TargetsSummary

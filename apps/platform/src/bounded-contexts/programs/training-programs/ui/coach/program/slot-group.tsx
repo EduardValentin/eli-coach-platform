@@ -202,7 +202,10 @@ export function SlotGroup({
             rules={rulesAt({ slot })}
           />
         ) : (
-          <div className="grid grid-cols-[minmax(0,1fr)]">
+          <div
+            className="grid grid-cols-[minmax(0,1fr)]"
+            data-parity="slot-unit-list"
+          >
             {holdsSeveralUnits && (
               <DropSeparator
                 rules={rulesAt({ slot, beforeRowId: units[0].rows[0].id })}
@@ -213,7 +216,11 @@ export function SlotGroup({
               const { group } = unit;
 
               return (
-                <div className="grid grid-cols-[minmax(0,1fr)]" key={unit.key}>
+                <div
+                  className="grid grid-cols-[minmax(0,1fr)]"
+                  data-parity="slot-unit"
+                  key={unit.key}
+                >
                   {group === undefined ? (
                     exerciseCardFor(unit.rows[0].id)
                   ) : (

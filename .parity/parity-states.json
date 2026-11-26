@@ -7292,9 +7292,6 @@
     },
     {
       "press": "End"
-    },
-    {
-      "waitFor": "[data-parity=\"row-action-delete-hint\"]"
     }
   ],
   "library-add-refused": [
@@ -7399,13 +7396,13 @@
   ],
   "focus-checkin-reschedule-moved-twice": [
     {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
       "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
     },
     {
-      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-    },
-    {
-      "wait": 400
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
     },
     {
       "press": "ArrowDown"
@@ -7414,27 +7411,49 @@
       "waitFor": "[data-parity=\"disabled-action-hint\"]"
     }
   ],
-  "coach-focus-checkin-reschedule-moved-twice": [
-    {
-      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
-    },
-    {
-      "wait": 600
-    },
-    {
-      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
-    },
-    {
-      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
-    },
-    {
-      "wait": 400
-    },
-    {
-      "press": "ArrowDown"
-    },
-    {
-      "waitFor": "[data-parity=\"disabled-action-hint\"]"
-    }
-  ]
+  "coach-focus-checkin-reschedule-moved-twice": {
+    "prototype": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"checkin-note\"]"
+      },
+      {
+        "hover": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Enter"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+      },
+      {
+        "press": "ArrowDown"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ]
+  }
 }

@@ -135,6 +135,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
   const facts = musclesAndEquipmentText(exercise);
   return (
     <div
+      data-parity="library-exercise-card"
       ref={drag as unknown as Ref<HTMLDivElement>}
       className={cn(
         'group grid cursor-grab touch-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-control border bg-card p-3 select-none transition-shadow hover:shadow-card active:cursor-grabbing motion-reduce:transition-none',
@@ -142,11 +143,11 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
       )}
     >
       <ExerciseNameButton exercise={exercise} detail={exerciseDetailOf(exercise, { targets: [], cues: exercise.cues })} weight="medium" size="compact" />
-      <span className="flex items-center gap-6">
+      <span data-parity="library-exercise-card-actions" className="flex items-center gap-6">
         <IconActionButton icon={Plus} label={`Add ${exercise.name}`} hint="Add exercise" onClick={() => onAdd(exercise)} />
         <GripVertical aria-hidden="true" size={16} className="text-text-secondary group-hover:text-primary" />
       </span>
-      {facts && <p className="col-span-2 text-sm break-words text-text-secondary">{facts}</p>}
+      {facts && <p data-parity="library-exercise-card-facts" className="col-span-2 text-sm break-words text-text-secondary">{facts}</p>}
     </div>
   );
 }
@@ -374,7 +375,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
             />
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
+        <div data-parity="library-results" className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
           {shown.length === 0 ? (
             <NoMatches type={type} filters={[...searchFilters(filters), ...fromPanel]} onRemove={removeFilter} onClear={clearFilters} />
           ) : (

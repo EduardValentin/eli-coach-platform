@@ -51,6 +51,7 @@ export function ExerciseItemList<Item extends ListedExercise>({
           <li
             className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-1 @lg:grid-cols-[minmax(0,1fr)_auto_auto]"
             data-item-id={item.id}
+            data-parity="exercise-item"
             key={item.id}
           >
             <ExerciseNameButton

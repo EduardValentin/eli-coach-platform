@@ -249,14 +249,14 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
       className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
       <TextDisclosureGroup>
-        <div className={CARD_GRID_CLASS}>
+        <div data-parity="exercise-card-grid" className={CARD_GRID_CLASS}>
           <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
-          <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
+          <div data-parity="exercise-card-info" className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
             <h5 className="flex items-center gap-2.5">
               <PositionBadge label={position} size="sm" />{' '}
               <ExerciseNameButton exercise={exercise} detail={detail} weight="medium" size="compact" />
             </h5>
-            {facts && <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
+            {facts && <p data-parity="exercise-card-facts" className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
           </div>
           <TargetsSummary size="sm" items={[...rowTargets(firstWeek, repsSuffix(exercise)), ...weekRange]} className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3" />
           <PanelTriggers panels={panels} exerciseName={name} />

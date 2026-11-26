@@ -110,13 +110,13 @@ export function SlotGroup({ session, plan, library, edits, slots, schedule, onCh
         {units.length === 0 ? (
           <EmptyDropTarget rules={rulesAt({ slot })} place={heading} onAdd={() => onAdd(slot)} />
         ) : (
-          <div className="grid grid-cols-[minmax(0,1fr)]">
+          <div data-parity="slot-unit-list" className="grid grid-cols-[minmax(0,1fr)]">
             {several && <DropSeparator rules={rulesAt({ slot, beforeRowId: units[0].rows[0].id })} />}
             {units.map((unit, index) => {
               const next = units[index + 1];
               const { group } = unit;
               return (
-                <div key={unit.key} className="grid grid-cols-[minmax(0,1fr)]">
+                <div key={unit.key} data-parity="slot-unit" className="grid grid-cols-[minmax(0,1fr)]">
                   {group === undefined ? (
                     card(unit.rows[0].id)
                   ) : (

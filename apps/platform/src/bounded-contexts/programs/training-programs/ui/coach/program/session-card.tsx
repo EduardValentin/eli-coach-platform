@@ -172,6 +172,7 @@ export function OpenSessionCard({
     >
       <header
         className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-surface-base px-3 py-2 lg:top-[calc(var(--block-header-height)-1.5rem)]"
+        data-parity="session-header"
         ref={header.measureRef}
       >
         <h3 className="sr-only" id={headingId}>
@@ -187,6 +188,7 @@ export function OpenSessionCard({
             "text-feedback-warning": overTarget,
             "text-text-secondary": !overTarget,
           })}
+          data-parity="session-duration"
         >
           <span>{durationAgainstTarget(minutes, block.targetMinutes)}</span>
           {overTarget && <span>Over target</span>}
@@ -220,6 +222,7 @@ export function OpenSessionCard({
           "grid grid-cols-[minmax(0,1fr)] gap-5 p-3 sm:p-4",
           SESSION_CONTENT_CLASS,
         )}
+        data-parity="session-content"
       >
         <WarmUpCard
           editing={new WarmUpEditing({ newId: newBuilderId, libraryExercises })}

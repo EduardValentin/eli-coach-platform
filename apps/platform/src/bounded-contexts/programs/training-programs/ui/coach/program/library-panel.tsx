@@ -188,6 +188,7 @@ function LibraryExerciseCard({ exercise, onAdd }: LibraryExerciseCardProps) {
           "border-border-default": !isDragging,
         },
       )}
+      data-parity="library-exercise-card"
       ref={drag as unknown as Ref<HTMLDivElement>}
     >
       <ExerciseNameButton
@@ -199,7 +200,10 @@ function LibraryExerciseCard({ exercise, onAdd }: LibraryExerciseCardProps) {
         size="compact"
         weight="medium"
       />
-      <span className="flex items-center gap-6">
+      <span
+        className="flex items-center gap-6"
+        data-parity="library-exercise-card-actions"
+      >
         <IconActionButton
           hint="Add exercise"
           icon={Plus}
@@ -213,7 +217,10 @@ function LibraryExerciseCard({ exercise, onAdd }: LibraryExerciseCardProps) {
         />
       </span>
       {facts && (
-        <p className="col-span-2 text-sm break-words text-text-secondary">
+        <p
+          className="col-span-2 text-sm break-words text-text-secondary"
+          data-parity="library-exercise-card-facts"
+        >
           {facts}
         </p>
       )}
@@ -563,7 +570,10 @@ export function LibraryPanel({
             />
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3"
+          data-parity="library-results"
+        >
           {shown.length === 0 ? (
             <NoMatches
               filters={selection.activeFilters()}
