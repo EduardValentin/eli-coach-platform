@@ -35,7 +35,7 @@ import { frameworkModeAction } from "~/composition-root/test-support/framework-m
 
 import { WaitlistEmailForm } from "./email-form";
 import { launchWaitlistConfetti } from "./confetti";
-import { WAITLIST_API_PATH, WAITLIST_API_URL } from "./api-client";
+import { WAITLIST_API_PATH, waitlistApiUrl } from "./api-client";
 
 vi.mock("./confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
@@ -128,7 +128,7 @@ function mockWaitlistSubmit(
   init?: ResponseInit,
 ) {
   server.use(
-    http.post(WAITLIST_API_URL, () => HttpResponse.json(response, init)),
+    http.post(waitlistApiUrl(), () => HttpResponse.json(response, init)),
   );
 }
 
@@ -245,7 +245,7 @@ describe("WaitlistEmailForm", () => {
     });
     const user = userEvent.setup();
     server.use(
-      http.post(WAITLIST_API_URL, async () => {
+      http.post(waitlistApiUrl(), async () => {
         await submitPromise;
 
         return HttpResponse.json({
@@ -378,7 +378,7 @@ describe("WaitlistEmailForm", () => {
     // arrange
     let submittedValues: Record<string, FormDataEntryValue> = {};
     server.use(
-      http.post(WAITLIST_API_URL, async ({ request }) => {
+      http.post(waitlistApiUrl(), async ({ request }) => {
         const formData = await request.formData();
 
         submittedValues = Object.fromEntries(formData.entries());
@@ -408,7 +408,7 @@ describe("WaitlistEmailForm", () => {
     const user = userEvent.setup();
     let submitCount = 0;
     server.use(
-      http.post(WAITLIST_API_URL, () => {
+      http.post(waitlistApiUrl(), () => {
         submitCount += 1;
 
         if (submitCount === 1) {
@@ -545,7 +545,7 @@ describe("WaitlistEmailForm", () => {
     "keeps her email, says the signup failed and resets bot detection when $failure",
     async ({ answer }) => {
       // arrange
-      server.use(http.post(WAITLIST_API_URL, answer));
+      server.use(http.post(waitlistApiUrl(), answer));
       renderForm();
 
       // act

@@ -11,7 +11,7 @@ import {
   useStoreDownloadContentsFetcher,
   type StoreDownloadContents,
 } from "../api-client";
-import { DOWNLOAD_API_URL, usePrivateDownloadToken } from "./download-state";
+import { downloadApiUrl, usePrivateDownloadToken } from "./download-state";
 
 export const meta: MetaFunction = () => [
   { title: "Your Resources | Store | Evoa" },
@@ -96,7 +96,7 @@ function ReadyDownload({
         seven days after each request.
       </p>
       {resources.length > 0 && <DownloadResources resources={resources} />}
-      <form action={DOWNLOAD_API_URL} method="post">
+      <form action={downloadApiUrl()} method="post">
         <input name="token" type="hidden" value={token} />
         <Button
           elevation="raised"

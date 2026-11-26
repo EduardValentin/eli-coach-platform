@@ -44,7 +44,7 @@ import HomeRoute from "~/surfaces/public-site/pages/home/home";
 import TermsRoute from "~/bounded-contexts/legal/legal/ui/public/terms-page";
 import {
   WAITLIST_API_PATH,
-  WAITLIST_API_URL,
+  waitlistApiUrl,
 } from "~/bounded-contexts/sales/waitlist/ui/public/api-client";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
@@ -132,7 +132,7 @@ function renderPublicHomeShell(waitlist: WaitlistSnapshot = createWaitlist()) {
 function mockWaitlistSubmit(
   handler: (request: Request) => Response | Promise<Response>,
 ) {
-  server.use(http.post(WAITLIST_API_URL, ({ request }) => handler(request)));
+  server.use(http.post(waitlistApiUrl(), ({ request }) => handler(request)));
 }
 
 function getFooterCta() {

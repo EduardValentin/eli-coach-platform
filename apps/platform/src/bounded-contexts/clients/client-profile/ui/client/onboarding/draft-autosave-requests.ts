@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import type { UnitPreferenceSnapshot } from "~/bounded-contexts/clients/client-profile/domain/client-settings";
 
 import type { SaveDraftRequest } from "~/bounded-contexts/clients/client-profile/public/onboarding";
@@ -6,16 +6,6 @@ import {
   CLIENT_ONBOARDING_API_PATHS,
   CLIENT_PROFILE_API_PATHS,
 } from "~/bounded-contexts/clients/client-profile/public/paths";
-
-const DRAFT_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  CLIENT_ONBOARDING_API_PATHS.draft,
-);
-
-const UNIT_PREFERENCE_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  CLIENT_PROFILE_API_PATHS.unitPreference,
-);
 
 const NOT_ON_JOURNEY_STATUS = 404;
 const ALREADY_SUBMITTED_STATUS = 409;
@@ -49,11 +39,15 @@ function saveOutcomeOf(response: Response | null): SaveOutcome {
 export async function saveDraft(
   request: SaveDraftRequest,
 ): Promise<SaveOutcome> {
-  return saveOutcomeOf(await putJson(DRAFT_API_URL, request));
+  return saveOutcomeOf(
+    await putJson(appUrl(CLIENT_ONBOARDING_API_PATHS.draft), request),
+  );
 }
 
 export async function saveUnitPreference(
   preference: UnitPreferenceSnapshot,
 ): Promise<SaveOutcome> {
-  return saveOutcomeOf(await putJson(UNIT_PREFERENCE_API_URL, preference));
+  return saveOutcomeOf(
+    await putJson(appUrl(CLIENT_PROFILE_API_PATHS.unitPreference), preference),
+  );
 }

@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { cn } from "~/shared/design-system/lib";
 import { DismissibleNotice } from "~/shared/design-system/primitives";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -27,11 +27,6 @@ import {
 } from "./bundle-page-resolution";
 import { StartChoice } from "./start-choice";
 import { CANCELLED_NOTICE, START_CHOICE_REQUIRED } from "./start-choice-copy";
-
-const CHECKOUTS_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  SUBSCRIPTIONS_API_PATHS.checkouts,
-);
 
 const PAYMENT_PARAM = "payment";
 
@@ -219,7 +214,11 @@ function BundleCheckoutForm(props: { page: BundlePage; token: string }) {
         "pointer-events-none opacity-50 grayscale-[0.5]": !isValidLink,
       })}
     >
-      <form action={CHECKOUTS_API_URL} method="post" onSubmit={openCheckout}>
+      <form
+        action={appUrl(SUBSCRIPTIONS_API_PATHS.checkouts)}
+        method="post"
+        onSubmit={openCheckout}
+      >
         <input name="token" type="hidden" value={props.token} />
         <input name="startChoice" type="hidden" value={startChoice ?? ""} />
         <BundleSelector

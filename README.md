@@ -98,7 +98,7 @@ http://localhost:3000/?ff.WAITLIST_MODE=default
 
 Booking, store requests and the waitlist refuse a subaddressed email (`name+tag@domain`) when `ENVIRONMENT=production` and accept it on LOCAL and TEST.
 
-`pnpm test` builds `apps/platform/build` for the integration suites with `APP_BASE_PATH=/eli-coach-platform` baked in (see `integration-test-config/platform-build.ts`), overwriting whatever a prior `pnpm build` produced. Run a fresh `pnpm build` before `pnpm start:platform` if you ran `pnpm test` in between — otherwise the served app answers on the integration base path instead of the one local development expects.
+One build serves any URL prefix: the server reads `APP_BASE_PATH` (default `/`) when it starts, and the integration suites serve the same build under `/eli-coach-platform` and at `/`.
 
 The reference prototype sits outside the pnpm workspace and uses npm on the same Node version:
 

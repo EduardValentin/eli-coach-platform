@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 
 import {
   resourceDownloadPath,
@@ -7,25 +7,16 @@ import {
 } from "~/bounded-contexts/clients/client-resources/public/paths";
 
 export function resourceThumbnailUrl(resourceId: string): string {
-  return joinBasePath(
-    import.meta.env.BASE_URL,
-    resourceThumbnailPath(resourceId),
-  );
+  return appUrl(resourceThumbnailPath(resourceId));
 }
 
 export function resourcePageUrl(
   resourceId: string,
   pageNumber: number,
 ): string {
-  return joinBasePath(
-    import.meta.env.BASE_URL,
-    resourcePagePath(resourceId, pageNumber),
-  );
+  return appUrl(resourcePagePath(resourceId, pageNumber));
 }
 
 export function resourceDownloadUrl(resourceId: string): string {
-  return joinBasePath(
-    import.meta.env.BASE_URL,
-    resourceDownloadPath(resourceId),
-  );
+  return appUrl(resourceDownloadPath(resourceId));
 }

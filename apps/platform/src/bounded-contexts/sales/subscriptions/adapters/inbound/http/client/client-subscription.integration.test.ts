@@ -66,8 +66,7 @@ const PROGRAM_START_API = "/api/subscriptions/program-start";
 const PAYMENT_METHOD_API = "/api/subscriptions/payment-method-session";
 const CLIENT_PORTAL = "/client";
 const ENDED_PAGE = "/client/ended";
-const SETTINGS_RETURN_URL =
-  "https://localhost:3000/eli-coach-platform/client/settings";
+const SETTINGS_RETURN_URL = suite.publicUrl("/client/settings");
 
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const DAY_13 = new Date(

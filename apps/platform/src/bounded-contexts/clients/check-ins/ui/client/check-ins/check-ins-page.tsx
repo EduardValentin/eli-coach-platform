@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { COACH_DISPLAY_NAME, ELI_PORTRAIT_PATHS } from "~/shared/brand";
 import { pwaSurfaceDefinitions } from "~/shared/pwa";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
@@ -88,10 +88,12 @@ const VIEWER: CheckInViewer = {
   party: "client",
 };
 
-const COACH = {
-  imageUrl: joinBasePath(import.meta.env.BASE_URL, ELI_PORTRAIT_PATHS.small),
-  name: COACH_DISPLAY_NAME,
-};
+function coachAttendee() {
+  return {
+    imageUrl: appUrl(ELI_PORTRAIT_PATHS.small),
+    name: COACH_DISPLAY_NAME,
+  };
+}
 
 export default function ClientCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
@@ -140,7 +142,7 @@ export default function ClientCheckInsRoute() {
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
             actions={clientActionsFor(checkIn, tab, decisions)}
-            attendee={COACH}
+            attendee={coachAttendee()}
             checkIn={checkIn}
             menu={menu.menuOf(checkIn)}
             timeZone={timeZone}

@@ -10,7 +10,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import {
   STORE_ACQUISITIONS_API_PATH,
-  STORE_ACQUISITIONS_API_URL,
+  storeAcquisitionsApiUrl,
   useStoreAcquisitionFetcher,
 } from "./api-client";
 
@@ -89,7 +89,7 @@ describe("store acquisition fetcher", () => {
     // arrange
     let submittedEmail: FormDataEntryValue | null = null;
     server.use(
-      http.post(STORE_ACQUISITIONS_API_URL, async ({ request }) => {
+      http.post(storeAcquisitionsApiUrl(), async ({ request }) => {
         submittedEmail = (await request.formData()).get("email");
 
         return HttpResponse.json({ success: true }, { status: 201 });
@@ -108,7 +108,7 @@ describe("store acquisition fetcher", () => {
   it("exposes a server error for a malformed JSON body", async () => {
     // arrange
     server.use(
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
+      http.post(storeAcquisitionsApiUrl(), () =>
         HttpResponse.json({ success: "true" }),
       ),
     );
@@ -124,7 +124,7 @@ describe("store acquisition fetcher", () => {
   it("forgets the previous response when reset", async () => {
     // arrange
     server.use(
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
+      http.post(storeAcquisitionsApiUrl(), () =>
         HttpResponse.json({ success: true }, { status: 201 }),
       ),
     );

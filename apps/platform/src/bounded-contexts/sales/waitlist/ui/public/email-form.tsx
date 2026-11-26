@@ -26,7 +26,7 @@ import {
   resolveWaitlistErrorMessage,
   type WaitlistClientError,
 } from "./errors";
-import { WAITLIST_API_URL } from "./api-client";
+import { waitlistApiUrl } from "./api-client";
 import { useWaitlistSubmission } from "./submission";
 
 type WaitlistEmailFormProps = {
@@ -62,7 +62,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             <WaitlistJoinedMessage key="success" variant={variant} />
           ) : (
             <motion.form
-              action={WAITLIST_API_URL}
+              action={waitlistApiUrl()}
               className="flex flex-col gap-3"
               exit={{ opacity: 0, scale: 0.95 }}
               key="form"

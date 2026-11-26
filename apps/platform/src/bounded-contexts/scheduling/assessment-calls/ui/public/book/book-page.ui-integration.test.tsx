@@ -40,7 +40,7 @@ import {
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import BookRoute, { shouldRevalidate } from "./book-page";
-import { BOOKINGS_API_URL, SLOTS_API_URL } from "./api-client";
+import { bookingsApiUrl, slotsApiUrl } from "./api-client";
 
 const TODAY = new Date("2026-03-02T06:00:00.000Z");
 const COACH_TIME_ZONE = "Europe/Bucharest";
@@ -332,7 +332,7 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     // arrange
     let bookingRequests = 0;
     server.use(
-      http.post(BOOKINGS_API_URL, () => {
+      http.post(bookingsApiUrl(), () => {
         bookingRequests += 1;
 
         return HttpResponse.json(confirmedBooking(), { status: 201 });
@@ -365,7 +365,7 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     // arrange
     let submitted: Record<string, FormDataEntryValue> = {};
     server.use(
-      http.post(BOOKINGS_API_URL, async ({ request }) => {
+      http.post(bookingsApiUrl(), async ({ request }) => {
         submitted = Object.fromEntries((await request.formData()).entries());
 
         return HttpResponse.json(confirmedBooking(), { status: 201 });
@@ -406,7 +406,7 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     // arrange
     let submitted: Record<string, FormDataEntryValue> = {};
     server.use(
-      http.post(BOOKINGS_API_URL, async ({ request }) => {
+      http.post(bookingsApiUrl(), async ({ request }) => {
         submitted = Object.fromEntries((await request.formData()).entries());
 
         return HttpResponse.json(confirmedBooking(), { status: 201 });
@@ -475,7 +475,7 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
       { status: 409 },
     );
     server.use(
-      http.get(SLOTS_API_URL, () =>
+      http.get(slotsApiUrl(), () =>
         HttpResponse.json({
           coachTimeZone: COACH_TIME_ZONE,
           slots: [SECOND_SLOT, REPLACEMENT_SLOT, NEXT_DAY_SLOT],
@@ -675,7 +675,7 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
     "keeps her details, offers a way to reach Eli and resets bot verification when $failure",
     async ({ answer }) => {
       // arrange
-      server.use(http.post(BOOKINGS_API_URL, answer));
+      server.use(http.post(bookingsApiUrl(), answer));
       const turnstile = installTurnstile();
       const user = renderBookingPage({
         page: {
@@ -708,7 +708,7 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
     // arrange
     let attempts = 0;
     server.use(
-      http.post(BOOKINGS_API_URL, () => {
+      http.post(bookingsApiUrl(), () => {
         attempts += 1;
 
         if (attempts === 1) {
@@ -877,7 +877,7 @@ describe("booking an assessment call: unreadable open slots", () => {
   it("explains the times are unreadable and offers to load them again", async () => {
     // arrange
     server.use(
-      http.get(SLOTS_API_URL, () =>
+      http.get(slotsApiUrl(), () =>
         HttpResponse.json({
           coachTimeZone: COACH_TIME_ZONE,
           slots: OPEN_SLOTS,
@@ -953,7 +953,7 @@ function renderBookingPage(options?: { page?: BookingPageValue }): UserEvent {
         shouldRevalidate,
       },
       {
-        loader: () => fetch(SLOTS_API_URL),
+        loader: () => fetch(slotsApiUrl()),
         path: ASSESSMENT_CALL_API_PATHS.slots,
       },
       {
@@ -1154,6 +1154,6 @@ function mockBooking(
   init: ResponseInit,
 ) {
   server.use(
-    http.post(BOOKINGS_API_URL, () => HttpResponse.json(response, init)),
+    http.post(bookingsApiUrl(), () => HttpResponse.json(response, init)),
   );
 }

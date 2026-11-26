@@ -1,5 +1,5 @@
 import { ClerkProvider } from "@clerk/react-router";
-import { joinBasePath } from "~/shared/http/base-path";
+import { appBasePathDocumentAttribute, appUrl } from "~/shared/http/base-path";
 import dmSansLatinFontUrl from "@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2?url";
 import playfairDisplayLatinFontUrl from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
 import { Toaster } from "~/shared/design-system/toast";
@@ -37,8 +37,6 @@ import { RootErrorPage } from "./root-error-page";
 import type { loader } from "./root.server";
 
 export { loader, middleware } from "./root.server";
-
-const assetBasePath = import.meta.env.BASE_URL;
 
 // React Router hands the errored route's own `meta` the error, which is the
 // only place a 404 can name itself before `<Meta />` renders. Without the
@@ -93,12 +91,12 @@ export const meta: MetaFunction = ({ error }) => {
 export const links: LinksFunction = () => [
   {
     rel: "icon",
-    href: joinBasePath(assetBasePath, "icon.svg"),
+    href: appUrl("icon.svg"),
     type: "image/svg+xml",
   },
-  ...[dmSansLatinFontUrl, playfairDisplayLatinFontUrl].map((href) => ({
+  ...[dmSansLatinFontUrl, playfairDisplayLatinFontUrl].map((fontUrl) => ({
     rel: "preload",
-    href,
+    href: appUrl(fontUrl),
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous" as const,
@@ -115,7 +113,12 @@ export function Layout({ children }: PropsWithChildren) {
   const shellPortal = useRenderedShellPortal();
   const pathPortal = portalForPathname(pathname);
   return (
-    <html className="relative" data-portal={shellPortal} lang="en">
+    <html
+      className="relative"
+      data-portal={shellPortal}
+      lang="en"
+      {...appBasePathDocumentAttribute()}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content={viewportContentFor(pathPortal)} />

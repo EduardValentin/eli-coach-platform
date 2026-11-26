@@ -36,7 +36,7 @@ import { STORE_CART_STORAGE_KEY } from "../cart/cart";
 import { STORE_CHECKOUT_DETAILS_STORAGE_KEY } from "../cart/cart-storage";
 import { StoreCartProvider } from "../cart/cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "../cart/cart-drawer";
-import { STORE_CATALOG_API_URL } from "../api-client";
+import { storeCatalogApiUrl } from "../api-client";
 import {
   STORE_CURRENCY_COOKIE_NAME,
   type StoreCurrency,
@@ -185,7 +185,7 @@ describe("store catalog", () => {
     // arrange
     const user = userEvent.setup();
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({ products: [createPlan()], success: true }),
       ),
     );
@@ -264,7 +264,7 @@ describe("store catalog", () => {
     // arrange
     const user = userEvent.setup();
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({ products: [createPlan()], success: true }),
       ),
     );
@@ -376,7 +376,7 @@ describe("store catalog", () => {
       }),
     );
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -920,7 +920,7 @@ function seedCancelledCheckout() {
     }),
   );
   server.use(
-    http.get(STORE_CATALOG_API_URL, () =>
+    http.get(storeCatalogApiUrl(), () =>
       HttpResponse.json({
         products: [createPlan(), createProduct()],
         success: true,
@@ -965,8 +965,8 @@ function renderStore(options: {
         shouldRevalidate,
       },
       {
-        loader: () => fetch(STORE_CATALOG_API_URL),
-        path: STORE_CATALOG_API_URL,
+        loader: () => fetch(storeCatalogApiUrl()),
+        path: storeCatalogApiUrl(),
       },
     ],
     { initialEntries: [options.url ?? "/store"] },

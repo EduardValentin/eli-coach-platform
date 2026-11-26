@@ -5,15 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 const server = setupServer();
@@ -26,7 +18,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
-  vi.unstubAllEnvs();
+  document.documentElement.removeAttribute("data-app-base-path");
 });
 
 afterAll(() => {
@@ -36,10 +28,13 @@ afterAll(() => {
 describe("store catalog API under an application base path", () => {
   it("loads the cart catalog without duplicating the router basename", async () => {
     // arrange
-    vi.stubEnv("BASE_URL", applicationBasePath);
+    document.documentElement.setAttribute(
+      "data-app-base-path",
+      "/eli-coach-platform",
+    );
     const storeApi = await import("./api-client");
     server.use(
-      http.get(storeApi.STORE_CATALOG_API_URL, () =>
+      http.get(storeApi.storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -65,7 +60,7 @@ describe("store catalog API under an application base path", () => {
           path: "/",
         },
         {
-          loader: () => fetch(storeApi.STORE_CATALOG_API_URL),
+          loader: () => fetch(storeApi.storeCatalogApiUrl()),
           path: "api/store/catalog",
         },
       ],

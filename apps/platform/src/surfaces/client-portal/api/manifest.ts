@@ -1,21 +1,16 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { pwaSurfaceDefinitions } from "~/shared/pwa";
 
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "~/bounded-contexts/access/public/paths";
-
-const basePath = import.meta.env.BASE_URL;
 
 // `start_url` has to resolve inside `scope`, and `/client` does not sit inside
 // `/client/` — a browser that finds it outside drops the declared scope and
 // falls back to the manifest's own directory. One trailing-slashed URL is
 // therefore the identity, the launch target and the scope at once; React Router
 // serves `/client/` and `/client` as the same route.
-const clientPortalUrl = joinBasePath(
-  basePath,
-  `${CLIENT_PORTAL_ROUTE_SEGMENT}/`,
-);
-
 export function loader() {
+  const clientPortalUrl = appUrl(`${CLIENT_PORTAL_ROUTE_SEGMENT}/`);
+
   return Response.json(
     {
       id: clientPortalUrl,
@@ -29,7 +24,7 @@ export function loader() {
       scope: clientPortalUrl,
       icons: [
         {
-          src: joinBasePath(basePath, "icon.svg"),
+          src: appUrl("icon.svg"),
           sizes: "any",
           type: "image/svg+xml",
         },

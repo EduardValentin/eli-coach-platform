@@ -1,4 +1,3 @@
-import { joinBasePath } from "~/shared/http/base-path";
 import { ELI_PORTRAIT_PATHS } from "~/shared/brand";
 
 export const ABOUT_COPY = {
@@ -22,26 +21,11 @@ export const ABOUT_CHIPS = [
 ] as const;
 
 export const ABOUT_MEDIA = {
-  eliPortraitLarge: joinBasePath(
-    import.meta.env.BASE_URL,
-    ELI_PORTRAIT_PATHS.large,
-  ),
-  eliPortraitSmall: joinBasePath(
-    import.meta.env.BASE_URL,
-    ELI_PORTRAIT_PATHS.small,
-  ),
-  heroPoster: joinBasePath(
-    import.meta.env.BASE_URL,
-    "media/hero/hero-training-poster.jpg",
-  ),
-  heroVideoMp4: joinBasePath(
-    import.meta.env.BASE_URL,
-    "media/hero/hero-training-loop.mp4",
-  ),
-  heroVideoWebm: joinBasePath(
-    import.meta.env.BASE_URL,
-    "media/hero/hero-training-loop.webm",
-  ),
+  eliPortraitLarge: ELI_PORTRAIT_PATHS.large,
+  eliPortraitSmall: ELI_PORTRAIT_PATHS.small,
+  heroPoster: "media/hero/hero-training-poster.jpg",
+  heroVideoMp4: "media/hero/hero-training-loop.mp4",
+  heroVideoWebm: "media/hero/hero-training-loop.webm",
 } as const;
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";

@@ -19,7 +19,6 @@ services:
     environment:
       APP_NAME: eli-coach-platform
       APP_BASE_PATH: /eli-coach-platform
-      APP_HEALTHCHECK_PATH: /eli-coach-platform/readyz
       ENVIRONMENT: test
       PORT: "3000"
       STORE_ASSET_ROOT: /srv/store-assets

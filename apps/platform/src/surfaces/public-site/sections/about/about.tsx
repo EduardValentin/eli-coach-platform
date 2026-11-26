@@ -3,6 +3,7 @@ import {
   SectionEyebrow,
   buttonVariants,
 } from "~/shared/design-system/primitives";
+import { appUrl } from "~/shared/http/base-path";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
@@ -50,7 +51,7 @@ export function PublicAbout(props: PublicAboutProps) {
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
             className="relative z-20 size-full rounded-full object-cover"
             height={208}
-            src={ABOUT_MEDIA.eliPortraitLarge}
+            src={appUrl(ABOUT_MEDIA.eliPortraitLarge)}
             width={208}
           />
         </motion.figure>

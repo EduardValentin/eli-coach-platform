@@ -57,8 +57,8 @@ import { FreeTag } from "../pricing/free-tag";
 import { Price } from "../pricing/price";
 import { StoreOrderSummary } from "../pricing/store-order-summary";
 import {
-  STORE_ACQUISITIONS_API_URL,
-  STORE_CHECKOUTS_API_URL,
+  storeAcquisitionsApiUrl,
+  storeCheckoutsApiUrl,
   useStoreCatalogFetcher,
 } from "../api-client";
 
@@ -417,7 +417,7 @@ function FreeClaimDetails(
   return (
     <CartDetailsForm
       {...props}
-      action={STORE_ACQUISITIONS_API_URL}
+      action={storeAcquisitionsApiUrl()}
       intro="Enter your email and we'll send one private download link for everything in your cart."
       submitAction={
         <Button
@@ -451,7 +451,7 @@ function PaidCheckoutDetails(
   return (
     <CartDetailsForm
       {...props}
-      action={STORE_CHECKOUTS_API_URL}
+      action={storeCheckoutsApiUrl()}
       intro="Check your order, enter your email, then continue to payment."
       submitAction={
         <ContinueToPayment
