@@ -72,6 +72,8 @@ export class PlatformServer {
   private logFilePath: string | null = null;
   private logStream: WriteStream | null = null;
   private port: number | null = null;
+  private listening = false;
+  private startupOutput = "";
   private readonly retainedOutput: string[] = [];
   private readonly exitGuard = (): void => this.forceCleanupOnProcessExit();
   /** Correlates each clock instruction with the acknowledgement it awaits. */
@@ -193,6 +195,8 @@ export class PlatformServer {
     this.exit = null;
     this.spawnError = null;
     this.retainedOutput.length = 0;
+    this.listening = false;
+    this.startupOutput = "";
     this.logFilePath = join(
       await mkdtemp(join(tmpdir(), "eli-coach-platform-integration-server-")),
       "server.log",
@@ -215,7 +219,10 @@ export class PlatformServer {
         stdio: ["ignore", "pipe", "pipe", "ipc"],
       },
     );
-    this.child.stdout?.on("data", (chunk: Buffer) => this.record(chunk));
+    this.child.stdout?.on("data", (chunk: Buffer) => {
+      this.record(chunk);
+      this.noticeListeningAnnouncement(chunk);
+    });
     this.child.stderr?.on("data", (chunk: Buffer) => this.record(chunk));
     this.child.on("exit", (code, signal) => {
       this.exit = { code, signal };
@@ -329,10 +336,10 @@ export class PlatformServer {
       }
 
       // Readiness is the application's own answer about its dependencies, so
-      // waiting for it is waiting for the database to be reachable too.
-      const status = await this.probeReadiness();
-
-      if (status === 200) {
+      // waiting for it is waiting for the database to be reachable too. Until
+      // this child says it is listening, a 200 on the port may come from
+      // another suite's server that took the same port first.
+      if (this.listening && (await this.probeReadiness()) === 200) {
         return;
       }
 
@@ -416,6 +423,22 @@ export class PlatformServer {
     );
   }
 
+  /**
+   * Watches stdout until the child prints the line `server.mjs` writes once it
+   * holds the port. Output is kept whole until then, so the line is found even
+   * when it arrives split across chunks.
+   */
+  private noticeListeningAnnouncement(chunk: Buffer): void {
+    if (this.listening) {
+      return;
+    }
+
+    this.startupOutput += chunk.toString();
+    this.listening = this.startupOutput
+      .split("\n")
+      .includes(`[platform] http://localhost:${this.port}`);
+  }
+
   private describeOutput(): string {
     const tail = this.retainedOutput
       .filter((line) => line.trim().length > 0)
@@ -431,8 +454,10 @@ function describeExit(exit: ProcessExit): string {
 
 /**
  * Suites run in separate processes and must not collide on a port. The kernel
- * hands out a free one, and it is released again immediately — nothing else
- * asks for an ephemeral port in the moment between here and the spawn.
+ * hands out a free one and it is released again immediately, so a suite in
+ * another process can be handed the same port before this child binds it; the
+ * child then exits on EADDRINUSE without announcing that it listens, and the
+ * spawn is retried on a new port.
  */
 async function reserveFreePort(): Promise<number> {
   return new Promise((resolvePort, rejectPort) => {
