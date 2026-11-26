@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import { cn } from "~/shared/design-system/lib";
+import { BrandMark } from "~/shared/design-system/primitives";
 
 import type { PublicHeaderAppearance } from "./header-appearance";
 
@@ -18,23 +19,7 @@ export function Logo(props: LogoProps) {
       onClick={onNavigate}
       to="/"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "flex size-8 shrink-0 rotate-45 items-center justify-center rounded-tile border-2 transition-colors",
-          {
-            "border-brand-primary": appearance === "solid",
-            "border-current": appearance === "transparent",
-          },
-        )}
-      >
-        <span
-          className={cn("block size-3 -rotate-45 transition-colors", {
-            "bg-brand-primary": appearance === "solid",
-            "bg-current": appearance === "transparent",
-          })}
-        />
-      </span>
+      <BrandMark appearance={appearance} />
       <span
         className={cn(
           "ml-2 font-heading text-xl font-semibold tracking-wide transition-colors",

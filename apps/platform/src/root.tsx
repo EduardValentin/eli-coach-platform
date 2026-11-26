@@ -1,5 +1,6 @@
 import { ClerkProvider } from "@clerk/react-router";
 import { appBasePathDocumentAttribute, appUrl } from "~/shared/http/base-path";
+import { isComingSoonMarker } from "~/shared/http/coming-soon-marker";
 import dmSansLatinFontUrl from "@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2?url";
 import playfairDisplayLatinFontUrl from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
 import { Toaster } from "~/shared/design-system/toast";
@@ -33,7 +34,7 @@ import {
 } from "~/bounded-contexts/access/accounts/ui/shared/access-denied-page";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 
-import { RootErrorPage } from "./root-error-page";
+import { ComingSoonPage, RootErrorPage } from "./root-error-page";
 import type { loader } from "./root.server";
 
 export { loader, middleware } from "./root.server";
@@ -47,6 +48,13 @@ export { loader, middleware } from "./root.server";
 // rendered by this route's boundary, so without it a page telling a person
 // they have no access would sit in their history under the app's own name.
 export const meta: MetaFunction = ({ error }) => {
+  if (isComingSoonPlaceholder(error)) {
+    return [
+      { title: "Evoa — Coming soon" },
+      { name: "robots", content: "noindex" },
+    ];
+  }
+
   if (isRouteErrorResponse(error) && error.status === 404) {
     return [
       { title: "Page Not Found | Evoa" },
@@ -112,6 +120,8 @@ export function Layout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
   const shellPortal = useRenderedShellPortal();
   const pathPortal = portalForPathname(pathname);
+  // The placeholder is a static page: it names no bundle and no route manifest.
+  const isPlaceholder = isComingSoonPlaceholder(useRouteError());
   return (
     <html
       className="relative"
@@ -127,9 +137,13 @@ export function Layout({ children }: PropsWithChildren) {
       </head>
       <body>
         <MotionConfig reducedMotion="user">{children}</MotionConfig>
-        <Toaster />
-        <ScrollRestoration />
-        <Scripts />
+        {isPlaceholder ? null : (
+          <>
+            <Toaster />
+            <ScrollRestoration />
+            <Scripts />
+          </>
+        )}
       </body>
     </html>
   );
@@ -146,6 +160,10 @@ export default function Root() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
+
+  if (isComingSoonPlaceholder(error)) {
+    return <ComingSoonPage />;
+  }
 
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
@@ -178,6 +196,10 @@ export function ErrorBoundary() {
       statusLabel={resolveErrorStatusLabel(error)}
     />
   );
+}
+
+function isComingSoonPlaceholder(error: unknown): boolean {
+  return isRouteErrorResponse(error) && isComingSoonMarker(error.data);
 }
 
 function useRenderedShellPortal() {

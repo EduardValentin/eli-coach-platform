@@ -7,6 +7,7 @@ export {
 export { Alert, AlertAction } from "./alert";
 export { Avatar } from "./avatar";
 export { Badge } from "./badge";
+export { BrandMark } from "./brand-mark";
 export { Button, buttonVariants } from "./button";
 export { Card, cardVariants } from "./card";
 export { CardBrandMark } from "./card-brand-mark";
