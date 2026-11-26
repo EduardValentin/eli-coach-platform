@@ -224,9 +224,7 @@ export class PlatformServer {
       this.noticeListeningAnnouncement(chunk);
     });
     this.child.stderr?.on("data", (chunk: Buffer) => this.record(chunk));
-    // "close" rather than "exit": it fires once the output pipes are drained,
-    // so a port collision's EADDRINUSE is recorded before the exit is judged.
-    this.child.on("close", (code, signal) => {
+    this.child.on("exit", (code, signal) => {
       this.exit = { code, signal };
     });
     // `spawn` itself never rejects — a bad binary path or a permissions
