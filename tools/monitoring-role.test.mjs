@@ -136,8 +136,6 @@ function runMigrationScript(postgresEnvironment) {
   }
 }
 
-// Loopback connections are trusted by the image's pg_hba, so passwords are
-// only checked on the network address, as the exporter connects.
 function serverLog() {
   const logs = spawnSync("docker", ["logs", containerName()], {
     encoding: "utf8",
@@ -150,6 +148,8 @@ function containerName() {
   return container.getName().replace(/^\//, "");
 }
 
+// Loopback connections are trusted by the image's pg_hba, so passwords are
+// only checked on the network address, as the exporter connects.
 async function psqlAs({ user, password, commands }) {
   const result = await container.exec(
     [
@@ -305,14 +305,14 @@ describe("monitoring role", () => {
 
   it("keeps the password out of the server log when the role cannot be created", async () => {
     // arrange
-    const leakedPassword = "leakcanarypassword7731";
+    const canaryPassword = "leakcanarypassword7731";
     const reservedRoleName = "pg_reserved_monitoring";
 
     // act
     const run = runMigrationScript(
       postgresEnvironmentWithMonitoringRole({
         user: reservedRoleName,
-        password: leakedPassword,
+        password: canaryPassword,
       }),
     );
     const log = serverLog();
@@ -320,7 +320,7 @@ describe("monitoring role", () => {
     // assert
     expect(run.exitCode).not.toBe(0);
     expect(log).toContain(reservedRoleName);
-    expect(log).not.toContain(leakedPassword);
+    expect(log).not.toContain(canaryPassword);
   });
 
   it("refuses a monitoring role that is one of the other database roles", async () => {
