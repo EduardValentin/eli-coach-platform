@@ -14,8 +14,6 @@ const platformDirectory = resolve(currentDirectory, "..");
 /** The command a deployed container runs — see docker/Dockerfile.react-router. */
 const SERVER_ENTRY_PATH = "server.mjs";
 const SERVER_BUILD_PATH = "build/server/index.js";
-/** What `server.mjs` prints once it holds its port. */
-const LISTENING_ANNOUNCEMENT = "[platform] http://localhost";
 /**
  * The rig's wall-clock seam, loaded before a single application module is. It
  * is named here and nowhere else — no production script, Dockerfile or build
@@ -75,6 +73,7 @@ export class PlatformServer {
   private logStream: WriteStream | null = null;
   private port: number | null = null;
   private listening = false;
+  private startupOutput = "";
   private readonly retainedOutput: string[] = [];
   private readonly exitGuard = (): void => this.forceCleanupOnProcessExit();
   /** Correlates each clock instruction with the acknowledgement it awaits. */
@@ -197,6 +196,7 @@ export class PlatformServer {
     this.spawnError = null;
     this.retainedOutput.length = 0;
     this.listening = false;
+    this.startupOutput = "";
     this.logFilePath = join(
       await mkdtemp(join(tmpdir(), "eli-coach-platform-integration-server-")),
       "server.log",
@@ -219,9 +219,14 @@ export class PlatformServer {
         stdio: ["ignore", "pipe", "pipe", "ipc"],
       },
     );
-    this.child.stdout?.on("data", (chunk: Buffer) => this.record(chunk));
+    this.child.stdout?.on("data", (chunk: Buffer) => {
+      this.record(chunk);
+      this.noticeListeningAnnouncement(chunk);
+    });
     this.child.stderr?.on("data", (chunk: Buffer) => this.record(chunk));
-    this.child.on("exit", (code, signal) => {
+    // "close" rather than "exit": it fires once the output pipes are drained,
+    // so a port collision's EADDRINUSE is recorded before the exit is judged.
+    this.child.on("close", (code, signal) => {
       this.exit = { code, signal };
     });
     // `spawn` itself never rejects — a bad binary path or a permissions
@@ -414,13 +419,26 @@ export class PlatformServer {
 
     this.logStream?.write(output);
     this.retainedOutput.push(...output.split("\n"));
-    this.listening ||= this.retainedOutput.some((line) =>
-      line.includes(`${LISTENING_ANNOUNCEMENT}:${this.port}`),
-    );
     this.retainedOutput.splice(
       0,
       Math.max(this.retainedOutput.length - RETAINED_OUTPUT_LINES, 0),
     );
+  }
+
+  /**
+   * Watches stdout until the child prints the line `server.mjs` writes once it
+   * holds the port. Output is kept whole until then, so the line is found even
+   * when it arrives split across chunks.
+   */
+  private noticeListeningAnnouncement(chunk: Buffer): void {
+    if (this.listening) {
+      return;
+    }
+
+    this.startupOutput += chunk.toString();
+    this.listening = this.startupOutput
+      .split("\n")
+      .includes(`[platform] http://localhost:${this.port}`);
   }
 
   private describeOutput(): string {
