@@ -1,12 +1,7 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { SUBSCRIPTIONS_API_PATHS } from "~/bounded-contexts/sales/subscriptions/public/paths";
-
-const PAYMENT_METHOD_SESSION_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  SUBSCRIPTIONS_API_PATHS.paymentMethodSession,
-);
 
 type PaymentMethodHandOff = { opening: boolean };
 
@@ -33,7 +28,7 @@ export function PaymentMethodForm({ children }: PaymentMethodFormProps) {
 
   return (
     <form
-      action={PAYMENT_METHOD_SESSION_URL}
+      action={appUrl(SUBSCRIPTIONS_API_PATHS.paymentMethodSession)}
       className="contents"
       method="post"
       onSubmit={() => setOpening(true)}

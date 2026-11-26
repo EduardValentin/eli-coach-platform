@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { useCallback, useMemo } from "react";
 import { useFetcher } from "react-router";
 import {
@@ -9,15 +9,13 @@ import {
 } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
 import { ASSESSMENT_CALL_API_PATHS } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
 
-export const SLOTS_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  ASSESSMENT_CALL_API_PATHS.slots,
-);
+export function slotsApiUrl(): string {
+  return appUrl(ASSESSMENT_CALL_API_PATHS.slots);
+}
 
-export const BOOKINGS_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  ASSESSMENT_CALL_API_PATHS.bookings,
-);
+export function bookingsApiUrl(): string {
+  return appUrl(ASSESSMENT_CALL_API_PATHS.bookings);
+}
 
 export function useBookAssessmentCallFetcher() {
   const fetcher = useFetcher<unknown>();

@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
@@ -16,25 +16,10 @@ import { PRICING_PATH } from "~/surfaces/public-site/paths";
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
-const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
-  import.meta.env.BASE_URL,
-  "media/hero/hero-training-poster.jpg",
-);
+const HERO_VIDEO_POSTER_PATH = "media/hero/hero-training-poster.jpg";
 const HERO_VIDEO_SOURCES = [
-  {
-    src: joinBasePath(
-      import.meta.env.BASE_URL,
-      "media/hero/hero-training-loop.webm",
-    ),
-    type: "video/webm",
-  },
-  {
-    src: joinBasePath(
-      import.meta.env.BASE_URL,
-      "media/hero/hero-training-loop.mp4",
-    ),
-    type: "video/mp4",
-  },
+  { path: "media/hero/hero-training-loop.webm", type: "video/webm" },
+  { path: "media/hero/hero-training-loop.mp4", type: "video/mp4" },
 ];
 
 type PublicHeroProps = {
@@ -136,14 +121,14 @@ export function PublicHero(props: PublicHeroProps) {
             loop
             muted
             playsInline
-            poster={HERO_VIDEO_POSTER_SOURCE}
+            poster={appUrl(HERO_VIDEO_POSTER_PATH)}
             preload="none"
           >
             {shouldLoadVideo
               ? HERO_VIDEO_SOURCES.map((source) => (
                   <source
                     key={source.type}
-                    src={source.src}
+                    src={appUrl(source.path)}
                     type={source.type}
                   />
                 ))

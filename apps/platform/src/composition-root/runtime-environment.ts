@@ -40,6 +40,11 @@ import {
   refineBotDetection,
 } from "~/shared/submission-checks/bot-detection-settings";
 
+// Every page, asset URL and cookie path carries the prefix, so only plain path
+// segments are accepted: no scheme, host, quote, separator or empty segment.
+const URL_PREFIX_PATTERN =
+  /^\/(?:[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*\/?)?$/;
+
 const appShape = {
   APP_NAME: z.string().default("eli-coach-platform"),
   ENVIRONMENT: z.string().default("local"),
@@ -47,7 +52,13 @@ const appShape = {
     .enum(["development", "production", "test"])
     .default("development"),
   PORT: z.coerce.number().default(3000),
-  APP_BASE_PATH: z.string().default("/"),
+  APP_BASE_PATH: z
+    .string()
+    .regex(
+      URL_PREFIX_PATTERN,
+      "APP_BASE_PATH must be a path prefix such as / or /eli-coach-platform.",
+    )
+    .default("/"),
   PUBLIC_APP_URL: z.url(),
   API_PUBLIC_URL: z.url().optional(),
 };

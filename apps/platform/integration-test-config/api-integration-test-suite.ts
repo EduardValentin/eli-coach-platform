@@ -1,3 +1,4 @@
+import { joinBasePath } from "~/shared/http/base-path";
 import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -164,7 +165,12 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   }
 
   path(target: string): string {
-    return `${this.basePath()}${target}`;
+    return joinBasePath(this.basePath(), target);
+  }
+
+  /** Where a visitor's browser reaches `target`, as the application links it. */
+  publicUrl(target: string): string {
+    return `${this.integrationTestEnvironment.runtimeEnvironment.PUBLIC_APP_URL}${this.path(target)}`;
   }
 
   url(target: string): string {

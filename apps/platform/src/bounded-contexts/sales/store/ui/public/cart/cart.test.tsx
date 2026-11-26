@@ -63,6 +63,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  document.documentElement.removeAttribute("data-app-base-path");
 });
 
 describe("StoreCartProvider", () => {
@@ -207,6 +208,26 @@ describe("StoreCartProvider", () => {
       productSlugs: ["hormone-harmony"],
       version: 1,
     });
+  });
+
+  it("scopes the currency cookie to the prefix the app is served under", () => {
+    // arrange
+    document.documentElement.setAttribute(
+      "data-app-base-path",
+      "/eli-coach-platform",
+    );
+    const writeCookie = vi.spyOn(document, "cookie", "set");
+    const { result } = renderHook(useWholeStoreCart, { wrapper });
+
+    // act
+    act(() => {
+      result.current.setCurrency("USD");
+    });
+
+    // assert
+    expect(writeCookie).toHaveBeenCalledWith(
+      `${STORE_CURRENCY_COOKIE_NAME}=USD; Path=/eli-coach-platform; Max-Age=31536000; SameSite=Lax`,
+    );
   });
 
   it("remembers a currency switch in a year-long cookie for the whole app", () => {

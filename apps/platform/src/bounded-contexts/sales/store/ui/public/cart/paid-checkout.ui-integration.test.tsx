@@ -39,9 +39,9 @@ import { StoreCartProvider } from "./cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "./cart-drawer";
 import {
   STORE_ACQUISITIONS_API_PATH,
-  STORE_CATALOG_API_URL,
+  storeCatalogApiUrl,
   STORE_CHECKOUTS_API_PATH,
-  STORE_CHECKOUTS_API_URL,
+  storeCheckoutsApiUrl,
 } from "../api-client";
 
 const PAID_SUBMIT_HINT =
@@ -154,7 +154,7 @@ describe("StoreCartDrawer with a plan in the cart", () => {
     seedCart(["fat-loss-plan", "hormone-harmony"]);
     serveCatalog();
     server.use(
-      http.post(STORE_CHECKOUTS_API_URL, async ({ request }) => {
+      http.post(storeCheckoutsApiUrl(), async ({ request }) => {
         submissions.push(await request.formData());
 
         return HttpResponse.json(
@@ -225,7 +225,7 @@ describe("StoreCartDrawer with a plan in the cart", () => {
     seedCart(["fat-loss-plan"]);
     serveCatalog();
     server.use(
-      http.post(STORE_CHECKOUTS_API_URL, async ({ request }) => {
+      http.post(storeCheckoutsApiUrl(), async ({ request }) => {
         submittedKeys.push(
           String((await request.formData()).get("idempotencyKey")),
         );
@@ -312,7 +312,7 @@ describe("StoreCartDrawer with a plan in the cart", () => {
     seedCart(["fat-loss-plan"]);
     serveCatalog();
     server.use(
-      http.post(STORE_CHECKOUTS_API_URL, async ({ request }) => {
+      http.post(storeCheckoutsApiUrl(), async ({ request }) => {
         submittedKeys.push(
           String((await request.formData()).get("idempotencyKey")),
         );
@@ -397,8 +397,8 @@ function renderCart() {
       path: "/",
     },
     {
-      loader: () => fetch(STORE_CATALOG_API_URL),
-      path: STORE_CATALOG_API_URL,
+      loader: () => fetch(storeCatalogApiUrl()),
+      path: storeCatalogApiUrl(),
     },
     {
       action: frameworkModeAction(acquireResources),
@@ -448,7 +448,7 @@ function answerCheckout(refusal: {
   status: number;
 }) {
   server.use(
-    http.post(STORE_CHECKOUTS_API_URL, () =>
+    http.post(storeCheckoutsApiUrl(), () =>
       HttpResponse.json(
         { error: refusal.error, success: false },
         { status: refusal.status },
@@ -459,7 +459,7 @@ function answerCheckout(refusal: {
 
 function serveCatalog() {
   server.use(
-    http.get(STORE_CATALOG_API_URL, () =>
+    http.get(storeCatalogApiUrl(), () =>
       HttpResponse.json({
         products: [createPlan(), createProduct()],
         success: true,

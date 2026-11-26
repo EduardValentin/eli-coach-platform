@@ -1,3 +1,7 @@
+const APP_BASE_PATH_ATTRIBUTE = "data-app-base-path";
+
+let serverAppBasePath = "/";
+
 export function normalizeBasePath(basePath: string): string {
   if (basePath === "/") {
     return "/";
@@ -34,4 +38,33 @@ export function buildRedirectPath(
   targetPath: string,
 ): string {
   return joinBasePath(basePath, targetPath);
+}
+
+/**
+ * Set once by the server build entry when the instance starts. Route modules
+ * evaluate before that entry's body runs, so callers read the prefix when they
+ * build a URL, never into a module-level constant.
+ */
+export function registerAppBasePath(basePath: string): void {
+  serverAppBasePath = normalizeBasePath(basePath);
+}
+
+/**
+ * The prefix this instance is served under: the server knows it from its
+ * runtime environment, the browser reads what the server wrote on `<html>`.
+ */
+export function appBasePath(): string {
+  if (typeof document === "undefined") {
+    return serverAppBasePath;
+  }
+
+  return document.documentElement.getAttribute(APP_BASE_PATH_ATTRIBUTE) ?? "/";
+}
+
+export function appBasePathDocumentAttribute(): Record<string, string> {
+  return { [APP_BASE_PATH_ATTRIBUTE]: appBasePath() };
+}
+
+export function appUrl(targetPath: string): string {
+  return joinBasePath(appBasePath(), targetPath);
 }

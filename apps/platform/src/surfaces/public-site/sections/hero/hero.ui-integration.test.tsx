@@ -29,7 +29,7 @@ import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detectio
 import { launchWaitlistConfetti } from "~/bounded-contexts/sales/waitlist/ui/public/confetti";
 import {
   WAITLIST_API_PATH,
-  WAITLIST_API_URL,
+  waitlistApiUrl,
 } from "~/bounded-contexts/sales/waitlist/ui/public/api-client";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { PublicHero } from "./hero";
@@ -111,7 +111,7 @@ describe("PublicHero UI integration", () => {
     let submittedEmail: FormDataEntryValue | null = null;
     let submittedToken: FormDataEntryValue | null = null;
     server.use(
-      http.post(WAITLIST_API_URL, async ({ request }) => {
+      http.post(waitlistApiUrl(), async ({ request }) => {
         const formData = await request.formData();
 
         submittedEmail = formData.get("email");

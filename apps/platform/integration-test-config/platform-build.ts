@@ -1,51 +1,41 @@
 import { execFile } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseEnv, promisify } from "node:util";
+import { promisify } from "node:util";
 
 const runCommand = promisify(execFile);
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const workspaceRootPath = resolve(currentDirectory, "../../..");
-const integrationEnvironmentFilePath = resolve(
-  currentDirectory,
-  "./.env.integration",
-);
+const PLATFORM_BUILD_KEY = Symbol.for("eli-coach-platform.integration-build");
+
+type BuildRegistry = { [PLATFORM_BUILD_KEY]?: Promise<void> };
 
 /**
- * Produces the artifact the suites serve. It has to be built rather than
- * reused because `react-router.config.ts` bakes `APP_BASE_PATH` into the
- * router's basename at build time, so a build made for local development
- * answers on different paths than the integration environment declares.
- *
- * The file is parsed rather than loaded into this process: the integration
- * environment belongs to the servers the suites spawn, and vitest's forked
- * test processes inherit whatever is set here.
+ * Produces the artifact the suites serve: the one production build every
+ * deployment runs, whatever prefix it is served under. Each integration
+ * project serves it under its own prefix, so the projects share one build
+ * per run instead of making one each. Vitest loads this module once per
+ * project, so the shared build lives on `globalThis`, not in a module variable.
  */
-export async function buildPlatformServer(): Promise<void> {
-  const basePath = parseEnv(
-    readFileSync(integrationEnvironmentFilePath, "utf8"),
-  ).APP_BASE_PATH;
+export function buildPlatformServer(): Promise<void> {
+  const registry = globalThis as BuildRegistry;
 
-  if (!basePath) {
-    throw new Error(
-      `APP_BASE_PATH is missing from ${integrationEnvironmentFilePath}.`,
-    );
-  }
+  registry[PLATFORM_BUILD_KEY] ??= runPlatformBuild();
 
+  return registry[PLATFORM_BUILD_KEY];
+}
+
+async function runPlatformBuild(): Promise<void> {
   try {
     await runCommand(
       "pnpm",
       ["--filter", "@eli-coach-platform/platform", "build"],
       {
         cwd: workspaceRootPath,
-        // `process.loadEnvFile` in the router config leaves an already-set
-        // variable alone, so this wins over a developer's local `.env`.
         // Vitest exports NODE_ENV=test, which would make this a development
         // build rather than the artifact the image deploys.
         env: {
           ...process.env,
-          APP_BASE_PATH: basePath,
           NODE_ENV: "production",
         },
         // Vite's build output (chunk sizes, future-flag warnings) can exceed

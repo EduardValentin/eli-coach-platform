@@ -341,7 +341,7 @@ module.exports = {
     {
       name: "config-runtime-readers",
       comment:
-        "Only the runtime reader, the container and database modules, the readyz controller, the migration config and the integration rig read the environment; everything else receives concern values and may import only their types.",
+        "Only the runtime reader, the container and database modules, the readyz controller, the server build entry, the migration config and the integration rig read the environment; everything else receives concern values and may import only their types.",
       severity: "error",
       from: {
         path: "^apps/",
@@ -349,6 +349,7 @@ module.exports = {
           "^apps/platform/src/composition-root/runtime-environment\\.ts$",
           "^apps/platform/src/composition-root/(container|database)\\.server\\.ts$",
           "^apps/platform/src/composition-root/api/readyz/readyz-controller\\.server\\.ts$",
+          "^apps/platform/src/composition-root/server-build\\.server\\.ts$",
           "^apps/platform/db/",
           "^apps/platform/integration-test-config/",
         ],
@@ -671,7 +672,10 @@ module.exports = {
       name: "not-to-unresolvable",
       severity: "error",
       from: {},
-      to: { couldNotResolve: true, pathNot: "\\?raw$" },
+      to: {
+        couldNotResolve: true,
+        pathNot: ["\\?raw$", "^virtual:react-router/server-build$"],
+      },
     },
     {
       name: "no-non-package-json",

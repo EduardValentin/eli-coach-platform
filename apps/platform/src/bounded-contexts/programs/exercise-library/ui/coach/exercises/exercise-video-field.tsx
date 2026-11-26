@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import type { UploadState } from "~/shared/http";
 import {
   Alert,
@@ -54,7 +54,7 @@ function shownVideoUrlOf(
   if (video.chosen.kind === "attach") return video.chosen.previewUrl;
   if (video.chosen.kind === "remove" || stored === null) return null;
 
-  return joinBasePath(import.meta.env.BASE_URL, stored.path);
+  return appUrl(stored.path);
 }
 
 function videoUploadMessage(upload: VideoUploadState): string {

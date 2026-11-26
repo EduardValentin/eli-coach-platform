@@ -11,7 +11,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import {
   useJoinWaitlistFetcher,
   WAITLIST_API_PATH,
-  WAITLIST_API_URL,
+  waitlistApiUrl,
 } from "./api-client";
 
 const API_ERROR_MESSAGE_SENTINEL = "api-error";
@@ -91,7 +91,7 @@ describe("waitlist join fetcher", () => {
     // arrange
     let submittedEmail: FormDataEntryValue | null = null;
     server.use(
-      http.post(WAITLIST_API_URL, async ({ request }) => {
+      http.post(waitlistApiUrl(), async ({ request }) => {
         submittedEmail = (await request.formData()).get("email");
 
         return HttpResponse.json({ success: true }, { status: 201 });
@@ -110,7 +110,7 @@ describe("waitlist join fetcher", () => {
   it("exposes a business error response even when the status is not ok", async () => {
     // arrange
     server.use(
-      http.post(WAITLIST_API_URL, () =>
+      http.post(waitlistApiUrl(), () =>
         HttpResponse.json(
           {
             success: false,
@@ -138,7 +138,7 @@ describe("waitlist join fetcher", () => {
     ["an empty body", () => new HttpResponse(null, { status: 204 })],
   ])("exposes a server error for %s", async (_label, respond) => {
     // arrange
-    server.use(http.post(WAITLIST_API_URL, () => respond()));
+    server.use(http.post(waitlistApiUrl(), () => respond()));
     renderFetcher();
 
     // act
@@ -153,7 +153,7 @@ describe("waitlist join fetcher", () => {
     let releaseSecondResponse = () => {};
     let submitCount = 0;
     server.use(
-      http.post(WAITLIST_API_URL, async () => {
+      http.post(waitlistApiUrl(), async () => {
         submitCount += 1;
 
         if (submitCount === 2) {

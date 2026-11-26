@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { COACH_DISPLAY_NAME, ELI_PORTRAIT_PATHS } from "~/shared/brand";
 import { ASSESSMENT_CALL_RULES } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import { cn } from "~/shared/design-system/lib";
@@ -10,11 +10,6 @@ import {
   formatMonthFirstDate,
   formatClockTime,
 } from "~/shared/time-format/call-moment";
-
-const COACH_AVATAR_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  ELI_PORTRAIT_PATHS.small,
-);
 
 export function CallOverview(props: {
   chosenCall: { startsAt: string; timeZone: string } | null;
@@ -31,7 +26,7 @@ export function CallOverview(props: {
         alt={COACH_DISPLAY_NAME}
         className="mb-6 size-24 rounded-full border border-control-border-soft object-cover shadow-card"
         height={96}
-        src={COACH_AVATAR_URL}
+        src={appUrl(ELI_PORTRAIT_PATHS.small)}
         width={96}
       />
 

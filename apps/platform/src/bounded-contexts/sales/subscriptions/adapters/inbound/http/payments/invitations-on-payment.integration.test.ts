@@ -47,7 +47,7 @@ const clients = new ClientsJourney(rig);
 const PAID_EVENT_ID = "evt_integration_invited";
 const INVITATION_SUBJECT = "Your place is booked — create your account.";
 const HOSTED_SIGN_UP_URL = "https://evoa.fit/sign-up";
-const CLIENT_PORTAL_URL = "https://localhost:3000/eli-coach-platform/client";
+const CLIENT_PORTAL_URL = suite.publicUrl("/client");
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 type InvitationRow = {

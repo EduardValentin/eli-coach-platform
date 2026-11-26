@@ -1,4 +1,3 @@
-import { joinBasePath } from "~/shared/http/base-path";
 import { ELI_PORTRAIT_PATHS } from "~/shared/brand";
 
 export const ABOUT_COPY = {
@@ -22,37 +21,22 @@ export const ABOUT_CHIPS = [
 ] as const;
 
 export const ABOUT_MEDIA = {
-  eliPortraitLarge: joinBasePath(
-    import.meta.env.BASE_URL,
-    ELI_PORTRAIT_PATHS.large,
-  ),
-  eliPortraitSmall: joinBasePath(
-    import.meta.env.BASE_URL,
-    ELI_PORTRAIT_PATHS.small,
-  ),
-  heroPoster: joinBasePath(
-    import.meta.env.BASE_URL,
-    "media/hero/hero-training-poster.jpg",
-  ),
-  heroVideoMp4: joinBasePath(
-    import.meta.env.BASE_URL,
-    "media/hero/hero-training-loop.mp4",
-  ),
-  heroVideoWebm: joinBasePath(
-    import.meta.env.BASE_URL,
-    "media/hero/hero-training-loop.webm",
-  ),
+  eliPortraitLarge: ELI_PORTRAIT_PATHS.large,
+  eliPortraitSmall: ELI_PORTRAIT_PATHS.small,
+  heroPoster: "media/hero/hero-training-poster.jpg",
+  heroVideoMp4: "media/hero/hero-training-loop.mp4",
+  heroVideoWebm: "media/hero/hero-training-loop.webm",
 } as const;
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";
 
 const ABOUT_STORY_VIDEO_SOURCES = [
   {
-    src: ABOUT_MEDIA.heroVideoWebm,
+    path: ABOUT_MEDIA.heroVideoWebm,
     type: "video/webm",
   },
   {
-    src: ABOUT_MEDIA.heroVideoMp4,
+    path: ABOUT_MEDIA.heroVideoMp4,
     type: "video/mp4",
   },
 ] as const;
@@ -61,19 +45,19 @@ export const ABOUT_STORIES = [
   {
     alt: "Story 1 of 3",
     objectPosition: "center",
-    posterSrc: ABOUT_MEDIA.heroPoster,
+    posterPath: ABOUT_MEDIA.heroPoster,
     videoSources: ABOUT_STORY_VIDEO_SOURCES,
   },
   {
     alt: "Story 2 of 3",
     objectPosition: "35% center",
-    posterSrc: ABOUT_MEDIA.heroPoster,
+    posterPath: ABOUT_MEDIA.heroPoster,
     videoSources: ABOUT_STORY_VIDEO_SOURCES,
   },
   {
     alt: "Story 3 of 3",
     objectPosition: "65% center",
-    posterSrc: ABOUT_MEDIA.heroPoster,
+    posterPath: ABOUT_MEDIA.heroPoster,
     videoSources: ABOUT_STORY_VIDEO_SOURCES,
   },
 ] as const;

@@ -43,7 +43,7 @@
     "terms:pdf": "pnpm --filter @eli-coach-platform/platform terms:pdf",
     "test": "pnpm typecheck && vitest run",
     "test:unit": "pnpm typecheck && vitest run --project unit --project tools",
-    "test:integration": "vitest run --project integration",
+    "test:integration": "vitest run --project 'integration-*'",
     "test:e2e": "pnpm --filter @eli-coach-platform/platform test:e2e",
     "test:e2e:critical": "pnpm --filter @eli-coach-platform/platform test:e2e:critical",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",

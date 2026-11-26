@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { useCallback, useMemo } from "react";
 import { useFetcher } from "react-router";
 import { WAITLIST_API_PATH } from "~/bounded-contexts/sales/waitlist/public/paths";
@@ -10,10 +10,9 @@ import {
 import { createWaitlistServerErrorResponse } from "./errors";
 
 export { WAITLIST_API_PATH };
-export const WAITLIST_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  WAITLIST_API_PATH,
-);
+export function waitlistApiUrl(): string {
+  return appUrl(WAITLIST_API_PATH);
+}
 
 export function useJoinWaitlistFetcher() {
   const fetcher = useFetcher<unknown>();

@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { cn, EYEBROW_CLASS } from "~/shared/design-system/lib";
 import {
   cardVariants,
@@ -44,7 +44,7 @@ export function RecipeCard({ recipe, tags }: RecipeCardProps) {
           recipe.photo === null
             ? undefined
             : {
-                src: joinBasePath(import.meta.env.BASE_URL, recipe.photo.path),
+                src: appUrl(recipe.photo.path),
                 alt: recipe.name,
               }
         }

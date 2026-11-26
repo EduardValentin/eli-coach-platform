@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";
@@ -27,20 +27,17 @@ export type StoreDownloadContents =
   | { status: "unconfirmed" };
 
 const STORE_CATALOG_ROUTE_PATH = STORE_API_PATHS.catalog;
-export const STORE_CATALOG_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  STORE_CATALOG_ROUTE_PATH,
-);
+export function storeCatalogApiUrl(): string {
+  return appUrl(STORE_CATALOG_ROUTE_PATH);
+}
 export const STORE_ACQUISITIONS_API_PATH = STORE_API_PATHS.acquisitions;
-export const STORE_ACQUISITIONS_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  STORE_ACQUISITIONS_API_PATH,
-);
+export function storeAcquisitionsApiUrl(): string {
+  return appUrl(STORE_ACQUISITIONS_API_PATH);
+}
 export const STORE_CHECKOUTS_API_PATH = STORE_API_PATHS.checkouts;
-export const STORE_CHECKOUTS_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  STORE_CHECKOUTS_API_PATH,
-);
+export function storeCheckoutsApiUrl(): string {
+  return appUrl(STORE_CHECKOUTS_API_PATH);
+}
 
 export function useStoreCatalogFetcher(options: { enabled: boolean }) {
   const fetcher = useFetcher<StoreCatalogResponse>();

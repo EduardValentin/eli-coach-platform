@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import type { RecipeIcon } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
 import {
   Alert,
@@ -60,7 +60,7 @@ function shownPhotoSrcOf(
   if (photo.chosen.kind === "attach") return photo.chosen.previewUrl;
   if (photo.chosen.kind === "remove" || stored === null) return null;
 
-  return joinBasePath(import.meta.env.BASE_URL, stored.path);
+  return appUrl(stored.path);
 }
 
 export function RecipePhotoField({

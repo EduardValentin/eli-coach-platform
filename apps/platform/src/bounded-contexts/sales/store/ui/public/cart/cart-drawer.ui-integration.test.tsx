@@ -33,9 +33,9 @@ import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider, useStoreCart } from "./cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "./cart-drawer";
 import {
-  STORE_ACQUISITIONS_API_URL,
+  storeAcquisitionsApiUrl,
   STORE_ACQUISITIONS_API_PATH,
-  STORE_CATALOG_API_URL,
+  storeCatalogApiUrl,
 } from "../api-client";
 
 const server = setupServer();
@@ -67,7 +67,7 @@ describe("StoreCartButton", () => {
     // arrange
     const user = userEvent.setup();
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -94,7 +94,7 @@ describe("StoreCartButton", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -127,7 +127,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json(
           {
             error: {
@@ -164,7 +164,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -191,7 +191,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -222,7 +222,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -256,7 +256,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -292,7 +292,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -323,7 +323,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -350,13 +350,13 @@ describe("StoreCartDrawer", () => {
     const submittedForm = { current: null as FormData | null };
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, async ({ request }) => {
+      http.post(storeAcquisitionsApiUrl(), async ({ request }) => {
         submittedForm.current = await request.formData();
 
         return HttpResponse.json({ success: true }, { status: 201 });
@@ -413,13 +413,13 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
+      http.post(storeAcquisitionsApiUrl(), () =>
         HttpResponse.json(
           {
             error: {
@@ -464,13 +464,13 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
+      http.post(storeAcquisitionsApiUrl(), () =>
         HttpResponse.json(
           {
             error: {
@@ -512,13 +512,13 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
+      http.post(storeAcquisitionsApiUrl(), () =>
         HttpResponse.json(
           {
             error: {
@@ -567,7 +567,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -602,7 +602,7 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
@@ -635,13 +635,13 @@ describe("StoreCartDrawer", () => {
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, () =>
+      http.post(storeAcquisitionsApiUrl(), () =>
         HttpResponse.json(
           {
             error: {
@@ -706,13 +706,13 @@ describe("StoreCartDrawer", () => {
       };
       seedCart(["hormone-harmony"]);
       server.use(
-        http.get(STORE_CATALOG_API_URL, () =>
+        http.get(storeCatalogApiUrl(), () =>
           HttpResponse.json({
             products: [createProduct()],
             success: true,
           }),
         ),
-        http.post(STORE_ACQUISITIONS_API_URL, answer),
+        http.post(storeAcquisitionsApiUrl(), answer),
       );
       renderCart({
         botDetection: {
@@ -762,13 +762,13 @@ describe("StoreCartDrawer", () => {
     };
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, () => {
+      http.post(storeAcquisitionsApiUrl(), () => {
         acquisitionRequests += 1;
 
         return HttpResponse.json({ success: true }, { status: 201 });
@@ -822,13 +822,13 @@ describe("StoreCartDrawer", () => {
     };
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, async ({ request }) => {
+      http.post(storeAcquisitionsApiUrl(), async ({ request }) => {
         submittedForm.current = await request.formData();
 
         return HttpResponse.json({ success: true }, { status: 201 });
@@ -891,13 +891,13 @@ describe("StoreCartDrawer", () => {
     const submittedKeys: string[] = [];
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, async ({ request }) => {
+      http.post(storeAcquisitionsApiUrl(), async ({ request }) => {
         const formData = await request.formData();
 
         submittedKeys.push(String(formData.get("idempotencyKey")));
@@ -949,13 +949,13 @@ describe("StoreCartDrawer", () => {
     const submittedKeys: string[] = [];
     seedCart(["hormone-harmony"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [createProduct()],
           success: true,
         }),
       ),
-      http.post(STORE_ACQUISITIONS_API_URL, async ({ request }) => {
+      http.post(storeAcquisitionsApiUrl(), async ({ request }) => {
         const formData = await request.formData();
 
         submittedKeys.push(String(formData.get("idempotencyKey")));
@@ -1015,7 +1015,7 @@ describe("StoreCartDrawer with plans", () => {
     const user = userEvent.setup();
     seedCart(["fat-loss-plan", "hormone-harmony", "bigger-glutes-plan"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({
           products: [...createPlans(), createProduct()],
           success: true,
@@ -1044,7 +1044,7 @@ describe("StoreCartDrawer with plans", () => {
     const user = userEvent.setup();
     seedCart(["fat-loss-plan", "bigger-glutes-plan"]);
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({ products: createPlans(), success: true }),
       ),
     );
@@ -1067,7 +1067,7 @@ describe("StoreCartDrawer with plans", () => {
     // arrange
     const user = userEvent.setup();
     server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
+      http.get(storeCatalogApiUrl(), () =>
         HttpResponse.json({ products: [createProduct()], success: true }),
       ),
     );
@@ -1119,8 +1119,8 @@ function renderCart(options?: {
       path: "/",
     },
     {
-      loader: () => fetch(STORE_CATALOG_API_URL),
-      path: STORE_CATALOG_API_URL,
+      loader: () => fetch(storeCatalogApiUrl()),
+      path: storeCatalogApiUrl(),
     },
     {
       action: frameworkModeAction(acquireResources),

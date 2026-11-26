@@ -1,3 +1,4 @@
+import { appBasePath } from "~/shared/http/base-path";
 import { createPwaRegistration, pwaSurfaceDefinitions } from "~/shared/pwa";
 import { NotificationBell, PortalShell } from "~/shared/design-system/layout";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
@@ -42,10 +43,12 @@ import {
   type ClientNavigationCounts,
 } from "./navigation-links";
 
-const pwaRegistration = createPwaRegistration({
-  assetBasePath: import.meta.env.BASE_URL,
-  surface: "client",
-});
+function clientPwaRegistration() {
+  return createPwaRegistration({
+    assetBasePath: appBasePath(),
+    surface: "client",
+  });
+}
 
 const NOTIFICATION_DESCRIBERS = [describeCheckInNotification];
 
@@ -101,7 +104,7 @@ export const meta: MetaFunction = () =>
   clientPortalPageMeta(pwaSurfaceDefinitions.client.name);
 
 export const links: LinksFunction = () => [
-  { rel: "manifest", href: pwaRegistration.manifestPath },
+  { rel: "manifest", href: clientPwaRegistration().manifestPath },
 ];
 
 export default function ClientLayoutRoute() {
@@ -187,7 +190,7 @@ export default function ClientLayoutRoute() {
       </PortalShell>
       <script
         dangerouslySetInnerHTML={{
-          __html: pwaRegistration.registrationScript,
+          __html: clientPwaRegistration().registrationScript,
         }}
       />
     </>

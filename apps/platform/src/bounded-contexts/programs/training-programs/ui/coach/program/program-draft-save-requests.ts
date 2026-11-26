@@ -1,4 +1,4 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { programDraftSavePath } from "~/bounded-contexts/programs/training-programs/public/paths";
 import {
   programDraftRefusalSchema,
@@ -42,15 +42,12 @@ export async function saveProgramDraft(
   request: ProgramDraftSaveRequest,
 ): Promise<DraftSaveAnswer> {
   try {
-    const response = await fetch(
-      joinBasePath(import.meta.env.BASE_URL, programDraftSavePath(clientId)),
-      {
-        body: JSON.stringify(request),
-        headers: { "Content-Type": "application/json" },
-        method: "PUT",
-        redirect: "manual",
-      },
-    );
+    const response = await fetch(appUrl(programDraftSavePath(clientId)), {
+      body: JSON.stringify(request),
+      headers: { "Content-Type": "application/json" },
+      method: "PUT",
+      redirect: "manual",
+    });
 
     return await answerOf(response);
   } catch {

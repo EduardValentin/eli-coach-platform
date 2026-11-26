@@ -1,11 +1,10 @@
-import { joinBasePath } from "~/shared/http/base-path";
+import { appUrl } from "~/shared/http/base-path";
 import { useEffect, useRef, useState } from "react";
 import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";
 
-export const DOWNLOAD_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  STORE_API_PATHS.downloads,
-);
+export function downloadApiUrl(): string {
+  return appUrl(STORE_API_PATHS.downloads);
+}
 
 type DownloadLocation = Pick<Location, "hash" | "search">;
 

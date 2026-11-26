@@ -1,5 +1,6 @@
 import { PhoneFrame } from "~/shared/design-system/layout";
 import { cn } from "~/shared/design-system/lib";
+import { appUrl } from "~/shared/http/base-path";
 import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { Heart, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -154,7 +155,7 @@ export function InstagramStoryWidget() {
             loop={!shouldReduceMotion}
             muted
             playsInline
-            poster={currentStory.posterSrc}
+            poster={appUrl(currentStory.posterPath)}
             preload={shouldReduceMotion ? "none" : "metadata"}
             style={{ objectPosition: currentStory.objectPosition }}
             transition={{ duration: 0.2 }}
@@ -164,7 +165,7 @@ export function InstagramStoryWidget() {
               : currentStory.videoSources.map((source) => (
                   <source
                     key={source.type}
-                    src={source.src}
+                    src={appUrl(source.path)}
                     type={source.type}
                   />
                 ))}
@@ -202,7 +203,7 @@ export function InstagramStoryWidget() {
               alt=""
               className="size-full object-cover"
               height={32}
-              src={ABOUT_MEDIA.eliPortraitSmall}
+              src={appUrl(ABOUT_MEDIA.eliPortraitSmall)}
               width={32}
             />
           </div>

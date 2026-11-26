@@ -1,5 +1,5 @@
 import { Cart } from "~/bounded-contexts/sales/store/domain/cart";
-import { normalizeBasePath } from "~/shared/http/base-path";
+import { appBasePath } from "~/shared/http/base-path";
 import { useEffect } from "react";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
@@ -126,7 +126,7 @@ export function createStoreCartStore(initialCurrency: StoreCurrency) {
 function rememberStoreCurrency(currency: StoreCurrency): void {
   const attributes = [
     `${STORE_CURRENCY_COOKIE_NAME}=${currency}`,
-    `Path=${normalizeBasePath(import.meta.env.BASE_URL)}`,
+    `Path=${appBasePath()}`,
     `Max-Age=${STORE_CURRENCY_COOKIE_MAX_AGE_SECONDS}`,
     "SameSite=Lax",
   ];

@@ -113,10 +113,12 @@ describe("checkouts integration", () => {
       "subscription_data[metadata][purpose]": "coaching-subscription",
       "subscription_data[metadata][assessmentCallId]": callId,
       "line_items[0][price_data][product_data][name]": "3 Months",
-      success_url:
-        "https://localhost:3000/eli-coach-platform/checkout/complete?session={CHECKOUT_SESSION_ID}",
-      cancel_url:
-        "https://localhost:3000/eli-coach-platform/select-bundle?payment=cancelled&bundle=3-months&start=immediate",
+      success_url: suite.publicUrl(
+        "/checkout/complete?session={CHECKOUT_SESSION_ID}",
+      ),
+      cancel_url: suite.publicUrl(
+        "/select-bundle?payment=cancelled&bundle=3-months&start=immediate",
+      ),
     });
     expect(await readCheckoutSessions()).toEqual([
       {
