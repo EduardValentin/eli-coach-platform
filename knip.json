@@ -33,6 +33,7 @@
         "db/apply-seeds.ts",
         "react-router.config.ts",
         "vite.config.ts",
+        "server.mjs",
         "e2e/**/*.ts",
         "integration-test-config/**/*.ts",
         "tooling/**/*.ts",
@@ -40,6 +41,7 @@
       ],
       "project": [
         "src/**/*.{ts,tsx}",
+        "server.mjs",
         "src/**/*.css",
         "db/**/*.ts",
         "e2e/**/*.ts",

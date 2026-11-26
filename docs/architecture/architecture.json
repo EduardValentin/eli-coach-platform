@@ -2,7 +2,7 @@
   "version": 2,
   "adapter": "node tools/arch-adapter/adapter.mjs",
   "record": "committed",
-  "frameworks": ["react", "react-router", "react-dom", "@react-router/node", "@react-router/serve", "vite"],
+  "frameworks": ["react", "react-router", "react-dom", "@react-router/node", "@react-router/express", "vite"],
   "components": [
     { "name": "apps/platform/src/shared/database", "paths": ["apps/platform/src/shared/database/**"], "enforcement": "shared-imports-no-context, shared-browser-entries, no-database-types-outside-persistence", "release": "no", "classify": [
         ["**", "adapter"] ] },

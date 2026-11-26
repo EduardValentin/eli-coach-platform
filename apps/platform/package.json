@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "files": [
-    "build"
+    "build",
+    "server.mjs"
   ],
   "scripts": {
     "dev": "node --env-file=../../.env ./node_modules/@react-router/dev/bin.cjs dev --host 0.0.0.0 --port 3000",
@@ -14,8 +15,8 @@
     "store:cover": "tsx tooling/render-product-cover-cli.ts",
     "terms:pdf": "tsx tooling/legal/generate-website-and-store-terms-pdf.ts",
     "lint": "eslint src --ext .ts,.tsx",
-    "start": "react-router-serve ./build/server/index.js",
-    "start:local": "set -a; . ../../.env; set +a; react-router-serve ./build/server/index.js",
+    "start": "node ./server.mjs ./build/server/index.js",
+    "start:local": "set -a; . ../../.env; set +a; node ./server.mjs ./build/server/index.js",
     "test:e2e": "playwright test --config e2e/playwright.config.ts",
     "test:e2e:critical": "playwright test --config e2e/playwright.config.ts --grep @critical",
     "typecheck": "react-router typegen && tsc -p tsconfig.json --noEmit"
@@ -30,17 +31,20 @@
     "@fontsource-variable/playfair-display": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@napi-rs/canvas": "catalog:",
+    "@react-router/express": "catalog:",
     "@react-router/node": "catalog:",
-    "@react-router/serve": "catalog:",
     "@tokenizer/inflate": "catalog:",
     "archiver": "catalog:",
     "canvas-confetti": "1.9.4",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "compression": "catalog:",
     "drizzle-orm": "catalog:",
+    "express": "catalog:",
     "file-type": "catalog:",
     "isbot": "catalog:",
     "lucide-react": "catalog:",
+    "morgan": "catalog:",
     "motion": "catalog:",
     "pdfjs-dist": "catalog:",
     "pg": "catalog:",

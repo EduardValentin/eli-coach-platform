@@ -24,6 +24,7 @@ RUN pnpm --dir "$APP_DIR" build
 RUN pnpm --filter "$APP_PACKAGE" --prod deploy /deploy
 RUN node /workspace/tools/check-deploy-resolves.mjs /deploy
 RUN test -f /deploy/build/server/index.js \
+  && test -f /deploy/server.mjs \
   && test ! -e /deploy/e2e \
   && test ! -e /deploy/src \
   && test ! -e /deploy/test-support \
@@ -60,4 +61,4 @@ EXPOSE 3000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=12 CMD ["node", "/workspace/healthcheck.mjs"]
 
-CMD ["node", "./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]
+CMD ["node", "./server.mjs", "./build/server/index.js"]
