@@ -12,7 +12,7 @@ import {
   type Muscle,
   type MovementPattern,
 } from '../../../domain/exercises';
-import { pickableItems } from '../../../domain/libraryLifecycle';
+import { inNameOrder, pickableItems } from '../../../domain/libraryLifecycle';
 import type { LibraryPickRefusal } from '../../../domain/programEditing';
 import { counted } from '../../../utils/counted';
 import { IconActionButton } from '../../IconActionButton';
@@ -306,7 +306,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   const needle = query.trim().toLowerCase();
   const alsoTagged = purpose?.type === type ? purpose.alsoTagged : undefined;
   const ofType = (exercise: Exercise) => exercise.type === type || (alsoTagged !== undefined && exercise.tags.includes(alsoTagged));
-  const shown = pickableItems(library)
+  const shown = inNameOrder(pickableItems(library))
     .filter(exercise => exercise.archivedAt === undefined && ofType(exercise))
     .filter(exercise => exercise.name.toLowerCase().includes(needle))
     .filter(exercise => type !== 'resistance' || anyOf(patterns, exercise.pattern ? [exercise.pattern] : []))

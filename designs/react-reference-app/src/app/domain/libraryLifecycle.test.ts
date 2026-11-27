@@ -4,6 +4,7 @@ import {
   countsByStatus,
   exerciseUsage,
   foodUsage,
+  inNameOrder,
   isDeletable,
   itemsWithStatus,
   parseStatus,
@@ -164,6 +165,19 @@ describe('what a picker offers', () => {
 
     // assert
     expect(offered).toEqual([squat, lunge]);
+  });
+});
+
+describe('the order a library lists its items in', () => {
+  it('sorts by name ignoring case, spaces and punctuation, as the production library does', () => {
+    // arrange
+    const unordered = ['Lat Pulldown', 'Pull-Up', 'lateral Raises', 'Pullover', 'Box Squat', 'arnold press', 'Lateral Lunge'].map(name => ({ name }));
+
+    // act
+    const ordered = inNameOrder(unordered);
+
+    // assert
+    expect(ordered.map(item => item.name)).toEqual(['arnold press', 'Box Squat', 'Lateral Lunge', 'lateral Raises', 'Lat Pulldown', 'Pullover', 'Pull-Up']);
   });
 });
 

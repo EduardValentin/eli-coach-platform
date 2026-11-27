@@ -1,6 +1,7 @@
 import type { Exercise } from '../context/TrainingContext';
 import { newId, SLOTS, withField, type Block, type PlacedRow, type Row, type Session, type Slot } from './program';
 import { resetRowDefaults } from './programDefaults';
+import { inNameOrder } from './libraryLifecycle';
 import { filledRow, type RowContext } from './programSuggestions';
 import { slotPlanFor } from './splitTemplates';
 import { MAX_SUBSTITUTIONS, substitutionsFor } from './substitutions';
@@ -83,7 +84,8 @@ export function quickAddSlot(block: Block, session: Session, exercise: Exercise)
   return matching ?? 'C';
 }
 
-export function rowEdits(session: Session, context: RowContext) {
+export function rowEdits(session: Session, rowContext: RowContext) {
+  const context: RowContext = { ...rowContext, library: inNameOrder(rowContext.library) };
   const { rows } = session;
   const withRows = (next: Row[]): Session => ({ ...session, rows: tidy(next) });
   const rowOf = (rowId: string) => rows.find(row => row.id === rowId);

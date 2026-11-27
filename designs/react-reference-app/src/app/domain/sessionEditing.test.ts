@@ -57,7 +57,7 @@ describe('rowEdits', () => {
     const [row] = next.rows;
     expect(row).toMatchObject({ slot: 'C', exerciseId: 'curl', cues: 'curl cues', restSeconds: 75 });
     expect(row.startSets.filter(set => set.kind === 'working')).toHaveLength(3);
-    expect(row.substitutions).toEqual(['raise', 'kickback']);
+    expect(row.substitutions).toEqual(['kickback', 'raise']);
   });
 
   it('sends a second exercise for a one-card slot to the next group', () => {
@@ -205,6 +205,19 @@ describe('rowEdits', () => {
     expect(rowOf(moved, 'curl')).toMatchObject(sets);
     expect(rowOf(swapped, 'curl').slot).toBe('A');
     expect(rowOf(swapped, 'curl')).toMatchObject(sets);
+  });
+
+  it('suggests substitutions picked from the library in name order, whatever order the library holds them in', () => {
+    // arrange
+    const library = [byId('curl'), exercise('wall-sit', { name: 'Wall Sit' }), exercise('lunge', { name: 'lunge' }), exercise('box-squat', { name: 'Box Squat' })];
+    const context = { ...CONTEXT, library };
+    const session = rowEdits(emptySession(), context).add(byId('curl'), { slot: 'C' });
+
+    // act
+    const next = rowEdits(session, context).suggestSubstitutions(session.rows[0].id);
+
+    // assert
+    expect(next.rows[0].substitutions).toEqual(['box-squat', 'lunge']);
   });
 
   it('removes a substitution and marks the substitutions as touched', () => {

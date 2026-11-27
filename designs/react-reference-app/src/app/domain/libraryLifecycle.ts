@@ -74,6 +74,13 @@ export function pickableItems<T extends ArchivableItem>(
   return items.filter((item) => statusOf(item) === 'active' || placedIds.includes(item.id));
 }
 
+// Postgres orders production's library by lower(name) under en_US, which passes over spaces and punctuation.
+const NAME_ORDER = new Intl.Collator('en', { sensitivity: 'base', ignorePunctuation: true });
+
+export function inNameOrder<T extends { name: string }>(items: readonly T[]): T[] {
+  return [...items].sort((one, other) => NAME_ORDER.compare(one.name, other.name));
+}
+
 export function archivedItem<T extends ArchivableItem>(item: T, at: Date): T {
   return { ...item, archivedAt: at.toISOString() };
 }

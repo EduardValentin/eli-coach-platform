@@ -259,6 +259,19 @@ describe('LibraryPanel', () => {
     expect(within(library()).queryByRole('button', { name: 'Add Leg Press' })).not.toBeInTheDocument();
   });
 
+  it('lists exercises in name order, passing over spaces and punctuation', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await showAllEquipment(user);
+
+    // act
+    await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'lat');
+
+    // assert
+    const offered = within(library()).getAllByRole('button', { name: /^Add / }).map(button => button.getAttribute('aria-label'));
+    expect(offered).toEqual(['Add Cable Lateral Raise', 'Add Lateral Lunge', 'Add Lateral Raises', 'Add Lat Pulldown', 'Add Single-Arm Lat Pulldown']);
+  });
+
   it('lists each filter that leaves nothing as a chip that removes only that filter', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
